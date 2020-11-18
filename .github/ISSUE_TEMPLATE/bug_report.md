@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is. If you think that you have found a security vulnerability then please write us a private email to hetida.designer@neusta-sd-west.de with your bug report instead.
+A clear and concise description of what the bug is. If you think that you have found a security vulnerability then please write us a private email to hetida@neusta-sd-west.de with your bug report instead.
 
 **To Reproduce**
 Steps to reproduce the behavior:

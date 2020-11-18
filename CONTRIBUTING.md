@@ -165,7 +165,7 @@ frontend - we have specific rules that apply to each one of these technologies:
 [coding-rules-backend]: https://github.com/hetida/hetida-designer/blob/release/backend/CODING_STANDARDS.md
 [coding-rules-frontend]: https://github.com/hetida/hetida-designer/blob/release/frontend/CODING_STANDARDS.md
 [changelog]: https://github.com/hetida/hetida-designer/blob/release/CHANGELOG.md
-[email]: mailto:hetida.designer@neusta-sd-west.de
+[email]: mailto:hetida@neusta-sd-west.de
 [getting-started]: https://github.com/hetida/hetida-designer/blob/release/README.md#gs-docker-compose
 [github]: https://github.com/hetida/hetida-designer
 [new-issue]: https://github.com/hetida/hetida-designer/issues/new?assignees=&labels=&template=bug_report.md&title=%5BBUG%5D
