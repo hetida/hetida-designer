@@ -29,9 +29,9 @@ Abstract dependencies go into `requirements.in` while abstract development-only 
 All following commands are run with activated development virtual environment.
 
 #### Locking Dependencies
-Lock all dependencies via 
+Lock all dependencies via
 ```
-pip-compile --generate-hashes && pip-compile --generate-hashes requirements-dev.in
+rm requirements.txt requirements-dev.txt && pip-compile --generate-hashes && pip-compile --generate-hashes requirements-dev.in
 ```
 This updates the locked dependency files `requirements.txt` and `requirements-dev.txt`.
 
