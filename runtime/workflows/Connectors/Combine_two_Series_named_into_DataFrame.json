@@ -1,0 +1,243 @@
+{
+    "category": "Connectors",
+    "description": "Combine two Series as named columns into DataFrame",
+    "groupId": "047cbb52-c7b4-4134-9fd8-4006bd66c192",
+    "id": "45f4f0c1-3fda-4c3b-8187-c590610e6975",
+    "inputs": [
+        {
+            "connector": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+            "constant": false,
+            "constantValue": {
+                "value": ""
+            },
+            "id": "fb274218-42c2-4951-8b48-13514c32b8e1",
+            "name": "column_name_1",
+            "operator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6",
+            "posX": 40,
+            "posY": 400,
+            "type": "STRING"
+        },
+        {
+            "connector": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+            "constant": false,
+            "constantValue": {
+                "value": ""
+            },
+            "id": "8106c90b-b3d6-48d8-ba61-79f06be3320f",
+            "name": "column_name_2",
+            "operator": "4081d021-3252-4a92-9cb9-3df129b2969b",
+            "posX": 770,
+            "posY": 340,
+            "type": "STRING"
+        },
+        {
+            "connector": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+            "constant": false,
+            "constantValue": {
+                "value": ""
+            },
+            "id": "7ef1f9fd-4198-4056-8b50-6ee79f4ef1c0",
+            "name": "series_1",
+            "operator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6",
+            "posX": 40,
+            "posY": 430,
+            "type": "SERIES"
+        },
+        {
+            "connector": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+            "constant": false,
+            "constantValue": {
+                "value": ""
+            },
+            "id": "e71a1c04-36bc-4a8c-bff0-26454b6442a0",
+            "name": "series_2",
+            "operator": "4081d021-3252-4a92-9cb9-3df129b2969b",
+            "posX": 770,
+            "posY": 370,
+            "type": "SERIES"
+        },
+        {
+            "connector": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
+            "constant": false,
+            "constantValue": {
+                "value": ""
+            },
+            "id": "ec588521-28e5-4616-b35a-fda973f91c37",
+            "name": "series_or_dataframe",
+            "operator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6",
+            "posX": 40,
+            "posY": 460,
+            "type": "ANY"
+        }
+    ],
+    "links": [
+        {
+            "fromConnector": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
+            "fromOperator": "4081d021-3252-4a92-9cb9-3df129b2969b",
+            "id": "169722e0-13c2-45db-9366-5c278554b1b5",
+            "path": [],
+            "toConnector": "809be129-f35c-47ef-be5d-687256470181",
+            "toOperator": "45f4f0c1-3fda-4c3b-8187-c590610e6975"
+        },
+        {
+            "fromConnector": "ec588521-28e5-4616-b35a-fda973f91c37",
+            "fromOperator": "45f4f0c1-3fda-4c3b-8187-c590610e6975",
+            "id": "4b980d30-61d1-4a59-9f62-2e7eaca372eb",
+            "path": [],
+            "toConnector": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
+            "toOperator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6"
+        },
+        {
+            "fromConnector": "7ef1f9fd-4198-4056-8b50-6ee79f4ef1c0",
+            "fromOperator": "45f4f0c1-3fda-4c3b-8187-c590610e6975",
+            "id": "4dd7fb86-67ee-458f-9a81-3ff4be47121c",
+            "path": [],
+            "toConnector": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+            "toOperator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6"
+        },
+        {
+            "fromConnector": "fb274218-42c2-4951-8b48-13514c32b8e1",
+            "fromOperator": "45f4f0c1-3fda-4c3b-8187-c590610e6975",
+            "id": "65d33e17-637a-408b-963c-f49fa3addee0",
+            "path": [],
+            "toConnector": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+            "toOperator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6"
+        },
+        {
+            "fromConnector": "8106c90b-b3d6-48d8-ba61-79f06be3320f",
+            "fromOperator": "45f4f0c1-3fda-4c3b-8187-c590610e6975",
+            "id": "7106b3e8-2c00-4205-945b-cd8c6f65b7b0",
+            "path": [],
+            "toConnector": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+            "toOperator": "4081d021-3252-4a92-9cb9-3df129b2969b"
+        },
+        {
+            "fromConnector": "e71a1c04-36bc-4a8c-bff0-26454b6442a0",
+            "fromOperator": "45f4f0c1-3fda-4c3b-8187-c590610e6975",
+            "id": "af9b62a9-876a-4f0a-bce4-b12c0fe3af7d",
+            "path": [],
+            "toConnector": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+            "toOperator": "4081d021-3252-4a92-9cb9-3df129b2969b"
+        },
+        {
+            "fromConnector": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
+            "fromOperator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6",
+            "id": "defc6d5b-8a69-4281-a1b7-c1275b91a43d",
+            "path": [],
+            "toConnector": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
+            "toOperator": "4081d021-3252-4a92-9cb9-3df129b2969b"
+        }
+    ],
+    "name": "Combine two Series as named columns into DataFrame",
+    "operators": [
+        {
+            "category": "Connectors",
+            "description": "Combine as named column into a DataFrame.",
+            "groupId": "0d08af64-3f34-cddc-354b-d6a26c3f1aab",
+            "id": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6",
+            "inputs": [
+                {
+                    "id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+                    "name": "column_name",
+                    "posX": 0,
+                    "posY": 0,
+                    "type": "STRING"
+                },
+                {
+                    "id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+                    "name": "series",
+                    "posX": 0,
+                    "posY": 0,
+                    "type": "SERIES"
+                },
+                {
+                    "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
+                    "name": "series_or_dataframe",
+                    "posX": 0,
+                    "posY": 0,
+                    "type": "ANY"
+                }
+            ],
+            "itemId": "0d08af64-3f34-cddc-354b-d6a26c3f1aab",
+            "name": "Combine as named column into DataFrame",
+            "outputs": [
+                {
+                    "id": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
+                    "name": "dataframe",
+                    "posX": 0,
+                    "posY": 0,
+                    "type": "DATAFRAME"
+                }
+            ],
+            "posX": 290,
+            "posY": 340,
+            "state": "RELEASED",
+            "tag": "1.0.0",
+            "type": "COMPONENT"
+        },
+        {
+            "category": "Connectors",
+            "description": "Combine as named column into a DataFrame.",
+            "groupId": "0d08af64-3f34-cddc-354b-d6a26c3f1aab",
+            "id": "4081d021-3252-4a92-9cb9-3df129b2969b",
+            "inputs": [
+                {
+                    "id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+                    "name": "column_name",
+                    "posX": 0,
+                    "posY": 0,
+                    "type": "STRING"
+                },
+                {
+                    "id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+                    "name": "series",
+                    "posX": 0,
+                    "posY": 0,
+                    "type": "SERIES"
+                },
+                {
+                    "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
+                    "name": "series_or_dataframe",
+                    "posX": 0,
+                    "posY": 0,
+                    "type": "ANY"
+                }
+            ],
+            "itemId": "0d08af64-3f34-cddc-354b-d6a26c3f1aab",
+            "name": "Combine as named column into DataFrame (2)",
+            "outputs": [
+                {
+                    "id": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
+                    "name": "dataframe",
+                    "posX": 0,
+                    "posY": 0,
+                    "type": "DATAFRAME"
+                }
+            ],
+            "posX": 1020,
+            "posY": 280,
+            "state": "RELEASED",
+            "tag": "1.0.0",
+            "type": "COMPONENT"
+        }
+    ],
+    "outputs": [
+        {
+            "connector": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
+            "constant": false,
+            "constantValue": {
+                "value": ""
+            },
+            "id": "809be129-f35c-47ef-be5d-687256470181",
+            "name": "dataframe",
+            "operator": "4081d021-3252-4a92-9cb9-3df129b2969b",
+            "posX": 1470,
+            "posY": 340,
+            "type": "DATAFRAME"
+        }
+    ],
+    "state": "RELEASED",
+    "tag": "1.0.0",
+    "testInput": {},
+    "wirings": []
+}

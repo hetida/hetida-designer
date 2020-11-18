@@ -1,0 +1,20 @@
+<mat-expansion-panel>
+  <mat-expansion-panel-header
+    [collapsedHeight]="'33px'"
+    [expandedHeight]="'33px'"
+    (mouseenter)="closePopover()"
+  >
+    <mat-panel-title>{{ category }}</mat-panel-title>
+    <mat-panel-description></mat-panel-description>
+  </mat-expansion-panel-header>
+
+  <div
+    *ngFor="let abstractBaseItem of abstractBaseItem"
+    class="unselectable expansion-panel-content"
+    [ngClass]="{ active: abstractBaseItem.id === activeBaseItemId }"
+  >
+    <hd-navigation-item
+      [abstractBaseItem]="abstractBaseItem"
+    ></hd-navigation-item>
+  </div>
+</mat-expansion-panel>

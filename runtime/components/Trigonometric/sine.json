@@ -1,0 +1,16 @@
+{
+    "name": "Sine",
+    "description": "Calculates the sine of the input",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "result",
+            "type": "ANY"
+        }
+    ]
+}

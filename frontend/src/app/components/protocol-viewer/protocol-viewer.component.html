@@ -1,0 +1,68 @@
+<mat-progress-bar
+  *ngIf="isLoading$ | async"
+  mode="indeterminate"
+></mat-progress-bar>
+<ng-container *ngIf="!(isLoading$ | async)">
+  <div class="menu-bar">
+    <span>execution protocol</span>
+    <div class="menu-bar__expand-icon" (click)="isExpanded = !isExpanded">
+      <ng-container *ngIf="isExpanded">
+        <mat-icon>expand_more</mat-icon>
+      </ng-container>
+      <ng-container *ngIf="!isExpanded">
+        <mat-icon>expand_less</mat-icon>
+      </ng-container>
+    </div>
+    <div>
+      <mat-icon class="clickable" (click)="displayRawValue = !displayRawValue"
+        >code</mat-icon
+      >
+      <mat-icon class="clickable" (click)="closeDialog()">close</mat-icon>
+    </div>
+  </div>
+  <div class="protocol-content" *ngIf="executionResponse && !displayRawValue">
+    <ng-container
+      *ngFor="
+        let item of executionResponse.output_results_by_output_name | keyvalue
+      "
+    >
+      <div style="padding-bottom: 10px; padding-left: 15px">
+        <ng-container
+          [ngTemplateOutlet]="getTemplateForType(item.key)"
+          [ngTemplateOutletContext]="{ abstractBaseItem: item }"
+        >
+        </ng-container>
+      </div>
+      <mat-divider></mat-divider>
+    </ng-container>
+  </div>
+
+  <textarea
+    *ngIf="displayRawValue"
+    class="protocol-content__raw-value"
+    readonly
+    >{{ executionResponseRaw }}</textarea
+  >
+</ng-container>
+
+<ng-template #plotlyTemplate let-plotlyItem="abstractBaseItem">
+  <span>{{ plotlyItem.key }}:</span>
+  <br />
+  <plotly-plot
+    [useResizeHandler]="true"
+    [style]="{
+      'padding-left': '10px',
+      position: 'relative',
+      width: 'calc(100% - 30px)'
+    }"
+    class="protocol-content__plot"
+    [data]="plotlyItem.value.data"
+    [layout]="plotlyItem.value.layout"
+  ></plotly-plot>
+</ng-template>
+
+<ng-template #simpleTemplate let-someItem="abstractBaseItem">
+  <span>{{ someItem.key }}:</span>
+  <br />
+  <span class="mat-body-strong">{{ stringifyJson(someItem.value) }}</span>
+</ng-template>

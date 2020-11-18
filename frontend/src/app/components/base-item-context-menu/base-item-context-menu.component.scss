@@ -1,0 +1,11 @@
+// for some reason the focus get stucked at the first menuitem if open the menu programmatically.
+// so we take out the focus from the menu item to an invisible button.
+// Later on mouseover the focus on the menu item is set correctly
+.mat-menu-focus-hack {
+  height: 0;
+  width: 0;
+  border: none;
+  position: absolute;
+  top: -99999px;
+  left: -99999px;
+}

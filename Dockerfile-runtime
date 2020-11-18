@@ -1,0 +1,43 @@
+##### Build stage
+FROM python:3.8.6-buster as base
+
+ENV TIMEOUT=60
+
+COPY ./runtime/requirements.txt /requirements.txt
+COPY ./runtime/requirements-dev.txt /requirements-dev.txt
+
+RUN python3 -m pip install --upgrade pip==20.2.2 wheel==0.35.1 pip-tools==5.3.1
+RUN pip-sync /requirements.txt
+
+##### Intermediate stage with actual application content
+FROM base AS application_base
+COPY ./runtime /app
+COPY ./VERSION /app/VERSION
+RUN chmod +x /app/start.sh
+
+RUN mkdir -p /mnt/obj_repo
+RUN chmod -R a+rw /mnt/obj_repo
+
+##### Production stage
+# making prod stage available early allows to build it without building test stage
+# since test stage is only necessary on build system
+FROM application_base AS prod
+RUN useradd -m hdrt_app
+USER hdrt_app
+WORKDIR /app
+ENV PORT 8090
+EXPOSE 8090
+CMD ["/app/start.sh"]
+
+##### Test stage
+FROM application_base AS test
+WORKDIR /app
+RUN pip-sync /requirements.txt /requirements-dev.txt
+RUN python3 -m pytest --cov=hetdesrun --cov-report xml --junitxml test_results.xml tests
+RUN bash /app/scripts/gen_pylint_report.sh
+
+# prod should still be the default build, this is why we close with FROM prod
+# Note that in order to really skip the test stage you either need to explicitly specify the prod
+# stage via 
+#     docker build --target prod -f Dockerfile-runtime . -t hetdesrun_webservice
+FROM prod

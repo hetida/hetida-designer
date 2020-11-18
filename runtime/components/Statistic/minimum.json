@@ -1,0 +1,16 @@
+{
+    "name": "Minimum",
+    "description": "Calculates the minimum",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "min",
+            "type": "ANY"
+        }
+    ]
+}

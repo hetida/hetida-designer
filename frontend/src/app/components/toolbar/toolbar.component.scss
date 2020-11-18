@@ -1,0 +1,45 @@
+:host {
+  display: flex;
+  flex-direction: row;
+  height: 33px;
+  align-items: center;
+  justify-content: space-between;
+
+  span {
+    display: inline-flex;
+
+    .mat-icon {
+      margin: 0 10px;
+
+      &:first-child {
+        margin-left: 20px;
+      }
+
+      &:last-child {
+        margin-right: 20px;
+      }
+
+      &.disabled {
+        cursor: default !important;
+        filter: invert(50%);
+      }
+
+      &.clickable:not(.disabled):hover {
+        background-color: #ffdb3e !important;
+        border-radius: 0;
+      }
+    }
+
+    .mat-divider {
+      margin: 0 10px;
+    }
+
+    &.draft {
+      font-style: italic;
+    }
+
+    &.released {
+      font-weight: 700;
+    }
+  }
+}

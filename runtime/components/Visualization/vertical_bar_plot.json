@@ -1,0 +1,16 @@
+{
+    "name": "Vertical Bar Plot",
+    "description": "Plotting a series of values as vertical bars",
+    "inputs": [
+        {
+            "name": "series",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

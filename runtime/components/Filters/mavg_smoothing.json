@@ -1,0 +1,20 @@
+{
+    "name": "MAVG Smoothing",
+    "description": "Return Moving Averages",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "window_size",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ]
+}

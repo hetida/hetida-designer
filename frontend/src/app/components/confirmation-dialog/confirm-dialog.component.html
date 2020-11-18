@@ -1,0 +1,17 @@
+<div class="d-flex content-space-between" mat-dialog-title>
+  <h4 class="m-0">{{ data.title }}</h4>
+  <button (click)="onCancel()" mat-icon-button>
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<div mat-dialog-content>
+  {{ data.content }}
+</div>
+<div mat-dialog-actions>
+  <button (click)="onCancel()" color="primary" mat-raised-button>
+    {{ data.actionCancel }}
+  </button>
+  <button (click)="onOk()" color="primary" mat-raised-button>
+    {{ data.actionOk }}
+  </button>
+</div>

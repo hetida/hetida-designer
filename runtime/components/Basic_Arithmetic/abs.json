@@ -1,0 +1,16 @@
+{
+    "name": "Abs",
+    "description": "Returns absolute values",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "absolute",
+            "type": "ANY"
+        }
+    ]
+}

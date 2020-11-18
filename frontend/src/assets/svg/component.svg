@@ -1,0 +1,8 @@
+<svg width='24' height='24' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300">
+  <defs>
+    <style>.cls-1{fill:#ffdb3f;}</style>
+  </defs>
+  <path class="cls-1"
+        d="M411.8,230.91V136.64H100.19v94.27h-81v50.23h81v94.22H411.8V281.14h81V230.91ZM361.57,214V325.14H150.41V186.86H361.57Z"
+        transform="translate(-19.19 -136.64)"/>
+</svg>

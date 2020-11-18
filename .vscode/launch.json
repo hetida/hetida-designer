@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-HetidaDesignerBackendApplication<backend>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "org.hetida.designer.backend.HetidaDesignerBackendApplication",
+            "projectName": "backend",
+            "args": "--spring.profiles.active=local",  
+        }
+    ]
+}

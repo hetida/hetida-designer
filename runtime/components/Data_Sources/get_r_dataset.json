@@ -1,0 +1,20 @@
+{
+    "name": "Get R Dataset",
+    "description": "Download an R dataset and obtain it as DataFrame",
+    "inputs": [
+        {
+            "name": "dataname",
+            "type": "STRING"
+        },
+        {
+            "name": "package",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "data",
+            "type": "DATAFRAME"
+        }
+    ]
+}

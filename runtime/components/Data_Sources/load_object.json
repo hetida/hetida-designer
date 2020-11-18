@@ -1,0 +1,20 @@
+{
+    "name": "Load Object",
+    "description": "Load a serialized Object from the object Repository",
+    "inputs": [
+        {
+            "name": "name",
+            "type": "STRING"
+        },
+        {
+            "name": "tag",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "obj",
+            "type": "ANY"
+        }
+    ]
+}

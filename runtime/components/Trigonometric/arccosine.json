@@ -1,0 +1,16 @@
+{
+    "name": "Arcuscosine",
+    "description": "Calculates the arcuscosine of the input",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "result",
+            "type": "ANY"
+        }
+    ]
+}

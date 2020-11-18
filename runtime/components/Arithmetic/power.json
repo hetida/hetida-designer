@@ -1,0 +1,20 @@
+{
+    "name": "Power",
+    "description": "Calculates the base to the power exponent",
+    "inputs": [
+        {
+            "name": "base",
+            "type": "ANY"
+        },
+        {
+            "name": "exponent",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "power",
+            "type": "ANY"
+        }
+    ]
+}

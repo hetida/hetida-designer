@@ -1,0 +1,16 @@
+{
+    "name": "Standard deviation",
+    "description": "Calculates the standard deviation",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "std",
+            "type": "ANY"
+        }
+    ]
+}

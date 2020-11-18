@@ -1,0 +1,20 @@
+{
+    "name": "Inequality",
+    "description": "Checks if left is unequal to right",
+    "inputs": [
+        {
+            "name": "left",
+            "type": "ANY"
+        },
+        {
+            "name": "right",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "result",
+            "type": "ANY"
+        }
+    ]
+}

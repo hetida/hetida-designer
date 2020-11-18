@@ -1,0 +1,93 @@
+<ng-container *ngIf="baseItem !== undefined">
+  <span>
+    <mat-icon
+      class="clickable unselectable"
+      title="Edit {{ baseItem.type | lowercase }} details"
+      (click)="editDetails()"
+    >
+      edit
+    </mat-icon>
+    <mat-icon
+      class="clickable unselectable"
+      title="Configure I/O"
+      [ngClass]="{ disabled: baseItemHasEmptyInputsAndOutputs && isWorkflow }"
+      (click)="configureIO()"
+      >settings_input_component
+    </mat-icon>
+    <mat-icon
+      class="clickable unselectable"
+      title="{{ executeTooltip }}"
+      (click)="execute()"
+      [ngClass]="{ disabled: incompleteFlag }"
+      >play_circle_outline</mat-icon
+    >
+    <mat-divider vertical *ngIf="isWorkflow"></mat-divider>
+    <mat-icon
+      class="clickable unselectable"
+      title="Show entire workflow"
+      (click)="showWorkflow()"
+      *ngIf="isWorkflow"
+    >
+      zoom_out_map</mat-icon
+    >
+    <mat-icon
+      class="clickable unselectable"
+      title="Zoom in"
+      (click)="zoomIn()"
+      *ngIf="isWorkflow"
+      >zoom_in</mat-icon
+    >
+    <mat-icon
+      class="clickable unselectable"
+      title="Zoom out"
+      (click)="zoomOut()"
+      *ngIf="isWorkflow"
+      >zoom_out</mat-icon
+    >
+  </span>
+  <span [ngClass]="baseItem.state.toLowerCase()" class="unselectable">
+    {{ baseItem.state }}
+  </span>
+  <span>
+    <mat-icon
+      class="clickable unselectable"
+      title="{{ publishTooltip }}"
+      (click)="publish()"
+      [ngClass]="{ disabled: isReleased() }"
+    >
+      share</mat-icon
+    >
+    <mat-icon
+      class="clickable unselectable"
+      title="{{ newRevisionTooltip }}"
+      (click)="newRevision()"
+      [ngClass]="{ disabled: !isReleased() }"
+      >plus_one</mat-icon
+    >
+    <mat-icon class="clickable unselectable" title="Copy" (click)="copy()"
+      >file_copy</mat-icon
+    >
+    <mat-divider vertical></mat-divider>
+    <mat-icon
+      class="clickable unselectable"
+      title="{{ deprecateTooltip }}"
+      (click)="deprecate()"
+      [ngClass]="{ disabled: !isReleased() }"
+      >desktop_access_disabled</mat-icon
+    >
+    <mat-icon
+      class="clickable unselectable"
+      title="{{ deleteTooltip }}"
+      (click)="delete()"
+      [ngClass]="{ disabled: isReleased() }"
+      >delete_forever</mat-icon
+    >
+    <mat-divider vertical></mat-divider>
+    <mat-icon
+      class="clickable unselectable"
+      title="Open documentation"
+      (click)="showDocumentation()"
+      >description
+    </mat-icon>
+  </span>
+</ng-container>

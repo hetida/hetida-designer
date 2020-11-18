@@ -1,0 +1,24 @@
+{
+    "name": "Simple Volatility Score",
+    "description": "Compare absolute of sum of differences with sum of absolute differences",
+    "inputs": [
+        {
+            "name": "timeseries",
+            "type": "SERIES"
+        },
+        {
+            "name": "window_size",
+            "type": "STRING"
+        },
+        {
+            "name": "window_timestamp_location",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "volatilities",
+            "type": "SERIES"
+        }
+    ]
+}

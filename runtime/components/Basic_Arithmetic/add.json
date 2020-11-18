@@ -1,0 +1,20 @@
+{
+    "name": "Add",
+    "description": "Add inputs",
+    "inputs": [
+        {
+            "name": "a",
+            "type": "ANY"
+        },
+        {
+            "name": "b",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "sum",
+            "type": "ANY"
+        }
+    ]
+}

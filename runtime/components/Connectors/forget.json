@@ -1,0 +1,11 @@
+{
+    "name": "Forget",
+    "description": "Throw away the input",
+    "inputs": [
+        {
+            "name": "input",
+            "type": "ANY"
+        }
+    ],
+    "outputs": []
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Time Gaps",
+    "description": "Calculates the sizes of time gaps",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "gap_sizes",
+            "type": "SERIES"
+        }
+    ]
+}

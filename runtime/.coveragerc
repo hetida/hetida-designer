@@ -1,0 +1,8 @@
+[run]
+omit = 
+    hetdesrun/auth/keycloak.py
+    
+[report]
+omit = 
+    hetdesrun/auth/keycloak.py
+    

@@ -1,0 +1,20 @@
+{
+    "name": "Sum Columns",
+    "description": "Add up values along the column axis.",
+    "inputs": [
+        {
+            "name": "dataframe",
+            "type": "DATAFRAME"
+        },
+        {
+            "name": "result_series_name",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "sum_values",
+            "type": "SERIES"
+        }
+    ]
+}

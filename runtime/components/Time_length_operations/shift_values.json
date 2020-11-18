@@ -1,0 +1,20 @@
+{
+    "name": "Shift Values",
+    "description": "Shift index by desired number of periods",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "periods",
+            "type": "INT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "shifted",
+            "type": "ANY"
+        }
+    ]
+}

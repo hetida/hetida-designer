@@ -1,0 +1,132 @@
+@import '../colors';
+@import 'src/app/app.component.theme';
+@import 'src/app/components/navigation/navigation-container/navigation-container.component.theme';
+@import 'src/app/components/popover-baseitem/popover-baseitem.component.theme';
+@import 'src/app/components/protocol-viewer/protocol-viewer.component.theme';
+
+@mixin hd-material-theme($theme) {
+  $primary: map-get($theme, primary);
+  $secondary: map-get($theme, accent);
+  $secondary-contrasts: map-get($secondary, contrast);
+
+  @include app-theme($primary);
+  @include navigation-container-theme($primary, $secondary);
+  @include popover-baseitem-theme($primary, $secondary);
+  @include protocol-viewer-theme($primary, $secondary);
+
+  // Plain HTML elements overrides
+  // TODO: Can we wrap those?
+  textarea {
+    background-color: map_get($secondary, 500);
+    color: map_get($primary, 500);
+  }
+
+  // Hetida Flowchart overrides
+  .hetida-flowchart-svg {
+    background-color: map_get($secondary, 700);
+  }
+
+  // Angular Material overrides
+  .mat-form-field {
+    .mat-focus {
+      color: map-get($primary, 700);
+    }
+  }
+
+  .mat-expansion-panel {
+    border-color: map-get($secondary, 700);
+  }
+
+  .dark-theme {
+    .mat-expansion-panel {
+      border-color: map-get($primary, 700);
+    }
+  }
+
+  .mat-button-toggle-checked {
+    background-color: map_get($secondary, 500);
+    color: map_get($primary, 500);
+  }
+
+  .mat-icon-svg {
+    &--draft {
+      .cls-1 {
+        fill: map_get($primary, 500);
+      }
+    }
+  }
+
+  .hetida-context-menu {
+    hr {
+      margin: 0;
+    }
+
+    background-color: $hd-white !important;
+    color: $hd-black;
+    border-color: $hd-black;
+    border-radius: 5px;
+
+    ul {
+      li:hover {
+        background-color: $hd-grey-dark;
+      }
+    }
+
+    &.component {
+      background-color: $hd-white !important;
+      color: $hd-black;
+      border-color: $hd-black;
+
+      ul {
+        li:hover {
+          background-color: $hd-grey-dark;
+        }
+      }
+    }
+  }
+
+  .app-context-menu {
+    border: 1px solid map-get($primary, 700);
+
+    .mat-menu-content {
+      .mat-menu-item {
+        height: 25px;
+        line-height: 25px;
+      }
+    }
+  }
+
+  .dark-theme {
+    .hetida-context-menu {
+      ul {
+        li:hover {
+          background-color: $hd-blue-dark;
+        }
+      }
+    }
+  }
+
+  .mat-tab-labels {
+    background-color: map-get($secondary, 700);
+
+    .mat-icon-svg {
+      .cls-1 {
+        fill: map_get($primary, 500);
+      }
+    }
+
+    .mat-tab-label-active {
+      background-color: map-get($secondary, 500);
+
+      .mat-icon-svg {
+        .cls-1 {
+          fill: $hd-yellow;
+        }
+      }
+    }
+  }
+
+  .mat-tab-group.mat-primary .mat-ink-bar {
+    background: none;
+  }
+}

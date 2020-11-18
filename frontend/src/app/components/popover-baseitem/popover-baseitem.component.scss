@@ -1,0 +1,23 @@
+:host {
+  position: absolute;
+  z-index: 300;
+  width: 300px;
+}
+
+.popover {
+  height: 100%;
+
+  &__flowchart-container {
+    height: 150px;
+    &[draggable='true'] {
+      cursor: move;
+    }
+  }
+
+  mat-icon {
+    &.disabled {
+      filter: invert(50%);
+      cursor: default !important;
+    }
+  }
+}

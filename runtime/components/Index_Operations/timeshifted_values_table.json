@@ -1,0 +1,24 @@
+{
+    "name": "Timeshifted Value Table",
+    "description": "Take a Series and get a DataFrame of regular time shifted values",
+    "inputs": [
+        {
+            "name": "timeseries",
+            "type": "SERIES"
+        },
+        {
+            "name": "freq",
+            "type": "STRING"
+        },
+        {
+            "name": "periods",
+            "type": "INT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "timeshifted_values",
+            "type": "DATAFRAME"
+        }
+    ]
+}

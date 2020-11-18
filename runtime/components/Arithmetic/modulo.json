@@ -1,0 +1,20 @@
+{
+    "name": "Modulo",
+    "description": "Calculates the modulo to some given b",
+    "inputs": [
+        {
+            "name": "a",
+            "type": "ANY"
+        },
+        {
+            "name": "b",
+            "type": "INT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "modulo",
+            "type": "ANY"
+        }
+    ]
+}

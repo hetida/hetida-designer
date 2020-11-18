@@ -1,0 +1,24 @@
+{
+    "name": "Pie Chart Plot",
+    "description": "Plotting a pie chart",
+    "inputs": [
+        {
+            "name": "dataframe",
+            "type": "DATAFRAME"
+        },
+        {
+            "name": "value_column",
+            "type": "STRING"
+        },
+        {
+            "name": "group_column",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "name": "Moving maximum number",
+    "description": "Calculates the moving maximum for a constant number of observations",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "n",
+            "type": "INT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "movmax",
+            "type": "ANY"
+        }
+    ]
+}

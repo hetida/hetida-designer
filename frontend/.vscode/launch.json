@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Edge (localhost)",
+      "type": "pwa-msedge",
+      "request": "launch",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "start_angular"
+    },
+    {
+      "name": "Launch Chrome (localhost)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "start_angular"
+    }
+  ]
+}

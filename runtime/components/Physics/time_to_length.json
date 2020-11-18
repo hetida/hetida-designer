@@ -1,0 +1,20 @@
+{
+    "name": "Time to length",
+    "description": "Converts time related data to length related data",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "speed",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "result",
+            "type": "ANY"
+        }
+    ]
+}

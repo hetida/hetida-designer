@@ -1,0 +1,16 @@
+{
+    "name": "Correlation Matrix Heatmap Plot",
+    "description": "Plotting a correlation matrix as a heatmap",
+    "inputs": [
+        {
+            "name": "dataframe",
+            "type": "DATAFRAME"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "name": "Timeseries and Alerts Plot",
+    "description": "Plotting a single timeseries and alerts into same figure",
+    "inputs": [
+        {
+            "name": "series",
+            "type": "SERIES"
+        },
+        {
+            "name": "alert_series",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "alert_plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

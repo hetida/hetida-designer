@@ -1,0 +1,20 @@
+{
+    "name": "Linear Interpolation Datetime Index",
+    "description": "Calculates the linear interpolation for some time frequency",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "t",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "interpolation",
+            "type": "ANY"
+        }
+    ]
+}

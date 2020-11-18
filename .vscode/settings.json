@@ -1,0 +1,35 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "sqltools.connections": [
+        {
+            "database": "hetida_designer_db",
+            "dialect": "PostgreSQL",
+            "name": "hetida-designer-db",
+            "password": "designer",
+            "port": 5430,
+            "server": "localhost",
+            "username": "hetida"
+        }
+    ],
+    "search.exclude": {
+        "**/.git": true,
+        "**/runtime/venv": true,
+        "**/.mypy_cache": true,
+        "**/.pytest_cache": true,
+        "**/.coverage": true
+    },
+    "files.exclude": {
+        "**/runtime/venv": true,
+        "**/.mypy_cache": true,
+        "**/.pytest_cache": true,
+        "**/.coverage": true
+    },
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
+    "python.linting.pylintArgs": [
+        "--rcfile=.pylintrc"
+    ],
+    "mypy.configFile": "./runtime/mypy.ini",
+    "python.linting.mypyPath": "./runtime/venv/bin/mypy",
+    "python.linting.mypyEnabled": true
+}

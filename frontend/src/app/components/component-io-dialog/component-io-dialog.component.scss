@@ -1,0 +1,40 @@
+.dialog-content {
+  display: flex;
+  flex-direction: row;
+  height: 75vh;
+  overflow: auto;
+}
+
+.component-io {
+  &__input-configuration,
+  &__output-configuration {
+    flex: 1 0 30%;
+    overflow: auto;
+  }
+
+  &__preview {
+    flex: 1 0 20%;
+    overflow: hidden;
+  }
+
+  &__configuration-header {
+    margin-bottom: var(--spacing-2);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  &__label-parameter {
+    padding-right: var(--spacing-2);
+    flex: 1 1 50%;
+  }
+
+  &__type-parameter {
+    padding-right: var(--spacing-2);
+    flex: 1 1 50%;
+  }
+
+  &__action {
+    flex: 0 0 40px;
+  }
+}

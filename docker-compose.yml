@@ -1,0 +1,44 @@
+version: "3"
+
+volumes:
+  postgres_data:
+    driver: local
+  designer_obj_repo:
+    driver: local
+
+services:
+  hetida-designer-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile-frontend
+    image: hetida/frontend
+    ports:
+      - 80:80
+    depends_on:
+      - hetida-designer-backend
+
+  hetida-designer-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile-backend
+    image: hetida/backend
+    depends_on:
+      - hetida-designer-db
+      - hetida-designer-runtime
+
+  hetida-designer-runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile-runtime
+    image: hetida/runtime
+    volumes:
+      - designer_obj_repo:/mnt/obj_repo
+
+  hetida-designer-db:
+    image: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: hetida_designer_db
+      POSTGRES_USER: hetida_designer_dbuser
+      POSTGRES_PASSWORD: hetida_designer_dbpasswd

@@ -1,0 +1,22 @@
+.editor-and-preview {
+  display: flex;
+  margin-left: var(--spacing-1);
+  overflow: hidden;
+  flex: 1 1 auto;
+
+  &__editor {
+    margin-right: var(--spacing-2);
+    flex: 1 1 50%;
+  }
+
+  &__editor-textarea {
+    width: 100%;
+    height: 100%;
+    resize: none;
+  }
+
+  &__preview {
+    overflow: auto;
+    flex: 1 1 50%;
+  }
+}

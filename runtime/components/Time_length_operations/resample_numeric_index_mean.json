@@ -1,0 +1,20 @@
+{
+    "name": "Resample Numeric Index using Mean",
+    "description": "Resamples data with given distances using mean",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "d",
+            "type": "INT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "resampled",
+            "type": "ANY"
+        }
+    ]
+}

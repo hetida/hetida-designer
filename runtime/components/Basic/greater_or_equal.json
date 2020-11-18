@@ -1,0 +1,20 @@
+{
+    "name": "Greater or equal",
+    "description": "Checks if left is greater than or equal to right",
+    "inputs": [
+        {
+            "name": "left",
+            "type": "ANY"
+        },
+        {
+            "name": "right",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "result",
+            "type": "ANY"
+        }
+    ]
+}

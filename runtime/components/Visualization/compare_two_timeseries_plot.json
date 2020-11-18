@@ -1,0 +1,20 @@
+{
+    "name": "Compare Two Timeseries Plot",
+    "description": "Plotting of two timeseries in the same plot",
+    "inputs": [
+        {
+            "name": "series_1",
+            "type": "SERIES"
+        },
+        {
+            "name": "series_2",
+            "type": "SERIES"
+        }        
+    ],
+    "outputs": [
+        {
+            "name": "comparison_plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

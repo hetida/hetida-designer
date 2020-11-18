@@ -1,0 +1,76 @@
+<mat-tab-group
+  #matTabGroup
+  [animationDuration]="0"
+  (selectedTabChange)="_onTabChange($event)"
+  [selectedIndex]="_selectedTabIndex"
+  class="h-100 w-100"
+>
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon>home</mat-icon>
+    </ng-template>
+    <hd-home (click)="_closePopover()"></hd-home>
+  </mat-tab>
+  <mat-tab #matTab *ngFor="let tabItem of _tabItems; trackBy: _trackBy">
+    <ng-container *ngIf="_isDocumentation(tabItem)">
+      <ng-template mat-tab-label>
+        <span class="d-flex">
+          <mat-icon>description</mat-icon>
+        </span>
+        <div class="tab-item__title">
+          <span class="text-ellipsis" [title]="tabItem.baseItem.name">{{
+            tabItem.baseItem.name
+          }}</span>
+          <span class="text-keep-whitespace">
+            ({{ tabItem.baseItem.tag }})</span
+          >
+        </div>
+        <button (click)="_onTabClose(tabItem)" mat-icon-button>
+          <mat-icon>close</mat-icon>
+        </button>
+      </ng-template>
+      <hd-documentation-editor-dialog
+        [editMode]="tabItem.initialDocumentationEditMode"
+        [itemId]="tabItem.baseItem.id"
+      ></hd-documentation-editor-dialog>
+    </ng-container>
+    <ng-container *ngIf="_isBaseItem(tabItem)">
+      <ng-template mat-tab-label>
+        <span class="d-flex">
+          <mat-icon
+            *ngIf="tabItem.baseItem.type === _ItemType.COMPONENT"
+            svgIcon="icon-component"
+            class="mat-icon-svg"
+          ></mat-icon>
+          <mat-icon
+            *ngIf="tabItem.baseItem.type === _ItemType.WORKFLOW"
+            svgIcon="icon-workflow"
+            class="mat-icon-svg"
+          ></mat-icon>
+        </span>
+        <div class="tab-item__title">
+          <span class="text-ellipsis" [title]="tabItem.baseItem.name">{{
+            tabItem.baseItem.name
+          }}</span>
+          <span class="text-keep-whitespace">
+            ({{ tabItem.baseItem.tag }})</span
+          >
+        </div>
+        <button (click)="_onTabClose(tabItem)" mat-icon-button>
+          <mat-icon>close</mat-icon>
+        </button>
+      </ng-template>
+      <hd-toolbar [baseItemId]="tabItem.baseItem.id"></hd-toolbar>
+      <hd-component-editor
+        *ngIf="tabItem.baseItem.type === _ItemType.COMPONENT && matTab.isActive"
+        [componentBaseItem]="tabItem.baseItem"
+        (click)="_closePopover()"
+      >
+      </hd-component-editor>
+      <hd-workflow-editor
+        *ngIf="tabItem.baseItem.type === _ItemType.WORKFLOW"
+        [workflowBaseItem]="tabItem.baseItem"
+      ></hd-workflow-editor>
+    </ng-container>
+  </mat-tab>
+</mat-tab-group>

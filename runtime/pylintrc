@@ -1,0 +1,5 @@
+[MASTER]
+ignore=tests
+
+[MESSAGES CONTROL]
+disable=too-many-locals,invalid-name,missing-function-docstring,missing-class-docstring,missing-module-docstring,too-few-public-methods,too-many-arguments,len-as-condition

@@ -1,0 +1,20 @@
+{
+    "name": "Predict Sklearn Trained Model",
+    "description": "Predict Sklearn Trained Model",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "trained_model",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "predictions",
+            "type": "ANY"
+        }
+    ]
+}

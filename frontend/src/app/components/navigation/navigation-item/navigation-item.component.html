@@ -1,0 +1,38 @@
+<div
+  [draggable]="abstractBaseItem.state === RevisionState.RELEASED"
+  (dragstart)="dragComponent($event)"
+  class="navigation-item clickable"
+  (dblclick)="editComponent()"
+  (mouseover)="selectComponent()"
+  (contextmenu)="$event.preventDefault(); openContextMenu($event)"
+>
+  <div class="navigation-item__label" attr.data-id="{{ abstractBaseItem.id }}">
+    <span class="text-ellipsis" [title]="abstractBaseItem.name">{{
+      abstractBaseItem.name
+    }}</span>
+    <span class="text-keep-whitespace"> ({{ abstractBaseItem.tag }})</span>
+  </div>
+
+  <span class="d-flex justify-center align-items-center">
+    <mat-icon
+      class="mat-icon-svg mr-1"
+      [svgIcon]="svgIcon"
+      title="{{
+        abstractBaseItem.state === RevisionState.RELEASED
+          ? 'Published - Can be dragged into a workflow'
+          : 'Draft - Work in progress'
+      }}"
+      [ngClass]="{
+        'draggable-mat-icon': abstractBaseItem.state === RevisionState.RELEASED,
+        'mat-icon-svg--draft': abstractBaseItem.state !== RevisionState.RELEASED
+      }"
+    >
+    </mat-icon>
+    <span
+      title="Open context menü"
+      (click)="$event.preventDefault(); openContextMenu($event)"
+    >
+      <mat-icon>more_horiz</mat-icon>
+    </span>
+  </span>
+</div>

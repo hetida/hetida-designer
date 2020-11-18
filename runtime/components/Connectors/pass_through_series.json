@@ -1,0 +1,16 @@
+{
+    "name": "Pass Through (Series)",
+    "description": "Just outputs its input value",
+    "inputs": [
+        {
+            "name": "input",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "output",
+            "type": "SERIES"
+        }
+    ]
+}

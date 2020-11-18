@@ -1,0 +1,24 @@
+{
+    "name": "MAVG Outlier Filter",
+    "description": "Return only those values inside of moving mean / std - band",
+    "inputs": [
+        {
+            "name": "allowed_deviation_factor",
+            "type": "FLOAT"
+        },
+        {
+            "name": "window_size",
+            "type": "STRING"
+        },
+        {
+            "name": "ts",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "ts",
+            "type": "ANY"
+        }
+    ]
+}

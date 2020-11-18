@@ -1,0 +1,18 @@
+<h1 mat-dialog-title>Rename operator</h1>
+<div mat-dialog-content>
+  <mat-form-field>
+    <mat-label>Operator name</mat-label>
+    <input
+      [formControl]="name"
+      id="name"
+      matInput
+      placeholder="Operator name"
+      type="text"
+    />
+    <mat-error [hdErrorVisual]="name"></mat-error>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button (click)="onCancel()" mat-button>Cancel</button>
+  <button (click)="onOk()" mat-button>Rename operator</button>
+</div>

@@ -1,0 +1,16 @@
+{
+    "name": "Median",
+    "description": "Calculates the median",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "median",
+            "type": "ANY"
+        }
+    ]
+}

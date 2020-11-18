@@ -1,0 +1,20 @@
+{
+    "name": "Linear Interpolation numeric index",
+    "description": "Calculates the linear interpolation for some distance",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "d",
+            "type": "INT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "interpolation",
+            "type": "ANY"
+        }
+    ]
+}

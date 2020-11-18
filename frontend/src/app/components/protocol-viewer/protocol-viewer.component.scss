@@ -1,0 +1,46 @@
+:host {
+  display: none;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 250px;
+  z-index: 100;
+  background-color: inherit;
+
+  &.visible {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menu-bar {
+    padding: 0 15px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+
+    &__expand-icon {
+      flex: 1 1 auto;
+      display: flex;
+      justify-content: center;
+    }
+  }
+  .protocol-content {
+    overflow: auto;
+    height: inherit;
+
+    &__plot {
+      position: relative;
+      width: calc(100% - 15px);
+    }
+
+    &__raw-value {
+      height: 100%;
+      width: calc(100% - 15px);
+      border: none;
+      resize: none;
+      overflow: auto;
+    }
+  }
+}

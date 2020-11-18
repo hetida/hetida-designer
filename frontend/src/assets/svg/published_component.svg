@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 24.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Ebene_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 120 120" style="enable-background:new 0 0 120 120;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#FFFFFF;}
+	.st1{fill:none;stroke:#1D1D1B;stroke-miterlimit:10;}
+	.st2{fill:none;stroke:#1D1D1B;stroke-miterlimit:10;stroke-dasharray:2.9515,2.9515;}
+	.st3{fill:none;stroke:#1D1D1B;stroke-miterlimit:10;stroke-dasharray:2.9833,2.9833;}
+	.st4{fill:none;stroke:#1D1D1B;stroke-miterlimit:10;stroke-dasharray:3.4786,3.4786;}
+	.st5{fill:none;stroke:#1D1D1B;stroke-miterlimit:10;stroke-dasharray:3.0509,3.0509;}
+	.st6{fill:none;stroke:#1D1D1B;stroke-miterlimit:10;stroke-dasharray:3.3449,3.3449;}
+	.st7{fill:#FFFFFF;stroke:#1D1D1B;stroke-miterlimit:10;}
+	.st8{fill:#FFDB3F;}
+</style>
+<rect x="27.2" y="27.5" class="st0" width="85.4" height="85.4"/>
+<g>
+	<g>
+		<polyline class="st1" points="94.3,27.5 92.8,27.5 92.8,29 		"/>
+		<line class="st2" x1="92.8" y1="32" x2="92.8" y2="89.5"/>
+		<polyline class="st1" points="92.8,91 92.8,92.5 91.3,92.5 		"/>
+		<line class="st3" x1="88.3" y1="92.5" x2="30.2" y2="92.5"/>
+		<polyline class="st1" points="28.7,92.5 27.2,92.5 27.2,94 		"/>
+		<line class="st4" x1="27.2" y1="97.5" x2="27.2" y2="109.6"/>
+		<polyline class="st1" points="27.2,111.4 27.2,112.9 28.7,112.9 		"/>
+		<line class="st5" x1="31.7" y1="112.9" x2="109.5" y2="112.9"/>
+		<polyline class="st1" points="111,112.9 112.5,112.9 112.5,111.4 		"/>
+		<line class="st5" x1="112.5" y1="108.3" x2="112.5" y2="30.5"/>
+		<polyline class="st1" points="112.5,29 112.5,27.5 111,27.5 		"/>
+		<line class="st6" x1="107.7" y1="27.5" x2="96" y2="27.5"/>
+	</g>
+</g>
+<rect x="7.5" y="7.1" class="st7" width="85.4" height="85.4"/>
+<path class="st8" d="M70.9,46.5V33.9H29.3v12.6H18.5v6.7h10.8v12.6h41.6V53.2h10.8v-6.7H70.9z M64.2,44.2V59H36V40.6h28.2V44.2z"/>
+</svg>

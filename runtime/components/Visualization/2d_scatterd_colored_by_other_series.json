@@ -1,0 +1,24 @@
+{
+    "name": "2D Scatter Plot colored by other Series",
+    "description": "Plotting two series into the plane using a third Series for coloring points",
+    "inputs": [
+        {
+            "name": "x",
+            "type": "SERIES"
+        },
+        {
+            "name": "y",
+            "type": "SERIES"
+        },
+        {
+            "name": "color",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "scatter_plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

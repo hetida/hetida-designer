@@ -1,0 +1,16 @@
+{
+    "name": "Standard Scale",
+    "description": "Applies Standard Scaling",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "scaled",
+            "type": "ANY"
+        }
+    ]
+}

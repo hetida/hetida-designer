@@ -1,0 +1,20 @@
+{
+    "name": "Filter",
+    "description": "Filters data by filter_series",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "filter_series",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "filtered",
+            "type": "ANY"
+        }
+    ]
+}

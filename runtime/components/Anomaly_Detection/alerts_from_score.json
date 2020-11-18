@@ -1,0 +1,20 @@
+{
+    "name": "Alerts from Score",
+    "description": "Generate a Series indicating starts and ends of anomalous situations",
+    "inputs": [
+        {
+            "name": "scores",
+            "type": "SERIES"
+        },
+        {
+            "name": "threshold",
+            "type": "FLOAT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "alerts",
+            "type": "SERIES"
+        }
+    ]
+}

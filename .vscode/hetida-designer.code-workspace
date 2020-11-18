@@ -1,0 +1,21 @@
+{
+  "extensions": {
+    "recommendations": [
+      "ms-azuretools.vscode-docker"
+    ]
+  },
+  "folders": [
+    {
+      "path": "../frontend",
+      "name": "hetida Frontend"
+    },
+    {
+      "path": "../backend",
+      "name": "hetida Backend"
+    },
+    {
+      "path": "../runtime",
+      "name": "hetida Runtime"
+    }
+  ]
+}

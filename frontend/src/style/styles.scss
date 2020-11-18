@@ -1,0 +1,7 @@
+/* You can add global styles to this file, and also import other style files */
+@import 'core';
+@import 'material/config';
+@import 'overrides';
+@import 'typography';
+@import 'utilities';
+@import '~@danielmoncada/angular-datetime-picker/assets/style/picker.min.css';

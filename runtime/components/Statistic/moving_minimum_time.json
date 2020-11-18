@@ -1,0 +1,20 @@
+{
+    "name": "Moving minimum time",
+    "description": "Calculates the moving minimum for a constant time interval",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "t",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "movmin",
+            "type": "ANY"
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Signum",
+    "description": "Returns sign of the input",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "signum",
+            "type": "ANY"
+        }
+    ]
+}

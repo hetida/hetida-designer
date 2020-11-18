@@ -1,0 +1,16 @@
+{
+    "name": "Arcustangent",
+    "description": "Calculates the arcustangent of the input",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "result",
+            "type": "ANY"
+        }
+    ]
+}

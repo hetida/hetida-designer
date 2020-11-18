@@ -1,0 +1,16 @@
+{
+    "name": "Exp",
+    "description": "Calculates the exponential function of data",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "exp",
+            "type": "ANY"
+        }
+    ]
+}

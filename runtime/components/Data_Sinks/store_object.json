@@ -1,0 +1,19 @@
+{
+    "name": "Store Object",
+    "description": "Serialize an Object and store it in the object Repository",
+    "inputs": [
+        {
+            "name": "name",
+            "type": "STRING"
+        },
+        {
+            "name": "tag",
+            "type": "STRING"
+        },
+        {
+            "name": "obj",
+            "type": "ANY"
+        }
+    ],
+    "outputs": []
+}

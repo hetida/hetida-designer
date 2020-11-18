@@ -1,0 +1,17 @@
+<div class="flowchart-editor" (mousedown)="closePopover()">
+  <hetida-flowchart
+    [initConfiguration]="flowchartConfiguration"
+    [flowchartConfiguration]="flowchartManipulatorConfiguration"
+    [clearSVG]="true"
+    (create)="addElement($event)"
+    (destroy)="removeElement($event)"
+    (drag)="updatePosition($event)"
+    (hetida-drop)="dropInterceptor($event)"
+    (select)="setActive($event)"
+    (revision)="changeRevision($event)"
+    (rename)="renameOperator($event)"
+    (customcontextmenu)="openContextMenu($event)"
+    (copy)="copyOperator($event)"
+  >
+  </hetida-flowchart>
+</div>

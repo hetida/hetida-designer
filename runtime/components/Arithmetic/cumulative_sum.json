@@ -1,0 +1,16 @@
+{
+    "name": "Cumulative sum",
+    "description": "Calculates the cumulative sum of a Series or DataFrame",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "cum_sum",
+            "type": "ANY"
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Drop duplicates",
+    "description": "Drop duplicated rows",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ]
+}

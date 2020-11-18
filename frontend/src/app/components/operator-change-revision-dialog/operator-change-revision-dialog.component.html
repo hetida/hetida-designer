@@ -1,0 +1,15 @@
+<h1 mat-dialog-title>Change Revision</h1>
+<div mat-dialog-content>
+  <mat-form-field>
+    <mat-label>Available Revisions</mat-label>
+    <mat-select [(value)]="selectedRevision">
+      <mat-option *ngFor="let rev of data.revisions" [value]="rev">
+        {{ rev.name }} ({{ rev.tag }})
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button (click)="onCancel()" mat-button>Cancel</button>
+  <button (click)="onOk()" mat-button>Change Revision</button>
+</div>

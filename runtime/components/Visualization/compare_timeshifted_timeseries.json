@@ -1,0 +1,36 @@
+{
+    "name": "Compare Timeshifted Timeseries",
+    "description": "Use a slider to timeshift one timeseries to compare with another",
+    "inputs": [
+        {
+            "name": "series",
+            "type": "SERIES"
+        },
+        {
+            "name": "series_shiftable",
+            "type": "SERIES"
+        },
+        {
+            "name": "freq",
+            "type": "STRING"
+        },
+        {
+            "name": "freq_factor",
+            "type": "INT"
+        },
+        {
+            "name": "max_shifts_past",
+            "type": "INT"
+        },
+        {
+            "name": "max_shifts_future",
+            "type": "INT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "comparison_plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "name": "Single Timeseries Plot",
+    "description": "Plotting a single timeseries",
+    "inputs": [
+        {
+            "name": "series",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

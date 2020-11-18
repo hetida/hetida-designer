@@ -1,0 +1,16 @@
+{
+    "name": "Convert Series to DataFrame",
+    "description": "Convert a Series to a DataFrame with one column",
+    "inputs": [
+        {
+            "name": "input",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "output",
+            "type": "DATAFRAME"
+        }
+    ]
+}

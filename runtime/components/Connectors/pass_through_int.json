@@ -1,0 +1,16 @@
+{
+    "name": "Pass Through (Float)",
+    "description": "Just outputs its input value",
+    "inputs": [
+        {
+            "name": "input",
+            "type": "FLOAT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "output",
+            "type": "FLOAT"
+        }
+    ]
+}

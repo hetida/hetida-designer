@@ -1,0 +1,32 @@
+{
+    "name": "Linear Regression two Series",
+    "description": "Linear Regression between two series of values",
+    "inputs": [
+        {
+            "name": "x_values",
+            "type": "SERIES"
+        },
+        {
+            "name": "y_values",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "intercept",
+            "type": "FLOAT"
+        },
+        {
+            "name": "slope",
+            "type": "FLOAT"
+        },
+        {
+            "name": "preds",
+            "type": "SERIES"
+        },
+        {
+            "name": "diffs",
+            "type": "SERIES"
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "name": "Divide",
+    "description": "Divides a by b",
+    "inputs": [
+        {
+            "name": "a",
+            "type": "ANY"
+        },
+        {
+            "name": "b",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "quotient",
+            "type": "ANY"
+        }
+    ]
+}

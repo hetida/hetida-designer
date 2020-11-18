@@ -1,0 +1,36 @@
+{
+    "name": "Linear Regression",
+    "description": "Linear Regression on dataframes of values",
+    "inputs": [
+        {
+            "name": "x_values",
+            "type": "DATAFRAME"
+        },
+        {
+            "name": "y_values",
+            "type": "DATAFRAME"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "intercept",
+            "type": "SERIES"
+        },
+        {
+            "name": "slope",
+            "type": "DATAFRAME"
+        },
+        {
+            "name": "preds",
+            "type": "DATAFRAME"
+        },
+        {
+            "name": "diffs",
+            "type": "DATAFRAME"
+        },
+        {
+            "name": "trained_model",
+            "type": "ANY"
+        }
+    ]
+}

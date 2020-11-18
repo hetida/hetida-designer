@@ -1,0 +1,51 @@
+.dialog-content {
+  display: flex;
+  flex-direction: row;
+  height: 75vh;
+}
+
+.popover {
+  flex: 0 0 20%;
+  overflow: hidden;
+}
+
+.io-configuration {
+  flex: 0 0 40%;
+  overflow: auto;
+
+  &__title {
+    margin-bottom: var(spacing-1);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  &__info-text {
+    margin-bottom: var(spacing-2);
+  }
+
+  &__connector-type-operator {
+    flex: 1 1 180px;
+    padding-right: var(--spacing-1);
+  }
+
+  &__dynamic-fixed-toggle {
+    flex: 0 0 50px;
+    padding-right: var(--spacing-1);
+  }
+}
+
+.mat-icon {
+  &.disabled {
+    cursor: default !important;
+    filter: invert(50%);
+  }
+}
+
+.input-configuration-label-column {
+  flex: 1 1 30%;
+}
+
+.input-configuration-delete-icon-column {
+  flex: 0 0 40px;
+}

@@ -1,0 +1,226 @@
+<div mat-dialog-title>
+  <h4 class="m-0">
+    Configure Input / Output for Workflow {{ data.workflow.name }}
+    {{ data.workflow.tag }}
+  </h4>
+  <button (click)="onCancel()" mat-icon-button>
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<div mat-dialog-content class="dialog-content">
+  <div class="io-configuration">
+    <div class="io-configuration__title">
+      <span class="mat-h2">Input Configuration</span>
+    </div>
+    <div class="io-configuration__info-text">
+      Configure the inputs of your Workflow either as dynamic or fixed. Dynamic
+      inputs can be dynamically connected to Data Sources and get their data at
+      the beginning of each workflow execution
+    </div>
+    <form *ngIf="ioItemForm" [formGroup]="ioItemForm">
+      <div class="d-flex">
+        <h3 class="io-configuration__connector-type-operator text-strong m-0">
+          Connector / Type / Operator
+        </h3>
+        <h3 class="io-configuration__dynamic-fixed-toggle text-strong m-0">
+          Dynamic / Fixed
+        </h3>
+        <h3 class="text-strong m-0 input-configuration-label-column">Label</h3>
+        <span class="input-configuration-delete-icon-column"></span>
+      </div>
+      <mat-divider></mat-divider>
+      <div
+        class="d-flex align-items-center mb-1"
+        [formGroup]="ioItem"
+        *ngFor="let ioItem of ioItemInputsArray.controls; let i = index"
+      >
+        <div class="io-configuration__connector-type-operator overflow-hidden">
+          <div class="d-flex">
+            <span
+              [title]="ioItem.get('connector').value"
+              style="flex: 0 1 70%"
+              class="mat-body-strong text-ellipsis mr-1"
+              >{{ ioItem.get('connector').value }}</span
+            >
+            <div
+              style="flex: 0 0 100px"
+              class="d-flex align-items-end text-ellipsis"
+            >
+              <span
+                [ngStyle]="{ color: getTypeColor(ioItem.get('type').value) }"
+              >
+                <mat-icon class="unselectable" [inline]="true">
+                  {{
+                    ioItem.get('isConstant').value
+                      ? 'panorama_fish_eye'
+                      : 'lens'
+                  }}
+                </mat-icon>
+              </span>
+              <span class="mat-body-strong">{{
+                ioItem.get('type').value
+              }}</span>
+            </div>
+          </div>
+          <span>{{ ioItem.get('operator').value }}</span>
+        </div>
+        <div
+          class="io-configuration__dynamic-fixed-toggle d-flex flex-direction-column align-self-start"
+        >
+          <label style="margin-top: -3px" class="mat-small">{{
+            ioItem.get('isConstant').value ? 'Fixed' : 'Dynamic'
+          }}</label>
+          <mat-slide-toggle
+            color="accent"
+            [checked]="ioItem.get('isConstant').value"
+            [disabled]="!data.editMode"
+            (change)="toggleConstant(ioItem)"
+          >
+          </mat-slide-toggle>
+        </div>
+        <mat-form-field
+          *ngIf="ioItem.get('isConstant').value; else variableInput"
+          class="input-no-fixed-width input-configuration-label-column"
+        >
+          <input
+            *ngIf="showEditorIcon(ioItem)"
+            formControlName="constant"
+            matInput
+            type="text"
+            readonly
+            class="clickable"
+            (click)="$event.preventDefault(); openJsonEditor(ioItem)"
+          />
+          <input
+            *ngIf="!showEditorIcon(ioItem)"
+            formControlName="constant"
+            matInput
+            type="text"
+          />
+          <mat-error [hdErrorVisual]="ioItem.get('constant')"></mat-error>
+          <mat-label>Input Data</mat-label>
+          <span
+            *ngIf="showEditorIcon(ioItem)"
+            class="clickable"
+            matSuffix
+            (click)="$event.preventDefault(); openJsonEditor(ioItem)"
+            ><mat-icon>create</mat-icon></span
+          >
+        </mat-form-field>
+        <ng-template #variableInput>
+          <mat-form-field
+            class="input-no-fixed-width input-configuration-label-column"
+          >
+            <input formControlName="name" matInput type="text" />
+            <mat-error [hdErrorVisual]="ioItem.get('name')"></mat-error>
+            <mat-label>Field Name</mat-label>
+          </mat-form-field>
+        </ng-template>
+        <button
+          title="Clear Input"
+          class="input-configuration-delete-icon-column"
+          (click)="resetInputOrOutput(ioItem)"
+          mat-icon-button
+          [disabled]="!data.editMode"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </form>
+  </div>
+  <div class="preview">
+    <hetida-flowchart
+      [initConfiguration]="preview"
+      [flowchartConfiguration]="svgConfiguration"
+      [clearSVG]="true"
+      [alwaysShowEntireWorkflow]="true"
+      class="noninteractive"
+    >
+    </hetida-flowchart>
+  </div>
+  <div class="io-configuration pl-2">
+    <div class="io-configuration_title">
+      <span class="mat-h2">Output Configuration</span>
+    </div>
+    <div class="io-configuration__info-text">
+      Configure the outputs of your Workflow. Outputs are always dynamic and can
+      be dynamically connected to Data Sinks. You have to specify a unique field
+      name for each of them.
+    </div>
+    <form *ngIf="ioItemForm" [formGroup]="ioItemForm">
+      <div class="d-flex">
+        <h3 class="io-configuration__connector-type-operator text-strong m-0">
+          Connector / Type / Operator
+        </h3>
+        <h3 class="text-strong m-0 pr-2 input-configuration-label-column">
+          Label
+        </h3>
+        <span class="input-configuration-delete-icon-column"></span>
+      </div>
+      <mat-divider></mat-divider>
+      <div
+        class="d-flex align-items-center"
+        [formGroup]="ioItem"
+        *ngFor="let ioItem of ioItemOutputsArray.controls; let i = index"
+      >
+        <div class="io-configuration__connector-type-operator overflow-hidden">
+          <div class="d-flex">
+            <span
+              [title]="ioItem.get('connector').value"
+              style="flex: 1 1 80%"
+              class="text-ellipsis mat-body-strong"
+              >{{ ioItem.get('connector').value }}</span
+            >
+            <div style="flex: 0 0 100px" class="d-flex align-items-end">
+              <span
+                [ngStyle]="{ color: getTypeColor(ioItem.get('type').value) }"
+              >
+                <mat-icon class="unselectable" [inline]="true">
+                  {{
+                    ioItem.get('isConstant').value
+                      ? 'panorama_fish_eye'
+                      : 'lens'
+                  }}
+                </mat-icon>
+              </span>
+              <span class="mat-body-strong">{{
+                ioItem.get('type').value
+              }}</span>
+            </div>
+          </div>
+          <span>{{ ioItem.get('operator').value }}</span>
+        </div>
+        <mat-form-field
+          class="input-no-fixed-width input-configuration-label-column"
+        >
+          <input formControlName="name" matInput type="text" />
+          <mat-error [hdErrorVisual]="ioItem.get('name')"></mat-error>
+          <mat-label>Field Name</mat-label>
+        </mat-form-field>
+        <button
+          title="Clear Output"
+          class="input-configuration-delete-icon-column"
+          (click)="resetInputOrOutput(ioItem)"
+          mat-icon-button
+          [disabled]="!data.editMode"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div mat-dialog-actions>
+  <button (click)="onCancel()" mat-raised-button color="primary">
+    {{ data.actionCancel }}
+  </button>
+  <button
+    (click)="onOk()"
+    mat-raised-button
+    color="primary"
+    [disabled]="!valid"
+  >
+    {{ data.actionOk }}
+  </button>
+</div>

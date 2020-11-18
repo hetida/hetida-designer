@@ -1,0 +1,20 @@
+{
+    "name": "Smaller",
+    "description": "Checks if left is smaller than right",
+    "inputs": [
+        {
+            "name": "left",
+            "type": "ANY"
+        },
+        {
+            "name": "right",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "result",
+            "type": "ANY"
+        }
+    ]
+}

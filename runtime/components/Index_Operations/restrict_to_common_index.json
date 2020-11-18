@@ -1,0 +1,24 @@
+{
+    "name": "Restrict to common Index",
+    "description": "Restrict two Pandas objects to their index intersection",
+    "inputs": [
+        {
+            "name": "data_1",
+            "type": "ANY"
+        },
+        {
+            "name": "data_2",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "data_1_restricted",
+            "type": "ANY"
+        },
+        {
+            "name": "data_2_restricted",
+            "type": "ANY"
+        }
+    ]
+}

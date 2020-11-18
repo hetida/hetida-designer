@@ -1,0 +1,7 @@
+@mixin app-theme($primary) {
+  hd-root {
+    .app-config {
+      border-top: 1px solid rgba(map_get($primary, 500), 0.12);
+    }
+  }
+}

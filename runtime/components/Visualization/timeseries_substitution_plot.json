@@ -1,0 +1,20 @@
+{
+    "name": "Timeseries Substitution Plot",
+    "description": "Apply a substitution to a timeseries and plot the results together with ignored, replaced and new values",
+    "inputs": [
+        {
+            "name": "raw_values",
+            "type": "SERIES"
+        },
+        {
+            "name": "substitution_series",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "substituted_ts_plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

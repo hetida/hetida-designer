@@ -1,0 +1,20 @@
+{
+    "name": "Resample Datetime Index using Mean",
+    "description": "Resamples data for some time frequency by taking means",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "t",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "resampled",
+            "type": "ANY"
+        }
+    ]
+}

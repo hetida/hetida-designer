@@ -1,0 +1,68 @@
+<div class="navigation-container__filter">
+  <form>
+    <mat-button-toggle-group [multiple]="false" [formControl]="typeFilter">
+      <mat-button-toggle
+        value="WORKFLOW"
+        [ngClass]="{ active: getFilterState('WORKFLOW') }"
+      >
+        <mat-icon svgIcon="icon-workflow" class="mat-icon-svg"></mat-icon>
+        Workflows
+      </mat-button-toggle>
+      <mat-button-toggle
+        value="COMPONENT"
+        [ngClass]="{ active: getFilterState('COMPONENT') }"
+      >
+        <mat-icon svgIcon="icon-component" class="mat-icon-svg"></mat-icon>
+        Components
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </form>
+</div>
+
+<div class="navigation-container__buttons">
+  <div
+    class="add-button clickable"
+    (click)="newWorkflow()"
+    *ngIf="getFilterState('WORKFLOW')"
+  >
+    <button mat-icon-button>
+      <mat-icon>add_circle_outline</mat-icon>
+    </button>
+    <span>Add workflow</span>
+  </div>
+  <div
+    class="add-button clickable"
+    (click)="newComponent()"
+    *ngIf="getFilterState('COMPONENT')"
+  >
+    <button mat-icon-button>
+      <mat-icon>add_circle_outline</mat-icon>
+    </button>
+    <span>Add component</span>
+  </div>
+</div>
+
+<mat-divider></mat-divider>
+
+<form class="navigation-container__search">
+  <mat-form-field appearance="outline">
+    <input
+      matInput
+      placeholder="Type to search..."
+      [formControl]="searchFilter"
+    />
+  </mat-form-field>
+</form>
+
+<div class="navigation-container__scrollable">
+  <hd-navigation-category
+    *ngFor="
+      let category of abstractBaseItemsByCategory;
+      trackBy: trackByBaseItemId
+    "
+    [abstractBaseItem]="category[1]"
+    [category]="category[0]"
+    (mouseleave)="closePopover()"
+  >
+  </hd-navigation-category>
+</div>

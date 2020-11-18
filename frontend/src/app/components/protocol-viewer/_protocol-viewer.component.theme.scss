@@ -1,0 +1,7 @@
+@mixin protocol-viewer-theme($primary, $secondary) {
+  hd-protocol-viewer {
+    .menu-bar {
+      background-color: map_get($secondary, 500);
+    }
+  }
+}

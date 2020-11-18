@@ -1,0 +1,16 @@
+{
+    "name": "Tangent",
+    "description": "Calculates the tangent of the input",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "result",
+            "type": "ANY"
+        }
+    ]
+}

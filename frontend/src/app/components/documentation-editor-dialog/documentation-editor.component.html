@@ -1,0 +1,34 @@
+<div class="d-flex flex-direction-column h-100">
+  <div class="d-flex justify-content-end">
+    <button
+      class="m-2"
+      (click)="switchEdit()"
+      mat-raised-button
+      color="primary"
+    >
+      <ng-container *ngIf="!editMode">Edit</ng-container>
+      <ng-container *ngIf="editMode">Save</ng-container>
+    </button>
+  </div>
+  <div class="editor-and-preview">
+    <div
+      #editorRef
+      *ngIf="editMode === true"
+      class="editor-and-preview__editor"
+      style="flex: 1 1 50%"
+    >
+      <textarea
+        (scroll)="editorRefScroll($event)"
+        (ngModelChange)="parseMarkdown($event)"
+        [ngModel]="markdown"
+        class="editor-and-preview__editor-textarea"
+        placeholder="Markdown Documentation"
+      ></textarea>
+    </div>
+    <div
+      #previewRef
+      [innerHTML]="parsedMarkdown"
+      class="editor-and-preview__preview"
+    ></div>
+  </div>
+</div>

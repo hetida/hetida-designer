@@ -1,0 +1,16 @@
+{
+    "name": "Ln",
+    "description": "Calculates the natural logarithm of data",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "ln",
+            "type": "ANY"
+        }
+    ]
+}

@@ -1,0 +1,52 @@
+<div class="d-flex content-space-between" mat-dialog-title>
+  <h4 class="m-0">{{ data.title }}</h4>
+  <button (click)="onCancel()" mat-icon-button>
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div mat-dialog-content>
+  <div class="toolbar">
+    <button
+      style="width: auto"
+      (click)="uploadCSVorJSONfile(uploadCSVorJSONfileInput)"
+      class="clickable"
+      mat-icon-button
+    >
+      <mat-icon>attachment</mat-icon>
+      Import JSON / CSV
+      <input
+        #uploadCSVorJSONfileInput
+        accept=".csv,.json"
+        class="d-none"
+        type="file"
+        (change)="triggerNewFileUpload(uploadCSVorJSONfileInput)"
+      />
+    </button>
+  </div>
+  <div class="editor-panel">
+    <ngx-monaco-editor
+      [options]="editorOptions"
+      (ngModelChange)="validateJson($event)"
+      [ngModel]="updatedJson"
+      class="editor-panel__monaco-editor"
+    >
+    </ngx-monaco-editor>
+  </div>
+</div>
+<div mat-dialog-actions>
+  <mat-error class="mr-1" *ngIf="jsonErrorMessage">{{
+    jsonErrorMessage
+  }}</mat-error>
+  <button (click)="onCancel()" color="primary" mat-raised-button>
+    {{ data.actionCancel }}
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="onOk()"
+    [disabled]="jsonErrorMessage != null"
+  >
+    {{ data.actionOk }}
+  </button>
+</div>

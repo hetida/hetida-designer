@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "start",
+      "label": "start_angular",
+      "detail": "start angular server",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": [
+          {
+            "regexp": "^([^\\\\s].*)\\\\((\\\\d+,\\\\d+)\\\\):\\\\s*(.*)$",
+            "file": 1,
+            "location": 2,
+            "message": 3
+          }
+        ],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "building",
+          "endsPattern": "Compiled successfully."
+        }
+      }
+    }
+  ]
+}

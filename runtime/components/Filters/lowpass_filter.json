@@ -1,0 +1,20 @@
+{
+    "name": "Lowpass Filter",
+    "description": "First-order digital lowpass filter",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "SERIES"
+        },
+        {
+            "name": "frequency",
+            "type": "FLOAT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "filtered",
+            "type": "SERIES"
+        }
+    ]
+}

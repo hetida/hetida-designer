@@ -1,0 +1,24 @@
+{
+    "name": "Combine as named column into DataFrame",
+    "description": "Combine as named column into a DataFrame.",
+    "inputs": [
+        {
+            "name": "series",
+            "type": "SERIES"
+        },
+        {
+            "name": "series_or_dataframe",
+            "type": "ANY"
+        },
+        {
+            "name": "column_name",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "dataframe",
+            "type": "DATAFRAME"
+        }
+    ]
+}

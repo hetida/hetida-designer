@@ -1,0 +1,20 @@
+{
+    "name": "Decision Function Sklearn Trained Model",
+    "description": "Apply decision function of Sklearn Trained Model to new data",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "trained_model",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "predictions",
+            "type": "ANY"
+        }
+    ]
+}

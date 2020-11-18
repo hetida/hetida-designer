@@ -1,0 +1,37 @@
+<button #invisibleTrigger class="mat-menu-focus-hack"></button>
+<div [matMenuTriggerFor]="itemMenu">
+  <mat-menu class="app-context-menu" #itemMenu="matMenu">
+    <button mat-menu-item (click)="openItem()">Edit ...</button>
+    <button mat-menu-item (click)="openDocumentation()">
+      Show documentation...
+    </button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="copyItem()">Copy...</button>
+    <button mat-menu-item *ngIf="_isNotPublished" (click)="publish()">
+      Publish...
+    </button>
+    <button mat-menu-item *ngIf="_isNotPublished" (click)="delete()">
+      Delete...
+    </button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="editDocumentation()">
+      Edit documentation...
+    </button>
+    <button
+      mat-menu-item
+      *ngIf="!baseItemHasEmptyInputsAndOutputs"
+      (click)="configureIO()"
+    >
+      Configure IO...
+    </button>
+    <button mat-menu-item *ngIf="!(_isIncomplete$ | async)" (click)="execute()">
+      Execute...
+    </button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="editItem()">Properties...</button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item *ngIf="!_isNotPublished" (click)="deprecate()">
+      Deprecate...
+    </button>
+  </mat-menu>
+</div>

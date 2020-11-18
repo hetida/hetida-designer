@@ -1,0 +1,20 @@
+{
+    "name": "Round",
+    "description": "Rounds values with specified number of decimals",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "decimals",
+            "type": "INT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "rounded",
+            "type": "ANY"
+        }
+    ]
+}

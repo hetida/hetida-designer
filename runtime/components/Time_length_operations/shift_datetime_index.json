@@ -1,0 +1,24 @@
+{
+    "name": "Shift Datetime Index",
+    "description": "Shift index by desired frequency",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "frequency",
+            "type": "STRING"
+        },
+        {
+            "name": "periods",
+            "type": "INT"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "shifted",
+            "type": "ANY"
+        }
+    ]
+}

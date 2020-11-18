@@ -1,0 +1,20 @@
+{
+    "name": "Moving maximum time",
+    "description": "Calculates the moving maximum for a constant time interval",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "ANY"
+        },
+        {
+            "name": "t",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "movmax",
+            "type": "ANY"
+        }
+    ]
+}

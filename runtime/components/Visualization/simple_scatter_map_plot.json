@@ -1,0 +1,24 @@
+{
+    "name": "Simple Scatter Map Plot",
+    "description": "Mark locations on a map",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "DATAFRAME"
+        },
+        {
+            "name": "color_map",
+            "type": "ANY"
+        },
+        {
+            "name": "cat_color_col",
+            "type": "STRING"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "map_plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

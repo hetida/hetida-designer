@@ -1,0 +1,214 @@
+@import 'node_modules/@angular/material/theming';
+@import 'theme';
+@import '../colors';
+
+@mixin mat-form-field-outline-typography($config) {
+  // The unit-less line-height from the font config.
+  $line-height: mat-line-height($config, input);
+  // The amount to scale the font for the floating label and subscript.
+  $subscript-font-scale: 0.75;
+  // The padding above and below the infix.
+  $infix-padding: 0.5em;
+  // The margin applied to the form-field-infix to reserve space for the floating label.
+  $infix-margin-top: 1em * $line-height * $subscript-font-scale;
+  // The space between the bottom of the .mat-form-field-flex area and the subscript wrapper.
+  // Mocks show half of the text size, but this margin is applied to an element with the subscript
+  // text font size, so we need to divide by the scale factor to make it half of the original text
+  // size.
+  $subscript-margin-top: 0.5em / $subscript-font-scale;
+  // The padding applied to the form-field-wrapper to reserve space for the subscript, since it's
+  // absolutely positioned. This is a combination of the subscript's margin and line-height, but we
+  // need to multiply by the subscript font scale factor since the wrapper has a larger font size.
+  $wrapper-padding-bottom: ($subscript-margin-top + $line-height) *
+    $subscript-font-scale;
+  // The amount we offset the label from the input text in the outline appearance.
+  $outline-appearance-label-offset: 0.2em;
+
+  .mat-form-field-appearance-outline {
+    .mat-form-field-infix {
+      padding: $infix-padding 0 $infix-padding 0;
+    }
+
+    .mat-form-field-label {
+      top: $infix-margin-top + $infix-padding;
+      margin-top: $outline-appearance-label-offset;
+    }
+  }
+
+  .mat-form-field-can-float {
+    &.mat-form-field-should-float .mat-form-field-label,
+    .mat-input-server:focus
+      + .mat-form-field-label-wrapper
+      .mat-form-field-label {
+      @include _mat-form-field-outline-label-floating(
+        $subscript-font-scale,
+        $infix-padding + $outline-appearance-label-offset,
+        $infix-margin-top
+      );
+    }
+
+    // Server-side rendered matInput with a label attribute but label not shown
+    // (used as a pure CSS stand-in for mat-form-field-should-float).
+    //noinspection CssInvalidPseudoSelector
+    .mat-input-server[label]:not(:label-shown)
+      + .mat-form-field-label-wrapper
+      .mat-form-field-label {
+      @include _mat-form-field-outline-label-floating(
+        $subscript-font-scale,
+        $infix-padding + $outline-appearance-label-offset,
+        $infix-margin-top
+      );
+    }
+  }
+}
+
+@include mat-core();
+
+// Colors
+
+$mg-primary-palette: (
+  100: $hd-grey,
+  200: $hd-blue-dark,
+  400: $hd-pink,
+  500: $hd-black,
+  700: $hd-grey-dark,
+  contrast: (
+    100: $hd-black,
+    200: $hd-white,
+    400: $hd-white,
+    500: $hd-white,
+    700: $hd-white
+  )
+);
+
+$mg-secondary-palette: (
+  100: $hd-grey,
+  200: $hd-grey-dark,
+  400: $hd-black,
+  500: $hd-white,
+  700: $hd-grey,
+  contrast: (
+    100: $hd-yellow,
+    200: $hd-yellow,
+    400: $hd-yellow,
+    500: $hd-black,
+    700: $hd-black
+  )
+);
+
+// Typography
+
+$light-primary-text: map_get($mg-primary-palette, 700);
+
+$mg-typography: mat-typography-config(
+  $font-family: 'Roboto, "Helvetica Neue", sans-serif',
+  $display-4: mat-typography-level(20px, 32px, 300),
+  $display-3: mat-typography-level(20px, 32px, 400),
+  $display-2: mat-typography-level(18px, 24px, 400),
+  $display-1: mat-typography-level(14px, 24px, 400),
+  $headline: mat-typography-level(20px, 32px, 400),
+  $title: mat-typography-level(20px, 32px, 500),
+  $subheading-2: mat-typography-level(16px, 20px, 500),
+  $subheading-1: mat-typography-level(16px, 20px, 400),
+  $body-2: mat-typography-level(14px, 24px, 500),
+  $body-1: mat-typography-level(14px, 24px, 400),
+  $caption: mat-typography-level(14px, 24px, 400),
+  $button: mat-typography-level(14px, 14px, 500),
+  $input: mat-typography-level(inherit, 1.125, 400)
+);
+
+// Light Theme
+
+$mat-light-theme-foreground: (
+  base: map_get($mg-primary-palette, 500),
+  divider: $dark-dividers,
+  dividers: $dark-dividers,
+  disabled: map_get($mg-secondary-palette, 100),
+  disabled-button: map_get($mg-secondary-palette, 400),
+  disabled-text: map_get($mg-secondary-palette, 700),
+  elevation: map_get($mg-secondary-palette, 700),
+  hint-text: map_get($mg-primary-palette, 100),
+  secondary-text: map_get($mg-primary-palette, 500),
+  icon: map_get($mg-primary-palette, 700),
+  icons: map_get($mg-primary-palette, 700),
+  text: map_get($mg-primary-palette, 500),
+  slider-min: map_get($mg-primary-palette, 700),
+  slider-off: map_get($mg-primary-palette, 100),
+  slider-off-active: map_get($mg-primary-palette, 400)
+);
+
+$mat-light-theme-background: (
+  status-bar: map_get($mg-secondary-palette, 400),
+  app-bar: map_get($mg-secondary-palette, 400),
+  background: map_get($mg-secondary-palette, 500),
+  hover: map_get($mg-primary-palette, 700),
+  card: map_get($mg-secondary-palette, 500),
+  dialog: map_get($mg-secondary-palette, 500),
+  disabled-button: map_get($mg-secondary-palette, 700),
+  raised-button: map_get($mg-primary-palette, 700),
+  focused-button: $dark-focused,
+  selected-button: map_get($mg-primary-palette, 500),
+  selected-disabled-button: map_get($mg-secondary-palette, 700),
+  disabled-button-toggle: map_get($mat-grey, 200),
+  unselected-chip: map_get($mat-grey, 300),
+  disabled-list-option: map_get($mat-grey, 200)
+);
+
+$hd-primary: mat-palette($mg-primary-palette);
+$hd-accent: mat-palette($mg-secondary-palette, 200, 100, 400);
+$hd-warn: mat-palette($mat-red);
+$hd-theme: mat-light-theme($hd-primary, $hd-accent, $hd-warn);
+
+@include angular-material-theme($hd-theme);
+@include hd-material-theme($hd-theme);
+
+// Dark Theme
+
+$mat-dark-theme-foreground: (
+  base: map_get($mg-secondary-palette, 500),
+  divider: $light-dividers,
+  dividers: $light-dividers,
+  disabled: map_get($mg-primary-palette, 500),
+  disabled-button: map_get($mg-primary-palette, 100),
+  disabled-text: map_get($mg-primary-palette, 700),
+  elevation: map_get($mg-primary-palette, 500),
+  hint-text: map_get($mg-secondary-palette, 100),
+  secondary-text: map_get($mg-secondary-palette, 500),
+  icon: map_get($mg-secondary-palette, 700),
+  icons: map_get($mg-secondary-palette, 700),
+  text: map_get($mg-secondary-palette, 500),
+  slider-min: map_get($mg-secondary-palette, 700),
+  slider-off: map_get($mg-secondary-palette, 100),
+  slider-off-active: map_get($mg-secondary-palette, 400)
+);
+
+$mat-dark-theme-background: (
+  status-bar: map_get($mg-primary-palette, 400),
+  app-bar: map_get($mg-primary-palette, 400),
+  background: map_get($mg-primary-palette, 500),
+  hover: map_get($mg-secondary-palette, 200),
+  card: map_get($mg-primary-palette, 500),
+  dialog: map_get($mg-primary-palette, 500),
+  disabled-button: map_get($mg-primary-palette, 500),
+  raised-button: map_get($mg-secondary-palette, 700),
+  focused-button: $light-focused,
+  selected-button: map_get($mg-primary-palette, 500),
+  selected-disabled-button: map_get($mg-primary-palette, 500),
+  disabled-button-toggle: map_get($mat-grey, 200),
+  unselected-chip: map_get($mat-grey, 300),
+  disabled-list-option: map_get($mat-grey, 200)
+);
+
+$hd-dark-primary: mat-palette($mg-secondary-palette);
+$hd-dark-accent: mat-palette($mg-primary-palette, A200, A100, A400);
+$hd-dark-warn: mat-palette($mat-red);
+$hd-dark-theme: mat-dark-theme(
+  $hd-dark-primary,
+  $hd-dark-accent,
+  $hd-dark-warn
+);
+
+.dark-theme {
+  @include angular-material-theme($hd-dark-theme);
+  @include hd-material-theme($hd-dark-theme);
+}

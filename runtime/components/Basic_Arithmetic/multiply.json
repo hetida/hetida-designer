@@ -1,0 +1,20 @@
+{
+    "name": "Multiply",
+    "description": "Multiplies a and b",
+    "inputs": [
+        {
+            "name": "a",
+            "type": "ANY"
+        },
+        {
+            "name": "b",
+            "type": "ANY"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "product",
+            "type": "ANY"
+        }
+    ]
+}

@@ -1,0 +1,9 @@
+-c requirements.txt
+pytest
+coverage
+pylint
+pytest-cov
+black==19.10b0
+pytest-asyncio
+rope
+mypy

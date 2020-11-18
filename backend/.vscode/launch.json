@@ -1,0 +1,19 @@
+{
+  "configurations": [
+      {
+          "type": "java",
+          "name": "Hetida Designer Backend",
+          "request": "launch",
+          "cwd": "${workspaceFolder}",
+          "console": "internalConsole",
+          "mainClass": "org.hetida.designer.backend.HetidaDesignerBackendApplication",
+          "projectName": "backend",
+          "env": {
+            "DATASOURCE_URL": "jdbc:postgresql://localhost:5430/hetida_designer_db",
+            "CODEGEN_URL": "http://localhost:8090/codegen",
+            "CODECHECK_URL": "http://localhost:8090/codecheck",
+            "RUNTIME_URL" :"http://localhost:8090/runtime"
+          }
+      }
+  ]
+}

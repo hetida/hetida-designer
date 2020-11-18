@@ -1,0 +1,19 @@
+<div>
+  <span>Assign To</span>
+  <div class="d-flex flex-direction-column">
+    <div *ngFor="let item of executionContextData.IOItem">
+      <ng-container *ngIf="!hasOtherWiring(item)">
+        <mat-checkbox
+          [disabled]="incompatibleTypes(item)"
+          (change)="itemSelectionChange($event, item)"
+          [checked]="isChecked(item)"
+        >
+          {{ item.ioItemName }}
+          <span [ngStyle]="{ color: getTypeColor(item.dataType) }">
+            <mat-icon class="unselectable" [inline]="true">lens</mat-icon>
+          </span>
+        </mat-checkbox>
+      </ng-container>
+    </div>
+  </div>
+</div>

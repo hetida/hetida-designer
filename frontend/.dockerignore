@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+mock
+.scannerwork
+Dockerfile
+documentation
+.git
+.vscode

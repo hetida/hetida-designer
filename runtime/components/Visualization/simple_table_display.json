@@ -1,0 +1,16 @@
+{
+    "name": "Display Table",
+    "description": "Display DataFrame as table",
+    "inputs": [
+        {
+            "name": "data",
+            "type": "DATAFRAME"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "table",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

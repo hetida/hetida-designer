@@ -1,0 +1,16 @@
+{
+    "name": "Timeseries DataFrame Plot with multiple Y Axes",
+    "description": "Plotting a dataframe of multiple timeseries with multiple Y axes",
+    "inputs": [
+        {
+            "name": "dataframe",
+            "type": "DATAFRAME"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

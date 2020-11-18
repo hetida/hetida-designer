@@ -1,0 +1,20 @@
+{
+    "name": "2D Scatter Plot colored by Index",
+    "description": "Plotting two series into the plane using index for coloring points",
+    "inputs": [
+        {
+            "name": "x",
+            "type": "SERIES"
+        },
+        {
+            "name": "y",
+            "type": "SERIES"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "scatter_plot",
+            "type": "PLOTLYJSON"
+        }
+    ]
+}

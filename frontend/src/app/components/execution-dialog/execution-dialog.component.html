@@ -1,0 +1,299 @@
+<div class="d-flex content-space-between" mat-dialog-title>
+  <h4 class="m-0">
+    {{ data.title }} {{ data.abstractBaseItem.name }}
+    {{ data.abstractBaseItem.tag }}
+  </h4>
+  <button (click)="onCancel()" mat-icon-button>
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div mat-dialog-content>
+  <div class="execution-dialog-content">
+    <form
+      *ngIf="inputOutputForm"
+      [formGroup]="inputOutputForm"
+      class="execution-dialog-parameter-wrapper"
+    >
+      <div class="parameter-input pr-3">
+        <div class="mb-1 d-flex content-space-between align-items-baseline">
+          <span class="mat-h2"> Input Parameter </span>
+          <div class="d-flex">
+            <button
+              (click)="downloadJsonSchema()"
+              mat-raised-button
+              color="primary"
+              class="mr-1"
+            >
+              Download JSON Template
+            </button>
+            <button
+              (click)="uploadJsonForAllInputs(jsonFileInput)"
+              mat-raised-button
+              color="primary"
+            >
+              Upload JSON Data
+            </button>
+            <input
+              #jsonFileInput
+              accept=".json"
+              class="d-none"
+              type="file"
+              (change)="triggerForAllInputs(jsonFileInput)"
+            />
+            <mat-error>{{ jsonImportErrorStatus | async }}</mat-error>
+          </div>
+        </div>
+        <div
+          id="hints-tips"
+          *ngIf="!adapterAvailable"
+          class="d-flex align-items-center"
+        >
+          <mat-icon class="mat-icon--small">info</mat-icon
+          ><span class="mat-small">No adapter provided</span>
+        </div>
+        <div class="d-flex">
+          <h3 class="text-strong m-0 pr-1 parameter-input-label-column">
+            Label
+          </h3>
+          <h3 class="text-strong m-0 pr-1 parameter-input-type-column">Type</h3>
+          <h3 class="text-strong m-0 pr-1 parameter-input-source-column">
+            Source
+          </h3>
+          <h3 class="text-strong m-0 parameter-input-value-column">Value(s)</h3>
+          <span class="parameter-input-delete-icon-column"></span>
+        </div>
+        <mat-divider></mat-divider>
+        <div
+          *ngFor="let inputControl of inputFormArray.controls"
+          [formGroup]="inputControl"
+        >
+          <div class="d-flex align-items-baseline">
+            <span class="pr-1 parameter-input-label-column text-ellipsis">{{
+              inputControl.get('ioItemName').value
+            }}</span>
+            <div class="pr-1 parameter-input-type-column">
+              <span
+                style="vertical-align: middle"
+                [ngStyle]="{
+                  color: getTypeColor(inputControl.get('dataType').value)
+                }"
+              >
+                <mat-icon class="unselectable" [inline]="true">lens</mat-icon>
+              </span>
+              <span>{{ inputControl.get('dataType').value }}</span>
+            </div>
+            <div
+              class="pr-1 d-flex flex-direction-column parameter-input-source-column"
+              style="align-self: flex-start"
+            >
+              <label style="margin-top: -3px" class="mat-small">{{
+                inputControl.get('isSource').value ? 'Adapter' : 'Manual'
+              }}</label>
+              <mat-slide-toggle
+                [disabled]="!adapterAvailable"
+                color="accent"
+                [checked]="inputControl.get('isSource').value"
+                (change)="toggleConstant(inputControl)"
+              >
+              </mat-slide-toggle>
+            </div>
+
+            <ng-container
+              *ngIf="inputControl.get('isSource').value; else elseRawValue"
+            >
+              <div
+                class="w-100 d-flex flex-direction-column parameter-input-value-column"
+              >
+                <mat-form-field class="mat-form-field--no-fixed-width">
+                  <input
+                    readonly
+                    class="clickable"
+                    (click)="
+                      $event.preventDefault();
+                      openAdapterTreeDialog(
+                        'source',
+                        inputControl.get('dataType').value
+                      )
+                    "
+                    formControlName="nodeId"
+                    matInput
+                    placeholder="Browse Source"
+                    type="text"
+                  />
+                  <span
+                    matSuffix
+                    class="clickable"
+                    (click)="
+                      openAdapterTreeDialog(
+                        'source',
+                        inputControl.get('dataType').value
+                      )
+                    "
+                  >
+                    <mat-icon>search</mat-icon>
+                  </span>
+                  <mat-error>{{
+                    inputControl.get('nodeId')?.errors?.message
+                  }}</mat-error>
+                </mat-form-field>
+              </div>
+            </ng-container>
+            <ng-template #elseRawValue>
+              <mat-form-field
+                class="mat-form-field--no-fixed-width parameter-input-value-column"
+              >
+                <input
+                  *ngIf="isJsonType(inputControl.get('dataType').value)"
+                  readonly
+                  class="clickable"
+                  (click)="
+                    $event.preventDefault(); openJsonEditorModal(inputControl)
+                  "
+                  formControlName="rawValue"
+                  matInput
+                  placeholder="Input Value"
+                  type="text"
+                />
+                <input
+                  *ngIf="!isJsonType(inputControl.get('dataType').value)"
+                  formControlName="rawValue"
+                  matInput
+                  placeholder="Input Value"
+                  type="text"
+                />
+                <mat-error>{{
+                  inputControl.get('rawValue')?.errors?.message
+                }}</mat-error>
+                <span matSuffix class="clickable">
+                  <mat-icon
+                    *ngIf="isJsonType(inputControl.get('dataType').value)"
+                    (click)="openJsonEditorModal(inputControl)"
+                    class="clickable"
+                    >create
+                  </mat-icon>
+                </span>
+              </mat-form-field>
+            </ng-template>
+            <button
+              title="Clear Input"
+              class="parameter-input-delete-icon-column"
+              (click)="clearInput(inputControl)"
+              mat-icon-button
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+          <div
+            *ngIf="
+              inputControl.get('isSource').value &&
+              isTimeSeriesType(inputControl.get('dataType').value) &&
+              inputControl.get('nodeId').value
+            "
+            class="d-flex align-items-baseline justify-content-end mr-4"
+          >
+            <mat-form-field
+              class="mat-form-field--no-fixed-width"
+              style="flex: 0 0 270px"
+            >
+              <input
+                [min]="(inputControl?.get('timestampRangeFilter')?.value)[0]"
+                [max]="(inputControl?.get('timestampRangeFilter')?.value)[1]"
+                matInput
+                [owlDateTime]="dt1"
+                [selectMode]="'range'"
+                [owlDateTimeTrigger]="dt1"
+                placeholder="Timestamp range"
+                formControlName="timestampRange"
+              />
+              <owl-date-time #dt1></owl-date-time>
+              <mat-error>{{
+                inputControl.get('timestampRange')?.errors?.message
+              }}</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+      <div class="parameter-output">
+        <div class="mb-1 d-flex content-space-between align-items-baseline">
+          <span class="mat-h2">Output Parameter</span>
+        </div>
+        <div id="input-header" class="d-flex">
+          <h3 class="text-strong m-0 pr-1 parameter-output-label-column">
+            Label
+          </h3>
+          <h3 class="text-strong m-0 pr-1 parameter-output-type-column">
+            Type
+          </h3>
+          <h3 class="text-strong m-0 parameter-output-value-column">
+            Value(s)
+          </h3>
+          <span class="parameter-output-delete-icon-column"></span>
+        </div>
+        <mat-divider></mat-divider>
+        <div
+          class="d-flex align-items-baseline"
+          *ngFor="let outputControl of outputFormArray.controls"
+          [formGroup]="outputControl"
+        >
+          <span class="pr-1 parameter-output-label-column text-ellipsis">{{
+            outputControl.get('ioItemName').value
+          }}</span>
+          <div class="pr-1 parameter-output-type-column">
+            <span
+              style="vertical-align: middle"
+              [ngStyle]="{
+                color: getTypeColor(outputControl.get('dataType').value)
+              }"
+            >
+              <mat-icon class="unselectable" [inline]="true">lens</mat-icon>
+            </span>
+            <span>{{ outputControl.get('dataType').value }}</span>
+          </div>
+          <mat-form-field
+            class="mat-form-field--no-fixed-width parameter-output-value-column"
+          >
+            <input
+              readonly
+              formControlName="nodeId"
+              matInput
+              class="clickable"
+              (click)="
+                openAdapterTreeDialog(
+                  'sink',
+                  outputControl.get('dataType').value
+                )
+              "
+              placeholder="Browse Destination"
+              type="text"
+            />
+            <span
+              matSuffix
+              class="clickable"
+              (click)="
+                openAdapterTreeDialog(
+                  'sink',
+                  outputControl.get('dataType').value
+                )
+              "
+            >
+              <mat-icon>search</mat-icon>
+            </span>
+          </mat-form-field>
+          <button
+            title="Clear Input"
+            class="parameter-output-delete-icon-column"
+            (click)="clearOutput(outputControl)"
+            mat-icon-button
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+<div mat-dialog-actions>
+  <button (click)="onCancel()" mat-raised-button color="primary">Cancel</button>
+  <button (click)="onOk()" mat-raised-button color="primary">Execute</button>
+</div>
