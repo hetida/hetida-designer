@@ -8,6 +8,9 @@ volumes:
 
 services:
   hetida-designer-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile-frontend
     image: hetida/designer-frontend
     ports:
       - 80:80
@@ -15,12 +18,18 @@ services:
       - hetida-designer-backend
 
   hetida-designer-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile-backend
     image: hetida/designer-backend
     depends_on:
       - hetida-designer-db
       - hetida-designer-runtime
 
   hetida-designer-runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile-runtime
     image: hetida/designer-runtime
     volumes:
       - designer_obj_repo:/mnt/obj_repo
