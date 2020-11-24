@@ -11,7 +11,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-frontend
-    image: hetida/frontend
+    image: hetida/designer-frontend
     ports:
       - 80:80
     depends_on:
@@ -21,7 +21,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-backend
-    image: hetida/backend
+    image: hetida/designer-backend
     depends_on:
       - hetida-designer-db
       - hetida-designer-runtime
@@ -30,7 +30,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-runtime
-    image: hetida/runtime
+    image: hetida/designer-runtime
     volumes:
       - designer_obj_repo:/mnt/obj_repo
 
