@@ -1,0 +1,21 @@
+language: minimal
+services:
+- docker
+script:
+- echo $(cat VERSION)
+- echo "$docker_pwd" | docker login -u "$docker_user" --password-stdin
+- docker build -t "$docker_organization"/designer-frontend:latest -f Dockerfile-frontend .
+- docker tag "$docker_organization"/designer-frontend:latest "$docker_organization"/designer-frontend:$(cat VERSION)
+- docker push "$docker_organization"/designer-frontend:latest
+- docker push "$docker_organization"/designer-frontend:$(cat VERSION)
+- docker build -t "$docker_organization"/designer-backend:latest -f Dockerfile-backend .
+- docker tag "$docker_organization"/designer-backend:latest "$docker_organization"/designer-backend:$(cat VERSION)
+- docker push "$docker_organization"/designer-backend:latest
+- docker push "$docker_organization"/designer-backend:$(cat VERSION)
+- docker build -t "$docker_organization"/designer-runtime:latest --target prod -f Dockerfile-runtime .
+- docker tag "$docker_organization"/designer-runtime:latest "$docker_organization"/designer-runtime:$(cat VERSION)
+- docker push "$docker_organization"/designer-runtime:latest
+- docker push "$docker_organization"/designer-runtime:$(cat VERSION)
+env:
+  global:
+    secure: XT7IDgobf4f8L7RojjqJVRyFlgLcxBOIsO2SIMp9B/CE2F/pbjbsvnIJlw8k/D4sRFPVqiEhh9Pv+WbhfQfOlQXpkwL8BYq+XpCf2IN4KGDzfQ8so+5xFxVzjb7TbZJXgembWCKOuX4cVOtyCvfgcj2KMUo/6YK9RRqtBeXjcI1nr/YQMzteSpQjNSTAByAeXOZQAGG/JIbuQZQwQnpbQ1rRw24LcZmJNNIUXSCJu7nwXwTV+PXvTk5x2S1qbn3z4j+7q0RCnS0+jORefQCP4MeMIgt+bYfUNNr5vSObCpyUJP0nfsGtbBP5bArfeK6Tn0pEUE1cGBv3ssR38TNizrLPFnxHUBUljGVq0ocU17kX6wz1I6Nm7P5+hRQrLSAnpQeL2quAF2UdYJrR8i57YwH3tLHFT8Y4XHRrNZ5QjBlKQ/SXvRZUJ+k2lY/tw6DiHT03shX7PygypdE3L7ZhLniyhwvzZT4BPuDTB8WR61VuubY63li+cGclEVqtvIHJALgSbvJnFFL8MhG/K8YYADZLRwOIwXed9/0HqSk9CyqQE7He87dqEk41NdMETxN+cu/pPt1UP7cPVtqKJQNKODKaj0HbekIrmn9dOYhdEoK8blKbbXv8GjQmOF/c0ZFQqHsv9Q/GQDCBnOQmzFsmXzIIXTipaRU1qmllFQ7XABo=
