@@ -4,23 +4,23 @@ services:
 script:
 - echo $(cat VERSION)
 - echo "$docker_pwd" | docker login -u "$docker_user" --password-stdin
-- docker build -t "$docker_organization"/designer-frontend:latest -f Dockerfile-frontend .
+- docker build --quiet -t "$docker_organization"/designer-frontend:latest -f Dockerfile-frontend .
 - docker tag "$docker_organization"/designer-frontend:latest "$docker_organization"/designer-frontend:$(cat VERSION)
 - docker push "$docker_organization"/designer-frontend:latest
 - docker push "$docker_organization"/designer-frontend:$(cat VERSION)
-- docker build -t "$docker_organization"/designer-backend:latest -f Dockerfile-backend .
+- docker build  --quiet -t "$docker_organization"/designer-backend:latest -f Dockerfile-backend .
 - docker tag "$docker_organization"/designer-backend:latest "$docker_organization"/designer-backend:$(cat VERSION)
 - docker push "$docker_organization"/designer-backend:latest
 - docker push "$docker_organization"/designer-backend:$(cat VERSION)
-- docker build -t "$docker_organization"/designer-runtime:latest --target prod -f Dockerfile-runtime .
+- docker build  --quiet -t "$docker_organization"/designer-runtime:latest --target prod -f Dockerfile-runtime .
 - docker tag "$docker_organization"/designer-runtime:latest "$docker_organization"/designer-runtime:$(cat VERSION)
 - docker push "$docker_organization"/designer-runtime:latest
 - docker push "$docker_organization"/designer-runtime:$(cat VERSION)
-- docker build -t "$docker_organization"/designer-demo-adapter-java:latest -f Dockerfile-demo-adapter-java .
+- docker build  --quiet -t "$docker_organization"/designer-demo-adapter-java:latest -f Dockerfile-demo-adapter-java .
 - docker tag "$docker_organization"/designer-demo-adapter-java:latest "$docker_organization"/designer-demo-adapter-java:$(cat VERSION)
 - docker push "$docker_organization"/designer-demo-adapter-java:latest
 - docker push "$docker_organization"/designer-demo-adapter-java:$(cat VERSION)
-- docker build -t "$docker_organization"/designer-demo-adapter-python:latest --target prod -f Dockerfile-demo-adapter-python .
+- docker build  --quiet -t "$docker_organization"/designer-demo-adapter-python:latest --target prod -f Dockerfile-demo-adapter-python .
 - docker tag "$docker_organization"/designer-demo-adapter-python:latest "$docker_organization"/designer-demo-adapter-python:$(cat VERSION)
 - docker push "$docker_organization"/designer-demo-adapter-python:latest
 - docker push "$docker_organization"/designer-demo-adapter-python:$(cat VERSION)
