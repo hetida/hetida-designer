@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { MatTabChangeEvent } from '@angular/material/tabs';
 import { createSelector, Store } from '@ngrx/store';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -55,9 +55,6 @@ export class ContentViewComponent implements OnInit, OnDestroy {
 
   // ngrx State
   _tabItems: TabItemWithBaseItem[] = [];
-
-  @ViewChild('matTabGroup')
-  matTabGroup: MatTabGroup;
 
   constructor(
     private readonly store: Store<IAppState>,
@@ -128,7 +125,7 @@ export class ContentViewComponent implements OnInit, OnDestroy {
     this.store.dispatch(removeTabItem(tabItemToClose.id));
   }
 
-  public _closePopover(): void {
+  _closePopover(): void {
     this.popoverService.closePopover();
   }
 }

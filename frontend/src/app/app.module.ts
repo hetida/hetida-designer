@@ -16,10 +16,15 @@ import {
 } from '@danielmoncada/angular-datetime-picker';
 import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { PlotlyModule } from 'angular-plotly.js';
+import { PlotlyViaWindowModule } from 'angular-plotly.js';
+import {
+  HdWiringConfig,
+  HdWiringModule,
+  HD_WIRING_CONFIG,
+  WiringTheme
+} from 'hd-wiring';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { MonacoEditorModule } from 'ngx-monaco-editor';
-import * as PlotlyJS from 'plotly.js/dist/plotly.js';
 import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
 import { BaseItemContextMenuComponent } from './components/base-item-context-menu/base-item-context-menu.component';
@@ -29,10 +34,7 @@ import { ConfirmDialogComponent } from './components/confirmation-dialog/confirm
 import { ContentViewComponent } from './components/content-view/content-view.component';
 import { CopyBaseItemDialogComponent } from './components/copy-base-item-dialog/copy-base-item-dialog.component';
 import { DocumentationEditorComponent } from './components/documentation-editor-dialog/documentation-editor.component';
-import { ExecutionDialogContextMenuComponent } from './components/execution-dialog-context-menu/execution-dialog-context-menu.component';
-import { ExecutionDialogComponent } from './components/execution-dialog/execution-dialog.component';
 import { HomeComponent } from './components/home/home.component';
-import { JsonEditorComponent } from './components/json-editor/json-editor.component';
 import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
@@ -41,8 +43,6 @@ import { PopoverBaseitemComponent } from './components/popover-baseitem/popover-
 import { ProtocolViewerComponent } from './components/protocol-viewer/protocol-viewer.component';
 import { RenameOperatorDialogComponent } from './components/rename-operator-dialog/rename-operator-dialog.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
-import { TreeNodeModalComponent } from './components/tree-node-modal/tree-node-modal.component';
-import { TreeNodeComponent } from './components/tree-node/tree-node.component';
 import { WorkflowEditorComponent } from './components/workflow-editor/workflow-editor.component';
 import { WorkflowIODialogComponent } from './components/workflow-io-dialog/workflow-io-dialog.component';
 import { ErrorVisualDirective } from './directives/error-visual.directive';
@@ -54,9 +54,8 @@ import { AuthInterceptor } from './service/http-interceptors/auth.interceptor';
 import { HttpErrorInterceptor } from './service/http-interceptors/http-error.interceptor';
 import { LocalStorageService } from './service/local-storage/local-storage.service';
 import { NotificationService } from './service/notifications/notification.service';
+import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
-
-PlotlyModule.plotlyjs = PlotlyJS;
 
 @NgModule({
   declarations: [
@@ -74,22 +73,17 @@ PlotlyModule.plotlyjs = PlotlyJS;
     DocumentationEditorComponent,
     OperatorChangeRevisionDialogComponent,
     ProtocolViewerComponent,
-    ExecutionDialogComponent,
     ToolbarComponent,
     PopoverBaseitemComponent,
     NavigationItemComponent,
     CopyBaseItemDialogComponent,
     RenameOperatorDialogComponent,
     ErrorVisualDirective,
-    ExecutionDialogContextMenuComponent,
-    TreeNodeComponent,
-    JsonEditorComponent,
-    TreeNodeModalComponent,
     BaseItemContextMenuComponent
   ],
 
   imports: [
-    PlotlyModule,
+    PlotlyViaWindowModule,
     BrowserModule,
     BrowserAnimationsModule,
     FormsModule,
@@ -98,6 +92,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
     OwlDateTimeModule,
     OwlNativeDateTimeModule,
     MaterialModule,
+    HdWiringModule,
     MonacoEditorModule.forRoot({
       baseUrl: `./assets`
     }), // use forRoot() in main app module only.
@@ -152,6 +147,28 @@ PlotlyModule.plotlyjs = PlotlyJS;
     {
       provide: APP_BASE_HREF,
       useValue: window.location.pathname
+    },
+    {
+      provide: HD_WIRING_CONFIG,
+      useFactory: (
+        appConfig: ConfigService,
+        themeService: ThemeService
+      ): HdWiringConfig => {
+        const activeTheme = themeService.activeTheme as WiringTheme;
+        return {
+          allowManualWiring: true,
+          allowOutputWiring: true,
+          monacoEditorTheme: activeTheme,
+          showDownloadExampleJsonButton: true,
+          showUploadJsonButton: true,
+          endpoints: {
+            applicationUrl: appConfig.config.apiEndpoint
+          },
+          confirmationButtonText: 'Execute',
+          showDialogHeader: true
+        };
+      },
+      deps: [ConfigService, ThemeService]
     }
   ],
   bootstrap: [AppComponent]

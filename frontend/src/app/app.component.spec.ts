@@ -1,5 +1,5 @@
 import { HttpClientModule } from '@angular/common/http';
-import { async, TestBed } from '@angular/core/testing';
+import { TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { StoreModule } from '@ngrx/store';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
@@ -19,32 +19,34 @@ import { WorkflowEditorComponent } from './components/workflow-editor/workflow-e
 import { appReducers } from './store/app.reducers';
 
 describe('AppComponent', () => {
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      imports: [
-        BasicTestModule,
-        FormsModule,
-        ReactiveFormsModule,
-        NgHetidaFlowchartModule,
-        MonacoEditorModule,
-        StoreModule.forRoot(appReducers),
-        HttpClientModule
-      ],
-      declarations: [
-        AppComponent,
-        HomeComponent,
-        ToolbarComponent,
-        NavigationContainerComponent,
-        NavigationCategoryComponent,
-        NavigationItemComponent,
-        ContentViewComponent,
-        ProtocolViewerComponent,
-        PopoverBaseitemComponent,
-        ComponentEditorComponent,
-        WorkflowEditorComponent
-      ]
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          BasicTestModule,
+          FormsModule,
+          ReactiveFormsModule,
+          NgHetidaFlowchartModule,
+          MonacoEditorModule,
+          StoreModule.forRoot(appReducers),
+          HttpClientModule
+        ],
+        declarations: [
+          AppComponent,
+          HomeComponent,
+          ToolbarComponent,
+          NavigationContainerComponent,
+          NavigationCategoryComponent,
+          NavigationItemComponent,
+          ContentViewComponent,
+          ProtocolViewerComponent,
+          PopoverBaseitemComponent,
+          ComponentEditorComponent,
+          WorkflowEditorComponent
+        ]
+      }).compileComponents();
+    })
+  );
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);

@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { BasicTestModule } from 'src/app/angular-test.module';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
@@ -13,23 +13,25 @@ describe('HomeComponent', () => {
   const mockBaseItemActionService = jasmine.createSpy();
   const mockTabItemService = jasmine.createSpy();
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      imports: [BasicTestModule],
-      providers: [
-        provideMockStore(),
-        {
-          provide: BaseItemActionService,
-          useValue: mockBaseItemActionService
-        },
-        {
-          provide: TabItemService,
-          useValue: mockTabItemService
-        }
-      ],
-      declarations: [HomeComponent]
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [BasicTestModule],
+        providers: [
+          provideMockStore(),
+          {
+            provide: BaseItemActionService,
+            useValue: mockBaseItemActionService
+          },
+          {
+            provide: TabItemService,
+            useValue: mockTabItemService
+          }
+        ],
+        declarations: [HomeComponent]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     const mockStore = TestBed.inject(MockStore);

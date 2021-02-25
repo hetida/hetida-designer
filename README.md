@@ -10,9 +10,7 @@ hetida designer is a graphical composition tool for analytical workflows based o
 
 It aims to unify graphical composition of analytical methods on an equal footing with Python-based self-development in one user interface. To give an example: You can write your complete own visualization components on [plotly](https://plotly.com/python/) basis.
 
-Another goal is to make the created workflows available for production use (e.g. as a web service) immediately without the need for further deployment steps. This includes a flexible adapter system[1] for connecting to arbitrary data sources and sinks.![workflow editor](./docs/assets/screenshot-composition.png)
-
-[1] The [adapter system](#adapter-system) is currently being revised and will be fully available in the next release.
+Another goal is to make the created workflows available for production use (e.g. as a web service) immediately without the need for further deployment steps. This includes a flexible adapter system for connecting to arbitrary data sources and sinks.![workflow editor](./docs/assets/screenshot-composition.png)
 
 ## Getting Started with hetida designer
 
@@ -23,6 +21,8 @@ your machine.
 - [Use Standalone Docker Images](#gs-docker-standalone)
 - [Code Contributors: Local development setup](#gs-local)
 - [Tutorial: How to build and execute your first workflow with hetida designer?](#tutorial)
+- [Adapter System](#adapter-system)
+- [Security Hints](#security-hints)
 - [Glossary: Important hetida designer concepts explained](#glossary)
 
 All kinds of contributions are highly welcome. If you'd like to ask a question,
@@ -32,31 +32,34 @@ necessary information in our [contribution guidelines](./CONTRIBUTING.md).
 ### <a name="gs-docker-compose"></a> Getting started with Docker Compose (recommended)
 
 #### Installing prerequisite dependencies
+
 You'll have to install a recent version of [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git), [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/).
 The exact procedure depends on your operating system. Follow the links to find out more about how to install these dependencies on your machine.
 
 **Note for Windows Users**: On Windows, we recommend to configure Docker to use Linux Containers (the default setting) and git to use the checkout strategy *Checkout as-is, commit Unix-sytyle line endings*. In every case, make sure that these settings match.
 
 #### Getting the source code
+
 Once you have installed git, open up a terminal, move to the directory where you'd like
 to install the hetida designer's source code, and execute the following command:
 
-```shell script
-git clone git@github.com:hetida/hetida-designer.git
+```shell
+git clone https://github.com/hetida/hetida-designer.git
 ```
 
 This should download the latest copy of the repository. Next, enter the newly
 created source code directory and check out the latest develop branch:
 
-```shell script
+```shell
 cd hetida-designer
 git checkout release
 ```
 
 #### Starting the hetida designer
+
 Once you have the source code, docker and docker-compose properly set up, run
 
-```shell script
+```shell
 docker-compose up -d
 ```
 
@@ -67,12 +70,13 @@ Wait some time for the hetida designer to start up (downloading / building of do
 #### Deployment of base component set into your installation
 
 Now you should run
+
 ```bash
 docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8080/api/" \
   --name htdruntime_deployment \
   --network hetida-designer_default \
-  --entrypoint python hetida/runtime -c "from hetdesrun.utils import post_components_from_directory, post_workflows_from_directory; post_components_from_directory('./components'); post_workflows_from_directory('./workflows'); post_workflows_from_directory('./workflows2')"
+  --entrypoint python hetida/designer-runtime -c "from hetdesrun.utils import post_components_from_directory, post_workflows_from_directory; post_components_from_directory('./components'); post_workflows_from_directory('./workflows'); post_workflows_from_directory('./workflows2')"  
 ```
 
 to install/deploy base components and some example workflows. **This step is only necessary the first time starting hetida designer!**
@@ -95,7 +99,8 @@ not see log output by default. If the application does not seem to work, you can
 a look at the logs by executing `docker-compose logs -f`.
 
 #### <a name="modify-ports"></a> Modifying ports.
-To expose a port, you can modify `docker-compose.yaml` and add/change the port binding. For example
+
+To expose a port, you can modify `docker-compose.yml` and add/change the port binding. For example
 
 ```docker
   hetida-designer-frontend:
@@ -104,9 +109,11 @@ To expose a port, you can modify `docker-compose.yaml` and add/change the port b
       - 127.0.0.1:4200:80
     ...
 ```
+
 makes the frontend available at 127.0.0.1:4200.
 
 You can expose the backend and runtime ports with
+
 ```
   hetida-designer-backend:
     ...
@@ -118,6 +125,7 @@ You can expose the backend and runtime ports with
     ports:
       - 127.0.0.1:8090:8090      
 ```
+
 Changing the backend and/or runtime ports is quite a bit more involved. You'll have to also
 update the corresponding application properties in the backend and rebuild the docker image or start the backend locally (see below).
 
@@ -134,7 +142,7 @@ and [docker](https://docs.docker.com/get-docker/).
 
 Get the source code by entering the following commands in your terminal:
 
-```shell script
+```shell
 git clone git@github.com:hetida/hetida-designer.git
 cd hetida-designer
 git checkout develop
@@ -222,6 +230,7 @@ or using maven:
 3. Run the Spring Boot application with maven `mvn spring-boot:run -Dspring.datasource.url="jdbc:postgresql://localhost:5430/hetida_designer_db" -Dorg.hetida.designer.backend.codegen="http://localhost:8090/codegen" -Dorg.hetida.designer.backend.codecheck="http://localhost:8090/codecheck" -Dorg.hetida.designer.backend.runtime="http://localhost:8090/runtime"`.
 
 To run the tests:
+
 1. Navigate to the `backend` folder.
 2. Run `mvn test`.
 
@@ -247,7 +256,7 @@ This assumes existence of the runtime Python virtual environment as described ab
 
 1. Navigate to the `runtime` folder.
 2. Activate virtuale environment with `source venv/bin/activate`.
-2. Run `python -m pytest --cov=hetdesrun tests`.
+3. Run `python -m pytest --cov=hetdesrun tests`.
 
 ## <a name="tutorial"></a> Tutorial
 
@@ -272,7 +281,7 @@ Some Notes:
 * You can delete connections by right-clicking on them and selecting "Delete Link". You can also delete operators (boxes) through their right-click menu.
 
 * Connection lines can be subdivided by left clicking on them and dragging one of the appearing handles to make them go around boxes. 
-
+  
   ![connection_handles](./docs/assets/first_workflow/connection_handles.png)
 
 * Connections must respect types of inputs / outputs (indicated by color). However, some inputs /outputs have type "Any" which means that everything can go out/into them.
@@ -317,8 +326,6 @@ In your local installation, there probably is no adapter installed/available cur
 Then, select the downloaded demo data file. Click "Save" and run "Execute". The result pops up after short time:
 
 ![](./docs/assets/first_workflow/demo_wf_execution_result.png)
-
-
 
 ### Editing and writing components
 
@@ -424,13 +431,13 @@ After confirmation the symbol of your component changes in the component sidebar
 
 ![component_new_revision_button](./docs/assets/first_workflow/component_new_revision_button.png)
 
-## <a name="adapter-system"></a>Notes on the Adapter System
+## <a name="adapter-system"></a>The Adapter System
 
-The adapter system is currently being revised and during this its interface may change quite a bit. It will be fully available and documented in the next release.
+hetida designer provides a flexible adapter system allowing integration of arbitrary data sources and sinks. It allows you to write your own custom adapters and makes them available in user interfaces like the hetida designer test execution dialog.
 
-If you need to write an adapter in the next few weeks your only option is to look into the source code at the moment. If you have any questions, recommendations, or requirements concerning the adapter system we ask you to contact us directly at hetida@neusta-sd-west.de.
+Please start by reading the [instructions to the adapter system](./docs/adapter_system/intro.md) and follow the links to detailed explanations/documentation from there.
 
-## Security Hints
+## <a name="security-hints"></a>Security Hints
 
 Hetida designer allows to execute arbitrary Python code. The included plain execution engine executes workflows in the same processes that serve the runtime component (which typically run as a (non-root) process in a Docker container if you use the runtime docker image). Knowing this, the following security measurements should at minimum be employed when working with the hetida designer:
 
@@ -453,6 +460,6 @@ Hetida designer allows to execute arbitrary Python code. The included plain exec
 * **Wiring**: To run a workflow revision a wiring is necessary. A wiring maps data sources / data sinks via adapters to the inputs/outputs of the workflow revision IO config.
 * **Adapter**: A small piece of software that provides access to data sources or data sinks in order to make them available for execution of workflow revisions. Typically, adapters connect to databases (SQL, NoSQL (e.g. timeseries databases). Currently, the base installation does not come with any adapters. You can of course [write your own adapter implementations](#adapter-system).
 * **Draft Mode /  Released Mode**: Workflow and component revisions can be in either of these modes. They are only editable in Draft Mode. Through **Publishing** they are switched to Release Mode. They can only be used as operators when in Released Mode. This guarantees trackable execution runs. You can of course create a new revision to make further edits.
-**Deprecate**: Workflow and component revisions in Released Mode cannot be deleted, but they can be deprecated. This means they still exist and workflow revisions containing operators belonging to them can still be executed. They are not visible in the sidebars anymore and therefore you cannot create new operators from them. Additionally, the user interface marks existing operatores as deprecated and invites to update to another revision.
-**Delete**: Component and Workflow revisions in Draft Mode can be deleted.
-**Documentation**: To every workflow and component revision a markdown documentation can be written and used.
+  **Deprecate**: Workflow and component revisions in Released Mode cannot be deleted, but they can be deprecated. This means they still exist and workflow revisions containing operators belonging to them can still be executed. They are not visible in the sidebars anymore and therefore you cannot create new operators from them. Additionally, the user interface marks existing operatores as deprecated and invites to update to another revision.
+  **Delete**: Component and Workflow revisions in Draft Mode can be deleted.
+  **Documentation**: To every workflow and component revision a markdown documentation can be written and used.

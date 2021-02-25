@@ -23,13 +23,6 @@
     <io.springfox.springfox-swagger-ui.version>2.9.2</io.springfox.springfox-swagger-ui.version>
     <org.flywaydb.flyway-core>5.1.4</org.flywaydb.flyway-core>
     <org.postgresql.postgresql.version>42.2.4</org.postgresql.postgresql.version>
-
-
-    <!-- db access for flyway plugin -->
-    <database.driver>org.postgresql.Driver</database.driver>
-    <database.url>jdbc:postgresql://psql01.dsa-id.de:5432/hetida_designer_db</database.url>
-    <database.user>hetida_designer_dbuser</database.user>
-    <database.password>b04dbA57879jf09X63</database.password>
   </properties>
 
   <dependencyManagement>

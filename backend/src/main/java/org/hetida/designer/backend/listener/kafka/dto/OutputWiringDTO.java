@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class OutputWiringDTO {
     private String workflow_output_name;
-    private Integer adapter_id;
+    private String adapter_id;
     private String sink_id;
 }

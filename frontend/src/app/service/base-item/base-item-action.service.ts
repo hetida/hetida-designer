@@ -1,8 +1,14 @@
 import { Injectable } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable } from 'rxjs';
-import { first } from 'rxjs/operators';
+import {
+  ConfirmClickEvent,
+  ExecutionDialogData,
+  Wiring,
+  WiringDialogComponent
+} from 'hd-wiring';
+import { iif, Observable, of } from 'rxjs';
+import { finalize, first, switchMap, tap } from 'rxjs/operators';
 import {
   ComponentIODialogComponent,
   ComponentIoDialogData
@@ -12,10 +18,6 @@ import {
   ConfirmDialogData
 } from 'src/app/components/confirmation-dialog/confirm-dialog.component';
 import { CopyBaseItemDialogComponent } from 'src/app/components/copy-base-item-dialog/copy-base-item-dialog.component';
-import {
-  ExecutionDialogComponent,
-  ExecutionDialogData
-} from 'src/app/components/execution-dialog/execution-dialog.component';
 import {
   WorkflowIODialogComponent,
   WorkflowIODialogData
@@ -37,7 +39,6 @@ import * as uuid from 'uuid';
 import { BaseItemDialogData } from '../../model/BaseItemDialogData';
 import { IOItem } from '../../model/io-item';
 import { ComponentEditorService } from '../component-editor.service';
-import { Wiring } from '../http-service/wiring-http.service';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
 import { WorkflowEditorService } from '../workflow-editor.service';
@@ -75,15 +76,70 @@ export class BaseItemActionService {
       title = 'Execute Unknown';
     }
 
-    this.dialog.open<ExecutionDialogComponent, ExecutionDialogData, never>(
-      ExecutionDialogComponent,
-      {
-        data: {
-          title,
-          abstractBaseItem
-        }
+    const dialogRef = this.dialog.open<
+      WiringDialogComponent,
+      ExecutionDialogData,
+      never
+    >(WiringDialogComponent, {
+      data: {
+        title,
+        wiringItem: abstractBaseItem
       }
-    );
+    });
+
+    const componentExecution$ = (
+      executeTestClickEvent: ConfirmClickEvent
+    ): Observable<ComponentBaseItem> => {
+      return this.componentService
+        .bindWiringToComponent(
+          executeTestClickEvent.id,
+          executeTestClickEvent.wiring
+        )
+        .pipe(
+          switchMap(() =>
+            this.componentService.testComponent(
+              executeTestClickEvent.id,
+              executeTestClickEvent.wiring
+            )
+          )
+        );
+    };
+
+    const workflowExecution$ = (
+      executeTestClickEvent: ConfirmClickEvent
+    ): Observable<WorkflowBaseItem> => {
+      return this.workflowService
+        .bindWiringToWorkflow(
+          executeTestClickEvent.id,
+          executeTestClickEvent.wiring
+        )
+        .pipe(
+          switchMap(() =>
+            this.workflowService.testWorkflow(
+              executeTestClickEvent.id,
+              executeTestClickEvent.wiring
+            )
+          )
+        );
+    };
+
+    dialogRef.componentInstance.cancelDialogClick.subscribe(() => {
+      dialogRef.close();
+    });
+
+    dialogRef.componentInstance.confirmClick
+      .pipe(
+        tap(() => dialogRef.close()),
+        switchMap((executeTestClickEvent: ConfirmClickEvent) =>
+          iif(
+            () => abstractBaseItem.type === BaseItemType.WORKFLOW,
+            workflowExecution$(executeTestClickEvent),
+            componentExecution$(executeTestClickEvent)
+          )
+        ),
+        finalize(() => dialogRef.close())
+      )
+      .subscribe();
   }
 
   public editDetails(baseItem: BaseItem): void {
@@ -113,8 +169,14 @@ export class BaseItemActionService {
       }
     });
 
+    // TODO call confirmation mail
     dialogRef.componentInstance.onDelete.subscribe(
-      (toBeDeleteBaseItem: BaseItem) => this.deleteAction(toBeDeleteBaseItem)
+      (toBeDeleteBaseItem: BaseItem) =>
+        this.delete(toBeDeleteBaseItem).subscribe(isDeleted => {
+          if (isDeleted) {
+            dialogRef.close();
+          }
+        })
     );
 
     dialogRef
@@ -180,9 +242,9 @@ export class BaseItemActionService {
     });
   }
 
-  public delete(abstractBaseItem: AbstractBaseItem) {
+  public delete(abstractBaseItem: AbstractBaseItem): Observable<boolean> {
     if (this.isReleased(abstractBaseItem)) {
-      return;
+      return of(false);
     }
 
     const dialogRef = this.dialog.open<
@@ -201,11 +263,16 @@ export class BaseItemActionService {
       }
     });
 
-    dialogRef.afterClosed().subscribe(async isConfirmed => {
-      if (isConfirmed) {
-        await this.deleteAction(abstractBaseItem);
-      }
-    });
+    return dialogRef.afterClosed().pipe(
+      switchMap(isConformed => {
+        if (isConformed) {
+          return this.deleteAction(abstractBaseItem).pipe(
+            switchMap(() => of(isConformed))
+          );
+        }
+        return of(isConformed);
+      })
+    );
   }
 
   public isReleased(abstractBaseItem: AbstractBaseItem) {
@@ -418,13 +485,14 @@ export class BaseItemActionService {
     return isIncomplete;
   }
 
-  public async deleteAction(abstractBaseItem: AbstractBaseItem) {
+  public deleteAction(
+    abstractBaseItem: AbstractBaseItem
+  ): Observable<WorkflowBaseItem | ComponentBaseItem> {
     this.tabItemService.deselectActiveBaseItem();
     if (abstractBaseItem.type === BaseItemType.WORKFLOW) {
-      this.workflowService.deleteWorkflow(abstractBaseItem.id);
-    } else {
-      this.componentService.deleteComponent(abstractBaseItem.id);
+      return this.workflowService.deleteWorkflow(abstractBaseItem.id);
     }
+    return this.componentService.deleteComponent(abstractBaseItem.id);
   }
 
   private async copyWorkflow(

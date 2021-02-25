@@ -10,8 +10,11 @@ import java.util.UUID;
 public class InputWiringDTO {
     private UUID id;
     private String workflowInputName;
-    private Integer adapterId;
-    private String sourceId;
+    private String adapterId;
+    private String refId;
+    private String refIdType;
+    private String refKey;
+    private String type;
     @JsonInclude()
     private Map<String, String> filters; 
     private String value;

@@ -28,7 +28,7 @@ public class WorkflowExecutionListener {
     private final ExecutionResultConverter executionResultConverter;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${org.hetida.designer.backend.listener.kafka.execResultTopic:h4w_designer_job_result}")
+    @Value("${org.hetida.designer.backend.listener.kafka.execResultTopic:designer_job_result}")
     private String resultTopic;
 
     public WorkflowExecutionListener(ExecutionConverter executionConverter, WorkflowExecutionService workflowExecutionService,
@@ -39,7 +39,7 @@ public class WorkflowExecutionListener {
         this.kafkaService = kafkaService;
     }
 
-    @KafkaListener(topics = "${org.hetida.designer.backend.listener.kafka.execTopic:h4w_designer_initialize_job}",
+    @KafkaListener(topics = "${org.hetida.designer.backend.listener.kafka.execTopic:designer_initialize_job}",
                    autoStartup = "${org.hetida.designer.backend.listener.kafka.enabled}")
     public void processExecution(@Payload String content,
                                  @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key){

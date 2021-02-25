@@ -1,0 +1,12 @@
+[MASTER]
+ignore=tests
+
+[MESSAGES CONTROL]
+disable=too-many-locals,invalid-name,missing-function-docstring,missing-class-docstring,missing-module-docstring,too-few-public-methods,too-many-arguments,len-as-condition
+
+[SIMILARITIES]
+# Minimum lines number of a similarity. Disabled because of repetitive json data.
+min-similarity-lines=100
+
+# Ignore imports when computing similarities.
+ignore-imports=yes

@@ -28,8 +28,8 @@ def test_wiring_basics(input_json_with_wiring):
     input_json_with_wiring["workflow_wiring"]["input_wirings"] = [
         {
             "workflow_input_name": "foo",
-            "adapter_id": "direct_provisioning",
-            "source_id": "TEST-ID",
+            "adapter_id": 1,
+            "ref_id": "TEST-ID",
             "filters": {"value": 42},
         }
     ]

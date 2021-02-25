@@ -20,3 +20,12 @@ runtime/.coverage*
 runtime/.coverage.xml
 runtime/upload_settings/*
 runtime/settings/*
+demo-adapter-python/**/lab
+demo-adapter-python/**/venv
+demo-adapter-python/pylint_report.txt
+demo-adapter-python/test_results.xml
+demo-adapter-python/.coverage*
+demo-adapter-python/.coverage.xml
+demo-adapter-python/upload_settings/*
+demo-adapter-python/settings/*
+.vscode/.ropeproject/objectdb

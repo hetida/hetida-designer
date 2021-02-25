@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class AdapterDTO {
-    private Integer id;
+    private String id;
     private String name;
+    private String url;
 }

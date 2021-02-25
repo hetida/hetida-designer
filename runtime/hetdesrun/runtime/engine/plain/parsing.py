@@ -242,7 +242,7 @@ def recursively_parse_workflow_node(
                 path_prefix=path_prefix + ":" + node.id,
             )
         else:  # ComponentNode
-            assert isinstance(sub_input_node, ComponentNode)  # hint for mypy
+            assert isinstance(sub_input_node, ComponentNode)  # hint for mypy # nosec
             new_sub_node = parse_component_node(
                 sub_input_node, component_dict, code_module_dict, path_prefix
             )

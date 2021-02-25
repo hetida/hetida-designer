@@ -58,6 +58,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
   }
 
   public onOk(): void {
+    this.infoForm.markAllAsTouched();
     if (this.infoForm.invalid) {
       return;
     }
@@ -66,7 +67,6 @@ export class CopyBaseItemDialogComponent implements OnInit {
 
   public _onDelete(): void {
     this.onDelete.next(this.data.abstractBaseItem);
-    this.dialogRef.close();
   }
 
   /**

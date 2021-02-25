@@ -1,9 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Wiring } from 'hd-wiring';
 import { Observable } from 'rxjs';
 import { ComponentBaseItem } from '../../model/component-base-item';
 import { ConfigService } from '../configuration/config.service';
-import { Wiring } from './wiring-http.service';
 
 @Injectable({
   providedIn: 'root'

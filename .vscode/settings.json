@@ -14,12 +14,14 @@
     "search.exclude": {
         "**/.git": true,
         "**/runtime/venv": true,
+        "**/demo-adapter-python/venv": true,
         "**/.mypy_cache": true,
         "**/.pytest_cache": true,
         "**/.coverage": true
     },
     "files.exclude": {
         "**/runtime/venv": true,
+        "**/demo-adapter-python/venv": true,
         "**/.mypy_cache": true,
         "**/.pytest_cache": true,
         "**/.coverage": true
@@ -31,5 +33,6 @@
     ],
     "mypy.configFile": "./runtime/mypy.ini",
     "python.linting.mypyPath": "./runtime/venv/bin/mypy",
-    "python.linting.mypyEnabled": true
+    "python.linting.mypyEnabled": true,
+    "python.linting.enabled": true
 }

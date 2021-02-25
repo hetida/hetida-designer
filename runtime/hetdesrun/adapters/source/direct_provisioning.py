@@ -13,7 +13,8 @@ from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
 
 
 def load_directly_provisioned_data(
-    wf_input_name_to_filtered_source_mapping_dict: Dict[str, FilteredSource]
+    wf_input_name_to_filtered_source_mapping_dict: Dict[str, FilteredSource],
+    adapter_key: str,  # pylint: disable=unused-argument
 ) -> Dict[str, Any]:
 
     try:

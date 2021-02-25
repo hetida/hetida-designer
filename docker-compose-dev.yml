@@ -11,28 +11,35 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-frontend
-    image: hetida/designer-frontend
+    #image: hetida/designer-frontend
     ports:
       - 80:80
     depends_on:
       - hetida-designer-backend
+      - hetida-designer-demo-adapter-python
 
   hetida-designer-backend:
     build:
       context: .
       dockerfile: Dockerfile-backend
-    image: hetida/designer-backend
+    #image: hetida/designer-backend
+    environment:
+      - org.hetida.designer.backend.installed.adapters=demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,demo-adapter-java|Java-Demo-Adapter|http://localhost:8091/adapter|http://hetida-designer-demo-adapter-java:8091/adapter
     depends_on:
       - hetida-designer-db
       - hetida-designer-runtime
+    ports:
+      - 8080:8080
 
   hetida-designer-runtime:
     build:
       context: .
       dockerfile: Dockerfile-runtime
-    image: hetida/designer-runtime
+    #image: hetida/designer-runtime
     volumes:
       - designer_obj_repo:/mnt/obj_repo
+    ports:
+      - 8090:8090
 
   hetida-designer-db:
     image: postgres
@@ -42,3 +49,21 @@ services:
       POSTGRES_DB: hetida_designer_db
       POSTGRES_USER: hetida_designer_dbuser
       POSTGRES_PASSWORD: hetida_designer_dbpasswd
+    ports:
+      - "5430:5432"
+
+  hetida-designer-demo-adapter-java:
+    build:
+      context: .
+      dockerfile: Dockerfile-demo-adapter-java
+    image: hetida/designer-demo-adapter-java
+    ports:
+      - 8091:8091
+
+  hetida-designer-demo-adapter-python:
+    build:
+      context: .
+      dockerfile: Dockerfile-demo-adapter-python
+    image: hetida/designer-demo-adapter-python
+    ports:
+      - 8092:8092

@@ -63,6 +63,35 @@ class RuntimeConfig(BaseSettings):
         description="the password of the service user",
     )
 
+    # Keycloak Auth for generic rest adapters
+    hd_generic_rest_adapter_auth_use_keycloak: bool = Field(
+        False,
+        env="HD_GENERIC_REST_ADAPTER_AUTH_USE_KEYCLOAK",
+        description=(
+            "Whether Keycloak is used for requests from runtime to generic rest adapter endpoints"
+        ),
+    )
+    hd_generic_rest_adapter_keycloak_auth_url: Optional[str] = Field(
+        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_AUTH_URL"
+    )
+    hd_generic_rest_adapter_keycloak_realm: Optional[str] = Field(
+        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_REALM"
+    )
+    hd_generic_rest_adapter_keycloak_runtime_client_id: Optional[str] = Field(
+        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_CLIENT_ID"
+    )
+    hd_generic_rest_adapter_keycloak_runtime_username: Optional[str] = Field(
+        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_USERNAME"
+    )
+    hd_generic_rest_adapter_keycloak_runtime_password: Optional[str] = Field(
+        None,
+        env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_PASSWORD",
+        description="the password of the service user",
+    )
+    hd_generic_rest_adapter_keycloak_runtime_audience: Optional[str] = Field(
+        "account", env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_AUDIENCE"
+    )
+
     # For scripts (e.g. component deployment)
     hd_backend_api_url: str = Field(
         "http://hetida-designer-backend:8080/api/",
@@ -80,13 +109,20 @@ class RuntimeConfig(BaseSettings):
         ),
     )
     hd_backend_basic_auth_user: Optional[str] = Field(
-        None, env="HETIDA_DESIGNER_BASIC_AUTH_USER", description="Basic Auth User",
+        None,
+        env="HETIDA_DESIGNER_BASIC_AUTH_USER",
+        description="Basic Auth User",
     )
     hd_backend_basic_auth_password: Optional[str] = Field(
-        None, env="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD", description="Basic Auth User",
+        None,
+        env="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD",
+        description="Basic Auth User",
     )
     hd_backend_verify_certs: bool = Field(
         True, env="HETIDA_DESIGNER_BACKEND_VERIFY_CERTS"
+    )
+    hd_adapters_verify_certs: bool = Field(
+        True, env="HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS"
     )
 
     # pylint: disable=no-self-argument,no-self-use

@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
@@ -11,32 +11,34 @@ describe('BaseItemContextMenuComponent', () => {
   let component: BaseItemContextMenuComponent;
   let fixture: ComponentFixture<BaseItemContextMenuComponent>;
 
-  beforeEach(async(() => {
-    const baseItemActionService = jasmine.createSpyObj<BaseItemActionService>(
-      'BaseItemActionService',
-      ['isIncomplete']
-    );
+  beforeEach(
+    waitForAsync(() => {
+      const baseItemActionService = jasmine.createSpyObj<BaseItemActionService>(
+        'BaseItemActionService',
+        ['isIncomplete']
+      );
 
-    const tabItemService = jasmine.createSpyObj<TabItemService>(
-      'TabItemService',
-      ['addBaseItemTab']
-    );
+      const tabItemService = jasmine.createSpyObj<TabItemService>(
+        'TabItemService',
+        ['addBaseItemTab']
+      );
 
-    TestBed.configureTestingModule({
-      imports: [MaterialModule, NoopAnimationsModule],
-      declarations: [BaseItemContextMenuComponent],
-      providers: [
-        {
-          provide: BaseItemActionService,
-          useValue: baseItemActionService
-        },
-        {
-          provide: TabItemService,
-          useValue: tabItemService
-        }
-      ]
-    }).compileComponents();
-  }));
+      TestBed.configureTestingModule({
+        imports: [MaterialModule, NoopAnimationsModule],
+        declarations: [BaseItemContextMenuComponent],
+        providers: [
+          {
+            provide: BaseItemActionService,
+            useValue: baseItemActionService
+          },
+          {
+            provide: TabItemService,
+            useValue: tabItemService
+          }
+        ]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(BaseItemContextMenuComponent);

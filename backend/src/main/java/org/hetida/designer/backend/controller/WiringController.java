@@ -103,7 +103,7 @@ public class WiringController {
     )
     @PutMapping(value ="/{id}")
     public ResponseEntity<WiringDTO> updateWiring(@PathVariable("id") UUID id, @RequestBody WiringDTO wiringDTO) {
-        log.info("create a new wiring");
+        log.info("update wiring");
         wiringDTO.setId(id);
         Wiring wiring = this.wiringConverter.toWiring(wiringDTO);
         WiringDTO updatedWiringDTO = this.wiringConverter.toWiringDto(this.wiringService.update(wiring));

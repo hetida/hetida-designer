@@ -137,7 +137,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   delete() {
-    this.baseItemAction.delete(this.baseItem);
+    this.baseItemAction.delete(this.baseItem).subscribe();
   }
 
   editDetails(): void {

@@ -17,5 +17,5 @@ class AdapterOutputDataError(AdapterHandlingException):
 class AdapterClientWiringInvalidError(AdapterHandlingException):
     """Should be raised if wiring cannot be understood by adapter
 
-    For example the expected filters may depend on the source_id for an input wiring.
+    For example the expected filters may depend on the ref_id for an input wiring.
     """

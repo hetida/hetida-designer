@@ -26,8 +26,17 @@ public class InputWiring {
     @Column(name = "AdapterId")
     private String adapterId;
 
-    @Column(name = "SourceId")
-    private String sourceId;
+    @Column(name = "refid")
+    private String refId;
+
+    @Column(name = "refidtype")
+    private String refIdType;
+
+    @Column(name = "refkey")
+    private String refKey;
+
+    @Column(name = "type")
+    private String type;
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "inputWiringId", orphanRemoval = true)

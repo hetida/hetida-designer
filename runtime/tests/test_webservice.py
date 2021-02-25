@@ -136,8 +136,8 @@ base_workflow_json = {
         "output_wirings": [
             {
                 "workflow_output_name": "z",
-                "adapter_id": "direct_provisioning",
-                "sink_id": "TEST-ID",
+                "adapter_id": 1,
+                "ref_id": "TEST-ID",
             }
         ],
     },
@@ -257,16 +257,16 @@ series_input_workflow_json = {
         "input_wirings": [
             {
                 "workflow_input_name": "x",
-                "adapter_id": "direct_provisioning",
-                "source_id": "TEST-ID",
+                "adapter_id": 1,
+                "ref_id": "TEST-ID",
                 "filters": {"value": [1.0, 2.0, 3.5]},
             }
         ],
         "output_wirings": [
             {
                 "workflow_output_name": "z",
-                "adapter_id": "direct_provisioning",
-                "sink_id": "TEST-ID",
+                "adapter_id": 1,
+                "ref_id": "TEST-ID",
             }
         ],
     },
@@ -381,22 +381,22 @@ def main(*, x, y):
         "input_wirings": [
             {
                 "workflow_input_name": "x",
-                "adapter_id": "direct_provisioning",
-                "source_id": "TEST-ID",
+                "adapter_id": 1,
+                "ref_id": "TEST-ID",
                 "filters": {"value": {"a": [1.0, 2.0, 3.5]}},
             },
             {
                 "workflow_input_name": "y",
-                "adapter_id": "direct_provisioning",
-                "source_id": "TEST-ID",
+                "adapter_id": 1,
+                "ref_id": "TEST-ID",
                 "filters": {"value": 2.0},
             },
         ],
         "output_wirings": [
             {
                 "workflow_output_name": "z",
-                "adapter_id": "direct_provisioning",
-                "sink_id": "TEST-ID",
+                "adapter_id": 1,
+                "ref_id": "TEST-ID",
             }
         ],
     },
@@ -520,8 +520,8 @@ plot_workflow_json = {
         "output_wirings": [
             {
                 "workflow_output_name": "z",
-                "adapter_id": "direct_provisioning",
-                "sink_id": "TEST-ID",
+                "adapter_id": 1,
+                "ref_id": "TEST-ID",
             }
         ],
     },

@@ -16,3 +16,5 @@ runtime/.pytest_cache
 runtime/.mypy_cache
 runtime/**/venv
 runtime/**/lab
+demo-adapter-python/**/lab
+demo-adapter-python/**/venv

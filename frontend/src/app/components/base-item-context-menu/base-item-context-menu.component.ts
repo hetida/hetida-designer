@@ -6,7 +6,6 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
   ViewChild
 } from '@angular/core';
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
@@ -21,8 +20,7 @@ import { TabItemService } from '../../service/tab-item/tab-item.service';
   styleUrls: ['./base-item-context-menu.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BaseItemContextMenuComponent
-  implements OnInit, AfterViewInit, OnDestroy {
+export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   @ViewChild(MatMenuTrigger) readonly _trigger: MatMenuTrigger;
   @ViewChild(MatMenu) readonly _menu: MatMenu;
   @ViewChild('invisibleTrigger') _elementRef: ElementRef;
@@ -30,23 +28,25 @@ export class BaseItemContextMenuComponent
   _isNotPublished: boolean;
   baseItemHasEmptyInputsAndOutputs: boolean;
 
+  _baseItem: BaseItem;
   @Input()
-  baseItem: BaseItem;
+  set baseItem(baseItem: BaseItem) {
+    this._isIncomplete$ = this.baseItemActionsService.isIncomplete(baseItem);
+    this._isNotPublished = baseItem.state === RevisionState.DRAFT;
+    this.baseItemHasEmptyInputsAndOutputs =
+      baseItem.inputs.length === 0 && baseItem.outputs.length === 0;
+    this._baseItem = baseItem;
+  }
+
+  get baseItem(): BaseItem {
+    return this._baseItem;
+  }
 
   constructor(
     public readonly changeDetector: ChangeDetectorRef,
     private readonly baseItemActionsService: BaseItemActionService,
     private readonly tabItemService: TabItemService
   ) {}
-
-  ngOnInit(): void {
-    this._isIncomplete$ = this.baseItemActionsService.isIncomplete(
-      this.baseItem
-    );
-    this._isNotPublished = this.baseItem.state === RevisionState.DRAFT;
-    this.baseItemHasEmptyInputsAndOutputs =
-      this.baseItem.inputs.length === 0 && this.baseItem.outputs.length === 0;
-  }
 
   ngAfterViewInit(): void {
     this.changeDetector.detectChanges();
@@ -85,7 +85,7 @@ export class BaseItemContextMenuComponent
   }
 
   delete() {
-    this.baseItemActionsService.delete(this.baseItem);
+    this.baseItemActionsService.delete(this.baseItem).subscribe();
   }
 
   async execute() {

@@ -793,7 +793,7 @@
                         "2020-05-08T01:00:00.000Z": 2.8435283639
                     }
                 },
-                "source_id": null,
+                "ref_id": null,
                 "workflow_input_name": "inp_series"
             },
             {
@@ -801,7 +801,7 @@
                 "filters": {
                     "value": "1.3"
                 },
-                "source_id": null,
+                "ref_id": null,
                 "workflow_input_name": "limit"
             },
             {
@@ -809,7 +809,7 @@
                 "filters": {
                     "value": "30"
                 },
-                "source_id": null,
+                "ref_id": null,
                 "workflow_input_name": "num_days_forecast"
             },
             {
@@ -817,34 +817,34 @@
                 "filters": {
                     "value": "0.25"
                 },
-                "source_id": null,
+                "ref_id": null,
                 "workflow_input_name": "postive_step_size"
             }
         ],
         "output_wirings": [
             {
                 "adapter_id": 1,
-                "sink_id": null,
+                "ref_id": null,
                 "workflow_output_name": "before_step_detect"
             },
             {
                 "adapter_id": 1,
-                "sink_id": null,
+                "ref_id": null,
                 "workflow_output_name": "intercept"
             },
             {
                 "adapter_id": 1,
-                "sink_id": null,
+                "ref_id": null,
                 "workflow_output_name": "limit_violation_timestamp"
             },
             {
                 "adapter_id": 1,
-                "sink_id": null,
+                "ref_id": null,
                 "workflow_output_name": "rul_regression_result_plot"
             },
             {
                 "adapter_id": 1,
-                "sink_id": null,
+                "ref_id": null,
                 "workflow_output_name": "slope"
             }
         ]

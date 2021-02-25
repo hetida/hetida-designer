@@ -45,12 +45,10 @@ export class ProtocolViewerComponent implements AfterViewInit {
   private readonly HOST_HEIGHT_SHRINKED = '250px';
   private readonly HOST_HEIGHT_EXPANDED = 'calc(100vh - 33px)';
 
-  @ViewChild('plotlyTemplate', { static: true }) plotlyTemplate: TemplateRef<
-    any
-  >;
-  @ViewChild('simpleTemplate', { static: true }) simpleTemplate: TemplateRef<
-    any
-  >;
+  @ViewChild('plotlyTemplate', { static: true })
+  plotlyTemplate: TemplateRef<any>;
+  @ViewChild('simpleTemplate', { static: true })
+  simpleTemplate: TemplateRef<any>;
 
   @HostBinding('style.height') hostHeight = this.HOST_HEIGHT_SHRINKED;
   @HostBinding('class.visible') get visible() {

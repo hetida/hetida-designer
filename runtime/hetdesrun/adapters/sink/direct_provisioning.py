@@ -13,7 +13,11 @@ def send_directly_provisioned_data(
         str, FilteredSink
     ],  # pylint: disable=unused-argument
     wf_output_name_to_value_mapping_dict: Dict[str, Any],
+    adapter_key: str,  # pylint: disable=unused-argument
 ) -> Dict[str, Any]:
     # Direct provisioning when sending works by simply returning the data.
     # A custom adapter with a true data sink would instead return None.
-    return wf_output_name_to_value_mapping_dict
+    return {
+        key: wf_output_name_to_value_mapping_dict[key]
+        for key in wf_output_name_to_filtered_sink_mapping_dict.keys()
+    }

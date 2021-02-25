@@ -28,7 +28,11 @@ async def resolve_and_load_data_from_wiring(
             adapter_key,
             {
                 input_wiring.workflow_input_name: FilteredSource(
-                    source_id=input_wiring.source_id, filters=input_wiring.filters
+                    ref_id=input_wiring.ref_id,
+                    ref_id_type=input_wiring.ref_id_type,
+                    ref_key=input_wiring.ref_key,
+                    type=input_wiring.type,
+                    filters=input_wiring.filters,
                 )
                 for input_wiring in input_wirings_of_adapter
             },
@@ -52,7 +56,6 @@ async def resolve_and_send_data_from_wiring(
         wirings_by_adapter[output_wiring.adapter_id].append(output_wiring)
 
     all_data_not_send_by_adapter = {}
-
     # data is loaded adapter-wise:
     for adapter_key, output_wirings_of_adapter in wirings_by_adapter.items():
         # call adapter with these wirings / sources
@@ -62,15 +65,17 @@ async def resolve_and_send_data_from_wiring(
             adapter_key,
             {
                 output_wiring.workflow_output_name: FilteredSink(
-                    sink_id=output_wiring.sink_id, filters={}
+                    ref_id=output_wiring.ref_id,
+                    ref_id_type=output_wiring.ref_id_type,
+                    ref_key=output_wiring.ref_key,
+                    type=output_wiring.type,
+                    filters={},
                 )
                 for output_wiring in output_wirings_of_adapter
             },
             result_data,
         )
 
-        if (
-            data_not_send_by_adapter is not None
-        ):  # and adapter_key in [1, "direct_provisioning"]?
+        if data_not_send_by_adapter is not None:
             all_data_not_send_by_adapter.update(data_not_send_by_adapter)
     return all_data_not_send_by_adapter
