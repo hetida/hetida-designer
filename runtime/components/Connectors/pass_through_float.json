@@ -1,16 +1,16 @@
 {
-    "name": "Pass Through (Integer)",
+    "name": "Pass Through (Float)",
     "description": "Just outputs its input value",
     "inputs": [
         {
             "name": "input",
-            "type": "INT"
+            "type": "FLOAT"
         }
     ],
     "outputs": [
         {
             "name": "output",
-            "type": "INT"
+            "type": "FLOAT"
         }
     ]
 }

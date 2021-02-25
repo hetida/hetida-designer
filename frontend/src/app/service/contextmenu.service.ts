@@ -51,7 +51,7 @@ export class ContextmenuService {
    * Open a context menü.
    *
    * Uses angular material overlay API to open the menu, global position strategy will be used,
-   * normaly you would like to open a context menu near the mouse position, therefore supporting other strategies are not planed.
+   * normally you would like to open a context menu near the mouse position, therefore supporting other strategies are not planed.
    *
    *  calls internally "registerContextMenu" so dont need to call it.
    *

@@ -36,8 +36,8 @@
         <mat-option
           *ngFor="let category of filteredCategories$ | async"
           [value]="category"
-          >{{ category }}</mat-option
-        >
+          >{{ category }}
+        </mat-option>
       </mat-autocomplete>
     </mat-form-field>
 
@@ -65,6 +65,12 @@
       <mat-error [hdErrorVisual]="infoForm.get('tag')"></mat-error>
     </mat-form-field>
   </form>
+  <div>
+    <small style="font-size: 0.8em; color: gray"
+      >{{ data.abstractBaseItem.type | titlecase }} revision ID:
+      {{ data.abstractBaseItem.id | titlecase }}</small
+    >
+  </div>
 </div>
 <div
   [ngClass]="{ 'copy-base-item--with-delete-button': data.showDeleteButton }"

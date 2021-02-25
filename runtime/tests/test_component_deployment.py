@@ -51,7 +51,6 @@ def test_workflow_deployment(caplog):
 
     # at least tries to upload many workflows
     assert patched_put.call_count > 3
-
     # Test logging when posting does not work
     response_mock.status_code = 400
     with mock.patch(
@@ -61,4 +60,3 @@ def test_workflow_deployment(caplog):
         post_workflows_from_directory("./workflows")
         assert "COULD NOT POST WORKFLOW" in caplog.text
         assert "COULD NOT PUT WORKFLOW DOCUMENTATION" in caplog.text
-

@@ -4,8 +4,6 @@ import json
 import os
 from uuid import uuid4
 
-from unittest import mock
-
 import pytest
 
 from starlette.testclient import TestClient
@@ -135,7 +133,7 @@ def gen_execution_input_from_single_component(
             input_wirings=[
                 InputWiring(
                     workflow_input_name=comp_input.name,
-                    adapter_id="direct_provisioning",
+                    adapter_id=1,
                     filters={"value": direct_provisioning_data_dict[comp_input.name]},
                 )
                 for comp_input in comp_inputs
@@ -143,7 +141,7 @@ def gen_execution_input_from_single_component(
             output_wirings=[
                 OutputWiring(
                     workflow_output_name=comp_output.name,
-                    adapter_id="direct_provisioning",
+                    adapter_id=1,
                 )
                 for comp_output in comp_outputs
             ],
@@ -157,7 +155,8 @@ def run_single_component(component_json_file_path, input_data_dict):
     response = client.post(
         "/runtime",
         data=gen_execution_input_from_single_component(
-            component_json_file_path, input_data_dict,
+            component_json_file_path,
+            input_data_dict,
         ).json(),
     )
     return WorkflowExecutionResult(**response.json())
@@ -188,7 +187,8 @@ def test_null_values_pass_series_pass_through():
     }
 
     exec_result = run_single_component(
-        "./components/Connectors/pass_through_series.json", {"input": [1.2, 2.5, None]},
+        "./components/Connectors/pass_through_series.json",
+        {"input": [1.2, 2.5, None]},
     )
     assert exec_result.output_results_by_output_name["output"] == {
         "0": 1.2,

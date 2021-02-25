@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
-import { debounceTime, filter, takeUntil } from 'rxjs/operators';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ThemeService } from 'src/app/service/theme/theme.service';
 import { environment } from '../../../environments/environment';
@@ -25,10 +25,9 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
   public lastSaved: string;
 
   private readonly _ngDestroyNotifier = new Subject();
-  private readonly autosave$ = new Subject<void>();
-  private readonly autosaveTimer$ = this.autosave$.pipe(
-    debounceTime(environment.autosaveTimer),
-    filter(_ => this.code !== this.lastSaved)
+  private readonly _autoSave$ = new Subject<void>();
+  private readonly _autoSaveTimer$ = this._autoSave$.pipe(
+    debounceTime(environment.autosaveTimer)
   );
 
   private readonly themeMap: Map<string, string> = new Map<string, string>([
@@ -42,10 +41,8 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     this._componentBaseItem = componentBaseItem;
     this.code = this.componentBaseItem.code;
     this.lastSaved = this.componentBaseItem.code;
-    this.editorOptions = {
-      ...this.editorOptions,
-      readOnly: this.componentBaseItem.state === RevisionState.RELEASED
-    };
+    this.editorOptions.readOnly =
+      this.componentBaseItem.state === RevisionState.RELEASED;
   }
 
   get componentBaseItem(): ComponentBaseItem {
@@ -72,12 +69,13 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
         };
       });
 
-    this.autosaveTimer$.subscribe(_ => {
-      this.componentService.updateComponent({
-        ...this.componentBaseItem,
-        code: this.code
-      });
-      this.lastSaved = this.code;
+    this._autoSaveTimer$.subscribe(_ => {
+      if (this.lastSaved !== this.code) {
+        this.componentService.updateComponent({
+          ...this.componentBaseItem,
+          code: this.code
+        });
+      }
     });
   }
 
@@ -87,6 +85,6 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
 
   public set code(code: string) {
     this.codeCopy = code;
-    this.autosave$.next();
+    this._autoSave$.next();
   }
 }

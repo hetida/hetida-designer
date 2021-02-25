@@ -26,7 +26,6 @@ public class AdapterControllerTest extends AbstractTest {
     @Before
     public void setup(){
         super.setUp();
-        //...
     }
 
     @Test
@@ -39,22 +38,10 @@ public class AdapterControllerTest extends AbstractTest {
         List<ModulAdapterDTO> adapters = objectMapper.readValue(getMvcResultContent, new TypeReference<List<ModulAdapterDTO>>(){});
         assertNotNull(adapters);
         assertEquals(1, adapters.size());
-        assertEquals("H4W-HD-Adapter", adapters.get(0).getId());
+        assertEquals("DEMO-HD-Adapter", adapters.get(0).getName());
+        assertEquals("DEMO-HD-Adapter", adapters.get(0).getId());
+        assertEquals("http://localhost:8091/adapter", adapters.get(0).getUrl());
+        assertEquals("http://localhost:8091/adapter", adapters.get(0).getInternalUrl());
     }
 
-    @Test
-    public void testGetMetadataForNonExistingAdapter() throws Exception{
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(ADAPTER_PATH + "/666/metadata")
-                .accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
-        int status = mvcResult.getResponse().getStatus();
-        assertEquals(404, status);
-    }
-
-    @Test
-    public void testGetMetadataForExistingAdapterWithoutImplementation() throws Exception{
-        MvcResult mvcResult = mvc.perform(MockMvcRequestBuilders.get(ADAPTER_PATH + "/1/metadata")
-                .accept(MediaType.APPLICATION_JSON_VALUE)).andReturn();
-        int status = mvcResult.getResponse().getStatus();
-        assertEquals(500, status);
-    }
 }

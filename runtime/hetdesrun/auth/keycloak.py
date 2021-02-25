@@ -23,7 +23,6 @@ import threading
 from requests import get, post, HTTPError
 
 from jose import jwt, JOSEError
-
 from pydantic import (  # pylint: disable=no-name-in-module
     BaseModel,
     Field,
@@ -226,7 +225,7 @@ class KeycloakAccessTokenManager:
     def get_access_token(self) -> str:
         """Provides a valid access token"""
         self._obtain_or_refresh_token_info()
-        assert self._current_token_info is not None  # for mypy
+        assert self._current_token_info is not None  # for mypy # nosec
         return self._current_token_info.access_token
 
 

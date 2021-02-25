@@ -1,0 +1,17 @@
+{
+  "id": "root.plantB.masterdata",
+  "masterdata": [
+    {
+      "name": "plant_construction_date",
+      "value": "2017-08-22T00:00:00.000Z"
+    },
+    {
+      "name": "plant_country",
+      "value": "DE"
+    },
+    {
+      "name": "num_current_employees",
+      "value": 13
+    }
+  ]
+}

@@ -7,15 +7,39 @@
   "folders": [
     {
       "path": "../frontend",
-      "name": "hetida Frontend"
+      "name": "Hetida Frontend"
     },
     {
       "path": "../backend",
-      "name": "hetida Backend"
+      "name": "Hetida Backend"
+    },
+    {
+      "path": "../demo-adapter-java",
+      "name": "Demo Adapter Java"
+    },
+    {
+      "path": "../demo-adapter-python",
+      "name": "Demo Adapter Python"
     },
     {
       "path": "../runtime",
-      "name": "hetida Runtime"
+      "name": "Hetida Runtime"
     }
-  ]
+  ],
+  "settings": {
+    "typescript.tsdk": "hetida Frontend/node_modules/typescript/lib",
+    "sqltools.connections": [
+      {
+        "previewLimit": 50,
+        "server": "127.0.0.1",
+        "port": 5430,
+        "driver": "PostgreSQL",
+        "name": "hetida db",
+        "database": "hetida_designer_db",
+        "username": "hetida_designer_dbuser",
+        "password": "hetida_designer_dbpasswd"
+      }
+    ],
+    "java.configuration.updateBuildConfiguration": "automatic"
+  }
 }

@@ -25,6 +25,15 @@ public class OutputWiring {
     @Column(name = "AdapterId")
     private String adapterId;
 
-    @Column(name = "SinkId")
-    private String sinkId;
+    @Column(name = "Refid")
+    private String refId;
+
+    @Column(name = "refidtype")
+    private String refIdType;
+
+    @Column(name = "refkey")
+    private String refKey;
+
+    @Column(name = "type")
+    private String type;
 }

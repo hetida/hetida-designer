@@ -1,0 +1,13 @@
+{
+  "configurations": [
+      {
+          "type": "java",
+          "name": "Demo Adapter",
+          "request": "launch",
+          "cwd": "${workspaceFolder}",
+          "console": "internalConsole",
+          "mainClass": "org.hetida.designer.demo.adapter.AdapterApplication",
+          "projectName": "demo adapter",
+      }
+  ]
+}

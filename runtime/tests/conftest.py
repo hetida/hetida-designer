@@ -118,8 +118,8 @@ def input_json_with_wiring():
         "output_wirings": [
             {
                 "workflow_output_name": "z",
-                "adapter_id": "direct_provisioning",
-                "sink_id": "TEST-ID",
+                "adapter_id": 1,
+                "ref_id": "TEST-ID",
             }
         ],
     }
@@ -164,16 +164,16 @@ def input_json_with_wiring_with_input():
         "input_wirings": [
             {
                 "workflow_input_name": "val_inp",
-                "adapter_id": "direct_provisioning",
-                "source_id": "TEST-ID",
+                "adapter_id": 1,
+                "ref_id": "TEST-ID",
                 "filters": {"value": 32},
             }
         ],
         "output_wirings": [
             {
                 "workflow_output_name": "z",
-                "adapter_id": "direct_provisioning",
-                "sink_id": "TEST-ID",
+                "adapter_id": 1,
+                "ref_id": "TEST-ID",
             }
         ],
     }

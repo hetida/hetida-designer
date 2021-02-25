@@ -418,6 +418,6 @@ def obtain_all_nodes(wf: Workflow) -> List[ComputationNode]:
         if isinstance(node, Workflow):
             all_nodes = all_nodes + obtain_all_nodes(node)
         else:
-            assert isinstance(node, ComputationNode)  # hint for mypy
+            assert isinstance(node, ComputationNode)  # hint for mypy # nosec
             all_nodes.append(node)
     return all_nodes

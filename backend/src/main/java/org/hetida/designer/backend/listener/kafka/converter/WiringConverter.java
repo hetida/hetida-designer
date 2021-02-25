@@ -25,7 +25,7 @@ public class WiringConverter {
     private InputWiringDTO convertInputWiring(org.hetida.designer.backend.listener.kafka.dto.InputWiringDTO inputWiring){
         InputWiringDTO result = new InputWiringDTO();
         result.setAdapterId(inputWiring.getAdapter_id());
-        result.setSourceId(inputWiring.getSource_id());
+        result.setRefId(inputWiring.getSource_id());
         result.setWorkflowInputName(inputWiring.getWorkflow_input_name());
         result.setFilters(inputWiring.getFilters());
         return result;
@@ -38,7 +38,7 @@ public class WiringConverter {
     private OutputWiringDTO convertOutputWiring(org.hetida.designer.backend.listener.kafka.dto.OutputWiringDTO outputWiring){
         OutputWiringDTO result = new OutputWiringDTO();
         result.setAdapterId(outputWiring.getAdapter_id());
-        result.setSinkId(outputWiring.getSink_id());
+        result.setRefId(outputWiring.getSink_id());
         result.setWorkflowOutputName(outputWiring.getWorkflow_output_name());
         return result;
     }

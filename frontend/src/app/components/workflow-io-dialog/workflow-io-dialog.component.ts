@@ -17,6 +17,7 @@ import {
   MatDialogRef,
   MAT_DIALOG_DATA
 } from '@angular/material/dialog';
+import { JsonEditorComponent, JsonEditorModalData } from 'hd-wiring';
 import {
   createReadOnlyConfig,
   FlowchartConfiguration,
@@ -35,10 +36,6 @@ import { UniqueValueValidator } from 'src/app/validation/UniqueValueValidator';
 import { IOItem } from '../../model/io-item';
 import { WorkflowBaseItem } from '../../model/workflow-base-item';
 import { WorkflowOperator } from '../../model/workflow-operator';
-import {
-  JsonEditorComponent,
-  JsonEditorModalData
-} from '../json-editor/json-editor.component';
 
 export interface WorkflowIODialogData {
   workflow: WorkflowBaseItem;
@@ -144,10 +141,10 @@ export class WorkflowIODialogComponent {
     }
 
     const inputIOControlGroup = inputData.map(data =>
-      this.createFormGroup(data)
+      this._createFormGroup(data)
     );
     const outputIOControlGroup = outputData.map(data =>
-      this.createFormGroup(data)
+      this._createFormGroup(data)
     );
 
     this.ioItemForm = this.formBuilder.group({
@@ -162,7 +159,7 @@ export class WorkflowIODialogComponent {
     });
   }
 
-  private createFormGroup(data: WorkflowIODefinition): FormGroup {
+  private _createFormGroup(data: WorkflowIODefinition): FormGroup {
     const constantControl = this.createConstantControl(data);
     const nameControl = this.createNameControl(data);
 
@@ -274,14 +271,13 @@ export class WorkflowIODialogComponent {
       data: {
         value: inputControl.get('constant').value,
         actionOk: 'Save',
-        actionCancel: 'Cancel'
+        actionCancel: 'Cancel',
+        dataType: inputControl.get('type').value
       }
     });
 
     dialogRef.afterClosed().subscribe((result: string) => {
-      if (typeof result === 'string') {
-        inputControl.get('constant').setValue(result);
-      }
+      inputControl.get('constant').setValue(result);
     });
   }
 
@@ -305,7 +301,6 @@ export class WorkflowIODialogComponent {
     );
   }
 
-  // noinspection JSMethodCanBeStatic
   private getValidators(data: WorkflowIODefinition) {
     if (data.isConstant) {
       switch (data.type) {
@@ -320,6 +315,7 @@ export class WorkflowIODialogComponent {
       }
     } else {
       return [
+        Validators.maxLength(60),
         PythonIdentifierValidator(true),
         PythonKeywordBlacklistValidator()
       ];

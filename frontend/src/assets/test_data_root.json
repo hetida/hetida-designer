@@ -1,0 +1,26 @@
+{
+  "id": 2,
+  "name": "test adapter",
+  "thingNodes": [
+    {
+      "id": "rootthingnode1",
+      "name": "test thingnode 1" 
+    },
+    {
+      "id": "rootthingnode2",
+      "name": "test thingnode 2" 
+    },
+    {
+      "id": "rootthingnode3",
+      "name": "test thingnode 3" 
+    },
+    {
+      "id": "rootthingnode4",
+      "name": "test thingnode 4" 
+    }
+  ],
+  "sources": [
+  ],
+  "sinks": [
+  ]
+}

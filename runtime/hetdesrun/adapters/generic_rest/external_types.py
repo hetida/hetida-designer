@@ -1,0 +1,183 @@
+"""Generic Rest Adapter datatype representation and management
+
+The generic rest adapter "types" differ from the types used in the designer.
+"""
+
+
+from typing import Optional, Dict, Union, Type, Any
+from enum import Enum
+import json
+
+import logging
+
+from pydantic import create_model  # pylint: disable=no-name-in-module
+
+import pandas as pd
+
+logger = logging.getLogger(__name__)
+
+
+def df_empty(
+    col_to_dtype_map: Dict[str, Union[Type, str]], index: Optional[pd.Index] = None
+) -> pd.DataFrame:
+    """Create empty Pandas DataFrame with columns of given dtypes"""
+    df = pd.DataFrame(index=index)
+    for c, d in col_to_dtype_map.items():
+        df[c] = pd.Series(dtype=d)
+    return df
+
+
+class ValueDataType(str, Enum):
+    """Represents an external value datatype"""
+
+    INT = "int", int, int, "integer"
+    FLOAT = ("float", float, float)
+    STRING = "string", str, str, "str"
+    BOOLEAN = "boolean", bool, bool, "bool"
+    ANY = "any", Any, object, "object"
+
+    def __new__(cls, *values: Any) -> "ValueDataType":
+        obj = str.__new__(cls, values[0])  # type: ignore
+
+        # first value is canonical value (e.g. what you get when calling ValueDataType.INT.value)
+        obj._value_ = values[0]
+
+        cls.parse_type: Type  # for mypy
+        obj.parse_type = values[1]  # set parse_type to second tuple entry
+
+        cls.pandas_value_type: Type  # for mypy
+        obj.pandas_value_type = values[2]
+
+        for other_value in values[3:]:
+            # register other values in order to allow initializations ValueDataType("integer")
+            # and ValueDataType("str") to work. This uses an internal attribute of Enum!
+            # pylint: disable=no-member
+            cls._value2member_map_[other_value] = obj  # type: ignore
+
+        obj._all_values = (values[0],) + values[2:]  # pylint: disable=no-member
+        return obj  # type:ignore
+
+    def __repr__(self) -> str:
+        return "<%s.%s: %s>" % (
+            self.__class__.__name__,
+            # pylint: disable=no-member
+            self._name_,
+            ", ".join([repr(v) for v in self._all_values]),  # type: ignore
+        )
+
+    def parse_object(self, obj: Any) -> Any:
+        """Parse a Python object using pydantic dynamic parsing
+
+        For example ValueDataType.BOOLEAN.parse_object("yes") will return True.
+
+        Raises pydantic.ValidationError if parsing fails.
+        """
+        DynamicallyParsedValue = create_model(
+            "DynamicallyParsedValue",
+            value=(
+                self.parse_type,
+                ...,
+            ),
+        )
+
+        if self is ValueDataType.ANY and isinstance(obj, str):
+            # If we get a string for an ANY source we first try to handle it as a json string
+            # and try to parse it using the stdlib json module.
+            # Only if that does not work we take that str literally
+            try:  # try to json-parse str
+                parsed_json_obj = json.loads(obj)
+            except json.JSONDecodeError as e:  # handle as actual string
+                logger.info(
+                    "Could not parse string received from metadata(any) as json. "
+                    "Therefore we take it literally as a string object. "
+                    f"Exception was: {str(e)}.\nValue string was (first 250 chars): {obj[:250]}"
+                )
+                parsed_json_obj = obj
+            return parsed_json_obj
+
+        parsed_value = DynamicallyParsedValue(value=obj)
+        return parsed_value.value  # type: ignore
+
+
+class GeneralType(Enum):
+    """General aspect / container type of a supported external type"""
+
+    METADATA = "metadata"
+    TIMESERIES = "timeseries"
+    SERIES = "series"
+    DATAFRAME = "dataframe"
+
+
+class ExternalType(str, Enum):
+    METADATA_INT = "metadata(int)", "metadata(integer)"
+    METADATA_FLOAT = "metadata(float)"
+    METADATA_STR = "metadata(string)", "metadata(str)"
+    METADATA_BOOLEAN = "metadata(boolean)", "metadata(bool)"
+    METADATA_ANY = "metadata(any)"
+
+    TIMESERIES_INT = "timeseries(int)", "timeseries(integer)"
+    TIMESERIES_FLOAT = "timeseries(float)"
+    TIMESERIES_STR = "timeseries(string)", "timeseries(str)"
+    TIMESERIES_BOOLEAN = "timeseries(boolean)", "timeseries(bool)"
+    TIMESERIES_ANY = "timeseries(any)", "timeseries(object)"
+
+    SERIES_INT = "series(int)", "series(integer)"
+    SERIES_FLOAT = "series(float)"
+    SERIES_STR = "series(string)", "series(str)"
+    SERIES_BOOLEAN = "series(boolean)", "series(bool)"
+    SERIES_ANY = "series(any)", "series(object)"
+
+    DATAFRAME = "dataframe"
+
+    def __new__(cls, *values: Any) -> "ExternalType":
+        obj = str.__new__(cls, values[0])  # type: ignore
+
+        # first value is canonical value
+        obj._value_ = values[0]
+
+        cls.general_type: GeneralType  # for mypy
+        cls.value_datatype: Optional[ValueDataType]  # for mypy
+
+        cls.store_value_datatypes(obj)
+        cls.store_general_type(obj)
+
+        for other_value in values[1:]:
+            # pylint: disable=no-member
+            cls._value2member_map_[other_value] = obj  # type: ignore
+        obj._all_values = values
+        return obj  # type: ignore
+
+    def __repr__(self) -> str:
+        # pylint: disable=no-member
+        return "<%s.%s: %s>" % (
+            self.__class__.__name__,
+            self._name_,  # pylint: disable=no-member
+            ", ".join([repr(v) for v in self._all_values]),  # type: ignore
+        )
+
+    @classmethod
+    def store_value_datatypes(cls, member: "ExternalType") -> None:
+        """Use the first value string to obtain the ValueDataType of values
+
+        Stores this ValueDataType on the member attribute "value_datatype".
+        Will be set to None if value_datatype can be determined.
+        """
+
+        # pylint: disable=protected-access
+        if member._value_.endswith("(string)"):
+            member.value_datatype = ValueDataType.STRING
+        elif member._value_.endswith("(float)"):
+            member.value_datatype = ValueDataType.FLOAT
+        elif member._value_.endswith("(int)"):
+            member.value_datatype = ValueDataType.INT
+        elif member._value_.endswith("(boolean)"):
+            member.value_datatype = ValueDataType.BOOLEAN
+        elif member._value_.endswith("(any)"):
+            member.value_datatype = ValueDataType.ANY
+        else:
+            member.value_datatype = None
+
+    @classmethod
+    def store_general_type(cls, member: "ExternalType") -> None:
+        general_type_str = member.value.split("(", 1)[0]
+        member.general_type = GeneralType(general_type_str)

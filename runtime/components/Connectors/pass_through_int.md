@@ -1,13 +1,13 @@
-# Pass Through (Float)
+# Pass Through (Integer)
 
 ## Description
 This component just passes data through.
 
 ## Inputs
-* **input** (Float): The input String.
+* **input** (Integer): The input String.
 
 ## Outputs
-* **output** (Float): The output String.
+* **output** (Integer): The output String.
 
 ## Details
 This component just passes data through. It can be used to map one dynamic workflow input to multiple component inputs.

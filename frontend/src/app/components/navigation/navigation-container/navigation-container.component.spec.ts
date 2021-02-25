@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
@@ -27,32 +27,34 @@ describe('NavigationContainerComponent', () => {
 
   const baseItemActionService = jasmine.createSpy();
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      imports: [
-        FormsModule,
-        ReactiveFormsModule,
-        BasicTestModule,
-        BrowserAnimationsModule
-      ],
-      declarations: [
-        NavigationContainerComponent,
-        NavigationCategoryComponent,
-        NavigationItemComponent
-      ],
-      providers: [
-        provideMockStore(),
-        {
-          provide: BaseItemService,
-          useValue: mockBaseItemService
-        },
-        {
-          provide: BaseItemActionService,
-          useValue: baseItemActionService
-        }
-      ]
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          FormsModule,
+          ReactiveFormsModule,
+          BasicTestModule,
+          BrowserAnimationsModule
+        ],
+        declarations: [
+          NavigationContainerComponent,
+          NavigationCategoryComponent,
+          NavigationItemComponent
+        ],
+        providers: [
+          provideMockStore(),
+          {
+            provide: BaseItemService,
+            useValue: mockBaseItemService
+          },
+          {
+            provide: BaseItemActionService,
+            useValue: baseItemActionService
+          }
+        ]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     const mockStore = TestBed.inject(MockStore);

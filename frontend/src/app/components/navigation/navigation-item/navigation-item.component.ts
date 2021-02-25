@@ -73,9 +73,9 @@ export class NavigationItemComponent implements OnInit {
 
     let baseItem$: Observable<BaseItem>;
 
-    if (this.abstractBaseItem.type === BaseItemType.COMPONENT) {
+    if (this.abstractBaseItem.type === BaseItemType.WORKFLOW) {
       baseItem$ = this._workflowService.getWorkflow(this.abstractBaseItem.id);
-    } else if (this.abstractBaseItem.type === BaseItemType.WORKFLOW) {
+    } else if (this.abstractBaseItem.type === BaseItemType.COMPONENT) {
       baseItem$ = this._componentService.getComponent(this.abstractBaseItem.id);
     } else {
       throw Error('type of abstract base item is invalid');

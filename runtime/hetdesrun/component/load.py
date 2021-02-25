@@ -60,7 +60,7 @@ def import_func_from_code(
         ] = mod  # now reachable under the constructed module_path
 
     try:
-        exec(code, mod.__dict__)  # actually import the module.
+        exec(code, mod.__dict__)  # actually import the module. # nosec
     except SyntaxError as e:
         logger.info(
             "Syntax Error during importing function %s with code module id %s",

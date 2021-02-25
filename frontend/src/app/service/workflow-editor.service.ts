@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { Wiring } from 'hd-wiring';
 import { iif, Observable, of } from 'rxjs';
 import { finalize, switchMap, switchMapTo, tap } from 'rxjs/operators';
 import { WorkflowBaseItem } from '../model/workflow-base-item';
@@ -20,7 +21,6 @@ import {
   setExecutionProtocol,
   setExecutionRunning
 } from '../store/execution-protocol/execution-protocol.actions';
-import { Wiring } from './http-service/wiring-http.service';
 import { WorkflowHttpService } from './http-service/workflow-http.service';
 import { LocalStorageService } from './local-storage/local-storage.service';
 
@@ -55,11 +55,13 @@ export class WorkflowEditorService {
       });
   }
 
-  deleteWorkflow(workflowId: string) {
-    this.workflowHttpService.deleteWorkflow(workflowId).subscribe(() => {
-      this.localStorageService.removeBaseItemFromLastOpened(workflowId);
-      this.store.dispatch(removeBaseItem(workflowId));
-    });
+  deleteWorkflow(workflowId: string): Observable<WorkflowBaseItem> {
+    return this.workflowHttpService.deleteWorkflow(workflowId).pipe(
+      tap(() => {
+        this.localStorageService.removeBaseItemFromLastOpened(workflowId);
+        this.store.dispatch(removeBaseItem(workflowId));
+      })
+    );
   }
 
   createWorkflow(workflowRevision: WorkflowBaseItem) {

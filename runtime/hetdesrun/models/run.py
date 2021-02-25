@@ -84,7 +84,7 @@ class WorkflowExecutionInput(BaseModel):
         return code_modules
 
     # pylint: disable=no-self-argument,no-self-use
-    @root_validator()
+    @root_validator(skip_on_failure=True)
     def check_wiring_complete(cls, values):  # type: ignore
         """Every (non-constant) Workflow input/output must be wired
 
@@ -114,14 +114,15 @@ class WorkflowExecutionInput(BaseModel):
             (outp_wiring.workflow_output_name for outp_wiring in wiring.output_wirings)
         )
 
+        for wf_output in workflow.outputs:
+            if not (wf_output.name in wired_output_names):
+                wiring.output_wirings.append(
+                    OutputWiring(
+                        workflow_output_name=wf_output.name,
+                        adapter_id=1,
+                    )
+                )
         # Automatically add missing wirings for outputs (make them direct provisioning outputs)
-        wiring.output_wirings = wiring.output_wirings + [
-            OutputWiring(
-                workflow_output_name=wf_output.name, adapter_id="direct_provisioning",
-            )
-            for wf_output in workflow.outputs
-            if not wf_output.name in wired_output_names
-        ]
 
         if len(wired_output_names) > len(workflow.outputs):
             raise ValueError("Too many output wirings provided!")

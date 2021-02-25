@@ -17,6 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "preserveSymlinks": true,
             "outputPath": "dist/frontend",
             "baseHref": ".",
             "index": "src/index.html",
@@ -35,9 +36,10 @@
             "styles": [
               "./node_modules/hetida-flowchart/hetida-flowchart.css",
               "./node_modules/katex/dist/katex.css",
+              "./node_modules/hd-wiring/hd-wiring.css",
               "src/style/styles.scss"
             ],
-            "scripts": []
+            "scripts": ["node_modules/plotly.js/dist/plotly.min.js"]
           },
           "configurations": {
             "production": {
@@ -50,7 +52,6 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,

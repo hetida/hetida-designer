@@ -7,6 +7,14 @@
       "label": "start_angular",
       "detail": "start angular server",
       "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "never",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": false
+      },
       "problemMatcher": {
         "pattern": [
           {
@@ -19,7 +27,7 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": "building",
-          "endsPattern": "Compiled successfully."
+          "endsPattern": "Angular Live Development Server is listening on"
         }
       }
     }

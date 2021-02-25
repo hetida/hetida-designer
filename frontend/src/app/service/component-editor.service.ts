@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { Wiring } from 'hd-wiring';
 import { iif, Observable, of } from 'rxjs';
 import { finalize, switchMap, switchMapTo, tap } from 'rxjs/operators';
 import { ComponentBaseItem } from '../model/component-base-item';
@@ -21,7 +22,6 @@ import {
   setExecutionRunning
 } from '../store/execution-protocol/execution-protocol.actions';
 import { ComponentHttpService } from './http-service/component-http.service';
-import { Wiring } from './http-service/wiring-http.service';
 import { LocalStorageService } from './local-storage/local-storage.service';
 
 @Injectable({
@@ -64,11 +64,13 @@ export class ComponentEditorService {
     );
   }
 
-  deleteComponent(componentId: string) {
-    this.componentHttpService.deleteComponent(componentId).subscribe(_ => {
-      this.localStorageService.removeBaseItemFromLastOpened(componentId);
-      this.store.dispatch(removeBaseItem(componentId));
-    });
+  deleteComponent(componentId: string): Observable<ComponentBaseItem> {
+    return this.componentHttpService.deleteComponent(componentId).pipe(
+      tap(_ => {
+        this.localStorageService.removeBaseItemFromLastOpened(componentId);
+        this.store.dispatch(removeBaseItem(componentId));
+      })
+    );
   }
 
   testComponent(id: string, wiring: Wiring): Observable<ComponentBaseItem> {

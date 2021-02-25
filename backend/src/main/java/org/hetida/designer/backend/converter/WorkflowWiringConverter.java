@@ -35,9 +35,12 @@ public class WorkflowWiringConverter {
         List<OutputWiring> outputWirings = wiringDTO.getOutputWirings().stream().map(inputDto -> {
             OutputWiring tmpOutputWiring = new OutputWiring();
             tmpOutputWiring.setId(inputDto.getId());
-            tmpOutputWiring.setAdapterId(inputDto.getAdapterId().toString());
+            tmpOutputWiring.setAdapterId(inputDto.getAdapterId());
             tmpOutputWiring.setWiringId(wiringId);
-            tmpOutputWiring.setSinkId(inputDto.getSinkId());
+            tmpOutputWiring.setRefId(inputDto.getRefId());
+            tmpOutputWiring.setRefIdType(inputDto.getRefIdType());
+            tmpOutputWiring.setRefKey(inputDto.getRefKey());
+            tmpOutputWiring.setType(inputDto.getType());
             tmpOutputWiring.setWorkflowOutputName(inputDto.getWorkflowOutputName());
             return tmpOutputWiring;
         }).collect(Collectors.toList());
@@ -65,10 +68,13 @@ public class WorkflowWiringConverter {
 
             InputWiring tmpInputWiring = new InputWiring();
             tmpInputWiring.setId(inputWiring.getId());
-            tmpInputWiring.setAdapterId(inputWiring.getAdapterId().toString());
+            tmpInputWiring.setAdapterId(inputWiring.getAdapterId());
             tmpInputWiring.setWiringId(wiringId);
             tmpInputWiring.setInputFilters(filters);
-            tmpInputWiring.setSourceId(inputWiring.getSourceId());
+            tmpInputWiring.setRefId(inputWiring.getRefId());
+            tmpInputWiring.setRefIdType(inputWiring.getRefIdType());
+            tmpInputWiring.setRefKey(inputWiring.getRefKey());
+            tmpInputWiring.setType(inputWiring.getType());
             tmpInputWiring.setWorkflowInputName(inputWiring.getWorkflowInputName());
             return tmpInputWiring;
         }).collect(Collectors.toList());
@@ -92,13 +98,16 @@ public class WorkflowWiringConverter {
         List<org.hetida.designer.backend.dto.InputWiringDTO> inputWirings = wiring.getInputWirings().stream().map(inputWiring -> {
             org.hetida.designer.backend.dto.InputWiringDTO tmpInputWiring = new org.hetida.designer.backend.dto.InputWiringDTO();
             tmpInputWiring.setId(inputWiring.getId());
-            tmpInputWiring.setAdapterId(Integer.parseInt(inputWiring.getAdapterId()));
+            tmpInputWiring.setAdapterId(inputWiring.getAdapterId());
 
             Map<String, String> filterMap = new HashMap<>();
             inputWiring.getInputFilters().forEach(f -> filterMap.put(f.getKey(), f.getValue()));
 
             tmpInputWiring.setFilters(filterMap);
-            tmpInputWiring.setSourceId(inputWiring.getSourceId());
+            tmpInputWiring.setRefId(inputWiring.getRefId());
+            tmpInputWiring.setRefIdType(inputWiring.getRefIdType());
+            tmpInputWiring.setRefKey(inputWiring.getRefKey());
+            tmpInputWiring.setType(inputWiring.getType());
             tmpInputWiring.setWorkflowInputName(inputWiring.getWorkflowInputName());
             return tmpInputWiring;
         }).collect(Collectors.toList());
@@ -108,8 +117,11 @@ public class WorkflowWiringConverter {
         List<OutputWiringDTO> outputWirings = wiring.getOutputWirings().stream().map(outputWiring -> {
             OutputWiringDTO tmpOutputWiring = new OutputWiringDTO();
             tmpOutputWiring.setId(outputWiring.getId());
-            tmpOutputWiring.setAdapterId(Integer.parseInt(outputWiring.getAdapterId()));
-            tmpOutputWiring.setSinkId(outputWiring.getSinkId());
+            tmpOutputWiring.setAdapterId(outputWiring.getAdapterId());
+            tmpOutputWiring.setRefId(outputWiring.getRefId());
+            tmpOutputWiring.setRefIdType(outputWiring.getRefIdType());
+            tmpOutputWiring.setRefKey(outputWiring.getRefKey());
+            tmpOutputWiring.setType(outputWiring.getType());
             tmpOutputWiring.setWorkflowOutputName(outputWiring.getWorkflowOutputName());
             return tmpOutputWiring;
         }).collect(Collectors.toList());
@@ -118,7 +130,8 @@ public class WorkflowWiringConverter {
 
         return wiringDTO;
     }
-    public WorkflowWiringDTO convertWorkflowWiringDTO(org.hetida.designer.backend.dto.WiringDTO wiringToConvert){
+
+    WorkflowWiringDTO convertWorkflowWiringDTO(org.hetida.designer.backend.dto.WiringDTO wiringToConvert){
         if (wiringToConvert == null)
             return null;
         WorkflowWiringDTO result = new WorkflowWiringDTO();
@@ -138,7 +151,10 @@ public class WorkflowWiringConverter {
     private org.hetida.designer.backend.dto.engine.OutputWiringDTO convertOutputWiringDTO (org.hetida.designer.backend.dto.OutputWiringDTO outputWiringToConvert){
         org.hetida.designer.backend.dto.engine.OutputWiringDTO result = new org.hetida.designer.backend.dto.engine.OutputWiringDTO();
         result.setAdapterId(outputWiringToConvert.getAdapterId());
-        result.setSinkId(outputWiringToConvert.getSinkId());
+        result.setRefId(outputWiringToConvert.getRefId());
+        result.setRefIdType(outputWiringToConvert.getRefIdType());
+        result.setRefKey(outputWiringToConvert.getRefKey());
+        result.setType(outputWiringToConvert.getType());
         result.setWorkflowOutputName(outputWiringToConvert.getWorkflowOutputName());
         return result;
     }
@@ -146,7 +162,10 @@ public class WorkflowWiringConverter {
     private InputWiringDTO convertInputWiringDTO (org.hetida.designer.backend.dto.InputWiringDTO inputWiringToConvert){
         InputWiringDTO result = new InputWiringDTO();
         result.setAdapterId(inputWiringToConvert.getAdapterId());
-        result.setSourceId(inputWiringToConvert.getSourceId());
+        result.setRefId(inputWiringToConvert.getRefId());
+        result.setRefIdType(inputWiringToConvert.getRefIdType());
+        result.setRefKey(inputWiringToConvert.getRefKey());
+        result.setType(inputWiringToConvert.getType());
         result.setWorkflowInputName(inputWiringToConvert.getWorkflowInputName());
         if (inputWiringToConvert.getFilters() != null ){
             for ( String key : inputWiringToConvert.getFilters().keySet() ){

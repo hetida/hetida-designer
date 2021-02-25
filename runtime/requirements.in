@@ -2,6 +2,7 @@ fastapi
 uvicorn
 uvloop
 gunicorn
+httpx
 httptools
 pandas
 numpy

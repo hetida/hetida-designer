@@ -3,6 +3,7 @@
 @import 'src/app/components/navigation/navigation-container/navigation-container.component.theme';
 @import 'src/app/components/popover-baseitem/popover-baseitem.component.theme';
 @import 'src/app/components/protocol-viewer/protocol-viewer.component.theme';
+// @import 'src/app/hd-wiring-module/node-search/node-search.component.theme';
 
 @mixin hd-material-theme($theme) {
   $primary: map-get($theme, primary);
@@ -13,6 +14,7 @@
   @include navigation-container-theme($primary, $secondary);
   @include popover-baseitem-theme($primary, $secondary);
   @include protocol-viewer-theme($primary, $secondary);
+  // @include node-search-theme($primary, $secondary);
 
   // Plain HTML elements overrides
   // TODO: Can we wrap those?
@@ -128,5 +130,13 @@
 
   .mat-tab-group.mat-primary .mat-ink-bar {
     background: none;
+  }
+
+  .dark-theme .mat-tab-group .mat-tab-label-container {
+    background-color: map-get($secondary, 700);
+  }
+
+  .mat-tab-group .mat-tab-label-container {
+    background-color: map-get($secondary, 700);
   }
 }

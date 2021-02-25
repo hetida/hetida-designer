@@ -6,7 +6,8 @@ export function RevisionTagValidator(
 ): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     if (
-      revisionItems.filter(item => item.tag === control.value.trim()).length > 1
+      revisionItems.filter(item => item.tag.trim() === control.value.trim())
+        .length > 1
     ) {
       return { revisionTag: { valid: false } };
     }

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
@@ -21,24 +21,26 @@ describe('ContentViewComponent', () => {
   let component: ContentViewComponent;
   let fixture: ComponentFixture<ContentViewComponent>;
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      imports: [
-        BasicTestModule,
-        FormsModule,
-        MonacoEditorModule.forRoot(),
-        NgHetidaFlowchartModule
-      ],
-      declarations: [
-        ContentViewComponent,
-        ToolbarComponent,
-        ComponentEditorComponent,
-        WorkflowEditorComponent,
-        HomeStubComponent
-      ],
-      providers: [provideMockStore()]
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          BasicTestModule,
+          FormsModule,
+          MonacoEditorModule.forRoot(),
+          NgHetidaFlowchartModule
+        ],
+        declarations: [
+          ContentViewComponent,
+          ToolbarComponent,
+          ComponentEditorComponent,
+          WorkflowEditorComponent,
+          HomeStubComponent
+        ],
+        providers: [provideMockStore()]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     const mockStore = TestBed.inject(MockStore);

@@ -1,0 +1,3872 @@
+[
+  {
+      "id": "MD/ThingNode/25/NAME",
+      "name": "Name",
+      "thingNodeId": "ThingNode/25",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/25/DESCRIPTION",
+      "name": "Description",
+      "thingNodeId": "ThingNode/25",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/NAME",
+      "name": "Name",
+      "thingNodeId": "ThingNode/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/DESCRIPTION",
+      "name": "Description",
+      "thingNodeId": "ThingNode/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/NAME",
+      "name": "Name",
+      "thingNodeId": "ThingNode/21",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/DESCRIPTION",
+      "name": "Description",
+      "thingNodeId": "ThingNode/21",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/7/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/NAME",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Name)",
+      "thingNodeId": "ThingNode/7/Thing/3",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/7/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/DESCRIPTION",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Description)",
+      "thingNodeId": "ThingNode/7/Thing/3",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/7/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/UNIT",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Unit)",
+      "thingNodeId": "ThingNode/7/Thing/3",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/18/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/NAME",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Name)",
+      "thingNodeId": "ThingNode/18/Thing/3",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/18/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/DESCRIPTION",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Description)",
+      "thingNodeId": "ThingNode/18/Thing/3",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/18/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/UNIT",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Unit)",
+      "thingNodeId": "ThingNode/18/Thing/3",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__WASSERTEMPERATUR/NAME",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__WASSERTEMPERATUR/DESCRIPTION",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__WASSERTEMPERATUR/UNIT",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__WASSERTEMPERATUR/NAME",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__WASSERTEMPERATUR/DESCRIPTION",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__WASSERTEMPERATUR/UNIT",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__GESAMTHÄRTE/NAME",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__GESAMTHÄRTE/DESCRIPTION",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__GESAMTHÄRTE/UNIT",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__GESAMTHÄRTE/NAME",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__GESAMTHÄRTE/DESCRIPTION",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__GESAMTHÄRTE/UNIT",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/NAME",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/DESCRIPTION",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/UNIT",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/NAME",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/DESCRIPTION",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/UNIT",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__EISEN/NAME",
+      "name": "Eisen Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__EISEN/DESCRIPTION",
+      "name": "Eisen Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__EISEN/UNIT",
+      "name": "Eisen Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__EISEN/NAME",
+      "name": "Eisen Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__EISEN/DESCRIPTION",
+      "name": "Eisen Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__EISEN/UNIT",
+      "name": "Eisen Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__MAGNESIUM/NAME",
+      "name": "Magnesium Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__MAGNESIUM/DESCRIPTION",
+      "name": "Magnesium Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__MAGNESIUM/UNIT",
+      "name": "Magnesium Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__MAGNESIUM/NAME",
+      "name": "Magnesium Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__MAGNESIUM/DESCRIPTION",
+      "name": "Magnesium Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__MAGNESIUM/UNIT",
+      "name": "Magnesium Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__NATRIUM/NAME",
+      "name": "Natrium Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__NATRIUM/DESCRIPTION",
+      "name": "Natrium Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__NATRIUM/UNIT",
+      "name": "Natrium Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__NATRIUM/NAME",
+      "name": "Natrium Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__NATRIUM/DESCRIPTION",
+      "name": "Natrium Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__NATRIUM/UNIT",
+      "name": "Natrium Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__FLUORID/NAME",
+      "name": "Fluorid Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__FLUORID/DESCRIPTION",
+      "name": "Fluorid Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__FLUORID/UNIT",
+      "name": "Fluorid Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__FLUORID/NAME",
+      "name": "Fluorid Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__FLUORID/DESCRIPTION",
+      "name": "Fluorid Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__FLUORID/UNIT",
+      "name": "Fluorid Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__SULFAT/NAME",
+      "name": "Sulfat Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__SULFAT/DESCRIPTION",
+      "name": "Sulfat Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__SULFAT/UNIT",
+      "name": "Sulfat Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__SULFAT/NAME",
+      "name": "Sulfat Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__SULFAT/DESCRIPTION",
+      "name": "Sulfat Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__SULFAT/UNIT",
+      "name": "Sulfat Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__PH-WERT/NAME",
+      "name": "pH-Wert Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__PH-WERT/DESCRIPTION",
+      "name": "pH-Wert Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__PH-WERT/UNIT",
+      "name": "pH-Wert Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__PH-WERT/NAME",
+      "name": "pH-Wert Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__PH-WERT/DESCRIPTION",
+      "name": "pH-Wert Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__PH-WERT/UNIT",
+      "name": "pH-Wert Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/NAME",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/DESCRIPTION",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/UNIT",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/NAME",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/DESCRIPTION",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/UNIT",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__TRÜBUNG/NAME",
+      "name": "Trübung Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__TRÜBUNG/DESCRIPTION",
+      "name": "Trübung Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__TRÜBUNG/UNIT",
+      "name": "Trübung Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__TRÜBUNG/NAME",
+      "name": "Trübung Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__TRÜBUNG/DESCRIPTION",
+      "name": "Trübung Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__TRÜBUNG/UNIT",
+      "name": "Trübung Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__BASEKAPAZITÄT/NAME",
+      "name": "Basekapazität Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__BASEKAPAZITÄT/DESCRIPTION",
+      "name": "Basekapazität Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__BASEKAPAZITÄT/UNIT",
+      "name": "Basekapazität Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__BASEKAPAZITÄT/NAME",
+      "name": "Basekapazität Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__BASEKAPAZITÄT/DESCRIPTION",
+      "name": "Basekapazität Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__BASEKAPAZITÄT/UNIT",
+      "name": "Basekapazität Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__MANGAN/NAME",
+      "name": "Mangan Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__MANGAN/DESCRIPTION",
+      "name": "Mangan Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/29/Channel/WWFrillendorfParam__MANGAN/UNIT",
+      "name": "Mangan Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__MANGAN/NAME",
+      "name": "Mangan Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__MANGAN/DESCRIPTION",
+      "name": "Mangan Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/WWFrillendorfParam__MANGAN/UNIT",
+      "name": "Mangan Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/NAME",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/1",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/DESCRIPTION",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/1",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/UNIT",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/1",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/15/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/NAME",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/15/Thing/1",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/15/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/DESCRIPTION",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/15/Thing/1",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/15/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/UNIT",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/15/Thing/1",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/NAME",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/DESCRIPTION",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/UNIT",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/NAME",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/DESCRIPTION",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/UNIT",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/NAME",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/DESCRIPTION",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/UNIT",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/NAME",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/DESCRIPTION",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/UNIT",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/NAME",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/DESCRIPTION",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/UNIT",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/NAME",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/DESCRIPTION",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/UNIT",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/NAME",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/DESCRIPTION",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/UNIT",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/NAME",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/DESCRIPTION",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/UNIT",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/NAME",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/DESCRIPTION",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/UNIT",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/NAME",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/DESCRIPTION",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/UNIT",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/NAME",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/5/Thing/10",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/DESCRIPTION",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/5/Thing/10",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/UNIT",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/5/Thing/10",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/25/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/NAME",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/25/Thing/10",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/25/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/DESCRIPTION",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/25/Thing/10",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/25/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/UNIT",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/25/Thing/10",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/6/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/NAME",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/6/Thing/13",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/6/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/DESCRIPTION",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/6/Thing/13",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/6/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/UNIT",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/6/Thing/13",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/27/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/NAME",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Name)",
+      "thingNodeId": "ThingNode/27/Thing/13",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/27/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/DESCRIPTION",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Description)",
+      "thingNodeId": "ThingNode/27/Thing/13",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "MD/ThingNode/27/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/UNIT",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Unit)",
+      "thingNodeId": "ThingNode/27/Thing/13",
+      "dataType": "string",
+      "filters": {}
+  },
+  {
+      "id": "TS/ThingNode/7/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/MEASUREMENTS",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Timeseries)",
+      "thingNodeId": "ThingNode/7/Thing/3",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530170000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530170000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/7/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/MESSAGES",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Status messages)",
+      "thingNodeId": "ThingNode/7/Thing/3",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530170000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530170000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/7/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/SUBSTITUTIONS",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Substitution timeseries)",
+      "thingNodeId": "ThingNode/7/Thing/3",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530171000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530171000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/18/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/MEASUREMENTS",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Timeseries)",
+      "thingNodeId": "ThingNode/18/Thing/3",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530170000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530170000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/18/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/MESSAGES",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Status messages)",
+      "thingNodeId": "ThingNode/18/Thing/3",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530170000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530170000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/18/Channel/Allgemeine Parameter WW Frillendorf__Tagesniederschlagsmenge/SUBSTITUTIONS",
+      "name": "Tagesniederschlagsmenge Wetterstation Essen-Nord (Substitution timeseries)",
+      "thingNodeId": "ThingNode/18/Thing/3",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530171000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530171000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__WASSERTEMPERATUR/MEASUREMENTS",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__WASSERTEMPERATUR/MESSAGES",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__WASSERTEMPERATUR/SUBSTITUTIONS",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__WASSERTEMPERATUR/MEASUREMENTS",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__WASSERTEMPERATUR/MESSAGES",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__WASSERTEMPERATUR/SUBSTITUTIONS",
+      "name": "Wassertemperatur Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530184000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__GESAMTHÄRTE/MEASUREMENTS",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530185000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530185000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__GESAMTHÄRTE/MESSAGES",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__GESAMTHÄRTE/SUBSTITUTIONS",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__GESAMTHÄRTE/MEASUREMENTS",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530185000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530185000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__GESAMTHÄRTE/MESSAGES",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__GESAMTHÄRTE/SUBSTITUTIONS",
+      "name": "Gesamthärte Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/MEASUREMENTS",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/MESSAGES",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530187000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530187000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/SUBSTITUTIONS",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530187000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530187000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/MEASUREMENTS",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530186000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/MESSAGES",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530187000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530187000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__SÄUREKAPAZITÄT/SUBSTITUTIONS",
+      "name": "Säurekapazität Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530187000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530187000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__EISEN/MEASUREMENTS",
+      "name": "Eisen Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530188000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530188000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__EISEN/MESSAGES",
+      "name": "Eisen Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530188000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530188000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__EISEN/SUBSTITUTIONS",
+      "name": "Eisen Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530189000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530189000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__EISEN/MEASUREMENTS",
+      "name": "Eisen Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530188000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530188000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__EISEN/MESSAGES",
+      "name": "Eisen Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530188000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530188000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__EISEN/SUBSTITUTIONS",
+      "name": "Eisen Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530189000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530189000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__MAGNESIUM/MEASUREMENTS",
+      "name": "Magnesium Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530189000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530189000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__MAGNESIUM/MESSAGES",
+      "name": "Magnesium Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530190000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530190000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__MAGNESIUM/SUBSTITUTIONS",
+      "name": "Magnesium Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530190000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530190000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__MAGNESIUM/MEASUREMENTS",
+      "name": "Magnesium Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530189000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530189000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__MAGNESIUM/MESSAGES",
+      "name": "Magnesium Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530190000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530190000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__MAGNESIUM/SUBSTITUTIONS",
+      "name": "Magnesium Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530190000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530190000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__NATRIUM/MEASUREMENTS",
+      "name": "Natrium Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530191000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530191000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__NATRIUM/MESSAGES",
+      "name": "Natrium Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530191000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530191000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__NATRIUM/SUBSTITUTIONS",
+      "name": "Natrium Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530192000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530192000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__NATRIUM/MEASUREMENTS",
+      "name": "Natrium Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530191000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530191000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__NATRIUM/MESSAGES",
+      "name": "Natrium Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530191000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530191000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__NATRIUM/SUBSTITUTIONS",
+      "name": "Natrium Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530192000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530192000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__FLUORID/MEASUREMENTS",
+      "name": "Fluorid Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530192000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530192000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__FLUORID/MESSAGES",
+      "name": "Fluorid Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530193000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530193000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__FLUORID/SUBSTITUTIONS",
+      "name": "Fluorid Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530193000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530193000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__FLUORID/MEASUREMENTS",
+      "name": "Fluorid Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530192000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530192000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__FLUORID/MESSAGES",
+      "name": "Fluorid Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530193000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530193000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__FLUORID/SUBSTITUTIONS",
+      "name": "Fluorid Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530193000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530193000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__SULFAT/MEASUREMENTS",
+      "name": "Sulfat Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__SULFAT/MESSAGES",
+      "name": "Sulfat Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__SULFAT/SUBSTITUTIONS",
+      "name": "Sulfat Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__SULFAT/MEASUREMENTS",
+      "name": "Sulfat Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__SULFAT/MESSAGES",
+      "name": "Sulfat Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__SULFAT/SUBSTITUTIONS",
+      "name": "Sulfat Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530194000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__PH-WERT/MEASUREMENTS",
+      "name": "pH-Wert Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530195000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530195000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__PH-WERT/MESSAGES",
+      "name": "pH-Wert Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530196000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530196000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__PH-WERT/SUBSTITUTIONS",
+      "name": "pH-Wert Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530196000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530196000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__PH-WERT/MEASUREMENTS",
+      "name": "pH-Wert Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530195000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530195000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__PH-WERT/MESSAGES",
+      "name": "pH-Wert Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530196000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530196000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__PH-WERT/SUBSTITUTIONS",
+      "name": "pH-Wert Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530196000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530196000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/MEASUREMENTS",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530197000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530197000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/MESSAGES",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530197000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530197000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/SUBSTITUTIONS",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530198000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530198000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/MEASUREMENTS",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530197000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530197000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/MESSAGES",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530197000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530197000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__LEITFÄHIGKEIT/SUBSTITUTIONS",
+      "name": "Leitfähigkeit Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530198000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530198000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__TRÜBUNG/MEASUREMENTS",
+      "name": "Trübung Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530198000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530198000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__TRÜBUNG/MESSAGES",
+      "name": "Trübung Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530199000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530199000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__TRÜBUNG/SUBSTITUTIONS",
+      "name": "Trübung Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530199000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530199000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__TRÜBUNG/MEASUREMENTS",
+      "name": "Trübung Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530198000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530198000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__TRÜBUNG/MESSAGES",
+      "name": "Trübung Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530199000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530199000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__TRÜBUNG/SUBSTITUTIONS",
+      "name": "Trübung Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530199000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530199000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__BASEKAPAZITÄT/MEASUREMENTS",
+      "name": "Basekapazität Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__BASEKAPAZITÄT/MESSAGES",
+      "name": "Basekapazität Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__BASEKAPAZITÄT/SUBSTITUTIONS",
+      "name": "Basekapazität Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__BASEKAPAZITÄT/MEASUREMENTS",
+      "name": "Basekapazität Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__BASEKAPAZITÄT/MESSAGES",
+      "name": "Basekapazität Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__BASEKAPAZITÄT/SUBSTITUTIONS",
+      "name": "Basekapazität Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530200000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__MANGAN/MEASUREMENTS",
+      "name": "Mangan Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530201000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530201000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__MANGAN/MESSAGES",
+      "name": "Mangan Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530201000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530201000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/29/Channel/WWFrillendorfParam__MANGAN/SUBSTITUTIONS",
+      "name": "Mangan Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/29/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530202000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530202000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__MANGAN/MEASUREMENTS",
+      "name": "Mangan Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530201000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530201000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__MANGAN/MESSAGES",
+      "name": "Mangan Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530201000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530201000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/WWFrillendorfParam__MANGAN/SUBSTITUTIONS",
+      "name": "Mangan Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/15",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530202000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530202000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/MEASUREMENTS",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/1",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530215000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530215000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/MESSAGES",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/1",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530216000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530216000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/SUBSTITUTIONS",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/1",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530216000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530216000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/15/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/MEASUREMENTS",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/15/Thing/1",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530215000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530215000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/15/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/MESSAGES",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/15/Thing/1",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530216000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530216000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/15/Channel/Allgemeine Parameter WW Frillendorf__Grundwasserstand/SUBSTITUTIONS",
+      "name": "Grundwasserstand Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/15/Thing/1",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530216000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530216000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/MEASUREMENTS",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/MESSAGES",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/SUBSTITUTIONS",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/MEASUREMENTS",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/MESSAGES",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Netzeinspeisung/SUBSTITUTIONS",
+      "name": "Netzeinspeisung Pumpe 1 Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530218000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/MEASUREMENTS",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530219000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530219000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/MESSAGES",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530220000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530220000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/SUBSTITUTIONS",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530220000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530220000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/MEASUREMENTS",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530219000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530219000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/MESSAGES",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530220000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530220000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Bruttovolumen/SUBSTITUTIONS",
+      "name": "Bruttovolumen Pumpe 1 Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530220000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530220000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/MEASUREMENTS",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/MESSAGES",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/21/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/SUBSTITUTIONS",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/21/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/MEASUREMENTS",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/MESSAGES",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Eigenverbrauch/SUBSTITUTIONS",
+      "name": "Eigenverbrauch Pumpe 1 Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/5",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530221000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/MEASUREMENTS",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530223000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530223000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/MESSAGES",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530223000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530223000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/SUBSTITUTIONS",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530224000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530224000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/MEASUREMENTS",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530223000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530223000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/MESSAGES",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530223000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530223000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Volumen versus Stromverbrauch/SUBSTITUTIONS",
+      "name": "Energieverbrauch/Volumen Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530224000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530224000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/MEASUREMENTS",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/MESSAGES",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/25/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/SUBSTITUTIONS",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/25/Thing/9",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/MEASUREMENTS",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/MESSAGES",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Allgemeine Parameter WW Frillendorf__Stromverbrauch/SUBSTITUTIONS",
+      "name": "Energieverbrauch Gesamt Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/9",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530225000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/MEASUREMENTS",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/10",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530227000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530227000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/MESSAGES",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/5/Thing/10",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530227000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530227000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/5/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/SUBSTITUTIONS",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/5/Thing/10",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530228000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530228000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/25/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/MEASUREMENTS",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/25/Thing/10",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530227000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530227000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/25/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/MESSAGES",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/25/Thing/10",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530227000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530227000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/25/Channel/Pumpe 01 WW Frillendorf__Stromverbrauch/SUBSTITUTIONS",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/25/Thing/10",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530228000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530228000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/6/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/MEASUREMENTS",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/6/Thing/13",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530234000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530234000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/6/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/MESSAGES",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/6/Thing/13",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530234000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530234000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/6/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/SUBSTITUTIONS",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/6/Thing/13",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530235000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530235000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/27/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/MEASUREMENTS",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Timeseries)",
+      "thingNodeId": "ThingNode/27/Thing/13",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530234000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530234000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/27/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/MESSAGES",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Status messages)",
+      "thingNodeId": "ThingNode/27/Thing/13",
+      "dataType": "timeseries[str]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530234000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530234000Z"
+          }
+      }
+  },
+  {
+      "id": "TS/ThingNode/27/Channel/Pumpe 01 WW Kettwig__Stromverbrauch/SUBSTITUTIONS",
+      "name": "Stromverbrauch Pumpe 1 Wasserwerk Frillendorf (Substitution timeseries)",
+      "thingNodeId": "ThingNode/27/Thing/13",
+      "dataType": "timeseries[float]",
+      "filters": {
+          "fromTimestamp": {
+              "dataType": "timestamp",
+              "name": "from timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530235000Z"
+          },
+          "toTimestamp": {
+              "dataType": "timestamp",
+              "name": "to timestamp",
+              "required": true,
+              "min": "2015-01-01T00:00:00.000000000Z",
+              "max": "2021-01-06T15:30:35.530235000Z"
+          }
+      }
+  }
+]

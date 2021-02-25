@@ -8,4 +8,5 @@ public class ModulAdapterDTO {
     private String id;
     private String name;
     private String url;
+    private String internalUrl;
 }

@@ -1,0 +1,65 @@
+{
+  "id": 2,
+  "name": "test adapter",
+  "thingNodes": [
+    {
+      "id": "childthingnode1",
+      "name": "child test thingnode 1",
+      "parentId": "rootthingnode1"
+    },
+    {
+      "id": "childthingnode2",
+      "name": "child test thingnode 2",
+      "parentId": "rootthingnode1"
+    },
+    {
+      "id": "childthingnode3",
+      "name": "child test thingnode 3",
+      "parentId": "rootthingnode1"
+    }
+  ],
+  "sources": [
+    {
+      "id": "rootSource1",
+      "thingNodeId": "rootthingnode1",
+      "name": "machine 1",
+      "dataType": "STRING"
+    },
+    {
+      "id": "rootSource1",
+      "thingNodeId": "rootthingnode2",
+      "name": "machine 2",
+      "dataType": "SERIES",
+      "filters": {
+        "fromTimestamp": {
+          "dataType": "timestamp",
+          "max": "2020-12-14T14:53:29.173825000Z",
+          "min": "2015-01-01T00:00:00.000000000Z",
+          "name": "from timestamp",
+          "required": true
+        },
+          "toTimestamp": {
+          "dataType": "timestamp",
+          "max": "2020-12-14T14:53:29.173825000Z",
+          "min": "2015-01-01T00:00:00.000000000Z",
+          "name": "to timestamp",
+          "required": true
+        }
+      }  
+    },
+    {
+      "id": "rootSource1",
+      "thingNodeId": "rootthingnode3",
+      "name": "machine 3",
+      "dataType": "STRING"
+    }
+  ],
+  "sinks": [
+    {
+      "id": "childSink1",
+      "thingNodeId": "childthingnode1",
+      "name": "machine 1",
+      "dataType": "STRING"
+    }
+  ]
+}

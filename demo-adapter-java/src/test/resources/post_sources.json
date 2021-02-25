@@ -1,0 +1,6 @@
+{
+  "key": "root.plantB.millingUnit.influx.temp|Last Self-Check Okay",
+  "value": true,
+  "dataType": "boolean",
+  "isSink": false
+}

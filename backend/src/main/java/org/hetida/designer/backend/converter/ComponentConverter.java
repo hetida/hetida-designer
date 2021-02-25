@@ -62,8 +62,4 @@ public class ComponentConverter {
         return codegenRequestDTO;
     }
 
-    public ComponentDTO setMissingFields(ComponentDTO componentDto) {
-      componentDto.setType(ItemType.COMPONENT);
-      return componentDto;
-    }
 }

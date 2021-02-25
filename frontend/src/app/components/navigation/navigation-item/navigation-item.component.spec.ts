@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
 import { BasicTestModule } from 'src/app/angular-test.module';
 import { BaseItemType } from 'src/app/enums/base-item-type';
@@ -23,31 +23,33 @@ describe('NavigationItemComponent', () => {
   const mockWorkflowEditorService = jasmine.createSpy();
   const mockComponentEditorService = jasmine.createSpy();
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      imports: [BasicTestModule],
-      declarations: [NavigationItemComponent],
-      providers: [
-        provideMockStore(),
-        {
-          provide: WorkflowEditorService,
-          useValue: mockWorkflowEditorService
-        },
-        {
-          provide: ComponentEditorService,
-          useValue: mockComponentEditorService
-        },
-        {
-          provide: ContextmenuService,
-          useValue: mockContextMenuService
-        },
-        {
-          provide: TabItemService,
-          useValue: mockTabItemService
-        }
-      ]
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [BasicTestModule],
+        declarations: [NavigationItemComponent],
+        providers: [
+          provideMockStore(),
+          {
+            provide: WorkflowEditorService,
+            useValue: mockWorkflowEditorService
+          },
+          {
+            provide: ComponentEditorService,
+            useValue: mockComponentEditorService
+          },
+          {
+            provide: ContextmenuService,
+            useValue: mockContextMenuService
+          },
+          {
+            provide: TabItemService,
+            useValue: mockTabItemService
+          }
+        ]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(NavigationItemComponent);

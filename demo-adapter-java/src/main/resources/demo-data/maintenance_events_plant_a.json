@@ -1,0 +1,17 @@
+{
+  "id": "root.plantA.maintenance_events",
+  "maintenanceEvents": [
+    {
+      "component_id": "AB1234",
+      "component_name": "central gearbox",
+      "maintenance_type": "repair",
+      "timestamp": "2020-01-15T07:30:45.000Z"
+    },
+    {
+      "component_id": "CD9876",
+      "component_name": "connector",
+      "maintenance_type": "replace",
+      "timestamp": "2020-01-16T12:30:45.000Z"
+    }
+  ]
+}

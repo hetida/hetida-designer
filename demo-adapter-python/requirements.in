@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+uvloop
+gunicorn
+httptools
+pandas
+numpy
+pydantic[dotenv]
+python-jose[cryptography]

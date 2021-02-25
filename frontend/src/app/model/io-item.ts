@@ -1,3 +1,5 @@
+import { IOType } from 'hetida-flowchart';
+
 export interface IOItem {
   /**
    * UUID
@@ -7,7 +9,7 @@ export interface IOItem {
   /**
    * Data Type
    */
-  type: string;
+  type: IOType;
 
   /**
    * Name

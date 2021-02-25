@@ -7,7 +7,7 @@ import java.util.Map;
 @Data
 public class InputWiringDTO {
     private String workflow_input_name;
-    private Integer adapter_id;
+    private String adapter_id;
     private String source_id;
     private Map<String, String> filters;
 }

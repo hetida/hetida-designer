@@ -3,7 +3,7 @@
 import json
 import os
 import glob
-from typing import List, Optional, Tuple, Union, Any
+from typing import List, Optional, Tuple, Union, Any, Dict
 from pathlib import Path
 
 from enum import Enum
@@ -45,6 +45,14 @@ kc_access_token_manager = (
     if runtime_config.hd_auth_use_keycloak
     else None
 )
+
+
+def get_auth_headers() -> Dict[str, str]:
+    return (
+        {"Authorization": "Bearer " + kc_access_token_manager.get_access_token()}
+        if kc_access_token_manager is not None
+        else {}
+    )
 
 
 def get_backend_basic_auth() -> Tuple[Optional[str], Optional[str]]:
@@ -230,11 +238,7 @@ def post_component(
         "JSON Input for Component Controller:\n%s", model_to_pretty_json_str(comp_dto)
     )
 
-    headers = (
-        {"Authorization": "Bearer " + kc_access_token_manager.get_access_token()}
-        if kc_access_token_manager is not None
-        else {}
-    )
+    headers = get_auth_headers()
 
     response = requests.post(
         runtime_config.hd_backend_api_url + "components",
@@ -296,7 +300,8 @@ def post_components_from_directory(base_path_components: str) -> None:
         (_, categories, _) = next(os.walk(base_path_components))
     except StopIteration:
         logger.warning(
-            "No Components in directory %s found for posting!", base_path_components,
+            "No Components in directory %s found for posting!",
+            base_path_components,
         )
         return
     for category in categories:
@@ -329,9 +334,9 @@ def post_components_from_directory(base_path_components: str) -> None:
                     + str((info, doc, code))
                 )
 
-            assert info is not None  # for mypy
-            assert doc is not None  # for mypy
-            assert code is not None  # for mypy
+            assert info is not None  # for mypy # nosec
+            assert doc is not None  # for mypy # nosec
+            assert code is not None  # for mypy # nosec
 
             post_component(base_name, category, info, doc, code)
 
@@ -352,11 +357,8 @@ def download_workflow_to_files(
     Usage:
         download_workflow_to_files("5e2d5320-db5a-4430-b0a7-700abc508adb", "./workflows")
     """
-    headers = (
-        {"Authorization": "Bearer " + kc_access_token_manager.get_access_token()}
-        if kc_access_token_manager is not None
-        else {}
-    )
+    headers = get_auth_headers()
+
     response = requests.get(
         runtime_config.hd_backend_api_url + "workflows/" + str(id),
         verify=runtime_config.hd_backend_verify_certs,
@@ -398,11 +400,8 @@ def download_workflow_to_files(
 
 def post_workflow(json_info: dict, doc: str) -> None:
 
-    headers = (
-        {"Authorization": "Bearer " + kc_access_token_manager.get_access_token()}
-        if kc_access_token_manager is not None
-        else {}
-    )
+    headers = get_auth_headers()
+
     response = requests.put(
         runtime_config.hd_backend_api_url + "workflows/" + json_info["id"],
         verify=runtime_config.hd_backend_verify_certs,
@@ -414,7 +413,9 @@ def post_workflow(json_info: dict, doc: str) -> None:
     )
 
     logger.info(
-        "Workflow posting status code: %s, %s", response.status_code, response.text,
+        "Workflow posting status code: %s, %s",
+        response.status_code,
+        response.text,
     )
 
     if response.status_code not in [200, 201]:
@@ -453,7 +454,8 @@ def post_workflows_from_directory(base_path_workflows: str) -> None:
         (_, categories, _) = next(os.walk(base_path_workflows))
     except StopIteration:
         logger.warning(
-            "No Workflows in directory %s found for posting!", base_path_workflows,
+            "No Workflows in directory %s found for posting!",
+            base_path_workflows,
         )
         return
     for category in categories:
@@ -473,12 +475,13 @@ def post_workflows_from_directory(base_path_workflows: str) -> None:
             )
 
             info, doc, _ = load_data(workflow_json_file, workflow_doc_file)
+
             if None in [info, doc]:
                 raise ValueError(
                     "Data for workflow not provided completely" + str((info, doc))
                 )
-            assert info is not None  # for mypy
-            assert doc is not None  # for mypy
+            assert info is not None  # for mypy # nosec
+            assert doc is not None  # for mypy # nosec
             post_workflow(info, doc)
 
 

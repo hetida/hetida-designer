@@ -9,12 +9,25 @@ import java.util.Map;
 
 @Data
 public class InputWiringDTO {
+
     @JsonProperty("workflow_input_name")
     private String workflowInputName;
+
     @JsonProperty("adapter_id")
-    private Integer adapterId;
-    @JsonProperty("source_id")
-    private String sourceId;
+    private String adapterId;
+
+    @JsonProperty("ref_id")
+    private String refId;
+
+    @JsonProperty("ref_id_type")
+    private String refIdType;
+
+    @JsonProperty("ref_key")
+    private String refKey;
+
+    @JsonProperty("type")
+    private String type;
+
     @JsonInclude()
     private Map<String, Object> filters = new HashMap<>();
 }

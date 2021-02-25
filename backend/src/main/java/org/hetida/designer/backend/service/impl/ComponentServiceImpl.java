@@ -1,6 +1,11 @@
 package org.hetida.designer.backend.service.impl;
 
-import lombok.extern.log4j.Log4j2;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.hetida.designer.backend.converter.ComponentConverter;
 import org.hetida.designer.backend.dto.WiringDTO;
 import org.hetida.designer.backend.dto.engine.CodegenRequestDTO;
@@ -8,6 +13,7 @@ import org.hetida.designer.backend.enums.ItemState;
 import org.hetida.designer.backend.exception.ComponentNotFoundException;
 import org.hetida.designer.backend.exception.ComponentNotWriteableException;
 import org.hetida.designer.backend.model.Component;
+import org.hetida.designer.backend.model.ComponentIO;
 import org.hetida.designer.backend.model.Wiring;
 import org.hetida.designer.backend.repository.ComponentRepository;
 import org.hetida.designer.backend.repository.WiringRepository;
@@ -18,7 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.*;
+import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
@@ -74,16 +80,13 @@ public class ComponentServiceImpl implements ComponentService {
         log.info("update:");
         log.info(component.toString());
 
-        boolean ioUpdate = false;
-        if (!component.getInputs().equals(existingComponent.getInputs())
-                || !component.getOutputs().equals(existingComponent.getOutputs())) {
-            ioUpdate = true;
-        }
+        boolean ioUpdate = isUpdateRequired(component.getInputs(), existingComponent.getInputs())
+                || isUpdateRequired(component.getOutputs(), existingComponent.getOutputs());
 
         if (ioUpdate) {
             component.setCode(this.generateCode(component));
         } else {
-            log.debug("code generation is disabled");
+            log.debug("code generation is not required");
         }
         this.componentRepository.saveAndFlush(component);
         log.info("modified component {}", component.getId());
@@ -96,6 +99,37 @@ public class ComponentServiceImpl implements ComponentService {
         log.debug("generating component code");
         CodegenRequestDTO codegenRequest = this.componentConverter.convertToCodegenRequestDto(component);
         return this.engineService.generateCode(codegenRequest);
+    }
+
+    private boolean isUpdateRequired(List<ComponentIO> componentIO, List<ComponentIO> existingComponentIO) {
+        boolean hasNewIOItems = existingComponentIO.stream().map(existingInput -> {
+            ComponentIO foundComponentIO = componentIO.stream()
+            .filter(input -> existingInput.getId().equals(input.getId())).findFirst().orElse(null);
+            return foundComponentIO == null;
+        }).reduce(false, (acc, hasChanges) -> {
+            if (acc) {
+                return true;
+            }
+            return hasChanges;
+        });
+
+        boolean hasIOChanges = componentIO.stream().map(input -> {
+            ComponentIO foundExistingInput = existingComponentIO.stream()
+                    .filter(existingInput -> input.getId().equals(existingInput.getId())).findFirst().orElse(null);
+            if (foundExistingInput == null) {
+                return true;
+            }
+            boolean nameHasChanged = !foundExistingInput.getName().equals(input.getName());
+            boolean typeHasChanged = !foundExistingInput.getType().equals(input.getType());
+            return nameHasChanged || typeHasChanged;
+        }).reduce(false, (acc, hasChanges) -> {
+            if (acc) {
+                return true;
+            }
+            return hasChanges;
+        });
+
+        return hasIOChanges || hasNewIOItems;
     }
 
     @Override

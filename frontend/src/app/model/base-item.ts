@@ -1,6 +1,6 @@
+import { Wiring } from 'hd-wiring';
 import { BaseItemType } from '../enums/base-item-type';
 import { RevisionState } from '../enums/revision-state';
-import { Wiring } from '../service/http-service/wiring-http.service';
 import { ComponentBaseItem } from './component-base-item';
 import { IOItem } from './io-item';
 import { WorkflowBaseItem } from './workflow-base-item';
