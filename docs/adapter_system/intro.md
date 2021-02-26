@@ -27,13 +27,13 @@ The hetida designer adapter system has the following **main goals**:
 
 A **workflow** exposes an interface consisting of its dynamic inputs and outputs. This is what you configure in the IO dialog. Inputs and outputs have types like "DATAFRAME" or "SERIES" or "FLOAT" that correspond to the Pandas/Python types used internally.
 
-![](/home/steffen/.md_notes_dir/.pasted_images/94ab30de89bc67be2faa96140e9c6bb81f24a608.png)
+![](../assets/inps_outps_io_dialog.png)
 
 When a workflow is executed a **wiring** is necessary to provide the necessary information from where data sources should be ingested into what inputs and similary which output should go to what data sink. A wiring is a json object.
 
 A wiring contains references to **adapters** which actually do the job of ingesting the data and sending it to sinks. Adapters also provide web service endpoints for browsing and filtering the available data in user interfaces in order to construct wirings. An adapter consists of software.
 
-![](/home/steffen/.md_notes_dir/.pasted_images/5576c1b7890e12e0c7d1e7c7ffc5204db28c06c9.png)
+![](../assets/comp_wf_wiring_wired_workflow.png)
 
 What the test execution dialog in hetida designer actually does is creating a wiring from user input and using this to execute a workflow.
 

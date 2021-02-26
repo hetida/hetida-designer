@@ -29,13 +29,13 @@ public class ThingNodeDataConverter {
         StructureDTO structureDTO = new StructureDTO();
         structureDTO.setId(adapterId);
         structureDTO.setName(adapterName);
-        structureDTO.setThingNodes(convertClientThingNodesToStructureThingNodes(clientStructureDTO.getThingNodes()));
+        structureDTO.setThingNodes(convertClientStructureToThingNodes(clientStructureDTO.getThingNodes()));
         structureDTO.setSources(sourceDataConverter.convertClientStructureToSources(clientStructureDTO));
         structureDTO.setSinks(sinkDataConverter.convertClientStructureToSinks(clientStructureDTO));
         return structureDTO;
     }
 
-    private List<ThingNodeDTO> convertClientThingNodesToStructureThingNodes(ClientThingNodesDTO thingNodes) {
+    private List<ThingNodeDTO> convertClientStructureToThingNodes(ClientThingNodesDTO thingNodes) {
         List<ThingNodeDTO> thingNodeDTOS = new ArrayList<>();
         thingNodes.getThingNodes().forEach(n -> {
             ThingNodeDTO thingNodeDTO = new ThingNodeDTO();

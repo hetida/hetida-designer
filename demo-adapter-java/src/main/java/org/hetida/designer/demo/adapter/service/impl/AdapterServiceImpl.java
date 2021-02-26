@@ -71,6 +71,13 @@ public class AdapterServiceImpl implements AdapterService {
     }
 
     @Override
+    @Cacheable("structure")
+    public StructureDTO getCachedStructure() {
+        ClientStructureDTO clientStructureDTO = client.getStructure();
+        return thingNodeDataConverter.convertToStructureDto(clientStructureDTO);
+    }
+
+    @Override
     public SourcesDTO getFilteredSources(final String filter) {
 
         SourcesDTO sourcesDTO = new SourcesDTO();
@@ -84,7 +91,10 @@ public class AdapterServiceImpl implements AdapterService {
 
     @Override
     public SourceDTO getSource(final String id) {
-        return getFilteredSources(null).getSources().stream().filter(source -> source.getId().equals(id)).findFirst().orElse(null);
+        return getFilteredSources(null).getSources().stream()
+                .filter(source -> source.getId().equals(id))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
@@ -119,24 +129,61 @@ public class AdapterServiceImpl implements AdapterService {
     }
 
     @Override
-    public SinkDTO getSinkMetaData(final String id) {
-        return getFilteredSinks(null).getSinks().stream().filter(sink -> sink.getId().equals(id)).findFirst().orElse(null);
+    public SinkDTO getSink(final String id) {
+        return getFilteredSinks(null).getSinks().stream()
+                .filter(sink -> sink.getId().equals(id))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
     public ThingNodeDTO getThingNode(final String id) {
-
-        return getCompleteStructure().getThingNodes().stream().filter(thingNodeDTO -> thingNodeDTO.getId().equals(id)).findFirst().orElse(null);
+        return getCachedStructure().getThingNodes().stream()
+                .filter(thingNodeDTO -> thingNodeDTO.getId().equals(id))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
-    @Cacheable("structure")
-    public StructureDTO getCompleteStructure() {
-        ClientStructureDTO clientStructureDTO = client.getStructure();
-        if (clientStructureDTO == null) {
-            return null;
+    public StructureDTO getStructure(final String parentId) {
+        StructureDTO structureDTO = getCachedStructure();
+        structureDTO.setSinks(filterSinks(structureDTO, parentId));
+        structureDTO.setSources(filterSources(structureDTO, parentId));
+        structureDTO.setThingNodes(filterThingNodes(structureDTO, parentId));
+        return structureDTO;
+    }
+
+    private List<ThingNodeDTO> filterThingNodes(final StructureDTO structureDTO, final String parentId) {
+
+        if (parentId != null) {
+            // filter 1st level
+            return structureDTO.getThingNodes().stream().filter(tndto -> parentId.equals(tndto.getParentId())).collect(Collectors.toList());
+        } else {
+            // only root
+            return structureDTO.getThingNodes().stream().filter(tndto -> tndto.getParentId() == null).collect(Collectors.toList());
         }
-        return thingNodeDataConverter.convertToStructureDto(clientStructureDTO);
+    }
+
+    private List<SourceDTO> filterSources(final StructureDTO structureDTO, final String parentId) {
+
+        if (parentId != null) {
+            return structureDTO.getSources().stream().filter(
+                    sourceDTO -> parentId.equals(sourceDTO.getThingNodeId())
+            ).collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private List<SinkDTO> filterSinks(final StructureDTO structureDTO, final String parentId) {
+
+        if (parentId != null) {
+            return structureDTO.getSinks().stream().filter(
+                    sinkDTO -> parentId.equals(sinkDTO.getThingNodeId())
+            ).collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     @Override
@@ -232,54 +279,6 @@ public class AdapterServiceImpl implements AdapterService {
     }
 
     @Override
-    public StructureDTO getStructure(final String parentId) {
-        StructureDTO completeStructure = getCompleteStructure();
-        List<ThingNodeDTO> filteredThingNodes = getFilteredThingNodes(completeStructure, parentId);
-        List<SourceDTO> filteredSources = getFilteredSources(completeStructure, parentId);
-        List<SinkDTO> filteredSinks = getFilteredSinks(completeStructure, parentId);
-        StructureDTO result = new StructureDTO();
-        result.setId(completeStructure.getId());
-        result.setName(completeStructure.getName());
-        result.setSinks(filteredSinks);
-        result.setSources(filteredSources);
-        result.setThingNodes(filteredThingNodes);
-        return result;
-    }
-
-    private List<ThingNodeDTO> getFilteredThingNodes(final StructureDTO completeStructure, final String parentId) {
-
-        if (parentId != null) {
-            // filter 1st level
-            return completeStructure.getThingNodes().stream().filter(tndto -> parentId.equals(tndto.getParentId())).collect(Collectors.toList());
-        } else {
-            // only root
-            return completeStructure.getThingNodes().stream().filter(tndto -> tndto.getParentId() == null).collect(Collectors.toList());
-        }
-    }
-
-    private List<SourceDTO> getFilteredSources(final StructureDTO completeStructure, final String parentId) {
-
-        if (parentId != null) {
-            return completeStructure.getSources().stream().filter(
-                    sourceDTO -> parentId.equals(sourceDTO.getThingNodeId())
-            ).collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    private List<SinkDTO> getFilteredSinks(final StructureDTO completeStructure, final String parentId) {
-
-        if (parentId != null) {
-            return completeStructure.getSinks().stream().filter(
-                    sinkDTO -> parentId.equals(sinkDTO.getThingNodeId())
-            ).collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    @Override
     public void startDataframeStreaming(final OutputStream outputStream, final String id) {
 
         final String methodName = new Object() {
@@ -312,12 +311,4 @@ public class AdapterServiceImpl implements AdapterService {
         log.info("Streaming of {} dataframes by criteria: [{}] processed successfully, Task: [{}] took {}ms.", counter.get(),
                 timeSeriesCriteriaDto, threadName, (System.currentTimeMillis() - start));
     }
-
-    @Override
-    public List<DataFrameDTO> addDataframe(final String id) {
-
-        return new ArrayList<>();
-    }
-
-
 }
