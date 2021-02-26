@@ -42,7 +42,7 @@ Basic information about the adapter. This endpoint is currently not used by heti
 
 * Response:
   
-  ```json
+  ```
   {
     "id": STRING,
     "name": STRING,
@@ -60,7 +60,7 @@ This endpoints allows for hierarchical browsing of data sources / data sinks. It
 
 Response:
 
-```json
+```
 {
   "id": STRING // id of adapter
   "name": STRING // name of adapter
@@ -135,7 +135,7 @@ parameters:
 
 Response of /sources/ (without id):
 
-```json
+```
 {
 "resultCount": INTEGER
 "sources": 
@@ -160,7 +160,7 @@ Response of /sources/ (without id):
 
 Response of /sources/{id} (with id):
 
-```json
+```
 {
   "id": STRING,
   "thingNodeId": STRING,
@@ -187,7 +187,7 @@ parameters:
 
 Response of /sinks/ (without id):
 
-```json
+```
 {
     "resultCount": INTEGER
     "sinks": [
@@ -206,7 +206,7 @@ Response of /sinks/ (without id):
 
 Response of /sinks/{id} (with id):
 
-```json
+```
 {
   "id": STRING,
   "thingNodeId": STRING,
@@ -223,12 +223,12 @@ This only needs to implement the endpoint with id, i.e. retrieval of a single th
 
 Response:
 
-```json
+```
 {
-      "id": STRING,
-      "parentId": STRING,
-      "name": STRING,
-      "description": STRING
+    "id": STRING,
+    "parentId": STRING,
+    "name": STRING,
+    "description": STRING
 }
 ```
 
@@ -246,7 +246,7 @@ Get all metadata attached to a specific source. `id` is the source's id.
 
 Response:
 
-```json
+```
 [
     {
         "key": STRING,
@@ -271,29 +271,29 @@ Get/Post a specific metadatum. `id` is the source's id and `key` is the `metdata
 
 Response (GET):
 
-```json
-   {
-        "key": STRING,
-        "value": value // json datatype corresponding to the dataType 
-                       // field. For "any" dataType this can be either
-                       // a Json object or a string containing a Json
-                       // object.
-        "dataType": DATATYPE // see "datatype" enum description above
-        "isSinK": BOOL // optional (default: False). Will be used in 
-                       // a later version to determine which metadata
-                       // is writable / wirableto workflow outputs
-    }
+```
+{
+    "key": STRING,
+    "value": value // json datatype corresponding to the dataType 
+                    // field. For "any" dataType this can be either
+                    // a Json object or a string containing a Json
+                    // object.
+    "dataType": DATATYPE // see "datatype" enum description above
+    "isSinK": BOOL // optional (default: False). Will be used in 
+                    // a later version to determine which metadata
+                    // is writable / wirableto workflow outputs
+}
 ```
 
 Payload (POST):
 
-```json
-    {
-        "key": STRING,
-        "value": value // json datatype corresponding to the dataType 
-                       // field. When posting this must be the 
-                       // JSON datatype corresponding to dataType
-    }
+```
+{
+    "key": STRING,
+    "value": value // json datatype corresponding to the dataType 
+                    // field. When posting this must be the 
+                    // JSON datatype corresponding to dataType
+}
 ```
 
 Notes: All metadata is wirable to workflow inputs by convention. In a later version metadata will by default not be  wirable to workflow outputs unless `isSink` is set to `true`.
@@ -326,7 +326,7 @@ Query parameters:
 
 Response (Line delimited Stream of Json records):
 
-```json
+```
 {"timeseriesId": STRING, "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
 {"timeseriesId": STRING, "timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7}
 {"timeseriesId": STRING, "timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
@@ -348,11 +348,11 @@ Query parameters:
 
 Payload (List of timeseries records):
 
-```json
+```
 [
-  {"timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3},
-  {"timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7},
-  {"timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
+    {"timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3},
+    {"timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7},
+    {"timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
 ]
 ```
 
@@ -366,7 +366,7 @@ Query parameters:
 
 Response (Line delimited Stream of Json records):
 
-```json
+```
 {"columnA": "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3}
 {"columnA": "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3}
 {"columnA": "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
@@ -384,11 +384,11 @@ Query parameters:
 
 Payload:
 
-```json
+```
 [
-  {columnA: "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3},
-  {columnA: "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3},
-  {columnA: "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
+    {columnA: "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3},
+    {columnA: "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3},
+    {columnA: "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
 ]
 ```
 

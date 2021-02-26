@@ -463,7 +463,7 @@ public class AdapterController {
         String decodedId = URLDecoder.decode(id, StandardCharsets.UTF_8.toString());
         log.info("Getting sinks for id {}", decodedId);
 
-        return new ResponseEntity<>(adapterService.getSinkMetaData(decodedId), HttpStatus.OK);
+        return new ResponseEntity<>(adapterService.getSink(decodedId), HttpStatus.OK);
     }
 
     /**
