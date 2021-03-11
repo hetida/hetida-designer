@@ -32,7 +32,6 @@ are importing here.
 
 from hetdesrun.adapters import register_source_adapter, register_sink_adapter
 
-
 """
 Example:
     from my_package.my_source_adapter import my_source_adapter_load_func
@@ -41,3 +40,72 @@ Example:
     from my_package.my_sink_adapter import my_sink_adapter_send_func
     register_sink_adapter("my_adapter_key", my_sink_adapter_send_func)
 """
+
+
+# Registering File Support Handlers for the local file adapter
+from hetdesrun.adapters.local_file.extensions import (
+    register_file_support,
+    FileSupportHandler,
+)
+
+from hetdesrun.adapters.local_file.handlers.csv import load_csv, write_csv
+
+csv_file_support_handler = FileSupportHandler(
+    associated_extensions=[
+        # this determines which files are associated to the handler functions
+        ".csv",
+        ".csv.zip",
+        ".csv.gz",
+        ".csv.bz2",
+        ".csv.xz",
+    ],
+    read_handler_func=load_csv,
+    write_handler_func=write_csv,
+)
+
+register_file_support(csv_file_support_handler)
+
+from hetdesrun.adapters.local_file.handlers.excel import load_excel, write_excel
+
+excel_file_support_handler = FileSupportHandler(
+    associated_extensions=[
+        # this determines which files are associated to the handler functions
+        ".xls",
+        ".xlsx",
+        ".xlsm",
+        ".xlsb",
+        ".odf",
+        ".ods",
+        ".odt",
+    ],
+    read_handler_func=load_excel,
+    write_handler_func=write_excel,
+)
+
+register_file_support(excel_file_support_handler)
+
+from hetdesrun.adapters.local_file.handlers.hdf import load_hdf, write_hdf
+
+hdf_file_support_handler = FileSupportHandler(
+    associated_extensions=[
+        # this determines which files are associated to the handler functions
+        ".h5"
+    ],
+    read_handler_func=load_hdf,
+    write_handler_func=write_hdf,
+)
+
+register_file_support(hdf_file_support_handler)
+
+from hetdesrun.adapters.local_file.handlers.parquet import load_parquet, write_parquet
+
+parquet_file_support_handler = FileSupportHandler(
+    associated_extensions=[
+        # this determines which files are associated to the handler functions
+        ".parquet"
+    ],
+    read_handler_func=load_parquet,
+    write_handler_func=write_parquet,
+)
+
+register_file_support(parquet_file_support_handler)

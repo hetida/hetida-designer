@@ -98,10 +98,10 @@ def validate_type_and_ref_id(
         )
 
     if not all(
-        [
+        (
             isinstance(rest_adapter_data_type, ExternalType)
             for rest_adapter_data_type in corresponding_types
-        ]
+        )
     ):
         raise AdapterClientWiringInvalidError(
             "Got unknown type in wiring for generic rest adapter"
@@ -176,7 +176,7 @@ async def send_data(
     wf_output_names, _, parsed_sink_types = validate_type_and_ref_id(
         wf_output_name_to_filtered_sink_mapping_dict
     )
- 
+
     # Organize by type
     metadata_data_to_send: Dict[str, Any] = {}
     metadata_filtered_sinks: Dict[str, FilteredSink] = {}

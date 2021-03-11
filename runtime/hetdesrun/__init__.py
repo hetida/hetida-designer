@@ -3,6 +3,9 @@ from hetdesrun.service.config import runtime_config
 from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.runtime import runtime_component_logger as logger
 
+import hetdesrun_config
+
+
 try:
     with open("VERSION", "r") as version_file:
         VERSION = version_file.read().strip()

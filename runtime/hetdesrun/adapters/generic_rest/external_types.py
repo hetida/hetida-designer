@@ -37,6 +37,7 @@ class ValueDataType(str, Enum):
     ANY = "any", Any, object, "object"
 
     def __new__(cls, *values: Any) -> "ValueDataType":
+
         obj = str.__new__(cls, values[0])  # type: ignore
 
         # first value is canonical value (e.g. what you get when calling ValueDataType.INT.value)
@@ -54,7 +55,9 @@ class ValueDataType(str, Enum):
             # pylint: disable=no-member
             cls._value2member_map_[other_value] = obj  # type: ignore
 
-        obj._all_values = (values[0],) + values[2:]  # pylint: disable=no-member
+        obj._all_values = (  # type: ignore # pylint: disable=no-member
+            values[0],
+        ) + values[2:]
         return obj  # type:ignore
 
     def __repr__(self) -> str:
@@ -72,7 +75,7 @@ class ValueDataType(str, Enum):
 
         Raises pydantic.ValidationError if parsing fails.
         """
-        DynamicallyParsedValue = create_model(
+        DynamicallyParsedValue = create_model(  # type: ignore
             "DynamicallyParsedValue",
             value=(
                 self.parse_type,
@@ -90,7 +93,9 @@ class ValueDataType(str, Enum):
                 logger.info(
                     "Could not parse string received from metadata(any) as json. "
                     "Therefore we take it literally as a string object. "
-                    f"Exception was: {str(e)}.\nValue string was (first 250 chars): {obj[:250]}"
+                    "Exception was: %s.\nValue string was (first 250 chars): %s",
+                    str(e),
+                    obj[:250],
                 )
                 parsed_json_obj = obj
             return parsed_json_obj
@@ -144,7 +149,7 @@ class ExternalType(str, Enum):
         for other_value in values[1:]:
             # pylint: disable=no-member
             cls._value2member_map_[other_value] = obj  # type: ignore
-        obj._all_values = values
+        obj._all_values = values  # type: ignore
         return obj  # type: ignore
 
     def __repr__(self) -> str:

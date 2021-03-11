@@ -1,0 +1,8 @@
+{
+    "loadable": true,
+    "load_settings": {
+        "sep": ","
+    },
+    "writable": false,
+    "write_settings": {}
+}

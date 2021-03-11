@@ -9,7 +9,7 @@ At its worst it requires the user to manage several variants of her workflow, e.
 Another disadvantage is that with such operators your workflow has side effects (in a functional programming sense) while the analytics itself typically is side-effect free. This can impose technical restrictions on some scaling / parallelizing / deployment scenarios. Generally it is a good idea to decouple analytics from data engineering whenever possible and think of it as a three-step process:
     **data goes in** :arrow_right: **analytics** :arrow_right: **results go out**.<span style="background:#d9edf7;border-color:#467b8f;border-left:5px solid #467b8f;width:100%;float:left;padding:0.5em;color:#467b8f">**Note:** It certainly is possible to write and use such in/egestion operators in hetida designer since any Python code can be used when writing components. But it is not the recommended way of getting data into and out of your workflows.</span>
 
-Instead hetida designer provides a flexible **adapter system** that not only allows to decouple in/egestion from the analytics but also allows to browse data sources and sinks in the hetida desgner user interface (and even your custom web applications through using the dialog component in external software).
+Instead hetida designer provides a flexible **adapter system** that not only allows to decouple in/egestion from the analytics but also allows to browse data sources and sinks in the hetida desgner user interface (and even your custom web applications through using the dialog component or the adapter webservice endpoints in external software).
 
 This means in particular that workflows in hetida designer are meant to contain only analytics and not data in/egestion.
 
@@ -21,7 +21,7 @@ The hetida designer adapter system has the following **main goals**:
 
 * :dart: Allow flexible integration of arbitrary data sources and sinks
 
-* :dart: Make it easy to browse, filter and find data sources and sinks
+* :dart: Make it easy to browse, filter and find data sources and sinks in user interfaces
 
 ### Overview: Workflows, wirings and adapters
 
@@ -29,7 +29,7 @@ A **workflow** exposes an interface consisting of its dynamic inputs and outputs
 
 ![](../assets/inps_outps_io_dialog.png)
 
-When a workflow is executed a **wiring** is necessary to provide the necessary information from where data sources should be ingested into what inputs and similary which output should go to what data sink. A wiring is a json object.
+When a workflow is executed a **wiring** is necessary to provide the needed information from where data sources should be ingested into what inputs and similary which output should go to what data sink. A wiring is a json object.
 
 A wiring contains references to **adapters** which actually do the job of ingesting the data and sending it to sinks. Adapters also provide web service endpoints for browsing and filtering the available data in user interfaces in order to construct wirings. An adapter consists of software.
 
@@ -55,7 +55,13 @@ When automating workflows in production scenarios this adapter is typically used
 
 There are two demo adapters, a Java one and a Python one, that demonstrate the capabilities of the adapter system and how to write your own adapters.
 
-They are **generic Rest adapters**, a certain kind of custom adapters that is easy to write and provided and receives data through web service endpoints (see below for details).
+They are **generic Rest adapters**, a certain kind of custom adapters that is easy to write and provides and receives data through web service endpoints (see below for details).
+
+#### Local File Adapter
+
+This adapter allows to read/write csv or excel files from/to directories directly mounted (as volumes) in the runtime container. This adapter is an example of a **general custom adapter** (read below on what that means).
+
+Detail on usage and configuration of the Local File Adapter can be found [here](./local_file_adapter.md).
 
 ### Custom adapters
 
@@ -71,7 +77,7 @@ General custom adapters need to implement
 
 1. certain web service endpoints for data browsing / filtering and wiring construction in user interfacses
 
-2. runtime functions for actually loading / writing data.
+2. runtime functions (Python code) for actually loading / writing data.
 
 The web endpoints from 1. agree with the same-purposed web endpoints of generic rest adapters mentioned below. What makes this adapters "general" is that they are not tied to loading/sending data through web endpoints like generic Rest adapters, but can provide their completely own method (2.) by adding custom plugin-Python-code to the runtime implementation.
 
@@ -87,7 +93,7 @@ General custom adapters need two code artefacts and the runtime functions need t
 
 Generic Rest endpoints provide their data via JSON through web endpoints which is convenient but not suitable for really large data amounts due to serialization/deserialization costs and inefficiently large Json Request/Response sizes (compared to e.g. binary formats).
 
-General custom adapters can use arbitrary code to access data and therefore can  implement fast and efficient direct data access to databases etc. However the custom runtime functions are coupled to the runtime service which may have disadvantages for your deployment setup and security requirements etc. depending on your concrete usage scenario.
+General custom adapters can use arbitrary code to access data and therefore can implement fast and efficient direct data access to databases etc. However the custom runtime functions are coupled to the runtime service which may have disadvantages for your deployment setup and security requirements etc. depending on your concrete usage scenario.
 
 #### Guides/Examples for writing your own adapters
 
@@ -108,3 +114,5 @@ General custom adapters can use arbitrary code to access data and therefore can 
 [Instructions on general custom adapters](./general_custom_adapters/instructions.md)
 
 direct link to the [hetdesrun_config.py](https://github.com/hetida/hetida-designer/blob/release/runtime/hetdesrun_config.py) which explains the runtime-side implementation.
+
+The built-in [local file adapter](./local_file_adapter.md) is an example of a general custom adapter.

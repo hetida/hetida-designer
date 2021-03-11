@@ -7,3 +7,4 @@ black==19.10b0
 pytest-asyncio
 rope
 mypy
+nest_asyncio

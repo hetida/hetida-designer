@@ -4,16 +4,16 @@ import traceback
 import logging
 import json
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 
 from fastapi.encoders import jsonable_encoder
+
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware import Middleware
 
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.routing import APIRoute
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
-from starlette.status import HTTP_403_FORBIDDEN
 
 from starlette.responses import JSONResponse
 from starlette.requests import Request
@@ -49,50 +49,14 @@ from hetdesrun.wiring import (
 
 from hetdesrun.adapters import AdapterHandlingException
 
-from hetdesrun.auth.keycloak import AuthentificationError
-from hetdesrun.auth.designer import kc_bearer_verifier
-
 from hetdesrun.utils import model_to_pretty_json_str
 
+from hetdesrun.adapters.local_file.webservice import local_file_adapter_router
+
+from hetdesrun.service.auth_dependency import get_auth_deps
+
+
 logger = logging.getLogger(__name__)
-
-
-class KeycloakJWTBearer(HTTPBearer):
-    def __init__(self, auto_error: bool = True):
-        super().__init__(auto_error=auto_error)
-
-    async def __call__(self, request: Request) -> Optional[dict]:  # type: ignore
-        credentials: Optional[HTTPAuthorizationCredentials] = await super().__call__(
-            request
-        )
-
-        if credentials is None:
-            logger.info("Unauthorized: Could not obtain credentials from request")
-
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN,
-                detail="Could not obtain credentials from request",
-            )
-
-        if not credentials.scheme == "Bearer":
-            logger.info("Unauthorized: No Bearer Schema")
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN, detail="Wrong authentication method"
-            )
-
-        jwt_token = credentials.credentials
-        try:
-            token_info: dict = kc_bearer_verifier.verify_token(jwt_token)
-        except AuthentificationError as e:
-            logger.info("Unauthorized: Auth failed: %s", str(e))
-
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN, detail="Invalid bearer token"
-            ) from e
-        return token_info
-
-
-hd_auth_dep = KeycloakJWTBearer()
 
 
 class AdditionalLoggingRoute(APIRoute):
@@ -130,11 +94,22 @@ class AdditionalLoggingRoute(APIRoute):
         return custom_route_handler
 
 
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=runtime_config.allowed_origins.split(","),
+        allow_credentials=True,
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+    )
+]
+
 app = FastAPI(
     title="Hetida Designer Runtime API",
     description="Hetida Designer Runtime Web Services API",
     version=VERSION,
     root_path=runtime_config.swagger_prefix,
+    middleware=middleware,
 )
 
 app.router.route_class = AdditionalLoggingRoute
@@ -151,7 +126,7 @@ async def validation_exception_handler(
 @app.post(
     "/runtime",
     response_model=WorkflowExecutionResult,
-    dependencies=[Depends(hd_auth_dep)] if runtime_config.hd_auth_use_keycloak else [],
+    dependencies=get_auth_deps(),
 )
 async def runtime_service(
     runtime_input: WorkflowExecutionInput,
@@ -159,7 +134,8 @@ async def runtime_service(
     WorkflowExecutionResult, JSONResponse
 ]:  # pylint: disable=too-many-return-statements
     logger.info(
-        "WORKFLOW EXECUTION INPUT JSON:\n%s", model_to_pretty_json_str(runtime_input),
+        "WORKFLOW EXECUTION INPUT JSON:\n%s",
+        model_to_pretty_json_str(runtime_input),
     )
 
     execution_context.set(runtime_input.configuration)
@@ -320,9 +296,11 @@ async def runtime_service(
 @app.post(
     "/codegen",
     response_model=GeneratedCode,
-    dependencies=[Depends(hd_auth_dep)] if runtime_config.hd_auth_use_keycloak else [],
+    dependencies=get_auth_deps(),
 )
-async def codegen_service(codegen_input: CodeBody,) -> GeneratedCode:
+async def codegen_service(
+    codegen_input: CodeBody,
+) -> GeneratedCode:
     """Service for generating and updating code stubs"""
     logger.info("CODEGEN INPUT JSON:\n%s", model_to_pretty_json_str(codegen_input))
     return GeneratedCode(
@@ -337,7 +315,7 @@ async def codegen_service(codegen_input: CodeBody,) -> GeneratedCode:
 @app.post(
     "/codecheck",
     response_model=CodeCheckResult,
-    dependencies=[Depends(hd_auth_dep)] if runtime_config.hd_auth_use_keycloak else [],
+    dependencies=get_auth_deps(),
 )
 async def codecheck_service(codecheck_input: CodeBody) -> CodeCheckResult:
     """Service for checking code of components"""
@@ -372,3 +350,6 @@ async def codecheck_service(codecheck_input: CodeBody) -> CodeCheckResult:
         ] = "Inputs/Outputs contain names not satisfying Python identifier rules"
 
     return CodeCheckResult(**return_dict)
+
+
+app.include_router(local_file_adapter_router, prefix="/adapters/localfile")

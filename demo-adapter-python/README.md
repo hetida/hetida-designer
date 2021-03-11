@@ -12,7 +12,7 @@ Make sure Python 3.8 is installed and available on your path. You may need addit
 1. Navigate to the `demo-adapter-python` folder.
 2. Create virtual environment: `python -m venv venv`
 3. Activate virtual environment: `source venv/bin/activate`
-4. Install dependency management tooling: `python3 -m pip install pip==20.2.2 pip-tools==5.3.1`
+4. Install dependency management tooling: `python3 -m pip install pip==21.0.1 pip-tools==5.5.0`
 5. Install development dependencies: `pip-sync ./requirements.txt ./requirements-dev.txt `
 
 All following commands assume that that the virtual environment is active (step 3).

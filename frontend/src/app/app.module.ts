@@ -150,10 +150,7 @@ import { appReducers } from './store/app.reducers';
     },
     {
       provide: HD_WIRING_CONFIG,
-      useFactory: (
-        appConfig: ConfigService,
-        themeService: ThemeService
-      ): HdWiringConfig => {
+      useFactory: (themeService: ThemeService): HdWiringConfig => {
         const activeTheme = themeService.activeTheme as WiringTheme;
         return {
           allowManualWiring: true,
@@ -161,9 +158,6 @@ import { appReducers } from './store/app.reducers';
           monacoEditorTheme: activeTheme,
           showDownloadExampleJsonButton: true,
           showUploadJsonButton: true,
-          endpoints: {
-            applicationUrl: appConfig.config.apiEndpoint
-          },
           confirmationButtonText: 'Execute',
           showDialogHeader: true
         };

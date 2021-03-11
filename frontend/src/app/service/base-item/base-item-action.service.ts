@@ -7,7 +7,7 @@ import {
   Wiring,
   WiringDialogComponent
 } from 'hd-wiring';
-import { iif, Observable, of } from 'rxjs';
+import { combineLatest, iif, Observable, of } from 'rxjs';
 import { finalize, first, switchMap, tap } from 'rxjs/operators';
 import {
   ComponentIODialogComponent,
@@ -39,6 +39,7 @@ import * as uuid from 'uuid';
 import { BaseItemDialogData } from '../../model/BaseItemDialogData';
 import { IOItem } from '../../model/io-item';
 import { ComponentEditorService } from '../component-editor.service';
+import { WiringHttpService } from '../http-service/wiring-http.service';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
 import { WorkflowEditorService } from '../workflow-editor.service';
@@ -57,7 +58,8 @@ export class BaseItemActionService {
     private readonly workflowService: WorkflowEditorService,
     private readonly tabItemService: TabItemService,
     private readonly notificationService: NotificationService,
-    private readonly componentService: ComponentEditorService
+    private readonly componentService: ComponentEditorService,
+    private readonly wiringService: WiringHttpService
   ) {}
 
   public async execute(abstractBaseItem: AbstractBaseItem) {
@@ -76,6 +78,8 @@ export class BaseItemActionService {
       title = 'Execute Unknown';
     }
 
+    const adapterList = await this.wiringService.getAdapterList().toPromise();
+
     const dialogRef = this.dialog.open<
       WiringDialogComponent,
       ExecutionDialogData,
@@ -83,10 +87,10 @@ export class BaseItemActionService {
     >(WiringDialogComponent, {
       data: {
         title,
-        wiringItem: abstractBaseItem
+        wiringItem: abstractBaseItem,
+        adapterList
       }
     });
-
     const componentExecution$ = (
       executeTestClickEvent: ConfirmClickEvent
     ): Observable<ComponentBaseItem> => {
@@ -130,11 +134,24 @@ export class BaseItemActionService {
     dialogRef.componentInstance.confirmClick
       .pipe(
         tap(() => dialogRef.close()),
-        switchMap((executeTestClickEvent: ConfirmClickEvent) =>
+        switchMap(executeTestClickEvent => {
+          let saveOrUpdate$: Observable<Wiring>;
+          if (Utils.isDefined(executeTestClickEvent.wiring.id)) {
+            saveOrUpdate$ = this.wiringService.updateWiring(
+              executeTestClickEvent.wiring
+            );
+          } else {
+            saveOrUpdate$ = this.wiringService.saveWiring(
+              executeTestClickEvent.wiring
+            );
+          }
+          return combineLatest([of(executeTestClickEvent.id), saveOrUpdate$]);
+        }),
+        switchMap(([wiringItemId, savedWiring]) =>
           iif(
             () => abstractBaseItem.type === BaseItemType.WORKFLOW,
-            workflowExecution$(executeTestClickEvent),
-            componentExecution$(executeTestClickEvent)
+            workflowExecution$({ id: wiringItemId, wiring: savedWiring }),
+            componentExecution$({ id: wiringItemId, wiring: savedWiring })
           )
         ),
         finalize(() => dialogRef.close())

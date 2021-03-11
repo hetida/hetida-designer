@@ -170,7 +170,8 @@ class NamedDataTypedValue(TypedDict):
 
 
 def parse_via_pydantic(
-    entries: List[NamedDataTypedValue], type_map: Optional[Dict[DataType, Type]] = None,
+    entries: List[NamedDataTypedValue],
+    type_map: Optional[Dict[DataType, Type]] = None,
 ) -> BaseModel:
     """Parse data dynamically into a pydantic object
 
@@ -192,7 +193,7 @@ def parse_via_pydantic(
 
     DynamicModel = create_model("DynamicyModel", **type_dict)  # type: ignore
 
-    return DynamicModel(**{entry["name"]: entry["value"] for entry in entries})
+    return DynamicModel(**{entry["name"]: entry["value"] for entry in entries})  # type: ignore
 
 
 def parse_dynamically_from_datatypes(entries: List[NamedDataTypedValue]) -> BaseModel:
