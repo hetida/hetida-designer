@@ -115,7 +115,7 @@ class WorkflowExecutionInput(BaseModel):
         )
 
         for wf_output in workflow.outputs:
-            if not (wf_output.name in wired_output_names):
+            if not wf_output.name in wired_output_names:
                 wiring.output_wirings.append(
                     OutputWiring(
                         workflow_output_name=wf_output.name,

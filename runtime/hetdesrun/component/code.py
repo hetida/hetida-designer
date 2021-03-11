@@ -133,4 +133,4 @@ example_code = (
 
 
 def check_parameter_names(names: List[str]) -> bool:
-    return all([name.isidentifier() and not iskeyword(name) for name in names])
+    return all((name.isidentifier() and not iskeyword(name) for name in names))

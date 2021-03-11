@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MaterialModule } from 'src/app/material.module';
 import { ComponentEditorService } from '../component-editor.service';
+import { WiringHttpService } from '../http-service/wiring-http.service';
 import { TabItemService } from '../tab-item/tab-item.service';
 import { WorkflowEditorService } from '../workflow-editor.service';
 import { BaseItemActionService } from './base-item-action.service';
@@ -14,6 +15,7 @@ describe('BaseitemActionService', () => {
     const workflowService = jasmine.createSpy();
     const tabItemService = jasmine.createSpy();
     const componentService = jasmine.createSpy();
+    const wiringService = jasmine.createSpy();
     TestBed.configureTestingModule({
       imports: [MaterialModule],
       providers: [
@@ -32,6 +34,10 @@ describe('BaseitemActionService', () => {
         {
           provide: ComponentEditorService,
           useValue: componentService
+        },
+        {
+          provide: WiringHttpService,
+          useValue: wiringService
         }
       ]
     });

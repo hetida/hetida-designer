@@ -43,7 +43,7 @@ def register(
     to the outputs (which must all be of PlotlyJson type!).
     """
     if is_pure_plot_component and not all(
-        [output_type == DataType.PlotlyJson for output_type in outputs.values()]
+        (output_type == DataType.PlotlyJson for output_type in outputs.values())
     ):
         raise ComponentEntryPointRegistrationError(
             (

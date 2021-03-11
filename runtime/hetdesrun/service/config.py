@@ -40,6 +40,19 @@ class RuntimeConfig(BaseSettings):
         ),
     )
 
+    allowed_origins: str = Field(
+        (
+            "http://localhost:4200,http://localhost:80,localhost"
+            ",http://localhost,hetida-designer-demo-adapter-python"
+        ),
+        description=(
+            "Comma separated allowed origins (CORS)"
+            " (relevant for adapters in runtime like local file adapter)"
+        ),
+        env="ALLOWED_ORIGINS",
+        example="http://exampledomain.com,http://anotherexampledomain.de",
+    )
+
     # HD Keycloak auth
     hd_auth_use_keycloak: bool = Field(
         False,

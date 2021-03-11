@@ -14,7 +14,6 @@ from project directory.
 # pylint: disable=wrong-import-order
 import logging
 from hetdesrun import configure_logging
-import hetdesrun_config
 
 from hetdesrun.service.webservice import app
 

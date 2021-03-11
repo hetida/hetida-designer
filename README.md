@@ -57,15 +57,19 @@ git checkout release
 
 #### Starting the hetida designer
 
+**Note:** The following command will expose ports of designer containers to your local network and depending on your OS setup these ports may be exposed to the outside world allowing arbitrary code execution. If in doubt, [restrict all port rules to localhost](https://stackoverflow.com/a/48208039) by editing the docker-compose.yml accordingly.
+
 Once you have the source code, docker and docker-compose properly set up, run
 
 ```shell
 docker-compose up -d
 ```
 
-to start the application. Make sure you execute this command from inside the root source code directory, i.e. the hetida-designer directory you checked out from git.
+to start the application. 
 
-Wait some time for the hetida designer to start up (downloading / building of docker images may take some time).
+Make sure you execute this command from inside the root source code directory, i.e. the hetida-designer directory you checked out from git.
+
+Wait some time for the hetida designer to start up (downloading / building of docker images may take some time the first time you are doing this).
 
 #### Deployment of base component set into your installation
 
@@ -246,8 +250,8 @@ or **scipy**. That said, development on Linux is recommended.
 1. Navigate to the `runtime` folder.
 2. Create virtual environment: `python -m venv venv`
 3. Activate virtual environment: `source venv/bin/activate`
-4. Install dependency management tooling: `python3 -m pip install pip==20.2.2 pip-tools==5.3.1`
-5. Install development dependencies: `pip-sync /requirements.txt /requirements-dev.txt `
+4. Install dependency management tooling: `python3 -m pip install pip==21.0.1 pip-tools==5.5.0`
+5. Install development dependencies: `pip-sync ./requirements.txt ./requirements-dev.txt `
 6. run `python main.py`
 
 #### Running Runtime Tests
@@ -319,11 +323,13 @@ The execution dialog offers two modes for data ingestion into the workflow's dyn
 * **Manual**: Here you can enter data directly or upload some JSON or CSV file from your computer.
 * **Adapter**: Adapters allow to connect data sources (e.g. databases) to dynamic workflow input (and similar for outputs and sinks). They are small pieces of software which can be written individually for your specific data sources and data structures. They may present business views on data for easy selection in the execution dialog. More on that in documentation on the hetida designer adapter system
 
-In your local installation, there probably is no adapter installed/available currently, so we choose "Manual" mode everywhere for this demo. For threshold we simply enter the value 600.0. For input_series you may copy or upload demo data from [volatility_detection_data.json](./runtime/demodata/volatility_detection_data.json): Click on the pencil-like symbol in the Input Value field of input_series) and on "Import JSON / CSV" in the upcoming dialog.
+In your local installation, there probably is either no adapter or only the demo adapters  installed/available, so we choose "Manual" mode everywhere for this demo. For threshold we simply enter the value 600.0. For input_series you may copy or upload demo data from [volatility_detection_data.json](./runtime/demodata/volatility_detection_data.json): Click on the pencil-like symbol in the Input Value field of input_series) and on "Import JSON / CSV" in the upcoming dialog.
 
 ![input_series_demo_data_upload_dialog](./docs/assets/first_workflow/upload_demo_data_json.png)
 
-Then, select the downloaded demo data file. Click "Save" and run "Execute". The result pops up after short time:
+Then, select the downloaded demo data file.
+
+Click "Save" and run "Execute". The result pops up after short time:
 
 ![](./docs/assets/first_workflow/demo_wf_execution_result.png)
 

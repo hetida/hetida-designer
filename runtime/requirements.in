@@ -19,4 +19,11 @@ plotly==4.9.0
 requests
 python-jose[cryptography]
 cached-property
+odfpy
+openpyxl
+pyarrow
+h5py
+tables
+fastparquet
+xlrd>=2.0
 

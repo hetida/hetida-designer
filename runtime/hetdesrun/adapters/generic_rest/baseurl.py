@@ -19,8 +19,6 @@ from hetdesrun.adapters.exceptions import (
     AdapterHandlingException,
 )
 
-from hetdesrun.service.config import runtime_config
-
 
 logger = logging.getLogger(__name__)
 
