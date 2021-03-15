@@ -22,6 +22,7 @@ your machine.
 - [Code Contributors: Local development setup](#gs-local)
 - [Tutorial: How to build and execute your first workflow with hetida designer?](#tutorial)
 - [Adapter System](#adapter-system)
+- [Running workflows in production](#running-in-production)
 - [Security Hints](#security-hints)
 - [Glossary: Important hetida designer concepts explained](#glossary)
 
@@ -439,9 +440,27 @@ After confirmation the symbol of your component changes in the component sidebar
 
 ## <a name="adapter-system"></a>The Adapter System
 
-hetida designer provides a flexible adapter system allowing integration of arbitrary data sources and sinks. It allows you to write your own custom adapters and makes them available in user interfaces like the hetida designer test execution dialog.
+hetida designer provides a flexible adapter system allowing integration of arbitrary data sources and sinks. It allows you to write your own custom adapters and makes them available in user interfaces making it possible to discover, browse and search data sources and sinks. One example for such a user interface is the hetida designer test execution dialog.
+
+The adapter system allows to execute the exact same workflow on local csv files as inputs during experimentation/development and then switch to production database data simply through swapping adapters in a so-called "wiring" data structure.
 
 Please start by reading the [instructions to the adapter system](./docs/adapter_system/intro.md) and follow the links to detailed explanations/documentation from there.
+
+## <a name="running-in-production"></a>Running Workflows in production
+
+It is one of the main goals of hetida designer to make it easy to run workflows in production scenarios. That is to make the transition from experimenting/development to production usage as smooth as possible.
+
+There are several mechanisms that contribute to reaching this goal:
+
+* The revision system: Workflows have revisions and a "released" workflow revision cannot be changed anymore. This makes production usage replicable.
+
+* The adapter system allowing to simply swap adapters in a "wiring" data structure  from using local test data (e.g. csv files) to using data from databases
+
+* The fact that execution of each workflow revision is immediately available through a web service endpoint – there is **no extra deployment step necessary**. 
+  
+  * Note that a Kafka consumer for the same pupose is also built into the backend and can be activated and configured via environment variables of the designer backend (full documentation for this will be provided in a later version)
+
+Read more about how to handle and write wirings and how to use the execution endpoints [here](./docs/workflow_execution/running_workflows.md)
 
 ## <a name="security-hints"></a>Security Hints
 
