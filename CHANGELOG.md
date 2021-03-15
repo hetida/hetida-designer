@@ -1,4 +1,9 @@
 
+## 0.6.5
+* add documentation for workflow execution via web endpoint
+
+## 0.6.4
+* add built-in local file adapter to runtime
 
 ## 0.6.1, 0.6.2, 0.6.3
 * fix adapter documentation
