@@ -13,6 +13,8 @@ RUN mvn -s $MVN_SETTINGS package
 
 ##### Production stage
 FROM openjdk:8-jre-alpine
+RUN addgroup -S backend && adduser -S backend -G backend
+USER backend:backend
 WORKDIR /usr/app
 COPY --from=build /usr/src/app/target/backend-0.0.1-SNAPSHOT.jar hetida-designer-backend.jar
 EXPOSE 8080

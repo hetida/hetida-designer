@@ -26,4 +26,6 @@ h5py
 tables
 fastparquet
 xlrd>=2.0
-
+gekko
+shapely
+geopandas

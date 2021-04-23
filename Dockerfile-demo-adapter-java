@@ -13,6 +13,8 @@ RUN mvn -s $MVN_SETTINGS package
 
 ##### Production stage
 FROM openjdk:8-jre-alpine
+RUN addgroup -S hdda_app && adduser -S hdda_app -G hdda_app
+USER hdda_app:hdda_app
 WORKDIR /usr/app
 COPY --from=build /usr/src/app/target/adapter.jar hetida-designer-demo-adapter-java.jar
 EXPOSE 8091

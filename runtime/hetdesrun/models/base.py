@@ -10,3 +10,7 @@ class Result(str, Enum):
 
 class AbstractNode(BaseModel):
     id: str = Field(..., title="Id of node", description="id in current layer")
+
+
+class VersionInfo(BaseModel):
+    version: str = Field(..., description="hetida designer version")

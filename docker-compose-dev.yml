@@ -15,7 +15,7 @@ services:
       dockerfile: Dockerfile-frontend
     #image: hetida/designer-frontend
     ports:
-      - 80:80
+      - 80:8080
     depends_on:
       - hetida-designer-backend
       - hetida-designer-demo-adapter-python

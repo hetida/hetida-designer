@@ -43,7 +43,6 @@ def contour_plot(x, y, z):
             height=400,
             xaxis_showgrid=False,
             yaxis_showgrid=False,
-            yaxis_autorange="reversed",
         ),
     )
 
