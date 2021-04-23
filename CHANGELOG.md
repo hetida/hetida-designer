@@ -1,3 +1,6 @@
+
+## 0.6.7
+* upgrade Python dependencies
 ## 0.6.6
 * switch/adapt to unprivileged docker images
 * add some more default Python dependencies to runtime
