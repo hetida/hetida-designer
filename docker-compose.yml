@@ -10,14 +10,14 @@ services:
   hetida-designer-frontend:
     image: hetida/designer-frontend
     ports:
-      - 80:80
+      - 80:8080
     depends_on:
       - hetida-designer-backend
 
   hetida-designer-backend:
     image: hetida/designer-backend
     ports:
-      - 8080:8080    
+      - 8080:8080
     environment:
       - org.hetida.designer.backend.installed.adapters=demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,demo-adapter-java|Java-Demo-Adapter|http://localhost:8091/adapter|http://hetida-designer-demo-adapter-java:8091/adapter,local-file-adapter|Local-File-Adapter|http://localhost:8090/adapters/localfile|http://hetida-designer-runtime:8090/adapters/localfile
     depends_on:
@@ -32,7 +32,7 @@ services:
     ports:
       - 8090:8090
     environment:
-      RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES: '["/mnt/mounted_local_files"]'      
+      RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES: '["/mnt/mounted_local_files"]'
 
 
   hetida-designer-db:

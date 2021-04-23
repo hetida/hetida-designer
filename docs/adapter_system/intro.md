@@ -7,7 +7,9 @@ Some graphical analytical workflow tools have "Load table from Postgres" or "Wri
 At its worst it requires the user to manage several variants of her workflow, e.g. one with CSV-loading operators for development and one with database operators for production. If a workflow is reused over several facilities with different backing database systems one may furthermore need to handle even more variants.
 
 Another disadvantage is that with such operators your workflow has side effects (in a functional programming sense) while the analytics itself typically is side-effect free. This can impose technical restrictions on some scaling / parallelizing / deployment scenarios. Generally it is a good idea to decouple analytics from data engineering whenever possible and think of it as a three-step process:
-    **data goes in** :arrow_right: **analytics** :arrow_right: **results go out**.<span style="background:#d9edf7;border-color:#467b8f;border-left:5px solid #467b8f;width:100%;float:left;padding:0.5em;color:#467b8f">**Note:** It certainly is possible to write and use such in/egestion operators in hetida designer since any Python code can be used when writing components. But it is not the recommended way of getting data into and out of your workflows.</span>
+    **data goes in** :arrow_right: **analytics** :arrow_right: **results go out**.
+    
+<span style="background:#d9edf7;border-color:#467b8f;border-left:5px solid #467b8f;width:100%;float:left;padding:0.5em;color:#467b8f">**Note:** It certainly is possible to write and use such in/egestion operators in hetida designer since any Python code can be used when writing components. But it is not the recommended way of getting data into and out of your workflows.</span>
 
 Instead hetida designer provides a flexible **adapter system** that not only allows to decouple in/egestion from the analytics but also allows to browse data sources and sinks in the hetida desgner user interface (and even your custom web applications through using the dialog component or the adapter webservice endpoints in external software).
 
@@ -81,7 +83,7 @@ General custom adapters need to implement
 
 The web endpoints from 1. agree with the same-purposed web endpoints of generic rest adapters mentioned below. What makes this adapters "general" is that they are not tied to loading/sending data through web endpoints like generic Rest adapters, but can provide their completely own method (2.) by adding custom plugin-Python-code to the runtime implementation.
 
-Generic Rest endpoints need to implement
+Generic Rest adapters need to implement
 
 1. certain web service endpoints for data browsing/ filtering and wiring construction in user interfacses
 

@@ -1,8 +1,8 @@
 {
-  "apiEndpoint": "http://localhost:8080/api",
-  "forwardAuthHeaders": false,
-  "keycloakEnabled": false,
-  "keycloakRealm": "hetida",
-  "keycloakClientId": "hetida-client",
-  "keycloakUrl": "hdauth"
+    "apiEndpoint": "/hdapi",
+    "forwardAuthHeaders": false,
+    "keycloakEnabled": false,
+    "keycloakRealm": "hetida",
+    "keycloakClientId": "hetida-client",
+    "keycloakUrl": "hdauth"
 }

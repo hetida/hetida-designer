@@ -32,6 +32,7 @@ from hetdesrun.runtime.engine.plain.parsing import (
 
 from hetdesrun.datatypes import NamedDataTypedValue
 
+from hetdesrun.models.base import VersionInfo
 from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
 from hetdesrun.models.code import CodeBody, GeneratedCode, CodeCheckResult
 
@@ -291,6 +292,15 @@ async def runtime_service(
     logger.info("Workflow Execution Result serialized successfully.")
 
     return json_response
+
+
+@app.get("/info", response_model=VersionInfo)
+async def info_service():
+    """Version Info Endpoint
+
+    Unauthorized, may be used for readiness probes.
+    """
+    return {"version": VERSION}
 
 
 @app.post(

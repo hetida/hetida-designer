@@ -100,6 +100,7 @@ The inputWirings and outputWirings tie workflow inputs to data sources via an ad
 A successful response contains the result values for those workflow outputs that are wired via the "direct_provisioning" adapter. Also hetida designer internal types are for each output is provided. Outputs wired via other adapters do not occur.
 
 ```
+{
     "result": "ok",
     "output_results_by_output_name": {
         "output_name_1": 42.2   // JSON VALUE or json object

@@ -1,3 +1,8 @@
+## 0.6.6
+* switch/adapt to unprivileged docker images
+* add some more default Python dependencies to runtime
+* add info endpoints for liveness probes
+* minor documentation fix
 
 ## 0.6.5
 * add documentation for workflow execution via web endpoint

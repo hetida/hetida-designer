@@ -37,7 +37,7 @@ RUN python3 -m pytest --cov=hetdesrun --cov-report xml --junitxml test_results.x
 RUN bash /app/scripts/gen_pylint_report.sh
 
 # prod should still be the default build, this is why we close with FROM prod
-# Note that in order to really skip the test stage you either need to explicitly specify the prod
-# stage via 
+# Note that in order to really skip building the test stage you need to explicitly specify 
+# the prod stage via 
 #     docker build --target prod -f Dockerfile-runtime . -t hetdesrun_webservice
 FROM prod
