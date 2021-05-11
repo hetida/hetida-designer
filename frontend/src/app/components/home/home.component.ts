@@ -14,85 +14,91 @@ import { selectHashedAbstractBaseItemLookupById } from 'src/app/store/base-item/
 import { Utils } from 'src/app/utils/utils';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import { BaseItemContextMenuComponent } from '../base-item-context-menu/base-item-context-menu.component';
-
+import { HttpClient } from '@angular/common/http';
 @Component({
-  selector: 'hd-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+    selector: 'hd-home',
+    templateUrl: './home.component.html',
+    styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  constructor(
-    private readonly localStorageService: LocalStorageService,
-    private readonly store: Store<IAppState>,
-    private readonly baseItemActionService: BaseItemActionService,
-    private readonly tabItemService: TabItemService,
-    private readonly contextmenuService: ContextmenuService
-  ) {}
+    constructor(
+        private readonly localStorageService: LocalStorageService,
+        private readonly store: Store<IAppState>,
+        private readonly baseItemActionService: BaseItemActionService,
+        private readonly tabItemService: TabItemService,
+        private readonly contextmenuService: ContextmenuService,
+        private readonly httpClient: HttpClient
+    ) { }
 
-  public lastOpened: Observable<BaseItem[]>;
+    public lastOpened: Observable<BaseItem[]>;
+    public version: string;
 
-  ngOnInit() {
-    this.lastOpened = combineLatest([
-      this.localStorageService.notifier,
-      this.store.select(selectHashedAbstractBaseItemLookupById)
-    ]).pipe(
-      map(([_, abstractBaseItemsLookup]) => {
-        const lastOpenedBaseItemIds: string[] =
-          this.localStorageService.getItem('last-opened') ?? [];
+    ngOnInit() {
+        this.httpClient.get<string>("/assets/VERSION", { responseType: 'text' as 'json' }).subscribe((version: string) => {
+            this.version = version;
+            console.log(version);
+        })
+        this.lastOpened = combineLatest([
+            this.localStorageService.notifier,
+            this.store.select(selectHashedAbstractBaseItemLookupById)
+        ]).pipe(
+            map(([_, abstractBaseItemsLookup]) => {
+                const lastOpenedBaseItemIds: string[] =
+                    this.localStorageService.getItem('last-opened') ?? [];
 
-        return lastOpenedBaseItemIds
-          .filter(() => !Utils.object.isEmpty(abstractBaseItemsLookup))
-          .map(baseItemId => abstractBaseItemsLookup[baseItemId])
-          .filter(
-            (abstractBaseItem): abstractBaseItem is BaseItem =>
-              Utils.isDefined(abstractBaseItem) &&
-              abstractBaseItem.state !== RevisionState.DISABLED
-          );
-      })
-    );
-  }
-
-  get lastOpenedWorkflows() {
-    return this.lastOpened.pipe(
-      map(abstractBaseItems => {
-        return abstractBaseItems.filter(
-          baseItem => baseItem.type === BaseItemType.WORKFLOW
+                return lastOpenedBaseItemIds
+                    .filter(() => !Utils.object.isEmpty(abstractBaseItemsLookup))
+                    .map(baseItemId => abstractBaseItemsLookup[baseItemId])
+                    .filter(
+                        (abstractBaseItem): abstractBaseItem is BaseItem =>
+                            Utils.isDefined(abstractBaseItem) &&
+                            abstractBaseItem.state !== RevisionState.DISABLED
+                    );
+            })
         );
-      })
-    );
-  }
+    }
 
-  get lastOpenedComponents() {
-    return this.lastOpened.pipe(
-      map(abstractBaseItems => {
-        return abstractBaseItems.filter(
-          baseItem => baseItem.type === BaseItemType.COMPONENT
+    get lastOpenedWorkflows() {
+        return this.lastOpened.pipe(
+            map(abstractBaseItems => {
+                return abstractBaseItems.filter(
+                    baseItem => baseItem.type === BaseItemType.WORKFLOW
+                );
+            })
         );
-      })
-    );
-  }
+    }
 
-  select(selectedItem: BaseItem) {
-    this.tabItemService.addBaseItemTab(selectedItem.id);
-  }
+    get lastOpenedComponents() {
+        return this.lastOpened.pipe(
+            map(abstractBaseItems => {
+                return abstractBaseItems.filter(
+                    baseItem => baseItem.type === BaseItemType.COMPONENT
+                );
+            })
+        );
+    }
 
-  openBaseItemContextMenu(selectedItem: BaseItem, mouseEvent: MouseEvent) {
-    const { componentPortalRef } = this.contextmenuService.openContextMenu(
-      new ComponentPortal(BaseItemContextMenuComponent),
-      {
-        x: mouseEvent.clientX,
-        y: mouseEvent.clientY
-      }
-    );
+    select(selectedItem: BaseItem) {
+        this.tabItemService.addBaseItemTab(selectedItem.id);
+    }
 
-    componentPortalRef.instance.baseItem = selectedItem;
-  }
+    openBaseItemContextMenu(selectedItem: BaseItem, mouseEvent: MouseEvent) {
+        const { componentPortalRef } = this.contextmenuService.openContextMenu(
+            new ComponentPortal(BaseItemContextMenuComponent),
+            {
+                x: mouseEvent.clientX,
+                y: mouseEvent.clientY
+            }
+        );
 
-  newWorkflow(): void {
-    this.baseItemActionService.newWorkflow();
-  }
+        componentPortalRef.instance.baseItem = selectedItem;
+    }
 
-  newComponent(): void {
-    this.baseItemActionService.newComponent();
-  }
+    newWorkflow(): void {
+        this.baseItemActionService.newWorkflow();
+    }
+
+    newComponent(): void {
+        this.baseItemActionService.newComponent();
+    }
 }

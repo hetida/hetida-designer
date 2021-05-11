@@ -1,5 +1,5 @@
 {
-    "apiEndpoint": "http://localhost:8080/api",
+    "apiEndpoint": "/hdapi",
     "forwardAuthHeaders": false,
     "keycloakEnabled": false,
     "keycloakRealm": "hetida",

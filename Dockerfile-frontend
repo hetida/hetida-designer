@@ -22,6 +22,8 @@ RUN npm run compile-libs
 COPY ./frontend/tsconfig.json .
 COPY ./frontend/angular.json .
 COPY ./frontend/src/ src/
+COPY VERSION src/assets/VERSION
+COPY ./frontend/src/assets/hetida_designer_config_docker.json src/assets/hetida_designer_config.json
 RUN npm run test-docker
 
 # 3. Do the actual build
