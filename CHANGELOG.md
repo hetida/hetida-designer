@@ -1,4 +1,5 @@
-
+## 0.6.8
+* minor fixes and improvements
 ## 0.6.7
 * upgrade Python dependencies
 ## 0.6.6

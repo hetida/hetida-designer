@@ -49,7 +49,7 @@ git clone https://github.com/hetida/hetida-designer.git
 ```
 
 This should download the latest copy of the repository. Next, enter the newly
-created source code directory and check out the latest develop branch:
+created source code directory and check out the release branch:
 
 ```shell
 cd hetida-designer
@@ -212,9 +212,8 @@ instructions on setting up one of these modules for development below.
 Dependencies: Node 12.18.x and npm 6.14.x (other versions are not tested).
 
 1. Navigate to the `frontend` folder.
-2. Change `apiEndpoint` in `hetida_designer_config.json` to `http://localhost:8080/api`.
-3. Run `npm install` to install application dependencies.
-4. Run `npm run start` to run the frontend on port 4200.
+2. Run `npm install` to install application dependencies.
+3. Run `npm run start` to run the frontend on port 4200.
 
 #### Backend
 

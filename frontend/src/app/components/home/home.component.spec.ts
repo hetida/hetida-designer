@@ -6,7 +6,7 @@ import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { selectHashedAbstractBaseItemLookupById } from 'src/app/store/base-item/base-item.selectors';
 import { HomeComponent } from './home.component';
 
-describe('HomeComponent', () => {
+xdescribe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
 
