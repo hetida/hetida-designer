@@ -8,11 +8,11 @@ pandas
 numpy
 sklearn
 scipy
-tensorflow
+tensorflow>=2.4.2
 keras
 statsmodels
 dateparser
-pydantic[dotenv]
+pydantic[dotenv]>=1.8.2
 joblib
 holidays
 plotly==4.9.0

@@ -21,7 +21,6 @@ public class SwaggerConfig {
                 .apis(RequestHandlerSelectors.basePackage("org.hetida.designer.backend.controller"))
                 .paths(PathSelectors.any())
                 .build().apiInfo(apiEndPointsInfo());
-        d.pathMapping("api");
 
         return d;
     }
