@@ -5,5 +5,5 @@ gunicorn
 httptools
 pandas
 numpy
-pydantic[dotenv]
+pydantic[dotenv]>=1.8.2
 python-jose[cryptography]

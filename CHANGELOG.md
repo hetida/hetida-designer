@@ -1,3 +1,6 @@
+## 0.6.9
+* security updates dependencies
+* minor fixes and improvements
 ## 0.6.8
 * minor fixes and improvements
 ## 0.6.7

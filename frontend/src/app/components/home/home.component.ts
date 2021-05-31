@@ -34,9 +34,8 @@ export class HomeComponent implements OnInit {
     public version: string;
 
     ngOnInit() {
-        this.httpClient.get<string>("/assets/VERSION", { responseType: 'text' as 'json' }).subscribe((version: string) => {
+        this.httpClient.get<string>("assets/VERSION", { responseType: 'text' as 'json' }).subscribe((version: string) => {
             this.version = version;
-            console.log(version);
         })
         this.lastOpened = combineLatest([
             this.localStorageService.notifier,

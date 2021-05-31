@@ -14,6 +14,7 @@ __pycache__
 .mypy_cache
 runtime/**/lab
 runtime/**/venv
+runtime/**/nix_venv_hd_dev
 runtime/pylint_report.txt
 runtime/test_results.xml
 runtime/.coverage*
@@ -29,3 +30,4 @@ demo-adapter-python/.coverage.xml
 demo-adapter-python/upload_settings/*
 demo-adapter-python/settings/*
 .vscode/.ropeproject/objectdb
+.tmp

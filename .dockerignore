@@ -16,5 +16,7 @@ runtime/.pytest_cache
 runtime/.mypy_cache
 runtime/**/venv
 runtime/**/lab
+runtim/**/nix_venv_hd_dev
 demo-adapter-python/**/lab
 demo-adapter-python/**/venv
+.tmp
