@@ -1,3 +1,5 @@
+## 0.6.10
+* remove buggy demo workflows
 ## 0.6.9
 * security updates dependencies
 * minor fixes and improvements
