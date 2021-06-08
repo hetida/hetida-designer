@@ -1,6 +1,9 @@
 language: minimal
 services:
 - docker
+branches:
+  only:
+  - release
 script:
 - echo $(cat VERSION)
 - echo "$docker_pwd" | docker login -u "$docker_user" --password-stdin
