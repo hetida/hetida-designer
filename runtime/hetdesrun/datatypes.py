@@ -4,6 +4,9 @@ import json
 import datetime
 from uuid import UUID
 
+import logging
+
+
 from typing import (
     Any,
     TypedDict,
@@ -26,6 +29,8 @@ import numpy as np
 
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
+
+logger = logging.getLogger(__name__)
 
 
 class DataType(str, Enum):
@@ -128,6 +133,63 @@ class PydanticPandasDataFrame:
                 ) from e
 
 
+class ParsedAny:
+    """Tries to parse Any objects somehow intelligently
+
+    Reason is that an object may be provided by the backend either as a proper json-object directly
+    in some cases (dict-like objects) or as json-encoded string (happens for example for lists).
+
+    Sometimes, if the frontend is involved, json strings get even double-string-encoded! This is a
+    known bug of frontend-backend-runtime interaction.
+
+    Sometimes adapter implementations deliver ANY-data directly as json objects and othertimes
+    string-encoded.
+
+    As a workaround for all these cases this class tries to json-parse a string if it receives one
+    and only if that does not work it yields the actual string value. If it works and the result is
+    itself a string again it tries to json-decode a second time and returns the result if that
+    works. Otherwise it returns the result string of the first parsing.
+
+    This workaround is justified by the argument that the user should really use a STRING input if
+    a string is expected and not an ANY input. Likewise, adapters should offer string data as STRING
+    data sources and not as ANY data sources.
+    """
+
+    @classmethod
+    def __get_validators__(cls) -> Generator:
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            # try to parse string as json
+            try:
+                parsed_json_object = json.loads(v)
+            except json.decoder.JSONDecodeError:
+                logger.info(
+                    "Could not JSON-parse string %s in Any input."
+                    " Therefore treating it as actual string value",
+                    v[:30] + "..." if len(v) > 10 else v,
+                )
+                return v
+
+            if isinstance(
+                parsed_json_object, str
+            ):  # sometimes it even gets double-encoded for some reasons
+                try:
+                    parsed_json_object = json.loads(parsed_json_object)
+                except json.decoder.JSONDecodeError:
+                    logger.info(
+                        "Could not JSON-parse string %s in Any input. "
+                        " Therefore treating it as actual string value",
+                        parsed_json_object[:30] + "..." if len(v) > 10 else v,
+                    )
+                    return parsed_json_object
+
+            return parsed_json_object
+        return v
+
+
 data_type_map: Dict[DataType, Type] = {
     DataType.Integer: int,
     DataType.Float: float,
@@ -136,7 +198,7 @@ data_type_map: Dict[DataType, Type] = {
     DataType.DataFrame: PydanticPandasDataFrame,
     DataType.Boolean: bool,
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
-    DataType.Any: Any,  # type: ignore
+    DataType.Any: ParsedAny,
     DataType.PlotlyJson: dict,
 }
 

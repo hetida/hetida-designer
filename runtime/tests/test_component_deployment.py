@@ -10,15 +10,18 @@ from unittest import mock
 def test_component_deployment(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
-    with mock.patch(
-        "hetdesrun.utils.requests.post", return_value=response_mock
-    ) as patched_post:
 
+    with caplog.at_level(logging.DEBUG):
         with mock.patch(
-            "hetdesrun.utils.requests.put", return_value=response_mock
-        ) as patched_put:
+            "hetdesrun.utils.requests.post", return_value=response_mock
+        ) as patched_post:
 
-            post_components_from_directory("./components")
+            with mock.patch(
+                "hetdesrun.utils.requests.put", return_value=response_mock
+            ) as patched_put:
+                caplog.clear()
+                post_components_from_directory("./components")
+                assert "Reduce data set by leaving out values" in caplog.text
 
     # at least tries to upload many components (we have more than 10 there)
     assert patched_post.call_count > 10

@@ -6,6 +6,8 @@ import glob
 from typing import List, Optional, Tuple, Union, Any, Dict
 from pathlib import Path
 
+import importlib
+
 from enum import Enum
 
 from uuid import UUID
@@ -23,6 +25,11 @@ from hetdesrun.datatypes import DataType
 from hetdesrun.auth.keycloak import KeycloakAccessTokenManager, ServiceUserCredentials
 
 from hetdesrun.service.config import RuntimeConfig
+
+from hetdesrun.component.load import (
+    module_path_from_uuid_and_code,
+    import_func_from_code_with_uuid_as_modulename,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -190,6 +197,67 @@ def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
     return json.dumps(json.loads(pydantic_model.json()), indent=2, sort_keys=True)
 
 
+def post_component_from_dto(comp_dto: ComponentDTO) -> None:
+    logger.debug(
+        "JSON Input for Component Controller:\n%s", model_to_pretty_json_str(comp_dto)
+    )
+
+    headers = get_auth_headers()
+
+    response = requests.post(
+        runtime_config.hd_backend_api_url + "components",
+        verify=runtime_config.hd_backend_verify_certs,
+        json=json.loads(comp_dto.json()),
+        auth=get_backend_basic_auth()
+        if runtime_config.hd_backend_use_basic_auth
+        else None,
+        headers=headers,
+    )
+
+    logger.info(
+        "component posting status code: %s for component %s",
+        str(response.status_code),
+        comp_dto.name,
+    )
+    if response.status_code not in [200, 201]:
+        logger.error(
+            "COULD NOT POST COMPONENT "
+            + comp_dto.name
+            + f". Response: {response.status_code} with response text {response.text}"
+        )
+
+
+def post_documentation_from_dto(doc_dto: dict) -> None:
+    logger.debug("Putting Component Documentation")
+
+    headers = get_auth_headers()
+
+    response = requests.put(
+        runtime_config.hd_backend_api_url + "documentations/" + str(doc_dto["id"]),
+        verify=runtime_config.hd_backend_verify_certs,
+        json=doc_dto,
+        auth=get_backend_basic_auth()
+        if runtime_config.hd_backend_use_basic_auth
+        else None,
+        headers=headers,
+    )
+    logger.info(
+        "component documentation posting status code: %s for component %s",
+        str(response.status_code),
+        str(doc_dto["id"]),
+    )
+    if response.status_code not in [200, 201]:
+        logger.error(
+            (
+                "COULD NOT PUT COMPONENT DOCUMENTATION %s"
+                ". Response: %s with response text %s"
+            ),
+            str(doc_dto["id"]),
+            response.status_code,
+            response.text,
+        )
+
+
 def post_component(
     base_name: str, category: str, info: dict, doc: str, code: str
 ) -> None:
@@ -234,55 +302,109 @@ def post_component(
         id=comp_id,
     )
 
-    logger.debug(
-        "JSON Input for Component Controller:\n%s", model_to_pretty_json_str(comp_dto)
+    post_component_from_dto(comp_dto)
+
+    post_documentation_from_dto({"document": doc, "id": str(comp_id)})
+
+
+def component_dtos_from_python_code(
+    code: str, base_name: str, category: Optional[str] = None
+) -> Tuple[ComponentDTO, dict]:
+    """Get Component dtos (component, doc) from just the Python code
+
+    This uses information from the register decorator and docstrings to obtain the necessary dtos
+    for posting/putting a component and its documentation from just the code.
+
+    Note: This needs to import the code module, which may have arbitrary side effects and security
+    implications.
+
+    base_name: A name which is used to derive uuids from. Should be unique over all components!
+    """
+
+    uuid = get_uuid_from_seed("component_" + base_name)
+
+    main_func = import_func_from_code_with_uuid_as_modulename(code, uuid, "main")
+    module_path = module_path_from_uuid_and_code(uuid, code)
+    mod = importlib.import_module(module_path)
+
+    mod_docstring = mod.__doc__ or ""
+    mod_docstring_lines = mod_docstring.splitlines()
+
+    component_name = main_func.registered_metadata["name"] or (  # type: ignore
+        mod_docstring_lines[0] if mod_docstring_lines[0] != "" else "Unnamed Component"
     )
 
-    headers = get_auth_headers()
-
-    response = requests.post(
-        runtime_config.hd_backend_api_url + "components",
-        verify=runtime_config.hd_backend_verify_certs,
-        json=json.loads(comp_dto.json()),
-        auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
-        else None,
-        headers=headers,
+    component_description = main_func.registered_metadata["description"] or (  # type: ignore
+        mod_docstring_lines[0]
+        if mod_docstring_lines[0] != ""
+        else "No description provided"
     )
 
-    logger.info(
-        "component posting status code: %s for component %s",
-        str(response.status_code),
-        base_name,
+    component_category = (
+        category
+        if category is not None
+        else (main_func.registered_metadata["category"] or "Other")  # type: ignore
     )
-    if response.status_code not in [200, 201]:
-        logger.error(
-            "COULD NOT POST COMPONENT "
-            + base_name
-            + f". Response: {response.status_code} with response text {response.text}"
-        )
 
-    logger.debug("Putting Component Documentation")
-    response = requests.put(
-        runtime_config.hd_backend_api_url + "documentations/" + str(comp_id),
-        verify=runtime_config.hd_backend_verify_certs,
-        json={"document": doc, "id": str(comp_id)},
-        auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
-        else None,
-        headers=headers,
+    comp_dto = ComponentDTO(
+        name=component_name,
+        category=component_category,
+        code=code,
+        description=component_description,
+        groupId=uuid,
+        id=uuid,
+        inputs=[
+            IODTO(
+                id=get_uuid_from_seed(
+                    "component_input_" + base_name + "_" + input_name
+                ),
+                name=input_name,
+                type=input_data_type,
+            )
+            for input_name, input_data_type in main_func.registered_metadata[  # type: ignore
+                "inputs"
+            ].items()
+        ],
+        outputs=[
+            IODTO(
+                id=get_uuid_from_seed(
+                    "component_output_" + base_name + "_" + output_name
+                ),
+                name=output_name,
+                type=output_data_type,
+            )
+            for output_name, output_data_type in main_func.registered_metadata[  # type: ignore
+                "outputs"
+            ].items()
+        ],
     )
-    logger.info(
-        "component documentation posting status code: %s for component %s",
-        str(response.status_code),
-        base_name,
+
+    documentation_dto = {
+        "document": "\n".join(
+            mod_docstring_lines[2:]
+        ),  # ignore first two linesaccording to docstring conventions
+        "id": str(uuid),
+    }
+
+    return comp_dto, documentation_dto
+
+
+def component_dtos_from_python_file(
+    path: str, category: Optional[str] = None
+) -> Tuple[ComponentDTO, dict]:
+    """Get Component dtos (component, doc) from just the Python file
+
+    Wrapper for component_dtos_from_python_code to work on file pathes directly.
+    """
+    with open(path, "r") as f:
+        code = f.read()
+
+    path_without_ext = os.path.splitext(path)[0]
+    base_name = os.path.basename(path_without_ext)
+
+    return component_dtos_from_python_code(
+        code=code, base_name=base_name, category=category
     )
-    if response.status_code not in [200, 201]:
-        logger.error(
-            "COULD NOT PUT COMPONENT DOCUMENTATION "
-            + base_name
-            + f". Response: {response.status_code} with response text {response.text}"
-        )
 
 
 def post_components_from_directory(base_path_components: str) -> None:
@@ -304,6 +426,8 @@ def post_components_from_directory(base_path_components: str) -> None:
             base_path_components,
         )
         return
+
+    handled_base_names = set()
     for category in categories:
 
         # find all json files (each represents one component)
@@ -315,6 +439,18 @@ def post_components_from_directory(base_path_components: str) -> None:
             # get other files (doc, code)
             path_without_ext = os.path.splitext(component_json_file)[0]
             base_name = os.path.basename(path_without_ext)
+
+            if base_name in handled_base_names:
+                logger.warning(
+                    (
+                        "The component file base_name %s has already been posted!"
+                        " So we skip posting  component from %s"
+                    ),
+                    base_name,
+                    component_json_file,
+                )
+                continue
+
             component_doc_file = path_without_ext + ".md"
             component_code_file = path_without_ext + ".py"
             logger.info("##### Uploading Component %s", base_name)
@@ -339,6 +475,28 @@ def post_components_from_directory(base_path_components: str) -> None:
             assert code is not None  # for mypy # nosec
 
             post_component(base_name, category, info, doc, code)
+
+            handled_base_names.add(base_name)
+        component_py_files = [
+            path
+            for path in glob.glob(os.path.join(base_path_components, category, "*.py"))
+            if (
+                (not os.path.basename(path).startswith("test_"))
+                and (not os.path.basename(path) == "__init__.py")
+            )
+        ]
+
+        for component_py_file in component_py_files:
+            path_without_ext = os.path.splitext(component_py_file)[0]
+            base_name = os.path.basename(path_without_ext)
+            if base_name not in handled_base_names:
+                comp_dto, doc_dto = component_dtos_from_python_file(
+                    component_py_file, category=category
+                )
+                post_component_from_dto(comp_dto)
+
+                post_documentation_from_dto(doc_dto)
+                handled_base_names.add(base_name)
 
 
 def download_workflow_to_files(

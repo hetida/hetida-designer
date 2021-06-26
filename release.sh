@@ -7,7 +7,7 @@
 SOURCE_REMOTE=origin
 SOURCE_BRANCH=develop
 
-TARGET_REMOTE=github
+TARGET_REMOTE=origin
 TARGET_BRANCH=release
 TARGET_REPO='git@github.com:hetida/hetida-designer.git'
 
@@ -26,7 +26,7 @@ print_usage() {
  echo "    Displays this help message."
  echo
  echo "  release.sh <VERSION>"
- echo "    Creates (or checks out) a local '$TARGET_BRANCH' branch, squashes all changes from development into a single commit, tags the commit and pushes the result to github."
+ echo "    Creates (or checks out) a local '$TARGET_BRANCH' branch,tags the commit and pushes the result to github."
  echo
  echo "  Note: If a local branch named '$TARGET_BRANCH' already exists, it will be overwritten with the content of the remote release branch WITHOUT WARNING!"
  echo
@@ -61,16 +61,16 @@ else
  echo " - ok"
 fi
 
-# 2. Ensure presence of the correct target repository.
+# 2. Ensure presence of the correct target repository with correct url.
 echo -n "target remote '$TARGET_REMOTE'"
-REMOTE_GITHUB=`git remote get-url "$TARGET_REMOTE" 2>/dev/null || true`
-if [ -z "$REMOTE_GITHUB" ]; then
+REMOTE_URL=`git remote get-url "$TARGET_REMOTE" 2>/dev/null || true`
+if [ -z "$REMOTE_URL" ]; then
  git remote add "$TARGET_REMOTE" "$TARGET_REPO"
  echo " - ok: added"
-elif [ "$REMOTE_GITHUB" == "$TARGET_REPO" ]; then
+elif [ "$REMOTE_URL" == "$TARGET_REPO" ]; then
  echo " - ok"
 else
- echo " - not ok: wrong remote URL '$REMOTE_GITHUB'"
+ echo " - not ok: wrong remote URL '$REMOTE_URL'"
  exit 1
 fi
 
@@ -137,14 +137,44 @@ fi
 echo
 echo "Preparing release..."
 ###########################################################################
-git restore --quiet --source "$SOURCE_REMOTE_BRANCH" .
+# git restore --quiet --source "$SOURCE_REMOTE_BRANCH" .
+
+echo "Get newest develop branch from remote"
+git checkout --quiet "$SOURCE_BRANCH"
+git pull "$SOURCE_REMOTE" "$SOURCE_BRANCH"
+
+echo "Get newest release branch from remote"
+git checkout --quiet "$TARGET_BRANCH"
+git pull "$TARGET_REMOTE" "$TARGET_BRANCH"
+
+
+echo "Checkout source branch and merge in target branch"
+git checkout --quiet "$SOURCE_BRANCH"
+git merge "$TARGET_BRANCH"
+
+# Make sure changelog has been updated
+CHANGELOG_DIFF=$(git diff "$SOURCE_BRANCH" "$TARGET_BRANCH" -- CHANGELOG.md)
+if [ -z "$CHANGELOG_DIFF" ]; then
+    echo "no changelog entry. Aborting. Please edit changelog."
+    exit 1
+else
+    echo "- ok: found changelog edits"
+fi
+
+echo "add VERSION and CHANGELOG.md"
 echo "$RELEASE_VERSION" > VERSION     # Version into version file
-git add --all
+# git add --all
+git add VERSION CHANGELOG.md
 git commit --allow-empty --quiet --message="Release $RELEASE_TAG"
 git tag "$RELEASE_TAG"
+
 
 ###########################################################################
 echo
 echo "Publishing release..."
 ###########################################################################
+git push --tags --no-verify "$SOURCE_REMOTE" "$SOURCE_BRANCH"
+
+git checkout --quiet "$TARGET_BRANCH"
+git merge "$SOURCE_BRANCH"
 git push --tags --no-verify "$TARGET_REMOTE" "$TARGET_BRANCH"

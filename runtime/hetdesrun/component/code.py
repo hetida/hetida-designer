@@ -7,8 +7,14 @@ to provide a very elementary support system to the designer code editor.
 
 from typing import Dict, Optional, List
 from keyword import iskeyword
+import re
 
 from hetdesrun.datatypes import DataType
+
+
+ALLOWED_CHARS_REGEXP = re.compile(
+    "[^a-zA-Z0-9\.\,\-#_ ]"  # pylint: disable=anomalous-backslash-in-string
+)  # allow only some special characters for category, description and component name
 
 imports_template: str = """\
 from hetdesrun.component.registration import register
@@ -21,9 +27,13 @@ from hetdesrun.datatypes import DataType
 
 function_definition_template: str = '''\
 # ***** DO NOT EDIT LINES BELOW *****
-# These lines may be overwritten if input/output changes.
+# These lines may be overwritten if component details or inputs/outputs change.
 @register(
-    inputs={input_dict_content}, outputs={output_dict_content}
+    inputs={input_dict_content},
+    outputs={output_dict_content},
+    component_name={component_name},
+    description={description},
+    category={category}
 )
 def main({params_list}):
     """entrypoint function for this component"""
@@ -36,8 +46,16 @@ function_body_template: str = """\
 """
 
 
+def sanitize(text: str) -> str:
+    return re.sub(ALLOWED_CHARS_REGEXP, "", text)
+
+
 def generate_function_header(
-    input_type_dict: Dict[str, DataType], output_type_dict: Dict[str, DataType]
+    input_type_dict: Dict[str, DataType],
+    output_type_dict: Dict[str, DataType],
+    component_name: str,
+    description: str,
+    category: str,
 ) -> str:
     """Generate entrypoint function header from the inputs and their types"""
     param_list_str = (
@@ -62,17 +80,26 @@ def generate_function_header(
             ]
         )
         + "}",
+        component_name='"' + sanitize(component_name) + '"',
+        description='"' + sanitize(description) + '"',
+        category='"' + sanitize(category) + '"',
         params_list=param_list_str,
     )
 
 
 def generate_complete_component_module(
-    input_type_dict: Dict[str, DataType], output_type_dict: Dict[str, DataType]
+    input_type_dict: Dict[str, DataType],
+    output_type_dict: Dict[str, DataType],
+    component_name: str,
+    description: str,
+    category: str,
 ) -> str:
     return (
         imports_template
         + "\n"
-        + generate_function_header(input_type_dict, output_type_dict)
+        + generate_function_header(
+            input_type_dict, output_type_dict, component_name, description, category
+        )
         + "\n"
         + function_body_template
     )
@@ -82,6 +109,9 @@ def update_code(
     existing_code: Optional[str],
     input_type_dict: Dict[str, DataType],
     output_type_dict: Dict[str, DataType],
+    component_name: str,
+    description: str,
+    category: str,
 ) -> str:
     """Generate and update component code
 
@@ -95,9 +125,21 @@ def update_code(
     undesirably replace user code in some cases.
     """
     if existing_code is None or existing_code == "":
-        return generate_complete_component_module(input_type_dict, output_type_dict)
+        return generate_complete_component_module(
+            input_type_dict,
+            output_type_dict,
+            component_name=component_name,
+            description=description,
+            category=category,
+        )
 
-    new_function_header = generate_function_header(input_type_dict, output_type_dict)
+    new_function_header = generate_function_header(
+        input_type_dict,
+        output_type_dict,
+        component_name=component_name,
+        description=description,
+        category=category,
+    )
 
     try:
         start, remaining = existing_code.split(
@@ -126,7 +168,11 @@ def update_code(
 
 example_code = (
     generate_complete_component_module(
-        {"x": DataType.Float, "y": DataType.Float}, {"z": DataType.Float}
+        {"x": DataType.Float, "y": DataType.Float},
+        {"z": DataType.Float},
+        "Example Component",
+        "An example mfor code generation",
+        "Exampels",
     )
     + """\n    return {"z": x+y}"""
 )

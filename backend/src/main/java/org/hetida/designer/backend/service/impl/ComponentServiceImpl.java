@@ -84,10 +84,11 @@ public class ComponentServiceImpl implements ComponentService {
                 || isUpdateRequired(component.getOutputs(), existingComponent.getOutputs());
 
         if (ioUpdate) {
-            component.setCode(this.generateCode(component));
+            log.debug("component IO updated.");
         } else {
-            log.debug("code generation is not required");
+            log.debug("component IO not updated.");
         }
+        component.setCode(this.generateCode(component));        
         this.componentRepository.saveAndFlush(component);
         log.info("modified component {}", component.getId());
         log.info(component);

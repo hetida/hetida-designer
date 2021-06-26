@@ -40,6 +40,9 @@ class CodeBody(BaseModel):
     )
     inputs: List[ComponentInput]
     outputs: List[ComponentOutput]
+    name: str
+    description: str
+    category: str
 
 
 class GeneratedCode(BaseModel):

@@ -1,3 +1,7 @@
+## 0.6.11
+* improve default timeout settings and add some documentation
+* add component export/import facilities from/to only a Python code file
+* extend component code generation to include information enabling export/import from just the component code.
 ## 0.6.10
 * remove buggy demo workflows
 ## 0.6.9

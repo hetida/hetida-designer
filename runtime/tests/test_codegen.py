@@ -8,7 +8,9 @@ from hetdesrun.datatypes import DataType
 
 
 def test_function_header_no_params():
-    func_header = generate_function_header({}, {})
+    func_header = generate_function_header(
+        {}, {}, "Test Component", "A test component", "Tests"
+    )
     assert "main()" in func_header
     assert "inputs={}" in func_header
     assert "outputs={}" in func_header
@@ -16,7 +18,11 @@ def test_function_header_no_params():
 
 def test_function_header_multiple_inputs():
     func_header = generate_function_header(
-        {"x": DataType.Float, "okay": DataType.Boolean}, {"output": DataType.Float}
+        {"x": DataType.Float, "okay": DataType.Boolean},
+        {"output": DataType.Float},
+        "Test Component",
+        "A test component",
+        "Tests",
     )
     assert "main(*, x, okay)" in func_header
     assert """inputs={"x": DataType.Float, "okay": DataType.Boolean}""" in func_header
@@ -31,18 +37,27 @@ def test_check_parameter_names():
 def test_update_code():
     func_body = """return {"z":x + y}"""
     test_code = example_code.replace("pass", func_body)
-    new_code = update_code(test_code, {}, {})
+    new_code = update_code(
+        test_code, {}, {}, "Test Component", "A test component", "Tests"
+    )
     assert func_body in new_code
     assert "pass" not in new_code
 
     # test with no code (new code generation)
-    new_code = update_code(None, {}, {})
+    new_code = update_code(None, {}, {}, "Test Component", "A test component", "Tests")
     assert "pass" in new_code
 
     # test input without both start/stop markers
-    new_code = update_code(" ", {}, {})
+    new_code = update_code(" ", {}, {}, "Test Component", "A test component", "Tests")
     assert "pass" in new_code
 
     # test input without only stop marker
-    new_code = update_code("# ***** DO NOT EDIT LINES BELOW *****", {}, {})
+    new_code = update_code(
+        "# ***** DO NOT EDIT LINES BELOW *****",
+        {},
+        {},
+        "Test Component",
+        "A test component",
+        "Tests",
+    )
     assert "pass" in new_code

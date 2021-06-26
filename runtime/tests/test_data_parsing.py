@@ -119,3 +119,86 @@ def test_dt_index_parsing():
     assert len(test_obj.s) == 2
     assert is_datetime64_any_dtype(test_obj.s.index.dtype)
 
+
+def test_any_parsing():
+    result = parse_dynamically_from_datatypes(
+        [
+            {"name": "float_value", "type": DataType.Any, "value": 2.0},
+            {
+                "name": "float_value_string_encoded",
+                "type": DataType.Any,
+                "value": r'"2.0"',
+            },
+            {
+                "name": "float_value_double_string_encoded",
+                "type": DataType.Any,
+                "value": '"2.0"',
+            },
+            {"name": "int_value", "type": DataType.Any, "value": 42},
+            {
+                "name": "any_object",
+                "type": DataType.Any,
+                "value": {"a": 2.3, "surname": "Mike"},
+            },
+            {
+                "name": "any_object_string_encoded",
+                "type": DataType.Any,
+                "value": r'"{\"a\":2.3,\"surname\":\"Mike\"}"',
+            },
+            {
+                "name": "any_object_double_string_encoded",
+                "type": DataType.Any,
+                "value": '"{\\"a\\":2.3,\\"surname\\":\\"Mike\\"}"',
+            },
+            {"name": "list_object", "type": DataType.Any, "value": ["c", 2, 3]},
+            {
+                "name": "list_object_string_encoded",
+                "type": DataType.Any,
+                "value": r'"[\"c\",2,3]"',
+            },
+            {
+                "name": "list_object_double_string_encoded",
+                "type": DataType.Any,
+                "value": '"[\\"c\\",2,3]"',
+            },
+            {"name": "actual_str_as_any", "type": DataType.Any, "value": "some_string"},
+        ]
+    )
+
+    assert isinstance(result.float_value, float)
+    assert result.float_value == 2.0
+
+    assert isinstance(result.float_value_string_encoded, float)
+    assert result.float_value_string_encoded == 2.0
+
+    assert isinstance(result.float_value_double_string_encoded, float)
+    assert result.float_value_double_string_encoded == 2.0
+
+    assert isinstance(result.int_value, int)
+    assert result.int_value == 42
+
+    assert result.any_object["a"] == 2.3
+    assert result.any_object["surname"] == "Mike"
+
+    assert result.any_object_string_encoded["a"] == 2.3
+    assert result.any_object_string_encoded["surname"] == "Mike"
+
+    assert result.any_object_double_string_encoded["a"] == 2.3
+    assert result.any_object_double_string_encoded["surname"] == "Mike"
+
+    assert isinstance(result.list_object, list)
+    assert result.list_object[0] == "c"
+    assert result.list_object[1] == 2
+    assert len(result.list_object) == 3
+
+    assert isinstance(result.list_object_string_encoded, list)
+    assert result.list_object_string_encoded[0] == "c"
+    assert result.list_object_string_encoded[1] == 2
+    assert len(result.list_object_string_encoded) == 3
+
+    assert isinstance(result.list_object_double_string_encoded, list)
+    assert result.list_object_double_string_encoded[0] == "c"
+    assert result.list_object_double_string_encoded[1] == 2
+    assert len(result.list_object_double_string_encoded) == 3
+
+    assert result.actual_str_as_any == "some_string"

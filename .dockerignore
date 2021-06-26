@@ -7,6 +7,7 @@
 Dockerfile
 documentation
 .git
+.s.PGSQL*
 */.vscode*
 */.ipynb_checkpoints/
 */__pycache__*
@@ -16,7 +17,7 @@ runtime/.pytest_cache
 runtime/.mypy_cache
 runtime/**/venv
 runtime/**/lab
-runtim/**/nix_venv_hd_dev
+runtime/**/nix_venv_hd_dev
 demo-adapter-python/**/lab
 demo-adapter-python/**/venv
 .tmp

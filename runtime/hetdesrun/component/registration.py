@@ -1,6 +1,6 @@
 """Component entrypoint registration utilities"""
 
-from typing import Dict, Callable
+from typing import Dict, Callable, Optional
 
 import asyncio
 import functools
@@ -29,7 +29,10 @@ def register(
     *,
     inputs: Dict[str, DataType],
     outputs: Dict[str, DataType],
-    is_pure_plot_component: bool = False
+    is_pure_plot_component: bool = False,
+    component_name: Optional[str] = None,
+    description: Optional[str] = None,
+    category: Optional[str] = None,
 ) -> Callable[[Callable], Callable]:
     """Additonal features for component entrypoint functions
 
@@ -87,6 +90,13 @@ def register(
         # add input output infos to function attributes
         return_func_or_coro.inputs = inputs  # type: ignore
         return_func_or_coro.outputs = outputs  # type: ignore
+        return_func_or_coro.registered_metadata = {  # type: ignore
+            "inputs": inputs,
+            "outputs": outputs,
+            "name": component_name,
+            "description": description,
+            "category": category,
+        }
 
         return return_func_or_coro
 

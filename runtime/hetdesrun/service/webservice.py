@@ -295,7 +295,7 @@ async def runtime_service(
 
 
 @app.get("/info", response_model=VersionInfo)
-async def info_service():
+async def info_service() -> dict:
     """Version Info Endpoint
 
     Unauthorized, may be used for readiness probes.
@@ -318,6 +318,9 @@ async def codegen_service(
             codegen_input.code,
             {c.name: c.type for c in codegen_input.inputs},
             {c.name: c.type for c in codegen_input.outputs},
+            component_name=codegen_input.name,
+            description=codegen_input.description,
+            category=codegen_input.category,
         )
     )
 

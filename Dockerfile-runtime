@@ -1,7 +1,7 @@
 ##### Build stage
 FROM python:3.8.6-buster as base
 
-ENV TIMEOUT=60
+ENV TIMEOUT=900
 
 COPY ./runtime/requirements.txt /requirements.txt
 COPY ./runtime/requirements-dev.txt /requirements-dev.txt

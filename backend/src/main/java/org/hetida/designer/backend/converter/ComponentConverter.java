@@ -59,6 +59,9 @@ public class ComponentConverter {
         codegenRequestDTO.setCode(entity.getCode());
         codegenRequestDTO.setInputs(this.IOConverter.convertComponentIOToIODtos(entity.getInputs()));
         codegenRequestDTO.setOutputs(this.IOConverter.convertComponentIOToIODtos(entity.getOutputs()));
+        codegenRequestDTO.setName(entity.getName());
+        codegenRequestDTO.setDescription(entity.getDescription());
+        codegenRequestDTO.setCategory(entity.getCategory());
         return codegenRequestDTO;
     }
 

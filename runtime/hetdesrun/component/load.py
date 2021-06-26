@@ -51,7 +51,7 @@ def import_func_from_code(
     """
     module_path = module_path_from_uuid_and_code(uuid, code)
 
-    mod = ModuleType(module_path, "module that was loaded automatically")
+    mod = ModuleType(module_path)
     # pylint: disable=exec-used
 
     if register_module:

@@ -12,6 +12,7 @@ __pycache__
 .coverage
 .pytest_cache
 .mypy_cache
+.s.PGSQL*
 runtime/**/lab
 runtime/**/venv
 runtime/**/nix_venv_hd_dev

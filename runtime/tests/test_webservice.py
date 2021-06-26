@@ -29,7 +29,15 @@ def test_swagger_ui_available():
 def test_access_api_endpoint():
     response = client.post(
         "/codegen",
-        json={"inputs": [], "outputs": [], "code": "", "function_name": "main"},
+        json={
+            "inputs": [],
+            "outputs": [],
+            "code": "",
+            "function_name": "main",
+            "name": "Testname",
+            "description": "Test Descr.",
+            "category": "Test category",
+        },
     )
     assert response.status_code == 200
     assert "code" in response.json().keys()
