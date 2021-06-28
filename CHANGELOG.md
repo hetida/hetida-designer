@@ -1,3 +1,6 @@
+## 0.6.12
+* update some dependencies
+* add ortools to default runtime dependencies
 ## 0.6.11
 * improve default timeout settings and add some documentation
 * add component export/import facilities from/to only a Python code file
