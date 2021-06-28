@@ -1,3 +1,6 @@
+
+## 0.6.13
+* minor fixes and improvements
 ## 0.6.12
 * update some dependencies
 * add ortools to default runtime dependencies
