@@ -340,10 +340,8 @@ def component_dtos_from_python_code(
         else "No description provided"
     )
 
-    component_category = (
-        category
-        if category is not None
-        else (main_func.registered_metadata["category"] or "Other")  # type: ignore
+    component_category = main_func.registered_metadata["category"] or (  # type: ignore
+        category.replace("_", " ") if category is not None else "Other"
     )
 
     comp_dto = ComponentDTO(
