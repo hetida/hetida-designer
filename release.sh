@@ -173,8 +173,17 @@ git tag "$RELEASE_TAG"
 echo
 echo "Publishing release..."
 ###########################################################################
-git push --tags --no-verify "$SOURCE_REMOTE" "$SOURCE_BRANCH"
+
 
 git checkout --quiet "$TARGET_BRANCH"
 git merge "$SOURCE_BRANCH"
+echo "Push release branch"
 git push --tags --no-verify "$TARGET_REMOTE" "$TARGET_BRANCH"
+
+git checkout --quiet "$SOURCE_BRANCH"
+echo "dev-snapshot-post-$RELEASE_VERSION" > VERSION
+git add VERSION
+git commit --allow-empty --quiet --message="Post-Release $RELEASE_VERSION dev snapshot"
+echo "Push development branch"
+git push --tags --no-verify "$SOURCE_REMOTE" "$SOURCE_BRANCH"
+
