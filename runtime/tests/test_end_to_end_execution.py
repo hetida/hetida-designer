@@ -154,11 +154,14 @@ def gen_execution_input_from_single_component(
 def run_single_component(component_json_file_path, input_data_dict):
     response = client.post(
         "/runtime",
-        data=gen_execution_input_from_single_component(
-            component_json_file_path,
-            input_data_dict,
-        ).json(),
+        json=json.loads(
+            gen_execution_input_from_single_component(
+                component_json_file_path,
+                input_data_dict,
+            ).json()
+        ),
     )
+
     return WorkflowExecutionResult(**response.json())
 
 
@@ -166,6 +169,7 @@ def test_null_values_pass_any_pass_through():
     exec_result = run_single_component(
         "./components/Connectors/pass_through.json", {"input": {"a": 1.5, "b": None}}
     )
+
     assert exec_result.output_results_by_output_name["output"] == {"a": 1.5, "b": None}
 
 

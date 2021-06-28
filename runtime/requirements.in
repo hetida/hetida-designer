@@ -1,4 +1,4 @@
-fastapi
+fastapi>=0.65.2
 uvicorn
 uvloop
 gunicorn
@@ -29,3 +29,4 @@ xlrd>=2.0
 gekko
 shapely
 geopandas
+ortools
