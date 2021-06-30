@@ -9,4 +9,5 @@ import java.util.List;
 @Data
 public class WorkflowSummaryDTO extends ParentDTO {
     private List<WorkflowIODTO> inputs = new ArrayList<>();
+    private List<WorkflowIODTO> outputs = new ArrayList<>();
 }

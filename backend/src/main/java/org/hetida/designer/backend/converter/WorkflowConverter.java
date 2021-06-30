@@ -78,6 +78,8 @@ public class WorkflowConverter {
         summaryDTO.setTag(workflow.getTag());
         summaryDTO.setType(ItemType.WORKFLOW);
         summaryDTO.setInputs(this.IOConverter.convertWorkflowIOToWorkflowIODTOs(workflow.getInputs()));
+        summaryDTO.setOutputs(this.IOConverter.convertWorkflowIOToWorkflowIODTOs(workflow.getOutputs()));
+
         return summaryDTO;
     }
 
