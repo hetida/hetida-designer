@@ -1,4 +1,6 @@
 
+## 0.6.14
+* add output information to /workflows endpoint
 ## 0.6.13
 * minor fixes and improvements
 ## 0.6.12
