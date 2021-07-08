@@ -111,7 +111,7 @@ To expose a port, you can modify `docker-compose.yml` and add/change the port bi
   hetida-designer-frontend:
     ...
     ports:
-      - 127.0.0.1:4200:80
+      - 127.0.0.1:4200:8080
     ...
 ```
 
