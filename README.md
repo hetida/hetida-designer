@@ -457,7 +457,7 @@ There are several mechanisms that contribute to reaching this goal:
 
 * The fact that execution of each workflow revision is immediately available through a web service endpoint – there is **no extra deployment step necessary**. 
   
-  * Note that a Kafka consumer for the same pupose is also built into the backend and can be activated and configured via environment variables of the designer backend (full documentation for this will be provided in a later version)
+  * Note that a Kafka consumer for the same pupose is also built into the backend and can be activated and configured via environment variables of the designer backend (see [documentation](./docs/workflow_execution/wf_execution_via_kafka.md))
 
 Read more about how to handle and write wirings and how to use the execution endpoints [here](./docs/workflow_execution/running_workflows.md)
 

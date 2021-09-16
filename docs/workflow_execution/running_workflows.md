@@ -257,3 +257,8 @@ The response:
     }
 }
 ```
+
+## Running workflows using Kafka
+
+see the documentation for [Workflow execution via Apache Kafka](./wf_execution_via_kafka.md).
+
