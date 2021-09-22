@@ -64,16 +64,52 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     public Workflow update(Workflow workflow) {
-        checkOperatorNames(workflow);
+        validateWorkflowLinks(workflow);
+        checkOperatorNamesUnique(workflow);
+
         workflow.setInputs(this.computeWorkflowInputs(workflow));
         workflow.setOutputs(this.computeWorkflowOutputs(workflow));
+
         this.workflowRepository.save(workflow);
         log.info("modified workflow {}", workflow.getId());
         return workflow;
-
     }
 
-    private void checkOperatorNames(Workflow workflow) {
+  /**
+   * Validates all WorkflowLinks inside a Workflow and checks, that all referenced WorkflowOperator exists.
+   * If the WorkflowOperator not exists, the WorkflowLink will be removed from the Workflow.
+   * This is a workaround for https://github.com/hetida/hetida-designer/issues/6
+   * @param workflow The Workflow to check
+   */
+  private void validateWorkflowLinks(Workflow workflow) {
+      List<WorkflowOperator> workflowOperators = workflow.getWorkflowOperators();
+
+      List<WorkflowIO> workflowIOS =workflow.getInputs();
+      workflowIOS.addAll(workflow.getOutputs());
+
+      List <WorkflowLink> workflowLinks = workflow.getLinks();
+      List <WorkflowLink> workflowLinksToRemove = new ArrayList<>();
+
+      for(WorkflowLink workflowLink: workflowLinks) {
+        if(workflowOperators.stream().noneMatch(x -> x.getId().equals(workflowLink.getFromOperator())) &&
+          workflowIOS.stream().noneMatch(x -> x.getOperator().equals(workflowLink.getToOperator()))){
+          log.error("Invalid workflowLink. Operator does not exist. id: {} fromOperator: {}",
+            workflowLink.getId(), workflowLink.getFromOperator());
+          workflowLinksToRemove.add(workflowLink);
+          continue;
+        }
+
+        if(workflowOperators.stream().noneMatch(x -> x.getId().equals(workflowLink.getToOperator())) &&
+          workflowIOS.stream().noneMatch(x -> x.getOperator().equals(workflowLink.getFromOperator()))){
+          log.error("Invalid workflowLink. Operator does not exist. id: {} toOperator: {}",
+            workflowLink.getId(), workflowLink.getToOperator());
+          workflowLinksToRemove.add(workflowLink);
+        }
+      }
+      workflow.getLinks().removeAll(workflowLinksToRemove);
+    }
+
+  private void checkOperatorNamesUnique(Workflow workflow) {
         // group operators by itemId
         Map<UUID, List<WorkflowOperator>> operatorGroups = new HashMap<>();
         if (workflow.getWorkflowOperators() != null) {
