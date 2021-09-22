@@ -64,6 +64,9 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     public Workflow update(Workflow workflow) {
+        Workflow currentWorkflow = workflowRepository.findById(workflow.getId())
+          .orElseThrow(WorkflowNotFoundException::new);
+
         validateWorkflowLinks(workflow);
         checkOperatorNamesUnique(workflow);
 
@@ -71,9 +74,11 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflow.setOutputs(this.computeWorkflowOutputs(workflow));
 
         this.workflowRepository.save(workflow);
+        this.workflowRepository.deleteOrphanedData();
         log.info("modified workflow {}", workflow.getId());
         return workflow;
     }
+
 
   /**
    * Validates all WorkflowLinks inside a Workflow and checks, that all referenced WorkflowOperator exists.
