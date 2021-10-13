@@ -12,10 +12,10 @@ This command writes a backup file named `<TIMESTAMP>-hd-backup.tar` into the cur
 
 ```
 docker run --rm \
-	-e "PGPASSWORD=hetida_designer_dbpasswd" \
+    -e "PGPASSWORD=hetida_designer_dbpasswd" \
     --name hd_postgres_backup \
     -v $(pwd):/backup_dir \
-    --network hd-github_default \
+    --network hetida-designer_default \
     postgres:13 \
     bash -c \
     "pg_dump -h hetida-designer-db -p 5432 -U hetida_designer_dbuser -Fc hetida_designer_db > /backup_dir/$(date --iso-8601=seconds)-hd-backup.tar"
@@ -27,10 +27,10 @@ Assuming the backup file to be imported is located in the current directory with
 
 ```
 docker run --rm \
-	-e "PGPASSWORD=hetida_designer_dbpasswd" \
+    -e "PGPASSWORD=hetida_designer_dbpasswd" \
     --name hd_postgres_backup \
     -v $(pwd):/backup_dir \
-    --network hd-github_default \
+    --network hetida-designer_default \
     postgres:13 \
     bash -c \
     "pg_restore --clean --exit-on-error -v -h hetida-designer-db -p 5432 -U hetida_designer_dbuser -d hetida_designer_db < /backup_dir/hd-backup.tar"
