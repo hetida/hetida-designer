@@ -1,4 +1,7 @@
-
+## 0.6.15
+* fix issue https://github.com/hetida/hetida-designer/issues/6
+* add documentation for postgres backup
+* add documentation for using R via rpy2
 ## 0.6.14
 * add output information to /workflows endpoint
 ## 0.6.13
