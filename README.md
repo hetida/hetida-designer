@@ -2,7 +2,7 @@
 
 ## Build Status
 
-[![Build Status](https://travis-ci.com/hetida/hetida-designer.svg?token=eB47p3eWdLFGCNEVBwCV&branch=develop)](https://travis-ci.com/hetida/hetida-designer)
+[![Build Status](https://app.travis-ci.com/hetida/hetida-designer.svg?branch=release)](https://app.travis-ci.com/hetida/hetida-designer)
 
 ## What is hetida designer?
 
