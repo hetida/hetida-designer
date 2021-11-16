@@ -43,6 +43,9 @@ class CodeBody(BaseModel):
     name: str
     description: str
     category: str
+    uuid: str
+    group_id: str
+    tag: str
 
 
 class GeneratedCode(BaseModel):

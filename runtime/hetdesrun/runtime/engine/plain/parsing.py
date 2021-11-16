@@ -15,7 +15,7 @@ from hetdesrun.models.code import CodeModule
 from hetdesrun.runtime.engine.plain.workflow import Workflow, ComputationNode, Node
 
 from hetdesrun.component.load import (
-    import_func_from_code_with_uuid_as_modulename,
+    import_func_from_code,
     ComponentCodeImportError,
 )
 
@@ -81,8 +81,8 @@ def load_func(
         raise NodeFunctionLoadingError(msg) from e
 
     try:
-        component_func = import_func_from_code_with_uuid_as_modulename(
-            code, code_module_uuid, component.function_name,
+        component_func = import_func_from_code(
+            code, component.function_name,
         )
     except (ImportError, ComponentCodeImportError) as e:
         msg = (

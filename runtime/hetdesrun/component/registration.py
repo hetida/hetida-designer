@@ -33,6 +33,9 @@ def register(
     component_name: Optional[str] = None,
     description: Optional[str] = None,
     category: Optional[str] = None,
+    uuid: Optional[str] = None,
+    group_id: Optional[str] = None,
+    tag: Optional[str] = None,
 ) -> Callable[[Callable], Callable]:
     """Additonal features for component entrypoint functions
 
@@ -96,6 +99,9 @@ def register(
             "name": component_name,
             "description": description,
             "category": category,
+            "uuid": uuid,
+            "group_id": group_id,
+            "tag": tag,
         }
 
         return return_func_or_coro

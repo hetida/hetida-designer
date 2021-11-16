@@ -321,6 +321,9 @@ async def codegen_service(
             component_name=codegen_input.name,
             description=codegen_input.description,
             category=codegen_input.category,
+            uuid=codegen_input.uuid,
+            group_id=codegen_input.group_id,
+            tag=codegen_input.tag
         )
     )
 
