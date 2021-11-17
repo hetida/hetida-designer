@@ -37,5 +37,6 @@
     "mypy.configFile": "./runtime/mypy.ini",
     "python.linting.mypyPath": "./runtime/venv/bin/mypy",
     "python.linting.mypyEnabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true
 }

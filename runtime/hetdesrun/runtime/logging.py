@@ -20,7 +20,7 @@ class MinimallyMoreCapableJsonEncoder(json.JSONEncoder):
 
     """
 
-    def default(self, obj: Any) -> Any:  # pylint: disable=arguments-differ
+    def default(self, obj: Any) -> Any:  # pylint: disable=arguments-renamed
         if isinstance(obj, UUID):
             # if the obj is uuid, we simply return the value of uuid
             return obj.hex

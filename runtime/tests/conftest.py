@@ -2,7 +2,16 @@ from copy import deepcopy
 
 import pytest
 
+from httpx import AsyncClient
+
+from hetdesrun.service.webservice import app
+
 from hetdesrun.utils import get_uuid_from_seed
+
+
+@pytest.fixture
+def async_test_client():
+    return AsyncClient(app=app, base_url="http://test")
 
 
 base_workflow_json = {

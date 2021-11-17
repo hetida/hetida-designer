@@ -94,7 +94,7 @@ async def update_generic_adapter_base_urls_cache() -> None:
     """Update the cached mapping from adapter keys to their base urls"""
     generic_adapter_infos = await load_generic_adapter_base_urls()
 
-    global generic_rest_adapter_urls  # pylint: disable=global-statement
+    global generic_rest_adapter_urls  # pylint: disable=global-statement,global-variable-not-assigned
     with generic_rest_adapter_urls_lock:
         for generic_adapter_info in generic_adapter_infos:
             generic_rest_adapter_urls[

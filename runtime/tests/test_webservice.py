@@ -9,7 +9,12 @@ from copy import deepcopy
 warnings.filterwarnings("ignore", message="the imp module is deprecated")
 
 from starlette.testclient import TestClient
+
+import pytest
+from httpx import AsyncClient
+
 from hetdesrun.service.webservice import app
+
 
 from hetdesrun.models.run import ConfigurationInput, ExecutionEngine
 
@@ -20,25 +25,37 @@ from hetdesrun.utils import get_uuid_from_seed
 client = TestClient(app)
 
 
-def test_swagger_ui_available():
-    response = client.get("/docs")
+@pytest.mark.asyncio
+async def test_swagger_ui_available(async_test_client):
+    async with async_test_client as ac:
+        response = await ac.get("/docs")
+
     assert response.status_code == 200
     assert "swagger-ui" in response.text.lower()
 
 
-def test_access_api_endpoint():
-    response = client.post(
-        "/codegen",
-        json={
-            "inputs": [],
-            "outputs": [],
-            "code": "",
-            "function_name": "main",
-            "name": "Testname",
-            "description": "Test Descr.",
-            "category": "Test category",
-        },
-    )
+# def test_swagger_ui_available_2():
+#     response = client.get("/docs")
+
+#     assert response.status_code == 200
+#     assert "swagger-ui" in response.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_access_api_endpoint(async_test_client):
+    async with async_test_client as ac:
+        response = await ac.post(
+            "/codegen",
+            json={
+                "inputs": [],
+                "outputs": [],
+                "code": "",
+                "function_name": "main",
+                "name": "Testname",
+                "description": "Test Descr.",
+                "category": "Test category",
+            },
+        )
     assert response.status_code == 200
     assert "code" in response.json().keys()
 
@@ -152,14 +169,18 @@ base_workflow_json = {
 }
 
 
-def run_workflow_with_client(workflow_json):
-    response = client.post("/runtime", json=workflow_json)
+async def run_workflow_with_client(workflow_json, async_test_client):
+    async with async_test_client as ac:
+        response = await ac.post("/runtime", json=workflow_json)
     return response.status_code, response.json()
 
 
-def test_running_workflow():
+@pytest.mark.asyncio
+async def test_running_workflow(async_test_client):
 
-    status_code, output = run_workflow_with_client(base_workflow_json.copy())
+    status_code, output = await run_workflow_with_client(
+        base_workflow_json.copy(), async_test_client
+    )
 
     assert status_code == 200
     assert output["result"] == "ok"
@@ -281,8 +302,11 @@ series_input_workflow_json = {
 }
 
 
-def test_workflow_with_series_input_and_dataframe_output():
-    status_code, output = run_workflow_with_client(series_input_workflow_json.copy())
+@pytest.mark.asyncio
+async def test_workflow_with_series_input_and_dataframe_output(async_test_client):
+    status_code, output = await run_workflow_with_client(
+        series_input_workflow_json.copy(), async_test_client
+    )
 
     assert status_code == 200
     assert output["result"] == "ok"
@@ -411,9 +435,12 @@ def main(*, x, y):
 }
 
 
-def test_single_node_workflow_with_dataframe_input_and_series_output():
-    status_code, output = run_workflow_with_client(
-        single_node_input_workflow_json.copy()
+@pytest.mark.asyncio
+async def test_single_node_workflow_with_dataframe_input_and_series_output(
+    async_test_client,
+):
+    status_code, output = await run_workflow_with_client(
+        single_node_input_workflow_json.copy(), async_test_client
     )
 
     assert status_code == 200
@@ -536,8 +563,13 @@ plot_workflow_json = {
 }
 
 
-def test_workflow_with_plot_component_and_activated_exec_of_plot_operators():
-    status_code, output = run_workflow_with_client(plot_workflow_json.copy())
+@pytest.mark.asyncio
+async def test_workflow_with_plot_component_and_activated_exec_of_plot_operators(
+    async_test_client,
+):
+    status_code, output = await run_workflow_with_client(
+        plot_workflow_json.copy(), async_test_client
+    )
 
     assert status_code == 200
 
@@ -546,7 +578,10 @@ def test_workflow_with_plot_component_and_activated_exec_of_plot_operators():
     assert output["output_results_by_output_name"]["z"] == {"a": 1.0}
 
 
-def test_workflow_with_plot_component_and_deactivated_exec_of_plot_operators():
+@pytest.mark.asyncio
+async def test_workflow_with_plot_component_and_deactivated_exec_of_plot_operators(
+    async_test_client,
+):
     new_plot_workflow_json = deepcopy(plot_workflow_json)
     new_plot_workflow_json["configuration"] = {
         "name": "string",
@@ -554,7 +589,9 @@ def test_workflow_with_plot_component_and_deactivated_exec_of_plot_operators():
         "run_pure_plot_operators": False,
     }
 
-    status_code, output = run_workflow_with_client(new_plot_workflow_json)
+    status_code, output = await run_workflow_with_client(
+        new_plot_workflow_json, async_test_client
+    )
 
     assert status_code == 200
 
@@ -563,7 +600,8 @@ def test_workflow_with_plot_component_and_deactivated_exec_of_plot_operators():
     assert output["output_results_by_output_name"]["z"] == {}
 
 
-def test_workflow_with_plot_component_with_non_plot_outputs():
+@pytest.mark.asyncio
+async def test_workflow_with_plot_component_with_non_plot_outputs(async_test_client):
     """Importing a component which is marked as plot component but
     has outputs which are not Plot Outputs should fail
     """
@@ -572,7 +610,9 @@ def test_workflow_with_plot_component_with_non_plot_outputs():
         "code"
     ] = 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nimport logging\ntest_logger = logging.getLogger(__name__)\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"x": DataType.Float, "y": DataType.Float}, outputs={"z": DataType.PlotlyJson, "w": DataType.Float}, is_pure_plot_component=True\n)\ndef main(*, x, y):\n    """entrypoint function for this component"""\n    test_logger.info("TEST in component function " + __name__)\n    # print(1 / 0)\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"z": {"a": 1.0}}'
 
-    status_code, output = run_workflow_with_client(new_plot_workflow_json)
+    status_code, output = await run_workflow_with_client(
+        new_plot_workflow_json, async_test_client
+    )
 
     print(output)
     assert status_code == 200

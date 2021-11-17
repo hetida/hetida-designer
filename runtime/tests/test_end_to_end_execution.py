@@ -39,11 +39,9 @@ from hetdesrun.runtime.context import execution_context
 
 from hetdesrun.utils import load_data, file_pathes_from_component_json
 
-client = TestClient(app)
 
-
-def run_workflow_with_client(workflow_json):
-    response = client.post("/runtime", json=workflow_json)
+async def run_workflow_with_client(workflow_json, open_async_test_client):
+    response = await open_async_test_client.post("/runtime", json=workflow_json)
     return response.status_code, response.json()
 
 
@@ -151,8 +149,11 @@ def gen_execution_input_from_single_component(
     )
 
 
-def run_single_component(component_json_file_path, input_data_dict):
-    response = client.post(
+async def run_single_component(
+    component_json_file_path, input_data_dict, open_async_test_client
+):
+
+    response = await open_async_test_client.post(
         "/runtime",
         json=json.loads(
             gen_execution_input_from_single_component(
@@ -165,63 +166,86 @@ def run_single_component(component_json_file_path, input_data_dict):
     return WorkflowExecutionResult(**response.json())
 
 
-def test_null_values_pass_any_pass_through():
-    exec_result = run_single_component(
-        "./components/Connectors/pass_through.json", {"input": {"a": 1.5, "b": None}}
-    )
+@pytest.mark.asyncio
+async def test_null_values_pass_any_pass_through(async_test_client):
+    async with async_test_client as client:
 
-    assert exec_result.output_results_by_output_name["output"] == {"a": 1.5, "b": None}
+        exec_result = await run_single_component(
+            "./components/Connectors/pass_through.json",
+            {"input": {"a": 1.5, "b": None}},
+            client,
+        )
 
-
-def test_null_list_values_pass_any_pass_through():
-    exec_result = run_single_component(
-        "./components/Connectors/pass_through.json", {"input": [1.2, None]}
-    )
-    assert exec_result.output_results_by_output_name["output"] == [1.2, None]
-
-
-def test_null_values_pass_series_pass_through():
-    exec_result = run_single_component(
-        "./components/Connectors/pass_through_series.json",
-        {"input": {"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}},
-    )
-    assert exec_result.output_results_by_output_name["output"] == {
-        "2020-01-01T00:00:00.000Z": 1.5,
-        "2020-01-02T00:00:00.000Z": None,
-    }
-
-    exec_result = run_single_component(
-        "./components/Connectors/pass_through_series.json",
-        {"input": [1.2, 2.5, None]},
-    )
-    assert exec_result.output_results_by_output_name["output"] == {
-        "0": 1.2,
-        "1": 2.5,
-        "2": None,
-    }
+        assert exec_result.output_results_by_output_name["output"] == {
+            "a": 1.5,
+            "b": None,
+        }
 
 
-def test_all_null_values_pass_series_pass_through():
-    exec_result = run_single_component(
-        "./components/Connectors/pass_through_series.json",
-        {"input": {"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}},
-    )
-    assert exec_result.output_results_by_output_name["output"] == {
-        "2020-01-01T00:00:00.000Z": None,
-        "2020-01-02T00:00:00.000Z": None,
-    }
+@pytest.mark.asyncio
+async def test_null_list_values_pass_any_pass_through(async_test_client):
+    async with async_test_client as client:
+
+        exec_result = await run_single_component(
+            "./components/Connectors/pass_through.json", {"input": [1.2, None]}, client
+        )
+        assert exec_result.output_results_by_output_name["output"] == [1.2, None]
 
 
-def test_nested_wf_execution():
-    with open(os.path.join("tests", "data", "nested_wf_execution_input.json")) as f:
-        loaded_workflow_exe_input = json.load(f)
+@pytest.mark.asyncio
+async def test_null_values_pass_series_pass_through(async_test_client):
+    async with async_test_client as client:
 
-    response_status_code, response_json = run_workflow_with_client(
-        loaded_workflow_exe_input
-    )
+        exec_result = await run_single_component(
+            "./components/Connectors/pass_through_series.json",
+            {"input": {"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}},
+            client,
+        )
+        assert exec_result.output_results_by_output_name["output"] == {
+            "2020-01-01T00:00:00.000Z": 1.5,
+            "2020-01-02T00:00:00.000Z": None,
+        }
 
-    assert response_status_code == 200
-    assert response_json["result"] == "ok"
-    assert response_json["output_results_by_output_name"][
-        "limit_violation_timestamp"
-    ].startswith("2020-05-28T20:16:41")
+        exec_result = await run_single_component(
+            "./components/Connectors/pass_through_series.json",
+            {"input": [1.2, 2.5, None]},
+            client,
+        )
+        assert exec_result.output_results_by_output_name["output"] == {
+            "0": 1.2,
+            "1": 2.5,
+            "2": None,
+        }
+
+
+@pytest.mark.asyncio
+async def test_all_null_values_pass_series_pass_through(async_test_client):
+    async with async_test_client as client:
+
+        exec_result = await run_single_component(
+            "./components/Connectors/pass_through_series.json",
+            {"input": {"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}},
+            client,
+        )
+        assert exec_result.output_results_by_output_name["output"] == {
+            "2020-01-01T00:00:00.000Z": None,
+            "2020-01-02T00:00:00.000Z": None,
+        }
+
+
+@pytest.mark.asyncio
+async def test_nested_wf_execution(async_test_client):
+    async with async_test_client as client:
+
+        with open(os.path.join("tests", "data", "nested_wf_execution_input.json")) as f:
+            loaded_workflow_exe_input = json.load(f)
+
+        response_status_code, response_json = await run_workflow_with_client(
+            loaded_workflow_exe_input, client
+        )
+
+        assert response_status_code == 200
+        assert response_json["result"] == "ok"
+        assert response_json["output_results_by_output_name"][
+            "limit_violation_timestamp"
+        ].startswith("2020-05-28T20:16:41")

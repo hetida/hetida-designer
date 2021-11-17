@@ -102,7 +102,7 @@ def load_data(
         from json file as first entry, documentation as second entry and if code_file
         is not None the code as third entry. If some part of loading failes, None is returned
     """
-    with open(json_file, "r") as f:
+    with open(json_file, "r", encoding="utf8") as f:
         try:
             info = json.load(f)
         except json.JSONDecodeError:
@@ -110,7 +110,7 @@ def load_data(
             info = None
     doc: Optional[str]
     try:
-        with open(md_file, "r") as f:
+        with open(md_file, "r", encoding="utf8") as f:
             doc = f.read()
     except FileNotFoundError:
         logger.error("Could not find documentation markdonw file %s", md_file)
@@ -121,7 +121,7 @@ def load_data(
 
     code: Optional[str]
     try:
-        with open(code_file, "r") as f:
+        with open(code_file, "r", encoding="utf8") as f:
             code = f.read()
     except FileNotFoundError:
         logger.error("Could not find code file %s", code_file)
@@ -394,7 +394,7 @@ def component_dtos_from_python_file(
 
     Wrapper for component_dtos_from_python_code to work on file pathes directly.
     """
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf8") as f:
         code = f.read()
 
     path_without_ext = os.path.splitext(path)[0]
@@ -546,11 +546,15 @@ def download_workflow_to_files(
     Path(cat_dir).mkdir(parents=True, exist_ok=True)
 
     # write json file
-    with open(os.path.join(cat_dir, name_for_filenames + ".json"), "w") as f:
+    with open(
+        os.path.join(cat_dir, name_for_filenames + ".json"), "w", encoding="utf8"
+    ) as f:
         json.dump(wf_json, f, indent=2, sort_keys=True)
 
     # write documentation file
-    with open(os.path.join(cat_dir, name_for_filenames + ".md"), "w") as f:
+    with open(
+        os.path.join(cat_dir, name_for_filenames + ".md"), "w", encoding="utf8"
+    ) as f:
         f.write(doc_text)
 
 

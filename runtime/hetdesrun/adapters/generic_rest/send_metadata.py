@@ -29,6 +29,15 @@ from hetdesrun.adapters.exceptions import (
 logger = logging.getLogger(__name__)
 
 
+async def post_json_with_open_client(
+    open_client: httpx.AsyncClient, url: str, json_payload: Dict
+) -> httpx.Response:
+    return await open_client.post(
+        url,
+        json=json_payload,
+    )
+
+
 async def send_single_metadatum_to_adapter(
     filtered_sink: FilteredSink,
     metadatum_value: Any,
@@ -54,9 +63,10 @@ async def send_single_metadatum_to_adapter(
     assert value_datatype is not None  # for mypy
 
     try:
-        resp = await client.post(
-            url,
-            json=(
+        resp = await post_json_with_open_client(
+            open_client=client,
+            url=url,
+            json_payload=(
                 {
                     "key": filtered_sink.ref_key,
                     "value": metadatum_value,
@@ -75,7 +85,7 @@ async def send_single_metadatum_to_adapter(
             f"Posting metadata from generic rest adapter endpoint {url} failed."
         ) from e
 
-    if resp.status_code != 200 and resp.status_code != 201:
+    if resp.status_code not in (200, 201):
         msg = (
             f"Posting metadata to generic rest adapter endpoint {url} failed."
             f" Status code: {resp.status_code}. Text: {resp.text}"

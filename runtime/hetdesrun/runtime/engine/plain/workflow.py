@@ -130,10 +130,7 @@ class ComputationNode:
         kwargable_params = [
             param
             for param in signature(self.func).parameters.values()  # type: ignore
-            if (
-                param.kind == Parameter.POSITIONAL_OR_KEYWORD
-                or param.kind == Parameter.KEYWORD_ONLY
-            )
+            if (param.kind in (Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY))
         ]
         # only non-default-valued params are required:
         return [
@@ -179,7 +176,8 @@ class ComputationNode:
             except KeyError as e:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
                 logger.info(
-                    "Execution failed due to missing output of a node", exc_info=True,
+                    "Execution failed due to missing output of a node",
+                    exc_info=True,
                 )
                 raise MissingOutputException(
                     "Could not obtain output result from another node while preparing to "
@@ -389,14 +387,18 @@ class Workflow:
         results = {}
         for (
             wf_output_name,
-            (sub_node, sub_node_output_name,),
+            (
+                sub_node,
+                sub_node_output_name,
+            ),
         ) in self.output_mappings.items():
             try:
                 results[wf_output_name] = (await sub_node.result)[sub_node_output_name]
             except KeyError as e:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
                 logger.info(
-                    "Execution failed due to missing output of a node", exc_info=True,
+                    "Execution failed due to missing output of a node",
+                    exc_info=True,
                 )
                 raise MissingOutputException(
                     "Could not obtain output result from another node while preparing to "
