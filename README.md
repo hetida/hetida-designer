@@ -240,7 +240,7 @@ To run the tests:
 
 #### Runtime
 
-Dependencies: Python 3.8 (other versions are not
+Dependencies: Python 3.9 (other versions are not
 tested, but higher versions will probably work as well). 
 
 You may need additional packages like a C compiler (e.g. gcc) depending on your
@@ -248,11 +248,12 @@ OS's availability of precompiled packages for numerical libraries like **numpy**
 or **scipy**. That said, development on Linux is recommended.
 
 1. Navigate to the `runtime` folder.
-2. Create virtual environment: `python -m venv venv`
+2. Create virtual environment: `python3.9 -m venv venv`
 3. Activate virtual environment: `source venv/bin/activate`
-4. Install dependency management tooling: `python3 -m pip install pip==21.0.1 pip-tools==5.5.0`
+4. Install dependency management tooling: `python -m pip install pip==21.3.1 pip-tools==6.4.0 wheel==0.37.0`
 5. Install development dependencies: `pip-sync ./requirements.txt ./requirements-dev.txt `
-6. run `python main.py`
+
+Now a development web server can be started via `python main.py`.
 
 #### Running Runtime Tests
 

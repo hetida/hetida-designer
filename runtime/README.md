@@ -5,13 +5,15 @@ The hetida designer runtime is the hetida designer submodule responsible for exe
 > Note: All described command line commands in this file assume that the runtime subdirectory of the hetida designer repository is the current working directory.
 
 ## Development Setup
-Make sure Python 3.8 is installed and available on your path. You may need additional packages like a C compiler (e.g. gcc) depending on your OS's availability of precompiled packages for numerical libraries like **numpy** or **scipy**. We recommend Linux as operating system for development.
+Make sure Python 3.9 is installed and available on your path. You may need additional packages like a C compiler (e.g. gcc) depending on your OS's availability of precompiled packages for numerical libraries like **numpy** or **scipy**. We recommend Linux as operating system for development.
 
 1. Navigate to the `runtime` folder.
-2. Create virtual environment: `python -m venv venv`
+2. Create virtual environment: `python3.9 -m venv venv`
 3. Activate virtual environment: `source venv/bin/activate`
-4. Install dependency management tooling: `python3 -m pip install pip==21.0.1 pip-tools==5.5.0 wheel==0.36.2`
+4. Install dependency management tooling: `python -m pip install pip==21.3.1 pip-tools==6.4.0 wheel==0.37.0`
 5. Install development dependencies: `pip-sync ./requirements.txt ./requirements-dev.txt`
+
+Now a development web server can be started via `python main.py`.
 
 All following commands assume that that the virtual environment is active (step 3).
 
