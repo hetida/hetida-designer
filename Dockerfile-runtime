@@ -6,7 +6,7 @@ ENV TIMEOUT=900
 COPY ./runtime/requirements.txt /requirements.txt
 COPY ./runtime/requirements-dev.txt /requirements-dev.txt
 
-RUN python3 -m pip install --upgrade pip==21.0.1 wheel==0.36.2 pip-tools==5.5.0
+RUN python3 -m pip install --upgrade pip==21.3.1 pip-tools==6.4.0 wheel==0.37.0
 RUN pip-sync /requirements.txt
 
 ##### Intermediate stage with actual application content

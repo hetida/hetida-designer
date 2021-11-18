@@ -3,8 +3,9 @@ pytest
 coverage
 pylint
 pytest-cov
-black==19.10b0
+black
 pytest-asyncio
 requests
+httpx
 rope
 mypy
