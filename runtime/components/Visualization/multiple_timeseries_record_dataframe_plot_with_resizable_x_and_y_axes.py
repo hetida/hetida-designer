@@ -223,7 +223,7 @@ def multi_series_with_multi_yaxis(df, value_col, group_col):
     outputs={"plot": DataType.PlotlyJson},
     component_name="Timeseries Plot with multiple movable X and Y Axes",
     description="Plots timeseries data with movable and resizable own y and x axes for every timeseries",
-    category="ARAC Visualization",
+    category="Visualization",
 )
 def main(*, dataframe):
     """entrypoint function for this component"""
