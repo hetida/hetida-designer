@@ -562,7 +562,7 @@ def post_workflow(json_info: dict, doc: str) -> None:
 
     headers = get_auth_headers()
 
-    response = requests.put(
+    response = requests.post(
         runtime_config.hd_backend_api_url + "workflows/" + json_info["id"],
         verify=runtime_config.hd_backend_verify_certs,
         auth=get_backend_basic_auth()
@@ -585,7 +585,7 @@ def post_workflow(json_info: dict, doc: str) -> None:
             + f". Response: {response.status_code} with response text {response.text}"
         )
 
-    response = requests.put(
+    response = requests.post(
         runtime_config.hd_backend_api_url + "documentations/" + json_info["id"],
         verify=runtime_config.hd_backend_verify_certs,
         auth=get_backend_basic_auth()
