@@ -48,17 +48,17 @@ def test_workflow_deployment(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
     with mock.patch(
-        "hetdesrun.utils.requests.post", return_value=response_mock
-    ) as patched_post:
+        "hetdesrun.utils.requests.put", return_value=response_mock
+    ) as patched_put:
         post_workflows_from_directory("./workflows")
 
     # at least tries to upload many workflows
-    assert patched_post.call_count > 3
+    assert patched_put.call_count > 3
     # Test logging when posting does not work
     response_mock.status_code = 400
     with mock.patch(
-        "hetdesrun.utils.requests.post", return_value=response_mock
-    ) as patched_post:
+        "hetdesrun.utils.requests.put", return_value=response_mock
+    ) as patched_put:
         caplog.clear()
         post_workflows_from_directory("./workflows")
         assert "COULD NOT POST WORKFLOW" in caplog.text
