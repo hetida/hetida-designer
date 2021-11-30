@@ -199,9 +199,24 @@ submodule that you'd like to change.
 
 So first of all, follow the above instructions to set up a fully working local installation
 either with [docker-compose](#gs-docker-compose) or with [standalone docker containers](#gs-docker-standalone). If using docker-compose, you should expose backend and runtime 
-ports in the docker-compose file as is described under [Modifying Ports](#modify-ports).
+ports in the docker-compose file as is described under [Modifying Ports](#modify-ports). There is a `docker-compose-dev.yml` that builds images from your local development files which you can use via
 
-Once you have the application running, only stop the container containing submodule that you
+```
+docker-compose -f docker-compose-dev.yml up -d
+```
+
+Note that in this case it makes sense to run the base component deployment command using the locally
+built runtime image via
+
+```
+docker run --rm \
+  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8080/api/" \
+  --name htdruntime_deployment \
+  --network hetida-designer_default \
+  --entrypoint python hetida-designer_hetida-designer-runtime -c "from hetdesrun.utils import post_components_from_directory, post_workflows_from_directory; post_components_from_directory('./components'); post_workflows_from_directory('./workflows'); post_workflows_from_directory('./workflows2')"  
+```
+
+Once you have the application running, only stop the container containing the submodule that you
 want to work on. We use a monorepo approach, so you already have the source code for all submodules on your machine by now.
 
 Depending on whether you want to work on the frontend, backend, or runtime, find the
