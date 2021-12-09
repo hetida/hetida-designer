@@ -144,6 +144,11 @@ public class AdapterServiceImpl implements AdapterService {
                 .orElse(null);
     }
 
+    /**
+     * The method getStructure should be for replaced for applied adapters.
+     * The shown demo method load the complete structure before filtering the required data.
+     * Instead, only the data related to the parentId should be returned.
+     **/
     @Override
     public StructureDTO getStructure(final String parentId) {
         StructureDTO structureDTO = getCachedStructure();
