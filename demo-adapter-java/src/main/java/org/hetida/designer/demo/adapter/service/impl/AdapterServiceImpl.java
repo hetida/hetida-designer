@@ -145,9 +145,17 @@ public class AdapterServiceImpl implements AdapterService {
     }
 
     /**
-     * The method getStructure should be for replaced for applied adapters.
-     * The shown demo method load the complete structure before filtering the required data.
-     * Instead, only the data related to the parentId should be returned.
+     * The getStructure method should be replaced for applied adapters.
+     *
+     * Currently, the getStructure method loads the complete structure and then filters the required data.
+     * - getStructure() -> createClientStructureMock() -> readThingNodes(){return: completeStructure}
+     * - filter(completeStructure){return: structureDto}
+     *
+     * Instead, the parentId should be passed in order to directly request the used data.
+     * - getStructure(parentId) -> createClientStructureMock(parentId) -> requestThingNodes(parentId){return: structureDto}
+     *
+     * The requestThingNodes method must be implemented and get the data from REST or database calls.
+     * In this way, unnecessary requests and filters are avoided.
      **/
     @Override
     public StructureDTO getStructure(final String parentId) {
