@@ -179,7 +179,7 @@ class ComponentDTO(BaseModel):
     category: str
     code: str
     description: str
-    group_id: UUID
+    groupId: UUID
     id: UUID
     inputs: List[IODTO]
     outputs: List[IODTO]
@@ -257,6 +257,18 @@ def post_documentation_from_dto(doc_dto: dict) -> None:
             response.text,
         )
 
+def post_component_and_docu_from_python_code(
+    code: str, base_name: str, category: Optional[str] = None
+) -> None:
+    dtos = component_dtos_from_python_code(
+        code,
+        base_name,
+        category,
+    )
+    
+    post_component_from_dto(dtos[0])
+    post_documentation_from_dto(dtos[1])
+
 
 def post_component(
     base_name: str, category: str, info: dict, doc: str, code: str
@@ -298,7 +310,7 @@ def post_component(
         **info,
         category=category.replace("_", " "),
         code=code,
-        group_id=comp_id,
+        groupId=comp_id,
         id=comp_id,
         tag="1.0.0"
     )
@@ -353,12 +365,15 @@ def component_dtos_from_python_code(
         "1.0.0"
     )
 
+    component_code = code.replace(mod_docstring, "", 1)
+    component_code = component_code.replace('""""""', "")
+
     comp_dto = ComponentDTO(
         name=component_name,
         category=component_category,
-        code=code,
+        code=component_code,
         description=component_description,
-        group_id=component_group_id,
+        groupId=component_group_id,
         id=component_uuid,
         tag=component_tag,
         inputs=[
@@ -390,7 +405,7 @@ def component_dtos_from_python_code(
     documentation_dto = {
         "document": "\n".join(
             mod_docstring_lines[2:]
-        ),  # ignore first two linesaccording to docstring conventions
+        ),  # ignore first two lines according to docstring conventions
         "id": str(component_uuid),
     }
     return comp_dto, documentation_dto

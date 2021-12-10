@@ -62,6 +62,9 @@ public class ComponentConverter {
         codegenRequestDTO.setName(entity.getName());
         codegenRequestDTO.setDescription(entity.getDescription());
         codegenRequestDTO.setCategory(entity.getCategory());
+        codegenRequestDTO.setUuid(entity.getId());
+        codegenRequestDTO.setGroup_id(entity.getGroupId());
+        codegenRequestDTO.setTag(entity.getTag());
         return codegenRequestDTO;
     }
 

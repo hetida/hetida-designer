@@ -39,7 +39,7 @@ function_definition_template: str = '''\
     tag={tag}
 )
 def main({params_list}):
-    """entrypoint function for this component"""
+    # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
 '''
 
