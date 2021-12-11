@@ -145,17 +145,18 @@ public class AdapterServiceImpl implements AdapterService {
     }
 
     /**
-     * The getStructure method should be replaced for applied adapters.
-     *
-     * Currently, the getStructure method loads the complete structure and then filters the required data.
-     * - getStructure() -> createClientStructureMock() -> readThingNodes(){return: completeStructure}
-     * - filter(completeStructure){return: structureDto}
-     *
-     * Instead, the parentId should be passed in order to directly request the used data.
-     * - getStructure(parentId) -> createClientStructureMock(parentId) -> requestThingNodes(parentId){return: structureDto}
-     *
-     * The requestThingNodes method must be implemented and get the data from REST or database calls.
-     * In this way, unnecessary requests and filters are avoided.
+     * In this demo adapter implementation the getStructure method loads the complete structure
+     * into memory once at its first invocation and filters it on every call to return only the
+     * data at the requested level determined by the parentId.
+     * 
+     * This approach is of course not feasible for typical real world scenarios containing large
+     * hierachies of data, e.g. milliones of sensor timeseries structured by some masterdata
+     * database.
+     * 
+     * Instead such a real world adapter should of course obtain only those structure assets which
+     * reside under the provided parentId in order to provide a performant user interface for
+     * browsing the hierarchy. E.g. by querying such a masterdata database on demand on every
+     * invocation.
      **/
     @Override
     public StructureDTO getStructure(final String parentId) {
