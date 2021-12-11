@@ -144,6 +144,20 @@ public class AdapterServiceImpl implements AdapterService {
                 .orElse(null);
     }
 
+    /**
+     * In this demo adapter implementation the getStructure method loads the complete structure
+     * into memory once at its first invocation and filters it on every call to return only the
+     * data at the requested level determined by the parentId.
+     * 
+     * This approach is of course not feasible for typical real world scenarios containing large
+     * hierachies of data, e.g. milliones of sensor timeseries structured by some masterdata
+     * database.
+     * 
+     * Instead such a real world adapter should of course obtain only those structure assets which
+     * reside under the provided parentId in order to provide a performant user interface for
+     * browsing the hierarchy. E.g. by querying such a masterdata database on demand on every
+     * invocation.
+     **/
     @Override
     public StructureDTO getStructure(final String parentId) {
         StructureDTO structureDTO = getCachedStructure();
