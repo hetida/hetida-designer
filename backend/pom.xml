@@ -23,6 +23,7 @@
     <io.springfox.springfox-swagger-ui.version>2.9.2</io.springfox.springfox-swagger-ui.version>
     <org.flywaydb.flyway-core>5.1.4</org.flywaydb.flyway-core>
     <org.postgresql.postgresql.version>42.2.4</org.postgresql.postgresql.version>
+    <log4j2.version>2.15.0</log4j2.version>
   </properties>
 
   <dependencyManagement>
