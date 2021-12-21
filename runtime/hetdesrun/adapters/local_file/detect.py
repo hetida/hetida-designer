@@ -58,13 +58,13 @@ def parse_settings_file(
         settings_file_path = data_file_path + ".settings.json"
 
     try:
-        with open(settings_file_path, "r") as f:
+        with open(settings_file_path, "r", encoding="utf8") as f:
             loaded_json = json.load(f)
-    except IOError as e:
+    except IOError:
         print("Settings File could not be found/opened.")
         return SettingsFile()
 
-    except json.JSONDecodeError as e:  # decoding error
+    except json.JSONDecodeError:  # decoding error
         print("Settings File JSON Decoding Error.")
         return SettingsFile()
 

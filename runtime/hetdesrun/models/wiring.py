@@ -49,7 +49,11 @@ class OutputWiring(BaseModel):
     def adapter_id_known(
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
-        if not v in SINK_ADAPTERS.keys() and not isinstance(v, str):
+        if (
+            not v
+            in SINK_ADAPTERS.keys()  # pylint: disable=consider-iterating-dictionary
+            and not isinstance(v, str)
+        ):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
             )
@@ -105,7 +109,11 @@ class InputWiring(BaseModel):
     def adapter_id_known(
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
-        if not v in SOURCE_ADAPTERS.keys() and not isinstance(v, str):
+        if (
+            not v
+            in SOURCE_ADAPTERS.keys()  # pylint: disable=consider-iterating-dictionary
+            and not isinstance(v, str)
+        ):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."
             )

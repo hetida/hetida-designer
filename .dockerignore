@@ -21,3 +21,5 @@ runtime/**/nix_venv_hd_dev
 demo-adapter-python/**/lab
 demo-adapter-python/**/venv
 .tmp
+**/.overmind.sock
+

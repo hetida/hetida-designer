@@ -1,3 +1,11 @@
+## 0.6.17
+* (security fix) upgrade log4j to 2.16.0
+## 0.6.16
+Importan: It is strongly recommended to upgrade designer installations to this version or higher
+due to the critical log4j security vulnerability known as "Log4Shell" (0-day Remote Code Execution)!
+* update log4j dependency (important security fix!)
+* fix workflow deployment
+* minor documentation updates
 ## 0.6.15
 * fix issue https://github.com/hetida/hetida-designer/issues/6
 * add documentation for postgres backup

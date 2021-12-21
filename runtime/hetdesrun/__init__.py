@@ -7,7 +7,7 @@ import hetdesrun_config
 
 
 try:
-    with open("VERSION", "r") as version_file:
+    with open("VERSION", "r", encoding="utf8") as version_file:
         VERSION = version_file.read().strip()
 except FileNotFoundError:
     VERSION = "dev snapshot"

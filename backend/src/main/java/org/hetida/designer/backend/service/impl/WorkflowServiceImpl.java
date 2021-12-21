@@ -64,8 +64,8 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     public Workflow update(Workflow workflow) {
-        Workflow currentWorkflow = workflowRepository.findById(workflow.getId())
-          .orElseThrow(WorkflowNotFoundException::new);
+        // No existence check, since the base/example workflow deployment needs to be able to put
+        // with an id and either create or update the workflow.
 
         validateWorkflowLinks(workflow);
         checkOperatorNamesUnique(workflow);

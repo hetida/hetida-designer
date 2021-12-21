@@ -161,7 +161,7 @@ async def get_single_sink(sink_id: str) -> LocalFileStructureSink:
 
 
 @local_file_adapter_router.get(
-    "/thingNodes/{thingNodeId}/metadata",
+    "/thingNodes/{thingNodeId}/metadata/",
     response_model=List,
     dependencies=get_auth_deps(),
 )

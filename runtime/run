@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+usage() {
+    echo "$0 [COMMAND] [ARGS]"
+    echo ""
+    echo "Hint: All commands expect a Python dev virtual environment to be active"
+    echo ""
+    echo "  Commands:"
+    echo "  - deps:lock       :    resolves and locks Python dependencies"
+    echo "  - deps:sync       :    syncs currently activated virtual environment with locked Python dev dependencies."
+    echo "  - test            :    run pytest on hetdesrun code"    
+    echo "  - test_components :    run pytest/doctest on components"
+    echo "  - lint            :    call pylint"
+    echo "  - typecheck       :    run mypy static type check"
+}
+
+fn_exists() {
+    type "${1:-}" 2>/dev/null | grep -q 'tion' # finds function and Funktion (depends on locale!)
+}
+
+COMMAND=${1:-}
+shift
+ARGUMENTS=${@}
+
+set -euo pipefail
+
+#----- subcommands -----#
+
+deps:lock() {
+    # upgrade and lock including dev-dependencies
+    rm requirements.txt requirements-dev.txt && pip-compile --generate-hashes && pip-compile --generate-hashes requirements-dev.in    
+}
+
+deps:sync() {
+    # sync dev dependencies
+    pip-sync requirements.txt requirements-dev.txt    
+}
+
+test() {
+    python -m pytest --cov=hetdesrun --cov-report=term-missing tests "$@"
+}
+
+
+test_components() {
+    python -m pytest --doctest-modules components
+}
+
+lint() {
+    pylint hetdesrun    
+}
+
+typecheck() {
+    python3 -m mypy hetdesrun
+}
+
+
+#----- Execution -----#
+
+if fn_exists "$COMMAND" ; then
+    # cd into the script's current directory
+    cd "${0%/*}" || exit 1
+
+    # Execute
+    TIMEFORMAT=$'\nTask completed in %3lR'
+
+    time "$COMMAND" $ARGUMENTS
+else
+    usage
+fi
+

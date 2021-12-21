@@ -52,7 +52,7 @@ async def post_framelike_records(
         logger.info(msg)
         raise AdapterConnectionError(msg) from e
 
-    if response.status_code != 200 and response.status_code != 201:
+    if response.status_code not in (200, 201):
         msg = (
             f"Failed posting framelike data to {url} for id {ref_id}."
             f" Status code: {str(response.status_code)}. Response text: {response.text}"

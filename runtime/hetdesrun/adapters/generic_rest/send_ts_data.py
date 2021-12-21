@@ -63,9 +63,7 @@ def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> List[Dict
             )
         )
 
-    if not (
-        (series.index.tz == pytz.UTC) or (series.index.tz == datetime.timezone.utc)
-    ):
+    if not series.index.tz in (pytz.UTC, datetime.timezone.utc):
         raise AdapterOutputDataError(
             (
                 "Received Pandas Series index does not have UTC timezone but generic rest adapter "
@@ -83,7 +81,9 @@ def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> List[Dict
                     lambda x: x.strftime(
                         "%Y-%m-%dT%H:%M:%S.%f"
                     )  # Generic Rest datetime format is yyyy-MM-ddTHH:mm:ss.SSSSSSSSSX
-                    + "{:03d}".format(x.nanosecond)
+                    + "{:03d}".format(  # pylint: disable=consider-using-f-string
+                        x.nanosecond
+                    )
                     + "Z"  # we guaranteed UTC time zone some lines above!
                 ),
             }

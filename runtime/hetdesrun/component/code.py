@@ -13,7 +13,7 @@ from hetdesrun.datatypes import DataType
 
 
 ALLOWED_CHARS_REGEXP = re.compile(
-    "[^a-zA-Z0-9\.\,\-#_ ]"  # pylint: disable=anomalous-backslash-in-string
+    r"[^a-zA-Z0-9\.\,\-#_ ]"  # pylint: disable=anomalous-backslash-in-string
 )  # allow only some special characters for category, description and component name
 
 imports_template: str = """\
