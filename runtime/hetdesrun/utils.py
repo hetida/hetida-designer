@@ -27,8 +27,8 @@ from hetdesrun.auth.keycloak import KeycloakAccessTokenManager, ServiceUserCrede
 from hetdesrun.service.config import RuntimeConfig
 
 from hetdesrun.component.load import (
-    module_path_from_uuid_and_code,
-    import_func_from_code_with_uuid_as_modulename,
+    module_path_from_code,
+    import_func_from_code,
 )
 
 logger = logging.getLogger(__name__)
@@ -184,7 +184,7 @@ class ComponentDTO(BaseModel):
     inputs: List[IODTO]
     outputs: List[IODTO]
     state: State = State.RELEASED
-    tag: str = "1.0.0"
+    tag: str
     testInput: dict = {}
     type: Type = Type.COMPONENT
 
@@ -258,6 +258,15 @@ def post_documentation_from_dto(doc_dto: dict) -> None:
         )
 
 
+def post_component_and_docu_from_python_code(
+    code: str, base_name: str, category: Optional[str] = None
+) -> None:
+    dtos = component_dtos_from_python_code(code, base_name, category,)
+
+    post_component_from_dto(dtos[0])
+    post_documentation_from_dto(dtos[1])
+
+
 def post_component(
     base_name: str, category: str, info: dict, doc: str, code: str
 ) -> None:
@@ -300,6 +309,7 @@ def post_component(
         code=code,
         groupId=comp_id,
         id=comp_id,
+        tag="1.0.0",
     )
 
     post_component_from_dto(comp_dto)
@@ -321,10 +331,9 @@ def component_dtos_from_python_code(
     base_name: A name which is used to derive uuids from. Should be unique over all components!
     """
 
-    uuid = get_uuid_from_seed("component_" + base_name)
+    main_func = import_func_from_code(code, "main")
 
-    main_func = import_func_from_code_with_uuid_as_modulename(code, uuid, "main")
-    module_path = module_path_from_uuid_and_code(uuid, code)
+    module_path = module_path_from_code(code)
     mod = importlib.import_module(module_path)
 
     mod_docstring = mod.__doc__ or ""
@@ -344,13 +353,29 @@ def component_dtos_from_python_code(
         category.replace("_", " ") if category is not None else "Other"
     )
 
+    component_uuid = main_func.registered_metadata["uuid"] or (  # type: ignore
+        get_uuid_from_seed("component_" + base_name)
+    )
+
+    component_group_id = main_func.registered_metadata["group_id"] or (  # type: ignore
+        get_uuid_from_seed("component_" + base_name)
+    )
+
+    component_tag = main_func.registered_metadata["tag"] or (  # type: ignore
+        "1.0.0"
+    )
+
+    component_code = code.replace(mod_docstring, "", 1)
+    component_code = component_code.replace('""""""', "")
+
     comp_dto = ComponentDTO(
         name=component_name,
         category=component_category,
-        code=code,
+        code=component_code,
         description=component_description,
-        groupId=uuid,
-        id=uuid,
+        groupId=component_group_id,
+        id=component_uuid,
+        tag=component_tag,
         inputs=[
             IODTO(
                 id=get_uuid_from_seed(
@@ -380,10 +405,9 @@ def component_dtos_from_python_code(
     documentation_dto = {
         "document": "\n".join(
             mod_docstring_lines[2:]
-        ),  # ignore first two linesaccording to docstring conventions
-        "id": str(uuid),
+        ),  # ignore first two lines according to docstring conventions
+        "id": str(component_uuid),
     }
-
     return comp_dto, documentation_dto
 
 
@@ -420,8 +444,7 @@ def post_components_from_directory(base_path_components: str) -> None:
         (_, categories, _) = next(os.walk(base_path_components))
     except StopIteration:
         logger.warning(
-            "No Components in directory %s found for posting!",
-            base_path_components,
+            "No Components in directory %s found for posting!", base_path_components,
         )
         return
 
@@ -573,9 +596,7 @@ def post_workflow(json_info: dict, doc: str) -> None:
     )
 
     logger.info(
-        "Workflow posting status code: %s, %s",
-        response.status_code,
-        response.text,
+        "Workflow posting status code: %s, %s", response.status_code, response.text,
     )
 
     if response.status_code not in [200, 201]:
@@ -614,8 +635,7 @@ def post_workflows_from_directory(base_path_workflows: str) -> None:
         (_, categories, _) = next(os.walk(base_path_workflows))
     except StopIteration:
         logger.warning(
-            "No Workflows in directory %s found for posting!",
-            base_path_workflows,
+            "No Workflows in directory %s found for posting!", base_path_workflows,
         )
         return
     for category in categories:

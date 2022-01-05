@@ -29,7 +29,10 @@ generic_rest_kc_access_token_manager = (
 
 def get_generic_rest_adapter_auth_headers() -> Dict[str, str]:
     return (
-        {"Authorization": "Bearer " + generic_rest_kc_access_token_manager.get_access_token()}
+        {
+            "Authorization": "Bearer "
+            + generic_rest_kc_access_token_manager.get_access_token()
+        }
         if generic_rest_kc_access_token_manager is not None
         else {}
     )

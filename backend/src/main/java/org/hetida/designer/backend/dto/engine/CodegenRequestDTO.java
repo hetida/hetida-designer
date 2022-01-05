@@ -5,6 +5,7 @@ import org.hetida.designer.backend.dto.IODTO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class CodegenRequestDTO {
@@ -14,4 +15,7 @@ public class CodegenRequestDTO {
     private String name;
     private String description;
     private String category;
+    private UUID uuid;
+    private UUID group_id;
+    private String tag;
 }

@@ -27,9 +27,7 @@ from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_h
 
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
 
-from hetdesrun.adapters.generic_rest.external_types import (
-    ExternalType,
-)
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 
 from hetdesrun.service.config import runtime_config
 

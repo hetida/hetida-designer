@@ -43,9 +43,7 @@ local_file_adapter_router = APIRouter()
 
 
 @local_file_adapter_router.get(
-    "/info",
-    response_model=InfoResponse,
-    dependencies=get_auth_deps(),
+    "/info", response_model=InfoResponse, dependencies=get_auth_deps(),
 )
 async def get_info_endpoint() -> InfoResponse:
     return InfoResponse(
@@ -54,48 +52,36 @@ async def get_info_endpoint() -> InfoResponse:
 
 
 @local_file_adapter_router.get(
-    "/structure",
-    response_model=StructureResponse,
-    dependencies=get_auth_deps(),
+    "/structure", response_model=StructureResponse, dependencies=get_auth_deps(),
 )
 async def get_structure_endpoint(parentId: Optional[str] = None) -> StructureResponse:
     return get_structure(parent_id=parentId)
 
 
 @local_file_adapter_router.get(
-    "/sources",
-    response_model=MultipleSourcesResponse,
-    dependencies=get_auth_deps(),
+    "/sources", response_model=MultipleSourcesResponse, dependencies=get_auth_deps(),
 )
 async def get_sources_endpoint(
     filter_str: Optional[str] = Query(None, alias="filter")
 ) -> MultipleSourcesResponse:
     found_sources = get_sources(filter_str=filter_str)
     return MultipleSourcesResponse(
-        resultCount=len(found_sources),
-        sources=found_sources,
+        resultCount=len(found_sources), sources=found_sources,
     )
 
 
 @local_file_adapter_router.get(
-    "/sinks",
-    response_model=MultipleSinksResponse,
-    dependencies=get_auth_deps(),
+    "/sinks", response_model=MultipleSinksResponse, dependencies=get_auth_deps(),
 )
 async def get_sinks_endpoint(
     filter_str: Optional[str] = Query(None, alias="filter")
 ) -> MultipleSinksResponse:
     found_sinks = get_sinks(filter_str=filter_str)
-    return MultipleSinksResponse(
-        resultCount=len(found_sinks),
-        sinks=found_sinks,
-    )
+    return MultipleSinksResponse(resultCount=len(found_sinks), sinks=found_sinks,)
 
 
 @local_file_adapter_router.get(
-    "/sources/{sourceId}/metadata/",
-    response_model=List,
-    dependencies=get_auth_deps(),
+    "/sources/{sourceId}/metadata/", response_model=List, dependencies=get_auth_deps(),
 )
 async def get_sources_metadata(
     sourceId: str,  # pylint: disable=unused-argument
@@ -128,9 +114,7 @@ async def get_single_source(source_id: str) -> LocalFileStructureSource:
 
 
 @local_file_adapter_router.get(
-    "/sinks/{sinkId}/metadata/",
-    response_model=List,
-    dependencies=get_auth_deps(),
+    "/sinks/{sinkId}/metadata/", response_model=List, dependencies=get_auth_deps(),
 )
 async def get_sinks_metadata(sinkId: str) -> List:  # pylint: disable=unused-argument
     """Get metadata attached to sinks
@@ -177,9 +161,7 @@ async def get_thing_nodes_metadata(
 
 
 @local_file_adapter_router.get(
-    "/thingNodes/{id}",
-    response_model=StructureThingNode,
-    dependencies=get_auth_deps(),
+    "/thingNodes/{id}", response_model=StructureThingNode, dependencies=get_auth_deps(),
 )
 async def get_single_thingNode(
     id: str,  # pylint: disable=redefined-builtin

@@ -25,7 +25,7 @@ from hetdesrun.datatypes import DataType
 
 """
 
-function_definition_template: str = '''\
+function_definition_template: str = """\
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
 @register(
@@ -33,12 +33,15 @@ function_definition_template: str = '''\
     outputs={output_dict_content},
     component_name={component_name},
     description={description},
-    category={category}
+    category={category},
+    uuid={uuid},
+    group_id={group_id},
+    tag={tag}
 )
 def main({params_list}):
-    """entrypoint function for this component"""
+    # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
-'''
+"""
 
 function_body_template: str = """\
     # write your function code here.
@@ -56,6 +59,9 @@ def generate_function_header(
     component_name: str,
     description: str,
     category: str,
+    uuid: str,
+    group_id: str,
+    tag: str,
 ) -> str:
     """Generate entrypoint function header from the inputs and their types"""
     param_list_str = (
@@ -83,6 +89,9 @@ def generate_function_header(
         component_name='"' + sanitize(component_name) + '"',
         description='"' + sanitize(description) + '"',
         category='"' + sanitize(category) + '"',
+        uuid='"' + sanitize(uuid) + '"',
+        group_id='"' + sanitize(group_id) + '"',
+        tag='"' + sanitize(tag) + '"',
         params_list=param_list_str,
     )
 
@@ -93,12 +102,22 @@ def generate_complete_component_module(
     component_name: str,
     description: str,
     category: str,
+    uuid: str,
+    group_id: str,
+    tag: str,
 ) -> str:
     return (
         imports_template
         + "\n"
         + generate_function_header(
-            input_type_dict, output_type_dict, component_name, description, category
+            input_type_dict,
+            output_type_dict,
+            component_name,
+            description,
+            category,
+            uuid,
+            group_id,
+            tag,
         )
         + "\n"
         + function_body_template
@@ -112,6 +131,9 @@ def update_code(
     component_name: str,
     description: str,
     category: str,
+    uuid: str,
+    group_id: str,
+    tag: str,
 ) -> str:
     """Generate and update component code
 
@@ -131,6 +153,9 @@ def update_code(
             component_name=component_name,
             description=description,
             category=category,
+            uuid=uuid,
+            group_id=group_id,
+            tag=tag,
         )
 
     new_function_header = generate_function_header(
@@ -139,6 +164,9 @@ def update_code(
         component_name=component_name,
         description=description,
         category=category,
+        uuid=uuid,
+        group_id=group_id,
+        tag=tag,
     )
 
     try:
@@ -171,8 +199,11 @@ example_code = (
         {"x": DataType.Float, "y": DataType.Float},
         {"z": DataType.Float},
         "Example Component",
-        "An example mfor code generation",
-        "Exampels",
+        "An example for code generation",
+        "Examples",
+        "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        "1.0.0",
     )
     + """\n    return {"z": x+y}"""
 )

@@ -14,9 +14,7 @@ from pydantic import ValidationError
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
 
-from hetdesrun.adapters.exceptions import (
-    AdapterClientWiringInvalidError,
-)
+from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
 
 from hetdesrun.models.adapter_data import RefIdType
 
@@ -27,9 +25,7 @@ from hetdesrun.adapters.generic_rest.load_ts_data import (
     load_grouped_timeseries_data_together,
 )
 
-from hetdesrun.adapters.generic_rest.load_dataframe import (
-    load_dataframes_from_adapter,
-)
+from hetdesrun.adapters.generic_rest.load_dataframe import load_dataframes_from_adapter
 
 from hetdesrun.adapters.generic_rest.send_dataframe import send_dataframes_to_adapter
 from hetdesrun.adapters.generic_rest.send_ts_data import (

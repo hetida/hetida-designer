@@ -15,16 +15,12 @@ from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_h
 
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
 
-from hetdesrun.adapters.generic_rest.external_types import (
-    ExternalType,
-)
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 
 from hetdesrun.service.config import runtime_config
 
 
-from hetdesrun.adapters.exceptions import (
-    AdapterConnectionError,
-)
+from hetdesrun.adapters.exceptions import AdapterConnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +28,7 @@ logger = logging.getLogger(__name__)
 async def post_json_with_open_client(
     open_client: httpx.AsyncClient, url: str, json_payload: Dict
 ) -> httpx.Response:
-    return await open_client.post(
-        url,
-        json=json_payload,
-    )
+    return await open_client.post(url, json=json_payload,)
 
 
 async def send_single_metadatum_to_adapter(
