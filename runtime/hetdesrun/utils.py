@@ -257,15 +257,12 @@ def post_documentation_from_dto(doc_dto: dict) -> None:
             response.text,
         )
 
+
 def post_component_and_docu_from_python_code(
     code: str, base_name: str, category: Optional[str] = None
 ) -> None:
-    dtos = component_dtos_from_python_code(
-        code,
-        base_name,
-        category,
-    )
-    
+    dtos = component_dtos_from_python_code(code, base_name, category,)
+
     post_component_from_dto(dtos[0])
     post_documentation_from_dto(dtos[1])
 
@@ -312,12 +309,13 @@ def post_component(
         code=code,
         groupId=comp_id,
         id=comp_id,
-        tag="1.0.0"
+        tag="1.0.0",
     )
 
     post_component_from_dto(comp_dto)
 
     post_documentation_from_dto({"document": doc, "id": str(comp_id)})
+
 
 def component_dtos_from_python_code(
     code: str, base_name: str, category: Optional[str] = None
@@ -346,7 +344,9 @@ def component_dtos_from_python_code(
     )
 
     component_description = main_func.registered_metadata["description"] or (  # type: ignore
-        mod_docstring_lines[0] if mod_docstring_lines[0] != "" else "No description provided"
+        mod_docstring_lines[0]
+        if mod_docstring_lines[0] != ""
+        else "No description provided"
     )
 
     component_category = main_func.registered_metadata["category"] or (  # type: ignore
@@ -444,8 +444,7 @@ def post_components_from_directory(base_path_components: str) -> None:
         (_, categories, _) = next(os.walk(base_path_components))
     except StopIteration:
         logger.warning(
-            "No Components in directory %s found for posting!",
-            base_path_components,
+            "No Components in directory %s found for posting!", base_path_components,
         )
         return
 
@@ -597,9 +596,7 @@ def post_workflow(json_info: dict, doc: str) -> None:
     )
 
     logger.info(
-        "Workflow posting status code: %s, %s",
-        response.status_code,
-        response.text,
+        "Workflow posting status code: %s, %s", response.status_code, response.text,
     )
 
     if response.status_code not in [200, 201]:
@@ -638,8 +635,7 @@ def post_workflows_from_directory(base_path_workflows: str) -> None:
         (_, categories, _) = next(os.walk(base_path_workflows))
     except StopIteration:
         logger.warning(
-            "No Workflows in directory %s found for posting!",
-            base_path_workflows,
+            "No Workflows in directory %s found for posting!", base_path_workflows,
         )
         return
     for category in categories:

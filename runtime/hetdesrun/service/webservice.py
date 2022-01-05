@@ -125,9 +125,7 @@ async def validation_exception_handler(
 
 
 @app.post(
-    "/runtime",
-    response_model=WorkflowExecutionResult,
-    dependencies=get_auth_deps(),
+    "/runtime", response_model=WorkflowExecutionResult, dependencies=get_auth_deps(),
 )
 async def runtime_service(
     runtime_input: WorkflowExecutionInput,
@@ -135,8 +133,7 @@ async def runtime_service(
     WorkflowExecutionResult, JSONResponse
 ]:  # pylint: disable=too-many-return-statements
     logger.info(
-        "WORKFLOW EXECUTION INPUT JSON:\n%s",
-        model_to_pretty_json_str(runtime_input),
+        "WORKFLOW EXECUTION INPUT JSON:\n%s", model_to_pretty_json_str(runtime_input),
     )
 
     execution_context.set(runtime_input.configuration)
@@ -304,13 +301,9 @@ async def info_service() -> dict:
 
 
 @app.post(
-    "/codegen",
-    response_model=GeneratedCode,
-    dependencies=get_auth_deps(),
+    "/codegen", response_model=GeneratedCode, dependencies=get_auth_deps(),
 )
-async def codegen_service(
-    codegen_input: CodeBody,
-) -> GeneratedCode:
+async def codegen_service(codegen_input: CodeBody,) -> GeneratedCode:
     """Service for generating and updating code stubs"""
     logger.info("CODEGEN INPUT JSON:\n%s", model_to_pretty_json_str(codegen_input))
     return GeneratedCode(
@@ -323,15 +316,13 @@ async def codegen_service(
             category=codegen_input.category,
             uuid=codegen_input.uuid,
             group_id=codegen_input.group_id,
-            tag=codegen_input.tag
+            tag=codegen_input.tag,
         )
     )
 
 
 @app.post(
-    "/codecheck",
-    response_model=CodeCheckResult,
-    dependencies=get_auth_deps(),
+    "/codecheck", response_model=CodeCheckResult, dependencies=get_auth_deps(),
 )
 async def codecheck_service(codecheck_input: CodeBody) -> CodeCheckResult:
     """Service for checking code of components"""

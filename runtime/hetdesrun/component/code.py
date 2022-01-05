@@ -25,7 +25,7 @@ from hetdesrun.datatypes import DataType
 
 """
 
-function_definition_template: str = '''\
+function_definition_template: str = """\
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
 @register(
@@ -41,7 +41,7 @@ function_definition_template: str = '''\
 def main({params_list}):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
-'''
+"""
 
 function_body_template: str = """\
     # write your function code here.
@@ -203,7 +203,7 @@ example_code = (
         "Examples",
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-        "1.0.0"
+        "1.0.0",
     )
     + """\n    return {"z": x+y}"""
 )

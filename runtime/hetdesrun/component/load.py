@@ -25,19 +25,19 @@ sys.modules[base_module_path] = ModuleType(base_module_path, "base module")
 
 def module_path_from_code(code: str) -> str:
     """Generates a unique module path from a hash of the actual code"""
-    return (
-        base_module_path
-        + ".by_code_"
-        + "_hash_"
-        + hash_code(code)
-    )
+    return base_module_path + ".by_code_" + "_hash_" + hash_code(code)
+
 
 def hash_code(code: str) -> str:
     """Generate a hash from a str representing code that can be used as part of module path"""
     return hex(hash(code)).replace("-", "_m_")
 
+
 def import_func_from_code(
-    code: str, func_name: str, raise_if_not_found: bool = False, register_module: bool = True
+    code: str,
+    func_name: str,
+    raise_if_not_found: bool = False,
+    register_module: bool = True,
 ) -> Union[Callable, Coroutine]:
     """Lazily loads a function from the given code and registers the imported module
 
@@ -74,8 +74,7 @@ def import_func_from_code(
             exec(code, mod.__dict__)  # actually import the module. # nosec
         except SyntaxError as e:
             logger.info(
-                "Syntax Error during importing function %s",
-                func_name,
+                "Syntax Error during importing function %s", func_name,
             )
             raise ComponentCodeImportError(
                 "Could not import code due to Syntax Errors"
@@ -83,9 +82,7 @@ def import_func_from_code(
 
         except Exception as e:
             logger.info(
-                "Exception during importing function %s: %s",
-                func_name,
-                str(e),
+                "Exception during importing function %s: %s", func_name, str(e),
             )
             raise ComponentCodeImportError(
                 "Could not import code due to Exception"
@@ -94,14 +91,12 @@ def import_func_from_code(
         func: Union[Coroutine, Callable] = getattr(mod, func_name)
         return func
 
+
 def check_importability(code: str, func_name: str) -> Tuple[bool, Optional[Exception]]:
     """Very simple check just to see whether the code is at least importable"""
     try:
         import_func_from_code(
-            code,
-            func_name,
-            raise_if_not_found = False,
-            register_module = False,
+            code, func_name, raise_if_not_found=False, register_module=False,
         )
         return True, None
     except Exception as e:  # pylint: disable=broad-except

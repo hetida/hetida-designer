@@ -81,9 +81,7 @@ def load_func(
         raise NodeFunctionLoadingError(msg) from e
 
     try:
-        component_func = import_func_from_code(
-            code, component.function_name,
-        )
+        component_func = import_func_from_code(code, component.function_name,)
     except (ImportError, ComponentCodeImportError) as e:
         msg = (
             f"Could not load node function (Code module uuid: "
