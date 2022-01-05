@@ -71,7 +71,8 @@ def import_func_from_code(
                 module_path
             ] = mod  # now reachable under the constructed module_path
         try:
-            exec(code, mod.__dict__)  # actually import the module. # nosec
+            # actually import the module;
+            exec(code, mod.__dict__)   # pylint: disable=exec-used
         except SyntaxError as e:
             logger.info(
                 "Syntax Error during importing function %s", func_name,
@@ -88,7 +89,7 @@ def import_func_from_code(
                 "Could not import code due to Exception"
             ) from e
 
-        func: Union[Coroutine, Callable] = getattr(mod, func_name)
+        func = getattr(mod, func_name)
         return func
 
 
