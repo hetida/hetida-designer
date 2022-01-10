@@ -144,6 +144,10 @@ async def structure(parentId: Optional[str] = None):
 
     If `parentId` is a valid thingNode id the response contains all the thingNodes, sources and
     sinks with this `parentId` as thingNodeId, i.e. every element directly attached to it.
+
+    IMPORTANT: In a real adpater implementation the information should be queried from a 
+    masterdata system on every invocation. It should not be kept in memory like in this
+    demo adapter as it may be too large and may change.
     """
 
     return {
