@@ -43,7 +43,7 @@
         "@angular/platform-browser": "^12.2.15",
         "@angular/platform-browser-dynamic": "^12.2.15",
         "@angular/router": "^12.2.15",
-        "@danielmoncada/angular-datetime-picker": "^10.1.0",
+        "@danielmoncada/angular-datetime-picker": "^12.3.0",
         "@ngrx/core": "^1.2.0",
         "@ngrx/entity": "^12.5.1",
         "@ngrx/store": "^12.5.1",
