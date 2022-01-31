@@ -10,7 +10,7 @@ import java.util.UUID;
 @MappedSuperclass
 public class BaseIO {
     @Id
-    @Column(name = "id")
+    @Column(columnDefinition = "uuid")
     private UUID id;
 
     @Column(name = "type")

@@ -11,7 +11,7 @@ import java.util.UUID;
 @Table(name = "Filter", uniqueConstraints={@UniqueConstraint(columnNames={"InputWiringId", "key"})})
 public class Filter {
     @Id
-    @Column(name = "InputWiringId")
+    @Column(name = "InputWiringId", columnDefinition = "uuid")
     private UUID inputWiringId;
 
     @Id

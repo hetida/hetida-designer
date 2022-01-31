@@ -1,6 +1,5 @@
 package org.hetida.designer.backend.converter;
 
-import lombok.extern.log4j.Log4j2;
 import org.hetida.designer.backend.dto.PointDTO;
 import org.hetida.designer.backend.model.Point;
 import org.springframework.stereotype.Component;
@@ -10,7 +9,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-@Log4j2
 public class PointConverter {
 
     public List<PointDTO> convertToPointDtos(final List<Point> entities) {

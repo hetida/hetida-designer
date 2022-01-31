@@ -16,13 +16,13 @@
 
   <properties>
     <java.version>1.8</java.version>
-    <com.h2database.h2.version>1.4.199</com.h2database.h2.version>
+    <com.h2database.h2.version>2.1.210</com.h2database.h2.version>
     <org.projectlombok.lombok.version>1.18.8</org.projectlombok.lombok.version>
     <org.apache.commons.commons-collections4.version>4.4</org.apache.commons.commons-collections4.version>
     <io.springfox.springfox-swagger2.version>2.9.2</io.springfox.springfox-swagger2.version>
     <io.springfox.springfox-swagger-ui.version>2.9.2</io.springfox.springfox-swagger-ui.version>
     <org.flywaydb.flyway-core>5.1.4</org.flywaydb.flyway-core>
-    <org.postgresql.postgresql.version>42.2.4</org.postgresql.postgresql.version>
+    <org.postgresql.postgresql.version>42.2.13</org.postgresql.postgresql.version>
     <log4j2.version>2.16.0</log4j2.version>
   </properties>
 

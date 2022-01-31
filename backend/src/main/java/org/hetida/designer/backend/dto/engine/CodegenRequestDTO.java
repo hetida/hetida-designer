@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.persistence.Column;
+
 @Data
 public class CodegenRequestDTO {
     private String code;
@@ -15,7 +17,12 @@ public class CodegenRequestDTO {
     private String name;
     private String description;
     private String category;
+
+    @Column(columnDefinition = "uuid")
     private UUID uuid;
+
+    @Column(columnDefinition = "uuid")
     private UUID group_id;
+
     private String tag;
 }

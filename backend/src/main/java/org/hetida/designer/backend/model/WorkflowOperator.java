@@ -13,10 +13,10 @@ import java.util.UUID;
 public class WorkflowOperator {
 
     @Id
-    @Column(name = "id")
+    @Column(name = "id", columnDefinition = "uuid")
     private UUID id;
 
-    @Column(name = "itemid")
+    @Column(name = "itemid", columnDefinition = "uuid")
     private UUID ItemId;
 
     @Column(name = "name")

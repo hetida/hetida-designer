@@ -14,10 +14,10 @@ import java.util.UUID;
 @Table(name = "InputWiring")
 public class InputWiring {
     @Id
-    @Column(name = "Id")
+    @Column(name = "Id", columnDefinition = "uuid")
     private UUID id;
 
-    @Column(name = "WiringId")
+    @Column(name = "WiringId", columnDefinition = "uuid")
     private UUID wiringId;
 
     @Column(name = "WorkflowInputName")

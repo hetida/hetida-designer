@@ -1,6 +1,5 @@
 package org.hetida.designer.backend.service.impl;
 
-import lombok.extern.log4j.Log4j2;
 import org.hetida.designer.backend.converter.AdapterConverter;
 import org.hetida.designer.backend.dto.adapter.ModulAdapterDTO;
 import org.hetida.designer.backend.service.AdapterService;
@@ -12,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@Log4j2
 public class AdapterServiceImpl implements AdapterService {
 
     private final AdapterConverter adapterConverter;

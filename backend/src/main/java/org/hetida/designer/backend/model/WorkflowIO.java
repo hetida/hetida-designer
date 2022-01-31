@@ -2,7 +2,6 @@ package org.hetida.designer.backend.model;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.hetida.designer.backend.converter.JSONAttributeConverter;
 import org.hetida.designer.backend.enums.IOType;
 
@@ -17,14 +16,13 @@ import java.util.UUID;
 @Entity
 @Data
 @NoArgsConstructor
-@Log4j2
 @SuppressWarnings("JpaAttributeTypeInspection")
 @Table(name = "workflowio")
 public class WorkflowIO extends BaseIO {
-    @Column(name = "operator")
+    @Column(name = "operator", columnDefinition = "uuid")
     private UUID operator;
 
-    @Column(name = "connector")
+    @Column(name = "connector", columnDefinition = "uuid")
     private UUID connector;
 
     @Column(name = "constant")

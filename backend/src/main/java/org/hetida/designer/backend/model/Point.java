@@ -13,7 +13,7 @@ import java.util.UUID;
 @Table(name = "point")
 public class Point {
     @Id
-    @Column(name = "id")
+    @Column(name = "id", columnDefinition = "uuid")
     private UUID id;
 
     @Column(name = "posy")

@@ -21,7 +21,7 @@ import lombok.Data;
 @Table(name = "Wiring")
 public class Wiring {
     @Id
-    @Column(name = "Id")
+    @Column(name = "Id", columnDefinition = "uuid")
     private UUID id;
 
     @Column(name = "Name")

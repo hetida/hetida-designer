@@ -1,6 +1,5 @@
 package org.hetida.designer.backend.service.impl;
 
-import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.IterableUtils;
 import org.hetida.designer.backend.converter.BaseItemConverter;
 import org.hetida.designer.backend.dto.BaseItemDTO;
@@ -13,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@Log4j2
 public class BaseItemServiceImpl implements BaseItemService {
     private final ComponentRepository componentRepository;
     private final WorkflowRepository workflowRepository;

@@ -14,7 +14,7 @@ import java.util.UUID;
 @Table(name = "workflowlink")
 public class WorkflowLink {
     @Id
-    @Column(name = "id")
+    @Column(name = "id", columnDefinition = "uuid")
     private UUID id;
 
     @LazyCollection(LazyCollectionOption.FALSE)
@@ -27,15 +27,15 @@ public class WorkflowLink {
     )
     private List<Point> path = new ArrayList<>();
 
-    @Column(name = "fromoperator")
+    @Column(name = "fromoperator", columnDefinition = "uuid")
     private UUID fromOperator;
 
-    @Column(name = "fromconnector")
+    @Column(name = "fromconnector", columnDefinition = "uuid")
     private UUID fromConnector;
 
-    @Column(name = "tooperator")
+    @Column(name = "tooperator", columnDefinition = "uuid")
     private UUID toOperator;
 
-    @Column(name = "toconnector")
+    @Column(name = "toconnector", columnDefinition = "uuid")
     private UUID toConnector;
 }

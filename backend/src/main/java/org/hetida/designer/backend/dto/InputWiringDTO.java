@@ -6,9 +6,14 @@ import lombok.Data;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.persistence.Column;
+
 @Data
 public class InputWiringDTO {
+
+    @Column(columnDefinition = "uuid")
     private UUID id;
+
     private String workflowInputName;
     private String adapterId;
     private String refId;
@@ -16,6 +21,6 @@ public class InputWiringDTO {
     private String refKey;
     private String type;
     @JsonInclude()
-    private Map<String, String> filters; 
+    private Map<String, String> filters;
     private String value;
 }

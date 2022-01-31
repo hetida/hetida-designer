@@ -7,10 +7,8 @@ import org.hetida.designer.backend.repository.WiringRepository;
 import org.hetida.designer.backend.service.WiringService;
 import org.springframework.stereotype.Service;
 
-import lombok.extern.log4j.Log4j2;
 
 @Service
-@Log4j2
 public class WiringServiceImpl implements WiringService {
 
     private final WiringRepository wiringRepository;
@@ -33,5 +31,5 @@ public class WiringServiceImpl implements WiringService {
     public Wiring update(Wiring wiring) {
         return this.wiringRepository.save(wiring);
     }
-    
+
 }

@@ -1,6 +1,5 @@
 package org.hetida.designer.backend.converter;
 
-import lombok.extern.log4j.Log4j2;
 import org.hetida.designer.backend.dto.WorkflowOperatorDTO;
 import org.hetida.designer.backend.enums.ItemType;
 import org.hetida.designer.backend.exception.ComponentNotFoundException;
@@ -16,7 +15,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Component
-@Log4j2
 public class WorkflowOperatorConverter {
 
     private final IOConverter IOConverter;

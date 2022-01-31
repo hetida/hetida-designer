@@ -16,7 +16,7 @@ import java.util.UUID;
 public class Documentation {
 
     @Id
-    @Column(name = "id")
+    @Column(name = "id", columnDefinition = "uuid")
     private UUID id;
 
     @Column(name = "document")

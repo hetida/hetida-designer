@@ -15,10 +15,10 @@ import java.util.UUID;
 @Table(name = "workflow")
 public class Workflow {
     @Id
-    @Column(name = "id")
+    @Column(name = "id", columnDefinition = "uuid")
     private UUID id;
 
-    @Column(name = "groupid")
+    @Column(name = "groupid", columnDefinition = "uuid")
     private UUID groupId;
 
     @Column(name = "name")

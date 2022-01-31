@@ -16,10 +16,10 @@ import java.util.UUID;
 public class Component {
 
     @Id
-    @Column(name = "id")
+    @Column(name = "id", columnDefinition = "uuid")
     private UUID id;
 
-    @Column(name = "groupid")
+    @Column(name = "groupid", columnDefinition = "uuid")
     private UUID groupId;
 
     @Column(name = "name")

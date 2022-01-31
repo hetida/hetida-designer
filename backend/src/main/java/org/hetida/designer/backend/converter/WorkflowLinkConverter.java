@@ -1,6 +1,5 @@
 package org.hetida.designer.backend.converter;
 
-import lombok.extern.log4j.Log4j2;
 import org.hetida.designer.backend.dto.WorkflowLinkDTO;
 import org.hetida.designer.backend.model.WorkflowLink;
 import org.springframework.stereotype.Component;
@@ -9,7 +8,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-@Log4j2
 public class WorkflowLinkConverter {
 
     private final PointConverter pointConverter;
