@@ -6,6 +6,5 @@ pytest-cov
 black
 pytest-asyncio
 requests
-httpx
 rope
 mypy
