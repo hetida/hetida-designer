@@ -1,9 +1,5 @@
 # hetida designer
 
-## Build Status
-
-[![Build Status](https://app.travis-ci.com/hetida/hetida-designer.svg?branch=release)](https://app.travis-ci.com/hetida/hetida-designer)
-
 ## What is hetida designer?
 
 hetida designer is a graphical composition tool for analytical workflows based on the Python data science stack.

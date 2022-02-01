@@ -1,3 +1,8 @@
+## 0.6.18
+* (security fix) upgrade java dependencies (see [Issue#9](https://github.com/hetida/hetida-designer/issues/9))
+* upgrade Python dependencies
+* preparations for export / import feature
+* add docker build and push script replacing Travis build
 ## 0.6.17
 * (security fix) upgrade log4j to 2.16.0
 ## 0.6.16
