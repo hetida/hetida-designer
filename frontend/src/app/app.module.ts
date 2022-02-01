@@ -1,11 +1,11 @@
 import { APP_BASE_HREF } from '@angular/common';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
-  MatDialogRef,
   MAT_DIALOG_DATA,
-  MAT_DIALOG_DEFAULT_OPTIONS
+  MAT_DIALOG_DEFAULT_OPTIONS,
+  MatDialogRef
 } from '@angular/material/dialog';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { BrowserModule } from '@angular/platform-browser';
@@ -18,9 +18,9 @@ import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { PlotlyViaWindowModule } from 'angular-plotly.js';
 import {
+  HD_WIRING_CONFIG,
   HdWiringConfig,
   HdWiringModule,
-  HD_WIRING_CONFIG,
   WiringTheme
 } from 'hd-wiring';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
@@ -153,13 +153,14 @@ import { appReducers } from './store/app.reducers';
       useFactory: (themeService: ThemeService): HdWiringConfig => {
         const activeTheme = themeService.activeTheme as WiringTheme;
         return {
-          allowManualWiring: true,
           allowOutputWiring: true,
-          monacoEditorTheme: activeTheme,
           showDownloadExampleJsonButton: true,
           showUploadJsonButton: true,
+          allowManualWiring: true,
+          monacoEditorTheme: activeTheme,
+          showDialogHeader: true,
           confirmationButtonText: 'Execute',
-          showDialogHeader: true
+          enableDateRangeSelectionOnSeriesTypes: true
         };
       },
       deps: [ConfigService, ThemeService]
