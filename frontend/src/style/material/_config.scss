@@ -1,10 +1,11 @@
+@use '~@angular/material' as mat;
 @import 'node_modules/@angular/material/theming';
 @import 'theme';
 @import '../colors';
 
 @mixin mat-form-field-outline-typography($config) {
   // The unit-less line-height from the font config.
-  $line-height: mat-line-height($config, input);
+  $line-height: mat.line-height($config, input);
   // The amount to scale the font for the floating label and subscript.
   $subscript-font-scale: 0.75;
   // The padding above and below the infix.
@@ -62,7 +63,7 @@
   }
 }
 
-@include mat-core();
+@include mat.core();
 
 // Colors
 
@@ -100,26 +101,26 @@ $mg-secondary-palette: (
 
 $light-primary-text: map_get($mg-primary-palette, 700);
 
-$mg-typography: mat-typography-config(
+$mg-typography: mat.define-typography-config(
   $font-family: 'Roboto, "Helvetica Neue", sans-serif',
-  $display-4: mat-typography-level(20px, 32px, 300),
-  $display-3: mat-typography-level(20px, 32px, 400),
-  $display-2: mat-typography-level(18px, 24px, 400),
-  $display-1: mat-typography-level(14px, 24px, 400),
-  $headline: mat-typography-level(20px, 32px, 400),
-  $title: mat-typography-level(20px, 32px, 500),
-  $subheading-2: mat-typography-level(16px, 20px, 500),
-  $subheading-1: mat-typography-level(16px, 20px, 400),
-  $body-2: mat-typography-level(14px, 24px, 500),
-  $body-1: mat-typography-level(14px, 24px, 400),
-  $caption: mat-typography-level(14px, 24px, 400),
-  $button: mat-typography-level(14px, 14px, 500),
-  $input: mat-typography-level(inherit, 1.125, 400)
+  $display-4: mat.define-typography-level(20px, 32px, 300),
+  $display-3: mat.define-typography-level(20px, 32px, 400),
+  $display-2: mat.define-typography-level(18px, 24px, 400),
+  $display-1: mat.define-typography-level(14px, 24px, 400),
+  $headline: mat.define-typography-level(20px, 32px, 400),
+  $title: mat.define-typography-level(20px, 32px, 500),
+  $subheading-2: mat.define-typography-level(16px, 20px, 500),
+  $subheading-1: mat.define-typography-level(16px, 20px, 400),
+  $body-2: mat.define-typography-level(14px, 24px, 500),
+  $body-1: mat.define-typography-level(14px, 24px, 400),
+  $caption: mat.define-typography-level(14px, 24px, 400),
+  $button: mat.define-typography-level(14px, 14px, 500),
+  $input: mat.define-typography-level(inherit, 1.125, 400)
 );
 
 // Light Theme
 
-$mat-light-theme-foreground: (
+mat.$light-theme-foreground-palette: (
   base: map_get($mg-primary-palette, 500),
   divider: $dark-dividers,
   dividers: $dark-dividers,
@@ -137,7 +138,7 @@ $mat-light-theme-foreground: (
   slider-off-active: map_get($mg-primary-palette, 400)
 );
 
-$mat-light-theme-background: (
+mat.$light-theme-background-palette: (
   status-bar: map_get($mg-secondary-palette, 400),
   app-bar: map_get($mg-secondary-palette, 400),
   background: map_get($mg-secondary-palette, 500),
@@ -149,22 +150,22 @@ $mat-light-theme-background: (
   focused-button: $dark-focused,
   selected-button: map_get($mg-primary-palette, 500),
   selected-disabled-button: map_get($mg-secondary-palette, 700),
-  disabled-button-toggle: map_get($mat-grey, 200),
-  unselected-chip: map_get($mat-grey, 300),
-  disabled-list-option: map_get($mat-grey, 200)
+  disabled-button-toggle: map_get(mat.$grey-palette, 200),
+  unselected-chip: map_get(mat.$grey-palette, 300),
+  disabled-list-option: map_get(mat.$grey-palette, 200)
 );
 
-$hd-primary: mat-palette($mg-primary-palette);
-$hd-accent: mat-palette($mg-secondary-palette, 200, 100, 400);
-$hd-warn: mat-palette($mat-red);
-$hd-theme: mat-light-theme($hd-primary, $hd-accent, $hd-warn);
+$hd-primary: mat.define-palette($mg-primary-palette);
+$hd-accent: mat.define-palette($mg-secondary-palette, 200, 100, 400);
+$hd-warn: mat.define-palette(mat.$red-palette);
+$hd-theme: mat.define-light-theme($hd-primary, $hd-accent, $hd-warn);
 
-@include angular-material-theme($hd-theme);
+@include mat.all-component-themes($hd-theme);
 @include hd-material-theme($hd-theme);
 
 // Dark Theme
 
-$mat-dark-theme-foreground: (
+mat.$dark-theme-foreground-palette: (
   base: map_get($mg-secondary-palette, 500),
   divider: $light-dividers,
   dividers: $light-dividers,
@@ -182,7 +183,7 @@ $mat-dark-theme-foreground: (
   slider-off-active: map_get($mg-secondary-palette, 400)
 );
 
-$mat-dark-theme-background: (
+mat.$dark-theme-background-palette: (
   status-bar: map_get($mg-primary-palette, 400),
   app-bar: map_get($mg-primary-palette, 400),
   background: map_get($mg-primary-palette, 500),
@@ -194,21 +195,21 @@ $mat-dark-theme-background: (
   focused-button: $light-focused,
   selected-button: map_get($mg-primary-palette, 500),
   selected-disabled-button: map_get($mg-primary-palette, 500),
-  disabled-button-toggle: map_get($mat-grey, 200),
-  unselected-chip: map_get($mat-grey, 300),
-  disabled-list-option: map_get($mat-grey, 200)
+  disabled-button-toggle: map_get(mat.$grey-palette, 200),
+  unselected-chip: map_get(mat.$grey-palette, 300),
+  disabled-list-option: map_get(mat.$grey-palette, 200)
 );
 
-$hd-dark-primary: mat-palette($mg-secondary-palette);
-$hd-dark-accent: mat-palette($mg-primary-palette, A200, A100, A400);
-$hd-dark-warn: mat-palette($mat-red);
-$hd-dark-theme: mat-dark-theme(
+$hd-dark-primary: mat.define-palette($mg-secondary-palette);
+$hd-dark-accent: mat.define-palette($mg-primary-palette, A200, A100, A400);
+$hd-dark-warn: mat.define-palette(mat.$red-palette);
+$hd-dark-theme: mat.define-dark-theme(
   $hd-dark-primary,
   $hd-dark-accent,
   $hd-dark-warn
 );
 
 .dark-theme {
-  @include angular-material-theme($hd-dark-theme);
+  @include mat.all-component-themes($hd-dark-theme);
   @include hd-material-theme($hd-dark-theme);
 }
