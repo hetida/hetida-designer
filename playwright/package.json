@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "e2e tests for hetida-designer",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

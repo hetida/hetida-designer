@@ -33,6 +33,16 @@ const config: PlaywrightTestConfig = {
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
+    /* Headless */
+    headless: true,
+    viewport: { width: 1280, height: 720 },
+
+    /* HTTPS Errors */
+    ignoreHTTPSErrors: true,  // Firefox and Safari Webkit are throwing HTTPS Errors
+
+    /* Video Screenshot */
+    video: 'off',
+    screenshot: 'only-on-failure',
 
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
@@ -47,7 +57,7 @@ const config: PlaywrightTestConfig = {
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
+      name: 'Chromium',
       /* Project-specific settings. */
       use: {
         ...devices['Desktop Chrome'],
@@ -55,14 +65,14 @@ const config: PlaywrightTestConfig = {
     },
 
     {
-      name: 'firefox',
+      name: 'Firefox',
       use: {
         ...devices['Desktop Firefox'],
       },
     },
 
     {
-      name: 'webkit',
+      name: 'Safari Webkit',
       use: {
         ...devices['Desktop Safari'],
       },
@@ -98,7 +108,7 @@ const config: PlaywrightTestConfig = {
   ],
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
-  // outputDir: 'test-results/',
+  outputDir: 'test-results/',
 
   /* Run your local dev server before starting the tests */
   // webServer: {
