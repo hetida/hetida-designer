@@ -1,14 +1,13 @@
 {
-  "name": "e2e",
-  "version": "1.0.0",
-  "description": "e2e tests for hetida-designer",
-  "main": "index.js",
+  "name": "hetida-designer-e2e",
+  "description": "Hetida Designer End to End tests",
+  "version": "0.0.1",
+  "homepage": "https://neusta-sd-west.de/data-science/hetida-designer/",
+  "license": "TODO",
   "scripts": {
     "test": "playwright test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "private": true,
   "devDependencies": {
     "@playwright/test": "^1.18.1"
   }
