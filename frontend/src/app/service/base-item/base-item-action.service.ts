@@ -33,16 +33,16 @@ import {
   isWorkflowBaseItem
 } from 'src/app/store/base-item/base-item-guards';
 import { Utils } from 'src/app/utils/utils';
-import { PythonIdentifierValidator } from 'src/app/validation/PythonIdentifierValidator';
-import { PythonKeywordBlacklistValidator } from 'src/app/validation/PythonKeywordValidator';
+import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
+import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import * as uuid from 'uuid';
-import { BaseItemDialogData } from '../../model/BaseItemDialogData';
+import { BaseItemDialogData } from '../../model/base-item-dialog-data';
 import { IOItem } from '../../model/io-item';
 import { ComponentEditorService } from '../component-editor.service';
 import { WiringHttpService } from '../http-service/wiring-http.service';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
-import { WorkflowEditorService } from '../workflow-editor.service';
+import { WorkflowEditorService } from '../workflow-editor/workflow-editor.service';
 import { BaseItemService } from './base-item.service';
 
 /**
@@ -186,7 +186,6 @@ export class BaseItemActionService {
       }
     });
 
-    // TODO call confirmation mail
     dialogRef.componentInstance.onDelete.subscribe(
       (toBeDeleteBaseItem: BaseItem) =>
         this.delete(toBeDeleteBaseItem).subscribe(isDeleted => {
@@ -903,6 +902,7 @@ export class BaseItemActionService {
       this._updateIoItemPosition(ioItem, isInput, workflowBaseItem)
     );
   }
+
   private _updateIoItemPosition(
     ioItem: IOItem,
     isInput: boolean,

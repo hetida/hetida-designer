@@ -10,22 +10,22 @@ import {
   popoverHeight,
   popoverMinHeight,
   popoverWidth
-} from 'src/app/constants/popoverSizes';
+} from 'src/app/constants/popover-sizes';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { AbstractBaseItem } from 'src/app/model/base-item';
 import { ShowPopover } from 'src/app/model/show-popover';
-import { PopoverService } from 'src/app/service/popover.service';
+import { PopoverService } from 'src/app/service/popover/popover.service';
 import { FlowchartConverterService } from 'src/app/service/type-converter/flowchart-converter.service';
 import { IAppState } from 'src/app/store/app.state';
 import { selectAbstractBaseItemById } from 'src/app/store/base-item/base-item.selectors';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 
 @Component({
-  selector: 'hd-popover-baseitem',
-  templateUrl: './popover-baseitem.component.html',
-  styleUrls: ['./popover-baseitem.component.scss']
+  selector: 'hd-popover-base-item',
+  templateUrl: './popover-base-item.component.html',
+  styleUrls: ['./popover-base-item.component.scss']
 })
-export class PopoverBaseitemComponent implements OnInit {
+export class PopoverBaseItemComponent implements OnInit {
   @HostBinding('style.top')
   get topPos(): string {
     if (this.showPopoverData === null) {

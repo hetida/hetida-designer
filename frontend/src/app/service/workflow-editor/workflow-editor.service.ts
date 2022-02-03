@@ -3,26 +3,26 @@ import { Store } from '@ngrx/store';
 import { Wiring } from 'hd-wiring';
 import { iif, Observable, of } from 'rxjs';
 import { finalize, switchMap, switchMapTo, tap } from 'rxjs/operators';
-import { WorkflowBaseItem } from '../model/workflow-base-item';
-import { IAppState } from '../store/app.state';
-import { isWorkflowBaseItem } from '../store/base-item/base-item-guards';
+import { WorkflowBaseItem } from '../../model/workflow-base-item';
+import { IAppState } from '../../store/app.state';
+import { isWorkflowBaseItem } from '../../store/base-item/base-item-guards';
 import {
   addBaseItem,
   patchWorkflowProperties,
   putBaseItem,
   removeBaseItem
-} from '../store/base-item/base-item.actions';
+} from '../../store/base-item/base-item.actions';
 import {
   selectAbstractBaseItemById,
   selectWorkflowBaseItemById
-} from '../store/base-item/base-item.selectors';
+} from '../../store/base-item/base-item.selectors';
 import {
   setExecutionFinished,
   setExecutionProtocol,
   setExecutionRunning
-} from '../store/execution-protocol/execution-protocol.actions';
-import { WorkflowHttpService } from './http-service/workflow-http.service';
-import { LocalStorageService } from './local-storage/local-storage.service';
+} from '../../store/execution-protocol/execution-protocol.actions';
+import { WorkflowHttpService } from '../http-service/workflow-http.service';
+import { LocalStorageService } from '../local-storage/local-storage.service';
 
 @Injectable({
   providedIn: 'root'
