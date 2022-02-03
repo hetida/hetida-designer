@@ -1,7 +1,7 @@
 @import '../colors';
 @import 'src/app/app.component.theme';
 @import 'src/app/components/navigation/navigation-container/navigation-container.component.theme';
-@import 'src/app/components/popover-baseitem/popover-baseitem.component.theme';
+@import 'src/app/components/popover-base-item/popover-base-item.component.theme';
 @import 'src/app/components/protocol-viewer/protocol-viewer.component.theme';
 // @import 'src/app/hd-wiring-module/node-search/node-search.component.theme';
 
@@ -12,7 +12,7 @@
 
   @include app-theme($primary);
   @include navigation-container-theme($primary, $secondary);
-  @include popover-baseitem-theme($primary, $secondary);
+  @include popover-base-item-theme($primary, $secondary);
   @include protocol-viewer-theme($primary, $secondary);
   // @include node-search-theme($primary, $secondary);
 

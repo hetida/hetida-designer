@@ -39,7 +39,7 @@ import { NavigationCategoryComponent } from './components/navigation/navigation-
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
 import { OperatorChangeRevisionDialogComponent } from './components/operator-change-revision-dialog/operator-change-revision-dialog.component';
-import { PopoverBaseitemComponent } from './components/popover-baseitem/popover-baseitem.component';
+import { PopoverBaseItemComponent } from './components/popover-base-item/popover-base-item.component';
 import { ProtocolViewerComponent } from './components/protocol-viewer/protocol-viewer.component';
 import { RenameOperatorDialogComponent } from './components/rename-operator-dialog/rename-operator-dialog.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -74,7 +74,7 @@ import { appReducers } from './store/app.reducers';
     OperatorChangeRevisionDialogComponent,
     ProtocolViewerComponent,
     ToolbarComponent,
-    PopoverBaseitemComponent,
+    PopoverBaseItemComponent,
     NavigationItemComponent,
     CopyBaseItemDialogComponent,
     RenameOperatorDialogComponent,

@@ -15,13 +15,13 @@ interface ContextMenuRefs<T> {
 /**
  * Context menu service. Provides a handy way to open context menus.
  *
- * The funktion "disposeAllContextMenus" should be called in an global manner attached to mousedown event,
- * to close opened manus on click somewhere else.
+ * The function "disposeAllContextMenus" should be called in a global manner attached to mousedown event,
+ * to close opened menus on click somewhere else.
  */
 @Injectable({
   providedIn: 'root'
 })
-export class ContextmenuService {
+export class ContextMenuService {
   /**
    * Opened overlay references
    */
@@ -31,7 +31,7 @@ export class ContextmenuService {
 
   /**
    *
-   * Register a opened overlayRef.
+   * Register an opened overlayRef.
    *
    * @param overlayRef Opened overlayRef
    */
@@ -48,17 +48,17 @@ export class ContextmenuService {
   }
 
   /**
-   * Open a context menü.
+   * Open a context menu.
    *
    * Uses angular material overlay API to open the menu, global position strategy will be used,
-   * normally you would like to open a context menu near the mouse position, therefore supporting other strategies are not planed.
+   * normally you would like to open a context menu near the mouse position, therefore supporting other strategies is not planned.
    *
-   *  calls internally "registerContextMenu" so dont need to call it.
+   *  Internally calls "registerContextMenu" so no need to call it separately.
    *
    *
    * @param component An instance of ComponentPortal, you can create one with "new ComponentPortal(FooComponent)".
    * Import from "import { ComponentPortal } from '@angular/cdk/portal';"
-   * @param position x and y positions where the mene should be appaer, in the most cases clientX and clientY from mouseEvent would do it.
+   * @param position x and y positions where the menu should appear, in most cases clientX and clientY from mouseEvent will do.
    */
   openContextMenu<T>(
     component: ComponentPortal<T>,

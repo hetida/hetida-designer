@@ -1,17 +1,20 @@
+import { HttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { BasicTestModule } from 'src/app/angular-test.module';
+import { of } from 'rxjs';
+import { BasicTestModule } from 'src/app/basic-test.module';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { selectHashedAbstractBaseItemLookupById } from 'src/app/store/base-item/base-item.selectors';
 import { HomeComponent } from './home.component';
 
-xdescribe('HomeComponent', () => {
+describe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
 
   const mockBaseItemActionService = jasmine.createSpy();
   const mockTabItemService = jasmine.createSpy();
+  const httpClientSpy = jasmine.createSpyObj('HttpClient', ['get']);
 
   beforeEach(
     waitForAsync(() => {
@@ -26,6 +29,10 @@ xdescribe('HomeComponent', () => {
           {
             provide: TabItemService,
             useValue: mockTabItemService
+          },
+          {
+            provide: HttpClient,
+            useValue: httpClientSpy
           }
         ],
         declarations: [HomeComponent]
@@ -36,6 +43,7 @@ xdescribe('HomeComponent', () => {
   beforeEach(() => {
     const mockStore = TestBed.inject(MockStore);
     mockStore.overrideSelector(selectHashedAbstractBaseItemLookupById, {});
+    httpClientSpy.get.and.returnValue(of('1.0'));
     fixture = TestBed.createComponent(HomeComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

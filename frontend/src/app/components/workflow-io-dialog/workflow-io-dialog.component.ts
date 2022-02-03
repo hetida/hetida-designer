@@ -13,9 +13,9 @@ import {
   Validators
 } from '@angular/forms';
 import {
+  MAT_DIALOG_DATA,
   MatDialog,
-  MatDialogRef,
-  MAT_DIALOG_DATA
+  MatDialogRef
 } from '@angular/material/dialog';
 import { JsonEditorComponent, JsonEditorModalData } from 'hd-wiring';
 import {
@@ -29,10 +29,10 @@ import {
   booleanValidator,
   floatValidator,
   integerValidator
-} from 'src/app/validation/BasicTypeValidators';
-import { PythonIdentifierValidator } from 'src/app/validation/PythonIdentifierValidator';
-import { PythonKeywordBlacklistValidator } from 'src/app/validation/PythonKeywordValidator';
-import { UniqueValueValidator } from 'src/app/validation/UniqueValueValidator';
+} from 'src/app/validation/basic-type-validators';
+import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
+import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
+import { UniqueValueValidator } from 'src/app/validation/unique-value-validator';
 import { IOItem } from '../../model/io-item';
 import { WorkflowBaseItem } from '../../model/workflow-base-item';
 import { WorkflowOperator } from '../../model/workflow-operator';

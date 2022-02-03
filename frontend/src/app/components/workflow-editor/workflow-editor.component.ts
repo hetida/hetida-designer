@@ -11,15 +11,15 @@ import { timer } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { ContextmenuService } from 'src/app/service/contextmenu.service';
-import { PopoverService } from 'src/app/service/popover.service';
+import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
+import { PopoverService } from 'src/app/service/popover/popover.service';
 import {
   selectAbstractBaseItemById,
   selectAbstractComponentBaseItems,
   selectAbstractWorkflowBaseItems
 } from 'src/app/store/base-item/base-item.selectors';
 import { v4 as UUID } from 'uuid';
-import { popoverMinHeight, popoverWidth } from '../../constants/popoverSizes';
+import { popoverMinHeight, popoverWidth } from '../../constants/popover-sizes';
 import { AbstractBaseItem, BaseItem } from '../../model/base-item';
 import { IOItem } from '../../model/io-item';
 import { WorkflowBaseItem } from '../../model/workflow-base-item';
@@ -27,7 +27,7 @@ import { WorkflowLink } from '../../model/workflow-link';
 import { WorkflowOperator } from '../../model/workflow-operator';
 import { NotificationService } from '../../service/notifications/notification.service';
 import { FlowchartConverterService } from '../../service/type-converter/flowchart-converter.service';
-import { WorkflowEditorService } from '../../service/workflow-editor.service';
+import { WorkflowEditorService } from '../../service/workflow-editor/workflow-editor.service';
 import { IAppState } from '../../store/app.state';
 import { BaseItemContextMenuComponent } from '../base-item-context-menu/base-item-context-menu.component';
 import {
@@ -62,7 +62,7 @@ export class WorkflowEditorComponent {
     private readonly flowchartConverter: FlowchartConverterService,
     private readonly popoverService: PopoverService,
     private readonly dialog: MatDialog,
-    private readonly contextMenuService: ContextmenuService
+    private readonly contextMenuService: ContextMenuService
   ) {
     // Only save updates every 500ms.
     timer(500, 500).subscribe(() => this._updateWorkflowIfNecessary());

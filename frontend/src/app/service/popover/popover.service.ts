@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
-import { ShowPopover } from '../model/show-popover';
-/**
- * TODO move to popover folder
- */
+import { ShowPopover } from '../../model/show-popover';
+
 @Injectable({
   providedIn: 'root'
 })
