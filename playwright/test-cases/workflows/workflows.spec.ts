@@ -1,8 +1,11 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { HetidaDesignerDevPage } from '../page-objects/hetida-designer-dev-page';
 
-test('home', async ({ page }) => {
-  // Run setup, test home
+test('workflows', async ({ page }) => {
+  // Run setup
   let hetidaDesignerDevPage = new HetidaDesignerDevPage(page);
   await hetidaDesignerDevPage.setup();
+
+  // Run test workflows
+  await page.locator('').click();
 });
