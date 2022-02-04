@@ -1,6 +1,7 @@
-@mixin popover-baseitem-theme($primary, $secondary) {
-  hd-popover-baseitem {
+@mixin popover-base-item-theme($primary, $secondary) {
+  hd-popover-base-item {
     outline: map-get($secondary, 700) solid 1px;
+
     .popover {
       background-color: map_get($secondary, 500);
       color: map_get($primary, 500);

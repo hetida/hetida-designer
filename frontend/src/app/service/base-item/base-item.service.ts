@@ -22,7 +22,7 @@ import {
 import { selectAbstractBaseItemById } from '../../store/base-item/base-item.selectors';
 import { ComponentEditorService } from '../component-editor.service';
 import { BaseItemHttpService } from '../http-service/base-item-http.service';
-import { WorkflowEditorService } from '../workflow-editor.service';
+import { WorkflowEditorService } from '../workflow-editor/workflow-editor.service';
 
 @Injectable({
   providedIn: 'root'

@@ -1,15 +1,15 @@
 import { Component, EventEmitter, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { select, Store } from '@ngrx/store';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { first, map, startWith } from 'rxjs/operators';
 import { AbstractBaseItem } from 'src/app/model/base-item';
-import { BaseItemDialogData } from 'src/app/model/BaseItemDialogData';
+import { BaseItemDialogData } from 'src/app/model/base-item-dialog-data';
 import { IAppState } from 'src/app/store/app.state';
 import { selectAbstractBaseItems } from 'src/app/store/base-item/base-item.selectors';
 import { Utils } from 'src/app/utils/utils';
-import { RevisionTagValidator } from 'src/app/validation/RevisionTagValidator';
+import { RevisionTagValidator } from 'src/app/validation/revision-tag-validator';
 
 @Component({
   selector: 'hd-copy-base-item-dialog',

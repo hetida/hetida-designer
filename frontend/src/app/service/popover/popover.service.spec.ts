@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { StoreModule } from '@ngrx/store';
-import { appReducers } from '../store/app.reducers';
+import { appReducers } from '../../store/app.reducers';
 import { PopoverService } from './popover.service';
 
 describe('PopoverService', () => {

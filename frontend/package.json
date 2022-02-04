@@ -3,7 +3,7 @@
   "description": "Hetida Designer Frontend",
   "version": "0.1.0",
   "homepage": "https://neusta-sd-west.de/data-science/hetida-designer/",
-  "license": "TODO",
+  "license": "MIT",
   "engines": {
     "node": ">=12.0.0 <13.0.0"
   },

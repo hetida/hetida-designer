@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
   createReadOnlyConfig,
   FlowchartConfiguration,
@@ -9,9 +9,9 @@ import {
 import { IOType } from 'hetida-flowchart/types/IOType';
 import { ComponentBaseItem } from 'src/app/model/component-base-item';
 import { FlowchartConverterService } from 'src/app/service/type-converter/flowchart-converter.service';
-import { PythonIdentifierValidator } from 'src/app/validation/PythonIdentifierValidator';
-import { PythonKeywordBlacklistValidator } from 'src/app/validation/PythonKeywordValidator';
-import { UniqueValueValidator } from 'src/app/validation/UniqueValueValidator';
+import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
+import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
+import { UniqueValueValidator } from 'src/app/validation/unique-value-validator';
 import { v4 as UUID } from 'uuid';
 import { IOItem } from '../../model/io-item';
 
@@ -115,7 +115,6 @@ export class ComponentIODialogComponent implements OnInit {
   }
 
   _inputAdd(): void {
-    console.debug('add input');
     const io: IOItem = {
       id: UUID().toString(),
       name: this._computeNextAvailableName(
@@ -132,7 +131,6 @@ export class ComponentIODialogComponent implements OnInit {
   }
 
   _outputAdd(): void {
-    console.debug('add output');
     const io: IOItem = {
       id: UUID().toString(),
       name: this._computeNextAvailableName(

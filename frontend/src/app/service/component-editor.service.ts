@@ -49,12 +49,9 @@ export class ComponentEditorService {
   }
 
   updateComponent(componentBaseItem: ComponentBaseItem) {
-    console.debug(componentBaseItem); // TODO
     this.componentHttpService
       .updateComponent(componentBaseItem)
       .subscribe(result => {
-        console.debug(result); // TODO
-
         this.store.dispatch(putBaseItem(result));
       });
   }
