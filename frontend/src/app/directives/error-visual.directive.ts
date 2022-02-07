@@ -40,7 +40,7 @@ export class ErrorVisualDirective implements OnInit {
               return `Enter a boolean value`;
             case 'noIntegerValue':
               return `Enter a integer value`;
-            case 'noFloatFloat':
+            case 'noFloatValue':
               return 'Enter a float value';
             default:
               return `Unknown error: ${error}`;

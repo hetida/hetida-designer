@@ -9,7 +9,7 @@ import { BaseItemDialogData } from 'src/app/model/base-item-dialog-data';
 import { IAppState } from 'src/app/store/app.state';
 import { selectAbstractBaseItems } from 'src/app/store/base-item/base-item.selectors';
 import { Utils } from 'src/app/utils/utils';
-import { RevisionTagValidator } from 'src/app/validation/revision-tag-validator';
+import { UniqueRevisionTagValidator } from 'src/app/validation/unique-revision-tag-validator';
 
 @Component({
   selector: 'hd-copy-base-item-dialog',
@@ -133,7 +133,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(20),
-              RevisionTagValidator(abstractBaseItems)
+              UniqueRevisionTagValidator(abstractBaseItems)
             ]
           )
         });

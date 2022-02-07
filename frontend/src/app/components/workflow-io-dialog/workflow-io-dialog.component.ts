@@ -26,9 +26,9 @@ import {
 } from 'hetida-flowchart';
 import { FlowchartConverterService } from 'src/app/service/type-converter/flowchart-converter.service';
 import {
-  booleanValidator,
-  floatValidator,
-  integerValidator
+  BooleanValidator,
+  FloatValidator,
+  IntegerValidator
 } from 'src/app/validation/basic-type-validators';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
@@ -305,11 +305,11 @@ export class WorkflowIODialogComponent {
     if (data.isConstant) {
       switch (data.type) {
         case 'FLOAT':
-          return [floatValidator(), Validators.required];
+          return [FloatValidator(), Validators.required];
         case 'INT':
-          return [integerValidator(), Validators.required];
+          return [IntegerValidator(), Validators.required];
         case 'BOOLEAN':
-          return [booleanValidator(), Validators.required];
+          return [BooleanValidator(), Validators.required];
         default:
           return Validators.required;
       }
