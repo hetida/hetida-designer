@@ -23,8 +23,8 @@ export function UniqueValueValidator(formControlName: string): ValidatorFn {
     }
 
     let hasDuplicateValue = false;
-    control.controls.forEach((currentformGroup, index) => {
-      const currentFormControl = currentformGroup.get(formControlName);
+    control.controls.forEach((currentFormGroup, index) => {
+      const currentFormControl = currentFormGroup.get(formControlName);
       Utils.assert(
         currentFormControl,
         `formControl with name ${formControlName} not found`
@@ -40,14 +40,14 @@ export function UniqueValueValidator(formControlName: string): ValidatorFn {
       hasDuplicateValue = control.controls
         .filter((_, i) => i !== index)
         .map(formGroup => formGroup.get(formControlName)?.value)
-        .some(v => currentFormControl.value === v);
+        .some(value => currentFormControl.value === value);
 
       const error = hasDuplicateValue ? { uniqueValue: true } : null;
 
-      const controlHasError =
+      const controlHasUniqueValueError =
         currentFormControl.errors && 'uniqueValue' in currentFormControl.errors;
 
-      if (Utils.isNullOrUndefined(error) && controlHasError) {
+      if (Utils.isNullOrUndefined(error) && controlHasUniqueValueError) {
         currentFormControl.setErrors(null);
       } else if (!Utils.isNullOrUndefined(error)) {
         currentFormControl.setErrors(error);
