@@ -69,7 +69,7 @@ As code formatter, [black](https://github.com/ambv/black) is used. It is recomme
 ### Type Hints
 Python demo adapter code is currently mostly type hinted. You may use [mypy](http://mypy-lang.org/) for static type checking via
 ```
-python3 -m mypy demo_adapter_python
+python -m mypy demo_adapter_python
 ```
 The Mypy configuration can be found in `mypy.ini` file in /demo-adapter-python directory.
 
