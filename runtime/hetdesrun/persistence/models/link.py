@@ -12,9 +12,7 @@ from hetdesrun.datatypes import DataType
 
 
 class Vertex(BaseModel):
-    """
-    Entity used to unambiguously identify start and end of links
-    """
+    """Represents start or end point of a link."""
 
     operator: Optional[UUID]
     connector: Connector = Field(
@@ -27,11 +25,10 @@ class Vertex(BaseModel):
 
 
 class Link(BaseModel):
-    """
-    Links determine how parameter values are passed through the workflow.
+    """Links determine how parameter values are passed through the workflow.
 
-    The data types at both sides must match, i.e. be the same or either one of type ANY.
-
+    Note: The data types at both sides must match, i.e. be the same or
+    at least one must be of type ANY.
     A link cannot start and end at the same connector.
     """
 

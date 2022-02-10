@@ -45,11 +45,13 @@ wiring_router = APIRouter(
 async def update_wiring(
     id: UUID, updated_wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:
-    """
+    """Store or update the test wiring of a transformation revision.
+
     WARNING: Instead of the id of the wiring use the id of the transformation revision
     as path parameter other wise the request body will be returned without storing it in the DB
 
-    Use PUT /api/transformations/{id} instead
+    This endpoint is deprecated and will be removed soon,
+    use PUT /api/transformations/{id} instead.
     """
 
     logger.info(f"update wiring {id}")

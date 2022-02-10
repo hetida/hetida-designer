@@ -46,8 +46,10 @@ base_item_router = APIRouter(
     deprecated=True,
 )
 async def get_all_transformation_revisions() -> List[TransformationRevisionFrontendDto]:
-    """
-    Use GET /api/transformations/ instead
+    """Get all transformation revisions without their content from the data base.
+    
+    This endpoint is deprecated and will be removed soon,
+    use GET /api/transformations/ instead
     """
 
     logger.info(f"get all transformation revisions")
@@ -81,8 +83,10 @@ async def get_all_transformation_revisions() -> List[TransformationRevisionFront
 async def get_transformation_revision_by_id(
     id: UUID = Path(..., example=UUID("123e4567-e89b-12d3-a456-426614174000"),),
 ) -> TransformationRevisionFrontendDto:
-    """
-    Use GET /api/transformations/{id} instead
+    """Get a single transformation revision without its content from the data base by its id.
+    
+    This endpoint is deprecated and will be removed soon,
+    use GET /api/transformations/{id} instead.
     """
 
     logger.info(f"get base item {id}")
@@ -116,8 +120,10 @@ async def get_transformation_revision_by_id(
 async def create_transformation_revision(
     transformation_revision_dto: TransformationRevisionFrontendDto,
 ) -> TransformationRevisionFrontendDto:
-    """
-    Use POST /api/transformations/ instead
+    """Store a transformation revision without content in the data base.
+    
+    This endpoint is deprecated and will be removed soon,
+    use POST /api/transformations/ instead.
     """
 
     logger.info(f"create base item {id}")
@@ -167,15 +173,22 @@ async def create_transformation_revision(
 async def update_transformation_revision(
     id: UUID, updated_transformation_revision_dto: TransformationRevisionFrontendDto,
 ) -> TransformationRevisionFrontendDto:
-    """
-    Use PUT /api/transformations/{id} instead
+    """Update or store a transformation revision except for its content in the data base.
+    
+    If no DB entry with the provided id is found, it will be created.
+
+    Updating a transformation revision is only possible if it is in state DRAFT
+    or to change the state from RELEASED to DISABLED.
+    
+    This endpoint is deprecated and will be removed soon,
+    use PUT /api/transformations/{id} instead.
     """
 
     logger.info(f"update base item {id}")
 
     if id != updated_transformation_revision_dto.id:
         msg = (
-            "The id {id} does not match "
+            f"The id {id} does not match "
             f"the id of the provided base item DTO {updated_transformation_revision_dto.id}"
         )
         logger.error(msg)

@@ -73,8 +73,10 @@ workflow_router = APIRouter(
 async def create_workflow_revision(
     workflow_dto: WorkflowRevisionFrontendDto,
 ) -> WorkflowRevisionFrontendDto:
-    """
-    Use POST /api/transformations/ instead
+    """Store a transformation revision of type workflow in the data base.
+    
+    This endpoint is deprecated and will be removed soon,
+    use POST /api/transformations/ instead.
     """
 
     logger.info(f"create a new workflow")
@@ -115,8 +117,10 @@ async def create_workflow_revision(
     deprecated=True,
 )
 async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
-    """
-    Use GET /api/transformations/ instead
+    """Get all transformation revisions of type workflow from the data base.
+    
+    This endpoint is deprecated and will be removed soon,
+    use GET /api/transformations/{id} instead.
     """
 
     logger.info(f"get all workflows")
@@ -148,8 +152,10 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
 async def get_workflow_revision_by_id(
     id: UUID = Path(..., example=UUID("123e4567-e89b-12d3-a456-426614174000"),),
 ) -> WorkflowRevisionFrontendDto:
-    """
-    Use GET /api/transformations/{id} instead
+    """Get a single transformation revision of type workflow from the data base.
+    
+    This endpoint is deprecated and will be removed soon,
+    use GET /api/transformations/{id} instead.
     """
 
     logger.info(f"get workflow {id}")
@@ -188,8 +194,15 @@ async def get_workflow_revision_by_id(
 async def update_workflow_revision(
     id: UUID, updated_workflow_dto: WorkflowRevisionFrontendDto,
 ) -> WorkflowRevisionFrontendDto:
-    """
-    Use PUT /api/transformations/{id} instead
+    """Update or store a transformation revision of type workflow in the data base.
+    
+    If no DB entry with the provided id is found, it will be created.
+
+    Updating a transformation revision is only possible if it is in state DRAFT
+    or to change the state from RELEASED to DISABLED.
+    
+    This endpoint is deprecated and will be removed soon,
+    use PUT /api/transformations/{id} instead.
     """
 
     logger.info(f"update workflow {id}")
@@ -262,8 +275,12 @@ async def update_workflow_revision(
     deprecated=True,
 )
 async def delete_workflow_revision(id: UUID,) -> None:
-    """
-    Use DELETE /api/transformations/{id} instead
+    """Delete a transformation revision of type workflow from the data base.
+    
+    Deleting a transformation revision is only possible if it is in state DRAFT.
+
+    This endpoint is deprecated and will be removed soon,
+    use DELETE /api/transformations/{id} instead.
     """
 
     logger.info(f"delete workflow {id}")
@@ -297,8 +314,10 @@ async def delete_workflow_revision(id: UUID,) -> None:
 async def execute_workflow_revision(
     id: UUID, wiring_dto: WiringFrontendDto, run_pure_plot_operators: bool = False,
 ) -> ExecutionResponseFrontendDto:
-    """
-    Use POST /api/transformations/{id}/execute instead
+    """Execute a transformation revision of type workflow.
+    
+    This endpoint is deprecated and will be removed soon,
+    use POST /api/transformations/{id}/execute instead.
     """
 
     try:
@@ -401,8 +420,10 @@ async def execute_workflow_revision(
 async def bind_wiring_to_workflow_revision(
     id: UUID, wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:
-    """
-    Use PUT /api/transformations/{id} instead
+    """Store or update the test wiring of a transformation revision of type workflow.
+    
+    This endpoint is deprecated and will be removed soon,
+    use PUT /api/transformations/{id} instead.
     """
 
     logger.info(f"bind wiring to workflow {id}")

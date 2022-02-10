@@ -138,6 +138,7 @@ def nested_nodes(
 async def create_transformation_revision(
     transformation_revision: TransformationRevision,
 ) -> TransformationRevision:
+    """Store a transformation revision in the data base."""
     logger.info(f"create transformation revision {id}")
 
     if transformation_revision.type == Type.COMPONENT:
@@ -179,8 +180,9 @@ async def create_transformation_revision(
     },
 )
 async def get_all_transformation_revisions() -> List[TransformationRevision]:
-    """
-    Used by frontend for initial loading of all transformations to populate the sidebar
+    """Get all transformation revisions from the data base.
+
+    Used by frontend for initial loading of all transformations to populate the sidebar.
     """
 
     logger.info(f"get all transformation revisions")
@@ -246,11 +248,13 @@ async def update_transformation_revision(
         False, description="Only set to True for deployment"
     ),
 ) -> TransformationRevision:
-    """
+    """Update or store a transformation revision in the data base.
+
     If no DB entry with the provided id is found, it will be created.
 
-    Only transformations in the state DRAFT can be updated, except for changing the state of a transformation from RELEASED to DEPRECATED.
-
+    Updating a transformation revision is only possible if it is in state DRAFT
+    or to change the state from RELEASED to DISABLED.
+    
     Unset attributes of the json sent in the request body will be set to default values, possibly changing the attribute saved in the DB.
     """
 
@@ -357,7 +361,8 @@ async def execute_transformation_revision(
         False, description="Set to True by frontent requests to generate plots"
     ),
 ) -> ExecutionResponseFrontendDto:
-    """
+    """Execute a transformation revision.
+
     The transformation will be loaded from the DB and executed with the wiring sent in the request body.
 
     The test wiring will not be updated.

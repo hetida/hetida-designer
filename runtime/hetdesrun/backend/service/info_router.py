@@ -28,5 +28,6 @@ info_router = APIRouter(
     responses={status.HTTP_200_OK: {"description": "Successfully got a sign of life"}},
 )
 async def get_info() -> dict:
+    """Show readiness and provide version info."""
     logger.info("Get sign of life")
     return {"msg": "Here I am", "version": VERSION}

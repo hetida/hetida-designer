@@ -45,8 +45,10 @@ documentation_router = APIRouter(
 async def get_component_revision_by_id(
     id: UUID = Path(..., example=UUID("123e4567-e89b-12d3-a456-426614174000"),),
 ) -> DocumentationFrontendDto:
-    """
-    Use GET /api/transformations/{id} instead
+    """Get the documentation of a transformation revision by its id from the data base.
+
+    This endpoint is deprecated and will be removed soon,
+    use GET /api/transformations/{id} instead.
     """
 
     logger.info(f"get documentation {id}")
@@ -80,8 +82,10 @@ async def get_component_revision_by_id(
 async def update_documentation(
     id: UUID, documentation_dto: DocumentationFrontendDto,
 ) -> DocumentationFrontendDto:
-    """
-    Use PUT /api/transformations/{id} instead
+    """Update or store the documentation of a transformation revision in the data base.
+    
+    This endpoint is deprecated and will be removed soon,
+    use PUT /api/transformations/{id} instead
     """
 
     logger.info(f"update documentation {id}")
@@ -131,8 +135,10 @@ async def update_documentation(
     deprecated=True,
 )
 async def delete_documentation(id: UUID,) -> None:
-    """
-    Use PUT /api/transformations/{id} instead
+    """Change the documentation of a transformation revision in the data base to "".
+    
+    This endpoint is deprecated and will be removed soon,
+    use PUT /api/transformations/{id} instead
     """
 
     logger.info(f"delete documentation {id}")

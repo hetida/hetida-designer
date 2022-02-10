@@ -70,8 +70,10 @@ component_router = APIRouter(
 async def create_component_revision(
     component_dto: ComponentRevisionFrontendDto,
 ) -> ComponentRevisionFrontendDto:
-    """
-    Use POST /api/transformations/ instead
+    """Store a transformation revision of type component in the data base.
+    
+    This endpoint is deprecated and will be removed soon,
+    use POST /api/transformations/ instead.
     """
 
     logger.info(f"create new component")
@@ -113,8 +115,10 @@ async def create_component_revision(
 async def get_component_revision_by_id(
     id: UUID = Path(..., example=UUID("123e4567-e89b-12d3-a456-426614174000"),),
 ) -> ComponentRevisionFrontendDto:
-    """
-    Use GET /api/transformations/{id} instead
+    """Get a single transformation revision of type component from the data base.
+    
+    This endpoint is deprecated and will be removed soon,
+    use GET /api/transformations/{id} instead.
     """
 
     logger.info(f"get component {id}")
@@ -153,8 +157,15 @@ async def get_component_revision_by_id(
 async def update_component_revision(
     id: UUID, updated_component_dto: ComponentRevisionFrontendDto,
 ) -> ComponentRevisionFrontendDto:
-    """
-    Use PUT /api/transformations/{id} instead
+    """Update or store a transformation revision of type component in the data base.
+    
+    If no DB entry with the provided id is found, it will be created.
+
+    Updating a transformation revision is only possible if it is in state DRAFT
+    or to change the state from RELEASED to DISABLED.
+    
+    This endpoint is deprecated and will be removed soon,
+    use PUT /api/transformations/{id} instead.
     """
 
     logger.info(f"update component {id}")
@@ -231,8 +242,12 @@ async def update_component_revision(
     deprecated=True,
 )
 async def delete_component_revision(id: UUID,) -> None:
-    """
-    Use DELETE /api/transformations/{id} instead
+    """Delete a transformation revision of type component from the data base.
+    
+    Deleting a transformation revision is only possible if it is in state DRAFT.
+
+    This endpoint is deprecated and will be removed soon,
+    use DELETE /api/transformations/{id} instead.
     """
 
     logger.info(f"delete component {id}")
@@ -266,8 +281,10 @@ async def delete_component_revision(id: UUID,) -> None:
 async def execute_component_revision(
     id: UUID, wiring_dto: WiringFrontendDto, run_pure_plot_operators: bool = False,
 ) -> ExecutionResponseFrontendDto:
-    """
-    Use POST /api/transformations/{id}/execute instead
+    """Execute a transformation revision of type component.
+    
+    This endpoint is deprecated and will be removed soon,
+    use POST /api/transformations/{id}/execute instead.
     """
 
     try:
@@ -360,8 +377,10 @@ async def execute_component_revision(
 async def bind_wiring_to_component_revision(
     id: UUID, wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:
-    """
-    Use PUT /api/transformations/{id} instead
+    """Store or update the test wiring of a transformation revision of type component.
+    
+    This endpoint is deprecated and will be removed soon,
+    use PUT /api/transformations/{id} instead.
     """
 
     logger.info(f"bind wiring to component {id}")

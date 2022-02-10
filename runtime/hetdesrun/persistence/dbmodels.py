@@ -44,7 +44,6 @@ class TransformationRevisionDBModel(Base):
     released_timestamp = Column(DateTime, nullable=True)
     disabled_timestamp = Column(DateTime, nullable=True)
 
-
     __table_args__ = (
         UniqueConstraint(
             "revision_group_id",

@@ -14,11 +14,12 @@ class NonEmptyStr(ConstrainedStr):
 
 
 class Operator(BaseModel):
-    """
+    """Represents components or workflows within a workflow.
+
     Contains all information about the transformation revision needed for display in the workflow as
     well as the id, so that the transformation itself can be loaded if more information is needed.
 
-    Only released transformation revisions can be used as operators in a workflow.
+    Note: Only released transformation revisions can be used as operators in a workflow.
     """
 
     id: UUID = Field(default_factory=uuid4)

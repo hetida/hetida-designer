@@ -35,8 +35,9 @@ class IO(BaseModel):
 
 
 class IOInterface(BaseModel):
-    """
-    The names in the list of inputs and outputs must be unique, respectively
+    """Represents combination of inputs and outputs.
+
+    Note: The names in the list of inputs and outputs must be unique, respectively.
     """
 
     inputs: List[IO] = []
@@ -98,8 +99,9 @@ class Connector(IO):
 
 
 class Constant(Connector):
-    """
-    The name of a constant must be an empty string.
+    """Represents a fixed workflow input value
+
+    Note: The name of the underlying connector must be an empty string.
     """
 
     value: Any
