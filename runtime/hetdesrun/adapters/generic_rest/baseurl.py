@@ -11,7 +11,7 @@ import httpx
 
 from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
 
-from hetdesrun.service.config import runtime_config
+from hetdesrun.webservice.config import runtime_config
 
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.exceptions import (

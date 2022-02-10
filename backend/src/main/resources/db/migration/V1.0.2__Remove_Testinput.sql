@@ -1,2 +1,0 @@
-ALTER TABLE Component DROP COLUMN TestInput;
-ALTER TABLE Workflow DROP COLUMN TestInput;

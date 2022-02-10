@@ -7,7 +7,7 @@ from hetdesrun.auth.keycloak import (
     ServiceUserCredentials,
 )
 
-from hetdesrun.service.config import runtime_config
+from hetdesrun.webservice.config import runtime_config
 
 # get creds from config
 

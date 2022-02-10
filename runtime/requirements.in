@@ -4,6 +4,9 @@ uvloop
 gunicorn
 httpx
 httptools
+psycopg2
+sqlalchemy[mypy]
+SQLAlchemy-Utils
 pandas
 numpy
 sklearn

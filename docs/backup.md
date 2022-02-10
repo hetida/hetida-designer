@@ -15,7 +15,7 @@ docker run --rm \
     -e "PGPASSWORD=hetida_designer_dbpasswd" \
     --name hd_postgres_backup \
     -v $(pwd):/backup_dir \
-    --network hetida-designer_default \
+    --network hetida-designer-network \
     postgres:13 \
     bash -c \
     "pg_dump -h hetida-designer-db -p 5432 -U hetida_designer_dbuser -Fc hetida_designer_db > /backup_dir/$(date --iso-8601=seconds)-hd-backup.tar"
@@ -30,7 +30,7 @@ docker run --rm \
     -e "PGPASSWORD=hetida_designer_dbpasswd" \
     --name hd_postgres_backup \
     -v $(pwd):/backup_dir \
-    --network hetida-designer_default \
+    --network hetida-designer-network \
     postgres:13 \
     bash -c \
     "pg_restore --clean --exit-on-error -v -h hetida-designer-db -p 5432 -U hetida_designer_dbuser -d hetida_designer_db < /backup_dir/hd-backup.tar"

@@ -1,0 +1,43 @@
+{
+  "category": "Index Operations",
+  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType  # add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"data_1\": DataType.Any, \"data_2\": DataType.Any},\n    outputs={\"data_1_restricted\": DataType.Any, \"data_2_restricted\": DataType.Any},\n    component_name=\"Restrict to common Index\",\n    description=\"Restrict two Pandas objects to their index intersection\",\n    category=\"Index Operations\",\n    uuid=\"ac86c25c-a510-e46e-ff3a-f9bbb4c26a24\",\n    group_id=\"ac86c25c-a510-e46e-ff3a-f9bbb4c26a24\",\n    tag=\"1.0.0\"\n)\ndef main(*, data_1, data_2):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    common_index = data_1.index.intersection(data_2.index)\n\n    return {\n        \"data_1_restricted\": data_1.loc[common_index],\n        \"data_2_restricted\": data_2.loc[common_index],\n    }\n",
+  "description": "Restrict two Pandas objects to their index intersection",
+  "documentation": "# Restrict to common Index\n\n## Description\nRestrict two Pandas objects to their index intersection.\n\n## Inputs\n* **data_1** (Pandas Series or Pandas DataFrame): First data set. \n* **data_1** (Pandas Series or Pandas DataFrame): Second data set. \n\n## Outputs\n* **data_1_restricted** (Pandas Series or Pandas DataFrame): The Pandas object restricted to the index intersection.\n* **data_2_restricted** (Pandas Series or Pandas DataFrame): The Pandas object restricted to the index intersection.\n\n## Details\nRestricts both pandas objects to the intersection of their indices.\n",
+  "id": "ac86c25c-a510-e46e-ff3a-f9bbb4c26a24",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "5d13b456-1b44-2130-ea88-eafe4fdc1488",
+        "name": "data_1"
+      },
+      {
+        "data_type": "ANY",
+        "id": "e535f823-e250-af85-7f12-d41ecf5f4a78",
+        "name": "data_2"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "b8e46d8a-0bd6-b59b-246a-403d28329099",
+        "name": "data_1_restricted"
+      },
+      {
+        "data_type": "ANY",
+        "id": "9c547baa-6cb0-6497-71d6-769794b62043",
+        "name": "data_2_restricted"
+      }
+    ]
+  },
+  "name": "Restrict to common Index",
+  "released_timestamp": "2022-02-09T17:33:31.537323+00:00",
+  "revision_group_id": "ac86c25c-a510-e46e-ff3a-f9bbb4c26a24",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}

@@ -6,7 +6,7 @@ from starlette.testclient import TestClient
 
 import pandas as pd
 
-from hetdesrun.service.webservice import app
+from hetdesrun.webservice.application import app
 
 from hetdesrun.models.data_selection import FilteredSource, FilteredSink
 

@@ -1,0 +1,38 @@
+{
+  "category": "Filters",
+  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nfrom scipy.signal import butter\nfrom scipy.signal import lfilter\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"data\": DataType.Any, \"window_size\": DataType.String},\n    outputs={\"data\": DataType.Any},\n    component_name=\"MAVG Smoothing\",\n    description=\"Return Moving Averages\",\n    category=\"Filters\",\n    uuid=\"41f4c453-e4e7-f07d-df77-c89cb42cb3ac\",\n    group_id=\"41f4c453-e4e7-f07d-df77-c89cb42cb3ac\",\n    tag=\"1.0.0\"\n)\ndef main(*, data, window_size):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your code here\n    return {\"data\": data.rolling(window_size).mean()}\n",
+  "description": "Return Moving Averages",
+  "documentation": "# MAVG Smoothing\n\n## Description\nReturn Moving Averages.\n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Values must be numeric.\n* **window_size** (String): Window, in which the moving average is calculated. \n\n## Outputs\n* **data** (Pandas Series): The filtered data.\n\n## Details\nUse Moving Average to smooth a Series or a DataFrame. The parameter window_size should be a String accordiding to what is allowed for Pandas rolling method.\n",
+  "id": "41f4c453-e4e7-f07d-df77-c89cb42cb3ac",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "277a910b-e86c-8ee7-4f44-04ca6b613b86",
+        "name": "data"
+      },
+      {
+        "data_type": "STRING",
+        "id": "38f67927-9970-a43f-8fdf-7101bf643885",
+        "name": "window_size"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "54110b96-2c6d-ee3d-98ac-d5c6bc1e397b",
+        "name": "data"
+      }
+    ]
+  },
+  "name": "MAVG Smoothing",
+  "released_timestamp": "2022-02-09T17:33:35.109406+00:00",
+  "revision_group_id": "41f4c453-e4e7-f07d-df77-c89cb42cb3ac",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}

@@ -14,7 +14,7 @@ from hetdesrun.adapters.generic_rest.external_types import ExternalType
 
 from hetdesrun.models.data_selection import FilteredSink
 
-from hetdesrun.service.config import runtime_config
+from hetdesrun.webservice.config import runtime_config
 
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
