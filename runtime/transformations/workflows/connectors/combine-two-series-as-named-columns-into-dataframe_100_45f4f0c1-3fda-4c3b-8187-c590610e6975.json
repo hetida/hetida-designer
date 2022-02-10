@@ -1,0 +1,453 @@
+{
+  "category": "Connectors",
+  "content": {
+    "constants": [],
+    "inputs": [
+      {
+        "data_type": "STRING",
+        "id": "fb274218-42c2-4951-8b48-13514c32b8e1",
+        "name": "column_name_1",
+        "position": {
+          "x": 40,
+          "y": 400
+        }
+      },
+      {
+        "data_type": "SERIES",
+        "id": "7ef1f9fd-4198-4056-8b50-6ee79f4ef1c0",
+        "name": "series_1",
+        "position": {
+          "x": 40,
+          "y": 430
+        }
+      },
+      {
+        "data_type": "ANY",
+        "id": "ec588521-28e5-4616-b35a-fda973f91c37",
+        "name": "series_or_dataframe",
+        "position": {
+          "x": 40,
+          "y": 460
+        }
+      },
+      {
+        "data_type": "STRING",
+        "id": "8106c90b-b3d6-48d8-ba61-79f06be3320f",
+        "name": "column_name_2",
+        "position": {
+          "x": 770,
+          "y": 340
+        }
+      },
+      {
+        "data_type": "SERIES",
+        "id": "e71a1c04-36bc-4a8c-bff0-26454b6442a0",
+        "name": "series_2",
+        "position": {
+          "x": 770,
+          "y": 370
+        }
+      }
+    ],
+    "links": [
+      {
+        "end": {
+          "connector": {
+            "data_type": "DATAFRAME",
+            "id": "809be129-f35c-47ef-be5d-687256470181",
+            "name": "dataframe",
+            "position": {
+              "x": 1470,
+              "y": 340
+            }
+          }
+        },
+        "id": "169722e0-13c2-45db-9366-5c278554b1b5",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "DATAFRAME",
+            "id": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
+            "name": "dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "4081d021-3252-4a92-9cb9-3df129b2969b"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
+            "name": "series_or_dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6"
+        },
+        "id": "4b980d30-61d1-4a59-9f62-2e7eaca372eb",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "ec588521-28e5-4616-b35a-fda973f91c37",
+            "name": "series_or_dataframe",
+            "position": {
+              "x": 40,
+              "y": 460
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6"
+        },
+        "id": "4dd7fb86-67ee-458f-9a81-3ff4be47121c",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "7ef1f9fd-4198-4056-8b50-6ee79f4ef1c0",
+            "name": "series_1",
+            "position": {
+              "x": 40,
+              "y": 430
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+            "name": "column_name",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6"
+        },
+        "id": "65d33e17-637a-408b-963c-f49fa3addee0",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "fb274218-42c2-4951-8b48-13514c32b8e1",
+            "name": "column_name_1",
+            "position": {
+              "x": 40,
+              "y": 400
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+            "name": "column_name",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "4081d021-3252-4a92-9cb9-3df129b2969b"
+        },
+        "id": "7106b3e8-2c00-4205-945b-cd8c6f65b7b0",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "8106c90b-b3d6-48d8-ba61-79f06be3320f",
+            "name": "column_name_2",
+            "position": {
+              "x": 770,
+              "y": 340
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "4081d021-3252-4a92-9cb9-3df129b2969b"
+        },
+        "id": "af9b62a9-876a-4f0a-bce4-b12c0fe3af7d",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "e71a1c04-36bc-4a8c-bff0-26454b6442a0",
+            "name": "series_2",
+            "position": {
+              "x": 770,
+              "y": 370
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
+            "name": "series_or_dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "4081d021-3252-4a92-9cb9-3df129b2969b"
+        },
+        "id": "defc6d5b-8a69-4281-a1b7-c1275b91a43d",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "DATAFRAME",
+            "id": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
+            "name": "dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6"
+        }
+      }
+    ],
+    "operators": [
+      {
+        "category": "Connectors",
+        "description": "Combine as named column into a DataFrame.",
+        "id": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6",
+        "inputs": [
+          {
+            "data_type": "STRING",
+            "id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+            "name": "column_name",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "SERIES",
+            "id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "ANY",
+            "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
+            "name": "series_or_dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Combine as named column into DataFrame",
+        "outputs": [
+          {
+            "data_type": "DATAFRAME",
+            "id": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
+            "name": "dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 290,
+          "y": 340
+        },
+        "revision_group_id": "0d08af64-3f34-cddc-354b-d6a26c3f1aab",
+        "state": "RELEASED",
+        "transformation_id": "0d08af64-3f34-cddc-354b-d6a26c3f1aab",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "category": "Connectors",
+        "description": "Combine as named column into a DataFrame.",
+        "id": "4081d021-3252-4a92-9cb9-3df129b2969b",
+        "inputs": [
+          {
+            "data_type": "STRING",
+            "id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+            "name": "column_name",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "SERIES",
+            "id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "ANY",
+            "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
+            "name": "series_or_dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Combine as named column into DataFrame (2)",
+        "outputs": [
+          {
+            "data_type": "DATAFRAME",
+            "id": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
+            "name": "dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1020,
+          "y": 280
+        },
+        "revision_group_id": "0d08af64-3f34-cddc-354b-d6a26c3f1aab",
+        "state": "RELEASED",
+        "transformation_id": "0d08af64-3f34-cddc-354b-d6a26c3f1aab",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "DATAFRAME",
+        "id": "809be129-f35c-47ef-be5d-687256470181",
+        "name": "dataframe",
+        "position": {
+          "x": 1470,
+          "y": 340
+        }
+      }
+    ]
+  },
+  "description": "Combine two Series as named columns into DataFrame",
+  "documentation": "# Combine two Series as named columns into DataFrame\n\nAllows to add two Series to a given DataFrame (or Series which then is converted to a DataFrame) while providing names for the new columns.\n\nThis is just a two times application of the corresponding component - see that component for details.\n",
+  "id": "45f4f0c1-3fda-4c3b-8187-c590610e6975",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "STRING",
+        "id": "fb274218-42c2-4951-8b48-13514c32b8e1",
+        "name": "column_name_1"
+      },
+      {
+        "data_type": "SERIES",
+        "id": "7ef1f9fd-4198-4056-8b50-6ee79f4ef1c0",
+        "name": "series_1"
+      },
+      {
+        "data_type": "ANY",
+        "id": "ec588521-28e5-4616-b35a-fda973f91c37",
+        "name": "series_or_dataframe"
+      },
+      {
+        "data_type": "STRING",
+        "id": "8106c90b-b3d6-48d8-ba61-79f06be3320f",
+        "name": "column_name_2"
+      },
+      {
+        "data_type": "SERIES",
+        "id": "e71a1c04-36bc-4a8c-bff0-26454b6442a0",
+        "name": "series_2"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "DATAFRAME",
+        "id": "809be129-f35c-47ef-be5d-687256470181",
+        "name": "dataframe"
+      }
+    ]
+  },
+  "name": "Combine two Series as named columns into DataFrame",
+  "released_timestamp": "2022-02-09T17:33:37.269504+00:00",
+  "revision_group_id": "047cbb52-c7b4-4134-9fd8-4006bd66c192",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "asdf"
+        },
+        "workflow_input_name": "column_name_1"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2020-01-01T01:15:27.000Z\": 42.2,\n    \"2020-01-03T08:20:03.000Z\": 18.7,\n    \"2020-01-03T08:20:04.000Z\": 25.9\n}"
+        },
+        "workflow_input_name": "series_1"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"a\": true,\n    \"b\": 31.56\n}"
+        },
+        "workflow_input_name": "series_or_dataframe"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "asdf"
+        },
+        "workflow_input_name": "column_name_2"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2020-01-01T01:15:27.000Z\": 42.2,\n    \"2020-01-03T08:20:03.000Z\": 18.7,\n    \"2020-01-03T08:20:04.000Z\": 25.9\n}"
+        },
+        "workflow_input_name": "series_2"
+      }
+    ],
+    "output_wirings": []
+  },
+  "type": "WORKFLOW",
+  "version_tag": "1.0.0"
+}

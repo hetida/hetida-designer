@@ -18,7 +18,7 @@ from typing import Any
 
 import joblib
 
-from hetdesrun.service.config import runtime_config
+from hetdesrun.webservice.config import runtime_config
 
 
 def get_object_path(name: str, tag: str) -> str:

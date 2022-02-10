@@ -30,7 +30,7 @@ from hetdesrun.adapters.generic_rest.external_types import (
 
 from hetdesrun.models.data_selection import FilteredSource
 
-from hetdesrun.service.config import runtime_config
+from hetdesrun.webservice.config import runtime_config
 
 
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers

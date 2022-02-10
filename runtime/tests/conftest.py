@@ -4,9 +4,23 @@ import pytest
 
 from httpx import AsyncClient
 
-from hetdesrun.service.webservice import app
+from hetdesrun.webservice.application import app
 
 from hetdesrun.utils import get_uuid_from_seed
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--dont-use-in-memory-db",
+        action="store_false",
+        dest="use_in_memory_db",
+        default=True,
+    )
+
+
+@pytest.fixture()
+def use_in_memory_db(pytestconfig):
+    return pytestconfig.getoption("use_in_memory_db")
 
 
 @pytest.fixture

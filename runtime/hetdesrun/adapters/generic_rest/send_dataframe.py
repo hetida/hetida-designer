@@ -12,7 +12,7 @@ from hetdesrun.adapters.exceptions import AdapterOutputDataError
 from hetdesrun.models.data_selection import FilteredSink
 
 from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
-from hetdesrun.service.config import runtime_config
+from hetdesrun.webservice.config import runtime_config
 
 
 def dataframe_to_list_of_dicts(df: pd.DataFrame) -> List[Dict]:

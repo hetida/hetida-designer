@@ -125,6 +125,8 @@ class WorkflowExecutionInput(BaseModel):
             raise ValueError("Too many output wirings provided!")
         return values
 
+    Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
+
 
 class WorkflowExecutionResult(BaseModel):
     result: Result = Field(

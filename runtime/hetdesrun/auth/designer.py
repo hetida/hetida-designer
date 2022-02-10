@@ -2,7 +2,7 @@
 
 from hetdesrun.auth.keycloak import KeycloakBearerVerifier
 
-from hetdesrun.service.config import runtime_config
+from hetdesrun.webservice.config import runtime_config
 
 kc_bearer_verifier = KeycloakBearerVerifier.from_creds(
     auth_url=runtime_config.hd_keycloak_auth_url or "",

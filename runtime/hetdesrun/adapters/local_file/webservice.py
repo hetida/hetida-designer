@@ -12,7 +12,7 @@ from typing import Optional, List
 
 from fastapi import APIRouter, Query, HTTPException
 
-from hetdesrun.service.auth_dependency import get_auth_deps
+from hetdesrun.webservice.auth_dependency import get_auth_deps
 
 
 from hetdesrun.adapters.local_file.structure import (
@@ -39,7 +39,9 @@ from hetdesrun.adapters.local_file.models import (
 from hetdesrun.adapters.local_file.utils import from_url_representation
 
 # Note: As CORS middleware the router employs the main FastAPI app's one
-local_file_adapter_router = APIRouter()
+local_file_adapter_router = APIRouter(
+    prefix="/adapters/localfile", tags=["local file adapter"]
+)
 
 
 @local_file_adapter_router.get(

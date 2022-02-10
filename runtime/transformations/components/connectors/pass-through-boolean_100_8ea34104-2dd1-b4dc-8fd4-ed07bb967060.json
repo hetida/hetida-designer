@@ -1,0 +1,33 @@
+{
+  "category": "Connectors",
+  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"input\": DataType.Boolean},\n    outputs={\"output\": DataType.Boolean},\n    component_name=\"Pass Through Boolean\",\n    description=\"Just outputs its input value\",\n    category=\"Connectors\",\n    uuid=\"8ea34104-2dd1-b4dc-8fd4-ed07bb967060\",\n    group_id=\"8ea34104-2dd1-b4dc-8fd4-ed07bb967060\",\n    tag=\"1.0.0\"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input}\n",
+  "description": "Just outputs its input value",
+  "documentation": "# Pass Through (Boolean)\n\n## Description\nThis component just passes data through.\n\n## Inputs\n* **input** (Boolean): The input boolean value.\n\n## Outputs\n* **output** (Boolean): The output boolean value.\n\n## Details\nThis component just passes data through. It can be used to map one dynamic workflow input to multiple component inputs.",
+  "id": "8ea34104-2dd1-b4dc-8fd4-ed07bb967060",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "BOOLEAN",
+        "id": "46cb9e3f-1b7a-d435-8625-303b51160fd4",
+        "name": "input"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "BOOLEAN",
+        "id": "20dc1d40-fd45-85ad-2271-0a534e14f084",
+        "name": "output"
+      }
+    ]
+  },
+  "name": "Pass Through (Boolean)",
+  "released_timestamp": "2022-02-09T17:33:34.706367+00:00",
+  "revision_group_id": "8ea34104-2dd1-b4dc-8fd4-ed07bb967060",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}

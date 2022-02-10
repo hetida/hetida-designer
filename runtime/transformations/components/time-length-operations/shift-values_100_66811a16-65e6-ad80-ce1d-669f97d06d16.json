@@ -1,0 +1,38 @@
+{
+  "category": "Time length operations",
+  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"data\": DataType.Any, \"periods\": DataType.Integer},\n    outputs={\"shifted\": DataType.Any},\n    component_name=\"Shift Values\",\n    description=\"Shift index by desired number of periods\",\n    category=\"Time length operations\",\n    uuid=\"66811a16-65e6-ad80-ce1d-669f97d06d16\",\n    group_id=\"66811a16-65e6-ad80-ce1d-669f97d06d16\",\n    tag=\"1.0.0\"\n)\ndef main(*, data, periods):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"shifted\": data.shift(periods)}\n\n",
+  "description": "Shift index by desired number of periods",
+  "documentation": "# Shift values\n\n## Description\nThis component shifts the values of some data by the desired number of periods.\n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Data that should be shifted.\n* **periods** (Integer): Positive or negative number of periods to shift.\n\n## Outputs\n* **shifted** (Pandas Series or Pandas DataFrame): Shifted **data**.\n\n## Details\nThis component shifts the values of **data** by the desired number of **periods**. \n\n## Examples\nThe json input of a typical call of this component, shifting the values of data by 2 periods is\n```\n{\n\t\"data\": {\n\t\t\t\t\"2019-08-01T15:20:00\": 1.0,\n\t\t\t\t\"2019-08-01T15:20:01\": 7.0,\n\t\t\t\t\"2019-08-01T15:20:02\": 5.0,\n\t},\n\t\"periods\": 2\n}\n```\nThe expected output is\n```\n\t\"shifted\": {\n\t\t\t\t\"2019-08-01T15:20:00\": null,\n\t\t\t\t\"2019-08-01T15:20:01\": null,\n\t\t\t\t\"2019-08-01T15:20:02\": 1.0,\n\t}\n```\n\nThe json input of a call of this component with the same data, shifting the values of data -1 period is\n```\n{\n\t\"data\": {\n\t\t\t\t\"2019-08-01T15:20:00\": 1.0,\n\t\t\t\t\"2019-08-01T15:20:01\": 7.0,\n\t\t\t\t\"2019-08-01T15:20:02\": 5.0,\n\t},\n\t\"periods\": -1\n}\n```\nThe expected output is\n```\n\t\"shifted\": {\n\t\t\t\t\"2019-08-01T15:20:00\": 7.0,\n\t\t\t\t\"2019-08-01T15:20:01\": 5.0,\n\t\t\t\t\"2019-08-01T15:20:02\": null,\n\t}\n```\n",
+  "id": "66811a16-65e6-ad80-ce1d-669f97d06d16",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "ca00677e-b8f3-512d-96d8-9d38ce9efc29",
+        "name": "data"
+      },
+      {
+        "data_type": "INT",
+        "id": "990dbc08-f31e-91c3-22cf-d4fb24bfac6d",
+        "name": "periods"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "85045ebb-ca42-ef79-9142-004835f3acd1",
+        "name": "shifted"
+      }
+    ]
+  },
+  "name": "Shift Values",
+  "released_timestamp": "2022-02-09T17:33:29.018360+00:00",
+  "revision_group_id": "66811a16-65e6-ad80-ce1d-669f97d06d16",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}

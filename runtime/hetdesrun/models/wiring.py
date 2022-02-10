@@ -135,8 +135,8 @@ class InputWiring(BaseModel):
 
 
 class WorkflowWiring(BaseModel):
-    input_wirings: List[InputWiring]
-    output_wirings: List[OutputWiring]
+    input_wirings: List[InputWiring] = []
+    output_wirings: List[OutputWiring] = []
 
     # pylint: disable=no-self-argument,no-self-use
     @validator("input_wirings", each_item=False)

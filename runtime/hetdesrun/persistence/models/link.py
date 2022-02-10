@@ -1,0 +1,81 @@
+from typing import List, Optional
+from uuid import UUID, uuid4
+
+# pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field, root_validator
+
+from hetdesrun.persistence.models.io import Position, Connector
+
+from hetdesrun.models.workflow import WorkflowConnection
+
+from hetdesrun.datatypes import DataType
+
+
+class Vertex(BaseModel):
+    """
+    Entity used to unambiguously identify start and end of links
+    """
+
+    operator: Optional[UUID]
+    connector: Connector = Field(
+        ...,
+        description=(
+            "Full connector including name and data type "
+            "instead of only the id to simplify execution of the workflow"
+        ),
+    )
+
+
+class Link(BaseModel):
+    """
+    Links determine how parameter values are passed through the workflow.
+
+    The data types at both sides must match, i.e. be the same or either one of type ANY.
+
+    A link cannot start and end at the same connector.
+    """
+
+    id: UUID = Field(default_factory=uuid4)
+    start: Vertex
+    end: Vertex
+    path: List[Position] = []
+
+    # pylint: disable=no-self-argument,no-self-use
+    @root_validator()
+    def types_match(cls, values: dict) -> dict:
+        try:
+            start = values["start"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot validate that types of link ends match if attribute 'start' is missing"
+            ) from e
+        try:
+            end = values["end"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot validate that data types of link ends match if attribute 'end' is missing"
+            ) from e
+        if not (
+            start.connector.data_type == end.connector.data_type
+            or start.connector.data_type == DataType.Any
+            or end.connector.data_type == DataType.Any
+        ):
+            raise ValueError("data types of both link ends must be the same!")
+        return values
+
+    # pylint: disable=no-self-argument,no-self-use
+    @root_validator()
+    def no_self_reference(cls, values: dict) -> dict:
+        if values["start"].operator == values["end"].operator:
+            raise ValueError(
+                "Start and end of a connection must differ from each other."
+            )
+        return values
+
+    def to_connection(self) -> WorkflowConnection:
+        return WorkflowConnection(
+            input_in_workflow_id=str(self.start.operator),
+            input_name=self.start.connector.name,
+            output_in_workflow_id=str(self.end.operator),
+            output_name=self.end.connector.name,
+        )

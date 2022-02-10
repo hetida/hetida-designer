@@ -1,0 +1,33 @@
+{
+  "category": "Connectors",
+  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"input\": DataType.Series},\n    outputs={\"output\": DataType.DataFrame},\n    component_name=\"Convert Series to DataFrame\",\n    description=\"Convert a Series to a DataFrame with one column\",\n    category=\"Connectors\",\n    uuid=\"2f8c3864-8d45-5d68-c73f-229ef43bf944\",\n    group_id=\"2f8c3864-8d45-5d68-c73f-229ef43bf944\",\n    tag=\"1.0.0\"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input.to_frame()}\n",
+  "description": "Convert a Series to a DataFrame with one column",
+  "documentation": "# Convert Series to DataFrame\n\n## Description\nConvert a Series to a DataFrame with one column.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n\n## Outputs\n* **output** (Pandas DataFrame): The output DataFrame with one column.\n\n## Details\nJust converts a series to a DataFrame with the series becoming the only one column of the new DataFrame.\n",
+  "id": "2f8c3864-8d45-5d68-c73f-229ef43bf944",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "SERIES",
+        "id": "8fc109c3-fba1-25c4-d657-fca92afc1769",
+        "name": "input"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "DATAFRAME",
+        "id": "f1ae0ae9-f189-173b-8e3d-bec0efd3393a",
+        "name": "output"
+      }
+    ]
+  },
+  "name": "Convert Series to DataFrame",
+  "released_timestamp": "2022-02-09T17:33:34.109282+00:00",
+  "revision_group_id": "2f8c3864-8d45-5d68-c73f-229ef43bf944",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}

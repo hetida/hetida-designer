@@ -1,10 +1,8 @@
 import logging
 
-from hetdesrun.utils import (
-    post_components_from_directory,
-    post_workflows_from_directory,
-)
 from unittest import mock
+
+from hetdesrun.exportimport.importing import import_transformations
 
 
 def test_component_deployment(caplog):
@@ -20,11 +18,11 @@ def test_component_deployment(caplog):
                 "hetdesrun.utils.requests.put", return_value=response_mock
             ) as patched_put:
                 caplog.clear()
-                post_components_from_directory("./components")
+                import_transformations("./transformations/components")
                 assert "Reduce data set by leaving out values" in caplog.text
+                # name of a component
 
     # at least tries to upload many components (we have more than 10 there)
-    assert patched_post.call_count > 10
     assert patched_put.call_count > 10
 
     # Test logging when posting does not work
@@ -32,16 +30,11 @@ def test_component_deployment(caplog):
 
     with caplog.at_level(logging.INFO):
         with mock.patch(
-            "hetdesrun.utils.requests.post", return_value=response_mock
-        ) as patched_post:
-
-            with mock.patch(
-                "hetdesrun.utils.requests.put", return_value=response_mock
-            ) as patched_put:
-                caplog.clear()
-                post_components_from_directory("./components")
-                assert "COULD NOT POST COMPONENT" in caplog.text
-                assert "COULD NOT PUT COMPONENT DOCUMENTATION" in caplog.text
+            "hetdesrun.utils.requests.put", return_value=response_mock
+        ) as patched_put:
+            caplog.clear()
+            import_transformations("./transformations/components")
+            assert "COULD NOT PUT COMPONENT" in caplog.text
 
 
 def test_workflow_deployment(caplog):
@@ -50,7 +43,7 @@ def test_workflow_deployment(caplog):
     with mock.patch(
         "hetdesrun.utils.requests.put", return_value=response_mock
     ) as patched_put:
-        post_workflows_from_directory("./workflows")
+        import_transformations("./transformations/workflows")
 
     # at least tries to upload many workflows
     assert patched_put.call_count > 3
@@ -60,6 +53,5 @@ def test_workflow_deployment(caplog):
         "hetdesrun.utils.requests.put", return_value=response_mock
     ) as patched_put:
         caplog.clear()
-        post_workflows_from_directory("./workflows")
-        assert "COULD NOT POST WORKFLOW" in caplog.text
-        assert "COULD NOT PUT WORKFLOW DOCUMENTATION" in caplog.text
+        import_transformations("./transformations/workflows")
+        assert "COULD NOT PUT WORKFLOW" in caplog.text

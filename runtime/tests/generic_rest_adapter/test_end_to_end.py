@@ -2,7 +2,7 @@ from unittest import mock
 from copy import deepcopy
 
 from starlette.testclient import TestClient
-from hetdesrun.service.webservice import app
+from hetdesrun.webservice.application import app
 
 from hetdesrun.models.wiring import WorkflowWiring
 
@@ -10,7 +10,7 @@ import pytest
 
 
 async def run_workflow_with_client(workflow_json, open_async_test_client):
-    response = await open_async_test_client.post("/runtime", json=workflow_json)
+    response = await open_async_test_client.post("engine/runtime", json=workflow_json)
     return response.status_code, response.json()
 
 

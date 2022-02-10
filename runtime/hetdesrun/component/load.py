@@ -72,7 +72,7 @@ def import_func_from_code(
             ] = mod  # now reachable under the constructed module_path
         try:
             # actually import the module;
-            exec(code, mod.__dict__)   # pylint: disable=exec-used
+            exec(code, mod.__dict__)  # pylint: disable=exec-used
         except SyntaxError as e:
             logger.info(
                 "Syntax Error during importing function %s", func_name,

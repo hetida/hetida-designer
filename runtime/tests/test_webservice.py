@@ -2,7 +2,7 @@ import warnings
 
 from copy import deepcopy
 
-# the following line in hetdesrun.service.webservice causes a DeprecationWarning concerning
+# the following line in hetdesrun.webservice.application causes a DeprecationWarning concerning
 # imp module usage:
 #    from fastapi import FastAPI
 # Therefore we ignore such warnings here
@@ -11,14 +11,8 @@ warnings.filterwarnings("ignore", message="the imp module is deprecated")
 from starlette.testclient import TestClient
 
 import pytest
-from httpx import AsyncClient
 
-from hetdesrun.service.webservice import app
-
-
-from hetdesrun.models.run import ConfigurationInput, ExecutionEngine
-
-from hetdesrun.runtime.context import execution_context
+from hetdesrun.webservice.application import app
 
 from hetdesrun.utils import get_uuid_from_seed
 
@@ -45,7 +39,7 @@ async def test_swagger_ui_available(async_test_client):
 async def test_access_api_endpoint(async_test_client):
     async with async_test_client as ac:
         response = await ac.post(
-            "/codegen",
+            "engine/codegen",
             json={
                 "inputs": [],
                 "outputs": [],
@@ -174,7 +168,7 @@ base_workflow_json = {
 
 async def run_workflow_with_client(workflow_json, async_test_client):
     async with async_test_client as ac:
-        response = await ac.post("/runtime", json=workflow_json)
+        response = await ac.post("engine/runtime", json=workflow_json)
     return response.status_code, response.json()
 
 

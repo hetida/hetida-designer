@@ -9,7 +9,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from hetdesrun.utils import get_uuid_from_seed
-from hetdesrun.service.webservice import app
+from hetdesrun.webservice.application import app
 
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import (
@@ -20,7 +20,6 @@ from hetdesrun.models.component import (
 )
 from hetdesrun.models.workflow import (
     WorkflowNode,
-    WorkflowConnection,
     WorkflowInput,
     WorkflowOutput,
 )
@@ -29,19 +28,14 @@ from hetdesrun.models.wiring import OutputWiring, InputWiring, WorkflowWiring
 
 from hetdesrun.models.run import (
     ConfigurationInput,
-    ExecutionEngine,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
 
-
-from hetdesrun.runtime.context import execution_context
-
-from hetdesrun.utils import load_data, file_pathes_from_component_json
-
+from hetdesrun.exportimport.importing import load_json
 
 async def run_workflow_with_client(workflow_json, open_async_test_client):
-    response = await open_async_test_client.post("/runtime", json=workflow_json)
+    response = await open_async_test_client.post("engine/runtime", json=workflow_json)
     return response.status_code, response.json()
 
 
@@ -58,30 +52,21 @@ def gen_execution_input_from_single_component(
             "Excatly one of direct_provisioning_data_dict or wf_wiring must be provided"
         )
 
-    # Load component stuff
-    (
-        base_name,
-        path_to_component_json,
-        component_doc_file,
-        component_code_file,
-    ) = file_pathes_from_component_json(component_json_path)
-
-    info, doc, code = load_data(
-        path_to_component_json, component_doc_file, component_code_file
-    )
+    tr_component_json = load_json(component_json_path)
+    code = tr_component_json["content"]
 
     # Build up execution input Json
     code_module_uuid = str(get_uuid_from_seed("code_module_uuid"))
     component_uuid = str(get_uuid_from_seed("component_uuid"))
 
     comp_inputs = [
-        ComponentInput(id=str(uuid4()), name=inp["name"], type=inp["type"])
-        for inp in info["inputs"]
+        ComponentInput(id=str(uuid4()), name=inp["name"], type=inp["data_type"])
+        for inp in tr_component_json["io_interface"]["inputs"]
     ]
 
     comp_outputs = [
-        ComponentOutput(id=str(uuid4()), name=outp["name"], type=outp["type"])
-        for outp in info["outputs"]
+        ComponentOutput(id=str(uuid4()), name=outp["name"], type=outp["data_type"])
+        for outp in tr_component_json["io_interface"]["outputs"]
     ]
 
     component_node_id = "component_node_id"
@@ -91,7 +76,7 @@ def gen_execution_input_from_single_component(
         components=[
             ComponentRevision(
                 uuid=component_uuid,
-                name=info["name"],
+                name=tr_component_json["name"],
                 code_module_uuid=code_module_uuid,
                 function_name="main",
                 inputs=comp_inputs,
@@ -154,7 +139,7 @@ async def run_single_component(
 ):
 
     response = await open_async_test_client.post(
-        "/runtime",
+        "engine/runtime",
         json=json.loads(
             gen_execution_input_from_single_component(
                 component_json_file_path,
@@ -171,7 +156,7 @@ async def test_null_values_pass_any_pass_through(async_test_client):
     async with async_test_client as client:
 
         exec_result = await run_single_component(
-            "./components/Connectors/pass_through.json",
+            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
             {"input": {"a": 1.5, "b": None}},
             client,
         )
@@ -187,7 +172,9 @@ async def test_null_list_values_pass_any_pass_through(async_test_client):
     async with async_test_client as client:
 
         exec_result = await run_single_component(
-            "./components/Connectors/pass_through.json", {"input": [1.2, None]}, client
+            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+            {"input": [1.2, None]},
+            client
         )
         assert exec_result.output_results_by_output_name["output"] == [1.2, None]
 
@@ -197,25 +184,21 @@ async def test_null_values_pass_series_pass_through(async_test_client):
     async with async_test_client as client:
 
         exec_result = await run_single_component(
-            "./components/Connectors/pass_through_series.json",
+            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
             {"input": {"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}},
             client,
         )
         assert exec_result.output_results_by_output_name["output"] == {
-            "2020-01-01T00:00:00.000Z": 1.5,
-            "2020-01-02T00:00:00.000Z": None,
+            "2020-01-01T00:00:00Z": 1.5,
+            "2020-01-02T00:00:00Z": None,
         }
 
         exec_result = await run_single_component(
-            "./components/Connectors/pass_through_series.json",
+            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
             {"input": [1.2, 2.5, None]},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == {
-            "0": 1.2,
-            "1": 2.5,
-            "2": None,
-        }
+        assert exec_result.output_results_by_output_name["output"] == [1.2, 2.5, None]
 
 
 @pytest.mark.asyncio
@@ -223,13 +206,13 @@ async def test_all_null_values_pass_series_pass_through(async_test_client):
     async with async_test_client as client:
 
         exec_result = await run_single_component(
-            "./components/Connectors/pass_through_series.json",
+            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
             {"input": {"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}},
             client,
         )
         assert exec_result.output_results_by_output_name["output"] == {
-            "2020-01-01T00:00:00.000Z": None,
-            "2020-01-02T00:00:00.000Z": None,
+            "2020-01-01T00:00:00Z": None,
+            "2020-01-02T00:00:00Z": None,
         }
 
 

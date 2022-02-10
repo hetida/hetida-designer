@@ -1,0 +1,38 @@
+{
+  "category": "Models",
+  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType  # add your own imports here\n\nimport pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"data\": DataType.Any, \"trained_model\": DataType.Any},\n    outputs={\"predictions\": DataType.Any},\n    component_name=\"Predict Sklearn Trained Model\",\n    description=\"Predict Sklearn Trained Model\",\n    category=\"Models\",\n    uuid=\"41e8bf16-0a16-6021-33c9-88c2f8336df8\",\n    group_id=\"41e8bf16-0a16-6021-33c9-88c2f8336df8\",\n    tag=\"1.0.0\"\n)\ndef main(*, data, trained_model):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"predictions\": pd.DataFrame(trained_model.predict(data), index=data.index)}\n\n",
+  "description": "Predict Sklearn Trained Model",
+  "documentation": "# Predict Sklearn Trained Model\n\n## Description\nPredict Sklearn Trained Model.\n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): The data on which the model is applied.\n* **trained_model** (Any): The trained sklearn model.\n\n## Outputs\n* **predictions** (Pandas Series or Pandas DataFrame): The predicted values.\n\n## Details\nCalls the predict method of the trained model on new data.\n",
+  "id": "41e8bf16-0a16-6021-33c9-88c2f8336df8",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "70e3561b-2ca0-f6a4-5ce3-1c05c8c4b32e",
+        "name": "data"
+      },
+      {
+        "data_type": "ANY",
+        "id": "a0540d21-cff0-a6f4-f88a-af5c14f43340",
+        "name": "trained_model"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "15b7d9b9-7337-4c81-1337-c69cbadfbd8e",
+        "name": "predictions"
+      }
+    ]
+  },
+  "name": "Predict Sklearn Trained Model",
+  "released_timestamp": "2022-02-09T17:33:32.826915+00:00",
+  "revision_group_id": "41e8bf16-0a16-6021-33c9-88c2f8336df8",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}
