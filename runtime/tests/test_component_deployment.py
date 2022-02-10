@@ -10,17 +10,14 @@ def test_component_deployment(caplog):
     response_mock.status_code = 200
 
     with caplog.at_level(logging.DEBUG):
-        with mock.patch(
-            "hetdesrun.utils.requests.post", return_value=response_mock
-        ) as patched_post:
 
-            with mock.patch(
-                "hetdesrun.utils.requests.put", return_value=response_mock
-            ) as patched_put:
-                caplog.clear()
-                import_transformations("./transformations/components")
-                assert "Reduce data set by leaving out values" in caplog.text
-                # name of a component
+        with mock.patch(
+            "hetdesrun.utils.requests.put", return_value=response_mock
+        ) as patched_put:
+            caplog.clear()
+            import_transformations("./transformations/components")
+            assert "Reduce data set by leaving out values" in caplog.text
+            # name of a component
 
     # at least tries to upload many components (we have more than 10 there)
     assert patched_put.call_count > 10
@@ -40,6 +37,7 @@ def test_component_deployment(caplog):
 def test_workflow_deployment(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
+    
     with mock.patch(
         "hetdesrun.utils.requests.put", return_value=response_mock
     ) as patched_put:
