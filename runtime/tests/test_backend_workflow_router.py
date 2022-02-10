@@ -3,14 +3,16 @@ import pytest
 
 from starlette.testclient import TestClient
 
-from typing import List
-from uuid import UUID
-import os
 import json
+from uuid import UUID
+from posixpath import join as posix_urljoin
 
-from hetdesrun.utils import ComponentDTO, IODTO, load_data, get_uuid_from_seed
+from hetdesrun.utils import get_uuid_from_seed
 
 from hetdesrun.webservice.application import app
+from hetdesrun.webservice.config import runtime_config
+
+from hetdesrun.exportimport.importing import load_json
 
 from hetdesrun.persistence import get_db_engine, sessionmaker
 
@@ -493,130 +495,44 @@ async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_en
             "hetdesrun.persistence.dbservice.revision.Session", patched_session,
         ):
             async with async_test_client as ac:
-                base_path_components = "components"
-                component_categories: List[str] = [
-                    "Connectors",
-                    "Connectors",
-                    "Connectors",
-                    "Remaining_Useful_Life",
-                    "Visualization",
-                    "Arithmetic",
-                    "Basic",
-                    "Basic",
-                    "Basic",
-                    "Basic",
-                    "Connectors",
-                    # "Connectors",
-                    # "Connectors",
-                    "Visualization",
-                ]
-                component_file_names_without_ext: List[str] = [
-                    "pass_through_int",
-                    "pass_through_series",
-                    "pass_through_string",
-                    "univariate_linear_rul_regression",
-                    "univariate_linear_rul_regression_plot",
-                    "consecutive_differences",
-                    "filter",
-                    "greater_or_equal",
-                    "last_datetime_index",
-                    "restrict_to_time_interval",
-                    "pass_through_float",
-                    # "pass_through_series",
-                    # "pass_through_series",
-                    "single_timeseries_plot",
+
+                json_files = [
+                    "./transformations/components/connectors/pass-through-integer_100_57eea09f-d28e-89af-4e81-2027697a3f0f.json",
+                    "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
+                    "./transformations/components/connectors/pass-through-string_100_2b1b474f-ddf5-1f4d-fec4-17ef9122112b.json",
+                    "./transformations/components/remaining-useful-life/univariate-linear-rul-regression_100_8d61a267-3a71-51cd-2817-48c320469d6b.json",
+                    "./transformations/components/visualization/univariate-linear-rul-regression-result-plot_100_9c3f88ce-1311-241e-18b7-acf7d3f5a051.json",
+                    "./transformations/components/arithmetic/consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json",
+                    "./transformations/components/basic/filter_100_18260aab-bdd6-af5c-cac1-7bafde85188f.json",
+                    "./transformations/components/basic/greater-or-equal_100_f759e4c0-1468-0f2e-9740-41302b860193.json",
+                    "./transformations/components/basic/last-datetime-index_100_c8e3bc64-b214-6486-31db-92a8888d8991.json",
+                    "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.json",
+                    "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
+                    "./transformations/components/visualization/single-timeseries-plot_100_8fba9b51-a0f1-6c6c-a6d4-e224103b819c.json",
+                    "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json",
+                    "./transformations/workflows/examples/univariate-linear-rul-regression-example_100_806df1b9-2fc8-4463-943f-3d258c569663.json",
+                    "./transformations/workflows/examples/linear-rul-from-last-positive-step_100_3d504361-e351-4d52-8734-391aa47e8f24.json"
                 ]
 
-                for index in range(len(component_file_names_without_ext)):
-                    path_without_ext = os.path.join(
-                        base_path_components,
-                        component_categories[index],
-                        component_file_names_without_ext[index],
-                    )
-                    component_json_file = path_without_ext + ".json"
-                    component_doc_file = path_without_ext + ".md"
-                    component_code_file = path_without_ext + ".py"
-
-                    base_name = os.path.basename(path_without_ext)
-                    category = component_categories[index]
-                    info, doc, code = load_data(
-                        component_json_file, component_doc_file, component_code_file
-                    )
-
-                    comp_id = get_uuid_from_seed("component_" + base_name)
-                    # add IDs to inputs
-                    info["inputs"] = [
-                        IODTO(
-                            **input,
-                            id=get_uuid_from_seed(
-                                "component_input_" + base_name + "_" + input["name"]
-                            ),
-                        )
-                        for input in info["inputs"]
-                    ]
-
-                    # add IDs to outputs
-                    info["outputs"] = [
-                        IODTO(
-                            **output,
-                            id=get_uuid_from_seed(
-                                "component_output_" + base_name + "_" + output["name"]
-                            ),
-                        )
-                        for output in info["outputs"]
-                    ]
-
-                    comp_dto = ComponentDTO(
-                        **info,
-                        category=category.replace("_", " "),
-                        code=code,
-                        groupId=comp_id,
-                        id=comp_id,
-                        tag="1.0.0",
-                    )
+                for file in json_files:
+                    tr_json = load_json(file)
 
                     response = await ac.put(
-                        "/api/components/" + str(comp_id),
-                        json=json.loads(comp_dto.json()),
+                        posix_urljoin(
+                            runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
+                        )
+                        + "?allow_overwrite_released=True",
+                        json=tr_json,
                     )
 
-                base_path_workflows = ["workflows", "workflows", "workflows2"]
-                workflow_categories = ["Examples", "Examples", "Examples"]
-                workflow_file_names_without_ext = [
-                    "Univariate_Linear_RUL_Regression_Example",
-                    "Data_From_Last_Positive_Step",
-                    "Linear_RUL_From_Last_Positive_Step",
-                ]
-                workflow_ids: List[UUID] = []
-                for index in range(len(workflow_file_names_without_ext)):
-                    path_without_ext = os.path.join(
-                        base_path_workflows[index],
-                        workflow_categories[index],
-                        workflow_file_names_without_ext[index],
-                    )
-                    base_name = os.path.basename(path_without_ext)
-
-                    workflow_json_file = path_without_ext + ".json"
-                    workflow_doc_file = path_without_ext + ".md"
-
-                    info, doc, _ = load_data(workflow_json_file, workflow_doc_file)
-
-                    workflow_id = info["id"]
-
-                    response = await ac.put(
-                        "/api/workflows/" + str(workflow_id), json=info
-                    )
-
-                    workflow_ids.append(workflow_id)
-
-                workflow_id = workflow_ids[2]
+                workflow_id = UUID("3d504361-e351-4d52-8734-391aa47e8f24")
                 tr_workflow = read_single_transformation_revision(workflow_id)
                 wiring_dto = WiringFrontendDto.from_wiring(
                     tr_workflow.test_wiring, workflow_id
                 )
 
                 response = await ac.post(
-                    "/api/workflows/" + workflow_id + "/execute",
+                    "/api/workflows/" + str(workflow_id) + "/execute",
                     json=json.loads(wiring_dto.json(by_alias=True)),
                 )
 

@@ -2,14 +2,12 @@
 
 import json
 from typing import List, Optional, Tuple, Any, Dict
-
-
 from enum import Enum
-
 from uuid import UUID
 import random
-
 import logging
+import requests
+
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 from plotly.graph_objects import Figure
