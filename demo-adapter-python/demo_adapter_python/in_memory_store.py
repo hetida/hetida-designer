@@ -4,8 +4,6 @@ from multiprocessing import Manager
 
 import pandas as pd
 
-from demo_adapter_python.models import GetMetadatum
-
 manager = Manager()
 
 store = manager.dict()

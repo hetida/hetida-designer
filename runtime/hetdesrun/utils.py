@@ -6,7 +6,8 @@ from enum import Enum
 from uuid import UUID
 import random
 import logging
-import requests
+
+import requests  # pylint: disable=unused-import
 
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
