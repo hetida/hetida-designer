@@ -1,6 +1,7 @@
 import logging
 
 from uuid import UUID, uuid4
+import json
 
 import httpx
 from fastapi import APIRouter, Path, status, HTTPException
@@ -111,7 +112,10 @@ async def create_component_revision(
     deprecated=True,
 )
 async def get_component_revision_by_id(
-    id: UUID = Path(..., example=UUID("123e4567-e89b-12d3-a456-426614174000"),),
+    id: UUID = Path(
+        ...,
+        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+    ),
 ) -> ComponentRevisionFrontendDto:
     """
     Use GET /api/transformations/{id} instead
@@ -151,7 +155,8 @@ async def get_component_revision_by_id(
     deprecated=True,
 )
 async def update_component_revision(
-    id: UUID, updated_component_dto: ComponentRevisionFrontendDto,
+    id: UUID,
+    updated_component_dto: ComponentRevisionFrontendDto,
 ) -> ComponentRevisionFrontendDto:
     """
     Use PUT /api/transformations/{id} instead
@@ -181,8 +186,10 @@ async def update_component_revision(
         if existing_transformation_revision.state == State.RELEASED:
             if updated_component_dto.state == State.DISABLED:
                 logger.info(f"deprecate transformation revision {id}")
-                updated_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
-                    existing_transformation_revision
+                updated_component_dto = (
+                    ComponentRevisionFrontendDto.from_transformation_revision(
+                        existing_transformation_revision
+                    )
                 )
                 updated_component_dto.state = State.DISABLED
             else:
@@ -201,8 +208,10 @@ async def update_component_revision(
     updated_transformation_revision = updated_component_dto.to_transformation_revision()
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            updated_transformation_revision
+        persisted_transformation_revision = (
+            update_or_create_single_transformation_revision(
+                updated_transformation_revision
+            )
         )
         logger.info(f"updated component {id}")
     except DBIntegrityError as e:
@@ -230,7 +239,9 @@ async def update_component_revision(
     },
     deprecated=True,
 )
-async def delete_component_revision(id: UUID,) -> None:
+async def delete_component_revision(
+    id: UUID,
+) -> None:
     """
     Use DELETE /api/transformations/{id} instead
     """
@@ -264,7 +275,9 @@ async def delete_component_revision(id: UUID,) -> None:
     deprecated=True,
 )
 async def execute_component_revision(
-    id: UUID, wiring_dto: WiringFrontendDto, run_pure_plot_operators: bool = False,
+    id: UUID,
+    wiring_dto: WiringFrontendDto,
+    run_pure_plot_operators: bool = False,
 ) -> ExecutionResponseFrontendDto:
     """
     Use POST /api/transformations/{id}/execute instead
@@ -293,7 +306,8 @@ async def execute_component_revision(
         components=[tr_component.to_component_revision()],
         workflow=workflow_node,
         configuration=ConfigurationInput(
-            name=str(tr_workflow.id), run_pure_plot_operators=run_pure_plot_operators,
+            name=str(tr_workflow.id),
+            run_pure_plot_operators=run_pure_plot_operators,
         ),
         workflow_wiring=wiring_dto.to_workflow_wiring(),
     )
@@ -315,7 +329,12 @@ async def execute_component_revision(
             url = posix_urljoin(runtime_config.hd_runtime_engine_url, "runtime")
             try:
                 response = await client.post(
-                    url, headers=headers,  # TODO: authentication
+                    url,
+                    headers=headers,  # TODO: authentication
+                    json=json.loads(
+                        execution_input.json()
+                    ),  # TODO: avoid double serialization. see https://github.com/samuelcolvin/pydantic/issues/1409
+                    # see also https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
                 )
             except httpx.HTTPError as e:
                 msg = f"Failure connecting to hd runtime endpoint ({url}):\n{e}"
@@ -358,7 +377,8 @@ async def execute_component_revision(
     deprecated=True,
 )
 async def bind_wiring_to_component_revision(
-    id: UUID, wiring_dto: WiringFrontendDto,
+    id: UUID,
+    wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:
     """
     Use PUT /api/transformations/{id} instead
@@ -381,8 +401,8 @@ async def bind_wiring_to_component_revision(
     transformation_revision.test_wiring = wiring
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            transformation_revision
+        persisted_transformation_revision = (
+            update_or_create_single_transformation_revision(transformation_revision)
         )
         logger.info(f"bound wiring to component {id}")
     except DBIntegrityError as e:
