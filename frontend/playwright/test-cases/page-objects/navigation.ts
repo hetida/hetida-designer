@@ -9,26 +9,35 @@ export class Navigation {
 
   public async clickTabNavigation(tabPosition: number): Promise<void> {
     if (tabPosition >= 0) {
-      await this.page.locator('div[role="tab"] >> nth=' + tabPosition + '').click();
+      await this.page.locator(`div[role="tab"] >> nth=${tabPosition}`).click();
     } else {
-      console.error('ERROR: Negative tab position! ' + tabPosition);
+      console.error(`ERROR: Negative tab position! ${tabPosition}`);
     }
   }
 
   public async clickBtnNavigation(btnText: String): Promise<void> {
     if (btnText !== '') {
-      await this.page.locator('button:has-text("' + btnText + '")').click();
+      await this.page.locator(`button:has-text("${btnText}")`).click();
       await this.page.waitForSelector('hd-navigation-category'); // Wait for workflows or components
     } else {
-      console.error('ERROR: Cannot locate button! ' + btnText);
+      console.error(`ERROR: Cannot locate button! ${btnText}`);
     }
   }
 
-  public async clickExpansionPanelNavigation(panelTitle: String): Promise<void> {
-    if (panelTitle !== '') {
-      await this.page.click('mat-expansion-panel-header[role="button"]:has-text("' + panelTitle + '")');
+  public async clickExpansionPanelNavigation(categoryName: String): Promise<void> {
+    if (categoryName !== '') {
+      await this.page.click(`mat-expansion-panel-header[role="button"]:has-text("${categoryName}")`);
     } else {
-      console.error('ERROR: Cannot locate expansion panel! ' + panelTitle);
+      console.error(`ERROR: Cannot locate category "expansion panel"! ${categoryName}`);
+    }
+  }
+
+  public async doubleClickItemNavigation(categoryName: String, itemName: String): Promise<void> {
+    if (itemName !== '') {
+      await this.page.locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
+        .locator(`.navigation-item:has-text("${itemName}") >> nth=0`).dblclick();
+    } else {
+      console.error(`ERROR: Cannot locate item ${itemName} in category ${categoryName}!`);
     }
   }
 }
