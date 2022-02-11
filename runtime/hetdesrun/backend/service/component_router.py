@@ -1,6 +1,7 @@
 import logging
 
 from uuid import UUID, uuid4
+import json
 
 import httpx
 from fastapi import APIRouter, Path, status, HTTPException
@@ -71,7 +72,7 @@ async def create_component_revision(
     component_dto: ComponentRevisionFrontendDto,
 ) -> ComponentRevisionFrontendDto:
     """Store a transformation revision of type component in the data base.
-    
+
     This endpoint is deprecated and will be removed soon,
     use POST /api/transformations/ instead.
     """
@@ -116,7 +117,7 @@ async def get_component_revision_by_id(
     id: UUID = Path(..., example=UUID("123e4567-e89b-12d3-a456-426614174000"),),
 ) -> ComponentRevisionFrontendDto:
     """Get a single transformation revision of type component from the data base.
-    
+
     This endpoint is deprecated and will be removed soon,
     use GET /api/transformations/{id} instead.
     """
@@ -158,12 +159,12 @@ async def update_component_revision(
     id: UUID, updated_component_dto: ComponentRevisionFrontendDto,
 ) -> ComponentRevisionFrontendDto:
     """Update or store a transformation revision of type component in the data base.
-    
+
     If no DB entry with the provided id is found, it will be created.
 
     Updating a transformation revision is only possible if it is in state DRAFT
     or to change the state from RELEASED to DISABLED.
-    
+
     This endpoint is deprecated and will be removed soon,
     use PUT /api/transformations/{id} instead.
     """
@@ -243,7 +244,7 @@ async def update_component_revision(
 )
 async def delete_component_revision(id: UUID,) -> None:
     """Delete a transformation revision of type component from the data base.
-    
+
     Deleting a transformation revision is only possible if it is in state DRAFT.
 
     This endpoint is deprecated and will be removed soon,
@@ -282,7 +283,7 @@ async def execute_component_revision(
     id: UUID, wiring_dto: WiringFrontendDto, run_pure_plot_operators: bool = False,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision of type component.
-    
+
     This endpoint is deprecated and will be removed soon,
     use POST /api/transformations/{id}/execute instead.
     """
@@ -332,7 +333,12 @@ async def execute_component_revision(
             url = posix_urljoin(runtime_config.hd_runtime_engine_url, "runtime")
             try:
                 response = await client.post(
-                    url, headers=headers,  # TODO: authentication
+                    url,
+                    headers=headers,  # TODO: authentication
+                    json=json.loads(
+                        execution_input.json()
+                    ),  # TODO: avoid double serialization. see https://github.com/samuelcolvin/pydantic/issues/1409
+                    # see also https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
                 )
             except httpx.HTTPError as e:
                 msg = f"Failure connecting to hd runtime endpoint ({url}):\n{e}"
@@ -378,7 +384,7 @@ async def bind_wiring_to_component_revision(
     id: UUID, wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:
     """Store or update the test wiring of a transformation revision of type component.
-    
+
     This endpoint is deprecated and will be removed soon,
     use PUT /api/transformations/{id} instead.
     """
