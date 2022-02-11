@@ -31,7 +31,7 @@ class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
             description=self.description,
             category=self.category,
             uuid=str(self.id),
-            group_id=str(self.id),
+            group_id=str(self.group_id),
             tag=self.tag,
         )
 
