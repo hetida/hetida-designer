@@ -125,7 +125,7 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
             refId=input_wiring.ref_id,
             refIdType=input_wiring.ref_id_type,
             refIdKey=input_wiring.ref_key,
-            type=input_wiring.ref_id_type,
+            type=input_wiring.type,
             workflowInputName=input_wiring.workflow_input_name,
             adapterId=input_wiring.adapter_id,
             filters=input_wiring.filters,
