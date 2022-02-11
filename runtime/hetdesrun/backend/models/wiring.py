@@ -63,7 +63,7 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
         return OutputWiring(
             ref_id=self.ref_id,
             ref_id_type=self.ref_id_type,
-            ref_id_key=self.ref_key,
+            ref_key=self.ref_key,
             type=self.type,
             workflow_output_name=self.workflow_output_name,
             adapter_id=self.adapter_id,
@@ -76,7 +76,7 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
         return OutputWiringFrontendDto(
             refId=output_wiring.ref_id,
             refIdType=output_wiring.ref_id_type,
-            refIdKey=output_wiring.ref_key,
+            refKey=output_wiring.ref_key,
             type=output_wiring.ref_id_type,
             workflowOutputName=output_wiring.workflow_output_name,
             adapterId=output_wiring.adapter_id,
@@ -112,7 +112,7 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
         return InputWiring(
             ref_id=self.ref_id,
             ref_id_type=self.ref_id_type,
-            ref_id_key=self.ref_key,
+            ref_key=self.ref_key,
             type=self.type,
             workflow_input_name=self.workflow_input_name,
             adapter_id=self.adapter_id,
@@ -124,7 +124,7 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
         return InputWiringFrontendDto(
             refId=input_wiring.ref_id,
             refIdType=input_wiring.ref_id_type,
-            refIdKey=input_wiring.ref_key,
+            refKey=input_wiring.ref_key,
             type=input_wiring.type,
             workflowInputName=input_wiring.workflow_input_name,
             adapterId=input_wiring.adapter_id,
