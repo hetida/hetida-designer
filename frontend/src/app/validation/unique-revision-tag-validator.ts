@@ -7,7 +7,7 @@ export function UniqueRevisionTagValidator(
   return (control: AbstractControl): ValidationErrors | null => {
     if (
       revisionItems.filter(item => item.tag.trim() === control.value.trim())
-        .length > 0
+        .length > 1
     ) {
       return { revisionTag: { valid: false } };
     }
