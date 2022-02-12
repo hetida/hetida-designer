@@ -21,6 +21,10 @@ from hetdesrun.adapters.exceptions import (
 
 from hetdesrun.backend.service.adapter_router import get_all_adapters
 
+from hetdesrun.backend.service.utils import to_camel
+
+from hetdesrun.backend.models.adapter import AdapterFrontendDto
+
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +43,11 @@ class BackendRegisteredGenericRestAdapter(BaseModel):
     id: str
     name: str
     url: str
-    internal_url: str
+    internalUrl: str
+
+
+class AdapterFrontendDtoRegisteredGenericRestAdapters(BaseModel):
+    __root__: List[AdapterFrontendDto]
 
 
 class BackendRegisteredGenericRestAdapters(BaseModel):
@@ -60,7 +68,12 @@ async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestA
 
         try:
             loaded_generic_rest_adapters: List[BackendRegisteredGenericRestAdapter] = [
-                BackendRegisteredGenericRestAdapter(**(adapter_dto.dict()))
+                BackendRegisteredGenericRestAdapter(
+                    id=adapter_dto.id,
+                    name=adapter_dto.name,
+                    url=adapter_dto.url,
+                    internalUrl=adapter_dto.internal_url,
+                )
                 for adapter_dto in adapter_list
             ]
         except ValidationError as e:
@@ -93,9 +106,17 @@ async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestA
             raise AdapterConnectionError(msg)
 
         try:
-            loaded_generic_rest_adapters = (
-                BackendRegisteredGenericRestAdapters.parse_obj(resp.json()).__root__
-            )
+            loaded_generic_rest_adapters = [
+                BackendRegisteredGenericRestAdapter(
+                    id=adapter_dto.id,
+                    name=adapter_dto.name,
+                    url=adapter_dto.url,
+                    internalUrl=adapter_dto.internal_url,
+                )
+                for adapter_dto in AdapterFrontendDtoRegisteredGenericRestAdapters.parse_obj(
+                    resp.json()
+                ).__root__
+            ]
         except ValidationError as e:
             msg = "Failure trying to parse received generic adapter infos: " + str(e)
 
@@ -118,7 +139,7 @@ async def update_generic_adapter_base_urls_cache() -> None:
         for generic_adapter_info in generic_adapter_infos:
             generic_rest_adapter_urls[
                 generic_adapter_info.id
-            ] = generic_adapter_info.internal_url
+            ] = generic_adapter_info.internalUrl
 
 
 async def get_generic_rest_adapter_base_url(
