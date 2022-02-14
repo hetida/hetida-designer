@@ -116,7 +116,10 @@ class Constant(Connector):
                 "Missing data_type attribute makes it impossible to parse constant value."
             ) from e
 
-        return parse_dynamically_single_value(v, data_type).value  # type: ignore
+        if data_type == DataType.Any:
+            return v
+        else:
+            return parse_dynamically_single_value(v, data_type).value  # type: ignore
 
     @root_validator()
     def name_none(cls, values: dict) -> dict:
