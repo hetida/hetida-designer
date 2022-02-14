@@ -40,4 +40,20 @@ export class Navigation {
       console.error(`ERROR: Cannot locate item ${itemName} in category ${categoryName}!`);
     }
   }
+
+  public async clickIconToolbar(iconTitle: String): Promise<void> {
+    if (iconTitle !== '') {
+      await this.page.locator('hd-toolbar').locator(`mat-icon[title="${iconTitle}"]`).click();
+    } else {
+      console.error(`ERROR: Cannot locate icon! ${iconTitle}`);
+    }
+  }
+
+  public async clickBtnDialog(btnText: String): Promise<void> {
+    if (btnText !== '') {
+      await this.page.locator(`button:has-text("${btnText}")`).click();
+    } else {
+      console.error(`ERROR: Cannot locate button! ${btnText}`);
+    }
+  }
 }

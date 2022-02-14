@@ -5,7 +5,8 @@
   "homepage": "https://neusta-sd-west.de/data-science/hetida-designer/",
   "license": "TODO",
   "scripts": {
-    "test": "playwright test"
+    "run-e2e-all": "playwright test",
+    "run-e2e-chromium": "playwright test --project=chromium"
   },
   "private": true,
   "devDependencies": {

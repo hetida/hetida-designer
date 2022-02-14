@@ -26,14 +26,14 @@ test('Open workflow on double-click', async ({ page }) => {
   // Open workflow on double-click
   await navigation.doubleClickItemNavigation(categoryName, workflowName);
 
+  // Check for equal names in list and opened tab
   const componentListName = await page.locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
     .locator(`.navigation-item:has-text("${workflowName}") >> nth=0`)
     .locator('.text-ellipsis').innerText();
 
   const componentTabName = await page.locator('div[role="tab"] >> nth=1').locator('.text-ellipsis').innerText();
-
-  // Check for equal names in list and opened tab
   expect(componentListName).toEqual(componentTabName);
+
   // Check if hd-workflow-editor exists and contains a svg image
   const svgInEditor = page.locator('hd-workflow-editor').locator('svg >> nth=0');
   await expect(svgInEditor).toHaveAttribute('class', 'hetida-flowchart-svg');
