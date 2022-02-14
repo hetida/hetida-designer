@@ -192,6 +192,7 @@ class RuntimeConfig(BaseSettings):
         env="HETIDA_DESIGNER_RUNTIME_EGINE_URL",
         description="URL to runtime",
     )
+
     hd_runtime_verify_certs: bool = Field(
         True, env="HETIDA_DESIGNER_RUNTIME_VERIFY_CERTS"
     )
