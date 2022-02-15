@@ -81,7 +81,17 @@ async def create_workflow_revision(
 
     logger.info(f"create a new workflow")
 
-    transformation_revision = workflow_dto.to_transformation_revision()
+    transformation_revision = workflow_dto.to_transformation_revision(
+        documentation=(
+            "\n"
+            "# New Component/Workflow\n"
+            "## Description\n"
+            "## Inputs\n"
+            "## Outputs\n"
+            "## Details\n"
+            "## Examples\n"
+        )
+    )
 
     try:
         store_single_transformation_revision(transformation_revision)

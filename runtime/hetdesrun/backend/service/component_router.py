@@ -83,7 +83,17 @@ async def create_component_revision(
     component_dto.code = generate_code(component_dto.to_code_body())
     logger.debug(f"generated code:\n{component_dto.code}")
 
-    transformation_revision = component_dto.to_transformation_revision()
+    transformation_revision = component_dto.to_transformation_revision(
+         documentation=(
+            "\n"
+            "# New Component/Workflow\n"
+            "## Description\n"
+            "## Inputs\n"
+            "## Outputs\n"
+            "## Details\n"
+            "## Examples\n"
+        )
+    )
 
     try:
         store_single_transformation_revision(transformation_revision)

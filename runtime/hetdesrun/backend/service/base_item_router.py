@@ -128,7 +128,17 @@ async def create_transformation_revision(
 
     logger.info(f"create base item {id}")
 
-    transformation_revision = transformation_revision_dto.to_transformation_revision()
+    transformation_revision = transformation_revision_dto.to_transformation_revision(
+        documentation=(
+            "\n"
+            "# New Component/Workflow\n"
+            "## Description\n"
+            "## Inputs\n"
+            "## Outputs\n"
+            "## Details\n"
+            "## Examples\n"
+        )
+    )
 
     if transformation_revision.type == Type.COMPONENT:
         logger.debug(f"transformation revision has type {Type.COMPONENT}")
