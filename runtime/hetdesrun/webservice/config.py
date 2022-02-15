@@ -192,15 +192,19 @@ class RuntimeConfig(BaseSettings):
         env="HETIDA_DESIGNER_RUNTIME_EGINE_URL",
         description="URL to runtime",
     )
+
     hd_runtime_verify_certs: bool = Field(
         True, env="HETIDA_DESIGNER_RUNTIME_VERIFY_CERTS"
     )
 
     # For scripts (e.g. component deployment)
     hd_backend_api_url: str = Field(
-        "http://hetida-designer-backend:8080/api/",
+        "http://hetida-designer-backend:8090/api/",
         env="HETIDA_DESIGNER_BACKEND_API_URL",
-        description="URL to backend. Only necessary for component deployment.",
+        description=(
+            "URL to backend. Necessary for component deployment "
+            "and to allow runtime to access adapters endpoint."
+        ),
     )
     hd_backend_use_basic_auth: bool = Field(
         False,
@@ -213,10 +217,14 @@ class RuntimeConfig(BaseSettings):
         ),
     )
     hd_backend_basic_auth_user: Optional[str] = Field(
-        None, env="HETIDA_DESIGNER_BASIC_AUTH_USER", description="Basic Auth User",
+        None,
+        env="HETIDA_DESIGNER_BASIC_AUTH_USER",
+        description="Basic Auth User",
     )
     hd_backend_basic_auth_password: Optional[str] = Field(
-        None, env="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD", description="Basic Auth User",
+        None,
+        env="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD",
+        description="Basic Auth User",
     )
     hd_backend_verify_certs: bool = Field(
         True, env="HETIDA_DESIGNER_BACKEND_VERIFY_CERTS"

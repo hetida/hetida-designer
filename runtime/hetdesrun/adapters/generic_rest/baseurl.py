@@ -19,6 +19,12 @@ from hetdesrun.adapters.exceptions import (
     AdapterHandlingException,
 )
 
+from hetdesrun.backend.service.adapter_router import get_all_adapters
+
+from hetdesrun.backend.service.utils import to_camel
+
+from hetdesrun.backend.models.adapter import AdapterFrontendDto
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +46,10 @@ class BackendRegisteredGenericRestAdapter(BaseModel):
     internalUrl: str
 
 
+class AdapterFrontendDtoRegisteredGenericRestAdapters(BaseModel):
+    __root__: List[AdapterFrontendDto]
+
+
 class BackendRegisteredGenericRestAdapters(BaseModel):
     __root__: List[BackendRegisteredGenericRestAdapter]
 
@@ -52,40 +62,70 @@ async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestA
     url = posix_urljoin(runtime_config.hd_backend_api_url, "adapters/")
     logger.info("Start getting Generic REST Adapter URLS from HD Backend url %s", url)
 
-    async with httpx.AsyncClient(
-        verify=runtime_config.hd_backend_verify_certs
-    ) as client:
+    if runtime_config.is_backend_service:
+        # call function directly
+        adapter_list = await get_all_adapters()
+
         try:
-            resp = await client.get(url, headers=headers)
-        except httpx.HTTPError as e:
-            msg = f"Failure connecting to hd backend adapters endpoint ({url}): " + str(
-                e
-            )
+            loaded_generic_rest_adapters: List[BackendRegisteredGenericRestAdapter] = [
+                BackendRegisteredGenericRestAdapter(
+                    id=adapter_dto.id,
+                    name=adapter_dto.name,
+                    url=adapter_dto.url,
+                    internalUrl=adapter_dto.internal_url,
+                )
+                for adapter_dto in adapter_list
+            ]
+        except ValidationError as e:
+            msg = "Failure trying to parse received generic adapter infos: " + str(e)
+
             logger.info(msg)
-            raise AdapterConnectionError(msg) from e
+            raise AdapterHandlingException(msg) from e
+    else:
+        # call backend service "adapters" endpoint
+        async with httpx.AsyncClient(
+            verify=runtime_config.hd_backend_verify_certs
+        ) as client:
+            try:
+                resp = await client.get(url, headers=headers)
+            except httpx.HTTPError as e:
+                msg = (
+                    f"Failure connecting to hd backend adapters endpoint ({url}): "
+                    + str(e)
+                )
+                logger.info(msg)
+                raise AdapterConnectionError(msg) from e
 
-    if resp.status_code != 200:
-        msg = (
-            f"HTTP failure trying to receive generic adapter infos from hd backend ({url}):"
-            f" Status code {str(resp.status_code)}. Response: {resp.text}"
+        if resp.status_code != 200:
+            msg = (
+                f"HTTP failure trying to receive generic adapter infos from hd backend ({url}):"
+                f" Status code {str(resp.status_code)}. Response: {resp.text}"
+            )
+
+            logger.info(msg)
+            raise AdapterConnectionError(msg)
+
+        try:
+            loaded_generic_rest_adapters = [
+                BackendRegisteredGenericRestAdapter(
+                    id=adapter_dto.id,
+                    name=adapter_dto.name,
+                    url=adapter_dto.url,
+                    internalUrl=adapter_dto.internal_url,
+                )
+                for adapter_dto in AdapterFrontendDtoRegisteredGenericRestAdapters.parse_obj(
+                    resp.json()
+                ).__root__
+            ]
+        except ValidationError as e:
+            msg = "Failure trying to parse received generic adapter infos: " + str(e)
+
+            logger.info(msg)
+            raise AdapterHandlingException(msg) from e
+
+        logger.info(
+            "Finished getting Generic REST Adapter URLS from HD Backend url %s", url
         )
-
-        logger.info(msg)
-        raise AdapterConnectionError(msg)
-
-    try:
-        loaded_generic_rest_adapters: List[
-            BackendRegisteredGenericRestAdapter
-        ] = BackendRegisteredGenericRestAdapters.parse_obj(resp.json()).__root__
-    except ValidationError as e:
-        msg = "Failure trying to parse received generic adapter infos: " + str(e)
-
-        logger.info(msg)
-        raise AdapterHandlingException(msg) from e
-
-    logger.info(
-        "Finished getting Generic REST Adapter URLS from HD Backend url %s", url
-    )
 
     return loaded_generic_rest_adapters
 

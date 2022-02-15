@@ -82,9 +82,18 @@ middleware = [
     )
 ]
 
+
+def app_desc_part() -> str:
+    if runtime_config.is_backend_service and runtime_config.is_runtime_service:
+        return "Runtime + Backend"
+    elif runtime_config.is_backend_service and not runtime_config.is_runtime_service:
+        return "Backend"
+    return "Runtime"
+
+
 app = FastAPI(
-    title="Hetida Designer Runtime API",
-    description="Hetida Designer Runtime Web Services API",
+    title="Hetida Designer " + app_desc_part() + " API",
+    description="Hetida Designer " + app_desc_part() + " Web Services API",
     version=VERSION,
     root_path=runtime_config.swagger_prefix,
     middleware=middleware,
