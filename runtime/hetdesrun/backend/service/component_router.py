@@ -84,7 +84,7 @@ async def create_component_revision(
     logger.debug(f"generated code:\n{component_dto.code}")
 
     transformation_revision = component_dto.to_transformation_revision(
-         documentation=(
+        documentation=(
             "\n"
             "# New Component/Workflow\n"
             "## Description\n"

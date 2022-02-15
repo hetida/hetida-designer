@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 def add_single_nesting(session: SQLAlchemySession, nesting: NestingDBModel) -> None:
+    logger.debug(
+        f"add nesting of transformation revision {nesting.nested_transformation_id} in workflow {nesting.workflow_id}"
+    )
     try:
         session.add(nesting)
     except IntegrityError as e:
@@ -41,10 +44,18 @@ def find_all_nested_transformation_revisions(
         ).where(NestingDBModel.workflow_id == workflow_id)
     )
 
-    return [
+    descendants = [
         Descendant(row.depth, row.nested_transformation_id, row.nested_operator_id)
         for row in result.all()
     ]
+
+    for descendant in descendants:
+        logger.debug(
+            f"transformation revision {descendant.transformation_id} "
+            f"is descendant of workflow {workflow_id}"
+        )
+
+    return descendants
 
 
 def find_all_nesting_transformation_revisions(
@@ -60,6 +71,7 @@ def find_all_nesting_transformation_revisions(
 
 
 def delete_own_nestings(session: SQLAlchemySession, workflow_id: UUID) -> None:
+    logger.debug(f"delete own nestings of workflow {workflow_id}")
     session.execute(
         delete(NestingDBModel).where(NestingDBModel.workflow_id == workflow_id)
     )
@@ -85,6 +97,7 @@ def delete_single_nesting(
 def update_nesting(
     session: SQLAlchemySession, workflow_id: UUID, workflow_content: WorkflowContent
 ) -> None:
+    logger.debug(f"update nesting of workflow {workflow_id}")
     # no need to deal with ancestors, workflow draft has none
     delete_own_nestings(session, workflow_id)
 

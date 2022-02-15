@@ -217,14 +217,10 @@ class RuntimeConfig(BaseSettings):
         ),
     )
     hd_backend_basic_auth_user: Optional[str] = Field(
-        None,
-        env="HETIDA_DESIGNER_BASIC_AUTH_USER",
-        description="Basic Auth User",
+        None, env="HETIDA_DESIGNER_BASIC_AUTH_USER", description="Basic Auth User",
     )
     hd_backend_basic_auth_password: Optional[str] = Field(
-        None,
-        env="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD",
-        description="Basic Auth User",
+        None, env="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD", description="Basic Auth User",
     )
     hd_backend_verify_certs: bool = Field(
         True, env="HETIDA_DESIGNER_BACKEND_VERIFY_CERTS"

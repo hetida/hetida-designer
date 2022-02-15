@@ -204,6 +204,7 @@ def select_multiple_transformation_revisions(
 
 
 def pass_on_deprecation(transformation_id: UUID) -> None:
+    logger.debug(f"pass on deprecation for transformation revision {transformation_id}")
     with Session() as session, session.begin():
         sup_nestings = find_all_nesting_transformation_revisions(
             session, transformation_id
