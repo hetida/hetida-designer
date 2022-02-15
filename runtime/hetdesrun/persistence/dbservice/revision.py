@@ -130,12 +130,12 @@ def update_or_create_single_transformation_revision(
         except DBNotFoundError:
             add_tr(session, transformation_revision)
 
+        if transformation_revision.state == State.DISABLED:
+            pass_on_deprecation(transformation_revision.id)
+
         if transformation_revision.type == Type.WORKFLOW:
             content = cast(WorkflowContent, transformation_revision.content)
             update_nesting(session, transformation_revision.id, content)
-
-        if transformation_revision.state == State.DISABLED:
-            pass_on_deprecation(transformation_revision.id)
 
         return select_tr_by_id(session, transformation_revision.id)
 

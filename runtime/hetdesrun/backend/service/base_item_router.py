@@ -225,13 +225,8 @@ async def update_transformation_revision(
         if existing_transformation_revision.state == State.RELEASED:
             if updated_transformation_revision_dto.state == State.DISABLED:
                 logger.info(f"deprecate transformation revision {id}")
-                updated_transformation_revision_dto = TransformationRevisionFrontendDto.from_transformation_revision(
-                    existing_transformation_revision
-                )
-                updated_transformation_revision_dto.state = State.DISABLED
-                updated_transformation_revision = (
-                    updated_transformation_revision_dto.to_transformation_revision()
-                )
+                updated_transformation_revision = existing_transformation_revision
+                updated_transformation_revision.deprecate()
             else:
                 msg = f"cannot modify released component {id}"
                 logger.error(msg)
