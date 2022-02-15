@@ -104,22 +104,9 @@ class Constant(Connector):
     Note: The name of the underlying connector must be an empty string.
     """
 
-    value: Any
-
-    # pylint: disable=no-self-argument,no-self-use
-    @validator("value")
-    def parse_value_into_correct_datatype(cls, v: Any, values: dict) -> Any:
-        try:
-            data_type = values["data_type"]
-        except KeyError as e:
-            raise ValueError(
-                "Missing data_type attribute makes it impossible to parse constant value."
-            ) from e
-
-        if data_type == DataType.Any:
-            return v
-        else:
-            return parse_dynamically_single_value(v, data_type).value  # type: ignore
+    # the frontend requires a string for the constant value
+    # the runtime will take care of the correct data type before execution
+    value: str
 
     @root_validator()
     def name_none(cls, values: dict) -> dict:
