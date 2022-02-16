@@ -22,7 +22,7 @@ def add_single_nesting(session: SQLAlchemySession, nesting: NestingDBModel) -> N
         f"add nesting of transformation revision {nesting.nested_transformation_id} in workflow {nesting.workflow_id}"
     )
     try:
-        session.add(nesting)
+        session.merge(nesting)
     except IntegrityError as e:
         msg = (
             f"Integrity Error while trying to store nesting for"

@@ -81,7 +81,7 @@ class NestingDBModel(Base):
     via_operator_id: UUIDType = Column(
         UUIDType(binary=False), primary_key=True, default=uuid4,
     )
-    depth = Column(Integer, nullable=False)
+    depth = Column(Integer, primary_key=True, nullable=False)
     nested_transformation_id: UUIDType = Column(
         UUIDType(binary=False),
         ForeignKey(TransformationRevisionDBModel.id),
