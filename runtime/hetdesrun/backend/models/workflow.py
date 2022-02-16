@@ -1,6 +1,8 @@
 from typing import List, Dict, Optional, Tuple, Literal, cast
 from uuid import UUID
 
+import re
+
 from datetime import datetime
 
 # pylint: disable=no-name-in-module
@@ -286,15 +288,18 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         operator_groups: dict[UUID, List[WorkflowOperatorFrontendDto]] = {}
 
         for operator in operators:
-            if operator.transformation_id not in operator_groups:
-                operator_groups[operator.transformation_id] = [operator]
+            operator_name_seed = re.sub(" {(}[0-9]+{)}$", "", operator.name)
+            print(operator.id, operator.name, "->", operator_name_seed)
+            if operator_name_seed not in operator_groups:
+                operator_groups[operator_name_seed] = [operator]
             else:
-                operator_groups[operator.transformation_id].append(operator)
+                operator_groups[operator_name_seed].append(operator)
 
-        for id in operator_groups:
-            for index, operator in enumerate(operator_groups[id]):
-                if index > 1:
-                    operator.name = operator.name + "(" + str(index) + ")"
+        for operator_name_seed, operator_group in operator_groups.items():
+            if len(operator_group) > 1:
+                for index, operator in enumerate(operator_group):
+                    if index > 0:
+                        operator.name = operator_name_seed + " (" + str(index + 1) + ")"
 
         return operators
 

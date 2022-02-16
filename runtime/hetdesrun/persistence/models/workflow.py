@@ -1,6 +1,8 @@
 from typing import List, Dict, Tuple, Optional, Union
 from uuid import UUID
 
+import re
+
 # pylint: disable=no-name-in-module
 from pydantic import (
     BaseModel,
@@ -136,22 +138,23 @@ class WorkflowContent(BaseModel):
     # pylint: disable=no-self-argument,no-self-use
     @validator("operators", each_item=False)
     def operator_names_unique(cls, operators: List[Operator]) -> List[Operator]:
-        operator_groups: dict[UUID, List[Operator]] = {}
+        operator_groups: dict[str, List[Operator]] = {}
 
         for operator in operators:
-            if operator.transformation_id not in operator_groups:
-                operator_groups[operator.transformation_id] = [operator]
+            operator_name_seed = re.sub(" \([0-9]+\)$", "", operator.name)
+            print(operator.id, operator.name, "->", operator_name_seed)
+            if operator_name_seed not in operator_groups:
+                operator_groups[operator_name_seed] = [operator]
             else:
-                operator_groups[operator.transformation_id].append(operator)
+                operator_groups[operator_name_seed].append(operator)
 
-        for operator_group in operator_groups.values():
-            operator_group_sorted_by_name = sorted(
-                operator_group, key=lambda operator: operator.name
-            )
-            name_seed = operator_group_sorted_by_name[0].name
-            for index, operator in enumerate(operator_group_sorted_by_name):
-                if index > 0:
-                    operator.name = NonEmptyStr(name_seed + " (" + str(index + 1) + ")")
+        for operator_name_seed, operator_group in operator_groups.items():
+            if len(operator_group) > 1:
+                for index, operator in enumerate(operator_group):
+                    if index > 0:
+                        operator.name = NonEmptyStr(
+                            operator_name_seed + " (" + str(index + 1) + ")"
+                        )
 
         return operators
 

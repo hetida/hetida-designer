@@ -28,7 +28,7 @@ valid_workflow_example_iso_forest: dict = {
         {
             "id": "1ecddb98-6ae1-48b0-b125-20d3b4e3118c",
             "groupId": "a4064897-66d3-9601-328e-5ae9036665c5",
-            "name": "Name Series (2)",
+            "name": "Name Series",
             "description": "Give a name to a series",
             "category": "Connectors",
             "type": "COMPONENT",
@@ -247,7 +247,7 @@ valid_workflow_example_iso_forest: dict = {
         {
             "id": "177db51b-6a68-4808-8e09-1a6d87f3e579",
             "groupId": "a4064897-66d3-9601-328e-5ae9036665c5",
-            "name": "Name Series",
+            "name": "Name Series (2)",
             "description": "Give a name to a series",
             "category": "Connectors",
             "type": "COMPONENT",
