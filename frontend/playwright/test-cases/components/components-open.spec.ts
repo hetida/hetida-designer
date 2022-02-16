@@ -1,13 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { HetidaDesigner } from '../page-objects/hetida-designer';
 import { Navigation } from '../page-objects/navigation';
+import { ErrorNotification } from '../page-objects/error-notification';
 
 test('Open component on double-click', async ({ page }) => {
   const hetidaDesigner = new HetidaDesigner(page);
   const navigation = new Navigation(page);
+  const errorNotification = new ErrorNotification(page);
 
-  const categoryName = 'Basic';
-  const componentName = 'Filter';
+  const categoryName = 'Arithmetic';
+  const componentName = 'Pi';
 
   // Run setup
   await hetidaDesigner.setupTest();
@@ -22,6 +24,10 @@ test('Open component on double-click', async ({ page }) => {
     .locator('.mat-expansion-panel-content');
 
   await expect(visibleExpansionPanelContent).toBeVisible();
+
+  // Hover over component, check if error-notification occurred
+  await navigation.hoverItemNavigation(categoryName, componentName);
+  await errorNotification.checkErrorNotification();
 
   // Open component on double-click
   await navigation.doubleClickItemNavigation(categoryName, componentName);

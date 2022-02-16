@@ -32,8 +32,17 @@ export class Navigation {
     }
   }
 
+  public async hoverItemNavigation(categoryName: String, itemName: String): Promise<void> {
+    if (categoryName !== '' || itemName !== '') {
+      await this.page.locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
+        .locator(`.navigation-item:has-text("${itemName}") >> nth=0`).hover();
+    } else {
+      console.error(`ERROR: Cannot locate item ${itemName} in category ${categoryName}!`);
+    }
+  }
+
   public async doubleClickItemNavigation(categoryName: String, itemName: String): Promise<void> {
-    if (itemName !== '') {
+    if (categoryName !== '' || itemName !== '') {
       await this.page.locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
         .locator(`.navigation-item:has-text("${itemName}") >> nth=0`).dblclick();
     } else {
