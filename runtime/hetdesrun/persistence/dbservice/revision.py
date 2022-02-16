@@ -119,6 +119,21 @@ def update_tr(
         raise DBIntegrityError(msg) from e
 
 
+def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> None:
+    logger.debug(f"pass on deprecation for transformation revision {transformation_id}")
+
+    sup_nestings = find_all_nesting_transformation_revisions(session, transformation_id)
+
+    for nesting in sup_nestings:
+        transformation_revision = select_tr_by_id(session, nesting.workflow_id)
+        workflow_content = cast(WorkflowContent, transformation_revision.content)
+        for operator in workflow_content.operators:
+            if operator.id == nesting.via_operator_id:
+                operator.state = State.DISABLED
+
+        update_tr(session, transformation_revision)
+
+
 def update_or_create_single_transformation_revision(
     transformation_revision: TransformationRevision,
 ) -> TransformationRevision:
@@ -131,7 +146,7 @@ def update_or_create_single_transformation_revision(
             add_tr(session, transformation_revision)
 
         if transformation_revision.state == State.DISABLED:
-            pass_on_deprecation(transformation_revision.id)
+            pass_on_deprecation(session, transformation_revision.id)
 
         if transformation_revision.type == Type.WORKFLOW:
             content = cast(WorkflowContent, transformation_revision.content)
@@ -203,25 +218,6 @@ def select_multiple_transformation_revisions(
         return [TransformationRevision.from_orm_model(result[0]) for result in results]
 
 
-def pass_on_deprecation(transformation_id: UUID) -> None:
-    logger.debug(f"pass on deprecation for transformation revision {transformation_id}")
-    with Session() as session, session.begin():
-        sup_nestings = find_all_nesting_transformation_revisions(
-            session, transformation_id
-        )
-
-        for nesting in sup_nestings:
-            transformation_revision = read_single_transformation_revision(
-                nesting.workflow_id
-            )
-            workflow_content = cast(WorkflowContent, transformation_revision.content)
-            for operator in workflow_content.operators:
-                if operator.id == nesting.via_operator_id:
-                    operator.state = State.DISABLED
-
-            update_or_create_single_transformation_revision(transformation_revision)
-
-
 def get_all_nested_transformation_revisions(
     transformation_revision: TransformationRevision,
 ) -> Dict[UUID, TransformationRevision]:
@@ -242,8 +238,8 @@ def get_all_nested_transformation_revisions(
     nested_transformation_revisions: Dict[UUID, TransformationRevision] = {}
 
     for descendant in descendants:
-        nested_transformation_revisions[
-            descendant.operator_id
-        ] = read_single_transformation_revision(descendant.transformation_id)
+        nested_transformation_revisions[descendant.operator_id] = select_tr_by_id(
+            session, descendant.transformation_id
+        )
 
     return nested_transformation_revisions
