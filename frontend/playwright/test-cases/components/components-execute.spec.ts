@@ -26,12 +26,17 @@ test('Execute component', async ({ page }) => {
 
   // Check if execute component dialog-container exists
   await page.waitForSelector('mat-dialog-container'); // Wait for dialog-container
-  const countDialogContainer = await page.locator('mat-dialog-container').count();
+  const countDialogContainer = await page
+    .locator('mat-dialog-container')
+    .count();
   expect(countDialogContainer).toEqual(1);
 
   // Check for equal substrings in dialog-title and opened tab
   const dialogTitle = page.locator('.mat-dialog-title h4');
-  const componentTabName = await page.locator('div[role="tab"] >> nth=1').locator('.text-ellipsis').innerText();
+  const componentTabName = await page
+    .locator('div[role="tab"] >> nth=1')
+    .locator('.text-ellipsis')
+    .innerText();
   await expect(dialogTitle).toContainText(`${componentTabName}`);
 
   // Confirm execute component, click on button "Execute"

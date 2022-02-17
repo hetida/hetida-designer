@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
 
 export class Navigation {
-  private page: Page;
+  private readonly page: Page;
 
   constructor(page: Page) {
     this.page = page;
@@ -15,7 +15,7 @@ export class Navigation {
     }
   }
 
-  public async clickBtnNavigation(btnText: String): Promise<void> {
+  public async clickBtnNavigation(btnText: string): Promise<void> {
     if (btnText !== '') {
       await this.page.locator(`button:has-text("${btnText}")`).click();
       await this.page.waitForSelector('hd-navigation-category'); // Wait for workflows or components
@@ -24,41 +24,64 @@ export class Navigation {
     }
   }
 
-  public async clickExpansionPanelNavigation(categoryName: String): Promise<void> {
+  public async clickExpansionPanelNavigation(
+    categoryName: string
+  ): Promise<void> {
     if (categoryName !== '') {
-      await this.page.click(`mat-expansion-panel-header[role="button"]:has-text("${categoryName}")`);
+      await this.page.click(
+        `mat-expansion-panel-header[role="button"]:has-text("${categoryName}")`
+      );
     } else {
-      console.error(`ERROR: Cannot locate category "expansion panel"! ${categoryName}`);
+      console.error(
+        `ERROR: Cannot locate category "expansion panel"! ${categoryName}`
+      );
     }
   }
 
-  public async hoverItemNavigation(categoryName: String, itemName: String): Promise<void> {
+  public async hoverItemNavigation(
+    categoryName: string,
+    itemName: string
+  ): Promise<void> {
     if (categoryName !== '' || itemName !== '') {
-      await this.page.locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
-        .locator(`.navigation-item:has-text("${itemName}") >> nth=0`).hover();
+      await this.page
+        .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
+        .locator(`.navigation-item:has-text("${itemName}") >> nth=0`)
+        .hover();
     } else {
-      console.error(`ERROR: Cannot locate item ${itemName} in category ${categoryName}!`);
+      console.error(
+        `ERROR: Cannot locate item ${itemName} in category ${categoryName}!`
+      );
     }
   }
 
-  public async doubleClickItemNavigation(categoryName: String, itemName: String): Promise<void> {
+  public async doubleClickItemNavigation(
+    categoryName: string,
+    itemName: string
+  ): Promise<void> {
     if (categoryName !== '' || itemName !== '') {
-      await this.page.locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
-        .locator(`.navigation-item:has-text("${itemName}") >> nth=0`).dblclick();
+      await this.page
+        .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
+        .locator(`.navigation-item:has-text("${itemName}") >> nth=0`)
+        .dblclick();
     } else {
-      console.error(`ERROR: Cannot locate item ${itemName} in category ${categoryName}!`);
+      console.error(
+        `ERROR: Cannot locate item ${itemName} in category ${categoryName}!`
+      );
     }
   }
 
-  public async clickIconToolbar(iconTitle: String): Promise<void> {
+  public async clickIconToolbar(iconTitle: string): Promise<void> {
     if (iconTitle !== '') {
-      await this.page.locator('hd-toolbar').locator(`mat-icon[title="${iconTitle}"]`).click();
+      await this.page
+        .locator('hd-toolbar')
+        .locator(`mat-icon[title="${iconTitle}"]`)
+        .click();
     } else {
       console.error(`ERROR: Cannot locate icon! ${iconTitle}`);
     }
   }
 
-  public async clickBtnDialog(btnText: String): Promise<void> {
+  public async clickBtnDialog(btnText: string): Promise<void> {
     if (btnText !== '') {
       await this.page.locator(`button:has-text("${btnText}")`).click();
     } else {

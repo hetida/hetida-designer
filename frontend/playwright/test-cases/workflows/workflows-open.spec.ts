@@ -20,9 +20,9 @@ test('Open workflow on double-click', async ({ page }) => {
   // Expansion-panel expands on click
   await navigation.clickExpansionPanelNavigation(categoryName);
 
-  const visibleExpansionPanelContent = page.locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
+  const visibleExpansionPanelContent = page
+    .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
     .locator('.mat-expansion-panel-content');
-
   await expect(visibleExpansionPanelContent).toBeVisible();
 
   // Hover over workflow, check if error-notification occurred
@@ -33,15 +33,21 @@ test('Open workflow on double-click', async ({ page }) => {
   await navigation.doubleClickItemNavigation(categoryName, workflowName);
 
   // Check for equal names in list and opened tab
-  const workflowListName = await page.locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
+  const workflowListName = await page
+    .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
     .locator(`.navigation-item:has-text("${workflowName}") >> nth=0`)
-    .locator('.text-ellipsis').innerText();
-
-  const workflowTabName = await page.locator('div[role="tab"] >> nth=1').locator('.text-ellipsis').innerText();
+    .locator('.text-ellipsis')
+    .innerText();
+  const workflowTabName = await page
+    .locator('div[role="tab"] >> nth=1')
+    .locator('.text-ellipsis')
+    .innerText();
   expect(workflowListName).toEqual(workflowTabName);
 
   // Check if hd-workflow-editor exists and contains a svg image
-  const svgInEditor = page.locator('hd-workflow-editor').locator('svg >> nth=0');
+  const svgInEditor = page
+    .locator('hd-workflow-editor')
+    .locator('svg >> nth=0');
   await expect(svgInEditor).toHaveAttribute('class', 'hetida-flowchart-svg');
 
   // Run clear

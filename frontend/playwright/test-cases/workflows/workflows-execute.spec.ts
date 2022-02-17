@@ -26,12 +26,17 @@ test('Execute workflow', async ({ page }) => {
 
   // Check if execute workflow dialog-container exists
   await page.waitForSelector('mat-dialog-container'); // Wait for dialog-container
-  const countDialogContainer = await page.locator('mat-dialog-container').count();
+  const countDialogContainer = await page
+    .locator('mat-dialog-container')
+    .count();
   expect(countDialogContainer).toEqual(1);
 
   // Check for equal substrings in dialog-title and opened tab
   const dialogTitle = page.locator('.mat-dialog-title h4');
-  const workflowTabName = await page.locator('div[role="tab"] >> nth=1').locator('.text-ellipsis').innerText();
+  const workflowTabName = await page
+    .locator('div[role="tab"] >> nth=1')
+    .locator('.text-ellipsis')
+    .innerText();
   await expect(dialogTitle).toContainText(`${workflowTabName}`);
 
   // Confirm execute workflow, click on button "Execute"
@@ -43,9 +48,13 @@ test('Execute workflow', async ({ page }) => {
   // Check if hd-protocol-viewer is visible
   const visibleProtocolViewer = page.locator('hd-protocol-viewer');
   await expect(visibleProtocolViewer).toBeVisible();
+
   // Check if plotly-plot exist in hd-protocol-viewer
   await page.waitForSelector('hd-protocol-viewer >> plotly-plot'); // Wait for plotly-plot
-  const countPlotlyPlot = await page.locator('hd-protocol-viewer >> plotly-plot').count();
+
+  const countPlotlyPlot = await page
+    .locator('hd-protocol-viewer >> plotly-plot')
+    .count();
   expect(countPlotlyPlot).toBeGreaterThan(0);
 
   // Run clear
