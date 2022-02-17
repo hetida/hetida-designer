@@ -126,7 +126,7 @@ async def create_transformation_revision(
     use POST /api/transformations/ instead.
     """
 
-    logger.info(f"create base item {id}")
+    logger.info(f"create base item {transformation_revision_dto.id}")
 
     transformation_revision = transformation_revision_dto.to_transformation_revision(
         documentation=(

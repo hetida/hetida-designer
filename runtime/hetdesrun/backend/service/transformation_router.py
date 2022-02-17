@@ -83,12 +83,12 @@ def nested_nodes(
     ancestor_content = cast(WorkflowContent, tr_workflow.content)
     ancestor_operator_ids = [operator.id for operator in ancestor_content.operators]
     ancestor_children: Dict[UUID, TransformationRevision] = {}
-    for id in ancestor_operator_ids:
-        if id in all_nested_tr:
-            ancestor_children[id] = all_nested_tr[id]
+    for operator_id in ancestor_operator_ids:
+        if operator_id in all_nested_tr:
+            ancestor_children[operator_id] = all_nested_tr[operator_id]
         else:
             raise DBIntegrityError(
-                f"operator {id} of transformation revision {tr_workflow.id} "
+                f"operator {operator_id} of transformation revision {tr_workflow.id} "
                 f"not contained in result of get_all_nested_transformation_revisions"
             )
 

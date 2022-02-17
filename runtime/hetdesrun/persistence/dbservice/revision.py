@@ -37,7 +37,7 @@ def add_tr(
         session.add(db_model)
     except IntegrityError as e:
         msg = (
-            f"Integrity Error while trying to store transformation revision with id {id}."
+            f"Integrity Error while trying to store transformation revision with id {transformation_revision.id}."
             f" Error was:\n{str(e)}"
         )
         logger.error(msg)
@@ -112,7 +112,7 @@ def update_tr(
     except IntegrityError as e:
         msg = (
             f"Integrity Error while trying to update "
-            f"transformation revision with id {id}.\n"
+            f"transformation revision with id {transformation_revision.id}.\n"
             f"Error was:\n{str(e)}"
         )
         logger.error(msg)
