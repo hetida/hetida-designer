@@ -1,10 +1,10 @@
-from typing import Any, List, Optional
+from typing import List, Optional
 from uuid import UUID, uuid4
 
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, validator, root_validator
 
-from hetdesrun.datatypes import DataType, parse_dynamically_single_value
+from hetdesrun.datatypes import DataType
 
 from hetdesrun.models.util import valid_python_identifier
 from hetdesrun.models.util import names_unique
@@ -108,6 +108,7 @@ class Constant(Connector):
     # the runtime will take care of the correct data type before execution
     value: str
 
+    # pylint: disable=no-self-argument,no-self-use
     @root_validator()
     def name_none(cls, values: dict) -> dict:
         if not ("name" not in values or values["name"] is None or values["name"] == ""):

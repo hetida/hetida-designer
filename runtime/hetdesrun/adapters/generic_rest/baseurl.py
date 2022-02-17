@@ -21,8 +21,6 @@ from hetdesrun.adapters.exceptions import (
 
 from hetdesrun.backend.service.adapter_router import get_all_adapters
 
-from hetdesrun.backend.service.utils import to_camel
-
 from hetdesrun.backend.models.adapter import AdapterFrontendDto
 
 

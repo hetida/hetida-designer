@@ -86,7 +86,7 @@ middleware = [
 def app_desc_part() -> str:
     if runtime_config.is_backend_service and runtime_config.is_runtime_service:
         return "Runtime + Backend"
-    elif runtime_config.is_backend_service and not runtime_config.is_runtime_service:
+    if runtime_config.is_backend_service and not runtime_config.is_runtime_service:
         return "Backend"
     return "Runtime"
 

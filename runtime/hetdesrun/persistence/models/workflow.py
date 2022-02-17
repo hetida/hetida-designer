@@ -141,7 +141,7 @@ class WorkflowContent(BaseModel):
         operator_groups: dict[str, List[Operator]] = {}
 
         for operator in operators:
-            operator_name_seed = re.sub(" \([0-9]+\)$", "", operator.name)
+            operator_name_seed = re.sub(r" \([0-9]+\)$", "", operator.name)
             if operator_name_seed not in operator_groups:
                 operator_groups[operator_name_seed] = [operator]
             else:

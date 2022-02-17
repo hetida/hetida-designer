@@ -37,8 +37,8 @@ def add_tr(
         session.add(db_model)
     except IntegrityError as e:
         msg = (
-            f"Integrity Error while trying to store transformation revision with id {transformation_revision.id}."
-            f" Error was:\n{str(e)}"
+            f"Integrity Error while trying to store transformation revision "
+            f"with id {transformation_revision.id}. Error was:\n{str(e)}"
         )
         logger.error(msg)
         raise DBIntegrityError(msg) from e
@@ -120,7 +120,9 @@ def update_tr(
 
 
 def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> None:
-    logger.debug(f"pass on deprecation for transformation revision {transformation_id}")
+    logger.debug(
+        "pass on deprecation for transformation revision %s", str(transformation_id)
+    )
 
     sup_nestings = find_all_nesting_transformation_revisions(session, transformation_id)
 
