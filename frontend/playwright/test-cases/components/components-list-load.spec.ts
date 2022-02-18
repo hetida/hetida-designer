@@ -12,6 +12,7 @@ test('Load components list', async ({ page }) => {
   // Run test
   await navigation.clickBtnNavigation('components');
 
+  // Check for loaded components
   const countComponents = await page.locator('hd-navigation-category').count();
   expect(countComponents).toBeGreaterThan(0);
 

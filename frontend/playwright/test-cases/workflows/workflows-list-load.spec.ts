@@ -12,6 +12,7 @@ test('Load workflows list', async ({ page }) => {
   // Run test
   await navigation.clickBtnNavigation('workflows');
 
+  // Check for loaded workflows
   const countWorkflows = await page.locator('hd-navigation-category').count();
   expect(countWorkflows).toBeGreaterThan(0);
 
