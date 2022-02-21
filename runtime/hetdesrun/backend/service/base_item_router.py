@@ -222,6 +222,17 @@ async def update_transformation_revision(
             logger.error(msg)
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
+        updated_transformation_revision.content = (
+            existing_transformation_revision.content
+        )
+        if existing_transformation_revision.type == Type.COMPONENT:
+            updated_transformation_revision.content = (
+                updated_transformation_revision.content
+            ) = generate_code(updated_transformation_revision.to_code_body())
+        updated_transformation_revision.documentation = (
+            existing_transformation_revision.documentation
+        )
+
         if existing_transformation_revision.state == State.RELEASED:
             if updated_transformation_revision_dto.state == State.DISABLED:
                 logger.info(f"deprecate transformation revision {id}")
@@ -231,11 +242,6 @@ async def update_transformation_revision(
                 msg = f"cannot modify released component {id}"
                 logger.error(msg)
                 raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-        else:
-            updated_transformation_revision.content = (
-                existing_transformation_revision.content
-            )
-
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the component revision

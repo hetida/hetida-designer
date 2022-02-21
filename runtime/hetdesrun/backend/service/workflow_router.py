@@ -225,6 +225,8 @@ async def update_workflow_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
+    updated_transformation_revision = updated_workflow_dto.to_transformation_revision()
+
     try:
         existing_transformation_revision = read_single_transformation_revision(
             id, log_error=False
@@ -236,13 +238,15 @@ async def update_workflow_revision(
             logger.error(msg)
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
+        updated_transformation_revision.documentation = (
+            existing_transformation_revision.documentation
+        )
+
         if existing_transformation_revision.state == State.RELEASED:
             if updated_workflow_dto.state == State.DISABLED:
                 logger.info(f"deprecate transformation revision {id}")
-                updated_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
-                    existing_transformation_revision
-                )
-                updated_workflow_dto.state = State.DISABLED
+                updated_transformation_revision = existing_transformation_revision
+                updated_transformation_revision.deprecate()
             else:
                 msg = f"cannot modify released component {id}"
                 logger.error(msg)
@@ -251,8 +255,6 @@ async def update_workflow_revision(
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the workflow revision
         pass
-
-    updated_transformation_revision = updated_workflow_dto.to_transformation_revision()
 
     try:
         persisted_transformation_revision = update_or_create_single_transformation_revision(

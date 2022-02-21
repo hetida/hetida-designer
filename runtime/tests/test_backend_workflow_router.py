@@ -433,10 +433,9 @@ async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine)
             "hetdesrun.persistence.dbservice.revision.Session", patched_session,
         ):
             component_dto = ComponentRevisionFrontendDto(**dto_json_component_1)
-            component_dto.code = generate_code(component_dto.to_code_body())
-            store_single_transformation_revision(
-                component_dto.to_transformation_revision()
-            )
+            tr_component = component_dto.to_transformation_revision()
+            tr_component.content = generate_code(tr_component.to_code_body())
+            store_single_transformation_revision(tr_component)
             tr_workflow_2 = WorkflowRevisionFrontendDto(
                 **dto_json_workflow_2_update
             ).to_transformation_revision()

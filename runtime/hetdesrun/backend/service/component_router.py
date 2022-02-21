@@ -79,10 +79,6 @@ async def create_component_revision(
 
     logger.info(f"create new component")
 
-    logger.debug(f"generate code")
-    component_dto.code = generate_code(component_dto.to_code_body())
-    logger.debug(f"generated code:\n{component_dto.code}")
-
     transformation_revision = component_dto.to_transformation_revision(
         documentation=(
             "\n"
@@ -94,6 +90,12 @@ async def create_component_revision(
             "## Examples\n"
         )
     )
+
+    logger.debug(f"generate code")
+    transformation_revision.content = generate_code(
+        transformation_revision.to_code_body()
+    )
+    logger.debug(f"generated code:\n{component_dto.code}")
 
     try:
         store_single_transformation_revision(transformation_revision)
@@ -189,6 +191,8 @@ async def update_component_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
+    updated_transformation_revision = updated_component_dto.to_transformation_revision()
+
     try:
         existing_transformation_revision = read_single_transformation_revision(
             id, log_error=False
@@ -200,27 +204,29 @@ async def update_component_revision(
             logger.error(msg)
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
+        updated_transformation_revision.content = (
+            existing_transformation_revision.content
+        )
+        updated_transformation_revision.content = generate_code(
+            updated_transformation_revision.to_code_body()
+        )
+        updated_transformation_revision.documentation = (
+            existing_transformation_revision.documentation
+        )
+
         if existing_transformation_revision.state == State.RELEASED:
             if updated_component_dto.state == State.DISABLED:
                 logger.info(f"deprecate transformation revision {id}")
-                updated_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
-                    existing_transformation_revision
-                )
-                updated_component_dto.state = State.DISABLED
+                updated_transformation_revision = existing_transformation_revision
+                updated_transformation_revision.deprecate()
             else:
                 msg = f"cannot modify released component {id}"
                 logger.error(msg)
                 raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-        else:
-            updated_component_dto.code = generate_code(
-                updated_component_dto.to_code_body()
-            )
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the component revision
         pass
-
-    updated_transformation_revision = updated_component_dto.to_transformation_revision()
 
     try:
         persisted_transformation_revision = update_or_create_single_transformation_revision(

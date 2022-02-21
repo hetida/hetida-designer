@@ -21,20 +21,6 @@ class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
     class Config:
         arbitrary_types_allowed = True
 
-    def to_code_body(self) -> CodeBody:
-        return CodeBody(
-            code=self.code,
-            function_name=self.name,
-            inputs=[input.to_component_input() for input in self.inputs],
-            outputs=[output.to_component_input() for output in self.outputs],
-            name=self.name,
-            description=self.description,
-            category=self.category,
-            uuid=str(self.id),
-            group_id=str(self.group_id),
-            tag=self.tag,
-        )
-
     def to_transformation_revision(
         self, documentation: str = ""
     ) -> TransformationRevision:
