@@ -35,11 +35,13 @@ def upgrade():
         sa.Column("version_tag", sa.String(), nullable=False),
         sa.Column(
             "state",
-            sa.Enum("DRAFT", "RELEASED", "DISABLED", name="state"),
+            sa.Enum("DRAFT", "RELEASED", "DISABLED", name="trafo_revision_state"),
             nullable=False,
         ),
         sa.Column(
-            "type", sa.Enum("COMPONENT", "WORKFLOW", name="type"), nullable=False
+            "type",
+            sa.Enum("COMPONENT", "WORKFLOW", name="trafo_revision_type"),
+            nullable=False,
         ),
         sa.Column("documentation", sa.String(), nullable=False),
         sa.Column("workflow_content", sa.JSON(none_as_null=True), nullable=True),
