@@ -32,29 +32,6 @@ logger = logging.getLogger(__name__)
 configure_logging(logger)
 
 
-def init_db():
-    if runtime_config.is_backend_service and runtime_config.ensure_db_schema:
-        logger.info("Checking DB status")
-        from sqlalchemy_utils import create_database
-        from hetdesrun.persistence.dbmodels import Base
-        from hetdesrun.persistence import get_db_engine
-        from sqlalchemy_utils.functions import database_exists
-
-        engine = get_db_engine()
-
-        logger.info("Using DB engine driver: %s", str(engine.url.drivername))
-
-        if not database_exists(engine.url):
-            logger.info("Creating DB database")
-            create_database(get_db_engine().url)
-
-            Base.metadata.drop_all(get_db_engine())
-        else:
-            logger.info("DB database already exists. Not creating.")
-        logger.info("Creating Schema (if it does not exist)")
-        Base.metadata.create_all(get_db_engine(), checkfirst=True)
-
-
 def detect_in_memory_db() -> bool:
     from hetdesrun.persistence import get_db_engine
 

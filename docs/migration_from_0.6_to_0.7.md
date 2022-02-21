@@ -12,7 +12,7 @@ This guide assumes the default docker compose setup from the Readme. For other s
 
 First you should do a complete database backup as is described in [backup](./backup.md), just in case something bad happens.
 
-Go to a directory where you want to store the exported components and workflows.
+Then go to a directory where you want to store the exported components and workflows.
 Now run 
 
 ```shell
@@ -29,7 +29,7 @@ The command will create a subdirectory `migration_data` in your current director
 
 ## Step 2: Importing into 0.7.0
 
-After having upgraded your designer installation to 0.7.0, run the following command to import the exported components and workflows from the same directory:
+Now upgrade your designer installation to 0.7.0 (As part of this you need to completely delete your database schema / all tables prior to starting the new version. For the docker-compose setup simply delete the postgres volume). Then run the following command to import the exported components and workflows from the same directory:
 
 ```shell
 docker run --rm \
