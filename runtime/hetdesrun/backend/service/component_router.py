@@ -204,9 +204,6 @@ async def update_component_revision(
             logger.error(msg)
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
-        updated_transformation_revision.content = (
-            existing_transformation_revision.content
-        )
         updated_transformation_revision.content = generate_code(
             updated_transformation_revision.to_code_body()
         )
