@@ -24,6 +24,7 @@ services:
       - HD_IS_RUNTIME_SERVICE=false      
     depends_on:
       - hetida-designer-db
+        condition: service_healthy        
       - hetida-designer-runtime
 
   hetida-designer-runtime:
@@ -45,6 +46,11 @@ services:
       POSTGRES_DB: hetida_designer_db
       POSTGRES_USER: hetida_designer_dbuser
       POSTGRES_PASSWORD: hetida_designer_dbpasswd
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hetida_designer_dbuser -d hetida_designer_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   hetida-designer-demo-adapter-java:
     image: hetida/designer-demo-adapter-java
