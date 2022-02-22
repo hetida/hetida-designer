@@ -30,8 +30,11 @@ services:
       - HD_ENSURE_DB_SCHEMA=true
       - HD_IS_RUNTIME_SERVICE=false
     depends_on:
-      - hetida-designer-db
-      - hetida-designer-runtime
+      hetida-designer-db:
+        condition: service_healthy
+      hetida-designer-runtime: 
+        condition: "service_started"
+
     ports:
       - 8080:8090
 
@@ -59,6 +62,11 @@ services:
       POSTGRES_PASSWORD: hetida_designer_dbpasswd
     ports:
       - "5430:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hetida_designer_dbuser -d hetida_designer_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   hetida-designer-demo-adapter-java:
     build:

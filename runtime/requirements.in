@@ -7,6 +7,7 @@ httptools
 psycopg2
 sqlalchemy[mypy]
 SQLAlchemy-Utils
+alembic
 pandas
 numpy
 sklearn

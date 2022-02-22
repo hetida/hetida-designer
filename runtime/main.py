@@ -32,32 +32,76 @@ logger = logging.getLogger(__name__)
 configure_logging(logger)
 
 
-def init_db():
-    if runtime_config.is_backend_service and runtime_config.ensure_db_schema:
-        logger.info("Checking DB status")
-        from sqlalchemy_utils import create_database
-        from hetdesrun.persistence.dbmodels import Base
-        from hetdesrun.persistence import get_db_engine
-        from sqlalchemy_utils.functions import database_exists
+def detect_in_memory_db() -> bool:
+    from hetdesrun.persistence import get_db_engine
 
-        engine = get_db_engine()
+    engine = get_db_engine()
 
-        logger.info("Using DB engine driver: %s", str(engine.url.drivername))
+    backend_name = engine.url.get_backend_name()
+    # driver_name = engine.url.get_driver_name()  # pysqlite
+    database = engine.url.database  # ":memory:"
 
-        if not database_exists(engine.url):
-            logger.info("Creating DB database")
-            create_database(get_db_engine().url)
+    if backend_name.lower() == "sqlite" and (
+        (database is None) or database.lower() in (":memory:",)
+    ):
+        return True
 
-            Base.metadata.drop_all(get_db_engine())
-        else:
-            logger.info("DB database already exists. Not creating.")
-        logger.info("Creating Schema (if it does not exist)")
-        Base.metadata.create_all(get_db_engine(), checkfirst=True)
+    return False
 
 
-init_db()  # init db database and schema if not present and if running as backend
+def run_migrations(
+    alembic_dir: str = "./alembic",
+    connection_url=runtime_config.sqlalchemy_connection_string,
+) -> None:
+    """Runs alembic migrations from within Python code
+
+    Should only be used for local development server. Not recommended
+    for multi-process/thread production servers.
+
+    Note: The docker container runs migrations via prestart.sh script in the
+    production setup.
+    """
+
+    from hetdesrun import migrations_invoked_from_py
+
+    migrations_invoked_from_py = True
+
+    from alembic.config import Config
+    from alembic import command
+    from pydantic import SecretStr
+    import hetdesrun.persistence.dbmodels
+
+    from hetdesrun.persistence import get_db_engine
+
+    engine = get_db_engine()
+
+    logger.info("Using DB engine driver: %s", str(engine.url.drivername))
+
+    if isinstance(connection_url, SecretStr):
+        connection_url_to_use = connection_url.get_secret_value()
+    else:
+        connection_url_to_use = connection_url
+
+    logger.info("Running DB migrations in %s", alembic_dir)
+    alembic_cfg = Config()
+    alembic_cfg.set_main_option("script_location", alembic_dir)
+    # alembic_cfg.set_main_option("sqlalchemy.url", connection_url_to_use)
+    # alembic_cfg.set_section_option("logger_root", "level", "DEBUG")
+    # alembic_cfg.set_section_option("logger_alembic", "level", "DEBUG")
+    # alembic_cfg.set_section_option("logger_sqlalchemy", "level", "DEBUG")
+    command.upgrade(alembic_cfg, "head")
+    logger.info("Finished running migrations.")
+
+
+in_memory_db = detect_in_memory_db()
+
+if in_memory_db:
+    run_migrations()
 
 if __name__ == "__main__":
+
+    if not in_memory_db:
+        run_migrations()
 
     import os
     import uvicorn
