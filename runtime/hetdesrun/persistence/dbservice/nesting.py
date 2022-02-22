@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import List
 import logging
 from uuid import UUID
 
@@ -140,7 +140,10 @@ def update_or_create_nesting(transformation_revision: TransformationRevision) ->
     if transformation_revision.type == Type.WORKFLOW:
         with Session() as session, session.begin():
 
-            workflow_id = transformation_revision.id
-            workflow_content = cast(WorkflowContent, transformation_revision.content)
+            assert isinstance(
+                transformation_revision.content, WorkflowContent
+            )  # hint for mypy
 
-            update_nesting(session, workflow_id, workflow_content)
+            update_nesting(
+                session, transformation_revision.id, transformation_revision.content
+            )

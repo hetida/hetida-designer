@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Tuple, Literal, cast
+from typing import List, Dict, Optional, Tuple, Literal
 from uuid import UUID
 
 import re
@@ -193,7 +193,8 @@ def get_or_create_output(
 
 
 def get_link_start_type_from_operator(
-    link: WorkflowLinkFrontendDto, operators: List[WorkflowOperatorFrontendDto],
+    link: WorkflowLinkFrontendDto,
+    operators: List[WorkflowOperatorFrontendDto],
 ) -> Optional[DataType]:
 
     data_type: Optional[DataType] = None
@@ -208,7 +209,8 @@ def get_link_start_type_from_operator(
 
 
 def get_link_start_type_from_input(
-    link: WorkflowLinkFrontendDto, inputs: List[WorkflowIoFrontendDto],
+    link: WorkflowLinkFrontendDto,
+    inputs: List[WorkflowIoFrontendDto],
 ) -> Optional[DataType]:
 
     data_type: Optional[DataType] = None
@@ -221,7 +223,8 @@ def get_link_start_type_from_input(
 
 
 def get_link_end_type_from_operator(
-    link: WorkflowLinkFrontendDto, operators: List[WorkflowOperatorFrontendDto],
+    link: WorkflowLinkFrontendDto,
+    operators: List[WorkflowOperatorFrontendDto],
 ) -> Optional[DataType]:
 
     data_type: Optional[DataType] = None
@@ -236,7 +239,8 @@ def get_link_end_type_from_operator(
 
 
 def get_link_end_type_from_output(
-    link: WorkflowLinkFrontendDto, outputs: List[WorkflowIoFrontendDto],
+    link: WorkflowLinkFrontendDto,
+    outputs: List[WorkflowIoFrontendDto],
 ) -> Optional[DataType]:
 
     data_type: Optional[DataType] = None
@@ -249,7 +253,8 @@ def get_link_end_type_from_output(
 
 
 def get_input_name_from_link(
-    link: WorkflowLinkFrontendDto, inputs: List[WorkflowIoFrontendDto],
+    link: WorkflowLinkFrontendDto,
+    inputs: List[WorkflowIoFrontendDto],
 ) -> Optional[str]:
     name: Optional[str] = None
 
@@ -261,7 +266,8 @@ def get_input_name_from_link(
 
 
 def get_output_name_from_link(
-    link: WorkflowLinkFrontendDto, outputs: List[WorkflowIoFrontendDto],
+    link: WorkflowLinkFrontendDto,
+    outputs: List[WorkflowIoFrontendDto],
 ) -> Optional[str]:
     name: Optional[str] = None
 
@@ -564,7 +570,8 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return values
 
     def get_from_connector_for_link(
-        self, link: WorkflowLinkFrontendDto,
+        self,
+        link: WorkflowLinkFrontendDto,
     ) -> ConnectorFrontendDto:
         from_connector_list: List[ConnectorFrontendDto] = []
 
@@ -608,7 +615,8 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return from_connector_list[0]
 
     def get_to_connector_for_link(
-        self, link: WorkflowLinkFrontendDto,
+        self,
+        link: WorkflowLinkFrontendDto,
     ) -> ConnectorFrontendDto:
         to_connector_list: List[ConnectorFrontendDto] = []
 
@@ -731,9 +739,9 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         cls, transformation_revision: TransformationRevision
     ) -> "WorkflowRevisionFrontendDto":
 
-        transformation_revision.content = cast(
-            WorkflowContent, transformation_revision.content
-        )
+        assert isinstance(
+            transformation_revision.content, WorkflowContent
+        )  # hint for mypy
 
         return WorkflowRevisionFrontendDto(
             id=transformation_revision.id,

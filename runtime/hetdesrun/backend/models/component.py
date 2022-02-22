@@ -1,4 +1,4 @@
-from typing import Literal, cast
+from typing import Literal
 
 from datetime import datetime
 
@@ -50,6 +50,7 @@ class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
     def from_transformation_revision(
         cls, transformation_revision: TransformationRevision
     ) -> "ComponentRevisionFrontendDto":
+        assert isinstance(transformation_revision.content, str)  # hint for mypy
         return ComponentRevisionFrontendDto(
             id=transformation_revision.id,
             groupId=transformation_revision.revision_group_id,
@@ -77,5 +78,5 @@ class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
                 and transformation_revision.test_wiring.output_wirings == []
             )
             else [],
-            code=cast(str, transformation_revision.content),
+            code=transformation_revision.content,
         )

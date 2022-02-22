@@ -175,7 +175,8 @@ class TransformationRevision(BaseModel):
             return io_interface
 
         try:
-            workflow_content = cast(WorkflowContent, values["content"])
+            workflow_content = values["content"]
+            assert isinstance(workflow_content, WorkflowContent)  # hint for mypy
         except KeyError as e:
             raise ValueError(
                 "Cannot fit io_interface to content if attribute 'content' is missing"
@@ -286,7 +287,9 @@ class TransformationRevision(BaseModel):
                 f"into a component node since its type is not COMPONENT"
             )
         return ComponentNode(
-            id=str(operator_id), component_uuid=str(self.id), name=self.name,
+            id=str(operator_id),
+            component_uuid=str(self.id),
+            name=self.name,
         )
 
     def to_workflow_node(
@@ -297,8 +300,8 @@ class TransformationRevision(BaseModel):
                 f"will not convert transformation revision {self.id}"
                 f"into a workflow node since its type is not WORKFLOW"
             )
-        workflow_content = cast(WorkflowContent, self.content)
-        return workflow_content.to_workflow_node(operator_id, self.name, sub_nodes)
+        assert isinstance(self.content, WorkflowContent)  # hint for mypy
+        return self.content.to_workflow_node(operator_id, self.name, sub_nodes)
 
     def to_code_module(self) -> CodeModule:
         if self.type != Type.COMPONENT:

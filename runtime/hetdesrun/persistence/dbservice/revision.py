@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, cast
+from typing import List, Dict, Optional
 import logging
 from uuid import UUID
 
@@ -52,8 +52,12 @@ def store_single_transformation_revision(
         add_tr(session, transformation_revision)
 
         if transformation_revision.type == Type.WORKFLOW:
-            content = cast(WorkflowContent, transformation_revision.content)
-            update_nesting(session, transformation_revision.id, content)
+            assert isinstance(
+                transformation_revision.content, WorkflowContent
+            )  # hint for mypy
+            update_nesting(
+                session, transformation_revision.id, transformation_revision.content
+            )
 
 
 # pylint: disable=W0622
@@ -129,8 +133,10 @@ def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> 
 
     for nesting in sup_nestings:
         transformation_revision = select_tr_by_id(session, nesting.workflow_id)
-        workflow_content = cast(WorkflowContent, transformation_revision.content)
-        for operator in workflow_content.operators:
+        assert isinstance(
+            transformation_revision.content, WorkflowContent
+        )  # hint for mypy
+        for operator in transformation_revision.content.operators:
             if operator.id == nesting.via_operator_id:
                 operator.state = State.DISABLED
 
@@ -152,8 +158,12 @@ def update_or_create_single_transformation_revision(
             pass_on_deprecation(session, transformation_revision.id)
 
         if transformation_revision.type == Type.WORKFLOW:
-            content = cast(WorkflowContent, transformation_revision.content)
-            update_nesting(session, transformation_revision.id, content)
+            assert isinstance(
+                transformation_revision.content, WorkflowContent
+            )  # hint for mypy
+            update_nesting(
+                session, transformation_revision.id, transformation_revision.content
+            )
 
         return select_tr_by_id(session, transformation_revision.id)
 
