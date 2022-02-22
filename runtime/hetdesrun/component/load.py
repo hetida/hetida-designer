@@ -75,7 +75,8 @@ def import_func_from_code(
             exec(code, mod.__dict__)  # pylint: disable=exec-used
         except SyntaxError as e:
             logger.info(
-                "Syntax Error during importing function %s", func_name,
+                "Syntax Error during importing function %s",
+                func_name,
             )
             raise ComponentCodeImportError(
                 "Could not import code due to Syntax Errors"
@@ -83,7 +84,9 @@ def import_func_from_code(
 
         except Exception as e:
             logger.info(
-                "Exception during importing function %s: %s", func_name, str(e),
+                "Exception during importing function %s: %s",
+                func_name,
+                str(e),
             )
             raise ComponentCodeImportError(
                 "Could not import code due to Exception"
@@ -97,7 +100,10 @@ def check_importability(code: str, func_name: str) -> Tuple[bool, Optional[Excep
     """Very simple check just to see whether the code is at least importable"""
     try:
         import_func_from_code(
-            code, func_name, raise_if_not_found=False, register_module=False,
+            code,
+            func_name,
+            raise_if_not_found=False,
+            register_module=False,
         )
         return True, None
     except Exception as e:  # pylint: disable=broad-except

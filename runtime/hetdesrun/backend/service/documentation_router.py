@@ -43,7 +43,10 @@ documentation_router = APIRouter(
     deprecated=True,
 )
 async def get_component_revision_by_id(
-    id: UUID = Path(..., example=UUID("123e4567-e89b-12d3-a456-426614174000"),),
+    id: UUID = Path(
+        ...,
+        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+    ),
 ) -> DocumentationFrontendDto:
     """Get the documentation of a transformation revision by its id from the data base.
 
@@ -80,10 +83,11 @@ async def get_component_revision_by_id(
     deprecated=True,
 )
 async def update_documentation(
-    id: UUID, documentation_dto: DocumentationFrontendDto,
+    id: UUID,
+    documentation_dto: DocumentationFrontendDto,
 ) -> DocumentationFrontendDto:
     """Update or store the documentation of a transformation revision in the data base.
-    
+
     This endpoint is deprecated and will be removed soon,
     use PUT /api/transformations/{id} instead
     """
@@ -106,8 +110,8 @@ async def update_documentation(
     transformation_revision.documentation = documentation_dto.document
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            transformation_revision
+        persisted_transformation_revision = (
+            update_or_create_single_transformation_revision(transformation_revision)
         )
         logger.info("updated documentation {id}")
     except DBIntegrityError as e:
@@ -134,9 +138,11 @@ async def update_documentation(
     },
     deprecated=True,
 )
-async def delete_documentation(id: UUID,) -> None:
+async def delete_documentation(
+    id: UUID,
+) -> None:
     """Change the documentation of a transformation revision in the data base to "".
-    
+
     This endpoint is deprecated and will be removed soon,
     use PUT /api/transformations/{id} instead
     """

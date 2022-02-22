@@ -62,7 +62,8 @@ def save_transformation(tr_json: dict, download_path: str) -> None:
     cat_dir = os.path.join(download_path, slugify(category))
     Path(cat_dir).mkdir(parents=True, exist_ok=True)
     path = os.path.join(
-        cat_dir, slugify(name) + "_" + slugify(tag) + "_" + uuid.lower() + ".json",
+        cat_dir,
+        slugify(name) + "_" + slugify(tag) + "_" + uuid.lower() + ".json",
     )
 
     # Save the transformation revision
@@ -145,9 +146,13 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
 
     # Generate transformation revision
     if type == Type.COMPONENT:
-        frontend_dto = ComponentRevisionFrontendDto(**revision_json,)
+        frontend_dto = ComponentRevisionFrontendDto(
+            **revision_json,
+        )
     else:
-        frontend_dto = WorkflowRevisionFrontendDto(**revision_json,)
+        frontend_dto = WorkflowRevisionFrontendDto(
+            **revision_json,
+        )
 
     transformation_revision = frontend_dto.to_transformation_revision(
         documentation=doc_text

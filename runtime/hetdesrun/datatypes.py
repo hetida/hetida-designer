@@ -232,7 +232,8 @@ class NamedDataTypedValue(TypedDict):
 
 
 def parse_via_pydantic(
-    entries: List[NamedDataTypedValue], type_map: Optional[Dict[DataType, Type]] = None,
+    entries: List[NamedDataTypedValue],
+    type_map: Optional[Dict[DataType, Type]] = None,
 ) -> BaseModel:
     """Parse data dynamically into a pydantic object
 

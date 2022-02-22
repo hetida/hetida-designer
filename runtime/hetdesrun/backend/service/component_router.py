@@ -126,7 +126,10 @@ async def create_component_revision(
     deprecated=True,
 )
 async def get_component_revision_by_id(
-    id: UUID = Path(..., example=UUID("123e4567-e89b-12d3-a456-426614174000"),),
+    id: UUID = Path(
+        ...,
+        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+    ),
 ) -> ComponentRevisionFrontendDto:
     """Get a single transformation revision of type component from the data base.
 
@@ -168,7 +171,8 @@ async def get_component_revision_by_id(
     deprecated=True,
 )
 async def update_component_revision(
-    id: UUID, updated_component_dto: ComponentRevisionFrontendDto,
+    id: UUID,
+    updated_component_dto: ComponentRevisionFrontendDto,
 ) -> ComponentRevisionFrontendDto:
     """Update or store a transformation revision of type component in the data base.
 
@@ -226,8 +230,10 @@ async def update_component_revision(
         pass
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            updated_transformation_revision
+        persisted_transformation_revision = (
+            update_or_create_single_transformation_revision(
+                updated_transformation_revision
+            )
         )
         logger.info(f"updated component {id}")
     except DBIntegrityError as e:
@@ -255,7 +261,9 @@ async def update_component_revision(
     },
     deprecated=True,
 )
-async def delete_component_revision(id: UUID,) -> None:
+async def delete_component_revision(
+    id: UUID,
+) -> None:
     """Delete a transformation revision of type component from the data base.
 
     Deleting a transformation revision is only possible if it is in state DRAFT.
@@ -293,7 +301,9 @@ async def delete_component_revision(id: UUID,) -> None:
     deprecated=True,
 )
 async def execute_component_revision(
-    id: UUID, wiring_dto: WiringFrontendDto, run_pure_plot_operators: bool = False,
+    id: UUID,
+    wiring_dto: WiringFrontendDto,
+    run_pure_plot_operators: bool = False,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision of type component.
 
@@ -324,7 +334,8 @@ async def execute_component_revision(
         components=[tr_component.to_component_revision()],
         workflow=workflow_node,
         configuration=ConfigurationInput(
-            name=str(tr_workflow.id), run_pure_plot_operators=run_pure_plot_operators,
+            name=str(tr_workflow.id),
+            run_pure_plot_operators=run_pure_plot_operators,
         ),
         workflow_wiring=wiring_dto.to_workflow_wiring(),
     )
@@ -394,7 +405,8 @@ async def execute_component_revision(
     deprecated=True,
 )
 async def bind_wiring_to_component_revision(
-    id: UUID, wiring_dto: WiringFrontendDto,
+    id: UUID,
+    wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:
     """Store or update the test wiring of a transformation revision of type component.
 
@@ -419,8 +431,8 @@ async def bind_wiring_to_component_revision(
     transformation_revision.test_wiring = wiring
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            transformation_revision
+        persisted_transformation_revision = (
+            update_or_create_single_transformation_revision(transformation_revision)
         )
         logger.info(f"bound wiring to component {id}")
     except DBIntegrityError as e:

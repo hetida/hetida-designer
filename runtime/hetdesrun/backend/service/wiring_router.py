@@ -43,7 +43,8 @@ wiring_router = APIRouter(
     deprecated=True,
 )
 async def update_wiring(
-    id: UUID, updated_wiring_dto: WiringFrontendDto,
+    id: UUID,
+    updated_wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:
     """Store or update the test wiring of a transformation revision.
 
@@ -67,8 +68,8 @@ async def update_wiring(
     transformation_revision.test_wiring = updated_wiring_dto.to_wiring()
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            transformation_revision
+        persisted_transformation_revision = (
+            update_or_create_single_transformation_revision(transformation_revision)
         )
         logger.info(f"updated wiring {id} for item with id {id}")
     except DBIntegrityError as e:

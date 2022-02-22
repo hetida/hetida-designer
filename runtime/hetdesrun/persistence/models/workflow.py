@@ -76,7 +76,8 @@ def get_link_by_input_connector(
 
 
 def get_input_by_link_start(
-    link_start_connector_id: UUID, inputs: List[Connector],
+    link_start_connector_id: UUID,
+    inputs: List[Connector],
 ) -> Optional[Connector]:
 
     for input_connector in inputs:
@@ -87,7 +88,8 @@ def get_input_by_link_start(
 
 
 def get_constant_by_link_start(
-    link_start_connector_id: UUID, constants: List[Constant],
+    link_start_connector_id: UUID,
+    constants: List[Constant],
 ) -> Optional[Constant]:
 
     for constant in constants:
@@ -98,7 +100,8 @@ def get_constant_by_link_start(
 
 
 def get_output_by_link_end(
-    link_end_connector_id: UUID, outputs: List[Connector],
+    link_end_connector_id: UUID,
+    outputs: List[Connector],
 ) -> Optional[Connector]:
 
     for output_connector in outputs:
@@ -271,7 +274,8 @@ class WorkflowContent(BaseModel):
                 if link is None:
                     updated_inputs.append(
                         Connector(
-                            data_type=connector.data_type, position=Position(x=0, y=0),
+                            data_type=connector.data_type,
+                            position=Position(x=0, y=0),
                         )
                     )
 
@@ -306,7 +310,8 @@ class WorkflowContent(BaseModel):
                 if link is None:
                     updated_outputs.append(
                         Connector(
-                            data_type=connector.data_type, position=Position(x=0, y=0),
+                            data_type=connector.data_type,
+                            position=Position(x=0, y=0),
                         )
                     )
                 else:

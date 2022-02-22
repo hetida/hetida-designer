@@ -49,14 +49,17 @@ runtime_router = APIRouter(tags=["runtime"])
 
 
 @runtime_router.post(
-    "/runtime", response_model=WorkflowExecutionResult, dependencies=get_auth_deps(),
+    "/runtime",
+    response_model=WorkflowExecutionResult,
+    dependencies=get_auth_deps(),
 )
 # pylint: disable=R0911
 async def runtime_service(
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:
     logger.info(
-        "WORKFLOW EXECUTION INPUT JSON:\n%s", model_to_pretty_json_str(runtime_input),
+        "WORKFLOW EXECUTION INPUT JSON:\n%s",
+        model_to_pretty_json_str(runtime_input),
     )
 
     execution_context.set(runtime_input.configuration)
@@ -224,9 +227,13 @@ async def info_service() -> dict:
 
 
 @runtime_router.post(
-    "/codegen", response_model=GeneratedCode, dependencies=get_auth_deps(),
+    "/codegen",
+    response_model=GeneratedCode,
+    dependencies=get_auth_deps(),
 )
-async def codegen_service(codegen_input: CodeBody,) -> GeneratedCode:
+async def codegen_service(
+    codegen_input: CodeBody,
+) -> GeneratedCode:
     """Service for generating and updating code stubs"""
     logger.info("CODEGEN INPUT JSON:\n%s", model_to_pretty_json_str(codegen_input))
     return GeneratedCode(
@@ -245,7 +252,9 @@ async def codegen_service(codegen_input: CodeBody,) -> GeneratedCode:
 
 
 @runtime_router.post(
-    "/codecheck", response_model=CodeCheckResult, dependencies=get_auth_deps(),
+    "/codecheck",
+    response_model=CodeCheckResult,
+    dependencies=get_auth_deps(),
 )
 async def codecheck_service(codecheck_input: CodeBody) -> CodeCheckResult:
     """Service for checking code of components"""

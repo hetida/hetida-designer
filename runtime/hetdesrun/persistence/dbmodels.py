@@ -79,7 +79,9 @@ class NestingDBModel(Base):
         nullable=False,
     )
     via_operator_id: UUIDType = Column(
-        UUIDType(binary=False), primary_key=True, default=uuid4,
+        UUIDType(binary=False),
+        primary_key=True,
+        default=uuid4,
     )
     depth = Column(Integer, primary_key=True, nullable=False)
     nested_transformation_id: UUIDType = Column(
@@ -89,11 +91,14 @@ class NestingDBModel(Base):
         nullable=False,
     )
     nested_operator_id: UUIDType = Column(
-        UUIDType(binary=False), primary_key=True, default=uuid4,
+        UUIDType(binary=False),
+        primary_key=True,
+        default=uuid4,
     )
 
     workflow: TransformationRevisionDBModel = relationship(
-        TransformationRevisionDBModel, foreign_keys=[workflow_id],
+        TransformationRevisionDBModel,
+        foreign_keys=[workflow_id],
     )
     via_transformation: TransformationRevisionDBModel = relationship(
         TransformationRevisionDBModel, foreign_keys=[via_transformation_id]
@@ -103,7 +108,10 @@ class NestingDBModel(Base):
     )
 
     __table_args__ = (
-        CheckConstraint("depth > 0", name="_depth_natural_number_cc",),
+        CheckConstraint(
+            "depth > 0",
+            name="_depth_natural_number_cc",
+        ),
         CheckConstraint(
             """
             (

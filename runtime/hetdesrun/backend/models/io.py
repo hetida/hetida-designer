@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import Optional
 from uuid import UUID, uuid4
 
 # pylint: disable=no-name-in-module
@@ -49,7 +49,11 @@ class WorkflowIoFrontendDto(BaseModel):
         )
 
     def to_io(self) -> IO:
-        return IO(id=self.id, name=self.name, data_type=self.type,)
+        return IO(
+            id=self.id,
+            name=self.name,
+            data_type=self.type,
+        )
 
     @classmethod
     def from_io(
@@ -137,7 +141,11 @@ class ConnectorFrontendDto(BaseModel):
     @classmethod
     def from_io(cls, io: IO, posX: int = 0, posY: int = 0) -> "ConnectorFrontendDto":
         return ConnectorFrontendDto(
-            id=io.id, name=io.name, posX=posX, posY=posY, type=io.data_type,
+            id=io.id,
+            name=io.name,
+            posX=posX,
+            posY=posY,
+            type=io.data_type,
         )
 
     def to_component_input(self) -> ComponentInput:
