@@ -460,7 +460,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def io_names_none_or_unique(
         cls, ios: List[WorkflowIoFrontendDto]
     ) -> List[WorkflowIoFrontendDto]:
-        ios_with_name = [io for io in ios if io.name is not None]
+        ios_with_name = [io for io in ios if not (io.name is None or io.name == "")]
 
         names_unique(cls, ios_with_name)
 

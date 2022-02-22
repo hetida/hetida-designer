@@ -322,7 +322,9 @@ class WorkflowContent(BaseModel):
         cls, connectors: List[Connector]
     ) -> List[Connector]:
         connectors_with_nonempty_name = [
-            connector for connector in connectors if connector.name is not None
+            connector
+            for connector in connectors
+            if not (connector.name is None or connector.name == "")
         ]
 
         names_unique(cls, connectors_with_nonempty_name)
