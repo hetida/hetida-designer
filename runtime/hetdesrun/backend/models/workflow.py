@@ -297,7 +297,9 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         for operator_name_seed, operator_group in operator_groups.items():
             if len(operator_group) > 1:
                 for index, operator in enumerate(operator_group):
-                    if index > 0:
+                    if index == 0:
+                        operator.name = operator_name_seed
+                    else:
                         operator.name = operator_name_seed + " (" + str(index + 1) + ")"
 
         return operators

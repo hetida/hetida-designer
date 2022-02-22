@@ -150,7 +150,9 @@ class WorkflowContent(BaseModel):
         for operator_name_seed, operator_group in operator_groups.items():
             if len(operator_group) > 1:
                 for index, operator in enumerate(operator_group):
-                    if index > 0:
+                    if index == 0:
+                        operator.name = NonEmptyStr(operator_name_seed)
+                    else:
                         operator.name = NonEmptyStr(
                             operator_name_seed + " (" + str(index + 1) + ")"
                         )
