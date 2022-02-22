@@ -1,4 +1,4 @@
-from typing import List, Dict, Union, cast
+from typing import List, Dict, Union
 import logging
 
 from uuid import UUID, uuid4
@@ -80,8 +80,8 @@ def nested_nodes(
     if tr_workflow.type != Type.WORKFLOW:
         raise ValueError
 
-    ancestor_content = cast(WorkflowContent, tr_workflow.content)
-    ancestor_operator_ids = [operator.id for operator in ancestor_content.operators]
+    assert isinstance(tr_workflow.content, WorkflowContent)  # hint for mypy
+    ancestor_operator_ids = [operator.id for operator in tr_workflow.content.operators]
     ancestor_children: Dict[UUID, TransformationRevision] = {}
     for operator_id in ancestor_operator_ids:
         if operator_id in all_nested_tr:
@@ -104,22 +104,50 @@ def nested_nodes(
                 )
             if operator.type == Type.WORKFLOW:
                 tr_workflow = tr_operators[operator.id]
-                content = cast(WorkflowContent, tr_workflow.content)
-                operator_ids = [operator.id for operator in content.operators]
+                assert isinstance(tr_workflow.content, WorkflowContent)  # hint for mypy
+                operator_ids = [
+                    operator.id for operator in tr_workflow.content.operators
+                ]
                 tr_children = {
                     id: all_nested_tr[id] for id in operator_ids if id in all_nested_tr
                 }
                 sub_nodes.append(
-                    content.to_workflow_node(
+                    tr_workflow.content.to_workflow_node(
                         operator.id,
                         tr_workflow.name,
-                        children_nodes(content, tr_children),
+                        children_nodes(tr_workflow.content, tr_children),
                     )
                 )
 
         return sub_nodes
 
-    return children_nodes(ancestor_content, ancestor_children)
+    return children_nodes(tr_workflow.content, ancestor_children)
+
+
+def contains_deprecated(transformation_id: UUID) -> bool:
+    logger.info(
+        "check if transformation revision %s contains deprecated oopeerators",
+        str(transformation_id),
+    )
+    transformation_revision = read_single_transformation_revision(transformation_id)
+
+    if transformation_revision.type is not Type.WORKFLOW:
+        msg = f"transformation revision {id} is not a workflow!"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+
+    assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
+
+    is_disabled = []
+    for operator in transformation_revision.content.operators:
+        logger.info(
+            "operator with transformation id %s has status %s",
+            str(operator.transformation_id),
+            operator.state,
+        )
+        is_disabled.append(operator.state == State.DISABLED)
+
+    return any(is_disabled)
 
 
 @transformation_router.post(
@@ -212,7 +240,10 @@ async def get_all_transformation_revisions() -> List[TransformationRevision]:
     },
 )
 async def get_transformation_revision_by_id(
-    id: UUID = Path(..., example=UUID("123e4567-e89b-12d3-a456-426614174000"),),
+    id: UUID = Path(
+        ...,
+        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+    ),
 ) -> TransformationRevision:
 
     logger.info(f"get transformation revision {id}")
@@ -254,7 +285,7 @@ async def update_transformation_revision(
 
     Updating a transformation revision is only possible if it is in state DRAFT
     or to change the state from RELEASED to DISABLED.
-    
+
     Unset attributes of the json sent in the request body will be set to default values, possibly changing the attribute saved in the DB.
     """
 
@@ -267,6 +298,8 @@ async def update_transformation_revision(
         )
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+
+    existing_operator_ids: List[UUID] = []
 
     try:
         existing_transformation_revision = read_single_transformation_revision(
@@ -292,10 +325,12 @@ async def update_transformation_revision(
 
         if existing_transformation_revision.state == State.RELEASED:
             if updated_transformation_revision.state == State.DISABLED:
+                logger.info(f"deprecate transformation revision {id}")
                 # make sure no other changes are made
                 updated_transformation_revision = TransformationRevision(
                     **existing_transformation_revision.dict()
                 )
+                updated_transformation_revision.deprecate()
             elif not allow_overwrite_released:
                 msg = f"cannot modify released component {id}"
                 logger.error(msg)
@@ -305,10 +340,13 @@ async def update_transformation_revision(
             updated_transformation_revision.content = generate_code(
                 updated_transformation_revision.to_code_body()
             )
+        else:
+            assert isinstance(
+                existing_transformation_revision.content, WorkflowContent
+            )  # hint for mypy
 
-        if updated_transformation_revision.state == State.DISABLED:
-            logger.info(f"deprecate transformation revision {id}")
-            updated_transformation_revision.deprecate()
+            for operator in existing_transformation_revision.content.operators:
+                existing_operator_ids.append(operator.id)
 
         if (
             updated_transformation_revision.state == State.RELEASED
@@ -323,9 +361,26 @@ async def update_transformation_revision(
         # with an id and either create or update the transformation revision
         pass
 
+    if updated_transformation_revision.type == Type.WORKFLOW:
+        assert isinstance(
+            updated_transformation_revision.content, WorkflowContent
+        )  # hint for mypy
+        for operator in updated_transformation_revision.content.operators:
+            if (
+                operator.type == Type.WORKFLOW
+                and operator.id not in existing_operator_ids
+            ):
+                operator.state = (
+                    State.DISABLED
+                    if contains_deprecated(operator.transformation_id)
+                    else operator.state
+                )
+
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            updated_transformation_revision
+        persisted_transformation_revision = (
+            update_or_create_single_transformation_revision(
+                updated_transformation_revision
+            )
         )
         logger.info(f"updated transformation revision {id}")
     except DBIntegrityError as e:
@@ -397,7 +452,8 @@ async def execute_transformation_revision(
         ],
         workflow=workflow_node,
         configuration=ConfigurationInput(
-            name=str(tr_workflow.id), run_pure_plot_operators=run_pure_plot_operators,
+            name=str(tr_workflow.id),
+            run_pure_plot_operators=run_pure_plot_operators,
         ),
         workflow_wiring=wiring,
     )
@@ -419,7 +475,8 @@ async def execute_transformation_revision(
             url = posix_urljoin(runtime_config.hd_runtime_engine_url, "runtime")
             try:
                 response = await client.post(
-                    url, headers=headers,  # TODO: authentication
+                    url,
+                    headers=headers,  # TODO: authentication
                 )
             except httpx.HTTPError as e:
                 msg = f"Failure connecting to hd runtime endpoint ({url}):\n{e}"

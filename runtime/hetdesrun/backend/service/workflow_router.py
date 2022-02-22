@@ -22,7 +22,10 @@ from hetdesrun.models.run import (
     WorkflowExecutionResult,
 )
 
-from hetdesrun.backend.service.transformation_router import nested_nodes
+from hetdesrun.backend.service.transformation_router import (
+    nested_nodes,
+    contains_deprecated,
+)
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
@@ -42,6 +45,7 @@ from hetdesrun.persistence.dbservice.exceptions import (
     DBNotFoundError,
     DBIntegrityError,
 )
+from hetdesrun.persistence.models.workflow import WorkflowContent
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +78,7 @@ async def create_workflow_revision(
     workflow_dto: WorkflowRevisionFrontendDto,
 ) -> WorkflowRevisionFrontendDto:
     """Store a transformation revision of type workflow in the data base.
-    
+
     This endpoint is deprecated and will be removed soon,
     use POST /api/transformations/ instead.
     """
@@ -128,7 +132,7 @@ async def create_workflow_revision(
 )
 async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
     """Get all transformation revisions of type workflow from the data base.
-    
+
     This endpoint is deprecated and will be removed soon,
     use GET /api/transformations/{id} instead.
     """
@@ -160,10 +164,13 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
     deprecated=True,
 )
 async def get_workflow_revision_by_id(
-    id: UUID = Path(..., example=UUID("123e4567-e89b-12d3-a456-426614174000"),),
+    id: UUID = Path(
+        ...,
+        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+    ),
 ) -> WorkflowRevisionFrontendDto:
     """Get a single transformation revision of type workflow from the data base.
-    
+
     This endpoint is deprecated and will be removed soon,
     use GET /api/transformations/{id} instead.
     """
@@ -202,15 +209,16 @@ async def get_workflow_revision_by_id(
     deprecated=True,
 )
 async def update_workflow_revision(
-    id: UUID, updated_workflow_dto: WorkflowRevisionFrontendDto,
+    id: UUID,
+    updated_workflow_dto: WorkflowRevisionFrontendDto,
 ) -> WorkflowRevisionFrontendDto:
     """Update or store a transformation revision of type workflow in the data base.
-    
+
     If no DB entry with the provided id is found, it will be created.
 
     Updating a transformation revision is only possible if it is in state DRAFT
     or to change the state from RELEASED to DISABLED.
-    
+
     This endpoint is deprecated and will be removed soon,
     use PUT /api/transformations/{id} instead.
     """
@@ -227,6 +235,8 @@ async def update_workflow_revision(
 
     updated_transformation_revision = updated_workflow_dto.to_transformation_revision()
 
+    existing_operator_ids: List[UUID] = []
+
     try:
         existing_transformation_revision = read_single_transformation_revision(
             id, log_error=False
@@ -238,9 +248,16 @@ async def update_workflow_revision(
             logger.error(msg)
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
+        assert isinstance(
+            existing_transformation_revision.content, WorkflowContent
+        )  # hint for mypy
+
         updated_transformation_revision.documentation = (
             existing_transformation_revision.documentation
         )
+
+        for operator in existing_transformation_revision.content.operators:
+            existing_operator_ids.append(operator.id)
 
         if existing_transformation_revision.state == State.RELEASED:
             if updated_workflow_dto.state == State.DISABLED:
@@ -256,9 +273,19 @@ async def update_workflow_revision(
         # with an id and either create or update the workflow revision
         pass
 
+    for operator in updated_transformation_revision.content.operators:
+        if operator.type == Type.WORKFLOW and operator.id not in existing_operator_ids:
+            operator.state = (
+                State.DISABLED
+                if contains_deprecated(operator.transformation_id)
+                else operator.state
+            )
+
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            updated_transformation_revision
+        persisted_transformation_revision = (
+            update_or_create_single_transformation_revision(
+                updated_transformation_revision
+            )
         )
         logger.info(f"updated workflow {id}")
     except DBIntegrityError as e:
@@ -286,9 +313,11 @@ async def update_workflow_revision(
     },
     deprecated=True,
 )
-async def delete_workflow_revision(id: UUID,) -> None:
+async def delete_workflow_revision(
+    id: UUID,
+) -> None:
     """Delete a transformation revision of type workflow from the data base.
-    
+
     Deleting a transformation revision is only possible if it is in state DRAFT.
 
     This endpoint is deprecated and will be removed soon,
@@ -324,10 +353,12 @@ async def delete_workflow_revision(id: UUID,) -> None:
     deprecated=True,
 )
 async def execute_workflow_revision(
-    id: UUID, wiring_dto: WiringFrontendDto, run_pure_plot_operators: bool = False,
+    id: UUID,
+    wiring_dto: WiringFrontendDto,
+    run_pure_plot_operators: bool = False,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision of type workflow.
-    
+
     This endpoint is deprecated and will be removed soon,
     use POST /api/transformations/{id}/execute instead.
     """
@@ -360,7 +391,8 @@ async def execute_workflow_revision(
             uuid4(), nested_nodes(tr_workflow, nested_transformations)
         ),
         configuration=ConfigurationInput(
-            name=str(tr_workflow.id), run_pure_plot_operators=run_pure_plot_operators,
+            name=str(tr_workflow.id),
+            run_pure_plot_operators=run_pure_plot_operators,
         ),
         workflow_wiring=wiring_dto.to_workflow_wiring(),
     )
@@ -430,10 +462,11 @@ async def execute_workflow_revision(
     deprecated=True,
 )
 async def bind_wiring_to_workflow_revision(
-    id: UUID, wiring_dto: WiringFrontendDto,
+    id: UUID,
+    wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:
     """Store or update the test wiring of a transformation revision of type workflow.
-    
+
     This endpoint is deprecated and will be removed soon,
     use PUT /api/transformations/{id} instead.
     """
@@ -455,8 +488,8 @@ async def bind_wiring_to_workflow_revision(
     transformation_revision.test_wiring = wiring
 
     try:
-        persisted_transformation_revision = update_or_create_single_transformation_revision(
-            transformation_revision
+        persisted_transformation_revision = (
+            update_or_create_single_transformation_revision(transformation_revision)
         )
         logger.info(f"bound wiring to workflow {id}")
     except DBIntegrityError as e:
