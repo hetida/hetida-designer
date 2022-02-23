@@ -1,3 +1,10 @@
+## 0.7.0
+* Complete Rewrite of the backend service in Python (formerly Java). This includes a lot of bug fixes.
+
+> :warning: IMPORTANT: Upgrading from 0.6.* to 0.7 requires [manual migration steps](./docs/migration_from_0.6_to_0.7.md)!
+* update frontend dependencies
+* export/import of components/workflows feature (see [docs](./docs/import_export.md))
+
 ## 0.6.19
 * fix runtime POST errors caused by https://github.com/encode/uvicorn/issues/1345
 ## 0.6.18
