@@ -1,47 +1,32 @@
-<div
-  (mousedown)='closeContextMenu()'
-  class='w-100 h-100'>
-  <mat-sidenav-container
-    autosize
-    hasBackdrop='false'
-    [ngClass]='theme'>
-    <mat-sidenav
-      opened='true'
-      mode='side'
-      disableClose='true'>
-      <div class='nav-wrapper'>
-        <div class='nav-content'>
+<div (mousedown)="closeContextMenu()" class="w-100 h-100">
+  <mat-sidenav-container autosize hasBackdrop="false" [ngClass]="theme">
+    <mat-sidenav opened="true" mode="side" disableClose="true">
+      <div class="nav-wrapper">
+        <div class="nav-content">
           <hd-navigation-container></hd-navigation-container>
         </div>
-        <div class='app-config'>
+        <div class="app-config">
           <mat-button-toggle
-            (change)='toggleTheme()'
-            [checked]='!lightTheme'
-            class='icon'
+            (change)="toggleTheme()"
+            [checked]="!lightTheme"
+            class="icon"
           >
             <mat-icon>{{ lightTheme ? 'wb_sunny' : 'nights_stay' }}</mat-icon>
           </mat-button-toggle>
-          <button
-            mat-button
-            [matMenuTriggerFor]='menu'>{{ userName }}</button>
+          <button mat-button [matMenuTriggerFor]="menu">{{ userName }}</button>
         </div>
       </div>
     </mat-sidenav>
 
-    <mat-sidenav-content
-      style='overflow: visible'
-      class='mat-app-background'>
+    <mat-sidenav-content style="overflow: visible" class="mat-app-background">
       <hd-content-view></hd-content-view>
       <hd-protocol-viewer></hd-protocol-viewer>
     </mat-sidenav-content>
   </mat-sidenav-container>
-  <hd-popover-base-item></hd-popover-base-item>
+  <hd-popover-baseitem></hd-popover-baseitem>
 
-  <mat-menu #menu='matMenu'>
-    <button
-      [disabled]='!keycloakEnabled'
-      (click)='logout()'
-      mat-menu-item>
+  <mat-menu #menu="matMenu">
+    <button [disabled]="!keycloakEnabled" (click)="logout()" mat-menu-item>
       Logout
     </button>
   </mat-menu>

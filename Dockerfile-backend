@@ -1,0 +1,21 @@
+##### Build and Test stage
+FROM maven:3.5.2-jdk-8-alpine AS build
+WORKDIR /usr/src/app
+ENV MVN_SETTINGS=/usr/share/maven/ref/settings-docker.xml
+
+# 1. Only update dependencies when the pom.xml actually changed.
+COPY ./backend/pom.xml .
+RUN mvn -s $MVN_SETTINGS dependency:go-offline
+
+# 2. Do the actual build.
+COPY ./backend/src src
+RUN mvn -s $MVN_SETTINGS package
+
+##### Production stage
+FROM openjdk:8-jre-alpine
+RUN addgroup -S backend && adduser -S backend -G backend
+USER backend:backend
+WORKDIR /usr/app
+COPY --from=build /usr/src/app/target/backend-0.0.1-SNAPSHOT.jar hetida-designer-backend.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "hetida-designer-backend.jar"]

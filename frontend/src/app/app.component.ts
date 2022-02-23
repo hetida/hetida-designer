@@ -3,7 +3,7 @@ import { Component, ElementRef, OnInit } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { AuthService } from './service/auth.service';
-import { ContextMenuService } from './service/context-menu/context-menu.service';
+import { ContextmenuService } from './service/contextmenu.service';
 import { LocalStorageService } from './service/local-storage/local-storage.service';
 import { ThemeService } from './service/theme/theme.service';
 
@@ -24,7 +24,7 @@ export class AppComponent implements OnInit {
     private readonly overlayContainer: OverlayContainer,
     private readonly themeService: ThemeService,
     private readonly appElement: ElementRef<Element>,
-    private readonly contextMenuService: ContextMenuService
+    private readonly contextMenuService: ContextmenuService
   ) {
     this.iconRegistry.addSvgIcon(
       'icon-component',

@@ -1,0 +1,20 @@
+{
+  "configurations": [
+      {
+          "type": "java",
+          "name": "Hetida Designer Backend",
+          "request": "launch",
+          "cwd": "${workspaceFolder}",
+          "console": "internalConsole",
+          "mainClass": "org.hetida.designer.backend.HetidaDesignerBackendApplication",
+          "projectName": "backend",
+          "env": {
+            "DATASOURCE_URL": "jdbc:postgresql://localhost:5430/hetida_designer_db",
+            "CODEGEN_URL": "http://localhost:8090/codegen",
+            "CODECHECK_URL": "http://localhost:8090/codecheck",
+            "RUNTIME_URL" :"http://localhost:8090/runtime",
+            "ADAPTER_CONFIG": "demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,demo-adapter-java|Java-Demo-Adapter|http://localhost:8091/adapter|http://hetida-designer-demo-adapter-java:8091/adapter"
+          }
+      }
+  ]
+}

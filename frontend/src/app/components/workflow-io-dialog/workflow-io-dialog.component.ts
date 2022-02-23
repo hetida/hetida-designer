@@ -13,9 +13,9 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  MAT_DIALOG_DATA,
   MatDialog,
-  MatDialogRef
+  MatDialogRef,
+  MAT_DIALOG_DATA
 } from '@angular/material/dialog';
 import { JsonEditorComponent, JsonEditorModalData } from 'hd-wiring';
 import {
@@ -26,13 +26,13 @@ import {
 } from 'hetida-flowchart';
 import { FlowchartConverterService } from 'src/app/service/type-converter/flowchart-converter.service';
 import {
-  BooleanValidator,
-  FloatValidator,
-  IntegerValidator
-} from 'src/app/validation/basic-type-validators';
-import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
-import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
-import { UniqueValueValidator } from 'src/app/validation/unique-value-validator';
+  booleanValidator,
+  floatValidator,
+  integerValidator
+} from 'src/app/validation/BasicTypeValidators';
+import { PythonIdentifierValidator } from 'src/app/validation/PythonIdentifierValidator';
+import { PythonKeywordBlacklistValidator } from 'src/app/validation/PythonKeywordValidator';
+import { UniqueValueValidator } from 'src/app/validation/UniqueValueValidator';
 import { IOItem } from '../../model/io-item';
 import { WorkflowBaseItem } from '../../model/workflow-base-item';
 import { WorkflowOperator } from '../../model/workflow-operator';
@@ -305,11 +305,11 @@ export class WorkflowIODialogComponent {
     if (data.isConstant) {
       switch (data.type) {
         case 'FLOAT':
-          return [FloatValidator(), Validators.required];
+          return [floatValidator(), Validators.required];
         case 'INT':
-          return [IntegerValidator(), Validators.required];
+          return [integerValidator(), Validators.required];
         case 'BOOLEAN':
-          return [BooleanValidator(), Validators.required];
+          return [booleanValidator(), Validators.required];
         default:
           return Validators.required;
       }

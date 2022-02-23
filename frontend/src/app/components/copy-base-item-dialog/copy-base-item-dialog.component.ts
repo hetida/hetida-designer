@@ -1,15 +1,15 @@
 import { Component, EventEmitter, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { select, Store } from '@ngrx/store';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { first, map, startWith } from 'rxjs/operators';
 import { AbstractBaseItem } from 'src/app/model/base-item';
-import { BaseItemDialogData } from 'src/app/model/base-item-dialog-data';
+import { BaseItemDialogData } from 'src/app/model/BaseItemDialogData';
 import { IAppState } from 'src/app/store/app.state';
 import { selectAbstractBaseItems } from 'src/app/store/base-item/base-item.selectors';
 import { Utils } from 'src/app/utils/utils';
-import { UniqueRevisionTagValidator } from 'src/app/validation/unique-revision-tag-validator';
+import { RevisionTagValidator } from 'src/app/validation/RevisionTagValidator';
 
 @Component({
   selector: 'hd-copy-base-item-dialog',
@@ -133,7 +133,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(20),
-              UniqueRevisionTagValidator(abstractBaseItems)
+              RevisionTagValidator(abstractBaseItems)
             ]
           )
         });

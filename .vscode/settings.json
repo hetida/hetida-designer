@@ -12,7 +12,6 @@
         }
     ],
     "search.exclude": {
-        "**/__pycache__": true,
         "**/.git": true,
         "**/runtime/venv": true,
         "**/runtime/nix_venv_hd_dev": true,
@@ -23,7 +22,6 @@
         "**/.coverage": true
     },
     "files.exclude": {
-        "**/__pycache__": true,
         "**/runtime/venv": true,
         "**/runtime/nix_venv_hd_dev": true,
         "**/demo-adapter-python/venv": true,
@@ -40,6 +38,5 @@
     "python.linting.mypyPath": "./runtime/venv/bin/mypy",
     "python.linting.mypyEnabled": true,
     "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    "editor.formatOnSave": true
+    "python.linting.pylintEnabled": true
 }

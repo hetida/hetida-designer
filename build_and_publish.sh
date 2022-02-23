@@ -13,7 +13,7 @@ DRY_RUN=false
 
 function usage() {
   if [ -n "$1" ]; then
-    echo -e "ERROR: $1\n"
+    echo -e "ERROR: $1\n";
   fi
   echo "Usage: $0 [-u docker-hub-user] [-p docker-hub-password]"
   echo "  -u, --docker-hub-user        Docker Hub username"
@@ -33,38 +33,23 @@ function usage() {
 # Parse arguments
 ######################################################
 
-while [[ "$#" -gt 0 ]]; do case $1 in
-  -u | --docker-hub-user)
-    DOCKER_USER="$2"
-    shift
-    shift
-    ;;
-  -p | --docker-hub-password)
-    DOCKER_PASSWORD="$2"
-    shift
-    shift
-    ;;
-  -d | --dryrun)
-    DRY_RUN=true
-    shift
-    ;;
-  -h | --help) usage ;;
-  *)
-    usage "Unknown parameter passed: $1"
-    shift
-    shift
-    ;;
-  esac done
+while [[ "$#" > 0 ]]; do case $1 in
+  -u|--docker-hub-user) DOCKER_USER="$2"; shift;shift;;
+  -p|--docker-hub-password) DOCKER_PASSWORD="$2"; shift;shift;;
+  -d|--dryrun) DRY_RUN=true; shift;;  
+  -h|--help) usage;;
+  *) usage "Unknown parameter passed: $1"; shift; shift;;
+esac; done
 
 # validate arguments:
-if [ -z "$DOCKER_USER" ]; then usage "Docker Hub user is not set"; fi
-if [ -z "$DOCKER_PASSWORD" ]; then usage "Docker Hub password is not set."; fi
+if [ -z "$DOCKER_USER" ]; then usage "Docker Hub user is not set"; fi;
+if [ -z "$DOCKER_PASSWORD" ]; then usage "Docker Hub password is not set."; fi;
 
 if "$DRY_RUN"; then
-  echo "Dry Run Mode active!"
-  cmd=echo
+    echo "Dry Run Mode active!"
+    cmd=echo
 else
-  cmd=''
+    cmd=''
 fi
 
 ######################################################
@@ -84,20 +69,19 @@ sleep 7 # some time to allow arborting ;-)
 build_and_push() {
   SERVICE_NAME=$1
   SERVICE_VERSION=$2
-  DOCKERFILE_SUFFIX="${3:-"$SERVICE_NAME"}"
   echo "Build service $SERVICE_NAME version $SERVICE_VERSION"
-  $cmd docker build -t "$DOCKER_ORGANIZATION"/designer-"$SERVICE_NAME":latest -f Dockerfile-"$DOCKERFILE_SUFFIX" .
+  $cmd docker build -t "$DOCKER_ORGANIZATION"/designer-"$SERVICE_NAME":latest -f Dockerfile-"$SERVICE_NAME" .
   echo "Tag service $SERVICE_NAME version $SERVICE_VERSION"
   $cmd docker tag "$DOCKER_ORGANIZATION"/designer-"$SERVICE_NAME":latest "$DOCKER_ORGANIZATION"/designer-"$SERVICE_NAME":"$SERVICE_VERSION"
-  echo "Push service $SERVICE_NAME version $SERVICE_VERSION with tag latest"
+  echo "Push service $SERVICE_NAME version $SERVICE_VERSION with tag latest"  
   $cmd docker push "$DOCKER_ORGANIZATION"/designer-"$SERVICE_NAME":latest
-  echo "Push service $SERVICE_NAME version $SERVICE_VERSION with tag $SERVICE_VERSION"
+  echo "Push service $SERVICE_NAME version $SERVICE_VERSION with tag $SERVICE_VERSION"  
   $cmd docker push "$DOCKER_ORGANIZATION"/designer-"$SERVICE_NAME":"$SERVICE_VERSION"
 }
 
 build_and_push frontend $VERSION
+build_and_push backend $VERSION
 build_and_push runtime $VERSION
-build_and_push backend $VERSION "runtime" # uses runtime image
 build_and_push demo-adapter-java $VERSION
 build_and_push demo-adapter-python $VERSION
 

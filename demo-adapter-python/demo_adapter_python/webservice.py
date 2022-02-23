@@ -11,13 +11,15 @@ from io import StringIO
 from starlette.requests import Request
 from starlette.responses import Response
 
-from fastapi import FastAPI, APIRouter, HTTPException, Query, Body
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, Body
 from fastapi.routing import APIRoute
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware import Middleware
 
-from fastapi.responses import StreamingResponse
+from fastapi.encoders import jsonable_encoder
+
+from fastapi.responses import JSONResponse, StreamingResponse
 
 import pandas as pd
 import numpy as np
@@ -143,7 +145,7 @@ async def structure(parentId: Optional[str] = None):
     If `parentId` is a valid thingNode id the response contains all the thingNodes, sources and
     sinks with this `parentId` as thingNodeId, i.e. every element directly attached to it.
 
-    IMPORTANT: In a real adpater implementation the information should be queried from a
+    IMPORTANT: In a real adpater implementation the information should be queried from a 
     masterdata system on every invocation. It should not be kept in memory like in this
     demo adapter as it may be too large and may change.
     """
@@ -419,8 +421,10 @@ def calculate_age(born):
 @demo_adapter_main_router.get(
     "/thingNodes/{thingNodeId}/metadata/{key}", response_model=GetMetadatum
 )
-async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> GetMetadatum:
-    # pylint: disable=too-many-return-statements
+async def get_metadata_thingNode_by_key(
+    thingNodeId: str, key: str
+) -> GetMetadatum:  # pylint: disable=too-many-return-statements
+
     key = unquote(key)
     if thingNodeId == "root.plantA":
         if key == "Temperature Unit":
@@ -498,7 +502,7 @@ async def post_metadata_thingNode_by_key(
 
 @demo_adapter_main_router.get("/thingNodes/{id}", response_model=StructureThingNode)
 async def thing_node(
-    id: str,  # pylint: disable=redefined-builtin
+    id: str,
 ) -> StructureThingNode:  # pylint: disable=redefined-builtin
     """Get a single sink by id"""
     requested_thing_nodes = [

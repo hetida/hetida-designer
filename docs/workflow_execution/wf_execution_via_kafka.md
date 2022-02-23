@@ -1,7 +1,4 @@
 # Workflow Execution via Apache Kafka
-
-> :warning: Warning: The Kafka endpoint is currently not available, following the backend rewrite in Python. It will be reintroduced in a later release. So for now this documentation page only applies for version <=0.6 and not for versions >=0.7.
-
 This document describes the [Kafka](https://kafka.apache.org/) workflow execution endpoint by providing a basic example.
 
 ## Setup
@@ -14,7 +11,7 @@ We save a copy of the `docker-compose.yml` with the new name `docker-compose-kaf
   hetida-designer-backend:
     image: hetida/designer-backend
     ports:
-      - 8080:8090
+      - 8080:8080
     environment:
       org.hetida.designer.backend.installed.adapters: "demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,demo-adapter-java|Java-Demo-Adapter|http://localhost:8091/adapter|http://hetida-designer-demo-adapter-java:8091/adapter,local-file-adapter|Local-File-Adapter|http://localhost:8090/adapters/localfile|http://hetida-designer-runtime:8090/adapters/localfile"
       org.hetida.designer.backend.listener.kafka.enabled: "true"
@@ -64,10 +61,10 @@ We will demonstrate workflow execution via Kafka using one of the example workfl
 
 ```bash
 docker run --rm \
-  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
+  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8080/api/" \
   --name htdruntime_deployment \
-  --network hetida-designer-network \
-  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'  
+  --network hetida-designer_default \
+  --entrypoint python hetida/designer-runtime -c "from hetdesrun.utils import post_components_from_directory, post_workflows_from_directory; post_components_from_directory('./components'); post_workflows_from_directory('./workflows'); post_workflows_from_directory('./workflows2')"  
 ```
 
 ## Workflow Execution

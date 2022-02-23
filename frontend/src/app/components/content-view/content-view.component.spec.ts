@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { MonacoEditorModule } from 'ngx-monaco-editor';
-import { BasicTestModule } from 'src/app/basic-test.module';
+import { BasicTestModule } from 'src/app/angular-test.module';
 import { TabItemType } from 'src/app/model/tab-item';
 import { ComponentEditorComponent } from '../component-editor/component-editor.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';

@@ -6,7 +6,7 @@ import { switchMap } from 'rxjs/operators';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { AbstractBaseItem } from 'src/app/model/base-item';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
-import { PopoverService } from 'src/app/service/popover/popover.service';
+import { PopoverService } from 'src/app/service/popover.service';
 import { Utils } from 'src/app/utils/utils';
 import { BaseItemService } from '../../../service/base-item/base-item.service';
 import { IAppState } from '../../../store/app.state';

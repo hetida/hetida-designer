@@ -1,5 +1,4 @@
 import { ComponentPortal } from '@angular/cdk/portal';
-import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { combineLatest, Observable } from 'rxjs';
@@ -8,99 +7,97 @@ import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { BaseItem } from 'src/app/model/base-item';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
-import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
+import { ContextmenuService } from 'src/app/service/contextmenu.service';
 import { LocalStorageService } from 'src/app/service/local-storage/local-storage.service';
 import { IAppState } from 'src/app/store/app.state';
 import { selectHashedAbstractBaseItemLookupById } from 'src/app/store/base-item/base-item.selectors';
 import { Utils } from 'src/app/utils/utils';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import { BaseItemContextMenuComponent } from '../base-item-context-menu/base-item-context-menu.component';
-
+import { HttpClient } from '@angular/common/http';
 @Component({
-  selector: 'hd-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+    selector: 'hd-home',
+    templateUrl: './home.component.html',
+    styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  constructor(
-    private readonly localStorageService: LocalStorageService,
-    private readonly store: Store<IAppState>,
-    private readonly baseItemActionService: BaseItemActionService,
-    private readonly tabItemService: TabItemService,
-    private readonly contextMenuService: ContextMenuService,
-    private readonly httpClient: HttpClient
-  ) {}
+    constructor(
+        private readonly localStorageService: LocalStorageService,
+        private readonly store: Store<IAppState>,
+        private readonly baseItemActionService: BaseItemActionService,
+        private readonly tabItemService: TabItemService,
+        private readonly contextmenuService: ContextmenuService,
+        private readonly httpClient: HttpClient
+    ) { }
 
-  public lastOpened: Observable<BaseItem[]>;
-  public version: string;
+    public lastOpened: Observable<BaseItem[]>;
+    public version: string;
 
-  ngOnInit() {
-    this.httpClient
-      .get<string>('assets/VERSION', { responseType: 'text' as 'json' })
-      .subscribe((version: string) => {
-        this.version = version;
-      });
-    this.lastOpened = combineLatest([
-      this.localStorageService.notifier,
-      this.store.select(selectHashedAbstractBaseItemLookupById)
-    ]).pipe(
-      map(([_, abstractBaseItemsLookup]) => {
-        const lastOpenedBaseItemIds: string[] =
-          this.localStorageService.getItem('last-opened') ?? [];
+    ngOnInit() {
+        this.httpClient.get<string>("assets/VERSION", { responseType: 'text' as 'json' }).subscribe((version: string) => {
+            this.version = version;
+        })
+        this.lastOpened = combineLatest([
+            this.localStorageService.notifier,
+            this.store.select(selectHashedAbstractBaseItemLookupById)
+        ]).pipe(
+            map(([_, abstractBaseItemsLookup]) => {
+                const lastOpenedBaseItemIds: string[] =
+                    this.localStorageService.getItem('last-opened') ?? [];
 
-        return lastOpenedBaseItemIds
-          .filter(() => !Utils.object.isEmpty(abstractBaseItemsLookup))
-          .map(baseItemId => abstractBaseItemsLookup[baseItemId])
-          .filter(
-            (abstractBaseItem): abstractBaseItem is BaseItem =>
-              Utils.isDefined(abstractBaseItem) &&
-              abstractBaseItem.state !== RevisionState.DISABLED
-          );
-      })
-    );
-  }
-
-  get lastOpenedWorkflows() {
-    return this.lastOpened.pipe(
-      map(abstractBaseItems => {
-        return abstractBaseItems.filter(
-          baseItem => baseItem.type === BaseItemType.WORKFLOW
+                return lastOpenedBaseItemIds
+                    .filter(() => !Utils.object.isEmpty(abstractBaseItemsLookup))
+                    .map(baseItemId => abstractBaseItemsLookup[baseItemId])
+                    .filter(
+                        (abstractBaseItem): abstractBaseItem is BaseItem =>
+                            Utils.isDefined(abstractBaseItem) &&
+                            abstractBaseItem.state !== RevisionState.DISABLED
+                    );
+            })
         );
-      })
-    );
-  }
+    }
 
-  get lastOpenedComponents() {
-    return this.lastOpened.pipe(
-      map(abstractBaseItems => {
-        return abstractBaseItems.filter(
-          baseItem => baseItem.type === BaseItemType.COMPONENT
+    get lastOpenedWorkflows() {
+        return this.lastOpened.pipe(
+            map(abstractBaseItems => {
+                return abstractBaseItems.filter(
+                    baseItem => baseItem.type === BaseItemType.WORKFLOW
+                );
+            })
         );
-      })
-    );
-  }
+    }
 
-  select(selectedItem: BaseItem) {
-    this.tabItemService.addBaseItemTab(selectedItem.id);
-  }
+    get lastOpenedComponents() {
+        return this.lastOpened.pipe(
+            map(abstractBaseItems => {
+                return abstractBaseItems.filter(
+                    baseItem => baseItem.type === BaseItemType.COMPONENT
+                );
+            })
+        );
+    }
 
-  openBaseItemContextMenu(selectedItem: BaseItem, mouseEvent: MouseEvent) {
-    const { componentPortalRef } = this.contextMenuService.openContextMenu(
-      new ComponentPortal(BaseItemContextMenuComponent),
-      {
-        x: mouseEvent.clientX,
-        y: mouseEvent.clientY
-      }
-    );
+    select(selectedItem: BaseItem) {
+        this.tabItemService.addBaseItemTab(selectedItem.id);
+    }
 
-    componentPortalRef.instance.baseItem = selectedItem;
-  }
+    openBaseItemContextMenu(selectedItem: BaseItem, mouseEvent: MouseEvent) {
+        const { componentPortalRef } = this.contextmenuService.openContextMenu(
+            new ComponentPortal(BaseItemContextMenuComponent),
+            {
+                x: mouseEvent.clientX,
+                y: mouseEvent.clientY
+            }
+        );
 
-  newWorkflow(): void {
-    this.baseItemActionService.newWorkflow();
-  }
+        componentPortalRef.instance.baseItem = selectedItem;
+    }
 
-  newComponent(): void {
-    this.baseItemActionService.newComponent();
-  }
+    newWorkflow(): void {
+        this.baseItemActionService.newWorkflow();
+    }
+
+    newComponent(): void {
+        this.baseItemActionService.newComponent();
+    }
 }

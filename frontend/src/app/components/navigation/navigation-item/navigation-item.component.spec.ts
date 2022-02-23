@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
-import { BasicTestModule } from 'src/app/basic-test.module';
+import { BasicTestModule } from 'src/app/angular-test.module';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ComponentEditorService } from 'src/app/service/component-editor.service';
-import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
+import { ContextmenuService } from 'src/app/service/contextmenu.service';
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
-import { WorkflowEditorService } from 'src/app/service/workflow-editor/workflow-editor.service';
+import { WorkflowEditorService } from 'src/app/service/workflow-editor.service';
 import { NavigationItemComponent } from './navigation-item.component';
 
 describe('NavigationItemComponent', () => {
   let component: NavigationItemComponent;
   let fixture: ComponentFixture<NavigationItemComponent>;
 
-  const mockContextMenuService = jasmine.createSpyObj<ContextMenuService>(
-    'ContextMenuService',
+  const mockContextMenuService = jasmine.createSpyObj<ContextmenuService>(
+    'ContextmenuService',
     ['openContextMenu']
   );
 
@@ -39,7 +39,7 @@ describe('NavigationItemComponent', () => {
             useValue: mockComponentEditorService
           },
           {
-            provide: ContextMenuService,
+            provide: ContextmenuService,
             useValue: mockContextMenuService
           },
           {

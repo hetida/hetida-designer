@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.1.4.RELEASE</version>
+    <relativePath /> <!-- lookup parent from repository -->
+  </parent>
+  <groupId>org.hetida.designer</groupId>
+  <artifactId>backend</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>backend</name>
+  <description>Hetida Designer</description>
+
+  <properties>
+    <java.version>1.8</java.version>
+    <com.h2database.h2.version>2.1.210</com.h2database.h2.version>
+    <org.projectlombok.lombok.version>1.18.8</org.projectlombok.lombok.version>
+    <org.apache.commons.commons-collections4.version>4.4</org.apache.commons.commons-collections4.version>
+    <io.springfox.springfox-swagger2.version>2.9.2</io.springfox.springfox-swagger2.version>
+    <io.springfox.springfox-swagger-ui.version>2.9.2</io.springfox.springfox-swagger-ui.version>
+    <org.flywaydb.flyway-core>5.1.4</org.flywaydb.flyway-core>
+    <org.postgresql.postgresql.version>42.2.13</org.postgresql.postgresql.version>
+    <log4j2.version>2.16.0</log4j2.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.keycloak.bom</groupId>
+        <artifactId>keycloak-adapter-bom</artifactId>
+        <version>3.3.0.Final</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-spring-boot-2-starter</artifactId>
+      <version>4.0.0.Final</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka</artifactId>
+    </dependency>
+
+    <!-- H2 Database -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
+      <version>${com.h2database.h2.version}</version>
+    </dependency>
+
+    <!-- PostgresSQL  Database-->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${org.postgresql.postgresql.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- Flyway-->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+      <version>${flyway.version}</version>
+    </dependency>
+
+    <!-- Lombok -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${org.projectlombok.lombok.version}</version>
+    </dependency>
+
+    <!-- Utilities -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>${org.apache.commons.commons-collections4.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+    </dependency>
+
+
+    <!-- Swagger -->
+    <dependency>
+      <groupId>io.springfox</groupId>
+      <artifactId>springfox-swagger2</artifactId>
+      <version>${io.springfox.springfox-swagger2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.springfox</groupId>
+      <artifactId>springfox-swagger-ui</artifactId>
+      <version>${io.springfox.springfox-swagger-ui.version}</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>-Dspring.profiles.active=test</argLine>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <version>${flyway.version}</version>
+        <configuration>
+          <driver>${database.driver}</driver>
+          <url>${database.url}</url>
+          <user>${database.user}</user>
+          <password>${database.password}</password>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

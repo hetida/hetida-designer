@@ -1,5 +1,3 @@
-## 0.6.19
-* fix runtime POST errors caused by https://github.com/encode/uvicorn/issues/1345
 ## 0.6.18
 * (security fix) upgrade java dependencies (see [Issue#9](https://github.com/hetida/hetida-designer/issues/9))
 * upgrade Python dependencies

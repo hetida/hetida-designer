@@ -1,8 +1,5 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-  "cli": {
-    "analytics": false
-  },
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
@@ -42,14 +39,7 @@
               "./node_modules/hd-wiring/hd-wiring.css",
               "src/style/styles.scss"
             ],
-            "scripts": ["node_modules/plotly.js/dist/plotly.min.js"],
-            "aot": false,
-            "vendorChunk": true,
-            "extractLicenses": false,
-            "buildOptimizer": false,
-            "sourceMap": true,
-            "optimization": false,
-            "namedChunks": true
+            "scripts": ["node_modules/plotly.js/dist/plotly.min.js"]
           },
           "configurations": {
             "production": {
@@ -75,8 +65,7 @@
                 }
               ]
             }
-          },
-          "defaultConfiguration": ""
+          }
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",

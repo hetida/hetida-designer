@@ -2,13 +2,13 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { Component, Input, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { navigationWidth } from 'src/app/constants/popover-sizes';
+import { navigationWidth } from 'src/app/constants/popoverSizes';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ComponentEditorService } from 'src/app/service/component-editor.service';
-import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
-import { PopoverService } from 'src/app/service/popover/popover.service';
-import { WorkflowEditorService } from 'src/app/service/workflow-editor/workflow-editor.service';
+import { ContextmenuService } from 'src/app/service/contextmenu.service';
+import { PopoverService } from 'src/app/service/popover.service';
+import { WorkflowEditorService } from 'src/app/service/workflow-editor.service';
 import { AbstractBaseItem, BaseItem } from '../../../model/base-item';
 import { TabItemService } from '../../../service/tab-item/tab-item.service';
 import { BaseItemContextMenuComponent } from '../../base-item-context-menu/base-item-context-menu.component';
@@ -23,7 +23,7 @@ export class NavigationItemComponent implements OnInit {
 
   constructor(
     private readonly popoverService: PopoverService,
-    private readonly contextMenuService: ContextMenuService,
+    private readonly contextmenuService: ContextmenuService,
     private readonly tabItemService: TabItemService,
     private readonly _workflowService: WorkflowEditorService,
     private readonly _componentService: ComponentEditorService
@@ -63,7 +63,7 @@ export class NavigationItemComponent implements OnInit {
   }
 
   public openContextMenu(mouseEvent: MouseEvent): void {
-    const { componentPortalRef } = this.contextMenuService.openContextMenu(
+    const { componentPortalRef } = this.contextmenuService.openContextMenu(
       new ComponentPortal(BaseItemContextMenuComponent),
       {
         x: mouseEvent.clientX,

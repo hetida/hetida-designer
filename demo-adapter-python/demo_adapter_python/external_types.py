@@ -35,7 +35,7 @@ class ValueDataType(str, Enum):
         return obj  # type:ignore
 
     def __repr__(self) -> str:
-        return "<%s.%s: %s>" % (  # pylint: disable=consider-using-f-string
+        return "<%s.%s: %s>" % (
             self.__class__.__name__,
             # pylint: disable=no-member
             self._name_,
@@ -111,7 +111,7 @@ class ExternalType(str, Enum):
 
     def __repr__(self) -> str:
         # pylint: disable=no-member
-        return "<%s.%s: %s>" % (  # pylint: disable=consider-using-f-string
+        return "<%s.%s: %s>" % (
             self.__class__.__name__,
             self._name_,  # pylint: disable=no-member
             ", ".join([repr(v) for v in self._all_values]),  # type: ignore

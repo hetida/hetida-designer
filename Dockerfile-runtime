@@ -22,8 +22,8 @@ RUN chmod -R a+rw /mnt/obj_repo
 # making prod stage available early allows to build it without building test stage
 # since test stage is only necessary on build system
 FROM application_base AS prod
-RUN useradd -m hd_app
-USER hd_app
+RUN useradd -m hdrt_app
+USER hdrt_app
 WORKDIR /app
 ENV PORT 8090
 EXPOSE 8090
