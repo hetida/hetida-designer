@@ -10,7 +10,7 @@ test('Load components list', async ({ page }) => {
   await hetidaDesigner.setupTest();
 
   // Run test
-  await navigation.clickBtnNavigation('components');
+  await navigation.clickBtnNavigation('Components');
 
   const countComponents = await page.locator('hd-navigation-category').count();
   expect(countComponents).toBeGreaterThan(0);

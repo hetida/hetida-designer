@@ -22,6 +22,8 @@
         "format:all": "prettier --write src/**/*.{js,ts,json,html,scss}",
         "format:staged": "pretty-quick --staged",
         "e2e": "ng e2e",
+        "run-e2e-all": "playwright test --config=./playwright/playwright.config.ts",
+        "run-e2e-chromium": "playwright test --config=./playwright/playwright.config.ts --project=chromium",
         "mock:server": "json-server --watch data.json",
         "tslint-check": "tslint-config-prettier-check ./tslint.json",
         "test-headless": "ng test --watch=false --browsers=ChromeHeadless"
@@ -70,6 +72,7 @@
         "@angular/compiler-cli": "^11.2.0",
         "@angular/language-service": "^11.2.0",
         "@ngrx/store-devtools": "^11.0.1",
+        "@playwright/test": "^1.18.1",
         "@types/jasmine": "~3.6.0",
         "@types/jasminewd2": "^2.0.8",
         "@types/katex": "^0.10.2",

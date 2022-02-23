@@ -10,7 +10,7 @@ test('Load workflows list', async ({ page }) => {
   await hetidaDesigner.setupTest();
 
   // Run test
-  await navigation.clickBtnNavigation('workflows');
+  await navigation.clickBtnNavigation('Workflows');
 
   const countWorkflows = await page.locator('hd-navigation-category').count();
   expect(countWorkflows).toBeGreaterThan(0);
