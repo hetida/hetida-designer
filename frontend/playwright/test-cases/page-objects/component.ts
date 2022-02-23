@@ -59,7 +59,8 @@ export class Component {
 
     // Hover over component, check if error-notification occurred
     await this.navigation.hoverItemNavigation(categoryName, componentName);
-    await this.errorNotification.checkErrorNotification();
+    const countErrorNotification = await this.errorNotification.checkErrorNotification();
+    expect(countErrorNotification).toEqual(0);
 
     // Open component on double-click
     await this.navigation.doubleClickItemNavigation(
@@ -131,7 +132,8 @@ export class Component {
     await this.navigation.clickBtnDialog('Execute');
 
     // Check if error-notification occurred
-    await this.errorNotification.checkErrorNotification();
+    const countErrorNotification = await this.errorNotification.checkErrorNotification();
+    expect(countErrorNotification).toEqual(0);
 
     // Check if hd-protocol-viewer is visible
     const visibleProtocolViewer = this.page.locator('hd-protocol-viewer');

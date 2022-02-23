@@ -38,7 +38,8 @@ export class Workflow {
 
     // Hover over workflow, check if error-notification occurred
     await this.navigation.hoverItemNavigation(categoryName, workflowName);
-    await this.errorNotification.checkErrorNotification();
+    const countErrorNotification = await this.errorNotification.checkErrorNotification();
+    expect(countErrorNotification).toEqual(0);
 
     // Open workflow on double-click
     await this.navigation.doubleClickItemNavigation(categoryName, workflowName);
@@ -104,7 +105,8 @@ export class Workflow {
     await this.navigation.clickBtnDialog('Execute');
 
     // Check if error-notification occurred
-    await this.errorNotification.checkErrorNotification();
+    const countErrorNotification = await this.errorNotification.checkErrorNotification();
+    expect(countErrorNotification).toEqual(0);
 
     // Check if hd-protocol-viewer is visible
     const visibleProtocolViewer = this.page.locator('hd-protocol-viewer');

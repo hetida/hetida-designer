@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 export class ErrorNotification {
   private readonly page: Page;
@@ -8,7 +8,7 @@ export class ErrorNotification {
   }
 
   // Check if error-notification occurred
-  public async checkErrorNotification(): Promise<void> {
+  public async checkErrorNotification(): Promise<number> {
     let countErrorNotification = 0;
 
     try {
@@ -22,6 +22,6 @@ export class ErrorNotification {
         .count();
     } catch (error) {}
 
-    expect(countErrorNotification).toEqual(0);
+    return countErrorNotification;
   }
 }
