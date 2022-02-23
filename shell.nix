@@ -111,7 +111,7 @@ let
       done
 
       echo "CREATING DB SCHEMA"
-      python -c "from sqlalchemy_utils import create_database; from hetdesrun.persistence.dbmodels import Base; from hetdesrun.persistence import get_db_engine; create_database(get_db_engine().url);"
+      python -c "from sqlalchemy_utils import create_database; from hetdesrun.persistence import get_db_engine; create_database(get_db_engine().url);"
       
       echo "STARTING RUNTIME"
       PORT=8080 python ./main.py
