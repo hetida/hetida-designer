@@ -126,7 +126,7 @@ def nested_nodes(
 
 def contains_deprecated(transformation_id: UUID) -> bool:
     logger.info(
-        "check if transformation revision %s contains deprecated oopeerators",
+        "check if transformation revision %s contains deprecated operators",
         str(transformation_id),
     )
     transformation_revision = read_single_transformation_revision(transformation_id)
