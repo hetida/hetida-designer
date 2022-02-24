@@ -214,8 +214,6 @@ docker run --rm \
   --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
 ```
 
-In case your checked out repository directory has a different name replace `hetida/designer-runtime` by `<directory name>/designer-runtime`.
-
 Once you have the application running, only stop the container containing the submodule that you
 want to work on. We use a monorepo approach, so you already have the source code for all submodules on your machine by now.
 
