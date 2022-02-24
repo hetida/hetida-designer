@@ -77,7 +77,7 @@ docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
+  --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
 ```
 
 to install/deploy base components and some example workflows. **This step is only necessary the first time starting hetida designer!**
@@ -211,10 +211,10 @@ docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
+  --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
 ```
 
-In case your checked out repository directory has a different name replace `hetida-designer_hetida-designer-runtime` by `<directory name>_hetida-designer-runtime`.
+In case your checked out repository directory has a different name replace `hetida/designer-runtime` by `<directory name>/designer-runtime`.
 
 Once you have the application running, only stop the container containing the submodule that you
 want to work on. We use a monorepo approach, so you already have the source code for all submodules on your machine by now.
