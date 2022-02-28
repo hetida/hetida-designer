@@ -2,21 +2,30 @@ import { test, expect } from '@playwright/test';
 import { HetidaDesigner } from '../page-objects/hetida-designer';
 import { Navigation } from '../page-objects/navigation';
 
-test('Open components on double-click', async ({ page }) => {
+test('Execute components, type, confirm dialog-container', async ({ page }) => {
   const hetidaDesigner = new HetidaDesigner(page);
   const navigation = new Navigation(page);
   // Test parameter
-  const categoryName = 'Arithmetic';
-  const componentName = 'Pi';
+  const componentName = 'Factorial';
+  const categoryName = 'Draft';
+  const shortDescription = 'Calculates my factorial';
+  const tag = '1.0.0';
 
   // Run setup
   await hetidaDesigner.setupTest();
 
   // Run test
   await navigation.clickBtnNavigation('Components');
-  await navigation.clickExpansionPanelNavigation(categoryName);
-  // Open component on double-click
-  await navigation.doubleClickItemNavigation(categoryName, componentName);
+  await navigation.clickBtnNavigation('Add component');
+
+  // Type in component details
+  await navigation.typeInInputDialog('name', componentName); // Component name
+  await navigation.typeInInputDialog('category', categoryName); // Category
+  await navigation.typeInInputDialog('description', shortDescription); // Short description
+  await navigation.typeInInputDialog('tag', tag); // Tag
+
+  // Click on "Create Component"
+  await navigation.clickBtnDialog('Create Component');
 
   // Check for equal names in list and opened tab
   const componentListName = await page

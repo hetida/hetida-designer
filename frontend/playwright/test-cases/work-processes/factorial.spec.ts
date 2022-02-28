@@ -23,16 +23,6 @@ test('Create a "factorial" component and use it, in a new created workflow', asy
   await hetidaDesigner.setupTest();
 
   // Run test
-  await component.addComponent(
-    categoryName,
-    componentName,
-    shortDescription,
-    tag
-  );
-
-  // await component.openComponent(categoryName, componentName);
-
-  // await component.declareComponent();
 
   // Run clear
   await hetidaDesigner.clearTest();

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { HetidaDesigner } from '../page-objects/hetida-designer';
 import { Navigation } from '../page-objects/navigation';
 
-test('Open components on double-click', async ({ page }) => {
+test('Execute components, open dialog-container', async ({ page }) => {
   const hetidaDesigner = new HetidaDesigner(page);
   const navigation = new Navigation(page);
   // Test parameter
@@ -15,26 +15,24 @@ test('Open components on double-click', async ({ page }) => {
   // Run test
   await navigation.clickBtnNavigation('Components');
   await navigation.clickExpansionPanelNavigation(categoryName);
-  // Open component on double-click
   await navigation.doubleClickItemNavigation(categoryName, componentName);
 
-  // Check for equal names in list and opened tab
-  const componentListName = await page
-    .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
-    .locator(`.navigation-item:has-text("${componentName}") >> nth=0`)
-    .locator('.text-ellipsis')
-    .innerText();
+  // Execute component, click on icon "Execute"
+  await navigation.clickIconToolbar('Execute');
+
+  // Check if execute component dialog-container exists
+  const countDialogContainer = await page
+    .locator('mat-dialog-container')
+    .count();
+  expect(countDialogContainer).toEqual(1);
+
+  // Check for equal substrings in dialog-title and opened tab
+  const dialogTitle = page.locator('.mat-dialog-title h4');
   const componentTabName = await page
     .locator('div[role="tab"] >> nth=1')
     .locator('.text-ellipsis')
     .innerText();
-  expect(componentListName).toEqual(componentTabName);
-
-  // Check if hd-component-editor exists
-  const countComponentEditor = await page
-    .locator('hd-component-editor')
-    .count();
-  expect(countComponentEditor).toEqual(1);
+  await expect(dialogTitle).toContainText(`${componentTabName}`);
 
   // Run clear
   await hetidaDesigner.clearTest();
