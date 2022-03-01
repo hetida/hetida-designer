@@ -87,7 +87,9 @@ def main(*, a, b):
 
 The file starts with the *documentation* of the component in docstring format. Following docstring conventions, it is necessary to start with the component name in the **second** line. Underneath, put the complete python code of the *component* itself. Then, you may safe the above code as some file named `add.py` on your local system and share it with your colleagues. 
 
-Now, your colleague goes to the `runtime` directory and creates a subdirectory `components_from_python_code`, for example. Here, he saves the python file `add.py`, and possibly many more components in that format. Simply run the following command to import the components from the `runtime` directory:
+Now, your colleague goes to the `runtime` directory and creates a subdirectory `components_from_python_code`, for example. Here, he saves the python file `add.py`, and possibly many more components in that format. One is now able to change details in the documentation and component code, i.e., one might add examples to the documentation or change the component description and category.
+
+Last, simply run the following command from the `runtime` directory to import the components:
 
 ```shell
 docker run --rm \
@@ -96,5 +98,5 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime:0.7.0 -c 'from hetdesrun.exportimport.importing import import_all; import_all("components_from_python_code/");'
+  hetida/designer-runtime:0.7.0 -c 'from hetdesrun.exportimport.importing import import_all; import_all("/mnt/obj_repo/components_from_python_code/");'
 ```
