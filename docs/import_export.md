@@ -41,9 +41,9 @@ docker run --rm \
 
 ## Importing components from single python files
 
-When sharing components among different designer users, your colleagues might also be interested in changing its python code and documentation *before* importing on their local system. Now, suppose you created such a component with corresponding documentation. In order for your colleagues to be able to first change the component details and then import it into their local designer installation using the implemented `import_all` functionality, create some python file having *exactly* the following structure, explained for the base component `Add (1.0.0)`. 
+When sharing components among different designer users, your colleagues might also be interested in changing the python code and documentation *before* importing on their local system. Now, suppose you created a component with corresponding documentation. In order for your colleagues to be able to first change the component details and then import it into their local designer installation using the implemented `import_all` functionality, create some python file having *exactly* the following structure, explained for the base component `Add (1.0.0)`. 
 
-```shell
+```python
 """
 
 # Add
@@ -60,8 +60,6 @@ This component adds numeric values, Pandas Series and Pandas DataFrames.
 
 ## Details
 The component adds the inputs. 
-
-## Examples
 """
 from hetdesrun.component.registration import register
 from hetdesrun.datatypes import DataType
@@ -87,4 +85,16 @@ def main(*, a, b):
     return {"sum": (a + b)}
 ```
 
-In order to do this, you may safe some component as a *single* python file, having the following structure. 
+The file starts with the *documentation* of the component in docstring format. Following docstring conventions, it is necessary to start with the component name in the **second** line. Underneath, put the complete python code of the *component* itself. Then, you may safe the above code as some file named `add.py` on your local system and share it with your colleagues. 
+
+Now, your colleague goes to the `runtime` directory and creates a subdirectory `components_from_python_code`, for example. Here, he saves the python file `add.py`, and possibly many more components in that format. Simply run the following command to import the components from the `runtime` directory:
+
+```shell
+docker run --rm \
+  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
+  --name htdruntime_import \
+  --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
+  --network hetida-designer-network \
+  --entrypoint python \
+  hetida/designer-runtime:0.7.0 -c 'from hetdesrun.exportimport.importing import import_all; import_all("components_from_python_code/");'
+```
