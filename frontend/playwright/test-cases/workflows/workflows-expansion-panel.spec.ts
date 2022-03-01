@@ -2,17 +2,17 @@ import { test, expect } from '@playwright/test';
 import { HetidaDesigner } from '../page-objects/hetida-designer';
 import { Navigation } from '../page-objects/navigation';
 
-test('Expansion-panel in components expands on click', async ({ page }) => {
+test('Expansion-panel in workflows expands on click', async ({ page }) => {
   const hetidaDesigner = new HetidaDesigner(page);
   const navigation = new Navigation(page);
   // Test parameter
-  const categoryName = 'Arithmetic';
+  const categoryName = 'Examples';
 
   // Run setup
   await hetidaDesigner.setupTest();
 
   // Run test
-  await navigation.clickBtnNavigation('Components');
+  await navigation.clickBtnNavigation('Workflows');
   // Click on Expansion-panel
   await navigation.clickExpansionPanelNavigation(categoryName);
 

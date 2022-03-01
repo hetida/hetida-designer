@@ -14,20 +14,15 @@ test('Search for workflows', async ({ page }) => {
 
   // Run test
   await navigation.clickBtnNavigation('Workflows');
-
-  // Check for loaded workflows
-  let countWorkflows = await page.locator('hd-navigation-category').count();
-  expect(countWorkflows).toBeGreaterThan(0);
-
   // Type in input-search
   await navigation.typeInSearchTerm(workflowName);
 
-  // Check if workflows-list is filtered
-  countWorkflows = await page.locator('hd-navigation-category').count();
-  expect(countWorkflows).toBeGreaterThan(0);
-
-  // Expansion-panel expands on click, only for better view on screenshot
+  // Expansion-panel expands on click, to render and locat workflows
   await navigation.clickExpansionPanelNavigation(categoryName);
+
+  // Check if workflows-list is filtered
+  const countWorkflows = await page.locator('hd-navigation-category').count();
+  expect(countWorkflows).toBeGreaterThan(0);
 
   // Check for equal names in first workflow, found in list and search term
   const firstWorkflowListName = await page

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { HetidaDesigner } from '../page-objects/hetida-designer';
 import { Navigation } from '../page-objects/navigation';
 
-test('Add components, open dialog-container', async ({ page }) => {
+test('Add workflows, open dialog-container', async ({ page }) => {
   const hetidaDesigner = new HetidaDesigner(page);
   const navigation = new Navigation(page);
 
@@ -10,10 +10,10 @@ test('Add components, open dialog-container', async ({ page }) => {
   await hetidaDesigner.setupTest();
 
   // Run test
-  await navigation.clickBtnNavigation('Components');
-  await navigation.clickBtnNavigation('Add component');
+  await navigation.clickBtnNavigation('Workflows');
+  await navigation.clickBtnNavigation('Add workflow');
 
-  // Check if create component dialog-container exists
+  // Check if create workflow dialog-container exists
   const countDialogContainer = await page
     .locator('mat-dialog-container')
     .count();

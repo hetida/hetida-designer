@@ -14,22 +14,17 @@ test('Search for components', async ({ page }) => {
 
   // Run test
   await navigation.clickBtnNavigation('Components');
-
-  // Check for loaded components
-  let countComponents = await page.locator('hd-navigation-category').count();
-  expect(countComponents).toBeGreaterThan(0);
-
   // Type in input-search
   await navigation.typeInSearchTerm(componentName);
 
-  // Check if components-list is filtered
-  countComponents = await page.locator('hd-navigation-category').count();
-  expect(countComponents).toBeGreaterThan(0);
-
-  // Expansion-panel expands on click, only for better view on screenshot
+  // Expansion-panel expands on click, to render and locat components
   await navigation.clickExpansionPanelNavigation(categoryName);
 
-  // Check for equal names in first component, found in list and search term
+  // Check if components-list is filtered
+  const countComponents = await page.locator('hd-navigation-category').count();
+  expect(countComponents).toBeGreaterThan(0);
+
+  // Check for equal names in first found component and search term
   const firstComponentListName = await page
     .locator('mat-expansion-panel >> nth=0')
     .locator('.navigation-item >> nth=0')

@@ -2,22 +2,34 @@ import { test, expect } from '@playwright/test';
 import { HetidaDesigner } from '../page-objects/hetida-designer';
 import { Navigation } from '../page-objects/navigation';
 
-test('Open workflows on double-click', async ({ page }) => {
+test('Add workflows, type and confirm dialog-container', async ({ page }) => {
   const hetidaDesigner = new HetidaDesigner(page);
   const navigation = new Navigation(page);
   // Test parameter
-  const categoryName = 'Examples';
-  const workflowName = 'Volatility Detection Example';
+  const workflowName = 'Factorial';
+  const categoryName = 'Draft';
+  const shortDescription = 'Calculates my factorial';
+  const tag = '1.0.0';
 
   // Run setup
   await hetidaDesigner.setupTest();
 
   // Run test
   await navigation.clickBtnNavigation('Workflows');
-  await navigation.clickExpansionPanelNavigation(categoryName);
-  // Open workflow on double-click
-  await navigation.doubleClickItemNavigation(categoryName, workflowName);
+  await navigation.clickBtnNavigation('Add workflow');
+
+  // Type in workflow details
+  await navigation.typeInInputDialog('name', workflowName); // WorkflowName name
+  await navigation.typeInInputDialog('category', categoryName); // Category
+  await navigation.typeInInputDialog('description', shortDescription); // Short description
+  await navigation.typeInInputDialog('tag', tag); // Tag
+
+  // Click on "Create Workflow"
+  await navigation.clickBtnDialog('Create Workflow');
   await page.waitForSelector('hd-workflow-editor'); // Wait for hd-workflow-editor
+
+  // Expansion-panel expands on click, to render and locat workflows in list
+  await navigation.clickExpansionPanelNavigation(categoryName);
 
   // Check for equal names in list and opened tab
   const workflowListName = await page

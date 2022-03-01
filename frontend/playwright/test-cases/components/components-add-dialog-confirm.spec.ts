@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { HetidaDesigner } from '../page-objects/hetida-designer';
 import { Navigation } from '../page-objects/navigation';
 
-test('Execute components, type, confirm dialog-container', async ({ page }) => {
+test('Add components, type and confirm dialog-container', async ({ page }) => {
   const hetidaDesigner = new HetidaDesigner(page);
   const navigation = new Navigation(page);
   // Test parameter
@@ -26,6 +26,10 @@ test('Execute components, type, confirm dialog-container', async ({ page }) => {
 
   // Click on "Create Component"
   await navigation.clickBtnDialog('Create Component');
+  await page.waitForSelector('hd-component-editor'); // Wait for hd-component-editor
+
+  // Expansion-panel expands on click, to render and locat components in list
+  await navigation.clickExpansionPanelNavigation(categoryName);
 
   // Check for equal names in list and opened tab
   const componentListName = await page

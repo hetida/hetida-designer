@@ -55,7 +55,7 @@ export class Navigation {
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
       console.error(
-        `ERROR: Cannot locate item in category if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
+        `ERROR: Cannot locate item in category, if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
       );
     }
 
@@ -71,7 +71,7 @@ export class Navigation {
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
       console.error(
-        `ERROR: Cannot locate item in category if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
+        `ERROR: Cannot locate item in category, if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
       );
     }
 
@@ -105,8 +105,6 @@ export class Navigation {
       .locator('hd-toolbar')
       .locator(`mat-icon[title="${iconTitle}"]`)
       .click();
-
-    await this.page.waitForSelector('mat-dialog-container'); // Wait for dialog-container
   }
 
   // Workflows or components-modal-dialog for add, edit, execute etc. functions
@@ -126,7 +124,7 @@ export class Navigation {
   ): Promise<void> {
     if (inputId === '' && inputText === '') {
       console.error(
-        `ERROR: Cannot locate input field or type in text if input id or input text is empty, used input text: ${inputText} with input id: ${inputId}`
+        `ERROR: Cannot locate input field or type in text, if input id or input text is empty, used input text: ${inputText} with input id: ${inputId}`
       );
     }
 

@@ -16,9 +16,9 @@ test('Execute components, open dialog-container', async ({ page }) => {
   await navigation.clickBtnNavigation('Components');
   await navigation.clickExpansionPanelNavigation(categoryName);
   await navigation.doubleClickItemNavigation(categoryName, componentName);
-
   // Execute component, click on icon "Execute"
   await navigation.clickIconToolbar('Execute');
+  await page.waitForSelector('mat-dialog-container'); // Wait for dialog-container
 
   // Check if execute component dialog-container exists
   const countDialogContainer = await page

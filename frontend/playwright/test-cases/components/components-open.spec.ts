@@ -17,6 +17,7 @@ test('Open components on double-click', async ({ page }) => {
   await navigation.clickExpansionPanelNavigation(categoryName);
   // Open component on double-click
   await navigation.doubleClickItemNavigation(categoryName, componentName);
+  await page.waitForSelector('hd-component-editor'); // Wait for hd-component-editor
 
   // Check for equal names in list and opened tab
   const componentListName = await page
