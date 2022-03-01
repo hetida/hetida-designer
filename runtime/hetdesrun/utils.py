@@ -119,7 +119,6 @@ def load_data(
 
     return info, doc, code
 
-
 class State(str, Enum):
     """Representing state of component/workflow"""
 

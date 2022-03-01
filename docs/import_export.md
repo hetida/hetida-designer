@@ -23,7 +23,7 @@ docker run --rm \
 
 The command will create a subdirectory `exported_data` in your current directory with subfolders `components` and `workflows` each of which contains subfolders corresponding to the categories in which the components and workflows are stored in individual json files.
 
-## Importing components and Workflows
+## Importing all components and workflows
 
 > :warning: IMPORTANT: If you have existing workflows/components in your installation you should do a complete database backup as is described in [backup](./backup.md), just in case something bad happens!
 
@@ -39,3 +39,52 @@ docker run --rm \
   hetida/designer-runtime:0.7.0 -c 'from hetdesrun.exportimport.importing import import_all; import_all("/mnt/obj_repo/exported_data/");'
 ```
 
+## Importing components from single python files
+
+When sharing components among different designer users, your colleagues might also be interested in changing its python code and documentation *before* importing on their local system. Now, suppose you created such a component with corresponding documentation. In order for your colleagues to be able to first change the component details and then import it into their local designer installation using the implemented `import_all` functionality, create some python file having *exactly* the following structure, explained for the base component `Add (1.0.0)`. 
+
+```shell
+"""
+
+# Add
+
+## Description
+This component adds numeric values, Pandas Series and Pandas DataFrames.
+
+## Inputs
+* **a** (Integer, Float, Pandas Series or Pandas DataFrame): First summand, entries must be numeric.
+* **b** (Integer, Float, Pandas Series or Pandas DataFrame): Second summand, entries must be numeric.
+
+## Outputs
+* **sum** (Integer, Float, Pandas Series or Pandas DataFrame): The sum of summand a and summand b. 
+
+## Details
+The component adds the inputs. 
+
+## Examples
+"""
+from hetdesrun.component.registration import register
+from hetdesrun.datatypes import DataType
+
+import pandas as pd
+
+# ***** DO NOT EDIT LINES BELOW *****
+# These lines may be overwritten if component details or inputs/outputs change.
+@register(
+    inputs={"a": DataType.Any, "b": DataType.Any},
+    outputs={"sum": DataType.Any},
+    component_name="Add",
+    description="Add inputs",
+    category="Basic Arithmetic",
+    uuid="2abf72f6-68c9-7398-7175-165d31b3ced7",
+    group_id="2abf72f6-68c9-7398-7175-165d31b3ced7",
+    tag="1.0.0"
+)
+def main(*, a, b):
+    # entrypoint function for this component
+    # ***** DO NOT EDIT LINES ABOVE *****
+
+    return {"sum": (a + b)}
+```
+
+In order to do this, you may safe some component as a *single* python file, having the following structure. 
