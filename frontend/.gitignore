@@ -4,4 +4,5 @@ dist
 .jenkins
 playwright/test-results
 playwright/test-reports
+playwright/playwright/test-reports
 playwright/playwright-report
