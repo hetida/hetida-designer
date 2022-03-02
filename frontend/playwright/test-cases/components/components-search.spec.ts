@@ -24,7 +24,7 @@ test('Search for components', async ({ page }) => {
   const countComponents = await page.locator('hd-navigation-category').count();
   expect(countComponents).toBeGreaterThan(0);
 
-  // Check for equal names in first found component and search term
+  // Check for equal names in first component found, in list and search term
   const firstComponentListName = await page
     .locator('mat-expansion-panel >> nth=0')
     .locator('.navigation-item >> nth=0')

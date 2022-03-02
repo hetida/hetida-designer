@@ -3,7 +3,7 @@ import { HetidaDesigner } from '../page-objects/hetida-designer';
 import { Navigation } from '../page-objects/navigation';
 import { ErrorNotification } from '../page-objects/error-notification';
 
-test('Execute components, confirm dialog-container', async ({ page }) => {
+test('Execute components, confirm dialog', async ({ page }) => {
   const hetidaDesigner = new HetidaDesigner(page);
   const navigation = new Navigation(page);
   const errorNotification = new ErrorNotification(page);

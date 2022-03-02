@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { HetidaDesigner } from '../page-objects/hetida-designer';
 import { Navigation } from '../page-objects/navigation';
 
-test('Add workflows, open dialog-container', async ({ page }) => {
+test('Add workflow, open dialog', async ({ page }) => {
   const hetidaDesigner = new HetidaDesigner(page);
   const navigation = new Navigation(page);
 

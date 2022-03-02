@@ -24,7 +24,7 @@ test('Search for workflows', async ({ page }) => {
   const countWorkflows = await page.locator('hd-navigation-category').count();
   expect(countWorkflows).toBeGreaterThan(0);
 
-  // Check for equal names in first workflow, found in list and search term
+  // Check for equal names in first workflow found, in list and search term
   const firstWorkflowListName = await page
     .locator('mat-expansion-panel >> nth=0')
     .locator('.navigation-item >> nth=0')
