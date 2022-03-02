@@ -73,13 +73,11 @@ def transformation_revision_from_python_code(code: str) -> Any:
     mod_docstring_lines = mod_docstring.splitlines()
 
     component_name = main_func.registered_metadata["name"] or (  # type: ignore
-        mod_docstring_lines[0] if mod_docstring_lines[0] != "" else "Unnamed Component"
+        "Unnamed Component"
     )
 
     component_description = main_func.registered_metadata["description"] or (  # type: ignore
-        mod_docstring_lines[0]
-        if mod_docstring_lines[0] != ""
-        else "No description provided"
+        "No description provided"
     )
 
     component_category = main_func.registered_metadata["category"] or (  # type: ignore
@@ -87,11 +85,11 @@ def transformation_revision_from_python_code(code: str) -> Any:
     )
 
     component_uuid = main_func.registered_metadata["uuid"] or (  # type: ignore
-        get_uuid_from_seed(component_name)
+        get_uuid_from_seed(str(component_name))
     )
 
     component_group_id = main_func.registered_metadata["group_id"] or (  # type: ignore
-        get_uuid_from_seed(component_name)
+        get_uuid_from_seed(str(component_name))
     )
 
     component_tag = main_func.registered_metadata["tag"] or (  # type: ignore
