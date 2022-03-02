@@ -25,6 +25,8 @@ from hetdesrun.component.load import (
     module_path_from_code,
 )
 
+from hetdesrun.component.code import update_code
+
 from hetdesrun.persistence.models.transformation import TransformationRevision
 
 from hetdesrun.persistence.models.io import (
@@ -98,6 +100,18 @@ def transformation_revision_from_python_code(code: str) -> Any:
 
     component_code = code.replace(mod_docstring, "", 1)
     component_code = component_code.replace('""""""', "")[1:]
+
+    component_code = update_code(
+        existing_code=component_code,
+        input_type_dict=main_func.registered_metadata["inputs"],
+        output_type_dict=main_func.registered_metadata["outputs"],
+        component_name=component_name,
+        description=component_description,
+        category=component_category,
+        uuid=str(component_uuid),
+        group_id=str(component_group_id),
+        tag=component_tag,
+    )
 
     component_documentation = "\n".join(mod_docstring_lines[2:])
 
