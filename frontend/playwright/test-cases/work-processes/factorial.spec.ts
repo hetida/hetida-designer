@@ -1,24 +1,29 @@
-import { test, expect } from '@playwright/test';
+import { test, Page, expect } from '@playwright/test';
 import { HetidaDesigner } from '../page-objects/hetida-designer';
 import { Navigation } from '../page-objects/navigation';
+
+let page: Page;
+let hetidaDesigner: HetidaDesigner;
+let navigation: Navigation;
 
 test.describe(
   'Create a "factorial" component and use it, in a new created workflow',
   () => {
-    test.beforeAll(async ({ page }) => {
-      const hetidaDesigner = new HetidaDesigner(page);
+    test.beforeAll(async ({ browser }) => {
+      page = await browser.newPage();
+      hetidaDesigner = new HetidaDesigner(page);
+      navigation = new Navigation(page);
+
       // Run setup
       await hetidaDesigner.setupTest();
     });
 
-    test.afterAll(async ({ page }) => {
-      const hetidaDesigner = new HetidaDesigner(page);
+    test.afterEach(async () => {
       // Run clear
       await hetidaDesigner.clearTest();
     });
 
-    test('Add component, type in data and confirm dialog', async ({ page }) => {
-      const navigation = new Navigation(page);
+    test('Add component, type in data and confirm dialog', async () => {
       // Test parameter
       const componentName = 'Factorial';
       const categoryName = 'Draft';
@@ -61,8 +66,7 @@ test.describe(
       expect(countComponentEditor).toEqual(1);
     });
 
-    test('Add workflow, type in data and confirm dialog', async ({ page }) => {
-      const navigation = new Navigation(page);
+    test('Add workflow, type in data and confirm dialog', async () => {
       // Test parameter
       const workflowName = 'Factorial';
       const categoryName = 'Draft';
@@ -108,36 +112,31 @@ test.describe(
       );
     });
 
-    test('Delete component on right-click via context-menu', async ({
-      page
-    }) => {
-      const navigation = new Navigation(page);
+    test('Delete workflow on right-click via context-menu, dialog open', async () => {
       // Test parameter
       const categoryName = 'Draft';
       const componentName = 'Factorial';
 
       // Run test
-      await navigation.clickBtnNavigation('Components');
+      await navigation.clickBtnNavigation('Workflows');
       await navigation.clickExpansionPanelNavigation(categoryName);
-      // Open context-menu via right-click on a component
+      // Open context-menu via right-click on a workflow
       await navigation.rightClickItemNavigation(categoryName, componentName);
 
-      // Delete component on right-click via context-menu
+      // !!! Fix hover over context-menu (DELETE LATER) !!!
+      await page.locator('.mat-menu-content >> Button >> nth=0').hover(); // !!! DELETE !!!
+
+      // Delete workflow on right-click via context-menu
       await navigation.clickContextMenu('Delete');
 
-      // Check if component was deleted
-      await navigation.typeInSearchTerm(componentName);
-
-      const searchResult = await page.locator(
-        '.navigation-container__scrollable'
-      );
-      expect(searchResult).toBeEmpty();
+      // Check if delete workflow dialog-container exists
+      const countDialogContainer = await page
+        .locator('mat-dialog-container')
+        .count();
+      expect(countDialogContainer).toEqual(1);
     });
 
-    test('Delete workflow on right-click via context-menu', async ({
-      page
-    }) => {
-      const navigation = new Navigation(page);
+    test('Delete workflow on right-click via context-menu and confirm dialog', async () => {
       // Test parameter
       const categoryName = 'Draft';
       const workflowName = 'Factorial';
@@ -148,16 +147,71 @@ test.describe(
       // Open context-menu via right-click on a workflow
       await navigation.rightClickItemNavigation(categoryName, workflowName);
 
+      // !!! Fix hover over context-menu (DELETE LATER) !!!
+      await page.locator('.mat-menu-content >> Button >> nth=0').hover(); // !!! DELETE !!!
+
       // Delete workflow on right-click via context-menu
       await navigation.clickContextMenu('Delete');
+
+      // Confirm dialog
+      await navigation.clickBtnDialog('Delete workflow');
 
       // Check if workflow was deleted
       await navigation.typeInSearchTerm(workflowName);
 
-      const searchResult = await page.locator(
-        '.navigation-container__scrollable'
-      );
-      expect(searchResult).toBeEmpty();
+      const searchResult = page.locator('.navigation-container__scrollable');
+      await expect(searchResult).toBeEmpty();
+    });
+
+    test('Delete component on right-click via context-menu, dialog open', async () => {
+      // Test parameter
+      const categoryName = 'Draft';
+      const componentName = 'Factorial';
+
+      // Run test
+      await navigation.clickBtnNavigation('Components');
+      await navigation.clickExpansionPanelNavigation(categoryName);
+      // Open context-menu via right-click on a component
+      await navigation.rightClickItemNavigation(categoryName, componentName);
+
+      // !!! Fix hover over context-menu (DELETE LATER) !!!
+      await page.locator('.mat-menu-content >> Button >> nth=0').hover(); // !!! DELETE !!!
+
+      // Delete component on right-click via context-menu
+      await navigation.clickContextMenu('Delete');
+
+      // Check if delete component dialog-container exists
+      const countDialogContainer = await page
+        .locator('mat-dialog-container')
+        .count();
+      expect(countDialogContainer).toEqual(1);
+    });
+
+    test('Delete component on right-click via context-menu and confirm dialog', async () => {
+      // Test parameter
+      const categoryName = 'Draft';
+      const componentName = 'Factorial';
+
+      // Run test
+      await navigation.clickBtnNavigation('Components');
+      await navigation.clickExpansionPanelNavigation(categoryName);
+      // Open context-menu via right-click on a component
+      await navigation.rightClickItemNavigation(categoryName, componentName);
+
+      // !!! Fix hover over context-menu (DELETE LATER) !!!
+      await page.locator('.mat-menu-content >> Button >> nth=0').hover(); // !!! DELETE !!!
+
+      // Delete component on right-click via context-menu
+      await navigation.clickContextMenu('Delete');
+
+      // Confirm dialog
+      await navigation.clickBtnDialog('Delete component');
+
+      // Check if component was deleted
+      await navigation.typeInSearchTerm(componentName);
+
+      const searchResult = page.locator('.navigation-container__scrollable');
+      await expect(searchResult).toBeEmpty();
     });
   }
 );

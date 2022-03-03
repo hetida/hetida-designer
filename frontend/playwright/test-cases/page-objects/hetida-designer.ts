@@ -26,5 +26,6 @@ export class HetidaDesigner {
   // Run after every test
   public async clearTest(): Promise<void> {
     await this.browserContext.clearCookies();
+    await this.page.reload();
   }
 }
