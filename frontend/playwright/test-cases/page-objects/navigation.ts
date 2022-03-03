@@ -81,6 +81,34 @@ export class Navigation {
       .dblclick();
   }
 
+  public async rightClickItemNavigation(
+    categoryName: string,
+    itemName: string
+  ): Promise<void> {
+    if (categoryName === '' || itemName === '') {
+      console.error(
+        `ERROR: Cannot locate item in category, if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
+      );
+    }
+
+    await this.page
+      .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
+      .locator(`.navigation-item:has-text("${itemName}") >> nth=0`)
+      .click({ button: 'right' });
+  }
+
+  public async clickContextMenu(itemMenu: string): Promise<void> {
+    if (itemMenu === '') {
+      console.error(
+        `ERROR: Cannot locate empty item in context-menu, used item: ${itemMenu}`
+      );
+    }
+
+    await this.page
+      .locator(`.mat-menu-content >> button:has-text("${itemMenu}")`)
+      .click();
+  }
+
   public async typeInSearchTerm(searchTerm: string): Promise<void> {
     if (searchTerm === '') {
       console.error(
