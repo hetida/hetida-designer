@@ -66,6 +66,24 @@ test.describe(
       expect(countComponentEditor).toEqual(1);
     });
 
+    test('Component "factorial" set inputs and outputs', async () => {
+      // Test parameter
+      const componentName = 'Factorial';
+      const categoryName = 'Draft';
+      const inputs = { label: 'data', type: 'INT' };
+      const outputs = { label: 'factorial', type: 'INT' };
+
+      // Run test
+      await navigation.clickBtnNavigation('Components');
+      await navigation.clickExpansionPanelNavigation(categoryName);
+      await navigation.doubleClickItemNavigation(categoryName, componentName);
+      // Set inputs and outputs
+      await navigation.clickIconToolbar('Configure I/O');
+
+      await navigation.typeInInputDialog('mat-input-13', inputs.label);
+      // await navigation.clickBtnDialog('Save');
+    });
+
     test('Add workflow, type in data and confirm dialog', async () => {
       // Test parameter
       const workflowName = 'Factorial';
