@@ -93,7 +93,7 @@ class ComputationNode:
         func is a function or coroutine function with the input_names as keyword arguments. It
         should output a dict of result values.
 
-        operator_hierarchical_id, component_uuid and operator_name can be provided to enrich
+        operator_hierarchical_id, component_id and operator_name can be provided to enrich
         logging and exception messages.
 
         The computation node inputs may or may not be complete, i.e. all required inputs are given
@@ -148,7 +148,7 @@ class ComputationNode:
                 f"Inputs of computation node operator {self.operator_hierarchical_id} are missing"
             ).set_context(
                 node_instance_id=self.operator_hierarchical_id,
-                component_uuid=self.component_id,
+                operator_name=self.operator_name,
             )
 
     async def _gather_data_from_inputs(self) -> Dict[str, Any]:
@@ -168,7 +168,7 @@ class ComputationNode:
                 logger.info(msg)
                 raise CircularDependency(msg).set_context(
                     node_instance_id=self.operator_hierarchical_id,
-                    component_uuid=self.component_id,
+                    operator_name=self.operator_name,
                 )
             # actually get input data from other nodes
             try:
@@ -184,7 +184,7 @@ class ComputationNode:
                     "run operator"
                 ).set_context(
                     node_instance_id=self.operator_hierarchical_id,
-                    component_uuid=self.component_id,
+                    operator_name=self.operator_name,
                 ) from e
         return input_value_dict
 
@@ -196,7 +196,7 @@ class ComputationNode:
             )
             function_result = function_result if function_result is not None else {}
         except RuntimeExecutionError as e:  # user code may raise runtime execution errors
-            e.set_context(self.operator_hierarchical_id, self.component_id)
+            e.set_context(self.operator_hierarchical_id, self.operator_name)
             logger.info(
                 (
                     "User raised Runtime execution exception during component execution"
@@ -211,13 +211,13 @@ class ComputationNode:
         except Exception as e:  # uncaught exceptions from user code
             logger.info(
                 "Exception during Component execution of component instance %s",
-                self.operator_hierarchical_id,
+                self.operator_name,
                 exc_info=True,
             )
             raise RuntimeExecutionError(
-                f"Exception during Component execution of component instance"
-                f" {self.operator_hierarchical_id} from component {self.component_id}: {str(e)}"
-            ).set_context(self.operator_hierarchical_id, self.component_id) from e
+                f"Exception during Component execution of component instance {self.operator_name}"
+                f" (operator hierarchical id: {self.operator_hierarchical_id}):\n{str(e)}"
+            ).set_context(self.operator_hierarchical_id, self.operator_name) from e
 
         if not isinstance(
             function_result, dict
@@ -225,11 +225,11 @@ class ComputationNode:
 
             msg = (
                 f"Component function of component instance {self.operator_hierarchical_id} from "
-                f"component {self.component_id} did not return an output dict!"
+                f"component {self.operator_name} did not return an output dict!"
             )
             logger.info(msg)
             raise RuntimeExecutionError(msg).set_context(
-                self.operator_hierarchical_id, self.component_id
+                self.operator_hierarchical_id, self.operator_name
             )
 
         return function_result
@@ -405,7 +405,7 @@ class Workflow:
                     "run operator"
                 ).set_context(
                     node_instance_id=self.operator_hierarchical_id,
-                    component_uuid="workflow",
+                    operator_name="workflow",
                 ) from e
 
         # cleanup
