@@ -1,14 +1,10 @@
-import { test, expect } from '@playwright/test';
-import { HetidaDesigner } from '../page-objects/hetida-designer';
-import { Navigation } from '../page-objects/navigation';
+import { test, expect } from '../fixtures/fixture';
 
-test('Add workflow, open dialog', async ({ page }) => {
-  const hetidaDesigner = new HetidaDesigner(page);
-  const navigation = new Navigation(page);
-
-  // Run setup
-  await hetidaDesigner.setupTest();
-
+test('Add workflow, open dialog', async ({
+  page,
+  hetidaDesigner,
+  navigation
+}) => {
   // Run test
   await navigation.clickBtnNavigation('Workflows');
   await navigation.clickBtnNavigation('Add workflow');

@@ -1,12 +1,6 @@
-import { test, expect } from '@playwright/test';
-import { HetidaDesigner } from '../page-objects/hetida-designer';
+import { test, expect } from '../fixtures/fixture';
 
-test('Load landingpage', async ({ page }) => {
-  const hetidaDesigner = new HetidaDesigner(page);
-
-  // Run setup
-  await hetidaDesigner.setupTest();
-
+test('Load landingpage', async ({ page, hetidaDesigner }) => {
   // Run test
   await expect(page).toHaveTitle('hetida designer');
 

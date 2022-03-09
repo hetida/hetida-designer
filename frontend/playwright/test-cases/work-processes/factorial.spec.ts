@@ -1,29 +1,17 @@
-import { test, Page, expect } from '@playwright/test';
-import { HetidaDesigner } from '../page-objects/hetida-designer';
-import { Navigation } from '../page-objects/navigation';
-
-let page: Page;
-let hetidaDesigner: HetidaDesigner;
-let navigation: Navigation;
+import { test, expect } from '../fixtures/fixture';
 
 test.describe(
   'Create a "factorial" component and use it, in a new created workflow',
   () => {
-    test.beforeAll(async ({ browser }) => {
-      page = await browser.newPage();
-      hetidaDesigner = new HetidaDesigner(page);
-      navigation = new Navigation(page);
-
-      // Run setup
-      await hetidaDesigner.setupTest();
-    });
-
-    test.afterEach(async () => {
+    test.afterEach(async ({ hetidaDesigner }) => {
       // Run clear
       await hetidaDesigner.clearTest();
     });
 
-    test('Add component, type in data and confirm dialog', async () => {
+    test('Add component, type in data and confirm dialog', async ({
+      page,
+      navigation
+    }) => {
       // Test parameter
       const componentName = 'Factorial';
       const categoryName = 'Draft';
@@ -66,7 +54,9 @@ test.describe(
       expect(countComponentEditor).toEqual(1);
     });
 
-    test('Component "factorial" set inputs and outputs', async () => {
+    test('Component "factorial" set inputs and outputs', async ({
+      navigation
+    }) => {
       // Test parameter
       const componentName = 'Factorial';
       const categoryName = 'Draft';
@@ -84,7 +74,10 @@ test.describe(
       // await navigation.clickBtnDialog('Save');
     });
 
-    test('Add workflow, type in data and confirm dialog', async () => {
+    test('Add workflow, type in data and confirm dialog', async ({
+      page,
+      navigation
+    }) => {
       // Test parameter
       const workflowName = 'Factorial';
       const categoryName = 'Draft';
@@ -130,7 +123,10 @@ test.describe(
       );
     });
 
-    test('Delete workflow on right-click via context-menu, dialog open', async () => {
+    test('Delete workflow on right-click via context-menu, dialog open', async ({
+      page,
+      navigation
+    }) => {
       // Test parameter
       const categoryName = 'Draft';
       const componentName = 'Factorial';
@@ -154,7 +150,10 @@ test.describe(
       expect(countDialogContainer).toEqual(1);
     });
 
-    test('Delete workflow on right-click via context-menu and confirm dialog', async () => {
+    test('Delete workflow on right-click via context-menu and confirm dialog', async ({
+      page,
+      navigation
+    }) => {
       // Test parameter
       const categoryName = 'Draft';
       const workflowName = 'Factorial';
@@ -181,7 +180,10 @@ test.describe(
       await expect(searchResult).toBeEmpty();
     });
 
-    test('Delete component on right-click via context-menu, dialog open', async () => {
+    test('Delete component on right-click via context-menu, dialog open', async ({
+      page,
+      navigation
+    }) => {
       // Test parameter
       const categoryName = 'Draft';
       const componentName = 'Factorial';
@@ -205,7 +207,10 @@ test.describe(
       expect(countDialogContainer).toEqual(1);
     });
 
-    test('Delete component on right-click via context-menu and confirm dialog', async () => {
+    test('Delete component on right-click via context-menu and confirm dialog', async ({
+      page,
+      navigation
+    }) => {
       // Test parameter
       const categoryName = 'Draft';
       const componentName = 'Factorial';

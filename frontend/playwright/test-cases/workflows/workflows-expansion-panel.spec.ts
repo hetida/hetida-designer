@@ -1,15 +1,12 @@
-import { test, expect } from '@playwright/test';
-import { HetidaDesigner } from '../page-objects/hetida-designer';
-import { Navigation } from '../page-objects/navigation';
+import { test, expect } from '../fixtures/fixture';
 
-test('Expansion-panel in workflows expands on click', async ({ page }) => {
-  const hetidaDesigner = new HetidaDesigner(page);
-  const navigation = new Navigation(page);
+test('Expansion-panel in workflows expands on click', async ({
+  page,
+  hetidaDesigner,
+  navigation
+}) => {
   // Test parameter
   const categoryName = 'Examples';
-
-  // Run setup
-  await hetidaDesigner.setupTest();
 
   // Run test
   await navigation.clickBtnNavigation('Workflows');

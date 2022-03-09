@@ -1,18 +1,13 @@
-import { test, expect } from '@playwright/test';
-import { HetidaDesigner } from '../page-objects/hetida-designer';
-import { Navigation } from '../page-objects/navigation';
+import { test, expect } from '../fixtures/fixture';
 
 test('Open context-menu via right-click on a workflow in navigation-menu', async ({
-  page
+  page,
+  hetidaDesigner,
+  navigation
 }) => {
-  const hetidaDesigner = new HetidaDesigner(page);
-  const navigation = new Navigation(page);
   // Test parameter
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example';
-
-  // Run setup
-  await hetidaDesigner.setupTest();
 
   // Run test
   await navigation.clickBtnNavigation('Workflows');

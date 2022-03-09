@@ -1,14 +1,6 @@
-import { test, expect } from '@playwright/test';
-import { HetidaDesigner } from '../page-objects/hetida-designer';
-import { Navigation } from '../page-objects/navigation';
+import { test, expect } from '../fixtures/fixture';
 
-test('Load workflows list', async ({ page }) => {
-  const hetidaDesigner = new HetidaDesigner(page);
-  const navigation = new Navigation(page);
-
-  // Run setup
-  await hetidaDesigner.setupTest();
-
+test('Load workflows list', async ({ page, hetidaDesigner, navigation }) => {
   // Run test
   await navigation.clickBtnNavigation('Workflows');
 

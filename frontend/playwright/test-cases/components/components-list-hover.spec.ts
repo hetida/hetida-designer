@@ -1,20 +1,13 @@
-import { test, expect } from '@playwright/test';
-import { HetidaDesigner } from '../page-objects/hetida-designer';
-import { Navigation } from '../page-objects/navigation';
-import { ErrorNotification } from '../page-objects/error-notification';
+import { test, expect } from '../fixtures/fixture';
 
 test('Hover over component, check if error-notification occurred', async ({
-  page
+  hetidaDesigner,
+  navigation,
+  errorNotification
 }) => {
-  const hetidaDesigner = new HetidaDesigner(page);
-  const navigation = new Navigation(page);
-  const errorNotification = new ErrorNotification(page);
   // Test parameter
   const categoryName = 'Arithmetic';
   const componentName = 'Pi';
-
-  // Run setup
-  await hetidaDesigner.setupTest();
 
   // Run test
   await navigation.clickBtnNavigation('Components');
