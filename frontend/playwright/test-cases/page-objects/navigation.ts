@@ -10,7 +10,7 @@ export class Navigation {
   // Tab bar
   public async clickTabNavigation(tabPosition: number): Promise<void> {
     if (tabPosition < 0) {
-      console.error(
+      throw new Error(
         `ERROR: Negative tab position, used tab position: ${tabPosition}`
       );
     }
@@ -21,7 +21,7 @@ export class Navigation {
   // Left navigation panel
   public async clickBtnNavigation(btnText: string): Promise<void> {
     if (btnText === '') {
-      console.error(
+      throw new Error(
         `ERROR: Cannot locate empty text in button, used button: ${btnText}`
       );
     }
@@ -39,7 +39,7 @@ export class Navigation {
     categoryName: string
   ): Promise<void> {
     if (categoryName === '') {
-      console.error(
+      throw new Error(
         `ERROR: Cannot locate empty category name in "expansion panel", used category: ${categoryName}`
       );
     }
@@ -54,7 +54,7 @@ export class Navigation {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      console.error(
+      throw new Error(
         `ERROR: Cannot locate item in category, if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
       );
     }
@@ -70,7 +70,7 @@ export class Navigation {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      console.error(
+      throw new Error(
         `ERROR: Cannot locate item in category, if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
       );
     }
@@ -86,7 +86,7 @@ export class Navigation {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      console.error(
+      throw new Error(
         `ERROR: Cannot locate item in category, if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
       );
     }
@@ -99,7 +99,7 @@ export class Navigation {
 
   public async clickContextMenu(itemMenu: string): Promise<void> {
     if (itemMenu === '') {
-      console.error(
+      throw new Error(
         `ERROR: Cannot locate empty item in context-menu, used item: ${itemMenu}`
       );
     }
@@ -111,7 +111,7 @@ export class Navigation {
 
   public async typeInSearchTerm(searchTerm: string): Promise<void> {
     if (searchTerm === '') {
-      console.error(
+      throw new Error(
         `ERROR: Cannot type in empty search term, used search term: ${searchTerm}`
       );
     }
@@ -124,7 +124,7 @@ export class Navigation {
   // Open workflows or components, toolbar
   public async clickIconToolbar(iconTitle: string): Promise<void> {
     if (iconTitle === '') {
-      console.error(
+      throw new Error(
         `ERROR: Cannot locate empty icon title, used icon title: ${iconTitle}`
       );
     }
@@ -138,7 +138,7 @@ export class Navigation {
   // Workflows or components-modal-dialog for add, edit, execute etc. functions
   public async clickBtnDialog(btnText: string): Promise<void> {
     if (btnText === '') {
-      console.error(
+      throw new Error(
         `ERROR: Cannot locate empty text in button, used button: ${btnText}`
       );
     }
@@ -151,7 +151,7 @@ export class Navigation {
     inputText: string
   ): Promise<void> {
     if (inputId === '' && inputText === '') {
-      console.error(
+      throw new Error(
         `ERROR: Cannot locate input field or type in text, if input id or input text is empty, used input text: ${inputText} with input id: ${inputId}`
       );
     }
