@@ -28,7 +28,10 @@ logger = logging.getLogger(__name__)
 async def post_json_with_open_client(
     open_client: httpx.AsyncClient, url: str, json_payload: Dict
 ) -> httpx.Response:
-    return await open_client.post(url, json=json_payload,)
+    return await open_client.post(
+        url,
+        json=json_payload,
+    )
 
 
 async def send_single_metadatum_to_adapter(

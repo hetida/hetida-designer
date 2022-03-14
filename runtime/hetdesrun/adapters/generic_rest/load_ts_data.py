@@ -85,7 +85,8 @@ async def load_grouped_timeseries_data_together(
 
     # group by occuring timestamp pairs
     group_by_timestamp_pair: Dict[
-        Tuple[str, str, ExternalType], Dict[str, FilteredSource],
+        Tuple[str, str, ExternalType],
+        Dict[str, FilteredSource],
     ] = defaultdict(dict)
 
     for filtered_source in data_to_load.values():
@@ -117,7 +118,8 @@ async def load_grouped_timeseries_data_together(
         loaded_data.update(
             {
                 key: extract_one_channel_series_from_loaded_data(
-                    loaded_ts_data_from_adapter, filtered_source.ref_id,  # type: ignore
+                    loaded_ts_data_from_adapter,
+                    filtered_source.ref_id,  # type: ignore
                 )
                 for key, filtered_source in grouped_source_dict.items()
             }

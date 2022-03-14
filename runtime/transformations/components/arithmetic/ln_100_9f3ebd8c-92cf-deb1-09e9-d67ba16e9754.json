@@ -1,0 +1,33 @@
+{
+  "category": "Arithmetic",
+  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\nimport math\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"data\": DataType.Any},\n    outputs={\"ln\": DataType.Any},\n    component_name=\"Ln\",\n    description=\"Calculates the natural logarithm of data\",\n    category=\"Arithmetic\",\n    uuid=\"9f3ebd8c-92cf-deb1-09e9-d67ba16e9754\",\n    group_id=\"9f3ebd8c-92cf-deb1-09e9-d67ba16e9754\",\n    tag=\"1.0.0\"\n)\ndef main(*, data):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"ln\": np.log(data)}\n",
+  "description": "Calculates the natural logarithm of data",
+  "documentation": "# Ln\n\n## Description\nThis component calculates the natural logarithm of data.\n\n## Inputs\n* **data** (Integer, Float, Pandas Series or Pandas DataFrame): Entries must be numeric. \n\n## Outputs\n* **ln** (Integer, Float, Pandas Series or Pandas DataFrame): Natural logarithm of data.\n\n## Details\nThe component calculates the natural logarithm of data. \n\n## Examples\nThe json input of a typical call of this component with a Pandas Series is\n```\n{\n\t\"data\": {\n\t\t\t\t\"2019-08-01T15:20:12\": null,\n\t\t\t\t\"2019-08-01T15:44:12\": 1,\n\t\t\t\t\"2019-08-03T16:20:15\": 2.718281828459045\n\t}\n}\n```\nThe expected output is\n```\n\t\"ln\": {\n\t\t\t\t\"2019-08-01T15:20:12\": null,\n\t\t\t\t\"2019-08-01T15:44:12\": 0,\n\t\t\t\t\"2019-08-03T16:20:15\": 1, \n\t}\n\n```\n",
+  "id": "9f3ebd8c-92cf-deb1-09e9-d67ba16e9754",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "0544dacf-17de-a744-e6b7-d4e12e6326f3",
+        "name": "data"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "3a12d1c7-3962-58e9-ebe9-d4844e344700",
+        "name": "ln"
+      }
+    ]
+  },
+  "name": "Ln",
+  "released_timestamp": "2022-02-09T17:33:32.203509+00:00",
+  "revision_group_id": "9f3ebd8c-92cf-deb1-09e9-d67ba16e9754",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}

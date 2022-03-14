@@ -1,0 +1,33 @@
+{
+  "category": "Trigonometric",
+  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"data\": DataType.Any},\n    outputs={\"result\": DataType.Any},\n    component_name=\"Tangent\",\n    description=\"Calculates the tangent of the input\",\n    category=\"Trigonometric\",\n    uuid=\"38eb0c5d-6182-0be2-3058-9b5bddc7842d\",\n    group_id=\"38eb0c5d-6182-0be2-3058-9b5bddc7842d\",\n    tag=\"1.0.0\"\n)\ndef main(*, data):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"result\": np.tan(data)}\n",
+  "description": "Calculates the tangent of the input",
+  "documentation": "# Tangent\n\n## Description\nThis component calculates the tangent of the input.\n\n## Inputs\n* **data** (Integer, Float, Boolean, Pandas Series or Pandas DataFrame): Entries must be numeric. \n\n## Outputs\n* **result** (Float, Pandas Series or Pandas DataFrame): The tangent of **data**.\n\n## Details\nThe component calculates the tangent of **data**.\n\n## Examples\nThe json input of a typical call of this component with a Pandas Series is\n```\n{\n\t\"data\": {\n\t\t\t\t\"2019-08-01T15:20:12\": 0.0,\n\t\t\t\t\"2019-08-01T15:44:12\": 3.14159\n\t}\n}\n```\nThe expected output is\n```\n\t\"result\": {\n\t\t\t\t\"2019-08-01T15:20:12\": 0.0,\n\t\t\t\t\"2019-08-01T15:44:12\": 0.0\n\t}\n```\n",
+  "id": "38eb0c5d-6182-0be2-3058-9b5bddc7842d",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "e002ae84-13f1-ffbb-fe36-f9888604b316",
+        "name": "data"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "ef093fa1-0522-11b4-113a-2b3230cfff80",
+        "name": "result"
+      }
+    ]
+  },
+  "name": "Tangent",
+  "released_timestamp": "2022-02-09T17:33:29.547605+00:00",
+  "revision_group_id": "38eb0c5d-6182-0be2-3058-9b5bddc7842d",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}

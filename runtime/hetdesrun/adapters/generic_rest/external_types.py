@@ -76,7 +76,11 @@ class ValueDataType(str, Enum):
         Raises pydantic.ValidationError if parsing fails.
         """
         DynamicallyParsedValue = create_model(  # type: ignore
-            "DynamicallyParsedValue", value=(self.parse_type, ...,),
+            "DynamicallyParsedValue",
+            value=(
+                self.parse_type,
+                ...,
+            ),
         )
 
         if self is ValueDataType.ANY and isinstance(obj, str):

@@ -86,9 +86,7 @@ def prepare_exc_classes(
     connection_custom_error: Optional[Type[Exception]] = None,
     output_data_custom_error: Optional[Type[Exception]] = None,
     client_wiring_invalid_error_class: Optional[Type[Exception]] = None,
-) -> Tuple[
-    ConnectionErrorTuple, OutputDataErrorTuple, ClientWiringInvalidErrorTuple,
-]:
+) -> Tuple[ConnectionErrorTuple, OutputDataErrorTuple, ClientWiringInvalidErrorTuple,]:
     """Gather existing and custom exception classes for simultaneous handling
 
     This meachanism allows client adapter implementations to send specific
@@ -196,19 +194,23 @@ def register_sink_adapter(
 # Registering direct provisioning adapters
 
 register_source_adapter(
-    adapter_key=1, load_func=load_directly_provisioned_data,
+    adapter_key=1,
+    load_func=load_directly_provisioned_data,
 )
 
 register_source_adapter(
-    adapter_key="direct_provisioning", load_func=load_directly_provisioned_data,
+    adapter_key="direct_provisioning",
+    load_func=load_directly_provisioned_data,
 )
 
 register_sink_adapter(
-    adapter_key=1, send_func=send_directly_provisioned_data,
+    adapter_key=1,
+    send_func=send_directly_provisioned_data,
 )
 
 register_sink_adapter(
-    adapter_key="direct_provisioning", send_func=send_directly_provisioned_data,
+    adapter_key="direct_provisioning",
+    send_func=send_directly_provisioned_data,
 )
 
 

@@ -7,11 +7,12 @@ httptools
 psycopg2
 sqlalchemy[mypy]
 SQLAlchemy-Utils
+alembic
 pandas
 numpy
 sklearn
 scipy
-tensorflow>=2.7.1
+# tensorflow>=2.7.1
 keras
 statsmodels
 dateparser

@@ -81,7 +81,10 @@ def load_func(
         raise NodeFunctionLoadingError(msg) from e
 
     try:
-        component_func = import_func_from_code(code, component.function_name,)
+        component_func = import_func_from_code(
+            code,
+            component.function_name,
+        )
     except (ImportError, ComponentCodeImportError) as e:
         msg = (
             f"Could not load node function (Code module uuid: "
@@ -129,7 +132,8 @@ def parse_component_node(
 
 
 def apply_connections(
-    wf_sub_nodes: Dict[str, Node], connections: List[WorkflowConnection],
+    wf_sub_nodes: Dict[str, Node],
+    connections: List[WorkflowConnection],
 ) -> None:
     """Wires one level of a workflow from this level's connections
 

@@ -74,10 +74,10 @@ Now you should run
 
 ```bash
 docker run --rm \
-  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8080/api/" \
+  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
-  --network hetida-designer_default \
-  --entrypoint python hetida/designer-runtime -c "from hetdesrun.utils import post_components_from_directory, post_workflows_from_directory; post_components_from_directory('./components'); post_workflows_from_directory('./workflows'); post_workflows_from_directory('./workflows2')"  
+  --network hetida-designer-network \
+  --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
 ```
 
 to install/deploy base components and some example workflows. **This step is only necessary the first time starting hetida designer!**
@@ -119,7 +119,7 @@ You can expose the backend and runtime ports with
   hetida-designer-backend:
     ...
     ports:
-      - 127.0.0.1:8080:8080
+      - 127.0.0.1:8080:8090
 
   hetida-designer-runtime:
     ...
@@ -128,7 +128,7 @@ You can expose the backend and runtime ports with
 ```
 
 Changing the backend and/or runtime ports is quite a bit more involved. You'll have to also
-update the corresponding application properties in the backend and rebuild the docker image or start the backend locally (see below).
+update the corresponding configuration and rebuild the docker image or start the backend or runtime locally (see below).
 
 ### <a name="gs-docker-standalone"></a> Getting started using Standalone Docker Images
 
@@ -153,11 +153,9 @@ git checkout develop
 
 The application consists of three submodules: a backend REST service, a runtime that
 executes hetida designer workflows, and a frontend that allows you to interact with the
-backend and the runtime to build components, workflows and test them.
+backend and the runtime to build components, workflows and test them. Note that both backend and runtime can be run together or as separated services. The later is recommended for security reasons and to be able to scale the runtime separately from the application backend.
 
-For each of these modules you'll find a corresponding Dockerfile in the source code's
-root folder. You can start (parts of) hetida designer in standalone docker containers
-as follows.
+You'll find corresponding Dockerfile in the source code's root folder. You can start (parts of) hetida designer in standalone docker containers as follows.
 
 #### Frontend
 
@@ -167,13 +165,17 @@ as follows.
 
 #### Backend
 
-1. Run `docker build -t hetida/backend -f ./Dockerfile-backend .` to build the image.
-2. Run `docker run --network hetida-designer_default -p 127.0.0.1:8080:8080 hetida/backend` to run the backend image. (use -d flag to run container in background)
+1. Run `docker build -t hetida/backend -f ./Dockerfile-runtime .` to build the image.
+2. Run `docker run -e HD_IS_RUNTIME_SERVICE=false --network hetida-designer-network -p 127.0.0.1:8080:8090 hetida/backend` to run the backend image. (use -d flag to run container in background). After this the backend OpenAPI UI is available at http://127.0.0.1:8090/docs.
 
 #### Runtime
 
 1. Run `docker build -t hetida/runtime -f ./Dockerfile-runtime .` to build the image.
-2. Run `docker run -d -p 127.0.0.1:8091:8090 hetida/runtime` to run the runtime image (use -d flag to run container in background). After this the runtime OpenAPI UI is available at http://127.0.0.1:8091/docs.
+2. Run `docker run -e HD_IS_BACKEND_SERVICE=false -p 127.0.0.1:8091:8090 hetida/runtime` to run the runtime image (use -d flag to run container in background). After this the runtime OpenAPI UI is available at http://127.0.0.1:8091/docs.
+
+#### Backend + Runtime as one container
+1. Run `docker build -t hetida/backend_runtime -f ./Dockerfile-runtime .` to build the image.
+2. Run `docker run -p 127.0.0.1:8092:8090 hetida/backend_runtime` to run the image (use -d flag to run container in background). After this the combined backend + runtime OpenAPI UI is available at http://127.0.0.1:8092/docs.
 
 ### <a name="gs-local"></a> Setting up a Development Environment
 
@@ -206,11 +208,13 @@ built runtime image via
 
 ```
 docker run --rm \
-  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8080/api/" \
+  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
-  --network hetida-designer_default \
-  --entrypoint python hetida-designer_hetida-designer-runtime -c "from hetdesrun.utils import post_components_from_directory, post_workflows_from_directory; post_components_from_directory('./components'); post_workflows_from_directory('./workflows'); post_workflows_from_directory('./workflows2')"  
+  --network hetida-designer-network \
+  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
 ```
+
+In case your checked out repository directory has a different name replace `hetida-designer_hetida-designer-runtime` by `<directory name>_hetida-designer-runtime`.
 
 Once you have the application running, only stop the container containing the submodule that you
 want to work on. We use a monorepo approach, so you already have the source code for all submodules on your machine by now.
@@ -226,30 +230,9 @@ Dependencies: Node 12.18.x and npm 6.14.x (other versions are not tested).
 2. Run `npm install` to install application dependencies.
 3. Run `npm run start` to run the frontend on port 4200.
 
-#### Backend
+#### Runtime and Backend
 
-Dependencies: OpenJDK 1.8 and a recent version of maven.
-
-The backend is a Spring Boot application and can be started in your IDE locally
-in the usual way by adding following parameters to your run configuration:
-
-1. `spring.datasource.url=jdbc:postgresql://localhost:5430/hetida_designer_db`
-2. `org.hetida.designer.backend.codegen=http://localhost:8090/codegen`
-3. `org.hetida.designer.backend.codecheck=http://localhost:8090/codecheck`
-4. `org.hetida.designer.backend.runtime=http://localhost:8090/runtime`
-
-or using maven:
-
-1. Navigate to the `backend` folder.
-2. Run `mvn clean package` to build the application.
-3. Run the Spring Boot application with maven `mvn spring-boot:run -Dspring.datasource.url="jdbc:postgresql://localhost:5430/hetida_designer_db" -Dorg.hetida.designer.backend.codegen="http://localhost:8090/codegen" -Dorg.hetida.designer.backend.codecheck="http://localhost:8090/codecheck" -Dorg.hetida.designer.backend.runtime="http://localhost:8090/runtime"`.
-
-To run the tests:
-
-1. Navigate to the `backend` folder.
-2. Run `mvn test`.
-
-#### Runtime
+> **Note**: The backend was rewritten in Python for version 0.7. It is now developed together with the runtime.
 
 Dependencies: Python 3.9 (other versions are not
 tested, but higher versions will probably work as well). 
@@ -264,11 +247,24 @@ or **scipy**. That said, development on Linux is recommended.
 4. Install dependency management tooling: `python -m pip install pip==21.3.1 pip-tools==6.4.0 wheel==0.37.0`
 5. Install development dependencies: `pip-sync ./requirements.txt ./requirements-dev.txt `
 
-Now a development web server can be started via `python main.py`.
+Now a development web server using a sqlite in-memory db can be started via
+```
+python main.py
+```
 
-#### Running Runtime Tests
+If you want to develop against the postgres db running in the docker-compose dev environment the command is
+```
+HD_DATABASE_URL="postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@localhost:5430/hetida_designer_db" python main.py
+```
 
-This assumes existence of the runtime Python virtual environment as described above.
+In both cases the OpenAPI UI can be found at http://localhost:8000/docs.
+
+Note that this starts runtime+backend combined. If you only want one of both you have to deactivate the other one by setting one of the environment variables `HD_IS_BACKEND_SERVICE` or `HD_IS_RUNTIME_SERVICE` to `false`.
+
+When deactivating the backend endpoints you do not need to specify a database connection URL.
+#### Running Runtime + Backend Tests
+
+This assumes existence of the Python virtual environment as described above.
 
 1. Navigate to the `runtime` folder.
 2. Activate virtuale environment with `source venv/bin/activate`.
@@ -469,7 +465,7 @@ There are several mechanisms that contribute to reaching this goal:
 
 * The fact that execution of each workflow revision is immediately available through a web service endpoint – there is **no extra deployment step necessary**. 
   
-  * Note that a Kafka consumer for the same pupose is also built into the backend and can be activated and configured via environment variables of the designer backend (see [documentation](./docs/workflow_execution/wf_execution_via_kafka.md))
+  * ~~Note that a Kafka consumer for the same pupose is also built into the backend and can be activated and configured via environment variables of the designer backend (see [documentation](./docs/workflow_execution/wf_execution_via_kafka.md))~~ The Kafka consumer is currently not available, following the Python rewrite of the backend for version 0.7. It will be reincluded in a later release!
 
 Read more about how to handle and write wirings and how to use the execution endpoints [here](./docs/workflow_execution/running_workflows.md)
 

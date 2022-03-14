@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { PopoverService } from 'src/app/service/popover.service';
+import { PopoverService } from 'src/app/service/popover/popover.service';
 import { selectActiveTabItem } from 'src/app/store/tab-item/tab-item.selectors';
 import { Utils } from 'src/app/utils/utils';
 import { AbstractBaseItem } from '../../../model/base-item';

@@ -1,0 +1,38 @@
+{
+  "category": "Statistic",
+  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"data\": DataType.Any, \"t\": DataType.String},\n    outputs={\"mavg\": DataType.Any},\n    component_name=\"Moving average time\",\n    description=\"Calculates the moving average for a constant time interval\",\n    category=\"Statistic\",\n    uuid=\"a2ba0da0-5a9a-60e9-6af5-e07917988021\",\n    group_id=\"a2ba0da0-5a9a-60e9-6af5-e07917988021\",\n    tag=\"1.0.0\"\n)\ndef main(*, data, t):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your code here.\n\n    data_date = data.copy()\n    try:\n        data_date.index = pd.to_datetime(data_date.index)\n    except (ValueError, TypeError):\n        raise TypeError(\"indices of data must be datetime\")\n\n    data_sort = data_date.sort_index().dropna()\n    \n    try:\n        return {\"mavg\": data_sort.rolling(t).mean()}\n    except (ValueError):\n        raise ValueError(f\"t could not be parsed as frequency: {t}\")\n",
+  "description": "Calculates the moving average for a constant time interval",
+  "documentation": "# Moving average time\n\n## Description\nThe component calculates the moving average for a constant time interval.\n\n## Inputs\n* **data** (Pandas Series or Pandas DataFrame): Indices must be datetimes, entries must be numeric.\n* **t** (String): The lenght of the time interval, the average is calculated for. For example, '2ms', '2s', '2min', '2h' or '2d'.\n\n## Outputs\n* **mavg** (Pandas Series or Pandas DataFrame): The moving average of **data**. \n\n## Details\nThe component calculates the moving average for a constant time interval. \n\nTherefore, it excludes NaN respectively None values from **data** and equippes each remaining index with the average of the numerical observations in the foregoing time interval of length t.   \n\n## Examples\nThe json input of a typical call of this component with a Pandas Series is\n```\n{\n\t\"data\": {\n\t\t\t\t\"2019-08-01T15:20:10\": 3.0,\n\t\t\t\t\"2019-08-01T15:20:20\": null,\n\t\t\t\t\"2019-08-01T15:20:25\": 3.0,\n\t\t\t\t\"2019-08-01T15:20:30\": 0.0,\n\t\t\t\t\"2019-08-01T15:20:35\": 6.0,\n\t\t\t\t\"2019-08-01T15:20:40\": null,\n\t\t\t\t\"2019-08-01T15:20:55\": 12.0,\n\t\t\t\t\"2019-08-01T15:20:56\": 9.0\n\t}, \n\t\"t\": 7s\n}\n```\nThe expected output is\n```\n\t\"mavg\": {\n\t\t\t\t\"2019-08-01T15:20:10\": 3.0,\n\t\t\t\t\"2019-08-01T15:20:25\": 3.0,\n\t\t\t\t\"2019-08-01T15:20:30\": 1.5,\n\t\t\t\t\"2019-08-01T15:20:35\": 3.0,\n\t\t\t\t\"2019-08-01T15:20:55\": 12.0,\n\t\t\t\t\"2019-08-01T15:20:56\": 10.5\n\t}\n```\n",
+  "id": "a2ba0da0-5a9a-60e9-6af5-e07917988021",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "11ac167d-8852-a638-b2af-f4df9b7d00de",
+        "name": "data"
+      },
+      {
+        "data_type": "STRING",
+        "id": "fa10796f-5c68-640d-8bb8-3e19d74b8deb",
+        "name": "t"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "c5a1c608-812f-2a8d-db63-29a4a0c8261b",
+        "name": "mavg"
+      }
+    ]
+  },
+  "name": "Moving average time",
+  "released_timestamp": "2022-02-09T17:33:32.865433+00:00",
+  "revision_group_id": "a2ba0da0-5a9a-60e9-6af5-e07917988021",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}

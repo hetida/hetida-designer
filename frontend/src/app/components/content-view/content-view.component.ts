@@ -3,7 +3,7 @@ import { MatTabChangeEvent } from '@angular/material/tabs';
 import { createSelector, Store } from '@ngrx/store';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { PopoverService } from 'src/app/service/popover.service';
+import { PopoverService } from 'src/app/service/popover/popover.service';
 import { setExecutionProtocol } from 'src/app/store/execution-protocol/execution-protocol.actions';
 import {
   removeTabItem,
@@ -62,6 +62,7 @@ export class ContentViewComponent implements OnInit, OnDestroy {
   ) {}
 
   private readonly _ngOnDestroyNotify = new Subject();
+
   ngOnDestroy(): void {
     this._ngOnDestroyNotify.next();
     this._ngOnDestroyNotify.complete();

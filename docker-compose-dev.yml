@@ -1,4 +1,4 @@
-version: "3"
+version: "3.5"
 
 volumes:
   postgres_data:
@@ -23,15 +23,20 @@ services:
   hetida-designer-backend:
     build:
       context: .
-      dockerfile: Dockerfile-backend
+      dockerfile: Dockerfile-runtime
     #image: hetida/designer-backend
     environment:
-      - org.hetida.designer.backend.installed.adapters=demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,demo-adapter-java|Java-Demo-Adapter|http://localhost:8091/adapter|http://hetida-designer-demo-adapter-java:8091/adapter,local-file-adapter|Local-File-Adapter|http://localhost:8090/adapters/localfile|http://hetida-designer-runtime:8090/adapters/localfile
+      - HD_DATABASE_URL=postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db
+      - HD_ENSURE_DB_SCHEMA=true
+      - HD_IS_RUNTIME_SERVICE=false
     depends_on:
-      - hetida-designer-db
-      - hetida-designer-runtime
+      hetida-designer-db:
+        condition: service_healthy
+      hetida-designer-runtime: 
+        condition: "service_started"
+
     ports:
-      - 8080:8080
+      - 8080:8090
 
   hetida-designer-runtime:
     build:
@@ -45,7 +50,7 @@ services:
       - 8090:8090
     environment:
       RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES: '["/mnt/mounted_local_files"]'
-
+      HD_IS_BACKEND_SERVICE: "false"
 
   hetida-designer-db:
     image: postgres
@@ -57,6 +62,11 @@ services:
       POSTGRES_PASSWORD: hetida_designer_dbpasswd
     ports:
       - "5430:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hetida_designer_dbuser -d hetida_designer_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   hetida-designer-demo-adapter-java:
     build:
@@ -73,3 +83,7 @@ services:
     image: hetida/designer-demo-adapter-python
     ports:
       - 8092:8092
+
+networks:
+  default:
+    name: hetida-designer-network

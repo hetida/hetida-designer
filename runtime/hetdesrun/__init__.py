@@ -5,6 +5,7 @@ from hetdesrun.runtime import runtime_component_logger as logger
 
 import hetdesrun_config
 
+migrations_invoked_from_py = False
 
 try:
     with open("VERSION", "r", encoding="utf8") as version_file:
