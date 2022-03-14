@@ -1,23 +1,19 @@
 import { test, expect } from '../fixtures/fixture';
 
-test('Execute workflows, open dialog', async ({
-  page,
-  hetidaDesigner,
-  navigation
-}) => {
-  // Test parameter
+test('Execute workflows, open dialog', async ({ page, hetidaDesigner }) => {
+  // Arrange
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example';
 
-  // Run test
-  await navigation.clickBtnNavigation('Workflows');
-  await navigation.clickExpansionPanelNavigation(categoryName);
-  await navigation.doubleClickItemNavigation(categoryName, workflowName);
-  // Execute workflow, click on icon "Execute"
-  await navigation.clickIconToolbar('Execute');
-  await page.waitForSelector('mat-dialog-container'); // Wait for dialog-container
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
+  await hetidaDesigner.doubleClickItemInNavigation(categoryName, workflowName);
 
-  // Check if execute workflow dialog-container exists
+  await hetidaDesigner.clickIconInToolbar('Execute');
+  await page.waitForSelector('mat-dialog-container');
+
+  // Assert
   const countDialogContainer = await page
     .locator('mat-dialog-container')
     .count();

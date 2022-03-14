@@ -1,15 +1,12 @@
 import { test, expect } from '../fixtures/fixture';
 
-test('Add component, open dialog', async ({
-  page,
-  hetidaDesigner,
-  navigation
-}) => {
-  // Run test
-  await navigation.clickBtnNavigation('Components');
-  await navigation.clickBtnNavigation('Add component');
+test('Add component, open dialog', async ({ page, hetidaDesigner }) => {
+  // Arrange
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickAddWorkflowComponentInNavigation('Add component');
 
-  // Check if create component dialog-container exists
+  // Assert
   const countDialogContainer = await page
     .locator('mat-dialog-container')
     .count();

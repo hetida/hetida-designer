@@ -1,9 +1,11 @@
 import { test, expect } from '../fixtures/fixture';
 
-test('Load components list', async ({ page, hetidaDesigner, navigation }) => {
-  // Run test
-  await navigation.clickBtnNavigation('Components');
+test('Load components list', async ({ page, hetidaDesigner }) => {
+  // Arrange
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
 
+  // Assert
   const countComponents = await page.locator('hd-navigation-category').count();
   expect(countComponents).toBeGreaterThan(0);
 

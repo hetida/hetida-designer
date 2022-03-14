@@ -1,21 +1,18 @@
 import { test, expect } from '../fixtures/fixture';
 
-test('Open components on double-click', async ({
-  page,
-  hetidaDesigner,
-  navigation
-}) => {
-  // Test parameter
+test('Open components on double-click', async ({ page, hetidaDesigner }) => {
+  // Arrange
   const categoryName = 'Arithmetic';
   const componentName = 'Pi';
 
-  // Run test
-  await navigation.clickBtnNavigation('Components');
-  await navigation.clickExpansionPanelNavigation(categoryName);
-  // Open component on double-click
-  await navigation.doubleClickItemNavigation(categoryName, componentName);
-  await page.waitForSelector('hd-component-editor'); // Wait for hd-component-editor
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
+  await hetidaDesigner.doubleClickItemInNavigation(categoryName, componentName);
+  await page.waitForSelector('hd-component-editor');
+
+  // Assert
   // Check for equal names in list and opened tab
   const componentListName = await page
     .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)

@@ -1,19 +1,17 @@
 import { test, expect } from '../fixtures/fixture';
 
-test('Expansion-panel in components expands on click', async ({
+test('Category in components expands on click', async ({
   page,
-  hetidaDesigner,
-  navigation
+  hetidaDesigner
 }) => {
-  // Test parameter
+  // Arrange
   const categoryName = 'Arithmetic';
 
-  // Run test
-  await navigation.clickBtnNavigation('Components');
-  // Click on Expansion-panel
-  await navigation.clickExpansionPanelNavigation(categoryName);
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
-  // Expansion-panel expands and content is visible
+  // Assert
   const visibleExpansionPanelContent = page
     .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
     .locator('.mat-expansion-panel-content');

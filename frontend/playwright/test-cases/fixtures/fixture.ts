@@ -1,17 +1,19 @@
 import { test as base, Page } from '@playwright/test';
 import { HetidaDesigner } from '../page-objects/hetida-designer';
-import { Navigation } from '../page-objects/navigation';
-import { ErrorNotification } from '../page-objects/error-notification';
 
 type HetidaDesignerFixture = {
   page: Page;
   hetidaDesigner: HetidaDesigner;
-  navigation: Navigation;
-  errorNotification: ErrorNotification;
 };
 
 export const test = base.extend<HetidaDesignerFixture>({
   page: async ({ baseURL, page }, use) => {
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        throw new Error(msg.text());
+      }
+    });
+
     await page.goto(baseURL);
     await use(page);
   },
@@ -19,17 +21,12 @@ export const test = base.extend<HetidaDesignerFixture>({
   hetidaDesigner: async ({ page }, use) => {
     const hetidaDesigner = new HetidaDesigner(page);
     await use(hetidaDesigner);
-  },
-
-  navigation: async ({ page }, use) => {
-    const navigation = new Navigation(page);
-    await use(navigation);
-  },
-
-  errorNotification: async ({ page }, use) => {
-    const errorNotification = new ErrorNotification(page);
-    await use(errorNotification);
   }
+});
+
+test.afterEach(async ({ hetidaDesigner }) => {
+  // Run clear
+  await hetidaDesigner.clearTest();
 });
 
 export { expect } from '@playwright/test';

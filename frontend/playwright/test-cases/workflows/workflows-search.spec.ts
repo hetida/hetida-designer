@@ -1,18 +1,17 @@
 import { test, expect } from '../fixtures/fixture';
 
-test('Search for workflows', async ({ page, hetidaDesigner, navigation }) => {
-  // Test parameter
+test('Search for workflows', async ({ page, hetidaDesigner }) => {
+  // Arrange
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example'; // Search term
 
-  // Run test
-  await navigation.clickBtnNavigation('Workflows');
-  // Type in input-search
-  await navigation.typeInSearchTerm(workflowName);
-
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+  await hetidaDesigner.typeInSearchTerm(workflowName);
   // Expansion-panel expands on click, to render and locat workflows
-  await navigation.clickExpansionPanelNavigation(categoryName);
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
+  // Assert
   // Check if workflows-list is filtered
   const countWorkflows = await page.locator('hd-navigation-category').count();
   expect(countWorkflows).toBeGreaterThan(0);

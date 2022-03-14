@@ -1,18 +1,17 @@
 import { test, expect } from '../fixtures/fixture';
 
-test('Search for components', async ({ page, hetidaDesigner, navigation }) => {
-  // Test parameter
+test('Search for components', async ({ page, hetidaDesigner }) => {
+  // Arrange
   const categoryName = 'Arithmetic';
   const componentName = 'Pi'; // Search term
 
-  // Run test
-  await navigation.clickBtnNavigation('Components');
-  // Type in input-search
-  await navigation.typeInSearchTerm(componentName);
-
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.typeInSearchTerm(componentName);
   // Expansion-panel expands on click, to render and locat components
-  await navigation.clickExpansionPanelNavigation(categoryName);
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
+  // Assert
   // Check if components-list is filtered
   const countComponents = await page.locator('hd-navigation-category').count();
   expect(countComponents).toBeGreaterThan(0);

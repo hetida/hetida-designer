@@ -1,21 +1,18 @@
 import { test, expect } from '../fixtures/fixture';
 
-test('Open workflows on double-click', async ({
-  page,
-  hetidaDesigner,
-  navigation
-}) => {
-  // Test parameter
+test('Open workflows on double-click', async ({ page, hetidaDesigner }) => {
+  // Arrange
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example';
 
-  // Run test
-  await navigation.clickBtnNavigation('Workflows');
-  await navigation.clickExpansionPanelNavigation(categoryName);
-  // Open workflow on double-click
-  await navigation.doubleClickItemNavigation(categoryName, workflowName);
-  await page.waitForSelector('hd-workflow-editor'); // Wait for hd-workflow-editor
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
+  await hetidaDesigner.doubleClickItemInNavigation(categoryName, workflowName);
+  await page.waitForSelector('hd-workflow-editor');
+
+  // Assert
   // Check for equal names in list and opened tab
   const workflowListName = await page
     .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)

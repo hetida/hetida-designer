@@ -2,20 +2,19 @@ import { test, expect } from '../fixtures/fixture';
 
 test('Open context-menu via right-click on a workflow in navigation-menu', async ({
   page,
-  hetidaDesigner,
-  navigation
+  hetidaDesigner
 }) => {
-  // Test parameter
+  // Arrange
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example';
 
-  // Run test
-  await navigation.clickBtnNavigation('Workflows');
-  await navigation.clickExpansionPanelNavigation(categoryName);
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
   // Open context-menu via right-click on a workflow
-  await navigation.rightClickItemNavigation(categoryName, workflowName);
+  await hetidaDesigner.rightClickItemInNavigation(categoryName, workflowName);
 
-  // Check for items in context-menu
+  // Assert
   const countItemsContextMenu = await page
     .locator('.mat-menu-content >> button')
     .count();

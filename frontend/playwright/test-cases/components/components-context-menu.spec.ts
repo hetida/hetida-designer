@@ -2,20 +2,19 @@ import { test, expect } from '../fixtures/fixture';
 
 test('Open context-menu via right-click on a component in navigation-menu', async ({
   page,
-  hetidaDesigner,
-  navigation
+  hetidaDesigner
 }) => {
-  // Test parameter
+  // Arrange
   const categoryName = 'Arithmetic';
   const componentName = 'Pi';
 
-  // Run test
-  await navigation.clickBtnNavigation('Components');
-  await navigation.clickExpansionPanelNavigation(categoryName);
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
   // Open context-menu via right-click on a component
-  await navigation.rightClickItemNavigation(categoryName, componentName);
+  await hetidaDesigner.rightClickItemInNavigation(categoryName, componentName);
 
-  // Check for items in context-menu
+  // Assert
   const countItemsContextMenu = await page
     .locator('.mat-menu-content >> button')
     .count();

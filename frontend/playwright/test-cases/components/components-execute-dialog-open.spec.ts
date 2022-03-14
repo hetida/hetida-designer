@@ -1,23 +1,19 @@
 import { test, expect } from '../fixtures/fixture';
 
-test('Execute components, open dialog', async ({
-  page,
-  hetidaDesigner,
-  navigation
-}) => {
-  // Test parameter
+test('Execute components, open dialog', async ({ page, hetidaDesigner }) => {
+  // Arrange
   const categoryName = 'Arithmetic';
   const componentName = 'Pi';
 
-  // Run test
-  await navigation.clickBtnNavigation('Components');
-  await navigation.clickExpansionPanelNavigation(categoryName);
-  await navigation.doubleClickItemNavigation(categoryName, componentName);
-  // Execute component, click on icon "Execute"
-  await navigation.clickIconToolbar('Execute');
-  await page.waitForSelector('mat-dialog-container'); // Wait for dialog-container
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
+  await hetidaDesigner.doubleClickItemInNavigation(categoryName, componentName);
 
-  // Check if execute component dialog-container exists
+  await hetidaDesigner.clickIconInToolbar('Execute');
+  await page.waitForSelector('mat-dialog-container');
+
+  // Assert
   const countDialogContainer = await page
     .locator('mat-dialog-container')
     .count();

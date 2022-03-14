@@ -3,38 +3,38 @@ import { test, expect } from '../fixtures/fixture';
 test.describe(
   'Create a "factorial" component and use it, in a new created workflow',
   () => {
-    test.afterEach(async ({ hetidaDesigner }) => {
-      // Run clear
-      await hetidaDesigner.clearTest();
-    });
-
     test('Add component, type in data and confirm dialog', async ({
       page,
-      navigation
+      hetidaDesigner
     }) => {
-      // Test parameter
+      // Arrange
       const componentName = 'Factorial';
       const categoryName = 'Draft';
       const shortDescription = 'Calculates my factorial';
       const tag = '1.0.0';
 
-      // Run test
-      await navigation.clickBtnNavigation('Components');
-      await navigation.clickBtnNavigation('Add component');
+      // Act
+      await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+      await hetidaDesigner.clickAddWorkflowComponentInNavigation(
+        'Add component'
+      );
 
       // Type in component details
-      await navigation.typeInInputDialog('name', componentName); // Component name
-      await navigation.typeInInputDialog('category', categoryName); // Category
-      await navigation.typeInInputDialog('description', shortDescription); // Short description
-      await navigation.typeInInputDialog('tag', tag); // Tag
+      await hetidaDesigner.typeInAnyInputInDialog('name', componentName); // Component name
+      await hetidaDesigner.typeInAnyInputInDialog('category', categoryName); // Category
+      await hetidaDesigner.typeInAnyInputInDialog(
+        'description',
+        shortDescription
+      ); // Short description
+      await hetidaDesigner.typeInAnyInputInDialog('tag', tag); // Tag
 
-      // Click on "Create Component"
-      await navigation.clickBtnDialog('Create Component');
-      await page.waitForSelector('hd-component-editor'); // Wait for hd-component-editor
+      await hetidaDesigner.clickAnyBtnInDialog('Create Component');
+      await page.waitForSelector('hd-component-editor');
 
-      // Expansion-panel expands on click, to render and locat components in list
-      await navigation.clickExpansionPanelNavigation(categoryName);
+      // Category expands on click, to render and locat components in list
+      await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
+      // Assert
       // Check for equal names in list and opened tab
       const componentListName = await page
         .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
@@ -47,7 +47,6 @@ test.describe(
         .innerText();
       expect(componentListName).toEqual(componentTabName);
 
-      // Check if hd-component-editor exists
       const countComponentEditor = await page
         .locator('hd-component-editor')
         .count();
@@ -55,52 +54,61 @@ test.describe(
     });
 
     test('Component "factorial" set inputs and outputs', async ({
-      navigation
+      hetidaDesigner
     }) => {
-      // Test parameter
+      // Arrange
       const componentName = 'Factorial';
       const categoryName = 'Draft';
       const inputs = { label: 'data', type: 'INT' };
       const outputs = { label: 'factorial', type: 'INT' };
 
-      // Run test
-      await navigation.clickBtnNavigation('Components');
-      await navigation.clickExpansionPanelNavigation(categoryName);
-      await navigation.doubleClickItemNavigation(categoryName, componentName);
+      // Act
+      await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+      await hetidaDesigner.clickCategoryInNavigation(categoryName);
+      await hetidaDesigner.doubleClickItemInNavigation(
+        categoryName,
+        componentName
+      );
       // Set inputs and outputs
-      await navigation.clickIconToolbar('Configure I/O');
+      await hetidaDesigner.clickIconInToolbar('Configure I/O');
+      await hetidaDesigner.typeInAnyInputInDialog('mat-input-13', inputs.label);
+      // await hetidaDesigner.clickBtnDialog('Save');
 
-      await navigation.typeInInputDialog('mat-input-13', inputs.label);
-      // await navigation.clickBtnDialog('Save');
+      // Assert
     });
 
     test('Add workflow, type in data and confirm dialog', async ({
       page,
-      navigation
+      hetidaDesigner
     }) => {
-      // Test parameter
+      // Arrange
       const workflowName = 'Factorial';
       const categoryName = 'Draft';
       const shortDescription = 'Calculates my factorial';
       const tag = '1.0.0';
 
-      // Run test
-      await navigation.clickBtnNavigation('Workflows');
-      await navigation.clickBtnNavigation('Add workflow');
+      // Act
+      await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+      await hetidaDesigner.clickAddWorkflowComponentInNavigation(
+        'Add workflow'
+      );
 
       // Type in workflow details
-      await navigation.typeInInputDialog('name', workflowName); // WorkflowName name
-      await navigation.typeInInputDialog('category', categoryName); // Category
-      await navigation.typeInInputDialog('description', shortDescription); // Short description
-      await navigation.typeInInputDialog('tag', tag); // Tag
+      await hetidaDesigner.typeInAnyInputInDialog('name', workflowName); // WorkflowName name
+      await hetidaDesigner.typeInAnyInputInDialog('category', categoryName); // Category
+      await hetidaDesigner.typeInAnyInputInDialog(
+        'description',
+        shortDescription
+      ); // Short description
+      await hetidaDesigner.typeInAnyInputInDialog('tag', tag); // Tag
 
-      // Click on "Create Workflow"
-      await navigation.clickBtnDialog('Create Workflow');
-      await page.waitForSelector('hd-workflow-editor'); // Wait for hd-workflow-editor
+      await hetidaDesigner.clickAnyBtnInDialog('Create Workflow');
+      await page.waitForSelector('hd-workflow-editor');
 
-      // Expansion-panel expands on click, to render and locat workflows in list
-      await navigation.clickExpansionPanelNavigation(categoryName);
+      // Category expands on click, to render and locat workflows in list
+      await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
+      // Assert
       // Check for equal names in list and opened tab
       const workflowListName = await page
         .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
@@ -125,25 +133,27 @@ test.describe(
 
     test('Delete workflow on right-click via context-menu, dialog open', async ({
       page,
-      navigation
+      hetidaDesigner
     }) => {
-      // Test parameter
+      // Arrange
       const categoryName = 'Draft';
       const componentName = 'Factorial';
 
-      // Run test
-      await navigation.clickBtnNavigation('Workflows');
-      await navigation.clickExpansionPanelNavigation(categoryName);
+      // Act
+      await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+      await hetidaDesigner.clickCategoryInNavigation(categoryName);
       // Open context-menu via right-click on a workflow
-      await navigation.rightClickItemNavigation(categoryName, componentName);
+      await hetidaDesigner.rightClickItemInNavigation(
+        categoryName,
+        componentName
+      );
 
       // !!! Fix hover over context-menu (DELETE LATER) !!!
-      await page.locator('.mat-menu-content >> Button >> nth=0').hover(); // !!! DELETE !!!
+      await page.locator('.mat-menu-content >> Button >> nth=0').hover();
 
-      // Delete workflow on right-click via context-menu
-      await navigation.clickContextMenu('Delete');
+      await hetidaDesigner.clickOnContextMenu('Delete');
 
-      // Check if delete workflow dialog-container exists
+      // Assert
       const countDialogContainer = await page
         .locator('mat-dialog-container')
         .count();
@@ -152,55 +162,58 @@ test.describe(
 
     test('Delete workflow on right-click via context-menu and confirm dialog', async ({
       page,
-      navigation
+      hetidaDesigner
     }) => {
-      // Test parameter
+      // Arrange
       const categoryName = 'Draft';
       const workflowName = 'Factorial';
 
-      // Run test
-      await navigation.clickBtnNavigation('Workflows');
-      await navigation.clickExpansionPanelNavigation(categoryName);
+      // Act
+      await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+      await hetidaDesigner.clickCategoryInNavigation(categoryName);
       // Open context-menu via right-click on a workflow
-      await navigation.rightClickItemNavigation(categoryName, workflowName);
+      await hetidaDesigner.rightClickItemInNavigation(
+        categoryName,
+        workflowName
+      );
 
       // !!! Fix hover over context-menu (DELETE LATER) !!!
-      await page.locator('.mat-menu-content >> Button >> nth=0').hover(); // !!! DELETE !!!
+      await page.locator('.mat-menu-content >> Button >> nth=0').hover();
 
-      // Delete workflow on right-click via context-menu
-      await navigation.clickContextMenu('Delete');
-
-      // Confirm dialog
-      await navigation.clickBtnDialog('Delete workflow');
+      await hetidaDesigner.clickOnContextMenu('Delete');
+      await hetidaDesigner.clickAnyBtnInDialog('Delete workflow');
 
       // Check if workflow was deleted
-      await navigation.typeInSearchTerm(workflowName);
+      await hetidaDesigner.typeInSearchTerm(workflowName);
 
+      // Assert
       const searchResult = page.locator('.navigation-container__scrollable');
       await expect(searchResult).toBeEmpty();
     });
 
     test('Delete component on right-click via context-menu, dialog open', async ({
       page,
-      navigation
+      hetidaDesigner
     }) => {
-      // Test parameter
+      // Arrange
       const categoryName = 'Draft';
       const componentName = 'Factorial';
 
-      // Run test
-      await navigation.clickBtnNavigation('Components');
-      await navigation.clickExpansionPanelNavigation(categoryName);
+      // Act
+      await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+      await hetidaDesigner.clickCategoryInNavigation(categoryName);
       // Open context-menu via right-click on a component
-      await navigation.rightClickItemNavigation(categoryName, componentName);
+      await hetidaDesigner.rightClickItemInNavigation(
+        categoryName,
+        componentName
+      );
 
       // !!! Fix hover over context-menu (DELETE LATER) !!!
-      await page.locator('.mat-menu-content >> Button >> nth=0').hover(); // !!! DELETE !!!
+      await page.locator('.mat-menu-content >> Button >> nth=0').hover();
 
-      // Delete component on right-click via context-menu
-      await navigation.clickContextMenu('Delete');
+      await hetidaDesigner.clickOnContextMenu('Delete');
 
-      // Check if delete component dialog-container exists
+      // Assert
       const countDialogContainer = await page
         .locator('mat-dialog-container')
         .count();
@@ -209,30 +222,32 @@ test.describe(
 
     test('Delete component on right-click via context-menu and confirm dialog', async ({
       page,
-      navigation
+      hetidaDesigner
     }) => {
-      // Test parameter
+      // Arrange
       const categoryName = 'Draft';
       const componentName = 'Factorial';
 
-      // Run test
-      await navigation.clickBtnNavigation('Components');
-      await navigation.clickExpansionPanelNavigation(categoryName);
+      // Act
+      await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+      await hetidaDesigner.clickCategoryInNavigation(categoryName);
       // Open context-menu via right-click on a component
-      await navigation.rightClickItemNavigation(categoryName, componentName);
+      await hetidaDesigner.rightClickItemInNavigation(
+        categoryName,
+        componentName
+      );
 
       // !!! Fix hover over context-menu (DELETE LATER) !!!
-      await page.locator('.mat-menu-content >> Button >> nth=0').hover(); // !!! DELETE !!!
+      await page.locator('.mat-menu-content >> Button >> nth=0').hover();
 
       // Delete component on right-click via context-menu
-      await navigation.clickContextMenu('Delete');
-
-      // Confirm dialog
-      await navigation.clickBtnDialog('Delete component');
+      await hetidaDesigner.clickOnContextMenu('Delete');
+      await hetidaDesigner.clickAnyBtnInDialog('Delete component');
 
       // Check if component was deleted
-      await navigation.typeInSearchTerm(componentName);
+      await hetidaDesigner.typeInSearchTerm(componentName);
 
+      // Assert
       const searchResult = page.locator('.navigation-container__scrollable');
       await expect(searchResult).toBeEmpty();
     });

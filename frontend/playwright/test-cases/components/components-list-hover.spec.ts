@@ -1,23 +1,19 @@
 import { test, expect } from '../fixtures/fixture';
 
-test('Hover over component, check if error-notification occurred', async ({
-  hetidaDesigner,
-  navigation,
-  errorNotification
-}) => {
-  // Test parameter
+test('Hover over component, load popover', async ({ page, hetidaDesigner }) => {
+  // Arrange
   const categoryName = 'Arithmetic';
   const componentName = 'Pi';
 
-  // Run test
-  await navigation.clickBtnNavigation('Components');
-  await navigation.clickExpansionPanelNavigation(categoryName);
-  // Hover over component in category
-  await navigation.hoverItemNavigation(categoryName, componentName);
+  // Act
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
-  // Check if error-notification occurred
-  const countErrorNotification = await errorNotification.checkErrorNotification();
-  expect(countErrorNotification).toEqual(0);
+  await hetidaDesigner.hoverItemInNavigation(categoryName, componentName);
+
+  // Assert
+  const popover = page.locator('hd-popover-base-item');
+  await expect(popover).not.toBeEmpty();
 
   // Run clear
   await hetidaDesigner.clearTest();
