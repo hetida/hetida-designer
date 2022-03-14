@@ -2,7 +2,6 @@ node_modules
 .idea
 dist
 .jenkins
-playwright/url.config.json
 playwright/test-results
 playwright/test-reports
 playwright/playwright-report
