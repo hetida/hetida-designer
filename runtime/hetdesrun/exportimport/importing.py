@@ -50,6 +50,7 @@ def load_json(path: str) -> Any:
         workflow_json = None
     return workflow_json
 
+
 def load_python_file(path: str) -> Any:
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -58,6 +59,7 @@ def load_python_file(path: str) -> Any:
         logger.error("Could not find python file at path %s", path)
         python_file = None
     return python_file
+
 
 def transformation_revision_from_python_code(code: str) -> Any:
     """Get the TransformationRevision as a json file from just the Python code of some component
@@ -94,17 +96,15 @@ def transformation_revision_from_python_code(code: str) -> Any:
         get_uuid_from_seed(str(component_name))
     )
 
-    component_tag = main_func.registered_metadata["tag"] or (  # type: ignore
-        "1.0.0"
-    )
+    component_tag = main_func.registered_metadata["tag"] or ("1.0.0")  # type: ignore
 
     component_code = code.replace(mod_docstring, "", 1)
     component_code = component_code.replace('""""""', "")[1:]
 
     component_code = update_code(
         existing_code=component_code,
-        input_type_dict=main_func.registered_metadata["inputs"],
-        output_type_dict=main_func.registered_metadata["outputs"],
+        input_type_dict=main_func.registered_metadata["inputs"],  # type: ignore
+        output_type_dict=main_func.registered_metadata["outputs"],  # type: ignore
         component_name=component_name,
         description=component_description,
         category=component_category,
@@ -128,11 +128,9 @@ def transformation_revision_from_python_code(code: str) -> Any:
         type=Type.COMPONENT,
         documentation=component_documentation,
         io_interface=IOInterface(
-            inputs = [
+            inputs=[
                 IO(
-                    id=get_uuid_from_seed(
-                        "component_input_" + input_name
-                    ),
+                    id=get_uuid_from_seed("component_input_" + input_name),
                     name=input_name,
                     data_type=input_data_type,
                 )
@@ -140,18 +138,17 @@ def transformation_revision_from_python_code(code: str) -> Any:
                     "inputs"
                 ].items()
             ],
-            outputs = [
+            outputs=[
                 IO(
-                    id=get_uuid_from_seed(
-                        "component_output_" + output_name
-                    ),
+                    id=get_uuid_from_seed("component_output_" + output_name),
                     name=output_name,
                     data_type=output_data_type,
                 )
                 for output_name, output_data_type in main_func.registered_metadata[  # type: ignore
                     "outputs"
                 ].items()
-        ]),
+            ],
+        ),
         content=component_code,
         test_wiring=WorkflowWiring(),
     )
@@ -159,6 +156,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
     tr_json = json.loads(transformation_revision.json())
 
     return tr_json
+
 
 ##Base function to import a transformation revision from a json file
 def import_transformation_from_path(path: str) -> None:
@@ -240,7 +238,7 @@ def import_transformations(
     for root, _, files in os.walk(download_path):
         for file in files:
             path = os.path.join(root, file)
-            if path.endswith('py'):
+            if path.endswith("py"):
                 python_file = load_python_file(path)
                 if python_file:
                     tr_json = transformation_revision_from_python_code(python_file)
