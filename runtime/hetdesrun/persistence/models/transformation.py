@@ -280,7 +280,7 @@ class TransformationRevision(BaseModel):
             ],
         )
 
-    def to_component_node(self, operator_id: UUID) -> ComponentNode:
+    def to_component_node(self, operator_id: UUID, operator_name: str) -> ComponentNode:
         if self.type != Type.COMPONENT:
             raise ValueError(
                 f"will not convert transformation revision {self.id}"
@@ -289,7 +289,7 @@ class TransformationRevision(BaseModel):
         return ComponentNode(
             id=str(operator_id),
             component_uuid=str(self.id),
-            name=self.name,
+            name=operator_name,
         )
 
     def to_workflow_node(
