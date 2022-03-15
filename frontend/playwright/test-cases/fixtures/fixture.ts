@@ -7,6 +7,7 @@ type HetidaDesignerFixture = {
 };
 
 export const test = base.extend<HetidaDesignerFixture>({
+  // Throw a new error, on console error in browser
   page: async ({ baseURL, page }, use) => {
     page.on('console', msg => {
       if (msg.type() === 'error') {
@@ -22,11 +23,6 @@ export const test = base.extend<HetidaDesignerFixture>({
     const hetidaDesigner = new HetidaDesigner(page);
     await use(hetidaDesigner);
   }
-});
-
-test.afterEach(async ({ hetidaDesigner }) => {
-  // Run clear
-  await hetidaDesigner.clearTest();
 });
 
 export { expect } from '@playwright/test';

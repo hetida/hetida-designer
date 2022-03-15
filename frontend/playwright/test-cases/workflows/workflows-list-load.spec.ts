@@ -9,6 +9,5 @@ test('Load workflows list', async ({ page, hetidaDesigner }) => {
   const countWorkflows = await page.locator('hd-navigation-category').count();
   expect(countWorkflows).toBeGreaterThan(0);
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

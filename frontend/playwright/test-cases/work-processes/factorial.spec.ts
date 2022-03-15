@@ -3,6 +3,10 @@ import { test, expect } from '../fixtures/fixture';
 test.describe(
   'Create a "factorial" component and use it, in a new created workflow',
   () => {
+    test.afterEach(async ({ hetidaDesigner }) => {
+      await hetidaDesigner.clearTest();
+    });
+
     test('Add component, type in data and confirm dialog', async ({
       page,
       hetidaDesigner
@@ -71,7 +75,8 @@ test.describe(
       );
       // Set inputs and outputs
       await hetidaDesigner.clickIconInToolbar('Configure I/O');
-      await hetidaDesigner.typeInAnyInputInDialog('mat-input-13', inputs.label);
+      await hetidaDesigner.clickAnyBtnInDialog('Add');
+      // await hetidaDesigner.typeInAnyInputInDialog('mat-input-13', inputs.label);
       // await hetidaDesigner.clickBtnDialog('Save');
 
       // Assert

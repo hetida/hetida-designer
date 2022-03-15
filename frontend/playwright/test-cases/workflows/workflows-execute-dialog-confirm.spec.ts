@@ -27,6 +27,5 @@ test('Execute workflows, confirm dialog', async ({ page, hetidaDesigner }) => {
 
   await expect(visibleProtocolViewer).not.toBeEmpty();
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

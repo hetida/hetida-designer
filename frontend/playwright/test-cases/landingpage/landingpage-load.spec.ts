@@ -9,6 +9,5 @@ test('Load landingpage', async ({ page, hetidaDesigner }) => {
   const homeHeader = page.locator('.home-header h1');
   await expect(homeHeader).toHaveText('Welcome to hetida designer');
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

@@ -31,6 +31,5 @@ test('Open components on double-click', async ({ page, hetidaDesigner }) => {
     .count();
   expect(countComponentEditor).toEqual(1);
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

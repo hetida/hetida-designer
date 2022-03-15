@@ -27,6 +27,5 @@ test('Execute workflows, open dialog', async ({ page, hetidaDesigner }) => {
     .innerText();
   await expect(dialogTitle).toContainText(`${workflowTabName}`);
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

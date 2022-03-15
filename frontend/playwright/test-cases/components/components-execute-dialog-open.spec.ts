@@ -27,6 +27,5 @@ test('Execute components, open dialog', async ({ page, hetidaDesigner }) => {
     .innerText();
   await expect(dialogTitle).toContainText(`${componentTabName}`);
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

@@ -15,6 +15,5 @@ test('Hover over component, load popover', async ({ page, hetidaDesigner }) => {
   const popover = page.locator('hd-popover-base-item');
   await expect(popover).not.toBeEmpty();
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

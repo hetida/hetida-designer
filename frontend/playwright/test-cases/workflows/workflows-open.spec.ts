@@ -31,6 +31,5 @@ test('Open workflows on double-click', async ({ page, hetidaDesigner }) => {
     .locator('svg >> nth=0');
   await expect(svgInEditor).toHaveAttribute('class', 'hetida-flowchart-svg');
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

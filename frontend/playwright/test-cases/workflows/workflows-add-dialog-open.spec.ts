@@ -12,6 +12,5 @@ test('Add workflow, open dialog', async ({ page, hetidaDesigner }) => {
     .count();
   expect(countDialogContainer).toEqual(1);
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

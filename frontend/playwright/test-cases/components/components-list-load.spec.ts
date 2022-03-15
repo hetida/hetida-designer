@@ -9,6 +9,5 @@ test('Load components list', async ({ page, hetidaDesigner }) => {
   const countComponents = await page.locator('hd-navigation-category').count();
   expect(countComponents).toBeGreaterThan(0);
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

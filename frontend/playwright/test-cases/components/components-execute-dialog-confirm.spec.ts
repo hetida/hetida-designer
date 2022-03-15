@@ -21,6 +21,5 @@ test('Execute components, confirm dialog', async ({ page, hetidaDesigner }) => {
   await expect(visibleProtocolViewer).toBeVisible();
   await expect(visibleProtocolViewer).not.toBeEmpty();
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

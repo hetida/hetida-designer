@@ -17,6 +17,5 @@ test('Category in workflows expands on click', async ({
     .locator('.mat-expansion-panel-content');
   await expect(visibleExpansionPanelContent).toBeVisible();
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

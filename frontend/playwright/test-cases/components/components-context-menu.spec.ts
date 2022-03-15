@@ -20,6 +20,5 @@ test('Open context-menu via right-click on a component in navigation-menu', asyn
     .count();
   expect(countItemsContextMenu).toBeGreaterThan(0);
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

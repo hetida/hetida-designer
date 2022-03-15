@@ -24,6 +24,5 @@ test('Search for components', async ({ page, hetidaDesigner }) => {
     .innerText();
   expect(firstComponentListName).toEqual(componentName);
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });

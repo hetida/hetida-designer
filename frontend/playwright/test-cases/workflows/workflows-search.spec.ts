@@ -24,6 +24,5 @@ test('Search for workflows', async ({ page, hetidaDesigner }) => {
     .innerText();
   expect(firstWorkflowListName).toEqual(workflowName);
 
-  // Run clear
   await hetidaDesigner.clearTest();
 });
