@@ -36,7 +36,7 @@ adapter_router = APIRouter(
 )
 async def get_all_adapters() -> List[AdapterFrontendDto]:
     """Get all adapters."""
-    logger.info(f"get adapters")
+    logger.info("get adapters")
     adapter_list: List[AdapterFrontendDto] = []
 
     if adapters is None:

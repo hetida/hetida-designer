@@ -83,7 +83,7 @@ async def create_workflow_revision(
     use POST /api/transformations/ instead.
     """
 
-    logger.info(f"create a new workflow")
+    logger.info("create a new workflow")
 
     transformation_revision = workflow_dto.to_transformation_revision(
         documentation=(
@@ -99,7 +99,7 @@ async def create_workflow_revision(
 
     try:
         store_single_transformation_revision(transformation_revision)
-        logger.info(f"created new workflow")
+        logger.info("created new workflow")
     except DBIntegrityError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
@@ -137,13 +137,13 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
     use GET /api/transformations/{id} instead.
     """
 
-    logger.info(f"get all workflows")
+    logger.info("get all workflows")
 
     transformation_revision_list = select_multiple_transformation_revisions(
         type=Type.WORKFLOW
     )
 
-    logger.info(f"got all workflows")
+    logger.info("got all workflows")
 
     workflow_dto_list = [
         WorkflowRevisionFrontendDto.from_transformation_revision(tr)
@@ -176,11 +176,11 @@ async def get_workflow_revision_by_id(
     use GET /api/transformations/{id} instead.
     """
 
-    logger.info(f"get workflow {id}")
+    logger.info("get workflow %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-        logger.info(f"found workflow with id {id}")
+        logger.info("found workflow with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -225,7 +225,7 @@ async def update_workflow_revision(
     use PUT /api/transformations/{id} instead.
     """
 
-    logger.info(f"update workflow {id}")
+    logger.info("update workflow %s", id)
 
     if id != updated_workflow_dto.id:
         msg = (
@@ -243,7 +243,7 @@ async def update_workflow_revision(
         existing_transformation_revision = read_single_transformation_revision(
             id, log_error=False
         )
-        logger.info(f"found transformation revision {id}")
+        logger.info("found transformation revision %s", id)
 
         if existing_transformation_revision.type != Type.WORKFLOW:
             msg = f"transformation revision {id} is not a workflow!"
@@ -263,7 +263,7 @@ async def update_workflow_revision(
 
         if existing_transformation_revision.state == State.RELEASED:
             if updated_workflow_dto.state == State.DISABLED:
-                logger.info(f"deprecate transformation revision {id}")
+                logger.info("deprecate transformation revision %s", id)
                 updated_transformation_revision = existing_transformation_revision
                 updated_transformation_revision.deprecate()
             else:
@@ -289,7 +289,7 @@ async def update_workflow_revision(
                 updated_transformation_revision
             )
         )
-        logger.info(f"updated workflow {id}")
+        logger.info("updated workflow %s", id)
     except DBIntegrityError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     except DBNotFoundError as e:
@@ -327,11 +327,11 @@ async def delete_workflow_revision(
     use DELETE /api/transformations/{id} instead.
     """
 
-    logger.info(f"delete workflow {id}")
+    logger.info("delete workflow %s", id)
 
     try:
         delete_single_transformation_revision(id, type=Type.WORKFLOW)
-        logger.info(f"deleted workflow {id}")
+        logger.info("deleted workflow %s", id)
 
     except DBTypeError as e:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=str(e))
@@ -369,7 +369,7 @@ async def execute_workflow_revision(
 
     try:
         tr_workflow = read_single_transformation_revision(id)
-        logger.info(f"found transformation revision with id {id}")
+        logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -476,11 +476,11 @@ async def bind_wiring_to_workflow_revision(
     use PUT /api/transformations/{id} instead.
     """
 
-    logger.info(f"bind wiring to workflow {id}")
+    logger.info("bind wiring to workflow %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-        logger.info(f"found workflow with id {id}")
+        logger.info("found workflow with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -496,7 +496,7 @@ async def bind_wiring_to_workflow_revision(
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(transformation_revision)
         )
-        logger.info(f"bound wiring to workflow {id}")
+        logger.info("bound wiring to workflow %s", id)
     except DBIntegrityError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     except DBNotFoundError as e:

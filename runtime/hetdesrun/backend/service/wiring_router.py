@@ -53,7 +53,7 @@ async def update_wiring(
     use PUT /api/transformations/{id} instead.
     """
 
-    logger.info(f"update wiring {id}")
+    logger.info("update wiring %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
@@ -69,7 +69,7 @@ async def update_wiring(
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(transformation_revision)
         )
-        logger.info(f"updated wiring {id} for item with id {id}")
+        logger.info("updated wiring for item with id %s", id)
     except DBIntegrityError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 

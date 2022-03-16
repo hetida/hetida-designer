@@ -77,7 +77,7 @@ async def create_component_revision(
     use POST /api/transformations/ instead.
     """
 
-    logger.info(f"create new component")
+    logger.info("create new component")
 
     transformation_revision = component_dto.to_transformation_revision(
         documentation=(
@@ -91,15 +91,15 @@ async def create_component_revision(
         )
     )
 
-    logger.debug(f"generate code")
+    logger.debug("generate code")
     transformation_revision.content = generate_code(
         transformation_revision.to_code_body()
     )
-    logger.debug(f"generated code:\n{component_dto.code}")
+    logger.debug("generated code:\n%s", component_dto.code)
 
     try:
         store_single_transformation_revision(transformation_revision)
-        logger.info(f"created new component")
+        logger.info("created new component")
     except DBIntegrityError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
@@ -138,11 +138,11 @@ async def get_component_revision_by_id(
     use GET /api/transformations/{id} instead.
     """
 
-    logger.info(f"get component {id}")
+    logger.info("get component %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-        logger.info(f"found component with id {id}")
+        logger.info("found component with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -187,7 +187,7 @@ async def update_component_revision(
     use PUT /api/transformations/{id} instead.
     """
 
-    logger.info(f"update component {id}")
+    logger.info("update component %s", id)
 
     if id != updated_component_dto.id:
         msg = (
@@ -203,7 +203,7 @@ async def update_component_revision(
         existing_transformation_revision = read_single_transformation_revision(
             id, log_error=False
         )
-        logger.info(f"found transformation revision {id}")
+        logger.info("found transformation revision %s", id)
 
         if existing_transformation_revision.type != Type.COMPONENT:
             msg = f"transformation revision {id} is not a component!"
@@ -219,7 +219,7 @@ async def update_component_revision(
 
         if existing_transformation_revision.state == State.RELEASED:
             if updated_component_dto.state == State.DISABLED:
-                logger.info(f"deprecate transformation revision {id}")
+                logger.info("deprecate transformation revision %s", id)
                 updated_transformation_revision = existing_transformation_revision
                 updated_transformation_revision.deprecate()
             else:
@@ -237,7 +237,7 @@ async def update_component_revision(
                 updated_transformation_revision
             )
         )
-        logger.info(f"updated component {id}")
+        logger.info("updated component %s", id)
     except DBIntegrityError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     except DBNotFoundError as e:
@@ -275,11 +275,11 @@ async def delete_component_revision(
     use DELETE /api/transformations/{id} instead.
     """
 
-    logger.info(f"delete component {id}")
+    logger.info("delete component %s", id)
 
     try:
         delete_single_transformation_revision(id, type=Type.COMPONENT)
-        logger.info(f"deleted component {id}")
+        logger.info("deleted component %s", id)
 
     except DBTypeError as e:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=str(e))
@@ -317,7 +317,7 @@ async def execute_component_revision(
 
     try:
         tr_component = read_single_transformation_revision(id)
-        logger.info(f"found component with id {id}")
+        logger.info("found component with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -419,11 +419,11 @@ async def bind_wiring_to_component_revision(
     use PUT /api/transformations/{id} instead.
     """
 
-    logger.info(f"bind wiring to component {id}")
+    logger.info("bind wiring to component %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-        logger.info(f"found component with id {id}")
+        logger.info("found component with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -439,7 +439,7 @@ async def bind_wiring_to_component_revision(
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(transformation_revision)
         )
-        logger.info(f"bound wiring to component {id}")
+        logger.info("bound wiring to component %s", id)
     except DBIntegrityError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     except DBNotFoundError as e:

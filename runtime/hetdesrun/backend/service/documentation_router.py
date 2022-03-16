@@ -55,11 +55,11 @@ async def get_component_revision_by_id(
     use GET /api/transformations/{id} instead.
     """
 
-    logger.info(f"get documentation {id}")
+    logger.info("get documentation %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-        logger.info(f"found documentation with id {id}")
+        logger.info("found documentation with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -94,7 +94,7 @@ async def update_documentation(
     use PUT /api/transformations/{id} instead
     """
 
-    logger.info(f"update documentation {id}")
+    logger.info("update documentation %s", id)
 
     if id != documentation_dto.id:
         msg = (
@@ -150,7 +150,7 @@ async def delete_documentation(
     use PUT /api/transformations/{id} instead
     """
 
-    logger.info(f"delete documentation {id}")
+    logger.info("delete documentation %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)

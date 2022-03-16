@@ -169,18 +169,18 @@ async def create_transformation_revision(
     transformation_revision: TransformationRevision,
 ) -> TransformationRevision:
     """Store a transformation revision in the data base."""
-    logger.info(f"create transformation revision {id}")
+    logger.info("create transformation revision %s", transformation_revision.id)
 
     if transformation_revision.type == Type.COMPONENT:
-        logger.debug(f"transformation revision has type {Type.COMPONENT}")
+        logger.debug("transformation revision has type %s", Type.COMPONENT)
         transformation_revision.content = generate_code(
             transformation_revision.to_code_body()
         )
-        logger.debug(f"generated code:\n{transformation_revision.content}")
+        logger.debug("generated code:\n%s", transformation_revision.content)
 
     try:
         store_single_transformation_revision(transformation_revision)
-        logger.info(f"created transformation revision")
+        logger.info("created transformation revision")
     except DBIntegrityError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
@@ -215,7 +215,7 @@ async def get_all_transformation_revisions() -> List[TransformationRevision]:
     Used by frontend for initial loading of all transformations to populate the sidebar.
     """
 
-    logger.info(f"get all transformation revisions")
+    logger.info("get all transformation revisions")
 
     try:
         transformation_revision_list = select_multiple_transformation_revisions()
@@ -249,11 +249,11 @@ async def get_transformation_revision_by_id(
     ),
 ) -> TransformationRevision:
 
-    logger.info(f"get transformation revision {id}")
+    logger.info("get transformation revision %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-        logger.info(f"found transformation revision with id {id}")
+        logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -293,7 +293,7 @@ async def update_transformation_revision(
     Unset attributes of the json sent in the request body will be set to default values, possibly changing the attribute saved in the DB.
     """
 
-    logger.info(f"update transformation revision {id}")
+    logger.info("update transformation revision %s", id)
 
     if id != updated_transformation_revision.id:
         msg = (
@@ -309,7 +309,7 @@ async def update_transformation_revision(
         existing_transformation_revision = read_single_transformation_revision(
             id, log_error=False
         )
-        logger.info(f"found transformation revision {id}")
+        logger.info("found transformation revision %s", id)
 
         if (
             existing_transformation_revision.type
@@ -329,7 +329,7 @@ async def update_transformation_revision(
 
         if existing_transformation_revision.state == State.RELEASED:
             if updated_transformation_revision.state == State.DISABLED:
-                logger.info(f"deprecate transformation revision {id}")
+                logger.info("deprecate transformation revision %s", id)
                 # make sure no other changes are made
                 updated_transformation_revision = TransformationRevision(
                     **existing_transformation_revision.dict()
@@ -357,7 +357,7 @@ async def update_transformation_revision(
             # avoid updating release date in case overwrite is allowed
             and existing_transformation_revision.state != State.RELEASED
         ):
-            logger.info(f"release transformation revision {id}")
+            logger.info("release transformation revision %s", id)
             updated_transformation_revision.release()
 
     except DBNotFoundError:
@@ -386,10 +386,10 @@ async def update_transformation_revision(
                 updated_transformation_revision
             )
         )
-        logger.info(f"updated transformation revision {id}")
+        logger.info("updated transformation revision %s", id)
     except DBIntegrityError as e:
         logger.error(
-            f"integrity error in DB when trying to access entry for id {id}\n{e}"
+            "integrity error in DB when trying to access entry for id %s\n%s", id, e
         )
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     except DBNotFoundError as e:
@@ -430,7 +430,7 @@ async def execute_transformation_revision(
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-        logger.info(f"found transformation revision with id {id}")
+        logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
 
