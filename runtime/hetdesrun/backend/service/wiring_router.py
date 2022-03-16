@@ -40,6 +40,7 @@ wiring_router = APIRouter(
     deprecated=True,
 )
 async def update_wiring(
+    # pylint: disable=W0622
     id: UUID,
     updated_wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:

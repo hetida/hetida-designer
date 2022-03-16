@@ -81,6 +81,7 @@ async def get_all_transformation_revisions() -> List[TransformationRevisionFront
     deprecated=True,
 )
 async def get_transformation_revision_by_id(
+    # pylint: disable=W0622
     id: UUID = Path(
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -188,6 +189,7 @@ async def create_transformation_revision(
     deprecated=True,
 )
 async def update_transformation_revision(
+    # pylint: disable=W0622
     id: UUID,
     updated_transformation_revision_dto: TransformationRevisionFrontendDto,
 ) -> TransformationRevisionFrontendDto:

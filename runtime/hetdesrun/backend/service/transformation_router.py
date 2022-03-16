@@ -242,6 +242,7 @@ async def get_all_transformation_revisions() -> List[TransformationRevision]:
     },
 )
 async def get_transformation_revision_by_id(
+    # pylint: disable=W0622
     id: UUID = Path(
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -275,6 +276,7 @@ async def get_transformation_revision_by_id(
     },
 )
 async def update_transformation_revision(
+    # pylint: disable=W0622
     id: UUID,
     updated_transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = Query(
@@ -412,6 +414,7 @@ async def update_transformation_revision(
     },
 )
 async def execute_transformation_revision(
+    # pylint: disable=W0622
     id: UUID,
     wiring: WorkflowWiring,
     run_pure_plot_operators: bool = Query(

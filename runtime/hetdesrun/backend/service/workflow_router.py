@@ -164,6 +164,7 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
     deprecated=True,
 )
 async def get_workflow_revision_by_id(
+    # pylint: disable=W0622
     id: UUID = Path(
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -209,6 +210,7 @@ async def get_workflow_revision_by_id(
     deprecated=True,
 )
 async def update_workflow_revision(
+    # pylint: disable=W0622
     id: UUID,
     updated_workflow_dto: WorkflowRevisionFrontendDto,
 ) -> WorkflowRevisionFrontendDto:
@@ -314,6 +316,7 @@ async def update_workflow_revision(
     deprecated=True,
 )
 async def delete_workflow_revision(
+    # pylint: disable=W0622
     id: UUID,
 ) -> None:
     """Delete a transformation revision of type workflow from the data base.
@@ -353,6 +356,7 @@ async def delete_workflow_revision(
     deprecated=True,
 )
 async def execute_workflow_revision(
+    # pylint: disable=W0622
     id: UUID,
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
@@ -462,6 +466,7 @@ async def execute_workflow_revision(
     deprecated=True,
 )
 async def bind_wiring_to_workflow_revision(
+    # pylint: disable=W0622
     id: UUID,
     wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:
