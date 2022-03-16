@@ -335,7 +335,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         workflow_id: UUID = values["id"]
 
         for link in links:
-            if link.from_operator == workflow_id or link.to_operator == workflow_id:
+            if workflow_id in (link.from_operator, link.to_operator):
                 # links from/to inputs/outputs will be dealt with in the clean_up_io_links validator
                 updated_links.append(link)
             else:
@@ -723,7 +723,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                 )
                 for link in self.links
             ]
-            + [link for link in self.additional_links_for_constant_inputs()],
+            + self.additional_links_for_constant_inputs(),
         )
 
     def to_transformation_revision(
