@@ -51,7 +51,7 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
     def adapter_id_known(
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
-        if not v in SINK_ADAPTERS.keys() and not isinstance(v, str):
+        if not v in SINK_ADAPTERS and not isinstance(v, str):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
             )
@@ -100,7 +100,7 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
     def adapter_id_known(
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
-        if not v in SOURCE_ADAPTERS.keys() and not isinstance(v, str):
+        if not v in SOURCE_ADAPTERS and not isinstance(v, str):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."
             )
