@@ -557,8 +557,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                     and link_end_type is not None
                     and (
                         link_start_type == link_end_type
-                        or link_start_type == DataType.Any
-                        or link_end_type == DataType.Any
+                        or DataType.Any in (link_start_type, link_end_type)
                     )
                     and not (io_name is None or io_name == "")
                 ):
@@ -572,8 +571,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                     and link_end_type is not None
                     and (
                         link_start_type == link_end_type
-                        or link_start_type == DataType.Any
-                        or link_end_type == DataType.Any
+                        or DataType.Any in (link_start_type, link_end_type)
                     )
                     and not (io_name is None or io_name == "")
                 ):
