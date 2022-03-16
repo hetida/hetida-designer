@@ -61,7 +61,9 @@ async def get_component_revision_by_id(
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found documentation with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     documentation_dto = DocumentationFrontendDto.from_transformation_revision(
         transformation_revision
@@ -107,7 +109,9 @@ async def update_documentation(
     try:
         transformation_revision = read_single_transformation_revision(id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     transformation_revision.documentation = documentation_dto.document
 
@@ -117,9 +121,13 @@ async def update_documentation(
         )
         logger.info("updated documentation {id}")
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     persisted_documentation_dto = DocumentationFrontendDto.from_transformation_revision(
         persisted_transformation_revision
@@ -155,7 +163,9 @@ async def delete_documentation(
     try:
         transformation_revision = read_single_transformation_revision(id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     transformation_revision.documentation = ""
 
@@ -163,6 +173,10 @@ async def delete_documentation(
         update_or_create_single_transformation_revision(transformation_revision)
         logger.info("deleted documentation {id}")
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError

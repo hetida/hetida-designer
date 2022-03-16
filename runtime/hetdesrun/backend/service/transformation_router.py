@@ -182,14 +182,18 @@ async def create_transformation_revision(
         store_single_transformation_revision(transformation_revision)
         logger.info("created transformation revision")
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
 
     try:
         persisted_transformation_revision = read_single_transformation_revision(
             transformation_revision.id
         )
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     logger.debug(persisted_transformation_revision.json())
 
@@ -223,7 +227,7 @@ async def get_all_transformation_revisions() -> List[TransformationRevision]:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"At least one entry in the DB is no valid transformation revision:\n{str(e)}",
-        )
+        ) from DBIntegrityError
 
     return transformation_revision_list
 
@@ -255,7 +259,9 @@ async def get_transformation_revision_by_id(
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     logger.debug(transformation_revision.json())
 
@@ -391,9 +397,13 @@ async def update_transformation_revision(
         logger.error(
             "integrity error in DB when trying to access entry for id %s\n%s", id, e
         )
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     logger.debug(persisted_transformation_revision.json())
 
@@ -432,7 +442,9 @@ async def execute_transformation_revision(
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     if transformation_revision.type == Type.COMPONENT:
         tr_workflow = transformation_revision.wrap_component_in_tr_workflow()

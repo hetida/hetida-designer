@@ -60,7 +60,7 @@ async def get_all_transformation_revisions() -> List[TransformationRevisionFront
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"At least one entry in the DB is no valid transformation revision:\n{str(e)}",
-        )
+        ) from DBIntegrityError
 
     transformation_revision_dto_list = [
         TransformationRevisionFrontendDto.from_transformation_revision(tr)
@@ -99,7 +99,9 @@ async def get_transformation_revision_by_id(
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     transformation_revision_dto = (
         TransformationRevisionFrontendDto.from_transformation_revision(
@@ -157,14 +159,18 @@ async def create_transformation_revision(
         store_single_transformation_revision(transformation_revision)
         logger.info("created base item")
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
 
     try:
         persisted_transformation_revision = read_single_transformation_revision(
             transformation_revision.id
         )
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     persisted_transformation_dto = (
         TransformationRevisionFrontendDto.from_transformation_revision(
@@ -265,9 +271,13 @@ async def update_transformation_revision(
         )
         logger.info("updated base item %s", id)
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     persisted_transformation_dto = (
         TransformationRevisionFrontendDto.from_transformation_revision(

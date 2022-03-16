@@ -101,14 +101,18 @@ async def create_workflow_revision(
         store_single_transformation_revision(transformation_revision)
         logger.info("created new workflow")
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
 
     try:
         persisted_transformation_revision = read_single_transformation_revision(
             transformation_revision.id
         )
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
@@ -182,7 +186,9 @@ async def get_workflow_revision_by_id(
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found workflow with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     if transformation_revision.type != Type.WORKFLOW:
         msg = f"DB entry for id {id} does not have type {Type.WORKFLOW}"
@@ -291,9 +297,13 @@ async def update_workflow_revision(
         )
         logger.info("updated workflow %s", id)
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
@@ -334,13 +344,19 @@ async def delete_workflow_revision(
         logger.info("deleted workflow %s", id)
 
     except DBTypeError as e:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=str(e))
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, detail=str(e)
+        ) from DBTypeError
 
     except DBBadRequestError as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, detail=str(e)
+        ) from DBBadRequestError
 
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
 
 @workflow_router.post(
@@ -371,7 +387,9 @@ async def execute_workflow_revision(
         tr_workflow = read_single_transformation_revision(id)
         logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     if tr_workflow.type != Type.WORKFLOW:
         msg = f"DB entry for id {id} does not have type {Type.WORKFLOW}"
@@ -482,7 +500,9 @@ async def bind_wiring_to_workflow_revision(
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found workflow with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     if transformation_revision.type != Type.WORKFLOW:
         msg = f"DB entry for id {id} does not have type {Type.WORKFLOW}"
@@ -498,9 +518,13 @@ async def bind_wiring_to_workflow_revision(
         )
         logger.info("bound wiring to workflow %s", id)
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision

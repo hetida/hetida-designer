@@ -101,7 +101,9 @@ async def create_component_revision(
         store_single_transformation_revision(transformation_revision)
         logger.info("created new component")
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
 
     persisted_transformation_revision = read_single_transformation_revision(
         transformation_revision.id
@@ -144,7 +146,9 @@ async def get_component_revision_by_id(
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found component with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     if transformation_revision.type != Type.COMPONENT:
         msg = f"DB entry for id {id} does not have type {Type.COMPONENT}"
@@ -239,9 +243,13 @@ async def update_component_revision(
         )
         logger.info("updated component %s", id)
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
@@ -282,13 +290,19 @@ async def delete_component_revision(
         logger.info("deleted component %s", id)
 
     except DBTypeError as e:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=str(e))
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, detail=str(e)
+        ) from DBTypeError
 
     except DBBadRequestError as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, detail=str(e)
+        ) from DBBadRequestError
 
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
 
 @component_router.post(
@@ -319,7 +333,9 @@ async def execute_component_revision(
         tr_component = read_single_transformation_revision(id)
         logger.info("found component with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     if tr_component.type != Type.COMPONENT:
         msg = f"DB entry for id {id} does not have type {Type.COMPONENT}"
@@ -425,7 +441,9 @@ async def bind_wiring_to_component_revision(
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found component with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     if transformation_revision.type != Type.COMPONENT:
         msg = f"DB entry for id {id} does not have type {Type.COMPONENT}"
@@ -441,9 +459,13 @@ async def bind_wiring_to_component_revision(
         )
         logger.info("bound wiring to component %s", id)
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=str(e)
+        ) from DBNotFoundError
 
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision

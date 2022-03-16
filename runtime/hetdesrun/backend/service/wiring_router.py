@@ -57,8 +57,7 @@ async def update_wiring(
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-    except:
-        DBNotFoundError
+    except DBNotFoundError:
         # there is no longer a separate data model for wiring
         # the wiring is saved when it is posted via the workflow/component router
         return updated_wiring_dto
@@ -71,7 +70,9 @@ async def update_wiring(
         )
         logger.info("updated wiring for item with id %s", id)
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from DBIntegrityError
 
     persisted_wiring_dto = WiringFrontendDto.from_wiring(
         persisted_transformation_revision.test_wiring, transformation_revision.id
