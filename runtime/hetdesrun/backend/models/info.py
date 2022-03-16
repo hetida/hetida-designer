@@ -24,6 +24,7 @@ class BasicInformation(BaseModel):
     tag: str = Field(..., max_length=20)
 
     @validator("tag")
+    # pylint: disable=no-self-argument,no-self-use
     def tag_not_latest(cls, tag: str) -> str:
         if tag != "latest":
             return tag

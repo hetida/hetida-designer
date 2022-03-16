@@ -25,6 +25,7 @@ class WorkflowIoFrontendDto(BaseModel):
     constant: bool = False
 
     @validator("name")
+    # pylint: disable=no-self-argument,no-self-use
     def name_valid_python_identifier(cls, name: Optional[str]) -> Optional[str]:
         if name is None or name == "":
             return name

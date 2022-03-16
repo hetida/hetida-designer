@@ -294,6 +294,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     wirings: List[WiringFrontendDto] = []
 
     @validator("operators", each_item=False)
+    # pylint: disable=no-self-argument,no-self-use
     def operator_names_unique(
         cls, operators: List[WorkflowOperatorFrontendDto]
     ) -> List[WorkflowOperatorFrontendDto]:
@@ -318,6 +319,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return operators
 
     @validator("links", each_item=False)
+    # pylint: disable=no-self-argument,no-self-use
     def reduce_to_valid_links(
         cls, links: List[WorkflowLinkFrontendDto], values: dict
     ) -> List[WorkflowLinkFrontendDto]:
@@ -353,6 +355,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return updated_links
 
     @validator("links", each_item=False)
+    # pylint: disable=no-self-argument,no-self-use
     def links_acyclic_directed_graph(
         cls, links: List[WorkflowLinkFrontendDto], values: dict
     ) -> List[WorkflowLinkFrontendDto]:
@@ -405,6 +408,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return links
 
     @validator("inputs", each_item=False)
+    # pylint: disable=no-self-argument,no-self-use
     def determine_inputs_from_operators_and_links(
         cls, inputs: List[WorkflowIoFrontendDto], values: dict
     ) -> List[WorkflowIoFrontendDto]:
@@ -438,6 +442,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return updated_inputs
 
     @validator("outputs", each_item=False)
+    # pylint: disable=no-self-argument,no-self-use
     def determine_outputs_from_operators_and_links(
         cls, outputs: List[WorkflowIoFrontendDto], values: dict
     ) -> List[WorkflowIoFrontendDto]:
@@ -470,8 +475,8 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         return updated_outputs
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("inputs", "outputs", each_item=False)
+    # pylint: disable=no-self-argument,no-self-use
     def io_names_none_or_unique(
         cls, ios: List[WorkflowIoFrontendDto]
     ) -> List[WorkflowIoFrontendDto]:
@@ -482,6 +487,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return ios
 
     @validator("inputs", "outputs", each_item=True)
+    # pylint: disable=no-self-argument,no-self-use
     def name_or_constant_data_provided(
         cls, io: WorkflowIoFrontendDto, values: dict
     ) -> WorkflowIoFrontendDto:
@@ -504,6 +510,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return io
 
     @root_validator()
+    # pylint: disable=no-self-argument,no-self-use
     def clean_up_io_links(cls, values: dict) -> dict:
         try:
             operators = values["operators"]

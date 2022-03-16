@@ -22,6 +22,7 @@ class WorkflowOperatorFrontendDto(BasicInformation):
     pos_y: int = 0
 
     @root_validator()
+    # pylint: disable=no-self-argument,no-self-use
     def is_not_draft(cls, values: dict) -> dict:
         if values["state"] == State.DRAFT:
             raise ValueError(
