@@ -71,10 +71,10 @@ class ExecutionContextFilter(logging.Filter):
         record.currently_executed_component_id = context_dict.get(  # type: ignore
             "currently_executed_component_id", None
         )
-
         record.currently_executed_component_node_name = context_dict.get(  # type: ignore
             "currently_executed_component_node_name", None
         )
+        record.job_id = context_dict.get("job_id", None)  # type: ignore
         return True
 
 

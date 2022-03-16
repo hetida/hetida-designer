@@ -1,11 +1,11 @@
-from typing import List
+from typing import List, Optional
 import logging
 
 from uuid import UUID, uuid4
 import json
 
 import httpx
-from fastapi import APIRouter, Path, status, HTTPException
+from fastapi import APIRouter, Path, Query, status, HTTPException
 
 from posixpath import join as posix_urljoin
 
@@ -21,9 +21,9 @@ from hetdesrun.models.run import (
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
+from hetdesrun.backend.execution import nested_nodes
 
 from hetdesrun.backend.service.transformation_router import (
-    nested_nodes,
     contains_deprecated,
 )
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
@@ -84,7 +84,6 @@ async def create_workflow_revision(
     """
 
     logger.info(f"create a new workflow")
-
     transformation_revision = workflow_dto.to_transformation_revision(
         documentation=(
             "\n"
@@ -356,12 +355,15 @@ async def execute_workflow_revision(
     id: UUID,
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
+    job_id: Optional[UUID] = None,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision of type workflow.
 
     This endpoint is deprecated and will be removed soon,
     use POST /api/transformations/{id}/execute instead.
     """
+    if job_id is None:
+        job_id = uuid4()
 
     try:
         tr_workflow = read_single_transformation_revision(id)
@@ -395,6 +397,7 @@ async def execute_workflow_revision(
             run_pure_plot_operators=run_pure_plot_operators,
         ),
         workflow_wiring=wiring_dto.to_workflow_wiring(),
+        job_id=job_id,
     )
 
     output_types = {
@@ -442,6 +445,7 @@ async def execute_workflow_revision(
         output_types_by_output_name=output_types,
         result=execution_result.result,
         traceback=execution_result.traceback,
+        job_id=job_id,
     )
 
     return execution_response

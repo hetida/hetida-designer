@@ -45,7 +45,7 @@ def configure_logging(
     if log_execution_context:
         logging_handler.addFilter(execution_context_filter)
     formatter = logging.Formatter(
-        "%(asctime)s %(levelname)s: %(message)s "
+        "%(asctime)s %(process)d %(levelname)s: %(message)s "
         "[in %(pathname)s:%(lineno)d"
         + (
             (

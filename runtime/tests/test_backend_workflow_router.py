@@ -427,10 +427,12 @@ async def test_set_test_wiring_to_workflow(async_test_client, clean_test_db_engi
 async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
-        "hetdesrun.persistence.dbservice.nesting.Session", patched_session,
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
     ):
         with mock.patch(
-            "hetdesrun.persistence.dbservice.revision.Session", patched_session,
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
         ):
             component_dto = ComponentRevisionFrontendDto(**dto_json_component_1)
             tr_component = component_dto.to_transformation_revision()
@@ -471,7 +473,6 @@ async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine)
             store_single_transformation_revision(tr_workflow_2)
 
             update_or_create_nesting(tr_workflow_2)
-
             async with async_test_client as ac:
                 response = await ac.post(
                     "/api/workflows/"
@@ -488,10 +489,12 @@ async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine)
 async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
-        "hetdesrun.persistence.dbservice.nesting.Session", patched_session,
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
     ):
         with mock.patch(
-            "hetdesrun.persistence.dbservice.revision.Session", patched_session,
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
         ):
             async with async_test_client as ac:
 
@@ -510,7 +513,7 @@ async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_en
                     "./transformations/components/visualization/single-timeseries-plot_100_8fba9b51-a0f1-6c6c-a6d4-e224103b819c.json",
                     "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json",
                     "./transformations/workflows/examples/univariate-linear-rul-regression-example_100_806df1b9-2fc8-4463-943f-3d258c569663.json",
-                    "./transformations/workflows/examples/linear-rul-from-last-positive-step_100_3d504361-e351-4d52-8734-391aa47e8f24.json"
+                    "./transformations/workflows/examples/linear-rul-from-last-positive-step_100_3d504361-e351-4d52-8734-391aa47e8f24.json",
                 ]
 
                 for file in json_files:
@@ -518,7 +521,9 @@ async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_en
 
                     response = await ac.put(
                         posix_urljoin(
-                            runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
+                            runtime_config.hd_backend_api_url,
+                            "transformations",
+                            tr_json["id"],
                         )
                         + "?allow_overwrite_released=True",
                         json=tr_json,

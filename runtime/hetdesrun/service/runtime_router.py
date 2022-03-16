@@ -78,6 +78,7 @@ async def runtime_service(
             error=str(e),
             traceback=traceback.format_exc(),
             output_results_by_output_name={},
+            job_id=runtime_input.job_id,
         )
 
     # Load data
@@ -92,6 +93,7 @@ async def runtime_service(
             error=str(exc),
             traceback=traceback.format_exc(),
             output_results_by_output_name={},
+            job_id=runtime_input.job_id,
         )
 
     wf_inputs_by_name = {inp.name: inp for inp in runtime_input.workflow.inputs}
@@ -129,6 +131,7 @@ async def runtime_service(
             error=str(e),
             traceback=traceback.format_exc(),
             output_results_by_output_name={},
+            job_id=runtime_input.job_id,
         )
 
     except RuntimeExecutionError as e:
@@ -143,6 +146,7 @@ async def runtime_service(
             error=str(e),
             traceback=traceback.format_exc(),
             output_results_by_output_name={},
+            job_id=runtime_input.job_id,
         )
 
     if runtime_input.configuration.return_individual_node_results:
@@ -183,12 +187,14 @@ async def runtime_service(
             error=str(exc),
             traceback=traceback.format_exc(),
             output_results_by_output_name={},
+            job_id=runtime_input.job_id,
         )
 
     wf_exec_result = WorkflowExecutionResult(
         result="ok",
         node_results=node_results,
         output_results_by_output_name=direct_return_data,
+        job_id=runtime_input.job_id,
     )
 
     logger.info("Workflow Execution Result Pydantic Object: \n%s", wf_exec_result)
@@ -209,6 +215,7 @@ async def runtime_service(
             traceback=traceback.format_exc(),
             output_results_by_output_id={},
             output_results_by_output_name={},
+            job_id=runtime_input.job_id,
         )
 
     logger.info("Workflow Execution Result serialized successfully.")
