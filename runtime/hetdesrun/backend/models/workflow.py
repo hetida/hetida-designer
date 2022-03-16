@@ -44,9 +44,9 @@ def opposite_link_end_by_connector_id(
 
     if len(link_ends) > 0:
         return link_ends[0]
-    else:
-        # default values in case no link is connected to the connector
-        return [connector_id, connector_id]
+
+    # default values in case no link is connected to the connector
+    return [connector_id, connector_id]
 
 
 def position_from_input_connector_id(
@@ -61,9 +61,9 @@ def position_from_input_connector_id(
 
     if len(positions) > 0:
         return positions[0]
-    else:
-        # default values in case no input connector matches the input_id
-        return [0, -200]
+
+    # default values in case no input connector matches the input_id
+    return [0, -200]
 
 
 def position_from_output_connector_id(
@@ -77,9 +77,9 @@ def position_from_output_connector_id(
 
     if len(positions) > 0:
         return positions[0]
-    else:
-        # default values in case no input connector matches the output_id
-        return [0, -200]
+
+    # default values in case no input connector matches the output_id
+    return [0, -200]
 
 
 def get_name_for_constant_input(
@@ -168,10 +168,10 @@ def get_or_create_input(
 
     if len(matching_inputs) > 0:
         return matching_inputs[0]
-    else:
-        return WorkflowIoFrontendDto(
-            operator=operator_id, connector=connector_id, type=type
-        )
+
+    return WorkflowIoFrontendDto(
+        operator=operator_id, connector=connector_id, type=type
+    )
 
 
 def get_or_create_output(
@@ -191,10 +191,10 @@ def get_or_create_output(
 
     if len(matching_outputs) > 0:
         return matching_outputs[0]
-    else:
-        return WorkflowIoFrontendDto(
-            operator=operator_id, connector=connector_id, type=type
-        )
+
+    return WorkflowIoFrontendDto(
+        operator=operator_id, connector=connector_id, type=type
+    )
 
 
 def get_link_start_type_from_operator(
