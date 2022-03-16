@@ -101,18 +101,14 @@ async def create_workflow_revision(
         store_single_transformation_revision(transformation_revision)
         logger.info("created new workflow")
     except DBIntegrityError as e:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        ) from DBIntegrityError
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
     try:
         persisted_transformation_revision = read_single_transformation_revision(
             transformation_revision.id
         )
     except DBNotFoundError as e:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from DBNotFoundError
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
@@ -186,9 +182,7 @@ async def get_workflow_revision_by_id(
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found workflow with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from DBNotFoundError
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     if transformation_revision.type != Type.WORKFLOW:
         msg = f"DB entry for id {id} does not have type {Type.WORKFLOW}"
@@ -297,13 +291,9 @@ async def update_workflow_revision(
         )
         logger.info("updated workflow %s", id)
     except DBIntegrityError as e:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        ) from DBIntegrityError
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from DBNotFoundError
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
@@ -344,19 +334,13 @@ async def delete_workflow_revision(
         logger.info("deleted workflow %s", id)
 
     except DBTypeError as e:
-        raise HTTPException(
-            status.HTTP_401_UNAUTHORIZED, detail=str(e)
-        ) from DBTypeError
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=str(e)) from e
 
     except DBBadRequestError as e:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN, detail=str(e)
-        ) from DBBadRequestError
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     except DBNotFoundError as e:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from DBNotFoundError
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 @workflow_router.post(
@@ -387,9 +371,7 @@ async def execute_workflow_revision(
         tr_workflow = read_single_transformation_revision(id)
         logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from DBNotFoundError
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     if tr_workflow.type != Type.WORKFLOW:
         msg = f"DB entry for id {id} does not have type {Type.WORKFLOW}"
@@ -440,13 +422,15 @@ async def execute_workflow_revision(
                     headers=headers,  # TODO: authentication
                     json=json.loads(
                         execution_input.json()
-                    ),  # TODO: avoid double serialization. 
+                    ),  # TODO: avoid double serialization.
                     # see https://github.com/samuelcolvin/pydantic/issues/1409, especially
                     # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
                 )
             except httpx.HTTPError as e:
                 msg = f"Failure connecting to hd runtime endpoint ({url}):\n{e}"
                 logger.info(msg)
+                # do not explictly re-raise to avoid displaying authentication details
+                # pylint: disable=raise-missing-from
                 raise HTTPException(status.HTTP_424_FAILED_DEPENDENCY, detail=msg)
             try:
                 json_obj = response.json()
@@ -457,7 +441,7 @@ async def execute_workflow_revision(
                     f"\nJson Object is:\n{str(json_obj)}"
                 )
                 logger.info(msg)
-                raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=msg)
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=msg) from e
 
     execution_response = ExecutionResponseFrontendDto(
         error=execution_result.error,
@@ -501,9 +485,7 @@ async def bind_wiring_to_workflow_revision(
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found workflow with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from DBNotFoundError
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     if transformation_revision.type != Type.WORKFLOW:
         msg = f"DB entry for id {id} does not have type {Type.WORKFLOW}"
@@ -519,13 +501,9 @@ async def bind_wiring_to_workflow_revision(
         )
         logger.info("bound wiring to workflow %s", id)
     except DBIntegrityError as e:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        ) from DBIntegrityError
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail=str(e)
-        ) from DBNotFoundError
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision

@@ -70,9 +70,7 @@ async def update_wiring(
         )
         logger.info("updated wiring for item with id %s", id)
     except DBIntegrityError as e:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        ) from DBIntegrityError
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
     persisted_wiring_dto = WiringFrontendDto.from_wiring(
         persisted_transformation_revision.test_wiring, transformation_revision.id
