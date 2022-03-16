@@ -11,7 +11,6 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.io import IOInterface
 
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.models.code import CodeBody
 
 
 class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):

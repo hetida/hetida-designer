@@ -100,7 +100,9 @@ def nested_nodes(
         for operator in workflow.operators:
             if operator.type == Type.COMPONENT:
                 sub_nodes.append(
-                    tr_operators[operator.id].to_component_node(operator.id, operator.name)
+                    tr_operators[operator.id].to_component_node(
+                        operator.id, operator.name
+                    )
                 )
             if operator.type == Type.WORKFLOW:
                 tr_workflow = tr_operators[operator.id]

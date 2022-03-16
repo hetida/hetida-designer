@@ -1,5 +1,5 @@
 from typing import List
-from uuid import UUID, uuid4
+from uuid import UUID
 
 # pylint: disable=no-name-in-module
 from pydantic import Field, root_validator
