@@ -44,8 +44,10 @@ class WorkflowIoFrontendDto(BaseModel):
             id=self.id,
             data_type=self.type,
             position=Position(x=self.pos_x, y=self.pos_y),
+            # pylint: disable=unsubscriptable-object
             value=self.constant_value["value"]
-            if self.constant_value is not None
+            if isinstance(self.constant_value, dict)
+            and "value" in self.constant_value.keys()
             else None,
         )
 
