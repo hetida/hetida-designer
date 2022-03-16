@@ -46,7 +46,10 @@ async def get_all_adapters() -> List[AdapterFrontendDto]:
         adapter_properties = adapter.split("|")
 
         if len(adapter_properties) != 4:
-            msg = 'Wrong adapter configuration format - must be "id|name|url|internalUrl,id2|name2|url2|internalUrl2,..."'
+            msg = (
+                "Wrong adapter configuration format - must be "
+                '"id|name|url|internalUrl,id2|name2|url2|internalUrl2,..."'
+            )
             logger.error(msg)
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 

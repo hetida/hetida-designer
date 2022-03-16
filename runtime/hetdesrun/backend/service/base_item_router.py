@@ -232,8 +232,10 @@ async def update_transformation_revision(
             != updated_transformation_revision_dto.type
         ):
             msg = (
-                f"The type ({updated_transformation_revision_dto.type}) of the provided transformation revision does not\n"
-                f"match the type ({existing_transformation_revision.type}) of the stored transformation revision {id}!"
+                f"The type ({updated_transformation_revision_dto.type}) "
+                f"of the provided transformation revision does not\n"
+                f"match the type ({existing_transformation_revision.type}) "
+                f"of the stored transformation revision {id}!"
             )
             logger.error(msg)
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)

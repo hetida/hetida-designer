@@ -296,15 +296,16 @@ async def update_transformation_revision(
     Updating a transformation revision is only possible if it is in state DRAFT
     or to change the state from RELEASED to DISABLED.
 
-    Unset attributes of the json sent in the request body will be set to default values, possibly changing the attribute saved in the DB.
+    Unset attributes of the json sent in the request body will be set to default values,
+    possibly changing the attribute saved in the DB.
     """
 
     logger.info("update transformation revision %s", id)
 
     if id != updated_transformation_revision.id:
         msg = (
-            "The id {id} does not match "
-            f"the id of the provided transformation revision DTO {updated_transformation_revision.id}"
+            f"The id {id} does not match the id of the provided "
+            f"transformation revision DTO {updated_transformation_revision.id}"
         )
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
@@ -322,8 +323,10 @@ async def update_transformation_revision(
             != updated_transformation_revision.type
         ):
             msg = (
-                f"The type ({updated_transformation_revision.type}) of the provided transformation revision does not\n"
-                f"match the type ({existing_transformation_revision.type}) of the stored transformation revision {id}!"
+                f"The type ({updated_transformation_revision.type}) of the "
+                f"provided transformation revision does not\n"
+                f"match the type ({existing_transformation_revision.type}) "
+                f"of the stored transformation revision {id}!"
             )
             logger.error(msg)
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
@@ -433,7 +436,8 @@ async def execute_transformation_revision(
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision.
 
-    The transformation will be loaded from the DB and executed with the wiring sent in the request body.
+    The transformation will be loaded from the DB and executed with the wiring sent in the request
+    body.
 
     The test wiring will not be updated.
     """

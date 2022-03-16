@@ -440,8 +440,9 @@ async def execute_workflow_revision(
                     headers=headers,  # TODO: authentication
                     json=json.loads(
                         execution_input.json()
-                    ),  # TODO: avoid double serialization. see https://github.com/samuelcolvin/pydantic/issues/1409
-                    # see also https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                    ),  # TODO: avoid double serialization. 
+                    # see https://github.com/samuelcolvin/pydantic/issues/1409, especially
+                    # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
                 )
             except httpx.HTTPError as e:
                 msg = f"Failure connecting to hd runtime endpoint ({url}):\n{e}"
