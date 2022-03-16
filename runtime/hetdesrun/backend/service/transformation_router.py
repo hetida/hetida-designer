@@ -274,6 +274,7 @@ async def get_transformation_revision_by_id(
         }
     },
 )
+# pylint: disable=too-many-branches,too-many-statements
 async def update_transformation_revision(
     # pylint: disable=W0622
     id: UUID,
