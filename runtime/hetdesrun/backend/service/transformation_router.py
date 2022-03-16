@@ -3,10 +3,9 @@ import logging
 
 from uuid import UUID, uuid4
 
+from posixpath import join as posix_urljoin
 import httpx
 from fastapi import APIRouter, Path, Query, status, HTTPException
-
-from posixpath import join as posix_urljoin
 
 from pydantic import ValidationError
 
