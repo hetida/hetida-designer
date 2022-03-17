@@ -6,11 +6,11 @@ import json
 
 from posixpath import join as posix_urljoin
 import httpx
-from fastapi import APIRouter, Path, Query, status, HTTPException
+from fastapi import APIRouter, Path, status, HTTPException
 
 from pydantic import ValidationError
 
-from hetdesrun.utils import Type, State, get_auth_headers
+from hetdesrun.utils import Type, get_auth_headers
 
 from hetdesrun.webservice.config import runtime_config
 from hetdesrun.service.runtime_router import runtime_service
@@ -20,11 +20,13 @@ from hetdesrun.models.run import (
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-from hetdesrun.backend.execution import nested_nodes
 
 from hetdesrun.backend.service.transformation_router import (
-    contains_deprecated,
+    check_modifiability,
+    update_content,
+    if_applicable_release_or_deprecate,
 )
+from hetdesrun.backend.execution import nested_nodes
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
@@ -37,14 +39,13 @@ from hetdesrun.persistence.dbservice.revision import (
     update_or_create_single_transformation_revision,
     get_all_nested_transformation_revisions,
 )
-
 from hetdesrun.persistence.dbservice.exceptions import (
     DBTypeError,
     DBBadRequestError,
     DBNotFoundError,
     DBIntegrityError,
 )
-from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.persistence.models.transformation import TransformationRevision
 
 logger = logging.getLogger(__name__)
 
@@ -235,8 +236,7 @@ async def update_workflow_revision(
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     updated_transformation_revision = updated_workflow_dto.to_transformation_revision()
-
-    existing_operator_ids: List[UUID] = []
+    existing_transformation_revision: Optional[TransformationRevision] = None
 
     try:
         existing_transformation_revision = read_single_transformation_revision(
@@ -244,46 +244,21 @@ async def update_workflow_revision(
         )
         logger.info("found transformation revision %s", id)
 
-        if existing_transformation_revision.type != Type.WORKFLOW:
-            msg = f"transformation revision {id} is not a workflow!"
-            logger.error(msg)
-            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
-        assert isinstance(
-            existing_transformation_revision.content, WorkflowContent
-        )  # hint for mypy
-
-        updated_transformation_revision.documentation = (
-            existing_transformation_revision.documentation
+        check_modifiability(
+            existing_transformation_revision, updated_transformation_revision
         )
-
-        for operator in existing_transformation_revision.content.operators:
-            existing_operator_ids.append(operator.id)
-
-        if existing_transformation_revision.state == State.RELEASED:
-            if updated_workflow_dto.state == State.DISABLED:
-                logger.info("deprecate transformation revision %s", id)
-                updated_transformation_revision = existing_transformation_revision
-                updated_transformation_revision.deprecate()
-            else:
-                msg = f"cannot modify released component {id}"
-                logger.error(msg)
-                raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the workflow revision
         pass
 
-    assert isinstance(
-        updated_transformation_revision.content, WorkflowContent
-    )  # hint for mypy
-    for operator in updated_transformation_revision.content.operators:
-        if operator.type == Type.WORKFLOW and operator.id not in existing_operator_ids:
-            operator.state = (
-                State.DISABLED
-                if contains_deprecated(operator.transformation_id)
-                else operator.state
-            )
+    updated_transformation_revision = update_content(
+        existing_transformation_revision, updated_transformation_revision
+    )
+
+    updated_transformation_revision = if_applicable_release_or_deprecate(
+        existing_transformation_revision, updated_transformation_revision
+    )
 
     try:
         persisted_transformation_revision = (

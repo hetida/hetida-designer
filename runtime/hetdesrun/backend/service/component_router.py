@@ -6,11 +6,11 @@ import json
 
 from posixpath import join as posix_urljoin
 import httpx
-from fastapi import APIRouter, Path, Query, status, HTTPException
+from fastapi import APIRouter, Path, status, HTTPException
 
 from pydantic import ValidationError
 
-from hetdesrun.utils import Type, State, get_auth_headers
+from hetdesrun.utils import Type, get_auth_headers
 
 from hetdesrun.webservice.config import runtime_config
 from hetdesrun.service.runtime_router import runtime_service
@@ -21,7 +21,12 @@ from hetdesrun.models.run import (
     WorkflowExecutionResult,
 )
 
-from hetdesrun.backend.service.transformation_router import generate_code
+from hetdesrun.backend.service.transformation_router import (
+    generate_code,
+    check_modifiability,
+    update_content,
+    if_applicable_release_or_deprecate,
+)
 from hetdesrun.backend.execution import nested_nodes
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
@@ -33,7 +38,6 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
-
 from hetdesrun.persistence.dbservice.exceptions import (
     DBTypeError,
     DBBadRequestError,
@@ -41,6 +45,7 @@ from hetdesrun.persistence.dbservice.exceptions import (
     DBIntegrityError,
 )
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.persistence.models.transformation import TransformationRevision
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +204,7 @@ async def update_component_revision(
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     updated_transformation_revision = updated_component_dto.to_transformation_revision()
+    existing_transformation_revision: Optional[TransformationRevision] = None
 
     try:
         existing_transformation_revision = read_single_transformation_revision(
@@ -206,31 +212,21 @@ async def update_component_revision(
         )
         logger.info("found transformation revision %s", id)
 
-        if existing_transformation_revision.type != Type.COMPONENT:
-            msg = f"transformation revision {id} is not a component!"
-            logger.error(msg)
-            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
-        updated_transformation_revision.content = generate_code(
-            updated_transformation_revision.to_code_body()
+        check_modifiability(
+            existing_transformation_revision, updated_transformation_revision
         )
-        updated_transformation_revision.documentation = (
-            existing_transformation_revision.documentation
-        )
-
-        if existing_transformation_revision.state == State.RELEASED:
-            if updated_component_dto.state == State.DISABLED:
-                logger.info("deprecate transformation revision %s", id)
-                updated_transformation_revision = existing_transformation_revision
-                updated_transformation_revision.deprecate()
-            else:
-                msg = f"cannot modify released component {id}"
-                logger.error(msg)
-                raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the component revision
         pass
+
+    updated_transformation_revision = update_content(
+        existing_transformation_revision, updated_transformation_revision
+    )
+
+    updated_transformation_revision = if_applicable_release_or_deprecate(
+        existing_transformation_revision, updated_transformation_revision
+    )
 
     try:
         persisted_transformation_revision = (

@@ -769,7 +769,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             )
             if operator_id is None:
                 operator_id = transformation_revision.id
-            assert connector_id is not None # hint for mypy
+            assert connector_id is not None  # hint for mypy
             pos_x, pos_y = position_from_input_connector_id(
                 input.id, transformation_revision.content.inputs
             )
@@ -784,7 +784,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             )
             if operator_id is None:
                 operator_id = transformation_revision.id
-            assert connector_id is not None # hint for mypy
+            assert connector_id is not None  # hint for mypy
             inputs.append(
                 WorkflowIoFrontendDto.from_constant(constant, operator_id, connector_id)
             )
@@ -796,7 +796,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             )
             if operator_id is None:
                 operator_id = transformation_revision.id
-            assert connector_id is not None # hint for mypy
+            assert connector_id is not None  # hint for mypy
             pos_x, pos_y = position_from_input_connector_id(
                 output.id, transformation_revision.content.outputs
             )

@@ -1,30 +1,17 @@
-from typing import List, Dict, Union, Optional
+from typing import List, Optional
 import logging
 
 from uuid import UUID, uuid4
 
-from posixpath import join as posix_urljoin
-import httpx
 from fastapi import APIRouter, Path, Query, status, HTTPException
 
-from pydantic import ValidationError
-
-from hetdesrun.utils import Type, State, get_auth_headers
-
-from hetdesrun.webservice.config import runtime_config
-from hetdesrun.service.runtime_router import runtime_service
+from hetdesrun.utils import Type, State
 
 from hetdesrun.backend.execution import (
     TrafoExecutionNotFoundError,
     TrafoExecutionRuntimeConnectionError,
     TrafoExecutionResultValidationError,
     execute_transformation_revision,
-)
-
-from hetdesrun.models.run import (
-    ConfigurationInput,
-    WorkflowExecutionInput,
-    WorkflowExecutionResult,
 )
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -35,7 +22,6 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
     select_multiple_transformation_revisions,
     update_or_create_single_transformation_revision,
-    get_all_nested_transformation_revisions,
 )
 
 from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError
@@ -43,8 +29,6 @@ from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegr
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 
-from hetdesrun.models.workflow import WorkflowNode
-from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.code import CodeBody
 from hetdesrun.component.code import update_code
 
@@ -77,32 +61,6 @@ def generate_code(codegen_input: CodeBody) -> str:
     )
 
     return code
-
-
-def contains_deprecated(transformation_id: UUID) -> bool:
-    logger.info(
-        "check if transformation revision %s contains deprecated operators",
-        str(transformation_id),
-    )
-    transformation_revision = read_single_transformation_revision(transformation_id)
-
-    if transformation_revision.type is not Type.WORKFLOW:
-        msg = f"transformation revision {id} is not a workflow!"
-        logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
-    assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
-
-    is_disabled = []
-    for operator in transformation_revision.content.operators:
-        logger.info(
-            "operator with transformation id %s has status %s",
-            str(operator.transformation_id),
-            operator.state,
-        )
-        is_disabled.append(operator.state == State.DISABLED)
-
-    return any(is_disabled)
 
 
 @transformation_router.post(
@@ -241,6 +199,99 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     return any(is_disabled)
 
 
+def check_modifiability(
+    existing_transformation_revision: TransformationRevision,
+    updated_transformation_revision: TransformationRevision,
+    allow_overwrite_released: bool = False,
+) -> None:
+    if existing_transformation_revision.type != updated_transformation_revision.type:
+        msg = (
+            f"The type ({updated_transformation_revision.type}) of the "
+            f"provided transformation revision does not\n"
+            f"match the type ({existing_transformation_revision.type}) "
+            f"of the stored transformation revision {id}!"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+
+    if existing_transformation_revision.state == State.DISABLED:
+        msg = f"cannot modify deprecated transformation revision {id}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+
+    if (
+        existing_transformation_revision.state == State.RELEASED
+        and updated_transformation_revision.state != State.DISABLED
+        and not allow_overwrite_released
+    ):
+        msg = f"cannot modify released transformation revision {id}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+
+
+def update_content(
+    existing_transformation_revision: Optional[TransformationRevision],
+    updated_transformation_revision: TransformationRevision,
+) -> TransformationRevision:
+    if updated_transformation_revision.type == Type.COMPONENT:
+        updated_transformation_revision.content = generate_code(
+            updated_transformation_revision.to_code_body()
+        )
+    elif existing_transformation_revision is not None:
+        assert isinstance(
+            existing_transformation_revision.content, WorkflowContent
+        )  # hint for mypy
+
+        existing_operator_ids: List[UUID] = []
+        for operator in existing_transformation_revision.content.operators:
+            existing_operator_ids.append(operator.id)
+
+        assert isinstance(
+            updated_transformation_revision.content, WorkflowContent
+        )  # hint for mypy
+
+        for operator in updated_transformation_revision.content.operators:
+            if (
+                operator.type == Type.WORKFLOW
+                and operator.id not in existing_operator_ids
+            ):
+                operator.state = (
+                    State.DISABLED
+                    if contains_deprecated(operator.transformation_id)
+                    else operator.state
+                )
+    return updated_transformation_revision
+
+
+def if_applicable_release_or_deprecate(
+    existing_transformation_revision: Optional[TransformationRevision],
+    updated_transformation_revision: TransformationRevision,
+) -> TransformationRevision:
+    if existing_transformation_revision is not None:
+        if (
+            existing_transformation_revision.state == State.DRAFT
+            and updated_transformation_revision.state == State.RELEASED
+        ):
+            logger.info(
+                "release transformation revision %s",
+                existing_transformation_revision.id,
+            )
+            updated_transformation_revision.release()
+        if (
+            existing_transformation_revision.state == State.RELEASED
+            and updated_transformation_revision.state == State.DISABLED
+        ):
+            logger.info(
+                "deprecate transformation revision %s",
+                existing_transformation_revision.id,
+            )
+            updated_transformation_revision = TransformationRevision(
+                **existing_transformation_revision.dict()
+            )
+            updated_transformation_revision.deprecate()
+    return updated_transformation_revision
+
+
 @transformation_router.put(
     "/{id}",
     response_model=TransformationRevision,
@@ -254,7 +305,6 @@ def contains_deprecated(transformation_id: UUID) -> bool:
         }
     },
 )
-# pylint: disable=too-many-branches,too-many-statements
 async def update_transformation_revision(
     # pylint: disable=W0622
     id: UUID,
@@ -284,7 +334,7 @@ async def update_transformation_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
-    existing_operator_ids: List[UUID] = []
+    existing_transformation_revision: Optional[TransformationRevision] = None
 
     try:
         existing_transformation_revision = read_single_transformation_revision(
@@ -292,76 +342,24 @@ async def update_transformation_revision(
         )
         logger.info("found transformation revision %s", id)
 
-        if (
-            existing_transformation_revision.type
-            != updated_transformation_revision.type
-        ):
-            msg = (
-                f"The type ({updated_transformation_revision.type}) of the "
-                f"provided transformation revision does not\n"
-                f"match the type ({existing_transformation_revision.type}) "
-                f"of the stored transformation revision {id}!"
-            )
-            logger.error(msg)
-            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
-        if existing_transformation_revision.state == State.DISABLED:
-            msg = f"cannot modify deprecated transformation revision {id}"
-            logger.error(msg)
-            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
-        if existing_transformation_revision.state == State.RELEASED:
-            if updated_transformation_revision.state == State.DISABLED:
-                logger.info("deprecate transformation revision %s", id)
-                # make sure no other changes are made
-                updated_transformation_revision = TransformationRevision(
-                    **existing_transformation_revision.dict()
-                )
-                updated_transformation_revision.deprecate()
-            elif not allow_overwrite_released:
-                msg = f"cannot modify released component {id}"
-                logger.error(msg)
-                raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
-        if updated_transformation_revision.type == Type.COMPONENT:
-            updated_transformation_revision.content = generate_code(
-                updated_transformation_revision.to_code_body()
-            )
-        else:
-            assert isinstance(
-                existing_transformation_revision.content, WorkflowContent
-            )  # hint for mypy
-
-            for operator in existing_transformation_revision.content.operators:
-                existing_operator_ids.append(operator.id)
-
-        if (
-            updated_transformation_revision.state == State.RELEASED
-            # avoid updating release date in case overwrite is allowed
-            and existing_transformation_revision.state != State.RELEASED
-        ):
-            logger.info("release transformation revision %s", id)
-            updated_transformation_revision.release()
+        check_modifiability(
+            existing_transformation_revision,
+            updated_transformation_revision,
+            allow_overwrite_released,
+        )
 
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the transformation revision
         pass
 
-    if updated_transformation_revision.type == Type.WORKFLOW:
-        assert isinstance(
-            updated_transformation_revision.content, WorkflowContent
-        )  # hint for mypy
-        for operator in updated_transformation_revision.content.operators:
-            if (
-                operator.type == Type.WORKFLOW
-                and operator.id not in existing_operator_ids
-            ):
-                operator.state = (
-                    State.DISABLED
-                    if contains_deprecated(operator.transformation_id)
-                    else operator.state
-                )
+    updated_transformation_revision = update_content(
+        existing_transformation_revision, updated_transformation_revision
+    )
+
+    updated_transformation_revision = if_applicable_release_or_deprecate(
+        existing_transformation_revision, updated_transformation_revision
+    )
 
     try:
         persisted_transformation_revision = (
