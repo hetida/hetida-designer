@@ -1,6 +1,6 @@
-import { test, expect } from '../fixtures/fixture';
+import { expect, test } from '../fixtures/fixture';
 
-test('Add workflow, open dialog', async ({ page, hetidaDesigner }) => {
+test('Open "add workflow" dialog', async ({ page, hetidaDesigner }) => {
   // Arrange
   // Act
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');

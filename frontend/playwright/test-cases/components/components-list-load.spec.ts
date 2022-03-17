@@ -1,6 +1,6 @@
-import { test, expect } from '../fixtures/fixture';
+import { expect, test } from '../fixtures/fixture';
 
-test('Load components list', async ({ page, hetidaDesigner }) => {
+test('Load component list', async ({ page, hetidaDesigner }) => {
   // Arrange
   // Act
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');

@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/fixture';
+import { expect, test } from '../fixtures/fixture';
 
 test('Category in workflows expands on click', async ({
   page,
@@ -12,10 +12,10 @@ test('Category in workflows expands on click', async ({
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
   // Assert
-  const visibleExpansionPanelContent = page
+  const expansionPanelContent = page
     .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
     .locator('.mat-expansion-panel-content');
-  await expect(visibleExpansionPanelContent).toBeVisible();
+  await expect(expansionPanelContent).toBeVisible();
 
   await hetidaDesigner.clearTest();
 });

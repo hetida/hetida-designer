@@ -1,6 +1,6 @@
-import { test, expect } from '../fixtures/fixture';
+import { expect, test } from '../fixtures/fixture';
 
-test('Open components on double-click', async ({ page, hetidaDesigner }) => {
+test('Open component on double-click', async ({ page, hetidaDesigner }) => {
   // Arrange
   const categoryName = 'Arithmetic';
   const componentName = 'Pi';

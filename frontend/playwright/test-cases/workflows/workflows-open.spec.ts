@@ -1,6 +1,6 @@
-import { test, expect } from '../fixtures/fixture';
+import { expect, test } from '../fixtures/fixture';
 
-test('Open workflows on double-click', async ({ page, hetidaDesigner }) => {
+test('Open workflow on double-click', async ({ page, hetidaDesigner }) => {
   // Arrange
   const categoryName = 'Examples';
   const workflowName = 'Volatility Detection Example';

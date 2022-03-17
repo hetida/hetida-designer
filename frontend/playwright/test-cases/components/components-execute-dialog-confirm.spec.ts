@@ -1,6 +1,6 @@
-import { test, expect } from '../fixtures/fixture';
+import { expect, test } from '../fixtures/fixture';
 
-test('Execute components, confirm dialog', async ({ page, hetidaDesigner }) => {
+test('Confirm "execute component" dialog', async ({ page, hetidaDesigner }) => {
   // Arrange
   const categoryName = 'Arithmetic';
   const componentName = 'Pi';
@@ -13,13 +13,13 @@ test('Execute components, confirm dialog', async ({ page, hetidaDesigner }) => {
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector('mat-dialog-container');
 
-  await hetidaDesigner.clickAnyBtnInDialog('Execute');
+  await hetidaDesigner.clickButton('Execute');
   await page.waitForSelector('hd-protocol-viewer');
 
   // Assert
-  const visibleProtocolViewer = page.locator('hd-protocol-viewer');
-  await expect(visibleProtocolViewer).toBeVisible();
-  await expect(visibleProtocolViewer).not.toBeEmpty();
+  const protocolViewer = page.locator('hd-protocol-viewer');
+  await expect(protocolViewer).toBeVisible();
+  await expect(protocolViewer).not.toBeEmpty();
 
   await hetidaDesigner.clearTest();
 });

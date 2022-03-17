@@ -1,4 +1,4 @@
-import { Page, BrowserContext } from '@playwright/test';
+import { BrowserContext, Page } from '@playwright/test';
 
 export class HetidaDesigner {
   private readonly page: Page;
@@ -9,14 +9,11 @@ export class HetidaDesigner {
     this.browserContext = page.context();
   }
 
-  // Run after every test
+  // run after every test
   public async clearTest(): Promise<void> {
     await this.browserContext.clearCookies();
-    await this.page.reload();
   }
 
-  // Navigation
-  // Tab bar
   public async clickTabInNavigation(tabPosition: number): Promise<void> {
     if (tabPosition < 0) {
       throw new Error(
@@ -29,36 +26,30 @@ export class HetidaDesigner {
 
   // Left navigation
   public async clickWorkflowsComponentsInNavigation(
-    btnText: string
+    buttonText: string
   ): Promise<void> {
-    if (btnText === '') {
-      throw new Error(
-        `ERROR: Cannot locate empty text in button, used button: ${btnText}`
-      );
+    if (buttonText === '') {
+      throw new Error(`ERROR: Button text must not be empty`);
     }
 
-    await this.page.locator(`button:has-text("${btnText}")`).click();
+    await this.page.locator(`button:has-text("${buttonText}")`).click();
     await this.page.waitForSelector('hd-navigation-category');
   }
 
   public async clickAddWorkflowComponentInNavigation(
-    btnText: string
+    buttonText: string
   ): Promise<void> {
-    if (btnText === '') {
-      throw new Error(
-        `ERROR: Cannot locate empty text in button, used button: ${btnText}`
-      );
+    if (buttonText === '') {
+      throw new Error(`ERROR: Button text must not be empty`);
     }
 
-    await this.page.locator(`.add-button:has-text("${btnText}")`).click();
+    await this.page.locator(`.add-button:has-text("${buttonText}")`).click();
     await this.page.waitForSelector('mat-dialog-container');
   }
 
   public async clickCategoryInNavigation(categoryName: string): Promise<void> {
     if (categoryName === '') {
-      throw new Error(
-        `ERROR: Cannot locate empty category name in "expansion panel", used category: ${categoryName}`
-      );
+      throw new Error(`ERROR: Category name must not be empty`);
     }
 
     await this.page.click(
@@ -71,9 +62,7 @@ export class HetidaDesigner {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      throw new Error(
-        `ERROR: Cannot locate item in category, if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
-      );
+      throw new Error(`ERROR: Category name and item name must not be empty`);
     }
 
     await this.page
@@ -87,9 +76,7 @@ export class HetidaDesigner {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      throw new Error(
-        `ERROR: Cannot locate item in category, if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
-      );
+      throw new Error(`ERROR: Category name and item name must not be empty`);
     }
 
     await this.page
@@ -103,9 +90,7 @@ export class HetidaDesigner {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      throw new Error(
-        `ERROR: Cannot locate item in category, if one or both names are empty, used item: ${itemName} in category: ${categoryName}`
-      );
+      throw new Error(`ERROR: Category name and item name must not be empty`);
     }
 
     await this.page
@@ -114,23 +99,19 @@ export class HetidaDesigner {
       .click({ button: 'right' });
   }
 
-  public async clickOnContextMenu(itemMenu: string): Promise<void> {
-    if (itemMenu === '') {
-      throw new Error(
-        `ERROR: Cannot locate empty item in context-menu, used item: ${itemMenu}`
-      );
+  public async clickOnContextMenu(menuItem: string): Promise<void> {
+    if (menuItem === '') {
+      throw new Error(`ERROR: Menu item must not be empty`);
     }
 
     await this.page
-      .locator(`.mat-menu-content >> button:has-text("${itemMenu}")`)
+      .locator(`.mat-menu-content >> button:has-text("${menuItem}")`)
       .click();
   }
 
   public async typeInSearchTerm(searchTerm: string): Promise<void> {
     if (searchTerm === '') {
-      throw new Error(
-        `ERROR: Cannot type in empty search term, used search term: ${searchTerm}`
-      );
+      throw new Error(`ERROR: Search term must not be empty`);
     }
 
     await this.page
@@ -138,12 +119,9 @@ export class HetidaDesigner {
       .type(searchTerm);
   }
 
-  // Open workflows or components, toolbar
   public async clickIconInToolbar(iconTitle: string): Promise<void> {
     if (iconTitle === '') {
-      throw new Error(
-        `ERROR: Cannot locate empty icon title, used icon title: ${iconTitle}`
-      );
+      throw new Error(`ERROR: Icon title must not be empty`);
     }
 
     await this.page
@@ -152,25 +130,17 @@ export class HetidaDesigner {
       .click();
   }
 
-  // Workflows or components-modal-dialog for add, edit, execute etc. functions
-  public async clickAnyBtnInDialog(btnText: string): Promise<void> {
-    if (btnText === '') {
-      throw new Error(
-        `ERROR: Cannot locate empty text in button, used button: ${btnText}`
-      );
+  public async clickButton(buttonText: string): Promise<void> {
+    if (buttonText === '') {
+      throw new Error(`ERROR: Button text must not be empty`);
     }
 
-    await this.page.locator(`button:has-text("${btnText}")`).click();
+    await this.page.locator(`button:has-text("${buttonText}")`).click();
   }
 
-  public async typeInAnyInputInDialog(
-    inputId: string,
-    inputText: string
-  ): Promise<void> {
+  public async typeInInput(inputId: string, inputText: string): Promise<void> {
     if (inputId === '' || inputText === '') {
-      throw new Error(
-        `ERROR: Cannot locate input field or type in text, if input id or input text is empty, used input text: ${inputText} with input id: ${inputId}`
-      );
+      throw new Error(`ERROR: Input id or text must not be empty`);
     }
 
     // Select default input text and overwrite it
@@ -178,8 +148,9 @@ export class HetidaDesigner {
     await this.page.press(`#${inputId}`, 'Control+a');
     await this.page.locator(`#${inputId}`).type(inputText);
 
+    // workaround for autocomplete in create component / workflow dialog
     if (inputId === 'category') {
-      // Tab out of input field to close suggested options
+      // tab out of input field to close suggested options
       await this.page.press(`#${inputId}`, 'Tab');
     }
   }

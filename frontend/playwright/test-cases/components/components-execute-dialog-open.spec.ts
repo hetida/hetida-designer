@@ -1,6 +1,6 @@
-import { test, expect } from '../fixtures/fixture';
+import { expect, test } from '../fixtures/fixture';
 
-test('Execute components, open dialog', async ({ page, hetidaDesigner }) => {
+test('Open "execute component" dialog', async ({ page, hetidaDesigner }) => {
   // Arrange
   const categoryName = 'Arithmetic';
   const componentName = 'Pi';
