@@ -34,6 +34,10 @@ from hetdesrun.backend.service.wiring_router import wiring_router
 from hetdesrun.backend.service.documentation_router import documentation_router
 
 
+if runtime_config.hd_kafka_consumer_enabled:
+    from hetdesrun.backend.kafka.consumer import get_kafka_worker_context
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -123,3 +127,21 @@ if runtime_config.is_backend_service:
     app.include_router(workflow_router, prefix="/api")
     app.include_router(wiring_router, prefix="/api")
     app.include_router(transformation_router, prefix="/api")
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    logger.info("Initializing application ...")
+    if runtime_config.hd_kafka_consumer_enabled and runtime_config.is_backend_service:
+        logger.info("Initializing Kafka consumer...")
+        kakfa_worker_context = get_kafka_worker_context()
+        await kakfa_worker_context.start()
+
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    logger.info("Shutting down application...")
+    if runtime_config.hd_kafka_consumer_enabled and runtime_config.is_backend_service:
+        logger.info("Shutting down Kafka consumer...")
+        kakfa_worker_context = get_kafka_worker_context()
+        await kakfa_worker_context.stop()

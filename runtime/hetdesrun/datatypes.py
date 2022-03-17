@@ -218,7 +218,9 @@ class AdvancedTypesOutputSerializationConfig(BaseConfig):
         PydanticPandasDataFrame: lambda v: v.to_dict(),
         np.ndarray: lambda v: v.tolist(),
         datetime.datetime: lambda v: v.isoformat(),
-        UUID: lambda v: v.hex,
+        UUID: lambda v: str(  # pylint: disable=unnecessary-lambda
+            v
+        ),  # alternatively: v.hex
         Figure: lambda v: json.loads(
             json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)
         ),

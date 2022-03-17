@@ -56,5 +56,6 @@ class ExecutionResponseFrontendDto(BaseModel):
     response: Optional[str]
     result: str
     traceback: Optional[str]
+    job_id: UUID
 
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types

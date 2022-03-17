@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
-from hetdesrun.backend.service.transformation_router import nested_nodes
+from hetdesrun.backend.execution import nested_nodes
 
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.workflow import WorkflowContent
