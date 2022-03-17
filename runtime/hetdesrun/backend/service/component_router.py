@@ -414,7 +414,7 @@ async def bind_wiring_to_component_revision(
     # pylint: disable=W0622
     id: UUID,
     wiring_dto: WiringFrontendDto,
-) -> WiringFrontendDto:
+) -> ComponentRevisionFrontendDto:
     """Store or update the test wiring of a transformation revision of type component.
 
     This endpoint is deprecated and will be removed soon,

@@ -90,6 +90,7 @@ def get_name_for_constant_input(
         if operator.id == operator_id:
             for connector in operator.inputs:
                 if connector.id == connector_id:
+                    assert isinstance(connector.name, str)  # hint for mypy
                     name = connector.name
     return name
 
@@ -299,7 +300,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         cls, operators: List[WorkflowOperatorFrontendDto]
     ) -> List[WorkflowOperatorFrontendDto]:
 
-        operator_groups: dict[UUID, List[WorkflowOperatorFrontendDto]] = {}
+        operator_groups: dict[str, List[WorkflowOperatorFrontendDto]] = {}
 
         for operator in operators:
             operator_name_seed = re.sub(r" \([0-9]+\)$", "", operator.name)
@@ -760,6 +761,51 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             transformation_revision.content, WorkflowContent
         )  # hint for mypy
 
+        inputs: List[WorkflowIoFrontendDto] = []
+        # pylint: disable=W0622
+        for input in transformation_revision.io_interface.inputs:
+            operator_id, connector_id = opposite_link_end_by_connector_id(
+                input.id, transformation_revision.content.links
+            )
+            if operator_id is None:
+                operator_id = transformation_revision.id
+            assert connector_id is not None # hint for mypy
+            pos_x, pos_y = position_from_input_connector_id(
+                input.id, transformation_revision.content.inputs
+            )
+            inputs.append(
+                WorkflowIoFrontendDto.from_io(
+                    input, operator_id, connector_id, pos_x, pos_y
+                )
+            )
+        for constant in transformation_revision.content.constants:
+            operator_id, connector_id = opposite_link_end_by_connector_id(
+                constant.id, transformation_revision.content.links
+            )
+            if operator_id is None:
+                operator_id = transformation_revision.id
+            assert connector_id is not None # hint for mypy
+            inputs.append(
+                WorkflowIoFrontendDto.from_constant(constant, operator_id, connector_id)
+            )
+
+        outputs: List[WorkflowIoFrontendDto] = []
+        for output in transformation_revision.io_interface.outputs:
+            operator_id, connector_id = opposite_link_end_by_connector_id(
+                output.id, transformation_revision.content.links
+            )
+            if operator_id is None:
+                operator_id = transformation_revision.id
+            assert connector_id is not None # hint for mypy
+            pos_x, pos_y = position_from_input_connector_id(
+                output.id, transformation_revision.content.outputs
+            )
+            outputs.append(
+                WorkflowIoFrontendDto.from_io(
+                    output, operator_id, connector_id, pos_x, pos_y
+                )
+            )
+
         return WorkflowRevisionFrontendDto(
             id=transformation_revision.id,
             groupId=transformation_revision.revision_group_id,
@@ -773,39 +819,8 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                 WorkflowOperatorFrontendDto.from_operator(operator)
                 for operator in transformation_revision.content.operators
             ],
-            inputs=[
-                WorkflowIoFrontendDto.from_io(
-                    input,
-                    *opposite_link_end_by_connector_id(
-                        input.id, transformation_revision.content.links
-                    ),
-                    *position_from_input_connector_id(
-                        input.id, transformation_revision.content.inputs
-                    ),
-                )
-                for input in transformation_revision.io_interface.inputs
-            ]
-            + [
-                WorkflowIoFrontendDto.from_constant(
-                    constant,
-                    *opposite_link_end_by_connector_id(
-                        constant.id, transformation_revision.content.links
-                    ),
-                )
-                for constant in transformation_revision.content.constants
-            ],
-            outputs=[
-                WorkflowIoFrontendDto.from_io(
-                    output,
-                    *opposite_link_end_by_connector_id(
-                        output.id, transformation_revision.content.links
-                    ),
-                    *position_from_output_connector_id(
-                        output.id, transformation_revision.content.outputs
-                    ),
-                )
-                for output in transformation_revision.io_interface.outputs
-            ],
+            inputs=inputs,
+            outputs=outputs,
             links=[
                 WorkflowLinkFrontendDto.from_link(link, transformation_revision.id)
                 for link in transformation_revision.content.links

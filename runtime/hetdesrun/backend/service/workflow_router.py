@@ -235,6 +235,7 @@ async def update_workflow_revision(
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     updated_transformation_revision = updated_workflow_dto.to_transformation_revision()
+    logger.info(updated_transformation_revision.json())
 
     existing_operator_ids: List[UUID] = []
 
@@ -274,6 +275,9 @@ async def update_workflow_revision(
         # with an id and either create or update the workflow revision
         pass
 
+    assert isinstance(
+        updated_transformation_revision.content, WorkflowContent
+    )  # hint for mypy
     for operator in updated_transformation_revision.content.operators:
         if operator.type == Type.WORKFLOW and operator.id not in existing_operator_ids:
             operator.state = (
@@ -289,6 +293,7 @@ async def update_workflow_revision(
             )
         )
         logger.info("updated workflow %s", id)
+        logger.info(persisted_transformation_revision.json())
     except DBIntegrityError as e:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
@@ -299,7 +304,7 @@ async def update_workflow_revision(
     )
     logger.debug(persisted_workflow_dto.json())
 
-    return persisted_workflow_dto.dict(exclude_none=True, by_alias=True)
+    return persisted_workflow_dto
 
 
 @workflow_router.delete(
@@ -471,7 +476,7 @@ async def bind_wiring_to_workflow_revision(
     # pylint: disable=W0622
     id: UUID,
     wiring_dto: WiringFrontendDto,
-) -> WiringFrontendDto:
+) -> WorkflowRevisionFrontendDto:
     """Store or update the test wiring of a transformation revision of type workflow.
 
     This endpoint is deprecated and will be removed soon,
