@@ -48,8 +48,8 @@ In order to add an output for an intermediate variable, which is passed from an 
 These components are in the category "Connectors".
 The output of the "Pass through" operator can be used, to set a new workflow output.
 
-<img src="./faq/workflow_without_debugging.png" height="230" width=1000>
-<img src="./faq/workflow_debugging.png" height="230" width=1000>
+<img src="./faq/workflow_without_debugging.png" height="250" width=1090>
+<img src="./faq/workflow_debugging.png" height="250" width=1090>
 
 ## <a name="data-type-parsing"></a> Specify data type to enable correct parsing
 
