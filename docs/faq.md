@@ -17,8 +17,26 @@ To understand why and how an error occured it is often necessary to get insights
 The only way to achieve this in components is to produce an error message that contains the desired information.
 You can raise a ValueError and pass the the variable converted to a string as error message to the ValueError object.
 
-![component_debugging](./faq/component_debugging.png)
-![component_debugging_value_error](./faq/component_debugging_value_error.png)
+```
+...
+vols = diffs.abs().rolling(freq).sum() - diffs.rolling(freq).sum().abs()
+vols.name = "volatilities"
+
+raise ValueError(str(vols))
+...
+```
+
+The first lines of the resulting error message will then look like:
+
+```
+{
+	"error": "Exception during Component execution of component instance Simple Volatility Score (operator hierarchical id: :3ca9b6cc-593f-4780-afcf-a44676494be0):
+2020-01-01 01:15:27+00:00     NaN
+2020-01-03 08:20:03+00:00     0.0
+2020-01-03 08:20:04+00:00    14.4
+Name: volatilities, dtype: float64",
+...
+```
 
 ## <a name="debugging-workflows"></a> Debugging workflow revisions
 
@@ -30,17 +48,23 @@ In order to add an output for an intermediate variable, which is passed from an 
 These components are in the category "Connectors".
 The output of the "Pass through" operator can be used, to set a new workflow output.
 
-
-![workflow_without_debugging](./faq/workflow_without_debugging.png)
-![pass_through](./faq/pass_through.png)
-![workflow_debugging](./faq/workflow_debugging.png)
+<img src="./faq/workflow_without_debugging.png" height="300">
+<img src="./faq/workflow_debugging.png" height="300">
 
 ## <a name="data-type-parsing"></a> Specify data type to enable correct parsing
 
 The data wired to a workflow is parsed and converted to the stated data type before execution.
 In case of a time series provided as a json, the data type ANY will result in a dictionary instead of a pandas series object.
+This will cause an error message which starts e.g. like
+
+```
+{
+	"error": "Exception during Component execution of component instance Add (operator hierarchical id: :1e969104-6ef1-4c45-a9d9-a9e0d5c9fceb):
+unsupported operand type(s) for +: 'dict' and 'dict'",
+...
+```
+
 This can be avoided by using the "Pass through (series)" component, so that the input data type is changed.
 
-![parsing_any](./faq/parsing_any.png)
-![parsing_error](./faq/parsing_error.png)
-![parsing_series](./faq/parsing_series.png)
+<img src="./faq/parsing_any.png" height="500">
+<img src="./faq/parsing_series.png" height="500">
