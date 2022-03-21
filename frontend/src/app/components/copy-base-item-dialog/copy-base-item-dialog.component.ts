@@ -10,6 +10,7 @@ import { IAppState } from 'src/app/store/app.state';
 import { selectAbstractBaseItems } from 'src/app/store/base-item/base-item.selectors';
 import { Utils } from 'src/app/utils/utils';
 import { UniqueRevisionTagValidator } from 'src/app/validation/unique-revision-tag-validator';
+import { NoWhitespaceValidator } from 'src/app/validation/no-whitespace-validator';
 
 @Component({
   selector: 'hd-copy-base-item-dialog',
@@ -112,14 +113,14 @@ export class CopyBaseItemDialogComponent implements OnInit {
               value: this.data.abstractBaseItem.name,
               disabled: this.data.disabledState.name
             },
-            [Validators.required, Validators.maxLength(60)]
+            [Validators.required, Validators.maxLength(60), NoWhitespaceValidator()]
           ),
           category: new FormControl(
             {
               value: this.data.abstractBaseItem.category,
               disabled: this.data.disabledState.category
             },
-            [Validators.required, Validators.maxLength(60)]
+            [Validators.required, Validators.maxLength(60), NoWhitespaceValidator()]
           ),
           description: new FormControl({
             value: this.data.abstractBaseItem.description,
@@ -133,6 +134,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(20),
+              NoWhitespaceValidator(),
               UniqueRevisionTagValidator(abstractBaseItems)
             ]
           )
