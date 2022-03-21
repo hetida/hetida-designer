@@ -24,12 +24,16 @@ class Operator(BaseModel):
 
     id: UUID = Field(default_factory=uuid4)
     revision_group_id: UUID = Field(default_factory=uuid4)
-    name: NonEmptyStr
+    name: NonEmptyStr = Field(..., max_length=60)
     description: str
-    category: str
+    category: NonEmptyStr = Field(
+        "Other",
+        description='Category in which this is classified, i.e. the "drawer" in the User Interface',
+        max_length=60,
+    )
     type: Type
     state: State
-    version_tag: NonEmptyStr
+    version_tag: NonEmptyStr = Field(..., max_length=20)
     transformation_id: UUID
     inputs: List[Connector]
     outputs: List[Connector]

@@ -53,13 +53,14 @@ class TransformationRevision(BaseModel):
 
     id: UUID
     revision_group_id: UUID
-    name: NonEmptyStr
+    name: NonEmptyStr = Field(..., max_length=60)
     description: str = ""
     category: NonEmptyStr = Field(
         "Other",
         description='Category in which this is classified, i.e. the "drawer" in the User Interface',
+        max_length=60,
     )
-    version_tag: NonEmptyStr
+    version_tag: NonEmptyStr = Field(..., max_length=20)
     released_timestamp: Optional[datetime.datetime] = Field(
         None,
         description="If the revision is RELEASED then this should be release timestamp",
