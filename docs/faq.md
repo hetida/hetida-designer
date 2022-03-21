@@ -66,5 +66,5 @@ unsupported operand type(s) for +: 'dict' and 'dict'",
 
 This can be avoided by using the "Pass through (series)" component, so that the input data type is changed.
 
-<img src="./faq/parsing_any.png" height="140" width=425>
+<img src="./faq/parsing_any.png" height="160" width=485>
 <img src="./faq/parsing_series.png" height="140" width=730>
