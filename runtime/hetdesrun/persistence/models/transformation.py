@@ -4,12 +4,7 @@ from uuid import UUID, uuid4
 import datetime
 
 # pylint: disable=no-name-in-module
-from pydantic import (
-    BaseModel,
-    Field,
-    validator,
-    ValidationError,
-)
+from pydantic import BaseModel, Field, validator, ValidationError, constr
 
 from hetdesrun.utils import State, Type
 from hetdesrun.models.code import CodeBody, CodeModule
@@ -22,7 +17,7 @@ from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 
 from hetdesrun.persistence.models.io import IOInterface, Position, Connector
 from hetdesrun.persistence.models.link import Vertex, Link
-from hetdesrun.persistence.models.operator import Operator, NonEmptyStr
+from hetdesrun.persistence.models.operator import Operator
 from hetdesrun.persistence.models.workflow import WorkflowContent
 
 
@@ -53,14 +48,13 @@ class TransformationRevision(BaseModel):
 
     id: UUID
     revision_group_id: UUID
-    name: NonEmptyStr = Field(..., max_length=60)
+    name: constr(min_length=1, max_length=60)
     description: str = ""
-    category: NonEmptyStr = Field(
+    category: constr(min_length=1, max_length=60) = Field(
         "Other",
         description='Category in which this is classified, i.e. the "drawer" in the User Interface',
-        max_length=60,
     )
-    version_tag: NonEmptyStr = Field(..., max_length=20)
+    version_tag: constr(min_length=1, max_length=20)
     released_timestamp: Optional[datetime.datetime] = Field(
         None,
         description="If the revision is RELEASED then this should be release timestamp",
@@ -117,7 +111,7 @@ class TransformationRevision(BaseModel):
 
     # pylint: disable=no-self-argument,no-self-use
     @validator("version_tag")
-    def version_tag_not_latest(cls, v: NonEmptyStr) -> NonEmptyStr:
+    def version_tag_not_latest(cls, v: str) -> str:
         if v.lower() == "latest":
             raise ValueError('version_tag is not allowed to be "latest"')
         return v
