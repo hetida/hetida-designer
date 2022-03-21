@@ -17,8 +17,8 @@ To understand why and how an error occured it is often necessary to get insights
 The only way to achieve this in components is to produce an error message that contains the desired information.
 You can raise a ValueError and pass the the variable converted to a string as error message to the ValueError object.
 
-![component_debugging](./docs/faq/component_debugging.png)
-![component_debugging_value_error](./docs/faq/component_debugging_value_error.png)
+![component_debugging](./faq/component_debugging.png)
+![component_debugging_value_error](./faq/component_debugging_value_error.png)
 
 ## <a name="debugging-workflows"></a> Debugging workflow revisions
 
@@ -31,9 +31,9 @@ These components are in the category "Connectors".
 The output of the "Pass through" operator can be used, to set a new workflow output.
 
 
-![workflow_without_debugging](./docs/faq/workflow_without_debugging.png)
-![pass_through](./docs/faq/pass_through.png)
-![workflow_debugging](./docs/faq/workflow_debugging.png)
+![workflow_without_debugging](./faq/workflow_without_debugging.png)
+![pass_through](./faq/pass_through.png)
+![workflow_debugging](./faq/workflow_debugging.png)
 
 ## <a name="data-type-parsing"></a> Specify data type to enable correct parsing
 
@@ -41,6 +41,6 @@ The data wired to a workflow is parsed and converted to the stated data type bef
 In case of a time series provided as a json, the data type ANY will result in a dictionary instead of a pandas series object.
 This can be avoided by using the "Pass through (series)" component, so that the input data type is changed.
 
-![parsing_any](./docs/faq/parsing_any.png)
-![parsing_error](./docs/faq/parsing_error.png)
-![parsing_series](./docs/faq/parsing_series.png)
+![parsing_any](./faq/parsing_any.png)
+![parsing_error](./faq/parsing_error.png)
+![parsing_series](./faq/parsing_series.png)
