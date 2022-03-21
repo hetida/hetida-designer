@@ -230,6 +230,7 @@ Dependencies: Node 12.18.x and npm 6.14.x (other versions are not tested).
 2. Run `npm install` to install application dependencies.
 3. Run `npm run start` to run the frontend on port 4200.
 
+The frontend subdirectory also contains end-to-end tests via playwright documented [here](./frontend/end2end_tests.md).
 #### Runtime and Backend
 
 > **Note**: The backend was rewritten in Python for version 0.7. It is now developed together with the runtime.
