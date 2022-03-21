@@ -26,7 +26,7 @@ raise ValueError(str(vols))
 ...
 ```
 
-The first lines of the resulting error message will then look like:
+The first lines of the resulting error message will then e.g. look like:
 
 ```
 {
@@ -48,8 +48,8 @@ In order to add an output for an intermediate variable, which is passed from an 
 These components are in the category "Connectors".
 The output of the "Pass through" operator can be used, to set a new workflow output.
 
-<img src="./faq/workflow_without_debugging.png" height="300">
-<img src="./faq/workflow_debugging.png" height="300">
+<img src="./faq/workflow_without_debugging.png" height="230" width=1000>
+<img src="./faq/workflow_debugging.png" height="230" width=1000>
 
 ## <a name="data-type-parsing"></a> Specify data type to enable correct parsing
 
@@ -66,5 +66,5 @@ unsupported operand type(s) for +: 'dict' and 'dict'",
 
 This can be avoided by using the "Pass through (series)" component, so that the input data type is changed.
 
-<img src="./faq/parsing_any.png" height="500">
-<img src="./faq/parsing_series.png" height="500">
+<img src="./faq/parsing_any.png" height="140" width=425>
+<img src="./faq/parsing_series.png" height="140" width=730>
