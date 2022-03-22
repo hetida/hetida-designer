@@ -49,13 +49,15 @@ class TransformationRevision(BaseModel):
 
     id: UUID
     revision_group_id: UUID
-    name: constr(min_length=1, max_length=60)
-    description: str = ""
-    category: constr(min_length=1, max_length=60) = Field(
+    name: constr(regex=r"^[\w -,.()=/]+$", min_length=1, max_length=60)
+    description: constr(regex=r"^[\w -,.()=/]*$") = ""
+    category: constr(regex=r"^[\w -,.()=/]+$", min_length=1, max_length=60) = Field(
         "Other",
         description='Category in which this is classified, i.e. the "drawer" in the User Interface',
     )
-    version_tag: constr(min_length=1, max_length=20)
+    version_tag: constr(
+        regex=r"^[\w -,.()=/]+$", min_length=1, max_length=20 
+    )
     released_timestamp: Optional[datetime.datetime] = Field(
         None,
         description="If the revision is RELEASED then this should be release timestamp",
@@ -110,38 +112,7 @@ class TransformationRevision(BaseModel):
         ),
     )
 
-    # pylint: disable=no-self-argument,no-self-use
-    @validator("name", "category", "description", "version tag", check_fields=False)
-    def input_validation(cls, v: str) -> str:
-        allowed_cats = ("Ll", "Lu", "Lo", "Nd")
-        allowed_chars = (
-            # "APOSTROPHE", # "'"
-            "SPACE",  # " "
-            "HYPHEN-MINUS",  # "-"
-            "LEFT PARENTHESIS",  # "("
-            "RIGHT PARENTHESIS",  # ")"
-            "LOW LINE",  # "_"
-            "SOLIDUS",  # "/"
-            "EQUALS SIGN",  # "="
-            "COMMA",  # ","
-            "FULL STOP",  # "."
-        )
-
-        for c in v:
-            # is it whitelisted by category?
-            cat = unicodedata.category(c)
-            if cat in allowed_cats:
-                continue
-            # is it whitelisted by character?
-            name = unicodedata.name(c)
-            if name in allowed_chars:
-                continue
-            # found a non-whitelisted character
-            msg = f"character {c} of string {v} is not contained in white list"
-            raise ValueError(msg)
-        # all characters were whitelisted
-        return v
-
+    # TODO: start regex with (?!^latest$) to replace this validator?
     # pylint: disable=no-self-argument,no-self-use
     @validator("version_tag")
     def version_tag_not_latest(cls, v: str) -> str:
