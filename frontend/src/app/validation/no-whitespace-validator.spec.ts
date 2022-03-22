@@ -14,25 +14,21 @@ describe('NoWhitespaceValidator', () => {
 
   it('NoWhitespaceValidator should return valid if no leading and trailing whitespace are found in given value', () => {
       const group1 = formBuilder.group({
-        value: 'draft'
+        value: ['draft', NoWhitespaceValidator()]
       });
       const group2 = formBuilder.group({
-        value: 'draft draft'
+        value: ['draft draft', NoWhitespaceValidator()]
       });
       const group3 = formBuilder.group({
-        value: ' draft'
+        value: [' draft', NoWhitespaceValidator()]
       });
       const group4 = formBuilder.group({
-        value: 'draft '
+        value: ['draft ', NoWhitespaceValidator()]
       });
       const group5 = formBuilder.group({
-        value: ' draft '
-      });
-      const formArray = formBuilder.array([group1, group2], {
-        validators: NoWhitespaceValidator()
+        value: [' draft ', NoWhitespaceValidator()]
       });
 
-      expect(formArray.valid).toBe(true);
       expect(group1.valid).toBe(true);
       expect(group2.valid).toBe(true);
       expect(group3.valid).toBe(false);
