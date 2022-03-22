@@ -43,7 +43,7 @@ export class ErrorVisualDirective implements OnInit {
             case 'noFloatValue':
               return 'Enter a float value';
             case 'noWhitespace':
-              return 'Leading and trailing whitespace are disallowed';
+              return 'Leading and trailing whitespaces are disallowed';
             default:
               return `Unknown error: ${error}`;
           }

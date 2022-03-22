@@ -125,7 +125,9 @@ export class CopyBaseItemDialogComponent implements OnInit {
           description: new FormControl({
             value: this.data.abstractBaseItem.description,
             disabled: this.data.disabledState.description
-          }),
+          },
+          [Validators.required, NoWhitespaceValidator()]
+          ),
           tag: new FormControl(
             {
               value: this.data.abstractBaseItem.tag,
@@ -134,7 +136,6 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(20),
-              NoWhitespaceValidator(),
               UniqueRevisionTagValidator(abstractBaseItems)
             ]
           )

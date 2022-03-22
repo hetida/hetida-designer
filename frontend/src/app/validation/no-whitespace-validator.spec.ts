@@ -12,7 +12,7 @@ describe('NoWhitespaceValidator', () => {
     formBuilder = TestBed.inject(FormBuilder);
   });
 
-  it('NoWhitespaceValidator should return valid if no leading and trailing whitespace are found in given value', () => {
+  it('NoWhitespaceValidator should return valid if no leading and trailing whitespaces are found in given value', () => {
       const group1 = formBuilder.group({
         value: ['draft', NoWhitespaceValidator()]
       });
