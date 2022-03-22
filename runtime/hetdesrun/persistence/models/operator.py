@@ -1,12 +1,29 @@
 from typing import List
 from uuid import UUID, uuid4
+import re
 
 # pylint: disable=no-name-in-module
-from pydantic import BaseModel, Field, constr, root_validator
+from pydantic import BaseModel, Field, ConstrainedStr, root_validator
 
 from hetdesrun.utils import State, Type
 
 from hetdesrun.persistence.models.io import Position, Connector
+
+
+class NonEmptyValidStr(ConstrainedStr):
+    min_length = 1
+    max_length = 60
+    regex = re.compile(r"^[\w -,.()=/]+$")
+
+
+class ShortNonEmptyValidStr(ConstrainedStr):
+    min_length = 1
+    max_length = 20
+    regex = re.compile(r"^[\w -,.()=/]+$")
+
+
+class ValidStr(ConstrainedStr):
+    regex = re.compile(r"^[\w -,.()=/]*$")
 
 
 class Operator(BaseModel):
@@ -20,15 +37,15 @@ class Operator(BaseModel):
 
     id: UUID = Field(default_factory=uuid4)
     revision_group_id: UUID = Field(default_factory=uuid4)
-    name: constr(min_length=1, max_length=60)
-    description: str
-    category: constr(min_length=1, max_length=60) = Field(
+    name: NonEmptyValidStr
+    description: ValidStr = ValidStr("")
+    category: NonEmptyValidStr = Field(
         "Other",
         description='Category in which this is classified, i.e. the "drawer" in the User Interface',
     )
     type: Type
     state: State
-    version_tag: constr(min_length=1, max_length=20)
+    version_tag: ShortNonEmptyValidStr
     transformation_id: UUID
     inputs: List[Connector]
     outputs: List[Connector]

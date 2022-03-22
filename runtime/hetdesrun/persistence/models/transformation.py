@@ -2,10 +2,9 @@ from typing import List, Union, Optional, cast
 from uuid import UUID, uuid4
 
 import datetime
-import unicodedata
 
 # pylint: disable=no-name-in-module
-from pydantic import BaseModel, Field, validator, ValidationError, constr
+from pydantic import BaseModel, Field, validator, ValidationError
 
 from hetdesrun.utils import State, Type
 from hetdesrun.models.code import CodeBody, CodeModule
@@ -18,7 +17,12 @@ from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 
 from hetdesrun.persistence.models.io import IOInterface, Position, Connector
 from hetdesrun.persistence.models.link import Vertex, Link
-from hetdesrun.persistence.models.operator import Operator
+from hetdesrun.persistence.models.operator import (
+    NonEmptyValidStr,
+    ShortNonEmptyValidStr,
+    ValidStr,
+    Operator,
+)
 from hetdesrun.persistence.models.workflow import WorkflowContent
 
 
@@ -49,15 +53,13 @@ class TransformationRevision(BaseModel):
 
     id: UUID
     revision_group_id: UUID
-    name: constr(regex=r"^[\w -,.()=/]+$", min_length=1, max_length=60)
-    description: constr(regex=r"^[\w -,.()=/]*$") = ""
-    category: constr(regex=r"^[\w -,.()=/]+$", min_length=1, max_length=60) = Field(
+    name: NonEmptyValidStr
+    description: ValidStr = ValidStr("")
+    category: NonEmptyValidStr = Field(
         "Other",
         description='Category in which this is classified, i.e. the "drawer" in the User Interface',
     )
-    version_tag: constr(
-        regex=r"^[\w -,.()=/]+$", min_length=1, max_length=20 
-    )
+    version_tag: ShortNonEmptyValidStr
     released_timestamp: Optional[datetime.datetime] = Field(
         None,
         description="If the revision is RELEASED then this should be release timestamp",

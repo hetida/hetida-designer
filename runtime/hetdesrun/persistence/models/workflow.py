@@ -13,7 +13,7 @@ from hetdesrun.models.workflow import WorkflowNode, ComponentNode
 
 from hetdesrun.persistence.models.io import Connector, Constant, Position
 from hetdesrun.persistence.models.link import Link
-from hetdesrun.persistence.models.operator import Operator
+from hetdesrun.persistence.models.operator import NonEmptyValidStr, Operator
 
 
 def get_link_start_connector_from_operator(
@@ -149,9 +149,9 @@ class WorkflowContent(BaseModel):
             if len(operator_group) > 1:
                 for index, operator in enumerate(operator_group):
                     if index == 0:
-                        operator.name = str(operator_name_seed)
+                        operator.name = NonEmptyValidStr(operator_name_seed)
                     else:
-                        operator.name = str(
+                        operator.name = NonEmptyValidStr(
                             operator_name_seed + " (" + str(index + 1) + ")"
                         )
 
