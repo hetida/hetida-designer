@@ -3,3 +3,4 @@ package-lock.json
 node_modules
 assets
 *.ico
+playwright/playwright.config.ts
