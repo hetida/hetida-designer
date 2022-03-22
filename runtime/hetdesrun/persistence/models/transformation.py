@@ -2,6 +2,7 @@ from typing import List, Union, Optional, cast
 from uuid import UUID, uuid4
 
 import datetime
+import unicodedata
 
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, validator, ValidationError, constr
@@ -108,6 +109,38 @@ class TransformationRevision(BaseModel):
             "the inputs and outputs of the io_interface"
         ),
     )
+
+    # pylint: disable=no-self-argument,no-self-use
+    @validator("name", "category", "description", "version tag", check_fields=False)
+    def input_validation(cls, v: str) -> str:
+        allowed_cats = ("Ll", "Lu", "Lo", "Nd")
+        allowed_chars = (
+            # "APOSTROPHE", # "'"
+            "SPACE",  # " "
+            "HYPHEN-MINUS",  # "-"
+            "LEFT PARENTHESIS",  # "("
+            "RIGHT PARENTHESIS",  # ")"
+            "LOW LINE",  # "_"
+            "SOLIDUS",  # "/"
+            "EQUALS SIGN",  # "="
+            "COMMA",  # ","
+            "FULL STOP",  # "."
+        )
+
+        for c in v:
+            # is it whitelisted by category?
+            cat = unicodedata.category(c)
+            if cat in allowed_cats:
+                continue
+            # is it whitelisted by character?
+            name = unicodedata.name(c)
+            if name in allowed_chars:
+                continue
+            # found a non-whitelisted character
+            msg = f"character {c} of string {v} is not contained in white list"
+            raise ValueError(msg)
+        # all characters were whitelisted
+        return v
 
     # pylint: disable=no-self-argument,no-self-use
     @validator("version_tag")
