@@ -233,6 +233,60 @@ class RuntimeConfig(BaseSettings):
         True, env="HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS"
     )
 
+    hd_kafka_consumer_enabled: bool = Field(
+        False,
+        description="Whether a Kafka consumer for executing workflows/components is enabled",
+        env="HETIDA_DESIGNER_KAFKA_ENABLED",
+    )
+
+    hd_kafka_consumer_topic: str = Field(
+        "hd-execution-topic",
+        description="The topic to which the execution consumer will listen",
+        env="HETIDA_DESIGNER_KAFKA_CONSUMER_TOPIC",
+    )
+
+    hd_kafka_consumer_options: dict = Field(
+        {"bootstrap_servers": "kafka:19092", "group_id": "hd_kafka_consumer_group"},
+        description=(
+            "Intialization parameters for the aiokafka consumer class."
+            " The most important ones set here are probably bootstrap_servers"
+            " and group_id."
+            " These options will be passed directly to the class init method."
+            " The environment variable expects this to be a mapping as json string."
+            " Note that some of the available options need different code to work"
+            " properly, so not all available options / combinations are viable"
+            " for the hetida designer consumer."
+        ),
+        example={
+            "bootstrap_servers": "kafka:19092",
+            "group_id": "hd_kafka_consumer_group",
+            "auto_commit_interval_ms": 1000,
+            "auto_offset_reset": "earliest",
+        },
+        env="HETIDA_DESIGNER_KAFKA_CONSUMER_OPTIONS",
+    )
+
+    hd_kafka_producer_options: dict = Field(
+        {"bootstrap_servers": "kafka:19092"},
+        description=(
+            "Intialization parameters for the aiokafka consumer class."
+            " The most important one set here is probably bootstrap_servers."
+            " These options will be passed directly to the class init method."
+            " The environment variable expects this to be a mapping as json string."
+            " Note that some of the available options need different code to work"
+            " properly, so not all available options / combinations are viable"
+            " for the hetida designer consumer."
+        ),
+        example={"bootstrap_servers": "kafka:19092"},
+        env="HETIDA_DESIGNER_KAFKA_PRODUCER_OPTIONS",
+    )
+
+    hd_kafka_response_topic: str = Field(
+        "hd-execution-response-topic",
+        description="The topic to which the execution consumer send execution results",
+        env="HETIDA_DESIGNER_KAFKA_RESPONSE_TOPIC",
+    )
+
     # pylint: disable=no-self-argument,no-self-use
     @validator("is_runtime_service")
     def must_be_at_least_backend_or_runtime(cls, v: bool, values: dict) -> bool:

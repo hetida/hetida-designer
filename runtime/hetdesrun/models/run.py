@@ -3,6 +3,7 @@
 
 from typing import List, Optional, Dict, Any
 from enum import Enum
+from uuid import UUID, uuid4
 from pydantic import (  # pylint: disable=no-name-in-module
     BaseModel,
     Field,
@@ -66,6 +67,8 @@ class WorkflowExecutionInput(BaseModel):
     workflow_wiring: WorkflowWiring = Field(
         ..., description=("Note that also workflow_wiring can provide inputs directly.")
     )
+
+    job_id: UUID = Field(default_factory=uuid4)
 
     # pylint: disable=no-self-argument,no-self-use
     @validator("components")
@@ -153,5 +156,5 @@ class WorkflowExecutionResult(BaseModel):
     )
     error: Optional[str] = Field(None, description="error string")
     traceback: Optional[str] = Field(None, description="traceback")
-
+    job_id: UUID
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types

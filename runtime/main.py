@@ -24,12 +24,12 @@ if __name__ == "__main__":
 
 from hetdesrun import configure_logging
 
-from hetdesrun.webservice.application import app
-from hetdesrun.webservice.config import runtime_config
-
-
 logger = logging.getLogger(__name__)
 configure_logging(logger)
+
+# must be after logging config:
+from hetdesrun.webservice.application import app
+from hetdesrun.webservice.config import runtime_config
 
 
 def detect_in_memory_db() -> bool:

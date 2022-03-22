@@ -70,7 +70,10 @@ tr_json_component_1 = {
         ],
     },
     "content": "code",
-    "test_wiring": {"input_wirings": [], "output_wirings": [],},
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+    },
 }
 tr_json_component_2 = {
     "id": str(get_uuid_from_seed("component 2")),
@@ -83,9 +86,15 @@ tr_json_component_2 = {
     "state": "RELEASED",
     "released_timestamp": "2019-12-01T12:00:00+00:00",
     "version_tag": "1.0.0",
-    "io_interface": {"inputs": [], "outputs": [],},
+    "io_interface": {
+        "inputs": [],
+        "outputs": [],
+    },
     "content": "code",
-    "test_wiring": {"input_wirings": [], "output_wirings": [],},
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+    },
 }
 tr_json_component_2_update = {
     "id": str(get_uuid_from_seed("component 2")),
@@ -98,9 +107,15 @@ tr_json_component_2_update = {
     "state": "RELEASED",
     "released_timestamp": "2019-12-01T12:00:00+00:00",
     "version_tag": "1.0.0",
-    "io_interface": {"inputs": [], "outputs": [],},
+    "io_interface": {
+        "inputs": [],
+        "outputs": [],
+    },
     "content": "code",
-    "test_wiring": {"input_wirings": [], "output_wirings": [],},
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+    },
 }
 tr_json_component_2_deprecate = {
     "id": str(get_uuid_from_seed("component 2")),
@@ -114,9 +129,15 @@ tr_json_component_2_deprecate = {
     "released_timestamp": "2019-12-01T12:00:00+00:00",
     "disabled_timestamp": "2023-08-03T12:00:00+00:00",
     "version_tag": "1.0.0",
-    "io_interface": {"inputs": [], "outputs": [],},
+    "io_interface": {
+        "inputs": [],
+        "outputs": [],
+    },
     "content": "code",
-    "test_wiring": {"input_wirings": [], "output_wirings": [],},
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+    },
 }
 tr_json_workflow_1 = {
     "id": str(get_uuid_from_seed("workflow 1")),
@@ -128,7 +149,10 @@ tr_json_workflow_1 = {
     "type": "WORKFLOW",
     "state": "DRAFT",
     "version_tag": "1.0.0",
-    "io_interface": {"inputs": [], "outputs": [],},
+    "io_interface": {
+        "inputs": [],
+        "outputs": [],
+    },
     "content": {
         "constants": [],
         "inputs": [],
@@ -136,7 +160,10 @@ tr_json_workflow_1 = {
         "operators": [],
         "links": [],
     },
-    "test_wiring": {"input_wirings": [], "output_wirings": [],},
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+    },
 }
 
 tr_json_workflow_2 = {
@@ -267,7 +294,10 @@ tr_json_workflow_2 = {
             },
         ],
         "output_wirings": [
-            {"workflow_output_name": "wf_output", "adapter_id": "direct_provisioning",},
+            {
+                "workflow_output_name": "wf_output",
+                "adapter_id": "direct_provisioning",
+            },
         ],
     },
 }
@@ -537,10 +567,12 @@ async def test_execute_for_transformation_revision(
 ):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
-        "hetdesrun.persistence.dbservice.nesting.Session", patched_session,
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
     ):
         with mock.patch(
-            "hetdesrun.persistence.dbservice.revision.Session", patched_session,
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
         ):
             tr_component_1 = TransformationRevision(**tr_json_component_1)
             tr_component_1.content = generate_code(tr_component_1.to_code_body())
@@ -556,22 +588,30 @@ async def test_execute_for_transformation_revision(
                     posix_urljoin(
                         "/api/transformations/",
                         str(get_uuid_from_seed("workflow 2")),
-                        "execute",
+                        "execute?job_id=1270547c-b224-461d-9387-e9d9d465bbe1",
                     ),
                     json=json.loads(tr_workflow_2.test_wiring.json()),
                 )
 
             assert response.status_code == 200
-            assert "output_types_by_output_name" in response.json()
+            resp_data = response.json()
+            assert "output_types_by_output_name" in resp_data
+            assert "job_id" in resp_data
+            assert UUID(resp_data["job_id"]) == UUID(
+                "1270547c-b224-461d-9387-e9d9d465bbe1"
+            )
+
 
 @pytest.mark.asyncio
 async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
-        "hetdesrun.persistence.dbservice.nesting.Session", patched_session,
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
     ):
         with mock.patch(
-            "hetdesrun.persistence.dbservice.revision.Session", patched_session,
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
         ):
             async with async_test_client as ac:
 
@@ -590,7 +630,7 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
                     "./transformations/components/visualization/single-timeseries-plot_100_8fba9b51-a0f1-6c6c-a6d4-e224103b819c.json",
                     "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json",
                     "./transformations/workflows/examples/univariate-linear-rul-regression-example_100_806df1b9-2fc8-4463-943f-3d258c569663.json",
-                    "./transformations/workflows/examples/linear-rul-from-last-positive-step_100_3d504361-e351-4d52-8734-391aa47e8f24.json"
+                    "./transformations/workflows/examples/linear-rul-from-last-positive-step_100_3d504361-e351-4d52-8734-391aa47e8f24.json",
                 ]
 
                 for file in json_files:
@@ -598,7 +638,9 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
 
                     response = await ac.put(
                         posix_urljoin(
-                            runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
+                            runtime_config.hd_backend_api_url,
+                            "transformations",
+                            tr_json["id"],
                         )
                         + "?allow_overwrite_released=True",
                         json=tr_json,
@@ -625,16 +667,25 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
                 assert response.status_code == 200
                 assert "output_types_by_output_name" in response.json()
                 assert response.json()["result"] == "ok"
-                assert abs(response.json()["output_results_by_output_name"]["intercept"] - 2.88) < 0.01
+                assert (
+                    abs(
+                        response.json()["output_results_by_output_name"]["intercept"]
+                        - 2.88
+                    )
+                    < 0.01
+                )
+
 
 @pytest.mark.asyncio
 async def test_import_transformation(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
-        "hetdesrun.persistence.dbservice.nesting.Session", patched_session,
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
     ):
         with mock.patch(
-            "hetdesrun.persistence.dbservice.revision.Session", patched_session,
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
         ):
 
             example_workflow_tr_json = load_json(

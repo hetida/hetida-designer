@@ -34,6 +34,7 @@ from hetdesrun.models.run import (
 
 from hetdesrun.exportimport.importing import load_json
 
+
 async def run_workflow_with_client(workflow_json, open_async_test_client):
     response = await open_async_test_client.post("engine/runtime", json=workflow_json)
     return response.status_code, response.json()
@@ -174,7 +175,7 @@ async def test_null_list_values_pass_any_pass_through(async_test_client):
         exec_result = await run_single_component(
             "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
             {"input": [1.2, None]},
-            client
+            client,
         )
         assert exec_result.output_results_by_output_name["output"] == [1.2, None]
 
@@ -222,7 +223,6 @@ async def test_nested_wf_execution(async_test_client):
 
         with open(os.path.join("tests", "data", "nested_wf_execution_input.json")) as f:
             loaded_workflow_exe_input = json.load(f)
-
         response_status_code, response_json = await run_workflow_with_client(
             loaded_workflow_exe_input, client
         )

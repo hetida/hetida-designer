@@ -1,10 +1,11 @@
 import logging
+from typing import Optional
 
 from uuid import UUID, uuid4
 import json
 
 import httpx
-from fastapi import APIRouter, Path, status, HTTPException
+from fastapi import APIRouter, Path, Query, status, HTTPException
 
 from posixpath import join as posix_urljoin
 
@@ -21,7 +22,8 @@ from hetdesrun.models.run import (
     WorkflowExecutionResult,
 )
 
-from hetdesrun.backend.service.transformation_router import generate_code, nested_nodes
+from hetdesrun.backend.service.transformation_router import generate_code
+from hetdesrun.backend.execution import nested_nodes
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
@@ -304,12 +306,15 @@ async def execute_component_revision(
     id: UUID,
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
+    job_id: Optional[UUID] = None,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision of type component.
 
     This endpoint is deprecated and will be removed soon,
     use POST /api/transformations/{id}/execute instead.
     """
+    if job_id is None:
+        job_id = uuid4()
 
     try:
         tr_component = read_single_transformation_revision(id)
@@ -338,6 +343,7 @@ async def execute_component_revision(
             run_pure_plot_operators=run_pure_plot_operators,
         ),
         workflow_wiring=wiring_dto.to_workflow_wiring(),
+        job_id=job_id,
     )
 
     output_types = {
@@ -385,6 +391,7 @@ async def execute_component_revision(
         output_types_by_output_name=output_types,
         result=execution_result.result,
         traceback=execution_result.traceback,
+        job_id=execution_input.job_id,
     )
 
     return execution_response

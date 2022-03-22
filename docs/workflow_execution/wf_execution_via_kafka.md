@@ -1,41 +1,35 @@
 # Workflow Execution via Apache Kafka
 
-> :warning: Warning: The Kafka endpoint is currently not available, following the backend rewrite in Python. It will be reintroduced in a later release. So for now this documentation page only applies for version <=0.6 and not for versions >=0.7.
+This document describes [Kafka](https://kafka.apache.org/) execution of workflows / components. 
 
-This document describes the [Kafka](https://kafka.apache.org/) workflow execution endpoint by providing a basic example.
-
+Naturally this depends strongly on the specific Kafka cluster setup. Of course, we cannot describe all possible scenarios here. Therefore we describe a docker-compose based demo setup, which should give you a good starting point for developing your individual setup.
 ## Setup
 
-We save a copy of the `docker-compose.yml` with the new name `docker-compose-kafka.yml`, modify the **hetida-designer-backend** service and add a **zookeeper** and a **kafka** service:
+We save a copy of the `docker-compose-dev.yml` with the new name `docker-compose-kafka.yml`, modify the **hetida-designer-backend** service and add a **zookeeper** and a **kafka** service as follows:
 
 ```yaml
 ...
 
   hetida-designer-backend:
-    image: hetida/designer-backend
-    ports:
-      - 8080:8090
+    ...
     environment:
-      org.hetida.designer.backend.installed.adapters: "demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,demo-adapter-java|Java-Demo-Adapter|http://localhost:8091/adapter|http://hetida-designer-demo-adapter-java:8091/adapter,local-file-adapter|Local-File-Adapter|http://localhost:8090/adapters/localfile|http://hetida-designer-runtime:8090/adapters/localfile"
-      org.hetida.designer.backend.listener.kafka.enabled: "true"
-      spring.kafka.bootstrap-servers: "kafka:19092"
-      spring.kafka.consumer.group-id: "Designer_Workflow_Execution"
-      org.hetida.designer.backend.listener.kafka.execTopic: "designer_initialize_job"
-      org.hetida.designer.backend.listener.kafka.execResultTopic: "designer_job_result"
-    depends_on:
-      - hetida-designer-db
-      - hetida-designer-runtime
-      - kafka
+      ...
+      - HETIDA_DESIGNER_KAFKA_ENABLED=true
+      ...
+    ...
+...
 
   zookeeper:
-    image: zookeeper:3.6
+    image: zookeeper:3.7
     ports:
       - 2181:2181
+
   kafka:
-    image: wurstmeister/kafka:2.13-2.6.0
+    image: wurstmeister/kafka:2.13-2.8.1
     environment:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_CREATE_TOPICS: "hd-execution-topic:8:1,hd-execution-response-topic:8:1"      
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
       KAFKA_BROKER_ID: -1
       KAFKA_LISTENERS: LISTENER_DOCKER_INTERNAL://:19092,LISTENER_DOCKER_EXTERNAL://:9092
       KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:19092,LISTENER_DOCKER_EXTERNAL://localhost:9092
@@ -45,29 +39,30 @@ We save a copy of the `docker-compose.yml` with the new name `docker-compose-kaf
     ports:
       - "9092:9092"
     depends_on:
-      - zookeeper        
+      - zookeeper      
 
 ...
 
 ```
 
-:warning: **Note:** This small Kafka setup using the "wurstmeister/kafka" image is only suitable for examples/demonstration and local development.
+:warning: **Note:** This small Kafka setup using the "wurstmeister/kafka" image is only suitable for examples/demonstration and local development. We do not recommend it for production!
 
 Now we can start this new setup via the following command (ensuring correct broker configuration, see https://stackoverflow.com/q/53571823).
 
 :warning: **Warning:** The following command deletes existing component/workflow data / volumes!
 
 ```
-docker-compose -f docker-compose-kafka.yml rm -fsv && docker-compose -f docker-compose-kafka.yml up --force-recreate --build
+docker-compose -f docker-compose-kafka.yml down --volumes && docker-compose -f docker-compose-kafka.yml up --force-recreate --build
 ```
-We will demonstrate workflow execution via Kafka using one of the example workflows provided with the default component/workflow deployment, so do not forget to run the deployment command as described in the Readme:
+
+We will demonstrate workflow execution via Kafka using one of the example workflows provided with the default component/workflow deployment, so do not forget to run the deployment command as described in the main Readme:
 
 ```bash
 docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-  --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'  
+  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
 ```
 
 ## Workflow Execution
@@ -78,128 +73,102 @@ We prepare some producer/consumers in order to send messages and watch the resul
 
 Open a terminal and start a console producer in a shell inside the kafka service container:
 ```bash
-docker-compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-producer.sh --broker-list kafka:9092 --topic designer_initialize_job --property "parse.key=true" --property "key.separator=:"
+docker-compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-producer.sh --broker-list kafka:9092 --topic hd-execution-topic --property "parse.key=true" --property key.separator=":"
 ```
 
 Open a second terminal and start a console consumer in a shell inside the kafka service container:
 ```bash
-docker-compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic  designer_initialize_job --property print.key=true --property key.separator="-" --from-beginning
+docker-compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic  hd-execution-topic --property print.key=true --property key.separator=":" --from-beginning
 ```
 
 Open a third terminal and start a console consumer for the result topic inside the kafka service container:
 ```bash
-docker-compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic  designer_job_result --property print.key=true --property key.separator="-" --from-beginning
+docker-compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic  hd-execution-response-topic --property print.key=true --property key.separator="-" --from-beginning
 ```
 
 ### Creating the Kafka message payload
 
-To execute a workflow via Kafka we can use the frontend test execution to help us building the payload. Using your browser developer tools network tab, observe that running for example the "Univariate Linear RUL regression Example" Workflow sends a JSON like the following to the workflow's execution endpoint `http://localhost/hdapi/workflows/806df1b9-2fc8-4463-943f-3d258c569663/execute?run_pure_plot_operators=true` (example shortened!):
+The Kafka message for running a workflow or component has the same structure as that of the transformation revision execution endpoint, with URL parameters moving to the first level of the message json.
+
+Therefore we refer to the backend interactive OpenAPI documentation (Available at http://localhost:8080/docs when running the docker compose setup) for details on available keys and their values.
+
+Additionally, to construct such a message for test purposes, it is helpful to use the frontend test execution: Using your browser developer tools network tab you may inspect the json send to the execution endpoint. Use this as a template for writing your own messages.
+
+Here is the json message value for running one of the example Workflows: "Volatility Detection Example", revision 1.0.0:
 
 ```json
 {
-    "id": "e4c36380-4b4d-4c97-b3f2-c8c25d25e5c8",
-    "name": "STANDARD-WIRING",
-    "inputWirings": [
-        {
-            "id": "e5ed757f-f8b0-45f0-be68-e00b0d0184a9",
-            "workflowInputName": "inp_series",
-            "adapterId": "direct_provisioning",
-            "filters": {
-                "value":"{\"2020-05-01T00:00:00.000Z\":2.5340945967,\"2020-05-01T01:00:00.000Z\":2.5658768256,
-    ...
-    ...
-    ...
-\"2020-06-11T08:00:00.000Z\":1.7441884421,\"2020-06-11T09:00:00.000Z\":1.7268847381,\"2020-06-11T10:00:00.000Z\":1.7372780067,\"2020-06-11T11:00:00.000Z\":1.7531690232,\"2020-06-11T12:00:00.000Z\":1.7563962807,\"2020-06-11T13:00:00.000Z\":1.7337006137,\"2020-06-11T14:00:00.000Z\":1.7567559875,\"2020-06-11T15:00:00.000Z\":1.7314396428}"
-            }
-        },
-        {
-            "id": "b29eb7b7-eae9-4711-b245-cd555456b9d0",
-            "workflowInputName": "limit",
-            "adapterId": "direct_provisioning",
-            "filters": {
-                "value": "1.3"
-            }
-        },
-        {
-            "id": "4454bb31-21e1-4a33-9555-6d919d6be9fd",
-            "workflowInputName": "num_days_forecast",
-            "adapterId": "direct_provisioning",
-            "filters": {
-                "value": "30"
-            }
-        }
-    ],
-    "outputWirings": [
-        {
-            "id": "9658ae49-ec4d-4a0c-bed1-d28c6de7814f",
-            "workflowOutputName": "intercept",
-            "adapterId": "direct_provisioning"
-        },
-        {
-            "id": "5ce41007-cc70-4639-b022-6bd54e7152fd",
-            "workflowOutputName": "limit_violation_timestamp",
-            "adapterId": "direct_provisioning"
-        },
-        {
-            "id": "d40fb12d-67f0-415f-887c-9e9aa3cbfad3",
-            "workflowOutputName": "rul_regression_result_plot",
-            "adapterId": "direct_provisioning"
-        },
-        {
-            "id": "c585607e-b8e0-445a-8b78-633c6875c8dd",
-            "workflowOutputName": "slope",
-            "adapterId": "direct_provisioning"
-        }
-    ]
-}
-```
-
-The Kafka execution consumer expects its message in a format `key:<JSON_PAYLOAD>` with <JSON_PAYLOAD> required to have the following structure:
-```json
-{
-    "workflowId": "806df1b9-2fc8-4463-943f-3d258c569663", // the workflow id from the url of the request
-    "configuration": {
-        "engine": "plain",
-        "name": "806df1b9-2fc8-4463-943f-3d258c569663",
-        "run_pure_plot_operators": true
-    },
-    "workflow_wiring": {
+    "id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89",
+    "run_pure_plot_operators": false,
+    "wiring": {
         "input_wirings": [
             {
-                "adapter_id": ...,
-                "filters": ...,
-                "workflow_input_name": ...,
-                "source_id" ... // only required if adapter_id is not "direct_provisioning"
+                "workflow_input_name": "window_size",
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "180min"
+                }
             },
-            ...
+            {
+                "workflow_input_name": "window_timestamp_location",
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "center"
+                }
+            },
+            {
+                "workflow_input_name": "input_series",
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "{\"2018-05-19T22:20:00.000Z\":86.9358994238,\"2018-05-19T22:25:00.000Z\":78.6552569681,\"2018-05-19T22:30:00.000Z\":93.515633185,\"2018-05-19T22:35:00.000Z\":96.3497006614,\"2018-05-19T22:40:00.000Z\":83.1926874657,\"2018-05-22T05:50:00.000Z\":926.4357356548,\"2018-05-22T05:55:00.000Z\":934.7257131637,\"2018-05-22T06:00:00.000Z\":908.4082221891,\"2018-05-22T06:05:00.000Z\":917.7112901544,\"2018-05-22T06:10:00.000Z\":924.0958121497}"
+                }
+            },
+            {
+                "workflow_input_name": "threshold",
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "600.0"
+                }
+            }
         ],
         "output_wirings": [
             {
-                "adapter_id": ...,
-                "filters": ...,
-                "workflow_output_name": ...,
-                "sink_id" ... // only required if adapter_id is not "direct_provisioning" 
+                "workflow_output_name": "score",
+                "adapter_id": "direct_provisioning"
             },
-            ...
+            {
+                "workflow_output_name": "data_and_alerts",
+                "adapter_id": "direct_provisioning"
+            }
         ]
-    }
+    },
+    "job_id": "00000000-0000-0000-0000-000000000002"
 }
 ```
 
-**Note:** This is slightly different from the web endpoint structure. This may be unified in the future!
+The Kafka execution command line producer started above expects its payload in a format `key:<MESSAGE JSON>`. A good choice for the key may be a job id (see technical details below).
 
-We can now use this information to convert the web-based payload to a Kafka-payload. The following includes only part of the data and is written as one line to allow easy pasting to the console producer:
-
+Here is the same content from above, together with a key, as ready-to-paste one liner for the console producer:
 ```
-test_executionissuer_1:{"workflowId":"806df1b9-2fc8-4463-943f-3d258c569663","configuration":{"engine":"plain", "name":"806df1b9-2fc8-4463-943f-3d258c569663", "run_pure_plot_operators":false}, "workflow_wiring": {"input_wirings":[{"workflow_input_name":"inp_series","adapter_id":"direct_provisioning","filters":{"value":"{\"2020-05-01T00:00:00.000Z\":2.5340945967,\"2020-06-11T11:00:00.000Z\":1.7531690232,\"2020-06-11T12:00:00.000Z\":1.7563962807,\"2020-06-11T13:00:00.000Z\":1.7337006137,\"2020-06-11T14:00:00.000Z\":1.7567559875,\"2020-06-11T15:00:00.000Z\":1.7314396428}"}},{"workflow_input_name":"limit","adapter_id":"direct_provisioning","filters":{"value":"1.3"}},{"workflow_input_name":"num_days_forecast","adapter_id":"direct_provisioning","filters":{"value":"30"}}],"output_wirings":[{"workflow_output_name":"intercept","adapter_id":"direct_provisioning"},{"workflow_output_name":"limit_violation_timestamp","adapter_id":"direct_provisioning"},{"workflow_output_name":"rul_regression_result_plot","adapter_id":"direct_provisioning"},{"workflow_output_name":"slope","adapter_id":"direct_provisioning"}]}}
+exec_job_1:{ "id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89", "run_pure_plot_operators": false, "wiring": { "input_wirings": [ { "workflow_input_name": "window_size", "adapter_id": "direct_provisioning", "filters": { "value": "180min" } }, { "workflow_input_name": "window_timestamp_location", "adapter_id": "direct_provisioning", "filters": { "value": "center" } }, { "workflow_input_name": "input_series", "adapter_id": "direct_provisioning", "filters": { "value": "{\"2018-05-19T22:20:00.000Z\":86.9358994238,\"2018-05-19T22:25:00.000Z\":78.6552569681,\"2018-05-19T22:30:00.000Z\":93.515633185,\"2018-05-19T22:35:00.000Z\":96.3497006614,\"2018-05-19T22:40:00.000Z\":83.1926874657,\"2018-05-22T05:50:00.000Z\":926.4357356548,\"2018-05-22T05:55:00.000Z\":934.7257131637,\"2018-05-22T06:00:00.000Z\":908.4082221891,\"2018-05-22T06:05:00.000Z\":917.7112901544,\"2018-05-22T06:10:00.000Z\":924.0958121497}" } }, { "workflow_input_name": "threshold", "adapter_id": "direct_provisioning", "filters": { "value": "600.0" } } ], "output_wirings": [ { "workflow_output_name": "score", "adapter_id": "direct_provisioning" }, { "workflow_output_name": "data_and_alerts", "adapter_id": "direct_provisioning" } ] }, "job_id": "00000000-0000-0000-0000-000000000002"}
 ```
-
 ### Running the workflow via Kafka
 
-Pasting the payload above in the first terminal (the producer for the "designer_initialize_job" topic) leads to the same message occuring in the second terminal (consumer for the "designer_initialize_job" topic) and after short moment to a result in the third terminal (the consumer of the result topic "designer_job_result"). The result json payload is identical to the web execution endpoint result json payload.
+Pasting the payload above in the first terminal (the producer for the "hd-execution-topic" topic) leads to the same message occuring in the second terminal (consumer for the "hd-execution-topic" topic) and after short moment to a result in the third terminal (the consumer of the result topic "hd-execution-response-topic"). The result json payload is identical to the API transformation revision execution endpoint result json.
 
 ## Using adapters when running workflows via Kafka
-This example includes only the "direct_provisioning" adapter for both all inputs and all outputs. This results in all input data being expected as part of the Kafka payload and output data being sent as part of the result Kafka message. 
+This example includes only the "direct_provisioning" adapter for both all inputs and all outputs. This results in all input data being expected as part of the Kafka payload and output data being sent as part of the result Kafka message.
 
-However this is no limitation: You can use arbitrary adapters and also mix them freely in the same manner as for the web endpoint. I.e. some data can be directly provided (usually single parameters) while other data is fetched from a database via an appropriate external adapter (typically mass data).
+However this is not a limitation: You can use arbitrary adapters and also mix them freely in the same manner as for the web endpoint. I.e. some data can be directly provided via the Kafka message (usually single parameters) while other data is fetched from a database via an appropriate external adapter (typically mass data).
 
+## Configuring the Kafka consumer / producer
+See [config](../../runtime/hetdesrun/webservice/config.py) code for available configuration options and corresponding environment variable names. All variables containing "KAFKA" should be of interest here. You can specify topic names and options for the [aiokafka](https://aiokafka.readthedocs.io/en/stable/) consumer / producer clients.
+
+Note that not all combinations of options will work / make sense. For example the built-in consumer expects autocommit being set to true. Moreover a consumer group id is expected to be set.
+
+## Technical details on the Kafka consumer
+The Kafka consumer (and producer for sending results) runs in the backend web service application: One consumer / producer pair is initialized per gunicorn/uvicorn worker process. Consumers are part of a consumer group specified via configuration (see above). By default messages are distributed to topic partitions automatically using the key of the Kafka message. Therefore it makes sense to use something like a job name or job id as message key.
+
+To actually make use of all these consumer instances for scaling, the corresponding topic in your Kafka cluster should be configured to have at least as many partitions as the designer backend has worker processes.
+
+Note that running the analytical code actually happens in the runtime service (separately scalable). So a sensible setup is to have a one-replication backend service with several worker processes and a scaled-up (multi-replication) runtime service.
