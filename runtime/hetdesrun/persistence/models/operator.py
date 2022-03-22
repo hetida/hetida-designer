@@ -13,17 +13,17 @@ from hetdesrun.persistence.models.io import Position, Connector
 class NonEmptyValidStr(ConstrainedStr):
     min_length = 1
     max_length = 60
-    regex = re.compile(r"^[\w -,.()=/]+$")
+    regex = re.compile(r"^[\w ,.()=/-]+$")
 
 
 class ShortNonEmptyValidStr(ConstrainedStr):
     min_length = 1
     max_length = 20
-    regex = re.compile(r"^[\w -,.()=/]+$")
+    regex = re.compile(r"^[\w ,.()=/-]+$")
 
 
 class ValidStr(ConstrainedStr):
-    regex = re.compile(r"^[\w -,.()=/]*$")
+    regex = re.compile(r"^[\w ,.()=/-]*$")
 
 
 class Operator(BaseModel):
