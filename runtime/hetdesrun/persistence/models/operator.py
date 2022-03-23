@@ -5,6 +5,8 @@ import re
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, ConstrainedStr, root_validator
 
+from hetdesrun.component.code import ALLOWED_CHARS_RAW_STRING
+
 from hetdesrun.utils import State, Type
 
 from hetdesrun.persistence.models.io import Position, Connector
@@ -13,17 +15,17 @@ from hetdesrun.persistence.models.io import Position, Connector
 class NonEmptyValidStr(ConstrainedStr):
     min_length = 1
     max_length = 60
-    regex = re.compile(r"^[\w ,.()=/-]+$")
+    regex = re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]+$")
 
 
 class ShortNonEmptyValidStr(ConstrainedStr):
     min_length = 1
     max_length = 20
-    regex = re.compile(r"^[\w ,.()=/-]+$")
+    regex = re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]+$")
 
 
 class ValidStr(ConstrainedStr):
-    regex = re.compile(r"^[\w ,.()=/-]*$")
+    regex = re.compile(rf"^[{ALLOWED_CHARS_RAW_STRING}]*$")
 
 
 class Operator(BaseModel):

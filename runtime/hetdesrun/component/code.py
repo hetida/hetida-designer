@@ -11,10 +11,8 @@ import re
 
 from hetdesrun.datatypes import DataType
 
-
-ALLOWED_CHARS_REGEXP = re.compile(
-    r"[^a-zA-Z0-9\.\,\-#_ ]"  # pylint: disable=anomalous-backslash-in-string
-)  # allow only some special characters for category, description and component name
+# allow only some special characters for category, description and component name
+ALLOWED_CHARS_RAW_STRING = r"\w\- ,.()=/"  # pylint: disable=anomalous-backslash-in-string
 
 imports_template: str = """\
 from hetdesrun.component.registration import register
@@ -50,7 +48,7 @@ function_body_template: str = """\
 
 
 def sanitize(text: str) -> str:
-    return re.sub(ALLOWED_CHARS_REGEXP, "", text)
+    return re.sub(re.compile(rf"[^{ALLOWED_CHARS_RAW_STRING}]"), "", text)
 
 
 def generate_function_header(
