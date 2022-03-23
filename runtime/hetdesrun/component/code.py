@@ -11,8 +11,11 @@ import re
 
 from hetdesrun.datatypes import DataType
 
-# allow only some special characters for category, description and component name
-ALLOWED_CHARS_RAW_STRING = r"\w\- ,.()=/"  # pylint: disable=anomalous-backslash-in-string
+# allow only some special characters for category, description, name and version tag
+ALLOWED_CHARS_RAW_STRING = r"\w ,\.\-\(\)=/"  # pylint: disable=anomalous-backslash-in-string
+# The special sequence \w matches unicode word characters;
+# this includes most characters that can be part of a word in any language, as well as numbers
+# and the underscore. If the ASCII flag is used, only [a-zA-Z0-9_] is matched.
 
 imports_template: str = """\
 from hetdesrun.component.registration import register
