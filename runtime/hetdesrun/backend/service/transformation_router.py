@@ -1,5 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 import logging
+import datetime
 
 from uuid import UUID, uuid4
 
@@ -381,6 +382,18 @@ async def update_transformation_revision(
     return persisted_transformation_revision
 
 
+def get_latest_revision_id(revision_group_id: UUID) -> UUID:
+    revision_group_list = select_multiple_transformation_revisions(
+        state=State.RELEASED, revision_group_id=revision_group_id
+    )
+    id_by_released_timestamp: Dict[datetime.datetime, UUID] = {}
+    for revision in revision_group_list:
+        assert isinstance(revision.released_timestamp, datetime.datetime)
+        id_by_released_timestamp[revision.released_timestamp] = revision.id
+    _, latest_revision_id = sorted(id_by_released_timestamp.items(), reverse=True)[0]
+    return latest_revision_id
+
+
 @transformation_router.post(
     "/{id}/execute",
     response_model=ExecutionResponseFrontendDto,
@@ -401,6 +414,12 @@ async def execute_transformation_revision_endpoint(
     run_pure_plot_operators: bool = Query(
         False, description="Set to True by frontend requests to generate plots"
     ),
+    latest: bool = Query(
+        False,
+        description=(
+            "Set to True to execute the latest released revision of the revision group"
+        ),
+    ),
     job_id: Optional[UUID] = None,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision.
@@ -410,8 +429,17 @@ async def execute_transformation_revision_endpoint(
 
     The test wiring will not be updated.
     """
+
     if job_id is None:
         job_id = uuid4()
+
+    if latest:
+        try:
+            transformation_revision = read_single_transformation_revision(id)
+            id = get_latest_revision_id(transformation_revision.revision_group_id)
+        except DBNotFoundError as e:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
     try:
         return await execute_transformation_revision(
             id=id,
