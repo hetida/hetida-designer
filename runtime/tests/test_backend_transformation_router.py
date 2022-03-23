@@ -71,8 +71,62 @@ tr_json_component_1 = {
     },
     "content": "code",
     "test_wiring": {
-        "input_wirings": [],
-        "output_wirings": [],
+        "input_wirings": [
+            {
+                "workflow_input_name": "operator_input",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": 100},
+            },
+        ],
+        "output_wirings": [
+            {
+                "workflow_output_name": "operator_output",
+                "adapter_id": "direct_provisioning",
+            },
+        ],
+    },
+}
+tr_json_component_1_new_revision = {
+    "id": str(get_uuid_from_seed("component 1 new revision")),
+    "revision_group_id": str(get_uuid_from_seed("group of component 1")),
+    "name": "component 0",
+    "description": "description of component 0",
+    "category": "category",
+    "documentation": "documentation",
+    "type": "COMPONENT",
+    "state": "DRAFT",
+    "version_tag": "1.0.1",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": str(get_uuid_from_seed("operator input")),
+                "name": "operator_input",
+                "data_type": "INT",
+            }
+        ],
+        "outputs": [
+            {
+                "id": str(get_uuid_from_seed("operator output")),
+                "name": "operator_output",
+                "data_type": "STRING",
+            }
+        ],
+    },
+    "content": "code",
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "operator_input",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": 100},
+            },
+        ],
+        "output_wirings": [
+            {
+                "workflow_output_name": "operator_output",
+                "adapter_id": "direct_provisioning",
+            },
+        ],
     },
 }
 tr_json_component_2 = {
@@ -596,6 +650,54 @@ async def test_execute_for_transformation_revision(
             assert response.status_code == 200
             resp_data = response.json()
             assert "output_types_by_output_name" in resp_data
+            assert "job_id" in resp_data
+            assert UUID(resp_data["job_id"]) == UUID(
+                "1270547c-b224-461d-9387-e9d9d465bbe1"
+            )
+
+
+@pytest.mark.asyncio
+async def test_execute_latest_for_transformation_revision(
+    async_test_client, clean_test_db_engine
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
+    ):
+        with mock.patch(
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
+        ):
+            tr_component_1 = TransformationRevision(**tr_json_component_1)
+            tr_component_1.content = generate_code(tr_component_1.to_code_body())
+            store_single_transformation_revision(tr_component_1)
+
+            tr_component_1_new_revision = TransformationRevision(
+                **tr_json_component_1_new_revision
+            )
+            tr_component_1_new_revision.content = generate_code(
+                tr_component_1_new_revision.to_code_body()
+            )
+            tr_component_1_new_revision.release()
+            store_single_transformation_revision(tr_component_1_new_revision)
+
+            async with async_test_client as ac:
+                response = await ac.post(
+                    posix_urljoin(
+                        "/api/transformations/",
+                        str(tr_component_1.id),
+                        "execute?latest=true&job_id=1270547c-b224-461d-9387-e9d9d465bbe1",
+                    ),
+                    json=json.loads(tr_component_1.test_wiring.json()),
+                )
+
+            assert response.status_code == 200
+            resp_data = response.json()
+            assert "output_types_by_output_name" in resp_data
+            assert (
+                resp_data["output_types_by_output_name"]["operator_output"] == "STRING"
+            )
             assert "job_id" in resp_data
             assert UUID(resp_data["job_id"]) == UUID(
                 "1270547c-b224-461d-9387-e9d9d465bbe1"
