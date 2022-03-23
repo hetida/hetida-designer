@@ -151,10 +151,14 @@ def prepare_execution_input(  # pylint: disable=redefined-builtin
 
     if transformation_revision.type == Type.COMPONENT:
         tr_workflow = transformation_revision.wrap_component_in_tr_workflow()
+        assert isinstance(tr_workflow.content, WorkflowContent)  # hint for mypy
+        nested_transformations = {
+            tr_workflow.content.operators[0].id: transformation_revision
+        }
     else:
         tr_workflow = transformation_revision
+        nested_transformations = get_all_nested_transformation_revisions(tr_workflow)
 
-    nested_transformations = get_all_nested_transformation_revisions(tr_workflow)
     nested_components = {
         tr.id: tr for tr in nested_transformations.values() if tr.type == Type.COMPONENT
     }
