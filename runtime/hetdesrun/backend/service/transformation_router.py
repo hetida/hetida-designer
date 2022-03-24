@@ -414,12 +414,6 @@ async def execute_transformation_revision_endpoint(
     run_pure_plot_operators: bool = Query(
         False, description="Set to True by frontend requests to generate plots"
     ),
-    latest: bool = Query(
-        False,
-        description=(
-            "Set to True to execute the latest released revision of the revision group"
-        ),
-    ),
     job_id: Optional[UUID] = None,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision.
@@ -433,12 +427,59 @@ async def execute_transformation_revision_endpoint(
     if job_id is None:
         job_id = uuid4()
 
-    if latest:
-        try:
-            transformation_revision = read_single_transformation_revision(id)
-            id = get_latest_revision_id(transformation_revision.revision_group_id)
-        except DBNotFoundError as e:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    try:
+        return await execute_transformation_revision(
+            id=id,
+            wiring=wiring,
+            run_pure_plot_operators=run_pure_plot_operators,
+            job_id=job_id,
+        )
+    except TrafoExecutionNotFoundError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    except TrafoExecutionRuntimeConnectionError as e:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+
+    except TrafoExecutionResultValidationError as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+@transformation_router.post(
+    "/{revision_group_id}/execute-latest",
+    response_model=ExecutionResponseFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Executes a transformation revision",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully executed the transformation revision"
+        }
+    },
+)
+async def execute_latest_transformation_revision_endpoint(
+    revision_group_id: UUID,
+    wiring: WorkflowWiring,
+    run_pure_plot_operators: bool = Query(
+        False, description="Set to True by frontend requests to generate plots"
+    ),
+    job_id: Optional[UUID] = None,
+) -> ExecutionResponseFrontendDto:
+    """Execute the latest transformation revision of a revision group.
+
+    The latest transformation will be determined by the released_timestamp of the released revisions
+    of the revision group.
+
+    This transformation will be loaded from the DB and executed with the wiring sent in the request
+    body.
+
+    The test wiring will not be updated.
+    """
+
+    id = get_latest_revision_id(revision_group_id)
+
+    if job_id is None:
+        job_id = uuid4()
 
     try:
         return await execute_transformation_revision(
