@@ -686,8 +686,8 @@ async def test_execute_latest_for_transformation_revision(
                 response = await ac.post(
                     posix_urljoin(
                         "/api/transformations/",
-                        str(tr_component_1.id),
-                        "execute?latest=true&job_id=1270547c-b224-461d-9387-e9d9d465bbe1",
+                        str(tr_component_1.revision_group_id),
+                        "execute-latest?job_id=1270547c-b224-461d-9387-e9d9d465bbe1",
                     ),
                     json=json.loads(tr_component_1.test_wiring.json()),
                 )
