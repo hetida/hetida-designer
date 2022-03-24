@@ -1,8 +1,6 @@
 from typing import List
 from uuid import UUID, uuid4
 
-from datetime import datetime
-
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, root_validator
 
@@ -31,6 +29,7 @@ class WorkflowLinkFrontendDto(BaseModel):
     path: List[PointFrontendDto] = []
 
     @root_validator()
+    # pylint: disable=no-self-argument,no-self-use
     def no_self_reference(cls, values: dict) -> dict:
         if values["to_operator"] == values["from_operator"]:
             raise ValueError(

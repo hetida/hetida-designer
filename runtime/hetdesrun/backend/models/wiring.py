@@ -7,12 +7,10 @@ from pydantic import BaseModel, Field, StrictInt, StrictStr, validator
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.models.util import valid_python_identifier
 from hetdesrun.models.adapter_data import RefIdType
-from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.wiring import WorkflowWiring, InputWiring, OutputWiring
 
 from hetdesrun.adapters import SOURCE_ADAPTERS, SINK_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
-
-from hetdesrun.models.wiring import WorkflowWiring, InputWiring, OutputWiring
 
 
 class IoWiringFrontendDto(BaseModel):
@@ -53,7 +51,7 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
     def adapter_id_known(
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
-        if not v in SINK_ADAPTERS.keys() and not isinstance(v, str):
+        if not v in SINK_ADAPTERS and not isinstance(v, str):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
             )
@@ -102,7 +100,7 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
     def adapter_id_known(
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
-        if not v in SOURCE_ADAPTERS.keys() and not isinstance(v, str):
+        if not v in SOURCE_ADAPTERS and not isinstance(v, str):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."
             )
