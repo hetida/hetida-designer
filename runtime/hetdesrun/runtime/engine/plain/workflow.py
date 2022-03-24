@@ -50,7 +50,7 @@ class Node(Protocol):
 
     _in_computation: bool = False
     operator_hierarchical_id: str = "UNKNOWN"
-    operator_name: str = "UNKNOWN"
+    operator_hierarchical_name: str = "UNKNOWN"
 
     @cached_property
     async def result(self) -> Dict[str, Any]:  # Outputs can have any type
@@ -84,7 +84,8 @@ class ComputationNode:
         inputs: Optional[Dict[str, Tuple[Node, str]]] = None,
         operator_hierarchical_id: str = "UNKNOWN",
         component_id: str = "UNKNOWN",
-        operator_name: str = "UNKNOWN",
+        operator_hierarchical_name: str = "UNKNOWN",
+        component_name: str = "UNKNOWN",
     ) -> None:
         """
         inputs is a dict {input_name : (another_node, output_name)}, i.e. mapping input names to
@@ -93,8 +94,8 @@ class ComputationNode:
         func is a function or coroutine function with the input_names as keyword arguments. It
         should output a dict of result values.
 
-        operator_hierarchical_id, component_id and operator_name can be provided to enrich
-        logging and exception messages.
+        operator_hierarchical_id, component_id, operator_hierarchical_name and component_name can be
+        provided to enrich logging and exception messages.
 
         The computation node inputs may or may not be complete, i.e. all required inputs are given
         or not. If not complete, computation of result may simply fail, e.g. with
@@ -118,8 +119,9 @@ class ComputationNode:
         self._in_computation = False  # to detect cycles
 
         self.operator_hierarchical_id = operator_hierarchical_id
-        self.operator_name = operator_name
+        self.operator_hierarchical_name = operator_hierarchical_name
         self.component_id = component_id
+        self.component_name = component_name
         self._in_computation = False
 
     def add_inputs(self, new_inputs: Dict[str, Tuple[Node, str]]) -> None:
@@ -147,8 +149,8 @@ class ComputationNode:
             raise MissingInputSource(
                 f"Inputs of computation node operator {self.operator_hierarchical_id} are missing"
             ).set_context(
-                node_instance_id=self.operator_hierarchical_id,
-                operator_name=self.operator_name,
+                operator_hierarchical_id=self.operator_hierarchical_id,
+                operator_hierarchical_name=self.operator_hierarchical_name,
             )
 
     async def _gather_data_from_inputs(self) -> Dict[str, Any]:
@@ -167,8 +169,8 @@ class ComputationNode:
                 )
                 logger.info(msg)
                 raise CircularDependency(msg).set_context(
-                    node_instance_id=self.operator_hierarchical_id,
-                    operator_name=self.operator_name,
+                    operator_hierarchical_id=self.operator_hierarchical_id,
+                    operator_hierarchical_name=self.operator_hierarchical_name,
                 )
             # actually get input data from other nodes
             try:
@@ -183,8 +185,8 @@ class ComputationNode:
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
                 ).set_context(
-                    node_instance_id=self.operator_hierarchical_id,
-                    operator_name=self.operator_name,
+                    operator_hierarchical_id=self.operator_hierarchical_id,
+                    operator_hierarchical_name=self.operator_hierarchical_name,
                 ) from e
         return input_value_dict
 
@@ -196,14 +198,17 @@ class ComputationNode:
             )
             function_result = function_result if function_result is not None else {}
         except RuntimeExecutionError as e:  # user code may raise runtime execution errors
-            e.set_context(self.operator_hierarchical_id, self.operator_name)
+            e.set_context(
+                self.operator_hierarchical_id, self.operator_hierarchical_name
+            )
             logger.info(
                 (
                     "User raised Runtime execution exception during component execution"
-                    " of component operator %s with UUID %s with component UUID %s"
+                    " of operator %s with UUID %s of component %s with UUID %s"
                 ),
-                self.operator_name,
+                self.operator_hierarchical_name,
                 self.operator_hierarchical_id,
+                self.component_name,
                 self.component_id,
                 exc_info=True,
             )
@@ -211,13 +216,16 @@ class ComputationNode:
         except Exception as e:  # uncaught exceptions from user code
             logger.info(
                 "Exception during Component execution of component instance %s",
-                self.operator_name,
+                self.operator_hierarchical_name,
                 exc_info=True,
             )
             raise RuntimeExecutionError(
-                f"Exception during Component execution of component instance {self.operator_name}"
+                f"Exception during Component execution of "
+                f"component instance {self.operator_hierarchical_name}"
                 f" (operator hierarchical id: {self.operator_hierarchical_id}):\n{str(e)}"
-            ).set_context(self.operator_hierarchical_id, self.operator_name) from e
+            ).set_context(
+                self.operator_hierarchical_id, self.operator_hierarchical_name
+            ) from e
 
         if not isinstance(
             function_result, dict
@@ -225,11 +233,11 @@ class ComputationNode:
 
             msg = (
                 f"Component function of component instance {self.operator_hierarchical_id} from "
-                f"component {self.operator_name} did not return an output dict!"
+                f"component {self.operator_hierarchical_name} did not return an output dict!"
             )
             logger.info(msg)
             raise RuntimeExecutionError(msg).set_context(
-                self.operator_hierarchical_id, self.operator_name
+                self.operator_hierarchical_id, self.operator_hierarchical_name
             )
 
         return function_result
@@ -239,12 +247,12 @@ class ComputationNode:
         execution_context_filter.bind_context(
             currently_executed_instance_id=self.operator_hierarchical_id,
             currently_executed_component_id=self.component_id,
-            currently_executed_component_node_name=self.operator_name,
+            currently_executed_component_node_name=self.operator_hierarchical_name,
         )
 
         logger.info(
             "Starting computation for operator %s of type component with operator id %s",
-            self.operator_name,
+            self.operator_hierarchical_name,
             self.operator_hierarchical_id,
         )
         self._in_computation = True
@@ -283,7 +291,7 @@ class Workflow:
         ],  # map sub_node outputs to wf outputs
         inputs: Optional[Dict[str, Tuple[Node, str]]] = None,
         operator_hierarchical_id: str = "UNKNOWN",
-        operator_name: str = "UNKNOWN",
+        operator_hierarchical_name: str = "UNKNOWN",
     ):
         """Initialize new Workflow
 
@@ -321,7 +329,7 @@ class Workflow:
 
         self._in_computation: bool = False
         self.operator_hierarchical_id = operator_hierarchical_id
-        self.operator_name = operator_name
+        self.operator_hierarchical_name = operator_hierarchical_name
 
     def add_inputs(self, new_inputs: Dict[str, Tuple[Node, str]]) -> None:
         self.inputs.update(new_inputs)
@@ -349,7 +357,7 @@ class Workflow:
         Const_Node = ComputationNode(
             func=lambda: parsed_values,
             inputs={},
-            operator_name="constant_provider",
+            operator_hierarchical_name="constant_provider",
             operator_hierarchical_id=self.operator_hierarchical_id
             + ":constant_provider"
             + "_"
@@ -374,12 +382,12 @@ class Workflow:
         execution_context_filter.bind_context(
             currently_executed_instance_id=self.operator_hierarchical_id,
             currently_executed_component_id=None,
-            currently_executed_component_node_name=self.operator_name,
+            currently_executed_component_node_name=self.operator_hierarchical_name,
         )
 
         logger.info(
             "Starting computation for operator %s of type workflow with operator id %s",
-            self.operator_name,
+            self.operator_hierarchical_name,
             self.operator_hierarchical_id,
         )
 
@@ -404,8 +412,8 @@ class Workflow:
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
                 ).set_context(
-                    node_instance_id=self.operator_hierarchical_id,
-                    operator_name="workflow",
+                    operator_hierarchical_id=self.operator_hierarchical_id,
+                    operator_hierarchical_name="workflow",
                 ) from e
 
         # cleanup
