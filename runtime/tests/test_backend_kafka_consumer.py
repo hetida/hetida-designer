@@ -229,7 +229,7 @@ async def test_consumer_successful_exec_by_id_input():
 async def test_consumer_successful_exec_latest_by_group_id_input():
     with mock.patch(
         "hetdesrun.backend.kafka.consumer.get_latest_revision_id",
-        return_value = UUID("79ce1eb1-3ef8-4c74-9114-c856fd88dc89")
+        return_value=UUID("79ce1eb1-3ef8-4c74-9114-c856fd88dc89"),
     ) as mocked_get_latest_id:
 
         results, kafka_ctx, mocked_producer = await run_kafka_msg(
