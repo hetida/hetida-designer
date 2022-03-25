@@ -7,10 +7,10 @@ class RuntimeExecutionError(Exception):
         super().__init__(*args, **kwargs)
 
     def set_context(
-        self, node_instance_id: str, operator_name: str
+        self, operator_hierarchical_id: str, operator_hierarchical_name: str
     ) -> "RuntimeExecutionError":
-        self.currently_executed_node_instance = node_instance_id
-        self.currently_executed_component = operator_name
+        self.currently_executed_node_instance = operator_hierarchical_id
+        self.currently_executed_component = operator_hierarchical_name
         return self
 
 

@@ -106,7 +106,7 @@ async def test_computation_nodes_user_raised_runtime_error_and_logging(caplog):
     source_node = ComputationNode(
         func=provide_two_values,
         operator_hierarchical_id="SOURCE_ID",
-        operator_name="TEST_SOURCE_OPERATOR",
+        operator_hierarchical_name="TEST_SOURCE_OPERATOR",
     )
     target_node = ComputationNode(
         func=add_two_values,
@@ -161,7 +161,7 @@ async def test_workflow_with_inputs_via_constant_node():
 
     target_node = ComputationNode(
         func=add_two_values,
-        operator_name="sum node",
+        operator_hierarchical_name="sum node",
         operator_hierarchical_id="sum node",
     )
 
@@ -169,7 +169,7 @@ async def test_workflow_with_inputs_via_constant_node():
         sub_nodes=[target_node],
         input_mappings={"first": (target_node, "c"), "second": (target_node, "d")},
         output_mappings={"sum_result": (target_node, "sum")},
-        operator_name="Workflow",
+        operator_hierarchical_name="Workflow",
         operator_hierarchical_id="Workflow",
     )
 
