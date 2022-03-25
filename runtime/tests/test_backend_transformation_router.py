@@ -199,6 +199,8 @@ tr_json_workflow_2 = {
                 "id": str(get_uuid_from_seed("input")),
                 "name": "wf_input",
                 "data_type": "INT",
+                "operator_id": str(get_uuid_from_seed("operator")),
+                "connector_id": str(get_uuid_from_seed("operator input")),
                 "position": {"x": 0, "y": 0},
             }
         ],
@@ -207,6 +209,8 @@ tr_json_workflow_2 = {
                 "id": str(get_uuid_from_seed("output")),
                 "name": "wf_output",
                 "data_type": "INT",
+                "operator_id": str(get_uuid_from_seed("operator")),
+                "connector_id": str(get_uuid_from_seed("operator output")),
                 "position": {"x": 0, "y": 0},
             }
         ],
