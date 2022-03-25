@@ -95,6 +95,14 @@ class IOConnector(IO):
             connector_id=self.connector_id,
         )
 
+    def to_connector(self) -> Connector:
+        return Connector(
+            id=self.id,
+            name=self.name,
+            data_type=self.data_type,
+            position=self.position,
+        )
+
     def to_workflow_input(
         self, operator_id: UUID, connector_name: str
     ) -> WorkflowInput:

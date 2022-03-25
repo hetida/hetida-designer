@@ -376,7 +376,7 @@ class WorkflowContent(BaseModel):
                         or input_connector.data_type == DataType.Any
                         or link_end_connector.data_type == DataType.Any
                     ):
-                        link.start.connector = input_connector
+                        link.start.connector = input_connector.to_connector()
                         link.end.connector = link_end_connector
                         updated_links.append(link)
                 constant = get_constant_by_link_start(
@@ -394,7 +394,7 @@ class WorkflowContent(BaseModel):
                         link.start.connector = constant.to_connector()
                         link.end.connector = link_end_connector
                         updated_links.append(link)
-            else:  # link.end.operator == self_id:
+            else:  # link.end.operator is None:
                 output_connector = get_output_by_link_end(
                     link.end.connector.id, outputs
                 )
@@ -408,7 +408,7 @@ class WorkflowContent(BaseModel):
                         or output_connector.data_type == DataType.Any
                     ):
                         link.start.connector = link_start_connector
-                        link.end.connector = output_connector
+                        link.end.connector = output_connector.to_connector()
                         updated_links.append(link)
 
         # frontend sends link in put-request if input/output is named
