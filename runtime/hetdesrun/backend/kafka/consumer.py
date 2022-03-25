@@ -173,8 +173,8 @@ async def consume_execution_trigger_message(
                     msg = (
                         f"Kafka consumer {kafka_ctx.consumer_id} failed to parse message"
                         f" payload for execution.\n"
-                        f"Validation Error assuming ExecByIdInput was\n{str(e1)}\n."
-                        f"Validation Error assuming ExecLatestByGroupIdInput was\n{str(e2)}\n."
+                        f"Validation Error assuming ExecByIdInput was\n{str(e1)}\n"
+                        f"Validation Error assuming ExecLatestByGroupIdInput was\n{str(e2)}\n"
                         f"Aborting."
                     )
                     kafka_ctx.last_unhandled_exception = e2
