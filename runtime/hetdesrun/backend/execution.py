@@ -61,6 +61,18 @@ class ExecByIdInput(BaseModel):
     )
 
 
+class ExecLatestByGroupIdInput(BaseModel):
+    revision_group_id: UUID
+    wiring: WorkflowWiring
+    run_pure_plot_operators: bool = Field(
+        False, description="Whether pure plot components should be run."
+    )
+    job_id: UUID = Field(
+        default_factory=uuid4,
+        description="Optional job id, that can be used to track an execution job.",
+    )
+
+
 class TrafoExecutionError(Exception):
     pass
 

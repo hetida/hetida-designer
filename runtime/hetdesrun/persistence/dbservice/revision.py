@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional
 import logging
 from uuid import UUID
+import datetime
 
 from sqlalchemy import select, update, delete
 from sqlalchemy.exc import IntegrityError
@@ -256,3 +257,15 @@ def get_all_nested_transformation_revisions(
         )
 
     return nested_transformation_revisions
+
+
+def get_latest_revision_id(revision_group_id: UUID) -> UUID:
+    revision_group_list = select_multiple_transformation_revisions(
+        state=State.RELEASED, revision_group_id=revision_group_id
+    )
+    id_by_released_timestamp: Dict[datetime.datetime, UUID] = {}
+    for revision in revision_group_list:
+        assert isinstance(revision.released_timestamp, datetime.datetime)
+        id_by_released_timestamp[revision.released_timestamp] = revision.id
+    _, latest_revision_id = sorted(id_by_released_timestamp.items(), reverse=True)[0]
+    return latest_revision_id

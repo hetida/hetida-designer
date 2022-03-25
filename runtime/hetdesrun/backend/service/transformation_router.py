@@ -1,6 +1,5 @@
-from typing import List, Optional, Dict
+from typing import List, Optional
 import logging
-import datetime
 
 from uuid import UUID, uuid4
 
@@ -9,6 +8,7 @@ from fastapi import APIRouter, Path, Query, status, HTTPException
 from hetdesrun.utils import Type, State
 
 from hetdesrun.backend.execution import (
+    ExecLatestByGroupIdInput,
     TrafoExecutionNotFoundError,
     TrafoExecutionRuntimeConnectionError,
     TrafoExecutionResultValidationError,
@@ -23,6 +23,7 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
     select_multiple_transformation_revisions,
     update_or_create_single_transformation_revision,
+    get_latest_revision_id
 )
 
 from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError
@@ -382,18 +383,6 @@ async def update_transformation_revision(
     return persisted_transformation_revision
 
 
-def get_latest_revision_id(revision_group_id: UUID) -> UUID:
-    revision_group_list = select_multiple_transformation_revisions(
-        state=State.RELEASED, revision_group_id=revision_group_id
-    )
-    id_by_released_timestamp: Dict[datetime.datetime, UUID] = {}
-    for revision in revision_group_list:
-        assert isinstance(revision.released_timestamp, datetime.datetime)
-        id_by_released_timestamp[revision.released_timestamp] = revision.id
-    _, latest_revision_id = sorted(id_by_released_timestamp.items(), reverse=True)[0]
-    return latest_revision_id
-
-
 @transformation_router.post(
     "/{id}/execute",
     response_model=ExecutionResponseFrontendDto,
@@ -445,7 +434,7 @@ async def execute_transformation_revision_endpoint(
 
 
 @transformation_router.post(
-    "/{revision_group_id}/execute-latest",
+    "/execute-latest",
     response_model=ExecutionResponseFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -458,12 +447,7 @@ async def execute_transformation_revision_endpoint(
     },
 )
 async def execute_latest_transformation_revision_endpoint(
-    revision_group_id: UUID,
-    wiring: WorkflowWiring,
-    run_pure_plot_operators: bool = Query(
-        False, description="Set to True by frontend requests to generate plots"
-    ),
-    job_id: Optional[UUID] = None,
+    exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
 ) -> ExecutionResponseFrontendDto:
     """Execute the latest transformation revision of a revision group.
 
@@ -476,17 +460,18 @@ async def execute_latest_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    id = get_latest_revision_id(revision_group_id)
+    # pylint: disable=W0622
+    id = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
 
-    if job_id is None:
-        job_id = uuid4()
+    if exec_latest_by_group_id_input.job_id is None:
+        exec_latest_by_group_id_input.job_id = uuid4()
 
     try:
         return await execute_transformation_revision(
             id=id,
-            wiring=wiring,
-            run_pure_plot_operators=run_pure_plot_operators,
-            job_id=job_id,
+            wiring=exec_latest_by_group_id_input.wiring,
+            run_pure_plot_operators=exec_latest_by_group_id_input.run_pure_plot_operators,
+            job_id=exec_latest_by_group_id_input.job_id,
         )
     except TrafoExecutionNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e

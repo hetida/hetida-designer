@@ -4,15 +4,21 @@ from functools import cache
 from typing import Coroutine, Optional
 from uuid import uuid4
 
+from pydantic import ValidationError
+
 import aiokafka
+
 from hetdesrun.backend.execution import (
     ExecByIdInput,
+    ExecLatestByGroupIdInput,
     TrafoExecutionError,
     execute_transformation_revision,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.webservice.config import runtime_config
-from pydantic import ValidationError
+from hetdesrun.persistence.dbservice.revision import (
+    get_latest_revision_id,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +111,7 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
     async def _start_producer(self) -> None:
         await self.producer.start()
 
-    async def start(self):
+    async def start(self) -> None:
         await self._start_producer()
         await self._start_consumer()
 
@@ -113,10 +119,10 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
         self.consumer_task.cancel()
         await self.consumer.stop()
 
-    async def _stop_producer(self):
+    async def _stop_producer(self) -> None:
         await self.producer.stop()
 
-    async def stop(self):
+    async def stop(self) -> None:
         await self._stop_consumer()
         await self._stop_producer()
 
@@ -150,14 +156,30 @@ async def consume_execution_trigger_message(
             )
             try:
                 exec_by_id_input = ExecByIdInput.parse_raw(msg.value.decode("utf8"))
-            except ValidationError as e:
-                msg = (
-                    f"Kafka consumer {kafka_ctx.consumer_id} failed to parse message"
-                    f" payload for execution. Validation Error was {str(e)}. Aborting."
-                )
-                kafka_ctx.last_unhandled_exception = e
-                logger.error(msg)
-                continue
+            except ValidationError as e1:
+                try:
+                    exec_latest_by_group_id_input = ExecLatestByGroupIdInput.parse_raw(
+                        msg.value.decode("utf8")
+                    )
+                    exec_by_id_input = ExecByIdInput(
+                        id=get_latest_revision_id(
+                            exec_latest_by_group_id_input.revision_group_id
+                        ),
+                        wiring=exec_latest_by_group_id_input.wiring,
+                        run_pure_plot_parameters=exec_latest_by_group_id_input.run_pure_plot_operators,
+                        job_id=exec_latest_by_group_id_input.job_id,
+                    )
+                except ValidationError as e2:
+                    msg = (
+                        f"Kafka consumer {kafka_ctx.consumer_id} failed to parse message"
+                        f" payload for execution.\n"
+                        f"Validation Error assuming ExecByIdInput was\n{str(e1)}\n."
+                        f"Validation Error assuming ExecLatestByGroupIdInput was\n{str(e2)}\n."
+                        f"Aborting."
+                    )
+                    kafka_ctx.last_unhandled_exception = e2
+                    logger.error(msg)
+                    continue
             logger.info(
                 "Start execution of trafo rev %s with job id %s from Kafka consumer %s",
                 str(exec_by_id_input.id),
