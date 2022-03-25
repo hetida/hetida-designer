@@ -630,7 +630,7 @@ async def test_execute_for_separate_runtime_container(async_test_client, clean_t
                 with mock.patch(
                     "hetdesrun.backend.execution.httpx.AsyncClient.post",
                     return_value=resp_mock,
-                ):
+                ) as mocked_post:
                     tr_component_1 = TransformationRevision(**tr_json_component_1)
                     tr_component_1.content = generate_code(tr_component_1.to_code_body())
                     store_single_transformation_revision(tr_component_1)
@@ -657,6 +657,7 @@ async def test_execute_for_separate_runtime_container(async_test_client, clean_t
                     assert UUID(resp_data["job_id"]) == UUID(
                         "1270547c-b224-461d-9387-e9d9d465bbe1"
                     )
+                    mocked_post.assert_called_once()
 
 
 @pytest.mark.asyncio
