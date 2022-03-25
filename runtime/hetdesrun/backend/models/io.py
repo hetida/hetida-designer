@@ -10,7 +10,13 @@ from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.models.util import valid_python_identifier
 from hetdesrun.models.component import ComponentInput, ComponentOutput
 
-from hetdesrun.persistence.models.io import Connector, Position, IO, Constant
+from hetdesrun.persistence.models.io import (
+    Connector,
+    Position,
+    IO,
+    IOConnector,
+    Constant,
+)
 
 
 class WorkflowIoFrontendDto(BaseModel):
@@ -31,11 +37,13 @@ class WorkflowIoFrontendDto(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_connector(self) -> Connector:
-        return Connector(
+    def to_io_connector(self) -> IOConnector:
+        return IOConnector(
             id=self.id,
             name=self.name,
             data_type=self.type,
+            operator_id=self.operator,
+            connector_id=self.connector,
             position=Position(x=self.pos_x, y=self.pos_y),
         )
 
@@ -43,6 +51,8 @@ class WorkflowIoFrontendDto(BaseModel):
         return Constant(
             id=self.id,
             data_type=self.type,
+            operator_id=self.operator,
+            connector_id=self.connector,
             position=Position(x=self.pos_x, y=self.pos_y),
             # pylint: disable=unsubscriptable-object
             value=self.constant_value["value"]
@@ -56,6 +66,8 @@ class WorkflowIoFrontendDto(BaseModel):
             id=self.id,
             name=self.name,
             data_type=self.type,
+            operator_id=self.operator,
+            connector_id=self.connector,
         )
 
     @classmethod

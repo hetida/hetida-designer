@@ -20,7 +20,12 @@ from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 
-from hetdesrun.persistence.models.io import IOInterface, Position, Connector
+from hetdesrun.persistence.models.io import (
+    IOInterface,
+    Position,
+    Connector,
+    IOConnector,
+)
 from hetdesrun.persistence.models.link import Vertex, Link
 from hetdesrun.persistence.models.operator import Operator, NonEmptyStr
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -362,8 +367,14 @@ class TransformationRevision(BaseModel):
             state=self.state,
             type=Type.WORKFLOW,
             content=WorkflowContent(
-                inputs=operator.inputs,
-                outputs=operator.outputs,
+                inputs=[
+                    IOConnector.from_connector(input_connector, operator.id)
+                    for input_connector in operator.inputs
+                ],
+                outputs=[
+                    IOConnector.from_connector(output_connector, operator.id)
+                    for output_connector in operator.outputs
+                ],
                 operators=[operator],
                 links=[
                     Link(
@@ -381,8 +392,14 @@ class TransformationRevision(BaseModel):
                 ],
             ),
             io_interface=IOInterface(
-                inputs=[input.to_io() for input in operator.inputs],
-                outputs=[output.to_io() for output in operator.outputs],
+                inputs=[
+                    input_connector.to_io(operator.id)
+                    for input_connector in operator.inputs
+                ],
+                outputs=[
+                    output_connector.to_io(operator.id)
+                    for output_connector in operator.outputs
+                ],
             ),
             test_wiring=self.test_wiring,
         )

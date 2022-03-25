@@ -16,7 +16,7 @@ from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import names_unique
 from hetdesrun.models.workflow import WorkflowNode, ComponentNode
 
-from hetdesrun.persistence.models.io import Connector, Constant, Position
+from hetdesrun.persistence.models.io import Connector, IOConnector, Constant, Position
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import NonEmptyStr, Operator
 
@@ -77,8 +77,8 @@ def get_link_by_input_connector(
 
 def get_input_by_link_start(
     link_start_connector_id: UUID,
-    inputs: List[Connector],
-) -> Optional[Connector]:
+    inputs: List[IOConnector],
+) -> Optional[IOConnector]:
 
     for input_connector in inputs:
         if input_connector.id == link_start_connector_id:
@@ -101,8 +101,8 @@ def get_constant_by_link_start(
 
 def get_output_by_link_end(
     link_end_connector_id: UUID,
-    outputs: List[Connector],
-) -> Optional[Connector]:
+    outputs: List[IOConnector],
+) -> Optional[IOConnector]:
 
     for output_connector in outputs:
         if output_connector.id == link_end_connector_id:
@@ -114,7 +114,7 @@ def get_output_by_link_end(
 class WorkflowContent(BaseModel):
     operators: List[Operator] = []
     links: List[Link] = Field([], description="Links may not form loops.")
-    inputs: List[Connector] = Field(
+    inputs: List[IOConnector] = Field(
         [],
         description=(
             "Workflow inputs are determined by operator inputs, "
@@ -122,7 +122,7 @@ class WorkflowContent(BaseModel):
             "If input names are set they must be unique."
         ),
     )
-    outputs: List[Connector] = Field(
+    outputs: List[IOConnector] = Field(
         [],
         description=(
             "Workflow outputs are determined by operator outputs, "
@@ -255,8 +255,8 @@ class WorkflowContent(BaseModel):
     # pylint: disable=no-self-argument,no-self-use
     @validator("inputs", each_item=False)
     def determine_inputs_from_operators_and_links(
-        cls, inputs: List[Connector], values: dict
-    ) -> List[Connector]:
+        cls, inputs: List[IOConnector], values: dict
+    ) -> List[IOConnector]:
 
         try:
             operators = values["operators"]
@@ -273,8 +273,10 @@ class WorkflowContent(BaseModel):
                 link = get_link_by_input_connector(operator.id, connector.id, links)
                 if link is None:
                     updated_inputs.append(
-                        Connector(
+                        IOConnector(
                             data_type=connector.data_type,
+                            operator_id=operator.id,
+                            connector_id=connector.id,
                             position=Position(x=0, y=0),
                         )
                     )
@@ -291,8 +293,8 @@ class WorkflowContent(BaseModel):
     # pylint: disable=no-self-argument,no-self-use
     @validator("outputs", each_item=False)
     def determine_outputs_from_operators_and_links(
-        cls, outputs: List[Connector], values: dict
-    ) -> List[Connector]:
+        cls, outputs: List[IOConnector], values: dict
+    ) -> List[IOConnector]:
 
         try:
             operators = values["operators"]
@@ -309,8 +311,10 @@ class WorkflowContent(BaseModel):
                 link = get_link_by_output_connector(operator.id, connector.id, links)
                 if link is None:
                     updated_outputs.append(
-                        Connector(
+                        IOConnector(
                             data_type=connector.data_type,
+                            operator_id=operator.id,
+                            connector_id=connector.id,
                             position=Position(x=0, y=0),
                         )
                     )

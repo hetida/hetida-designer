@@ -61,8 +61,39 @@ class Position(BaseModel):
 class Connector(IO):
     position: Position
 
+    def to_io(self, operator_id: UUID) -> IO:
+        return IO(
+            name=self.name,
+            data_type=self.data_type,
+            operator_id=operator_id,
+            connector_id=self.id,
+        )
+
+    @classmethod
+    def from_io(cls, io: IO, pos_x: int = 0, pos_y: int = 0) -> "Connector":
+        return Connector(
+            id=io.id,
+            name=io.name,
+            data_type=io.data_type,
+            position=Position(x=pos_x, y=pos_y),
+        )
+
+
+class IOConnector(IO):
+    operator_id: UUID
+    connector_id: UUID
+    # operator_name: str
+    # connector_name: str
+    position: Position
+
     def to_io(self) -> IO:
-        return IO(id=self.id, name=self.name, data_type=self.data_type)
+        return IO(
+            id=self.id,
+            name=self.name,
+            data_type=self.data_type,
+            operator_id=self.operator_id,
+            connector_id=self.connector_id,
+        )
 
     def to_workflow_input(
         self, operator_id: UUID, connector_name: str
@@ -89,16 +120,17 @@ class Connector(IO):
         )
 
     @classmethod
-    def from_io(cls, io: IO, pos_x: int = 0, pos_y: int = 0) -> "Connector":
-        return Connector(
-            id=io.id,
-            name=io.name,
-            data_type=io.data_type,
-            position=Position(x=pos_x, y=pos_y),
+    def from_connector(cls, connector: Connector, operator_id: UUID) -> "IOConnector":
+        return IOConnector(
+            name=connector.name,
+            data_type=connector.data_type,
+            operator_id=operator_id,
+            connector_id=connector.id,
+            position=Position(x=connector.position.x, y=connector.position.y),
         )
 
 
-class Constant(Connector):
+class Constant(IOConnector):
     """Represents a fixed workflow input value
 
     Note: The name of the underlying connector must be an empty string.
