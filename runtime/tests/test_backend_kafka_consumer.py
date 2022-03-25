@@ -1,5 +1,6 @@
 import asyncio
 from unittest import mock
+from uuid import UUID
 
 import pytest
 
@@ -67,7 +68,7 @@ exec_by_id_input_msg = r"""
 
 exec_latest_by_group_id_input_msg = r"""
 {
-    "revision_group_id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89",
+    "revision_group_id": "d0d40c45-aef0-424a-a8f4-b16cd5f8b129",
     "run_pure_plot_operators": false,
     "wiring": {
         "input_wirings": [
@@ -226,19 +227,24 @@ async def test_consumer_successful_exec_by_id_input():
 
 @pytest.mark.asyncio
 async def test_consumer_successful_exec_latest_by_group_id_input():
-    results, kafka_ctx, mocked_producer = await run_kafka_msg(
-        exec_latest_by_group_id_input_msg
-    )
+    with mock.patch(
+        "hetdesrun.backend.kafka.consumer.get_latest_revision_id",
+        return_value = UUID("79ce1eb1-3ef8-4c74-9114-c856fd88dc89")
+    ) as mocked_get_latest_id:
 
-    assert kafka_ctx.last_unhandled_exception is None
+        results, kafka_ctx, mocked_producer = await run_kafka_msg(
+            exec_latest_by_group_id_input_msg
+        )
 
-    # check result message is shipped:
-    mocked_producer.send_and_wait.assert_called_once()
-    mocked_producer.send_and_wait.assert_called_with(
-        runtime_config.hd_kafka_response_topic,
-        key=None,
-        value=exec_result.json().encode("utf8"),
-    )
+        assert kafka_ctx.last_unhandled_exception is None
+
+        # check result message is shipped:
+        mocked_producer.send_and_wait.assert_called_once()
+        mocked_producer.send_and_wait.assert_called_with(
+            runtime_config.hd_kafka_response_topic,
+            key=None,
+            value=exec_result.json().encode("utf8"),
+        )
 
 
 @pytest.mark.asyncio
