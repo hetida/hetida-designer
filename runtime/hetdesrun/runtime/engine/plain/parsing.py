@@ -55,7 +55,7 @@ def parse_workflow_input(
     code_module_dict: Dict[str, CodeModule] = {str(c.uuid): c for c in code_modules}
 
     workflow = recursively_parse_workflow_node(
-        workflow_node, component_dict, code_module_dict, path_prefix=""
+        workflow_node, component_dict, code_module_dict, name_prefix="", id_prefix=""
     )
 
     return workflow
@@ -100,12 +100,16 @@ def parse_component_node(
     component_node: ComponentNode,
     component_dict: Dict[str, ComponentRevision],
     code_module_dict: Dict[str, CodeModule],
-    path_prefix: str,
+    name_prefix: str,
+    id_prefix: str,
 ) -> ComputationNode:
     """Parse component node into a ComputationNode
 
     Includes importing and loading of component function
     """
+    component_node_name = (
+        component_node.name if component_node.name is not None else "UNKNOWN"
+    )
     try:
         comp_rev = component_dict[component_node.component_uuid]
     except KeyError as e:
@@ -123,11 +127,11 @@ def parse_component_node(
     return ComputationNode(
         func=component_func,
         component_id=component_node.component_uuid,
-        operator_name=component_node.name
-        if component_node.name is not None
-        else "UNKNOWN",
+        operator_hierarchical_name=name_prefix + " : " + component_node_name
+        if name_prefix != ""
+        else component_node_name,
         inputs=None,  # inputs are added later by the surrounding workflow
-        operator_hierarchical_id=path_prefix + ":" + component_node.id,
+        operator_hierarchical_id=id_prefix + " : " + component_node.id,
     )
 
 
@@ -226,13 +230,15 @@ def recursively_parse_workflow_node(
     node: WorkflowNode,
     component_dict: Dict[str, ComponentRevision],
     code_module_dict: Dict[str, CodeModule],
-    path_prefix: str = "",
+    name_prefix: str = "",
+    id_prefix: str = "",
 ) -> Workflow:
     """Depth first recursive parsing of workflow nodes
 
-    To simplify log analysis ids are set hierarchically (":" seperated) for nested
+    To simplify log analysis names and ids are set hierarchically (" : " seperated) for nested
     workflows.
     """
+    node_name = node.name if node.name is not None else "UNKNOWN"
     new_sub_nodes: Dict[str, Node] = {}
     for sub_input_node in node.sub_nodes:
         new_sub_node: Node
@@ -241,12 +247,19 @@ def recursively_parse_workflow_node(
                 sub_input_node,
                 component_dict,
                 code_module_dict,
-                path_prefix=path_prefix + ":" + node.id,
+                name_prefix=name_prefix + " : " + node_name
+                if name_prefix != ""
+                else node_name,
+                id_prefix=id_prefix + " : " + node.id if id_prefix != "" else node.id,
             )
         else:  # ComponentNode
             assert isinstance(sub_input_node, ComponentNode)  # hint for mypy # nosec
             new_sub_node = parse_component_node(
-                sub_input_node, component_dict, code_module_dict, path_prefix
+                sub_input_node,
+                component_dict,
+                code_module_dict,
+                name_prefix + " : " + node_name if name_prefix != "" else node_name,
+                id_prefix + " : " + node.id if id_prefix != "" else node.id,
             )
         new_sub_nodes[str(sub_input_node.id)] = new_sub_node
 
@@ -273,8 +286,10 @@ def recursively_parse_workflow_node(
         sub_nodes=list(new_sub_nodes.values()),
         input_mappings=input_mappings,
         output_mappings=output_mappings,
-        operator_hierarchical_id=path_prefix + ":" + node.id,
-        operator_name=node.name if node.name is not None else "UNKNOWN",
+        operator_hierarchical_id=id_prefix + " : " + node.id,
+        operator_hierarchical_name=name_prefix + " : " + node_name
+        if name_prefix != ""
+        else node_name,
     )
 
     # provide constant data
