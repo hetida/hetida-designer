@@ -16,6 +16,8 @@ from hetdesrun.utils import get_uuid_from_seed
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 
+from hetdesrun.exportimport.importing import load_json
+
 
 client = TestClient(app)
 
@@ -130,63 +132,10 @@ dto_json_wiring = {
     ],
     "outputWirings": [],
 }
-valid_component_dto_dict = {
-    "category": "Arithmetic",
-    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"a": DataType.Any, "b": DataType.Integer},\n    outputs={"modulo": DataType.Any},\n    component_name="Modulo",\n    description="Calculates the modulo to some given b",\n    category="Arithmetic",\n    uuid="ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",\n    group_id="ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",\n    tag="1.0.0"\n)\ndef main(*, a, b):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"modulo": a % b}\n',
-    "description": "Calculates the modulo to some given b",
-    "groupId": "ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",
-    "id": "ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",
-    "inputs": [
-        {
-            "id": "1aa579e3-e568-326c-0768-72c725844828",
-            "name": "a",
-            "posX": 0,
-            "posY": 0,
-            "type": "ANY",
-        },
-        {
-            "id": "6198074e-18fa-0ba1-13a7-8d77b7f2c8f3",
-            "name": "b",
-            "posX": 0,
-            "posY": 0,
-            "type": "INT",
-        },
-    ],
-    "name": "Modulo",
-    "outputs": [
-        {
-            "id": "f309d0e5-6f20-2edb-c7be-13f84882af93",
-            "name": "modulo",
-            "posX": 0,
-            "posY": 0,
-            "type": "ANY",
-        }
-    ],
-    "state": "RELEASED",
-    "tag": "1.0.0",
-    "type": "COMPONENT",
-    "wirings": [
-        {
-            "id": "8e7d06f4-1085-4243-bff7-18991d377923",
-            "name": "STANDARD-WIRING",
-            "inputWirings": [
-                {
-                    "id": "77886042-28e9-4640-9405-9c3d1d61a08c",
-                    "workflowInputName": "a",
-                    "adapterId": "direct_provisioning",
-                    "filters": {"value": "27"},
-                },
-                {
-                    "id": "f64e6718-2d15-4c1a-828f-65da48fe56a2",
-                    "workflowInputName": "b",
-                    "adapterId": "direct_provisioning",
-                    "filters": {"value": "4"},
-                },
-            ],
-            "outputWirings": [],
-        }
-    ],
-}
+
+valid_component_dto_dict = load_json(
+    "./transformations/components/arithmetic/modulo_100_ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f.json"
+)
 
 
 @pytest.mark.asyncio

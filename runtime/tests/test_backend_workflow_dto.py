@@ -1108,7 +1108,7 @@ def test_io_to_io():
 
 
 def test_io_to_connector():
-    connector = WorkflowIoFrontendDto(**valid_input_with_name).to_connector()
+    connector = WorkflowIoFrontendDto(**valid_input_with_name).to_io_connector()
 
     assert str(connector.id) == valid_input_with_name["id"]
     assert connector.name == valid_input_with_name["name"]
