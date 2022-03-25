@@ -8,7 +8,7 @@ from posixpath import join as posix_urljoin
 import json
 from uuid import UUID
 
-from hetdesrun.utils import State, get_uuid_from_seed
+from hetdesrun.utils import get_uuid_from_seed
 
 from hetdesrun.webservice.application import app
 from hetdesrun.webservice.config import runtime_config
@@ -23,6 +23,8 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
+
+from hetdesrun.backend.execution import ExecLatestByGroupIdInput
 
 from hetdesrun.backend.service.transformation_router import generate_code
 
@@ -682,14 +684,21 @@ async def test_execute_latest_for_transformation_revision(
             tr_component_1_new_revision.release()
             store_single_transformation_revision(tr_component_1_new_revision)
 
+            exec_latest_by_group_id_input = ExecLatestByGroupIdInput(
+                revision_group_id=tr_component_1.revision_group_id,
+                wiring = tr_component_1.test_wiring,
+                run_pure_plot_parameters = False,
+                job_id = UUID(
+                    "1270547c-b224-461d-9387-e9d9d465bbe1"
+                )
+            )
+
             async with async_test_client as ac:
                 response = await ac.post(
                     posix_urljoin(
-                        "/api/transformations/",
-                        str(tr_component_1.revision_group_id),
-                        "execute-latest?job_id=1270547c-b224-461d-9387-e9d9d465bbe1",
+                        "/api/transformations/execute-latest",
                     ),
-                    json=json.loads(tr_component_1.test_wiring.json()),
+                    json=json.loads(exec_latest_by_group_id_input.json()),
                 )
 
             assert response.status_code == 200
