@@ -9,6 +9,7 @@ from hetdesrun.backend.models.workflow import (
     WorkflowLinkFrontendDto,
     WorkflowRevisionFrontendDto,
     position_from_input_connector_id,
+    get_operator_and_connector_name,
 )
 
 from hetdesrun.backend.models.wiring import InputWiringFrontendDto, WiringFrontendDto
@@ -1107,47 +1108,6 @@ def test_io_to_io():
     assert io.data_type == valid_input_with_name["type"]
 
 
-def test_io_to_connector():
-    connector = WorkflowIoFrontendDto(**valid_input_with_name).to_io_connector()
-
-    assert str(connector.id) == valid_input_with_name["id"]
-    assert connector.name == valid_input_with_name["name"]
-    assert connector.data_type == valid_input_with_name["type"]
-    assert connector.position.x == valid_input_with_name["posX"]
-    assert connector.position.y == valid_input_with_name["posY"]
-
-
-def test_to_constant():
-
-    constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant()
-
-    assert str(constant.id) == valid_input_without_name["id"]
-    assert constant.data_type == valid_input_without_name["type"]
-    assert constant.position.x == valid_input_without_name["posX"]
-    assert constant.position.y == valid_input_without_name["posY"]
-
-    assert constant.value == valid_input_without_name["constantValue"]["value"]
-
-
-def test_from_constant():
-    constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant()
-    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_constant(
-        constant,
-        operator_id=UUID(valid_input_without_name["operator"]),
-        connector_id=UUID(valid_input_without_name["connector"]),
-    )
-
-    assert str(io_dto.id) == valid_input_without_name["id"]
-    assert io_dto.name == None
-    assert io_dto.type == valid_input_without_name["type"]
-    assert io_dto.pos_x == valid_input_without_name["posX"]
-    assert io_dto.pos_y == valid_input_without_name["posY"]
-    assert str(io_dto.operator) == valid_input_without_name["operator"]
-    assert str(io_dto.connector) == valid_input_without_name["connector"]
-    assert io_dto.constant == valid_input_without_name["constant"]
-    assert io_dto.constant_value == valid_input_without_name["constantValue"]
-
-
 def test_connector_to_connector():
     valid_connector = valid_operator["inputs"][0]
     connector = ConnectorFrontendDto(**valid_connector).to_connector()
@@ -1206,6 +1166,78 @@ def test_from_operator():
     assert len(operator_dto.outputs) == len(valid_operator["outputs"])
     assert operator_dto.pos_x == valid_operator["posX"]
     assert operator_dto.pos_y == valid_operator["posY"]
+
+
+def test_io_to_io_connector():
+    operators = [
+        WorkflowOperatorFrontendDto(**operator).to_operator()
+        for operator in valid_workflow_example_iso_forest["operators"]
+    ]
+    connector = WorkflowIoFrontendDto(**valid_input_with_name).to_io_connector(
+        *get_operator_and_connector_name(
+            valid_input_with_name["operator"],
+            valid_input_with_name["connector"],
+            operators,
+        )
+    )
+
+    assert str(connector.id) == valid_input_with_name["id"]
+    assert connector.name == valid_input_with_name["name"]
+    assert connector.data_type == valid_input_with_name["type"]
+    assert connector.position.x == valid_input_with_name["posX"]
+    assert connector.position.y == valid_input_with_name["posY"]
+
+
+def test_to_constant():
+    operators = [
+        WorkflowOperatorFrontendDto(**operator).to_operator()
+        for operator in valid_workflow_example_iso_forest["operators"]
+    ]
+    
+    constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant(
+        *get_operator_and_connector_name(
+            valid_input_with_name["operator"],
+            valid_input_with_name["connector"],
+            operators,
+        )
+    )
+
+    assert str(constant.id) == valid_input_without_name["id"]
+    assert constant.data_type == valid_input_without_name["type"]
+    assert constant.position.x == valid_input_without_name["posX"]
+    assert constant.position.y == valid_input_without_name["posY"]
+
+    assert constant.value == valid_input_without_name["constantValue"]["value"]
+
+
+def test_from_constant():
+    operators = [
+        WorkflowOperatorFrontendDto(**operator).to_operator()
+        for operator in valid_workflow_example_iso_forest["operators"]
+    ]
+    
+    constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant(
+        *get_operator_and_connector_name(
+            valid_input_with_name["operator"],
+            valid_input_with_name["connector"],
+            operators,
+        )
+    )
+    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_constant(
+        constant,
+        operator_id=UUID(valid_input_without_name["operator"]),
+        connector_id=UUID(valid_input_without_name["connector"]),
+    )
+
+    assert str(io_dto.id) == valid_input_without_name["id"]
+    assert io_dto.name == None
+    assert io_dto.type == valid_input_without_name["type"]
+    assert io_dto.pos_x == valid_input_without_name["posX"]
+    assert io_dto.pos_y == valid_input_without_name["posY"]
+    assert str(io_dto.operator) == valid_input_without_name["operator"]
+    assert str(io_dto.connector) == valid_input_without_name["connector"]
+    assert io_dto.constant == valid_input_without_name["constant"]
+    assert io_dto.constant_value == valid_input_without_name["constantValue"]
 
 
 def test_to_input_wiring():
