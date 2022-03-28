@@ -61,12 +61,10 @@ class Position(BaseModel):
 class Connector(IO):
     position: Position
 
-    def to_io(self, operator_id: UUID) -> IO:
+    def to_io(self) -> IO:
         return IO(
             name=self.name,
             data_type=self.data_type,
-            operator_id=operator_id,
-            connector_id=self.id,
         )
 
     @classmethod
@@ -134,7 +132,7 @@ class IOConnector(IO):
             data_type=connector.data_type,
             operator_id=operator_id,
             connector_id=connector.id,
-            position=Position(x=connector.position.x, y=connector.position.y),
+            position=Position(x=0, y=0),
         )
 
 
