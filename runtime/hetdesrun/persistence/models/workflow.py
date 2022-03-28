@@ -16,7 +16,7 @@ from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import names_unique
 from hetdesrun.models.workflow import WorkflowNode, ComponentNode
 
-from hetdesrun.persistence.models.io import Connector, IOConnector, Constant, Position
+from hetdesrun.persistence.models.io import Connector, IOConnector, Constant
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import NonEmptyStr, Operator
 
@@ -272,7 +272,9 @@ class WorkflowContent(BaseModel):
             for connector in operator.inputs:
                 link = get_link_by_input_connector(operator.id, connector.id, links)
                 if link is None:
-                    updated_inputs.append(IOConnector.from_connector(connector,operator.id))
+                    updated_inputs.append(
+                        IOConnector.from_connector(connector, operator.id)
+                    )
                 else:
                     input_connector = get_input_by_link_start(
                         link.start.connector.id, inputs
@@ -302,14 +304,16 @@ class WorkflowContent(BaseModel):
             for connector in operator.outputs:
                 link = get_link_by_output_connector(operator.id, connector.id, links)
                 if link is None:
-                    updated_outputs.append(IOConnector.from_connector(connector,operator.id))
+                    updated_outputs.append(
+                        IOConnector.from_connector(connector, operator.id)
+                    )
                 else:
                     output_connector = get_output_by_link_end(
                         link.end.connector.id, outputs
                     )
                     if output_connector is not None:
                         updated_outputs.append(output_connector)
-        
+
         return updated_outputs
 
     # pylint: disable=no-self-argument,no-self-use
