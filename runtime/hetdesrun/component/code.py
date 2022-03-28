@@ -38,7 +38,7 @@ function_definition_template: str = """\
     group_id={group_id},
     tag={tag}
 )
-def main({params_list}):
+{definition} main({params_list}):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
 """
@@ -62,6 +62,7 @@ def generate_function_header(
     uuid: str,
     group_id: str,
     tag: str,
+    definition: str="def",
 ) -> str:
     """Generate entrypoint function header from the inputs and their types"""
     param_list_str = (
@@ -93,6 +94,7 @@ def generate_function_header(
         group_id='"' + sanitize(group_id) + '"',
         tag='"' + sanitize(tag) + '"',
         params_list=param_list_str,
+        definition=definition,
     )
 
 
@@ -105,6 +107,7 @@ def generate_complete_component_module(
     uuid: str,
     group_id: str,
     tag: str,
+    definition: str="def",
 ) -> str:
     return (
         imports_template
@@ -118,6 +121,7 @@ def generate_complete_component_module(
             uuid,
             group_id,
             tag,
+            definition,
         )
         + "\n"
         + function_body_template
@@ -156,6 +160,7 @@ def update_code(
             uuid=uuid,
             group_id=group_id,
             tag=tag,
+            definition="def",
         )
 
     new_function_header = generate_function_header(
@@ -167,6 +172,7 @@ def update_code(
         uuid=uuid,
         group_id=group_id,
         tag=tag,
+        definition="def",
     )
 
     try:
@@ -191,6 +197,19 @@ def update_code(
     # pylint: disable=unused-variable
     old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****", 1)
 
+    if old_func_def.split("\n")[-3].startswith("async def"):
+        new_function_header = generate_function_header(
+            input_type_dict,
+            output_type_dict,
+            component_name=component_name,
+            description=description,
+            category=category,
+            uuid=uuid,
+            group_id=group_id,
+            tag=tag,
+            definition="async def",
+        )
+
     return start + new_function_header + end
 
 
@@ -204,6 +223,22 @@ example_code = (
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "1.0.0",
+        "def",
+    )
+    + """\n    return {"z": x+y}"""
+)
+
+example_code_async = (
+    generate_complete_component_module(
+        {"x": DataType.Float, "y": DataType.Float},
+        {"z": DataType.Float},
+        "Example Component",
+        "An example for code generation",
+        "Examples",
+        "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        "1.0.0",
+        "async def",
     )
     + """\n    return {"z": x+y}"""
 )
