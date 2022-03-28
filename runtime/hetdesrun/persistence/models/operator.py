@@ -25,8 +25,6 @@ class Operator(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     revision_group_id: UUID = Field(default_factory=uuid4)
     name: NonEmptyStr
-    description: str
-    category: str
     type: Type
     state: State
     version_tag: NonEmptyStr

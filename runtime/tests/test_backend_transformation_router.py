@@ -223,8 +223,6 @@ tr_json_workflow_2 = {
                 "id": str(get_uuid_from_seed("operator")),
                 "revision_group_id": str(get_uuid_from_seed("group of component 1")),
                 "name": "operator",
-                "description": "",
-                "category": "category",
                 "type": "COMPONENT",
                 "state": "RELEASED",
                 "version_tag": "1.0.0",
