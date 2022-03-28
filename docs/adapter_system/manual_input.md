@@ -22,6 +22,11 @@ This dialog additionally allows to import a json or csv file from disk via click
 
 i.e. index: value pairs.
 
+Having a pandas series variable `s` (e.g. in a jupyter notebook) you can obtain this format by calling the `to_json` method with `date_format="iso"`:
+```python
+print(s.to_json(date_format="iso", indent=2))
+```
+
 ### DATAFRAME JSON
 
 ```json
@@ -35,6 +40,10 @@ i.e. index: value pairs.
         "2019-08-02T11:33:41.000Z": 2.8
     }
 }
+```
+Having a pandas dataframe variable `df` (e.g. in a jupyter notebook) you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
+```python
+print(df.to_json(orient="columns", date_format="iso", indent=2))
 ```
 
 ## CSV Formats
