@@ -82,17 +82,19 @@ def position_from_output_connector_id(
     return [0, -200]
 
 
-def get_name_for_constant_input(
+def get_operator_and_connector_name(
     operator_id: UUID, connector_id: UUID, operators: List[WorkflowOperatorFrontendDto]
-) -> str:
-    name: str = "name"
+) -> Tuple[str,str]:
+    operator_name: str = "operator name"
+    connector_name: str = "connector_name"
     for operator in operators:
         if operator.id == operator_id:
+            operator_name=operator.name
             for connector in operator.inputs:
                 if connector.id == connector_id:
                     assert isinstance(connector.name, str)  # hint for mypy
-                    name = connector.name
-    return name
+                    connector_name = connector.name
+    return operator_name, connector_name
 
 
 def is_link_start(
@@ -703,13 +705,27 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def to_workflow_content(self) -> WorkflowContent:
         return WorkflowContent(
             inputs=[
-                input.to_io_connector()
+                input.to_io_connector(
+                    *get_operator_and_connector_name(
+                        input.operator, input.connector, self.operators
+                    )
+                )
                 for input in self.inputs
                 if not input.constant and input.name is not None
             ],
-            constants=[input.to_constant() for input in self.inputs if input.constant],
+            constants=[
+                input.to_constant(
+                    *get_operator_and_connector_name(
+                        input.operator, input.connector, self.operators
+                    )
+                ) for input in self.inputs if input.constant
+            ],
             outputs=[
-                output.to_io_connector()
+                output.to_io_connector(
+                    *get_operator_and_connector_name(
+                        output.operator, output.connector, self.operators
+                    )
+                )
                 for output in self.outputs
                 if output.name is not None
             ],
