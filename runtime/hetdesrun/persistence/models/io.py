@@ -82,7 +82,7 @@ class IOConnector(IO):
     connector_id: UUID
     operator_name: str
     connector_name: str
-    position: Position
+    position: Position = Position(x=0, y=0)
 
     def to_io(self) -> IO:
         return IO(
@@ -126,12 +126,16 @@ class IOConnector(IO):
         )
 
     @classmethod
-    def from_connector(cls, connector: Connector, operator_id: UUID) -> "IOConnector":
+    def from_connector(
+        cls, connector: Connector, operator_id: UUID, operator_name: str
+    ) -> "IOConnector":
         return IOConnector(
             name=connector.name,
             data_type=connector.data_type,
             operator_id=operator_id,
             connector_id=connector.id,
+            operator_name=operator_name,
+            connector_name=connector.name,
             position=Position(x=0, y=0),
         )
 
