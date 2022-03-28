@@ -90,8 +90,8 @@ def generate_function_header(
         component_name='"' + sanitize(component_name) + '"',
         description='"' + sanitize(description) + '"',
         category='"' + sanitize(category) + '"',
-        uuid='"' + sanitize(uuid) + '"',
-        group_id='"' + sanitize(group_id) + '"',
+        uuid='"' + uuid + '"',
+        group_id='"' + group_id + '"',
         tag='"' + sanitize(tag) + '"',
         params_list=param_list_str,
     )
