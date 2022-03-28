@@ -1,5 +1,5 @@
 from typing import List
-from uuid import UUID, uuid4
+from uuid import UUID
 
 # pylint: disable=no-name-in-module
 from pydantic import Field, root_validator
@@ -22,6 +22,7 @@ class WorkflowOperatorFrontendDto(BasicInformation):
     pos_y: int = 0
 
     @root_validator()
+    # pylint: disable=no-self-argument,no-self-use
     def is_not_draft(cls, values: dict) -> dict:
         if values["state"] == State.DRAFT:
             raise ValueError(

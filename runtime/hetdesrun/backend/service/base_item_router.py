@@ -52,7 +52,7 @@ async def get_all_transformation_revisions() -> List[TransformationRevisionFront
     use GET /api/transformations/ instead
     """
 
-    logger.info(f"get all transformation revisions")
+    logger.info("get all transformation revisions")
 
     try:
         transformation_revision_list = select_multiple_transformation_revisions()
@@ -60,7 +60,7 @@ async def get_all_transformation_revisions() -> List[TransformationRevisionFront
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"At least one entry in the DB is no valid transformation revision:\n{str(e)}",
-        )
+        ) from e
 
     transformation_revision_dto_list = [
         TransformationRevisionFrontendDto.from_transformation_revision(tr)
@@ -81,6 +81,7 @@ async def get_all_transformation_revisions() -> List[TransformationRevisionFront
     deprecated=True,
 )
 async def get_transformation_revision_by_id(
+    # pylint: disable=W0622
     id: UUID = Path(
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -92,13 +93,13 @@ async def get_transformation_revision_by_id(
     use GET /api/transformations/{id} instead.
     """
 
-    logger.info(f"get base item {id}")
+    logger.info("get base item %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-        logger.info(f"found transformation revision with id {id}")
+        logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     transformation_revision_dto = (
         TransformationRevisionFrontendDto.from_transformation_revision(
@@ -131,7 +132,7 @@ async def create_transformation_revision(
     use POST /api/transformations/ instead.
     """
 
-    logger.info(f"create base item {transformation_revision_dto.id}")
+    logger.info("create base item %s", transformation_revision_dto.id)
 
     transformation_revision = transformation_revision_dto.to_transformation_revision(
         documentation=(
@@ -146,24 +147,24 @@ async def create_transformation_revision(
     )
 
     if transformation_revision.type == Type.COMPONENT:
-        logger.debug(f"transformation revision has type {Type.COMPONENT}")
+        logger.debug("transformation revision has type %s", Type.COMPONENT)
         transformation_revision.content = generate_code(
             transformation_revision.to_code_body()
         )
-        logger.debug(f"generated code:\n{transformation_revision.content}")
+        logger.debug("generated code:\n%s", transformation_revision.content)
 
     try:
         store_single_transformation_revision(transformation_revision)
-        logger.info(f"created base item")
+        logger.info("created base item")
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
     try:
         persisted_transformation_revision = read_single_transformation_revision(
             transformation_revision.id
         )
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     persisted_transformation_dto = (
         TransformationRevisionFrontendDto.from_transformation_revision(
@@ -188,6 +189,7 @@ async def create_transformation_revision(
     deprecated=True,
 )
 async def update_transformation_revision(
+    # pylint: disable=W0622
     id: UUID,
     updated_transformation_revision_dto: TransformationRevisionFrontendDto,
 ) -> TransformationRevisionFrontendDto:
@@ -202,7 +204,7 @@ async def update_transformation_revision(
     use PUT /api/transformations/{id} instead.
     """
 
-    logger.info(f"update base item {id}")
+    logger.info("update base item %s", id)
 
     if id != updated_transformation_revision_dto.id:
         msg = (
@@ -224,8 +226,10 @@ async def update_transformation_revision(
             != updated_transformation_revision_dto.type
         ):
             msg = (
-                f"The type ({updated_transformation_revision_dto.type}) of the provided transformation revision does not\n"
-                f"match the type ({existing_transformation_revision.type}) of the stored transformation revision {id}!"
+                f"The type ({updated_transformation_revision_dto.type}) "
+                f"of the provided transformation revision does not\n"
+                f"match the type ({existing_transformation_revision.type}) "
+                f"of the stored transformation revision {id}!"
             )
             logger.error(msg)
             raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
@@ -243,7 +247,7 @@ async def update_transformation_revision(
 
         if existing_transformation_revision.state == State.RELEASED:
             if updated_transformation_revision_dto.state == State.DISABLED:
-                logger.info(f"deprecate transformation revision {id}")
+                logger.info("deprecate transformation revision %s", id)
                 updated_transformation_revision = existing_transformation_revision
                 updated_transformation_revision.deprecate()
             else:
@@ -261,11 +265,11 @@ async def update_transformation_revision(
                 updated_transformation_revision
             )
         )
-        logger.info(f"updated base item {id}")
+        logger.info("updated base item %s", id)
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     persisted_transformation_dto = (
         TransformationRevisionFrontendDto.from_transformation_revision(

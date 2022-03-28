@@ -43,6 +43,7 @@ documentation_router = APIRouter(
     deprecated=True,
 )
 async def get_component_revision_by_id(
+    # pylint: disable=W0622
     id: UUID = Path(
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -54,13 +55,13 @@ async def get_component_revision_by_id(
     use GET /api/transformations/{id} instead.
     """
 
-    logger.info(f"get documentation {id}")
+    logger.info("get documentation %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-        logger.info(f"found documentation with id {id}")
+        logger.info("found documentation with id %s", id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     documentation_dto = DocumentationFrontendDto.from_transformation_revision(
         transformation_revision
@@ -83,6 +84,7 @@ async def get_component_revision_by_id(
     deprecated=True,
 )
 async def update_documentation(
+    # pylint: disable=W0622
     id: UUID,
     documentation_dto: DocumentationFrontendDto,
 ) -> DocumentationFrontendDto:
@@ -92,7 +94,7 @@ async def update_documentation(
     use PUT /api/transformations/{id} instead
     """
 
-    logger.info(f"update documentation {id}")
+    logger.info("update documentation %s", id)
 
     if id != documentation_dto.id:
         msg = (
@@ -105,7 +107,7 @@ async def update_documentation(
     try:
         transformation_revision = read_single_transformation_revision(id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     transformation_revision.documentation = documentation_dto.document
 
@@ -115,9 +117,9 @@ async def update_documentation(
         )
         logger.info("updated documentation {id}")
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     persisted_documentation_dto = DocumentationFrontendDto.from_transformation_revision(
         persisted_transformation_revision
@@ -139,6 +141,7 @@ async def update_documentation(
     deprecated=True,
 )
 async def delete_documentation(
+    # pylint: disable=W0622
     id: UUID,
 ) -> None:
     """Change the documentation of a transformation revision in the data base to "".
@@ -147,12 +150,12 @@ async def delete_documentation(
     use PUT /api/transformations/{id} instead
     """
 
-    logger.info(f"delete documentation {id}")
+    logger.info("delete documentation %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     transformation_revision.documentation = ""
 
@@ -160,6 +163,6 @@ async def delete_documentation(
         update_or_create_single_transformation_revision(transformation_revision)
         logger.info("deleted documentation {id}")
     except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
