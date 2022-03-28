@@ -84,12 +84,12 @@ def position_from_output_connector_id(
 
 def get_operator_and_connector_name(
     operator_id: UUID, connector_id: UUID, operators: List[WorkflowOperatorFrontendDto]
-) -> Tuple[str,str]:
+) -> Tuple[str, str]:
     operator_name: str = "operator name"
     connector_name: str = "connector_name"
     for operator in operators:
         if operator.id == operator_id:
-            operator_name=operator.name
+            operator_name = operator.name
             for connector in operator.inputs:
                 if connector.id == connector_id:
                     assert isinstance(connector.name, str)  # hint for mypy
@@ -718,7 +718,9 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                     *get_operator_and_connector_name(
                         input.operator, input.connector, self.operators
                     )
-                ) for input in self.inputs if input.constant
+                )
+                for input in self.inputs
+                if input.constant
             ],
             outputs=[
                 output.to_io_connector(

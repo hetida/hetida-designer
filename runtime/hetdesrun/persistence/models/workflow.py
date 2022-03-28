@@ -273,7 +273,13 @@ class WorkflowContent(BaseModel):
                 link = get_link_by_input_connector(operator.id, connector.id, links)
                 if link is None:
                     updated_inputs.append(
-                        IOConnector.from_connector(connector, operator.id)
+                        IOConnector(
+                            data_type=connector.data_type,
+                            operator_id=operator.id,
+                            connector_id=connector.id,
+                            operator_name=operator.name,
+                            connector_name=connector.name,
+                        )
                     )
                 else:
                     input_connector = get_input_by_link_start(
@@ -305,7 +311,13 @@ class WorkflowContent(BaseModel):
                 link = get_link_by_output_connector(operator.id, connector.id, links)
                 if link is None:
                     updated_outputs.append(
-                        IOConnector.from_connector(connector, operator.id)
+                        IOConnector(
+                            data_type=connector.data_type,
+                            operator_id=operator.id,
+                            connector_id=connector.id,
+                            operator_name=operator.name,
+                            connector_name=connector.name,
+                        )
                     )
                 else:
                     output_connector = get_output_by_link_end(
