@@ -272,15 +272,7 @@ class WorkflowContent(BaseModel):
             for connector in operator.inputs:
                 link = get_link_by_input_connector(operator.id, connector.id, links)
                 if link is None:
-                    updated_inputs.append(
-                        IOConnector(
-                            data_type=connector.data_type,
-                            operator_id=operator.id,
-                            connector_id=connector.id,
-                            position=Position(x=0, y=0),
-                        )
-                    )
-
+                    updated_inputs.append(IOConnector.from_connector(connector,operator.id))
                 else:
                     input_connector = get_input_by_link_start(
                         link.start.connector.id, inputs
@@ -310,37 +302,31 @@ class WorkflowContent(BaseModel):
             for connector in operator.outputs:
                 link = get_link_by_output_connector(operator.id, connector.id, links)
                 if link is None:
-                    updated_outputs.append(
-                        IOConnector(
-                            data_type=connector.data_type,
-                            operator_id=operator.id,
-                            connector_id=connector.id,
-                            position=Position(x=0, y=0),
-                        )
-                    )
+                    updated_outputs.append(IOConnector.from_connector(connector,operator.id))
                 else:
                     output_connector = get_output_by_link_end(
                         link.end.connector.id, outputs
                     )
                     if output_connector is not None:
                         updated_outputs.append(output_connector)
-
+        
         return updated_outputs
 
     # pylint: disable=no-self-argument,no-self-use
     @validator("inputs", "outputs", each_item=False)
     def connector_names_empty_or_unique(
-        cls, connectors: List[Connector]
-    ) -> List[Connector]:
-        connectors_with_nonempty_name = [
-            connector
-            for connector in connectors
-            if not (connector.name is None or connector.name == "")
+        cls, io_connectors: List[IOConnector]
+    ) -> List[IOConnector]:
+
+        io_connectors_with_nonempty_name = [
+            io_connector
+            for io_connector in io_connectors
+            if not (io_connector.name is None or io_connector.name == "")
         ]
 
-        names_unique(cls, connectors_with_nonempty_name)
+        names_unique(cls, io_connectors_with_nonempty_name)
 
-        return connectors
+        return io_connectors
 
     @root_validator()
     def clean_up_io_links(cls, values: dict) -> dict:
