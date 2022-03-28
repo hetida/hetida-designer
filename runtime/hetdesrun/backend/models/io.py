@@ -37,22 +37,26 @@ class WorkflowIoFrontendDto(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_io_connector(self) -> IOConnector:
+    def to_io_connector(self, operator_name: str, connector_name: str) -> IOConnector:
         return IOConnector(
             id=self.id,
             name=self.name,
             data_type=self.type,
             operator_id=self.operator,
             connector_id=self.connector,
+            operator_name=operator_name,
+            connector_name=connector_name,
             position=Position(x=self.pos_x, y=self.pos_y),
         )
 
-    def to_constant(self) -> Constant:
+    def to_constant(self, operator_name: str, connector_name: str) -> Constant:
         return Constant(
             id=self.id,
             data_type=self.type,
             operator_id=self.operator,
             connector_id=self.connector,
+            operator_name=operator_name,
+            connector_name=connector_name,
             position=Position(x=self.pos_x, y=self.pos_y),
             # pylint: disable=unsubscriptable-object
             value=self.constant_value["value"]
@@ -66,8 +70,6 @@ class WorkflowIoFrontendDto(BaseModel):
             id=self.id,
             name=self.name,
             data_type=self.type,
-            operator_id=self.operator,
-            connector_id=self.connector,
         )
 
     @classmethod

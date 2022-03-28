@@ -80,8 +80,8 @@ class Connector(IO):
 class IOConnector(IO):
     operator_id: UUID
     connector_id: UUID
-    # operator_name: str
-    # connector_name: str
+    operator_name: str
+    connector_name: str
     position: Position
 
     def to_io(self) -> IO:
