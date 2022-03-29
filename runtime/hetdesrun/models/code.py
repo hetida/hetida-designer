@@ -58,9 +58,9 @@ from hetdesrun.datatypes import DataType
     version_tag="1.0.0"
 )
 def main(*, x, y):
-# entrypoint function for this component
-# ***** DO NOT EDIT LINES ABOVE *****
-# write your function code here.
+    # entrypoint function for this component
+    # ***** DO NOT EDIT LINES ABOVE *****
+    # write your function code here.
     return {"z": x+y}
 """
 
