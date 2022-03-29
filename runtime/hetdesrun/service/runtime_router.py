@@ -21,7 +21,12 @@ from hetdesrun.datatypes import NamedDataTypedValue
 
 from hetdesrun.models.base import VersionInfo
 from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
-from hetdesrun.models.code import CodeBody, GeneratedCode, CodeCheckResult
+from hetdesrun.models.code import (
+    CodeBody,
+    GeneratedCode,
+    CodeCheckResult,
+    ComponentInfo,
+)
 
 from hetdesrun.runtime.context import execution_context
 
@@ -246,14 +251,7 @@ async def codegen_service(
     return GeneratedCode(
         code=update_code(
             existing_code=codegen_input.code,
-            input_type_dict={c.name: c.type for c in codegen_input.inputs},
-            output_type_dict={c.name: c.type for c in codegen_input.outputs},
-            component_name=codegen_input.name,
-            description=codegen_input.description,
-            category=codegen_input.category,
-            uuid=codegen_input.uuid,
-            group_id=codegen_input.group_id,
-            tag=codegen_input.tag,
+            component_info=ComponentInfo.from_code_body(codegen_input),
         )
     )
 

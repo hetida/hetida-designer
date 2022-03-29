@@ -29,7 +29,7 @@ from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegr
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 
-from hetdesrun.models.code import CodeBody
+from hetdesrun.models.code import CodeBody, ComponentInfo
 from hetdesrun.component.code import update_code
 
 logger = logging.getLogger(__name__)
@@ -50,14 +50,7 @@ transformation_router = APIRouter(
 def generate_code(codegen_input: CodeBody) -> str:
     code: str = update_code(
         existing_code=codegen_input.code,
-        input_type_dict={c.name: c.type for c in codegen_input.inputs},
-        output_type_dict={c.name: c.type for c in codegen_input.outputs},
-        component_name=codegen_input.name,
-        description=codegen_input.description,
-        category=codegen_input.category,
-        uuid=codegen_input.uuid,
-        group_id=codegen_input.group_id,
-        tag=codegen_input.tag,
+        component_info=ComponentInfo.from_code_body(codegen_input),
     )
 
     return code
