@@ -7,7 +7,7 @@ import re
 from uuid import UUID
 from pathlib import Path
 from posixpath import join as posix_urljoin
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 
 import requests
 
@@ -143,6 +143,8 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
         raise Exception(msg)
 
     doc_text = doc_response.json().get("document", "")
+
+    frontend_dto: Union[ComponentRevisionFrontendDto, WorkflowRevisionFrontendDto]
 
     # Generate transformation revision
     if type == Type.COMPONENT:
