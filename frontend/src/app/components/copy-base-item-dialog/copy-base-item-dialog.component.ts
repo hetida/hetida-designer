@@ -147,7 +147,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
           this.data.abstractBaseItem.description =
             withDisabledAttributes.description.trim();
           this.data.abstractBaseItem.name = withDisabledAttributes.name.trim();
-          this.data.abstractBaseItem.tag = withDisabledAttributes.tag;
+          this.data.abstractBaseItem.tag = withDisabledAttributes.tag.trim();
         });
 
         this.filteredCategories$ = combineLatest([
