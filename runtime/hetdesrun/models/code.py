@@ -61,8 +61,7 @@ def main(*, x, y):
 # entrypoint function for this component
 # ***** DO NOT EDIT LINES ABOVE *****
 # write your function code here.
-    pass
-    return {"z": x+y}\
+    return {"z": x+y}
 """
 
 
@@ -101,9 +100,9 @@ class CodeBody(BaseModel):
     name: str
     description: str
     category: str
-    uuid: str
-    group_id: str
-    tag: str
+    id: UUID
+    revision_group_id: UUID
+    version_tag: str
 
 
 class GeneratedCode(BaseModel):
@@ -126,8 +125,8 @@ class CodeCheckResult(BaseModel):
 
 
 class ComponentInfo(BaseModel):
-    input_types: Dict[str, DataType]
-    output_types: Dict[str, DataType]
+    input_types_by_name: Dict[str, DataType]
+    output_types_by_name: Dict[str, DataType]
     id: UUID = Field(default_factory=uuid4)
     revision_group_id: UUID = Field(default_factory=uuid4)
     name: NonEmptyValidStr
@@ -135,22 +134,23 @@ class ComponentInfo(BaseModel):
     description: ValidStr
     version_tag: ShortNonEmptyValidStr
 
-    @validator("tag")
+    # TODO: start regex with (?!^latest$) to replace this validator?
     # pylint: disable=no-self-argument,no-self-use
-    def tag_not_latest(cls, tag: str) -> str:
-        if tag != "latest":
-            return tag
-        raise ValueError("'latest' is a tag value for internal use only!")
+    @validator("version_tag")
+    def version_tag_not_latest(cls, v: str) -> str:
+        if v.lower() == "latest":
+            raise ValueError('version_tag is not allowed to be "latest"')
+        return v
 
     @classmethod
     def from_code_body(cls, code_body: CodeBody) -> "ComponentInfo":
         return ComponentInfo(
-            input_types={io.name: io.type for io in code_body.inputs},
-            output_types={io.name: io.type for io in code_body.outputs},
-            id=code_body.uuid,
-            revision_group_id=code_body.group_id,
+            input_types_by_name={io.name: io.type for io in code_body.inputs},
+            output_types_by_name={io.name: io.type for io in code_body.outputs},
+            id=code_body.id,
+            revision_group_id=code_body.revision_group_id,
             name=code_body.name,
             category=code_body.category,
             description=code_body.description,
-            version_tag=code_body.tag,
+            version_tag=code_body.version_tag,
         )

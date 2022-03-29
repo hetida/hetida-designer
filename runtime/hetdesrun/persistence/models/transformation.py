@@ -259,9 +259,9 @@ class TransformationRevision(BaseModel):
             name=self.name,
             description=self.description,
             category=self.category,
-            uuid=str(self.id),
-            group_id=str((self.revision_group_id)),
-            tag=self.version_tag,
+            id=self.id,
+            revision_group_id=self.revision_group_id,
+            version_tag=self.version_tag,
         )
 
     def to_component_revision(self) -> ComponentRevision:

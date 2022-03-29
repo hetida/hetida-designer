@@ -25,7 +25,7 @@ function_definition_template: str = """\
 @register(
     inputs={input_dict_content},
     outputs={output_dict_content},
-    component_name={name},
+    name={name},
     description={description},
     category={category},
     id={id},
@@ -47,15 +47,15 @@ def generate_function_header(component_info: ComponentInfo) -> str:
     """Generate entrypoint function header from the inputs and their types"""
     param_list_str = (
         ""
-        if len(component_info.input_types.keys()) == 0
-        else "*, " + ", ".join(component_info.input_types.keys())
+        if len(component_info.input_types_by_name.keys()) == 0
+        else "*, " + ", ".join(component_info.input_types_by_name.keys())
     )
     return function_definition_template.format(
         input_dict_content="{"
         + ", ".join(
             [
                 '"' + key + '": DataType.' + value.name
-                for key, value in component_info.input_types.items()
+                for key, value in component_info.input_types_by_name.items()
             ]
         )
         + "}",
@@ -63,7 +63,7 @@ def generate_function_header(component_info: ComponentInfo) -> str:
         + ", ".join(
             [
                 '"' + key + '": DataType.' + value.name
-                for key, value in component_info.output_types.items()
+                for key, value in component_info.output_types_by_name.items()
             ]
         )
         + "}",
