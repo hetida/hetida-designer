@@ -1,0 +1,56 @@
+{
+    "category": "Time length operations",
+    "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"df_or_series\": DataType.Any, \"timedelta\": DataType.String},\n    outputs={\"df_or_series\": DataType.Any},\n    component_name=\"Add Timedelta to Index\",\n    description=\"Add a timedelta to the index of a frame or series\",\n    category=\"Time length operations\",\n    uuid=\"c587ced1-7841-4208-8f88-9a9bd6a28f20\",\n    group_id=\"3b838621-8d8e-493a-a91a-5a7680385ed9\",\n    tag=\"1.0.0\"\n)\ndef main(*, df_or_series, timedelta):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    df_or_series = pd.DataFrame.from_dict(df_or_series, orient=\"index\")\n    df_or_series.index = pd.to_datetime(df_or_series.index)\n    if df_or_series.columns.size < 2:\n        df_or_series = df_or_series.squeeze(\"columns\")\n    new_index = df_or_series.index + pd.Timedelta(timedelta)\n    df_or_series.index = new_index\n    return {\"df_or_series\": df_or_series}\n",
+    "description": "Add a timedelta to the index of a frame or series",
+    "documentation": "# Add Timedelta to Index\n\n## Description\nThis component adds the provided timedelta to each of the indices of the provided dataframe or series.\n\n## Inputs\n* **df_or_series** (Any): Both dataframe and series are accepted, the indices must be datetimes.\n* **timedelta** (String): Timedelta to be added to each of the indeces, e.g. 'ms', '3s', 'min', '-2h' or 'days', may be negative, too.\n\n## Outputs\n* **df_or_series** (Any): Dataframe or series as the input just with the provided timedelta added to each of the indices.\n\n## Details\nThis component adds the provided timedelta to each of the indices of the provided dataframe or series. \n\n## Examples\nThe json input of a typical call of this component, adding a timedelta of 2 days to each of the indices is\n```\n{\n\t\"data\": {\n\t\t\"2019-08-01T15:20:00\": 1.0,\n\t\t\"2019-08-02T15:20:15\": 7.0,\n\t\t\"2019-08-04T15:19:20\": 5.0\n\t},\n\t\"timedelta\" = \"2days\"\n}\n```\nThe expected output is\n```\n\t\"df_or_series\": {\n\t\t\"2019-08-03T15:20:00\": 1.0,\n\t\t\"2019-08-04T15:20:15\": 7.0,\n\t\t\"2019-08-06T15:19:20\": 5.0\n\t}\n```\n\nThe json input of a call of this component with the same series, adding a timedelta of -1 minute\n```\n{\n\t\"df_or_series\": {\n\t\t\"2019-08-03T15:20:00\": 1.0,\n\t\t\"2019-08-04T15:20:15\": 7.0,\n\t\t\"2019-08-06T15:19:20\": 5.0\n\t},\n\t\"timedelta\": \"-1min\"\n}\n```\nThe expected output is\n```\n\t\"df_or_series\": {\n\t\t\"2019-08-03T15:19:00\": 1.0,\n\t\t\"2019-08-04T15:19:15\": 7.0,\n\t\t\"2019-08-06T15:18:20\": 5.0\n\t}\n```\n",
+    "id": "c587ced1-7841-4208-8f88-9a9bd6a28f20",
+    "io_interface": {
+        "inputs": [
+            {
+                "data_type": "ANY",
+                "id": "cc5c04b8-01fb-46a6-b12c-6eb13dd9941e",
+                "name": "df_or_series"
+            },
+            {
+                "data_type": "STRING",
+                "id": "0bde48a5-1095-495a-974a-03bc448ba7ee",
+                "name": "timedelta"
+            }
+        ],
+        "outputs": [
+            {
+                "data_type": "ANY",
+                "id": "bda5d278-1395-4ca3-98d8-2f57d87259f4",
+                "name": "df_or_series"
+            }
+        ]
+    },
+    "name": "Add Timedelta to Index",
+    "released_timestamp": "2022-04-01T15:33:28.989750+00:00",
+    "revision_group_id": "3b838621-8d8e-493a-a91a-5a7680385ed9",
+    "state": "RELEASED",
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "{\n    \"2019-08-03T15:20:00\": 1.0,\n    \"2019-08-04T15:20:15\": 7.0,\n    \"2019-08-06T15:19:20\": 5.0\n}"
+                },
+                "id": "a62797c5-73fc-435a-9fb9-0c604a0a9ed5",
+                "workflow_input_name": "df_or_series"
+                
+            },
+            {
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "-1min"
+                },
+                "id": "4fabcd56-9a89-493c-addf-49a581dfed87",
+                "workflow_input_name": "timedelta"
+            }
+        ],
+        "output_wirings": []
+    },
+    "type": "COMPONENT",
+    "version_tag": "1.0.0"
+}
