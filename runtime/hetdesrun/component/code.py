@@ -38,7 +38,7 @@ function_definition_template: str = """\
     group_id={group_id},
     tag={tag}
 )
-{definition} main({params_list}):
+{async_def} main({params_list}):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
 """
@@ -62,7 +62,7 @@ def generate_function_header(
     uuid: str,
     group_id: str,
     tag: str,
-    definition: str="def",
+    asynchronous_definition: bool=False,
 ) -> str:
     """Generate entrypoint function header from the inputs and their types"""
     param_list_str = (
@@ -70,6 +70,12 @@ def generate_function_header(
         if len(input_type_dict.keys()) == 0
         else "*, " + ", ".join(input_type_dict.keys())
     )
+
+    if asynchronous_definition:
+        async_def = "async def"
+    else:
+        async_def = "def"
+
     return function_definition_template.format(
         input_dict_content="{"
         + ", ".join(
@@ -94,7 +100,7 @@ def generate_function_header(
         group_id='"' + sanitize(group_id) + '"',
         tag='"' + sanitize(tag) + '"',
         params_list=param_list_str,
-        definition=definition,
+        async_def=async_def,
     )
 
 
@@ -107,7 +113,7 @@ def generate_complete_component_module(
     uuid: str,
     group_id: str,
     tag: str,
-    definition: str="def",
+    asynchronous_definition: bool=False,
 ) -> str:
     return (
         imports_template
@@ -121,7 +127,7 @@ def generate_complete_component_module(
             uuid,
             group_id,
             tag,
-            definition,
+            asynchronous_definition,
         )
         + "\n"
         + function_body_template
@@ -160,20 +166,8 @@ def update_code(
             uuid=uuid,
             group_id=group_id,
             tag=tag,
-            definition="def",
+            asynchronous_definition=False,
         )
-
-    new_function_header = generate_function_header(
-        input_type_dict,
-        output_type_dict,
-        component_name=component_name,
-        description=description,
-        category=category,
-        uuid=uuid,
-        group_id=group_id,
-        tag=tag,
-        definition="def",
-    )
 
     try:
         start, remaining = existing_code.split(
@@ -182,6 +176,17 @@ def update_code(
     except ValueError:
         # Cannot find func def, therefore append it (assuming necessary imports are present):
         # This may secretely add a second main entrypoint function!
+        new_function_header = generate_function_header(
+            input_type_dict,
+            output_type_dict,
+            component_name=component_name,
+            description=description,
+            category=category,
+            uuid=uuid,
+            group_id=group_id,
+            tag=tag,
+            asynchronous_definition=False,
+        )
         return (
             existing_code + "\n\n" + new_function_header + "\n" + function_body_template
         )
@@ -190,6 +195,17 @@ def update_code(
         # Cannot find end of function definition.
         # Therefore replace all code starting from the detected beginning of the function
         # definition. This deletes all user code below!
+        new_function_header = generate_function_header(
+            input_type_dict,
+            output_type_dict,
+            component_name=component_name,
+            description=description,
+            category=category,
+            uuid=uuid,
+            group_id=group_id,
+            tag=tag,
+            asynchronous_definition=False,
+        )
         return start + new_function_header + "\n" + function_body_template
 
     # we now are quite sure that we find a complete existing function definition
@@ -207,7 +223,19 @@ def update_code(
             uuid=uuid,
             group_id=group_id,
             tag=tag,
-            definition="async def",
+            asynchronous_definition=True,
+        )
+    else: 
+        new_function_header = generate_function_header(
+            input_type_dict,
+            output_type_dict,
+            component_name=component_name,
+            description=description,
+            category=category,
+            uuid=uuid,
+            group_id=group_id,
+            tag=tag,
+            asynchronous_definition=False,
         )
 
     return start + new_function_header + end
