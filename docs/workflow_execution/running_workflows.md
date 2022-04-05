@@ -8,13 +8,19 @@ For example the default docker-compose setup this endpoint can be reached via ht
 
 Here `{id}` is a placeholder for the workflow revision id.
 
-## Getting the workflow revision id
+Additionally, the latest released workflow revision of a revision group can be executed through the POST web service endpoint
 
-The id of a workflow is shown in the "Edit workflow details" dialog: Open the workflow revision and click on the pencil button in the user interface
+`/api/workflows/execute-latest`
+
+Be aware: Depending on the latest workflow revision present, this endpoint might not only yield different results for the same input but might even fail, if inputs or outputs have changed.
+
+## Getting the workflow revision id and revision group id
+
+The id of a workflow as well as its revision group id are shown in the "Edit workflow details" dialog: Open the workflow revision and click on the pencil button in the user interface
 
 <img title="" src="../assets/edit_workflow_button.png" alt="" width="269" data-align="center">
 
-Then the id is shown at the bottom of the dialog window:
+Then the id and below it the group ID are displayed at the bottom of the dialog window:
 
 ![](../assets/workflow_revision_id.png)
 
@@ -36,9 +42,9 @@ The `/api/workflows/{id}/execute` endpoint currently has the following query par
 
 ## The JSON payload and response for workflow execution
 
-### Payload
+### Payload (execute)
 
-The payload looks as follows:
+The payload for the execute endpoint looks as follows:
 
 ```
 {
@@ -95,9 +101,66 @@ See the section 'Enumeration "type"' in the [description of webservice endpoints
 
 The inputWirings and outputWirings tie workflow inputs to data sources via an adapter (and analogously workflow outputs to data sinks). Typically the refId is a source id for inputs (i.e. refIdType is "SOURCE") and it is a sink id for outputs (i.e. refIdType is "SINK"). Note however that this may differ in the case of metadata. If the adapter provides metadata tied to a sink that should be read into a workflow input the refIdType for the workflow input is "SINK" instead, and the refId is the id of the sink the metadata is tied to.
 
+### Payload (execute-latest)
+
+The payload for the execute-latest endpoint contains additionally the revision group id and thus looks as follows:
+```
+{
+  "revision_group_id": string, // the revision group id
+  "test_wiring": {
+    "id": "string", // the wiring id (if coming from a stored wiring)
+                    // can be an arbitraray uuid.
+    "inputWirings": [
+      {
+        "adapterId": "string", // e.g. "direct_provisioning" or
+                               // "local-file-adapter"
+        "filters": { 
+          // depends on adapter.
+          // direct_provisioning adapter inputs require an entry with key
+          // "value" and value being a string containing the actual value
+          // as json value.
+          "key1": "value1",
+          "key2": "value2"
+        },
+        "id": "string", // id of input wiring (if coming from a stored 
+                        // wiring). Can be an arbitrary otherwise.
+        "refId": "string",     // id of THINGNODE, SOURCE, SINK (depending
+                               // on redIdType)
+                               // should be omitted or set to null for 
+                               // direct_provisionig adapter
+        "refIdType": "string", // one of THINGNODE, SOURCE, SINK. If type
+                               // is metadata(...) this indicates to what
+                               // structural element the metadata is tied.
+                               // Otherwise this should be SOURCE for input
+                               // wirings (and SINK for output wirings)
+                               // Should be omitted or set to null for 
+                               // direct_provisionig adapter
+        "refKey": "string",    // metadata key if type is "metadata(...)"
+                               // should be omitted or be null otherwise
+        "type": "string",      // type: see below
+        "workflowInputName": "string" // name of workflow input
+      }
+    ],
+    "name": "STANDARD-WIRING", // Name of wiring. Should be the fixed
+                               // value "STANDARD-WIRING" for now.
+    "outputWirings": [
+      {                        // see explanations above for input wiring
+        "adapterId": "string",
+        "id": "string",
+        "refId": "string",
+        "refIdType": "string",
+        "refKey": "string",
+        "type": "string",
+        "workflowOutputName": "string"
+      }
+    ]
+  }
+}
+```
+
 ### Response
 
-A successful response contains the result values for those workflow outputs that are wired via the "direct_provisioning" adapter. Also hetida designer internal types are for each output is provided. Outputs wired via other adapters do not occur.
+For both web service endpoints a successful response contains the result values for those workflow outputs that are wired via the "direct_provisioning" adapter. Also hetida designer internal types are for each output is provided. Outputs wired via other adapters do not occur.
 
 ```
 {
