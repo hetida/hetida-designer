@@ -24,7 +24,7 @@ from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
 
-from hetdesrun.backend.execution import ExecLatestByGroupIdInput
+from hetdesrun.backend.models.info import ExecutionLatestInput
 
 from hetdesrun.backend.service.transformation_router import generate_code
 
@@ -392,6 +392,20 @@ async def test_get_all_transformation_revisions_with_valid_db_entries(
 
 
 @pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_no_db_entries(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        async with async_test_client as ac:
+            response = await ac.get("/api/transformations/")
+
+        assert response.status_code == 200
+
+
+@pytest.mark.asyncio
 async def test_get_transformation_revision_by_id_with_component(
     async_test_client, clean_test_db_engine
 ):
@@ -659,7 +673,7 @@ async def test_execute_for_transformation_revision(
 
 
 @pytest.mark.asyncio
-async def test_execute_latest_for_transformation_revision(
+async def test_execute_latest_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
@@ -684,19 +698,17 @@ async def test_execute_latest_for_transformation_revision(
             tr_component_1_new_revision.release()
             store_single_transformation_revision(tr_component_1_new_revision)
 
-            exec_latest_by_group_id_input = ExecLatestByGroupIdInput(
+            exec_latest_by_group_id_input = ExecutionLatestInput(
                 revision_group_id=tr_component_1.revision_group_id,
-                wiring = tr_component_1.test_wiring,
-                run_pure_plot_parameters = False,
-                job_id = UUID(
-                    "1270547c-b224-461d-9387-e9d9d465bbe1"
-                )
+                wiring=tr_component_1.test_wiring,
+                run_pure_plot_parameters=False,
             )
 
             async with async_test_client as ac:
                 response = await ac.post(
                     posix_urljoin(
-                        "/api/transformations/execute-latest",
+                        "/api/transformations/",
+                        "execute-latest?job_id=1270547c-b224-461d-9387-e9d9d465bbe1",
                     ),
                     json=json.loads(exec_latest_by_group_id_input.json()),
                 )
@@ -710,6 +722,44 @@ async def test_execute_latest_for_transformation_revision(
             assert "job_id" in resp_data
             assert UUID(resp_data["job_id"]) == UUID(
                 "1270547c-b224-461d-9387-e9d9d465bbe1"
+            )
+
+
+@pytest.mark.asyncio
+async def test_execute_latest_for_transformation_revision_no_revision_in_db(
+    async_test_client, clean_test_db_engine
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
+    ):
+        with mock.patch(
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
+        ):
+            tr_component_1 = TransformationRevision(**tr_json_component_1)
+            tr_component_1.content = generate_code(tr_component_1.to_code_body())
+
+            exec_latest_by_group_id_input = ExecutionLatestInput(
+                revision_group_id=tr_component_1.revision_group_id,
+                wiring=tr_component_1.test_wiring,
+                run_pure_plot_parameters=False,
+            )
+
+            async with async_test_client as ac:
+                response = await ac.post(
+                    posix_urljoin(
+                        "/api/transformations/",
+                        "execute-latest?job_id=1270547c-b224-461d-9387-e9d9d465bbe1",
+                    ),
+                    json=json.loads(exec_latest_by_group_id_input.json()),
+                )
+
+            assert response.status_code == 404
+            assert (
+                "no released transformation revisions with revision group id"
+                in response.json()["detail"]
             )
 
 
