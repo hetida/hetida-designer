@@ -17,6 +17,7 @@ from hetdesrun.backend.execution import (
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.webservice.config import runtime_config
 from hetdesrun.persistence.dbservice.revision import (
+    DBNotFoundError,
     get_latest_revision_id,
 )
 
@@ -161,14 +162,6 @@ async def consume_execution_trigger_message(
                     exec_latest_by_group_id_input = ExecLatestByGroupIdInput.parse_raw(
                         msg.value.decode("utf8")
                     )
-                    exec_by_id_input = ExecByIdInput(
-                        id=get_latest_revision_id(
-                            exec_latest_by_group_id_input.revision_group_id
-                        ),
-                        wiring=exec_latest_by_group_id_input.wiring,
-                        run_pure_plot_parameters=exec_latest_by_group_id_input.run_pure_plot_operators,
-                        job_id=exec_latest_by_group_id_input.job_id,
-                    )
                 except ValidationError as e2:
                     msg = (
                         f"Kafka consumer {kafka_ctx.consumer_id} failed to parse message"
@@ -180,6 +173,25 @@ async def consume_execution_trigger_message(
                     kafka_ctx.last_unhandled_exception = e2
                     logger.error(msg)
                     continue
+                try:
+                    latest_id = get_latest_revision_id(
+                        exec_latest_by_group_id_input.revision_group_id
+                    )
+                except DBNotFoundError as e3:
+                    msg = (
+                        f"Kafka consumer {kafka_ctx.consumer_id} failed to receive"
+                        f" id of latest revision of revision group "
+                        f"{exec_latest_by_group_id_input.revision_group_id} from datatbase.\n"
+                        f"Aborting."
+                    )
+                    kafka_ctx.last_unhandled_exception = e3
+                    logger.error(msg)
+                exec_by_id_input = ExecByIdInput(
+                    id=latest_id,
+                    wiring=exec_latest_by_group_id_input.wiring,
+                    run_pure_plot_parameters=exec_latest_by_group_id_input.run_pure_plot_operators,
+                    job_id=exec_latest_by_group_id_input.job_id,
+                )
             logger.info(
                 "Start execution of trafo rev %s with job id %s from Kafka consumer %s",
                 str(exec_by_id_input.id),
