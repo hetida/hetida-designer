@@ -8,6 +8,8 @@ from hetdesrun.utils import State, Type
 
 from hetdesrun.backend.service.utils import to_camel
 
+from hetdesrun.models.wiring import WorkflowWiring
+
 from hetdesrun.persistence.models.transformation import TransformationRevision
 
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
@@ -46,6 +48,28 @@ class DocumentationFrontendDto(BaseModel):
             id=transformation_revision.id,
             document=transformation_revision.documentation,
         )
+
+
+class ExecutionLatestInput(BaseModel):
+    """Payload for execute-latest kafka endpoint
+
+    WARNING: Even when this input is not changed, the execution response might change if a new latest
+    transformation revision exists.
+
+    WARNING: The inputs and outputs may be different for different revisions. In such a case,
+    executing the last revision with the same input as before will not work, but will result in errors.
+
+    The latest transformation will be determined by the released_timestamp of the released revisions
+    of the revision group which are stored in the database.
+
+    This transformation will be loaded from the DB and executed with the wiring sent with this payload.
+    """
+
+    revision_group_id: UUID
+    wiring: WorkflowWiring
+    run_pure_plot_operators: bool = Field(
+        False, description="Whether pure plot components should be run."
+    )
 
 
 class ExecutionResponseFrontendDto(BaseModel):
