@@ -227,9 +227,9 @@ def select_multiple_transformation_revisions(
         if state is not None:
             selection = selection.where(TransformationRevisionDBModel.state == state)
 
-        results = session.execute(selection).all()
+        results = session.execute(selection).scalars().all()
 
-        return [TransformationRevision.from_orm_model(result[0]) for result in results]
+        return [TransformationRevision.from_orm_model(result) for result in results]
 
 
 def get_all_nested_transformation_revisions(
@@ -238,7 +238,7 @@ def get_all_nested_transformation_revisions(
 
     if transformation_revision.type != Type.WORKFLOW:
         msg = (
-            f"cannot get operators of transformation revision {transformation_revision.id}"
+            f"cannot get operators of transformation revision {transformation_revision.id} "
             f"because its type is not WORKFLOW"
         )
         logger.error(msg)
@@ -263,7 +263,16 @@ def get_latest_revision_id(revision_group_id: UUID) -> UUID:
     revision_group_list = select_multiple_transformation_revisions(
         state=State.RELEASED, revision_group_id=revision_group_id
     )
+    if not revision_group_list:
+        msg = (
+            f"no released transformation revisions with revision group id {revision_group_id} "
+            f"found in the database"
+        )
+        logger.error(msg)
+        raise DBNotFoundError(msg)
+
     id_by_released_timestamp: Dict[datetime.datetime, UUID] = {}
+
     for revision in revision_group_list:
         assert isinstance(revision.released_timestamp, datetime.datetime)
         id_by_released_timestamp[revision.released_timestamp] = revision.id
