@@ -64,16 +64,18 @@ class ExecByIdInput(BaseModel):
 class ExecLatestByGroupIdInput(BaseModel):
     """Payload for execute-latest kafka endpoint
 
-    WARNING: Even when this input is not changed, the execution response might change if a new latest
-    transformation revision exists.
+    WARNING: Even when this input is not changed, the execution response might change if a new
+    latest transformation revision exists.
 
     WARNING: The inputs and outputs may be different for different revisions. In such a case,
-    executing the last revision with the same input as before will not work, but will result in errors.
+    executing the last revision with the same input as before will not work, but will result in
+    errors.
 
     The latest transformation will be determined by the released_timestamp of the released revisions
     of the revision group which are stored in the database.
 
-    This transformation will be loaded from the DB and executed with the wiring sent with this payload.
+    This transformation will be loaded from the DB and executed with the wiring sent with this
+    payload.
     """
 
     revision_group_id: UUID
@@ -85,6 +87,15 @@ class ExecLatestByGroupIdInput(BaseModel):
         default_factory=uuid4,
         description="Optional job id, that can be used to track an execution job.",
     )
+
+    # pylint: disable=W0622
+    def to_exec_by_id(self, id: UUID) -> ExecByIdInput:
+        return ExecByIdInput(
+            id=id,
+            wiring=self.wiring,
+            run_pure_plot_parameters=self.run_pure_plot_operators,
+            job_id=self.job_id,
+        )
 
 
 class TrafoExecutionError(Exception):
@@ -156,9 +167,7 @@ def nested_nodes(
     return children_nodes(tr_workflow.content, ancestor_children)
 
 
-def prepare_execution_input(  # pylint: disable=redefined-builtin
-    id: UUID, wiring: WorkflowWiring, run_pure_plot_operators: bool, job_id: UUID
-) -> WorkflowExecutionInput:
+def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutionInput:
     """Loads trafo revision and prepares execution input from it.
 
     Loads the trafo revision specified by id and prepares
@@ -170,8 +179,8 @@ def prepare_execution_input(  # pylint: disable=redefined-builtin
     an ad-hoc workflow structure for execution.
     """
     try:
-        transformation_revision = read_single_transformation_revision(id)
-        logger.info("found transformation revision with id %s", str(id))
+        transformation_revision = read_single_transformation_revision(exec_by_id_input.id)
+        logger.info("found transformation revision with id %s", str(exec_by_id_input.id))
     except DBNotFoundError as e:
         raise TrafoExecutionNotFoundError() from e
 
@@ -203,10 +212,10 @@ def prepare_execution_input(  # pylint: disable=redefined-builtin
         workflow=workflow_node,
         configuration=ConfigurationInput(
             name=str(tr_workflow.id),
-            run_pure_plot_operators=run_pure_plot_operators,
+            run_pure_plot_operators=exec_by_id_input.run_pure_plot_operators,
         ),
-        workflow_wiring=wiring,
-        job_id=job_id,
+        workflow_wiring=exec_by_id_input.wiring,
+        job_id=exec_by_id_input.job_id,
     )
     return execution_input
 
@@ -274,16 +283,14 @@ async def run_execution_input(
     return execution_response
 
 
-async def execute_transformation_revision(  # pylint: disable=redefined-builtin
-    id: UUID, wiring: WorkflowWiring, run_pure_plot_operators: bool, job_id: UUID
+async def execute_transformation_revision(
+    exec_by_id_input: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
     """Execute transformation revision
 
     raises subtypes of TrafoExecutionError on errors.
     """
 
-    execution_context_filter.bind_context(job_id=job_id)
-    execution_input = prepare_execution_input(
-        id, wiring, run_pure_plot_operators, job_id
-    )
+    execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
+    execution_input = prepare_execution_input(exec_by_id_input)
     return await run_execution_input(execution_input)

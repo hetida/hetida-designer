@@ -8,6 +8,8 @@ from fastapi import APIRouter, Path, Query, status, HTTPException
 from hetdesrun.utils import Type, State
 
 from hetdesrun.backend.execution import (
+    ExecByIdInput,
+    ExecLatestByGroupIdInput,
     TrafoExecutionNotFoundError,
     TrafoExecutionRuntimeConnectionError,
     TrafoExecutionResultValidationError,
@@ -25,13 +27,9 @@ from hetdesrun.persistence.dbservice.revision import (
     get_latest_revision_id,
 )
 
-from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError, DBBadRequestError
+from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError
 
-from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.backend.models.info import (
-    ExecutionResponseFrontendDto,
-    ExecutionLatestInput,
-)
+from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 
 from hetdesrun.models.code import CodeBody
 from hetdesrun.component.code import update_code
@@ -386,7 +384,7 @@ async def update_transformation_revision(
 
 
 @transformation_router.post(
-    "/{id}/execute",
+    "/execute",
     response_model=ExecutionResponseFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -400,12 +398,7 @@ async def update_transformation_revision(
 )
 async def execute_transformation_revision_endpoint(
     # pylint: disable=W0622
-    id: UUID,
-    wiring: WorkflowWiring,
-    run_pure_plot_operators: bool = Query(
-        False, description="Set to True by frontend requests to generate plots"
-    ),
-    job_id: Optional[UUID] = None,
+    exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision.
 
@@ -415,16 +408,11 @@ async def execute_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    if job_id is None:
-        job_id = uuid4()
+    if exec_by_id.job_id is None:
+        exec_by_id.job_id = uuid4()
 
     try:
-        return await execute_transformation_revision(
-            id=id,
-            wiring=wiring,
-            run_pure_plot_operators=run_pure_plot_operators,
-            job_id=job_id,
-        )
+        return await execute_transformation_revision(exec_by_id)
     except TrafoExecutionNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
@@ -449,8 +437,7 @@ async def execute_transformation_revision_endpoint(
     },
 )
 async def execute_latest_transformation_revision_endpoint(
-    execute_latest_input: ExecutionLatestInput,
-    job_id: Optional[UUID] = None,
+    exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
 ) -> ExecutionResponseFrontendDto:
     """Execute the latest transformation revision of a revision group.
 
@@ -469,22 +456,19 @@ async def execute_latest_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    if job_id is None:
-        job_id = uuid4()
+    if exec_latest_by_group_id_input.job_id is None:
+        exec_latest_by_group_id_input.job_id = uuid4()
 
     try:
         # pylint: disable=W0622
-        id = get_latest_revision_id(execute_latest_input.revision_group_id)
+        id = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
+    exec_by_id_input = exec_latest_by_group_id_input.to_exec_by_id(id)
+
     try:
-        return await execute_transformation_revision(
-            id=id,
-            wiring=execute_latest_input.wiring,
-            run_pure_plot_operators=execute_latest_input.run_pure_plot_operators,
-            job_id=job_id,
-        )
+        return await execute_transformation_revision(exec_by_id_input)
     except TrafoExecutionNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 

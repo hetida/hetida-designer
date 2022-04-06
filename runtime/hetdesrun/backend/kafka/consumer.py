@@ -199,12 +199,7 @@ async def consume_execution_trigger_message(
                 kafka_ctx.consumer_id,
             )
             try:
-                exec_result = await execute_transformation_revision(
-                    exec_by_id_input.id,
-                    exec_by_id_input.wiring,
-                    exec_by_id_input.run_pure_plot_operators,
-                    exec_by_id_input.job_id,
-                )
+                exec_result = await execute_transformation_revision(exec_by_id_input)
             except TrafoExecutionError as e:
                 msg = (
                     f"Kafka consumer failed to execute trafo rev {exec_by_id_input.id}"
