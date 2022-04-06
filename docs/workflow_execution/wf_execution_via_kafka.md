@@ -1,6 +1,6 @@
-# Workflow Execution via Apache Kafka
+# Execution via Apache Kafka
 
-This document describes [Kafka](https://kafka.apache.org/) execution of workflows / components. 
+This document describes [Kafka](https://kafka.apache.org/) execution of workflow / component revisions. 
 
 Naturally this depends strongly on the specific Kafka cluster setup. Of course, we cannot describe all possible scenarios here. Therefore we describe a docker-compose based demo setup, which should give you a good starting point for developing your individual setup.
 ## Setup
@@ -88,7 +88,7 @@ docker-compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-conso
 
 ### Creating the Kafka message payload
 
-The Kafka message for running a workflow or component has the same structure as that of the transformation revision execution endpoint, with URL parameters moving to the first level of the message json.
+The Kafka message for running a workflow or component has the same structure as that of the transformation revision execution endpoint.
 
 Therefore we refer to the backend interactive OpenAPI documentation (Available at http://localhost:8080/docs when running the docker compose setup) for details on available keys and their values.
 

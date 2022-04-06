@@ -1,12 +1,12 @@
-# Running Workflows
+# Running Workflow and Component Revisions
 
-Every workflow revision, whether in "draft" state or "released", is immediately available for execution through a POST web service endpoint of the hetida designer backend service
+Every transformation revision, whether component or workflow type, is immediately available for execution through the POST web service endpoint 
 
-`/api/workflows/{id}/execute`
+`/api/workflows/execute`
 
-For example the default docker-compose setup this endpoint can be reached via http://localhost:8080/api/workflows/{id}/execute
+of the hetida designer backend service, whether in "draft" or "released" state.
 
-Here `{id}` is a placeholder for the workflow revision id.
+For example the default docker-compose setup this endpoint can be reached via http://localhost:8080/api/workflows/execute
 
 Additionally, the latest released workflow revision of a revision group can be executed through the POST web service endpoint
 
@@ -14,102 +14,17 @@ Additionally, the latest released workflow revision of a revision group can be e
 
 Be aware: Depending on the latest workflow revision present, this endpoint might not only yield different results for the same input but might even fail, if inputs or outputs have changed.
 
-## Getting the workflow revision id and revision group id
+## The JSON payload and response for execution
 
-The id of a workflow as well as its revision group id are shown in the "Edit workflow details" dialog: Open the workflow revision and click on the pencil button in the user interface
-
-<img title="" src="../assets/edit_workflow_button.png" alt="" width="269" data-align="center">
-
-Then the id and below it the group ID are displayed at the bottom of the dialog window:
-
-![](../assets/workflow_revision_id.png)
-
-## Query paramters
-
-The `/api/workflows/{id}/execute` endpoint currently has the following query parameters:
-
-* `run_pure_plot_operators` (optional, default value: `false`): Whether pure plot operators should be executed. Pure plot operators are operators (i.e. component instances) in the workflow which 
-  
-  * only have outputs of type PLOTLYJSON
-  
-  * and have an entrypoint function with `pure_plot_component` being set to `True` in the `register` decorator, e.g.:
-    
-    ![](../assets/pure_plot_component.png)
-  
-  During production executions one typically does not want plot outputs. This feature allows to use a workflow with plots in production without the plot computing overhead.
-  
-  If `run_pure_plot_operators` is `false` these operators will not be run and return an empty dictionary `{}` for every PLOTLJSON outputs instead.
-
-## The JSON payload and response for workflow execution
-
-### Payload (execute)
+The payload for the two endpoints is almost the same. The only difference is that either the revision id is provided with the key "id" or the id of the revision group with the key "revision_group_id".
 
 The payload for the execute endpoint looks as follows:
 
-```
 {
-  "id": "string", // the wiring id (if coming from a stored wiring)
-                  // can be an arbitraray uuid.
-  "inputWirings": [
-    {
-      "adapterId": "string", // e.g. "direct_provisioning" or
-                             // "local-file-adapter"
-      "filters": { 
-        // depends on adapter.
-        // direct_provisioning adapter inputs require an entry with key
-        // "value" and value being a string containing the actual value
-        // as json value.
-        "key1": "value1",
-        "key2": "value2"
-      },
-      "id": "string", // id of input wiring (if coming from a stored 
-                      // wiring). Can be an arbitrary otherwise.
-      "refId": "string",     // id of THINGNODE, SOURCE, SINK (depending
-                             // on redIdType)
-                             // should be omitted or set to null for 
-                             // direct_provisionig adapter
-      "refIdType": "string", // one of THINGNODE, SOURCE, SINK. If type
-                             // is metadata(...) this indicates to what
-                             // structural element the metadata is tied.
-                             // Otherwise this should be SOURCE for input
-                             // wirings (and SINK for output wirings)
-                             // Should be omitted or set to null for 
-                             // direct_provisionig adapter
-      "refKey": "string",    // metadata key if type is "metadata(...)"
-                             // should be omitted or be null otherwise
-      "type": "string",      // type: see below
-      "workflowInputName": "string" // name of workflow input
-    }
-  ],
-  "name": "STANDARD-WIRING", // Name of wiring. Should be the fixed
-                             // value "STANDARD-WIRING" for now.
-  "outputWirings": [
-    {                        // see explanations above for input wiring
-      "adapterId": "string",
-      "id": "string",
-      "refId": "string",
-      "refIdType": "string",
-      "refKey": "string",
-      "type": "string",
-      "workflowOutputName": "string"
-    }
-  ]
-}
-```
-
-See the section 'Enumeration "type"' in the [description of webservice endpoints of generic Rest adapters](../adapter_system/generic_rest_adapters/web_service_interface.md) for the possible values of "type".
-
-The inputWirings and outputWirings tie workflow inputs to data sources via an adapter (and analogously workflow outputs to data sinks). Typically the refId is a source id for inputs (i.e. refIdType is "SOURCE") and it is a sink id for outputs (i.e. refIdType is "SINK"). Note however that this may differ in the case of metadata. If the adapter provides metadata tied to a sink that should be read into a workflow input the refIdType for the workflow input is "SINK" instead, and the refId is the id of the sink the metadata is tied to.
-
-### Payload (execute-latest)
-
-The payload for the execute-latest endpoint contains additionally the revision group id and thus looks as follows:
-```
-{
-  "revision_group_id": string, // the revision group id
-  "test_wiring": {
+  "id": string, // the id of the respective transformation revision
+  "wiring": {
     "id": "string", // the wiring id (if coming from a stored wiring)
-                    // can be an arbitraray uuid.
+                    // can be an arbitrary uuid.
     "inputWirings": [
       {
         "adapterId": "string", // e.g. "direct_provisioning" or
@@ -154,9 +69,43 @@ The payload for the execute-latest endpoint contains additionally the revision g
         "workflowOutputName": "string"
       }
     ]
-  }
+  },
+  "run_pure_plot_parameters": "string",
+  "job_id": "string"
 }
 ```
+
+#### Getting the transformation revision id and revision group id
+
+The id of a workflow or component revision as well as its revision group id are shown in the "Edit workflow details" dialog: Open the workflow revision and click on the pencil button in the user interface
+
+<img title="" src="../assets/edit_workflow_button.png" alt="" width="269" data-align="center">
+
+Then the id and below it the group ID are displayed at the bottom of the dialog window:
+
+![](../assets/workflow_revision_id.png)
+
+#### Input and output wirings
+
+See the section 'Enumeration "type"' in the [description of webservice endpoints of generic Rest adapters](../adapter_system/generic_rest_adapters/web_service_interface.md) for the possible values of "type".
+
+The inputWirings and outputWirings tie inputs of the workflow or component revision to data sources via an adapter (and analogously the outputs to data sinks). Typically the refId is a source id for inputs (i.e. refIdType is "SOURCE") and it is a sink id for outputs (i.e. refIdType is "SINK"). Note however that this may differ in the case of metadata. If the adapter provides metadata tied to a sink that should be read into an input the refIdType for this input is "SINK" instead, and the refId is the id of the sink the metadata is tied to.
+
+#### Optional parameters
+
+* `run_pure_plot_operators` (optional, default value: `false`): controls whether pure plot operators should be executed. Pure plot operators are operators (i.e. component instances) in the workflow which 
+  
+  * only have outputs of type PLOTLYJSON
+  
+  * and have an entrypoint function with `pure_plot_component` being set to `True` in the `register` decorator, e.g.:
+    
+    ![](../assets/pure_plot_component.png)
+  
+  During production executions one typically does not want plot outputs. This feature allows to use a workflow with plots in production without the plot computing overhead.
+  
+  If `run_pure_plot_operators` is `false` these operators will not be run and return an empty dictionary `{}` for every PLOTLJSON outputs instead.
+
+* `job_id` (optional, by default an arbitrary UUID will be generated): unique identifier which enables checking if the respective execution process is completed and match log messages to a specific execution process.
 
 ### Response
 
@@ -321,7 +270,7 @@ The response:
 }
 ```
 
-## Running workflows using Kafka
+## Running workflow and component revisions using Kafka
 
-see the documentation for [Workflow execution via Apache Kafka](./wf_execution_via_kafka.md).
+see the documentation for [Execution via Apache Kafka](./wf_execution_via_kafka.md).
 
