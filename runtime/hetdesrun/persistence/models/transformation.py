@@ -258,7 +258,7 @@ class TransformationRevision(BaseModel):
             function_name=self.name,
             inputs=[input.to_component_input() for input in self.io_interface.inputs],
             outputs=[
-                output.to_component_input() for output in self.io_interface.outputs
+                output.to_component_output() for output in self.io_interface.outputs
             ],
             name=self.name,
             description=self.description,
@@ -281,7 +281,7 @@ class TransformationRevision(BaseModel):
             function_name="main",
             inputs=[input.to_component_input() for input in self.io_interface.inputs],
             outputs=[
-                output.to_component_input() for output in self.io_interface.outputs
+                output.to_component_output() for output in self.io_interface.outputs
             ],
         )
 
