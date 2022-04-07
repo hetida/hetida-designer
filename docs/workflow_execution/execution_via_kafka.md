@@ -146,57 +146,7 @@ Here is the json message value for running one of the example Workflows: "Volati
 }
 ```
 
-In order to execute the latest revision the json message should be almost the same, except for the first parameter:
-
-```json
-{
-    "revision_group_id": "d0d40c45-aef0-424a-a8f4-b16cd5f8b129",
-    "run_pure_plot_operators": false,
-    "wiring": {
-        "input_wirings": [
-            {
-                "workflow_input_name": "window_size",
-                "adapter_id": "direct_provisioning",
-                "filters": {
-                    "value": "180min"
-                }
-            },
-            {
-                "workflow_input_name": "window_timestamp_location",
-                "adapter_id": "direct_provisioning",
-                "filters": {
-                    "value": "center"
-                }
-            },
-            {
-                "workflow_input_name": "input_series",
-                "adapter_id": "direct_provisioning",
-                "filters": {
-                    "value": "{\"2018-05-19T22:20:00.000Z\":86.9358994238,\"2018-05-19T22:25:00.000Z\":78.6552569681,\"2018-05-19T22:30:00.000Z\":93.515633185,\"2018-05-19T22:35:00.000Z\":96.3497006614,\"2018-05-19T22:40:00.000Z\":83.1926874657,\"2018-05-22T05:50:00.000Z\":926.4357356548,\"2018-05-22T05:55:00.000Z\":934.7257131637,\"2018-05-22T06:00:00.000Z\":908.4082221891,\"2018-05-22T06:05:00.000Z\":917.7112901544,\"2018-05-22T06:10:00.000Z\":924.0958121497}"
-                }
-            },
-            {
-                "workflow_input_name": "threshold",
-                "adapter_id": "direct_provisioning",
-                "filters": {
-                    "value": "600.0"
-                }
-            }
-        ],
-        "output_wirings": [
-            {
-                "workflow_output_name": "score",
-                "adapter_id": "direct_provisioning"
-            },
-            {
-                "workflow_output_name": "data_and_alerts",
-                "adapter_id": "direct_provisioning"
-            }
-        ]
-    },
-    "job_id": "00000000-0000-0000-0000-000000000002"
-}
-```
+In order to execute the latest revision the json message is the same, except for the parameter "id", which needs to be replaced by the parameter "revision_group_id".
 
 The Kafka execution command line producer started above expects its payload in a format `key:<MESSAGE JSON>`. A good choice for the key may be a job id (see technical details below).
 
