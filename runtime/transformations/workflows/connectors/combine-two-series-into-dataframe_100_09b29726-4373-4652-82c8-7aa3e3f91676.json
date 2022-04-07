@@ -4,27 +4,39 @@
     "constants": [],
     "inputs": [
       {
+        "connector_id": "15637612-6dc7-4f55-7b5b-83c9fdac8579",
+        "connector_name": "series",
         "data_type": "SERIES",
         "id": "b44f8d11-73c2-4f52-bc56-ff738618fdbb",
         "name": "series_2",
+        "operator_id": "ea5479cb-a8df-4f8c-8165-86c21d0fd8e8",
+        "operator_name": "Combine into DataFrame (2)",
         "position": {
           "x": 510,
           "y": 60
         }
       },
       {
+        "connector_id": "15637612-6dc7-4f55-7b5b-83c9fdac8579",
+        "connector_name": "series",
         "data_type": "SERIES",
         "id": "9f4b9299-867b-41fa-86f8-29069574c991",
         "name": "series_1",
+        "operator_id": "f2e74579-6058-474a-bb9e-ae2d9a059b6d",
+        "operator_name": "Combine into DataFrame",
         "position": {
           "x": 0,
           "y": 190
         }
       },
       {
+        "connector_id": "3e68b069-390e-cf1f-5916-101b7fe4cf4a",
+        "connector_name": "series_or_dataframe",
         "data_type": "ANY",
         "id": "d36314d1-d09c-4af2-b472-bb46ce30b2ba",
         "name": "series_or_dataframe",
+        "operator_id": "f2e74579-6058-474a-bb9e-ae2d9a059b6d",
+        "operator_name": "Combine into DataFrame",
         "position": {
           "x": 0,
           "y": 220
@@ -265,9 +277,13 @@
     ],
     "outputs": [
       {
+        "connector_id": "cbf856b7-faf7-3079-d8e8-3b666d6f9d84",
+        "connector_name": "connector_name",
         "data_type": "DATAFRAME",
         "id": "ebbfb57d-5108-4f75-9ea3-7025f31530f9",
         "name": "dataframe",
+        "operator_id": "ea5479cb-a8df-4f8c-8165-86c21d0fd8e8",
+        "operator_name": "Combine into DataFrame (2)",
         "position": {
           "x": 1230,
           "y": 160

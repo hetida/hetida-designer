@@ -3,8 +3,12 @@
   "content": {
     "constants": [
       {
+        "connector_id": "44d0fd6a-4f72-3ec1-d5dc-4f8df7029652",
+        "connector_name": "name",
         "data_type": "STRING",
         "id": "088d81cf-caa3-4fd4-ab7a-e1538de3b559",
+        "operator_id": "1ecddb98-6ae1-48b0-b125-20d3b4e3118c",
+        "operator_name": "Name Series (2)",
         "position": {
           "x": -200,
           "y": 0
@@ -12,8 +16,12 @@
         "value": "y"
       },
       {
+        "connector_id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+        "connector_name": "column_name",
         "data_type": "STRING",
         "id": "a062167b-8fe0-4a48-bd94-552039a4f7af",
+        "operator_id": "2ae1a251-3d86-4323-ae64-0702cfb5a4cf",
+        "operator_name": "Combine as named column into DataFrame",
         "position": {
           "x": -200,
           "y": 0
@@ -21,8 +29,12 @@
         "value": "y"
       },
       {
+        "connector_id": "44d0fd6a-4f72-3ec1-d5dc-4f8df7029652",
+        "connector_name": "name",
         "data_type": "STRING",
         "id": "d4ee291f-4476-447d-a161-a6b16fdaf205",
+        "operator_id": "177db51b-6a68-4808-8e09-1a6d87f3e579",
+        "operator_name": "Name Series",
         "position": {
           "x": -200,
           "y": 0
@@ -32,72 +44,104 @@
     ],
     "inputs": [
       {
+        "connector_id": "5336c0a5-97ac-d436-ae5f-ee75fa8c8b40",
+        "connector_name": "input",
         "data_type": "SERIES",
         "id": "1c3224e0-90e6-4d03-9160-3a9417c27841",
         "name": "y_vals",
+        "operator_id": "1ecddb98-6ae1-48b0-b125-20d3b4e3118c",
+        "operator_name": "Name Series (2)",
         "position": {
           "x": -50,
           "y": 370
         }
       },
       {
+        "connector_id": "64245bba-7e81-ef0a-941d-2f9b5b43d044",
+        "connector_name": "n",
         "data_type": "INT",
         "id": "b817a8f6-764d-4003-96c4-b8ba52981fb1",
         "name": "n_grid",
+        "operator_id": "74608f8a-d973-4add-9764-ad3348b3bb57",
+        "operator_name": "2D Grid Generator",
         "position": {
           "x": -60,
           "y": 90
         }
       },
       {
+        "connector_id": "02a7f8f6-0fb5-5a65-12d7-a21d61cdd271",
+        "connector_name": "x_max",
         "data_type": "FLOAT",
         "id": "f468e81c-0e8f-4869-a268-892a391327d6",
         "name": "x_max",
+        "operator_id": "74608f8a-d973-4add-9764-ad3348b3bb57",
+        "operator_name": "2D Grid Generator",
         "position": {
           "x": -60,
           "y": 120
         }
       },
       {
+        "connector_id": "4ef2610a-4321-004c-aee8-5cbf87ac1a49",
+        "connector_name": "x_min",
         "data_type": "FLOAT",
         "id": "d5c0c6b6-3b9d-48ed-9c40-70ecf14a3d0d",
         "name": "x_min",
+        "operator_id": "74608f8a-d973-4add-9764-ad3348b3bb57",
+        "operator_name": "2D Grid Generator",
         "position": {
           "x": -60,
           "y": 150
         }
       },
       {
+        "connector_id": "80fb9d9d-d926-8cb6-6a41-777ba806f6ea",
+        "connector_name": "y_max",
         "data_type": "FLOAT",
         "id": "1cabf944-d63e-4d0d-a1e7-d6c0ffb193c5",
         "name": "y_max",
+        "operator_id": "74608f8a-d973-4add-9764-ad3348b3bb57",
+        "operator_name": "2D Grid Generator",
         "position": {
           "x": -60,
           "y": 180
         }
       },
       {
+        "connector_id": "b3492592-b3e8-caaa-a4d4-4670d110d7f0",
+        "connector_name": "y_min",
         "data_type": "FLOAT",
         "id": "2c212317-15a7-4599-b1f2-b6333a6c7a2b",
         "name": "y_min",
+        "operator_id": "74608f8a-d973-4add-9764-ad3348b3bb57",
+        "operator_name": "2D Grid Generator",
         "position": {
           "x": -60,
           "y": 210
         }
       },
       {
+        "connector_id": "9861c5a4-1e37-54af-70be-f4e7b81d1f64",
+        "connector_name": "n_estimators",
         "data_type": "INT",
         "id": "8a569d4a-863a-4800-abb5-819cc1e8a030",
         "name": "n_estimators",
+        "operator_id": "d1b7342b-0efa-4a01-b239-d82834d1583f",
+        "operator_name": "Isolation Forest",
         "position": {
           "x": 940,
           "y": 240
         }
       },
       {
+        "connector_id": "5336c0a5-97ac-d436-ae5f-ee75fa8c8b40",
+        "connector_name": "input",
         "data_type": "SERIES",
         "id": "196c78f4-6b9a-4476-9b37-ec80986a6a47",
         "name": "x_vals",
+        "operator_id": "177db51b-6a68-4808-8e09-1a6d87f3e579",
+        "operator_name": "Name Series",
         "position": {
           "x": -50,
           "y": 520
@@ -1150,9 +1194,13 @@
     ],
     "outputs": [
       {
+        "connector_id": "53dff70b-364f-e5b7-fbb4-c293a5d2f339",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "5dcdf141-590f-42d6-86bd-460af86147a7",
         "name": "contour_plot",
+        "operator_id": "e362967a-fa2d-4d7c-8ef9-e58eceb45e2b",
+        "operator_name": "Contour Plot",
         "position": {
           "x": 2010,
           "y": -100
