@@ -22,7 +22,7 @@ The payload for the execute endpoint looks as follows:
 
 ```json
 {
-  "id": string, // the id of the respective transformation revision
+  "id": "string", // the id of the respective transformation revision
   "wiring": {
     "id": "string", // the wiring id (if coming from a stored wiring)
                     // can be an arbitrary uuid.
