@@ -85,17 +85,20 @@ async def create_workflow_revision(
 
     logger.info("create a new workflow")
 
-    transformation_revision = workflow_dto.to_transformation_revision(
-        documentation=(
-            "\n"
-            "# New Component/Workflow\n"
-            "## Description\n"
-            "## Inputs\n"
-            "## Outputs\n"
-            "## Details\n"
-            "## Examples\n"
+    try:
+        transformation_revision = workflow_dto.to_transformation_revision(
+            documentation=(
+                "\n"
+                "# New Component/Workflow\n"
+                "## Description\n"
+                "## Inputs\n"
+                "## Outputs\n"
+                "## Details\n"
+                "## Examples\n"
+            )
         )
-    )
+    except ValidationError as e:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     try:
         store_single_transformation_revision(transformation_revision)
@@ -235,7 +238,13 @@ async def update_workflow_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
-    updated_transformation_revision = updated_workflow_dto.to_transformation_revision()
+    try:
+        updated_transformation_revision = (
+            updated_workflow_dto.to_transformation_revision()
+        )
+    except ValidationError as e:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
+
     existing_transformation_revision: Optional[TransformationRevision] = None
 
     try:
@@ -320,6 +329,7 @@ async def delete_workflow_revision(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
+# pylint: disable=W0622
 @workflow_router.post(
     "/{id}/execute",
     response_model=ExecutionResponseFrontendDto,
@@ -412,7 +422,9 @@ async def execute_workflow_revision(
                 logger.info(msg)
                 # do not explictly re-raise to avoid displaying authentication details
                 # pylint: disable=raise-missing-from
-                raise HTTPException(status.HTTP_424_FAILED_DEPENDENCY, detail=msg)
+                raise HTTPException(
+                    status.HTTP_424_FAILED_DEPENDENCY, detail=msg
+                ) from e
             try:
                 json_obj = response.json()
                 execution_result = WorkflowExecutionResult(**json_obj)

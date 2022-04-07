@@ -129,8 +129,10 @@ class ComponentInfo(BaseModel):
 
     Used as input for code generation to include meta-information about the component in the code.
 
-    This additional information makes it possible to recover the underlying transformation revision object from the code.
+    This additional information makes it possible to recover the underlying transformation revision
+    object from the code.
     """
+
     input_types_by_name: Dict[str, DataType]
     output_types_by_name: Dict[str, DataType]
     id: UUID = Field(default_factory=uuid4)

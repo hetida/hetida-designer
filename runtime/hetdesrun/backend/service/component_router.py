@@ -85,17 +85,20 @@ async def create_component_revision(
 
     logger.info("create new component")
 
-    transformation_revision = component_dto.to_transformation_revision(
-        documentation=(
-            "\n"
-            "# New Component/Workflow\n"
-            "## Description\n"
-            "## Inputs\n"
-            "## Outputs\n"
-            "## Details\n"
-            "## Examples\n"
+    try:
+        transformation_revision = component_dto.to_transformation_revision(
+            documentation=(
+                "\n"
+                "# New Component/Workflow\n"
+                "## Description\n"
+                "## Inputs\n"
+                "## Outputs\n"
+                "## Details\n"
+                "## Examples\n"
+            )
         )
-    )
+    except ValidationError as e:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     logger.debug("generate code")
     transformation_revision.content = generate_code(
@@ -203,7 +206,13 @@ async def update_component_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
-    updated_transformation_revision = updated_component_dto.to_transformation_revision()
+    try:
+        updated_transformation_revision = (
+            updated_component_dto.to_transformation_revision()
+        )
+    except ValidationError as e:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
+
     existing_transformation_revision: Optional[TransformationRevision] = None
 
     try:
