@@ -132,19 +132,6 @@ class ConnectorFrontendDto(BaseModel):
     def to_io(self) -> IO:
         return IO(id=self.id, name=self.name, data_type=self.type)
 
-    def to_workflow_io(
-        self, operator_id: UUID, connector_id: UUID
-    ) -> WorkflowIoFrontendDto:
-        return WorkflowIoFrontendDto(
-            id=self.id,
-            name=self.name,
-            pos_x=self.pos_x,
-            pos_y=self.pos_y,
-            type=self.type,
-            operator=operator_id,
-            connector=connector_id,
-        )
-
     @classmethod
     def from_connector(cls, connector: Connector) -> "ConnectorFrontendDto":
         return ConnectorFrontendDto(
@@ -164,12 +151,6 @@ class ConnectorFrontendDto(BaseModel):
             posY=posY,
             type=io.data_type,
         )
-
-    def to_component_input(self) -> ComponentInput:
-        return ComponentInput(id=self.id, type=self.type, name=self.name)
-
-    def to_component_output(self) -> ComponentOutput:
-        return ComponentOutput(id=self.id, type=self.type, name=self.name)
 
     class Config:
         alias_generator = to_camel
