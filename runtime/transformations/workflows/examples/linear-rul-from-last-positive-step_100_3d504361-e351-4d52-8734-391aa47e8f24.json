@@ -4,36 +4,52 @@
     "constants": [],
     "inputs": [
       {
+        "connector_id": "f103c395-92b6-444d-320a-93950ed6d857",
+        "connector_name": "input",
         "data_type": "SERIES",
         "id": "1ab7579f-eb3a-4725-944b-e96272ff279d",
         "name": "inp_series",
+        "operator_id": "10d45f6c-4034-4eb9-b3f6-a497d5f7cc18",
+        "operator_name": "Pass Through (Series)",
         "position": {
           "x": -440,
           "y": 170
         }
       },
       {
+        "connector_id": "9f517001-688c-4a09-bcea-76c1bf54ec5b",
+        "connector_name": "postive_step_size",
         "data_type": "FLOAT",
         "id": "8080f74f-ce6f-4e0f-b3bb-b222f8341969",
         "name": "postive_step_size",
+        "operator_id": "244973af-0daa-4d4e-9a6f-570642162b7f",
+        "operator_name": "Data From Last Positive Step",
         "position": {
           "x": 70,
           "y": 210
         }
       },
       {
+        "connector_id": "b338e339-93a5-4f0e-b1d4-165e70b1e794",
+        "connector_name": "limit",
         "data_type": "FLOAT",
         "id": "716b7b23-2168-4a6b-a8f5-3369dbdc830c",
         "name": "limit",
+        "operator_id": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "operator_name": "Univariate Linear RUL Regression Example",
         "position": {
           "x": 700,
           "y": 230
         }
       },
       {
+        "connector_id": "2d5dfada-f777-4067-a065-41ffd2994817",
+        "connector_name": "num_days_forecast",
         "data_type": "INT",
         "id": "2b35188c-2ecf-400d-8826-86a7c0cc2aee",
         "name": "num_days_forecast",
+        "operator_id": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "operator_name": "Univariate Linear RUL Regression Example",
         "position": {
           "x": 700,
           "y": 260
@@ -575,45 +591,65 @@
     ],
     "outputs": [
       {
+        "connector_id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "69a90572-028f-4f40-b153-7dd6dc26dc67",
         "name": "before_step_detect",
+        "operator_id": "ca5ce637-5736-491b-b2e2-13ec1748a538",
+        "operator_name": "Single Timeseries Plot",
         "position": {
           "x": 780,
           "y": 400
         }
       },
       {
+        "connector_id": "93cf92d4-4082-464e-bc21-724513e59d41",
+        "connector_name": "connector_name",
         "data_type": "FLOAT",
         "id": "36d95060-e3c2-485c-8abf-a10875a9adb6",
         "name": "intercept",
+        "operator_id": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "operator_name": "Univariate Linear RUL Regression Example",
         "position": {
           "x": 1400,
           "y": 200
         }
       },
       {
+        "connector_id": "aa7edab2-3da0-48b9-bbd0-ed6f3136f8ed",
+        "connector_name": "connector_name",
         "data_type": "STRING",
         "id": "634f74ff-ac6d-456c-97a8-ea5188e6ec3c",
         "name": "limit_violation_timestamp",
+        "operator_id": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "operator_name": "Univariate Linear RUL Regression Example",
         "position": {
           "x": 1400,
           "y": 230
         }
       },
       {
+        "connector_id": "8a4a9698-5d7f-401a-b6f6-bc2f549d9395",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "67d1a7e6-aa76-4918-b701-005c8ba4d667",
         "name": "rul_regression_result_plot",
+        "operator_id": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "operator_name": "Univariate Linear RUL Regression Example",
         "position": {
           "x": 1400,
           "y": 260
         }
       },
       {
+        "connector_id": "02699d2d-865e-493a-bae2-7e79577d549c",
+        "connector_name": "connector_name",
         "data_type": "FLOAT",
         "id": "d1fc90eb-2c5e-4639-ba47-87f2903fadfd",
         "name": "slope",
+        "operator_id": "223b0263-af3b-4324-b9f0-c441860edb42",
+        "operator_name": "Univariate Linear RUL Regression Example",
         "position": {
           "x": 1400,
           "y": 290

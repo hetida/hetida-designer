@@ -16,6 +16,8 @@ from hetdesrun.utils import get_uuid_from_seed
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 
+from hetdesrun.exportimport.importing import load_json
+
 
 client = TestClient(app)
 
@@ -130,6 +132,7 @@ dto_json_wiring = {
     ],
     "outputWirings": [],
 }
+
 valid_component_dto_dict = {
     "category": "Arithmetic",
     "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"a": DataType.Any, "b": DataType.Integer},\n    outputs={"modulo": DataType.Any},\n    component_name="Modulo",\n    description="Calculates the modulo to some given b",\n    category="Arithmetic",\n    uuid="ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",\n    group_id="ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",\n    tag="1.0.0"\n)\ndef main(*, a, b):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"modulo": a % b}\n',
