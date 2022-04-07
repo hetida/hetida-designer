@@ -1191,7 +1191,7 @@ def test_to_constant():
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
     ]
-    
+
     constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant(
         *get_operator_and_connector_name(
             valid_input_with_name["operator"],
@@ -1213,7 +1213,7 @@ def test_from_constant():
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
     ]
-    
+
     constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant(
         *get_operator_and_connector_name(
             valid_input_with_name["operator"],
@@ -1424,15 +1424,30 @@ def test_workflow_dto_to_transformation_revision_and_back_matches():
     assert len(workflow_dto.operators) == len(returned_workflow_dto.operators)
     for i in range(len(workflow_dto.operators)):
         assert workflow_dto.operators[i].id == returned_workflow_dto.operators[i].id
-        assert workflow_dto.operators[i].group_id == returned_workflow_dto.operators[i].group_id
-        assert workflow_dto.operators[i].transformation_id == returned_workflow_dto.operators[i].transformation_id
+        assert (
+            workflow_dto.operators[i].group_id
+            == returned_workflow_dto.operators[i].group_id
+        )
+        assert (
+            workflow_dto.operators[i].transformation_id
+            == returned_workflow_dto.operators[i].transformation_id
+        )
         assert workflow_dto.operators[i].tag == returned_workflow_dto.operators[i].tag
         assert workflow_dto.operators[i].name == returned_workflow_dto.operators[i].name
-        assert workflow_dto.operators[i].inputs == returned_workflow_dto.operators[i].inputs
-        assert workflow_dto.operators[i].outputs == returned_workflow_dto.operators[i].outputs
-        assert workflow_dto.operators[i].pos_x == returned_workflow_dto.operators[i].pos_x
-        assert workflow_dto.operators[i].pos_y == returned_workflow_dto.operators[i].pos_y
-        
+        assert (
+            workflow_dto.operators[i].inputs
+            == returned_workflow_dto.operators[i].inputs
+        )
+        assert (
+            workflow_dto.operators[i].outputs
+            == returned_workflow_dto.operators[i].outputs
+        )
+        assert (
+            workflow_dto.operators[i].pos_x == returned_workflow_dto.operators[i].pos_x
+        )
+        assert (
+            workflow_dto.operators[i].pos_y == returned_workflow_dto.operators[i].pos_y
+        )
 
 
 def test_workflow_dto_from_transformation_revision_and_back_matches():
@@ -1506,3 +1521,214 @@ def test_workflow_dto_from_transformation_revision_and_back_matches():
             == returned_transformation_revision.content.operators[i]
         )
     assert transformation_revision == returned_transformation_revision
+
+
+def test_workflow_dto_to_transformation_revision_and_back_matches_with_ambiguous_open_ends():
+    open_ends_workflow = deepcopy(valid_workflow_example_iso_forest)
+    open_ends_workflow["state"] = "DRAFT"
+    del open_ends_workflow["links"][16]
+    del open_ends_workflow["links"][5]
+    del open_ends_workflow["links"][1]
+    del open_ends_workflow["links"][0]
+    del open_ends_workflow["inputs"][7]
+    del open_ends_workflow["inputs"][4]
+    workflow_dto = WorkflowRevisionFrontendDto(**open_ends_workflow)
+    transformation_revision = workflow_dto.to_transformation_revision()
+    returned_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
+        transformation_revision
+    )
+
+    assert len(workflow_dto.links) == len(returned_workflow_dto.links)
+    for i in range(len(workflow_dto.links)):
+        assert workflow_dto.links[i] == returned_workflow_dto.links[i]
+    assert len(workflow_dto.inputs) == len(returned_workflow_dto.inputs)
+    for i in range(len(workflow_dto.inputs)):
+        assert workflow_dto.inputs[i].type == returned_workflow_dto.inputs[i].type
+        assert (
+            workflow_dto.inputs[i].operator == returned_workflow_dto.inputs[i].operator
+        )
+        assert (
+            workflow_dto.inputs[i].connector
+            == returned_workflow_dto.inputs[i].connector
+        )
+        assert workflow_dto.inputs[i].pos_x == returned_workflow_dto.inputs[i].pos_x
+        assert workflow_dto.inputs[i].pos_y == returned_workflow_dto.inputs[i].pos_y
+        assert (
+            workflow_dto.inputs[i].constant == returned_workflow_dto.inputs[i].constant
+        )
+        assert (
+            workflow_dto.inputs[i].constant_value
+            == returned_workflow_dto.inputs[i].constant_value
+        )
+        if not workflow_dto.inputs[i].constant:
+            assert workflow_dto.inputs[i].name == returned_workflow_dto.inputs[i].name
+    assert len(workflow_dto.outputs) == len(returned_workflow_dto.outputs)
+    for i in range(len(workflow_dto.outputs)):
+        assert workflow_dto.outputs[i].type == returned_workflow_dto.outputs[i].type
+        assert (
+            workflow_dto.outputs[i].operator
+            == returned_workflow_dto.outputs[i].operator
+        )
+        assert (
+            workflow_dto.outputs[i].connector
+            == returned_workflow_dto.outputs[i].connector
+        )
+        assert workflow_dto.outputs[i].pos_x == returned_workflow_dto.outputs[i].pos_x
+        assert workflow_dto.outputs[i].pos_y == returned_workflow_dto.outputs[i].pos_y
+        assert (
+            workflow_dto.outputs[i].constant
+            == returned_workflow_dto.outputs[i].constant
+        )
+        assert (
+            workflow_dto.outputs[i].constant_value
+            == returned_workflow_dto.outputs[i].constant_value
+        )
+        if not workflow_dto.outputs[i].constant:
+            assert workflow_dto.outputs[i].name == returned_workflow_dto.outputs[i].name
+    assert len(workflow_dto.operators) == len(returned_workflow_dto.operators)
+    for i in range(len(workflow_dto.operators)):
+        assert workflow_dto.operators[i].id == returned_workflow_dto.operators[i].id
+        assert (
+            workflow_dto.operators[i].group_id
+            == returned_workflow_dto.operators[i].group_id
+        )
+        assert (
+            workflow_dto.operators[i].transformation_id
+            == returned_workflow_dto.operators[i].transformation_id
+        )
+        assert workflow_dto.operators[i].tag == returned_workflow_dto.operators[i].tag
+        assert workflow_dto.operators[i].name == returned_workflow_dto.operators[i].name
+        assert (
+            workflow_dto.operators[i].inputs
+            == returned_workflow_dto.operators[i].inputs
+        )
+        assert (
+            workflow_dto.operators[i].outputs
+            == returned_workflow_dto.operators[i].outputs
+        )
+        assert (
+            workflow_dto.operators[i].pos_x == returned_workflow_dto.operators[i].pos_x
+        )
+        assert (
+            workflow_dto.operators[i].pos_y == returned_workflow_dto.operators[i].pos_y
+        )
+
+
+def test_workflow_dto_from_transformation_revision_and_back_matches_with_ambiguous_open_ends():
+    open_ends_workflow = deepcopy(valid_workflow_example_iso_forest)
+    open_ends_workflow["state"] = "DRAFT"
+    del open_ends_workflow["links"][16]
+    del open_ends_workflow["links"][5]
+    del open_ends_workflow["links"][1]
+    del open_ends_workflow["links"][0]
+    del open_ends_workflow["inputs"][7]
+    del open_ends_workflow["inputs"][4]
+    workflow_dto = WorkflowRevisionFrontendDto(**open_ends_workflow)
+    transformation_revision = workflow_dto.to_transformation_revision()
+    returned_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
+        transformation_revision
+    )
+    returned_transformation_revision = returned_workflow_dto.to_transformation_revision(
+        timestamp=transformation_revision.released_timestamp
+    )
+
+    assert (
+        transformation_revision.released_timestamp
+        == returned_transformation_revision.released_timestamp
+    )
+    assert len(transformation_revision.io_interface.inputs) == len(
+        returned_transformation_revision.io_interface.inputs
+    )
+    assert len(transformation_revision.io_interface.outputs) == len(
+        returned_transformation_revision.io_interface.outputs
+    )
+    # inputs and outputs will be generated with arbitrary UUID by validators
+    # for the open ends. Their ids won't be reproduced, no need to compare
+    assert len(transformation_revision.content.links) == len(
+        returned_transformation_revision.content.links
+    )
+    for i in range(len(transformation_revision.content.links)):
+        assert (
+            transformation_revision.content.links[i]
+            == returned_transformation_revision.content.links[i]
+        )
+    assert len(transformation_revision.content.inputs) == len(
+        returned_transformation_revision.content.inputs
+    )
+    for i in range(len(transformation_revision.content.inputs)):
+        assert (
+            transformation_revision.content.inputs[i].name
+            == returned_transformation_revision.content.inputs[i].name
+        )
+        assert (
+            transformation_revision.content.inputs[i].data_type
+            == returned_transformation_revision.content.inputs[i].data_type
+        )
+        assert (
+            transformation_revision.content.inputs[i].operator_id
+            == returned_transformation_revision.content.inputs[i].operator_id
+        )
+        assert (
+            transformation_revision.content.inputs[i].connector_id
+            == returned_transformation_revision.content.inputs[i].connector_id
+        )
+        assert (
+            transformation_revision.content.inputs[i].operator_name
+            == returned_transformation_revision.content.inputs[i].operator_name
+        )
+        assert (
+            transformation_revision.content.inputs[i].connector_name
+            == returned_transformation_revision.content.inputs[i].connector_name
+        )
+        assert (
+            transformation_revision.content.inputs[i].position
+            == returned_transformation_revision.content.inputs[i].position
+        )
+    assert len(transformation_revision.content.constants) == len(
+        returned_transformation_revision.content.constants
+    )
+    for i in range(len(transformation_revision.content.constants)):
+        assert (
+            transformation_revision.content.constants[i]
+            == returned_transformation_revision.content.constants[i]
+        )
+    assert len(transformation_revision.content.outputs) == len(
+        returned_transformation_revision.content.outputs
+    )
+    for i in range(len(transformation_revision.content.outputs)):
+        assert (
+            transformation_revision.content.outputs[i].name
+            == returned_transformation_revision.content.outputs[i].name
+        )
+        assert (
+            transformation_revision.content.outputs[i].data_type
+            == returned_transformation_revision.content.outputs[i].data_type
+        )
+        assert (
+            transformation_revision.content.outputs[i].operator_id
+            == returned_transformation_revision.content.outputs[i].operator_id
+        )
+        assert (
+            transformation_revision.content.outputs[i].connector_id
+            == returned_transformation_revision.content.outputs[i].connector_id
+        )
+        assert (
+            transformation_revision.content.outputs[i].operator_name
+            == returned_transformation_revision.content.outputs[i].operator_name
+        )
+        assert (
+            transformation_revision.content.outputs[i].connector_name
+            == returned_transformation_revision.content.outputs[i].connector_name
+        )
+        assert (
+            transformation_revision.content.outputs[i].position
+            == returned_transformation_revision.content.outputs[i].position
+        )
+    assert len(transformation_revision.content.operators) == len(
+        returned_transformation_revision.content.operators
+    )
+    for i in range(len(transformation_revision.content.operators)):
+        assert (
+            transformation_revision.content.operators[i]
+            == returned_transformation_revision.content.operators[i]
+        )
