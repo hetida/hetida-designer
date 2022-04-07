@@ -179,8 +179,12 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
     an ad-hoc workflow structure for execution.
     """
     try:
-        transformation_revision = read_single_transformation_revision(exec_by_id_input.id)
-        logger.info("found transformation revision with id %s", str(exec_by_id_input.id))
+        transformation_revision = read_single_transformation_revision(
+            exec_by_id_input.id
+        )
+        logger.info(
+            "found transformation revision with id %s", str(exec_by_id_input.id)
+        )
     except DBNotFoundError as e:
         raise TrafoExecutionNotFoundError() from e
 

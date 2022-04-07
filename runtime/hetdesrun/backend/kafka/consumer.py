@@ -157,34 +157,38 @@ async def consume_execution_trigger_message(
             )
             try:
                 exec_by_id_input = ExecByIdInput.parse_raw(msg.value.decode("utf8"))
-            except ValidationError as e1:
+            except ValidationError as validate_exec_by_id_input_error:
                 try:
                     exec_latest_by_group_id_input = ExecLatestByGroupIdInput.parse_raw(
                         msg.value.decode("utf8")
                     )
-                except ValidationError as e2:
+                except ValidationError as validate_exec_latest_by_group_id_input_error:
                     msg = (
                         f"Kafka consumer {kafka_ctx.consumer_id} failed to parse message"
                         f" payload for execution.\n"
-                        f"Validation Error assuming ExecByIdInput was\n{str(e1)}\n"
-                        f"Validation Error assuming ExecLatestByGroupIdInput was\n{str(e2)}\n"
+                        f"Validation Error assuming ExecByIdInput was\n"
+                        f"{str(validate_exec_by_id_input_error)}\n"
+                        f"Validation Error assuming ExecLatestByGroupIdInput was\n"
+                        f"{str(validate_exec_latest_by_group_id_input_error)}\n"
                         f"Aborting."
                     )
-                    kafka_ctx.last_unhandled_exception = e2
+                    kafka_ctx.last_unhandled_exception = (
+                        validate_exec_latest_by_group_id_input_error
+                    )
                     logger.error(msg)
                     continue
                 try:
                     latest_id = get_latest_revision_id(
                         exec_latest_by_group_id_input.revision_group_id
                     )
-                except DBNotFoundError as e3:
+                except DBNotFoundError as e:
                     msg = (
                         f"Kafka consumer {kafka_ctx.consumer_id} failed to receive"
                         f" id of latest revision of revision group "
                         f"{exec_latest_by_group_id_input.revision_group_id} from datatbase.\n"
                         f"Aborting."
                     )
-                    kafka_ctx.last_unhandled_exception = e3
+                    kafka_ctx.last_unhandled_exception = e
                     logger.error(msg)
                 exec_by_id_input = ExecByIdInput(
                     id=latest_id,
