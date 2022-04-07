@@ -9,6 +9,7 @@ from hetdesrun.backend.models.workflow import (
     WorkflowLinkFrontendDto,
     WorkflowRevisionFrontendDto,
     position_from_input_connector_id,
+    get_operator_and_connector_name,
 )
 
 from hetdesrun.backend.models.wiring import InputWiringFrontendDto, WiringFrontendDto
@@ -1107,47 +1108,6 @@ def test_io_to_io():
     assert io.data_type == valid_input_with_name["type"]
 
 
-def test_io_to_connector():
-    connector = WorkflowIoFrontendDto(**valid_input_with_name).to_connector()
-
-    assert str(connector.id) == valid_input_with_name["id"]
-    assert connector.name == valid_input_with_name["name"]
-    assert connector.data_type == valid_input_with_name["type"]
-    assert connector.position.x == valid_input_with_name["posX"]
-    assert connector.position.y == valid_input_with_name["posY"]
-
-
-def test_to_constant():
-
-    constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant()
-
-    assert str(constant.id) == valid_input_without_name["id"]
-    assert constant.data_type == valid_input_without_name["type"]
-    assert constant.position.x == valid_input_without_name["posX"]
-    assert constant.position.y == valid_input_without_name["posY"]
-
-    assert constant.value == valid_input_without_name["constantValue"]["value"]
-
-
-def test_from_constant():
-    constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant()
-    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_constant(
-        constant,
-        operator_id=UUID(valid_input_without_name["operator"]),
-        connector_id=UUID(valid_input_without_name["connector"]),
-    )
-
-    assert str(io_dto.id) == valid_input_without_name["id"]
-    assert io_dto.name == None
-    assert io_dto.type == valid_input_without_name["type"]
-    assert io_dto.pos_x == valid_input_without_name["posX"]
-    assert io_dto.pos_y == valid_input_without_name["posY"]
-    assert str(io_dto.operator) == valid_input_without_name["operator"]
-    assert str(io_dto.connector) == valid_input_without_name["connector"]
-    assert io_dto.constant == valid_input_without_name["constant"]
-    assert io_dto.constant_value == valid_input_without_name["constantValue"]
-
-
 def test_connector_to_connector():
     valid_connector = valid_operator["inputs"][0]
     connector = ConnectorFrontendDto(**valid_connector).to_connector()
@@ -1177,8 +1137,6 @@ def test_to_operator():
     assert str(operator.id) == valid_operator["id"]
     assert str(operator.revision_group_id) == valid_operator["groupId"]
     assert operator.name == valid_operator["name"]
-    assert operator.description == valid_operator["description"]
-    assert operator.category == valid_operator["category"]
     assert operator.type == valid_operator["type"]
     assert operator.state == valid_operator["state"]
     assert operator.version_tag == valid_operator["tag"]
@@ -1196,8 +1154,8 @@ def test_from_operator():
     assert str(operator_dto.id) == valid_operator["id"]
     assert str(operator_dto.group_id) == valid_operator["groupId"]
     assert operator_dto.name == valid_operator["name"]
-    assert operator_dto.description == valid_operator["description"]
-    assert operator_dto.category == valid_operator["category"]
+    # assert operator_dto.description == valid_operator["description"]
+    # assert operator_dto.category == valid_operator["category"]
     assert operator_dto.type == valid_operator["type"]
     assert operator_dto.state == valid_operator["state"]
     assert operator_dto.tag == valid_operator["tag"]
@@ -1206,6 +1164,78 @@ def test_from_operator():
     assert len(operator_dto.outputs) == len(valid_operator["outputs"])
     assert operator_dto.pos_x == valid_operator["posX"]
     assert operator_dto.pos_y == valid_operator["posY"]
+
+
+def test_io_to_io_connector():
+    operators = [
+        WorkflowOperatorFrontendDto(**operator).to_operator()
+        for operator in valid_workflow_example_iso_forest["operators"]
+    ]
+    connector = WorkflowIoFrontendDto(**valid_input_with_name).to_io_connector(
+        *get_operator_and_connector_name(
+            valid_input_with_name["operator"],
+            valid_input_with_name["connector"],
+            operators,
+        )
+    )
+
+    assert str(connector.id) == valid_input_with_name["id"]
+    assert connector.name == valid_input_with_name["name"]
+    assert connector.data_type == valid_input_with_name["type"]
+    assert connector.position.x == valid_input_with_name["posX"]
+    assert connector.position.y == valid_input_with_name["posY"]
+
+
+def test_to_constant():
+    operators = [
+        WorkflowOperatorFrontendDto(**operator).to_operator()
+        for operator in valid_workflow_example_iso_forest["operators"]
+    ]
+
+    constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant(
+        *get_operator_and_connector_name(
+            valid_input_with_name["operator"],
+            valid_input_with_name["connector"],
+            operators,
+        )
+    )
+
+    assert str(constant.id) == valid_input_without_name["id"]
+    assert constant.data_type == valid_input_without_name["type"]
+    assert constant.position.x == valid_input_without_name["posX"]
+    assert constant.position.y == valid_input_without_name["posY"]
+
+    assert constant.value == valid_input_without_name["constantValue"]["value"]
+
+
+def test_from_constant():
+    operators = [
+        WorkflowOperatorFrontendDto(**operator).to_operator()
+        for operator in valid_workflow_example_iso_forest["operators"]
+    ]
+
+    constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant(
+        *get_operator_and_connector_name(
+            valid_input_with_name["operator"],
+            valid_input_with_name["connector"],
+            operators,
+        )
+    )
+    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_constant(
+        constant,
+        operator_id=UUID(valid_input_without_name["operator"]),
+        connector_id=UUID(valid_input_without_name["connector"]),
+    )
+
+    assert str(io_dto.id) == valid_input_without_name["id"]
+    assert io_dto.name == None
+    assert io_dto.type == valid_input_without_name["type"]
+    assert io_dto.pos_x == valid_input_without_name["posX"]
+    assert io_dto.pos_y == valid_input_without_name["posY"]
+    assert str(io_dto.operator) == valid_input_without_name["operator"]
+    assert str(io_dto.connector) == valid_input_without_name["connector"]
+    assert io_dto.constant == valid_input_without_name["constant"]
+    assert io_dto.constant_value == valid_input_without_name["constantValue"]
 
 
 def test_to_input_wiring():
@@ -1393,7 +1423,31 @@ def test_workflow_dto_to_transformation_revision_and_back_matches():
         assert workflow_dto.outputs[i] == returned_workflow_dto.outputs[i]
     assert len(workflow_dto.operators) == len(returned_workflow_dto.operators)
     for i in range(len(workflow_dto.operators)):
-        assert workflow_dto.operators[i] == returned_workflow_dto.operators[i]
+        assert workflow_dto.operators[i].id == returned_workflow_dto.operators[i].id
+        assert (
+            workflow_dto.operators[i].group_id
+            == returned_workflow_dto.operators[i].group_id
+        )
+        assert (
+            workflow_dto.operators[i].transformation_id
+            == returned_workflow_dto.operators[i].transformation_id
+        )
+        assert workflow_dto.operators[i].tag == returned_workflow_dto.operators[i].tag
+        assert workflow_dto.operators[i].name == returned_workflow_dto.operators[i].name
+        assert (
+            workflow_dto.operators[i].inputs
+            == returned_workflow_dto.operators[i].inputs
+        )
+        assert (
+            workflow_dto.operators[i].outputs
+            == returned_workflow_dto.operators[i].outputs
+        )
+        assert (
+            workflow_dto.operators[i].pos_x == returned_workflow_dto.operators[i].pos_x
+        )
+        assert (
+            workflow_dto.operators[i].pos_y == returned_workflow_dto.operators[i].pos_y
+        )
 
 
 def test_workflow_dto_from_transformation_revision_and_back_matches():
@@ -1467,3 +1521,214 @@ def test_workflow_dto_from_transformation_revision_and_back_matches():
             == returned_transformation_revision.content.operators[i]
         )
     assert transformation_revision == returned_transformation_revision
+
+
+def test_workflow_dto_to_transformation_revision_and_back_matches_with_ambiguous_open_ends():
+    open_ends_workflow = deepcopy(valid_workflow_example_iso_forest)
+    open_ends_workflow["state"] = "DRAFT"
+    del open_ends_workflow["links"][16]
+    del open_ends_workflow["links"][5]
+    del open_ends_workflow["links"][1]
+    del open_ends_workflow["links"][0]
+    del open_ends_workflow["inputs"][7]
+    del open_ends_workflow["inputs"][4]
+    workflow_dto = WorkflowRevisionFrontendDto(**open_ends_workflow)
+    transformation_revision = workflow_dto.to_transformation_revision()
+    returned_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
+        transformation_revision
+    )
+
+    assert len(workflow_dto.links) == len(returned_workflow_dto.links)
+    for i in range(len(workflow_dto.links)):
+        assert workflow_dto.links[i] == returned_workflow_dto.links[i]
+    assert len(workflow_dto.inputs) == len(returned_workflow_dto.inputs)
+    for i in range(len(workflow_dto.inputs)):
+        assert workflow_dto.inputs[i].type == returned_workflow_dto.inputs[i].type
+        assert (
+            workflow_dto.inputs[i].operator == returned_workflow_dto.inputs[i].operator
+        )
+        assert (
+            workflow_dto.inputs[i].connector
+            == returned_workflow_dto.inputs[i].connector
+        )
+        assert workflow_dto.inputs[i].pos_x == returned_workflow_dto.inputs[i].pos_x
+        assert workflow_dto.inputs[i].pos_y == returned_workflow_dto.inputs[i].pos_y
+        assert (
+            workflow_dto.inputs[i].constant == returned_workflow_dto.inputs[i].constant
+        )
+        assert (
+            workflow_dto.inputs[i].constant_value
+            == returned_workflow_dto.inputs[i].constant_value
+        )
+        if not workflow_dto.inputs[i].constant:
+            assert workflow_dto.inputs[i].name == returned_workflow_dto.inputs[i].name
+    assert len(workflow_dto.outputs) == len(returned_workflow_dto.outputs)
+    for i in range(len(workflow_dto.outputs)):
+        assert workflow_dto.outputs[i].type == returned_workflow_dto.outputs[i].type
+        assert (
+            workflow_dto.outputs[i].operator
+            == returned_workflow_dto.outputs[i].operator
+        )
+        assert (
+            workflow_dto.outputs[i].connector
+            == returned_workflow_dto.outputs[i].connector
+        )
+        assert workflow_dto.outputs[i].pos_x == returned_workflow_dto.outputs[i].pos_x
+        assert workflow_dto.outputs[i].pos_y == returned_workflow_dto.outputs[i].pos_y
+        assert (
+            workflow_dto.outputs[i].constant
+            == returned_workflow_dto.outputs[i].constant
+        )
+        assert (
+            workflow_dto.outputs[i].constant_value
+            == returned_workflow_dto.outputs[i].constant_value
+        )
+        if not workflow_dto.outputs[i].constant:
+            assert workflow_dto.outputs[i].name == returned_workflow_dto.outputs[i].name
+    assert len(workflow_dto.operators) == len(returned_workflow_dto.operators)
+    for i in range(len(workflow_dto.operators)):
+        assert workflow_dto.operators[i].id == returned_workflow_dto.operators[i].id
+        assert (
+            workflow_dto.operators[i].group_id
+            == returned_workflow_dto.operators[i].group_id
+        )
+        assert (
+            workflow_dto.operators[i].transformation_id
+            == returned_workflow_dto.operators[i].transformation_id
+        )
+        assert workflow_dto.operators[i].tag == returned_workflow_dto.operators[i].tag
+        assert workflow_dto.operators[i].name == returned_workflow_dto.operators[i].name
+        assert (
+            workflow_dto.operators[i].inputs
+            == returned_workflow_dto.operators[i].inputs
+        )
+        assert (
+            workflow_dto.operators[i].outputs
+            == returned_workflow_dto.operators[i].outputs
+        )
+        assert (
+            workflow_dto.operators[i].pos_x == returned_workflow_dto.operators[i].pos_x
+        )
+        assert (
+            workflow_dto.operators[i].pos_y == returned_workflow_dto.operators[i].pos_y
+        )
+
+
+def test_workflow_dto_from_transformation_revision_and_back_matches_with_ambiguous_open_ends():
+    open_ends_workflow = deepcopy(valid_workflow_example_iso_forest)
+    open_ends_workflow["state"] = "DRAFT"
+    del open_ends_workflow["links"][16]
+    del open_ends_workflow["links"][5]
+    del open_ends_workflow["links"][1]
+    del open_ends_workflow["links"][0]
+    del open_ends_workflow["inputs"][7]
+    del open_ends_workflow["inputs"][4]
+    workflow_dto = WorkflowRevisionFrontendDto(**open_ends_workflow)
+    transformation_revision = workflow_dto.to_transformation_revision()
+    returned_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
+        transformation_revision
+    )
+    returned_transformation_revision = returned_workflow_dto.to_transformation_revision(
+        timestamp=transformation_revision.released_timestamp
+    )
+
+    assert (
+        transformation_revision.released_timestamp
+        == returned_transformation_revision.released_timestamp
+    )
+    assert len(transformation_revision.io_interface.inputs) == len(
+        returned_transformation_revision.io_interface.inputs
+    )
+    assert len(transformation_revision.io_interface.outputs) == len(
+        returned_transformation_revision.io_interface.outputs
+    )
+    # inputs and outputs will be generated with arbitrary UUID by validators
+    # for the open ends. Their ids won't be reproduced, no need to compare
+    assert len(transformation_revision.content.links) == len(
+        returned_transformation_revision.content.links
+    )
+    for i in range(len(transformation_revision.content.links)):
+        assert (
+            transformation_revision.content.links[i]
+            == returned_transformation_revision.content.links[i]
+        )
+    assert len(transformation_revision.content.inputs) == len(
+        returned_transformation_revision.content.inputs
+    )
+    for i in range(len(transformation_revision.content.inputs)):
+        assert (
+            transformation_revision.content.inputs[i].name
+            == returned_transformation_revision.content.inputs[i].name
+        )
+        assert (
+            transformation_revision.content.inputs[i].data_type
+            == returned_transformation_revision.content.inputs[i].data_type
+        )
+        assert (
+            transformation_revision.content.inputs[i].operator_id
+            == returned_transformation_revision.content.inputs[i].operator_id
+        )
+        assert (
+            transformation_revision.content.inputs[i].connector_id
+            == returned_transformation_revision.content.inputs[i].connector_id
+        )
+        assert (
+            transformation_revision.content.inputs[i].operator_name
+            == returned_transformation_revision.content.inputs[i].operator_name
+        )
+        assert (
+            transformation_revision.content.inputs[i].connector_name
+            == returned_transformation_revision.content.inputs[i].connector_name
+        )
+        assert (
+            transformation_revision.content.inputs[i].position
+            == returned_transformation_revision.content.inputs[i].position
+        )
+    assert len(transformation_revision.content.constants) == len(
+        returned_transformation_revision.content.constants
+    )
+    for i in range(len(transformation_revision.content.constants)):
+        assert (
+            transformation_revision.content.constants[i]
+            == returned_transformation_revision.content.constants[i]
+        )
+    assert len(transformation_revision.content.outputs) == len(
+        returned_transformation_revision.content.outputs
+    )
+    for i in range(len(transformation_revision.content.outputs)):
+        assert (
+            transformation_revision.content.outputs[i].name
+            == returned_transformation_revision.content.outputs[i].name
+        )
+        assert (
+            transformation_revision.content.outputs[i].data_type
+            == returned_transformation_revision.content.outputs[i].data_type
+        )
+        assert (
+            transformation_revision.content.outputs[i].operator_id
+            == returned_transformation_revision.content.outputs[i].operator_id
+        )
+        assert (
+            transformation_revision.content.outputs[i].connector_id
+            == returned_transformation_revision.content.outputs[i].connector_id
+        )
+        assert (
+            transformation_revision.content.outputs[i].operator_name
+            == returned_transformation_revision.content.outputs[i].operator_name
+        )
+        assert (
+            transformation_revision.content.outputs[i].connector_name
+            == returned_transformation_revision.content.outputs[i].connector_name
+        )
+        assert (
+            transformation_revision.content.outputs[i].position
+            == returned_transformation_revision.content.outputs[i].position
+        )
+    assert len(transformation_revision.content.operators) == len(
+        returned_transformation_revision.content.operators
+    )
+    for i in range(len(transformation_revision.content.operators)):
+        assert (
+            transformation_revision.content.operators[i]
+            == returned_transformation_revision.content.operators[i]
+        )

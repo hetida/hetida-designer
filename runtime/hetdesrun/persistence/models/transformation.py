@@ -20,7 +20,12 @@ from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 
-from hetdesrun.persistence.models.io import IOInterface, Position, Connector
+from hetdesrun.persistence.models.io import (
+    IOInterface,
+    Position,
+    Connector,
+    IOConnector,
+)
 from hetdesrun.persistence.models.link import Vertex, Link
 from hetdesrun.persistence.models.operator import Operator, NonEmptyStr
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -253,7 +258,7 @@ class TransformationRevision(BaseModel):
             function_name=self.name,
             inputs=[input.to_component_input() for input in self.io_interface.inputs],
             outputs=[
-                output.to_component_input() for output in self.io_interface.outputs
+                output.to_component_output() for output in self.io_interface.outputs
             ],
             name=self.name,
             description=self.description,
@@ -276,7 +281,7 @@ class TransformationRevision(BaseModel):
             function_name="main",
             inputs=[input.to_component_input() for input in self.io_interface.inputs],
             outputs=[
-                output.to_component_input() for output in self.io_interface.outputs
+                output.to_component_output() for output in self.io_interface.outputs
             ],
         )
 
@@ -351,6 +356,31 @@ class TransformationRevision(BaseModel):
 
     def wrap_component_in_tr_workflow(self) -> "TransformationRevision":
         operator = self.to_operator()
+
+        wf_inputs = []
+        wf_outputs = []
+        links = []
+        for input_connector in operator.inputs:
+            wf_input = IOConnector.from_connector(
+                input_connector, operator.id, operator.name
+            )
+            wf_inputs.append(wf_input)
+            link = Link(
+                start=Vertex(operator=None, connector=wf_input.to_connector()),
+                end=Vertex(operator=operator.id, connector=input_connector),
+            )
+            links.append(link)
+        for output_connector in operator.outputs:
+            wf_output = IOConnector.from_connector(
+                output_connector, operator.id, operator.name
+            )
+            wf_outputs.append(wf_output)
+            link = Link(
+                start=Vertex(operator=operator.id, connector=output_connector),
+                end=Vertex(operator=None, connector=wf_output.to_connector()),
+            )
+            links.append(link)
+
         return TransformationRevision(
             id=uuid4(),
             revision_group_id=uuid4(),
@@ -362,27 +392,14 @@ class TransformationRevision(BaseModel):
             state=self.state,
             type=Type.WORKFLOW,
             content=WorkflowContent(
-                inputs=operator.inputs,
-                outputs=operator.outputs,
+                inputs=wf_inputs,
+                outputs=wf_outputs,
                 operators=[operator],
-                links=[
-                    Link(
-                        start=Vertex(operator=None, connector=input),
-                        end=Vertex(operator=operator.id, connector=input),
-                    )
-                    for input in operator.inputs
-                ]
-                + [
-                    Link(
-                        start=Vertex(operator=operator.id, connector=output),
-                        end=Vertex(operator=None, connector=output),
-                    )
-                    for output in operator.outputs
-                ],
+                links=links,
             ),
             io_interface=IOInterface(
-                inputs=[input.to_io() for input in operator.inputs],
-                outputs=[output.to_io() for output in operator.outputs],
+                inputs=[input_connector.to_io() for input_connector in wf_inputs],
+                outputs=[output_connector.to_io() for output_connector in wf_outputs],
             ),
             test_wiring=self.test_wiring,
         )

@@ -4,198 +4,286 @@
     "constants": [],
     "inputs": [
       {
+        "connector_id": "4128780c-c4e1-1540-8864-06e810fb223d",
+        "connector_name": "interval",
         "data_type": "STRING",
         "id": "03034bb6-c22f-407b-9301-f147b8440ead",
         "name": "time_boxes_interval",
+        "operator_id": "7cfaff69-b68b-4d72-b553-104d826b0b13",
+        "operator_name": "Timeseries Interval Boxplots",
         "position": {
           "x": 150,
           "y": 1180
         }
       },
       {
+        "connector_id": "884ef67a-37ae-d67c-6d51-6d3b59556bec",
+        "connector_name": "series",
         "data_type": "SERIES",
         "id": "bbe008bb-6cd8-4f6d-93eb-929be2ffafe7",
         "name": "time_boxes_ts",
+        "operator_id": "7cfaff69-b68b-4d72-b553-104d826b0b13",
+        "operator_name": "Timeseries Interval Boxplots",
         "position": {
           "x": 150,
           "y": 1210
         }
       },
       {
+        "connector_id": "b7519a7a-83ae-d0a4-e79c-60b3c0f00c2e",
+        "connector_name": "cat_color_col",
         "data_type": "STRING",
         "id": "b7cdf904-a0a7-4df2-ae63-c15ee482cc80",
         "name": "map_cat_color_col",
+        "operator_id": "fbaa5750-fd58-4e67-a3a7-6989121de3f9",
+        "operator_name": "Simple Scatter Map Plot",
         "position": {
           "x": 149,
           "y": 1320
         }
       },
       {
+        "connector_id": "0d0227d4-60cd-98de-d7bd-8de9462ff452",
+        "connector_name": "color_map",
         "data_type": "ANY",
         "id": "1824155b-0b6b-44f1-9951-0dc5d559fc1f",
         "name": "map_color_map",
+        "operator_id": "fbaa5750-fd58-4e67-a3a7-6989121de3f9",
+        "operator_name": "Simple Scatter Map Plot",
         "position": {
           "x": 149,
           "y": 1350
         }
       },
       {
+        "connector_id": "159f2c5a-40fc-65a2-d84c-2e7d2ae16e0a",
+        "connector_name": "data",
         "data_type": "DATAFRAME",
         "id": "d2c944c6-56b0-4934-80e9-d4976efadaa6",
         "name": "map_data",
+        "operator_id": "fbaa5750-fd58-4e67-a3a7-6989121de3f9",
+        "operator_name": "Simple Scatter Map Plot",
         "position": {
           "x": 149,
           "y": 1380
         }
       },
       {
+        "connector_id": "2e61e06b-a7dc-6ea6-efb7-dc7bf68890b8",
+        "connector_name": "x",
         "data_type": "SERIES",
         "id": "a4b3e41e-dec1-43a2-965d-602d00108525",
         "name": "scatter_x",
+        "operator_id": "2602969e-04f3-446c-973f-f84c2b358204",
+        "operator_name": "2D Scatter Plot colored by Index",
         "position": {
           "x": 150,
           "y": 1490
         }
       },
       {
+        "connector_id": "050d0420-21c8-8560-7f97-40f2f93cb9d3",
+        "connector_name": "y",
         "data_type": "SERIES",
         "id": "2ab2a705-06d9-4a8f-b28e-51c77770ae67",
         "name": "scatter_y",
+        "operator_id": "2602969e-04f3-446c-973f-f84c2b358204",
+        "operator_name": "2D Scatter Plot colored by Index",
         "position": {
           "x": 150,
           "y": 1520
         }
       },
       {
+        "connector_id": "70753b5c-4a8d-fb0b-36d0-076fc7cd7967",
+        "connector_name": "series",
         "data_type": "SERIES",
         "id": "a1830fc5-af3c-45f6-8a91-07c0269e450e",
         "name": "single_ts",
+        "operator_id": "b8f38976-0d14-417f-a707-8e9c55040565",
+        "operator_name": "Single Timeseries Plot",
         "position": {
           "x": 150,
           "y": 170
         }
       },
       {
+        "connector_id": "ff22a376-752f-9a5f-899e-601d6e341c72",
+        "connector_name": "dataframe",
         "data_type": "DATAFRAME",
         "id": "4abb1f86-a920-479b-82b0-f1a7f4d05638",
         "name": "ts_dataframe",
+        "operator_id": "e2e8b968-c82d-455e-8ae7-1f0584853a43",
+        "operator_name": "Timeseries DataFrame Plot",
         "position": {
           "x": 150,
           "y": 280
         }
       },
       {
+        "connector_id": "2e11c6e7-2a2f-eca5-0507-954ecb6f3329",
+        "connector_name": "series",
         "data_type": "SERIES",
         "id": "caa12be4-9d8c-4b96-af49-733cb9ccadb7",
         "name": "bar_series",
+        "operator_id": "ebfd511b-7165-48a4-b50a-24f7944aa671",
+        "operator_name": "Vertical Bar Plot",
         "position": {
           "x": 150,
           "y": 390
         }
       },
       {
+        "connector_id": "bc8b441a-9d32-f9ab-eb7e-5a19688039d2",
+        "connector_name": "dataframe",
         "data_type": "DATAFRAME",
         "id": "d5a29fa6-c570-468c-8195-e2301e91c589",
         "name": "pie_data",
+        "operator_id": "9abcae45-e58d-45a8-9239-95a180715225",
+        "operator_name": "Pie Chart Plot",
         "position": {
           "x": 150,
           "y": 500
         }
       },
       {
+        "connector_id": "03280c10-5cf8-0e47-9e23-3b06b7388168",
+        "connector_name": "group_column",
         "data_type": "STRING",
         "id": "75604e53-8379-4bc1-b1af-600727e94e2f",
         "name": "pie_group_col",
+        "operator_id": "9abcae45-e58d-45a8-9239-95a180715225",
+        "operator_name": "Pie Chart Plot",
         "position": {
           "x": 150,
           "y": 530
         }
       },
       {
+        "connector_id": "f586c1eb-6943-45cc-b828-fc1c30515b9a",
+        "connector_name": "value_column",
         "data_type": "STRING",
         "id": "3b768612-2631-4967-a13c-632a3c6c9aa7",
         "name": "pie_val_col",
+        "operator_id": "9abcae45-e58d-45a8-9239-95a180715225",
+        "operator_name": "Pie Chart Plot",
         "position": {
           "x": 150,
           "y": 560
         }
       },
       {
+        "connector_id": "38fdfd24-a76e-6296-606e-73495727eaa0",
+        "connector_name": "dataframe",
         "data_type": "DATAFRAME",
         "id": "08c17f33-6dee-4f3e-8093-38b42652f89f",
         "name": "corr_data",
+        "operator_id": "4f6db4f7-0db0-4138-ad8b-fd5c23ec89be",
+        "operator_name": "Correlation Matrix Heatmap Plot",
         "position": {
           "x": 150,
           "y": 670
         }
       },
       {
+        "connector_id": "d416b294-0dc1-06b8-01ad-afd4d9794ae4",
+        "connector_name": "series_1",
         "data_type": "SERIES",
         "id": "a4cddb2f-7f61-478b-88d0-107fa779c424",
         "name": "comp_s1",
+        "operator_id": "cccbeeed-c40a-4adf-bb15-42a2fc680e19",
+        "operator_name": "Compare Two Timeseries Plot",
         "position": {
           "x": 150,
           "y": 780
         }
       },
       {
+        "connector_id": "8478c25c-9370-e6d9-7a1f-4d611782570c",
+        "connector_name": "series_2",
         "data_type": "SERIES",
         "id": "2c6ba5fb-38ce-425d-a2f7-19f8b2e8c8b8",
         "name": "comp_s2",
+        "operator_id": "cccbeeed-c40a-4adf-bb15-42a2fc680e19",
+        "operator_name": "Compare Two Timeseries Plot",
         "position": {
           "x": 150,
           "y": 810
         }
       },
       {
+        "connector_id": "8fc11cb1-16ad-5053-a187-cb4fb5af31ce",
+        "connector_name": "freq",
         "data_type": "STRING",
         "id": "1e25ad3c-0206-4609-ac82-43e744fb9f34",
         "name": "comp_shifed_freq",
+        "operator_id": "024a61e0-036b-40f7-98f0-88b96b6db022",
+        "operator_name": "Compare Timeshifted Timeseries",
         "position": {
           "x": 150,
           "y": 920
         }
       },
       {
+        "connector_id": "00041bd7-41a1-4c4e-e129-b491ec028e8a",
+        "connector_name": "freq_factor",
         "data_type": "INT",
         "id": "197a9dad-be64-4125-8ab2-7b71a1ab4327",
         "name": "comp_timeshift_freq_factor",
+        "operator_id": "024a61e0-036b-40f7-98f0-88b96b6db022",
+        "operator_name": "Compare Timeshifted Timeseries",
         "position": {
           "x": 150,
           "y": 950
         }
       },
       {
+        "connector_id": "c8a2d3fd-6b49-c1b0-4d46-fbe5c4d156d4",
+        "connector_name": "max_shifts_future",
         "data_type": "INT",
         "id": "2790221e-f11f-4273-b0f9-caa9eaa61575",
         "name": "comp_shifted_max_future",
+        "operator_id": "024a61e0-036b-40f7-98f0-88b96b6db022",
+        "operator_name": "Compare Timeshifted Timeseries",
         "position": {
           "x": 150,
           "y": 980
         }
       },
       {
+        "connector_id": "9733a691-3271-74d1-fdb0-7b613e599420",
+        "connector_name": "max_shifts_past",
         "data_type": "INT",
         "id": "c767d78b-a19f-4572-84a2-2aefcd8a8abb",
         "name": "comp_shifted_max_past",
+        "operator_id": "024a61e0-036b-40f7-98f0-88b96b6db022",
+        "operator_name": "Compare Timeshifted Timeseries",
         "position": {
           "x": 150,
           "y": 1010
         }
       },
       {
+        "connector_id": "105c728f-7e02-f7ce-60e5-aba4e0625094",
+        "connector_name": "series",
         "data_type": "SERIES",
         "id": "ae573303-2f93-4d00-9b67-9614ee454b9c",
         "name": "comp_shifted_series",
+        "operator_id": "024a61e0-036b-40f7-98f0-88b96b6db022",
+        "operator_name": "Compare Timeshifted Timeseries",
         "position": {
           "x": 150,
           "y": 1040
         }
       },
       {
+        "connector_id": "9433aef9-4751-5114-345e-79dfcc427268",
+        "connector_name": "series_shiftable",
         "data_type": "SERIES",
         "id": "94029ffe-7225-4d91-8c82-8ec9bd2f90fa",
         "name": "comp_shifted_shiftable_series",
+        "operator_id": "024a61e0-036b-40f7-98f0-88b96b6db022",
+        "operator_name": "Compare Timeshifted Timeseries",
         "position": {
           "x": 150,
           "y": 1070
@@ -1550,90 +1638,130 @@
     ],
     "outputs": [
       {
+        "connector_id": "1658275f-5ff6-1e12-c44c-3dac33a6a56d",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "9c36a4be-a223-47cb-ae98-093e6e08aed8",
         "name": "h_ts_box_plot",
+        "operator_id": "7cfaff69-b68b-4d72-b553-104d826b0b13",
+        "operator_name": "Timeseries Interval Boxplots",
         "position": {
           "x": 850,
           "y": 1180
         }
       },
       {
+        "connector_id": "7c1a20a3-f8ae-be72-f6c3-73e874904c74",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "687e9b02-dd1d-401b-9713-76462cb5af5a",
         "name": "i_map_plot",
+        "operator_id": "fbaa5750-fd58-4e67-a3a7-6989121de3f9",
+        "operator_name": "Simple Scatter Map Plot",
         "position": {
           "x": 849,
           "y": 1320
         }
       },
       {
+        "connector_id": "66990a60-30fa-7a61-65f6-0c6a27636b83",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "7be67df5-1e30-4070-8130-7d57c23685bd",
         "name": "j_scatter_plot",
+        "operator_id": "2602969e-04f3-446c-973f-f84c2b358204",
+        "operator_name": "2D Scatter Plot colored by Index",
         "position": {
           "x": 850,
           "y": 1490
         }
       },
       {
+        "connector_id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "edbf0dc7-5673-4faa-8cda-26b6dc633c23",
         "name": "a_single_ts",
+        "operator_id": "b8f38976-0d14-417f-a707-8e9c55040565",
+        "operator_name": "Single Timeseries Plot",
         "position": {
           "x": 850,
           "y": 170
         }
       },
       {
+        "connector_id": "c0d410fa-e324-7d06-186a-8096b4aa4468",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "525a5fe0-f1c4-4ad6-a7fb-bea695637260",
         "name": "b_ts_frame",
+        "operator_id": "e2e8b968-c82d-455e-8ae7-1f0584853a43",
+        "operator_name": "Timeseries DataFrame Plot",
         "position": {
           "x": 850,
           "y": 280
         }
       },
       {
+        "connector_id": "9ab59d8b-9927-3664-dc40-ab9924e91e88",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "17432dbe-9015-410c-98b3-3a98c9688241",
         "name": "c_bar_plot",
+        "operator_id": "ebfd511b-7165-48a4-b50a-24f7944aa671",
+        "operator_name": "Vertical Bar Plot",
         "position": {
           "x": 850,
           "y": 390
         }
       },
       {
+        "connector_id": "2ba3fb5f-4be0-f48a-3124-894113466b62",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "5530e5d9-440d-47b8-98a8-994badd859b5",
         "name": "d_pie_chart",
+        "operator_id": "9abcae45-e58d-45a8-9239-95a180715225",
+        "operator_name": "Pie Chart Plot",
         "position": {
           "x": 850,
           "y": 500
         }
       },
       {
+        "connector_id": "dd24f709-50f3-f9d5-94f6-ac9b0d403275",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "63057577-7123-46df-a5ab-d53f48ca40e0",
         "name": "f_corr_heatmap",
+        "operator_id": "4f6db4f7-0db0-4138-ad8b-fd5c23ec89be",
+        "operator_name": "Correlation Matrix Heatmap Plot",
         "position": {
           "x": 850,
           "y": 670
         }
       },
       {
+        "connector_id": "0951b836-933c-044d-030b-6c2ee3b5d00a",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "86e04d63-2bc8-4360-9630-32c91ae6d2f1",
         "name": "e_comp_2_ts",
+        "operator_id": "cccbeeed-c40a-4adf-bb15-42a2fc680e19",
+        "operator_name": "Compare Two Timeseries Plot",
         "position": {
           "x": 850,
           "y": 780
         }
       },
       {
+        "connector_id": "c3d55f42-2827-2899-9bb0-c1537171a8cc",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "40b46035-52d7-4200-9e3c-c24ef0b4bdce",
         "name": "g_comp_2_shifted",
+        "operator_id": "024a61e0-036b-40f7-98f0-88b96b6db022",
+        "operator_name": "Compare Timeshifted Timeseries",
         "position": {
           "x": 850,
           "y": 920

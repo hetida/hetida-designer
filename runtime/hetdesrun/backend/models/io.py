@@ -10,7 +10,13 @@ from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.models.util import valid_python_identifier
 from hetdesrun.models.component import ComponentInput, ComponentOutput
 
-from hetdesrun.persistence.models.io import Connector, Position, IO, Constant
+from hetdesrun.persistence.models.io import (
+    Connector,
+    Position,
+    IO,
+    IOConnector,
+    Constant,
+)
 
 
 class WorkflowIoFrontendDto(BaseModel):
@@ -31,18 +37,26 @@ class WorkflowIoFrontendDto(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_connector(self) -> Connector:
-        return Connector(
+    def to_io_connector(self, operator_name: str, connector_name: str) -> IOConnector:
+        return IOConnector(
             id=self.id,
             name=self.name,
             data_type=self.type,
+            operator_id=self.operator,
+            connector_id=self.connector,
+            operator_name=operator_name,
+            connector_name=connector_name,
             position=Position(x=self.pos_x, y=self.pos_y),
         )
 
-    def to_constant(self) -> Constant:
+    def to_constant(self, operator_name: str, connector_name: str) -> Constant:
         return Constant(
             id=self.id,
             data_type=self.type,
+            operator_id=self.operator,
+            connector_id=self.connector,
+            operator_name=operator_name,
+            connector_name=connector_name,
             position=Position(x=self.pos_x, y=self.pos_y),
             # pylint: disable=unsubscriptable-object
             value=self.constant_value["value"]
@@ -118,19 +132,6 @@ class ConnectorFrontendDto(BaseModel):
     def to_io(self) -> IO:
         return IO(id=self.id, name=self.name, data_type=self.type)
 
-    def to_workflow_io(
-        self, operator_id: UUID, connector_id: UUID
-    ) -> WorkflowIoFrontendDto:
-        return WorkflowIoFrontendDto(
-            id=self.id,
-            name=self.name,
-            pos_x=self.pos_x,
-            pos_y=self.pos_y,
-            type=self.type,
-            operator=operator_id,
-            connector=connector_id,
-        )
-
     @classmethod
     def from_connector(cls, connector: Connector) -> "ConnectorFrontendDto":
         return ConnectorFrontendDto(
@@ -150,12 +151,6 @@ class ConnectorFrontendDto(BaseModel):
             posY=posY,
             type=io.data_type,
         )
-
-    def to_component_input(self) -> ComponentInput:
-        return ComponentInput(id=self.id, type=self.type, name=self.name)
-
-    def to_component_output(self) -> ComponentOutput:
-        return ComponentOutput(id=self.id, type=self.type, name=self.name)
 
     class Config:
         alias_generator = to_camel
