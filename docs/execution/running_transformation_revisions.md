@@ -258,5 +258,5 @@ The response:
 
 ## Running workflow and component revisions using Kafka
 
-see the documentation for [Execution via Apache Kafka](./wf_execution_via_kafka.md).
+see the documentation for [Execution via Apache Kafka](./execution_via_kafka.md).
 
