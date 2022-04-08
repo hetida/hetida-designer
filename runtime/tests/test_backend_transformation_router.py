@@ -69,7 +69,7 @@ tr_json_component_1 = {
             }
         ],
     },
-    "content": "code",
+    "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"operator_input\": DataType.Integer},\n    outputs={\"operator_output\": DataType.Integer},\n    component_name=\"Pass Through Integer\",\n    description=\"Just outputs its input value\",\n    category=\"Connectors\",\n    uuid=\"57eea09f-d28e-89af-4e81-2027697a3f0f\",\n    group_id=\"57eea09f-d28e-89af-4e81-2027697a3f0f\",\n    tag=\"1.0.0\"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"operator_output\": operator_input}\n",
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
@@ -199,6 +199,10 @@ tr_json_workflow_2 = {
                 "id": str(get_uuid_from_seed("input")),
                 "name": "wf_input",
                 "data_type": "INT",
+                "operator_id": str(get_uuid_from_seed("operator")),
+                "connector_id": str(get_uuid_from_seed("operator input")),
+                "operator_name": "operator",
+                "connector_name": "operator_input",
                 "position": {"x": 0, "y": 0},
             }
         ],
@@ -207,6 +211,10 @@ tr_json_workflow_2 = {
                 "id": str(get_uuid_from_seed("output")),
                 "name": "wf_output",
                 "data_type": "INT",
+                "operator_id": str(get_uuid_from_seed("operator")),
+                "connector_id": str(get_uuid_from_seed("operator output")),
+                "operator_name": "operator",
+                "connector_name": "operator_output",
                 "position": {"x": 0, "y": 0},
             }
         ],
@@ -215,8 +223,6 @@ tr_json_workflow_2 = {
                 "id": str(get_uuid_from_seed("operator")),
                 "revision_group_id": str(get_uuid_from_seed("group of component 1")),
                 "name": "operator",
-                "description": "",
-                "category": "category",
                 "type": "COMPONENT",
                 "state": "RELEASED",
                 "version_tag": "1.0.0",
@@ -600,6 +606,64 @@ async def test_execute_for_transformation_revision(
             assert UUID(resp_data["job_id"]) == UUID(
                 "1270547c-b224-461d-9387-e9d9d465bbe1"
             )
+
+
+@pytest.mark.asyncio
+async def test_execute_for_separate_runtime_container(async_test_client, clean_test_db_engine):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
+    ):
+        with mock.patch(
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
+        ):
+            with mock.patch(
+                "hetdesrun.backend.execution.runtime_config",
+                is_runtime_service=False,
+            ):
+                resp_mock = mock.Mock()
+                resp_mock.status_code = 200
+                resp_mock.json = mock.Mock(
+                    return_value={
+                                'output_results_by_output_name': {'wf_output': 100},
+                                'output_types_by_output_name': {'wf_output': 'INT'},
+                                'result': 'ok',
+                                'job_id': '1270547c-b224-461d-9387-e9d9d465bbe1'
+                            }
+                )
+                with mock.patch(
+                    "hetdesrun.backend.execution.httpx.AsyncClient.post",
+                    return_value=resp_mock,
+                ) as mocked_post:
+                    tr_component_1 = TransformationRevision(**tr_json_component_1)
+                    tr_component_1.content = generate_code(tr_component_1.to_code_body())
+                    store_single_transformation_revision(tr_component_1)
+                    tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
+
+                    store_single_transformation_revision(tr_workflow_2)
+
+                    update_or_create_nesting(tr_workflow_2)
+
+                    async with async_test_client as ac:
+                        response = await ac.post(
+                            posix_urljoin(
+                                "/api/transformations/",
+                                str(get_uuid_from_seed("workflow 2")),
+                                "execute?job_id=1270547c-b224-461d-9387-e9d9d465bbe1",
+                            ),
+                            json=json.loads(tr_workflow_2.test_wiring.json()),
+                        )
+
+                    assert response.status_code == 200
+                    resp_data = response.json()
+                    assert "output_types_by_output_name" in resp_data
+                    assert "job_id" in resp_data
+                    assert UUID(resp_data["job_id"]) == UUID(
+                        "1270547c-b224-461d-9387-e9d9d465bbe1"
+                    )
+                    mocked_post.assert_called_once()
 
 
 @pytest.mark.asyncio

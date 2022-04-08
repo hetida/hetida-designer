@@ -49,13 +49,15 @@ class WorkflowOperatorFrontendDto(BasicInformation):
         )
 
     @classmethod
-    def from_operator(cls, operator: Operator) -> "WorkflowOperatorFrontendDto":
+    def from_operator(
+        cls, operator: Operator, category: str = "Other", description: str = ""
+    ) -> "WorkflowOperatorFrontendDto":
         return WorkflowOperatorFrontendDto(
             id=operator.id,
             groupId=operator.revision_group_id,
             name=operator.name,
-            description=operator.description,
-            category=operator.category,
+            description=description,
+            category=category,
             type=operator.type,
             state=operator.state,
             tag=operator.version_tag,

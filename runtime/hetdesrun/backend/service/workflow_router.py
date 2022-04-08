@@ -252,6 +252,14 @@ async def update_workflow_revision(
         # with an id and either create or update the workflow revision
         pass
 
+    if existing_transformation_revision is not None:
+        updated_transformation_revision.documentation = (
+            existing_transformation_revision.documentation
+        )
+        updated_transformation_revision.test_wiring = (
+            existing_transformation_revision.test_wiring
+        )
+
     updated_transformation_revision = update_content(
         existing_transformation_revision, updated_transformation_revision
     )
