@@ -60,7 +60,8 @@ class Node(Protocol):
         ...
 
 
-class ComputationNode:
+class ComputationNode:  # pylint: disable=too-many-instance-attributes)
+
     """Represents a function computation with multiple outputs together with input information
 
     Inputs and outputs are not made explicit here and the information where the inputs

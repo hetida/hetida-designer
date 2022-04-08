@@ -3,6 +3,7 @@ from hetdesrun.component.code import (
     check_parameter_names,
     update_code,
     example_code,
+    example_code_async,
 )
 from hetdesrun.datatypes import DataType
 
@@ -17,8 +18,9 @@ def test_function_header_no_params():
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565", 
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565", 
         "1.0.0",
+        "def",
     )
-    assert "main()" in func_header
+    assert "def main()" in func_header
     assert "inputs={}" in func_header
     assert "outputs={}" in func_header
     assert 'uuid="c6eff22c-21c4-43c6-9ae1-b2bdfb944565"' in func_header
@@ -34,6 +36,7 @@ def test_function_header_multiple_inputs():
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "1.0.0",
+        "def",
     )
     assert "main(*, x, okay)" in func_header
     assert """inputs={"x": DataType.Float, "okay": DataType.Boolean}""" in func_header
@@ -103,4 +106,17 @@ def test_update_code():
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "1.0.0",
     )
-    assert "pass" in new_code
+
+    # test with async def in function header
+    new_code = update_code(
+        example_code_async, 
+        {}, 
+        {},
+        "Test Component", 
+        "A test component", 
+        "Tests",
+        "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        "1.0.1",
+    )
+    assert "async def" in new_code

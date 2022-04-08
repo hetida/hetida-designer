@@ -5,6 +5,8 @@ from typing import Coroutine, Optional
 from uuid import uuid4
 
 import aiokafka
+from pydantic import ValidationError
+
 from hetdesrun.backend.execution import (
     ExecByIdInput,
     TrafoExecutionError,
@@ -12,7 +14,6 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.webservice.config import runtime_config
-from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
