@@ -233,7 +233,6 @@ Here both inputs are wired via the Python demo adapter. One of them is wired to 
             "workflow_input_name": "int_in"
         }
     ],
-    "name": "STANDARD-WIRING",
     "output_wirings": [
         {
             "adapter_id": "demo-adapter-python",
