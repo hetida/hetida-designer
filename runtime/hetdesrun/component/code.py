@@ -38,7 +38,7 @@ function_definition_template: str = """\
     group_id={group_id},
     tag={tag}
 )
-def main({params_list}):
+{main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
 """
@@ -62,6 +62,7 @@ def generate_function_header(
     uuid: str,
     group_id: str,
     tag: str,
+    is_coroutine: bool = False,
 ) -> str:
     """Generate entrypoint function header from the inputs and their types"""
     param_list_str = (
@@ -69,6 +70,9 @@ def generate_function_header(
         if len(input_type_dict.keys()) == 0
         else "*, " + ", ".join(input_type_dict.keys())
     )
+
+    main_func_declaration_start = "async def" if is_coroutine else "def"
+
     return function_definition_template.format(
         input_dict_content="{"
         + ", ".join(
@@ -93,6 +97,7 @@ def generate_function_header(
         group_id='"' + sanitize(group_id) + '"',
         tag='"' + sanitize(tag) + '"',
         params_list=param_list_str,
+        main_func_declaration_start=main_func_declaration_start,
     )
 
 
@@ -105,6 +110,7 @@ def generate_complete_component_module(
     uuid: str,
     group_id: str,
     tag: str,
+    is_coroutine: bool = False,
 ) -> str:
     return (
         imports_template
@@ -118,6 +124,7 @@ def generate_complete_component_module(
             uuid,
             group_id,
             tag,
+            is_coroutine,
         )
         + "\n"
         + function_body_template
@@ -156,7 +163,57 @@ def update_code(
             uuid=uuid,
             group_id=group_id,
             tag=tag,
+            is_coroutine=False,
         )
+
+    try:
+        start, remaining = existing_code.split(
+            "# ***** DO NOT EDIT LINES BELOW *****", 1
+        )
+    except ValueError:
+        # Cannot find func def, therefore append it (assuming necessary imports are present):
+        # This may secretely add a second main entrypoint function!
+        new_function_header = generate_function_header(
+            input_type_dict,
+            output_type_dict,
+            component_name=component_name,
+            description=description,
+            category=category,
+            uuid=uuid,
+            group_id=group_id,
+            tag=tag,
+            is_coroutine=False,
+        )
+        return (
+            existing_code + "\n\n" + new_function_header + "\n" + function_body_template
+        )
+
+    if "    # ***** DO NOT EDIT LINES ABOVE *****" not in remaining:
+        # Cannot find end of function definition.
+        # Therefore replace all code starting from the detected beginning of the function
+        # definition. This deletes all user code below!
+        new_function_header = generate_function_header(
+            input_type_dict,
+            output_type_dict,
+            component_name=component_name,
+            description=description,
+            category=category,
+            uuid=uuid,
+            group_id=group_id,
+            tag=tag,
+            is_coroutine=False,
+        )
+        return start + new_function_header + "\n" + function_body_template
+
+    # we now are quite sure that we find a complete existing function definition
+
+    # pylint: disable=unused-variable
+    old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****", 1)
+
+    old_func_def_lines = old_func_def.split("\n")
+    use_async_def = (len(old_func_def_lines) >= 3) and old_func_def_lines[
+        -3
+    ].startswith("async def")
 
     new_function_header = generate_function_header(
         input_type_dict,
@@ -167,29 +224,8 @@ def update_code(
         uuid=uuid,
         group_id=group_id,
         tag=tag,
+        is_coroutine=use_async_def,
     )
-
-    try:
-        start, remaining = existing_code.split(
-            "# ***** DO NOT EDIT LINES BELOW *****", 1
-        )
-    except ValueError:
-        # Cannot find func def, therefore append it (assuming necessary imports are present):
-        # This may secretely add a second main entrypoint function!
-        return (
-            existing_code + "\n\n" + new_function_header + "\n" + function_body_template
-        )
-
-    if "    # ***** DO NOT EDIT LINES ABOVE *****" not in remaining:
-        # Cannot find end of function definition.
-        # Therefore replace all code starting from the detected beginning of the function
-        # definition. This deletes all user code below!
-        return start + new_function_header + "\n" + function_body_template
-
-    # we now are quite sure that we find a complete existing function definition
-
-    # pylint: disable=unused-variable
-    old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****", 1)
 
     return start + new_function_header + end
 
@@ -204,6 +240,22 @@ example_code = (
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "1.0.0",
+        False,
+    )
+    + """\n    return {"z": x+y}"""
+)
+
+example_code_async = (
+    generate_complete_component_module(
+        {"x": DataType.Float, "y": DataType.Float},
+        {"z": DataType.Float},
+        "Example Component",
+        "An example for code generation",
+        "Examples",
+        "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        "1.0.0",
+        True,
     )
     + """\n    return {"z": x+y}"""
 )
