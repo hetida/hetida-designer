@@ -8,8 +8,6 @@ from hetdesrun.utils import State, Type
 
 from hetdesrun.backend.service.utils import to_camel
 
-from hetdesrun.models.wiring import WorkflowWiring
-
 from hetdesrun.persistence.models.transformation import TransformationRevision
 
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
