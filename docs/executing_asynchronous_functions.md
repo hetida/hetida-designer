@@ -1,5 +1,7 @@
-# Executing asynchronous functions in Hetida Designer
+# Using asynchronous functions (coroutines) in components
 
-The Hetida Designer allows the execution of *asynchronous* functions also. To this end, add `async` in front of the definition of the main function in the component code.  
+You can use coroutines (asnychronous functions defined with `async def`) in components. To do this just edit the main function declaration to start with `async def` instead of `def`.
 
-> :warning: Except for adding `async`, changes in the lines between `# ***** DO NOT EDIT LINES BELOW *****` and `# ***** DO NOT EDIT LINES ABOVE *****` in the component code will be reversed within the next automatic buffering, which takes place every few seconds. 
+After that you can await other coroutines defined in your component code or imported from libraries from within the async main function. During component execution hetida designer automatically detects whether your main definition is an ordinary synchronous function or a coroutine. In the later case it will await your main function in the runtime's main event loop.
+
+> :warning: Except for adding `async`, all changes in the automatically generated main function header will be reversed with the next autosave, which happens every few seconds.
