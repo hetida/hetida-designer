@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from functools import cache
-from typing import Coroutine, Optional
+from typing import Callable, Optional
 from uuid import uuid4
 
 from pydantic import ValidationError
@@ -57,11 +57,22 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
     the stop method should be awaited.
     """
 
+    def _init_consumer(self) -> None:
+        self._consumer = aiokafka.AIOKafkaConsumer(
+            self.consumer_topic,
+            **(self.consumer_options),
+        )
+
+    
+    def _init_producer(self) -> None:
+        self._producer = aiokafka.AIOKafkaProducer(**(self.producer_options))
+
+
     def __init__(
         self,
         consumer_topic: str,
         consumer_options: dict,
-        msg_handling_coroutine: Coroutine,
+        msg_handling_coroutine: Callable,
         producer_topic: str,
         producer_options: dict,
     ):
@@ -82,22 +93,13 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
         self._init_consumer()
         self._init_producer()
 
-    def _init_consumer(self) -> None:
-        self._consumer = aiokafka.AIOKafkaConsumer(
-            self.consumer_topic,
-            **(self.consumer_options),
-        )
-
     @property
-    def consumer(self):
+    def consumer(self) -> aiokafka.AIOKafkaConsumer:
         return self._consumer
 
     @property
-    def producer(self):
+    def producer(self) -> aiokafka.AIOKafkaProducer:
         return self._producer
-
-    def _init_producer(self) -> None:
-        self._producer = aiokafka.AIOKafkaProducer(**(self.producer_options))
 
     async def _start_consumer(self) -> None:
         await self.consumer.start()
@@ -116,7 +118,8 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
         await self._start_producer()
         await self._start_consumer()
 
-    async def _stop_consumer(self):
+    async def _stop_consumer(self) -> None:
+        assert self.consumer_task is not None
         self.consumer_task.cancel()
         await self.consumer.stop()
 
@@ -129,7 +132,7 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
 
 
 @cache
-def get_kafka_worker_context():
+def get_kafka_worker_context() -> KafkaWorkerContext:
     """Kafka worker context singleton"""
     return KafkaWorkerContext(
         consumer_topic=runtime_config.hd_kafka_consumer_topic,
