@@ -214,34 +214,39 @@ Here both inputs are wired via the Python demo adapter. One of them is wired to 
 
 ```
 {
-    "input_wirings": [
-        {
-            "adapter_id": "demo-adapter-python",
-            "filters": {},
-            "ref_id": "root.plantA.alerts",
-            "ref_id_type": "SOURCE",
-            "type": "dataframe",
-            "workflow_input_name": "df_in"
-        },
-        {
-            "adapter_id": "demo-adapter-python",
-            "filters": {},
-            "ref_id": "root.plantA",
-            "ref_id_type": "THINGNODE",
-            "ref_key": "Plant Age in Years",
-            "type": "metadata(int)",
-            "workflow_input_name": "int_in"
-        }
-    ],
-    "output_wirings": [
-        {
-            "adapter_id": "demo-adapter-python",
-            "ref_id": "root.plantA.alerts",
-            "ref_id_type": "SINK",
-            "type": "dataframe",
-            "workflow_output_name": "df_out"
-        }
-    ]
+    "id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89",
+    "wiring": {
+        "input_wirings": [
+            {
+                "adapter_id": "demo-adapter-python",
+                "filters": {},
+                "ref_id": "root.plantA.alerts",
+                "ref_id_type": "SOURCE",
+                "type": "dataframe",
+                "workflow_input_name": "df_in"
+            },
+            {
+                "adapter_id": "demo-adapter-python",
+                "filters": {},
+                "ref_id": "root.plantA",
+                "ref_id_type": "THINGNODE",
+                "ref_key": "Plant Age in Years",
+                "type": "metadata(int)",
+                "workflow_input_name": "int_in"
+            }
+        ],
+        "output_wirings": [
+            {
+                "adapter_id": "demo-adapter-python",
+                "ref_id": "root.plantA.alerts",
+                "ref_id_type": "SINK",
+                "type": "dataframe",
+                "workflow_output_name": "df_out"
+            }
+        ]
+    },
+    "run_pure_plot_operators": false,
+    "job_id": "00000000-0000-0000-0000-000000000002"
 }
 ```
 
