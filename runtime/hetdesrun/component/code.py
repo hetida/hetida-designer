@@ -32,7 +32,7 @@ function_definition_template: str = """\
     revision_group_id={revision_group_id},
     version_tag={version_tag}
 )
-def main({params_list}):
+{main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
 """
@@ -50,6 +50,9 @@ def generate_function_header(component_info: ComponentInfo) -> str:
         if len(component_info.input_types_by_name.keys()) == 0
         else "*, " + ", ".join(component_info.input_types_by_name.keys())
     )
+
+    main_func_declaration_start = "async def" if component_info.is_coroutine else "def"
+
     return function_definition_template.format(
         input_dict_content="{"
         + ", ".join(
@@ -74,6 +77,7 @@ def generate_function_header(component_info: ComponentInfo) -> str:
         revision_group_id='"' + str(component_info.revision_group_id) + '"',
         version_tag='"' + component_info.version_tag + '"',
         params_list=param_list_str,
+        main_func_declaration_start=main_func_declaration_start,
     )
 
 
@@ -128,6 +132,14 @@ def update_code(
 
     # pylint: disable=unused-variable
     old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****", 1)
+
+    old_func_def_lines = old_func_def.split("\n")
+    use_async_def = (len(old_func_def_lines) >= 3) and old_func_def_lines[
+        -3
+    ].startswith("async def")
+    component_info.is_coroutine = use_async_def
+
+    new_function_header = generate_function_header(component_info)
 
     return start + new_function_header + end
 

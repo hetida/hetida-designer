@@ -8,7 +8,6 @@ from hetdesrun.datatypes import DataType
 
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.models.util import valid_python_identifier
-from hetdesrun.models.component import ComponentInput, ComponentOutput
 
 from hetdesrun.persistence.models.io import (
     Connector,

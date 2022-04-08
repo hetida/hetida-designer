@@ -105,8 +105,8 @@ def transformation_revision_from_python_code(code: str) -> Any:
     component_code = update_code(
         existing_code=component_code,
         component_info=ComponentInfo(
-            input_types=main_func.registered_metadata["inputs"],  # type: ignore
-            output_types=main_func.registered_metadata["outputs"],  # type: ignore
+            input_types_by_name=main_func.registered_metadata["inputs"],  # type: ignore
+            output_types_by_name=main_func.registered_metadata["outputs"],  # type: ignore
             name=component_name,
             description=component_description,
             category=component_category,
@@ -241,15 +241,22 @@ def import_transformations(
     for root, _, files in os.walk(download_path):
         for file in files:
             path = os.path.join(root, file)
-            if path.endswith("py"):
+            if path.endswith(".py"):
+                logger.info("Loading transformation from python file %s", path)
                 python_file = load_python_file(path)
                 if python_file:
                     tr_json = transformation_revision_from_python_code(python_file)
                     import_transformation(tr_json, path)
-            else:
+            elif path.endswith(".json"):
+                logger.info("Loading transformation from json file %s", path)
                 transformation_json = load_json(path)
                 transformation_dict[transformation_json["id"]] = transformation_json
                 path_dict[transformation_json["id"]] = path
+            else:
+                logger.warning(
+                    "Invalid file extension to loadtransformation revision from: %s",
+                    path,
+                )
 
     def nesting_level(transformation_id: UUID, level: int) -> int:
 

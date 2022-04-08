@@ -23,11 +23,6 @@ class Operator(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     revision_group_id: UUID = Field(default_factory=uuid4)
     name: NonEmptyValidStr
-    description: ValidStr = ValidStr("")
-    category: NonEmptyValidStr = Field(
-        "Other",
-        description='Category in which this is classified, i.e. the "drawer" in the User Interface',
-    )
     type: Type
     state: State
     version_tag: ShortNonEmptyValidStr

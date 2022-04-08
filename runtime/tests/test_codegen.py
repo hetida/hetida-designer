@@ -3,7 +3,7 @@ from hetdesrun.component.code import (
     check_parameter_names,
     update_code,
 )
-from hetdesrun.models.code import ComponentInfo, example_code
+from hetdesrun.models.code import ComponentInfo, example_code, example_code_async
 from hetdesrun.datatypes import DataType
 
 
@@ -97,4 +97,10 @@ def test_update_code():
         "# ***** DO NOT EDIT LINES BELOW *****",
         component_info,
     )
-    assert "pass" in new_code
+
+    # test with async def in function header
+    new_code = update_code(
+        example_code_async, 
+        component_info,
+    )
+    assert "async def" in new_code

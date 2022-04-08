@@ -64,6 +64,32 @@ def main(*, x, y):
     return {"z": x+y}
 """
 
+example_code_async: str = """\
+from hetdesrun.component.registration import register
+from hetdesrun.datatypes import DataType
+# add your own imports here, e.g.
+#     import pandas as pd
+#     import numpy as np
+
+# ***** DO NOT EDIT LINES BELOW *****
+# These lines may be overwritten if component details or inputs/outputs change.
+@register(
+    inputs={"x": DataType.Float, "y": DataType.Float},
+    outputs={"z": DataType.Float},
+    name="Example Component",
+    description="An example for code generation",
+    category="Examples",
+    id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+    revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+    version_tag="1.0.0"
+)
+async def main(*, x, y):
+    # entrypoint function for this component
+    # ***** DO NOT EDIT LINES ABOVE *****
+    # write your function code here.
+    return {"z": x+y}
+"""
+
 
 class CodeModule(BaseModel):
     code: str = Field(
@@ -141,6 +167,7 @@ class ComponentInfo(BaseModel):
     category: NonEmptyValidStr
     description: ValidStr
     version_tag: ShortNonEmptyValidStr
+    is_coroutine: bool = False
 
     # TODO: start regex with (?!^latest$) to replace this validator?
     # pylint: disable=no-self-argument,no-self-use
