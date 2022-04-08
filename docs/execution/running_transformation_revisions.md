@@ -8,11 +8,11 @@ of the hetida designer backend service, whether in "draft" or "released" state.
 
 For example the default docker-compose setup this endpoint can be reached via http://localhost:8080/api/transformations/execute
 
-Additionally, the latest released workflow revision of a revision group can be executed through the POST web service endpoint
+Additionally, the latest released revision of a revision group can be executed through the POST web service endpoint
 
 `/api/transformations/execute-latest`
 
-Be aware: Depending on the latest workflow revision present, this endpoint might not only yield different results for the same input but might even fail, if inputs or outputs have changed.
+:warning: **Warning:** Depending on the latest revision present, this endpoint might not only yield different results for the same input but might even fail, if inputs or outputs have changed.
 
 ## The JSON payload and response for execution
 
@@ -73,7 +73,7 @@ The payload for the execute endpoint looks as follows:
 
 #### Getting the transformation revision id and revision group id
 
-The id of a workflow or component revision as well as its revision group id are shown in the "Edit workflow details" dialog: Open the workflow revision and click on the pencil button in the user interface
+The id of a workflow revision as well as its revision group id are shown in the "Edit workflow details" dialog: Open the workflow revision and click on the pencil button in the user interface
 
 <img title="" src="../assets/edit_workflow_button.png" alt="" width="269" data-align="center">
 
@@ -81,11 +81,13 @@ Then the id and below it the group ID are displayed at the bottom of the dialog 
 
 ![](../assets/workflow_revision_id.png)
 
+The procedure is analogous for a component revision.
+
 #### Input and output wirings
 
 See the section 'Enumeration "type"' in the [description of webservice endpoints of generic Rest adapters](../adapter_system/generic_rest_adapters/web_service_interface.md) for the possible values of "type".
 
-The input_wirings and output_wirings tie inputs of the workflow or component revision to data sources via an adapter (and analogously the outputs to data sinks). Typically the ref_id is a source id for inputs (i.e. ref_id_type is "SOURCE") and it is a sink id for outputs (i.e. ref_id_type is "SINK"). Note however that this may differ in the case of metadata. If the adapter provides metadata tied to a sink that should be read into an input the ref_id_type for this input is "SINK" instead, and the ref_id is the id of the sink the metadata is tied to.
+The input wirings and output wirings tie inputs of the workflow or component revision to data sources via an adapter (and analogously the outputs to data sinks). Typically `ref_id` is a source id for inputs (i.e. `ref_id_type` is "SOURCE") and it is a sink id for outputs (i.e. `ref_id_type` is "SINK"). Note however that this may differ in the case of metadata. If the adapter provides metadata tied to a sink that should be read into an input the `ref_id_type` for this input is "SINK" instead, and the `ref_id` is the id of the sink the metadata is tied to.
 
 #### Optional parameters
 
