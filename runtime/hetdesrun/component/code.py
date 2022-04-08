@@ -38,7 +38,7 @@ function_definition_template: str = """\
     group_id={group_id},
     tag={tag}
 )
-{async_def} main({params_list}):
+{main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
 """
@@ -62,7 +62,7 @@ def generate_function_header(
     uuid: str,
     group_id: str,
     tag: str,
-    asynchronous_definition: bool=False,
+    is_coroutine: bool = False,
 ) -> str:
     """Generate entrypoint function header from the inputs and their types"""
     param_list_str = (
@@ -71,10 +71,7 @@ def generate_function_header(
         else "*, " + ", ".join(input_type_dict.keys())
     )
 
-    if asynchronous_definition:
-        async_def = "async def"
-    else:
-        async_def = "def"
+    main_func_declaration_start = "async def" if is_coroutine else "def"
 
     return function_definition_template.format(
         input_dict_content="{"
@@ -100,7 +97,7 @@ def generate_function_header(
         group_id='"' + sanitize(group_id) + '"',
         tag='"' + sanitize(tag) + '"',
         params_list=param_list_str,
-        async_def=async_def,
+        main_func_declaration_start=main_func_declaration_start,
     )
 
 
@@ -113,7 +110,7 @@ def generate_complete_component_module(
     uuid: str,
     group_id: str,
     tag: str,
-    asynchronous_definition: bool=False,
+    is_coroutine: bool = False,
 ) -> str:
     return (
         imports_template
@@ -127,7 +124,7 @@ def generate_complete_component_module(
             uuid,
             group_id,
             tag,
-            asynchronous_definition,
+            is_coroutine,
         )
         + "\n"
         + function_body_template
@@ -166,7 +163,7 @@ def update_code(
             uuid=uuid,
             group_id=group_id,
             tag=tag,
-            asynchronous_definition=False,
+            is_coroutine=False,
         )
 
     try:
@@ -185,7 +182,7 @@ def update_code(
             uuid=uuid,
             group_id=group_id,
             tag=tag,
-            asynchronous_definition=False,
+            is_coroutine=False,
         )
         return (
             existing_code + "\n\n" + new_function_header + "\n" + function_body_template
@@ -204,7 +201,7 @@ def update_code(
             uuid=uuid,
             group_id=group_id,
             tag=tag,
-            asynchronous_definition=False,
+            is_coroutine=False,
         )
         return start + new_function_header + "\n" + function_body_template
 
@@ -213,30 +210,22 @@ def update_code(
     # pylint: disable=unused-variable
     old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****", 1)
 
-    if old_func_def.split("\n")[-3].startswith("async def"):
-        new_function_header = generate_function_header(
-            input_type_dict,
-            output_type_dict,
-            component_name=component_name,
-            description=description,
-            category=category,
-            uuid=uuid,
-            group_id=group_id,
-            tag=tag,
-            asynchronous_definition=True,
-        )
-    else: 
-        new_function_header = generate_function_header(
-            input_type_dict,
-            output_type_dict,
-            component_name=component_name,
-            description=description,
-            category=category,
-            uuid=uuid,
-            group_id=group_id,
-            tag=tag,
-            asynchronous_definition=False,
-        )
+    old_func_def_lines = old_func_def.split("\n")
+    use_async_def = (len(old_func_def_lines) >= 3) and old_func_def_lines[
+        -3
+    ].startswith("async def")
+
+    new_function_header = generate_function_header(
+        input_type_dict,
+        output_type_dict,
+        component_name=component_name,
+        description=description,
+        category=category,
+        uuid=uuid,
+        group_id=group_id,
+        tag=tag,
+        is_coroutine=use_async_def,
+    )
 
     return start + new_function_header + end
 
@@ -251,7 +240,7 @@ example_code = (
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "1.0.0",
-        "def",
+        False,
     )
     + """\n    return {"z": x+y}"""
 )
@@ -266,7 +255,7 @@ example_code_async = (
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         "1.0.0",
-        "async def",
+        True,
     )
     + """\n    return {"z": x+y}"""
 )
