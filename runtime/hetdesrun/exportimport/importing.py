@@ -100,7 +100,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
     component_tag = main_func.registered_metadata["version_tag"] or ("1.0.0")  # type: ignore
 
     component_code = update_code(
-        existing_code=component_code,
+        existing_code=code,
         component_info=ComponentInfo(
             input_types_by_name=main_func.registered_metadata["inputs"],  # type: ignore
             output_types_by_name=main_func.registered_metadata["outputs"],  # type: ignore
