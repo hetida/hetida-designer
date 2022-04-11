@@ -31,7 +31,7 @@ A **workflow** exposes an interface consisting of its dynamic inputs and outputs
 
 ![](../assets/inps_outps_io_dialog.png)
 
-When a workflow is executed a **wiring** is necessary to provide the needed information from where data sources should be ingested into what inputs and similary which output should go to what data sink. A wiring is a json object. The [running workflow](../workflow_execution/running_workflows.md) documentation has some example wirings.
+When a workflow is executed a **wiring** is necessary to provide the needed information from where data sources should be ingested into what inputs and similary which output should go to what data sink. A wiring is a json object. The [running transformation revisions](../execution/running_transformation_revisions.md) documentation has some example wirings.
 
 A wiring contains references to **adapters** which actually do the job of ingesting the data and sending it to sinks. Adapters also provide web service endpoints for browsing and filtering the available data in user interfaces in order to construct wirings. An adapter consists of software.
 
