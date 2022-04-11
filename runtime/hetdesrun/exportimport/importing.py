@@ -310,4 +310,3 @@ def import_transformations(
 def import_all(download_path: str) -> None:
     import_transformations(os.path.join(download_path, "components"))
     import_transformations(os.path.join(download_path, "workflows"))
-    import_transformations(download_path)
