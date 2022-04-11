@@ -6,9 +6,9 @@ from starlette.testclient import TestClient
 from posixpath import join as posix_urljoin
 
 import json
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from hetdesrun.utils import State, get_uuid_from_seed
+from hetdesrun.utils import get_uuid_from_seed
 
 from hetdesrun.webservice.application import app
 from hetdesrun.webservice.config import runtime_config
@@ -23,6 +23,8 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
+
+from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 
 from hetdesrun.backend.service.transformation_router import generate_code
 
@@ -69,10 +71,64 @@ tr_json_component_1 = {
             }
         ],
     },
-    "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"operator_input\": DataType.Integer},\n    outputs={\"operator_output\": DataType.Integer},\n    component_name=\"Pass Through Integer\",\n    description=\"Just outputs its input value\",\n    category=\"Connectors\",\n    uuid=\"57eea09f-d28e-89af-4e81-2027697a3f0f\",\n    group_id=\"57eea09f-d28e-89af-4e81-2027697a3f0f\",\n    tag=\"1.0.0\"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"operator_output\": operator_input}\n",
+    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',
     "test_wiring": {
-        "input_wirings": [],
-        "output_wirings": [],
+        "input_wirings": [
+            {
+                "workflow_input_name": "operator_input",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": 100},
+            },
+        ],
+        "output_wirings": [
+            {
+                "workflow_output_name": "operator_output",
+                "adapter_id": "direct_provisioning",
+            },
+        ],
+    },
+}
+tr_json_component_1_new_revision = {
+    "id": str(get_uuid_from_seed("component 1 new revision")),
+    "revision_group_id": str(get_uuid_from_seed("group of component 1")),
+    "name": "component 0",
+    "description": "description of component 0",
+    "category": "category",
+    "documentation": "documentation",
+    "type": "COMPONENT",
+    "state": "DRAFT",
+    "version_tag": "1.0.1",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": str(get_uuid_from_seed("operator input")),
+                "name": "operator_input",
+                "data_type": "INT",
+            }
+        ],
+        "outputs": [
+            {
+                "id": str(get_uuid_from_seed("operator output")),
+                "name": "operator_output",
+                "data_type": "STRING",
+            }
+        ],
+    },
+    "content": "code",
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "operator_input",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": 100},
+            },
+        ],
+        "output_wirings": [
+            {
+                "workflow_output_name": "operator_output",
+                "adapter_id": "direct_provisioning",
+            },
+        ],
     },
 }
 tr_json_component_2 = {
@@ -342,6 +398,20 @@ async def test_get_all_transformation_revisions_with_valid_db_entries(
 
 
 @pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_no_db_entries(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        async with async_test_client as ac:
+            response = await ac.get("/api/transformations/")
+
+        assert response.status_code == 200
+
+
+@pytest.mark.asyncio
 async def test_get_transformation_revision_by_id_with_component(
     async_test_client, clean_test_db_engine
 ):
@@ -589,14 +659,16 @@ async def test_execute_for_transformation_revision(
 
             update_or_create_nesting(tr_workflow_2)
 
+            exec_by_id_input = ExecByIdInput(
+                id=tr_workflow_2.id,
+                wiring=tr_workflow_2.test_wiring,
+                job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+            )
+
             async with async_test_client as ac:
                 response = await ac.post(
-                    posix_urljoin(
-                        "/api/transformations/",
-                        str(get_uuid_from_seed("workflow 2")),
-                        "execute?job_id=1270547c-b224-461d-9387-e9d9d465bbe1",
-                    ),
-                    json=json.loads(tr_workflow_2.test_wiring.json()),
+                    "/api/transformations/execute",
+                    json=json.loads(exec_by_id_input.json()),
                 )
 
             assert response.status_code == 200
@@ -609,7 +681,9 @@ async def test_execute_for_transformation_revision(
 
 
 @pytest.mark.asyncio
-async def test_execute_for_separate_runtime_container(async_test_client, clean_test_db_engine):
+async def test_execute_for_separate_runtime_container(
+    async_test_client, clean_test_db_engine
+):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
         "hetdesrun.persistence.dbservice.nesting.Session",
@@ -627,18 +701,20 @@ async def test_execute_for_separate_runtime_container(async_test_client, clean_t
                 resp_mock.status_code = 200
                 resp_mock.json = mock.Mock(
                     return_value={
-                                'output_results_by_output_name': {'wf_output': 100},
-                                'output_types_by_output_name': {'wf_output': 'INT'},
-                                'result': 'ok',
-                                'job_id': '1270547c-b224-461d-9387-e9d9d465bbe1'
-                            }
+                        "output_results_by_output_name": {"wf_output": 100},
+                        "output_types_by_output_name": {"wf_output": "INT"},
+                        "result": "ok",
+                        "job_id": "1270547c-b224-461d-9387-e9d9d465bbe1",
+                    }
                 )
                 with mock.patch(
                     "hetdesrun.backend.execution.httpx.AsyncClient.post",
                     return_value=resp_mock,
                 ) as mocked_post:
                     tr_component_1 = TransformationRevision(**tr_json_component_1)
-                    tr_component_1.content = generate_code(tr_component_1.to_code_body())
+                    tr_component_1.content = generate_code(
+                        tr_component_1.to_code_body()
+                    )
                     store_single_transformation_revision(tr_component_1)
                     tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
 
@@ -646,14 +722,16 @@ async def test_execute_for_separate_runtime_container(async_test_client, clean_t
 
                     update_or_create_nesting(tr_workflow_2)
 
+                    exec_by_id_input = ExecByIdInput(
+                        id=tr_workflow_2.id,
+                        wiring=tr_workflow_2.test_wiring,
+                        job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+                    )
+
                     async with async_test_client as ac:
                         response = await ac.post(
-                            posix_urljoin(
-                                "/api/transformations/",
-                                str(get_uuid_from_seed("workflow 2")),
-                                "execute?job_id=1270547c-b224-461d-9387-e9d9d465bbe1",
-                            ),
-                            json=json.loads(tr_workflow_2.test_wiring.json()),
+                            "/api/transformations/execute",
+                            json=json.loads(exec_by_id_input.json()),
                         )
 
                     assert response.status_code == 200
@@ -664,6 +742,90 @@ async def test_execute_for_separate_runtime_container(async_test_client, clean_t
                         "1270547c-b224-461d-9387-e9d9d465bbe1"
                     )
                     mocked_post.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_execute_latest_for_transformation_revision_works(
+    async_test_client, clean_test_db_engine
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
+    ):
+        with mock.patch(
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
+        ):
+            tr_component_1 = TransformationRevision(**tr_json_component_1)
+            tr_component_1.content = generate_code(tr_component_1.to_code_body())
+            store_single_transformation_revision(tr_component_1)
+
+            tr_component_1_new_revision = TransformationRevision(
+                **tr_json_component_1_new_revision
+            )
+            tr_component_1_new_revision.content = generate_code(
+                tr_component_1_new_revision.to_code_body()
+            )
+            tr_component_1_new_revision.release()
+            store_single_transformation_revision(tr_component_1_new_revision)
+
+            exec_latest_by_group_id_input = ExecLatestByGroupIdInput(
+                revision_group_id=tr_component_1.revision_group_id,
+                wiring=tr_component_1.test_wiring,
+                job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+            )
+
+            async with async_test_client as ac:
+                response = await ac.post(
+                    "/api/transformations/execute-latest",
+                    json=json.loads(exec_latest_by_group_id_input.json()),
+                )
+
+            assert response.status_code == 200
+            resp_data = response.json()
+            assert "output_types_by_output_name" in resp_data
+            assert (
+                resp_data["output_types_by_output_name"]["operator_output"] == "STRING"
+            )
+            assert "job_id" in resp_data
+            assert UUID(resp_data["job_id"]) == UUID(
+                "1270547c-b224-461d-9387-e9d9d465bbe1"
+            )
+
+
+@pytest.mark.asyncio
+async def test_execute_latest_for_transformation_revision_no_revision_in_db(
+    async_test_client, clean_test_db_engine
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
+    ):
+        with mock.patch(
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
+        ):
+            tr_component_1 = TransformationRevision(**tr_json_component_1)
+            tr_component_1.content = generate_code(tr_component_1.to_code_body())
+
+            exec_latest_by_group_id_input = ExecLatestByGroupIdInput(
+                revision_group_id=tr_component_1.revision_group_id,
+                wiring=tr_component_1.test_wiring,
+            )
+
+            async with async_test_client as ac:
+                response = await ac.post(
+                    "/api/transformations/execute-latest",
+                    json=json.loads(exec_latest_by_group_id_input.json()),
+                )
+
+            assert response.status_code == 404
+            assert (
+                "no released transformation revisions with revision group id"
+                in response.json()["detail"]
+            )
 
 
 @pytest.mark.asyncio
@@ -723,9 +885,13 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
                 workflow_id = UUID("3d504361-e351-4d52-8734-391aa47e8f24")
                 tr_workflow = read_single_transformation_revision(workflow_id)
 
+                exec_by_id_input = ExecByIdInput(
+                    id=workflow_id, wiring=tr_workflow.test_wiring
+                )
+
                 response = await ac.post(
-                    "/api/transformations/" + str(workflow_id) + "/execute",
-                    json=json.loads(tr_workflow.test_wiring.json(by_alias=True)),
+                    "/api/transformations/execute",
+                    json=json.loads(exec_by_id_input.json()),
                 )
 
                 assert response.status_code == 200

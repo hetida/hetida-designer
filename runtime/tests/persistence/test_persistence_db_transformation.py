@@ -9,6 +9,7 @@ from hetdesrun.persistence.dbservice.exceptions import (
 )
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
+    get_latest_revision_id,
     read_single_transformation_revision,
     store_single_transformation_revision,
     select_multiple_transformation_revisions,
@@ -241,3 +242,41 @@ def test_multiple_select(clean_test_db_engine):
         assert len(results) == 0
 
         # TODO: Test more cases: E.g. Combined filters
+
+
+def test_get_latest_revision_id(clean_test_db_engine):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        tr_template_id = get_uuid_from_seed("object_template")
+        tr_object_template = TransformationRevision(
+            id=get_uuid_from_seed("test_get_latest_revision_0"),
+            revision_group_id=tr_template_id,
+            name="Test",
+            description="Test description",
+            version_tag="1.0.0",
+            category="Test category",
+            state=State.DRAFT,
+            type=Type.COMPONENT,
+            content="code",
+            io_interface=IOInterface(),
+            test_wiring=WorkflowWiring(),
+            documentation="",
+        )
+
+        tr_object_1 = tr_object_template.copy()
+        tr_object_1.id = get_uuid_from_seed("test_get_latest_revision_1")
+        tr_object_1.version_tag = "1.0.1"
+        tr_object_1.release()
+        store_single_transformation_revision(tr_object_1)
+
+        tr_object_2 = tr_object_template.copy()
+        tr_object_2.id = get_uuid_from_seed("test_get_latest_revision_2")
+        tr_object_2.version_tag = "1.0.2"
+        tr_object_2.release()
+        store_single_transformation_revision(tr_object_2)
+
+        assert get_latest_revision_id(tr_template_id) == get_uuid_from_seed(
+            "test_get_latest_revision_2"
+        )
