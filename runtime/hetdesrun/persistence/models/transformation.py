@@ -7,7 +7,14 @@ import datetime
 from pydantic import BaseModel, Field, validator, ValidationError
 
 from hetdesrun.utils import State, Type
-from hetdesrun.models.code import CodeBody, CodeModule
+from hetdesrun.models.code import (
+    CodeBody,
+    CodeModule,
+    NonEmptyValidStr,
+    ShortNonEmptyValidStr,
+    ValidStr,
+)
+
 from hetdesrun.models.component import ComponentRevision, ComponentNode
 from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.models.wiring import WorkflowWiring
@@ -22,12 +29,7 @@ from hetdesrun.persistence.models.io import (
     IOConnector,
 )
 from hetdesrun.persistence.models.link import Vertex, Link
-from hetdesrun.persistence.models.operator import (
-    NonEmptyValidStr,
-    ShortNonEmptyValidStr,
-    ValidStr,
-    Operator,
-)
+from hetdesrun.persistence.models.operator import Operator
 from hetdesrun.persistence.models.workflow import WorkflowContent
 
 
@@ -119,7 +121,6 @@ class TransformationRevision(BaseModel):
         ),
     )
 
-    # TODO: start regex with (?!^latest$) to replace this validator?
     # pylint: disable=no-self-argument,no-self-use
     @validator("version_tag")
     def version_tag_not_latest(cls, v: str) -> str:

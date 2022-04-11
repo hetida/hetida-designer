@@ -169,7 +169,6 @@ class ComponentInfo(BaseModel):
     version_tag: ShortNonEmptyValidStr
     is_coroutine: bool = False
 
-    # TODO: start regex with (?!^latest$) to replace this validator?
     # pylint: disable=no-self-argument,no-self-use
     @validator("version_tag")
     def version_tag_not_latest(cls, v: str) -> str:
