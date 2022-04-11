@@ -99,9 +99,6 @@ def transformation_revision_from_python_code(code: str) -> Any:
 
     component_tag = main_func.registered_metadata["version_tag"] or ("1.0.0")  # type: ignore
 
-    component_code = code.replace(mod_docstring, "", 1)
-    component_code = component_code.replace('""""""', "")[1:]
-
     component_code = update_code(
         existing_code=component_code,
         component_info=ComponentInfo(
@@ -313,4 +310,3 @@ def import_transformations(
 def import_all(download_path: str) -> None:
     import_transformations(os.path.join(download_path, "components"))
     import_transformations(os.path.join(download_path, "workflows"))
-    import_transformations(download_path)
