@@ -61,7 +61,7 @@ def store_single_transformation_revision(
             )
 
 
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def select_tr_by_id(
     session: SQLAlchemySession, id: UUID, log_error: bool = True
 ) -> TransformationRevision:
@@ -263,7 +263,7 @@ def get_latest_revision_id(revision_group_id: UUID) -> UUID:
     revision_group_list = select_multiple_transformation_revisions(
         state=State.RELEASED, revision_group_id=revision_group_id
     )
-    if not revision_group_list:
+    if len(revision_group_list) == 0:
         msg = (
             f"no released transformation revisions with revision group id {revision_group_id} "
             f"found in the database"
