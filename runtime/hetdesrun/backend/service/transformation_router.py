@@ -148,7 +148,7 @@ async def get_all_transformation_revisions() -> List[TransformationRevision]:
     },
 )
 async def get_transformation_revision_by_id(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID = Path(
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -301,7 +301,7 @@ def if_applicable_release_or_deprecate(
     },
 )
 async def update_transformation_revision(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID,
     updated_transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = Query(
@@ -390,7 +390,7 @@ async def update_transformation_revision(
     },
 )
 async def execute_transformation_revision_endpoint(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision.
@@ -453,7 +453,7 @@ async def execute_latest_transformation_revision_endpoint(
         exec_latest_by_group_id_input.job_id = uuid4()
 
     try:
-        # pylint: disable=W0622
+        # pylint: disable=redefined-builtin
         id = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e

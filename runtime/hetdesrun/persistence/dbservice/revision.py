@@ -81,7 +81,7 @@ def select_tr_by_id(
     return TransformationRevision.from_orm_model(result)
 
 
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def read_single_transformation_revision(
     id: UUID, log_error: bool = True
 ) -> TransformationRevision:
@@ -169,7 +169,7 @@ def update_or_create_single_transformation_revision(
         return select_tr_by_id(session, transformation_revision.id)
 
 
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def delete_single_transformation_revision(
     id: UUID, type: Optional[Type] = None
 ) -> None:
@@ -203,7 +203,7 @@ def delete_single_transformation_revision(
         )
 
 
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def select_multiple_transformation_revisions(
     category: Optional[str] = None,
     revision_group_id: Optional[UUID] = None,

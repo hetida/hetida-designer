@@ -25,7 +25,7 @@ def gen_default_return_for_plot_func(outputs: dict) -> dict:
     return {key: {} for key in outputs.keys()}
 
 
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def register(
     *,
     inputs: Dict[str, DataType],
