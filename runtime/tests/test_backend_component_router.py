@@ -296,7 +296,7 @@ async def test_update_transformation_revision_from_non_existing_component_dto(
             get_uuid_from_seed("new input")
         )
         assert "new comment" in response.json()["code"]
-        assert "uuid" in response.json()["code"]
+        assert "revision_group_id" in response.json()["code"]
 
 
 @pytest.mark.asyncio

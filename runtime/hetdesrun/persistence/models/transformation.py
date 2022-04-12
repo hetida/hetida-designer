@@ -4,15 +4,17 @@ from uuid import UUID, uuid4
 import datetime
 
 # pylint: disable=no-name-in-module
-from pydantic import (
-    BaseModel,
-    Field,
-    validator,
-    ValidationError,
-)
+from pydantic import BaseModel, Field, validator, ValidationError
 
 from hetdesrun.utils import State, Type
-from hetdesrun.models.code import CodeBody, CodeModule
+from hetdesrun.models.code import (
+    CodeBody,
+    CodeModule,
+    NonEmptyValidStr,
+    ShortNonEmptyValidStr,
+    ValidStr,
+)
+
 from hetdesrun.models.component import ComponentRevision, ComponentNode
 from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.models.wiring import WorkflowWiring
@@ -27,7 +29,7 @@ from hetdesrun.persistence.models.io import (
     IOConnector,
 )
 from hetdesrun.persistence.models.link import Vertex, Link
-from hetdesrun.persistence.models.operator import Operator, NonEmptyStr
+from hetdesrun.persistence.models.operator import Operator
 from hetdesrun.persistence.models.workflow import WorkflowContent
 
 
@@ -58,13 +60,13 @@ class TransformationRevision(BaseModel):
 
     id: UUID
     revision_group_id: UUID
-    name: NonEmptyStr
-    description: str = ""
-    category: NonEmptyStr = Field(
+    name: NonEmptyValidStr
+    description: ValidStr = ValidStr("")
+    category: NonEmptyValidStr = Field(
         "Other",
         description='Category in which this is classified, i.e. the "drawer" in the User Interface',
     )
-    version_tag: NonEmptyStr
+    version_tag: ShortNonEmptyValidStr
     released_timestamp: Optional[datetime.datetime] = Field(
         None,
         description="If the revision is RELEASED then this should be release timestamp",
@@ -121,7 +123,7 @@ class TransformationRevision(BaseModel):
 
     # pylint: disable=no-self-argument,no-self-use
     @validator("version_tag")
-    def version_tag_not_latest(cls, v: NonEmptyStr) -> NonEmptyStr:
+    def version_tag_not_latest(cls, v: str) -> str:
         if v.lower() == "latest":
             raise ValueError('version_tag is not allowed to be "latest"')
         return v
@@ -263,9 +265,9 @@ class TransformationRevision(BaseModel):
             name=self.name,
             description=self.description,
             category=self.category,
-            uuid=str(self.id),
-            group_id=str((self.revision_group_id)),
-            tag=self.version_tag,
+            id=self.id,
+            revision_group_id=self.revision_group_id,
+            version_tag=self.version_tag,
         )
 
     def to_component_revision(self) -> ComponentRevision:

@@ -45,7 +45,9 @@ async def get_info() -> dict:
 
     if runtime_config.hd_kafka_consumer_enabled and runtime_config.is_backend_service:
         kafka_ctx = get_kafka_worker_context()
-        info_dict["worker_process_internal_kafka_consumer_id"] = str(kafka_ctx.consumer_id)
+        info_dict["worker_process_internal_kafka_consumer_id"] = str(
+            kafka_ctx.consumer_id
+        )
         info_dict[
             "worker_process_kafka_consumer_partition_assignments"
         ] = kafka_ctx.consumer.assignment()

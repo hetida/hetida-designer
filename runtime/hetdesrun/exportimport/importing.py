@@ -35,6 +35,7 @@ from hetdesrun.persistence.models.io import (
 )
 
 from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.code import ComponentInfo
 
 from hetdesrun.webservice.config import runtime_config
 
@@ -88,32 +89,34 @@ def transformation_revision_from_python_code(code: str) -> Any:
         "Other"
     )
 
-    component_uuid = main_func.registered_metadata["uuid"] or (  # type: ignore
+    component_id = main_func.registered_metadata["id"] or (  # type: ignore
         get_uuid_from_seed(str(component_name))
     )
 
-    component_group_id = main_func.registered_metadata["group_id"] or (  # type: ignore
+    component_group_id = main_func.registered_metadata["revision_group_id"] or (  # type: ignore
         get_uuid_from_seed(str(component_name))
     )
 
-    component_tag = main_func.registered_metadata["tag"] or ("1.0.0")  # type: ignore
+    component_tag = main_func.registered_metadata["version_tag"] or ("1.0.0")  # type: ignore
 
     component_code = update_code(
         existing_code=code,
-        input_type_dict=main_func.registered_metadata["inputs"],  # type: ignore
-        output_type_dict=main_func.registered_metadata["outputs"],  # type: ignore
-        component_name=component_name,
-        description=component_description,
-        category=component_category,
-        uuid=str(component_uuid),
-        group_id=str(component_group_id),
-        tag=component_tag,
+        component_info=ComponentInfo(
+            input_types_by_name=main_func.registered_metadata["inputs"],  # type: ignore
+            output_types_by_name=main_func.registered_metadata["outputs"],  # type: ignore
+            name=component_name,
+            description=component_description,
+            category=component_category,
+            id=component_id,
+            revision_group_id=component_group_id,
+            version_tag=component_tag,
+        ),
     )
 
     component_documentation = "\n".join(mod_docstring_lines[2:])
 
     transformation_revision = TransformationRevision(
-        id=component_uuid,
+        id=component_id,
         revision_group_id=component_group_id,
         name=component_name,
         description=component_description,

@@ -61,7 +61,7 @@ def store_single_transformation_revision(
             )
 
 
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def select_tr_by_id(
     session: SQLAlchemySession, id: UUID, log_error: bool = True
 ) -> TransformationRevision:
@@ -81,7 +81,7 @@ def select_tr_by_id(
     return TransformationRevision.from_orm_model(result)
 
 
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def read_single_transformation_revision(
     id: UUID, log_error: bool = True
 ) -> TransformationRevision:
@@ -169,7 +169,7 @@ def update_or_create_single_transformation_revision(
         return select_tr_by_id(session, transformation_revision.id)
 
 
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def delete_single_transformation_revision(
     id: UUID, type: Optional[Type] = None
 ) -> None:
@@ -203,7 +203,7 @@ def delete_single_transformation_revision(
         )
 
 
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def select_multiple_transformation_revisions(
     category: Optional[str] = None,
     revision_group_id: Optional[UUID] = None,
@@ -263,7 +263,7 @@ def get_latest_revision_id(revision_group_id: UUID) -> UUID:
     revision_group_list = select_multiple_transformation_revisions(
         state=State.RELEASED, revision_group_id=revision_group_id
     )
-    if not revision_group_list:
+    if len(revision_group_list) == 0:
         msg = (
             f"no released transformation revisions with revision group id {revision_group_id} "
             f"found in the database"

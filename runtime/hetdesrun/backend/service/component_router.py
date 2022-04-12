@@ -85,17 +85,20 @@ async def create_component_revision(
 
     logger.info("create new component")
 
-    transformation_revision = component_dto.to_transformation_revision(
-        documentation=(
-            "\n"
-            "# New Component/Workflow\n"
-            "## Description\n"
-            "## Inputs\n"
-            "## Outputs\n"
-            "## Details\n"
-            "## Examples\n"
+    try:
+        transformation_revision = component_dto.to_transformation_revision(
+            documentation=(
+                "\n"
+                "# New Component/Workflow\n"
+                "## Description\n"
+                "## Inputs\n"
+                "## Outputs\n"
+                "## Details\n"
+                "## Examples\n"
+            )
         )
-    )
+    except ValidationError as e:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     logger.debug("generate code")
     transformation_revision.content = generate_code(
@@ -132,7 +135,7 @@ async def create_component_revision(
     deprecated=True,
 )
 async def get_component_revision_by_id(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID = Path(
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -178,7 +181,7 @@ async def get_component_revision_by_id(
     deprecated=True,
 )
 async def update_component_revision(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID,
     updated_component_dto: ComponentRevisionFrontendDto,
 ) -> ComponentRevisionFrontendDto:
@@ -203,7 +206,13 @@ async def update_component_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
-    updated_transformation_revision = updated_component_dto.to_transformation_revision()
+    try:
+        updated_transformation_revision = (
+            updated_component_dto.to_transformation_revision()
+        )
+    except ValidationError as e:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
+
     existing_transformation_revision: Optional[TransformationRevision] = None
 
     try:
@@ -269,7 +278,7 @@ async def update_component_revision(
     deprecated=True,
 )
 async def delete_component_revision(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID,
 ) -> None:
     """Delete a transformation revision of type component from the data base.
@@ -309,7 +318,7 @@ async def delete_component_revision(
     deprecated=True,
 )
 async def execute_component_revision(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID,
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
@@ -422,7 +431,7 @@ async def execute_component_revision(
     deprecated=True,
 )
 async def bind_wiring_to_component_revision(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID,
     wiring_dto: WiringFrontendDto,
 ) -> ComponentRevisionFrontendDto:
