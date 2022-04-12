@@ -28,10 +28,10 @@ class TransformationRevisionDBModel(Base):
     revision_group_id: UUIDType = Column(
         UUIDType(binary=False), default=uuid4, nullable=False
     )
-    name = Column(String(length=60), nullable=False)
+    name = Column(String, nullable=False)
     description = Column(String, nullable=False)
-    category = Column(String(length=60), nullable=False)
-    version_tag = Column(String(length=20), nullable=False)
+    category = Column(String, nullable=False)
+    version_tag = Column(String, nullable=False)
     state = Column(Enum(State), nullable=False)
     type = Column(Enum(Type), nullable=False)
     documentation = Column(String, nullable=False)
