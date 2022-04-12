@@ -193,6 +193,7 @@ async def consume_execution_trigger_message(
                     )
                     kafka_ctx.last_unhandled_exception = e
                     logger.error(msg)
+                    continue
                 exec_by_id_input = ExecByIdInput(
                     id=latest_id,
                     wiring=exec_latest_by_group_id_input.wiring,
