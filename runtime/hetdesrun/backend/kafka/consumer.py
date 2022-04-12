@@ -63,10 +63,8 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
             **(self.consumer_options),
         )
 
-    
     def _init_producer(self) -> None:
         self._producer = aiokafka.AIOKafkaProducer(**(self.producer_options))
-
 
     def __init__(
         self,
