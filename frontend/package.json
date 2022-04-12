@@ -58,7 +58,7 @@
     "marked": "^0.7.0",
     "material-design-icons-iconfont": "^5.0.1",
     "ng-hetida-flowchart": "0.3.0",
-    "hd-wiring": "0.3.9",
+    "hd-wiring": "0.3.10",
     "ngx-monaco-editor": "^9.0.0",
     "plotly.js": "^1.58.2",
     "rxjs": "^6.5.3",
