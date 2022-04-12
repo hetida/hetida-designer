@@ -83,7 +83,7 @@ class PydanticPandasSeries:
                     "Could not parse provided input as Pandas Series even with convert_dates=False"
                 ) from e
 
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             try:
                 return pd.read_json(json.dumps(v), typ="series")
 
@@ -92,16 +92,16 @@ class PydanticPandasSeries:
                     return pd.read_json(
                         json.dumps(v), typ="series", convert_dates=False
                     )
-                except Exception as e:
+                except Exception as read_json_with_type_error_exception:
                     raise ValueError(
                         "Could not parse provided input as Pandas Series even with"
                         " convert_dates=False"
-                    ) from e
+                    ) from read_json_with_type_error_exception
 
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as read_json_exception:  # pylint: disable=broad-except
                 raise ValueError(
                     "Could not parse provided input as Pandas Series"
-                ) from e
+                ) from read_json_exception
 
 
 class PydanticPandasDataFrame:
@@ -124,13 +124,13 @@ class PydanticPandasDataFrame:
         try:
             return pd.read_json(v, typ="frame")
         # pylint: disable=broad-except
-        except Exception as e:
+        except Exception:
             try:
                 return pd.read_json(json.dumps(v), typ="frame")
-            except Exception as e:
+            except Exception as read_json_exception:
                 raise ValueError(
                     "Could not parse provided input as Pandas DataFrame"
-                ) from e
+                ) from read_json_exception
 
 
 class ParsedAny:

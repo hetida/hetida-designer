@@ -4,12 +4,7 @@ from uuid import UUID
 import re
 
 # pylint: disable=no-name-in-module
-from pydantic import (
-    BaseModel,
-    Field,
-    validator,
-    root_validator,
-)
+from pydantic import BaseModel, Field, validator, root_validator
 
 from hetdesrun.datatypes import DataType
 
@@ -18,7 +13,7 @@ from hetdesrun.models.workflow import WorkflowNode, ComponentNode
 
 from hetdesrun.persistence.models.io import Connector, IOConnector, Constant
 from hetdesrun.persistence.models.link import Link
-from hetdesrun.persistence.models.operator import NonEmptyStr, Operator
+from hetdesrun.persistence.models.operator import NonEmptyValidStr, Operator
 
 
 def get_link_start_connector_from_operator(
@@ -154,9 +149,9 @@ class WorkflowContent(BaseModel):
             if len(operator_group) > 1:
                 for index, operator in enumerate(operator_group):
                     if index == 0:
-                        operator.name = NonEmptyStr(operator_name_seed)
+                        operator.name = NonEmptyValidStr(operator_name_seed)
                     else:
-                        operator.name = NonEmptyStr(
+                        operator.name = NonEmptyValidStr(
                             operator_name_seed + " (" + str(index + 1) + ")"
                         )
 

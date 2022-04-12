@@ -85,17 +85,20 @@ async def create_workflow_revision(
 
     logger.info("create a new workflow")
 
-    transformation_revision = workflow_dto.to_transformation_revision(
-        documentation=(
-            "\n"
-            "# New Component/Workflow\n"
-            "## Description\n"
-            "## Inputs\n"
-            "## Outputs\n"
-            "## Details\n"
-            "## Examples\n"
+    try:
+        transformation_revision = workflow_dto.to_transformation_revision(
+            documentation=(
+                "\n"
+                "# New Component/Workflow\n"
+                "## Description\n"
+                "## Inputs\n"
+                "## Outputs\n"
+                "## Details\n"
+                "## Examples\n"
+            )
         )
-    )
+    except ValidationError as e:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     try:
         store_single_transformation_revision(transformation_revision)
@@ -164,7 +167,7 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
     deprecated=True,
 )
 async def get_workflow_revision_by_id(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID = Path(
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -210,7 +213,7 @@ async def get_workflow_revision_by_id(
     deprecated=True,
 )
 async def update_workflow_revision(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID,
     updated_workflow_dto: WorkflowRevisionFrontendDto,
 ) -> WorkflowRevisionFrontendDto:
@@ -235,7 +238,13 @@ async def update_workflow_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
-    updated_transformation_revision = updated_workflow_dto.to_transformation_revision()
+    try:
+        updated_transformation_revision = (
+            updated_workflow_dto.to_transformation_revision()
+        )
+    except ValidationError as e:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
+
     existing_transformation_revision: Optional[TransformationRevision] = None
 
     try:
@@ -301,7 +310,7 @@ async def update_workflow_revision(
     deprecated=True,
 )
 async def delete_workflow_revision(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID,
 ) -> None:
     """Delete a transformation revision of type workflow from the data base.
@@ -328,6 +337,7 @@ async def delete_workflow_revision(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
+# pylint: disable=redefined-builtin
 @workflow_router.post(
     "/{id}/execute",
     response_model=ExecutionResponseFrontendDto,
@@ -341,7 +351,7 @@ async def delete_workflow_revision(
     deprecated=True,
 )
 async def execute_workflow_revision(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID,
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
@@ -420,7 +430,9 @@ async def execute_workflow_revision(
                 logger.info(msg)
                 # do not explictly re-raise to avoid displaying authentication details
                 # pylint: disable=raise-missing-from
-                raise HTTPException(status.HTTP_424_FAILED_DEPENDENCY, detail=msg)
+                raise HTTPException(
+                    status.HTTP_424_FAILED_DEPENDENCY, detail=msg
+                ) from e
             try:
                 json_obj = response.json()
                 execution_result = WorkflowExecutionResult(**json_obj)
@@ -459,7 +471,7 @@ async def execute_workflow_revision(
     deprecated=True,
 )
 async def bind_wiring_to_workflow_revision(
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     id: UUID,
     wiring_dto: WiringFrontendDto,
 ) -> WorkflowRevisionFrontendDto:

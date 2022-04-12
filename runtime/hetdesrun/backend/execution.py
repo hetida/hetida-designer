@@ -88,7 +88,7 @@ class ExecLatestByGroupIdInput(BaseModel):
         description="Optional job id, that can be used to track an execution job.",
     )
 
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     def to_exec_by_id(self, id: UUID) -> ExecByIdInput:
         return ExecByIdInput(
             id=id,

@@ -63,10 +63,8 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
             **(self.consumer_options),
         )
 
-    
     def _init_producer(self) -> None:
         self._producer = aiokafka.AIOKafkaProducer(**(self.producer_options))
-
 
     def __init__(
         self,
@@ -193,6 +191,7 @@ async def consume_execution_trigger_message(
                     )
                     kafka_ctx.last_unhandled_exception = e
                     logger.error(msg)
+                    continue
                 exec_by_id_input = ExecByIdInput(
                     id=latest_id,
                     wiring=exec_latest_by_group_id_input.wiring,
