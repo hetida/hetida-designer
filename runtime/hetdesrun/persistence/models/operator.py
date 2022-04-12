@@ -2,15 +2,13 @@ from typing import List
 from uuid import UUID, uuid4
 
 # pylint: disable=no-name-in-module
-from pydantic import BaseModel, Field, ConstrainedStr, root_validator
+from pydantic import BaseModel, Field, root_validator
+
+from hetdesrun.models.code import NonEmptyValidStr, ShortNonEmptyValidStr
 
 from hetdesrun.utils import State, Type
 
 from hetdesrun.persistence.models.io import Position, Connector
-
-
-class NonEmptyStr(ConstrainedStr):
-    min_length = 1
 
 
 class Operator(BaseModel):
@@ -24,10 +22,10 @@ class Operator(BaseModel):
 
     id: UUID = Field(default_factory=uuid4)
     revision_group_id: UUID = Field(default_factory=uuid4)
-    name: NonEmptyStr
+    name: NonEmptyValidStr
     type: Type
     state: State
-    version_tag: NonEmptyStr
+    version_tag: ShortNonEmptyValidStr
     transformation_id: UUID
     inputs: List[Connector]
     outputs: List[Connector]

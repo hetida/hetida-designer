@@ -133,6 +133,111 @@ def test_tr_validator_version_tag_not_latest():
             documentation="",
         )
 
+def test_tr_nonemptyvalidstr_regex_validator_not_whitelisted_character():
+    id = get_uuid_from_seed("test")
+    with pytest.raises(ValidationError):
+        TransformationRevision(
+            id=id,
+            revision_group_id=id,
+            name="+",
+            description="Test description",
+            version_tag="1.0.0",
+            category="Test category",
+            state=State.DRAFT,
+            type=Type.COMPONENT,
+            content="test",
+            io_interface=IOInterface(),
+            test_wiring=WorkflowWiring(),
+            documentation="",
+        )
+
+def test_tr_validstr_regex_validator_empty():
+    id = get_uuid_from_seed("test")
+    TransformationRevision(
+        id=id,
+        revision_group_id=id,
+        name="Test",
+        description="",
+        version_tag="1.0.0",
+        category="Test category",
+        state=State.DRAFT,
+        type=Type.COMPONENT,
+        content="test",
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+        documentation="",
+    )
+
+def test_tr_nonemptyvalidstr_regex_validator_empty():
+    id = get_uuid_from_seed("test")
+    with pytest.raises(ValidationError):
+        TransformationRevision(
+            id=id,
+            revision_group_id=id,
+            name="",
+            description="Test description",
+            version_tag="1.0.0",
+            category="Test category",
+            state=State.DRAFT,
+            type=Type.COMPONENT,
+            content="test",
+            io_interface=IOInterface(),
+            test_wiring=WorkflowWiring(),
+            documentation="",
+        )
+
+def test_tr_nonemptyvalidstr_validator_max_characters():
+    id = get_uuid_from_seed("test")
+    with pytest.raises(ValidationError):
+        TransformationRevision(
+            id=id,
+            revision_group_id=id,
+            name="Name Name Name Name Name Name Name Name Name Name Name Name Name",
+            description="Test description",
+            version_tag="1.0.0",
+            category="Test category",
+            state=State.DRAFT,
+            type=Type.COMPONENT,
+            content="test",
+            io_interface=IOInterface(),
+            test_wiring=WorkflowWiring(),
+            documentation="",
+        )
+
+def test_tr_shortnonemptyvalidstr_validator_max_characters():
+    id = get_uuid_from_seed("test")
+    with pytest.raises(ValidationError):
+        TransformationRevision(
+            id=id,
+            revision_group_id=id,
+            name="Name",
+            description="Test description",
+            version_tag="1.0.0.0.0.0.0.0.0.0.0",
+            category="Test category",
+            state=State.DRAFT,
+            type=Type.COMPONENT,
+            content="test",
+            io_interface=IOInterface(),
+            test_wiring=WorkflowWiring(),
+            documentation="",
+        )
+
+def test_tr_nonemptyvalidstr_regex_validator_fancy_characters():
+    id = get_uuid_from_seed("test")
+    TransformationRevision(
+        id=id,
+        revision_group_id=id,
+        name="bößä",
+        description="中文, español, Çok teşekkürler",
+        version_tag="(-_-) /  =.=",
+        category="ไทย",
+        state=State.DRAFT,
+        type=Type.COMPONENT,
+        content="test",
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+        documentation="",
+    )
 
 def test_tr_validator_io_interface_fits_to_content():
     tr_json_empty_io_interface = deepcopy(tr_json_valid_released_example)

@@ -149,12 +149,12 @@ def merge_with_deduplicated_timestamps(
         "new_name": DataType.String,
     },
     outputs={"timeseries": DataType.Series},
-    component_name="Merge timeseries deduplicating timestamps",
+    name="Merge timeseries deduplicating timestamps",
     description="Combine multiple timeseries from a timeseries dataframe into one, avoiding duplicate timestamps.",
     category="Time length operations",
-    uuid="b1dba357-b6d5-43cd-ac3e-7b6cd829be37",
-    group_id="79de1ec7-b629-4360-a5e2-4eba19e60bd0",
-    tag="1.0.0",
+    id="b1dba357-b6d5-43cd-ac3e-7b6cd829be37",
+    revision_group_id="79de1ec7-b629-4360-a5e2-4eba19e60bd0",
+    version_tag="1.0.0",
 )
 def main(*, timeseries_df, max_distribution_delta, new_name):
     # entrypoint function for this component

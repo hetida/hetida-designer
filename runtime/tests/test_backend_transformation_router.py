@@ -539,6 +539,35 @@ async def test_update_transformation_revision_with_workflow(
 
 
 @pytest.mark.asyncio
+async def test_update_transformation_revision_with_invalid_name_workflow(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_2)
+        )
+
+        tr_json_workflow_2_update_invalid_name = deepcopy(tr_json_workflow_2_update)
+        tr_json_workflow_2_update_invalid_name["name"] = "+"
+
+        async with async_test_client as ac:
+            response = await ac.put(
+                posix_urljoin(
+                    "/api/transformations/", str(get_uuid_from_seed("workflow 2"))
+                ),
+                json=tr_json_workflow_2_update_invalid_name,
+            )
+
+        print(response.json())
+        assert response.status_code == 422
+        assert "string does not match regex" in response.json()["detail"][0]["msg"]
+        assert "name" in response.json()["detail"][0]["loc"]
+
+
+@pytest.mark.asyncio
 async def test_update_transformation_revision_with_non_existing_workflow(
     async_test_client, clean_test_db_engine
 ):
