@@ -79,7 +79,10 @@ The id of a workflow revision as well as its revision group id are shown in the 
 
 Then the id and below it the group ID are displayed at the bottom of the dialog window:
 
-![](../assets/workflow_revision_id.png)are wired via the "direct_provisioning"
+![](../assets/workflow_revision_id.png)
+
+The procedure is analogous for a component revision.
+
 #### Input and output wirings
 
 See the section 'Enumeration "type"' in the [description of webservice endpoints of generic Rest adapters](../adapter_system/generic_rest_adapters/web_service_interface.md) for the possible values of "type".
@@ -104,7 +107,7 @@ The input wirings and output wirings tie inputs of the workflow or component rev
 
 ### Response
 
-For both web service endpoints a successful response contains the result values for those workflow outputs that are not wired to any adapter. Also hetida designer internal types for each output are provided. Outputs wired via adapters do not occur in the response.
+For both web service endpoints, a successful response contains the result values for those workflow outputs without wiring, since this implies that they are wired with the default adapter "direct_provisioning". Also hetida designer internal types for each output are provided. Outputs wired via adapters do not occur in the response.
 
 ```
 {
@@ -180,7 +183,7 @@ This is the payload for running the Example workflow "Volatility Detection Examp
 
 #### Response (shortened):
 
-Here the only outputs are of type PLOTLYJSON. They may be `{}` if query `run_pure_plot_operators`  was `false.` Since both outputs are not wired via adapters their output values are returned in the response in 
+Here the only outputs are of type PLOTLYJSON. They may be `{}` if query `run_pure_plot_operators`  was `false`. Since both outputs are implicitly wired to the default adapter "direct_provisioning", their output values are returned in the response
 
 ```
 {
@@ -198,7 +201,7 @@ Here the only outputs are of type PLOTLYJSON. They may be `{}` if query `run_pur
 
 ## Mixed example
 
-Here both inputs are wired via the Python demo adapter. One of them is wired to metadata from a node of the adapter's hierarchy. The example workflow actually has two outputs of which only one is wired to a sink. The other one will be directly provided in the response.
+Here both inputs are wired via the Python demo adapter. One of them is wired to metadata from a node of the adapter's hierarchy. The sample workflow actually has two outputs, only one of which is wired to a sink. The other one, which is not explicitly wired, is thereby implicitly wired to the default adapter "direct_provisioning" and thus provided directly in the response.
 
 ```
 {

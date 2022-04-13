@@ -150,7 +150,7 @@ exec_job_1:{ "id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89", "wiring": { "input_wi
 Pasting the payload above in the first terminal (the producer for the "hd-execution-topic" topic) leads to the same message occuring in the second terminal (consumer for the "hd-execution-topic" topic) and after short moment to a result in the third terminal (the consumer of the result topic "hd-execution-response-topic"). The result json payload is identical to the API transformation revision execution endpoint result json.
 
 ## Using adapters when running workflows via Kafka
-This example includes only the "direct_provisioning" adapter for all inputs and no adapters for all outputs. This results in all input data being expected as part of the Kafka payload and output data being sent as part of the result Kafka message.
+This example includes only the "direct_provisioning" adapter being wired to all inputs and there are no wirings for the outputs, which is the proper way to indicate that these are wired to the default adapter "direct_provisioning". This results in all input data being expected as part of the Kafka payload and the output data being sent as part of the Kafka result message.
 
 However this is not a limitation: You can use arbitrary adapters and also mix them freely in the same manner as for the web endpoint. I.e. some data can be directly provided via the Kafka message (usually single parameters) while other data is fetched from a database via an appropriate external adapter (typically mass data).
 
