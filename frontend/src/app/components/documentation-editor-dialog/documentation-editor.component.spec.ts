@@ -16,25 +16,23 @@ describe('DocumentationEditorComponent', () => {
     ['getDocumentation']
   );
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [FormsModule, HttpClientModule],
-        declarations: [DocumentationEditorComponent],
-        providers: [
-          { provide: MatDialogRef, useValue: {} },
-          {
-            provide: MAT_DIALOG_DATA,
-            useValue: {}
-          },
-          {
-            provide: DocumentationService,
-            useValue: mockDocumentationService
-          }
-        ]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [FormsModule, HttpClientModule],
+      declarations: [DocumentationEditorComponent],
+      providers: [
+        { provide: MatDialogRef, useValue: {} },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {}
+        },
+        {
+          provide: DocumentationService,
+          useValue: mockDocumentationService
+        }
+      ]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     const mockDocumentation: Documentation = {

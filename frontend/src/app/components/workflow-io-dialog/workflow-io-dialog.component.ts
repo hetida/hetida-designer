@@ -219,7 +219,9 @@ export class WorkflowIODialogComponent {
     const constantControl = workflowIODefinitionForm.get('constant');
     const nameControl = workflowIODefinitionForm.get('name');
 
-    const rawValue = (workflowIODefinitionForm as FormGroup).getRawValue() as WorkflowIODefinition;
+    const rawValue = (
+      workflowIODefinitionForm as FormGroup
+    ).getRawValue() as WorkflowIODefinition;
 
     if (isConstant) {
       nameControl.reset('');

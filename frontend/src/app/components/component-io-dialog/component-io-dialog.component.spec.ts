@@ -11,39 +11,37 @@ describe('ComponentIODialogComponent', () => {
   let component: ComponentIODialogComponent;
   let fixture: ComponentFixture<ComponentIODialogComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          BasicTestModule,
-          NgHetidaFlowchartModule,
-          FormsModule,
-          ReactiveFormsModule
-        ],
-        declarations: [ComponentIODialogComponent, ErrorVisualDirective],
-        providers: [
-          {
-            provide: MAT_DIALOG_DATA,
-            useValue: {
-              componentBaseItem: {
-                id: 'Mock',
-                name: 'Mock',
-                tag: 'Mock',
-                pos_x: null,
-                pos_y: null,
-                inputs: [],
-                outputs: [],
-                links: [],
-                type: BaseItemType.COMPONENT
-              },
-              editMode: true
-            }
-          },
-          { provide: MatDialogRef, useValue: {} }
-        ]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        BasicTestModule,
+        NgHetidaFlowchartModule,
+        FormsModule,
+        ReactiveFormsModule
+      ],
+      declarations: [ComponentIODialogComponent, ErrorVisualDirective],
+      providers: [
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            componentBaseItem: {
+              id: 'Mock',
+              name: 'Mock',
+              tag: 'Mock',
+              pos_x: null,
+              pos_y: null,
+              inputs: [],
+              outputs: [],
+              links: [],
+              type: BaseItemType.COMPONENT
+            },
+            editMode: true
+          }
+        },
+        { provide: MatDialogRef, useValue: {} }
+      ]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(ComponentIODialogComponent);

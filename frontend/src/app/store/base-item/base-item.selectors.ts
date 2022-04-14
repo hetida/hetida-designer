@@ -80,15 +80,16 @@ export const selectWorkflowBaseItemById = (workflowBaseItemId: string) =>
   );
 
 export const selectBaseItemById = (baseItemId: string) =>
-  createSelector(selectAbstractBaseItemById(baseItemId), (abstractBaseItem):
-    | BaseItem
-    | undefined => {
-    if (Utils.isNullOrUndefined(abstractBaseItem)) {
-      return undefined;
+  createSelector(
+    selectAbstractBaseItemById(baseItemId),
+    (abstractBaseItem): BaseItem | undefined => {
+      if (Utils.isNullOrUndefined(abstractBaseItem)) {
+        return undefined;
+      }
+      Utils.assert(isBaseItem(abstractBaseItem));
+      return abstractBaseItem;
     }
-    Utils.assert(isBaseItem(abstractBaseItem));
-    return abstractBaseItem;
-  });
+  );
 
 export const selectAbstractBaseItemById = (abstractBaseItemId: string) =>
   createSelector(

@@ -12,21 +12,19 @@ describe('ToolbarComponent', () => {
   let component: ToolbarComponent;
   let fixture: ComponentFixture<ToolbarComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          MatIconModule,
-          MatDividerModule,
-          MatDialogModule,
-          HttpClientModule,
-          StoreModule.forRoot(appReducers),
-          MatSnackBarModule
-        ],
-        declarations: [ToolbarComponent]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        MatIconModule,
+        MatDividerModule,
+        MatDialogModule,
+        HttpClientModule,
+        StoreModule.forRoot(appReducers),
+        MatSnackBarModule
+      ],
+      declarations: [ToolbarComponent]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(ToolbarComponent);

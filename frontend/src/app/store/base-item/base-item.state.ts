@@ -5,4 +5,5 @@ export const baseItemEntityAdapter = createEntityAdapter<AbstractBaseItem>();
 
 export interface IBaseItemState extends EntityState<AbstractBaseItem> {}
 
-export const initialBaseItemState: IBaseItemState = baseItemEntityAdapter.getInitialState();
+export const initialBaseItemState: IBaseItemState =
+  baseItemEntityAdapter.getInitialState();

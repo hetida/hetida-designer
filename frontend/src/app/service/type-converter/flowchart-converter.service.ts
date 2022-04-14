@@ -64,9 +64,8 @@ export class FlowchartConverterService {
 
     const flowchart = {
       id: workflow.id,
-      components: this.convertWorkflowOperatorsToFlowchartComponents(
-        workflowClean
-      ),
+      components:
+        this.convertWorkflowOperatorsToFlowchartComponents(workflowClean),
       io: this.convertWorkflowIOToFlowchartIO(workflowClean),
       links: this.convertWorkflowLinksToFlowchartLinks(workflowClean)
     } as FlowchartConfiguration;
