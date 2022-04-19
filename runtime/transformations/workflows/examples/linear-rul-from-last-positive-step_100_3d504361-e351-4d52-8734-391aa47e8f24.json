@@ -746,28 +746,7 @@
         "workflow_input_name": "num_days_forecast"
       }
     ],
-    "output_wirings": [
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "intercept"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "limit_violation_timestamp"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "rul_regression_result_plot"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "slope"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "before_step_detect"
-      }
-    ]
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

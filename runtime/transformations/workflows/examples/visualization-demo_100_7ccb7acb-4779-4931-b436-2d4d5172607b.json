@@ -2098,68 +2098,7 @@
         "workflow_input_name": "scatter_y"
       }
     ],
-    "output_wirings": [
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "a_single_ts"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "b_ts_frame"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "c_bar_plot"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "comp_2_shifted"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "comp_2_ts"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "corr_heatmap"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "d_pie_chart"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "map_plot"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "ts_box_plot"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "h_ts_box_plot"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "i_map_plot"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "f_corr_heatmap"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "e_comp_2_ts"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "g_comp_2_shifted"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "j_scatter_plot"
-      }
-    ]
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

@@ -1325,16 +1325,7 @@
         "workflow_input_name": "y_min"
       }
     ],
-    "output_wirings": [
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "contour_plot"
-      },
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "xs"
-      }
-    ]
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

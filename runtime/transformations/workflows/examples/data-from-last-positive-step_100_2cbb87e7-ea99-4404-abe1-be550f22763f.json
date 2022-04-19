@@ -853,12 +853,7 @@
         "workflow_input_name": "postive_step_size"
       }
     ],
-    "output_wirings": [
-      {
-        "adapter_id": "direct_provisioning",
-        "workflow_output_name": "series_from_last_step"
-      }
-    ]
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"
