@@ -208,18 +208,12 @@ in pkgs.mkShell rec {
     set -e
     SOURCE_DATE_EPOCH=$(date +%s)
 
-    echo "FINDING VENV at ${venvDir}"
-    if [ -d "${venvDir}" ]; then
-      echo "Skipping venv creation, '${venvDir}' already exists"
-    else
-      echo "Creating new venv environment in path: '${venvDir}'"
-      # Note that the module venv was only introduced in python 3, so for 2.7
-      # this needs to be replaced with a call to virtualenv
-      ${pythonPackages.python.interpreter} -m venv "${venvDir}"
-      
-      "${venvDir}"/bin/pip install pip-tools==6.4.0
-    fi
+    export PIPT_EXPLICIT_VENV_TARGET_PATH="${venvDir}"
+    export PIPT_PYTHON_INTERPRETER="${pythonPackages.python.interpreter}"
 
+    cd "${projectDir}"/runtime
+    ./pipt venv
+ 
     # Under some circumstances it might be necessary to add your virtual
     # environment to PYTHONPATH, which you can do here too;
     PYTHONPATH=$PWD/${venvDir}/${pythonPackages.python.sitePackages}/:$PYTHONPATH
@@ -235,18 +229,16 @@ in pkgs.mkShell rec {
 
     export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "${venvDir}/symbolic_links_to_system_libs") ]}      
 
+    ./pipt sync
     echo "ACTIVATING VENV AT ${venvDir}"
-    source "${venvDir}/bin/activate"
-
-    echo "INSTALL FIXED PIP, WHEEL AND PIP-TOOLS INTO VENV"
-    "${venvDir}"/bin/pip install pip==21.3.1 wheel==0.37.0 pip-tools==6.4.0 jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
-    echo "START PIP-SYNC"
-    "${venvDir}"/bin/pip-sync ${projectDir}/runtime/requirements.txt ${projectDir}/runtime/requirements-dev.txt
+    source "${venvDir}/bin/activate" 
+ 
 
     # Test some imports (for system libraries missing / not found)
     echo "TESTING IMPORTING SOME PYTHON PACKAGES":
-    python -c "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
+    ${venvDir}/bin/python -c "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
 
+    cd "${projectDir}"
 
     echo "Initialize/configure jupyter notebook in virtual environment"
     mkdir -p ${JUPYTER_CONFIG_DIR}
