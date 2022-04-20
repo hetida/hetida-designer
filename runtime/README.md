@@ -14,10 +14,7 @@ Make sure Python 3.9 is installed and available on your path. You may need addit
 We recommend Linux as operating system for development. In particular we point out that locked dependency files in this repository are created only for Linux environments with CPython.
 
 1. Navigate to the `runtime` folder.
-2. Create virtual environment: `python3.9 -m venv venv`
-3. Activate virtual environment: `source venv/bin/activate`
-4. Install dependency management tooling: `python -m pip install pip==21.3.1 pip-tools==6.4.0 wheel==0.37.0`
-5. Install development dependencies: `pip-sync ./requirements.txt ./requirements-dev.txt`
+2. Create, sync and activate virtual environmnet: `./pipt shell`
 
 Now a development web server using a sqlite in-memory db can be started via
 ```
@@ -35,38 +32,39 @@ Note that this starts runtime+backend combined. If you only want one of both you
 
 When deactivating the backend endpoints you do not need to specify a database connection URL.
 
-All following commands assume that that the virtual environment is active (step 3).
+Most following commands assume that that the virtual environment is active (step 2).
 
 ## Dependency Management
-For the hetida designer runtime/backend we rely on [pip-tools](https://github.com/jazzband/pip-tools) for depedency management.
+For the hetida designer runtime/backend we rely on [pip-tools](https://github.com/jazzband/pip-tools) for depedency management. We use a wrapper script called `pipt` to faciliate working with pip-tools.
 Pip-tools supports having a tree of interdependant dependency sets such that each set is locked with its locked dependant dependency sets as constraints. This is called ["layered dependencies"](https://github.com/jazzband/pip-tools#workflow-for-layered-requirements) in the pip-tools documentation.
 
 This feature allows users of the runtime to [merge their specific Python dependencies](../docs/custom_python_dependencies.md) in their own docker images.
 
-### Basic pip-tools usage
-Abstract dependencies go into `requirements.in` while abstract development-only dependencies (test libraries, code quality check libraries etc) should be placed in `requirements-dev.in`.
+### Basic dependency management
+Abstract dependencies can be added and locked using the `./pipt add` subcommand, e.g.
+```
+./pipt add 'requests>=2'
+```
+or
+```
+./pipt add --dev pytest
+```
+with deactivated virtual environment.
 
-All following commands are run with activated development virtual environment.
+Afterwards (re)activating the environment with `./pipt shell` will automatically sync to the locked versions.
 
-#### Locking Dependencies
-Lock all dependencies via
+### Upgrade Dependencies
+Upgrade and lock all dependencies with deactivated virtual environmnet via
 ```
-rm requirements.txt requirements-dev.txt && pip-compile --generate-hashes && pip-compile --generate-hashes requirements-dev.in
+./pipt upgrade
 ```
-This updates the locked dependency files `requirements.txt` and `requirements-dev.txt`.
+This upgrades the locked dependency files `requirements-base.txt`, `requirements.txt` and `requirements-dev.txt`.
 
-#### Updating development virtual environment
-Update your development virtual environment to the current locked dependencies via 
-
+After that
 ```
-pip-sync requirements.txt requirements-dev.txt
+./pipt shell
 ```
-
-#### Upgrade dependencies
-All dependencies are upgraded via
-```
-pip-compile --generate-hashes --upgrade && pip-compile --generate-hashes --upgrade requirements-dev.in
-```
+will automatically sync and activate your environment.
 
 ### <a name="runtime-tests"></a> Tests
 With activated virtual environment, run

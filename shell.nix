@@ -231,9 +231,8 @@ in pkgs.mkShell rec {
 
     ./pipt sync
     echo "ACTIVATING VENV AT ${venvDir}"
-    source "${venvDir}/bin/activate" 
+    source "${venvDir}/bin/activate"
  
-
     # Test some imports (for system libraries missing / not found)
     echo "TESTING IMPORTING SOME PYTHON PACKAGES":
     ${venvDir}/bin/python -c "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
