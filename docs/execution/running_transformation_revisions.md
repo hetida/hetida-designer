@@ -107,7 +107,7 @@ The input wirings and output wirings tie inputs of the workflow or component rev
 
 ### Response
 
-For both web service endpoints a successful response contains the result values for those workflow outputs that are wired via the "direct_provisioning" adapter. Also hetida designer internal types are for each output is provided. Outputs wired via other adapters do not occur.
+For both web service endpoints, a successful response contains the result values for those workflow outputs without wiring, since this implies that they are wired with the default adapter "direct_provisioning". Also hetida designer internal types for each output are provided. Outputs wired via adapters do not occur in the response.
 
 ```
 {
@@ -174,16 +174,7 @@ This is the payload for running the Example workflow "Volatility Detection Examp
                 "workflow_input_name": "window_timestamp_location"
             }
         ],
-        "output_wirings": [
-            {
-                "adapter_id": "direct_provisioning",
-                "workflow_output_name": "data_and_alerts"
-            },
-            {
-                "adapter_id": "direct_provisioning",
-                "workflow_output_name": "score"
-            }
-        ]
+        "output_wirings": []
     },
     "run_pure_plot_operators": false,
     "job_id": "00000000-0000-0000-0000-000000000002"
@@ -192,7 +183,7 @@ This is the payload for running the Example workflow "Volatility Detection Examp
 
 #### Response (shortened):
 
-Here the only outputs are of type PLOTLYJSON. They may be `{}` if query `run_pure_plot_operators`  was `false.` Since both outputs were wired via the "direct_provisioning" adapter their output values are returned in the response in 
+Here the only outputs are of type PLOTLYJSON. They may be `{}` if query `run_pure_plot_operators`  was `false`. Since both outputs are implicitly wired to the default adapter "direct_provisioning", their output values are returned in the response
 
 ```
 {
@@ -210,7 +201,7 @@ Here the only outputs are of type PLOTLYJSON. They may be `{}` if query `run_pur
 
 ## Mixed example
 
-Here both inputs are wired via the Python demo adapter. One of them is wired to metadata from a node of the adapter's hierarchy. The example workflow actually has two outputs of which only one is wired to a sink. The other one will be automatically inferred to use the direct_provisioning adapter.
+Here both inputs are wired via the Python demo adapter. One of them is wired to metadata from a node of the adapter's hierarchy. The sample workflow actually has two outputs, only one of which is wired to a sink. The other one, which is not explicitly wired, is thereby implicitly wired to the default adapter "direct_provisioning" and thus provided directly in the response.
 
 ```
 {
