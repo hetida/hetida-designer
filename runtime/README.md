@@ -9,7 +9,9 @@ Both are written in Python and their code resides in the runtime subdirectory.
 > **Note**: All described command line commands in this file assume that the runtime subdirectory of the hetida designer repository is the current working directory.
 
 ## Development Setup
-Make sure Python 3.9 is installed and available on your path. You may need additional packages like a C compiler (e.g. gcc) depending on your OS's availability of precompiled packages for numerical libraries like **numpy** or **scipy**. We recommend Linux as operating system for development.
+Make sure Python 3.9 is installed and available on your path. You may need additional packages like a C compiler (e.g. gcc) depending on your OS's availability of precompiled packages for numerical libraries like **numpy** or **scipy**. 
+
+We recommend Linux as operating system for development. In particular we point out that locked dependency files in this repository are created only for Linux environments with CPython.
 
 1. Navigate to the `runtime` folder.
 2. Create virtual environment: `python3.9 -m venv venv`
