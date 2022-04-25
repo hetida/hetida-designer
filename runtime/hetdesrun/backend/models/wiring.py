@@ -75,7 +75,7 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
             refId=output_wiring.ref_id,
             refIdType=output_wiring.ref_id_type,
             refKey=output_wiring.ref_key,
-            type=output_wiring.ref_id_type,
+            type=output_wiring.type,
             workflowOutputName=output_wiring.workflow_output_name,
             adapterId=output_wiring.adapter_id,
         )
