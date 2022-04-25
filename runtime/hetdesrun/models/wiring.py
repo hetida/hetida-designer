@@ -7,6 +7,7 @@ from pydantic import (  # pylint: disable=no-name-in-module
     StrictInt,
 )
 
+EXPORT_MODE = False
 
 from hetdesrun.models.util import valid_python_identifier
 
@@ -50,7 +51,9 @@ class OutputWiring(BaseModel):
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
         # pylint: disable=consider-iterating-dictionary
-        if not v in SINK_ADAPTERS.keys() and not isinstance(v, str):
+        if not EXPORT_MODE and (
+            not v in SINK_ADAPTERS.keys() and not isinstance(v, str)
+        ):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
             )
@@ -107,7 +110,9 @@ class InputWiring(BaseModel):
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
         # pylint: disable=consider-iterating-dictionary
-        if not v in SOURCE_ADAPTERS.keys() and not isinstance(v, str):
+        if not EXPORT_MODE and (
+            not v in SOURCE_ADAPTERS.keys() and not isinstance(v, str)
+        ):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."
             )

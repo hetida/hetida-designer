@@ -12,6 +12,8 @@ from hetdesrun.models.wiring import WorkflowWiring, InputWiring, OutputWiring
 from hetdesrun.adapters import SOURCE_ADAPTERS, SINK_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
 
+EXPORT_MODE = False
+
 
 class IoWiringFrontendDto(BaseModel):
     id: UUID = Field(default_factory=uuid4)
@@ -51,7 +53,7 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
     def adapter_id_known(
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
-        if not v in SINK_ADAPTERS and not isinstance(v, str):
+        if not EXPORT_MODE and (not v in SINK_ADAPTERS and not isinstance(v, str)):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
             )
@@ -100,7 +102,7 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
     def adapter_id_known(
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
-        if not v in SOURCE_ADAPTERS and not isinstance(v, str):
+        if not EXPORT_MODE and (not v in SOURCE_ADAPTERS and not isinstance(v, str)):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."
             )
