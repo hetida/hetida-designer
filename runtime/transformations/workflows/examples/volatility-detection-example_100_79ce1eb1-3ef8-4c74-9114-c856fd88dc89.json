@@ -4,36 +4,52 @@
     "constants": [],
     "inputs": [
       {
+        "connector_id": "5424d11b-b9d4-07d6-81ed-66707d71e381",
+        "connector_name": "window_size",
         "data_type": "STRING",
         "id": "9b855306-1544-4de3-acd9-696c933966f0",
         "name": "window_size",
+        "operator_id": "3519e005-cbdb-473a-8749-b564203d119a",
+        "operator_name": "Simple Volatility Score",
         "position": {
           "x": 210,
           "y": 290
         }
       },
       {
+        "connector_id": "aad10ed2-5e2f-dde9-8204-782cd0d2876f",
+        "connector_name": "window_timestamp_location",
         "data_type": "STRING",
         "id": "e24eb512-8d63-469d-9991-00e512a74633",
         "name": "window_timestamp_location",
+        "operator_id": "3519e005-cbdb-473a-8749-b564203d119a",
+        "operator_name": "Simple Volatility Score",
         "position": {
           "x": 210,
           "y": 320
         }
       },
       {
+        "connector_id": "f103c395-92b6-444d-320a-93950ed6d857",
+        "connector_name": "input",
         "data_type": "SERIES",
         "id": "0557ddc6-1e14-493d-9b0a-6def9ede5889",
         "name": "input_series",
+        "operator_id": "8e382eb9-ee49-4593-8b3b-e73e83b06360",
+        "operator_name": "Pass Through (Series)",
         "position": {
           "x": -300,
           "y": 410
         }
       },
       {
+        "connector_id": "d3d0b592-a24f-991d-2731-0531d5479e7f",
+        "connector_name": "threshold",
         "data_type": "FLOAT",
         "id": "928d247e-012d-43b1-a877-2707e5f03140",
         "name": "threshold",
+        "operator_id": "25825125-e2fd-4507-af09-d66fe55d5d2f",
+        "operator_name": "Alerts from Score",
         "position": {
           "x": 680,
           "y": 290
@@ -569,18 +585,26 @@
     ],
     "outputs": [
       {
+        "connector_id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "7203a149-f86c-42e4-a37f-6a89520ba523",
         "name": "score",
+        "operator_id": "6b028851-a407-4946-b131-954a64703506",
+        "operator_name": "Single Timeseries Plot",
         "position": {
           "x": 1340,
           "y": 110
         }
       },
       {
+        "connector_id": "83af48bc-135e-9def-a5cf-e9a2f233f03f",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "c212b5b2-dc6a-46cb-a8c5-d812c40d4b05",
         "name": "data_and_alerts",
+        "operator_id": "3a5a440a-13b8-4a5e-a21d-f15405201dea",
+        "operator_name": "Timeseries and Alerts Plot",
         "position": {
           "x": 1830,
           "y": 380

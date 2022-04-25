@@ -4,18 +4,26 @@
     "constants": [],
     "inputs": [
       {
+        "connector_id": "c57127e7-6b84-03f8-6ef1-dcd7232bf3bf",
+        "connector_name": "input",
         "data_type": "FLOAT",
         "id": "9f517001-688c-4a09-bcea-76c1bf54ec5b",
         "name": "postive_step_size",
+        "operator_id": "addefd98-a5bb-4878-a237-71289fb17ac2",
+        "operator_name": "Pass Through (Float)",
         "position": {
           "x": 190,
           "y": 250
         }
       },
       {
+        "connector_id": "f103c395-92b6-444d-320a-93950ed6d857",
+        "connector_name": "input",
         "data_type": "SERIES",
         "id": "b8e04c00-b389-4ec1-8e3e-ba1645551745",
         "name": "inp_series",
+        "operator_id": "c216bbc4-1f99-45c1-97b7-8d3665fbb8d0",
+        "operator_name": "Pass Through (Series)",
         "position": {
           "x": -240,
           "y": 40
@@ -786,9 +794,13 @@
     ],
     "outputs": [
       {
+        "connector_id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+        "connector_name": "connector_name",
         "data_type": "SERIES",
         "id": "fb643e6f-98d9-4df8-a69e-0c7e142c768d",
         "name": "series_from_last_step",
+        "operator_id": "4f1b4f7b-2f09-479f-961d-f79ae337b2ec",
+        "operator_name": "Pass Through (Series) (2)",
         "position": {
           "x": 3230,
           "y": 30

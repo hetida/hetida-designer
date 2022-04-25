@@ -5,16 +5,10 @@ to provide a very elementary support system to the designer code editor.
 """
 
 
-from typing import Dict, Optional, List
+from typing import Optional, List
 from keyword import iskeyword
-import re
 
-from hetdesrun.datatypes import DataType
-
-
-ALLOWED_CHARS_REGEXP = re.compile(
-    r"[^a-zA-Z0-9\.\,\-#_ ]"  # pylint: disable=anomalous-backslash-in-string
-)  # allow only some special characters for category, description and component name
+from hetdesrun.models.code import ComponentInfo
 
 imports_template: str = """\
 from hetdesrun.component.registration import register
@@ -31,14 +25,14 @@ function_definition_template: str = """\
 @register(
     inputs={input_dict_content},
     outputs={output_dict_content},
-    component_name={component_name},
+    name={name},
     description={description},
     category={category},
-    uuid={uuid},
-    group_id={group_id},
-    tag={tag}
+    id={id},
+    revision_group_id={revision_group_id},
+    version_tag={version_tag}
 )
-def main({params_list}):
+{main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
 """
@@ -49,32 +43,22 @@ function_body_template: str = """\
 """
 
 
-def sanitize(text: str) -> str:
-    return re.sub(ALLOWED_CHARS_REGEXP, "", text)
-
-
-def generate_function_header(
-    input_type_dict: Dict[str, DataType],
-    output_type_dict: Dict[str, DataType],
-    component_name: str,
-    description: str,
-    category: str,
-    uuid: str,
-    group_id: str,
-    tag: str,
-) -> str:
+def generate_function_header(component_info: ComponentInfo) -> str:
     """Generate entrypoint function header from the inputs and their types"""
     param_list_str = (
         ""
-        if len(input_type_dict.keys()) == 0
-        else "*, " + ", ".join(input_type_dict.keys())
+        if len(component_info.input_types_by_name.keys()) == 0
+        else "*, " + ", ".join(component_info.input_types_by_name.keys())
     )
+
+    main_func_declaration_start = "async def" if component_info.is_coroutine else "def"
+
     return function_definition_template.format(
         input_dict_content="{"
         + ", ".join(
             [
                 '"' + key + '": DataType.' + value.name
-                for key, value in input_type_dict.items()
+                for key, value in component_info.input_types_by_name.items()
             ]
         )
         + "}",
@@ -82,43 +66,26 @@ def generate_function_header(
         + ", ".join(
             [
                 '"' + key + '": DataType.' + value.name
-                for key, value in output_type_dict.items()
+                for key, value in component_info.output_types_by_name.items()
             ]
         )
         + "}",
-        component_name='"' + sanitize(component_name) + '"',
-        description='"' + sanitize(description) + '"',
-        category='"' + sanitize(category) + '"',
-        uuid='"' + sanitize(uuid) + '"',
-        group_id='"' + sanitize(group_id) + '"',
-        tag='"' + sanitize(tag) + '"',
+        name='"' + component_info.name + '"',
+        description='"' + component_info.description + '"',
+        category='"' + component_info.category + '"',
+        id='"' + str(component_info.id) + '"',
+        revision_group_id='"' + str(component_info.revision_group_id) + '"',
+        version_tag='"' + component_info.version_tag + '"',
         params_list=param_list_str,
+        main_func_declaration_start=main_func_declaration_start,
     )
 
 
-def generate_complete_component_module(
-    input_type_dict: Dict[str, DataType],
-    output_type_dict: Dict[str, DataType],
-    component_name: str,
-    description: str,
-    category: str,
-    uuid: str,
-    group_id: str,
-    tag: str,
-) -> str:
+def generate_complete_component_module(component_info: ComponentInfo) -> str:
     return (
         imports_template
         + "\n"
-        + generate_function_header(
-            input_type_dict,
-            output_type_dict,
-            component_name,
-            description,
-            category,
-            uuid,
-            group_id,
-            tag,
-        )
+        + generate_function_header(component_info)
         + "\n"
         + function_body_template
     )
@@ -126,14 +93,7 @@ def generate_complete_component_module(
 
 def update_code(
     existing_code: Optional[str],
-    input_type_dict: Dict[str, DataType],
-    output_type_dict: Dict[str, DataType],
-    component_name: str,
-    description: str,
-    category: str,
-    uuid: str,
-    group_id: str,
-    tag: str,
+    component_info: ComponentInfo,
 ) -> str:
     """Generate and update component code
 
@@ -147,27 +107,9 @@ def update_code(
     undesirably replace user code in some cases.
     """
     if existing_code is None or existing_code == "":
-        return generate_complete_component_module(
-            input_type_dict,
-            output_type_dict,
-            component_name=component_name,
-            description=description,
-            category=category,
-            uuid=uuid,
-            group_id=group_id,
-            tag=tag,
-        )
+        return generate_complete_component_module(component_info)
 
-    new_function_header = generate_function_header(
-        input_type_dict,
-        output_type_dict,
-        component_name=component_name,
-        description=description,
-        category=category,
-        uuid=uuid,
-        group_id=group_id,
-        tag=tag,
-    )
+    new_function_header = generate_function_header(component_info)
 
     try:
         start, remaining = existing_code.split(
@@ -191,22 +133,15 @@ def update_code(
     # pylint: disable=unused-variable
     old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****", 1)
 
+    old_func_def_lines = old_func_def.split("\n")
+    use_async_def = (len(old_func_def_lines) >= 3) and old_func_def_lines[
+        -3
+    ].startswith("async def")
+    component_info.is_coroutine = use_async_def
+
+    new_function_header = generate_function_header(component_info)
+
     return start + new_function_header + end
-
-
-example_code = (
-    generate_complete_component_module(
-        {"x": DataType.Float, "y": DataType.Float},
-        {"z": DataType.Float},
-        "Example Component",
-        "An example for code generation",
-        "Examples",
-        "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-        "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-        "1.0.0",
-    )
-    + """\n    return {"z": x+y}"""
-)
 
 
 def check_parameter_names(names: List[str]) -> bool:

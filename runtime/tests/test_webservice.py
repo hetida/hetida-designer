@@ -48,9 +48,9 @@ async def test_access_api_endpoint(async_test_client):
                 "name": "Testname",
                 "description": "Test Descr.",
                 "category": "Test category",
-                "uuid": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-                "group_id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-                "tag": "1.0.0",
+                "id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+                "revision_group_id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+                "version_tag": "1.0.0",
             },
         )
     assert response.status_code == 200

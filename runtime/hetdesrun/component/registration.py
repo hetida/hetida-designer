@@ -25,17 +25,18 @@ def gen_default_return_for_plot_func(outputs: dict) -> dict:
     return {key: {} for key in outputs.keys()}
 
 
+# pylint: disable=redefined-builtin
 def register(
     *,
     inputs: Dict[str, DataType],
     outputs: Dict[str, DataType],
     is_pure_plot_component: bool = False,
-    component_name: Optional[str] = None,
+    name: Optional[str] = None,
     description: Optional[str] = None,
     category: Optional[str] = None,
-    uuid: Optional[str] = None,
-    group_id: Optional[str] = None,
-    tag: Optional[str] = None,
+    id: Optional[str] = None,
+    revision_group_id: Optional[str] = None,
+    version_tag: Optional[str] = None,
 ) -> Callable[[Callable], Callable]:
     """Additonal features for component entrypoint functions
 
@@ -96,12 +97,12 @@ def register(
         return_func_or_coro.registered_metadata = {  # type: ignore
             "inputs": inputs,
             "outputs": outputs,
-            "name": component_name,
+            "name": name,
             "description": description,
             "category": category,
-            "uuid": uuid,
-            "group_id": group_id,
-            "tag": tag,
+            "id": id,
+            "revision_group_id": revision_group_id,
+            "version_tag": version_tag,
         }
 
         return return_func_or_coro

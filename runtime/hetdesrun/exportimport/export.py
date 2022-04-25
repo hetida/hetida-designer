@@ -55,7 +55,7 @@ def save_transformation(tr_json: dict, download_path: str) -> None:
     # Create directory on local system
     uuid = tr_json["id"]
     name = tr_json["name"]
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     type = tr_json["type"]
     category = tr_json["category"]
     tag = tr_json["version_tag"]
@@ -78,7 +78,7 @@ def save_transformation(tr_json: dict, download_path: str) -> None:
 
 
 ##Base function to get transformation via REST API from DB (old endpoints)
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
     """
     Loads a single transformation revision together with its documentation based on its id
@@ -166,7 +166,7 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
 
 
 ##Export transformations based on type, id, name and category if provided
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 def export_transformations(
     download_path: str,
     type: Optional[Type] = None,

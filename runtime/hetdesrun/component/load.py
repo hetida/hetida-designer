@@ -73,24 +73,24 @@ def import_func_from_code(
         try:
             # actually import the module;
             exec(code, mod.__dict__)  # pylint: disable=exec-used
-        except SyntaxError as e:
+        except SyntaxError as exec_syntax_exception:
             logger.info(
                 "Syntax Error during importing function %s",
                 func_name,
             )
             raise ComponentCodeImportError(
                 "Could not import code due to Syntax Errors"
-            ) from e
+            ) from exec_syntax_exception
 
-        except Exception as e:
+        except Exception as exec_exception:
             logger.info(
                 "Exception during importing function %s: %s",
                 func_name,
-                str(e),
+                str(exec_exception),
             )
             raise ComponentCodeImportError(
                 "Could not import code due to Exception"
-            ) from e
+            ) from exec_exception
 
         func = getattr(mod, func_name)
         return func

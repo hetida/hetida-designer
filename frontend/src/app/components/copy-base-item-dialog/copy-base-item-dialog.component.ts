@@ -156,11 +156,10 @@ export class CopyBaseItemDialogComponent implements OnInit {
           }
 
           const withDisabledAttributes = this.infoForm.getRawValue();
-          this.data.abstractBaseItem.category = withDisabledAttributes.category;
-          this.data.abstractBaseItem.description =
-            withDisabledAttributes.description;
-          this.data.abstractBaseItem.name = withDisabledAttributes.name;
-          this.data.abstractBaseItem.tag = withDisabledAttributes.tag;
+          this.data.abstractBaseItem.category = withDisabledAttributes.category.trim();
+          this.data.abstractBaseItem.description = withDisabledAttributes.description.trim();
+          this.data.abstractBaseItem.name = withDisabledAttributes.name.trim();
+          this.data.abstractBaseItem.tag = withDisabledAttributes.tag.trim();
         });
 
         this.filteredCategories$ = combineLatest([

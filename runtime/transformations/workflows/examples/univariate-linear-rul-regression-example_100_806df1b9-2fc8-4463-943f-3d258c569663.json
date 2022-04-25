@@ -3,8 +3,12 @@
   "content": {
     "constants": [
       {
+        "connector_id": "425f3ef8-e7ae-6ba9-c2c1-dcc594b3c61a",
+        "connector_name": "pred_series_frequency",
         "data_type": "STRING",
         "id": "7b73f9d6-d469-4b2a-956f-557daaf4ccf4",
+        "operator_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
+        "operator_name": "Univariate Linear RUL Regression",
         "position": {
           "x": -200,
           "y": 0
@@ -14,27 +18,39 @@
     ],
     "inputs": [
       {
+        "connector_id": "f103c395-92b6-444d-320a-93950ed6d857",
+        "connector_name": "input",
         "data_type": "SERIES",
         "id": "890386ce-5e0c-4a24-b714-b49f0de93a3a",
         "name": "inp_series",
+        "operator_id": "82132623-2aaa-4797-b478-3857d93bde09",
+        "operator_name": "Obtain Training Series",
         "position": {
           "x": -130,
           "y": 350
         }
       },
       {
+        "connector_id": "d7ee8fb5-c52b-431a-2a80-c11ca727d9ce",
+        "connector_name": "input",
         "data_type": "FLOAT",
         "id": "b338e339-93a5-4f0e-b1d4-165e70b1e794",
         "name": "limit",
+        "operator_id": "ea68a5a4-540e-4a39-b958-d25a08bd8f40",
+        "operator_name": "Obtain Limit Value",
         "position": {
           "x": -155,
           "y": 220
         }
       },
       {
+        "connector_id": "278dc2d7-73da-3c38-a1ad-ea7d186ac887",
+        "connector_name": "num_pred_series_future_days",
         "data_type": "INT",
         "id": "2d5dfada-f777-4067-a065-41ffd2994817",
         "name": "num_days_forecast",
+        "operator_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
+        "operator_name": "Univariate Linear RUL Regression",
         "position": {
           "x": -150,
           "y": 260
@@ -771,36 +787,52 @@
     ],
     "outputs": [
       {
+        "connector_id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+        "connector_name": "connector_name",
         "data_type": "STRING",
         "id": "aa7edab2-3da0-48b9-bbd0-ed6f3136f8ed",
         "name": "limit_violation_timestamp",
+        "operator_id": "a1f1affa-03ca-4896-91a2-dbf9580d9105",
+        "operator_name": "Pass Through Limit Violation Timestamp",
         "position": {
           "x": 1710,
           "y": 430
         }
       },
       {
+        "connector_id": "cf404526-75de-f1ff-f961-200e99dde8d6",
+        "connector_name": "connector_name",
         "data_type": "FLOAT",
         "id": "93cf92d4-4082-464e-bc21-724513e59d41",
         "name": "intercept",
+        "operator_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
+        "operator_name": "Univariate Linear RUL Regression",
         "position": {
           "x": 1100,
           "y": 60
         }
       },
       {
+        "connector_id": "1828c68d-c5c9-f31a-f2e9-3493409f53ed",
+        "connector_name": "connector_name",
         "data_type": "FLOAT",
         "id": "02699d2d-865e-493a-bae2-7e79577d549c",
         "name": "slope",
+        "operator_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
+        "operator_name": "Univariate Linear RUL Regression",
         "position": {
           "x": 1100,
           "y": 490
         }
       },
       {
+        "connector_id": "aebbc55f-1e4a-c035-bbd0-2475307536c9",
+        "connector_name": "connector_name",
         "data_type": "PLOTLYJSON",
         "id": "8a4a9698-5d7f-401a-b6f6-bc2f549d9395",
         "name": "rul_regression_result_plot",
+        "operator_id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
+        "operator_name": "Univariate Linear RUL Regression Result Plot",
         "position": {
           "x": 1710,
           "y": 230

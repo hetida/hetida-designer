@@ -35,6 +35,7 @@ from hetdesrun.persistence.models.io import (
 )
 
 from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.code import ComponentInfo
 
 from hetdesrun.webservice.config import runtime_config
 
@@ -88,35 +89,34 @@ def transformation_revision_from_python_code(code: str) -> Any:
         "Other"
     )
 
-    component_uuid = main_func.registered_metadata["uuid"] or (  # type: ignore
+    component_id = main_func.registered_metadata["id"] or (  # type: ignore
         get_uuid_from_seed(str(component_name))
     )
 
-    component_group_id = main_func.registered_metadata["group_id"] or (  # type: ignore
+    component_group_id = main_func.registered_metadata["revision_group_id"] or (  # type: ignore
         get_uuid_from_seed(str(component_name))
     )
 
-    component_tag = main_func.registered_metadata["tag"] or ("1.0.0")  # type: ignore
-
-    component_code = code.replace(mod_docstring, "", 1)
-    component_code = component_code.replace('""""""', "")[1:]
+    component_tag = main_func.registered_metadata["version_tag"] or ("1.0.0")  # type: ignore
 
     component_code = update_code(
-        existing_code=component_code,
-        input_type_dict=main_func.registered_metadata["inputs"],  # type: ignore
-        output_type_dict=main_func.registered_metadata["outputs"],  # type: ignore
-        component_name=component_name,
-        description=component_description,
-        category=component_category,
-        uuid=str(component_uuid),
-        group_id=str(component_group_id),
-        tag=component_tag,
+        existing_code=code,
+        component_info=ComponentInfo(
+            input_types_by_name=main_func.registered_metadata["inputs"],  # type: ignore
+            output_types_by_name=main_func.registered_metadata["outputs"],  # type: ignore
+            name=component_name,
+            description=component_description,
+            category=component_category,
+            id=component_id,
+            revision_group_id=component_group_id,
+            version_tag=component_tag,
+        ),
     )
 
     component_documentation = "\n".join(mod_docstring_lines[2:])
 
     transformation_revision = TransformationRevision(
-        id=component_uuid,
+        id=component_id,
         revision_group_id=component_group_id,
         name=component_name,
         description=component_description,
@@ -238,15 +238,22 @@ def import_transformations(
     for root, _, files in os.walk(download_path):
         for file in files:
             path = os.path.join(root, file)
-            if path.endswith("py"):
+            if path.endswith(".py"):
+                logger.info("Loading transformation from python file %s", path)
                 python_file = load_python_file(path)
                 if python_file:
                     tr_json = transformation_revision_from_python_code(python_file)
                     import_transformation(tr_json, path)
-            else:
+            elif path.endswith(".json"):
+                logger.info("Loading transformation from json file %s", path)
                 transformation_json = load_json(path)
                 transformation_dict[transformation_json["id"]] = transformation_json
                 path_dict[transformation_json["id"]] = path
+            else:
+                logger.warning(
+                    "Invalid file extension to loadtransformation revision from: %s",
+                    path,
+                )
 
     def nesting_level(transformation_id: UUID, level: int) -> int:
 
@@ -303,4 +310,3 @@ def import_transformations(
 def import_all(download_path: str) -> None:
     import_transformations(os.path.join(download_path, "components"))
     import_transformations(os.path.join(download_path, "workflows"))
-    import_transformations(download_path)

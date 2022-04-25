@@ -23,7 +23,7 @@ from hetdesrun.backend.models.link import WorkflowLinkFrontendDto
 from hetdesrun.backend.models.operator import WorkflowOperatorFrontendDto
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.io import IOInterface, Connector
+from hetdesrun.persistence.models.io import IOInterface, IOConnector
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.workflow import WorkflowContent
 
@@ -50,11 +50,11 @@ def opposite_link_end_by_connector_id(
 
 
 def position_from_input_connector_id(
-    input_id: UUID, inputs: List[Connector]
+    input_id: UUID, inputs: List[IOConnector]
 ) -> List[int]:
     positions: List[List[int]] = []
 
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     for input in inputs:
         if input.id == input_id:
             positions.append([input.position.x, input.position.y])
@@ -67,7 +67,7 @@ def position_from_input_connector_id(
 
 
 def position_from_output_connector_id(
-    output_id: UUID, outputs: List[Connector]
+    output_id: UUID, outputs: List[IOConnector]
 ) -> List[int]:
     positions: List[List[int]] = []
 
@@ -82,17 +82,19 @@ def position_from_output_connector_id(
     return [0, -200]
 
 
-def get_name_for_constant_input(
+def get_operator_and_connector_name(
     operator_id: UUID, connector_id: UUID, operators: List[WorkflowOperatorFrontendDto]
-) -> str:
-    name: str = "name"
+) -> Tuple[str, str]:
+    operator_name: str = "operator name"
+    connector_name: str = "connector_name"
     for operator in operators:
         if operator.id == operator_id:
+            operator_name = operator.name
             for connector in operator.inputs:
                 if connector.id == connector_id:
                     assert isinstance(connector.name, str)  # hint for mypy
-                    name = connector.name
-    return name
+                    connector_name = connector.name
+    return operator_name, connector_name
 
 
 def is_link_start(
@@ -133,7 +135,7 @@ def is_link_end(
 def is_connected_to_input(
     operator_id: UUID, connector_id: UUID, inputs: List[WorkflowIoFrontendDto]
 ) -> bool:
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     for input in inputs:
         if input.operator == operator_id and input.connector == connector_id:
             return True
@@ -154,14 +156,14 @@ def is_connected_to_output(
 def get_or_create_input(
     operator_id: UUID,
     connector_id: UUID,
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     type: DataType,
     inputs: List[WorkflowIoFrontendDto],
 ) -> WorkflowIoFrontendDto:
 
     matching_inputs: List[WorkflowIoFrontendDto] = []
 
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     for input in inputs:
         if input.operator == operator_id and input.connector == connector_id:
             input.type = type
@@ -178,7 +180,7 @@ def get_or_create_input(
 def get_or_create_output(
     operator_id: UUID,
     connector_id: UUID,
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     type: DataType,
     outputs: List[WorkflowIoFrontendDto],
 ) -> WorkflowIoFrontendDto:
@@ -221,7 +223,7 @@ def get_link_start_type_from_input(
 
     data_type: Optional[DataType] = None
 
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     for input in inputs:
         if input.id == link.from_connector:
             data_type = input.type
@@ -265,7 +267,7 @@ def get_input_name_from_link(
 ) -> Optional[str]:
     name: Optional[str] = None
 
-    # pylint: disable=W0622
+    # pylint: disable=redefined-builtin
     for input in inputs:
         if input.id == link.from_connector:
             name = input.name
@@ -592,7 +594,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         from_connector_list: List[ConnectorFrontendDto] = []
 
         if link.from_operator == self.id:
-            # pylint: disable=W0622
+            # pylint: disable=redefined-builtin
             for input in self.inputs:
                 if input.id == link.from_connector:
                     if input.constant:
@@ -669,7 +671,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def additional_links_for_constant_inputs(self) -> List[Link]:
         link_list: List[Link] = []
 
-        # pylint: disable=W0622
+        # pylint: disable=redefined-builtin
         for input in self.inputs:
             if input.constant:
                 link_dto = WorkflowLinkFrontendDto(
@@ -703,13 +705,29 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def to_workflow_content(self) -> WorkflowContent:
         return WorkflowContent(
             inputs=[
-                input.to_connector()
+                input.to_io_connector(
+                    *get_operator_and_connector_name(
+                        input.operator, input.connector, self.operators
+                    )
+                )
                 for input in self.inputs
                 if not input.constant and input.name is not None
             ],
-            constants=[input.to_constant() for input in self.inputs if input.constant],
+            constants=[
+                input.to_constant(
+                    *get_operator_and_connector_name(
+                        input.operator, input.connector, self.operators
+                    )
+                )
+                for input in self.inputs
+                if input.constant
+            ],
             outputs=[
-                output.to_connector()
+                output.to_io_connector(
+                    *get_operator_and_connector_name(
+                        output.operator, output.connector, self.operators
+                    )
+                )
                 for output in self.outputs
                 if output.name is not None
             ],
@@ -761,8 +779,10 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             transformation_revision.content, WorkflowContent
         )  # hint for mypy
 
+        # !!! If IO is not yet linked ambiguous which operator belongs to IO !!!
+        # !!! default values might cause problems !!!
         inputs: List[WorkflowIoFrontendDto] = []
-        # pylint: disable=W0622
+        # pylint: disable=redefined-builtin
         for input in transformation_revision.io_interface.inputs:
             operator_id, connector_id = opposite_link_end_by_connector_id(
                 input.id, transformation_revision.content.links

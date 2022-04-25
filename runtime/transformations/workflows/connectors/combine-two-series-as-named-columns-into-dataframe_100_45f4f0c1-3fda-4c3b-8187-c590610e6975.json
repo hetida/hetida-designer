@@ -4,45 +4,65 @@
     "constants": [],
     "inputs": [
       {
+        "connector_id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+        "connector_name": "column_name",
         "data_type": "STRING",
         "id": "fb274218-42c2-4951-8b48-13514c32b8e1",
         "name": "column_name_1",
+        "operator_id": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6",
+        "operator_name": "Combine as named column into DataFrame",
         "position": {
           "x": 40,
           "y": 400
         }
       },
       {
+        "connector_id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+        "connector_name": "series",
         "data_type": "SERIES",
         "id": "7ef1f9fd-4198-4056-8b50-6ee79f4ef1c0",
         "name": "series_1",
+        "operator_id": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6",
+        "operator_name": "Combine as named column into DataFrame",
         "position": {
           "x": 40,
           "y": 430
         }
       },
       {
+        "connector_id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
+        "connector_name": "series_or_dataframe",
         "data_type": "ANY",
         "id": "ec588521-28e5-4616-b35a-fda973f91c37",
         "name": "series_or_dataframe",
+        "operator_id": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6",
+        "operator_name": "Combine as named column into DataFrame",
         "position": {
           "x": 40,
           "y": 460
         }
       },
       {
+        "connector_id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
+        "connector_name": "column_name",
         "data_type": "STRING",
         "id": "8106c90b-b3d6-48d8-ba61-79f06be3320f",
         "name": "column_name_2",
+        "operator_id": "4081d021-3252-4a92-9cb9-3df129b2969b",
+        "operator_name": "Combine as named column into DataFrame (2)",
         "position": {
           "x": 770,
           "y": 340
         }
       },
       {
+        "connector_id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
+        "connector_name": "series",
         "data_type": "SERIES",
         "id": "e71a1c04-36bc-4a8c-bff0-26454b6442a0",
         "name": "series_2",
+        "operator_id": "4081d021-3252-4a92-9cb9-3df129b2969b",
+        "operator_name": "Combine as named column into DataFrame (2)",
         "position": {
           "x": 770,
           "y": 370
@@ -355,9 +375,13 @@
     ],
     "outputs": [
       {
+        "connector_id": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
+        "connector_name": "connector_name",
         "data_type": "DATAFRAME",
         "id": "809be129-f35c-47ef-be5d-687256470181",
         "name": "dataframe",
+        "operator_id": "4081d021-3252-4a92-9cb9-3df129b2969b",
+        "operator_name": "Combine as named column into DataFrame (2)",
         "position": {
           "x": 1470,
           "y": 340
