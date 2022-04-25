@@ -211,11 +211,11 @@ def export_transformations(
         )
 
     """
-    import hetdesrun.models.wiring
+    import hetdesrun.models.wiring  # pylint: disable=import-outside-toplevel
 
     hetdesrun.models.wiring.EXPORT_MODE = True
 
-    import hetdesrun.backend.models.wiring
+    import hetdesrun.backend.models.wiring  # pylint: disable=import-outside-toplevel
 
     hetdesrun.backend.models.wiring.EXPORT_MODE = True
 

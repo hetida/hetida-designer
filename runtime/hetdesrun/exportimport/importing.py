@@ -159,7 +159,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
 
 
 ##Base function to import a transformation revision from a json file
-def import_transformation_from_path(path: str, strip_wirings=False) -> None:
+def import_transformation_from_path(path: str, strip_wirings: bool = False) -> None:
     """
     Imports a transformation revision based on its path on the local system.
     WARNING: Overwrites possible existing transformation revision!
@@ -176,7 +176,9 @@ def import_transformation_from_path(path: str, strip_wirings=False) -> None:
     import_transformation(tr_json, path, strip_wirings=strip_wirings)
 
 
-def import_transformation(tr_json: dict, path: str, strip_wirings=False) -> None:
+def import_transformation(
+    tr_json: dict, path: str, strip_wirings: bool = False
+) -> None:
 
     headers = get_auth_headers()
 
@@ -224,7 +226,7 @@ def import_transformations(
     ids: Optional[List[UUID]] = None,
     names: Optional[List[str]] = None,
     category: Optional[str] = None,
-    strip_wirings=False,
+    strip_wirings: bool = False,
 ) -> None:
     """
     This function imports all transformations together with their documentations
@@ -313,7 +315,7 @@ def import_transformations(
     logger.info("finished importing")
 
 
-def import_all(download_path: str, strip_wirings=False) -> None:
+def import_all(download_path: str, strip_wirings: bool = False) -> None:
     import_transformations(
         os.path.join(download_path, "components"), strip_wirings=strip_wirings
     )

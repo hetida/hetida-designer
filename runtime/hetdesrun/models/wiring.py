@@ -7,7 +7,6 @@ from pydantic import (  # pylint: disable=no-name-in-module
     StrictInt,
 )
 
-EXPORT_MODE = False
 
 from hetdesrun.models.util import valid_python_identifier
 
@@ -15,6 +14,8 @@ from hetdesrun.adapters import SOURCE_ADAPTERS, SINK_ADAPTERS
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
 from hetdesrun.models.adapter_data import RefIdType
+
+EXPORT_MODE = False
 
 
 class OutputWiring(BaseModel):
