@@ -130,16 +130,7 @@ Here is the json message value for running one of the example Workflows: "Volati
                 }
             }
         ],
-        "output_wirings": [
-            {
-                "workflow_output_name": "score",
-                "adapter_id": "direct_provisioning"
-            },
-            {
-                "workflow_output_name": "data_and_alerts",
-                "adapter_id": "direct_provisioning"
-            }
-        ]
+        "output_wirings": []
     },
     "run_pure_plot_operators": false,
     "job_id": "00000000-0000-0000-0000-000000000002"
@@ -152,14 +143,14 @@ The Kafka execution command line producer started above expects its payload in a
 
 Here is the same content from above, together with a key, as ready-to-paste one liner for the console producer:
 ```
-exec_job_1:{ "id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89", "wiring": { "input_wirings": [ { "workflow_input_name": "window_size", "adapter_id": "direct_provisioning", "filters": { "value": "180min" } }, { "workflow_input_name": "window_timestamp_location", "adapter_id": "direct_provisioning", "filters": { "value": "center" } }, { "workflow_input_name": "input_series", "adapter_id": "direct_provisioning", "filters": { "value": "{\"2018-05-19T22:20:00.000Z\":86.9358994238,\"2018-05-19T22:25:00.000Z\":78.6552569681,\"2018-05-19T22:30:00.000Z\":93.515633185,\"2018-05-19T22:35:00.000Z\":96.3497006614,\"2018-05-19T22:40:00.000Z\":83.1926874657,\"2018-05-22T05:50:00.000Z\":926.4357356548,\"2018-05-22T05:55:00.000Z\":934.7257131637,\"2018-05-22T06:00:00.000Z\":908.4082221891,\"2018-05-22T06:05:00.000Z\":917.7112901544,\"2018-05-22T06:10:00.000Z\":924.0958121497}" } }, { "workflow_input_name": "threshold", "adapter_id": "direct_provisioning", "filters": { "value": "600.0" } } ], "output_wirings": [ { "workflow_output_name": "score", "adapter_id": "direct_provisioning" }, { "workflow_output_name": "data_and_alerts", "adapter_id": "direct_provisioning" } ] }, "run_pure_plot_operators": false, "job_id": "00000000-0000-0000-0000-000000000002"}
+exec_job_1:{ "id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89", "wiring": { "input_wirings": [ { "workflow_input_name": "window_size", "adapter_id": "direct_provisioning", "filters": { "value": "180min" } }, { "workflow_input_name": "window_timestamp_location", "adapter_id": "direct_provisioning", "filters": { "value": "center" } }, { "workflow_input_name": "input_series", "adapter_id": "direct_provisioning", "filters": { "value": "{\"2018-05-19T22:20:00.000Z\":86.9358994238,\"2018-05-19T22:25:00.000Z\":78.6552569681,\"2018-05-19T22:30:00.000Z\":93.515633185,\"2018-05-19T22:35:00.000Z\":96.3497006614,\"2018-05-19T22:40:00.000Z\":83.1926874657,\"2018-05-22T05:50:00.000Z\":926.4357356548,\"2018-05-22T05:55:00.000Z\":934.7257131637,\"2018-05-22T06:00:00.000Z\":908.4082221891,\"2018-05-22T06:05:00.000Z\":917.7112901544,\"2018-05-22T06:10:00.000Z\":924.0958121497}" } }, { "workflow_input_name": "threshold", "adapter_id": "direct_provisioning", "filters": { "value": "600.0" } } ], "output_wirings": [] }, "run_pure_plot_operators": false, "job_id": "00000000-0000-0000-0000-000000000002"}
 ```
 ### Running the workflow via Kafka
 
 Pasting the payload above in the first terminal (the producer for the "hd-execution-topic" topic) leads to the same message occuring in the second terminal (consumer for the "hd-execution-topic" topic) and after short moment to a result in the third terminal (the consumer of the result topic "hd-execution-response-topic"). The result json payload is identical to the API transformation revision execution endpoint result json.
 
 ## Using adapters when running workflows via Kafka
-This example includes only the "direct_provisioning" adapter for both all inputs and all outputs. This results in all input data being expected as part of the Kafka payload and output data being sent as part of the result Kafka message.
+This example includes only the "direct_provisioning" adapter being wired to all inputs and there are no wirings for the outputs, which is the proper way to indicate that these are wired to the default adapter "direct_provisioning". This results in all input data being expected as part of the Kafka payload and the output data being sent as part of the Kafka result message.
 
 However this is not a limitation: You can use arbitrary adapters and also mix them freely in the same manner as for the web endpoint. I.e. some data can be directly provided via the Kafka message (usually single parameters) while other data is fetched from a database via an appropriate external adapter (typically mass data).
 

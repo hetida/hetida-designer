@@ -1,3 +1,11 @@
+## 0.7.1
+* Bug fixes!
+* you may now write async components by making your main function async
+* improved execution logging: now contains operator names and level/hierarchy
+* new endpoint to run latest revision of a revision group
+* restored the Kafka execution consumer and add improvements, in particular allow many configuration options to be set
+* Kafka execution also allows to execute latest revisiion of a revision group
+* add user interface end-to-end test suite (using playwright)
 ## 0.7.0
 * Complete Rewrite of the backend service in Python (formerly Java). This includes a lot of bug fixes.
 
