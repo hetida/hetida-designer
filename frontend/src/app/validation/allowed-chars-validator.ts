@@ -7,8 +7,7 @@ import {
 
 export function AllowedCharsValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const value = Validators.pattern(/[^\p{L}\p{N}\p{M}\p{Pc} \.'\()\/=-]/gu);
-    const retval = value(control) ? null : { allowedChars: { valid: false } };
-    return retval;
+    const val = Validators.pattern(/[^\p{L}\p{N}\p{M}\p{Pc} \.'\()\/=-]/gu);
+    return val(control) ? null : { allowedChars: { valid: false } };
   };
 }

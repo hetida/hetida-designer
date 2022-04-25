@@ -45,6 +45,7 @@ describe('AllowedCharsValidator', () => {
     const group10 = formBuilder.group({
       value: ['10€ >= 10$', AllowedCharsValidator()]
     });
+
     expect(group1.valid).toBe(true);
     expect(group2.valid).toBe(true);
     expect(group3.valid).toBe(true);
