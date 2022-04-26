@@ -6,7 +6,7 @@ For simple types (like STRING, FLOAT, INT) you can enter data directly in the in
 
 This dialog additionally allows to import a json or csv file from disk via clicking on "Import JSON/CSV". For json files the required format agrees with the format for entering data into the dialogs editor. This format and the format required for CSVs is described below.
 
-:warning:**Important Note :warning::** Importing JSON/CSV files this way has restrictive limits on data size. Since the data is stored as json and send via Web Requests, importing larger files and trying to execute a workflow will soon run into either request size limits or timeouts (and frontend errors). It is strongly recommended to use the [local file adapter](./local_file_adapter) for any file that is not very small.
+:warning:**Important Note :warning::** Importing JSON/CSV files this way has restrictive limits on data size. Since the data is stored as json and send via Web Requests, importing larger files and trying to execute a workflow will soon run into either request size limits or timeouts (and frontend errors). It is strongly recommended to use the [local file adapter](./local_file_adapter.md) for any file that is not very small.
 
 ## JSON Formats
 

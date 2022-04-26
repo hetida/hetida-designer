@@ -4,7 +4,7 @@ Every transformation revision, whether component or workflow type, is immediatel
 
 `/api/transformations/execute`
 
-of the hetida designer backend service, whether in "draft" or "released" state.
+of the hetida designer backend service, whether in "DRAFT" or "RELEASED" state.
 
 For example the default docker-compose setup this endpoint can be reached via http://localhost:8080/api/transformations/execute
 

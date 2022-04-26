@@ -13,7 +13,7 @@ Here you can find some guidance for common issues that might occur:
 
 ## <a name="debugging-components"></a> Debugging component revisions
 
-To understand why and how an error occured it is often necessary to get insights, which variable hat which value at certain steps of running the code.
+To understand why and how an error occurred it is often necessary to get insights, which variable had which value at certain steps of running the code.
 The only way to achieve this in components is to produce an error message that contains the desired information.
 You can raise a ValueError and pass the the variable converted to a string as error message to the ValueError object.
 

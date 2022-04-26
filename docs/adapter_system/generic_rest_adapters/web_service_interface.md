@@ -109,14 +109,14 @@ Some details:
 
 - sources and sinks have an optional (default true) `visible` attribute. In future versions hetida designer might not show sources and sinks in the tree with visible being false.
 
-- `filters` may request user interface filters in future versions of hetida designer. Currently this should be an empty mapping object (`{}`). Note that for timeseries type sources the frontend askas for time interval automatically so that there is no need to specify this as a filter for now.
+- `filters` may request user interface filters in future versions of hetida designer. Currently this should be an empty mapping object (`{}`). Note that for timeseries type sources the frontend asks for time interval automatically so that there is no need to specify this as a filter for now.
 
 - `path` should be a human readable "breadcrumb"-like path to the source or sink. This attribute is used in the designer frontend for example when filtering.
 
-Note on metadata in hierarchy: Metadata sources (and sinks) can be part of the hierarchy, i.e. as a source or sink leaf in the hierarchy tree. Internally they will then be handled as if they are attached to the thingNode at which they occur. In particular metadata occuring this way will be requested/send from/to the thingNode metadata endpoint (see below):
+Note on metadata in hierarchy: Metadata sources (and sinks) can be part of the hierarchy, i.e. as a source or sink leaf in the hierarchy tree. Internally they will then be handled as if they are attached to the thingNode at which they occur. In particular metadata occurring this way will be requested/send from/to the thingNode metadata endpoint (see below):
 
 ```
-/tingNodes/{thingNodeId}/metadata/{metadataKey}
+/thingNodes/{thingNodeId}/metadata/{metadataKey}
 ```
 
 So the adapter implementation must then provide/accept data at that endpoint accordingly.
@@ -308,11 +308,11 @@ Analogous to /sources/{id}/metadata/{key} (GET, POST) but handles metadata attac
 
 #### /thingNodes/{id}/metadata/ (GET)
 
-Analogous to /sources/{id}/metadata/ (GET) but handles metadata attached to thingNodes. This includes metadata occuring directly in the hierarchy tree (they are considered attached to their parent thingNode).
+Analogous to /sources/{id}/metadata/ (GET) but handles metadata attached to thingNodes. This includes metadata occurring directly in the hierarchy tree (they are considered attached to their parent thingNode).
 
 #### /thingNodes/{id}/metadata/{key} (GET, POST)
 
-Analogous to /sources/{id}/metadata/{key} (GET, POST) but handles metadata attached to thingNodes. This includes metadata occuring directly in the hierarchy tree (they are considered attached to their parent thingNode).
+Analogous to /sources/{id}/metadata/{key} (GET, POST) but handles metadata attached to thingNodes. This includes metadata occurring directly in the hierarchy tree (they are considered attached to their parent thingNode).
 
 ## Data Endpoints
 
@@ -344,7 +344,7 @@ This endpoint accepts a single timeseries per POST request.
 
 Query parameters:
 
-* timeseriesId: required, must occur exactly once. This is a sink id of a timeseries sink occuring in the structure endpoint.
+* timeseriesId: required, must occur exactly once. This is a sink id of a timeseries sink occurring in the structure endpoint.
 
 Payload (List of timeseries records):
 
@@ -362,7 +362,7 @@ The same rules as describen in the corresponding GET apply to `timestamp` and `v
 
 Query parameters:
 
-* id: requried exactly once: This is a source id of a dataframe source occuring in the structure endpoint
+* id: required exactly once: This is a source id of a dataframe source occurring in the structure endpoint
 
 Response (Line delimited Stream of Json records):
 
@@ -380,7 +380,7 @@ There is a special convention on "timestamp" columns: If a timestamp column exis
 
 Query parameters:
 
-* id: requried exactly once: This is a sink id of a dataframe sink occuring in the structure endpoint
+* id: required exactly once: This is a sink id of a dataframe sink occurring in the structure endpoint
 
 Payload:
 
@@ -424,4 +424,4 @@ In particular you do not need:
 
 ## Registering your generic Rest adapter
 
-see [adapter registration docs](../adapter_registration)!
+see [adapter registration documentation](../adapter_registration.md)!
