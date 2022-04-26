@@ -11,39 +11,41 @@ describe('WorkflowIODialogComponent', () => {
   let component: WorkflowIODialogComponent;
   let fixture: ComponentFixture<WorkflowIODialogComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      imports: [
-        FormsModule,
-        ReactiveFormsModule,
-        MaterialModule,
-        NgHetidaFlowchartModule
-      ],
-      declarations: [WorkflowIODialogComponent, ErrorVisualDirective],
-      providers: [
-        { provide: MatDialogRef, useValue: {} },
-        {
-          provide: MAT_DIALOG_DATA,
-          useValue: {
-            workflow: {
-              operators: [],
-              links: [],
-              id: 'Mock',
-              groupId: 'Mock',
-              name: 'Mock',
-              description: 'Mock',
-              category: 'Mock',
-              type: BaseItemType.WORKFLOW,
-              tag: 'Mock',
-              state: 'DRAFT',
-              inputs: [],
-              outputs: []
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          FormsModule,
+          ReactiveFormsModule,
+          MaterialModule,
+          NgHetidaFlowchartModule
+        ],
+        declarations: [WorkflowIODialogComponent, ErrorVisualDirective],
+        providers: [
+          { provide: MatDialogRef, useValue: {} },
+          {
+            provide: MAT_DIALOG_DATA,
+            useValue: {
+              workflow: {
+                operators: [],
+                links: [],
+                id: 'Mock',
+                groupId: 'Mock',
+                name: 'Mock',
+                description: 'Mock',
+                category: 'Mock',
+                type: BaseItemType.WORKFLOW,
+                tag: 'Mock',
+                state: 'DRAFT',
+                inputs: [],
+                outputs: []
+              }
             }
           }
-        }
-      ]
-    }).compileComponents();
-  }));
+        ]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(WorkflowIODialogComponent);

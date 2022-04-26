@@ -8,12 +8,14 @@ describe('ProtocolViewerComponent', () => {
   let component: ProtocolViewerComponent;
   let fixture: ComponentFixture<ProtocolViewerComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      imports: [MatIconModule, StoreModule.forRoot(appReducers)],
-      declarations: [ProtocolViewerComponent]
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [MatIconModule, StoreModule.forRoot(appReducers)],
+        declarations: [ProtocolViewerComponent]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(ProtocolViewerComponent);

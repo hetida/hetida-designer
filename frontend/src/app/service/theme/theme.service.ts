@@ -6,8 +6,7 @@ import { LocalStorageService } from '../local-storage/local-storage.service';
   providedIn: 'root'
 })
 export class ThemeService {
-  private readonly currentTheme$: ReplaySubject<string> =
-    new ReplaySubject<string>();
+  private readonly currentTheme$: ReplaySubject<string> = new ReplaySubject<string>();
 
   readonly activeTheme: string;
 

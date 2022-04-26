@@ -63,31 +63,37 @@ const unsetActiveTabItemIfPointingToDeletedTabItem = (
 
 export const tabItemReducers = createReducer(
   initialTabItemState,
-  on(addTabItem, (state, action): ITabItemState => {
-    const tabItemToAdd: TabItem = {
-      id: `${action.payload.baseItemId}-${action.payload.tabItemType}`,
-      ...action.payload
-    };
-    const updatedState = tabItemEntityAdapter.addOne(tabItemToAdd, state);
-    return {
-      ...updatedState,
-      // Whenever we add a new tab item it will be immediately activated.
-      activeTabItemId: tabItemToAdd.id
-    };
-  }),
-  on(removeTabItem, (state, action): ITabItemState => {
-    const tabItemIdToRemove = action.payload;
-    const updatedState = tabItemEntityAdapter.removeOne(
-      tabItemIdToRemove,
-      state
-    );
+  on(
+    addTabItem,
+    (state, action): ITabItemState => {
+      const tabItemToAdd: TabItem = {
+        id: `${action.payload.baseItemId}-${action.payload.tabItemType}`,
+        ...action.payload
+      };
+      const updatedState = tabItemEntityAdapter.addOne(tabItemToAdd, state);
+      return {
+        ...updatedState,
+        // Whenever we add a new tab item it will be immediately activated.
+        activeTabItemId: tabItemToAdd.id
+      };
+    }
+  ),
+  on(
+    removeTabItem,
+    (state, action): ITabItemState => {
+      const tabItemIdToRemove = action.payload;
+      const updatedState = tabItemEntityAdapter.removeOne(
+        tabItemIdToRemove,
+        state
+      );
 
-    // Check whether the deleted tab was the active tab.
-    return unsetActiveTabItemIfPointingToDeletedTabItem(
-      updatedState,
-      tabItemIdToRemove
-    );
-  }),
+      // Check whether the deleted tab was the active tab.
+      return unsetActiveTabItemIfPointingToDeletedTabItem(
+        updatedState,
+        tabItemIdToRemove
+      );
+    }
+  ),
   on(putBaseItem, (state, action) => {
     if (action.payload.state === RevisionState.DISABLED) {
       const baseItemIdToRemove = action.payload.id;
@@ -95,10 +101,13 @@ export const tabItemReducers = createReducer(
     }
     return state;
   }),
-  on(removeBaseItem, (state, action): ITabItemState => {
-    const baseItemIdToRemove = action.payload;
-    return closeAllBaseItemRelatedTabs(baseItemIdToRemove, state);
-  }),
+  on(
+    removeBaseItem,
+    (state, action): ITabItemState => {
+      const baseItemIdToRemove = action.payload;
+      return closeAllBaseItemRelatedTabs(baseItemIdToRemove, state);
+    }
+  ),
   on(
     setActiveTabItem,
     (state, action): ITabItemState => ({

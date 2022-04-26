@@ -16,27 +16,29 @@ describe('HomeComponent', () => {
   const mockTabItemService = jasmine.createSpy();
   const httpClientSpy = jasmine.createSpyObj('HttpClient', ['get']);
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      imports: [BasicTestModule],
-      providers: [
-        provideMockStore(),
-        {
-          provide: BaseItemActionService,
-          useValue: mockBaseItemActionService
-        },
-        {
-          provide: TabItemService,
-          useValue: mockTabItemService
-        },
-        {
-          provide: HttpClient,
-          useValue: httpClientSpy
-        }
-      ],
-      declarations: [HomeComponent]
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [BasicTestModule],
+        providers: [
+          provideMockStore(),
+          {
+            provide: BaseItemActionService,
+            useValue: mockBaseItemActionService
+          },
+          {
+            provide: TabItemService,
+            useValue: mockTabItemService
+          },
+          {
+            provide: HttpClient,
+            useValue: httpClientSpy
+          }
+        ],
+        declarations: [HomeComponent]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     const mockStore = TestBed.inject(MockStore);

@@ -11,32 +11,34 @@ describe('BaseItemContextMenuComponent', () => {
   let component: BaseItemContextMenuComponent;
   let fixture: ComponentFixture<BaseItemContextMenuComponent>;
 
-  beforeEach(waitForAsync(() => {
-    const baseItemActionService = jasmine.createSpyObj<BaseItemActionService>(
-      'BaseItemActionService',
-      ['isIncomplete']
-    );
+  beforeEach(
+    waitForAsync(() => {
+      const baseItemActionService = jasmine.createSpyObj<BaseItemActionService>(
+        'BaseItemActionService',
+        ['isIncomplete']
+      );
 
-    const tabItemService = jasmine.createSpyObj<TabItemService>(
-      'TabItemService',
-      ['addBaseItemTab']
-    );
+      const tabItemService = jasmine.createSpyObj<TabItemService>(
+        'TabItemService',
+        ['addBaseItemTab']
+      );
 
-    TestBed.configureTestingModule({
-      imports: [MaterialModule, NoopAnimationsModule],
-      declarations: [BaseItemContextMenuComponent],
-      providers: [
-        {
-          provide: BaseItemActionService,
-          useValue: baseItemActionService
-        },
-        {
-          provide: TabItemService,
-          useValue: tabItemService
-        }
-      ]
-    }).compileComponents();
-  }));
+      TestBed.configureTestingModule({
+        imports: [MaterialModule, NoopAnimationsModule],
+        declarations: [BaseItemContextMenuComponent],
+        providers: [
+          {
+            provide: BaseItemActionService,
+            useValue: baseItemActionService
+          },
+          {
+            provide: TabItemService,
+            useValue: tabItemService
+          }
+        ]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(BaseItemContextMenuComponent);

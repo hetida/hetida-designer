@@ -28,18 +28,20 @@ export const selectOrderedTabItemsWithBaseItem = createSelector(
     orderedTabItems: TabItem[],
     abstractBaseItems: Record<string, AbstractBaseItem>
   ) =>
-    orderedTabItems.map((tabItem): TabItemWithBaseItem => {
-      const abstractBaseItem = abstractBaseItems[tabItem.baseItemId];
-      if (!isBaseItem(abstractBaseItem)) {
-        throw Error(
-          'Inconsistent state: Found a tab item whose base item was not yet expanded.'
-        );
+    orderedTabItems.map(
+      (tabItem): TabItemWithBaseItem => {
+        const abstractBaseItem = abstractBaseItems[tabItem.baseItemId];
+        if (!isBaseItem(abstractBaseItem)) {
+          throw Error(
+            'Inconsistent state: Found a tab item whose base item was not yet expanded.'
+          );
+        }
+        return {
+          ...tabItem,
+          baseItem: abstractBaseItem
+        };
       }
-      return {
-        ...tabItem,
-        baseItem: abstractBaseItem
-      };
-    })
+    )
 );
 
 const selectActiveTabItemId = createSelector(

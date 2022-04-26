@@ -12,20 +12,22 @@ describe('WorkflowEditorComponent', () => {
   let component: WorkflowEditorComponent;
   let fixture: ComponentFixture<WorkflowEditorComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      imports: [
-        NgHetidaFlowchartModule,
-        StoreModule.forRoot(appReducers),
-        MatIconModule,
-        MatDividerModule,
-        MatSnackBarModule,
-        HttpClientModule,
-        MatDialogModule
-      ],
-      declarations: [WorkflowEditorComponent]
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          NgHetidaFlowchartModule,
+          StoreModule.forRoot(appReducers),
+          MatIconModule,
+          MatDividerModule,
+          MatSnackBarModule,
+          HttpClientModule,
+          MatDialogModule
+        ],
+        declarations: [WorkflowEditorComponent]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(WorkflowEditorComponent);

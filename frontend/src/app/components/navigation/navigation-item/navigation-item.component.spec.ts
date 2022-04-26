@@ -23,31 +23,33 @@ describe('NavigationItemComponent', () => {
   const mockWorkflowEditorService = jasmine.createSpy();
   const mockComponentEditorService = jasmine.createSpy();
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      imports: [BasicTestModule],
-      declarations: [NavigationItemComponent],
-      providers: [
-        provideMockStore(),
-        {
-          provide: WorkflowEditorService,
-          useValue: mockWorkflowEditorService
-        },
-        {
-          provide: ComponentEditorService,
-          useValue: mockComponentEditorService
-        },
-        {
-          provide: ContextMenuService,
-          useValue: mockContextMenuService
-        },
-        {
-          provide: TabItemService,
-          useValue: mockTabItemService
-        }
-      ]
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [BasicTestModule],
+        declarations: [NavigationItemComponent],
+        providers: [
+          provideMockStore(),
+          {
+            provide: WorkflowEditorService,
+            useValue: mockWorkflowEditorService
+          },
+          {
+            provide: ComponentEditorService,
+            useValue: mockComponentEditorService
+          },
+          {
+            provide: ContextMenuService,
+            useValue: mockContextMenuService
+          },
+          {
+            provide: TabItemService,
+            useValue: mockTabItemService
+          }
+        ]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(NavigationItemComponent);

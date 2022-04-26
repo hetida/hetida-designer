@@ -28,43 +28,45 @@ describe('CopyBaseItemDialogComponent', () => {
     wirings: []
   };
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      imports: [BasicTestModule, FormsModule, ReactiveFormsModule],
-      declarations: [CopyBaseItemDialogComponent, ErrorVisualDirective],
-      providers: [
-        provideMockStore({}),
-        {
-          provide: MAT_DIALOG_DATA,
-          useValue: {
-            title: 'MOCK',
-            content: 'MOCK',
-            actionOk: 'MOCK',
-            actionCancel: 'MOCK',
-            abstractBaseItem: {
-              id: 'MockId1',
-              name: 'Mock',
-              tag: 'Mock',
-              pos_x: null,
-              pos_y: null,
-              inputs: [],
-              outputs: [],
-              links: [],
-              type: BaseItemType.COMPONENT,
-              groupId: 'g123'
-            },
-            disabledState: {
-              name: true,
-              category: true,
-              tag: true,
-              description: true
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [BasicTestModule, FormsModule, ReactiveFormsModule],
+        declarations: [CopyBaseItemDialogComponent, ErrorVisualDirective],
+        providers: [
+          provideMockStore({}),
+          {
+            provide: MAT_DIALOG_DATA,
+            useValue: {
+              title: 'MOCK',
+              content: 'MOCK',
+              actionOk: 'MOCK',
+              actionCancel: 'MOCK',
+              abstractBaseItem: {
+                id: 'MockId1',
+                name: 'Mock',
+                tag: 'Mock',
+                pos_x: null,
+                pos_y: null,
+                inputs: [],
+                outputs: [],
+                links: [],
+                type: BaseItemType.COMPONENT,
+                groupId: 'g123'
+              },
+              disabledState: {
+                name: true,
+                category: true,
+                tag: true,
+                description: true
+              }
             }
-          }
-        },
-        { provide: MatDialogRef, useValue: {} }
-      ]
-    }).compileComponents();
-  }));
+          },
+          { provide: MatDialogRef, useValue: {} }
+        ]
+      }).compileComponents();
+    })
+  );
 
   beforeEach(() => {
     fixture = TestBed.createComponent(CopyBaseItemDialogComponent);

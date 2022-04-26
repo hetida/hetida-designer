@@ -153,8 +153,9 @@ export class PopoverBaseItemComponent implements OnInit {
     if (this.abstractBaseItem === undefined) {
       return;
     }
-    this.componentPreview =
-      this.flowchartConverter.convertComponentToFlowchart(abstractBaseItem);
+    this.componentPreview = this.flowchartConverter.convertComponentToFlowchart(
+      abstractBaseItem
+    );
   }
 
   _dragComponent(event: DragEvent): void {

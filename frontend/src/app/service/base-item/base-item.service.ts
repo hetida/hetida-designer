@@ -84,15 +84,17 @@ export class BaseItemService {
 
   getBaseItem(baseItemId: string): Observable<BaseItem> {
     return this.store.select(selectAbstractBaseItemById(baseItemId)).pipe(
-      switchMap((abstractBaseItem: AbstractBaseItem): Observable<BaseItem> => {
-        if (isBaseItem(abstractBaseItem)) {
-          return of(abstractBaseItem);
-        }
+      switchMap(
+        (abstractBaseItem: AbstractBaseItem): Observable<BaseItem> => {
+          if (isBaseItem(abstractBaseItem)) {
+            return of(abstractBaseItem);
+          }
 
-        return abstractBaseItem.type === BaseItemType.COMPONENT
-          ? this.componentService.getComponent(abstractBaseItem.id)
-          : this.workflowService.getWorkflow(abstractBaseItem.id);
-      })
+          return abstractBaseItem.type === BaseItemType.COMPONENT
+            ? this.componentService.getComponent(abstractBaseItem.id)
+            : this.workflowService.getWorkflow(abstractBaseItem.id);
+        }
+      )
     );
   }
 

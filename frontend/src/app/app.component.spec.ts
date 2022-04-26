@@ -19,32 +19,34 @@ import { WorkflowEditorComponent } from './components/workflow-editor/workflow-e
 import { appReducers } from './store/app.reducers';
 
 describe('AppComponent', () => {
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      imports: [
-        BasicTestModule,
-        FormsModule,
-        ReactiveFormsModule,
-        NgHetidaFlowchartModule,
-        MonacoEditorModule,
-        StoreModule.forRoot(appReducers),
-        HttpClientModule
-      ],
-      declarations: [
-        AppComponent,
-        HomeComponent,
-        ToolbarComponent,
-        NavigationContainerComponent,
-        NavigationCategoryComponent,
-        NavigationItemComponent,
-        ContentViewComponent,
-        ProtocolViewerComponent,
-        PopoverBaseItemComponent,
-        ComponentEditorComponent,
-        WorkflowEditorComponent
-      ]
-    }).compileComponents();
-  }));
+  beforeEach(
+    waitForAsync(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          BasicTestModule,
+          FormsModule,
+          ReactiveFormsModule,
+          NgHetidaFlowchartModule,
+          MonacoEditorModule,
+          StoreModule.forRoot(appReducers),
+          HttpClientModule
+        ],
+        declarations: [
+          AppComponent,
+          HomeComponent,
+          ToolbarComponent,
+          NavigationContainerComponent,
+          NavigationCategoryComponent,
+          NavigationItemComponent,
+          ContentViewComponent,
+          ProtocolViewerComponent,
+          PopoverBaseItemComponent,
+          ComponentEditorComponent,
+          WorkflowEditorComponent
+        ]
+      }).compileComponents();
+    })
+  );
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);

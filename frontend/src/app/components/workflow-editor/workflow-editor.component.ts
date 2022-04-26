@@ -50,8 +50,7 @@ interface IdentifiableEntity {
 })
 export class WorkflowEditorComponent {
   flowchartConfiguration: FlowchartConfiguration | undefined = undefined;
-  flowchartManipulatorConfiguration: SVGManipulatorConfiguration =
-    new SVGManipulatorConfiguration();
+  flowchartManipulatorConfiguration: SVGManipulatorConfiguration = new SVGManipulatorConfiguration();
 
   private currentWorkflow: WorkflowBaseItem;
   private hasChanges = false;
@@ -515,8 +514,9 @@ export class WorkflowEditorComponent {
       );
     }
     this.flowchartManipulatorConfiguration.dispatchContextMenuEvent = true;
-    this.flowchartConfiguration =
-      this.flowchartConverter.convertWorkflowToFlowchart(workflow);
+    this.flowchartConfiguration = this.flowchartConverter.convertWorkflowToFlowchart(
+      workflow
+    );
     this.currentWorkflow = workflow;
     if (
       this.currentWorkflow.operators.some(
