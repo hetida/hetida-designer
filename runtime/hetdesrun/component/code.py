@@ -11,26 +11,32 @@ from keyword import iskeyword
 from hetdesrun.models.code import ComponentInfo
 
 imports_template: str = """\
-from hetdesrun.component.registration import register
-from hetdesrun.datatypes import DataType
 # add your own imports here, e.g.
-#     import pandas as pd
-#     import numpy as np
+# import pandas as pd
+# import numpy as np
 
 """
 
 function_definition_template: str = """\
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-@register(
-    inputs={input_dict_content},
-    outputs={output_dict_content},
-    name={name},
-    description={description},
-    category={category},
-    id={id},
-    revision_group_id={revision_group_id},
-    version_tag={version_tag}
+component_exterior[{id}] = (
+    # inputs:
+    {input_dict_content},
+    # outputs:
+    {output_dict_content}, 
+    # name:
+    {name},
+    # description:
+    {description},
+    # category:
+    {category},
+    # id:
+    {id},
+    # revision_group_id:
+    {revision_group_id},
+    # version_tag:
+    {version_tag}
 )
 {main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
@@ -57,16 +63,16 @@ def generate_function_header(component_info: ComponentInfo) -> str:
         input_dict_content="{"
         + ", ".join(
             [
-                '"' + key + '": DataType.' + value.name
-                for key, value in component_info.input_types_by_name.items()
+                '"' + parameter + '": "' + data_type_enum.value + '"'
+                for parameter, data_type_enum in component_info.input_types_by_name.items()
             ]
         )
         + "}",
         output_dict_content="{"
         + ", ".join(
             [
-                '"' + key + '": DataType.' + value.name
-                for key, value in component_info.output_types_by_name.items()
+                '"' + parameter + '": "' + data_type_enum.name + '"'
+                for parameter, data_type_enum in component_info.output_types_by_name.items()
             ]
         )
         + "}",
