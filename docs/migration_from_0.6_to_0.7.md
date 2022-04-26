@@ -1,8 +1,8 @@
-# Migration from 0.6 to 0.7
+# Migration from 0.6 to 0.7.2
 
 Version 0.7 features a complete rewrite of the hetida designer application backend from Java to Python. In particular the database entity model was completely revised.
 
-As a consequence of this, the migration from 0.6.* to 0.7.0 involves manual steps which we describe in this guide. In summary, all components and workflows need to be exported to files from the 0.6 installation and then imported back into the upgraded 0.7 installation.
+As a consequence of this, the migration from 0.6.* to 0.7.2 involves manual steps which we describe in this guide. In summary, all components and workflows need to be exported to files from the 0.6 installation and then imported back into the upgraded 0.7 installation.
 
 This guide assumes the default docker compose setup from the Readme. For other setups you have to edit the relevant environment variables like `HETIDA_DESIGNER_BACKEND_API_URL` in the commands below.
 
@@ -22,14 +22,14 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime:0.6.19 -c 'from hetdesrun.exportimport.export import export_all; export_all("/mnt/obj_repo/migration_data/", True);'
+  hetida/designer-runtime:0.7.2 -c 'from hetdesrun.exportimport.export import export_all; export_all("/mnt/obj_repo/migration_data/", True);'
 ```
 
 The command will create a subdirectory `migration_data` in your current directory with subfolders `components` and `workflows` each of which contains subfolders corresponding to the categories in which the components and workflows are stored in individual json files.
 
-## Step 2: Importing into 0.7.0
+## Step 2: Importing into 0.7.2
 
-Now upgrade your designer installation to 0.7.0 (As part of this you need to completely delete your database schema / all tables prior to starting the new version. For the docker-compose setup simply delete the postgres volume). Then run the following command to import the exported components and workflows from the same directory:
+Now upgrade your designer installation to 0.7.2 (As part of this you need to completely delete your database schema / all tables prior to starting the new version. For the docker-compose setup simply delete the postgres volume). Then run the following command to import the exported components and workflows from the same directory:
 
 ```shell
 docker run --rm \
@@ -38,6 +38,6 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime:0.7.0 -c 'from hetdesrun.exportimport.importing import import_all; import_all("/mnt/obj_repo/migration_data/");'
+  hetida/designer-runtime:0.7.2 -c 'from hetdesrun.exportimport.importing import import_all; import_all("/mnt/obj_repo/migration_data/");'
 ```
 
