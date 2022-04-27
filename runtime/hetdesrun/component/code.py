@@ -20,24 +20,18 @@ imports_template: str = """\
 function_definition_template: str = """\
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-component_exterior[{id}] = (
-    # inputs:
-    {input_dict_content},
-    # outputs:
-    {output_dict_content}, 
-    # name:
-    {name},
-    # description:
-    {description},
-    # category:
-    {category},
-    # id:
-    {id},
-    # revision_group_id:
-    {revision_group_id},
-    # version_tag:
-    {version_tag}
-)
+COMPONENT_INFO = {opening_bracket}
+    "inputs": {input_dict_content},
+    "outputs": {output_dict_content},
+    "name": {name},
+    "description": {description},
+    "category": {category},
+    "id": {id},
+    "revision_group_id": {revision_group_id},
+    "version_tag": {version_tag},
+{closing_bracket}
+
+
 {main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
