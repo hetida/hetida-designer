@@ -12,7 +12,7 @@ describe('AllowedCharsValidator', () => {
     formBuilder = TestBed.inject(FormBuilder);
   });
 
-  it('AllowedCharsValidator should return valid if only letters, numbers, whitespace and "_", "-", ".", "\'", "(", ")", "/", "=" are used in given value', () => {
+  it('AllowedCharsValidator should return valid if only letters, numbers, whitespace and "_", "-", ".", "(", ")", "/", "=" are used in given value', () => {
     const group1 = formBuilder.group({
       value: ['draft', AllowedCharsValidator()]
     });
@@ -20,12 +20,10 @@ describe('AllowedCharsValidator', () => {
       value: ['45649', AllowedCharsValidator()]
     });
     const group3 = formBuilder.group({
-      // prettier-ignore
-      value: ['_ -.\'()/=', AllowedCharsValidator()]
+      value: ['_ -.()/=', AllowedCharsValidator()]
     });
     const group4 = formBuilder.group({
-      // prettier-ignore
-      value: ['4_d5-r.6a\'4(f)9/t= e', AllowedCharsValidator()]
+      value: ['4_d5-r.6a4(f)9/t= e', AllowedCharsValidator()]
     });
     const group5 = formBuilder.group({
       value: ['äöüß', AllowedCharsValidator()]

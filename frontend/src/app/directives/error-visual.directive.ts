@@ -43,7 +43,7 @@ export class ErrorVisualDirective implements OnInit {
             case 'noFloatValue':
               return 'Enter a float value';
             case 'allowedChars':
-              return 'Only letters, numbers, whitespace and "_", "-", ".", "\'", "(", ")", "/", "=" are allowed characters';
+              return 'Some of these characters are invalid';
             default:
               return `Unknown error: ${error}`;
           }
