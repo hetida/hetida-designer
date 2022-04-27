@@ -15,6 +15,8 @@ from hetdesrun.adapters import SOURCE_ADAPTERS, SINK_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
 from hetdesrun.models.adapter_data import RefIdType
 
+EXPORT_MODE = False
+
 
 class OutputWiring(BaseModel):
     workflow_output_name: str = Field(..., alias="workflow_output_name")
@@ -50,7 +52,9 @@ class OutputWiring(BaseModel):
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
         # pylint: disable=consider-iterating-dictionary
-        if not v in SINK_ADAPTERS.keys() and not isinstance(v, str):
+        if not EXPORT_MODE and (
+            not v in SINK_ADAPTERS.keys() and not isinstance(v, str)
+        ):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
             )
@@ -107,7 +111,9 @@ class InputWiring(BaseModel):
         cls, v: Union[StrictInt, StrictStr]
     ) -> Union[StrictInt, StrictStr]:
         # pylint: disable=consider-iterating-dictionary
-        if not v in SOURCE_ADAPTERS.keys() and not isinstance(v, str):
+        if not EXPORT_MODE and (
+            not v in SOURCE_ADAPTERS.keys() and not isinstance(v, str)
+        ):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."
             )

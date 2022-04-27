@@ -159,7 +159,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
 
 
 ##Base function to import a transformation revision from a json file
-def import_transformation_from_path(path: str) -> None:
+def import_transformation_from_path(path: str, strip_wirings: bool = False) -> None:
     """
     Imports a transformation revision based on its path on the local system.
     WARNING: Overwrites possible existing transformation revision!
@@ -173,12 +173,17 @@ def import_transformation_from_path(path: str) -> None:
 
     tr_json = load_json(path)
 
-    import_transformation(tr_json, path)
+    import_transformation(tr_json, path, strip_wirings=strip_wirings)
 
 
-def import_transformation(tr_json: dict, path: str) -> None:
+def import_transformation(
+    tr_json: dict, path: str, strip_wirings: bool = False
+) -> None:
 
     headers = get_auth_headers()
+
+    if strip_wirings:
+        tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
 
     response = requests.put(
         posix_urljoin(
@@ -221,6 +226,7 @@ def import_transformations(
     ids: Optional[List[UUID]] = None,
     names: Optional[List[str]] = None,
     category: Optional[str] = None,
+    strip_wirings: bool = False,
 ) -> None:
     """
     This function imports all transformations together with their documentations
@@ -302,11 +308,17 @@ def import_transformations(
                     category, transformation["category"]
                 )
             ):
-                import_transformation_from_path(path_dict[transformation_id])
+                import_transformation_from_path(
+                    path_dict[transformation_id], strip_wirings=strip_wirings
+                )
 
     logger.info("finished importing")
 
 
-def import_all(download_path: str) -> None:
-    import_transformations(os.path.join(download_path, "components"))
-    import_transformations(os.path.join(download_path, "workflows"))
+def import_all(download_path: str, strip_wirings: bool = False) -> None:
+    import_transformations(
+        os.path.join(download_path, "components"), strip_wirings=strip_wirings
+    )
+    import_transformations(
+        os.path.join(download_path, "workflows"), strip_wirings=strip_wirings
+    )
