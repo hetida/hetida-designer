@@ -59,23 +59,57 @@ def generate_function_header(component_info: ComponentInfo) -> str:
 
     main_func_declaration_start = "async def" if component_info.is_coroutine else "def"
 
-    return function_definition_template.format(
-        input_dict_content="{"
+    input_dict_content = (
+        "{"
         + ", ".join(
             [
                 '"' + parameter + '": "' + data_type_enum.value + '"'
                 for parameter, data_type_enum in component_info.input_types_by_name.items()
             ]
         )
-        + "}",
-        output_dict_content="{"
+        + "}"
+    )
+
+    # black prefers entries per line for more than 88 characters, 15 are already taken
+    if len(input_dict_content) > 73:
+        input_dict_content = (
+            "{\n        "
+            + ",\n        ".join(
+                [
+                    '"' + parameter + '": "' + data_type_enum.value + '"'
+                    for parameter, data_type_enum in component_info.input_types_by_name.items()
+                ]
+            )
+            + ",\n    }"
+        )
+
+    output_dict_content = (
+        "{"
         + ", ".join(
             [
-                '"' + parameter + '": "' + data_type_enum.name + '"'
+                '"' + parameter + '": "' + data_type_enum.value + '"'
                 for parameter, data_type_enum in component_info.output_types_by_name.items()
             ]
         )
-        + "}",
+        + "}"
+    )
+
+    # black prefers entries per line for more than 88 characters, 16 are already taken
+    if len(output_dict_content) > 72:
+        output_dict_content = (
+            "{\n        "
+            + ",\n        ".join(
+                [
+                    '"' + parameter + '": "' + data_type_enum.value + '"'
+                    for parameter, data_type_enum in component_info.output_types_by_name.items()
+                ]
+            )
+            + ",\n    }"
+        )
+
+    return function_definition_template.format(
+        input_dict_content=input_dict_content,
+        output_dict_content=output_dict_content,
         name='"' + component_info.name + '"',
         description='"' + component_info.description + '"',
         category='"' + component_info.category + '"',
@@ -84,6 +118,8 @@ def generate_function_header(component_info: ComponentInfo) -> str:
         version_tag='"' + component_info.version_tag + '"',
         params_list=param_list_str,
         main_func_declaration_start=main_func_declaration_start,
+        opening_bracket="{",
+        closing_bracket="}",
     )
 
 
