@@ -53,20 +53,24 @@ def generate_function_header(component_info: ComponentInfo) -> str:
 
     main_func_declaration_start = "async def" if component_info.is_coroutine else "def"
 
-    input_dict_content = (
-        "{"
-        + ", ".join(
-            [
-                '"' + parameter + '": "' + data_type_enum.value + '"'
-                for parameter, data_type_enum in component_info.input_types_by_name.items()
-            ]
+    input_dict_str = (
+        (
+            "{"
+            + ", ".join(
+                [
+                    '"' + parameter + '": "' + data_type_enum.value + '"'
+                    for parameter, data_type_enum in component_info.input_types_by_name.items()
+                ]
+            )
+            + "}"
         )
-        + "}"
+        if len(component_info.input_types_by_name) != 0
+        else "{" + "}"
     )
 
     # black prefers entries per line for more than 88 characters, 15 are already taken
-    if len(input_dict_content) > 73:
-        input_dict_content = (
+    if len(input_dict_str) > 73:
+        input_dict_str = (
             "{\n        "
             + ",\n        ".join(
                 [
@@ -77,20 +81,24 @@ def generate_function_header(component_info: ComponentInfo) -> str:
             + ",\n    }"
         )
 
-    output_dict_content = (
-        "{"
-        + ", ".join(
-            [
-                '"' + parameter + '": "' + data_type_enum.value + '"'
-                for parameter, data_type_enum in component_info.output_types_by_name.items()
-            ]
+    output_dict_str = (
+        (
+            "{"
+            + ", ".join(
+                [
+                    '"' + parameter + '": "' + data_type_enum.value + '"'
+                    for parameter, data_type_enum in component_info.output_types_by_name.items()
+                ]
+            )
+            + "}"
         )
-        + "}"
+        if len(component_info.output_types_by_name) != 0
+        else "{" + "}"
     )
 
     # black prefers entries per line for more than 88 characters, 16 are already taken
-    if len(output_dict_content) > 72:
-        output_dict_content = (
+    if len(output_dict_str) > 72:
+        output_dict_str = (
             "{\n        "
             + ",\n        ".join(
                 [
@@ -102,8 +110,8 @@ def generate_function_header(component_info: ComponentInfo) -> str:
         )
 
     return function_definition_template.format(
-        input_dict_content=input_dict_content,
-        output_dict_content=output_dict_content,
+        input_dict_content=input_dict_str,
+        output_dict_content=output_dict_str,
         name='"' + component_info.name + '"',
         description='"' + component_info.description + '"',
         category='"' + component_info.category + '"',

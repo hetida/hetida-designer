@@ -20,9 +20,9 @@ def test_function_header_no_params():
     )
     func_header = generate_function_header(component_info)
     assert "main()" in func_header
-    assert "inputs={}" in func_header
-    assert "outputs={}" in func_header
-    assert 'id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565"' in func_header
+    assert '"inputs": {' + '}' in func_header
+    assert '"outputs": {' + '}' in func_header
+    assert '"id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565"' in func_header
 
 
 def test_function_header_multiple_inputs():
@@ -38,9 +38,9 @@ def test_function_header_multiple_inputs():
     )
     func_header = generate_function_header(component_info)
     assert "main(*, x, okay)" in func_header
-    assert """inputs={"x": DataType.Float, "okay": DataType.Boolean}""" in func_header
-    assert """outputs={"output": DataType.Float}""" in func_header
-    assert 'tag="1.0.0"' in func_header
+    assert '"inputs": {"x": "FLOAT", "okay": "BOOLEAN"}' in func_header
+    assert '"outputs": {"output": "FLOAT"}' in func_header
+    assert '"version_tag": "1.0.0"' in func_header
 
 
 def test_check_parameter_names():
