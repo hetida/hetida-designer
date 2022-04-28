@@ -95,7 +95,7 @@ The input wirings and output wirings tie inputs of the workflow or component rev
   
   * only have outputs of type PLOTLYJSON
   
-  * and have an entrypoint function with `pure_plot_component` being set to `True` in the `register` decorator, e.g.:
+  * and have an entrypoint function with `is_pure_plot_component` being set to `True` in the `register` decorator, e.g.:
     
     ![](../assets/pure_plot_component.png)
   
