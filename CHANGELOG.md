@@ -1,3 +1,6 @@
+## 0.7.2
+* Bugfixes concerning migration and importing
+* documentation fixes and improvements
 ## 0.7.1
 * Bug fixes!
 * you may now write async components by making your main function async
