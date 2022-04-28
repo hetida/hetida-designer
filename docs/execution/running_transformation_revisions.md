@@ -66,7 +66,7 @@ The payload for the execute endpoint looks as follows:
       }
     ]
   },
-  "run_pure_plot_parameters": "string",
+  "run_pure_plot_operators": "string",
   "job_id": "string"
 }
 ```
