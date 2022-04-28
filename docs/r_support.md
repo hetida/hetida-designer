@@ -6,26 +6,34 @@ This page describes a very basic setup example for this.
 
 ## Preparing your Setup
 
-Create a a new file Dockerfile `Dockerfile-runtime-basic-R-support` containing for example
+Create a a new file Dockerfile `Dockerfile-runtime-basic-R-support` containing for example (see https://cran.r-project.org/bin/linux/debian/#debian-buster-stable)
 
 ```dockerfile
-FROM hetida/designer-runtime
+FROM hetida/designer-runtime:0.7.2
 
 USER root
 
 RUN apt-get update
-RUN apt-get install -y r-base build-essential
+
+# Install R 4.X (see https://cran.r-project.org/bin/linux/debian/#debian-buster-stable)
+RUN apt-get install -y build-essential cmake dirmngr apt-transport-https ca-certificates software-properties-common gnupg2 libcurl4-openssl-dev libxml2-dev libssl-dev
+RUN echo "deb http://cloud.r-project.org/bin/linux/debian buster-cran40/" >>/etc/apt/sources.list
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-key B8F25A8A73EACF41
+RUN apt-get update && apt update
+RUN apt install -y -t buster-cran40 r-base r-base-dev
+RUN R -e 'update.packages(lib.loc="/usr/local/lib/R/site-library", ask = FALSE, checkBuilt = TRUE, Ncpus = 8)'
 
 # install some R package:
-RUN Rscript -e 'install.packages(c("TDA"), repos="https://cloud.r-project.org")'
+RUN Rscript -e 'install.packages(c("Matrix","quantreg","mclust","splines","textTinyR","MASS","zoo", "imputeTS", "anomalize", "tsrobprep"), repos="https://cloud.r-project.org", dependencies = TRUE)'
 
+# install rpy2 to be able to use R from Python
 RUN pip install rpy2
 
-USER hdrt_app
+USER hd_app
 
 ```
 
-This example installs R and rpy2 and the R package "TDA".
+This example installs R and rpy2 and some R packages like "anomalize".
 
 Now save the default `docker-compose.yml` file as a new file with name `docker-compose-basic-R-support.yml` and edit the hetida designer runtime service section as follows:
 
@@ -79,11 +87,11 @@ def main():
     return {"value_of_pi": pi[0]}
 ```
 
-You may also import and use the installed R package "TDA" in your code using
+You may also import and use the installed R package "anomalize" in your code using
 
 ```python
 import rpy2.robjects.packages as rpackages
-tda = rpackages.importr('TDA')
+anomalize = rpackages.importr('anomalize')
 ...
 ```
 

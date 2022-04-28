@@ -6,9 +6,7 @@ This guide assumes the default docker-compose setup described in the project REA
 
 ## Exporting all components and workflows
 
-First you should do a complete database backup as is described in [backup](./backup.md), just in case something bad happens.
-
-Then go to a directory where you want to store the exported components and workflows.
+Go to a directory where you want to store the exported components and workflows.
 Now run 
 
 ```shell
@@ -25,7 +23,7 @@ The command will create a subdirectory `exported_data` in your current directory
 
 ## Importing all components and workflows
 
-> :warning: IMPORTANT: If you have existing workflows/components in your installation you should do a complete database backup as is described in [backup](./backup.md), just in case something bad happens!
+> :warning: IMPORTANT: If you have existing workflows/components in your installation you should do a complete database backup as is described in [backup](./backup.md), just in case something bad happens! Note that importing overwrites possibly existing revisions with the same id.
 
 Simply run the following command to import the exported components and workflows from the same directory:
 
@@ -41,19 +39,12 @@ docker run --rm \
 
 ## Importing components from single python files
 
-Components are also importable from python files, which can be created by simply copying the component code from the hetida designer user interface into a .py file. When importing such a file, the module docstring from the third line onwards will be used as documentation. 
+Components are also importable from python files, which can be created by simply copying the component code from the hetida designer user interface into a .py file. When importing such a file, the module docstring from the third line onwards will be used as documentation.
 
-Note, that the .py file does not include the test wiring of the component, which is included in the json export format above.
+Note, that the .py file does not include the test wiring of the component, which is included in the json export format above. Components as .py files should be located in the same subdirectories as ordinary component files.
 
-As an example, to import a subdirectory named `components_in_python_files` containing such .py files, simply run the following command:
+## Remove test wirings when importing
+You may want to ignore the test wirings stored in the component/workflow files during import. One reason may be that the target backend validates incoming test wirings of the imported workflows and components: Adapters present in a test wiring must be registered under the same adapter key in the target backend.
 
-```shell
-docker run --rm \
-  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
-  --name htdruntime_import \
-  --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
-  --network hetida-designer-network \
-  --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("/mnt/obj_repo/components_in_python_files/");'
-```
+To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_all` function in the commands documented above.
 
