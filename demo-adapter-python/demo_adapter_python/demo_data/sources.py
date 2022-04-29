@@ -80,7 +80,7 @@ sources_json_objects: List[Dict[str, Any]] = [
         "type": ExternalType.DATAFRAME,
     },
     {
-        "id": "root.plantA.picklingUnit.influx.temp",
+        "id": "root.plantA.picklingUnit.influx.tempß",
         "thingNodeId": "root.plantA.picklingUnit.influx",
         "name": "Influx Temperature",
         "path": "Plant A / Pickling Unit / Influx",

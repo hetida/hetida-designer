@@ -171,7 +171,7 @@ async def sources(filter_str: Optional[str] = Query(None, alias="filter")):
     "/sources/{sourceId}/metadata/", response_model=List[GetMetadatum]
 )
 async def get_all_metadata_source(sourceId: str):
-    if sourceId.endswith("temp") and "plantA" in sourceId:
+    if sourceId.endswith("temp") or sourceId.endswith("tempß") and "plantA" in sourceId:
         return [
             {"key": "Max Value", "value": 300.0, "dataType": "float"},
             {"key": "Min Value", "value": -100.0, "dataType": "float"},
