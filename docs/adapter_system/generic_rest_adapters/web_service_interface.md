@@ -338,6 +338,8 @@ The `timestamp` entries have to be ISO-8601 timestamps and should always have UT
 
 Type of value must be the datatype of the timeseries source (i.e. if the timeseries source with that id has type `timeseries(int)`the value of a corresponding record must be a Json integer.
 
+If the adapter has no data for all the requested timeseries in the requested time interval but the timeseries ids are all valid, it must respond with an empty stream. After all, this is an analytically valid case and should be expected and handled in the respective workflows. The adapter is not expected to respond with a 404 or 500 error or a different response body in this situation!
+
 #### /timeseries (POST)
 
 This endpoint accepts a single timeseries per POST request.
