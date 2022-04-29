@@ -255,7 +255,7 @@ async def run_execution_input(
                     url,
                     headers=headers,  # TODO: authentication
                     json=json.loads(
-                        execution_input.json(dumps_kwargs={"ensure_ascii": False})
+                        execution_input.json()
                     ),  # TODO: avoid double serialization.
                     # see https://github.com/samuelcolvin/pydantic/issues/1409 and
                     # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
