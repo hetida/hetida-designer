@@ -1,3 +1,7 @@
+## 0.7.3
+* Allow special characters in adapter source/sink ids
+* small bug fixes
+* documentation restructuring and improvements
 ## 0.7.2
 * Bugfixes concerning migration and importing
 * documentation fixes and improvements
