@@ -163,7 +163,12 @@ def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
 
     For logging etc.
     """
-    return json.dumps(json.loads(pydantic_model.json()), indent=2, sort_keys=True)
+    return json.dumps(
+        json.loads(pydantic_model.json(dumps_kwargs={"ensure_ascii": False})),
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    )
 
 
 def plotly_fig_to_json_dict(fig: Figure) -> Any:
