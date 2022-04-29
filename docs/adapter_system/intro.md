@@ -4,14 +4,14 @@
 
 Some graphical analytical workflow tools have "Load table from Postgres" or "Write to csv file" data **in/egestion operators** that you pull into your analytical workflows. This couples analytics with data engineering in a way that makes it cumbersome and difficult to employ the same workflow in different contexts.
 
-At its worst it requires the user to manage several variants of her workflow, e.g. one with CSV-loading operators for development and one with database operators for production. If a workflow is reused over several facilities with different backing database systems one may furthermore need to handle even more variants.
+At its worst it requires the user to manage several variants of their workflow, e.g. one with CSV-loading operators for development and one with database operators for production. If a workflow is reused over several facilities with different backing database systems one may furthermore need to handle even more variants.
 
 Another disadvantage is that with such operators your workflow has side effects (in a functional programming sense) while the analytics itself typically is side-effect free. This can impose technical restrictions on some scaling / parallelizing / deployment scenarios. Generally it is a good idea to decouple analytics from data engineering whenever possible and think of it as a three-step process:
     **data goes in** :arrow_right: **analytics** :arrow_right: **results go out**.
     
 <span style="background:#d9edf7;border-color:#467b8f;border-left:5px solid #467b8f;width:100%;float:left;padding:0.5em;color:#467b8f">**Note:** It certainly is possible to write and use such in/egestion operators in hetida designer since any Python code can be used when writing components. But it is not the recommended way of getting data into and out of your workflows.</span>
 
-Instead hetida designer provides a flexible **adapter system** that not only allows to decouple in/egestion from the analytics but also allows to browse data sources and sinks in the hetida desgner user interface (and even your custom web applications through using the dialog component or the adapter webservice endpoints in external software).
+Instead hetida designer provides a flexible **adapter system** that not only allows to decouple in/egestion from the analytics but also allows to browse data sources and sinks in the hetida designer user interface (and even your custom web applications through using the dialog component or the adapter webservice endpoints in external software).
 
 This means in particular that workflows in hetida designer are meant to contain only analytics and not data in/egestion.
 
@@ -77,7 +77,7 @@ Writing custom adapters is the prefered way to connect your organization's or ex
 
 General custom adapters need to implement 
 
-1. certain web service endpoints for data browsing / filtering and wiring construction in user interfacses
+1. certain web service endpoints for data browsing / filtering and wiring construction in user interfaces
 
 2. runtime functions (Python code) for actually loading / writing data.
 
@@ -85,7 +85,7 @@ The web endpoints from 1. agree with the same-purposed web endpoints of generic 
 
 Generic Rest adapters need to implement
 
-1. certain web service endpoints for data browsing/ filtering and wiring construction in user interfacses
+1. certain web service endpoints for data browsing/ filtering and wiring construction in user interfaces
 
 2. certain additional web service endpoints for receiving and sending data
 
