@@ -15,14 +15,15 @@ Further information about developing, deploying, connecting, using and running h
 - [Runtime and Backend Readme](../runtime/README.md)
 - [End2End Tests](../frontend/end2end_tests.md)
 
-## Deploying hetida designer
+## Deploying, Customization and Ops
 
 - [Custom Python Dependencies](./custom_python_dependencies.md)
+- [R support](./r_support.md)
 - [Backup](./backup.md)
 - [Export and Import](./import_export.md)
 - [Migration from 0.6 to 0.7](./migration_from_0.6_to_0.7.md)
 
-## Connecting hetida designer with the Adapter System
+## Adapter System
 
 - [Introduction to the Adapter System](./adapter_system/intro.md)
 - [Adapter Registration](./adapter_system/adapter_registration.md)
@@ -31,14 +32,13 @@ Further information about developing, deploying, connecting, using and running h
 - [Generic REST Adapters](./adapter_system/generic_rest_adapters/web_service_interface.md)
 - [General Custom Adapters](./adapter_system/general_custom_adapters/instructions.md)
 
-## Creating components and workflows in hetida designer
+## Creating components and workflows
 
 - [Versioning in hetida designer](./versioning_in_hetida_designer.md)
 - [Tips and Tricks](./faq.md)
 - [Asynchronous Components](./executing_asynchronous_functions.md)
-- [R support](./r_support.md)
 
-## Running hetida designer
+## Integration and running workflows in production
 
 - [Execution via Kafka](./execution/execution_via_kafka.md)
 - [Execution via REST API](./execution/running_transformation_revisions.md)
