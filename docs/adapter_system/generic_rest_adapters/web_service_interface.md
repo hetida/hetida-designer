@@ -338,8 +338,6 @@ The `timestamp` entries have to be ISO-8601 timestamps and should always have UT
 
 Type of value must be the datatype of the timeseries source (i.e. if the timeseries source with that id has type `timeseries(int)`the value of a corresponding record must be a Json integer.
 
-If the adapter has no data for all the requested timeseries in the requested time interval but the timeseries ids are all valid, it must respond with an empty stream. After all, this is an analytically valid case and should be expected and handled in the respective workflows. The adapter is not expected to respond with a 404 or 500 error or a different response body in this situation! The adapter should only respond with an error like 404 if one of the timeseries ids is not valid at all.
-
 #### /timeseries (POST)
 
 This endpoint accepts a single timeseries per POST request.
@@ -425,19 +423,5 @@ In particular you do not need:
 * /dataframe (POST) endpoint
 
 ## Registering your generic Rest adapter
-See [adapter registration documentation](../adapter_registration.md)!
 
-## Hints on testing your adapter
-Some hints on testing your adapter:
-### Testing timeseries data
-#### Test whether requesting multiple timeseries data with the same time interval works
-
-Simply create a workflow with two parallel "Pass Through (Series)" components and run it with two different timeseries sources but with exactly the same time interval. It should work and both outputs should output the timeseries data from their corresponding inputs.
-
-**Background**: The runtime will fetch both timeseries data together in one request from the /timeseries endpoint. This allows performant streaming from timeseries databases. In our experience, developers often forget to make their adapter's /timeseries endpoint correctly handle being called with more than one timeseries id.
-
-#### Test whether adapter handles empty timeseries data correctly
-
-Run a "Pass Through (Series)" component with a timeseries source with a time interval for which there is no data. It should run and output an empty series.
-
-**Background**: In our experience developers often try to handle this case by sending a 404 or even 500 error. This is not correct: See the documentation of the /timeseries endpoint above for details and an explanation.
+see [adapter registration documentation](../adapter_registration.md)!

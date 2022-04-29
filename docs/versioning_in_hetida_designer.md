@@ -4,11 +4,11 @@ hetida designer comes with a versioning system for both components and workflows
 
 For both workflows and components what you are actually working on is always a revision! Generally in hetida designer's documentation we often omit the term "revision" when talking about components or workflows in order to simplify the documentation language a bit. For example the entries in the sidebar for both components and workflows always include the version tag and when you double click on such an entry you actually open this revision. But we may simply say "open the component" in the documentation instead.
 
-## Revesions for components
+## Revisions for components
 ### DRAFT Mode
 A new component revision starts its existence in "DRAFT" mode which means it can be edited, i.e. inputs/outputs can be changed and the source code can be modified freely. On the other side "DRAFT" mode means that this component revision cannot be dragged into a workflow. This limitation is necessary in order to guarantee reproducibility and stability of workflow execution in production setups. For being able to use your component in workflows it needs to be published.
 
-### Publishing and Updating
+### Publishing (Releasing) and Updating
 A revision in DRAFT mode can be published via the appropriate button in the UI. After publishing the component revision's mode is now "RELEASED". This means it cannot be edited anymore (neither source code nor inputs/outputs) but can now be dragged into and used in workflows.
 
 If later you need to change the component you have to create a new revision for this component through the UI button for "new revision" in the component view. Again you have to provide a version tag for this new revision of your component and it starts in DRAFT mode.
