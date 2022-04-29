@@ -104,7 +104,7 @@ async def load_framelike_data(
             resp = session.get(
                 url,
                 params=[
-                    ("id", quote(str(filtered_source.ref_id)))
+                    ("id", (str(filtered_source.ref_id)))
                     for filtered_source in filtered_sources
                 ]
                 + additional_params,
