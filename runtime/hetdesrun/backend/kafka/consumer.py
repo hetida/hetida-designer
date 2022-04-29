@@ -195,7 +195,7 @@ async def consume_execution_trigger_message(
                 exec_by_id_input = ExecByIdInput(
                     id=latest_id,
                     wiring=exec_latest_by_group_id_input.wiring,
-                    run_pure_plot_parameters=exec_latest_by_group_id_input.run_pure_plot_operators,
+                    run_pure_plot_operators=exec_latest_by_group_id_input.run_pure_plot_operators,
                     job_id=exec_latest_by_group_id_input.job_id,
                 )
             logger.info(

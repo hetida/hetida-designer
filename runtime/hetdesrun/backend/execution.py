@@ -93,7 +93,7 @@ class ExecLatestByGroupIdInput(BaseModel):
         return ExecByIdInput(
             id=id,
             wiring=self.wiring,
-            run_pure_plot_parameters=self.run_pure_plot_operators,
+            run_pure_plot_operators=self.run_pure_plot_operators,
             job_id=self.job_id,
         )
 

@@ -10,9 +10,9 @@ This environment variable is a string consisting of comma-separated entries (one
 
 2. Adapter Name (this is used in the user interface)
 
-3. External Adapter Url (from Frontend)
+3. External Adapter URL (from Frontend)
 
-4. Internal Adapter Url (how the hetida designer runtime reaches the adapter. This may coincide with the External Adapter Url)
+4. Internal Adapter URL (how the hetida designer runtime reaches the adapter. This may coincide with the External Adapter URL)
 
 I.e. the format is
 
@@ -32,8 +32,8 @@ Note: The registered adapters can be queried from the hetida designer backend ap
 
 First you have to **register the webservice** of the general custom adapter in the same way that is explained above for generic Rest adapters.
 
-Second you have to **register your runtime-side Python plugin** via the `hetdesrun_config.py` file. This file is available as /app/hetdesrun_config.py in the runtime docker image. You either need to create your own derived Docker image for the runtime replacing this file with your own variant or you mount your adapted hetdesrun_config.py on the existing file effectively shadowing it -- how you do that depends on your environment and setup, see for example [here](https://stackoverflow.com/questions/42248198/how-to-mount-a-single-file-in-a-volume#42260979).
+Second you have to **register your runtime-side Python plugin** via the `hetdesrun_config.py` file. This file is available as /app/hetdesrun_config.py in the runtime docker image. You either need to create your own derived Docker image for the runtime replacing this file with your own variant or you mount your adapted hetdesrun_config.py on the existing file effectively shadowing it &ndash; how you do that depends on your environment and setup, see for example [here](https://stackoverflow.com/questions/42248198/how-to-mount-a-single-file-in-a-volume#42260979).
 
-The default `hetdesrun_config.py` (you can find it [here](https://github.com/hetida/hetida-designer/blob/release/runtime/hetdesrun_config.py)) contains a detailed guide how you register your Python plugn functions there. You need to use the Adapter Id with which you regsister the web service as `adapter_key` there.
+The default `hetdesrun_config.py` (you can find it [here](https://github.com/hetida/hetida-designer/blob/release/runtime/hetdesrun_config.py)) contains a detailed guide how you register your Python plugin functions there. You need to use the Adapter Id with which you regsister the web service as `adapter_key` there.
 
-Note that the functions you provide must be importable from the /app dir of the docker image. This means if your runtime-side adapter implementation contains Python modules / packages you must make them available in the runtime docker image - again for example by creating a derived docker image or volume mounting.
+Note that the functions you provide must be importable from the /app dir of the docker image. This means if your runtime-side adapter implementation contains Python modules / packages you must make them available in the runtime docker image &ndash; again for example by creating a derived docker image or volume mounting.

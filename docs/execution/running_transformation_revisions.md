@@ -4,7 +4,7 @@ Every transformation revision, whether component or workflow type, is immediatel
 
 `/api/transformations/execute`
 
-of the hetida designer backend service, whether in "draft" or "released" state.
+of the hetida designer backend service, whether in "DRAFT" or "RELEASED" state.
 
 For example the default docker-compose setup this endpoint can be reached via http://localhost:8080/api/transformations/execute
 
@@ -66,7 +66,7 @@ The payload for the execute endpoint looks as follows:
       }
     ]
   },
-  "run_pure_plot_parameters": "string",
+  "run_pure_plot_operators": "string",
   "job_id": "string"
 }
 ```
@@ -95,7 +95,7 @@ The input wirings and output wirings tie inputs of the workflow or component rev
   
   * only have outputs of type PLOTLYJSON
   
-  * and have an entrypoint function with `pure_plot_component` being set to `True` in the `register` decorator, e.g.:
+  * and have an entrypoint function with `is_pure_plot_component` being set to `True` in the `register` decorator, e.g.:
     
     ![](../assets/pure_plot_component.png)
   

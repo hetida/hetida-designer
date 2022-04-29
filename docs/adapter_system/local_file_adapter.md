@@ -60,7 +60,7 @@ docker-compose stop
 docker-compose up
 ```
 
-Now alls mounted directores and included local files with known extensions (.csv, .excel) should be available via selecting "Local File Adapter" in the Execution dialog:
+Now all mounted directories and included local files with known extensions (.csv, .excel) should be available via selecting "Local File Adapter" in the Execution dialog:
 
 <img title="" src="../assets/local_file_adapter_selected.png" alt="" width="277" data-align="center">
 
@@ -74,7 +74,7 @@ This makes them available for reading with default settings, i.e. the default se
 
 ### Accompanying .settings.json - Writing and load/write settings
 
-Allowing writing of files and also configuring the settings for loading / wirting is done via an accompanying file starting with the same name but with `.settings.json` appended. E.g. if you have a file `/my/dir/data.csv` you may place a file `/my/dir/data.csv.settings.json` beside it. This new file contains a json object structured as follows:
+Allowing writing of files and also configuring the settings for loading / writing is done via an accompanying file starting with the same name but with `.settings.json` appended. E.g. if you have a file `/my/dir/data.csv` you may place a file `/my/dir/data.csv.settings.json` beside it. This new file contains a json object structured as follows:
 
 ```json
 {
