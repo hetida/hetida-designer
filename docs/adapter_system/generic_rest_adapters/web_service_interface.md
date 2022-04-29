@@ -425,5 +425,19 @@ In particular you do not need:
 * /dataframe (POST) endpoint
 
 ## Registering your generic Rest adapter
+See [adapter registration documentation](../adapter_registration.md)!
 
-see [adapter registration documentation](../adapter_registration.md)!
+## Hints on testing your adapter
+Some hints on testing your adapter:
+### Testing timeseries data
+#### Test whether requesting multiple timeseries data with the same time interval works
+
+Simply create a workflow with two parallel "Pass Through (Series)" components and run it with two different timeseries sources but with exactly the same time interval. It should work and both outputs should output the timeseries data from their corresponding inputs.
+
+**Background**: The runtime will fetch both timeseries data together in one request from the /timeseries endpoint. This allows performant streaming from timeseries databases. In our experience, developers often forget to make their adapter's /timeseries endpoint correctly handle being called with more than one timeseries id.
+
+#### Test whether adapter handles empty timeseries data correctly
+
+Run a "Pass Through (Series)" component with a timeseries source with a time interval for which there is no data. It should run and output an empty series.
+
+**Background**: In our experience developers often try to handle this case by sending a 404 or even 500 error. This is not correct: See the documentation of the /timeseries endpoint above for details and an explanation.
