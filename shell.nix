@@ -57,6 +57,7 @@ let
   projectDir = toString ./.;
   venvDir = toString ./runtime/nix_venv_hd_dev;
   runtimeDir = toString ./runtime;
+  pythonDemoAdapterDir = toString ./demo-adapter-python;
   backendDir = toString ./backend;
   frontendDir = toString ./frontend;
 
@@ -93,6 +94,12 @@ let
 
     # This starts postgres with the current user as db user and without password
     postgres -D ${projectDir}/.tmp/pg_dev_db  -k ${projectDir}
+  '';
+
+  start-python-demo-adapter = writeShellScriptBin "start-python-demo-adapter" ''
+      set -e
+      cd ${pythonDemoAdapterDir}
+      PORT=8092 python ./main.py
   '';
 
   start-runtime = writeShellScriptBin "start-hd-runtime" ''
