@@ -1,4 +1,6 @@
-## 7.0.4
+## 0.7.5
+* fix db config password secret handling
+## 0.7.4
 * fix DB user config environment variable name
 * small documentation fixes
 ## 0.7.3

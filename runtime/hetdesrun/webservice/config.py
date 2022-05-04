@@ -315,10 +315,17 @@ class RuntimeConfig(BaseSettings):
         cls, v: Optional[Union[SecretStr, SQLAlchemy_DB_URL]], values: dict
     ) -> Optional[Union[SecretStr, SQLAlchemy_DB_URL]]:
         if v is None:
+
+            pw_secret = values["sqlalchemy_db_password"]
+
             return SQLAlchemy_DB_URL.create(
                 drivername=values["sqlalchemy_db_drivername"],
                 username=values["sqlalchemy_db_user"],
-                password=values["sqlalchemy_db_password"],
+                password=(
+                    pw_secret.get_secret_value()
+                    if isinstance(pw_secret, SecretStr)
+                    else pw_secret
+                ),
                 host=values["sqlalchemy_db_host"],
                 port=values["sqlalchemy_db_port"],
                 database=values["sqlalchemy_db_database"],
