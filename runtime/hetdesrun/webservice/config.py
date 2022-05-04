@@ -97,7 +97,7 @@ class RuntimeConfig(BaseSettings):
         "postgresql+psycopg2", env="HD_DB_DRIVERNAME", example="postgresql+psycopg2"
     )
 
-    sqlalchemy_db_user: str = Field("hetida_designer_dbuser", env="HD_DB_PASSWORD")
+    sqlalchemy_db_user: str = Field("hetida_designer_dbuser", env="HD_DB_USER")
 
     sqlalchemy_db_password: SecretStr = Field(
         SecretStr("hetida_designer_dbpasswd"), env="HD_DB_PASSWORD"
