@@ -29,7 +29,12 @@ config = context.config
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("hetdesrun")
+
+from hetdesrun import configure_logging
+
+alembic_logger = logging.getLogger("alembic")
+configure_logging(alembic_logger)
 
 
 def get_target_metadata():
@@ -85,15 +90,23 @@ def run_migrations_online():
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=get_target_metadata())
-
+        logger.info("Connected to db for migrations")
         with context.begin_transaction():
+            logger.info(
+                "Beginning transaction. Dialect name is %s", connection.dialect.name
+            )
             if connection.dialect.name == "postgresql":
+                logger.info("Detected postgresql driver. Ensuring versioning table")
                 # Make sure no two processed can migrate at the same time
                 context.get_context()._ensure_version_table()  # pylint: disable=protected-access
+                logger.info(
+                    "Ensured versioning table. Now locking alembic version table"
+                )
                 connection.execute(
                     text("LOCK TABLE alembic_version IN ACCESS EXCLUSIVE MODE")
                 )
                 # Postgres lock is released when transaction ends
+            logger.info("actually starting to run migrations")
             context.run_migrations()
 
 
