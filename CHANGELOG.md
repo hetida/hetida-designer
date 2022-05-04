@@ -1,3 +1,6 @@
+## 0.7.6
+* fix db config management bug
+* add more logging
 ## 0.7.5
 * fix db config password secret handling
 ## 0.7.4
