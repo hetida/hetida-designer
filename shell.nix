@@ -55,7 +55,8 @@ with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/af21d4126084
 let
   pythonPackages = python39Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
-  venvDir = toString ./runtime/nix_venv_hd_dev;
+  venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
+  venvDirPythonDemoAdapter = toString ./runtime/nix_venv_hd_dev_python_demo_adapter;
   runtimeDir = toString ./runtime;
   pythonDemoAdapterDir = toString ./demo-adapter-python;
   backendDir = toString ./backend;
@@ -135,7 +136,7 @@ let
       # wait for backend
       ${waitfor}/bin/waitfor -t 60 http://localhost:8080/api/info
       # Deploy components and workflows
-      HETIDA_DESIGNER_BACKEND_API_URL=http://localhost:8080/api/ ${venvDir}/bin/python -c "from hetdesrun.exportimport.importing import import_all; import_all('./transformations');"
+      HETIDA_DESIGNER_BACKEND_API_URL=http://localhost:8080/api/ ${venvDirRuntime}/bin/python -c "from hetdesrun.exportimport.importing import import_all; import_all('./transformations');"
       echo "finished deploying components and workflows"
   '';
 
@@ -150,7 +151,7 @@ let
 in pkgs.mkShell rec {
   name = "hetida-desiger-local-dev-environment";
 
-  inherit projectDir venvDir;
+  inherit projectDir venvDirRuntime;
 
   buildInputs = [
     # A Python interpreter including the 'venv' module is required to bootstrap
@@ -206,42 +207,52 @@ in pkgs.mkShell rec {
 
   shellHook = ''
     set -e
-    SOURCE_DATE_EPOCH=$(date +%s)
+    SOURCE_DATE_EPOCH=$(date +%s)    
 
-    export PIPT_EXPLICIT_VENV_TARGET_PATH="${venvDir}"
-    export PIPT_PYTHON_INTERPRETER="${pythonPackages.python.interpreter}"
+    prepare_venv() {
+        local sub_project_dir=$1
+        local venv_target_dir=$2
+        local activate_venv="''${3:-false}"
 
-    cd "${projectDir}"/runtime
-    ./pipt venv
- 
-    # Under some circumstances it might be necessary to add your virtual
-    # environment to PYTHONPATH, which you can do here too;
-    PYTHONPATH=$PWD/${venvDir}/${pythonPackages.python.sitePackages}/:$PYTHONPATH
+        if ! "$activate_venv" ; then
+            local PIPT_EXPLICIT_VENV_TARGET_PATH
+            local PIPT_PYTHON_INTERPRETER
+        fi
+        export PIPT_EXPLICIT_VENV_TARGET_PATH="$venv_target_dir"
+        export PIPT_PYTHON_INTERPRETER="${pythonPackages.python.interpreter}"
+        cd "$sub_project_dir"
+        ./pipt venv
+        
+        local OLD_PYTHONPATH="$PYTHONPATH"
+        if ! "$activate_venv" ; then local PYTHONPATH; fi
+        export PYTHONPATH="$PWD"/"$venv_target_dir"/${pythonPackages.python.sitePackages}/:"$OLD_PYTHONPATH"
+        
+        rm -fR "$venv_target_dir"/symbolic_links_to_system_libs
+        mkdir -p "$venv_target_dir"/symbolic_links_to_system_libs/lib
+        ln -s ${zlib}/lib/libz.so.1 "$venv_target_dir"/symbolic_links_to_system_libs/lib/libz.so.1
+        ln -s ${glibc}/lib/libc-2.33.so "$venv_target_dir"/symbolic_links_to_system_libs/lib/libc-2.33.so
+        ln -s ${glibc}/lib/libc-2.33.so.1 "$venv_target_dir"/symbolic_links_to_system_libs/lib/libc-2.33.so.1
+        if ! "$activate_venv" ; then local LD_LIBRARY_PATH; fi
+        export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "$venv_target_dir/symbolic_links_to_system_libs") ]}      
+        ./pipt sync
 
-    # Additionally for pandas / numpy to work you need:
-    # (https://discourse.nixos.org/t/python-package-with-runtime-dependencies/5522/9)
+        if "$activate_venv" ; then
+            source "$venv_target_dir/bin/activate"
+        fi
+    }
 
-    rm -fR ${venvDir}/symbolic_links_to_system_libs
-    mkdir -p ${venvDir}/symbolic_links_to_system_libs/lib
-    ln -s ${zlib}/lib/libz.so.1 ${venvDir}/symbolic_links_to_system_libs/lib/libz.so.1
-    ln -s ${glibc}/lib/libc-2.33.so ${venvDir}/symbolic_links_to_system_libs/lib/libc-2.33.so
-    ln -s ${glibc}/lib/libc-2.33.so.1 ${venvDir}/symbolic_links_to_system_libs/lib/libc-2.33.so.1
+    echo "BUILD AND ACTIVATING VENV AT ${venvDirRuntime}"
+    prepare_venv "${projectDir}"/runtime "${venvDirRuntime}" true
 
-    export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "${venvDir}/symbolic_links_to_system_libs") ]}      
-
-    ./pipt sync
-    echo "ACTIVATING VENV AT ${venvDir}"
-    source "${venvDir}/bin/activate"
- 
     # Test some imports (for system libraries missing / not found)
     echo "TESTING IMPORTING SOME PYTHON PACKAGES":
-    ${venvDir}/bin/python -c "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
+    ${venvDirRuntime}/bin/python -c "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
 
     cd "${projectDir}"
 
     echo "Initialize/configure jupyter notebook in virtual environment"
     mkdir -p ${JUPYTER_CONFIG_DIR}
-    "${venvDir}"/bin/pip install jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
+    "${venvDirRuntime}"/bin/pip install jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
 
     mkdir -p ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter
     echo '{"preferences": {"default_formatter": {"python": ["black"]}},}' > ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter/settings.jupyterlab-setting

@@ -15,8 +15,12 @@ __pycache__
 .s.PGSQL*
 runtime/**/lab
 runtime/**/venv
+<<<<<<< HEAD
 runtime/**/nix_venv_hd_dev
 runtime/**/nix_venv_*
+=======
+runtime/**/nix_venv*
+>>>>>>> d11c125 (refactor shell nix)
 runtime/pylint_report.txt
 runtime/test_results.xml
 runtime/.coverage*

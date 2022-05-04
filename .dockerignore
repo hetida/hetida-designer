@@ -17,8 +17,12 @@ runtime/.pytest_cache
 runtime/.mypy_cache
 runtime/**/venv
 runtime/**/lab
+<<<<<<< HEAD
 runtime/**/nix_venv_hd_dev
 runtime/**/nix_venv_*
+=======
+runtime/**/nix_venv*
+>>>>>>> d11c125 (refactor shell nix)
 demo-adapter-python/**/lab
 demo-adapter-python/**/venv
 demo-adapter-python/**/nix_venv_*
