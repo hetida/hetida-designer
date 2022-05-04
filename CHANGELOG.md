@@ -1,3 +1,6 @@
+## 7.0.4
+* fix DB user config environment variable name
+* small documentation fixes
 ## 0.7.3
 * Allow special characters in adapter source/sink ids
 * small bug fixes
