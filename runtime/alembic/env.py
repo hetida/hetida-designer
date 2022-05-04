@@ -7,10 +7,6 @@ from sqlalchemy import pool, text
 
 from alembic import context
 
-if os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None) is None:
-    # if this script is called directly, default to local dev setup.
-    os.environ["HD_RUNTIME_ENVIRONMENT_FILE"] = "local_dev.env"
-
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -28,13 +24,6 @@ config = context.config
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-
-logger = logging.getLogger("hetdesrun")
-
-from hetdesrun import configure_logging
-
-alembic_logger = logging.getLogger("alembic")
-configure_logging(alembic_logger)
 
 
 def get_target_metadata():
@@ -79,6 +68,12 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    from hetdesrun import configure_logging
+
+    logger = logging.getLogger("hetdesrun")
+
+    alembic_logger = logging.getLogger("alembic")
+    configure_logging(alembic_logger)
 
     from hetdesrun.persistence import get_db_engine
 

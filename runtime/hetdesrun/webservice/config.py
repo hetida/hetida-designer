@@ -64,10 +64,7 @@ class RuntimeConfig(BaseSettings):
     ensure_db_schema: bool = Field(
         True,
         env="HD_ENSURE_DB_SCHEMA",
-        description=(
-            "Whether DB and DB schema should be created if not present"
-            " and if running as backend."
-        ),
+        description=("Currently not in use!"),
     )
 
     allowed_origins: str = Field(
@@ -314,10 +311,9 @@ class RuntimeConfig(BaseSettings):
     def database_url(
         cls, v: Optional[Union[SecretStr, SQLAlchemy_DB_URL]], values: dict
     ) -> Optional[Union[SecretStr, SQLAlchemy_DB_URL]]:
+
         if v is None:
-
             pw_secret = values["sqlalchemy_db_password"]
-
             return SQLAlchemy_DB_URL.create(
                 drivername=values["sqlalchemy_db_drivername"],
                 username=values["sqlalchemy_db_user"],
