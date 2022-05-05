@@ -33,7 +33,7 @@ npm run run-e2e-all
 ```
 in the frontend directory.
 
-In the case that the designer installation against which you want to run the tests provides its frontend at a different url than `http://localhost` you may provide the frontend URL via environment variable:
+In the case that the designer installation against which you want to run the tests provides its frontend at a different URL than `http://localhost` you may provide the frontend URL via environment variable:
 ```bash
 PLAYWRIGHT_TARGET_URL="http://my-domain/hd-frontend" npm run run-e2e-all
 ```

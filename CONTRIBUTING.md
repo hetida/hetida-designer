@@ -35,7 +35,7 @@ on whether and how the new feature is to be implemented, you are welcome to
 
 ## <a name="submit-issue"></a> How to submit an Issue?
 
-Before you submit an issue, search the archive. Maybe someone else already
+Before you submit an issue, search the [archive](https://github.com/hetida/hetida-designer/issues). Maybe someone else already
 reported the same issue before? Maybe your problem was already discussed and
 a decision been taken? Maybe the issue has already been solved in the latest
 release?
@@ -47,7 +47,7 @@ issue on GitHub!**
 Otherwise: If your issue appears to be a bug, and hasn't been reported before,
 [open a new issue on GitHub][new-issue] with the following information:
 
-- **Overview of the Issue** - Quick description of the expected behavior and
+- **Overview of the Issue** - Brief description of the expected behavior and
   the actual behavior. If an error is being thrown in the browser, a stack trace
   helps. If something is visibly wrong, a screenshot or screencast may be more
   helpful than a textual description.
@@ -153,20 +153,18 @@ To ensure consistency throughout the source code, we have defined coding rules
 which need to be followed when [submitting a PR](#submit-pr). These rules will
 guide our code review when we provide feedback about your PR.
 
-As the hetida designer is developed in three separate technologies - namely Python
-for the runtime, Java/Spring for the backend and Angular/TypeScript for the
+As the hetida designer is developed in two separate technologies - namely Python
+for runtime and backend, and Angular/TypeScript for the
 frontend - we have specific rules that apply to each one of these technologies:
 
-- [Coding Rules for the Runtime][coding-rules-runtime]
-- [Coding Rules for the Backend][coding-rules-backend]
+- [Coding Rules for Runtime and Backend][coding-rules-runtime]
 - [Coding Rules for the Frontend][coding-rules-frontend]
 
 [coding-rules-runtime]: https://github.com/hetida/hetida-designer/blob/release/runtime/CODING_STANDARDS.md
-[coding-rules-backend]: https://github.com/hetida/hetida-designer/blob/release/backend/CODING_STANDARDS.md
 [coding-rules-frontend]: https://github.com/hetida/hetida-designer/blob/release/frontend/CODING_STANDARDS.md
 [changelog]: https://github.com/hetida/hetida-designer/blob/release/CHANGELOG.md
 [email]: mailto:hetida@neusta-sd-west.de
 [getting-started]: https://github.com/hetida/hetida-designer/blob/release/README.md#gs-docker-compose
 [github]: https://github.com/hetida/hetida-designer
 [new-issue]: https://github.com/hetida/hetida-designer/issues/new?assignees=&labels=&template=bug_report.md&title=%5BBUG%5D
-[new-pr]: https://github.com/hetida/hetida-designer/compare/develop...
+[new-pr]: https://github.com/hetida/hetida-designer/compare/develop

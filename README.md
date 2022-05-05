@@ -452,7 +452,7 @@ hetida designer provides a flexible adapter system allowing integration of arbit
 
 The adapter system allows to execute the exact same workflow on local csv files as inputs during experimentation/development and then switch to production database data simply through swapping adapters in a so-called "wiring" data structure.
 
-Please start by reading the [instructions to the adapter system](./docs/adapter_system/intro.md) and follow the links to detailed explanations/documentation from there.
+Please start by reading the [introduction to the adapter system](./docs/adapter_system/intro.md) and follow the links to detailed explanations/documentation from there.
 
 ## <a name="running-in-production"></a>Running Workflows in production
 

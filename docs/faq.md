@@ -15,7 +15,7 @@ Here you can find some guidance for common issues that might occur:
 
 ## <a name="debugging-components"></a> Debugging component revisions
 
-To understand why and how an error occured it is often necessary to understand which value a variable has at certain steps of running the code.
+To understand why and how an error occurred it is often necessary to understand which value a variable has at certain steps of running the code.
 One way to achieve this in components is to temporarily add a line that raises an exception like a `ValueError` and pass the the variable converted to a string as error message to the ValueError object. Example:
 
 ```

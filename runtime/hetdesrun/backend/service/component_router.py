@@ -386,9 +386,10 @@ async def execute_component_revision(
                     ),  # TODO: avoid double serialization.
                     # see https://github.com/samuelcolvin/pydantic/issues/1409, especially
                     # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                    timeout=None,
                 )
             except httpx.HTTPError as e:
-                msg = f"Failure connecting to hd runtime endpoint ({url}):\n{e}"
+                msg = f"Failure connecting to hd runtime endpoint ({url}):\n{str(e)}"
                 logger.info(msg)
                 # do not explictly re-raise to avoid displaying authentication details
                 # pylint: disable=raise-missing-from

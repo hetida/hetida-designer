@@ -93,7 +93,7 @@ class ExecLatestByGroupIdInput(BaseModel):
         return ExecByIdInput(
             id=id,
             wiring=self.wiring,
-            run_pure_plot_parameters=self.run_pure_plot_operators,
+            run_pure_plot_operators=self.run_pure_plot_operators,
             job_id=self.job_id,
         )
 
@@ -259,9 +259,10 @@ async def run_execution_input(
                     ),  # TODO: avoid double serialization.
                     # see https://github.com/samuelcolvin/pydantic/issues/1409 and
                     # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                    timeout=None,
                 )
             except httpx.HTTPError as e:
-                msg = f"Failure connecting to hd runtime endpoint ({url}):\n{e}"
+                msg = f"Failure connecting to hd runtime endpoint ({url}):\n{str(e)}"
                 logger.info(msg)
                 raise TrafoExecutionRuntimeConnectionError(msg) from e
             try:
