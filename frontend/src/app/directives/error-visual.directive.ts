@@ -42,6 +42,8 @@ export class ErrorVisualDirective implements OnInit {
               return `Enter a integer value`;
             case 'noFloatValue':
               return 'Enter a float value';
+            case 'notOnlyWhitespaces':
+              return 'Only whitespaces are disallowed';
             default:
               return `Unknown error: ${error}`;
           }

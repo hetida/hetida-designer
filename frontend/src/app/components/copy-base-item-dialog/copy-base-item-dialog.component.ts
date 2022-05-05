@@ -10,6 +10,7 @@ import { IAppState } from 'src/app/store/app.state';
 import { selectAbstractBaseItems } from 'src/app/store/base-item/base-item.selectors';
 import { Utils } from 'src/app/utils/utils';
 import { UniqueRevisionTagValidator } from 'src/app/validation/unique-revision-tag-validator';
+import { NotOnlyWhitespacesValidator } from 'src/app/validation/not-only-whitespaces-validator';
 
 @Component({
   selector: 'hd-copy-base-item-dialog',
@@ -112,19 +113,30 @@ export class CopyBaseItemDialogComponent implements OnInit {
               value: this.data.abstractBaseItem.name,
               disabled: this.data.disabledState.name
             },
-            [Validators.required, Validators.maxLength(60)]
+            [
+              Validators.required,
+              Validators.maxLength(60),
+              NotOnlyWhitespacesValidator()
+            ]
           ),
           category: new FormControl(
             {
               value: this.data.abstractBaseItem.category,
               disabled: this.data.disabledState.category
             },
-            [Validators.required, Validators.maxLength(60)]
+            [
+              Validators.required,
+              Validators.maxLength(60),
+              NotOnlyWhitespacesValidator()
+            ]
           ),
-          description: new FormControl({
-            value: this.data.abstractBaseItem.description,
-            disabled: this.data.disabledState.description
-          }),
+          description: new FormControl(
+            {
+              value: this.data.abstractBaseItem.description,
+              disabled: this.data.disabledState.description
+            },
+            [Validators.required, NotOnlyWhitespacesValidator()]
+          ),
           tag: new FormControl(
             {
               value: this.data.abstractBaseItem.tag,
@@ -133,7 +145,8 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(20),
-              UniqueRevisionTagValidator(abstractBaseItems)
+              UniqueRevisionTagValidator(abstractBaseItems),
+              NotOnlyWhitespacesValidator()
             ]
           )
         });
