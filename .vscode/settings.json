@@ -16,10 +16,7 @@
         "**/.git": true,
         "**/runtime/venv": true,
         "**/runtime/nix_venv*": true,
-<<<<<<< HEAD
         "**/demo-adapter-python/nix_venv*": true,
-=======
->>>>>>> d11c125 (refactor shell nix)
         "**/demo-adapter-python/venv": true,
         ".tmp": true,
         "**/.mypy_cache": true,
@@ -30,10 +27,7 @@
         "**/__pycache__": true,
         "**/runtime/venv": true,
         "**/runtime/nix_venv*": true,
-<<<<<<< HEAD
         "**/demo-adapter-python/nix_venv*": true,
-=======
->>>>>>> d11c125 (refactor shell nix)
         "**/demo-adapter-python/venv": true,
         ".tmp": true,
         "**/.mypy_cache": true,

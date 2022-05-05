@@ -61,6 +61,7 @@ let
   pythonDemoAdapterDir = toString ./demo-adapter-python;
   backendDir = toString ./backend;
   frontendDir = toString ./frontend;
+  JUPYTER_CONFIG_DIR =  toString ./.jupyter;  
 
   waitfor = stdenv.mkDerivation {
     name = "waitfor";
@@ -82,6 +83,83 @@ let
     '';
   };
 
+  prepare-venv = writeShellScriptBin "prepare-venv" ''
+    set -e
+    SOURCE_DATE_EPOCH=$(date +%s)    
+
+    prepare_venv() {
+        local sub_project_dir=$1
+        local venv_target_dir=$2
+        local activate_venv="''${3:-false}"
+
+        if ! "$activate_venv" ; then
+            local PIPT_EXPLICIT_VENV_TARGET_PATH
+            local PIPT_PYTHON_INTERPRETER
+        fi
+        export PIPT_EXPLICIT_VENV_TARGET_PATH="$venv_target_dir"
+        export PIPT_PYTHON_INTERPRETER="${pythonPackages.python.interpreter}"
+        cd "$sub_project_dir"
+        ./pipt venv
+        
+        local OLD_PYTHONPATH="$PYTHONPATH"
+        if ! "$activate_venv" ; then local PYTHONPATH; fi
+        export PYTHONPATH="$PWD"/"$venv_target_dir"/${pythonPackages.python.sitePackages}/:"$OLD_PYTHONPATH"
+        
+        rm -fR "$venv_target_dir"/symbolic_links_to_system_libs
+        mkdir -p "$venv_target_dir"/symbolic_links_to_system_libs/lib
+        ln -s ${zlib}/lib/libz.so.1 "$venv_target_dir"/symbolic_links_to_system_libs/lib/libz.so.1
+        ln -s ${glibc}/lib/libc-2.33.so "$venv_target_dir"/symbolic_links_to_system_libs/lib/libc-2.33.so
+        ln -s ${glibc}/lib/libc-2.33.so.1 "$venv_target_dir"/symbolic_links_to_system_libs/lib/libc-2.33.so.1
+        if ! "$activate_venv" ; then local LD_LIBRARY_PATH; fi
+        export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "$venv_target_dir/symbolic_links_to_system_libs") ]}      
+        ./pipt sync
+
+        if "$activate_venv" ; then
+            source "$venv_target_dir/bin/activate"
+        fi
+    }
+
+    prepare_venv "''${@}"
+  '';
+
+  prepare-runtime-venv = writeShellScriptBin "prepare-runtime-venv" ''
+    set -e
+    SOURCE_DATE_EPOCH=$(date +%s)
+
+    echo "BUILD AND ACTIVATING VENV AT ${venvDirRuntime}"
+    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/runtime "${venvDirRuntime}" true
+
+    # Test some imports (for system libraries missing / not found)
+    echo "TESTING IMPORTING SOME PYTHON PACKAGES":
+    ${venvDirRuntime}/bin/python -c "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
+
+    cd "${projectDir}"
+
+    echo "Initialize/configure jupyter notebook in virtual environment"
+    mkdir -p ${JUPYTER_CONFIG_DIR}
+    "${venvDirRuntime}"/bin/pip install jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
+
+    mkdir -p ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter
+    echo '{"preferences": {"default_formatter": {"python": ["black"]}},}' > ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter/settings.jupyterlab-setting
+    mkdir -p ${JUPYTER_CONFIG_DIR}/lab/user-settings/@jupyterlab/shortcuts-extension
+    echo '{"shortcuts": [{"command": "jupyterlab_code_formatter:black", "keys": ["Ctrl K", "Ctrl M"], "selector": ".jp-Notebook.jp-mod-editMode"}]}' > ${JUPYTER_CONFIG_DIR}/lab/user-settings/@jupyterlab/shortcuts-extension/shortcuts.jupyterlab-settings
+
+  '';
+
+  prepare-python-demo-adapter-venv = writeShellScriptBin "prepare-python-demo-adapter-venv" ''
+    set -e
+    SOURCE_DATE_EPOCH=$(date +%s)
+
+    echo "BUILD AND ACTIVATING VENV AT ${venvDirPythonDemoAdapter}"
+    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/demo-adapter-python "${venvDirPythonDemoAdapter}" true
+
+    # Test some imports (for system libraries missing / not found)
+    echo "TESTING IMPORTING SOME PYTHON PACKAGES":
+    ${venvDirPythonDemoAdapter}/bin/python -c "import httpx; import pydantic; import numpy; import pandas"
+
+    cd "${projectDir}"
+  '';
+
   start-postgres = writeShellScriptBin "start-hd-postgres" ''
     
     echo "Stop possible running postgres server"
@@ -99,16 +177,20 @@ let
 
   start-python-demo-adapter = writeShellScriptBin "start-python-demo-adapter" ''
       set -e
+      source ${prepare-python-demo-adapter-venv}/bin/prepare-python-demo-adapter-venv
       cd ${pythonDemoAdapterDir}
+
       PORT=8092 python ./main.py
   '';
 
   start-runtime = writeShellScriptBin "start-hd-runtime" ''
       set -e
 
+      source ${prepare-runtime-venv}/bin/prepare-runtime-venv
+
       cd ${runtimeDir}
       export HD_DATABASE_URL="postgresql+psycopg2://$(whoami):hetida_designer_dbpasswd@localhost:5432/hetida_designer_db"
-    
+      export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092"
       echo "WAIT FOR POSTGRES DB"
       sleep 5 # wait for stopping possibly existing postgres instances before trying
       # wait for postgres to be up using the pg_isready utility
@@ -132,6 +214,8 @@ let
 
   init-components = writeShellScriptBin "init-hd-components" ''
       set -e
+      source ${prepare-runtime-venv}/bin/prepare-runtime-venv      
+      
       cd ${runtimeDir}
       # wait for backend
       ${waitfor}/bin/waitfor -t 60 http://localhost:8080/api/info
@@ -145,6 +229,7 @@ let
       frontend: ${start-frontend}/bin/start-hd-frontend
       postgres: ${start-postgres}/bin/start-hd-postgres
       initcomponents: ${init-components}/bin/init-hd-components
+      pythondemoadapter: ${start-python-demo-adapter}/bin/start-python-demo-adapter
       
   '';
   
@@ -203,61 +288,15 @@ in pkgs.mkShell rec {
     OVERMIND_NO_PORT = "1";
     OVERMIND_CAN_DIE = "runtime,initcomponents";
 
-    JUPYTER_CONFIG_DIR =  toString ./.jupyter;
+
 
   shellHook = ''
     set -e
-    SOURCE_DATE_EPOCH=$(date +%s)    
+    SOURCE_DATE_EPOCH=$(date +%s)
 
-    prepare_venv() {
-        local sub_project_dir=$1
-        local venv_target_dir=$2
-        local activate_venv="''${3:-false}"
+    ${prepare-runtime-venv}/bin/prepare-runtime-venv
 
-        if ! "$activate_venv" ; then
-            local PIPT_EXPLICIT_VENV_TARGET_PATH
-            local PIPT_PYTHON_INTERPRETER
-        fi
-        export PIPT_EXPLICIT_VENV_TARGET_PATH="$venv_target_dir"
-        export PIPT_PYTHON_INTERPRETER="${pythonPackages.python.interpreter}"
-        cd "$sub_project_dir"
-        ./pipt venv
-        
-        local OLD_PYTHONPATH="$PYTHONPATH"
-        if ! "$activate_venv" ; then local PYTHONPATH; fi
-        export PYTHONPATH="$PWD"/"$venv_target_dir"/${pythonPackages.python.sitePackages}/:"$OLD_PYTHONPATH"
-        
-        rm -fR "$venv_target_dir"/symbolic_links_to_system_libs
-        mkdir -p "$venv_target_dir"/symbolic_links_to_system_libs/lib
-        ln -s ${zlib}/lib/libz.so.1 "$venv_target_dir"/symbolic_links_to_system_libs/lib/libz.so.1
-        ln -s ${glibc}/lib/libc-2.33.so "$venv_target_dir"/symbolic_links_to_system_libs/lib/libc-2.33.so
-        ln -s ${glibc}/lib/libc-2.33.so.1 "$venv_target_dir"/symbolic_links_to_system_libs/lib/libc-2.33.so.1
-        if ! "$activate_venv" ; then local LD_LIBRARY_PATH; fi
-        export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "$venv_target_dir/symbolic_links_to_system_libs") ]}      
-        ./pipt sync
-
-        if "$activate_venv" ; then
-            source "$venv_target_dir/bin/activate"
-        fi
-    }
-
-    echo "BUILD AND ACTIVATING VENV AT ${venvDirRuntime}"
-    prepare_venv "${projectDir}"/runtime "${venvDirRuntime}" true
-
-    # Test some imports (for system libraries missing / not found)
-    echo "TESTING IMPORTING SOME PYTHON PACKAGES":
-    ${venvDirRuntime}/bin/python -c "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
-
-    cd "${projectDir}"
-
-    echo "Initialize/configure jupyter notebook in virtual environment"
-    mkdir -p ${JUPYTER_CONFIG_DIR}
-    "${venvDirRuntime}"/bin/pip install jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
-
-    mkdir -p ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter
-    echo '{"preferences": {"default_formatter": {"python": ["black"]}},}' > ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter/settings.jupyterlab-setting
-    mkdir -p ${JUPYTER_CONFIG_DIR}/lab/user-settings/@jupyterlab/shortcuts-extension
-    echo '{"shortcuts": [{"command": "jupyterlab_code_formatter:black", "keys": ["Ctrl K", "Ctrl M"], "selector": ".jp-Notebook.jp-mod-editMode"}]}' > ${JUPYTER_CONFIG_DIR}/lab/user-settings/@jupyterlab/shortcuts-extension/shortcuts.jupyterlab-settings
+    ${prepare-python-demo-adapter-venv}/bin/prepare-python-demo-adapter-venv
 
     echo "NODE VERSION"
     which node
