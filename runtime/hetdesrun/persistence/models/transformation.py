@@ -247,11 +247,11 @@ class TransformationRevision(BaseModel):
         return test_wiring
 
     def release(self) -> None:
-        self.released_timestamp = datetime.datetime.utcnow()
+        self.released_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.state = State.RELEASED
 
     def deprecate(self) -> None:
-        self.disabled_timestamp = datetime.datetime.utcnow()
+        self.disabled_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.state = State.DISABLED
 
     def to_code_body(self) -> CodeBody:

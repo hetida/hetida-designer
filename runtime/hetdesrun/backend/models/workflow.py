@@ -3,7 +3,7 @@ from uuid import UUID
 
 import re
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 # pylint: disable=no-name-in-module
 from pydantic import validator, root_validator
@@ -747,7 +747,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         self, documentation: str = "", timestamp: datetime = None
     ) -> TransformationRevision:
         if timestamp is None:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
         return TransformationRevision(
             id=self.id,
             revision_group_id=self.group_id,

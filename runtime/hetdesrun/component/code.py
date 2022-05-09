@@ -4,7 +4,7 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
-import datetime
+from datetime import datetime, timezone
 
 from typing import Optional, List
 from keyword import iskeyword
@@ -116,17 +116,17 @@ def generate_function_header(component_info: ComponentInfo) -> str:
     if "RELEASED" == component_info.state:
         timestamp_str = "\n    " + '"' + "released_timestamp="
         if component_info.released_timestamp is not None:
-            timestamp_str = timestamp_str + str(component_info.released_timestamp)
+            timestamp_str = timestamp_str + component_info.released_timestamp.isoformat()
         else:
-            timestamp_str = timestamp_str + str(datetime.datetime.now())
+            timestamp_str = timestamp_str + datetime.now(timezone.utc).isoformat()
         timestamp_str = timestamp_str + '"'
 
     if "DISABLED" == component_info.state:
         timestamp_str = "\n    " + '"' + "disabled_timestamp="
         if component_info.disabled_timestamp is not None:
-            timestamp_str = timestamp_str + str(component_info.disabled_timestamp)
+            timestamp_str = timestamp_str + component_info.disabled_timestamp.isoformat()
         else:
-            timestamp_str = timestamp_str + str(datetime.datetime.now())
+            timestamp_str = timestamp_str + datetime.now(timezone.utc).isoformat()
         timestamp_str = timestamp_str + '"'
 
     return function_definition_template.format(
