@@ -7,10 +7,6 @@ from sqlalchemy import pool, text
 
 from alembic import context
 
-if os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None) is None:
-    # if this script is called directly, default to local dev setup.
-    os.environ["HD_RUNTIME_ENVIRONMENT_FILE"] = "local_dev.env"
-
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -28,8 +24,6 @@ config = context.config
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-
-logger = logging.getLogger(__name__)
 
 
 def get_target_metadata():
@@ -74,6 +68,12 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    from hetdesrun import configure_logging
+
+    logger = logging.getLogger("hetdesrun")
+
+    alembic_logger = logging.getLogger("alembic")
+    configure_logging(alembic_logger)
 
     from hetdesrun.persistence import get_db_engine
 
@@ -85,15 +85,23 @@ def run_migrations_online():
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=get_target_metadata())
-
+        logger.info("Connected to db for migrations")
         with context.begin_transaction():
+            logger.info(
+                "Beginning transaction. Dialect name is %s", connection.dialect.name
+            )
             if connection.dialect.name == "postgresql":
+                logger.info("Detected postgresql driver. Ensuring versioning table")
                 # Make sure no two processed can migrate at the same time
                 context.get_context()._ensure_version_table()  # pylint: disable=protected-access
+                logger.info(
+                    "Ensured versioning table. Now locking alembic version table"
+                )
                 connection.execute(
                     text("LOCK TABLE alembic_version IN ACCESS EXCLUSIVE MODE")
                 )
                 # Postgres lock is released when transaction ends
+            logger.info("actually starting to run migrations")
             context.run_migrations()
 
 

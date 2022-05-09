@@ -1,3 +1,11 @@
+## 0.7.6
+* fix db config management bug
+* add more logging
+## 0.7.5
+* fix db config password secret handling
+## 0.7.4
+* fix DB user config environment variable name
+* small documentation fixes
 ## 0.7.3
 * Allow special characters in adapter source/sink ids
 * small bug fixes

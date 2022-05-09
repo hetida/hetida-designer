@@ -7,8 +7,6 @@ timeseries (where the later can be understood as special dataframe/table)
 from typing import List, Tuple, Literal, Dict, Union, Type
 from posixpath import join as posix_urljoin
 
-from urllib.parse import quote
-
 import logging
 import datetime
 
