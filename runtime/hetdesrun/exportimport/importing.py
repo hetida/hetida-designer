@@ -21,6 +21,7 @@ from hetdesrun.utils import (
 )
 
 from hetdesrun.component.load import (
+    ComponentCodeImportError,
     import_func_from_code,
     module_path_from_code,
 )
@@ -62,14 +63,20 @@ def load_python_file(path: str) -> Optional[str]:
     return python_file
 
 
-def transformation_revision_from_python_code(code: str) -> Any:
+def transformation_revision_from_python_code(code: str, path: str) -> Any:
     """Get the TransformationRevision as a json file from just the Python code of some component
     This uses information from the register decorator and docstrings.
     Note: This needs to import the code module, which may have arbitrary side effects and security
     implications.
     """
 
-    main_func = import_func_from_code(code, "main")
+    try:
+        main_func = import_func_from_code(code, "main")
+    except ComponentCodeImportError as e:
+        msg = (
+            f"Could not load function from {path}"
+        )
+        logging.info(msg)
 
     module_path = module_path_from_code(code)
     mod = importlib.import_module(module_path)
@@ -264,7 +271,8 @@ def import_transformations(
                     python_file = load_python_file(path)
                     if python_file is not None:
                         transformation_json = transformation_revision_from_python_code(
-                            python_file
+                            python_file,
+                            path
                         )
                 if path.endswith(".json"):
                     logger.info("Loading transformation from json file %s", path)
