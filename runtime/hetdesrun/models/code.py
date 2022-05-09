@@ -1,6 +1,7 @@
 from uuid import UUID, uuid4
 from typing import List, Dict, Optional
 import re
+import datetime
 
 from pydantic import (
     BaseModel,
@@ -10,6 +11,7 @@ from pydantic import (
 )  # pylint: disable=no-name-in-module
 
 from hetdesrun.datatypes import DataType
+from hetdesrun.utils import State
 from hetdesrun.models.base import Result
 from hetdesrun.models.component import ComponentInput, ComponentOutput
 
@@ -161,12 +163,15 @@ class ComponentInfo(BaseModel):
 
     input_types_by_name: Dict[str, DataType]
     output_types_by_name: Dict[str, DataType]
-    id: UUID = Field(default_factory=uuid4)
-    revision_group_id: UUID = Field(default_factory=uuid4)
     name: NonEmptyValidStr
     category: NonEmptyValidStr
     description: ValidStr
     version_tag: ShortNonEmptyValidStr
+    id: UUID = Field(default_factory=uuid4)
+    revision_group_id: UUID = Field(default_factory=uuid4)
+    state: State
+    released_timestamp: Optional[datetime.datetime] = None
+    disabled_timestamp: Optional[datetime.datetime] = None
     is_coroutine: bool = False
 
     # pylint: disable=no-self-argument,no-self-use
@@ -181,10 +186,10 @@ class ComponentInfo(BaseModel):
         return ComponentInfo(
             input_types_by_name={io.name: io.type for io in code_body.inputs},
             output_types_by_name={io.name: io.type for io in code_body.outputs},
-            id=code_body.id,
-            revision_group_id=code_body.revision_group_id,
             name=code_body.name,
             category=code_body.category,
             description=code_body.description,
             version_tag=code_body.version_tag,
+            id=code_body.id,
+            revision_group_id=code_body.revision_group_id,
         )
