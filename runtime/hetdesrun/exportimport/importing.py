@@ -5,14 +5,13 @@ import importlib
 
 from uuid import UUID
 from posixpath import join as posix_urljoin
-from typing import List, Dict, Any, Union, Optional
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 import requests
 
 from hetdesrun.utils import (
     Type,
-    State,
     get_uuid_from_seed,
     get_auth_headers,
     get_backend_basic_auth,
@@ -74,7 +73,8 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
         main_func = import_func_from_code(code, "main")
     except ComponentCodeImportError as e:
         msg = (
-            f"Could not load function from {path}"
+            f"Could not load function from {path}\n"
+            f"due to error during import of component code:\n{e}"
         )
         logging.info(msg)
 
@@ -111,19 +111,24 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
 
         component_outputs = main_func.registered_metadata["outputs"]  # type: ignore
 
+        component_state = main_func.registered_metadata["state"] or "RELEASED"  # type: ignore
+
+        component_released_timestamp = (
+            main_func.registered_metadata["released_timestamp"] or None  # type: ignore
+        )
+
+        component_disabled_timestamp = (
+            main_func.registered_metadata["disabled_timestamp"] or None  # type: ignore
+        )
+
     elif "COMPONENT_INFO" in code:
         info_dict = mod.COMPONENT_INFO
-        component_name = (
-            info_dict["name"] if "name" in info_dict else "Unnamed Component"
-        )
-        component_description = (
-            info_dict["description"]
-            if "description" in info_dict
-            else "No description provided"
-        )
-        component_category = (
-            info_dict["category"] if "category" in info_dict else "Other"
-        )
+        component_inputs = info_dict["inputs"] or {}
+        component_outputs = info_dict["outputs"] or {}
+        component_name = info_dict["name"] or "Unnamed Component"
+        component_description = info_dict["description"] or "No description provided"
+        component_category = info_dict["category"] or "Other"
+        component_tag = info_dict["version_tag"] or "1.0.0"
         component_id = (
             info_dict["id"]
             if "id" in info_dict
@@ -134,11 +139,7 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
             if "revision_group_id" in info_dict
             else get_uuid_from_seed(str(component_name))
         )
-        component_tag = (
-            info_dict["version_tag"] if "version_tag" in info_dict else "1.0.0"
-        )
-        component_inputs = info_dict["inputs"] if "inputs" in info_dict else {}
-        component_outputs = info_dict["outputs"] if "outputs" in info_dict else {}
+        component_state = info_dict["category"] or "Other"
 
     component_code = update_code(
         existing_code=code,
@@ -148,9 +149,12 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
             name=component_name,
             description=component_description,
             category=component_category,
+            version_tag=component_tag,
             id=component_id,
             revision_group_id=component_group_id,
-            version_tag=component_tag,
+            state=component_state,
+            released_timestamp=component_released_timestamp,
+            disabled_timestamp=component_disabled_timestamp,
         ),
     )
 
@@ -164,8 +168,9 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
         category=component_category,
         version_tag=component_tag,
         released_timestamp=datetime.now(),
-        disabled_timestamp=None,
-        state=State.RELEASED,
+        disabled_timestamp=component_released_timestamp,
+        disabled_timestamp=component_disabled_timestamp,
+        state=component_state,
         type=Type.COMPONENT,
         documentation=component_documentation,
         io_interface=IOInterface(
@@ -271,8 +276,7 @@ def import_transformations(
                     python_file = load_python_file(path)
                     if python_file is not None:
                         transformation_json = transformation_revision_from_python_code(
-                            python_file,
-                            path
+                            python_file, path
                         )
                 if path.endswith(".json"):
                     logger.info("Loading transformation from json file %s", path)
