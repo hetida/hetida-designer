@@ -3,13 +3,20 @@ FROM python:3.9.9-slim-buster as base
 
 ENV TIMEOUT=900
 
-COPY ./runtime/requirements.txt /requirements.txt
-COPY ./runtime/requirements-dev.txt /requirements-dev.txt
+# Copy relevant files
+COPY ./runtime/pipt_locks.env /app/pipt_locks.env
+COPY ./runtime/pipt_config.env /app/pipt_config.env
+COPY ./runtime/requirements-base.txt /app/requirements-base.txt
+COPY ./runtime/requirements.txt /app/requirements.txt
+COPY ./runtime/requirements-dev.txt /app/requirements-dev.txt
+COPY ./runtime/pipt /app/pipt
 
 RUN apt-get -y update && apt-get -y install libpq-dev gcc && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --no-cache-dir --upgrade pip==21.3.1 pip-tools==6.4.0 wheel==0.37.0
-RUN pip-sync --pip-args='--no-cache-dir' /requirements.txt
+WORKDIR /app
+ENV PIPT_PIP_INSTALL_ARGS "--no-cache-dir"
+ENV PIPT_PIP_SYNC_ARGS "--no-cache-dir"
+RUN ./pipt sync-system --prod
 
 ##### Intermediate stage with actual application content
 FROM base AS application_base
@@ -26,15 +33,13 @@ RUN chmod -R a+rw /mnt/obj_repo
 FROM application_base AS prod
 RUN useradd -m hd_app
 USER hd_app
-WORKDIR /app
 ENV PORT 8090
 EXPOSE 8090
 CMD ["/app/start.sh"]
 
 ##### Test stage
 FROM application_base AS test
-WORKDIR /app
-RUN pip-sync --pip-args='--no-cache-dir' /requirements.txt /requirements-dev.txt
+RUN ./pipt sync-system --dev
 RUN python3 -m pytest --cov=hetdesrun --cov-report xml --junitxml test_results.xml tests
 RUN bash /app/scripts/gen_pylint_report.sh
 

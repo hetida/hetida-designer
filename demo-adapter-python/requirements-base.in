@@ -1,0 +1,3 @@
+pip<22
+wheel
+pip-tools

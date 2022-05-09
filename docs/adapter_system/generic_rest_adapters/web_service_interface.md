@@ -125,7 +125,7 @@ In general it is of course necessary that the adapter implementation actually pr
 
 ### Sources sinks and thingNodes endpoints
 
-These endpoints provide direct information on sources and sinks and allow to search/filter them. They are used by the user interface to provide fulltext filtering functionality.
+These endpoints provide direct information on sources and sinks and allow to search/filter them. They are used by the user interface to provide fulltext filtering functionality and to store and load wirings in the test execution dialog.
 
 #### /sources/{id} (id is optional) (GET)
 

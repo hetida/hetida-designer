@@ -17,9 +17,9 @@ runtime/.pytest_cache
 runtime/.mypy_cache
 runtime/**/venv
 runtime/**/lab
-runtime/**/nix_venv_hd_dev
+runtime/**/nix_venv_*
 demo-adapter-python/**/lab
 demo-adapter-python/**/venv
+demo-adapter-python/**/nix_venv_*
 .tmp
 **/.overmind.sock
-

@@ -64,10 +64,7 @@ class RuntimeConfig(BaseSettings):
     ensure_db_schema: bool = Field(
         True,
         env="HD_ENSURE_DB_SCHEMA",
-        description=(
-            "Whether DB and DB schema should be created if not present"
-            " and if running as backend."
-        ),
+        description=("Currently not in use!"),
     )
 
     allowed_origins: str = Field(
@@ -97,7 +94,7 @@ class RuntimeConfig(BaseSettings):
         "postgresql+psycopg2", env="HD_DB_DRIVERNAME", example="postgresql+psycopg2"
     )
 
-    sqlalchemy_db_user: str = Field("hetida_designer_dbuser", env="HD_DB_PASSWORD")
+    sqlalchemy_db_user: str = Field("hetida_designer_dbuser", env="HD_DB_USER")
 
     sqlalchemy_db_password: SecretStr = Field(
         SecretStr("hetida_designer_dbpasswd"), env="HD_DB_PASSWORD"
@@ -314,11 +311,17 @@ class RuntimeConfig(BaseSettings):
     def database_url(
         cls, v: Optional[Union[SecretStr, SQLAlchemy_DB_URL]], values: dict
     ) -> Optional[Union[SecretStr, SQLAlchemy_DB_URL]]:
+
         if v is None:
+            pw_secret = values["sqlalchemy_db_password"]
             return SQLAlchemy_DB_URL.create(
                 drivername=values["sqlalchemy_db_drivername"],
                 username=values["sqlalchemy_db_user"],
-                password=values["sqlalchemy_db_password"],
+                password=(
+                    pw_secret.get_secret_value()
+                    if isinstance(pw_secret, SecretStr)
+                    else pw_secret
+                ),
                 host=values["sqlalchemy_db_host"],
                 port=values["sqlalchemy_db_port"],
                 database=values["sqlalchemy_db_database"],
