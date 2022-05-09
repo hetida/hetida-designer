@@ -4,6 +4,7 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
+import datetime
 
 from typing import Optional, List
 from keyword import iskeyword
@@ -24,11 +25,12 @@ COMPONENT_INFO = {opening_bracket}
     "inputs": {input_dict_content},
     "outputs": {output_dict_content},
     "name": {name},
-    "description": {description},
     "category": {category},
+    "description": {description},
+    "version_tag": {version_tag},
     "id": {id},
     "revision_group_id": {revision_group_id},
-    "version_tag": {version_tag},
+    "state": {state},{timestamp}
 {closing_bracket}
 
 
@@ -109,15 +111,35 @@ def generate_function_header(component_info: ComponentInfo) -> str:
             + ",\n    }"
         )
 
+    timestamp_str = ""
+
+    if "RELEASED" == component_info.state:
+        timestamp_str = "\n    " + '"' + "released_timestamp="
+        if component_info.released_timestamp is not None:
+            timestamp_str = timestamp_str + str(component_info.released_timestamp)
+        else:
+            timestamp_str = timestamp_str + str(datetime.datetime.now())
+        timestamp_str = timestamp_str + '"'
+
+    if "DISABLED" == component_info.state:
+        timestamp_str = "\n    " + '"' + "disabled_timestamp="
+        if component_info.disabled_timestamp is not None:
+            timestamp_str = timestamp_str + str(component_info.disabled_timestamp)
+        else:
+            timestamp_str = timestamp_str + str(datetime.datetime.now())
+        timestamp_str = timestamp_str + '"'
+
     return function_definition_template.format(
         input_dict_content=input_dict_str,
         output_dict_content=output_dict_str,
         name='"' + component_info.name + '"',
         description='"' + component_info.description + '"',
         category='"' + component_info.category + '"',
+        version_tag='"' + component_info.version_tag + '"',
         id='"' + str(component_info.id) + '"',
         revision_group_id='"' + str(component_info.revision_group_id) + '"',
-        version_tag='"' + component_info.version_tag + '"',
+        state='"' + component_info.state + '"',
+        timestamp=timestamp_str,
         params_list=param_list_str,
         main_func_declaration_start=main_func_declaration_start,
         opening_bracket="{",
