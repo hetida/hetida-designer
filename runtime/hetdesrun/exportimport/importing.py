@@ -155,17 +155,6 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     else:
         raise ComponentCodeImportError
 
-    print(component_inputs)
-    print(component_outputs)
-    print(component_name)
-    print(component_description)
-    print(component_category)
-    print(component_tag)
-    print(component_id)
-    print(component_group_id)
-    print(component_state)
-    print(component_released_timestamp)
-    print(component_disabled_timestamp)
     component_code = update_code(
         existing_code=code,
         component_info=ComponentInfo(
@@ -226,7 +215,10 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
 
 # Base function to import a transformation revision
 def import_transformation(
-    tr_json: dict, path: str, strip_wirings: bool = False
+    tr_json: dict,
+    path: str,
+    strip_wirings: bool = False,
+    update_component_code: bool = True,
 ) -> None:
 
     headers = get_auth_headers()
@@ -234,11 +226,17 @@ def import_transformation(
     if strip_wirings:
         tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
 
+    update_component_code_str = (
+        "update_component_code=True" if update_component_code else "update_component_code=False"
+    )
+
     response = requests.put(
         posix_urljoin(
             runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
         )
-        + "?allow_overwrite_released=True",
+        + "?allow_overwrite_released=True"
+        + "&"
+        + update_component_code_str,
         verify=runtime_config.hd_backend_verify_certs,
         json=tr_json,
         auth=get_backend_basic_auth()
@@ -276,6 +274,7 @@ def import_transformations(
     names: Optional[List[str]] = None,
     category: Optional[str] = None,
     strip_wirings: bool = False,
+    update_component_code: bool = True,
 ) -> None:
     """
     This function imports all transformations together with their documentations
@@ -365,15 +364,22 @@ def import_transformations(
                     transformation,
                     path_dict[transformation_id],
                     strip_wirings=strip_wirings,
+                    update_component_code=update_component_code,
                 )
 
     logger.info("finished importing")
 
 
-def import_all(download_path: str, strip_wirings: bool = False) -> None:
+def import_all(
+    download_path: str, strip_wirings: bool = False, update_component_code: bool = True
+) -> None:
     import_transformations(
-        os.path.join(download_path, "components"), strip_wirings=strip_wirings
+        os.path.join(download_path, "components"),
+        strip_wirings=strip_wirings,
+        update_component_code=update_component_code,
     )
     import_transformations(
-        os.path.join(download_path, "workflows"), strip_wirings=strip_wirings
+        os.path.join(download_path, "workflows"),
+        strip_wirings=strip_wirings,
+        update_component_code=update_component_code,
     )
