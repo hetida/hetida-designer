@@ -112,20 +112,18 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
 
         component_outputs = main_func.registered_metadata["outputs"]  # type: ignore
 
-        component_state = main_func.registered_metadata.get("state", "RELEASED")  # type: ignore
+        component_state = main_func.registered_metadata["state"] or "RELEASED"  # type: ignore
 
-        component_released_timestamp = main_func.registered_metadata.get(  # type: ignore
-            "released_timestamp",
+        component_released_timestamp = main_func.registered_metadata["released_timestamp"] or (  # type: ignore
             datetime.now(timezone.utc).isoformat()
             if component_state == "RELEASED"
-            else None,
+            else None
         )
 
-        component_disabled_timestamp = main_func.registered_metadata.get(  # type: ignore
-            "disabled_timestamp",
+        component_disabled_timestamp = main_func.registered_metadata["disabled_timestamp"] or (  # type: ignore
             datetime.now(timezone.utc).isoformat()
             if component_state == "DISABLED"
-            else None,
+            else None
         )
 
     elif "COMPONENT_INFO" in code:
