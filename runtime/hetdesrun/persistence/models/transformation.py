@@ -261,8 +261,12 @@ class TransformationRevision(BaseModel):
                 f"into a component info since its type is not COMPONENT"
             )
         return ComponentInfo(
-            input_types_by_name={io.name: io.data_type for io in self.io_interface.inputs},
-            output_types_by_name={io.name: io.data_type for io in self.io_interface.outputs},
+            input_types_by_name={
+                io.name: io.data_type for io in self.io_interface.inputs
+            },
+            output_types_by_name={
+                io.name: io.data_type for io in self.io_interface.outputs
+            },
             name=self.name,
             category=self.category,
             description=self.description,
@@ -271,7 +275,7 @@ class TransformationRevision(BaseModel):
             revision_group_id=self.revision_group_id,
             state=self.state,
             released_timestamp=self.released_timestamp,
-            disabled_timestamp=self.disabled_timestamp
+            disabled_timestamp=self.disabled_timestamp,
         )
 
     def to_component_revision(self) -> ComponentRevision:
