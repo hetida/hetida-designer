@@ -6,7 +6,7 @@ import importlib
 from uuid import UUID
 from posixpath import join as posix_urljoin
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 
@@ -85,6 +85,7 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     mod_docstring_lines = mod_docstring.splitlines()
 
     if hasattr(main_func, "registered_metadata"):
+        logger.info("Get component info from registered metadata")
         component_name = main_func.registered_metadata["name"] or (  # type: ignore
             "Unnamed Component"
         )
@@ -114,14 +115,21 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
         component_state = main_func.registered_metadata.get("state", "RELEASED")  # type: ignore
 
         component_released_timestamp = main_func.registered_metadata.get(  # type: ignore
-            "released_timestamp", None
+            "released_timestamp",
+            datetime.now(timezone.utc).isoformat()
+            if component_state == "RELEASED"
+            else None,
         )
 
         component_disabled_timestamp = main_func.registered_metadata.get(  # type: ignore
-            "disabled_timestamp", None
+            "disabled_timestamp",
+            datetime.now(timezone.utc).isoformat()
+            if component_state == "DISABLED"
+            else None,
         )
 
     elif "COMPONENT_INFO" in code:
+        logger.info("Get component info from dictionary in code")
         info_dict = mod.COMPONENT_INFO
         component_inputs = info_dict.get("inputs", {})
         component_outputs = info_dict.get("outputs", {})
@@ -134,9 +142,32 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
             "revision_group_id", get_uuid_from_seed(str(component_name))
         )
         component_state = info_dict.get("state", "RELEASED")
-        component_released_timestamp = info_dict.get("released_timestamp")
-        component_disabled_timestamp = info_dict.get("released_timestamp")
+        component_released_timestamp = info_dict.get(
+            "released_timestamp",
+            datetime.now(timezone.utc).isoformat()
+            if component_state == "RELEASED"
+            else None,
+        )
+        component_disabled_timestamp = info_dict.get(
+            "released_timestamp",
+            datetime.now(timezone.utc).isoformat()
+            if component_state == "DISABLED"
+            else None,
+        )
+    else:
+        raise ComponentCodeImportError
 
+    print(component_inputs)
+    print(component_outputs)
+    print(component_name)
+    print(component_description)
+    print(component_category)
+    print(component_tag)
+    print(component_id)
+    print(component_group_id)
+    print(component_state)
+    print(component_released_timestamp)
+    print(component_disabled_timestamp)
     component_code = update_code(
         existing_code=code,
         component_info=ComponentInfo(
