@@ -131,6 +131,7 @@ def parse_component_node(
         if name_prefix != ""
         else component_node_name,
         inputs=None,  # inputs are added later by the surrounding workflow
+        has_only_plot_outputs=comp_rev.is_pure_plot_component(),
         operator_hierarchical_id=id_prefix + " : " + component_node.id,
     )
 

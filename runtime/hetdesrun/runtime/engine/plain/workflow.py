@@ -22,9 +22,13 @@ from pydantic import ValidationError
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
 from hetdesrun.runtime import runtime_component_logger
+from hetdesrun.runtime.context import execution_context
 from hetdesrun.runtime.logging import execution_context_filter
 
-from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
+from hetdesrun.runtime.engine.plain.execution import (
+    gen_default_return_for_plot_func,
+    run_func_or_coroutine,
+)
 
 
 from hetdesrun.runtime.exceptions import (
@@ -82,6 +86,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         self,
         func: Union[Coroutine, Callable],
         inputs: Optional[Dict[str, Tuple[Node, str]]] = None,
+        has_only_plot_outputs: bool = False,
         operator_hierarchical_id: str = "UNKNOWN",
         component_id: str = "UNKNOWN",
         operator_hierarchical_name: str = "UNKNOWN",
@@ -118,6 +123,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
 
         self._in_computation = False  # to detect cycles
 
+        self.has_only_plot_outputs = has_only_plot_outputs
         self.operator_hierarchical_id = operator_hierarchical_id
         self.operator_hierarchical_name = operator_hierarchical_name
         self.component_id = component_id
@@ -249,6 +255,11 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             currently_executed_component_id=self.component_id,
             currently_executed_component_node_name=self.operator_hierarchical_name,
         )
+
+        exe_context_config = execution_context.get()
+
+        if self.has_only_plot_outputs and exe_context_config.run_pure_plot_operators:
+            return gen_default_return_for_plot_func({})
 
         logger.info(
             "Starting computation for operator %s of type component with operator id %s",
