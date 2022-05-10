@@ -33,16 +33,15 @@ async def test_execute_for_component_without_hetdesrun_imports(clean_test_db_eng
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
-        with open(
-            os.path.join(
+        path = os.path.join(
                 "tests",
                 "data",
                 "components",
                 "alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.py",
             )
-        ) as f:
+        with open(path) as f:
             code = f.read()
 
-        tr_json = transformation_revision_from_python_code(code)
+        tr_json = transformation_revision_from_python_code(code, path)
 
         assert tr_json["id"] == "38f168ef-cb06-d89c-79b3-0cd823f32e9d"

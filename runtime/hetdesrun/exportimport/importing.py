@@ -111,35 +111,31 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
 
         component_outputs = main_func.registered_metadata["outputs"]  # type: ignore
 
-        component_state = main_func.registered_metadata["state"] or "RELEASED"  # type: ignore
+        component_state = main_func.registered_metadata.get("state", "RELEASED")  # type: ignore
 
-        component_released_timestamp = (
-            main_func.registered_metadata["released_timestamp"] or None  # type: ignore
+        component_released_timestamp = main_func.registered_metadata.get(  # type: ignore
+            "released_timestamp", None
         )
 
-        component_disabled_timestamp = (
-            main_func.registered_metadata["disabled_timestamp"] or None  # type: ignore
+        component_disabled_timestamp = main_func.registered_metadata.get(  # type: ignore
+            "disabled_timestamp", None
         )
 
     elif "COMPONENT_INFO" in code:
         info_dict = mod.COMPONENT_INFO
-        component_inputs = info_dict["inputs"] or {}
-        component_outputs = info_dict["outputs"] or {}
-        component_name = info_dict["name"] or "Unnamed Component"
-        component_description = info_dict["description"] or "No description provided"
-        component_category = info_dict["category"] or "Other"
-        component_tag = info_dict["version_tag"] or "1.0.0"
-        component_id = (
-            info_dict["id"]
-            if "id" in info_dict
-            else get_uuid_from_seed(str(component_name))
+        component_inputs = info_dict.get("inputs", {})
+        component_outputs = info_dict.get("outputs", {})
+        component_name = info_dict.get("name", "Unnamed Component")
+        component_description = info_dict.get("description", "No description provided")
+        component_category = info_dict.get("category", "Other")
+        component_tag = info_dict.get("version_tag", "1.0.0")
+        component_id = info_dict.get("id", get_uuid_from_seed(str(component_name)))
+        component_group_id = info_dict.get(
+            "revision_group_id", get_uuid_from_seed(str(component_name))
         )
-        component_group_id = (
-            info_dict["revision_group_id"]
-            if "revision_group_id" in info_dict
-            else get_uuid_from_seed(str(component_name))
-        )
-        component_state = info_dict["category"] or "Other"
+        component_state = info_dict.get("state", "RELEASED")
+        component_released_timestamp = info_dict.get("released_timestamp")
+        component_disabled_timestamp = info_dict.get("released_timestamp")
 
     component_code = update_code(
         existing_code=code,
@@ -167,11 +163,10 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
         description=component_description,
         category=component_category,
         version_tag=component_tag,
-        released_timestamp=datetime.now(),
-        disabled_timestamp=component_released_timestamp,
-        disabled_timestamp=component_disabled_timestamp,
-        state=component_state,
         type=Type.COMPONENT,
+        state=component_state,
+        released_timestamp=component_released_timestamp,
+        disabled_timestamp=component_disabled_timestamp,
         documentation=component_documentation,
         io_interface=IOInterface(
             inputs=[
