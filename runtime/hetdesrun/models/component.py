@@ -96,6 +96,12 @@ class ComponentRevision(BaseModel):
     ) -> List[ComponentOutput]:
         return names_unique(cls, outputs)
 
+    def is_pure_plot_component(self) -> bool:
+        # in case of an empty output list all will yield true
+        return len(self.outputs) > 0 and all(
+            output.type == DataType.PlotlyJson for output in self.outputs
+        )
+
 
 class ComponentNode(AbstractNode):
     component_uuid: str  # ref to the component
