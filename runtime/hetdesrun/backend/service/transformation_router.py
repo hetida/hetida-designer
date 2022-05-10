@@ -314,6 +314,9 @@ async def update_transformation_revision(
     allow_overwrite_released: bool = Query(
         False, description="Only set to True for deployment"
     ),
+    update_component_code: bool = Query(
+        True, description="Only set to False for deployment"
+    ),
 ) -> TransformationRevision:
     """Update or store a transformation revision in the data base.
 
@@ -355,9 +358,10 @@ async def update_transformation_revision(
         # with an id and either create or update the transformation revision
         pass
 
-    updated_transformation_revision = update_content(
-        existing_transformation_revision, updated_transformation_revision
-    )
+    if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
+        updated_transformation_revision = update_content(
+            existing_transformation_revision, updated_transformation_revision
+        )
 
     updated_transformation_revision = if_applicable_release_or_deprecate(
         existing_transformation_revision, updated_transformation_revision
