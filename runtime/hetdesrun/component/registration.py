@@ -37,6 +37,9 @@ def register(
     id: Optional[str] = None,
     revision_group_id: Optional[str] = None,
     version_tag: Optional[str] = None,
+    state: Optional[str] = None,
+    released_timestamp: Optional[str] = None,
+    disabled_timestamp: Optional[str] = None,
 ) -> Callable[[Callable], Callable]:
     """Additonal features for component entrypoint functions
 
