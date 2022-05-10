@@ -103,9 +103,12 @@ def register(
             "name": name,
             "description": description,
             "category": category,
+            "version_tag": version_tag,
             "id": id,
             "revision_group_id": revision_group_id,
-            "version_tag": version_tag,
+            "state": state,
+            "released_timestamp": released_timestamp,
+            "disabled_timestamp": disabled_timestamp,
         }
 
         return return_func_or_coro
