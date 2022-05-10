@@ -1,5 +1,5 @@
 from uuid import UUID, uuid4
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 import re
 import datetime
 
@@ -12,8 +12,6 @@ from pydantic import (
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.utils import State
-from hetdesrun.models.base import Result
-from hetdesrun.models.component import ComponentInput, ComponentOutput
 
 # allow only some special characters for category, description, name and version tag
 ALLOWED_CHARS_RAW_STRING = (
@@ -109,49 +107,6 @@ function called "main".
     uuid: UUID
 
 
-class CodeBody(BaseModel):
-    code: str = Field(
-        None,
-        title="Python source code of a component",
-        description="source code of a component",
-        example=example_code,
-    )
-    function_name: str = Field(
-        "main",
-        example="main",
-        title="Entry point function name",
-        description="The name of the function in the provided code module"
-        "which is the entrypoint for this component",
-    )
-    inputs: List[ComponentInput]
-    outputs: List[ComponentOutput]
-    name: str
-    description: str
-    category: str
-    id: UUID
-    revision_group_id: UUID
-    version_tag: str
-
-
-class GeneratedCode(BaseModel):
-    code: str = Field(
-        ...,
-        title="Python source code of a component",
-        description="source code of a component",
-        example=example_code,
-    )
-
-
-class CodeCheckResult(BaseModel):
-    result: Result = Field(
-        ...,
-        description="one of " + ", ".join(['"' + x.value + '"' for x in list(Result)]),
-        example=Result.OK,
-    )
-    error: Optional[str] = Field(None, description="error string")
-    traceback: Optional[str] = Field(None, description="traceback")
-
-
 class ComponentInfo(BaseModel):
     """Provide meta-information about component.
 
@@ -180,16 +135,3 @@ class ComponentInfo(BaseModel):
         if v.lower() == "latest":
             raise ValueError('version_tag is not allowed to be "latest"')
         return v
-
-    @classmethod
-    def from_code_body(cls, code_body: CodeBody) -> "ComponentInfo":
-        return ComponentInfo(
-            input_types_by_name={io.name: io.type for io in code_body.inputs},
-            output_types_by_name={io.name: io.type for io in code_body.outputs},
-            name=code_body.name,
-            category=code_body.category,
-            description=code_body.description,
-            version_tag=code_body.version_tag,
-            id=code_body.id,
-            revision_group_id=code_body.revision_group_id,
-        )

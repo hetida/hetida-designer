@@ -101,9 +101,7 @@ async def create_component_revision(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     logger.debug("generate code")
-    transformation_revision.content = generate_code(
-        transformation_revision.to_code_body()
-    )
+    transformation_revision.content = generate_code(transformation_revision)
     logger.debug("generated code:\n%s", component_dto.code)
 
     try:
