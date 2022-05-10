@@ -680,7 +680,7 @@ async def test_execute_for_transformation_revision(
             patched_session,
         ):
             tr_component_1 = TransformationRevision(**tr_json_component_1)
-            tr_component_1.content = generate_code(tr_component_1.to_code_body())
+            tr_component_1.content = generate_code(tr_component_1)
             store_single_transformation_revision(tr_component_1)
             tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
 
@@ -741,9 +741,7 @@ async def test_execute_for_separate_runtime_container(
                     return_value=resp_mock,
                 ) as mocked_post:
                     tr_component_1 = TransformationRevision(**tr_json_component_1)
-                    tr_component_1.content = generate_code(
-                        tr_component_1.to_code_body()
-                    )
+                    tr_component_1.content = generate_code(tr_component_1)
                     store_single_transformation_revision(tr_component_1)
                     tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
 
@@ -787,15 +785,13 @@ async def test_execute_latest_for_transformation_revision_works(
             patched_session,
         ):
             tr_component_1 = TransformationRevision(**tr_json_component_1)
-            tr_component_1.content = generate_code(tr_component_1.to_code_body())
+            tr_component_1.content = generate_code(tr_component_1)
             store_single_transformation_revision(tr_component_1)
 
             tr_component_1_new_revision = TransformationRevision(
                 **tr_json_component_1_new_revision
             )
-            tr_component_1_new_revision.content = generate_code(
-                tr_component_1_new_revision.to_code_body()
-            )
+            tr_component_1_new_revision.content = generate_code(tr_component_1_new_revision)
             tr_component_1_new_revision.release()
             store_single_transformation_revision(tr_component_1_new_revision)
 
@@ -837,7 +833,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
             patched_session,
         ):
             tr_component_1 = TransformationRevision(**tr_json_component_1)
-            tr_component_1.content = generate_code(tr_component_1.to_code_body())
+            tr_component_1.content = generate_code(tr_component_1)
 
             exec_latest_by_group_id_input = ExecLatestByGroupIdInput(
                 revision_group_id=tr_component_1.revision_group_id,
