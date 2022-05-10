@@ -114,13 +114,17 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
 
         component_state = main_func.registered_metadata["state"] or "RELEASED"  # type: ignore
 
-        component_released_timestamp = main_func.registered_metadata["released_timestamp"] or (  # type: ignore
+        component_released_timestamp = main_func.registered_metadata[  # type: ignore
+            "released_timestamp"
+        ] or (
             datetime.now(timezone.utc).isoformat()
             if component_state == "RELEASED"
             else None
         )
 
-        component_disabled_timestamp = main_func.registered_metadata["disabled_timestamp"] or (  # type: ignore
+        component_disabled_timestamp = main_func.registered_metadata[  # type: ignore
+            "disabled_timestamp"
+        ] or (
             datetime.now(timezone.utc).isoformat()
             if component_state == "DISABLED"
             else None
@@ -227,7 +231,9 @@ def import_transformation(
         tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
 
     update_component_code_str = (
-        "update_component_code=True" if update_component_code else "update_component_code=False"
+        "update_component_code=True"
+        if update_component_code
+        else "update_component_code=False"
     )
 
     response = requests.put(
