@@ -227,13 +227,28 @@ export class HetidaDesigner {
       .type(inputText);
   }
 
+  public async typeInTextareaPosition(
+    textareaPosition: number,
+    textareaText: string
+  ): Promise<void> {
+    if (textareaPosition < 0 || textareaText === '') {
+      throw new Error('ERROR: Textarea position or text must not be empty');
+    }
+
+    await this.page.locator(`textarea >> nth=${textareaPosition}`).click();
+    await this.page.press(`textarea >> nth=${textareaPosition}`, 'Control+a');
+    await this.page
+      .locator(`textarea >> nth=${textareaPosition}`)
+      .type(textareaText);
+  }
+
   public async importJson(importData: string): Promise<void> {
     if (importData === '') {
       throw new Error('ERROR: Import data must not be empty');
     }
 
-    await this.page.locator('.view-line').click();
-    await this.page.press('.view-line', 'Control+a');
-    await this.page.locator('.view-line').type(importData);
+    await this.page.locator('.view-lines').click();
+    await this.page.press('.view-lines', 'Control+a');
+    await this.page.locator('.view-lines').type(importData);
   }
 }
