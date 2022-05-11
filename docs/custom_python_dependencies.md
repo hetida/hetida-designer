@@ -49,6 +49,7 @@ To do this, start by creating a file `requirements-custom.in` (here in the runti
 
 ```
 -c requirements.txt
+-c requirements-base.txt
 xgboost
 ```
 
@@ -61,10 +62,12 @@ FROM hetida/designer-runtime
 
 USER root
 
-COPY ./runtime/requirements-custom.in /requirements-custom.in
+COPY ./runtime/requirements-custom.in /app/requirements-custom.in
 
-RUN pip-compile --generate-hashes /requirements-custom.in
-RUN pip-sync /requirements.txt /requirements-custom.txt
+WORKDIR /app
+
+RUN pip-compile --generate-hashes ./requirements-custom.in
+RUN pip-sync ./requirements-base.txt ./requirements.txt ./requirements-custom.txt
 
 USER hdrt_app
 ```
