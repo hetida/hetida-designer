@@ -19,7 +19,7 @@ from hetdesrun.component.load import (
     ComponentCodeImportError,
 )
 
-from hetdesrun.datatypes import NamedDataTypedValue
+from hetdesrun.datatypes import NamedDataTypedValue, DataType
 
 logger = logging.getLogger(__name__)
 
@@ -270,6 +270,9 @@ def recursively_parse_workflow_node(
 
     # Obtain input and output mappings
     wf_outputs = node.outputs
+    has_only_outputs = len(wf_outputs) > 0 and all(
+        wf_output.type == DataType.PlotlyJson for wf_output in wf_outputs
+    )
 
     dynamic_inputs, constant_inputs = obtain_inputs_by_role(node)
 
@@ -287,6 +290,7 @@ def recursively_parse_workflow_node(
         sub_nodes=list(new_sub_nodes.values()),
         input_mappings=input_mappings,
         output_mappings=output_mappings,
+        has_only_plot_outputs=has_only_outputs,
         operator_hierarchical_id=id_prefix + " : " + node.id,
         operator_hierarchical_name=name_prefix + " : " + node_name
         if name_prefix != ""

@@ -25,11 +25,7 @@ from hetdesrun.runtime import runtime_component_logger
 from hetdesrun.runtime.context import execution_context
 from hetdesrun.runtime.logging import execution_context_filter
 
-from hetdesrun.runtime.engine.plain.execution import (
-    gen_default_return_for_plot_func,
-    run_func_or_coroutine,
-)
-
+from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
 
 from hetdesrun.runtime.exceptions import (
     RuntimeExecutionError,
@@ -53,6 +49,7 @@ class Node(Protocol):
     # one other node.
 
     _in_computation: bool = False
+    has_only_plot_outputs: bool = False
     operator_hierarchical_id: str = "UNKNOWN"
     operator_hierarchical_name: str = "UNKNOWN"
 
@@ -256,11 +253,6 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             currently_executed_component_node_name=self.operator_hierarchical_name,
         )
 
-        exe_context_config = execution_context.get()
-
-        if self.has_only_plot_outputs and exe_context_config.run_pure_plot_operators:
-            return gen_default_return_for_plot_func({})
-
         logger.info(
             "Starting computation for operator %s of type component with operator id %s",
             self.operator_hierarchical_name,
@@ -287,7 +279,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         return await self._compute_result()
 
 
-class Workflow:
+class Workflow:  # pylint: disable=too-many-instance-attributes
     """Grouping computation nodes and other workflows and handling common input/output interface
 
     This class does not ensure that the interface actually handles all lose ends.
@@ -301,6 +293,7 @@ class Workflow:
             str, Tuple[Node, str]
         ],  # map sub_node outputs to wf outputs
         inputs: Optional[Dict[str, Tuple[Node, str]]] = None,
+        has_only_plot_outputs: bool = False,
         operator_hierarchical_id: str = "UNKNOWN",
         operator_hierarchical_name: str = "UNKNOWN",
     ):
@@ -339,6 +332,7 @@ class Workflow:
             self.add_inputs(inputs)
 
         self._in_computation: bool = False
+        self.has_only_plot_outputs = has_only_plot_outputs
         self.operator_hierarchical_id = operator_hierarchical_id
         self.operator_hierarchical_name = operator_hierarchical_name
 
@@ -404,6 +398,8 @@ class Workflow:
 
         # gather result from workflow operators
         results = {}
+        exe_context_config = execution_context.get()
+
         for (
             wf_output_name,
             (
@@ -412,7 +408,14 @@ class Workflow:
             ),
         ) in self.output_mappings.items():
             try:
-                results[wf_output_name] = (await sub_node.result)[sub_node_output_name]
+                results[wf_output_name] = (
+                    (await sub_node.result)[sub_node_output_name]
+                    if not (
+                        sub_node.has_only_plot_outputs
+                        and not exe_context_config.run_pure_plot_operators
+                    )
+                    else {}
+                )
             except KeyError as e:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
                 logger.info(
