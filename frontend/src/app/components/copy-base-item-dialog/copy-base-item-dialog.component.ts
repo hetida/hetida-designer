@@ -10,6 +10,7 @@ import { IAppState } from 'src/app/store/app.state';
 import { selectAbstractBaseItems } from 'src/app/store/base-item/base-item.selectors';
 import { Utils } from 'src/app/utils/utils';
 import { UniqueRevisionTagValidator } from 'src/app/validation/unique-revision-tag-validator';
+import { NotOnlyWhitespacesValidator } from 'src/app/validation/not-only-whitespaces-validator';
 import { AllowedCharsValidator } from 'src/app/validation/allowed-chars-validator';
 
 @Component({
@@ -116,6 +117,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(60),
+              NotOnlyWhitespacesValidator(),
               AllowedCharsValidator()
             ]
           ),
@@ -127,6 +129,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(60),
+              NotOnlyWhitespacesValidator(),
               AllowedCharsValidator()
             ]
           ),
@@ -135,7 +138,11 @@ export class CopyBaseItemDialogComponent implements OnInit {
               value: this.data.abstractBaseItem.description,
               disabled: this.data.disabledState.description
             },
-            [Validators.required, AllowedCharsValidator()]
+            [
+              Validators.required,
+              NotOnlyWhitespacesValidator(),
+              AllowedCharsValidator()
+            ]
           ),
           tag: new FormControl(
             {
@@ -146,6 +153,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
               Validators.required,
               Validators.maxLength(20),
               UniqueRevisionTagValidator(abstractBaseItems),
+              NotOnlyWhitespacesValidator(),
               AllowedCharsValidator()
             ]
           )
