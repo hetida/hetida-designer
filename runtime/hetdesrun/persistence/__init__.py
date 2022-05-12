@@ -45,12 +45,16 @@ def get_db_engine(
     if isinstance(db_url_to_use, SecretStr):
         db_url_to_use = db_url_to_use.get_secret_value()
 
-    return create_engine(  # type: ignore
+    engine = create_engine(  # type: ignore
         str(db_url_to_use),
         future=True,
         json_serializer=dumps,
         pool_size=runtime_config.sqlalchemy_pool_size,
     )
+
+    logger.debug("Created DB Engine with url: %s", repr(engine.url))
+
+    return engine
 
 
 Session = sessionmaker(get_db_engine())

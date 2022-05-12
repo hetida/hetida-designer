@@ -204,13 +204,19 @@ def check_modifiability(
             f"The type ({updated_transformation_revision.type}) of the "
             f"provided transformation revision does not\n"
             f"match the type ({existing_transformation_revision.type}) "
-            f"of the stored transformation revision {id}!"
+            f"of the stored transformation revision {existing_transformation_revision.id}!"
         )
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
-    if existing_transformation_revision.state == State.DISABLED:
-        msg = f"cannot modify deprecated transformation revision {id}"
+    if (
+        existing_transformation_revision.state == State.DISABLED
+        and not allow_overwrite_released
+    ):
+        msg = (
+            f"cannot modify deprecated transformation revision "
+            f"{existing_transformation_revision.id}"
+        )
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
@@ -219,7 +225,10 @@ def check_modifiability(
         and updated_transformation_revision.state != State.DISABLED
         and not allow_overwrite_released
     ):
-        msg = f"cannot modify released transformation revision {id}"
+        msg = (
+            f"cannot modify released transformation revision "
+            f"{existing_transformation_revision.id}"
+        )
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 

@@ -7,8 +7,6 @@ timeseries (where the later can be understood as special dataframe/table)
 from typing import List, Tuple, Literal, Dict, Union, Type
 from posixpath import join as posix_urljoin
 
-from urllib.parse import quote
-
 import logging
 import datetime
 
@@ -104,7 +102,7 @@ async def load_framelike_data(
             resp = session.get(
                 url,
                 params=[
-                    ("id", quote(str(filtered_source.ref_id)))
+                    ("id", (str(filtered_source.ref_id)))
                     for filtered_source in filtered_sources
                 ]
                 + additional_params,

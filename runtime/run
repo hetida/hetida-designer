@@ -6,8 +6,9 @@ usage() {
     echo "Hint: All commands expect a Python dev virtual environment to be active"
     echo ""
     echo "  Commands:"
-    echo "  - deps:lock       :    resolves and locks Python dependencies"
+    echo "  - deps:upgrade    :    resolves and locks Python dependencies, upgrading them all"
     echo "  - deps:sync       :    syncs currently activated virtual environment with locked Python dev dependencies."
+    echo "  - shell           :    Activate virtual environment, thereby creating and syncing if necessary"
     echo "  - test            :    run pytest on hetdesrun code"
     # echo "  - test_components :    run pytest/doctest on components"
     echo "  - lint            :    call pylint"
@@ -26,14 +27,18 @@ set -euo pipefail
 
 #----- subcommands -----#
 
-deps:lock() {
+deps:upgrade() {
     # upgrade and lock including dev-dependencies
-    rm requirements.txt requirements-dev.txt && pip-compile --generate-hashes && pip-compile --generate-hashes requirements-dev.in
+    ./pipt upgrade
 }
 
 deps:sync() {
     # sync dev dependencies
-    pip-sync requirements.txt requirements-dev.txt
+    ./pipt sync
+}
+
+shell() {
+    ./pipt shell
 }
 
 test() {

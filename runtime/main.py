@@ -38,6 +38,7 @@ def detect_in_memory_db() -> bool:
     engine = get_db_engine()
 
     backend_name = engine.url.get_backend_name()
+
     # driver_name = engine.url.get_driver_name()  # pysqlite
     database = engine.url.database  # ":memory:"
 
@@ -96,11 +97,17 @@ def run_migrations(
 in_memory_db = detect_in_memory_db()
 
 if in_memory_db:
+    logger.info(
+        "Detected in-memory db usage: Running migrations during importing of main.py."
+    )
     run_migrations()
 
 if __name__ == "__main__":
 
     if not in_memory_db:
+        logger.info(
+            "Running migrations from main.py since main.py was invoked directly."
+        )
         run_migrations()
 
     import os

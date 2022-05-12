@@ -6,7 +6,7 @@ as readable, maintainable and debuggable as possible. Rather than sticking to th
 ## Python Coding Standard
 The core of our coding standards is of course [PEP8](https://www.python.org/dev/peps/pep-0008/).
 
-We prefer more explicit code over some very Python-idiomatic structures where this may increase readability for developers from other languages (since Hetida Designer is a multi-language project). An example is Python's boolean evalutation of any type: We prefer `if my_object is None:` over `if my_object:`.
+We prefer more explicit code over some very Python-idiomatic structures where this may increase readability for developers from other languages (since Hetida Designer is a multi-language project). An example is Python's boolean evaluation of any type: We prefer `if my_object is None:` over `if my_object:`.
 
 ## Specific Topics
 
