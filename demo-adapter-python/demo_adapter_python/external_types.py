@@ -14,7 +14,7 @@ class ValueDataType(str, Enum):
     ANY = "any", Any, object, "object"
 
     def __new__(cls, *values: Any) -> "ValueDataType":
-        obj = str.__new__(cls, values[0])  #  type: ignore
+        obj = str.__new__(cls, values[0])  # type: ignore
 
         # first value is canonical value (e.g. what you get when calling ValueDataType.INT.value)
         obj._value_ = values[0]
@@ -31,7 +31,7 @@ class ValueDataType(str, Enum):
             # pylint: disable=no-member
             cls._value2member_map_[other_value] = obj  # type: ignore
 
-        obj._all_values = (values[0],) + values[2:]  # pylint: disable=no-member
+        obj._all_values = (values[0],) + values[2:]  # type: ignore # pylint: disable=no-member
         return obj  # type:ignore
 
     def __repr__(self) -> str:
@@ -106,7 +106,7 @@ class ExternalType(str, Enum):
         for other_value in values[1:]:
             # pylint: disable=no-member
             cls._value2member_map_[other_value] = obj  # type: ignore
-        obj._all_values = values
+        obj._all_values = values  # type: ignore
         return obj  # type: ignore
 
     def __repr__(self) -> str:
