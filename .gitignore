@@ -15,7 +15,7 @@ __pycache__
 .s.PGSQL*
 runtime/**/lab
 runtime/**/venv
-runtime/**/nix_venv_hd_dev
+runtime/**/nix_venv_*
 runtime/pylint_report.txt
 runtime/test_results.xml
 runtime/.coverage*
@@ -24,6 +24,7 @@ runtime/upload_settings/*
 runtime/settings/*
 demo-adapter-python/**/lab
 demo-adapter-python/**/venv
+demo-adapter-python/**/nix_venv_*
 demo-adapter-python/pylint_report.txt
 demo-adapter-python/test_results.xml
 demo-adapter-python/.coverage*

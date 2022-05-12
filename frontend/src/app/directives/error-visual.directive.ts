@@ -44,6 +44,8 @@ export class ErrorVisualDirective implements OnInit {
               return 'Enter a float value';
             case 'notOnlyWhitespaces':
               return 'At least one non-whitespace character required';
+            case 'allowedChars':
+              return 'Some of these characters are invalid';
             default:
               return `Unknown error: ${error}`;
           }

@@ -11,6 +11,7 @@ import { selectAbstractBaseItems } from 'src/app/store/base-item/base-item.selec
 import { Utils } from 'src/app/utils/utils';
 import { UniqueRevisionTagValidator } from 'src/app/validation/unique-revision-tag-validator';
 import { NotOnlyWhitespacesValidator } from 'src/app/validation/not-only-whitespaces-validator';
+import { AllowedCharsValidator } from 'src/app/validation/allowed-chars-validator';
 
 @Component({
   selector: 'hd-copy-base-item-dialog',
@@ -116,7 +117,8 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(60),
-              NotOnlyWhitespacesValidator()
+              NotOnlyWhitespacesValidator(),
+              AllowedCharsValidator()
             ]
           ),
           category: new FormControl(
@@ -127,7 +129,8 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(60),
-              NotOnlyWhitespacesValidator()
+              NotOnlyWhitespacesValidator(),
+              AllowedCharsValidator()
             ]
           ),
           description: new FormControl(
@@ -135,7 +138,11 @@ export class CopyBaseItemDialogComponent implements OnInit {
               value: this.data.abstractBaseItem.description,
               disabled: this.data.disabledState.description
             },
-            [Validators.required, NotOnlyWhitespacesValidator()]
+            [
+              Validators.required,
+              NotOnlyWhitespacesValidator(),
+              AllowedCharsValidator()
+            ]
           ),
           tag: new FormControl(
             {
@@ -146,7 +153,8 @@ export class CopyBaseItemDialogComponent implements OnInit {
               Validators.required,
               Validators.maxLength(20),
               UniqueRevisionTagValidator(abstractBaseItems),
-              NotOnlyWhitespacesValidator()
+              NotOnlyWhitespacesValidator(),
+              AllowedCharsValidator()
             ]
           )
         });

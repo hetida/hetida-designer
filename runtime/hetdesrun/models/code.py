@@ -15,7 +15,7 @@ from hetdesrun.models.component import ComponentInput, ComponentOutput
 
 # allow only some special characters for category, description, name and version tag
 ALLOWED_CHARS_RAW_STRING = (
-    r"\w ,\.\-\(\)=/"  # pylint: disable=anomalous-backslash-in-string
+    r"\w ,\.\-\(\)\&\+=/"  # pylint: disable=anomalous-backslash-in-string
 )
 # The special sequence \w matches unicode word characters;
 # this includes most characters that can be part of a word in any language, as well as numbers
