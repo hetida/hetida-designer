@@ -2,6 +2,7 @@ from typing import Callable, Optional, List, Dict, Union
 
 import logging
 import json
+import base64
 import datetime
 
 from urllib.parse import unquote
@@ -11,7 +12,7 @@ from io import StringIO
 from starlette.requests import Request
 from starlette.responses import Response
 
-from fastapi import FastAPI, APIRouter, HTTPException, Query, Body
+from fastapi import FastAPI, APIRouter, HTTPException, Query, Body, Header
 from fastapi.routing import APIRoute
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -662,7 +663,8 @@ async def post_timeseries(
 
 @demo_adapter_main_router.get("/dataframe")
 async def dataframe(
-    df_id: str = Query(..., alias="id")
+    response: Response,
+    df_id: str = Query(..., alias="id"),
 ) -> Union[HTTPException, StreamingResponse]:
 
     if df_id.endswith("plantA.maintenance_events"):
@@ -719,9 +721,18 @@ async def dataframe(
             404, f"no dataframe data available with provided id {df_id}"
         )
 
+    df_attrs = df.attrs
+    if df_attrs is not None:
+        df_attrs_json_str = json.dumps(df_attrs)
+        df_attrs_bytes = df_attrs_json_str.encode('utf-8')
+        base64_bytes = base64.b64encode(df_attrs_bytes)
+        base64_str = base64_bytes.decode('ascii')
+        response.headers["Dataframe-Attributes"] = base64_str
+
     io_stream = StringIO()
     df.to_json(io_stream, lines=True, orient="records", date_format="iso")
     io_stream.seek(0)
+    
     return StreamingResponse(io_stream, media_type="application/json")
 
 
@@ -735,9 +746,16 @@ async def post_dataframe(
         ],
     ),
     df_id: str = Query(..., alias="id"),
+    dataframe_attributes: Optional[str] = Header(None),
 ) -> dict:
     if df_id.endswith("alerts"):
         df = pd.DataFrame.from_dict(df_body, orient="columns")
+        if dataframe_attributes is not None:
+            base64_bytes = dataframe_attributes.encode('ascii')
+            df_attrs_bytes = base64.b64decode(base64_bytes)
+            df_attrs_json_str = df_attrs_bytes.decode('utf-8')
+            df_attrs = json.loads(df_attrs_json_str)
+            df.attrs = df_attrs
         set_value_in_store(df_id, df)
         return {"message": "success"}
 
