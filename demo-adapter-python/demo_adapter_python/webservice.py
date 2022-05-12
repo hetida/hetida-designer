@@ -61,6 +61,7 @@ middleware = [
         allow_credentials=True,
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
+        expose_headers=["Dataframe-Attributes"], # is this necessary?
     )
 ]
 
