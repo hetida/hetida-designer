@@ -551,7 +551,7 @@ async def test_update_transformation_revision_with_invalid_name_workflow(
         )
 
         tr_json_workflow_2_update_invalid_name = deepcopy(tr_json_workflow_2_update)
-        tr_json_workflow_2_update_invalid_name["name"] = "+"
+        tr_json_workflow_2_update_invalid_name["name"] = "'"
 
         async with async_test_client as ac:
             response = await ac.put(

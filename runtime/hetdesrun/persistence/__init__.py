@@ -52,7 +52,7 @@ def get_db_engine(
         pool_size=runtime_config.sqlalchemy_pool_size,
     )
 
-    logger.info("Created DB Engine with url: %s", repr(engine.url))
+    logger.debug("Created DB Engine with url: %s", repr(engine.url))
 
     return engine
 

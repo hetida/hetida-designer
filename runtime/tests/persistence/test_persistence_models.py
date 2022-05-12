@@ -139,7 +139,7 @@ def test_tr_nonemptyvalidstr_regex_validator_not_whitelisted_character():
         TransformationRevision(
             id=id,
             revision_group_id=id,
-            name="+",
+            name="'",
             description="Test description",
             version_tag="1.0.0",
             category="Test category",
@@ -229,7 +229,7 @@ def test_tr_nonemptyvalidstr_regex_validator_fancy_characters():
         revision_group_id=id,
         name="bößä",
         description="中文, español, Çok teşekkürler",
-        version_tag="(-_-) /  =.=",
+        version_tag="(-_-) /  =.= & +_+",
         category="ไทย",
         state=State.DRAFT,
         type=Type.COMPONENT,
