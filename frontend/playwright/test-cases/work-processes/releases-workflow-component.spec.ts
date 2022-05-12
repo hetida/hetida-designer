@@ -14,8 +14,7 @@ test('HDOS-364: releases workflow or component', async ({
   const workflowInput = 'Input';
   const workflowOutput = 'Output';
   const workflowInputImportData = '["hello","world"]';
-  const workflowDocumentation =
-    '# New Component/Workflow ## Description ## Inputs ## Outputs ## Details ## Examples';
+  const workflowDocumentation = `# New Component/Workflow\nTest Workflow HDOS-364\n## Description\nReleases workflow or component\n## Inputs\n${workflowInput}\n## Outputs\n${workflowOutput}\n## Details\nSome details...\n## Examples\nSome examples...`;
 
   // Act
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');

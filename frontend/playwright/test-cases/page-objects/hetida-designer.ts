@@ -249,6 +249,7 @@ export class HetidaDesigner {
 
     await this.page.locator('.view-lines').click();
     await this.page.press('.view-lines', 'Control+a');
+    await this.page.press('.view-lines', 'Delete');
     await this.page.locator('.view-lines').type(importData);
   }
 }
