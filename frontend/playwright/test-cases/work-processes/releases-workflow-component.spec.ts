@@ -14,7 +14,20 @@ test('HDOS-364: releases workflow or component', async ({
   const workflowInput = 'Input';
   const workflowOutput = 'Output';
   const workflowInputImportData = '["hello","world"]';
-  const workflowDocumentation = `# New Component/Workflow\nTest Workflow HDOS-364\n## Description\nReleases workflow or component\n## Inputs\n${workflowInput}\n## Outputs\n${workflowOutput}\n## Details\nSome details...\n## Examples\nSome examples...`;
+
+  const workflowDocumentation = `# Test Workflow HDOS-364
+## Description
+Releases workflow or component e2e test.
+## Inputs
+${workflowInput}
+## Outputs
+${workflowOutput}
+## Examples
+The json input of a typical call of this workflow is:
+\`\`\`JSON
+${workflowInputImportData}
+\`\`\`
+`;
 
   // Act
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
@@ -60,6 +73,32 @@ test('HDOS-364: releases workflow or component', async ({
 
   await hetidaDesigner.clickTabInNavigation(0);
   // await hetidaDesigner.clickIconInToolbar('Publish');
+  // await hetidaDesigner.clickButton('Publish workflow');
+
+  await hetidaDesigner.clickIconInToolbar('Edit workflow details');
+  await page.waitForSelector('mat-dialog-container');
+  const workflowNameReleased = page.locator('');
+  await hetidaDesigner.clickButton('Cancel');
+
+  await hetidaDesigner.clickIconInToolbar('Configure I/O');
+  await page.waitForSelector('mat-dialog-container', {
+    state: 'attached',
+    timeout: 5000
+  });
+  await hetidaDesigner.clickButton('Cancel');
+
+  await hetidaDesigner.clickIconInToolbar('Execute');
+  await page.waitForSelector('mat-dialog-container');
+  await hetidaDesigner.clickInput(0);
+  await hetidaDesigner.clickButton('Save');
+  await hetidaDesigner.clickButton('Execute');
+  await page.waitForSelector('hd-protocol-viewer >> .protocol-content');
+  const outputReleased = await page
+    .locator('hd-protocol-viewer >> .protocol-content >> span >> nth=1')
+    .innerText();
+
+  await hetidaDesigner.clickIconInToolbar('Open documentation');
+  await page.waitForSelector('hd-documentation-editor-dialog >> textarea');
 
   // Assert
   // Edit details
@@ -67,5 +106,14 @@ test('HDOS-364: releases workflow or component', async ({
   // Execute
   // Documentation
 
+  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+  await hetidaDesigner.clickCategoryInNavigation(workflowCategoryName);
+  await hetidaDesigner.rightClickItemInNavigation(
+    workflowCategoryName,
+    workflowName
+  );
+  await page.locator('.mat-menu-panel').hover();
+  await hetidaDesigner.clickOnContextMenu('Deprecate');
+  // await hetidaDesigner.clickButton('Deprecate workflow');
   await hetidaDesigner.clearTest();
 });
