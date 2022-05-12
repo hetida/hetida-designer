@@ -284,10 +284,12 @@ async def post_metadata_source_by_key(
 
         old_metadatum = get_metadatum_from_store(sourceId, key)
 
-        new_metadatum = GetMetadatum(**metadatum.dict())
-
-        new_metadatum.dataType = old_metadatum.dataType
-        new_metadatum.isSink = old_metadatum.isSink or True
+        new_metadatum = GetMetadatum(
+            key=metadatum.key,
+            value=metadatum.value,
+            dataType=old_metadatum.dataType,
+            isSink=old_metadatum.isSink or True
+        )
 
         set_metadatum_in_store(sourceId, key, new_metadatum)
         return {"message": "success"}
@@ -389,10 +391,12 @@ async def post_metadata_sink_by_key(
 
         old_metadatum = get_metadatum_from_store(sinkId, key)
 
-        new_metadatum = GetMetadatum(**metadatum.dict())
-
-        new_metadatum.dataType = old_metadatum.dataType
-        new_metadatum.isSink = old_metadatum.isSink or True
+        new_metadatum = GetMetadatum(
+            key=metadatum.key,
+            value=metadatum.value,
+            dataType=old_metadatum.dataType,
+            isSink=old_metadatum.isSink or True
+        )
 
         set_metadatum_in_store(sinkId, key, new_metadatum)
         return {"message": "success"}
@@ -548,10 +552,12 @@ async def post_metadata_thingNode_by_key(
 
         old_metadatum = get_metadatum_from_store(thingNodeId, key)
 
-        new_metadatum = GetMetadatum(**metadatum.dict())
-
-        new_metadatum.dataType = old_metadatum.dataType
-        new_metadatum.isSink = old_metadatum.isSink or True
+        new_metadatum = GetMetadatum(
+            key=metadatum.key,
+            value=metadatum.value,
+            dataType=old_metadatum.dataType,
+            isSink=old_metadatum.isSink or True
+        )
 
         set_metadatum_in_store(thingNodeId, key, new_metadatum)
         return {"message": "success"}
