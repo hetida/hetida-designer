@@ -670,7 +670,6 @@ async def post_timeseries(
 
 @demo_adapter_main_router.get("/dataframe")
 async def dataframe(
-    response: Response,
     df_id: str = Query(..., alias="id"),
 ) -> Union[HTTPException, StreamingResponse]:
 
@@ -730,6 +729,7 @@ async def dataframe(
             404, f"no dataframe data available with provided id {df_id}"
         )
 
+    headers = {}
     logger.info("loading %s", str(df))
     logger.info("which has attributes %s", str(df.attrs))
     df_attrs = df.attrs
@@ -740,13 +740,13 @@ async def dataframe(
         base64_bytes = base64.b64encode(df_attrs_bytes)
         base64_str = base64_bytes.decode('ascii')
         logger.info("base64_str=%s", base64_str)
-        response.headers["Dataframe-Attributes"] = base64_str
+        headers["Dataframe-Attributes"] = base64_str
 
     io_stream = StringIO()
     df.to_json(io_stream, lines=True, orient="records", date_format="iso")
     io_stream.seek(0)
     
-    return StreamingResponse(io_stream, media_type="application/json")
+    return StreamingResponse(io_stream, media_type="application/json", headers=headers)
 
 
 @demo_adapter_main_router.post("/dataframe", status_code=200)
