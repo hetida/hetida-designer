@@ -1,4 +1,5 @@
 import json
+import base64
 
 from urllib.parse import quote
 
@@ -261,14 +262,32 @@ async def test_sending_attrs_via_get_dataframe(async_test_client):
         response = await client.get(f"/dataframe?id=root.plantA.maintenance_events")
 
         assert response.status_code == 200
-        assert "ttributes" in response.headers
+        assert "dataframe-attributes" in response.headers
+        assert isinstance(response.headers["dataframe-attributes"], str)
+
+        base64_str = response.headers["dataframe-attributes"]
+        base64_bytes = base64_str.encode('ascii')
+        df_attrs_bytes = base64.b64decode(base64_bytes)
+        df_attrs_json_str = df_attrs_bytes.decode('utf-8')
+        df_attrs = json.loads(df_attrs_json_str)
+
+        assert "test" in df_attrs
+        assert df_attrs["test"] == "Hello world!"
 
 
 @pytest.mark.asyncio
 async def test_receiving_attrs_via_post_dataframe(async_test_client):
     async with async_test_client as client:
+        df_attrs = {"test": "Hello world!", "answer": 42}
+        df_attrs_json_str = json.dumps(df_attrs)
+        df_attrs_bytes = df_attrs_json_str.encode('utf-8')
+        base64_bytes = base64.b64encode(df_attrs_bytes)
+        base64_str = base64_bytes.decode('ascii')
+
         response = await client.post(
-            "/dataframe?id=root.plantA.alerts", json={}, header={"test": "Hello world!"}
+            "/dataframe?id=root.plantA.alerts",
+            json=[{"column1": 1, "column2": 1.3}, {"column1": 2, "column2": 2.8}],
+            headers={"Dataframe-Attributes": base64_str}
         )
 
         assert response.status_code == 200
@@ -277,4 +296,5 @@ async def test_receiving_attrs_via_post_dataframe(async_test_client):
 
         assert len(df_from_store.attrs) != 0
         assert "test" in df_from_store.attrs
-        assert df_from_store.attrs["test"] == "Hello world!"
+        for key, value in df_attrs.items():
+            assert df_from_store.attrs[key] == value
