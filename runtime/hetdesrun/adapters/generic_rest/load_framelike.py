@@ -7,6 +7,8 @@ timeseries (where the later can be understood as special dataframe/table)
 from typing import List, Tuple, Literal, Dict, Union, Type
 from posixpath import join as posix_urljoin
 
+import json
+import base64
 import logging
 import datetime
 
@@ -90,7 +92,7 @@ async def load_framelike_data(
     )
 
     headers = get_generic_rest_adapter_auth_headers()
-    logging.info("request headers:\n%s",headers)
+    logging.info("request headers:\n%s", headers)
 
     with requests.Session() as session:
         try:
@@ -111,7 +113,7 @@ async def load_framelike_data(
                 headers=headers,
                 verify=runtime_config.hd_adapters_verify_certs,
             )
-            logger.info("response headers:\n%s",resp.headers)
+            logger.info("response headers:\n%s", resp.headers)
             if (
                 resp.status_code == 404
                 and "errorCode" in resp.text
@@ -140,6 +142,16 @@ async def load_framelike_data(
             logger.info("Start reading in and parsing framelike data")
 
             df = pd.read_json(resp.raw, lines=True)
+            if "DataframeAttributes" in resp.headers:
+                logging.info("Found DataframeAttributes in Response-Header")
+                dataframe_attributes = resp.headers["DataframeAttributes"]
+                base64_bytes = dataframe_attributes.encode("ascii")
+                logger.info("dataframe_attributes={%s}", dataframe_attributes)
+                df_attrs_bytes = base64.b64decode(base64_bytes)
+                df_attrs_json_str = df_attrs_bytes.decode("utf-8")
+                logger.info("df_attrs_json_str={%s}", df_attrs_json_str)
+                df_attrs = json.loads(df_attrs_json_str)
+                df.attrs = df_attrs
             end_time = datetime.datetime.now(datetime.timezone.utc)
             logger.info(
                 (
