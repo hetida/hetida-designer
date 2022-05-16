@@ -771,7 +771,7 @@ async def post_dataframe(
             logger.info("df_attrs_json_str=%s", df_attrs_json_str)
             df_attrs = json.loads(df_attrs_json_str)
             df.attrs = df_attrs
-        logger.info("storing %s", str(df))
+        logger.info("storing %s", json.dumps(df_body))
         logger.info("which has attributes %s", str(df.attrs))
         set_value_in_store(df_id, df)
         return {"message": "success"}
