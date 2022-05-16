@@ -731,9 +731,11 @@ async def dataframe(
     df_attrs = df.attrs
     if df_attrs is not None:
         df_attrs_json_str = json.dumps(df_attrs)
+        logger.info("df_attrs_json_str={%s}", df_attrs_json_str)
         df_attrs_bytes = df_attrs_json_str.encode('utf-8')
         base64_bytes = base64.b64encode(df_attrs_bytes)
         base64_str = base64_bytes.decode('ascii')
+        logger.info("base64_str={%s}", base64_str)
         response.headers["Dataframe-Attributes"] = base64_str
 
     io_stream = StringIO()
@@ -759,8 +761,10 @@ async def post_dataframe(
         df = pd.DataFrame.from_dict(df_body, orient="columns")
         if dataframe_attributes is not None:
             base64_bytes = dataframe_attributes.encode('ascii')
+            logger.info("dataframe_attributes={%s}", dataframe_attributes)
             df_attrs_bytes = base64.b64decode(base64_bytes)
             df_attrs_json_str = df_attrs_bytes.decode('utf-8')
+            logger.info("df_attrs_json_str={%s}", df_attrs_json_str)
             df_attrs = json.loads(df_attrs_json_str)
             df.attrs = df_attrs
         set_value_in_store(df_id, df)

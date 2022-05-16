@@ -90,6 +90,7 @@ async def load_framelike_data(
     )
 
     headers = get_generic_rest_adapter_auth_headers()
+    logging.info("request headers:\n%s",headers)
 
     with requests.Session() as session:
         try:
@@ -110,6 +111,7 @@ async def load_framelike_data(
                 headers=headers,
                 verify=runtime_config.hd_adapters_verify_certs,
             )
+            logger.info("response headers:\n%s",resp.headers)
             if (
                 resp.status_code == 404
                 and "errorCode" in resp.text

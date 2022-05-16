@@ -28,6 +28,7 @@ async def post_framelike_records(
 ) -> None:
     """Post a list of dicts (records) to the appropriate endpoint"""
     headers = get_generic_rest_adapter_auth_headers()
+    logging.info("request headers:\n%s",headers)
 
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
@@ -47,6 +48,7 @@ async def post_framelike_records(
             headers=headers,
             timeout=60,
         )
+        logger.info("response headers:\n%s",response.headers)
     except httpx.HTTPError as e:
         msg = f"Http error while posting framelike data to {url} for id {ref_id}: {str(e)}"
         logger.info(msg)
