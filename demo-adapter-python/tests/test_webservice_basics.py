@@ -10,6 +10,8 @@ from demo_adapter_python.webservice import app
 
 from demo_adapter_python.external_types import ExternalType
 
+from demo_adapter_python.in_memory_store import get_value_from_store
+
 client = TestClient(app)
 
 
@@ -251,3 +253,28 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                     ],
                 )
                 assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_sending_attrs_via_get_dataframe(async_test_client):
+    async with async_test_client as client:
+        response = await client.get(f"/dataframe?id=root.plantA.maintenance_events")
+
+        assert response.status_code == 200
+        assert "ttributes" in response.headers
+
+
+@pytest.mark.asyncio
+async def test_receiving_attrs_via_post_dataframe(async_test_client):
+    async with async_test_client as client:
+        response = await client.post(
+            "/dataframe?id=root.plantA.alerts", json={}, header={"test": "Hello world!"}
+        )
+
+        assert response.status_code == 200
+
+        df_from_store = get_value_from_store("root.plantA.alerts")
+
+        assert len(df_from_store.attrs) != 0
+        assert "test" in df_from_store.attrs
+        assert df_from_store.attrs["test"] == "Hello world!"
