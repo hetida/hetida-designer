@@ -356,7 +356,7 @@ Payload (List of timeseries records):
 ]
 ```
 
-The same rules as describen in the corresponding GET apply to `timestamp` and `value`
+The same rules as described in the corresponding GET apply to `timestamp` and `value`
 
 #### /dataframe (GET)
 
