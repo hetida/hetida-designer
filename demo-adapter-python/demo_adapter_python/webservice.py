@@ -687,6 +687,7 @@ async def dataframe(
                 ],
             }
         )
+        df.attrs = {"test": "Hello world!"}
     elif df_id.endswith("plantB.maintenance_events"):
         df = pd.DataFrame(
             {  # has timestamp column
