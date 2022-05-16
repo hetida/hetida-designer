@@ -92,7 +92,7 @@ async def load_framelike_data(
     )
 
     headers = get_generic_rest_adapter_auth_headers()
-    logging.info("request headers:\n%s", headers)
+    logger.info("request headers:\n%s", headers)
 
     with requests.Session() as session:
         try:
@@ -142,16 +142,6 @@ async def load_framelike_data(
             logger.info("Start reading in and parsing framelike data")
 
             df = pd.read_json(resp.raw, lines=True)
-            if "DataframeAttributes" in resp.headers:
-                logging.info("Found DataframeAttributes in Response-Header")
-                dataframe_attributes = resp.headers["DataframeAttributes"]
-                base64_bytes = dataframe_attributes.encode("ascii")
-                logger.info("dataframe_attributes={%s}", dataframe_attributes)
-                df_attrs_bytes = base64.b64decode(base64_bytes)
-                df_attrs_json_str = df_attrs_bytes.decode("utf-8")
-                logger.info("df_attrs_json_str={%s}", df_attrs_json_str)
-                df_attrs = json.loads(df_attrs_json_str)
-                df.attrs = df_attrs
             end_time = datetime.datetime.now(datetime.timezone.utc)
             logger.info(
                 (
@@ -170,6 +160,18 @@ async def load_framelike_data(
                 ),
                 str(end_time - start_time),
             )
+
+            if "DataframeAttributes" in resp.headers:
+                logger.info("Found DataframeAttributes in Response-Header")
+                dataframe_attributes = resp.headers["DataframeAttributes"]
+                base64_bytes = dataframe_attributes.encode("ascii")
+                logger.info("dataframe_attributes=%s", dataframe_attributes)
+                df_attrs_bytes = base64.b64decode(base64_bytes)
+                df_attrs_json_str = df_attrs_bytes.decode("utf-8")
+                logger.info("df_attrs_json_str=%s", df_attrs_json_str)
+                df_attrs = json.loads(df_attrs_json_str)
+                df.attrs = df_attrs
+
             logger.debug(
                 "Received dataframe of form %s:\n%s",
                 str(df.shape) if len(df) > 0 else "EMPTY RESULT",

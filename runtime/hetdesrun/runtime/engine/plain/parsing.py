@@ -77,7 +77,7 @@ def load_func(
             f"The code module with UUID {str(code_module_uuid)} which was referenced by"
             f"component revision with UUID {component.uuid} was not provided"
         )
-        logging.info(msg)
+        logger.info(msg)
         raise NodeFunctionLoadingError(msg) from e
 
     try:
@@ -91,7 +91,7 @@ def load_func(
             f"{component.code_module_uuid}, Component uuid: {component.uuid}, "
             f" function name: {component.function_name})"
         )
-        logging.info(msg)
+        logger.info(msg)
         raise NodeFunctionLoadingError(msg) from e
     return component_func
 
