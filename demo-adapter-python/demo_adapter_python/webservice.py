@@ -722,6 +722,7 @@ async def dataframe(
             }
         )
     elif df_id.endswith("alerts"):
+        logger.info("Trying to get 'alerts' from storage")
         df = get_value_from_store(df_id)
 
     else:
@@ -729,14 +730,16 @@ async def dataframe(
             404, f"no dataframe data available with provided id {df_id}"
         )
 
+    logger.info("loading %s", str(df))
+    logger.info("which has attributes %s", str(df.attrs))
     df_attrs = df.attrs
-    if df_attrs is not None:
+    if df_attrs is not None and len(df_attrs) != 0:
         df_attrs_json_str = json.dumps(df_attrs)
-        logger.info("df_attrs_json_str={%s}", df_attrs_json_str)
+        logger.info("df_attrs_json_str=%s", df_attrs_json_str)
         df_attrs_bytes = df_attrs_json_str.encode('utf-8')
         base64_bytes = base64.b64encode(df_attrs_bytes)
         base64_str = base64_bytes.decode('ascii')
-        logger.info("base64_str={%s}", base64_str)
+        logger.info("base64_str=%s", base64_str)
         response.headers["Dataframe-Attributes"] = base64_str
 
     io_stream = StringIO()
@@ -760,14 +763,16 @@ async def post_dataframe(
 ) -> dict:
     if df_id.endswith("alerts"):
         df = pd.DataFrame.from_dict(df_body, orient="columns")
-        if dataframe_attributes is not None:
+        if dataframe_attributes is not None and len(dataframe_attributes) != 0:
             base64_bytes = dataframe_attributes.encode('ascii')
-            logger.info("dataframe_attributes={%s}", dataframe_attributes)
+            logger.info("dataframe_attributes=%s", dataframe_attributes)
             df_attrs_bytes = base64.b64decode(base64_bytes)
             df_attrs_json_str = df_attrs_bytes.decode('utf-8')
-            logger.info("df_attrs_json_str={%s}", df_attrs_json_str)
+            logger.info("df_attrs_json_str=%s", df_attrs_json_str)
             df_attrs = json.loads(df_attrs_json_str)
             df.attrs = df_attrs
+        logger.info("storing %s", str(df))
+        logger.info("which has attributes %s", str(df.attrs))
         set_value_in_store(df_id, df)
         return {"message": "success"}
 
