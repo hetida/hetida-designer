@@ -36,6 +36,7 @@ async def test_load_ts_adapter_request():
             {"timeseriesId": "id_1", "timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7}
             {"timeseriesId": "id_1", "timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
             """
+        resp_mock.headers = {}
 
         filtered_sources = [
             FilteredSource(
