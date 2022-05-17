@@ -96,3 +96,32 @@ async def test_end_to_end_load_dataframe_data_with_timestamp_column():
             assert isinstance(loaded_data["inp_1"], pd.DataFrame)
             assert loaded_data["inp_1"].shape == (3, 2)
             assert pd.api.types.is_datetime64tz_dtype(loaded_data["inp_1"].index)
+
+
+async def mock_load_generic_rest_dataframe_data_with_attrs(*args, **kwargs):
+    df = pd.DataFrame(
+        {
+            "a": [1.0, 2.0, 3.4, 5.8],
+            "b": [2.58, 3.4, 10.2, 11.5],
+        }
+    )
+    df.attrs = {"c": "test"}
+    return df
+
+
+@pytest.mark.asyncio
+async def test_end_to_end_load_dataframe_data_with_attrs():
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_dataframe.load_single_dataframe_from_adapter",
+        new=mock_load_generic_rest_dataframe_data_with_attrs,
+    ):
+        loaded_data = await load_data(
+            {"inp_1": FilteredSource(ref_id="id_1", type="dataframe")},
+            adapter_key="end_to_end_only_dataframe_data",
+        )
+
+        assert len(loaded_data) == 1
+        assert isinstance(loaded_data["inp_1"], pd.DataFrame)
+        assert loaded_data["inp_1"].shape == (4, 2)
+        assert len(loaded_data["inp_1"].attrs) == 1
+        assert loaded_data["inp_1"].attrs["c"] == "test"
