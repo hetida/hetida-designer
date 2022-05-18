@@ -92,7 +92,6 @@ async def load_framelike_data(
     )
 
     headers = get_generic_rest_adapter_auth_headers()
-    logger.info("request headers:\n%s", headers)
 
     with requests.Session() as session:
         try:
@@ -113,7 +112,6 @@ async def load_framelike_data(
                 headers=headers,
                 verify=runtime_config.hd_adapters_verify_certs,
             )
-            logger.info("response headers:\n%s", resp.headers)
             if (
                 resp.status_code == 404
                 and "errorCode" in resp.text
@@ -162,13 +160,13 @@ async def load_framelike_data(
             )
 
             if "Dataframe-Attributes" in resp.headers:
-                logger.info("Found Dataframe-Attributes in Response-Header")
+                logger.debug("Got Dataframe-Attributes via GET response header")
                 dataframe_attributes = resp.headers["Dataframe-Attributes"]
                 base64_bytes = dataframe_attributes.encode("ascii")
-                logger.info("dataframe_attributes=%s", dataframe_attributes)
+                logger.debug("dataframe_attributes=%s", dataframe_attributes)
                 df_attrs_bytes = base64.b64decode(base64_bytes)
                 df_attrs_json_str = df_attrs_bytes.decode("utf-8")
-                logger.info("df_attrs_json_str=%s", df_attrs_json_str)
+                logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
                 df_attrs = json.loads(df_attrs_json_str)
                 df.attrs = df_attrs
 
