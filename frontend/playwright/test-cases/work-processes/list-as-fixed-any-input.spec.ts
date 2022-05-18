@@ -2,13 +2,14 @@ import { expect, test } from '../fixtures/fixture';
 
 test('HDOS-379: use a list as fixed any input', async ({
   page,
-  hetidaDesigner
+  hetidaDesigner,
+  browserName
 }) => {
   // Arrange
-  const componentCategoryName = 'Connectors';
+  const componentCategory = 'Connectors';
   const componentName = 'Pass Through';
-  const workflowCategoryName = 'Draft';
-  const workflowName = 'Test Workflow HDOS-379';
+  const workflowCategory = 'Test';
+  const workflowName = `Test Workflow HDOS-379 ${browserName}`;
   const workflowDescription = 'Use a list as fixed any input';
   const workflowImportData = '["hello","world"]';
 
@@ -16,22 +17,20 @@ test('HDOS-379: use a list as fixed any input', async ({
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
   await hetidaDesigner.clickAddWorkflowComponentInNavigation('Add workflow');
   await hetidaDesigner.typeInInput('name', workflowName);
+  await hetidaDesigner.typeInInput('category', workflowCategory);
   await hetidaDesigner.typeInInput('description', workflowDescription);
   await hetidaDesigner.clickButton('Create Workflow');
 
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
-  await hetidaDesigner.clickCategoryInNavigation(componentCategoryName);
+  await hetidaDesigner.clickCategoryInNavigation(componentCategory);
   await hetidaDesigner.dragAndDropItemInNavigation(
-    componentCategoryName,
+    componentCategory,
     componentName,
     'hetida-flowchart'
   );
 
   await hetidaDesigner.clickIconInToolbar('Configure I/O');
-  await page.waitForSelector('mat-dialog-container', {
-    state: 'attached',
-    timeout: 5000
-  });
+  await page.waitForSelector('mat-dialog-container');
   await hetidaDesigner.clickToggleButton(1);
   await hetidaDesigner.clickInput(0);
   await hetidaDesigner.importJson(workflowImportData);
@@ -51,9 +50,9 @@ test('HDOS-379: use a list as fixed any input', async ({
   expect(output).toEqual(workflowImportData);
 
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
-  await hetidaDesigner.clickCategoryInNavigation(workflowCategoryName);
+  await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
   await hetidaDesigner.rightClickItemInNavigation(
-    workflowCategoryName,
+    workflowCategory,
     workflowName
   );
   await page.locator('.mat-menu-panel').hover();

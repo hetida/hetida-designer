@@ -145,25 +145,36 @@ export class HetidaDesigner {
       throw new Error('ERROR: Icon title must not be empty');
     }
 
+    await this.page.waitForSelector(
+      `hd-toolbar >> mat-icon[title="${iconTitle}"]:not(.disabled)`
+    );
+
     await this.page
-      .locator('hd-toolbar')
-      .locator(`mat-icon[title="${iconTitle}"]`)
+      .locator(`hd-toolbar >> mat-icon[title="${iconTitle}"]`)
       .click();
   }
 
-  public async clickButton(buttonText: string): Promise<void> {
-    if (buttonText === '') {
-      throw new Error('ERROR: Button text must not be empty');
+  public async clickButton(
+    buttonText: string,
+    buttonPosition: number = null
+  ): Promise<void> {
+    if ((buttonPosition !== null && buttonPosition < 0) || buttonText === '') {
+      throw new Error('ERROR: Button position is negative or text is empty');
     }
 
     const locateButtons = this.page.locator(`button:has-text("${buttonText}")`);
     const countButtons = await locateButtons.count();
-    // If more than one button with the same text was found, click the enabled one
+
+    // If more than one button with the same text was found, click the enabled one or choose a position
     if (countButtons > 1) {
-      for (let i = 0; i < countButtons; i++) {
-        if (await locateButtons.nth(i).isEnabled()) {
-          await locateButtons.nth(i).click();
+      if (buttonPosition === null) {
+        for (let i = 0; i < countButtons; i++) {
+          if (await locateButtons.nth(i).isEnabled()) {
+            await locateButtons.nth(i).click();
+          }
         }
+      } else {
+        await locateButtons.nth(buttonPosition).click();
       }
     } else {
       await locateButtons.click();
@@ -212,7 +223,7 @@ export class HetidaDesigner {
     inputText: string
   ): Promise<void> {
     if (inputPosition < 0 || inputText === '') {
-      throw new Error('ERROR: Input position or text must not be empty');
+      throw new Error('ERROR: Input position is negative or text is empty');
     }
 
     await this.page
@@ -232,11 +243,12 @@ export class HetidaDesigner {
     textareaText: string
   ): Promise<void> {
     if (textareaPosition < 0 || textareaText === '') {
-      throw new Error('ERROR: Textarea position or text must not be empty');
+      throw new Error('ERROR: Textarea position is negative or text is empty');
     }
 
     await this.page.locator(`textarea >> nth=${textareaPosition}`).click();
     await this.page.press(`textarea >> nth=${textareaPosition}`, 'Control+a');
+    await this.page.press(`textarea >> nth=${textareaPosition}`, 'Delete');
     await this.page
       .locator(`textarea >> nth=${textareaPosition}`)
       .type(textareaText);
