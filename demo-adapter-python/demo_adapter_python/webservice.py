@@ -721,7 +721,6 @@ async def dataframe(
             }
         )
     elif df_id.endswith("alerts"):
-        logger.info("Trying to get 'alerts' from storage")
         df = get_value_from_store(df_id)
 
     else:
@@ -730,16 +729,16 @@ async def dataframe(
         )
 
     headers = {}
-    logger.info("loading %s", str(df))
-    logger.info("which has attributes %s", str(df.attrs))
+    logger.debug("loading dataframe %s", str(df))
+    logger.debug("which has attributes %s", str(df.attrs))
     df_attrs = df.attrs
     if df_attrs is not None and len(df_attrs) != 0:
         df_attrs_json_str = json.dumps(df_attrs)
-        logger.info("df_attrs_json_str=%s", df_attrs_json_str)
+        logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
         df_attrs_bytes = df_attrs_json_str.encode('utf-8')
         base64_bytes = base64.b64encode(df_attrs_bytes)
         base64_str = base64_bytes.decode('ascii')
-        logger.info("base64_str=%s", base64_str)
+        logger.debug("base64_str=%s", base64_str)
         headers["Dataframe-Attributes"] = base64_str
 
     io_stream = StringIO()
@@ -765,14 +764,14 @@ async def post_dataframe(
         df = pd.DataFrame.from_dict(df_body, orient="columns")
         if dataframe_attributes is not None and len(dataframe_attributes) != 0:
             base64_bytes = dataframe_attributes.encode('ascii')
-            logger.info("dataframe_attributes=%s", dataframe_attributes)
+            logger.debug("dataframe_attributes=%s", dataframe_attributes)
             df_attrs_bytes = base64.b64decode(base64_bytes)
             df_attrs_json_str = df_attrs_bytes.decode('utf-8')
-            logger.info("df_attrs_json_str=%s", df_attrs_json_str)
+            logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
             df_attrs = json.loads(df_attrs_json_str)
             df.attrs = df_attrs
-        logger.info("storing %s", json.dumps(df_body))
-        logger.info("which has attributes %s", str(df.attrs))
+        logger.debug("storing %s", json.dumps(df_body))
+        logger.debug("which has attributes %s", str(df.attrs))
         set_value_in_store(df_id, df)
         return {"message": "success"}
 
