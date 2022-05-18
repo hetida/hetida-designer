@@ -61,7 +61,7 @@ middleware = [
         allow_credentials=True,
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
-        expose_headers=["Dataframe-Attributes"], # is this necessary?
+        expose_headers=["Dataframe-Attributes"],  # is this necessary?
     )
 ]
 
@@ -288,7 +288,7 @@ async def post_metadata_source_by_key(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
-            isSink=old_metadatum.isSink or True
+            isSink=old_metadatum.isSink or True,
         )
 
         set_metadatum_in_store(sourceId, key, new_metadatum)
@@ -395,7 +395,7 @@ async def post_metadata_sink_by_key(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
-            isSink=old_metadatum.isSink or True
+            isSink=old_metadatum.isSink or True,
         )
 
         set_metadatum_in_store(sinkId, key, new_metadatum)
@@ -556,7 +556,7 @@ async def post_metadata_thingNode_by_key(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
-            isSink=old_metadatum.isSink or True
+            isSink=old_metadatum.isSink or True,
         )
 
         set_metadatum_in_store(thingNodeId, key, new_metadatum)
@@ -735,16 +735,16 @@ async def dataframe(
     if df_attrs is not None and len(df_attrs) != 0:
         df_attrs_json_str = json.dumps(df_attrs)
         logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
-        df_attrs_bytes = df_attrs_json_str.encode('utf-8')
+        df_attrs_bytes = df_attrs_json_str.encode("utf-8")
         base64_bytes = base64.b64encode(df_attrs_bytes)
-        base64_str = base64_bytes.decode('ascii')
+        base64_str = base64_bytes.decode("ascii")
         logger.debug("base64_str=%s", base64_str)
         headers["Dataframe-Attributes"] = base64_str
 
     io_stream = StringIO()
     df.to_json(io_stream, lines=True, orient="records", date_format="iso")
     io_stream.seek(0)
-    
+
     return StreamingResponse(io_stream, media_type="application/json", headers=headers)
 
 
@@ -763,10 +763,10 @@ async def post_dataframe(
     if df_id.endswith("alerts"):
         df = pd.DataFrame.from_dict(df_body, orient="columns")
         if dataframe_attributes is not None and len(dataframe_attributes) != 0:
-            base64_bytes = dataframe_attributes.encode('ascii')
+            base64_bytes = dataframe_attributes.encode("ascii")
             logger.debug("dataframe_attributes=%s", dataframe_attributes)
             df_attrs_bytes = base64.b64decode(base64_bytes)
-            df_attrs_json_str = df_attrs_bytes.decode('utf-8')
+            df_attrs_json_str = df_attrs_bytes.decode("utf-8")
             logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
             df_attrs = json.loads(df_attrs_json_str)
             df.attrs = df_attrs
