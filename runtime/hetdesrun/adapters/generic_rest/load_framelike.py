@@ -161,9 +161,9 @@ async def load_framelike_data(
                 str(end_time - start_time),
             )
 
-            if "DataframeAttributes" in resp.headers:
-                logger.info("Found DataframeAttributes in Response-Header")
-                dataframe_attributes = resp.headers["DataframeAttributes"]
+            if "Dataframe-Attributes" in resp.headers:
+                logger.info("Found Dataframe-Attributes in Response-Header")
+                dataframe_attributes = resp.headers["Dataframe-Attributes"]
                 base64_bytes = dataframe_attributes.encode("ascii")
                 logger.info("dataframe_attributes=%s", dataframe_attributes)
                 df_attrs_bytes = base64.b64decode(base64_bytes)
