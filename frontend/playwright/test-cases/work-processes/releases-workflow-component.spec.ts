@@ -66,7 +66,7 @@ ${workflowImportData}
 
   await hetidaDesigner.clickIconInToolbar('Open documentation');
   await page.waitForSelector('hd-documentation-editor-dialog >> textarea');
-  await hetidaDesigner.typeInTextarea(0, workflowDocumentation);
+  await hetidaDesigner.typeInTextarea(workflowDocumentation);
   await hetidaDesigner.clickButton('Save');
 
   await hetidaDesigner.clickTabInNavigation(1);

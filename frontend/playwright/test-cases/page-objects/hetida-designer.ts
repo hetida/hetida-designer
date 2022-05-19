@@ -243,19 +243,24 @@ export class HetidaDesigner {
       .type(inputText);
   }
 
-  public async typeInTextarea(
-    textareaPosition: number,
-    textareaText: string
-  ): Promise<void> {
-    if (textareaPosition < 0 || textareaText === '') {
-      throw new Error('ERROR: Textarea position is negative or text is empty');
+  public async typeInTextarea(textareaText: string): Promise<void> {
+    if (textareaText === '') {
+      throw new Error('ERROR: Textarea text must not be empty');
     }
 
-    await this.page.locator(`textarea >> nth=${textareaPosition}`).click();
-    await this.page.press(`textarea >> nth=${textareaPosition}`, 'Control+a');
-    await this.page.press(`textarea >> nth=${textareaPosition}`, 'Delete');
     await this.page
-      .locator(`textarea >> nth=${textareaPosition}`)
+      .locator('hd-documentation-editor-dialog >> textarea')
+      .click();
+    await this.page.press(
+      'hd-documentation-editor-dialog >> textarea',
+      'Control+a'
+    );
+    await this.page.press(
+      'hd-documentation-editor-dialog >> textarea',
+      'Delete'
+    );
+    await this.page
+      .locator('hd-documentation-editor-dialog >> textarea')
       .type(textareaText);
   }
 
@@ -264,9 +269,9 @@ export class HetidaDesigner {
       throw new Error('ERROR: Import data must not be empty');
     }
 
-    await this.page.locator('.view-lines').click();
-    await this.page.press('.view-lines', 'Control+a');
-    await this.page.press('.view-lines', 'Delete');
-    await this.page.locator('.view-lines').type(importData);
+    await this.page.locator('.editor-container').click();
+    await this.page.press('.editor-container >> textarea', 'Control+a');
+    await this.page.press('.editor-container >> textarea', 'Delete');
+    await this.page.locator('.editor-container >> textarea').type(importData);
   }
 }
