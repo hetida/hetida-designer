@@ -43,6 +43,7 @@
 
     <mat-form-field>
       <mat-label>Short description</mat-label>
+      <mat-error [hdErrorVisual]="infoForm.get('description')"></mat-error>
       <input
         formControlName="description"
         id="description"
@@ -50,6 +51,7 @@
         placeholder="Short description"
         type="text"
       />
+      <mat-error [hdErrorVisual]="infoForm.get('description')"></mat-error>
     </mat-form-field>
 
     <mat-form-field>
