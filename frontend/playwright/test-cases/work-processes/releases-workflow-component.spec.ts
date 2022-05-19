@@ -66,7 +66,7 @@ ${workflowImportData}
 
   await hetidaDesigner.clickIconInToolbar('Open documentation');
   await page.waitForSelector('hd-documentation-editor-dialog >> textarea');
-  await hetidaDesigner.typeInTextareaPosition(0, workflowDocumentation);
+  await hetidaDesigner.typeInTextarea(0, workflowDocumentation);
   await hetidaDesigner.clickButton('Save');
 
   await hetidaDesigner.clickTabInNavigation(1);
@@ -97,7 +97,7 @@ ${workflowImportData}
   const workflowImportDataReleased = await page
     .locator('.view-lines')
     .innerText();
-  await hetidaDesigner.clickButton('Cancel', 1);
+  await hetidaDesigner.clickButtonPosition(1, 'Cancel');
   await hetidaDesigner.clickButton('Execute');
   await page.waitForSelector('hd-protocol-viewer >> .protocol-content');
   const outputProtocolReleased = await page

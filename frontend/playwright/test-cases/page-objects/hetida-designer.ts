@@ -154,31 +154,36 @@ export class HetidaDesigner {
       .click();
   }
 
-  public async clickButton(
-    buttonText: string,
-    buttonPosition: number = null
-  ): Promise<void> {
-    if ((buttonPosition !== null && buttonPosition < 0) || buttonText === '') {
-      throw new Error('ERROR: Button position is negative or text is empty');
+  public async clickButton(buttonText: string): Promise<void> {
+    if (buttonText === '') {
+      throw new Error('ERROR: Button text must not be empty');
     }
 
     const locateButtons = this.page.locator(`button:has-text("${buttonText}")`);
     const countButtons = await locateButtons.count();
 
-    // If more than one button with the same text was found, click the enabled one or choose a position
+    // If more than one button with the same text was found, click the enabled one
     if (countButtons > 1) {
-      if (buttonPosition === null) {
-        for (let i = 0; i < countButtons; i++) {
-          if (await locateButtons.nth(i).isEnabled()) {
-            await locateButtons.nth(i).click();
-          }
+      for (let i = 0; i < countButtons; i++) {
+        if (await locateButtons.nth(i).isEnabled()) {
+          await locateButtons.nth(i).click();
         }
-      } else {
-        await locateButtons.nth(buttonPosition).click();
       }
     } else {
       await locateButtons.click();
     }
+  }
+
+  public async clickButtonPosition(
+    buttonPosition: number,
+    buttonText: string
+  ): Promise<void> {
+    if (buttonPosition < 0 || buttonText === '') {
+      throw new Error('ERROR: Empty text or negative button position');
+    }
+
+    const locateButtons = this.page.locator(`button:has-text("${buttonText}")`);
+    await locateButtons.nth(buttonPosition).click();
   }
 
   public async clickToggleButton(toggleButtonPosition: number): Promise<void> {
@@ -238,7 +243,7 @@ export class HetidaDesigner {
       .type(inputText);
   }
 
-  public async typeInTextareaPosition(
+  public async typeInTextarea(
     textareaPosition: number,
     textareaText: string
   ): Promise<void> {
