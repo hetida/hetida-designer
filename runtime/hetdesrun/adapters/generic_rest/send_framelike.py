@@ -59,7 +59,6 @@ async def post_framelike_records(
             headers=headers,
             timeout=60,
         )
-        logger.info("response headers:\n%s", response.headers)
     except httpx.HTTPError as e:
         msg = f"Http error while posting framelike data to {url} for id {ref_id}: {str(e)}"
         logger.info(msg)
