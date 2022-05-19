@@ -26,6 +26,11 @@ def dataframe_to_list_of_dicts(df: pd.DataFrame) -> List[Dict]:
             )
         )
 
+
+    for column_name in df.dtypes.index:
+        if pd.api.types.is_datetime64_any_dtype(df.dtypes[column_name]):
+            df[column_name] = df[column_name].astype(str)
+
     return df.replace({np.nan: None}).to_dict(orient="records")  # type: ignore
 
 
