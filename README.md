@@ -59,7 +59,7 @@ git checkout release
 Once you have the source code, docker and docker-compose properly set up, run
 
 ```shell
-docker-compose up -d
+docker compose up -d
 ```
 
 to start the application. 
@@ -200,7 +200,7 @@ either with [docker-compose](#gs-docker-compose) or with [standalone docker cont
 ports in the docker-compose file as is described under [Modifying Ports](#modify-ports). There is a `docker-compose-dev.yml` that builds images from your local development files which you can use via
 
 ```
-docker-compose -f docker-compose-dev.yml up -d
+docker compose -f docker-compose-dev.yml up -d
 ```
 
 Note that in this case it makes sense to run the base component deployment command using the locally

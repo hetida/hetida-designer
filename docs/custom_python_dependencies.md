@@ -30,13 +30,13 @@ Now save the `docker-compose.yml` file as a new file with name `docker-compose-c
 After that build the modified runtime image with
 
 ```bash
-docker-compose -f docker-compose-custom-dependencies.yml build --no-cache hetida-designer-runtime
+docker compose -f docker-compose-custom-dependencies.yml build --no-cache hetida-designer-runtime
 ```
 
 Now you can run your new setup with
 
 ```bash
-docker-compose -f docker-compose-custom-dependencies.yml up -d
+docker compose -f docker-compose-custom-dependencies.yml up -d
 ```
 
 To test availability of the xgboost library you may write a small component importing it (`import xgboost`) and verify that the component can be run.
@@ -75,13 +75,13 @@ USER hdrt_app
 After that build the modified runtime image with
 
 ```bash
-docker-compose -f docker-compose-custom-dependencies.yml build --no-cache hetida-designer-runtime
+docker compose -f docker-compose-custom-dependencies.yml build --no-cache hetida-designer-runtime
 ```
 
 Now you can run your new setup with
 
 ```bash
-docker-compose -f docker-compose-custom-dependencies.yml up -d
+docker compose -f docker-compose-custom-dependencies.yml up -d
 ```
 
 To test availability of the xgboost library you may write a small component importing it (`import xgboost`) and verify that the component can be run.
