@@ -2,9 +2,9 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { Component, ElementRef, OnInit } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { AuthService } from './service/auth.service';
 import { ContextMenuService } from './service/context-menu/context-menu.service';
 import { LocalStorageService } from './service/local-storage/local-storage.service';
+import { OldAuthService } from './service/old-auth.service';
 import { ThemeService } from './service/theme/theme.service';
 
 @Component({
@@ -71,11 +71,11 @@ export class AppComponent implements OnInit {
   }
 
   public get userName(): string {
-    return AuthService.getFullName();
+    return OldAuthService.getFullName();
   }
 
   public logout(): void {
-    AuthService.logout();
+    OldAuthService.logout();
   }
 
   public closeContextMenu() {

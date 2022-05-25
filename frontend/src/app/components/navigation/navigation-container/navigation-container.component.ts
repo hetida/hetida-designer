@@ -43,6 +43,7 @@ export class NavigationContainerComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // TODO fetch base items only when authenticated
     this._baseItemService.fetchBaseItems();
     combineLatest([this.filterChanges, this.searchFilterChanges])
       .pipe(

@@ -7,17 +7,17 @@ import {
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { AuthService } from '../auth.service';
 import { ConfigService } from '../configuration/config.service';
+import { OldAuthService } from '../old-auth.service';
 
 @Injectable()
-export class AuthInterceptor implements HttpInterceptor {
+export class OldAuthInterceptor implements HttpInterceptor {
   private forwardAuthHeaders: boolean;
   private keycloakEnabled: boolean;
 
   constructor(
     private readonly config: ConfigService,
-    private readonly auth: AuthService
+    private readonly auth: OldAuthService
   ) {
     this.config.getConfig().subscribe(runtimeConfig => {
       this.forwardAuthHeaders = runtimeConfig.forwardAuthHeaders;

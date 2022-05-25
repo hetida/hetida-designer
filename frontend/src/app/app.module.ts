@@ -10,12 +10,17 @@ import {
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { RouterModule } from '@angular/router';
 import {
   OwlDateTimeModule,
   OwlNativeDateTimeModule
 } from '@danielmoncada/angular-datetime-picker';
 import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import {
+  AuthInterceptor,
+  AutoLoginAllRoutesGuard
+} from 'angular-auth-oidc-client';
 import { PlotlyViaWindowModule } from 'angular-plotly.js';
 import {
   HD_WIRING_CONFIG,
@@ -27,6 +32,7 @@ import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { MonacoEditorModule } from 'ngx-monaco-editor';
 import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
+import { AuthHttpConfigModule } from './auth/auth-http-config.module';
 import { BaseItemContextMenuComponent } from './components/base-item-context-menu/base-item-context-menu.component';
 import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
 import { ComponentIODialogComponent } from './components/component-io-dialog/component-io-dialog.component';
@@ -47,13 +53,12 @@ import { WorkflowEditorComponent } from './components/workflow-editor/workflow-e
 import { WorkflowIODialogComponent } from './components/workflow-io-dialog/workflow-io-dialog.component';
 import { ErrorVisualDirective } from './directives/error-visual.directive';
 import { MaterialModule } from './material.module';
-import { AuthService } from './service/auth.service';
 import { ConfigService } from './service/configuration/config.service';
 import { AppErrorHandler } from './service/error-handler/app-error-handler.service';
-import { AuthInterceptor } from './service/http-interceptors/auth.interceptor';
 import { HttpErrorInterceptor } from './service/http-interceptors/http-error.interceptor';
 import { LocalStorageService } from './service/local-storage/local-storage.service';
 import { NotificationService } from './service/notifications/notification.service';
+import { OldAuthService } from './service/old-auth.service';
 import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
 
@@ -105,12 +110,21 @@ import { appReducers } from './store/app.reducers';
       }
     }),
     !environment.production ? StoreDevtoolsModule.instrument() : [],
-    NgHetidaFlowchartModule
+    NgHetidaFlowchartModule,
+    AuthHttpConfigModule,
+    RouterModule.forRoot([
+      {
+        path: '**',
+        component: AppComponent,
+        canActivate: [AutoLoginAllRoutesGuard]
+      }
+    ])
   ],
   providers: [
     NotificationService,
     LocalStorageService,
     { provide: HTTP_INTERCEPTORS, useClass: HttpErrorInterceptor, multi: true },
+    // { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     { provide: ErrorHandler, useClass: AppErrorHandler },
     { provide: MAT_DIALOG_DATA, useValue: {} },
@@ -135,7 +149,7 @@ import { appReducers } from './store/app.reducers';
         return async () => {
           const config = await appConfig.loadConfig();
           if (config.keycloakEnabled === true) {
-            await AuthService.init(config).catch(() =>
+            await OldAuthService.init(config).catch(() =>
               window.location.reload()
             );
           }

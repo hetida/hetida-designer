@@ -6,8 +6,9 @@ import { Configuration } from './configuration/config.service';
 @Injectable({
   providedIn: 'root'
 })
-export class AuthService {
+export class OldAuthService {
   constructor(private readonly zone: NgZone) {}
+
   private static config: Cloak.KeycloakConfig;
 
   static keycloak: Cloak.KeycloakInstance;
@@ -15,46 +16,49 @@ export class AuthService {
   static init(
     config: Configuration
   ): Cloak.KeycloakPromise<boolean, Cloak.KeycloakError> {
-    AuthService.config = {
+    OldAuthService.config = {
       realm: config.keycloakRealm,
       url: config.keycloakUrl,
       clientId: config.keycloakClientId
     };
 
-    AuthService.keycloak = Cloak(AuthService.config);
+    OldAuthService.keycloak = Cloak(OldAuthService.config);
 
-    return AuthService.keycloak.init({ onLoad: 'login-required' });
+    return OldAuthService.keycloak.init({ onLoad: 'login-required' });
   }
 
   static isAuthenticated(): boolean {
-    return !!AuthService.keycloak.authenticated;
+    return !!OldAuthService.keycloak.authenticated;
   }
 
   /**
    * Get user roles if available otherwise returns empty Array
    */
   static getUserRoles(): string[] {
-    if (AuthService.keycloak.realmAccess) {
-      return AuthService.keycloak.realmAccess.roles;
+    if (OldAuthService.keycloak.realmAccess) {
+      return OldAuthService.keycloak.realmAccess.roles;
     }
 
     return [];
   }
 
   static hasRoles(roles: string[]): boolean {
-    return roles.every(role => AuthService.hasRole(role));
+    return roles.every(role => OldAuthService.hasRole(role));
   }
 
   static hasRole(role: string): boolean {
-    return AuthService.getUserRoles().includes(role);
+    return OldAuthService.getUserRoles().includes(role);
   }
 
   static hasOneOfRoles(roles: string[]): boolean {
-    return AuthService.getUserRoles().filter(x => roles.includes(x)).length > 0;
+    return (
+      OldAuthService.getUserRoles().filter(x => roles.includes(x)).length > 0
+    );
   }
 
+  // TODO display name for new oauth
   static getFullName(): string {
-    const keycloak = AuthService.keycloak;
+    const keycloak = OldAuthService.keycloak;
     if (keycloak && keycloak.tokenParsed) {
       return keycloak.tokenParsed.name;
     }
@@ -63,34 +67,34 @@ export class AuthService {
   }
 
   static logout(): void {
-    AuthService.keycloak.logout();
+    OldAuthService.keycloak.logout();
   }
 
   getToken(): Observable<string> {
     return new Observable((observer: Observer<string>) => {
       if (
-        AuthService.keycloak.token !== null &&
-        AuthService.keycloak.token !== undefined
+        OldAuthService.keycloak.token !== null &&
+        OldAuthService.keycloak.token !== undefined
       ) {
-        AuthService.keycloak
+        OldAuthService.keycloak
           .updateToken(900)
           .then(() => {
             this.zone.run(() => {
               if (
-                AuthService.keycloak.token !== null ||
-                AuthService.keycloak.token !== undefined
+                OldAuthService.keycloak.token !== null ||
+                OldAuthService.keycloak.token !== undefined
               ) {
-                observer.next(AuthService.keycloak.token);
+                observer.next(OldAuthService.keycloak.token);
               }
 
               observer.complete();
             });
           })
           .catch(() => {
-            AuthService.logout();
+            OldAuthService.logout();
           });
       } else {
-        AuthService.logout();
+        OldAuthService.logout();
       }
     });
   }
