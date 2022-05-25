@@ -1,12 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ReplaySubject } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 import { Utils } from 'src/app/utils/utils';
 
 export interface Configuration {
   readonly apiEndpoint: string;
   readonly forwardAuthHeaders: boolean;
+  // TODO rename
   keycloakEnabled?: boolean;
+  // TODO add other oauth properties
   readonly keycloakRealm: string;
   readonly keycloakClientId: string;
   readonly keycloakUrl: string;
@@ -35,7 +37,7 @@ export class ConfigService {
     return this.config;
   }
 
-  public getConfig(): ReplaySubject<Configuration> {
-    return this.config$;
+  public getConfig(): Observable<Configuration> {
+    return this.config$.asObservable();
   }
 }

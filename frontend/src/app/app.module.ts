@@ -17,10 +17,7 @@ import {
 } from '@danielmoncada/angular-datetime-picker';
 import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import {
-  AuthInterceptor,
-  AutoLoginAllRoutesGuard
-} from 'angular-auth-oidc-client';
+import { AuthInterceptor } from 'angular-auth-oidc-client';
 import { PlotlyViaWindowModule } from 'angular-plotly.js';
 import {
   HD_WIRING_CONFIG,
@@ -33,6 +30,7 @@ import { MonacoEditorModule } from 'ngx-monaco-editor';
 import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
 import { AuthHttpConfigModule } from './auth/auth-http-config.module';
+import { AuthGuard } from './auth/auth.guard';
 import { BaseItemContextMenuComponent } from './components/base-item-context-menu/base-item-context-menu.component';
 import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
 import { ComponentIODialogComponent } from './components/component-io-dialog/component-io-dialog.component';
@@ -58,7 +56,6 @@ import { AppErrorHandler } from './service/error-handler/app-error-handler.servi
 import { HttpErrorInterceptor } from './service/http-interceptors/http-error.interceptor';
 import { LocalStorageService } from './service/local-storage/local-storage.service';
 import { NotificationService } from './service/notifications/notification.service';
-import { OldAuthService } from './service/old-auth.service';
 import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
 
@@ -116,7 +113,7 @@ import { appReducers } from './store/app.reducers';
       {
         path: '**',
         component: AppComponent,
-        canActivate: [AutoLoginAllRoutesGuard]
+        canActivate: [AuthGuard]
       }
     ])
   ],
@@ -124,7 +121,6 @@ import { appReducers } from './store/app.reducers';
     NotificationService,
     LocalStorageService,
     { provide: HTTP_INTERCEPTORS, useClass: HttpErrorInterceptor, multi: true },
-    // { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     { provide: ErrorHandler, useClass: AppErrorHandler },
     { provide: MAT_DIALOG_DATA, useValue: {} },
@@ -145,14 +141,9 @@ import { appReducers } from './store/app.reducers';
     ConfigService,
     {
       provide: APP_INITIALIZER,
-      useFactory: (appConfig: ConfigService) => {
+      useFactory: (configService: ConfigService) => {
         return async () => {
-          const config = await appConfig.loadConfig();
-          if (config.keycloakEnabled === true) {
-            await OldAuthService.init(config).catch(() =>
-              window.location.reload()
-            );
-          }
+          await configService.loadConfig();
         };
       },
       multi: true,
