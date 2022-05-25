@@ -15,7 +15,6 @@ export const httpLoaderFactory = () => {
     .pipe(
       map(() => {
         return {
-          configId: 'hetida-designer',
           authority: `http://localhost:8080/auth/realms/hetida-designer`,
           redirectUrl: window.location.origin,
           clientId: 'hetida-designer',
@@ -24,7 +23,7 @@ export const httpLoaderFactory = () => {
           postLogoutRedirectUri: window.location.origin,
           silentRenew: true,
           silentRenewUrl: `${window.location.origin}/silent-renew.html`,
-          logLevel: LogLevel.Debug,
+          logLevel: LogLevel.Warn,
           // TODO take api endpoint from config json
           // TODO also add token to adapter request (which might have totally different URLs)
           secureRoutes: ['/api']

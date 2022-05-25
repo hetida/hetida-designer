@@ -3,8 +3,18 @@ import { Injectable } from '@angular/core';
 import { Observable, ReplaySubject } from 'rxjs';
 import { Utils } from 'src/app/utils/utils';
 
+export interface NewConfiguration {
+  authEnabled: boolean;
+  authAuthority: string;
+  authClientId: string;
+  secureRoutes: Array<string>;
+  // authLogLevel?
+  // authUsernameAttribute?
+}
+
 export interface Configuration {
   readonly apiEndpoint: string;
+  // TODO is this used in any project?
   readonly forwardAuthHeaders: boolean;
   // TODO rename
   keycloakEnabled?: boolean;
