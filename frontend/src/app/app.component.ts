@@ -83,7 +83,7 @@ export class AppComponent implements OnInit {
   }
 
   public get keycloakEnabled(): boolean {
-    const keycloak = AuthService.keycloak;
+    const keycloak = OldAuthService.keycloak;
     return keycloak ? true : false;
   }
 
