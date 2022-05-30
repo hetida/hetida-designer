@@ -16,9 +16,9 @@ npx playwright install
 Although the tests can be run against any running Designer installation (see below), it is recommended to start a fresh designer dev docker-compose setup. This is described in the [main readme](../README.md) file. Nevertheless it is recommended to start a clean setup via
 
 ```
-docker compose -f docker-compose-dev.yml down --volumes \
-    && docker compose -f docker-compose-dev.yml build \
-    && docker compose -f docker-compose-dev.yml up --force-recreate
+docker-compose -f docker-compose-dev.yml down --volumes \
+    && docker-compose -f docker-compose-dev.yml build \
+    && docker-compose -f docker-compose-dev.yml up --force-recreate
 ```
 
 and then run a fresh deployment of the base components / workflows via

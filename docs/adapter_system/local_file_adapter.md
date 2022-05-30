@@ -56,8 +56,8 @@ If you have not changed anything else in your setup you may just leave this as i
 After having made adaptions to the configuration described above you need to (re)start with
 
 ```bash
-docker compose stop
-docker compose up
+docker-compose stop
+docker-compose up
 ```
 
 Now all mounted directories and included local files with known extensions (.csv, .excel) should be available via selecting "Local File Adapter" in the Execution dialog:

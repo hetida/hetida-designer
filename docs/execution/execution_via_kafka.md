@@ -52,7 +52,7 @@ Now we can start this new setup via the following command (ensuring correct brok
 :warning: **Warning:** The following command deletes existing component/workflow data / volumes!
 
 ```
-docker compose -f docker-compose-kafka.yml down --volumes && docker compose -f docker-compose-kafka.yml up --force-recreate --build
+docker-compose -f docker-compose-kafka.yml down --volumes && docker-compose -f docker-compose-kafka.yml up --force-recreate --build
 ```
 
 We will demonstrate workflow execution via Kafka using one of the example workflows provided with the default component/workflow deployment, so do not forget to run the deployment command as described in the main Readme:
@@ -73,17 +73,17 @@ We prepare some producer/consumers in order to send messages and watch the resul
 
 Open a terminal and start a console producer in a shell inside the kafka service container:
 ```bash
-docker compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-producer.sh --broker-list kafka:9092 --topic hd-execution-topic --property "parse.key=true" --property key.separator=":"
+docker-compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-producer.sh --broker-list kafka:9092 --topic hd-execution-topic --property "parse.key=true" --property key.separator=":"
 ```
 
 Open a second terminal and start a console consumer in a shell inside the kafka service container:
 ```bash
-docker compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic  hd-execution-topic --property print.key=true --property key.separator=":" --from-beginning
+docker-compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic  hd-execution-topic --property print.key=true --property key.separator=":" --from-beginning
 ```
 
 Open a third terminal and start a console consumer for the result topic inside the kafka service container:
 ```bash
-docker compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic  hd-execution-response-topic --property print.key=true --property key.separator="-" --from-beginning
+docker-compose -f docker-compose-kafka.yml exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic  hd-execution-response-topic --property print.key=true --property key.separator="-" --from-beginning
 ```
 
 ### Creating the Kafka message payload
