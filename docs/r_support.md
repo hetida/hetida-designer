@@ -49,13 +49,13 @@ Now save the default `docker-compose.yml` file as a new file with name `docker-c
 After that build the modified runtime image with
 
 ```bash
-docker compose -f docker-compose-basic-R-support.yml build --no-cache hetida-designer-runtime
+docker-compose -f docker-compose-basic-R-support.yml build --no-cache hetida-designer-runtime
 ```
 
 Now you can run your new setup with
 
 ```bash
-docker compose -f docker-compose-basic-R-support.yml up -d
+docker-compose -f docker-compose-basic-R-support.yml up -d
 ```
 
 ## Using R in component code
