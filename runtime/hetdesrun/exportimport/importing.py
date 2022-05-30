@@ -28,11 +28,16 @@ from hetdesrun.component.load import (
 from hetdesrun.component.code import update_code
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
-
 from hetdesrun.persistence.models.io import (
     IOInterface,
     IO,
 )
+from hetdesrun.persistence.dbservice.revision import (
+    read_single_transformation_revision,
+    store_single_transformation_revision,
+    update_or_create_single_transformation_revision,
+)
+from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError
 
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.models.code import ComponentInfo
@@ -159,7 +164,9 @@ def transformation_revision_from_python_code(code: str) -> Any:
 
 
 ##Base function to import a transformation revision from a json file
-def import_transformation_from_path(path: str, strip_wirings: bool = False) -> None:
+def import_transformation_from_path(
+    path: str, strip_wirings: bool = False, directly_into_db: bool = False
+) -> None:
     """
     Imports a transformation revision based on its path on the local system.
     WARNING: Overwrites possible existing transformation revision!
@@ -173,51 +180,67 @@ def import_transformation_from_path(path: str, strip_wirings: bool = False) -> N
 
     tr_json = load_json(path)
 
-    import_transformation(tr_json, path, strip_wirings=strip_wirings)
+    import_transformation(
+        tr_json, path, strip_wirings=strip_wirings, directly_into_db=directly_into_db
+    )
 
 
 def import_transformation(
-    tr_json: dict, path: str, strip_wirings: bool = False
+    tr_json: dict,
+    path: str,
+    strip_wirings: bool = False,
+    directly_into_db: bool = False,
 ) -> None:
-
-    headers = get_auth_headers()
 
     if strip_wirings:
         tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
+        tr = TransformationRevision(**tr_json)
 
-    response = requests.put(
-        posix_urljoin(
-            runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
+    if directly_into_db:
+        try:
+            read_single_transformation_revision(tr_json.id)
+        except DBNotFoundError:
+            store_single_transformation_revision(tr)
+        else:
+            if runtime_config.hd_backend_overwrite_on_import:
+                update_or_create_single_transformation_revision(tr)
+
+    else:
+        headers = get_auth_headers()
+
+        response = requests.put(
+            posix_urljoin(
+                runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
+            )
+            + "?allow_overwrite_released=True",
+            verify=runtime_config.hd_backend_verify_certs,
+            json=tr_json,
+            auth=get_backend_basic_auth()
+            if runtime_config.hd_backend_use_basic_auth
+            else None,
+            headers=headers,
         )
-        + "?allow_overwrite_released=True",
-        verify=runtime_config.hd_backend_verify_certs,
-        json=tr_json,
-        auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
-        else None,
-        headers=headers,
-    )
-    logger.info(
-        (
-            "PUT transformation status code: %d"
-            " for transformation %s"
-            " of type %s\n"
-            "with name %s"
-            " in category %s"
-        ),
-        response.status_code,
-        tr_json["id"],
-        tr_json["type"],
-        tr_json["name"],
-        tr_json["category"],
-    )
-    if response.status_code != 201:
-        msg = (
-            f"COULD NOT PUT {tr_json['type']} from path {path}\n."
-            f"Response status code {response.status_code}"
-            f"with response text:\n{response.text}"
+        logger.info(
+            (
+                "PUT transformation status code: %d"
+                " for transformation %s"
+                " of type %s\n"
+                "with name %s"
+                " in category %s"
+            ),
+            response.status_code,
+            tr_json["id"],
+            tr_json["type"],
+            tr_json["name"],
+            tr_json["category"],
         )
-        logger.error(msg)
+        if response.status_code != 201:
+            msg = (
+                f"COULD NOT PUT {tr_json['type']} from path {path}\n."
+                f"Response status code {response.status_code}"
+                f"with response text:\n{response.text}"
+            )
+            logger.error(msg)
 
 
 # Import all transformations based on type, id, name and category
@@ -227,6 +250,7 @@ def import_transformations(
     names: Optional[List[str]] = None,
     category: Optional[str] = None,
     strip_wirings: bool = False,
+    directly_into_db: bool = False,
 ) -> None:
     """
     This function imports all transformations together with their documentations
@@ -249,7 +273,7 @@ def import_transformations(
                 python_file = load_python_file(path)
                 if python_file:
                     tr_json = transformation_revision_from_python_code(python_file)
-                    import_transformation(tr_json, path)
+                    import_transformation(tr_json, path, directly_into_db)
             elif path.endswith(".json"):
                 logger.info("Loading transformation from json file %s", path)
                 transformation_json = load_json(path)
@@ -309,16 +333,26 @@ def import_transformations(
                 )
             ):
                 import_transformation_from_path(
-                    path_dict[transformation_id], strip_wirings=strip_wirings
+                    path_dict[transformation_id],
+                    strip_wirings=strip_wirings,
+                    directly_into_db=directly_into_db,
                 )
 
     logger.info("finished importing")
 
 
-def import_all(download_path: str, strip_wirings: bool = False) -> None:
+def import_all(
+    download_path: str,
+    strip_wirings: bool = False,
+    directly_into_db: bool = runtime_config.hd_backend_import_directly_into_db,
+) -> None:
     import_transformations(
-        os.path.join(download_path, "components"), strip_wirings=strip_wirings
+        os.path.join(download_path, "components"),
+        strip_wirings=strip_wirings,
+        directly_into_db=directly_into_db,
     )
     import_transformations(
-        os.path.join(download_path, "workflows"), strip_wirings=strip_wirings
+        os.path.join(download_path, "workflows"),
+        strip_wirings=strip_wirings,
+        directly_into_db=directly_into_db,
     )
