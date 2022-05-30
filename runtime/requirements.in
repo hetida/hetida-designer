@@ -1,3 +1,4 @@
+-c requirements-base.txt
 fastapi>=0.65.2
 uvicorn>=0.17.2
 uvloop
@@ -11,7 +12,7 @@ aiokafka
 alembic
 pandas
 numpy
-sklearn
+scikit-learn
 scipy
 # tensorflow>=2.7.1
 keras
