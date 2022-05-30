@@ -198,7 +198,7 @@ def import_transformation(
     if directly_into_db:
         tr = TransformationRevision(**tr_json)
         try:
-            read_single_transformation_revision(tr.id)
+            read_single_transformation_revision(tr.id, log_error=False)
         except DBNotFoundError:
             store_single_transformation_revision(tr)
         else:
