@@ -273,7 +273,12 @@ def import_transformations(
                 python_file = load_python_file(path)
                 if python_file:
                     tr_json = transformation_revision_from_python_code(python_file)
-                    import_transformation(tr_json, path, directly_into_db)
+                    import_transformation(
+                        tr_json,
+                        path,
+                        strip_wirings=strip_wirings,
+                        directly_into_db=directly_into_db,
+                    )
             elif path.endswith(".json"):
                 logger.info("Loading transformation from json file %s", path)
                 transformation_json = load_json(path)
