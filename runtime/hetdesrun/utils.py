@@ -52,11 +52,16 @@ def get_auth_headers() -> Dict[str, str]:
     )
 
 
-def get_backend_basic_auth() -> Tuple[Optional[str], Optional[str]]:
-    return (
-        runtime_config.hd_backend_basic_auth_user,
-        runtime_config.hd_backend_basic_auth_password,
-    )
+def get_backend_basic_auth() -> Optional[Tuple[str, str]]:
+    if (
+        runtime_config.hd_backend_basic_auth_user is not None
+        and runtime_config.hd_backend_basic_auth_password is not None
+    ):
+        return (
+            runtime_config.hd_backend_basic_auth_user,
+            runtime_config.hd_backend_basic_auth_password,
+        )
+    return None
 
 
 def get_uuid_from_seed(seed_str: str) -> UUID:

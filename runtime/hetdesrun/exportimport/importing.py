@@ -194,11 +194,11 @@ def import_transformation(
 
     if strip_wirings:
         tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
-        tr = TransformationRevision(**tr_json)
 
     if directly_into_db:
+        tr = TransformationRevision(**tr_json)
         try:
-            read_single_transformation_revision(tr_json.id)
+            read_single_transformation_revision(tr.id)
         except DBNotFoundError:
             store_single_transformation_revision(tr)
         else:
