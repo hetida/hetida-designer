@@ -20,7 +20,7 @@ export class AuthGuard implements CanActivate {
     private readonly autoLoginAllRoutesGuard: AutoLoginAllRoutesGuard
   ) {
     this.configService.getConfig().subscribe(config => {
-      this.authEnabled = config.keycloakEnabled;
+      this.authEnabled = config.authEnabled;
     });
   }
 

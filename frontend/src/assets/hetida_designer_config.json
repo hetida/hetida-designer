@@ -1,8 +1,9 @@
 {
-    "apiEndpoint": "http://localhost:8080/api",
-    "forwardAuthHeaders": false,
-    "keycloakEnabled": false,
-    "keycloakRealm": "hetida",
-    "keycloakClientId": "hetida-client",
-    "keycloakUrl": "hdauth"
+  "apiEndpoint": "/api",
+  "authEnabled": true,
+  "authConfig": {
+    "authority": "http://localhost:8080/auth/realms/hetida-designer",
+    "clientId": "hetida-designer",
+    "userNameAttribute": "preferred_username"
+  }
 }

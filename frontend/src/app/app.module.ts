@@ -1,6 +1,6 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
@@ -17,7 +17,11 @@ import {
 } from '@danielmoncada/angular-datetime-picker';
 import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { AuthInterceptor } from 'angular-auth-oidc-client';
+import {
+  AuthModule,
+  StsConfigHttpLoader,
+  StsConfigLoader
+} from 'angular-auth-oidc-client';
 import { PlotlyViaWindowModule } from 'angular-plotly.js';
 import {
   HD_WIRING_CONFIG,
@@ -27,10 +31,12 @@ import {
 } from 'hd-wiring';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { MonacoEditorModule } from 'ngx-monaco-editor';
+import { from } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
-import { AuthHttpConfigModule } from './auth/auth-http-config.module';
 import { AuthGuard } from './auth/auth.guard';
+import { AuthInterceptor } from './auth/auth.interceptor';
 import { BaseItemContextMenuComponent } from './components/base-item-context-menu/base-item-context-menu.component';
 import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
 import { ComponentIODialogComponent } from './components/component-io-dialog/component-io-dialog.component';
@@ -58,6 +64,35 @@ import { LocalStorageService } from './service/local-storage/local-storage.servi
 import { NotificationService } from './service/notifications/notification.service';
 import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
+
+const httpLoaderFactory = (configService: ConfigService) => {
+  // we need to first load the hetida designer config upon app initialization, then use its values to initialize the auth module
+  // since the auth module uses an APP_INITIALIZER token internally, we have to combine both calls
+  // the calls can be split again once we migrate to v14 of the oidc library, see
+  // docs/site/angular-auth-oidc-client/docs/migrations/v13-to-v14.md
+  const config$ = from(configService.loadConfig())
+    .pipe(
+      map(config => {
+        // unfortunately, the oidc library requires some config values upon initialization
+        // it throws an error if authority and clientId are undefined, which can be ignored if no auth is needed
+        // the error can be fixed by migrating to version 14, see above
+        return {
+          authority: config.authConfig?.authority,
+          redirectUrl: window.location.origin,
+          clientId: config.authConfig?.clientId,
+          responseType: 'code',
+          scope: 'openid',
+          postLogoutRedirectUri: window.location.origin,
+          silentRenew: true,
+          silentRenewUrl: `${window.location.origin}/silent-renew.html`,
+          ...config.authConfig
+        };
+      })
+    )
+    .toPromise();
+
+  return new StsConfigHttpLoader(config$);
+};
 
 @NgModule({
   declarations: [
@@ -108,7 +143,13 @@ import { appReducers } from './store/app.reducers';
     }),
     !environment.production ? StoreDevtoolsModule.instrument() : [],
     NgHetidaFlowchartModule,
-    AuthHttpConfigModule,
+    AuthModule.forRoot({
+      loader: {
+        provide: StsConfigLoader,
+        useFactory: httpLoaderFactory,
+        deps: [ConfigService]
+      }
+    }),
     RouterModule.forRoot([
       {
         path: '**',
@@ -139,16 +180,6 @@ import { appReducers } from './store/app.reducers';
     },
     { provide: MatDialogRef, useValue: {} },
     ConfigService,
-    {
-      provide: APP_INITIALIZER,
-      useFactory: (configService: ConfigService) => {
-        return async () => {
-          await configService.loadConfig();
-        };
-      },
-      multi: true,
-      deps: [ConfigService]
-    },
     {
       provide: APP_BASE_HREF,
       useValue: window.location.pathname

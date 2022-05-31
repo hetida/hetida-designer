@@ -9,13 +9,15 @@ import { ConfigService } from '../service/configuration/config.service';
 })
 export class AuthService {
   private authEnabled = false;
+  private userNameAttribute: string = null;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly oidcSecurityService: OidcSecurityService
   ) {
     this.configService.getConfig().subscribe(config => {
-      this.authEnabled = config.keycloakEnabled;
+      this.authEnabled = config.authEnabled;
+      this.userNameAttribute = config.authConfig?.userNameAttribute;
     });
   }
 
@@ -36,8 +38,9 @@ export class AuthService {
     if (this.authEnabled) {
       return this.oidcSecurityService.userData$.pipe(
         map(userDataResult => {
-          // TODO configurable username attribute?
-          return userDataResult.userData?.preferred_username ?? 'no username';
+          return (
+            userDataResult.userData?.[this.userNameAttribute] ?? 'no username'
+          );
         })
       );
     }
