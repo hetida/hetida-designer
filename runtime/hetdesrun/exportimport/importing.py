@@ -269,7 +269,7 @@ def import_transformations(
     names: Optional[List[str]] = None,
     category: Optional[str] = None,
     strip_wirings: bool = False,
-    directly_into_db: bool = False,
+    directly_into_db: bool = runtime_config.hd_backend_import_directly_into_db,
 ) -> None:
     """
     This function imports all transformations together with their documentations
@@ -361,20 +361,3 @@ def import_transformations(
                 )
 
     logger.info("finished importing")
-
-
-def import_all(
-    download_path: str,
-    strip_wirings: bool = False,
-    directly_into_db: bool = runtime_config.hd_backend_import_directly_into_db,
-) -> None:
-    import_transformations(
-        os.path.join(download_path, "components"),
-        strip_wirings=strip_wirings,
-        directly_into_db=directly_into_db,
-    )
-    import_transformations(
-        os.path.join(download_path, "workflows"),
-        strip_wirings=strip_wirings,
-        directly_into_db=directly_into_db,
-    )
