@@ -112,6 +112,8 @@ let
         ln -s ${glibc}/lib/libc-2.33.so.1 "$venv_target_dir"/symbolic_links_to_system_libs/lib/libc-2.33.so.1
         if ! "$activate_venv" ; then local LD_LIBRARY_PATH; fi
         export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "$venv_target_dir/symbolic_links_to_system_libs") ]}      
+
+        export JUPYTER_CONFIG_DIR=${JUPYTER_CONFIG_DIR}
         ./pipt sync
 
         if "$activate_venv" ; then
@@ -135,9 +137,13 @@ let
 
     cd "${projectDir}"
 
-    echo "Initialize/configure jupyter notebook in virtual environment"
+    export JUPYTER_CONFIG_DIR=${JUPYTER_CONFIG_DIR}
+    echo "Jupyter config dir: ${JUPYTER_CONFIG_DIR}"
+
+    echo "Configure jupyter notebook in virtual environment"
     mkdir -p ${JUPYTER_CONFIG_DIR}
-    "${venvDirRuntime}"/bin/pip install jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
+    # "${venvDirRuntime}"/bin/pip install jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
+
 
     mkdir -p ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter
     echo '{"preferences": {"default_formatter": {"python": ["black"]}},}' > ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter/settings.jupyterlab-setting
@@ -307,9 +313,26 @@ in pkgs.mkShell rec {
     npm --version
 
     # Install node packages
-    current_dir=$(pwd)
-    cd ./frontend && npm ci # npm-ci = sync with package-lock.json
-    cd $current_dir
+
+    PACKAGE_JSON_HASH=$(./runtime/pipt _hash_multiple ./frontend/package-lock.json)
+
+    if [[ -d ./frontend/node_modules ]] && [[ -e ./frontend/node_modules/package-lock.json.hash ]] && [[ "$PACKAGE_JSON_HASH" == "$(cat ./frontend/node_modules/package-lock.json.hash)" ]] ; then
+        echo "$PACKAGE_JSON_HASH"
+        echo "$(cat ./frontend/node_modules/package-lock.json.hash)"    
+        echo "--> Node modules probably still in sync. Not syncing again."
+        echo "--> If you are not sure, simply delete ./frontend/node_modules subdir"
+        echo "    and restart nix shell."
+    else
+        current_dir=$(pwd)
+        cd ./frontend && npm ci 
+        # npm-ci = sync with package-lock.json. Could be improved:
+        # Does not intelligently check by using
+        # hashes
+        cd $current_dir        
+        ./runtime/pipt _hash_multiple ./frontend/package-lock.json > ./frontend/node_modules/package-lock.json.hash
+    fi
+
+
 
     set +e # disable exit on error!
   '';
