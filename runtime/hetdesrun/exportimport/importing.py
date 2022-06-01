@@ -268,20 +268,15 @@ def import_transformations(
     for root, _, files in os.walk(download_path):
         for file in files:
             path = os.path.join(root, file)
-            if path.endswith(".py"):
-                logger.info("Loading transformation from python file %s", path)
-                python_file = load_python_file(path)
-                if python_file:
-                    tr_json = transformation_revision_from_python_code(python_file)
-                    import_transformation(
-                        tr_json,
-                        path,
-                        strip_wirings=strip_wirings,
-                        directly_into_db=directly_into_db,
-                    )
-            elif path.endswith(".json"):
-                logger.info("Loading transformation from json file %s", path)
-                transformation_json = load_json(path)
+            if path.endswith(".py") or  path.endswith(".json"):
+                if path.endswith(".py"):
+                    logger.info("Loading transformation from python file %s", path)
+                    python_file = load_python_file(path)
+                    if python_file:
+                        transformation_json = transformation_revision_from_python_code(python_file)
+                else: # path.endswith(".json")
+                    logger.info("Loading transformation from json file %s", path)
+                    transformation_json = load_json(path)
                 transformation_dict[transformation_json["id"]] = transformation_json
                 path_dict[transformation_json["id"]] = path
             else:
@@ -337,7 +332,8 @@ def import_transformations(
                     category, transformation["category"]
                 )
             ):
-                import_transformation_from_path(
+                import_transformation(
+                    transformation_dict[transformation_id],
                     path_dict[transformation_id],
                     strip_wirings=strip_wirings,
                     directly_into_db=directly_into_db,
