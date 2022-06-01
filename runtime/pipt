@@ -508,7 +508,7 @@ _infer_python_interpreter() {
 _init_base_in_file() {
     if [[ ! -f requirements-base.in ]]; then
         _info "--> Initiliazing requirements-base.in since it does not exist."
-        printf -- "pip<22\nwheel\npip-tools\n" >requirements-base.in
+        printf -- "pip\nwheel\npip-tools\n" >requirements-base.in
         # TODO: remove pip <22 constraints when https://github.com/jazzband/pip-tools/issues/1558 is resolved.
     fi
 }
@@ -594,6 +594,7 @@ CONFIG_FILE_TEMPLATE=$(
 ## This is passed to all calls to pip-sync by pipt.
 #
 # PIP_SYNC_ARGS=("-i" "https://my-company-package-index.org/simple")
+PIP_SYNC_ARGS=("--pip-args" "--no-deps")
 
 END_HEREDOC
 )
@@ -633,14 +634,13 @@ _recreate_venv() {
     if [[ -n "$VENV_BASE_PATH" ]]; then
         mkdir -p "$VENV_BASE_PATH"
     fi
-
     $INFERRED_PYTHON -m venv "$VENV_PATH"
 
     if [[ ! -f requirements-base.txt ]]; then
         _init_base_in_file
-        _wrap_venv_pip_install -r requirements-base.in
+        _wrap_venv_pip_install -r requirements-base.in # with deps!
     else
-        _wrap_venv_pip_install -r requirements-base.txt
+        _wrap_venv_pip_install --no-deps -r requirements-base.txt
     fi
 }
 
@@ -899,7 +899,7 @@ sync-system() {
     fi
 
     _info "--> install locked base requirements including piptools"
-    _wrap_system_pip_install -r requirements-base.txt
+    _wrap_system_pip_install --no-deps -r requirements-base.txt
 
     if [[ $SILENT = true ]]; then
         SYNC_OPTIONS=("-q")
