@@ -15,7 +15,7 @@ Further information about developing, deploying, connecting, using and running h
 - [Runtime and Backend Readme](../runtime/README.md)
 - [End2End Tests](../frontend/end2end_tests.md)
 
-## Deploying, Customizing and Ops
+## Deploying, Customization and Ops
 
 - [Custom Python Dependencies](./custom_python_dependencies.md)
 - [R support](./r_support.md)
@@ -39,7 +39,7 @@ Further information about developing, deploying, connecting, using and running h
 - [Asynchronous Components](./executing_asynchronous_functions.md)
 - [Persisting Models](./persisting_models.md)
 
-## Integring and Running Workflows in Production
+## Integration and Running Workflows in Production
 
 - [Execution via Kafka](./execution/execution_via_kafka.md)
 - [Execution via REST API](./execution/running_transformation_revisions.md)
