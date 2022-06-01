@@ -1,0 +1,53 @@
+{
+    "id": "f092920e-7de9-4be4-b21f-1b400b064f6e",
+    "revision_group_id": "5cb6844b-a5b4-4796-813f-0a78a58583a3",
+    "name": "Add/Update Attributes",
+    "description": "Add attributes to a dataframe or update attributes of a dataframe",
+    "category": "Connectors",
+    "version_tag": "1.0.0",
+    "released_timestamp": "2022-06-01T13:28:05.018512+00:00",
+    "state": "RELEASED",
+    "type": "COMPONENT",
+    "documentation": "# Add/Update Attributes\n\n## Description\nAdd attributes to a dataframe or update attributes of a dataframe.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame.\n* **attributes** (Any): A dictionary with string keys to be added to the input DataFrame.\n\n## Outputs\n* **dataframe** (Pandas DataFrame): The input DataFrame with added attributes.\n\n## Details\nAdds attributes to a dataframe. Adding an attribute with a key, that is already included in the attributes of the dataframe, will update the corresponding value.\n\n**Note:** Selecting \"Only Output\" for the output dataframe means that it is wired to the \"direct provisioning\" adapter, which sends the data as a stream of records in the response to be displayed in the browser window, but not the attributes. To access the attributes, use the \"Extract Attributes\" component.\n \n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Dataframe-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
+    "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"dataframe\": DataType.DataFrame, \"attributes\": DataType.Any},\n    outputs={\"dataframe\": DataType.DataFrame},\n    name=\"Add/Update Attributes\",\n    description=\"Add attributes to a dataframe or update attributes of a dataframe\",\n    category=\"Connectors\",\n    id=\"f092920e-7de9-4be4-b21f-1b400b064f6e\",\n    revision_group_id=\"5cb6844b-a5b4-4796-813f-0a78a58583a3\",\n    version_tag=\"1.0.0\"\n)\ndef main(*, dataframe, attributes):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    dataframe.attrs.update(attributes)\n\n    return {\"dataframe\": dataframe}\n",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "f4b1f6d7-810d-427c-ba05-95cb7f50ba26",
+                "name": "dataframe",
+                "data_type": "DATAFRAME"
+            },
+            {
+                "id": "80a77390-2c8a-47b9-a222-633044f87840",
+                "name": "attributes",
+                "data_type": "ANY"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "0c8d4a52-7c21-483d-ab98-73831d1df0de",
+                "name": "dataframe",
+                "data_type": "DATAFRAME"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "dataframe",
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "{\n    \"column1\": {\n        \"2019-08-01T15:45:36.000Z\": 1,\n        \"2019-08-02T11:33:41.000Z\": 2\n    },\n    \"column2\": {\n        \"2019-08-01T15:45:36.000Z\": 1.3,\n        \"2019-08-02T11:33:41.000Z\": 2.8\n    }\n}"
+                }
+            },
+            {
+                "workflow_input_name": "attributes",
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "{\n    \"a\": true,\n    \"b\": 31.56\n}"
+                }
+            }
+        ],
+        "output_wirings": []
+    }
+}
