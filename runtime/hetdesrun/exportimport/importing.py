@@ -205,7 +205,10 @@ def import_transformation(
                     "Store transformation revision %s of type %s\n"
                     "in category %s with name %s in the database"
                 ),
-                str(tr.id)
+                str(tr.id),
+                str(tr.type),
+                tr.category,
+                tr.name,
             )
             store_single_transformation_revision(tr)
         else:
@@ -214,9 +217,12 @@ def import_transformation(
                 logger.info(
                     (
                         "Update transformation revision %s of type %s\n"
-                         "in category %s with name %s in the database"
+                        "in category %s with name %s in the database"
                     ),
-                    str(tr.id)
+                    str(tr.id),
+                    str(tr.type),
+                    tr.category,
+                    tr.name,
                 )
                 update_or_create_single_transformation_revision(tr)
 
@@ -281,13 +287,15 @@ def import_transformations(
     for root, _, files in os.walk(download_path):
         for file in files:
             path = os.path.join(root, file)
-            if path.endswith(".py") or  path.endswith(".json"):
+            if path.endswith(".py") or path.endswith(".json"):
                 if path.endswith(".py"):
                     logger.info("Loading transformation from python file %s", path)
                     python_file = load_python_file(path)
                     if python_file:
-                        transformation_json = transformation_revision_from_python_code(python_file)
-                else: # path.endswith(".json")
+                        transformation_json = transformation_revision_from_python_code(
+                            python_file
+                        )
+                else:  # path.endswith(".json")
                     logger.info("Loading transformation from json file %s", path)
                     transformation_json = load_json(path)
                 transformation_dict[transformation_json["id"]] = transformation_json
