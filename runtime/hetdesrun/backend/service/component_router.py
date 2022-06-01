@@ -14,7 +14,7 @@ from hetdesrun.backend.service.transformation_router import (
     check_modifiability,
     update_content,
     if_applicable_release_or_deprecate,
-    execute_transformation_revision_endpoint,
+    handle_trafo_revision_execution_request,
 )
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
@@ -326,7 +326,7 @@ async def execute_component_revision(
         job_id=job_id,
     )
 
-    return await execute_transformation_revision_endpoint(exec_by_id)
+    return await handle_trafo_revision_execution_request(exec_by_id)
 
 
 @component_router.post(
