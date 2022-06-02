@@ -14,8 +14,9 @@ COPY ./runtime/pipt /app/pipt
 RUN apt-get -y update && apt-get -y install libpq-dev gcc && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-RUN python3 -m pip install --no-deps -r /app/requirements-base.txt
-RUN pip-sync --pip-args='--no-cache-dir --no-deps' /app/requirements-base.txt /app/requirements.txt
+ENV PIPT_PIP_INSTALL_ARGS "--no-cache-dir"
+ENV PIPT_PIP_SYNC_PIP_ARGS "--no-cache-dir --no-deps"
+RUN ./pipt sync-system --prod
 
 ##### Intermediate stage with actual application content
 FROM base AS application_base
@@ -38,8 +39,7 @@ CMD ["/app/start.sh"]
 
 ##### Test stage
 FROM application_base AS test
-RUN pip-sync --pip-args='--no-cache-dir --no-deps' /app/requirements-base.txt /app/requirements.txt /app/requirements-dev.txt
-
+RUN ./pipt sync-system --dev
 RUN python3 -m pytest --cov=hetdesrun --cov-report xml --junitxml test_results.xml tests
 RUN bash /app/scripts/gen_pylint_report.sh
 
