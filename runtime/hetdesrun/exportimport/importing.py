@@ -316,7 +316,7 @@ def import_transformations(
         for operator in transformation["content"]["operators"]:
             if operator["type"] == Type.WORKFLOW:
                 logger.info(
-                    "workflow %s contains workflow %s -> nesting level %i",
+                    "transformation %s contains workflow %s at nesting level %i",
                     str(transformation_id),
                     operator["transformation_id"],
                     level,
@@ -337,7 +337,7 @@ def import_transformations(
             level_dict[level] = []
         level_dict[level].append(transformation_id)
         logger.info(
-            "transformation %s has nesting level %i", str(transformation_id), level
+            "transformation %s of type %s has nesting level %i", str(transformation_id), transformation["type"], level
         )
 
     for level in sorted(level_dict):
