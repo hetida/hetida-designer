@@ -44,5 +44,6 @@ if [[ "$_is_backend_service" != "false" && "$_is_backend_service" != "yes" && "$
             python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_code=False);'
         else
             python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_code=False, only_if_db_empty=True);'
+        fi
     fi
 fi
