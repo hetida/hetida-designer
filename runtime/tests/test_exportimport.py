@@ -10,6 +10,7 @@ from hetdesrun.webservice.application import app
 from hetdesrun.exportimport.importing import transformation_revision_from_python_code
 
 from hetdesrun.persistence import get_db_engine, sessionmaker
+from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.dbmodels import Base
 
 client = TestClient(app)
@@ -28,7 +29,7 @@ def clean_test_db_engine(use_in_memory_db):
 
 
 @pytest.mark.asyncio
-async def test_execute_for_component_without_hetdesrun_imports(clean_test_db_engine):
+async def test_tr_from_code_for_component_without_register_decorator(clean_test_db_engine):
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
@@ -44,4 +45,15 @@ async def test_execute_for_component_without_hetdesrun_imports(clean_test_db_eng
 
         tr_json = transformation_revision_from_python_code(code, path)
 
-        assert tr_json["id"] == "38f168ef-cb06-d89c-79b3-0cd823f32e9d"
+        tr = TransformationRevision(**tr_json)
+
+        assert tr.name == "Alerts from Score"
+        assert tr.category == "Anomaly Detection"
+        assert "anomalous situations" in tr.description
+        assert tr.version_tag == "1.0.0"
+        assert str(tr.id) == "38f168ef-cb06-d89c-79b3-0cd823f32e9d"
+        assert str(tr.revision_group_id) == "38f168ef-cb06-d89c-79b3-0cd823f32e9d"
+        assert len(tr.io_interface.inputs) == 2
+        assert len(tr.io_interface.outputs) == 1
+        assert tr.type == "COMPONENT"
+        assert "COMPONENT_INFO" in tr.content

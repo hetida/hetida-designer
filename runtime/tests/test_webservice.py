@@ -35,6 +35,14 @@ async def test_swagger_ui_available(async_test_client):
 #     assert "swagger-ui" in response.text.lower()
 
 
+@pytest.mark.asyncio
+async def test_access_api_endpoint(async_test_client):
+    async with async_test_client as ac:
+        response = await ac.get("engine/info")
+    assert response.status_code == 200
+    assert "version" in response.json().keys()
+
+
 base_workflow_json = {
     "code_modules": [
         {  # ordinary function entry point

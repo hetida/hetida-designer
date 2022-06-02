@@ -21,7 +21,7 @@ imports_template: str = """\
 function_definition_template: str = """\
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-COMPONENT_INFO = {opening_bracket}
+COMPONENT_INFO = {{
     "inputs": {input_dict_content},
     "outputs": {output_dict_content},
     "name": {name},
@@ -31,7 +31,7 @@ COMPONENT_INFO = {opening_bracket}
     "id": {id},
     "revision_group_id": {revision_group_id},
     "state": {state},{timestamp}
-{closing_bracket}
+}}
 
 
 {main_func_declaration_start} main({params_list}):
@@ -56,64 +56,30 @@ def generate_function_header(component_info: ComponentInfo) -> str:
     main_func_declaration_start = "async def" if component_info.is_coroutine else "def"
 
     input_dict_str = (
-        (
-            "{"
-            + ", ".join(
-                [
-                    '"' + parameter + '": "' + data_type_enum.value + '"'
-                    for parameter, data_type_enum in component_info.input_types_by_name.items()
-                ]
-            )
-            + "}"
+        "{\n        "
+        + ",\n        ".join(
+            [
+                '"' + parameter + '": "' + data_type_enum.value + '"'
+                for parameter, data_type_enum in component_info.input_types_by_name.items()
+            ]
         )
-        if len(component_info.input_types_by_name) != 0
-        else "{" + "}"
+        + ",\n    }"
     )
-
-    # black prefers entries per line for more than 88 characters, 15 are already taken
-    if len(input_dict_str) > 73:
-        input_dict_str = (
-            "{\n        "
-            + ",\n        ".join(
-                [
-                    '"' + parameter + '": "' + data_type_enum.value + '"'
-                    for parameter, data_type_enum in component_info.input_types_by_name.items()
-                ]
-            )
-            + ",\n    }"
-        )
 
     output_dict_str = (
-        (
-            "{"
-            + ", ".join(
-                [
-                    '"' + parameter + '": "' + data_type_enum.value + '"'
-                    for parameter, data_type_enum in component_info.output_types_by_name.items()
-                ]
-            )
-            + "}"
+        "{\n        "
+        + ",\n        ".join(
+            [
+                '"' + parameter + '": "' + data_type_enum.value + '"'
+                for parameter, data_type_enum in component_info.output_types_by_name.items()
+            ]
         )
-        if len(component_info.output_types_by_name) != 0
-        else "{" + "}"
+        + ",\n    }"
     )
-
-    # black prefers entries per line for more than 88 characters, 16 are already taken
-    if len(output_dict_str) > 72:
-        output_dict_str = (
-            "{\n        "
-            + ",\n        ".join(
-                [
-                    '"' + parameter + '": "' + data_type_enum.value + '"'
-                    for parameter, data_type_enum in component_info.output_types_by_name.items()
-                ]
-            )
-            + ",\n    }"
-        )
 
     timestamp_str = ""
 
-    if "RELEASED" == component_info.state:
+    if component_info.state == "RELEASED":
         timestamp_str = "\n    " + '"released_timestamp": "'
         if component_info.released_timestamp is not None:
             timestamp_str = (
@@ -123,7 +89,7 @@ def generate_function_header(component_info: ComponentInfo) -> str:
             timestamp_str = timestamp_str + datetime.now(timezone.utc).isoformat()
         timestamp_str = timestamp_str + '"'
 
-    if "DISABLED" == component_info.state:
+    if component_info.state == "DISABLED":
         timestamp_str = "\n    " + '"disabled_timestamp": "'
         if component_info.disabled_timestamp is not None:
             timestamp_str = (

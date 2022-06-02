@@ -9,6 +9,8 @@ from hetdesrun.webservice.application import app
 
 from hetdesrun.exportimport.importing import load_json
 
+from hetdesrun.component.code import update_code
+
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
@@ -428,7 +430,7 @@ async def test_execute_for_component_without_hetdesrun_imports(async_test_client
     ):
 
         path = (
-            "./transformations/components/anomaly-detection/"
+            "./tests/data/components/"
             "alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d"
             ".json"
         )
@@ -463,9 +465,11 @@ async def test_execute_for_component_without_hetdesrun_imports(async_test_client
             "outputWirings":[]
         }
 
-        store_single_transformation_revision(
-            TransformationRevision(**component_tr_json)
-        )
+        tr = TransformationRevision(**component_tr_json)
+        tr.content = update_code(tr.content, tr.to_component_info())
+        assert "COMPONENT_INFO" in tr.content
+        
+        store_single_transformation_revision(tr)
 
         async with async_test_client as ac:
             response = await ac.post(
