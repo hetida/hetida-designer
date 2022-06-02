@@ -37,9 +37,12 @@ if [[ "$_is_backend_service" != "false" && "$_is_backend_service" != "yes" && "$
     retry 10 5 "alembic migrations" alembic upgrade head
     
     # Run autodeployment if autodeployment is wanted
-    _autodeploy_is_wanted="${HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_COMPONENTS,,}"
-    if [[ "$_autodeploy_is_wanted" != "false" && "$_autodeploy_is_wanted" != "yes" && "$_autodeploy_is_wanted" != "y" && "$_autodeploy_is_wanted" != "ok" && "$_autodeploy_is_wanted" != "1" ]]; then
-        
-        python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/");'
+    _autodeploy="${HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}"
+    if [[ "$_autodeploy" != "false" && "$_autodeploy" != "yes" && "$_autodeploy" != "y" && "$_autodeploy" != "ok" && "$_autodeploy" != "1" ]]; then
+        _overwrite="${HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY,,}"
+        if [[ "$_overwrite" != "false" && "$_overwrite" != "yes" && "$_overwrite" != "y" && "$_overwrite" != "ok" && "$_overwrite" != "1" ]]; then
+            python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_code=False);'
+        else
+            python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_code=False, only_if_db_empty=True);'
     fi
 fi
