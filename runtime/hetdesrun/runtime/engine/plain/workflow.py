@@ -214,16 +214,13 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             )
             raise
         except Exception as e:  # uncaught exceptions from user code
-            logger.info(
-                "Exception during Component execution of component instance %s",
-                self.operator_hierarchical_name,
-                exc_info=True,
-            )
-            raise RuntimeExecutionError(
+            msg = (
                 f"Exception during Component execution of "
                 f"component instance {self.operator_hierarchical_name}"
                 f" (operator hierarchical id: {self.operator_hierarchical_id}):\n{str(e)}"
-            ).set_context(
+            )
+            logger.info(msg, exc_info=True)
+            raise RuntimeExecutionError(msg).set_context(
                 self.operator_hierarchical_id, self.operator_hierarchical_name
             ) from e
 
