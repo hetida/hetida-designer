@@ -1,6 +1,6 @@
 """Loading code and importing functions"""
 from types import ModuleType
-from typing import Callable, Coroutine, Union, Tuple, Optional
+from typing import Callable, Coroutine, Union
 
 import sys
 import logging
@@ -94,4 +94,3 @@ def import_func_from_code(
 
         func = getattr(mod, func_name)
         return func
-

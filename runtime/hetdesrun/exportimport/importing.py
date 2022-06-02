@@ -33,11 +33,8 @@ from hetdesrun.persistence.models.io import (
     IO,
 )
 from hetdesrun.persistence.dbservice.revision import (
-    read_single_transformation_revision,
-    store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
-from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError
 
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.models.code import ComponentInfo
@@ -367,7 +364,10 @@ def import_transformations(
             level_dict[level] = []
         level_dict[level].append(transformation_id)
         logger.info(
-            "transformation %s of type %s has nesting level %i", str(transformation_id), transformation["type"], level
+            "transformation %s of type %s has nesting level %i",
+            str(transformation_id),
+            transformation["type"],
+            level,
         )
 
     for level in sorted(level_dict):
