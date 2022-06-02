@@ -31,7 +31,7 @@ def test_component_deployment_via_rest_api(caplog):
             "hetdesrun.utils.requests.put", return_value=response_mock
         ) as patched_put:
             caplog.clear()
-            import_transformations("./transformations/components", directly_into_db=False)
+            import_transformations("./transformations/components")
             assert "Reduce data set by leaving out values" in caplog.text
             # name of a component
 
@@ -46,7 +46,7 @@ def test_component_deployment_via_rest_api(caplog):
             "hetdesrun.utils.requests.put", return_value=response_mock
         ) as patched_put:
             caplog.clear()
-            import_transformations("./transformations/components", directly_into_db=False)
+            import_transformations("./transformations/components")
             assert "COULD NOT PUT COMPONENT" in caplog.text
 
 
@@ -57,7 +57,7 @@ def test_workflow_deployment_via_rest_api(caplog):
     with mock.patch(
         "hetdesrun.utils.requests.put", return_value=response_mock
     ) as patched_put:
-        import_transformations("./transformations/workflows", directly_into_db=False)
+        import_transformations("./transformations/workflows")
 
     # at least tries to upload many workflows
     assert patched_put.call_count > 3
@@ -67,7 +67,7 @@ def test_workflow_deployment_via_rest_api(caplog):
         "hetdesrun.utils.requests.put", return_value=response_mock
     ) as patched_put:
         caplog.clear()
-        import_transformations("./transformations/workflows", directly_into_db=False)
+        import_transformations("./transformations/workflows")
         assert "COULD NOT PUT WORKFLOW" in caplog.text
 
 
@@ -90,7 +90,7 @@ def test_component_deployment_directly_into_db(caplog, clean_test_db_engine):
                     "hetdesrun.utils.requests.put", return_value=response_mock
                 ) as patched_put:
                     caplog.clear()
-                    import_transformations("./transformations/components")
+                    import_transformations("./transformations/components", directly_into_db=True)
                     assert "1946d5f8-44a8-724c-176f-16f3e49963af" in caplog.text
                     # id of a component
 
