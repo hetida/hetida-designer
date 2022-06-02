@@ -272,8 +272,11 @@ def import_transformation(
         response = requests.put(
             posix_urljoin(
                 runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
-            )
-            + "?allow_overwrite_released=True",
+            ),
+            params={
+                "allow_overwrite_released": True,
+                "update_component_code": update_component_code,
+            },
             verify=runtime_config.hd_backend_verify_certs,
             json=tr_json,
             auth=get_backend_basic_auth()
