@@ -38,23 +38,9 @@ async def test_swagger_ui_available(async_test_client):
 @pytest.mark.asyncio
 async def test_access_api_endpoint(async_test_client):
     async with async_test_client as ac:
-        response = await ac.post(
-            "engine/codegen",
-            json={
-                "inputs": [],
-                "outputs": [],
-                "code": "",
-                "function_name": "main",
-                "name": "Testname",
-                "description": "Test Descr.",
-                "category": "Test category",
-                "id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-                "revision_group_id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-                "version_tag": "1.0.0",
-            },
-        )
+        response = await ac.get("engine/info")
     assert response.status_code == 200
-    assert "code" in response.json().keys()
+    assert "version" in response.json().keys()
 
 
 base_workflow_json = {

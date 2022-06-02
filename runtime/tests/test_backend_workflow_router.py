@@ -436,7 +436,7 @@ async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine)
         ):
             component_dto = ComponentRevisionFrontendDto(**dto_json_component_1)
             tr_component = component_dto.to_transformation_revision()
-            tr_component.content = generate_code(tr_component.to_code_body())
+            tr_component.content = generate_code(tr_component)
             store_single_transformation_revision(tr_component)
             tr_workflow_2 = WorkflowRevisionFrontendDto(
                 **dto_json_workflow_2_update
