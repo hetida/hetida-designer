@@ -194,12 +194,12 @@ class RuntimeConfig(BaseSettings):
         True, env="HETIDA_DESIGNER_RUNTIME_VERIFY_CERTS"
     )
 
-    # For scripts (e.g. component deployment)
+    # For scripts (e.g. transformation deployment)
     hd_backend_api_url: str = Field(
         "http://hetida-designer-backend:8090/api/",
         env="HETIDA_DESIGNER_BACKEND_API_URL",
         description=(
-            "URL to backend. Necessary for component deployment "
+            "URL to backend. Necessary for transformation deployment "
             "and to allow runtime to access adapters endpoint."
         ),
     )
@@ -208,7 +208,7 @@ class RuntimeConfig(BaseSettings):
         env="HETIDA_DESIGNER_BACKEND_USE_BASIC_AUTH",
         description=(
             "Whether Backend is protected via Basic Auth."
-            " Only necessary for component deployment."
+            " Only necessary for transformation deployment."
             " If Backend is protected via Keycloak instead "
             " use the corresponding keycloak environment variables!"
         ),
@@ -226,8 +226,8 @@ class RuntimeConfig(BaseSettings):
     hd_backend_verify_certs: bool = Field(
         True, env="HETIDA_DESIGNER_BACKEND_VERIFY_CERTS"
     )
-    hd_backend_autodeploy_base_components: bool = Field(
-        True, env="HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_COMPONENTS"
+    hd_backend_autodeploy_base_transformations: bool = Field(
+        True, env="HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS"
     )
     hd_backend_overwrite_on_autodeploy: bool = Field(
         False, env="HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY"
