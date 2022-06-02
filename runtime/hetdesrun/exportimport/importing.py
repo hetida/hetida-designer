@@ -72,11 +72,12 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     try:
         main_func = import_func_from_code(code, "main")
     except ComponentCodeImportError as e:
-        msg = (
-            f"Could not load function from {path}\n"
-            f"due to error during import of component code:\n{e}"
+        logging.error(
+            "Could not load function from %s\n"
+            "due to error during import of component code:\n%s",
+            path,
+            str(e),
         )
-        logging.info(msg)
 
     module_path = module_path_from_code(code)
     mod = importlib.import_module(module_path)
@@ -130,7 +131,7 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
             else None
         )
 
-    elif "COMPONENT_INFO" in code:
+    elif hasattr(mod, "COMPONENT_INFO"):
         logger.info("Get component info from dictionary in code")
         info_dict = mod.COMPONENT_INFO
         component_inputs = info_dict.get("inputs", {})
@@ -230,19 +231,14 @@ def import_transformation(
     if strip_wirings:
         tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
 
-    update_component_code_str = (
-        "update_component_code=True"
-        if update_component_code
-        else "update_component_code=False"
-    )
-
     response = requests.put(
         posix_urljoin(
             runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
-        )
-        + "?allow_overwrite_released=True"
-        + "&"
-        + update_component_code_str,
+        ),
+        params={
+            "allow_overwrite_released": True,
+            "update_component_code": update_component_code,
+        },
         verify=runtime_config.hd_backend_verify_certs,
         json=tr_json,
         auth=get_backend_basic_auth()
@@ -299,25 +295,25 @@ def import_transformations(
         for file in files:
             path = os.path.join(root, file)
             ext = os.path.splitext(path)[1]
-            if ext in (".py", ".json"):
-                if path.endswith(".py"):
-                    logger.info("Loading transformation from python file %s", path)
-                    python_file = load_python_file(path)
-                    if python_file is not None:
-                        transformation_json = transformation_revision_from_python_code(
-                            python_file, path
-                        )
-                if path.endswith(".json"):
-                    logger.info("Loading transformation from json file %s", path)
-                    transformation_json = load_json(path)
-                transformation_dict[transformation_json["id"]] = transformation_json
-                path_dict[transformation_json["id"]] = path
-            else:
+            if ext not in (".py", ".json"):
                 logger.warning(
                     "Invalid file extension '%s' to load transformation revision from: %s",
                     ext,
                     path,
                 )
+                continue
+            if ext == ".py":
+                logger.info("Loading transformation from python file %s", path)
+                python_file = load_python_file(path)
+                if python_file is not None:
+                    transformation_json = transformation_revision_from_python_code(
+                        python_file, path
+                    )
+            if ext == ".json":
+                logger.info("Loading transformation from json file %s", path)
+                transformation_json = load_json(path)
+            transformation_dict[transformation_json["id"]] = transformation_json
+            path_dict[transformation_json["id"]] = path
 
     def nesting_level(transformation_id: UUID, level: int) -> int:
 
