@@ -2,7 +2,7 @@
   "apiEndpoint": "/api",
   "authEnabled": true,
   "authConfig": {
-    "authority": "http://localhost:8080/auth/realms/hetida-designer",
+    "authority": "http://localhost:8081/auth/realms/hetida-designer",
     "clientId": "hetida-designer",
     "userNameAttribute": "preferred_username"
   }

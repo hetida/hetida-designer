@@ -69,7 +69,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
   // we need to first load the hetida designer config upon app initialization, then use its values to initialize the auth module
   // since the auth module uses an APP_INITIALIZER token internally, we have to combine both calls
   // the calls can be split again once we migrate to v14 of the oidc library, see
-  // docs/site/angular-auth-oidc-client/docs/migrations/v13-to-v14.md
+  // https://github.com/damienbod/angular-auth-oidc-client/blob/main/docs/site/angular-auth-oidc-client/docs/migrations/v13-to-v14.md
   const config$ = from(configService.loadConfig())
     .pipe(
       map(config => {
