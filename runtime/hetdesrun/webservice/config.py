@@ -226,11 +226,11 @@ class RuntimeConfig(BaseSettings):
     hd_backend_verify_certs: bool = Field(
         True, env="HETIDA_DESIGNER_BACKEND_VERIFY_CERTS"
     )
-    hd_backend_import_directly_into_db: bool = Field(
-        True, env="HETIDA_DESIGNER_BACKEND_IMPORT_DIRECTLY_INTO_DB"
+    hd_backend_autodeploy_base_components: bool = Field(
+        True, env="HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_COMPONENTS"
     )
     hd_backend_overwrite_on_autodeploy: bool = Field(
-        False, env="HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_IMPORT"
+        False, env="HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY"
     )
     hd_adapters_verify_certs: bool = Field(
         True, env="HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS"
