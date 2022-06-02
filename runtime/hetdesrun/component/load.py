@@ -95,16 +95,3 @@ def import_func_from_code(
         func = getattr(mod, func_name)
         return func
 
-
-def check_importability(code: str, func_name: str) -> Tuple[bool, Optional[Exception]]:
-    """Very simple check just to see whether the code is at least importable"""
-    try:
-        import_func_from_code(
-            code,
-            func_name,
-            raise_if_not_found=False,
-            register_module=False,
-        )
-        return True, None
-    except Exception as e:  # pylint: disable=broad-except
-        return False, e
