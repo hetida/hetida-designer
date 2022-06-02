@@ -237,34 +237,18 @@ def import_transformation(
 
     if directly_into_db:
         tr = TransformationRevision(**tr_json)
-        try:
-            read_single_transformation_revision(tr.id, log_error=False)
-        except DBNotFoundError:
-            logger.info(
-                (
-                    "Store transformation revision %s of type %s\n"
-                    "in category %s with name %s in the database"
-                ),
-                str(tr.id),
-                str(tr.type),
-                tr.category,
-                tr.name,
-            )
-            store_single_transformation_revision(tr)
-        else:
-            logger.info("Found transformation revision %s in the database", str(tr.id))
-            if runtime_config.hd_backend_overwrite_on_import:
-                logger.info(
-                    (
-                        "Update transformation revision %s of type %s\n"
-                        "in category %s with name %s in the database"
-                    ),
-                    str(tr.id),
-                    str(tr.type),
-                    tr.category,
-                    tr.name,
-                )
-                update_or_create_single_transformation_revision(tr)
+        logger.info(
+            (
+                "Update or create database entry"
+                " for transformation revision %s of type %s\n"
+                "in category %s with name %s"
+            ),
+            str(tr.id),
+            str(tr.type),
+            tr.category,
+            tr.name,
+        )
+        update_or_create_single_transformation_revision(tr)
 
     else:
         headers = get_auth_headers()
@@ -287,7 +271,7 @@ def import_transformation(
         logger.info(
             (
                 "PUT transformation status code: %d"
-                " for transformation %s of type %s\n"
+                " for transformation revision %s of type %s\n"
                 "in category %s with name %s"
             ),
             response.status_code,
