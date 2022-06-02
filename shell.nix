@@ -226,7 +226,7 @@ let
       # wait for backend
       ${waitfor}/bin/waitfor -t 60 http://localhost:8080/api/info
       # Deploy components and workflows
-      HETIDA_DESIGNER_BACKEND_API_URL=http://localhost:8080/api/ ${venvDirRuntime}/bin/python -c "from hetdesrun.exportimport.importing import import_all; import_all('./transformations');"
+      HETIDA_DESIGNER_BACKEND_API_URL=http://localhost:8080/api/ ${venvDirRuntime}/bin/python -c "from hetdesrun.exportimport.importing import import_transformations; import_transformations('./transformations');"
       echo "finished deploying components and workflows"
   '';
 
