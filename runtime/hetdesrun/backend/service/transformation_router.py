@@ -385,20 +385,7 @@ async def update_transformation_revision(
     return persisted_transformation_revision
 
 
-@transformation_router.post(
-    "/execute",
-    response_model=ExecutionResponseFrontendDto,
-    response_model_exclude_none=True,  # needed because:
-    # frontend handles attributes with value null in a different way than missing attributes
-    summary="Executes a transformation revision",
-    status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {
-            "description": "Successfully executed the transformation revision"
-        }
-    },
-)
-async def execute_transformation_revision_endpoint(
+async def handle_trafo_revision_execution_request(
     # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
@@ -423,6 +410,26 @@ async def execute_transformation_revision_endpoint(
 
     except TrafoExecutionResultValidationError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+@transformation_router.post(
+    "/execute",
+    response_model=ExecutionResponseFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Executes a transformation revision",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully executed the transformation revision"
+        }
+    },
+)
+async def execute_transformation_revision_endpoint(
+    # pylint: disable=redefined-builtin
+    exec_by_id: ExecByIdInput,
+) -> ExecutionResponseFrontendDto:
+    return await execute_transformation_revision(exec_by_id)
 
 
 @transformation_router.post(
