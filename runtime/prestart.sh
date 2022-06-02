@@ -35,4 +35,11 @@ retry() {
 _is_backend_service="${HD_IS_BACKEND_SERVICE,,}" # to lower case
 if [[ "$_is_backend_service" != "false" && "$_is_backend_service" != "yes" && "$_is_backend_service" != "y" && "$_is_backend_service" != "ok" && "$_is_backend_service" != "1" ]]; then
     retry 10 5 "alembic migrations" alembic upgrade head
+    
+    # Run autodeployment if autodeployment is wanted
+    _autodeploy_is_wanted="${HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_COMPONENTS,,}"
+    if [[ "$_autodeploy_is_wanted" != "false" && "$_autodeploy_is_wanted" != "yes" && "$_autodeploy_is_wanted" != "y" && "$_autodeploy_is_wanted" != "ok" && "$_autodeploy_is_wanted" != "1" ]]; then
+        
+        python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/");'
+    fi
 fi
