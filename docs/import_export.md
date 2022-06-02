@@ -34,7 +34,7 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("/mnt/obj_repo/exported_data/");'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/exported_data/");'
 ```
 
 ## Importing components from single python files
@@ -46,5 +46,5 @@ Note, that the .py file does not include the test wiring of the component, which
 ## Remove test wirings when importing
 You may want to ignore the test wirings stored in the component/workflow files during import. One reason may be that the target backend validates incoming test wirings of the imported workflows and components: Adapters present in a test wiring must be registered under the same adapter key in the target backend.
 
-To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_all` function in the commands documented above.
+To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_transformations` function in the commands documented above.
 
