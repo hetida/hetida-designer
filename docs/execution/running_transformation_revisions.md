@@ -111,7 +111,6 @@ For both web service endpoints, a successful response contains the result values
 
 ```
 {
-    "result": "ok",
     "output_results_by_output_name": {
         "output_name_1": 42.2   // JSON VALUE or JSON object
         "output_name_2": {
@@ -129,6 +128,8 @@ For both web service endpoints, a successful response contains the result values
         "output_name_1": "FLOAT",
         "output_name_2": "DATAFRAME"
     }
+    "result": "ok",
+    "job_id": "89e550f5-4853-489d-a332-e1b68c4d6577"
 }
 ```
 
@@ -140,7 +141,7 @@ This is the payload for running the Example workflow "Volatility Detection Examp
 
 #### Payload
 
-```
+```json
 {
     "id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89",
     "wiring": {
@@ -185,9 +186,8 @@ This is the payload for running the Example workflow "Volatility Detection Examp
 
 Here the only outputs are of type PLOTLYJSON. They may be `{}` if query `run_pure_plot_operators`  was `false`. Since both outputs are implicitly wired to the default adapter "direct_provisioning", their output values are returned in the response
 
-```
+```json
 {
-    "result": "ok",
     "output_results_by_output_name": {
         "data_and_alerts": ...
         "score": ...
@@ -195,7 +195,9 @@ Here the only outputs are of type PLOTLYJSON. They may be `{}` if query `run_pur
     "output_types_by_output_name": {
         "data_and_alerts": "PLOTLYJSON",
         "score": "PLOTLYJSON"
-    }
+    },
+    "result": "ok",
+    "job_id": "00000000-0000-0000-0000-000000000002"
 }
 ```
 
@@ -203,36 +205,49 @@ Here the only outputs are of type PLOTLYJSON. They may be `{}` if query `run_pur
 
 Here both inputs are wired via the Python demo adapter. One of them is wired to metadata from a node of the adapter's hierarchy. The sample workflow actually has two outputs, only one of which is wired to a sink. The other one, which is not explicitly wired, is thereby implicitly wired to the default adapter "direct_provisioning" and thus provided directly in the response.
 
-```
+```json
 {
-    "id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89",
+    "id": "8d61a267-3a71-51cd-2817-48c320469d6b",
     "wiring": {
         "input_wirings": [
             {
-                "adapter_id": "demo-adapter-python",
-                "filters": {},
-                "ref_id": "root.plantA.alerts",
-                "ref_id_type": "SOURCE",
-                "type": "dataframe",
-                "workflow_input_name": "df_in"
+                "workflow_input_name": "num_pred_series_future_days",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": "1"}
             },
             {
+                "workflow_input_name": "pred_series_frequency",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": "3min"}
+            },
+            {
+                "ref_id": "root.plantA.picklingUnit.influx.temp",
+                "ref_id_type": "SOURCE",
+                "type": "timeseries(float)",
+                "workflow_input_name": "timeseries",
                 "adapter_id": "demo-adapter-python",
-                "filters": {},
-                "ref_id": "root.plantA",
-                "ref_id_type": "THINGNODE",
-                "ref_key": "Plant Age in Years",
-                "type": "metadata(int)",
-                "workflow_input_name": "int_in"
+                "filters": {
+                    "timestampFrom": "2022-05-19T15:24:00.000000000Z",
+                    "timestampTo": "2022-05-19T15:24:00.000000000Z"
+                }
+            },
+            {
+                "ref_id": "root.plantA.picklingUnit.influx.temp",
+                "ref_id_type": "SOURCE",
+                "ref_key": "Max Value",
+                "type": "metadata(float)",
+                "workflow_input_name": "limit",
+                "adapter_id": "demo-adapter-python",
+                "filters": {}
             }
         ],
         "output_wirings": [
             {
-                "adapter_id": "demo-adapter-python",
-                "ref_id": "root.plantA.alerts",
+                "ref_id": "root.plantA.picklingUnit.influx.anomaly_score",
                 "ref_id_type": "SINK",
-                "type": "dataframe",
-                "workflow_output_name": "df_out"
+                "type": "timeseries(float)",
+                "workflow_output_name": "pred_series",
+                "adapter_id": "demo-adapter-python"
             }
         ]
     },
@@ -245,14 +260,21 @@ The response:
 
 ```json
 {
-    "result": "ok",
-    "output_results_by_output_name": {
-        "int_out": 8
-    },
-    "output_types_by_output_name": {
-        "int_out": "INT",
-        "df_out": "DATAFRAME"
-    }
+  "output_results_by_output_name": {
+    "intercept": 108.0310580589,
+    "slope": [
+      0
+    ],
+    "limit_violation_prediction_timestamp": "NaT"
+  },
+  "output_types_by_output_name": {
+    "intercept": "FLOAT",
+    "slope": "FLOAT",
+    "pred_series": "SERIES",
+    "limit_violation_prediction_timestamp": "STRING"
+  },
+  "result": "ok",
+  "job_id": "00000000-0000-0000-0000-000000000002"
 }
 ```
 
