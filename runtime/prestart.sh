@@ -33,13 +33,13 @@ retry() {
 
 # Run migrations if this is run as backend service.
 _is_backend_service="${HD_IS_BACKEND_SERVICE,,}" # to lower case
-if [[ "$_is_backend_service" != "false" && "$_is_backend_service" != "yes" && "$_is_backend_service" != "y" && "$_is_backend_service" != "ok" && "$_is_backend_service" != "1" ]]; then
+if [[ "$_is_backend_service" == "true" || "$_is_backend_service" == "yes" || "$_is_backend_service" == "y" || "$_is_backend_service" == "ok" || "$_is_backend_service" == "1" ]]; then
     retry 10 5 "alembic migrations" alembic upgrade head
     
     # Run autodeployment if autodeployment is wanted
     _autodeploy="${HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}" # to lower case
     _overwrite="${HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY,,}" # to lower case
-    if [[ "$_autodeploy" != "false" && "$_autodeploy" != "yes" && "$_autodeploy" != "y" && "$_autodeploy" != "ok" && "$_autodeploy" != "1" ]]; then
+    if [[ "$_autodeploy" == "true" || "$_autodeploy" == "yes" || "$_autodeploy" == "y" || "$_autodeploy" == "ok" || "$_autodeploy" == "1" ]]; then
         echo "HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=$HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS"
         echo "CHECK NUMBER OF DB ENTRIES"
         nof_db_entries=$( python -c "from hetdesrun.persistence.dbservice.revision import nof_db_entries; print(nof_db_entries())" | tail -1 )
@@ -50,7 +50,7 @@ if [[ "$_is_backend_service" != "false" && "$_is_backend_service" != "yes" && "$
         else
             echo "DB CONTAINS $nof_db_entries VALUES"
             echo "HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY=$HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY"
-            if [[ "$_overwrite" != "false" && "$_overwrite" != "yes" && "$_overwrite" != "y" && "$_overwrite" != "ok" && "$_overwrite" != "1" ]]; then
+            if [[ "$_overwrite" == "true" || "$_overwrite" == "yes" || "$_overwrite" == "y" || "$_overwrite" == "ok" || "$_overwrite" == "1" ]]; then
                 echo "RUNNING TRANSFORMATION REVISION DEPLOYMENT POSSIBLY OVERWRITING EXISTING DB ENTRIES"
                 python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
             else
