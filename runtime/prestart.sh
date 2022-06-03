@@ -41,7 +41,7 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
     
     # Run autodeployment if autodeployment is wanted
     _autodeploy="${HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}" # to lower case
-    _preserve_db_entries="${HD_PRESERVE_DB_ENTRIES_ON_AUTODEPLOY,,}" # to lower case
+    _preserve_db_entries="${HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY,,}" # to lower case
     echo "HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=$HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS"
     if [[ "$_autodeploy" == $_true_equiv ]]; then
         echo "CHECKING NUMBER OF DB ENTRIES"
@@ -52,7 +52,7 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
             python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
         else
             echo "DB CONTAINS $nof_db_entries VALUES"
-            echo "HD_BACKEND_PRESERVE_DB_ENTRIES_ON_AUTODEPLOY=$HD_BACKEND_PRESERVE_DB_ENTRIES_ON_AUTODEPLOY"
+            echo "HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY=$HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY"
             if [[ "$_preserve_db_entries" == $_true_equiv ]]; then
                 echo "SKIPPING TRANSFORMATION REVISION AUTO DEPLOYMENT"
             else
