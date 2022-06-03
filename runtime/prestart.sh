@@ -31,34 +31,36 @@ retry() {
     done
 }
 
+_true_equiv="@(|true|yes|y|ok|on|1)"
+
 # Run migrations if this is run as backend service.
 _is_backend_service="${HD_IS_BACKEND_SERVICE,,}" # to lower case
 echo "HD_IS_BACKEND_SERVICE=$HD_IS_BACKEND_SERVICE"
-if [[ "$_is_backend_service" == "true" || "$_is_backend_service" == "yes" || "$_is_backend_service" == "y" || "$_is_backend_service" == "ok" || "$_is_backend_service" == "1" ]]; then
+if [[ "$_is_backend_service" == $_true_equiv ]]; then
     retry 10 5 "alembic migrations" alembic upgrade head
     
     # Run autodeployment if autodeployment is wanted
-    _autodeploy="${HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}" # to lower case
-    _overwrite="${HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY,,}" # to lower case
-    echo "HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=$HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS"
-    if [[ "$_autodeploy" == "true" || "$_autodeploy" == "yes" || "$_autodeploy" == "y" || "$_autodeploy" == "ok" || "$_autodeploy" == "1" ]]; then
+    _autodeploy="${HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}" # to lower case
+    _preserve_db_entries="${HD_PRESERVE_DB_ENTRIES_ON_AUTODEPLOY,,}" # to lower case
+    echo "HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=$HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS"
+    if [[ "$_autodeploy" == $_true_equiv ]]; then
         echo "CHECKING NUMBER OF DB ENTRIES"
         nof_db_entries=$( python -c "from hetdesrun.persistence.dbservice.revision import nof_db_entries; print(nof_db_entries())" | tail -1 )
         if [[ $nof_db_entries -eq 0 ]]; then
             echo "DB IS EMPTY"
-            echo "RUNNING TRANSFORMATION REVISION DEPLOYMENT"
+            echo "RUNNING TRANSFORMATION REVISION AUTO DEPLOYMENT"
             python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
         else
             echo "DB CONTAINS $nof_db_entries VALUES"
-            echo "HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY=$HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY"
-            if [[ "$_overwrite" == "true" || "$_overwrite" == "yes" || "$_overwrite" == "y" || "$_overwrite" == "ok" || "$_overwrite" == "1" ]]; then
-                echo "RUNNING TRANSFORMATION REVISION DEPLOYMENT POSSIBLY OVERWRITING EXISTING DB ENTRIES"
-                python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
+            echo "HD_BACKEND_PRESERVE_DB_ENTRIES_ON_AUTODEPLOY=$HD_BACKEND_PRESERVE_DB_ENTRIES_ON_AUTODEPLOY"
+            if [[ "$_preserve_db_entries" == $_true_equiv ]]; then
+                echo "SKIPPING TRANSFORMATION REVISION AUTO DEPLOYMENT"
             else
-                echo "OMITTING TRANSFORMATION REVISION DEPLOYMENT"
+                echo "RUNNING TRANSFORMATION REVISION AUTO DEPLOYMENT POSSIBLY OVERWRITING EXISTING DB ENTRIES"
+                python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
             fi
         fi
     else
-        echo "OMITTING TRANSFORMATION REVISION DEPLOYMENT"
+        echo "SKIPPING TRANSFORMATION REVISION AUTO DEPLOYMENT"
     fi
 fi
