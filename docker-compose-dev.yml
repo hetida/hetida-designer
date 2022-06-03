@@ -29,6 +29,8 @@ services:
       - HD_DATABASE_URL=postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db
       - HD_ENSURE_DB_SCHEMA=true
       - HD_IS_RUNTIME_SERVICE=false
+      - HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=true
+      - HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY=false
 
     depends_on:
       hetida-designer-db:
