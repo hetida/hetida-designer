@@ -34,7 +34,6 @@ from hetdesrun.persistence.models.io import (
 )
 from hetdesrun.persistence.dbservice.revision import (
     update_or_create_single_transformation_revision,
-    select_multiple_transformation_revisions,
 )
 
 from hetdesrun.models.wiring import WorkflowWiring
@@ -296,7 +295,6 @@ def import_transformations(
     strip_wirings: bool = False,
     directly_into_db: bool = False,
     update_component_code: bool = True,
-    only_if_db_empty: bool = False,
 ) -> None:
     """
     This function imports all transformations together with their documentations
@@ -307,14 +305,6 @@ def import_transformations(
     Usage:
         import_transformations("./transformations/components")
     """
-
-    if only_if_db_empty:
-        trafo_list = select_multiple_transformation_revisions()
-        if len(trafo_list) != 0:
-            logger.info(
-                "The database is not empty, hence the transformation deployment is omitted."
-            )
-            return
 
     path_dict = {}
     transformation_dict = {}
