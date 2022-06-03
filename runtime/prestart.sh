@@ -41,9 +41,9 @@ if [[ "$_is_backend_service" != "false" && "$_is_backend_service" != "yes" && "$
     if [[ "$_autodeploy" != "false" && "$_autodeploy" != "yes" && "$_autodeploy" != "y" && "$_autodeploy" != "ok" && "$_autodeploy" != "1" ]]; then
         _overwrite="${HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY,,}"
         if [[ "$_overwrite" != "false" && "$_overwrite" != "yes" && "$_overwrite" != "y" && "$_overwrite" != "ok" && "$_overwrite" != "1" ]]; then
-            python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_code=False);'
+            python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
         else
-            python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_code=False, only_if_db_empty=True);'
+            python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False, only_if_db_empty=True);'
         fi
     fi
 fi
