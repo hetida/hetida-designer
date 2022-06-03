@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env/bash
 # retry several times
 
 retry() {
@@ -37,13 +37,25 @@ if [[ "$_is_backend_service" != "false" && "$_is_backend_service" != "yes" && "$
     retry 10 5 "alembic migrations" alembic upgrade head
     
     # Run autodeployment if autodeployment is wanted
-    _autodeploy="${HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}"
+    _autodeploy="${HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}" # to lower case
+    _overwrite="${HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY,,}" # to lower case
     if [[ "$_autodeploy" != "false" && "$_autodeploy" != "yes" && "$_autodeploy" != "y" && "$_autodeploy" != "ok" && "$_autodeploy" != "1" ]]; then
-        _overwrite="${HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY,,}"
-        if [[ "$_overwrite" != "false" && "$_overwrite" != "yes" && "$_overwrite" != "y" && "$_overwrite" != "ok" && "$_overwrite" != "1" ]]; then
+        echo "HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=$HETIDA_DESIGNER_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS"
+        echo "CHECK NUMBER OF DB ENTRIES"
+        nof_db_entries=$( python -c "from hetdesrun.persistence.dbservice.revision import nof_db_entries; print(nof_db_entries())" | tail -1 )
+        if [[ $nof_db_entries -eq 0 ]]; then
+            echo "DB IS EMPTY"
+            echo "RUNNING TRANSFORMATION REVISION DEPLOYMENT"
             python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
         else
-            python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False, only_if_db_empty=True);'
+            echo "DB CONTAINS $nof_db_entries VALUES"
+            echo "HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY=$HETIDA_DESIGNER_BACKEND_OVERWRITE_ON_AUTODEPLOY"
+            if [[ "$_overwrite" != "false" && "$_overwrite" != "yes" && "$_overwrite" != "y" && "$_overwrite" != "ok" && "$_overwrite" != "1" ]]; then
+                echo "RUNNING TRANSFORMATION REVISION DEPLOYMENT POSSIBLY OVERWRITING EXISTING DB ENTRIES"
+                python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
+            else
+                echo "OMITTING TRANSFORMATION REVISION DEPLOYMENT"
+            fi
         fi
     fi
 fi
