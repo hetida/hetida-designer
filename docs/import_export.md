@@ -37,7 +37,7 @@ docker run --rm \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/exported_data/", update_component_code=False);'
 ```
 
-The input parameter `update_component_code` of the `import_all` function is optional and set to `True` by default. When set to `True`, the code is updated even of components in the "RELEASED" state &ndash; based on the current implementation of the `update_code` function &ndash; before they are stored in the database.
+The input parameter `update_component_code` of the `import_transformations` function is optional and set to `True` by default. When set to `True`, the code is updated even of components in the "RELEASED" state &ndash; based on the current implementation of the `update_code` function &ndash; before they are stored in the database.
 This has the advantage that the automatically generated part of the code corresponds to the latest schema and contains all relevant information about the component.
 Setting the parameter to `False` ensures that the code is not changed, but remains exactly as it has been exported.
 

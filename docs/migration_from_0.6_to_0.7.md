@@ -31,7 +31,7 @@ The command will create a subdirectory `migration_data` in your current director
 
 ## Step 2: Importing into >=0.7.2
 
-Now upgrade your designer installation to 0.7.2 (As part of this you need to completely delete your database schema / all tables prior to starting the new version. For the docker-compose setup simply delete the postgres volume). Then run the following command to import the exported components and workflows from the same directory:
+Now upgrade your designer installation to 0.7.2 (As part of this you need to completely delete your database schema / all tables prior to starting the new version. For the docker-compose setup simply delete the postgres volume). Then run the following command to import the exported components and workflows from the same directory as described in the [import documentation](./import_export.md):
 
 ```shell
 docker run --rm \

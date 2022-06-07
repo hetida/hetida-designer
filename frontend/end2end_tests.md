@@ -21,7 +21,7 @@ docker-compose -f docker-compose-dev.yml down --volumes \
     && docker-compose -f docker-compose-dev.yml up --force-recreate
 ```
 
-and then run a fresh deployment of the base components / workflows via
+and in case auto-deployment is disabled run a fresh deployment of the base components / workflows via
 
 ```bash
 docker run --rm \

@@ -54,7 +54,22 @@ git checkout release
 
 #### Starting the hetida designer
 
-**Note:** The following command will expose ports of designer containers to your local network and depending on your OS setup these ports may be exposed to the outside world allowing arbitrary code execution. If in doubt, [restrict all port rules to localhost](https://stackoverflow.com/a/48208039) by editing the docker-compose.yml accordingly.
+**Note:** The following command will expose ports of designer containers to your local network and depending on your OS setup these ports may be exposed to the outside world allowing arbitrary code execution. If in doubt, [restrict all port rules to localhost](https://stackoverflow.com/a/48208039) by editing the `docker-compose.yml` accordingly.
+
+**Note:** If you want to keep your database empty initially, set the environment variable `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS` in the `docker-compse.yml` to `false` to skip auto-deployment of base components and sample workflows.
+
+```yaml
+...
+
+  hetida-designer-backend:
+    ...
+    environment:
+      ...
+      - HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=false
+      ...
+    ...
+...
+```
 
 Once you have the source code, docker and docker-compose properly set up, run
 
@@ -70,7 +85,7 @@ Wait some time for the hetida designer to start up (downloading / building of do
 
 #### Deployment of base component set into your installation
 
-Now you should run
+If you skipped auto-deployment of base components and example workflows and want to deploy them now at a later stage, you should run
 
 ```bash
 docker run --rm \
@@ -79,8 +94,6 @@ docker run --rm \
   --network hetida-designer-network \
   --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/");'
 ```
-
-to install/deploy base components and some example workflows. **This step is only necessary the first time starting hetida designer!**
 
 #### Opening hetida designer
 
@@ -203,7 +216,12 @@ ports in the docker-compose file as is described under [Modifying Ports](#modify
 docker-compose -f docker-compose-dev.yml up -d
 ```
 
-Note that in this case it makes sense to run the base component deployment command using the locally
+The auto-deployment of base components and example workflows can be de-activated by setting the corresponding environmental variable `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS` to `false` in the `docker-compose-dev.yml` as described above to keep the database empty initially.
+
+**Note:** As soon as the database volume contains any entries, auto-deployment of base components and example workflows will be skipped unless you set the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose-dev.yml`.
+
+You can as well deploy the base components and example workflows by running the corresponding command.
+Note that in the case of the delopment environment it makes sense to run the deployment command using the locally
 built runtime image via
 
 ```shell
@@ -211,14 +229,12 @@ docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-<<<<<<< HEAD
   --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/");'
-=======
-  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/", update_component_code=False);'
->>>>>>> develop
 ```
 
 In case your checked out repository directory has a different name replace `hetida-designer_hetida-designer-runtime` by `<directory name>_hetida-designer-runtime`.
+
+**Note:** If base components or workflows are already stored in the database, these will be overwritten by the versions stored in the `transformations` directory in the container (the same source as for auto-deployment).
 
 Once you have the application running, only stop the container containing the submodule that you
 want to work on. We use a monorepo approach, so you already have the source code for all submodules on your machine by now.
