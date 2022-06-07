@@ -63,6 +63,7 @@ EXPLICIT_VENV_TARGET_PATH="${PIPT_EXPLICIT_VENV_TARGET_PATH:-"${EXPLICIT_VENV_TA
 PYTHON_INTERPRETER="${PIPT_PYTHON_INTERPRETER:-"${PYTHON_INTERPRETER}"}"
 SILENT="${PIPT_SILENT:-"${SILENT:-false}"}"
 SHELL_HOOK="${PIPT_SHELL_HOOK:-"${SHELL_HOOK:-""}"}"
+PIP_SYNC_PIP_ARGS="${PIPT_PIP_SYNC_PIP_ARGS:-"${PIP_SYNC_PIP_ARGS:-""}"}"
 set -u
 
 declare -a PIP_INSTALL_ARGS="${PIPT_PIP_INSTALL_ARGS:-"${PIP_INSTALL_ARGS:-()}"}"
@@ -509,7 +510,6 @@ _init_base_in_file() {
     if [[ ! -f requirements-base.in ]]; then
         _info "--> Initiliazing requirements-base.in since it does not exist."
         printf -- "pip\nwheel\npip-tools\n" >requirements-base.in
-        # TODO: remove pip <22 constraints when https://github.com/jazzband/pip-tools/issues/1558 is resolved.
     fi
 }
 
@@ -579,7 +579,7 @@ CONFIG_FILE_TEMPLATE=$(
 ## IMPORTANT: These arguments are NOT passed through to invocations of pip 
 ## by invocations of pip-compile or pip-sync. Both these commands
 ## have their own "--pip-args" option which in turn can be reached using
-## the PIP_COMPILE_ARGS or PIP_SYNC_ARGS configuration described below.
+## the PIP_COMPILE_ARGS or PIP_SYNC_PIP_ARGS configuration described below.
 #
 # PIP_INSTALL_ARGS=("-i" "https://my-company-package-index.org/simple")
 
@@ -594,7 +594,14 @@ CONFIG_FILE_TEMPLATE=$(
 ## This is passed to all calls to pip-sync by pipt.
 #
 # PIP_SYNC_ARGS=("-i" "https://my-company-package-index.org/simple")
-PIP_SYNC_ARGS=("--pip-args" "--no-deps")
+#
+## the --pip-args of pip-sync parameter can be set directly:
+#
+# PIP_SYNC_PIP_ARGS="--no-cache-dir --no-deps"
+#
+## Note that --no-deps is set here as default due to
+## https://github.com/pypa/pip/issues/9644 :
+PIP_SYNC_PIP_ARGS="--no-deps"
 
 END_HEREDOC
 )
@@ -807,6 +814,10 @@ _pip_sync_wrapped() {
 
     pip_sync_args+=("${PIP_SYNC_ARGS[@]}")
 
+    if [[ -n "$PIP_SYNC_PIP_ARGS" ]]; then
+        pip_sync_args+=("--pip-args" "$PIP_SYNC_PIP_ARGS")
+    fi
+
     "$VENV_PATH_BIN"/pip-sync "${pip_sync_args[@]}" "${@}"
 }
 
@@ -901,18 +912,25 @@ sync-system() {
     _info "--> install locked base requirements including piptools"
     _wrap_system_pip_install --no-deps -r requirements-base.txt
 
+    local pip_sync_args=()
     if [[ $SILENT = true ]]; then
-        SYNC_OPTIONS=("-q")
-    else
-        SYNC_OPTIONS=()
+        pip_sync_args+=("-q")
     fi
+
+    pip_sync_args+=("${PIP_SYNC_ARGS[@]}")
+
+    if [[ -n "$PIP_SYNC_PIP_ARGS" ]]; then
+        pip_sync_args+=("--pip-args" "$PIP_SYNC_PIP_ARGS")
+    fi
+
+    pip_sync_args+=("${REMAINING_ARGS[@]}")
 
     if [[ $USE_PROD_ENVIRONMENT = false ]]; then
         _info "--> install locked runtime and dev requirements"
-        "$INFERRED_PYTHON" -m piptools sync "${SYNC_OPTIONS[@]}" requirements-base.txt requirements.txt requirements-dev.txt
+        "$INFERRED_PYTHON" -m piptools sync "${pip_sync_args[@]}" requirements-base.txt requirements.txt requirements-dev.txt
     else
         _info "--> install locked runtime requirements"
-        "$INFERRED_PYTHON" -m piptools sync "${SYNC_OPTIONS[@]}" requirements-base.txt requirements.txt
+        "$INFERRED_PYTHON" -m piptools sync "${pip_sync_args[@]}" requirements-base.txt requirements.txt
     fi
 }
 

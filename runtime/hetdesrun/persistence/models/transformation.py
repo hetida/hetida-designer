@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field, validator, ValidationError
 
 from hetdesrun.utils import State, Type
 from hetdesrun.models.code import (
-    CodeBody,
     CodeModule,
+    ComponentInfo,
     NonEmptyValidStr,
     ShortNonEmptyValidStr,
     ValidStr,
@@ -247,27 +247,35 @@ class TransformationRevision(BaseModel):
         return test_wiring
 
     def release(self) -> None:
-        self.released_timestamp = datetime.datetime.utcnow()
+        self.released_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.state = State.RELEASED
 
     def deprecate(self) -> None:
-        self.disabled_timestamp = datetime.datetime.utcnow()
+        self.disabled_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.state = State.DISABLED
 
-    def to_code_body(self) -> CodeBody:
-        return CodeBody(
-            code=self.content,
-            function_name=self.name,
-            inputs=[input.to_component_input() for input in self.io_interface.inputs],
-            outputs=[
-                output.to_component_output() for output in self.io_interface.outputs
-            ],
+    def to_component_info(self) -> ComponentInfo:
+        if self.type != Type.COMPONENT:
+            raise ValueError(
+                f"will not convert transformation revision {self.id}"
+                f"into a component info since its type is not COMPONENT"
+            )
+        return ComponentInfo(
+            input_types_by_name={
+                io.name: io.data_type for io in self.io_interface.inputs
+            },
+            output_types_by_name={
+                io.name: io.data_type for io in self.io_interface.outputs
+            },
             name=self.name,
-            description=self.description,
             category=self.category,
+            description=self.description,
+            version_tag=self.version_tag,
             id=self.id,
             revision_group_id=self.revision_group_id,
-            version_tag=self.version_tag,
+            state=self.state,
+            released_timestamp=self.released_timestamp,
+            disabled_timestamp=self.disabled_timestamp,
         )
 
     def to_component_revision(self) -> ComponentRevision:

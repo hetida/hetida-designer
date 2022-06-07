@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Optional, Dict
+from typing import Optional
 import traceback
 import logging
 
@@ -10,8 +10,6 @@ from fastapi.encoders import jsonable_encoder
 
 from hetdesrun import VERSION
 
-from hetdesrun.component.code import update_code, check_parameter_names
-from hetdesrun.component.load import check_importability
 from hetdesrun.runtime.engine.plain.parsing import (
     parse_workflow_input,
     WorkflowParsingException,
@@ -21,12 +19,6 @@ from hetdesrun.datatypes import NamedDataTypedValue
 
 from hetdesrun.models.base import VersionInfo
 from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
-from hetdesrun.models.code import (
-    CodeBody,
-    GeneratedCode,
-    CodeCheckResult,
-    ComponentInfo,
-)
 
 from hetdesrun.runtime.context import execution_context
 
@@ -76,7 +68,7 @@ async def runtime_service(
         )
     except WorkflowParsingException as e:
         logger.info(
-            "Workflow Parsing Exception during workflow execution", exc_info=True
+            "Workflow Parsing Exception during workflow execution (\"%s\")", str(runtime_input.job_id), exc_info=True
         )
         return WorkflowExecutionResult(
             result="failure",
@@ -92,7 +84,7 @@ async def runtime_service(
             runtime_input.workflow_wiring
         )
     except AdapterHandlingException as exc:
-        logger.info("Adapter Handling Exception during data loading", exc_info=True)
+        logger.info("Adapter Handling Exception during data loading  (\"%s\")", str(runtime_input.job_id), exc_info=True)
         return WorkflowExecutionResult(
             result="failure",
             error=str(exc),
@@ -129,7 +121,7 @@ async def runtime_service(
             res = await computation_node.result  # pylint: disable=unused-variable
     except WorkflowParsingException as e:
         logger.info(
-            "Workflow Parsing Exception during workflow execution", exc_info=True
+            "Workflow Parsing Exception during workflow execution (\"%s\")", str(runtime_input.job_id), exc_info=True
         )
         return WorkflowExecutionResult(
             result="failure",
@@ -141,7 +133,8 @@ async def runtime_service(
 
     except RuntimeExecutionError as e:
         logger.info(
-            "Exception during workflow execution in instance %s of component %s",
+            "Exception during workflow execution (\"%s\") in instance %s of component %s",
+            str(runtime_input.job_id),
             e.currently_executed_node_instance,
             e.currently_executed_component,
             exc_info=True,
@@ -164,7 +157,8 @@ async def runtime_service(
         )
 
         logger.info(
-            "Execution Results:\n%s",
+            "Execution Results (\"%s\"):\n%s",
+            str(runtime_input.job_id),
             all_results_str
             if len(all_results_str) <= 100
             else (all_results_str[:50] + " ... " + all_results_str[-50:]),
@@ -182,9 +176,10 @@ async def runtime_service(
     except AdapterHandlingException as exc:
         logger.info(
             (
-                "Adapter Handling Exception during data sending. "
+                "Adapter Handling Exception during data sending (\"%s\"). "
                 "Sending data to external sources may be partly done."
             ),
+            str(runtime_input.job_id),
             exc_info=True,
         )
         return WorkflowExecutionResult(
@@ -210,13 +205,14 @@ async def runtime_service(
         jsonable_encoder(wf_exec_result)
     except Exception as e:  # pylint: disable=broad-except
         logger.info(
-            "Exception during workflow execution response serialisation: %s",
+            "Exception during workflow execution (\"%s\") response serialisation: %s",
+            str(runtime_input.job_id),
             str(e),
             exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
-            error=f"Exception during workflow execution response serialisation: {str(e)}",
+            error=f"Exception during workflow execution (\"{str(runtime_input.job_id)}\") response serialisation: {str(e)}",
             traceback=traceback.format_exc(),
             output_results_by_output_id={},
             output_results_by_output_name={},
@@ -236,61 +232,3 @@ async def info_service() -> dict:
     Unauthorized, may be used for readiness probes.
     """
     return {"version": VERSION}
-
-
-@runtime_router.post(
-    "/codegen",
-    response_model=GeneratedCode,
-    dependencies=get_auth_deps(),
-)
-async def codegen_service(
-    codegen_input: CodeBody,
-) -> GeneratedCode:
-    """Service for generating and updating code stubs"""
-    logger.info("CODEGEN INPUT JSON:\n%s", model_to_pretty_json_str(codegen_input))
-    return GeneratedCode(
-        code=update_code(
-            existing_code=codegen_input.code,
-            component_info=ComponentInfo.from_code_body(codegen_input),
-        )
-    )
-
-
-@runtime_router.post(
-    "/codecheck",
-    response_model=CodeCheckResult,
-    dependencies=get_auth_deps(),
-)
-async def codecheck_service(codecheck_input: CodeBody) -> CodeCheckResult:
-    """Service for checking code of components"""
-
-    logger.info("CODECHECK INPUT JSON:\n%s", model_to_pretty_json_str(codecheck_input))
-
-    return_dict: Dict[str, Optional[str]] = {}
-
-    result, possible_exception = check_importability(
-        codecheck_input.code, codecheck_input.function_name
-    )
-
-    inputs_outputs_okay = check_parameter_names(
-        [i.name for i in codecheck_input.inputs]
-        + [o.name for o in codecheck_input.outputs]
-    )
-
-    return_dict = {"result": "ok" if result and inputs_outputs_okay else "failure"}
-
-    if not result:
-        return_dict["error"] = (
-            str(possible_exception) if possible_exception is not None else None
-        )
-        return_dict["traceback"] = (
-            str(possible_exception.__traceback__)
-            if possible_exception is not None
-            else None
-        )
-    elif not inputs_outputs_okay:
-        return_dict[
-            "error"
-        ] = "Inputs/Outputs contain names not satisfying Python identifier rules"
-
-    return CodeCheckResult(**return_dict)

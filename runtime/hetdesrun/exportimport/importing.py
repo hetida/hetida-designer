@@ -6,13 +6,12 @@ import importlib
 from uuid import UUID
 from posixpath import join as posix_urljoin
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 
 from hetdesrun.utils import (
     Type,
-    State,
     get_uuid_from_seed,
     get_auth_headers,
     get_backend_basic_auth,
@@ -21,6 +20,7 @@ from hetdesrun.utils import (
 )
 
 from hetdesrun.component.load import (
+    ComponentCodeImportError,
     import_func_from_code,
     module_path_from_code,
 )
@@ -52,7 +52,7 @@ def load_json(path: str) -> Any:
     return workflow_json
 
 
-def load_python_file(path: str) -> Any:
+def load_python_file(path: str) -> Optional[str]:
     try:
         with open(path, "r", encoding="utf-8") as f:
             python_file = f.read()
@@ -62,14 +62,22 @@ def load_python_file(path: str) -> Any:
     return python_file
 
 
-def transformation_revision_from_python_code(code: str) -> Any:
+def transformation_revision_from_python_code(code: str, path: str) -> Any:
     """Get the TransformationRevision as a json file from just the Python code of some component
     This uses information from the register decorator and docstrings.
     Note: This needs to import the code module, which may have arbitrary side effects and security
     implications.
     """
 
-    main_func = import_func_from_code(code, "main")
+    try:
+        main_func = import_func_from_code(code, "main")
+    except ComponentCodeImportError as e:
+        logging.error(
+            "Could not load function from %s\n"
+            "due to error during import of component code:\n%s",
+            path,
+            str(e),
+        )
 
     module_path = module_path_from_code(code)
     mod = importlib.import_module(module_path)
@@ -77,39 +85,95 @@ def transformation_revision_from_python_code(code: str) -> Any:
     mod_docstring = mod.__doc__ or ""
     mod_docstring_lines = mod_docstring.splitlines()
 
-    component_name = main_func.registered_metadata["name"] or (  # type: ignore
-        "Unnamed Component"
-    )
+    if hasattr(main_func, "registered_metadata"):
+        logger.info("Get component info from registered metadata")
+        component_name = main_func.registered_metadata["name"] or (  # type: ignore
+            "Unnamed Component"
+        )
 
-    component_description = main_func.registered_metadata["description"] or (  # type: ignore
-        "No description provided"
-    )
+        component_description = main_func.registered_metadata["description"] or (  # type: ignore
+            "No description provided"
+        )
 
-    component_category = main_func.registered_metadata["category"] or (  # type: ignore
-        "Other"
-    )
+        component_category = main_func.registered_metadata["category"] or (  # type: ignore
+            "Other"
+        )
 
-    component_id = main_func.registered_metadata["id"] or (  # type: ignore
-        get_uuid_from_seed(str(component_name))
-    )
+        component_id = main_func.registered_metadata["id"] or (  # type: ignore
+            get_uuid_from_seed(str(component_name))
+        )
 
-    component_group_id = main_func.registered_metadata["revision_group_id"] or (  # type: ignore
-        get_uuid_from_seed(str(component_name))
-    )
+        component_group_id = main_func.registered_metadata["revision_group_id"] or (  # type: ignore
+            get_uuid_from_seed(str(component_name))
+        )
 
-    component_tag = main_func.registered_metadata["version_tag"] or ("1.0.0")  # type: ignore
+        component_tag = main_func.registered_metadata["version_tag"] or ("1.0.0")  # type: ignore
+
+        component_inputs = main_func.registered_metadata["inputs"]  # type: ignore
+
+        component_outputs = main_func.registered_metadata["outputs"]  # type: ignore
+
+        component_state = main_func.registered_metadata["state"] or "RELEASED"  # type: ignore
+
+        component_released_timestamp = main_func.registered_metadata[  # type: ignore
+            "released_timestamp"
+        ] or (
+            datetime.now(timezone.utc).isoformat()
+            if component_state == "RELEASED"
+            else None
+        )
+
+        component_disabled_timestamp = main_func.registered_metadata[  # type: ignore
+            "disabled_timestamp"
+        ] or (
+            datetime.now(timezone.utc).isoformat()
+            if component_state == "DISABLED"
+            else None
+        )
+
+    elif hasattr(mod, "COMPONENT_INFO"):
+        logger.info("Get component info from dictionary in code")
+        info_dict = mod.COMPONENT_INFO
+        component_inputs = info_dict.get("inputs", {})
+        component_outputs = info_dict.get("outputs", {})
+        component_name = info_dict.get("name", "Unnamed Component")
+        component_description = info_dict.get("description", "No description provided")
+        component_category = info_dict.get("category", "Other")
+        component_tag = info_dict.get("version_tag", "1.0.0")
+        component_id = info_dict.get("id", get_uuid_from_seed(str(component_name)))
+        component_group_id = info_dict.get(
+            "revision_group_id", get_uuid_from_seed(str(component_name))
+        )
+        component_state = info_dict.get("state", "RELEASED")
+        component_released_timestamp = info_dict.get(
+            "released_timestamp",
+            datetime.now(timezone.utc).isoformat()
+            if component_state == "RELEASED"
+            else None,
+        )
+        component_disabled_timestamp = info_dict.get(
+            "released_timestamp",
+            datetime.now(timezone.utc).isoformat()
+            if component_state == "DISABLED"
+            else None,
+        )
+    else:
+        raise ComponentCodeImportError
 
     component_code = update_code(
         existing_code=code,
         component_info=ComponentInfo(
-            input_types_by_name=main_func.registered_metadata["inputs"],  # type: ignore
-            output_types_by_name=main_func.registered_metadata["outputs"],  # type: ignore
+            input_types_by_name=component_inputs,
+            output_types_by_name=component_outputs,
             name=component_name,
             description=component_description,
             category=component_category,
+            version_tag=component_tag,
             id=component_id,
             revision_group_id=component_group_id,
-            version_tag=component_tag,
+            state=component_state,
+            released_timestamp=component_released_timestamp,
+            disabled_timestamp=component_disabled_timestamp,
         ),
     )
 
@@ -122,10 +186,10 @@ def transformation_revision_from_python_code(code: str) -> Any:
         description=component_description,
         category=component_category,
         version_tag=component_tag,
-        released_timestamp=datetime.now(),
-        disabled_timestamp=None,
-        state=State.RELEASED,
         type=Type.COMPONENT,
+        state=component_state,
+        released_timestamp=component_released_timestamp,
+        disabled_timestamp=component_disabled_timestamp,
         documentation=component_documentation,
         io_interface=IOInterface(
             inputs=[
@@ -134,9 +198,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
                     name=input_name,
                     data_type=input_data_type,
                 )
-                for input_name, input_data_type in main_func.registered_metadata[  # type: ignore
-                    "inputs"
-                ].items()
+                for input_name, input_data_type in component_inputs.items()
             ],
             outputs=[
                 IO(
@@ -144,9 +206,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
                     name=output_name,
                     data_type=output_data_type,
                 )
-                for output_name, output_data_type in main_func.registered_metadata[  # type: ignore
-                    "outputs"
-                ].items()
+                for output_name, output_data_type in component_outputs.items()
             ],
         ),
         content=component_code,
@@ -158,26 +218,12 @@ def transformation_revision_from_python_code(code: str) -> Any:
     return tr_json
 
 
-##Base function to import a transformation revision from a json file
-def import_transformation_from_path(path: str, strip_wirings: bool = False) -> None:
-    """
-    Imports a transformation revision based on its path on the local system.
-    WARNING: Overwrites possible existing transformation revision!
-    Args:
-        path (str): The local path of the transformation revision.
-    Usage:
-        import_transformation_from_path(
-            "transformations/components/arithmetic/e_100_13d3376a-9c08-d78f-8ad4-6d24fef504ca.json"
-        )
-    """
-
-    tr_json = load_json(path)
-
-    import_transformation(tr_json, path, strip_wirings=strip_wirings)
-
-
+# Base function to import a transformation revision
 def import_transformation(
-    tr_json: dict, path: str, strip_wirings: bool = False
+    tr_json: dict,
+    path: str,
+    strip_wirings: bool = False,
+    update_component_code: bool = True,
 ) -> None:
 
     headers = get_auth_headers()
@@ -188,8 +234,11 @@ def import_transformation(
     response = requests.put(
         posix_urljoin(
             runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
-        )
-        + "?allow_overwrite_released=True",
+        ),
+        params={
+            "allow_overwrite_released": True,
+            "update_component_code": update_component_code,
+        },
         verify=runtime_config.hd_backend_verify_certs,
         json=tr_json,
         auth=get_backend_basic_auth()
@@ -220,13 +269,14 @@ def import_transformation(
         logger.error(msg)
 
 
-# Import all transformations based on type, id, name and category
+# Import all transformations from download_path based on type, id, name and category
 def import_transformations(
     download_path: str,
     ids: Optional[List[UUID]] = None,
     names: Optional[List[str]] = None,
     category: Optional[str] = None,
     strip_wirings: bool = False,
+    update_component_code: bool = True,
 ) -> None:
     """
     This function imports all transformations together with their documentations
@@ -244,22 +294,26 @@ def import_transformations(
     for root, _, files in os.walk(download_path):
         for file in files:
             path = os.path.join(root, file)
-            if path.endswith(".py"):
-                logger.info("Loading transformation from python file %s", path)
-                python_file = load_python_file(path)
-                if python_file:
-                    tr_json = transformation_revision_from_python_code(python_file)
-                    import_transformation(tr_json, path)
-            elif path.endswith(".json"):
-                logger.info("Loading transformation from json file %s", path)
-                transformation_json = load_json(path)
-                transformation_dict[transformation_json["id"]] = transformation_json
-                path_dict[transformation_json["id"]] = path
-            else:
+            ext = os.path.splitext(path)[1]
+            if ext not in (".py", ".json"):
                 logger.warning(
-                    "Invalid file extension to loadtransformation revision from: %s",
+                    "Invalid file extension '%s' to load transformation revision from: %s",
+                    ext,
                     path,
                 )
+                continue
+            if ext == ".py":
+                logger.info("Loading transformation from python file %s", path)
+                python_file = load_python_file(path)
+                if python_file is not None:
+                    transformation_json = transformation_revision_from_python_code(
+                        python_file, path
+                    )
+            if ext == ".json":
+                logger.info("Loading transformation from json file %s", path)
+                transformation_json = load_json(path)
+            transformation_dict[transformation_json["id"]] = transformation_json
+            path_dict[transformation_json["id"]] = path
 
     def nesting_level(transformation_id: UUID, level: int) -> int:
 
@@ -308,17 +362,26 @@ def import_transformations(
                     category, transformation["category"]
                 )
             ):
-                import_transformation_from_path(
-                    path_dict[transformation_id], strip_wirings=strip_wirings
+                import_transformation(
+                    transformation,
+                    path_dict[transformation_id],
+                    strip_wirings=strip_wirings,
+                    update_component_code=update_component_code,
                 )
 
     logger.info("finished importing")
 
 
-def import_all(download_path: str, strip_wirings: bool = False) -> None:
+def import_all(
+    download_path: str, strip_wirings: bool = False, update_component_code: bool = True
+) -> None:
     import_transformations(
-        os.path.join(download_path, "components"), strip_wirings=strip_wirings
+        os.path.join(download_path, "components"),
+        strip_wirings=strip_wirings,
+        update_component_code=update_component_code,
     )
     import_transformations(
-        os.path.join(download_path, "workflows"), strip_wirings=strip_wirings
+        os.path.join(download_path, "workflows"),
+        strip_wirings=strip_wirings,
+        update_component_code=update_component_code,
     )
