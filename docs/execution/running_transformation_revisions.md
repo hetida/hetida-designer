@@ -91,13 +91,7 @@ The input wirings and output wirings tie inputs of the workflow or component rev
 
 #### Optional parameters
 
-* `run_pure_plot_operators` (optional, default value: `false`): controls whether pure plot operators should be executed. Pure plot operators are operators (i.e. component instances) in the workflow which 
-  
-  * only have outputs of type PLOTLYJSON
-  
-  * and have an entrypoint function with `is_pure_plot_component` being set to `True` in the `register` decorator, e.g.:
-    
-    ![](../assets/pure_plot_component.png)
+* `run_pure_plot_operators` (optional, default value: `false`): controls whether pure plot operators should be executed. Pure plot operators are operators (i.e. component instances) in the workflow which only have outputs of type PLOTLYJSON.
   
   During production executions one typically does not want plot outputs. This feature allows to use a workflow with plots in production without the plot computing overhead.
   
