@@ -15,7 +15,7 @@ RUN apt-get -y update && apt-get -y install libpq-dev gcc && apt-get clean && rm
 
 WORKDIR /app
 ENV PIPT_PIP_INSTALL_ARGS "--no-cache-dir"
-ENV PIPT_PIP_SYNC_ARGS "--no-cache-dir"
+ENV PIPT_PIP_SYNC_PIP_ARGS "--no-cache-dir --no-deps"
 RUN ./pipt sync-system --prod
 
 ##### Intermediate stage with actual application content

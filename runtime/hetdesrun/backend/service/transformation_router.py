@@ -31,7 +31,6 @@ from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegr
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 
-from hetdesrun.models.code import CodeBody, ComponentInfo
 from hetdesrun.component.code import update_code
 
 logger = logging.getLogger(__name__)
@@ -49,10 +48,11 @@ transformation_router = APIRouter(
 )
 
 
-def generate_code(codegen_input: CodeBody) -> str:
+def generate_code(transformation_revision: TransformationRevision) -> str:
+    assert isinstance(transformation_revision.content, str)
     code: str = update_code(
-        existing_code=codegen_input.code,
-        component_info=ComponentInfo.from_code_body(codegen_input),
+        existing_code=transformation_revision.content,
+        component_info=transformation_revision.to_component_info(),
     )
 
     return code
@@ -79,9 +79,7 @@ async def create_transformation_revision(
 
     if transformation_revision.type == Type.COMPONENT:
         logger.debug("transformation revision has type %s", Type.COMPONENT)
-        transformation_revision.content = generate_code(
-            transformation_revision.to_code_body()
-        )
+        transformation_revision.content = generate_code(transformation_revision)
         logger.debug("generated code:\n%s", transformation_revision.content)
 
     try:
@@ -239,7 +237,7 @@ def update_content(
 ) -> TransformationRevision:
     if updated_transformation_revision.type == Type.COMPONENT:
         updated_transformation_revision.content = generate_code(
-            updated_transformation_revision.to_code_body()
+            updated_transformation_revision
         )
     elif existing_transformation_revision is not None:
         assert isinstance(
@@ -316,6 +314,9 @@ async def update_transformation_revision(
     allow_overwrite_released: bool = Query(
         False, description="Only set to True for deployment"
     ),
+    update_component_code: bool = Query(
+        True, description="Only set to False for deployment"
+    ),
 ) -> TransformationRevision:
     """Update or store a transformation revision in the data base.
 
@@ -357,9 +358,10 @@ async def update_transformation_revision(
         # with an id and either create or update the transformation revision
         pass
 
-    updated_transformation_revision = update_content(
-        existing_transformation_revision, updated_transformation_revision
-    )
+    if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
+        updated_transformation_revision = update_content(
+            existing_transformation_revision, updated_transformation_revision
+        )
 
     updated_transformation_revision = if_applicable_release_or_deprecate(
         existing_transformation_revision, updated_transformation_revision
@@ -385,20 +387,7 @@ async def update_transformation_revision(
     return persisted_transformation_revision
 
 
-@transformation_router.post(
-    "/execute",
-    response_model=ExecutionResponseFrontendDto,
-    response_model_exclude_none=True,  # needed because:
-    # frontend handles attributes with value null in a different way than missing attributes
-    summary="Executes a transformation revision",
-    status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {
-            "description": "Successfully executed the transformation revision"
-        }
-    },
-)
-async def execute_transformation_revision_endpoint(
+async def handle_trafo_revision_execution_request(
     # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
@@ -423,6 +412,26 @@ async def execute_transformation_revision_endpoint(
 
     except TrafoExecutionResultValidationError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+@transformation_router.post(
+    "/execute",
+    response_model=ExecutionResponseFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Executes a transformation revision",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully executed the transformation revision"
+        }
+    },
+)
+async def execute_transformation_revision_endpoint(
+    # pylint: disable=redefined-builtin
+    exec_by_id: ExecByIdInput,
+) -> ExecutionResponseFrontendDto:
+    return await execute_transformation_revision(exec_by_id)
 
 
 @transformation_router.post(

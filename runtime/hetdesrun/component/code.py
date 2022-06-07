@@ -4,6 +4,7 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
+from datetime import datetime, timezone
 
 from typing import Optional, List
 from keyword import iskeyword
@@ -11,27 +12,28 @@ from keyword import iskeyword
 from hetdesrun.models.code import ComponentInfo
 
 imports_template: str = """\
-from hetdesrun.component.registration import register
-from hetdesrun.datatypes import DataType
 # add your own imports here, e.g.
-#     import pandas as pd
-#     import numpy as np
+# import pandas as pd
+# import numpy as np
 
 """
 
 function_definition_template: str = """\
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-@register(
-    inputs={input_dict_content},
-    outputs={output_dict_content},
-    name={name},
-    description={description},
-    category={category},
-    id={id},
-    revision_group_id={revision_group_id},
-    version_tag={version_tag}
-)
+COMPONENT_INFO = {{
+    "inputs": {input_dict_content},
+    "outputs": {output_dict_content},
+    "name": {name},
+    "category": {category},
+    "description": {description},
+    "version_tag": {version_tag},
+    "id": {id},
+    "revision_group_id": {revision_group_id},
+    "state": {state},{timestamp}
+}}
+
+
 {main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****\
@@ -53,29 +55,61 @@ def generate_function_header(component_info: ComponentInfo) -> str:
 
     main_func_declaration_start = "async def" if component_info.is_coroutine else "def"
 
+    input_dict_str = (
+        "{\n        "
+        + ",\n        ".join(
+            [
+                '"' + parameter + '": "' + data_type_enum.value + '"'
+                for parameter, data_type_enum in component_info.input_types_by_name.items()
+            ]
+        )
+        + ",\n    }"
+    )
+
+    output_dict_str = (
+        "{\n        "
+        + ",\n        ".join(
+            [
+                '"' + parameter + '": "' + data_type_enum.value + '"'
+                for parameter, data_type_enum in component_info.output_types_by_name.items()
+            ]
+        )
+        + ",\n    }"
+    )
+
+    timestamp_str = ""
+
+    if component_info.state == "RELEASED":
+        timestamp_str = "\n    " + '"released_timestamp": "'
+        if component_info.released_timestamp is not None:
+            timestamp_str = (
+                timestamp_str + component_info.released_timestamp.isoformat()
+            )
+        else:
+            timestamp_str = timestamp_str + datetime.now(timezone.utc).isoformat()
+        timestamp_str = timestamp_str + '"'
+
+    if component_info.state == "DISABLED":
+        timestamp_str = "\n    " + '"disabled_timestamp": "'
+        if component_info.disabled_timestamp is not None:
+            timestamp_str = (
+                timestamp_str + component_info.disabled_timestamp.isoformat()
+            )
+        else:
+            timestamp_str = timestamp_str + datetime.now(timezone.utc).isoformat()
+        timestamp_str = timestamp_str + '"'
+
     return function_definition_template.format(
-        input_dict_content="{"
-        + ", ".join(
-            [
-                '"' + key + '": DataType.' + value.name
-                for key, value in component_info.input_types_by_name.items()
-            ]
-        )
-        + "}",
-        output_dict_content="{"
-        + ", ".join(
-            [
-                '"' + key + '": DataType.' + value.name
-                for key, value in component_info.output_types_by_name.items()
-            ]
-        )
-        + "}",
+        input_dict_content=input_dict_str,
+        output_dict_content=output_dict_str,
         name='"' + component_info.name + '"',
         description='"' + component_info.description + '"',
         category='"' + component_info.category + '"',
+        version_tag='"' + component_info.version_tag + '"',
         id='"' + str(component_info.id) + '"',
         revision_group_id='"' + str(component_info.revision_group_id) + '"',
-        version_tag='"' + component_info.version_tag + '"',
+        state='"' + component_info.state + '"',
+        timestamp=timestamp_str,
         params_list=param_list_str,
         main_func_declaration_start=main_func_declaration_start,
     )

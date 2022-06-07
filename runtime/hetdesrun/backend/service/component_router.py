@@ -2,32 +2,20 @@ import logging
 from typing import Optional
 
 from uuid import UUID, uuid4
-import json
-
-from posixpath import join as posix_urljoin
-import httpx
 from fastapi import APIRouter, Path, status, HTTPException
 
 from pydantic import ValidationError
 
-from hetdesrun.utils import Type, get_auth_headers
+from hetdesrun.utils import Type
 
-from hetdesrun.webservice.config import runtime_config
-from hetdesrun.service.runtime_router import runtime_service
-
-from hetdesrun.models.run import (
-    ConfigurationInput,
-    WorkflowExecutionInput,
-    WorkflowExecutionResult,
-)
-
+from hetdesrun.backend.execution import ExecByIdInput
 from hetdesrun.backend.service.transformation_router import (
     generate_code,
     check_modifiability,
     update_content,
     if_applicable_release_or_deprecate,
+    handle_trafo_revision_execution_request,
 )
-from hetdesrun.backend.execution import nested_nodes
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
@@ -44,7 +32,6 @@ from hetdesrun.persistence.dbservice.exceptions import (
     DBNotFoundError,
     DBIntegrityError,
 )
-from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.persistence.models.transformation import TransformationRevision
 
 logger = logging.getLogger(__name__)
@@ -101,9 +88,7 @@ async def create_component_revision(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     logger.debug("generate code")
-    transformation_revision.content = generate_code(
-        transformation_revision.to_code_body()
-    )
+    transformation_revision.content = generate_code(transformation_revision)
     logger.debug("generated code:\n%s", component_dto.code)
 
     try:
@@ -332,89 +317,14 @@ async def execute_component_revision(
     if job_id is None:
         job_id = uuid4()
 
-    try:
-        tr_component = read_single_transformation_revision(id)
-        logger.info("found component with id %s", id)
-    except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-
-    if tr_component.type != Type.COMPONENT:
-        msg = f"DB entry for id {id} does not have type {Type.COMPONENT}"
-        logger.error(msg)
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg)
-
-    tr_workflow = tr_component.wrap_component_in_tr_workflow()
-    assert isinstance(tr_workflow.content, WorkflowContent)
-    nested_transformations = {tr_workflow.content.operators[0].id: tr_component}
-    workflow_node = tr_workflow.to_workflow_node(
-        uuid4(), nested_nodes(tr_workflow, nested_transformations)
-    )
-
-    execution_input = WorkflowExecutionInput(
-        code_modules=[tr_component.to_code_module()],
-        components=[tr_component.to_component_revision()],
-        workflow=workflow_node,
-        configuration=ConfigurationInput(
-            name=str(tr_workflow.id),
-            run_pure_plot_operators=run_pure_plot_operators,
-        ),
-        workflow_wiring=wiring_dto.to_workflow_wiring(),
+    exec_by_id = ExecByIdInput(
+        id=id,
+        wiring=wiring_dto.to_workflow_wiring(),
+        run_pure_plot_operators=run_pure_plot_operators,
         job_id=job_id,
     )
 
-    output_types = {
-        output.name: output.type for output in execution_input.workflow.outputs
-    }
-
-    execution_result: WorkflowExecutionResult
-
-    if runtime_config.is_runtime_service:
-        execution_result = await runtime_service(execution_input)
-    else:
-        headers = get_auth_headers()
-
-        async with httpx.AsyncClient(
-            verify=runtime_config.hd_runtime_verify_certs
-        ) as client:
-            url = posix_urljoin(runtime_config.hd_runtime_engine_url, "runtime")
-            try:
-                response = await client.post(
-                    url,
-                    headers=headers,  # TODO: authentication
-                    json=json.loads(
-                        execution_input.json()
-                    ),  # TODO: avoid double serialization.
-                    # see https://github.com/samuelcolvin/pydantic/issues/1409, especially
-                    # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
-                    timeout=None,
-                )
-            except httpx.HTTPError as e:
-                msg = f"Failure connecting to hd runtime endpoint ({url}):\n{str(e)}"
-                logger.info(msg)
-                # do not explictly re-raise to avoid displaying authentication details
-                # pylint: disable=raise-missing-from
-                raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg)
-            try:
-                json_obj = response.json()
-                execution_result = WorkflowExecutionResult(**json_obj)
-            except ValidationError as e:
-                msg = (
-                    f"Could not validate hd runtime result object. Exception:\n{str(e)}"
-                    f"\nJson Object is:\n{str(json_obj)}"
-                )
-                logger.info(msg)
-                raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=msg) from e
-
-    execution_response = ExecutionResponseFrontendDto(
-        error=execution_result.error,
-        output_results_by_output_name=execution_result.output_results_by_output_name,
-        output_types_by_output_name=output_types,
-        result=execution_result.result,
-        traceback=execution_result.traceback,
-        job_id=execution_input.job_id,
-    )
-
-    return execution_response
+    return await handle_trafo_revision_execution_request(exec_by_id)
 
 
 @component_router.post(

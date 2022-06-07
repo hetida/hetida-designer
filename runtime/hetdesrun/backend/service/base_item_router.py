@@ -148,9 +148,7 @@ async def create_transformation_revision(
 
     if transformation_revision.type == Type.COMPONENT:
         logger.debug("transformation revision has type %s", Type.COMPONENT)
-        transformation_revision.content = generate_code(
-            transformation_revision.to_code_body()
-        )
+        transformation_revision.content = generate_code(transformation_revision)
         logger.debug("generated code:\n%s", transformation_revision.content)
 
     try:
@@ -238,9 +236,9 @@ async def update_transformation_revision(
             existing_transformation_revision.content
         )
         if existing_transformation_revision.type == Type.COMPONENT:
-            updated_transformation_revision.content = (
-                updated_transformation_revision.content
-            ) = generate_code(updated_transformation_revision.to_code_body())
+            updated_transformation_revision.content = generate_code(
+                updated_transformation_revision
+            )
         updated_transformation_revision.documentation = (
             existing_transformation_revision.documentation
         )

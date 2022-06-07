@@ -62,7 +62,7 @@ docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
+  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/", update_component_code=False);'
 ```
 
 ## Workflow Execution
@@ -145,6 +145,13 @@ Here is the same content from above, together with a key, as ready-to-paste one 
 ```
 exec_job_1:{ "id": "79ce1eb1-3ef8-4c74-9114-c856fd88dc89", "wiring": { "input_wirings": [ { "workflow_input_name": "window_size", "adapter_id": "direct_provisioning", "filters": { "value": "180min" } }, { "workflow_input_name": "window_timestamp_location", "adapter_id": "direct_provisioning", "filters": { "value": "center" } }, { "workflow_input_name": "input_series", "adapter_id": "direct_provisioning", "filters": { "value": "{\"2018-05-19T22:20:00.000Z\":86.9358994238,\"2018-05-19T22:25:00.000Z\":78.6552569681,\"2018-05-19T22:30:00.000Z\":93.515633185,\"2018-05-19T22:35:00.000Z\":96.3497006614,\"2018-05-19T22:40:00.000Z\":83.1926874657,\"2018-05-22T05:50:00.000Z\":926.4357356548,\"2018-05-22T05:55:00.000Z\":934.7257131637,\"2018-05-22T06:00:00.000Z\":908.4082221891,\"2018-05-22T06:05:00.000Z\":917.7112901544,\"2018-05-22T06:10:00.000Z\":924.0958121497}" } }, { "workflow_input_name": "threshold", "adapter_id": "direct_provisioning", "filters": { "value": "600.0" } } ], "output_wirings": [] }, "run_pure_plot_operators": false, "job_id": "00000000-0000-0000-0000-000000000002"}
 ```
+
+This is the ready-to-paste one liner for the console producer to execute the latest revision of the revision group:
+```
+exec_job_2:{ "revision_group_id": "d0d40c45-aef0-424a-a8f4-b16cd5f8b129", "wiring": { "input_wirings": [ { "workflow_input_name": "window_size", "adapter_id": "direct_provisioning", "filters": { "value": "180min" } }, { "workflow_input_name": "window_timestamp_location", "adapter_id": "direct_provisioning", "filters": { "value": "center" } }, { "workflow_input_name": "input_series", "adapter_id": "direct_provisioning", "filters": { "value": "{\"2018-05-19T22:20:00.000Z\":86.9358994238,\"2018-05-19T22:25:00.000Z\":78.6552569681,\"2018-05-19T22:30:00.000Z\":93.515633185,\"2018-05-19T22:35:00.000Z\":96.3497006614,\"2018-05-19T22:40:00.000Z\":83.1926874657,\"2018-05-22T05:50:00.000Z\":926.4357356548,\"2018-05-22T05:55:00.000Z\":934.7257131637,\"2018-05-22T06:00:00.000Z\":908.4082221891,\"2018-05-22T06:05:00.000Z\":917.7112901544,\"2018-05-22T06:10:00.000Z\":924.0958121497}" } }, { "workflow_input_name": "threshold", "adapter_id": "direct_provisioning", "filters": { "value": "600.0" } } ], "output_wirings": [] }, "run_pure_plot_operators": false, "job_id": "00000000-0000-0000-0000-000000000003"}
+```
+If no later revision then 1.0.0 has been created the output will be the same as before except for the job id.
+
 ### Running the workflow via Kafka
 
 Pasting the payload above in the first terminal (the producer for the "hd-execution-topic" topic) leads to the same message occurring in the second terminal (consumer for the "hd-execution-topic" topic) and after short moment to a result in the third terminal (the consumer of the result topic "hd-execution-response-topic"). The result json payload is identical to the API transformation revision execution endpoint result json.
@@ -153,6 +160,64 @@ Pasting the payload above in the first terminal (the producer for the "hd-execut
 This example includes only the "direct_provisioning" adapter being wired to all inputs and there are no wirings for the outputs, which is the proper way to indicate that these are wired to the default adapter "direct_provisioning". This results in all input data being expected as part of the Kafka payload and the output data being sent as part of the Kafka result message.
 
 However this is not a limitation: You can use arbitrary adapters and also mix them freely in the same manner as for the web endpoint. I.e. some data can be directly provided via the Kafka message (usually single parameters) while other data is fetched from a database via an appropriate external adapter (typically mass data).
+
+Here is the json message value for running the example workflow "Univariate Linear RUL Regression" revision 1.0.0 with mixed adapters:
+
+```json
+{
+    "id": "8d61a267-3a71-51cd-2817-48c320469d6b",
+    "wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "num_pred_series_future_days",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": "1"}
+            },
+            {
+                "workflow_input_name": "pred_series_frequency",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": "3min"}
+            },
+            {
+                "ref_id": "root.plantA.picklingUnit.influx.temp",
+                "ref_id_type": "SOURCE",
+                "type": "timeseries(float)",
+                "workflow_input_name": "timeseries",
+                "adapter_id": "demo-adapter-python",
+                "filters": {
+                    "timestampFrom": "2022-05-19T15:24:00.000000000Z",
+                    "timestampTo": "2022-05-19T15:24:00.000000000Z"
+                }
+            },
+            {
+                "ref_id": "root.plantA.picklingUnit.influx.temp",
+                "ref_id_type": "SOURCE",
+                "ref_key": "Max Value",
+                "type": "metadata(float)",
+                "workflow_input_name": "limit",
+                "adapter_id": "demo-adapter-python",
+                "filters": {}
+            }
+        ],
+        "output_wirings": [
+            {
+                "ref_id": "root.plantA.picklingUnit.influx.anomaly_score",
+                "ref_id_type": "SINK",
+                "type": "timeseries(float)",
+                "workflow_output_name": "pred_series",
+                "adapter_id": "demo-adapter-python"
+            }
+        ]
+    },
+    "run_pure_plot_operators": false,
+    "job_id": "00000000-0000-0000-0000-000000000005"
+}
+```
+
+And for your convenience the corresponding ready-to-paste one liner:
+```
+exec_job_3: { "id": "8d61a267-3a71-51cd-2817-48c320469d6b", "wiring": { "input_wirings": [ { "workflow_input_name": "num_pred_series_future_days", "adapter_id": "direct_provisioning", "filters": {"value": "1"} }, { "workflow_input_name": "pred_series_frequency", "adapter_id": "direct_provisioning", "filters": {"value": "3min"} }, { "ref_id": "root.plantA.picklingUnit.influx.temp", "ref_id_type": "SOURCE", "type": "timeseries(float)", "workflow_input_name": "timeseries", "adapter_id": "demo-adapter-python", "filters": { "timestampFrom": "2022-05-19T15:24:00.000000000Z", "timestampTo": "2022-05-19T15:24:00.000000000Z" } }, { "ref_id": "root.plantA.picklingUnit.influx.temp", "ref_id_type": "SOURCE", "ref_key": "Max Value", "type": "metadata(float)", "workflow_input_name": "limit", "adapter_id": "demo-adapter-python", "filters": {} } ], "output_wirings": [ { "ref_id": "root.plantA.picklingUnit.influx.anomaly_score", "ref_id_type": "SINK", "type": "timeseries(float)", "workflow_output_name": "pred_series", "adapter_id": "demo-adapter-python" } ] }, "run_pure_plot_operators": false, "job_id": "00000000-0000-0000-0000-000000000005" }
+```
 
 ## Configuring the Kafka consumer / producer
 See [config](../../runtime/hetdesrun/webservice/config.py) code for available configuration options and corresponding environment variable names. All variables containing "KAFKA" should be of interest here. You can specify topic names and options for the [aiokafka](https://aiokafka.readthedocs.io/en/stable/) consumer / producer clients.
