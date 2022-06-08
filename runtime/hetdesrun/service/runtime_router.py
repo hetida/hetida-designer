@@ -68,7 +68,9 @@ async def runtime_service(
         )
     except WorkflowParsingException as e:
         logger.info(
-            "Workflow Parsing Exception during workflow execution (\"%s\")", str(runtime_input.job_id), exc_info=True
+            'Workflow Parsing Exception during workflow execution ("%s")',
+            str(runtime_input.job_id),
+            exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
@@ -84,7 +86,11 @@ async def runtime_service(
             runtime_input.workflow_wiring
         )
     except AdapterHandlingException as exc:
-        logger.info("Adapter Handling Exception during data loading  (\"%s\")", str(runtime_input.job_id), exc_info=True)
+        logger.info(
+            'Adapter Handling Exception during data loading  ("%s")',
+            str(runtime_input.job_id),
+            exc_info=True,
+        )
         return WorkflowExecutionResult(
             result="failure",
             error=str(exc),
@@ -121,7 +127,9 @@ async def runtime_service(
             res = await computation_node.result  # pylint: disable=unused-variable
     except WorkflowParsingException as e:
         logger.info(
-            "Workflow Parsing Exception during workflow execution (\"%s\")", str(runtime_input.job_id), exc_info=True
+            'Workflow Parsing Exception during workflow execution ("%s")',
+            str(runtime_input.job_id),
+            exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
@@ -133,7 +141,7 @@ async def runtime_service(
 
     except RuntimeExecutionError as e:
         logger.info(
-            "Exception during workflow execution (\"%s\") in instance %s of component %s",
+            'Exception during workflow execution ("%s") in instance %s of component %s',
             str(runtime_input.job_id),
             e.currently_executed_node_instance,
             e.currently_executed_component,
@@ -157,7 +165,7 @@ async def runtime_service(
         )
 
         logger.info(
-            "Execution Results (\"%s\"):\n%s",
+            'Execution Results ("%s"):\n%s',
             str(runtime_input.job_id),
             all_results_str
             if len(all_results_str) <= 100
@@ -176,7 +184,7 @@ async def runtime_service(
     except AdapterHandlingException as exc:
         logger.info(
             (
-                "Adapter Handling Exception during data sending (\"%s\"). "
+                'Adapter Handling Exception during data sending ("%s"). '
                 "Sending data to external sources may be partly done."
             ),
             str(runtime_input.job_id),
@@ -205,14 +213,14 @@ async def runtime_service(
         jsonable_encoder(wf_exec_result)
     except Exception as e:  # pylint: disable=broad-except
         logger.info(
-            "Exception during workflow execution (\"%s\") response serialisation: %s",
+            'Exception during workflow execution ("%s") response serialisation: %s',
             str(runtime_input.job_id),
             str(e),
             exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
-            error=f"Exception during workflow execution (\"{str(runtime_input.job_id)}\") response serialisation: {str(e)}",
+            error=f'Exception during workflow execution ("{str(runtime_input.job_id)}") response serialisation: {str(e)}',
             traceback=traceback.format_exc(),
             output_results_by_output_id={},
             output_results_by_output_name={},
