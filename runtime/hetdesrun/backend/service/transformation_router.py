@@ -291,6 +291,10 @@ def if_applicable_release_or_deprecate(
                 **existing_transformation_revision.dict()
             )
             updated_transformation_revision.deprecate()
+            if updated_transformation_revision.type == Type.COMPONENT:
+                updated_transformation_revision.content = generate_code(
+                    updated_transformation_revision
+                )
     return updated_transformation_revision
 
 
