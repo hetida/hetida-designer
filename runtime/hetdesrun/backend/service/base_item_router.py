@@ -1,14 +1,21 @@
-from typing import List
+from typing import List, Optional
 import logging
 
 from uuid import UUID
 
 from fastapi import APIRouter, Path, status, HTTPException
 
+from hetdesrun.utils import Type
+
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
+from hetdesrun.backend.service.transformation_router import (
+    generate_code,
+    check_modifiability,
+    update_content,
+    if_applicable_release_or_deprecate,
+)
 
-from hetdesrun.utils import Type, State
-
+from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
     store_single_transformation_revision,
@@ -17,8 +24,6 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 
 from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError
-
-from hetdesrun.backend.service.component_router import generate_code
 
 logger = logging.getLogger(__name__)
 
@@ -216,46 +221,37 @@ async def update_transformation_revision(
         updated_transformation_revision_dto.to_transformation_revision()
     )
 
+    existing_transformation_revision: Optional[TransformationRevision] = None
+
     try:
-        existing_transformation_revision = read_single_transformation_revision(id)
-
-        if (
-            existing_transformation_revision.type
-            != updated_transformation_revision_dto.type
-        ):
-            msg = (
-                f"The type ({updated_transformation_revision_dto.type}) "
-                f"of the provided transformation revision does not\n"
-                f"match the type ({existing_transformation_revision.type}) "
-                f"of the stored transformation revision {id}!"
-            )
-            logger.error(msg)
-            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
-        updated_transformation_revision.content = (
-            existing_transformation_revision.content
+        existing_transformation_revision = read_single_transformation_revision(
+            id, log_error=False
         )
-        if existing_transformation_revision.type == Type.COMPONENT:
-            updated_transformation_revision.content = generate_code(
-                updated_transformation_revision
-            )
-        updated_transformation_revision.documentation = (
-            existing_transformation_revision.documentation
-        )
+        logger.info("found transformation revision %s", id)
 
-        if existing_transformation_revision.state == State.RELEASED:
-            if updated_transformation_revision_dto.state == State.DISABLED:
-                logger.info("deprecate transformation revision %s", id)
-                updated_transformation_revision = existing_transformation_revision
-                updated_transformation_revision.deprecate()
-            else:
-                msg = f"cannot modify released component {id}"
-                logger.error(msg)
-                raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        check_modifiability(
+            existing_transformation_revision, updated_transformation_revision
+        )
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the component revision
         pass
+
+    if existing_transformation_revision is not None:
+        updated_transformation_revision.documentation = (
+            existing_transformation_revision.documentation
+        )
+        updated_transformation_revision.test_wiring = (
+            existing_transformation_revision.test_wiring
+        )
+
+    updated_transformation_revision = update_content(
+        existing_transformation_revision, updated_transformation_revision
+    )
+
+    updated_transformation_revision = if_applicable_release_or_deprecate(
+        existing_transformation_revision, updated_transformation_revision
+    )
 
     try:
         persisted_transformation_revision = (
