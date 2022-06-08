@@ -212,15 +212,14 @@ async def runtime_service(
     try:
         jsonable_encoder(wf_exec_result)
     except Exception as e:  # pylint: disable=broad-except
-        logger.info(
-            'Exception during workflow execution ("%s") response serialisation: %s',
-            str(runtime_input.job_id),
-            str(e),
-            exc_info=True,
+        msg = (
+            f'Exception during workflow execution ("{str(runtime_input.job_id)}") '
+            f"response serialisation: {str(e)}"
         )
+        logger.info(msg, exc_info=True)
         return WorkflowExecutionResult(
             result="failure",
-            error=f'Exception during workflow execution ("{str(runtime_input.job_id)}") response serialisation: {str(e)}',
+            error=msg,
             traceback=traceback.format_exc(),
             output_results_by_output_id={},
             output_results_by_output_name={},
