@@ -56,30 +56,32 @@ def generate_function_header(component_info: ComponentInfo) -> str:
     main_func_declaration_start = "async def" if component_info.is_coroutine else "def"
 
     input_dict_str = (
-        "{\n        "
-        + ",\n        ".join(
+        "{"
+        + ("\n    " if len(component_info.input_types_by_name.items()) != 0 else "")
+        + "".join(
             [
-                '"' + parameter + '": "' + data_type_enum.value + '"'
+                '    "' + parameter + '": "' + data_type_enum.value + '",\n    '
                 for parameter, data_type_enum in component_info.input_types_by_name.items()
             ]
         )
-        + ",\n    }"
+        + "}"
     )
 
     output_dict_str = (
-        "{\n        "
-        + ",\n        ".join(
+        "{"
+        + ("\n    " if len(component_info.input_types_by_name.items()) != 0 else "")
+        + "".join(
             [
-                '"' + parameter + '": "' + data_type_enum.value + '"'
+                '    "' + parameter + '": "' + data_type_enum.value + '",\n    '
                 for parameter, data_type_enum in component_info.output_types_by_name.items()
             ]
         )
-        + ",\n    }"
+        + "}"
     )
 
     timestamp_str = ""
 
-    if component_info.state == "RELEASED":
+    if component_info.released_timestamp is not None:
         timestamp_str = "\n    " + '"released_timestamp": "'
         if component_info.released_timestamp is not None:
             timestamp_str = (
@@ -87,9 +89,9 @@ def generate_function_header(component_info: ComponentInfo) -> str:
             )
         else:
             timestamp_str = timestamp_str + datetime.now(timezone.utc).isoformat()
-        timestamp_str = timestamp_str + '"'
+        timestamp_str = timestamp_str + '",'
 
-    if component_info.state == "DISABLED":
+    if component_info.disabled_timestamp is not None:
         timestamp_str = "\n    " + '"disabled_timestamp": "'
         if component_info.disabled_timestamp is not None:
             timestamp_str = (
@@ -97,7 +99,7 @@ def generate_function_header(component_info: ComponentInfo) -> str:
             )
         else:
             timestamp_str = timestamp_str + datetime.now(timezone.utc).isoformat()
-        timestamp_str = timestamp_str + '"'
+        timestamp_str = timestamp_str + '",'
 
     return function_definition_template.format(
         input_dict_content=input_dict_str,
