@@ -94,4 +94,3 @@ def import_func_from_code(
 
         func = getattr(mod, func_name)
         return func
-
