@@ -46,10 +46,14 @@ base_item_router = APIRouter(
     deprecated=True,
 )
 async def get_all_transformation_revisions(
+    type: Optional[Type] = Query(
+        None,
+        description="Set to get only transformation revisions in the specified type",
+    ),
     state: Optional[State] = Query(
         None,
         description="Set to get only transformation revisions in the specified state",
-    )
+    ),
 ) -> List[TransformationRevisionFrontendDto]:
     """Get all transformation revisions without their content from the data base.
 
@@ -58,13 +62,16 @@ async def get_all_transformation_revisions(
     """
 
     msg = "get all transformation revisions"
+    if type is not None:
+        msg = msg + " of type " + type.value
     if state is not None:
         msg = msg + " in the state " + state.value
     logger.info(msg)
 
     try:
         transformation_revision_list = select_multiple_transformation_revisions(
-            state=state
+            type=type,
+            state=state,
         )
     except DBIntegrityError as e:
         raise HTTPException(
@@ -76,7 +83,6 @@ async def get_all_transformation_revisions(
         TransformationRevisionFrontendDto.from_transformation_revision(tr)
         for tr in transformation_revision_list
     ]
-    logger.info("returning %s DTO objects", str(len(transformation_revision_dto_list)))
 
     return transformation_revision_dto_list
 
