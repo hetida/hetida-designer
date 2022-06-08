@@ -6,7 +6,7 @@ from starlette.testclient import TestClient
 from posixpath import join as posix_urljoin
 
 import json
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from hetdesrun.utils import get_uuid_from_seed
 
@@ -409,6 +409,49 @@ async def test_get_all_transformation_revisions_with_no_db_entries(
             response = await ac.get("/api/transformations/")
 
         assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_specified_state(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1) # DRAFT
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_2) # RELEASED
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_1) # DRAFT
+        )
+        tr_workflow_2 = TransformationRevision(**tr_json_workflow_2)
+        tr_workflow_2.deprecate()
+        store_single_transformation_revision(
+            tr_workflow_2
+        )
+        async with async_test_client as ac:
+            response_draft = await ac.get("/api/transformations/?state=DRAFT")
+            response_released = await ac.get("/api/transformations/?state=RELEASED")
+            response_disabled = await ac.get("/api/transformations/?state=DISABLED")
+            response_foo = await ac.get("/api/transformations/?state=foo")
+
+        assert response_draft.status_code == 200
+        assert len(response_draft.json()) == 2
+        assert response_draft.json()[0] == tr_json_component_1
+        assert response_draft.json()[1] == tr_json_workflow_1
+        assert response_released.status_code == 200
+        assert len(response_released.json()) == 1
+        assert response_released.json()[0] == tr_json_component_2
+        assert response_disabled.status_code == 200
+        assert len(response_disabled.json()) == 1
+        assert response_disabled.json()[0]["id"] == tr_json_workflow_2["id"]
+        assert response_disabled.json()[0]["state"] == "DISABLED"
+        assert response_foo.status_code == 422
+        assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio

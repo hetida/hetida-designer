@@ -132,7 +132,7 @@ tr_dto_json_workflow_2 = {
 
 
 @pytest.mark.asyncio
-async def test_get_all_transformation_revisions_with_valid_db_entries(
+async def test_get_all_base_items_with_valid_db_entries(
     async_test_client, clean_test_db_engine
 ):
     with mock.patch(
@@ -162,6 +162,58 @@ async def test_get_all_transformation_revisions_with_valid_db_entries(
         assert response.json()[0] == tr_dto_json_component_1
         assert response.json()[1] == tr_dto_json_workflow_1
         assert response.json()[2] == tr_dto_json_workflow_2
+
+
+@pytest.mark.asyncio
+async def test_get_all_base_items_with_specified_state(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevisionFrontendDto(
+                **tr_dto_json_component_1 # DRAFT
+            ).to_transformation_revision()
+        )
+        store_single_transformation_revision(
+            TransformationRevisionFrontendDto(
+                **tr_dto_json_component_2 # RELEASED
+            ).to_transformation_revision()
+        )
+        store_single_transformation_revision(
+            TransformationRevisionFrontendDto(
+                **tr_dto_json_workflow_1 # DRAFT
+            ).to_transformation_revision()
+        )
+        tr_workflow_2 = TransformationRevisionFrontendDto(
+                **tr_dto_json_workflow_2
+            ).to_transformation_revision()
+        tr_workflow_2.deprecate()
+        store_single_transformation_revision(
+            tr_workflow_2
+        )
+
+        async with async_test_client as ac:
+            response_draft = await ac.get("/api/base-items/?state=DRAFT")
+            response_released = await ac.get("/api/base-items/?state=RELEASED")
+            response_disabled = await ac.get("/api/base-items/?state=DISABLED")
+            response_foo = await ac.get("/api/base-items/?state=foo")
+
+        assert response_draft.status_code == 200
+        assert len(response_draft.json()) == 2
+        assert response_draft.json()[0] == tr_dto_json_component_1
+        assert response_draft.json()[1] == tr_dto_json_workflow_1
+        assert response_released.status_code == 200
+        assert len(response_released.json()) == 1
+        assert response_released.json()[0] == tr_dto_json_component_2
+        assert response_disabled.status_code == 200
+        assert len(response_disabled.json()) == 1
+        assert response_disabled.json()[0]["id"] == tr_dto_json_workflow_2["id"]
+        assert response_disabled.json()[0]["state"] == "DISABLED"
+        assert response_foo.status_code == 422
+        assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
