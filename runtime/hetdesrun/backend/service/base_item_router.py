@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Optional
 import logging
 
 from uuid import UUID
 
-from fastapi import APIRouter, Path, status, HTTPException
+from fastapi import APIRouter, Path, Query, status, HTTPException
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 
@@ -45,17 +45,27 @@ base_item_router = APIRouter(
     responses={status.HTTP_200_OK: {"description": "Successfully got all base items"}},
     deprecated=True,
 )
-async def get_all_transformation_revisions() -> List[TransformationRevisionFrontendDto]:
+async def get_all_transformation_revisions(
+    state: Optional[State] = Query(
+        None,
+        description="Set to get only transformation revisions in the specified state",
+    )
+) -> List[TransformationRevisionFrontendDto]:
     """Get all transformation revisions without their content from the data base.
 
     This endpoint is deprecated and will be removed soon,
     use GET /api/transformations/ instead
     """
 
-    logger.info("get all transformation revisions")
+    msg = "get all transformation revisions"
+    if state is not None:
+        msg = msg + " in the state " + state.value
+    logger.info(msg)
 
     try:
-        transformation_revision_list = select_multiple_transformation_revisions()
+        transformation_revision_list = select_multiple_transformation_revisions(
+            state=state
+        )
     except DBIntegrityError as e:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -66,6 +76,7 @@ async def get_all_transformation_revisions() -> List[TransformationRevisionFront
         TransformationRevisionFrontendDto.from_transformation_revision(tr)
         for tr in transformation_revision_list
     ]
+    logger.info("returning %s DTO objects", str(len(transformation_revision_dto_list)))
 
     return transformation_revision_dto_list
 
