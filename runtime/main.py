@@ -100,7 +100,6 @@ def run_trafo_rev_deployment():
 
 in_memory_db = detect_in_memory_db()
 is_backend = runtime_config.is_backend_service
-true_equiv = [None, "", "true", "yes", "y", "ok"]
 
 if in_memory_db:
     logger.info(
@@ -108,7 +107,7 @@ if in_memory_db:
     )
     run_migrations()
     
-    if is_backend in true_equiv:
+    if is_backend:
         logger.info(
             "Detected in-memory db usage: "
             "Running base component and example workflow deployment "
@@ -124,7 +123,7 @@ if __name__ == "__main__":
         )
         run_migrations()
 
-        if is_backend in true_equiv:
+        if is_backend:
             logger.info(
                 "Running base component and example workflow deployment "
                 "from main.py since main.py was invoked directly."
