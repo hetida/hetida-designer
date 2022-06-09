@@ -1,12 +1,12 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Check pull requests
 
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the "develop" branch
-  push:
-    branches: [ ]
+  # push:
+  #   branches: [ ]
   pull_request:
     branches: [ "develop" ]
 
@@ -46,3 +46,10 @@ jobs:
           ./pipt sync
           echo "Running black..."
           ./pipt run black --check hetdesrun
+      - name: Run tests
+        run: |
+          set -e
+          cd "$GITHUB_WORKSPACE"/runtime
+          export PIPT_PYTHON_INTERPRETER="python3.9".
+          ./pipt run python -m pytest --cov=hetdesrun --cov-report=term-missing tests
+
