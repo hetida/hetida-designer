@@ -277,6 +277,7 @@ in pkgs.mkShell rec {
     libxslt
     libzip
     zlib
+    cacert
     # glib
     glibc
     glibcLocales
