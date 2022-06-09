@@ -39,7 +39,10 @@ jobs:
 
       - name: Sync dependencies and run black
         run: |
+          set -e
           cd "$GITHUB_WORKSPACE"/runtime
           export PIPT_PYTHON_INTERPRETER="python3.9"
+          echo "Syncinc dependencies"
           ./pipt sync
+          echo "Running black..."
           ./pipt run black --check hetdesrun
