@@ -285,7 +285,7 @@ When deactivating the backend endpoints you do not need to specify a database co
 This assumes existence of the Python virtual environment as described above.
 
 1. Navigate to the `runtime` folder.
-2. Activate virtuale environment with `./pipt shell`.
+2. Activate virtual environment with `./pipt shell`.
 3. Run `python -m pytest --cov=hetdesrun tests`.
 
 ## <a name="tutorial"></a> Tutorial
