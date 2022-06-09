@@ -99,7 +99,7 @@ def run_trafo_rev_deployment():
     import_transformations("./transformations", update_component_code=False, directly_into_db=True)
 
 in_memory_db = detect_in_memory_db()
-is_backend = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
+is_backend = os.environ.get("HD_IS_BACKEND_SERVICE", None)
 true_equiv = [None, "", "true", "yes", "y", "ok"]
 
 if in_memory_db:
