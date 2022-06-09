@@ -99,18 +99,22 @@ def run_trafo_rev_deployment():
     import_transformations("./transformations", update_component_code=False, directly_into_db=True)
 
 in_memory_db = detect_in_memory_db()
+is_backend = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
+true_equiv = [None, "", "true", "yes", "y", "ok"]
 
 if in_memory_db:
     logger.info(
         "Detected in-memory db usage: Running migrations during importing of main.py."
     )
     run_migrations()
-    logger.info(
-        "Detected in-memory db usage: "
-        "Running base component and example workflow deployment "
-        "during importing of main.py."
-    )
-    run_trafo_rev_deployment()
+    
+    if is_backend in true_equiv:
+        logger.info(
+            "Detected in-memory db usage: "
+            "Running base component and example workflow deployment "
+            "during importing of main.py."
+        )
+        run_trafo_rev_deployment()
 
 if __name__ == "__main__":
 
@@ -119,11 +123,13 @@ if __name__ == "__main__":
             "Running migrations from main.py since main.py was invoked directly."
         )
         run_migrations()
-        logger.info(
-            "Running base component and example workflow deployment "
-            "from main.py since main.py was invoked directly."
-        )
-        run_trafo_rev_deployment()
+
+        if is_backend in true_equiv:
+            logger.info(
+                "Running base component and example workflow deployment "
+                "from main.py since main.py was invoked directly."
+            )
+            run_trafo_rev_deployment()
 
     import os
     import uvicorn
