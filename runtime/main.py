@@ -93,6 +93,10 @@ def run_migrations(
     command.upgrade(alembic_cfg, "head")
     logger.info("Finished running migrations.")
 
+def run_trafo_rev_deployment():
+    from hetdesrun.exportimport.importing import import_transformations
+
+    import_transformations("./transformations", update_component_code=False, directly_into_db=True)
 
 in_memory_db = detect_in_memory_db()
 
@@ -101,6 +105,12 @@ if in_memory_db:
         "Detected in-memory db usage: Running migrations during importing of main.py."
     )
     run_migrations()
+    logger.info(
+        "Detected in-memory db usage: "
+        "Running base component and example workflow deployment "
+        "during importing of main.py."
+    )
+    run_trafo_rev_deployment()
 
 if __name__ == "__main__":
 
@@ -109,6 +119,11 @@ if __name__ == "__main__":
             "Running migrations from main.py since main.py was invoked directly."
         )
         run_migrations()
+        logger.info(
+            "Running base component and example workflow deployment "
+            "from main.py since main.py was invoked directly."
+        )
+        run_trafo_rev_deployment()
 
     import os
     import uvicorn
