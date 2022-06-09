@@ -267,15 +267,15 @@ or **scipy**. That said, development on Linux is recommended.
 
 Now a development web server using a sqlite in-memory db can be started via
 ```shell
-python main.py
+PORT=8080 ./python main.py
 ```
 
 If you want to develop against the postgres db running in the docker-compose dev environment the command is
 ```shell
-HD_DATABASE_URL="postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@localhost:5430/hetida_designer_db" python main.py
+HD_DATABASE_URL="postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@localhost:5430/hetida_designer_db" PORT=8080 python main.py
 ```
 
-In both cases the OpenAPI UI can be found at http://localhost:8000/docs.
+In both cases the OpenAPI UI can be found at http://localhost:8080/docs.
 
 Note that this starts runtime+backend combined. If you only want one of both you have to deactivate the other one by setting one of the environment variables `HD_IS_BACKEND_SERVICE` or `HD_IS_RUNTIME_SERVICE` to `false`.
 
