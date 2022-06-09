@@ -514,7 +514,7 @@ async def test_get_all_transformation_revisions_with_specified_type_and_state(
         
         async with async_test_client as ac:
             response_released_component = await ac.get(
-                "/api/transformations/?type=COMPONENT&?state=RELEASED"
+                "/api/transformations/?type=COMPONENT&state=RELEASED"
             )
             response_draft_workflow = await ac.get(
                 "/api/transformations/?type=WORKFLOW&state=DRAFT"

@@ -293,7 +293,7 @@ async def test_get_all_base_items_with_specified_type_and_state(
 
         async with async_test_client as ac:
             response_released_component = await ac.get(
-                "/api/base-items/?type=COMPONENT&?state=RELEASED"
+                "/api/base-items/?type=COMPONENT&state=RELEASED"
             )
             response_draft_workflow = await ac.get(
                 "/api/base-items/?type=WORKFLOW&state=DRAFT"
