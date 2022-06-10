@@ -376,7 +376,7 @@ This response can have arbitrary entries in the record which then correspond to 
 
 There is a special convention on "timestamp" columns: If a timestamp column exists the runtime will try to parse this column as datetimes and if this is successful will set the index of the Pandas Dataframe to this column and sort by it. If that does not work the index of the resulting Pandas Dataframe will be the default RangeIndex. In every case the column timestamp will also be available as column in the resulting Pandas DataFrame.
 
-If additional information about the data frame is stored in its property `attrs`, it will be included in the response header base64-encoded with the name `Dataframe-Attributes`.
+If additional information about the data frame is stored in its property `attrs`, it will be included in the response header base64-encoded with the name `Data-Attributes`.
 
 #### /dataframe (POST)
 
@@ -396,7 +396,7 @@ Payload:
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
 
-Similar to the corresponding GET endpoint, the information to be stored in the property `attrs` of the data frame must be sent base64 encoded with the name `Dataframe-Attributes`.
+Similar to the corresponding GET endpoint, the information to be stored in the property `attrs` of the data frame must be sent base64 encoded with the name `data-attributes`.
 
 ## A minimal Generic Rest adapter
 

@@ -98,4 +98,4 @@ async def test_end_to_end_send_only_dataframe_data():
                 {"a": 3.4, "b": 8.7},
                 {"a": 5.9, "b": 2.2},
             ]
-            assert "Dataframe-Attributes" in kwargs["headers"]
+            assert "data-attributes" in kwargs["headers"]

@@ -52,9 +52,9 @@ def create_empty_ts_df(data_type: ExternalType) -> pd.DataFrame:
     return df_empty(dtype_dict)
 
 
-def decode_attributes(dataframe_attributes: str) -> Any:
-    base64_bytes = dataframe_attributes.encode("utf-8")
-    logger.debug("dataframe_attributes=%s", dataframe_attributes)
+def decode_attributes(data_attributes: str) -> Any:
+    base64_bytes = data_attributes.encode("utf-8")
+    logger.debug("data_attributes=%s", data_attributes)
     df_attrs_bytes = base64.b64decode(base64_bytes)
     df_attrs_json_str = df_attrs_bytes.decode("utf-8")
     logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
@@ -169,10 +169,10 @@ async def load_framelike_data(
                 str(end_time - start_time),
             )
 
-            if "Dataframe-Attributes" in resp.headers:
-                logger.debug("Got Dataframe-Attributes via GET response header")
-                dataframe_attributes = resp.headers["Dataframe-Attributes"]
-                df.attrs = decode_attributes(dataframe_attributes)
+            if "data-attributes" in resp.headers:
+                logger.debug("Got data-attributes via GET response header")
+                data_attributes = resp.headers["data-attributes"]
+                df.attrs = decode_attributes(data_attributes)
 
             logger.debug(
                 "Received dataframe of form %s:\n%s",

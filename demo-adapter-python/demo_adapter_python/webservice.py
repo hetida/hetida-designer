@@ -61,7 +61,7 @@ middleware = [
         allow_credentials=True,
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
-        expose_headers=["Dataframe-Attributes"],  # is this necessary?
+        expose_headers=["data-attributes"],  # is this necessary?
     )
 ]
 
@@ -744,7 +744,7 @@ async def dataframe(
     logger.debug("which has attributes %s", str(df.attrs))
     df_attrs = df.attrs
     if df_attrs is not None and len(df_attrs) != 0:
-        headers["Dataframe-Attributes"] = encode_attributes(df_attrs)
+        headers["data-attributes"] = encode_attributes(df_attrs)
 
     io_stream = StringIO()
     df.to_json(io_stream, lines=True, orient="records", date_format="iso")
@@ -753,9 +753,9 @@ async def dataframe(
     return StreamingResponse(io_stream, media_type="application/json", headers=headers)
 
 
-def decode_attributes(dataframe_attributes: str) -> Any:
-    base64_bytes = dataframe_attributes.encode("utf-8")
-    logger.debug("dataframe_attributes=%s", dataframe_attributes)
+def decode_attributes(data_attributes: str) -> Any:
+    base64_bytes = data_attributes.encode("utf-8")
+    logger.debug("data_attributes=%s", data_attributes)
     df_attrs_bytes = base64.b64decode(base64_bytes)
     df_attrs_json_str = df_attrs_bytes.decode("utf-8")
     logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
@@ -773,12 +773,12 @@ async def post_dataframe(
         ],
     ),
     df_id: str = Query(..., alias="id"),
-    dataframe_attributes: Optional[str] = Header(None),
+    data_attributes: Optional[str] = Header(None),
 ) -> dict:
     if df_id.endswith("alerts"):
         df = pd.DataFrame.from_dict(df_body, orient="columns")
-        if dataframe_attributes is not None and len(dataframe_attributes) != 0:
-            df.attrs = decode_attributes(dataframe_attributes)
+        if data_attributes is not None and len(data_attributes) != 0:
+            df.attrs = decode_attributes(data_attributes)
         logger.debug("storing %s", json.dumps(df_body))
         logger.debug("which has attributes %s", str(df.attrs))
         set_value_in_store(df_id, df)

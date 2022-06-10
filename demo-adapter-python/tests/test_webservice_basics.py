@@ -262,10 +262,10 @@ async def test_sending_attrs_via_get_dataframe(async_test_client):
         response = await client.get(f"/dataframe?id=root.plantA.maintenance_events")
 
         assert response.status_code == 200
-        assert "dataframe-attributes" in response.headers
-        assert isinstance(response.headers["dataframe-attributes"], str)
+        assert "data-attributes" in response.headers
+        assert isinstance(response.headers["data-attributes"], str)
 
-        df_attrs = decode_attributes(response.headers["dataframe-attributes"])
+        df_attrs = decode_attributes(response.headers["data-attributes"])
 
         assert "since_date" in df_attrs
         assert df_attrs["since_date"] == "2020-01-01T00:00:00.000Z"
@@ -280,7 +280,7 @@ async def test_receiving_attrs_via_post_dataframe(async_test_client):
         response = await client.post(
             "/dataframe?id=root.plantA.alerts",
             json=[{"column1": 1, "column2": 1.3}, {"column1": 2, "column2": 2.8}],
-            headers={"Dataframe-Attributes": base64_str}
+            headers={"data-attributes": base64_str}
         )
 
         assert response.status_code == 200
