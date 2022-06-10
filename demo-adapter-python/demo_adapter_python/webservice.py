@@ -673,7 +673,7 @@ def encode_attributes(df_attrs: Any) -> str:
     logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
     df_attrs_bytes = df_attrs_json_str.encode("utf-8")
     base64_bytes = base64.b64encode(df_attrs_bytes)
-    base64_str = base64_bytes.decode("ascii")
+    base64_str = base64_bytes.decode("utf-8")
     logger.debug("base64_str=%s", base64_str)
     return base64_str
 
@@ -754,7 +754,7 @@ async def dataframe(
 
 
 def decode_attributes(dataframe_attributes: str) -> Any:
-    base64_bytes = dataframe_attributes.encode("ascii")
+    base64_bytes = dataframe_attributes.encode("utf-8")
     logger.debug("dataframe_attributes=%s", dataframe_attributes)
     df_attrs_bytes = base64.b64decode(base64_bytes)
     df_attrs_json_str = df_attrs_bytes.decode("utf-8")

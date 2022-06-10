@@ -53,7 +53,7 @@ def create_empty_ts_df(data_type: ExternalType) -> pd.DataFrame:
 
 
 def decode_attributes(dataframe_attributes: str) -> Any:
-    base64_bytes = dataframe_attributes.encode("ascii")
+    base64_bytes = dataframe_attributes.encode("utf-8")
     logger.debug("dataframe_attributes=%s", dataframe_attributes)
     df_attrs_bytes = base64.b64decode(base64_bytes)
     df_attrs_json_str = df_attrs_bytes.decode("utf-8")
