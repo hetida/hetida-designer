@@ -39,12 +39,10 @@ def dataframe_to_list_of_dicts(df: pd.DataFrame) -> List[Dict]:
             df.replace({np.nan: None})
             .drop(datetime_column_names, axis=1)
             .join(
-                pd.DataFrame(
-                    [
-                        df[column_name].map(lambda x: x.isoformat())
-                        for column_name in datetime_column_names
-                    ]
-                )
+                [
+                    df[column_name].map(lambda x: x.isoformat())
+                    for column_name in datetime_column_names
+                ]
             )
             .to_dict(orient="records")
         )
