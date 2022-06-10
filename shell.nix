@@ -83,6 +83,31 @@ let
     '';
   };
 
+  library_join = pkgs.symlinkJoin { 
+      name = "system_libraries_symlinked";
+      paths = [ pkgs.zlib pkgs.glibc ]; postBuild = "echo 'links added'; ls ."; 
+  };
+
+  symlinks_to_libs = runCommand "symlinks_to_some_libs" { } ''
+      # Gather explicit symlinks to certain library pathes.
+      # This is a simple workaround for Python imports not finding necessary libraries.
+      # It allows to add the lib path of the result explicitely 
+      # to LD_LIBRARY_PATH in nix shell environments etc.
+      #
+      # Usage in nix shell / scripts:
+      #      # (Remove double ' in following line)
+      #      export LD_LIBRARY_PATH=''${lib.makeLibraryPath [stdenv.cc.cc (toString "''${symlinks_to_libs}") ]}
+      # where "symlinks_to_libs is the result of this build.
+
+      set -e
+
+      mkdir -p $out/lib
+      
+      ln -s "${zlib}"/lib/libz.so.1 "$out"/lib/libz.so.1
+      ln -s "${glibc}"/lib/libc-2.33.so "$out"/lib/libc-2.33.so
+      ln -s "${glibc}"/lib/libc-2.33.so.1 "$out"/lib/libc-2.33.so.1
+    '';
+
   prepare-venv = writeShellScriptBin "prepare-venv" ''
     set -e
     SOURCE_DATE_EPOCH=$(date +%s)    
@@ -91,79 +116,74 @@ let
         local sub_project_dir=$1
         local venv_target_dir=$2
         local activate_venv="''${3:-false}"
+        local configure_jupyter_in_venv="''${4:-false}"
+        local run_test_python_command="''${5:-""}"
 
         if ! "$activate_venv" ; then
             local PIPT_EXPLICIT_VENV_TARGET_PATH
             local PIPT_PYTHON_INTERPRETER
+            local LD_LIBRARY_PATH
+            local PYTHONPATH
+            local JUPYTER_CONFIG_DIR
         fi
+
         export PIPT_EXPLICIT_VENV_TARGET_PATH="$venv_target_dir"
         export PIPT_PYTHON_INTERPRETER="${pythonPackages.python.interpreter}"
-        cd "$sub_project_dir"
-        ./pipt venv
-        
         local OLD_PYTHONPATH="$PYTHONPATH"
-        if ! "$activate_venv" ; then local PYTHONPATH; fi
         export PYTHONPATH="$PWD"/"$venv_target_dir"/${pythonPackages.python.sitePackages}/:"$OLD_PYTHONPATH"
+        export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "${symlinks_to_libs}") ]}
         
-        rm -fR "$venv_target_dir"/symbolic_links_to_system_libs
-        mkdir -p "$venv_target_dir"/symbolic_links_to_system_libs/lib
-        ln -s ${zlib}/lib/libz.so.1 "$venv_target_dir"/symbolic_links_to_system_libs/lib/libz.so.1
-        ln -s ${glibc}/lib/libc-2.33.so "$venv_target_dir"/symbolic_links_to_system_libs/lib/libc-2.33.so
-        ln -s ${glibc}/lib/libc-2.33.so.1 "$venv_target_dir"/symbolic_links_to_system_libs/lib/libc-2.33.so.1
-        if ! "$activate_venv" ; then local LD_LIBRARY_PATH; fi
-        export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "$venv_target_dir/symbolic_links_to_system_libs") ]}      
-
-        export JUPYTER_CONFIG_DIR=${JUPYTER_CONFIG_DIR}
+        export JUPYTER_CONFIG_DIR="$venv_target_dir"/.auto_created_jupyter_config
+        
+        local current_dir="$PWD"
+        cd "$sub_project_dir"
+        
         ./pipt sync
+
+        cd "$current_dir"
+
+        if [[ -n "$run_test_python_command" ]]; then
+            # Test some imports (for system libraries missing / not found)
+            echo "Run test Python command: $run_test_python_command"
+            "$venv_target_dir"/bin/python -c "$run_test_python_command"
+        fi
+
+        if "$configure_jupyter_in_venv" ; then
+            echo "Configure jupyter notebook in virtual environment"
+            echo "Write jupyter config to: $JUPYTER_CONFIG_DIR"
+            rm -rf "$JUPYTER_CONFIG_DIR"
+            mkdir -p "$JUPYTER_CONFIG_DIR"
+            # "$venv_target_dir"/bin/pip install jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
+
+            mkdir -p "$JUPYTER_CONFIG_DIR"/lab/user-settings/@ryantam626/jupyterlab_code_formatter
+            echo '{"preferences": {"default_formatter": {"python": ["black"]}},}' > "$JUPYTER_CONFIG_DIR"/lab/user-settings/@ryantam626/jupyterlab_code_formatter/settings.jupyterlab-setting
+            mkdir -p "$JUPYTER_CONFIG_DIR"/lab/user-settings/@jupyterlab/shortcuts-extension
+            echo '{"shortcuts": [{"command": "jupyterlab_code_formatter:black", "keys": ["Ctrl K", "Ctrl M"], "selector": ".jp-Notebook.jp-mod-editMode"}]}' > "$JUPYTER_CONFIG_DIR"/lab/user-settings/@jupyterlab/shortcuts-extension/shortcuts.jupyterlab-settings
+
+        fi
 
         if "$activate_venv" ; then
             source "$venv_target_dir/bin/activate"
         fi
+
     }
 
     prepare_venv "''${@}"
   '';
 
+
   prepare-runtime-venv = writeShellScriptBin "prepare-runtime-venv" ''
     set -e
-    SOURCE_DATE_EPOCH=$(date +%s)
 
-    echo "BUILD AND ACTIVATING VENV AT ${venvDirRuntime}"
-    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/runtime "${venvDirRuntime}" true
-
-    # Test some imports (for system libraries missing / not found)
-    echo "TESTING IMPORTING SOME PYTHON PACKAGES":
-    ${venvDirRuntime}/bin/python -c "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
-
-    cd "${projectDir}"
-
-    export JUPYTER_CONFIG_DIR=${JUPYTER_CONFIG_DIR}
-    echo "Jupyter config dir: ${JUPYTER_CONFIG_DIR}"
-
-    echo "Configure jupyter notebook in virtual environment"
-    mkdir -p ${JUPYTER_CONFIG_DIR}
-    # "${venvDirRuntime}"/bin/pip install jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
-
-
-    mkdir -p ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter
-    echo '{"preferences": {"default_formatter": {"python": ["black"]}},}' > ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter/settings.jupyterlab-setting
-    mkdir -p ${JUPYTER_CONFIG_DIR}/lab/user-settings/@jupyterlab/shortcuts-extension
-    echo '{"shortcuts": [{"command": "jupyterlab_code_formatter:black", "keys": ["Ctrl K", "Ctrl M"], "selector": ".jp-Notebook.jp-mod-editMode"}]}' > ${JUPYTER_CONFIG_DIR}/lab/user-settings/@jupyterlab/shortcuts-extension/shortcuts.jupyterlab-settings
-
+    echo "BUILD AND ACTIVATE VENV AT ${venvDirRuntime}"
+    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/runtime "${venvDirRuntime}" true true "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
   '';
 
   prepare-python-demo-adapter-venv = writeShellScriptBin "prepare-python-demo-adapter-venv" ''
     set -e
-    SOURCE_DATE_EPOCH=$(date +%s)
 
     echo "BUILD AND ACTIVATING VENV AT ${venvDirPythonDemoAdapter}"
-    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/demo-adapter-python "${venvDirPythonDemoAdapter}" true
-
-    # Test some imports (for system libraries missing / not found)
-    echo "TESTING IMPORTING SOME PYTHON PACKAGES":
-    ${venvDirPythonDemoAdapter}/bin/python -c "import httpx; import pydantic; import numpy; import pandas"
-
-    cd "${projectDir}"
+    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/demo-adapter-python "${venvDirPythonDemoAdapter}" true false "import httpx; import pydantic; import numpy; import pandas"
   '';
 
   start-postgres = writeShellScriptBin "start-hd-postgres" ''
@@ -257,6 +277,7 @@ in pkgs.mkShell rec {
     libxslt
     libzip
     zlib
+    cacert
     # glib
     glibc
     glibcLocales
