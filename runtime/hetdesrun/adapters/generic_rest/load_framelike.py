@@ -4,7 +4,7 @@ Common utilities for loading data that is frame-like (tabular), i.e. dataframes 
 timeseries (where the later can be understood as special dataframe/table)
 """
 
-from typing import List, Tuple, Literal, Dict, Union, Type
+from typing import List, Dict, Any, Tuple, Literal, Union, Type
 from posixpath import join as posix_urljoin
 
 import json
@@ -51,6 +51,14 @@ def create_empty_ts_df(data_type: ExternalType) -> pd.DataFrame:
 
     return df_empty(dtype_dict)
 
+def decode_attributes(dataframe_attributes: str) -> Dict[str, Any]:
+    base64_bytes = dataframe_attributes.encode("ascii")
+    logger.debug("dataframe_attributes=%s", dataframe_attributes)
+    df_attrs_bytes = base64.b64decode(base64_bytes)
+    df_attrs_json_str = df_attrs_bytes.decode("utf-8")
+    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
+    df_attrs = json.loads(df_attrs_json_str)
+    return df_attrs
 
 async def load_framelike_data(
     filtered_sources: List[FilteredSource],
@@ -162,13 +170,7 @@ async def load_framelike_data(
             if "Dataframe-Attributes" in resp.headers:
                 logger.debug("Got Dataframe-Attributes via GET response header")
                 dataframe_attributes = resp.headers["Dataframe-Attributes"]
-                base64_bytes = dataframe_attributes.encode("ascii")
-                logger.debug("dataframe_attributes=%s", dataframe_attributes)
-                df_attrs_bytes = base64.b64decode(base64_bytes)
-                df_attrs_json_str = df_attrs_bytes.decode("utf-8")
-                logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
-                df_attrs = json.loads(df_attrs_json_str)
-                df.attrs = df_attrs
+                df.attrs = decode_attributes(dataframe_attributes)
 
             logger.debug(
                 "Received dataframe of form %s:\n%s",

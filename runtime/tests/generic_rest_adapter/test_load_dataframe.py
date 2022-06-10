@@ -1,14 +1,12 @@
 from unittest import mock
 
 import pytest
-import json
-import base64
 import pandas as pd
 
 from hetdesrun.adapters.generic_rest import (
     load_data,
 )
-
+from hetdesrun.adapters.generic_rest.send_framelike import encode_attributes
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 
 from hetdesrun.models.data_selection import FilteredSource
@@ -99,19 +97,12 @@ async def test_end_to_end_load_dataframe_data_with_timestamp_column():
             assert pd.api.types.is_datetime64tz_dtype(loaded_data["inp_1"].index)
 
 
-def encode_attrs(attributes):
-    df_attrs_json_str = json.dumps(attributes)
-    df_attrs_bytes = df_attrs_json_str.encode("utf-8")
-    base64_bytes = base64.b64encode(df_attrs_bytes)
-    base64_str = base64_bytes.decode("ascii")
-    return base64_str
-
 @pytest.mark.asyncio
 async def test_end_to_end_load_dataframe_data_with_attrs():
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     attributes = {"b": 2}
-    resp_mock.headers = {"Dataframe-Attributes": encode_attrs(attributes)}
+    resp_mock.headers = {"Dataframe-Attributes": encode_attributes(attributes)}
     resp_mock.raw = """\n
         {"timestamp": "2020-03-11T13:45:18.194000000Z", "a": 42.3}
         {"timestamp": "2020-03-11T14:45:18.194000000Z", "a": 41.7}

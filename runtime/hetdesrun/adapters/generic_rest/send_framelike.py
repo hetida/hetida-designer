@@ -8,7 +8,7 @@ import logging
 import json
 import base64
 from posixpath import join as posix_urljoin
-from typing import List, Literal, Optional
+from typing import List, Dict, Any, Literal, Optional
 
 from httpx import AsyncClient
 import httpx
@@ -20,6 +20,14 @@ from hetdesrun.adapters.exceptions import AdapterConnectionError
 
 logger = logging.getLogger(__name__)
 
+def encode_attributes(df_attrs: Dict[str, Any]) -> str:
+    df_attrs_json_str = json.dumps(df_attrs)
+    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
+    df_attrs_bytes = df_attrs_json_str.encode("utf-8")
+    base64_bytes = base64.b64encode(df_attrs_bytes)
+    base64_str = base64_bytes.decode("ascii")
+    logger.debug("base64_str=%s", base64_str)
+    return base64_str
 
 async def post_framelike_records(
     list_of_records: List[dict],
@@ -33,13 +41,7 @@ async def post_framelike_records(
     headers = get_generic_rest_adapter_auth_headers()
     if attributes is not None and len(attributes) != 0:
         logger.debug("Sending dataframe attributes via POST request header")
-        df_attrs_json_str = json.dumps(attributes)
-        logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
-        df_attrs_bytes = df_attrs_json_str.encode("utf-8")
-        base64_bytes = base64.b64encode(df_attrs_bytes)
-        base64_str = base64_bytes.decode("ascii")
-        logger.debug("base64_str=%s", base64_str)
-        headers["Dataframe-Attributes"] = base64_str
+        headers["Dataframe-Attributes"] = encode_attributes(attributes)
 
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
