@@ -1,0 +1,56 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Check pull requests
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "develop" branch
+  # push:
+  #   branches: [ ]
+  pull_request:
+    branches: [ "develop" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4.0.0
+        with:
+          # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
+          python-version: 3.9
+          # Used to specify a package manager for caching in the default directory. Supported values: pip, pipenv, poetry.
+          cache: pip
+
+      # Runs a single command using the runners shell
+      - name: Info
+        run: echo "Checking Pull Request"
+
+      - name: Sync dependencies and run black
+        run: |
+          set -e
+          cd "$GITHUB_WORKSPACE"/runtime
+          export PIPT_PYTHON_INTERPRETER="python3.9"
+          echo "Syncinc dependencies"
+          ./pipt sync
+          echo "Running black..."
+          ./pipt run black --check hetdesrun
+      
+      - name: Run tests
+        run: |
+          set -e
+          cd "$GITHUB_WORKSPACE"/runtime
+          export PIPT_PYTHON_INTERPRETER="python3.9"
+          ./pipt run python -m pytest --cov=hetdesrun --cov-report=term-missing tests
+
