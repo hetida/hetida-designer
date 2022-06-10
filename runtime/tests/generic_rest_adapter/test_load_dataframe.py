@@ -129,4 +129,3 @@ async def test_end_to_end_load_dataframe_data_with_attrs():
             assert loaded_data["inp_1"].shape == (3, 2)
             assert len(loaded_data["inp_1"].attrs) == 1
             assert loaded_data["inp_1"].attrs == attributes
-

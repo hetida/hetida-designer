@@ -51,7 +51,8 @@ def create_empty_ts_df(data_type: ExternalType) -> pd.DataFrame:
 
     return df_empty(dtype_dict)
 
-def decode_attributes(dataframe_attributes: str) -> Dict[str, Any]:
+
+def decode_attributes(dataframe_attributes: str) -> Any:
     base64_bytes = dataframe_attributes.encode("ascii")
     logger.debug("dataframe_attributes=%s", dataframe_attributes)
     df_attrs_bytes = base64.b64decode(base64_bytes)
@@ -59,6 +60,7 @@ def decode_attributes(dataframe_attributes: str) -> Dict[str, Any]:
     logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
     df_attrs = json.loads(df_attrs_json_str)
     return df_attrs
+
 
 async def load_framelike_data(
     filtered_sources: List[FilteredSource],
