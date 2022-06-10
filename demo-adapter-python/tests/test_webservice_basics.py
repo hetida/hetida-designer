@@ -7,7 +7,7 @@ from starlette.testclient import TestClient
 
 import pytest
 
-from demo_adapter_python.webservice import app
+from demo_adapter_python.webservice import app, decode_attributes, encode_attributes
 
 from demo_adapter_python.external_types import ExternalType
 
@@ -265,24 +265,17 @@ async def test_sending_attrs_via_get_dataframe(async_test_client):
         assert "dataframe-attributes" in response.headers
         assert isinstance(response.headers["dataframe-attributes"], str)
 
-        base64_str = response.headers["dataframe-attributes"]
-        base64_bytes = base64_str.encode('ascii')
-        df_attrs_bytes = base64.b64decode(base64_bytes)
-        df_attrs_json_str = df_attrs_bytes.decode('utf-8')
-        df_attrs = json.loads(df_attrs_json_str)
+        df_attrs = decode_attributes(response.headers["dataframe-attributes"])
 
-        assert "test" in df_attrs
-        assert df_attrs["test"] == "Hello world!"
+        assert "since_date" in df_attrs
+        assert df_attrs["since_date"] == "2020-01-01T00:00:00.000Z"
 
 
 @pytest.mark.asyncio
 async def test_receiving_attrs_via_post_dataframe(async_test_client):
     async with async_test_client as client:
         df_attrs = {"test": "Hello world!", "answer": 42}
-        df_attrs_json_str = json.dumps(df_attrs)
-        df_attrs_bytes = df_attrs_json_str.encode('utf-8')
-        base64_bytes = base64.b64encode(df_attrs_bytes)
-        base64_str = base64_bytes.decode('ascii')
+        base64_str = encode_attributes(df_attrs)
 
         response = await client.post(
             "/dataframe?id=root.plantA.alerts",

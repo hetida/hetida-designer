@@ -1,4 +1,4 @@
-from typing import Callable, Optional, List, Dict, Union
+from typing import Callable, Optional, List, Dict, Any, Union
 
 import logging
 import json
@@ -668,6 +668,16 @@ async def post_timeseries(
     raise HTTPException(404, f"No writable timeseries with id {ts_id}")
 
 
+def encode_attributes(df_attrs: Any) -> str:
+    df_attrs_json_str = json.dumps(df_attrs)
+    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
+    df_attrs_bytes = df_attrs_json_str.encode("utf-8")
+    base64_bytes = base64.b64encode(df_attrs_bytes)
+    base64_str = base64_bytes.decode("ascii")
+    logger.debug("base64_str=%s", base64_str)
+    return base64_str
+
+
 @demo_adapter_main_router.get("/dataframe")
 async def dataframe(
     df_id: str = Query(..., alias="id"),
@@ -734,19 +744,23 @@ async def dataframe(
     logger.debug("which has attributes %s", str(df.attrs))
     df_attrs = df.attrs
     if df_attrs is not None and len(df_attrs) != 0:
-        df_attrs_json_str = json.dumps(df_attrs)
-        logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
-        df_attrs_bytes = df_attrs_json_str.encode("utf-8")
-        base64_bytes = base64.b64encode(df_attrs_bytes)
-        base64_str = base64_bytes.decode("ascii")
-        logger.debug("base64_str=%s", base64_str)
-        headers["Dataframe-Attributes"] = base64_str
+        headers["Dataframe-Attributes"] = encode_attributes(df_attrs)
 
     io_stream = StringIO()
     df.to_json(io_stream, lines=True, orient="records", date_format="iso")
     io_stream.seek(0)
 
     return StreamingResponse(io_stream, media_type="application/json", headers=headers)
+
+
+def decode_attributes(dataframe_attributes: str) -> Any:
+    base64_bytes = dataframe_attributes.encode("ascii")
+    logger.debug("dataframe_attributes=%s", dataframe_attributes)
+    df_attrs_bytes = base64.b64decode(base64_bytes)
+    df_attrs_json_str = df_attrs_bytes.decode("utf-8")
+    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
+    df_attrs = json.loads(df_attrs_json_str)
+    return df_attrs
 
 
 @demo_adapter_main_router.post("/dataframe", status_code=200)
@@ -764,13 +778,7 @@ async def post_dataframe(
     if df_id.endswith("alerts"):
         df = pd.DataFrame.from_dict(df_body, orient="columns")
         if dataframe_attributes is not None and len(dataframe_attributes) != 0:
-            base64_bytes = dataframe_attributes.encode("ascii")
-            logger.debug("dataframe_attributes=%s", dataframe_attributes)
-            df_attrs_bytes = base64.b64decode(base64_bytes)
-            df_attrs_json_str = df_attrs_bytes.decode("utf-8")
-            logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
-            df_attrs = json.loads(df_attrs_json_str)
-            df.attrs = df_attrs
+            df.attrs = decode_attributes(dataframe_attributes)
         logger.debug("storing %s", json.dumps(df_body))
         logger.debug("which has attributes %s", str(df.attrs))
         set_value_in_store(df_id, df)
