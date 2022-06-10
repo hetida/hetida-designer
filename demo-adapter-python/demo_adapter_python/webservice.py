@@ -686,7 +686,7 @@ async def dataframe(
                 ],
             }
         )
-        df.attrs = {"test": "Hello world!"}
+        df.attrs = {"since_date": "2020-01-01T00:00:00.000Z"}
     elif df_id.endswith("plantB.maintenance_events"):
         df = pd.DataFrame(
             {  # has timestamp column
@@ -698,6 +698,7 @@ async def dataframe(
                 ],
             }
         )
+        df.attrs = {"since_date": "2020-01-01T00:00:00.000Z"}
     elif df_id.endswith("plantA.masterdata"):
         df = pd.DataFrame(
             {
