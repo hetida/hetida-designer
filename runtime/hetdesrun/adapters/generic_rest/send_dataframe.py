@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, List
 import asyncio
 
@@ -26,12 +27,27 @@ def dataframe_to_list_of_dicts(df: pd.DataFrame) -> List[Dict]:
             )
         )
 
-
-    for column_name in df.dtypes.index:
+    datetime_column_names = []
+    for column_name in df.columns.values.tolist():
         if pd.api.types.is_datetime64_any_dtype(df.dtypes[column_name]):
-            df[column_name] = df[column_name].astype(str)
+            datetime_column_names.append(column_name)
 
-    return df.replace({np.nan: None}).to_dict(orient="records")  # type: ignore
+    if len(datetime_column_names) == 0:
+        return df.replace({np.nan: None}).to_dict(orient="records")  # type: ignore
+    else:
+        return (
+            df.replace({np.nan: None})
+            .drop(datetime_column_names, axis=1)
+            .join(
+                pd.DataFrame(
+                    [
+                        df[column_name].map(lambda x: x.isoformat())
+                        for column_name in datetime_column_names
+                    ]
+                )
+            )
+            .to_dict(orient="records")
+        )
 
 
 async def post_dataframe(
