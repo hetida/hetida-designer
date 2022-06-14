@@ -1,6 +1,7 @@
-from typing import List, Any
+from typing import List, Any, Dict
 
 import logging
+from contextvars import ContextVar
 
 from starlette.status import HTTP_403_FORBIDDEN
 
@@ -11,6 +12,28 @@ from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.auth import BearerVerifier, AuthentificationError
 
 logger = logging.getLogger(__name__)
+
+_REQUEST_AUTH_CONTEXT: ContextVar[dict] = ContextVar("_REQUEST_AUTH_CONTEXT")
+
+
+def set_request_auth_context(value_dict: dict):
+    token = _REQUEST_AUTH_CONTEXT.set(value_dict)
+    logger.debug("Request auth context set token: %s", str(token))
+
+
+def get_request_auth_context() -> dict:
+    return _REQUEST_AUTH_CONTEXT.get({})
+
+
+def get_auth_headers() -> Dict[str, str]:
+    """Forward access token when making requests to runtime or adapters"""
+    auth_ctx_dict = get_request_auth_context()
+    try:
+        token = auth_ctx_dict["token"]
+    except KeyError:
+        return {}
+    return {"Authorization": "Bearer " + token}
+
 
 security = HTTPBearer()
 
@@ -36,7 +59,6 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
         )
 
     token = credentials.credentials  # type: ignore
-
     try:
         payload: dict = bearer_verifier.verify_token(token)
         logger.debug("Bearer token payload => %s", payload)
@@ -60,6 +82,9 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
         raise HTTPException(  # pylint: disable=raise-missing-from
             status_code=HTTP_403_FORBIDDEN, detail="No role information in token"
         )
+
+    auth_context_dict = {"token": token, "creds": credentials}
+    set_request_auth_context(auth_context_dict)
 
 
 def get_auth_deps() -> List[Any]:

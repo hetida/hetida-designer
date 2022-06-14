@@ -29,6 +29,10 @@ logger = logging.getLogger(__name__)
 async def runtime_service(
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:
+    """Running stuff with appropriate error handling, serializing etc.
+    
+    This function is used by the runtime endpoint
+    """
     logger.info(
         "WORKFLOW EXECUTION INPUT JSON:\n%s",
         model_to_pretty_json_str(runtime_input),
