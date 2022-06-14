@@ -3,10 +3,6 @@ import pytest
 
 import json
 
-from starlette.testclient import TestClient
-
-from hetdesrun.webservice.application import app
-
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -22,9 +18,6 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.utils import Type, State, get_uuid_from_seed
 
 from hetdesrun.backend.models.info import DocumentationFrontendDto
-
-
-client = TestClient(app)
 
 
 @pytest.fixture(scope="function")

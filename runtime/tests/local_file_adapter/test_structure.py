@@ -2,11 +2,7 @@ import pytest
 
 from unittest import mock
 
-from starlette.testclient import TestClient
-
 import pandas as pd
-
-from hetdesrun.webservice.application import app
 
 from hetdesrun.models.data_selection import FilteredSource, FilteredSink
 
@@ -15,8 +11,6 @@ from hetdesrun.adapters.local_file import load_data, send_data
 import nest_asyncio
 
 nest_asyncio.apply()
-
-# client = TestClient(app)
 
 
 async def walk_thing_nodes(

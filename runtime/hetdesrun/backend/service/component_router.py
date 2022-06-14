@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 from hetdesrun.utils import Type, get_auth_headers
 
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 from hetdesrun.service.runtime_router import runtime_service
 
 from hetdesrun.models.run import (
@@ -368,15 +368,15 @@ async def execute_component_revision(
 
     execution_result: WorkflowExecutionResult
 
-    if runtime_config.is_runtime_service:
+    if get_config().is_runtime_service:
         execution_result = await runtime_service(execution_input)
     else:
         headers = get_auth_headers()
 
         async with httpx.AsyncClient(
-            verify=runtime_config.hd_runtime_verify_certs
+            verify=get_config().hd_runtime_verify_certs
         ) as client:
-            url = posix_urljoin(runtime_config.hd_runtime_engine_url, "runtime")
+            url = posix_urljoin(get_config().hd_runtime_engine_url, "runtime")
             try:
                 response = await client.post(
                     url,

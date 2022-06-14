@@ -1,8 +1,12 @@
 # Enabling OpenID Connect
 
-This document describes how to enable OpenID Connect in hetida designer. 
+This document describes how to enable OpenID Connect in hetida designer.
 
-Hetida designer supports authentication via the OpenID Connect standard using the Auth Code flow with PKCE. Authentication has to be enabled in both the backend and the frontend. In addition, you will need an OpenID provider, for example [keycloak](https://www.keycloak.org/). 
+Hetida designer supports authentication via the OpenID Connect standard using the Auth Code flow with PKCE.
+
+Authentication has to be enabled in both the backend and the frontend. This guide assumes that the runtime is not exposed and can only be reached internally from the backend.
+
+In addition, you will need an OpenID provider, for example [keycloak](https://www.keycloak.org/), which is used here as an example.
 ## Setup
 
 We save a copy of the `docker-compose-dev.yml` with the new name `docker-compose-keycloak.yml`, modify the **hetida-designer-backend** and the **hetida-designer-frontend** service and add a **keycloak** service as follows:
@@ -45,7 +49,7 @@ In order to enable OpenID Connect in the frontend, we create a `hetida_designer_
 ```json
 
 {
-  ...,
+  "apiEndpoint": "/hdapi",
   "authEnabled": true,
   "authConfig": {
     "authority": "http://localhost:8081/auth/realms/hetida-designer",

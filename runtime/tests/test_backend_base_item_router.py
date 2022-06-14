@@ -1,10 +1,6 @@
 from unittest import mock
 import pytest
 
-from starlette.testclient import TestClient
-
-from hetdesrun.webservice.application import app
-
 from hetdesrun.persistence import get_db_engine, sessionmaker
 
 from hetdesrun.persistence.dbmodels import Base
@@ -15,9 +11,6 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.utils import get_uuid_from_seed
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
-
-
-client = TestClient(app)
 
 
 @pytest.fixture(scope="function")

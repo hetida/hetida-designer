@@ -6,10 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from starlette.testclient import TestClient
-
 from hetdesrun.utils import get_uuid_from_seed
-from hetdesrun.webservice.application import app
 
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import (

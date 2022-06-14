@@ -29,7 +29,7 @@ from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_bas
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 
 from hetdesrun.adapters.generic_rest.external_types import ValueDataType
@@ -134,7 +134,7 @@ async def load_multiple_metadata(
 ) -> Dict[str, Any]:
     headers = get_generic_rest_adapter_auth_headers()
     async with httpx.AsyncClient(
-        headers=headers, verify=runtime_config.hd_adapters_verify_certs
+        headers=headers, verify=get_config().hd_adapters_verify_certs
     ) as client:
         loaded_metadata = await asyncio.gather(
             *(

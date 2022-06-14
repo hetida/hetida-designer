@@ -2,7 +2,6 @@ from unittest import mock
 from copy import deepcopy
 import pytest
 
-from starlette.testclient import TestClient
 from posixpath import join as posix_urljoin
 
 import json
@@ -10,8 +9,7 @@ from uuid import UUID, uuid4
 
 from hetdesrun.utils import get_uuid_from_seed
 
-from hetdesrun.webservice.application import app
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 from hetdesrun.persistence import get_db_engine, sessionmaker
 
@@ -29,8 +27,6 @@ from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.backend.service.transformation_router import generate_code
 
 from hetdesrun.exportimport.importing import load_json
-
-client = TestClient(app)
 
 
 @pytest.fixture(scope="function")
@@ -723,7 +719,7 @@ async def test_execute_for_separate_runtime_container(
             patched_session,
         ):
             with mock.patch(
-                "hetdesrun.backend.execution.runtime_config",
+                "hetdesrun.webservice.config.runtime_config",
                 is_runtime_service=False,
             ):
                 resp_mock = mock.Mock()
@@ -893,7 +889,7 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
 
                     response = await ac.put(
                         posix_urljoin(
-                            runtime_config.hd_backend_api_url,
+                            get_config().hd_backend_api_url,
                             "transformations",
                             tr_json["id"],
                         )

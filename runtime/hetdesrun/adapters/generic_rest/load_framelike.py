@@ -28,7 +28,7 @@ from hetdesrun.adapters.generic_rest.external_types import (
 
 from hetdesrun.models.data_selection import FilteredSource
 
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
@@ -108,7 +108,7 @@ async def load_framelike_data(
                 + additional_params,
                 stream=True,
                 headers=headers,
-                verify=runtime_config.hd_adapters_verify_certs,
+                verify=get_config().hd_adapters_verify_certs,
             )
             if (
                 resp.status_code == 404

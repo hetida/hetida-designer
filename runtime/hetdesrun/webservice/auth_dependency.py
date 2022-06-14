@@ -1,61 +1,67 @@
-from typing import Optional, List, Any
+from typing import List, Any
 
 import logging
 
-
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from starlette.status import HTTP_403_FORBIDDEN
 
 from fastapi import HTTPException, Depends
+from fastapi.security import HTTPBasicCredentials, HTTPBearer
 
-from starlette.status import HTTP_403_FORBIDDEN
-from starlette.requests import Request
-
-
-from hetdesrun.auth.keycloak import AuthentificationError
-from hetdesrun.auth.designer import kc_bearer_verifier
-
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.auth import BearerVerifier, AuthentificationError
 
 logger = logging.getLogger(__name__)
 
+security = HTTPBearer()
 
-class KeycloakJWTBearer(HTTPBearer):
-    def __init__(self, auto_error: bool = True):
-        super().__init__(auto_error=auto_error)
+bearer_verifier = BearerVerifier.from_verifier_options(
+    auth_url=get_config().auth_public_key_url or "",
+)
 
-    async def __call__(self, request: Request) -> Optional[dict]:  # type: ignore
-        credentials: Optional[HTTPAuthorizationCredentials] = await super().__call__(
-            request
+
+async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> None:
+    """Validate access"""
+    if credentials is None:
+        logger.info("Unauthorized: Could not obtain credentials from request")
+
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail="Could not obtain credentials from request",
         )
 
-        if credentials is None:
-            logger.info("Unauthorized: Could not obtain credentials from request")
+    if not credentials.scheme == "Bearer":  # type: ignore
+        logger.info("Unauthorized: No Bearer Schema")
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN, detail="Wrong authentication method"
+        )
 
+    token = credentials.credentials  # type: ignore
+
+    try:
+        payload: dict = bearer_verifier.verify_token(token)
+        logger.debug("Bearer token payload => %s", payload)
+    except AuthentificationError as e:
+        raise HTTPException(  # pylint: disable=raise-missing-from
+            status_code=401, detail=str(e)
+        )
+
+    # Check role
+    try:
+        if get_config().auth_allowed_role is not None and (
+            not get_config().auth_allowed_role in payload[get_config().auth_role_key]
+        ):
+            # roles are expected in "groups" key in payload
+            logger.info("Unauthorized: Roles not allowed")
             raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN,
-                detail="Could not obtain credentials from request",
+                status_code=HTTP_403_FORBIDDEN, detail="Roles not allowed"
             )
-
-        if not credentials.scheme == "Bearer":
-            logger.info("Unauthorized: No Bearer Schema")
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN, detail="Wrong authentication method"
-            )
-
-        jwt_token = credentials.credentials
-        try:
-            token_info: dict = kc_bearer_verifier.verify_token(jwt_token)
-        except AuthentificationError as e:
-            logger.info("Unauthorized: Auth failed: %s", str(e))
-
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN, detail="Invalid bearer token"
-            ) from e
-        return token_info
-
-
-hd_auth_dep = KeycloakJWTBearer()
+    except KeyError:
+        logger.info("Unauthorized: No role information in token")
+        raise HTTPException(  # pylint: disable=raise-missing-from
+            status_code=HTTP_403_FORBIDDEN, detail="No role information in token"
+        )
 
 
 def get_auth_deps() -> List[Any]:
-    return [Depends(hd_auth_dep)] if runtime_config.hd_auth_use_keycloak else []
+    """Return the authentication dependencies based on the application settings."""
+    return [Depends(has_access)] if get_config().auth else []

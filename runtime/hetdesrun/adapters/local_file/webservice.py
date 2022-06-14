@@ -47,7 +47,7 @@ local_file_adapter_router = APIRouter(
 @local_file_adapter_router.get(
     "/info",
     response_model=InfoResponse,
-    dependencies=get_auth_deps(),
+    # no auth for info endpoint
 )
 async def get_info_endpoint() -> InfoResponse:
     return InfoResponse(

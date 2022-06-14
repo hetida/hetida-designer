@@ -1,9 +1,6 @@
 from unittest import mock
 from copy import deepcopy
 
-from starlette.testclient import TestClient
-from hetdesrun.webservice.application import app
-
 from hetdesrun.models.wiring import WorkflowWiring
 
 import pytest

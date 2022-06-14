@@ -37,7 +37,7 @@ from hetdesrun.persistence.models.io import (
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.models.code import ComponentInfo
 
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -186,14 +186,12 @@ def import_transformation(
         tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
 
     response = requests.put(
-        posix_urljoin(
-            runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
-        )
+        posix_urljoin(get_config().hd_backend_api_url, "transformations", tr_json["id"])
         + "?allow_overwrite_released=True",
-        verify=runtime_config.hd_backend_verify_certs,
+        verify=get_config().hd_backend_verify_certs,
         json=tr_json,
         auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
+        if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
     )

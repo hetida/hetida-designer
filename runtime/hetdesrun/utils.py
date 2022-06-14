@@ -18,29 +18,25 @@ from hetdesrun.datatypes import DataType
 
 from hetdesrun.auth.keycloak import KeycloakAccessTokenManager, ServiceUserCredentials
 
-from hetdesrun.webservice.config import RuntimeConfig
+from hetdesrun.webservice.config import get_config
 
 
 logger = logging.getLogger(__name__)
 
-
-runtime_config = RuntimeConfig()
-# reload actively here for usage in Jupyter notebook where
-# env variables may be set before importing this module
-
 kc_access_token_manager = (
-    KeycloakAccessTokenManager(
-        creds=ServiceUserCredentials(
-            realm=runtime_config.hd_keycloak_realm,
-            client_id=runtime_config.hd_keycloak_runtime_client_id,
-            username=runtime_config.hd_keycloak_runtime_username,
-            password=runtime_config.hd_keycloak_runtime_password,
-            auth_url=runtime_config.hd_keycloak_auth_url,
-            audience=runtime_config.hd_keycloak_runtime_audience,
-        )
-    )
-    if runtime_config.hd_auth_use_keycloak
-    else None
+    # KeycloakAccessTokenManager(
+    #     creds=ServiceUserCredentials(
+    #         realm=get_config().hd_keycloak_realm,
+    #         client_id=get_config().hd_keycloak_runtime_client_id,
+    #         username=get_config().hd_keycloak_runtime_username,
+    #         password=get_config().hd_keycloak_runtime_password,
+    #         auth_url=get_config().hd_keycloak_auth_url,
+    #         audience=get_config().hd_keycloak_runtime_audience,
+    #     )
+    # )
+    # if get_config().hd_auth_use_keycloak
+    # else
+    None
 )
 
 
@@ -54,8 +50,8 @@ def get_auth_headers() -> Dict[str, str]:
 
 def get_backend_basic_auth() -> Tuple[Optional[str], Optional[str]]:
     return (
-        runtime_config.hd_backend_basic_auth_user,
-        runtime_config.hd_backend_basic_auth_password,
+        get_config().hd_backend_basic_auth_user,
+        get_config().hd_backend_basic_auth_password,
     )
 
 

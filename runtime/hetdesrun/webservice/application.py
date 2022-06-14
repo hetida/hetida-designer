@@ -18,7 +18,7 @@ from starlette.responses import Response
 
 
 from hetdesrun import VERSION
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 from hetdesrun.service.runtime_router import runtime_router
 
@@ -33,8 +33,9 @@ from hetdesrun.backend.service.workflow_router import workflow_router
 from hetdesrun.backend.service.wiring_router import wiring_router
 from hetdesrun.backend.service.documentation_router import documentation_router
 
+from hetdesrun.webservice.auth_dependency import get_auth_deps
 
-if runtime_config.hd_kafka_consumer_enabled:
+if get_config().hd_kafka_consumer_enabled:
     from hetdesrun.backend.kafka.consumer import get_kafka_worker_context
 
 
@@ -79,7 +80,7 @@ class AdditionalLoggingRoute(APIRoute):
 middleware = [
     Middleware(
         CORSMiddleware,
-        allow_origins=runtime_config.allowed_origins.split(","),
+        allow_origins=get_config().allowed_origins.split(","),
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["*"],
@@ -88,9 +89,9 @@ middleware = [
 
 
 def app_desc_part() -> str:
-    if runtime_config.is_backend_service and runtime_config.is_runtime_service:
+    if get_config().is_backend_service and get_config().is_runtime_service:
         return "Runtime + Backend"
-    if runtime_config.is_backend_service and not runtime_config.is_runtime_service:
+    if get_config().is_backend_service and not get_config().is_runtime_service:
         return "Backend"
     return "Runtime"
 
@@ -99,9 +100,10 @@ app = FastAPI(
     title="Hetida Designer " + app_desc_part() + " API",
     description="Hetida Designer " + app_desc_part() + " Web Services API",
     version=VERSION,
-    root_path=runtime_config.swagger_prefix,
+    root_path=get_config().swagger_prefix,
     middleware=middleware,
 )
+
 
 app.router.route_class = AdditionalLoggingRoute
 
@@ -114,25 +116,33 @@ async def validation_exception_handler(
     return await request_validation_exception_handler(request, exc)
 
 
-if runtime_config.is_runtime_service:
-    app.include_router(local_file_adapter_router)
-    app.include_router(runtime_router, prefix="/engine")
+if get_config().is_runtime_service:
+    app.include_router(
+        local_file_adapter_router
+    )  # auth dependency set individually per endpoint
+    app.include_router(
+        runtime_router, prefix="/engine"
+    )  # auth dependency set individually per endpoint
 
-if runtime_config.is_backend_service:
-    app.include_router(adapter_router, prefix="/api")
-    app.include_router(base_item_router, prefix="/api")
-    app.include_router(documentation_router, prefix="/api")
-    app.include_router(info_router, prefix="/api")
-    app.include_router(component_router, prefix="/api")
-    app.include_router(workflow_router, prefix="/api")
-    app.include_router(wiring_router, prefix="/api")
-    app.include_router(transformation_router, prefix="/api")
+if get_config().is_backend_service:
+    app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
+    app.include_router(base_item_router, prefix="/api", dependencies=get_auth_deps())
+    app.include_router(
+        documentation_router, prefix="/api", dependencies=get_auth_deps()
+    )
+    app.include_router(info_router, prefix="/api")  # reachable without authorization
+    app.include_router(component_router, prefix="/api", dependencies=get_auth_deps())
+    app.include_router(workflow_router, prefix="/api", dependencies=get_auth_deps())
+    app.include_router(wiring_router, prefix="/api", dependencies=get_auth_deps())
+    app.include_router(
+        transformation_router, prefix="/api", dependencies=get_auth_deps()
+    )
 
 
 @app.on_event("startup")
 async def startup_event() -> None:
     logger.info("Initializing application ...")
-    if runtime_config.hd_kafka_consumer_enabled and runtime_config.is_backend_service:
+    if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
         logger.info("Initializing Kafka consumer...")
         kakfa_worker_context = get_kafka_worker_context()
         await kakfa_worker_context.start()
@@ -141,7 +151,7 @@ async def startup_event() -> None:
 @app.on_event("shutdown")
 async def shutdown_event() -> None:
     logger.info("Shutting down application...")
-    if runtime_config.hd_kafka_consumer_enabled and runtime_config.is_backend_service:
+    if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
         logger.info("Shutting down Kafka consumer...")
         kakfa_worker_context = get_kafka_worker_context()
         await kakfa_worker_context.stop()

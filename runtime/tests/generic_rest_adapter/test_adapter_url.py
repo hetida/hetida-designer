@@ -32,7 +32,7 @@ async def test_base_url_fetching_internally():
         return_value=get_all_adapters_response_mock,
     ):
         with mock.patch(
-            "hetdesrun.adapters.generic_rest.baseurl.runtime_config.is_backend_service",
+            "hetdesrun.webservice.config.runtime_config.is_backend_service",
             True,
         ):
             assert (
@@ -60,7 +60,7 @@ async def test_base_url_fetching():
         return_value=response_mock,
     ):
         with mock.patch(
-            "hetdesrun.adapters.generic_rest.baseurl.runtime_config.is_backend_service",
+            "hetdesrun.webservice.config.runtime_config.is_backend_service",
             False,
         ):
             assert (
@@ -74,7 +74,7 @@ async def test_base_url_fetching():
         return_value=response_mock,
     ):
         with mock.patch(
-            "hetdesrun.adapters.generic_rest.baseurl.runtime_config.is_backend_service",
+            "hetdesrun.webservice.config.runtime_config.is_backend_service",
             False,
         ):
             with pytest.raises(AdapterConnectionError):

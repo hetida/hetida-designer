@@ -11,7 +11,7 @@ import httpx
 
 from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
 
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.exceptions import (
@@ -57,10 +57,10 @@ async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestA
 
     headers = get_generic_rest_adapter_auth_headers()
 
-    url = posix_urljoin(runtime_config.hd_backend_api_url, "adapters/")
+    url = posix_urljoin(get_config().hd_backend_api_url, "adapters/")
     logger.info("Start getting Generic REST Adapter URLS from HD Backend url %s", url)
 
-    if runtime_config.is_backend_service:
+    if get_config().is_backend_service:
         # call function directly
         adapter_list = await get_all_adapters()
 
@@ -82,7 +82,7 @@ async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestA
     else:
         # call backend service "adapters" endpoint
         async with httpx.AsyncClient(
-            verify=runtime_config.hd_backend_verify_certs
+            verify=get_config().hd_backend_verify_certs
         ) as client:
             try:
                 resp = await client.get(url, headers=headers)

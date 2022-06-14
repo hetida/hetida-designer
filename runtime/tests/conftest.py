@@ -1,12 +1,23 @@
 from copy import deepcopy
 
 import pytest
+from unittest import mock
+
 
 from httpx import AsyncClient
 
-from hetdesrun.webservice.application import app
+from hetdesrun.webservice import get_app
 
 from hetdesrun.utils import get_uuid_from_seed
+from hetdesrun.webservice.config import get_config
+
+
+@pytest.fixture(scope="session")
+def deactivate_auth():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.auth", False
+    ) as _fixture:
+        yield _fixture
 
 
 def pytest_addoption(parser):
@@ -24,8 +35,8 @@ def use_in_memory_db(pytestconfig):
 
 
 @pytest.fixture
-def async_test_client():
-    return AsyncClient(app=app, base_url="http://test")
+def async_test_client(deactivate_auth):
+    return AsyncClient(app=get_app(), base_url="http://test")
 
 
 base_workflow_json = {

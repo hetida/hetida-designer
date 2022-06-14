@@ -20,7 +20,7 @@ from hetdesrun.utils import (
     criterion_unset_or_matches_value,
 )
 
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
@@ -87,16 +87,16 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
     headers = get_auth_headers()
 
     if type == Type.COMPONENT:
-        url = posix_urljoin(runtime_config.hd_backend_api_url, "components", str(id))
+        url = posix_urljoin(get_config().hd_backend_api_url, "components", str(id))
     else:
-        url = posix_urljoin(runtime_config.hd_backend_api_url, "workflows", str(id))
+        url = posix_urljoin(get_config().hd_backend_api_url, "workflows", str(id))
 
     # Get transformation revision from old backend
     response = requests.get(
         url,
-        verify=runtime_config.hd_backend_verify_certs,
+        verify=get_config().hd_backend_verify_certs,
         auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
+        if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
     )
@@ -120,10 +120,10 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
 
     # Get documentation from old backend
     doc_response = requests.get(
-        posix_urljoin(runtime_config.hd_backend_api_url, "documentations", str(id)),
-        verify=runtime_config.hd_backend_verify_certs,
+        posix_urljoin(get_config().hd_backend_api_url, "documentations", str(id)),
+        verify=get_config().hd_backend_verify_certs,
         auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
+        if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
     )
@@ -223,12 +223,12 @@ def export_transformations(
 
     endpoint = "transformations" if not java_backend else "base-items"
 
-    url = posix_urljoin(runtime_config.hd_backend_api_url, endpoint)
+    url = posix_urljoin(get_config().hd_backend_api_url, endpoint)
     response = requests.get(
         url,
-        verify=runtime_config.hd_backend_verify_certs,
+        verify=get_config().hd_backend_verify_certs,
         auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
+        if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
     )
