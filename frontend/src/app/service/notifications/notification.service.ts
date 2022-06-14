@@ -12,6 +12,8 @@ export class NotificationService {
 
   default(message: string) {
     this.show(message, {
+      verticalPosition: 'top',
+      horizontalPosition: 'right',
       duration: 2000,
       panelClass: 'default-notification-overlay'
     });
@@ -19,6 +21,8 @@ export class NotificationService {
 
   info(message: string) {
     this.show(message, {
+      verticalPosition: 'top',
+      horizontalPosition: 'right',
       duration: 2000,
       panelClass: 'info-notification-overlay'
     });
@@ -26,6 +30,8 @@ export class NotificationService {
 
   success(message: string) {
     this.show(message, {
+      verticalPosition: 'top',
+      horizontalPosition: 'right',
       duration: 2000,
       panelClass: 'success-notification-overlay'
     });
@@ -33,6 +39,8 @@ export class NotificationService {
 
   warn(message: string) {
     this.show(message, {
+      verticalPosition: 'top',
+      horizontalPosition: 'right',
       duration: 2500,
       panelClass: 'warning-notification-overlay'
     });
@@ -40,6 +48,8 @@ export class NotificationService {
 
   error(message: string) {
     this.show(message, {
+      verticalPosition: 'top',
+      horizontalPosition: 'right',
       duration: 3000,
       panelClass: 'error-notification-overlay'
     });
