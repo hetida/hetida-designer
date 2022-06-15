@@ -14,7 +14,7 @@ export class NotificationService {
     this.show(message, {
       verticalPosition: 'top',
       horizontalPosition: 'right',
-      duration: 2000,
+      duration: 5000,
       panelClass: 'default-notification-overlay'
     });
   }
@@ -23,7 +23,7 @@ export class NotificationService {
     this.show(message, {
       verticalPosition: 'top',
       horizontalPosition: 'right',
-      duration: 2000,
+      duration: 5000,
       panelClass: 'info-notification-overlay'
     });
   }
@@ -32,7 +32,7 @@ export class NotificationService {
     this.show(message, {
       verticalPosition: 'top',
       horizontalPosition: 'right',
-      duration: 2000,
+      duration: 5000,
       panelClass: 'success-notification-overlay'
     });
   }
@@ -41,7 +41,7 @@ export class NotificationService {
     this.show(message, {
       verticalPosition: 'top',
       horizontalPosition: 'right',
-      duration: 2500,
+      duration: 5000,
       panelClass: 'warning-notification-overlay'
     });
   }
@@ -50,7 +50,7 @@ export class NotificationService {
     this.show(message, {
       verticalPosition: 'top',
       horizontalPosition: 'right',
-      duration: 3000,
+      duration: 5000,
       panelClass: 'error-notification-overlay'
     });
   }
