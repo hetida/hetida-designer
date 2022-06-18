@@ -1,4 +1,8 @@
-def get_app():
-    from hetdesrun.webservice.application import app
+from functools import cache
 
-    return app
+
+@cache
+def get_app():
+    from hetdesrun.webservice.application import init_app
+
+    return init_app()

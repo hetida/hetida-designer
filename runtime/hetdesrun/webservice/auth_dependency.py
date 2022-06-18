@@ -31,7 +31,11 @@ def get_auth_headers() -> Dict[str, str]:
     try:
         token = auth_ctx_dict["token"]
     except KeyError:
+        logger.debug("No stored auth token. Not setting auth header")
         return {}
+    logger.debug(
+        "Found stored auth token. Setting Authorization header with schema Bearer"
+    )
     return {"Authorization": "Bearer " + token}
 
 
@@ -44,6 +48,7 @@ bearer_verifier = BearerVerifier.from_verifier_options(
 
 async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> None:
     """Validate access"""
+
     if credentials is None:
         logger.info("Unauthorized: Could not obtain credentials from request")
 
@@ -59,6 +64,7 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
         )
 
     token = credentials.credentials  # type: ignore
+
     try:
         payload: dict = bearer_verifier.verify_token(token)
         logger.debug("Bearer token payload => %s", payload)
@@ -66,7 +72,6 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
         raise HTTPException(  # pylint: disable=raise-missing-from
             status_code=401, detail=str(e)
         )
-
     # Check role
     try:
         if get_config().auth_allowed_role is not None and (
@@ -85,6 +90,8 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
 
     auth_context_dict = {"token": token, "creds": credentials}
     set_request_auth_context(auth_context_dict)
+
+    logger.debug("Auth token check successful.")
 
 
 def get_auth_deps() -> List[Any]:

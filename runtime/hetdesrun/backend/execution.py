@@ -261,6 +261,8 @@ async def run_execution_input(
                     timeout=None,
                 )
             except httpx.HTTPError as e:
+                # handles both request errors (connection problems)
+                # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
                 msg = f"Failure connecting to hd runtime endpoint ({url}):\n{str(e)}"
                 logger.info(msg)
                 raise TrafoExecutionRuntimeConnectionError(msg) from e

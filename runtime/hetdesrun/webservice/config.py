@@ -134,7 +134,7 @@ class RuntimeConfig(BaseSettings):
     )
 
     auth_role_key: str = Field(
-        "groups",
+        "roles",
         description=(
             "Under which key of the access token payload the roles will"
             " be expected as a list."

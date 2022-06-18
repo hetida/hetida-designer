@@ -28,8 +28,10 @@ logger = logging.getLogger(__name__)
 configure_logging(logger)
 
 # must be after logging config:
-from hetdesrun.webservice.application import app
+from hetdesrun.webservice import get_app
 from hetdesrun.webservice.config import get_config
+
+app = get_app()
 
 
 def detect_in_memory_db() -> bool:

@@ -21,7 +21,7 @@ fn_exists() {
 
 COMMAND=${1:-}
 shift
-ARGUMENTS=${@}
+ARGUMENTS="${@}"
 
 set -euo pipefail
 
@@ -66,7 +66,7 @@ if fn_exists "$COMMAND"; then
     # Execute
     TIMEFORMAT=$'\nTask completed in %3lR'
 
-    time "$COMMAND" $ARGUMENTS
+    time "$COMMAND" "${ARGUMENTS[@]}"
 else
     usage
 fi
