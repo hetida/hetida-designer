@@ -168,6 +168,8 @@ import { appReducers } from './store/app.reducers';
       },
       deps: [ConfigService, ThemeService]
     },
+    // Fix for Frozen Progress bar animation, in an *ngIf condition.
+    // https://github.com/angular/components/issues/11453#issuecomment-466038415
     { provide: ANIMATION_MODULE_TYPE, useValue: 'BrowserAnimations' }
   ],
   bootstrap: [AppComponent]
