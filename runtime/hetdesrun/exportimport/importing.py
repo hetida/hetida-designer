@@ -14,11 +14,13 @@ from hetdesrun.utils import (
     Type,
     State,
     get_uuid_from_seed,
-    get_auth_headers,
     get_backend_basic_auth,
     selection_list_empty_or_contains_value,
     criterion_unset_or_matches_value,
 )
+
+from hetdesrun.webservice.auth_dependency import get_auth_headers
+
 
 from hetdesrun.component.load import (
     import_func_from_code,
@@ -190,7 +192,7 @@ def import_transformation(
         + "?allow_overwrite_released=True",
         verify=get_config().hd_backend_verify_certs,
         json=tr_json,
-        auth=get_backend_basic_auth()
+        auth=get_backend_basic_auth()  # type: ignore
         if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,

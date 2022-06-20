@@ -94,7 +94,7 @@ def app_desc_part() -> str:
 
 
 def init_app() -> FastAPI:
-    import sys
+    import sys  # pylint: disable=import-outside-toplevel
 
     # reimporting runtime_router and local_file router since they have
     # endpoint-individual auth settings and therefore load config during
@@ -104,14 +104,18 @@ def init_app() -> FastAPI:
     except KeyError:
         pass
 
-    from hetdesrun.service.runtime_router import runtime_router
+    from hetdesrun.service.runtime_router import (  # pylint: disable=import-outside-toplevel
+        runtime_router,
+    )
 
     try:
         del sys.modules["hetdesrun.adapters.local_file.webservice"]
     except KeyError:
         pass
 
-    from hetdesrun.adapters.local_file.webservice import local_file_adapter_router
+    from hetdesrun.adapters.local_file.webservice import (  # pylint: disable=import-outside-toplevel
+        local_file_adapter_router,
+    )
 
     app = FastAPI(
         title="Hetida Designer " + app_desc_part() + " API",

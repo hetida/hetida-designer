@@ -38,7 +38,7 @@ def get_db_engine(
 
     db_url_to_use: Union[SecretStr, str, URL]
     if override_db_url is None:
-        db_url_to_use = get_config().sqlalchemy_connection_string
+        db_url_to_use = get_config().sqlalchemy_connection_string  # type: ignore
     else:
         db_url_to_use = override_db_url
 

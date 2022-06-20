@@ -1,7 +1,7 @@
 """Utilities for scripting and in particular component/workflow deployment"""
 
 import json
-from typing import List, Optional, Tuple, Any, Dict
+from typing import List, Optional, Tuple, Any
 from enum import Enum
 from uuid import UUID
 import random
@@ -17,9 +17,6 @@ from plotly.utils import PlotlyJSONEncoder
 from hetdesrun.datatypes import DataType
 
 from hetdesrun.webservice.config import get_config
-
-from hetdesrun.webservice.auth_dependency import get_auth_headers
-
 
 logger = logging.getLogger(__name__)
 

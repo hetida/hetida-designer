@@ -14,11 +14,12 @@ import requests
 from hetdesrun.utils import (
     Type,
     State,
-    get_auth_headers,
     get_backend_basic_auth,
     selection_list_empty_or_contains_value,
     criterion_unset_or_matches_value,
 )
+
+from hetdesrun.webservice.auth_dependency import get_auth_headers
 
 from hetdesrun.webservice.config import get_config
 
@@ -95,7 +96,7 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
     response = requests.get(
         url,
         verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()
+        auth=get_backend_basic_auth()  # type: ignore
         if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
@@ -122,7 +123,7 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
     doc_response = requests.get(
         posix_urljoin(get_config().hd_backend_api_url, "documentations", str(id)),
         verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()
+        auth=get_backend_basic_auth()  # type: ignore
         if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
@@ -227,7 +228,7 @@ def export_transformations(
     response = requests.get(
         url,
         verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()
+        auth=get_backend_basic_auth()  # type: ignore
         if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,

@@ -18,7 +18,9 @@ from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.models.component import ComponentNode
 
-from hetdesrun.utils import Type, get_auth_headers
+from hetdesrun.utils import Type
+
+from hetdesrun.webservice.auth_dependency import get_auth_headers
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 
@@ -252,7 +254,7 @@ async def run_execution_input(
             try:
                 response = await client.post(
                     url,
-                    headers=headers,  # TODO: authentication
+                    headers=headers,
                     json=json.loads(
                         execution_input.json()
                     ),  # TODO: avoid double serialization.

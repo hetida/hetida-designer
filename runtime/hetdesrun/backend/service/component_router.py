@@ -10,7 +10,10 @@ from fastapi import APIRouter, Path, status, HTTPException
 
 from pydantic import ValidationError
 
-from hetdesrun.utils import Type, get_auth_headers
+from hetdesrun.utils import Type
+
+from hetdesrun.webservice.auth_dependency import get_auth_headers
+
 
 from hetdesrun.webservice.config import get_config
 from hetdesrun.service.runtime_router import runtime_service
@@ -380,7 +383,7 @@ async def execute_component_revision(
             try:
                 response = await client.post(
                     url,
-                    headers=headers,  # TODO: authentication
+                    headers=headers,
                     json=json.loads(
                         execution_input.json()
                     ),  # TODO: avoid double serialization.

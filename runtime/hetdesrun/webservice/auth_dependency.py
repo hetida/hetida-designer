@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 _REQUEST_AUTH_CONTEXT: ContextVar[dict] = ContextVar("_REQUEST_AUTH_CONTEXT")
 
 
-def set_request_auth_context(value_dict: dict):
+def set_request_auth_context(value_dict: dict) -> None:
     token = _REQUEST_AUTH_CONTEXT.set(value_dict)
     logger.debug("Request auth context set token: %s", str(token))
 
