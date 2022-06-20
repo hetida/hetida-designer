@@ -103,11 +103,15 @@ class BearerVerifier:
             logger.info(
                 "Failing to verify Bearer Token: %s\nError: %s", access_token, str(e)
             )
-            if self.is_key_old():
-                # try again but force reloading key
-                return self.verify_token(
-                    access_token=access_token, options=options, force_loading_keys=True
-                )
+            if not force_loading_keys:
+                logger.info("Trying to load current public key")
+                if self.verifier_options.reload_public_key and self.is_key_old():
+                    # try again but force reloading key
+                    return self.verify_token(
+                        access_token=access_token,
+                        options=options,
+                        force_loading_keys=True,
+                    )
             raise AuthentificationError("Failed to verify Bearer Token") from e
         return decoded_bearer_token
 

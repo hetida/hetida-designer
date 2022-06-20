@@ -62,6 +62,11 @@ def valid_access_token(key_pair):
 
 
 @pytest.fixture(scope="function")
+def second_valid_access_token(key_pair):
+    return generate_token(payload={"sub": "second"}, algorithm="RS256", key=key_pair[0])
+
+
+@pytest.fixture(scope="function")
 def wrong_key_access_token(wrong_key_pair):
     return generate_token(algorithm="RS256", key=wrong_key_pair[0])
 
@@ -89,6 +94,24 @@ def mocked_pre_loaded_wrong_public_key(wrong_key_pair):
     with mock.patch(
         "hetdesrun.webservice.auth_dependency.bearer_verifier._public_key_data",
         wrong_key_pair[1],
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def mocked_public_key_fetching(key_pair):
+    def _mocked_obtain_public_key(self, force: bool = False):
+        if self._public_key_data is not None and not force:
+            # do not reload key if not forced
+            return
+        self._public_key_data = key_pair[1]
+        _mocked_obtain_public_key.called = _mocked_obtain_public_key.called + 1
+
+    _mocked_obtain_public_key.called = 0
+
+    with mock.patch(
+        "hetdesrun.webservice.auth_dependency.BearerVerifier._obtain_public_key_data",
+        _mocked_obtain_public_key,
     ) as _fixture:
         yield _fixture
 

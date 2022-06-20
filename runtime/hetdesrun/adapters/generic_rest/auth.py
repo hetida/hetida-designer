@@ -1,11 +1,5 @@
 # pylint: disable=duplicate-code
 
-from typing import Dict
-
-from hetdesrun.auth.keycloak import (
-    KeycloakAccessTokenManager,
-    ServiceUserCredentials,
-)
 
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.auth_dependency import (

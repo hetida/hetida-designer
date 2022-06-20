@@ -16,8 +16,6 @@ from plotly.utils import PlotlyJSONEncoder
 
 from hetdesrun.datatypes import DataType
 
-from hetdesrun.auth.keycloak import KeycloakAccessTokenManager, ServiceUserCredentials
-
 from hetdesrun.webservice.config import get_config
 
 from hetdesrun.webservice.auth_dependency import get_auth_headers

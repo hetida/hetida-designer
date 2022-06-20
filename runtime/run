@@ -19,9 +19,9 @@ fn_exists() {
     LC_ALL=C type "${1:-}" 2>/dev/null | grep -q 'function'
 }
 
-COMMAND=${1:-}
+COMMAND="${1:-}"
 shift
-ARGUMENTS="${@}"
+ARGUMENTS=("${@}")
 
 set -euo pipefail
 
