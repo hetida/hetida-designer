@@ -9,7 +9,10 @@ import {
 } from '@angular/material/dialog';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { BrowserModule } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {
+  ANIMATION_MODULE_TYPE,
+  BrowserAnimationsModule
+} from '@angular/platform-browser/animations';
 import {
   OwlDateTimeModule,
   OwlNativeDateTimeModule
@@ -164,7 +167,10 @@ import { appReducers } from './store/app.reducers';
         };
       },
       deps: [ConfigService, ThemeService]
-    }
+    },
+    // Fix for Frozen Progress bar animation, in an *ngIf condition.
+    // https://github.com/angular/components/issues/11453#issuecomment-466038415
+    { provide: ANIMATION_MODULE_TYPE, useValue: 'BrowserAnimations' }
   ],
   bootstrap: [AppComponent]
 })
