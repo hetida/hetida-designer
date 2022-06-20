@@ -1,4 +1,5 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { EditorComponent } from 'ngx-monaco-editor';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { RevisionState } from 'src/app/enums/revision-state';
@@ -49,6 +50,8 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     return this._componentBaseItem;
   }
 
+  @ViewChild('monacoEditor') monacoEditor: EditorComponent;
+
   constructor(
     private readonly componentService: ComponentEditorService,
     private readonly themeService: ThemeService
@@ -86,5 +89,10 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
   public set code(code: string) {
     this.codeCopy = code;
     this._autoSave$.next();
+  }
+
+  public setEditorReadOnly(readOnly: boolean): void {
+    const editor = this.monacoEditor;
+    editor.options.readOnly = readOnly;
   }
 }
