@@ -5,6 +5,13 @@ import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
   providedIn: 'root'
 })
 export class NotificationService {
+  private readonly notificationOptions: MatSnackBarConfig = {
+    verticalPosition: 'top',
+    horizontalPosition: 'right',
+    duration: 5000,
+    panelClass: 'default-notification-overlay'
+  };
+
   constructor(
     private readonly snackBar: MatSnackBar,
     private readonly zone: NgZone
@@ -12,45 +19,34 @@ export class NotificationService {
 
   default(message: string) {
     this.show(message, {
-      verticalPosition: 'top',
-      horizontalPosition: 'right',
-      duration: 5000,
-      panelClass: 'default-notification-overlay'
+      ...this.notificationOptions
     });
   }
 
   info(message: string) {
     this.show(message, {
-      verticalPosition: 'top',
-      horizontalPosition: 'right',
-      duration: 5000,
+      ...this.notificationOptions,
       panelClass: 'info-notification-overlay'
     });
   }
 
   success(message: string) {
     this.show(message, {
-      verticalPosition: 'top',
-      horizontalPosition: 'right',
-      duration: 5000,
+      ...this.notificationOptions,
       panelClass: 'success-notification-overlay'
     });
   }
 
   warn(message: string) {
     this.show(message, {
-      verticalPosition: 'top',
-      horizontalPosition: 'right',
-      duration: 5000,
+      ...this.notificationOptions,
       panelClass: 'warning-notification-overlay'
     });
   }
 
   error(message: string) {
     this.show(message, {
-      verticalPosition: 'top',
-      horizontalPosition: 'right',
-      duration: 5000,
+      ...this.notificationOptions,
       panelClass: 'error-notification-overlay'
     });
   }
