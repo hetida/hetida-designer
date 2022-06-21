@@ -1,32 +1,24 @@
-from unittest import mock
-from copy import deepcopy
-import pytest
-
-from posixpath import join as posix_urljoin
-
 import json
+from copy import deepcopy
+from posixpath import join as posix_urljoin
+from unittest import mock
 from uuid import UUID, uuid4
 
-from hetdesrun.utils import get_uuid_from_seed
+import pytest
 
-from hetdesrun.webservice.config import get_config
-
+from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
+from hetdesrun.backend.service.transformation_router import generate_code
+from hetdesrun.exportimport.importing import load_json
 from hetdesrun.persistence import get_db_engine, sessionmaker
-
 from hetdesrun.persistence.dbmodels import Base
+from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
     store_single_transformation_revision,
 )
-from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
-
 from hetdesrun.persistence.models.transformation import TransformationRevision
-
-from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
-
-from hetdesrun.backend.service.transformation_router import generate_code
-
-from hetdesrun.exportimport.importing import load_json
+from hetdesrun.utils import get_uuid_from_seed
+from hetdesrun.webservice.config import get_config
 
 
 @pytest.fixture(scope="function")

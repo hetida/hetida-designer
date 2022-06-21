@@ -1,10 +1,10 @@
 from hetdesrun.component.code import (
-    generate_function_header,
     check_parameter_names,
+    generate_function_header,
     update_code,
 )
-from hetdesrun.models.code import ComponentInfo, example_code, example_code_async
 from hetdesrun.datatypes import DataType
+from hetdesrun.models.code import ComponentInfo, example_code, example_code_async
 
 
 def test_function_header_no_params():

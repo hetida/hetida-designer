@@ -1,16 +1,16 @@
 from unittest import mock
+
 import pytest
 
-from hetdesrun.backend.models.adapter import AdapterFrontendDto
-
-from hetdesrun.adapters.generic_rest.baseurl import (
-    get_generic_rest_adapter_base_url,
-    update_generic_adapter_base_urls_cache,
-)
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
     AdapterHandlingException,
 )
+from hetdesrun.adapters.generic_rest.baseurl import (
+    get_generic_rest_adapter_base_url,
+    update_generic_adapter_base_urls_cache,
+)
+from hetdesrun.backend.models.adapter import AdapterFrontendDto
 
 
 @pytest.mark.asyncio

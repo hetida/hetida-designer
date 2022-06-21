@@ -1,6 +1,7 @@
 import asyncio
-import pytest
 from unittest import mock
+
+import pytest
 
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 

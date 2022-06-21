@@ -1,5 +1,4 @@
 import logging
-
 from unittest import mock
 
 from hetdesrun.exportimport.importing import import_transformations

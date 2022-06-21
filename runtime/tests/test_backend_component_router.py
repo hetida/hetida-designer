@@ -1,22 +1,17 @@
 from unittest import mock
+
 import pytest
 
-from hetdesrun.persistence import get_db_engine, sessionmaker
-
-from hetdesrun.utils import get_uuid_from_seed
-from hetdesrun.exportimport.importing import load_json
-
+from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.component.code import update_code
-
+from hetdesrun.exportimport.importing import load_json
+from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
-
-from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
-
-from hetdesrun.exportimport.importing import load_json
+from hetdesrun.utils import get_uuid_from_seed
 
 
 @pytest.fixture(scope="function")

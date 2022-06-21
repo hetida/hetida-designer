@@ -1,8 +1,8 @@
 from unittest import mock
+
 import pytest
 
 from hetdesrun.persistence import get_db_engine, sessionmaker
-
 from hetdesrun.persistence.dbmodels import Base
 
 

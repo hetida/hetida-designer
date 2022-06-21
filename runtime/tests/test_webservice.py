@@ -1,5 +1,4 @@
 import warnings
-
 from copy import deepcopy
 
 # the following line in hetdesrun.webservice.application causes a DeprecationWarning concerning

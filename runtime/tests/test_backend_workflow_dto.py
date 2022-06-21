@@ -1,19 +1,18 @@
 from copy import deepcopy
 from uuid import UUID
+
 import pytest
 
 from hetdesrun.backend.models.io import ConnectorFrontendDto
+from hetdesrun.backend.models.wiring import InputWiringFrontendDto, WiringFrontendDto
 from hetdesrun.backend.models.workflow import (
     WorkflowIoFrontendDto,
-    WorkflowOperatorFrontendDto,
     WorkflowLinkFrontendDto,
+    WorkflowOperatorFrontendDto,
     WorkflowRevisionFrontendDto,
-    position_from_input_connector_id,
     get_operator_and_connector_name,
+    position_from_input_connector_id,
 )
-
-from hetdesrun.backend.models.wiring import InputWiringFrontendDto, WiringFrontendDto
-
 
 valid_workflow_example_iso_forest: dict = {
     "id": "67c14cf2-cd4e-410e-9aca-6664273ccc3f",

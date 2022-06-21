@@ -1,20 +1,15 @@
 from copy import deepcopy
-
-import pytest
 from unittest import mock
 
-
+import pytest
 from httpx import AsyncClient
-
-from hetdesrun.webservice import get_app
-
-from hetdesrun.utils import get_uuid_from_seed
-from hetdesrun.webservice.config import get_config
 
 from hetdesrun.persistence import get_db_engine
 from hetdesrun.persistence.dbmodels import Base
-
+from hetdesrun.utils import get_uuid_from_seed
+from hetdesrun.webservice import get_app
 from hetdesrun.webservice.application import init_app
+from hetdesrun.webservice.config import get_config
 
 
 @pytest.fixture(scope="function")

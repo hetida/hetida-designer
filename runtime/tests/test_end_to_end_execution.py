@@ -1,35 +1,26 @@
-from copy import deepcopy
-
 import json
 import os
+from copy import deepcopy
 from uuid import uuid4
 
 import pytest
 
-from hetdesrun.utils import get_uuid_from_seed
-
+from hetdesrun.exportimport.importing import load_json
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import (
-    ComponentRevision,
     ComponentInput,
-    ComponentOutput,
     ComponentNode,
+    ComponentOutput,
+    ComponentRevision,
 )
-from hetdesrun.models.workflow import (
-    WorkflowNode,
-    WorkflowInput,
-    WorkflowOutput,
-)
-
-from hetdesrun.models.wiring import OutputWiring, InputWiring, WorkflowWiring
-
 from hetdesrun.models.run import (
     ConfigurationInput,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-
-from hetdesrun.exportimport.importing import load_json
+from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
+from hetdesrun.models.workflow import WorkflowInput, WorkflowNode, WorkflowOutput
+from hetdesrun.utils import get_uuid_from_seed
 
 
 async def run_workflow_with_client(workflow_json, open_async_test_client):

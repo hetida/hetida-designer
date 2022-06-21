@@ -1,24 +1,18 @@
-from copy import deepcopy
 from collections import namedtuple
+from copy import deepcopy
 from uuid import uuid4
 
 import pytest
-
 from pydantic import ValidationError
 
-from hetdesrun.utils import State, Type, get_uuid_from_seed
-
-from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.execution import nested_nodes
-
-from hetdesrun.persistence.models.io import IOInterface, IOConnector
-from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
-from hetdesrun.models.wiring import WorkflowWiring
-
+from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.exportimport.importing import load_json
-
+from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence.models.io import IOConnector, IOInterface
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 tr_json_valid_released_example = load_json(
     "./transformations/workflows/examples/iso-forest-example_100_67c14cf2-cd4e-410e-9aca-6664273ccc3f.json"
