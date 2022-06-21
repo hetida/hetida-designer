@@ -64,10 +64,12 @@ def workflow_creator(identifier: str) -> TransformationRevision:
 def test_update_or_create_nesting(clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
-        "hetdesrun.persistence.dbservice.nesting.Session", patched_session,
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
     ):
         with mock.patch(
-            "hetdesrun.persistence.dbservice.revision.Session", patched_session,
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
         ):
             component_a = component_creator("a")
             component_a.io_interface.inputs.append(

@@ -133,6 +133,7 @@ def test_tr_validator_version_tag_not_latest():
             documentation="",
         )
 
+
 def test_tr_nonemptyvalidstr_regex_validator_not_whitelisted_character():
     id = get_uuid_from_seed("test")
     with pytest.raises(ValidationError):
@@ -151,6 +152,7 @@ def test_tr_nonemptyvalidstr_regex_validator_not_whitelisted_character():
             documentation="",
         )
 
+
 def test_tr_validstr_regex_validator_empty():
     id = get_uuid_from_seed("test")
     TransformationRevision(
@@ -167,6 +169,7 @@ def test_tr_validstr_regex_validator_empty():
         test_wiring=WorkflowWiring(),
         documentation="",
     )
+
 
 def test_tr_nonemptyvalidstr_regex_validator_empty():
     id = get_uuid_from_seed("test")
@@ -186,6 +189,7 @@ def test_tr_nonemptyvalidstr_regex_validator_empty():
             documentation="",
         )
 
+
 def test_tr_nonemptyvalidstr_validator_max_characters():
     id = get_uuid_from_seed("test")
     with pytest.raises(ValidationError):
@@ -203,6 +207,7 @@ def test_tr_nonemptyvalidstr_validator_max_characters():
             test_wiring=WorkflowWiring(),
             documentation="",
         )
+
 
 def test_tr_shortnonemptyvalidstr_validator_max_characters():
     id = get_uuid_from_seed("test")
@@ -222,6 +227,7 @@ def test_tr_shortnonemptyvalidstr_validator_max_characters():
             documentation="",
         )
 
+
 def test_tr_nonemptyvalidstr_regex_validator_fancy_characters():
     id = get_uuid_from_seed("test")
     TransformationRevision(
@@ -238,6 +244,7 @@ def test_tr_nonemptyvalidstr_regex_validator_fancy_characters():
         test_wiring=WorkflowWiring(),
         documentation="",
     )
+
 
 def test_tr_validator_io_interface_fits_to_content():
     tr_json_empty_io_interface = deepcopy(tr_json_valid_released_example)

@@ -419,7 +419,9 @@ async def test_execute_for_component_dto(async_test_client, clean_test_db_engine
 
 
 @pytest.mark.asyncio
-async def test_execute_for_component_without_hetdesrun_imports(async_test_client, clean_test_db_engine):
+async def test_execute_for_component_without_hetdesrun_imports(
+    async_test_client, clean_test_db_engine
+):
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
@@ -432,39 +434,37 @@ async def test_execute_for_component_without_hetdesrun_imports(async_test_client
         )
         component_tr_json = load_json(path)
         wiring_json = {
-            "id":"38f168ef-cb06-d89c-79b3-0cd823f32e9d",
-            "name":"STANDARD-WIRING",
-            "inputWirings":[
+            "id": "38f168ef-cb06-d89c-79b3-0cd823f32e9d",
+            "name": "STANDARD-WIRING",
+            "inputWirings": [
                 {
-                    "id":"8c249f92-4b81-457e-9371-24204d6b373b",
-                    "workflowInputName":"scores",
-                    "adapterId":"direct_provisioning",
-                    "filters":{
-                        "value":(
+                    "id": "8c249f92-4b81-457e-9371-24204d6b373b",
+                    "workflowInputName": "scores",
+                    "adapterId": "direct_provisioning",
+                    "filters": {
+                        "value": (
                             "{\n"
-                            "    \"2020-01-03T08:20:03.000Z\": 18.7,\n"
-                            "    \"2020-01-01T01:15:27.000Z\": 42.2,\n"
-                            "    \"2020-01-03T08:20:04.000Z\": 25.9\n"
+                            '    "2020-01-03T08:20:03.000Z": 18.7,\n'
+                            '    "2020-01-01T01:15:27.000Z": 42.2,\n'
+                            '    "2020-01-03T08:20:04.000Z": 25.9\n'
                             "}"
                         )
-                    }
+                    },
                 },
                 {
-                    "id":"0f0f97f7-1f5d-4f5d-be11-7c7b78d02129",
-                    "workflowInputName":"threshold",
-                    "adapterId":"direct_provisioning",
-                    "filters":{
-                        "value":"30"
-                    }
-                }
+                    "id": "0f0f97f7-1f5d-4f5d-be11-7c7b78d02129",
+                    "workflowInputName": "threshold",
+                    "adapterId": "direct_provisioning",
+                    "filters": {"value": "30"},
+                },
             ],
-            "outputWirings":[]
+            "outputWirings": [],
         }
 
         tr = TransformationRevision(**component_tr_json)
         tr.content = update_code(tr.content, tr.to_component_info())
         assert "COMPONENT_INFO" in tr.content
-        
+
         store_single_transformation_revision(tr)
 
         async with async_test_client as ac:

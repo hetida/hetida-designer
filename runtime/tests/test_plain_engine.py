@@ -219,4 +219,3 @@ async def test_nested_workflow():
 
     res = await wf.result
     assert res["sum_result"] == 3.7
-

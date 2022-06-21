@@ -787,7 +787,9 @@ async def test_execute_latest_for_transformation_revision_works(
             tr_component_1_new_revision = TransformationRevision(
                 **tr_json_component_1_new_revision
             )
-            tr_component_1_new_revision.content = generate_code(tr_component_1_new_revision)
+            tr_component_1_new_revision.content = generate_code(
+                tr_component_1_new_revision
+            )
             tr_component_1_new_revision.release()
             store_single_transformation_revision(tr_component_1_new_revision)
 
@@ -955,7 +957,9 @@ async def test_put_workflow_transformation(async_test_client, clean_test_db_engi
 
 
 @pytest.mark.asyncio
-async def test_put_component_transformation_with_update_code(async_test_client, clean_test_db_engine):
+async def test_put_component_transformation_with_update_code(
+    async_test_client, clean_test_db_engine
+):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
@@ -967,9 +971,8 @@ async def test_put_component_transformation_with_update_code(async_test_client, 
 
         async with async_test_client as ac:
             response = await ac.put(
-                posix_urljoin(
-                    "/api/transformations/", example_component_tr_json["id"]
-                ) + "?update_component_code=True",
+                posix_urljoin("/api/transformations/", example_component_tr_json["id"])
+                + "?update_component_code=True",
                 json=example_component_tr_json,
             )
 
@@ -985,7 +988,9 @@ async def test_put_component_transformation_with_update_code(async_test_client, 
 
 
 @pytest.mark.asyncio
-async def test_put_component_transformation_without_update_code(async_test_client, clean_test_db_engine):
+async def test_put_component_transformation_without_update_code(
+    async_test_client, clean_test_db_engine
+):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
@@ -997,9 +1002,8 @@ async def test_put_component_transformation_without_update_code(async_test_clien
 
         async with async_test_client as ac:
             response = await ac.put(
-                posix_urljoin(
-                    "/api/transformations/", example_component_tr_json["id"]
-                ) + "?update_component_code=False",
+                posix_urljoin("/api/transformations/", example_component_tr_json["id"])
+                + "?update_component_code=False",
                 json=example_component_tr_json,
             )
 
