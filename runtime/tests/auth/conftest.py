@@ -9,7 +9,7 @@ from cryptography.hazmat.backends import default_backend as crypto_default_backe
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from httpx import AsyncClient
-from jose import JWTError, constants, jwk, jwt
+from jose import constants, jwk, jwt
 
 from hetdesrun.persistence import sessionmaker
 from hetdesrun.webservice.application import init_app

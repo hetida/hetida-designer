@@ -1,6 +1,5 @@
 import json
 import os
-from copy import deepcopy
 from uuid import uuid4
 
 import pytest
@@ -145,7 +144,10 @@ async def test_null_values_pass_any_pass_through(async_test_client):
     async with async_test_client as client:
 
         exec_result = await run_single_component(
-            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+            (
+                "./transformations/components/connectors/"
+                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+            ),
             {"input": {"a": 1.5, "b": None}},
             client,
         )
@@ -161,7 +163,10 @@ async def test_null_list_values_pass_any_pass_through(async_test_client):
     async with async_test_client as client:
 
         exec_result = await run_single_component(
-            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+            (
+                "./transformations/components/connectors/"
+                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+            ),
             {"input": [1.2, None]},
             client,
         )
@@ -173,7 +178,10 @@ async def test_null_values_pass_series_pass_through(async_test_client):
     async with async_test_client as client:
 
         exec_result = await run_single_component(
-            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+            (
+                "./transformations/components/connectors/"
+                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+            ),
             {"input": {"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}},
             client,
         )
@@ -183,7 +191,10 @@ async def test_null_values_pass_series_pass_through(async_test_client):
         }
 
         exec_result = await run_single_component(
-            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+            (
+                "./transformations/components/connectors/"
+                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+            ),
             {"input": [1.2, 2.5, None]},
             client,
         )
@@ -195,7 +206,10 @@ async def test_all_null_values_pass_series_pass_through(async_test_client):
     async with async_test_client as client:
 
         exec_result = await run_single_component(
-            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+            (
+                "./transformations/components/connectors/"
+                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+            ),
             {"input": {"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}},
             client,
         )
@@ -209,7 +223,10 @@ async def test_all_null_values_pass_series_pass_through(async_test_client):
 async def test_nested_wf_execution(async_test_client):
     async with async_test_client as client:
 
-        with open(os.path.join("tests", "data", "nested_wf_execution_input.json")) as f:
+        with open(
+            os.path.join("tests", "data", "nested_wf_execution_input.json"),
+            encoding="utf8",
+        ) as f:
             loaded_workflow_exe_input = json.load(f)
         response_status_code, response_json = await run_workflow_with_client(
             loaded_workflow_exe_input, client

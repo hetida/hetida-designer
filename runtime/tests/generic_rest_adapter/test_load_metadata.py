@@ -1,23 +1,14 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 from unittest import mock
 
-import pandas as pd
 import pytest
 
 from hetdesrun.adapters.exceptions import (
-    AdapterClientWiringInvalidError,
     AdapterConnectionError,
     AdapterHandlingException,
 )
-from hetdesrun.adapters.generic_rest import (
-    load_data,
-    load_grouped_timeseries_data_together,
-)
-from hetdesrun.adapters.generic_rest.external_types import ExternalType
-from hetdesrun.adapters.generic_rest.load_metadata import (
-    load_multiple_metadata,
-    load_single_metadatum_from_adapter,
-)
+from hetdesrun.adapters.generic_rest import load_data
+from hetdesrun.adapters.generic_rest.load_metadata import load_multiple_metadata
 from hetdesrun.models.data_selection import FilteredSource
 
 

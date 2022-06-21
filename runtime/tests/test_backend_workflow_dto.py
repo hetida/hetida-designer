@@ -14,6 +14,8 @@ from hetdesrun.backend.models.workflow import (
     position_from_input_connector_id,
 )
 
+# pylint: disable=too-many-lines
+
 valid_workflow_example_iso_forest: dict = {
     "id": "67c14cf2-cd4e-410e-9aca-6664273ccc3f",
     "groupId": "b123bfb6-f8ee-422f-bbf8-01668a471e88",
@@ -1227,7 +1229,7 @@ def test_from_constant():
     )
 
     assert str(io_dto.id) == valid_input_without_name["id"]
-    assert io_dto.name == None
+    assert io_dto.name is None
     assert io_dto.type == valid_input_without_name["type"]
     assert io_dto.pos_x == valid_input_without_name["posX"]
     assert io_dto.pos_y == valid_input_without_name["posY"]
@@ -1726,8 +1728,8 @@ def test_workflow_dto_from_transformation_revision_and_back_matches_with_ambiguo
     assert len(transformation_revision.content.operators) == len(
         returned_transformation_revision.content.operators
     )
-    for i in range(len(transformation_revision.content.operators)):
-        assert (
-            transformation_revision.content.operators[i]
-            == returned_transformation_revision.content.operators[i]
-        )
+    for op, op_returned in zip(
+        transformation_revision.content.operators,
+        returned_transformation_revision.content.operators,
+    ):
+        assert op == op_returned
