@@ -52,6 +52,7 @@ def configure_logging(
                 ", component instance: %(currently_executed_instance_id)s"
                 ", component id: %(currently_executed_component_id)s"
                 ", component node name: %(currently_executed_component_node_name)s"
+                ", job id: %(job_id)s"
                 "]"
             )
             if log_execution_context

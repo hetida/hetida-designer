@@ -40,6 +40,6 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime:0.7.2 -c 'from hetdesrun.exportimport.importing import import_all; import_all("/mnt/obj_repo/migration_data/");'
+  hetida/designer-runtime:0.7.2 -c 'from hetdesrun.exportimport.importing import import_all; import_all("/mnt/obj_repo/migration_data/", update_component_code=False);'
 ```
 
