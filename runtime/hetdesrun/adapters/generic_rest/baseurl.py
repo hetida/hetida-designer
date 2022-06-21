@@ -1,28 +1,21 @@
 """Loading and caching of generic rest adapter base urls"""
 
-import threading
-from typing import List, Dict
-
 import logging
-
+import threading
 from posixpath import join as posix_urljoin
+from typing import Dict, List
 
 import httpx
-
 from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
 
-from hetdesrun.webservice.config import get_config
-
-from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
     AdapterHandlingException,
 )
-
-from hetdesrun.backend.service.adapter_router import get_all_adapters
-
+from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.backend.models.adapter import AdapterFrontendDto
-
+from hetdesrun.backend.service.adapter_router import get_all_adapters
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 

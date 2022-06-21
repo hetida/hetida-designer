@@ -5,10 +5,8 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, root_validator
 
 from hetdesrun.models.code import NonEmptyValidStr, ShortNonEmptyValidStr
-
+from hetdesrun.persistence.models.io import Connector, Position
 from hetdesrun.utils import State, Type
-
-from hetdesrun.persistence.models.io import Position, Connector
 
 
 class Operator(BaseModel):

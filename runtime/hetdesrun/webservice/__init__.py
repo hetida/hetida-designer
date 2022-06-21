@@ -1,4 +1,5 @@
 from functools import cache
+
 from fastapi import FastAPI
 
 

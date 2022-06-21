@@ -1,15 +1,13 @@
-from typing import List, Any, Dict
-
 import logging
 from contextvars import ContextVar
+from typing import Any, Dict, List
 
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPBasicCredentials, HTTPBearer
 from starlette.status import HTTP_403_FORBIDDEN
 
-from fastapi import HTTPException, Depends
-from fastapi.security import HTTPBasicCredentials, HTTPBearer
-
+from hetdesrun.webservice.auth import AuthentificationError, BearerVerifier
 from hetdesrun.webservice.config import get_config
-from hetdesrun.webservice.auth import BearerVerifier, AuthentificationError
 
 logger = logging.getLogger(__name__)
 

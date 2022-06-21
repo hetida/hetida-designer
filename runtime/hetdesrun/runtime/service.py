@@ -1,28 +1,25 @@
-from typing import Optional
 import logging
 import traceback
+from typing import Optional
+
 from fastapi.encoders import jsonable_encoder
 
-
-from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
-from hetdesrun.runtime.context import execution_context
-
-from hetdesrun.runtime.engine.plain.parsing import (
-    parse_workflow_input,
-    WorkflowParsingException,
-)
+from hetdesrun.adapters import AdapterHandlingException
 from hetdesrun.datatypes import NamedDataTypedValue
+from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
 from hetdesrun.runtime import RuntimeExecutionError
+from hetdesrun.runtime.context import execution_context
 from hetdesrun.runtime.engine.plain import workflow_execution_plain
+from hetdesrun.runtime.engine.plain.parsing import (
+    WorkflowParsingException,
+    parse_workflow_input,
+)
 from hetdesrun.runtime.engine.plain.workflow import obtain_all_nodes
+from hetdesrun.utils import model_to_pretty_json_str
 from hetdesrun.wiring import (
     resolve_and_load_data_from_wiring,
     resolve_and_send_data_from_wiring,
 )
-
-from hetdesrun.adapters import AdapterHandlingException
-from hetdesrun.utils import model_to_pretty_json_str
-
 
 logger = logging.getLogger(__name__)
 

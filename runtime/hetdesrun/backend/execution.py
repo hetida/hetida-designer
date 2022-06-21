@@ -1,50 +1,39 @@
 """Handle execution of transformation revisions."""
 
-from typing import List, Dict, Union
 import json
 import logging
-from uuid import UUID, uuid4
 from posixpath import join as posix_urljoin
+from typing import Dict, List, Union
+from uuid import UUID, uuid4
 
-
-from pydantic import (
-    BaseModel,
-    ValidationError,
-    Field,
-)  # pylint: disable=no-name-in-module
 import httpx
-
-from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.models.workflow import WorkflowNode
-from hetdesrun.models.component import ComponentNode
-
-from hetdesrun.utils import Type
-
-from hetdesrun.webservice.auth_dependency import get_auth_headers
+from pydantic import (  # pylint: disable=no-name-in-module
+    BaseModel,
+    Field,
+    ValidationError,
+)
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-
-from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
-from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError
-
-from hetdesrun.runtime.service import runtime_service
-from hetdesrun.webservice.config import get_config
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
-from hetdesrun.runtime.logging import execution_context_filter
-
-
+from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.run import (
     ConfigurationInput,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-
+from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.workflow import WorkflowNode
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_all_nested_transformation_revisions,
+    read_single_transformation_revision,
 )
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.runtime.logging import execution_context_filter
+from hetdesrun.runtime.service import runtime_service
+from hetdesrun.utils import Type
+from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 logger.addFilter(execution_context_filter)

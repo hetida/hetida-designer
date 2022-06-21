@@ -4,9 +4,8 @@ from functools import cache
 from typing import Callable, Optional
 from uuid import uuid4
 
-from pydantic import ValidationError
-
 import aiokafka
+from pydantic import ValidationError
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -15,11 +14,11 @@ from hetdesrun.backend.execution import (
     execute_transformation_revision,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-from hetdesrun.webservice.config import get_config
 from hetdesrun.persistence.dbservice.revision import (
     DBNotFoundError,
     get_latest_revision_id,
 )
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 

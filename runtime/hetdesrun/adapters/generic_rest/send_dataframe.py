@@ -1,17 +1,13 @@
-from typing import Dict, List
 import asyncio
+from typing import Dict, List
 
-
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from httpx import AsyncClient
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
-
-from hetdesrun.models.data_selection import FilteredSink
-
 from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
+from hetdesrun.models.data_selection import FilteredSink
 from hetdesrun.webservice.config import get_config
 
 

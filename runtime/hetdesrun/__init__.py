@@ -1,9 +1,9 @@
 import logging
-from hetdesrun.webservice.config import get_config
-from hetdesrun.runtime.logging import execution_context_filter
-from hetdesrun.runtime import runtime_component_logger as logger
 
 import hetdesrun_config
+from hetdesrun.runtime import runtime_component_logger as logger
+from hetdesrun.runtime.logging import execution_context_filter
+from hetdesrun.webservice.config import get_config
 
 migrations_invoked_from_py = False
 

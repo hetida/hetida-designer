@@ -1,26 +1,18 @@
-from typing import Dict, Any
 import asyncio
-
-import urllib
 import logging
+import urllib
 from posixpath import join as posix_urljoin
+from typing import Any, Dict
 
 import httpx
 
-from hetdesrun.models.data_selection import FilteredSink
-
-from hetdesrun.models.adapter_data import RefIdType
-
-from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
-
-from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
-
-from hetdesrun.adapters.generic_rest.external_types import ExternalType
-
-from hetdesrun.webservice.config import get_config
-
-
 from hetdesrun.adapters.exceptions import AdapterConnectionError
+from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
+from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
+from hetdesrun.models.adapter_data import RefIdType
+from hetdesrun.models.data_selection import FilteredSink
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 

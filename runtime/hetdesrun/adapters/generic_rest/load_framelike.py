@@ -4,34 +4,23 @@ Common utilities for loading data that is frame-like (tabular), i.e. dataframes 
 timeseries (where the later can be understood as special dataframe/table)
 """
 
-from typing import List, Tuple, Literal, Dict, Union, Type
-from posixpath import join as posix_urljoin
-
-import logging
 import datetime
-
-import requests
+import logging
+from posixpath import join as posix_urljoin
+from typing import Dict, List, Literal, Tuple, Type, Union
 
 import pandas as pd
+import requests
 
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
     AdapterHandlingException,
 )
-
-from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
-
-from hetdesrun.adapters.generic_rest.external_types import (
-    ExternalType,
-    df_empty,
-)
-
-from hetdesrun.models.data_selection import FilteredSource
-
-from hetdesrun.webservice.config import get_config
-
-
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
+from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
+from hetdesrun.adapters.generic_rest.external_types import ExternalType, df_empty
+from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 

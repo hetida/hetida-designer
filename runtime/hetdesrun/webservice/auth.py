@@ -1,14 +1,12 @@
-from typing import Optional
-import logging
-import json
 import datetime
+import json
+import logging
 import threading
-
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from typing import Optional
 
 import httpx
-
-from jose import jwt, JOSEError
+from jose import JOSEError, jwt
+from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 
 logger = logging.getLogger(__name__)
 

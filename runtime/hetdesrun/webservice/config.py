@@ -1,16 +1,10 @@
-import os
 import datetime
+import os
 from enum import Enum
 from typing import Optional, Union
 
 # pylint: disable=no-name-in-module
-from pydantic import (
-    BaseSettings,
-    Field,
-    SecretStr,
-    validator,
-)
-
+from pydantic import BaseSettings, Field, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
 

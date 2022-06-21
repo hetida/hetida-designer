@@ -1,30 +1,26 @@
-import os
 import json
 import logging
-import unicodedata
+import os
 import re
-
-from uuid import UUID
+import unicodedata
 from pathlib import Path
 from posixpath import join as posix_urljoin
-from typing import List, Dict, Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
+from uuid import UUID
 
 import requests
 
-from hetdesrun.utils import (
-    Type,
-    State,
-    get_backend_basic_auth,
-    selection_list_empty_or_contains_value,
-    criterion_unset_or_matches_value,
-)
-
-from hetdesrun.webservice.auth_dependency import get_auth_headers
-
-from hetdesrun.webservice.config import get_config
-
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
+from hetdesrun.utils import (
+    State,
+    Type,
+    criterion_unset_or_matches_value,
+    get_backend_basic_auth,
+    selection_list_empty_or_contains_value,
+)
+from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, status
+
 from hetdesrun import VERSION
 from hetdesrun.backend.kafka.consumer import get_kafka_worker_context
 from hetdesrun.webservice.config import get_config

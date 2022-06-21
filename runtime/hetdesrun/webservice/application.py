@@ -1,36 +1,28 @@
 # -*- coding: utf-8 -*-
-from typing import Callable
-import logging
 import json
+import logging
+from typing import Callable
 
 from fastapi import FastAPI, HTTPException
-
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware import Middleware
-
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware import Middleware
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRoute
-
-from starlette.responses import JSONResponse
 from starlette.requests import Request
-from starlette.responses import Response
-
+from starlette.responses import JSONResponse, Response
 
 from hetdesrun import VERSION
-from hetdesrun.webservice.config import get_config
-
-
-from hetdesrun.backend.service.info_router import info_router
 from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
-from hetdesrun.backend.service.transformation_router import transformation_router
 from hetdesrun.backend.service.component_router import component_router
-from hetdesrun.backend.service.workflow_router import workflow_router
-from hetdesrun.backend.service.wiring_router import wiring_router
 from hetdesrun.backend.service.documentation_router import documentation_router
-
+from hetdesrun.backend.service.info_router import info_router
+from hetdesrun.backend.service.transformation_router import transformation_router
+from hetdesrun.backend.service.wiring_router import wiring_router
+from hetdesrun.backend.service.workflow_router import workflow_router
 from hetdesrun.webservice.auth_dependency import get_auth_deps
+from hetdesrun.webservice.config import get_config
 
 if get_config().hd_kafka_consumer_enabled:
     from hetdesrun.backend.kafka.consumer import get_kafka_worker_context

@@ -1,21 +1,18 @@
 """Utilities for scripting and in particular component/workflow deployment"""
 
 import json
-from typing import List, Optional, Tuple, Any
-from enum import Enum
-from uuid import UUID
-import random
 import logging
+import random
+from enum import Enum
+from typing import Any, List, Optional, Tuple
+from uuid import UUID
 
 import requests  # pylint: disable=unused-import
-
-from pydantic import BaseModel  # pylint: disable=no-name-in-module
-
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
+from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 from hetdesrun.datatypes import DataType
-
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
