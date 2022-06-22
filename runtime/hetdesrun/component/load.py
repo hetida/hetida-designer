@@ -3,7 +3,7 @@ import importlib
 import logging
 import sys
 from types import ModuleType
-from typing import Callable, Coroutine, Optional, Tuple, Union
+from typing import Callable, Coroutine, Union
 
 
 class ComponentCodeImportError(Exception):

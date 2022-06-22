@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Dict, Optional
 
 from fastapi import APIRouter
 
@@ -8,7 +7,6 @@ from hetdesrun import VERSION
 from hetdesrun.models.base import VersionInfo
 from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
 from hetdesrun.runtime.service import runtime_service
-from hetdesrun.utils import model_to_pretty_json_str
 from hetdesrun.webservice.auth_dependency import get_auth_deps
 
 logger = logging.getLogger(__name__)
