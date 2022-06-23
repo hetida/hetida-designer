@@ -43,7 +43,7 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     this.code = this.componentBaseItem.code;
     this.lastSaved = this.componentBaseItem.code;
     this.editorOptions.readOnly =
-      this.componentBaseItem.state === RevisionState.RELEASED;
+      this.componentBaseItem.state !== RevisionState.DRAFT;
   }
 
   get componentBaseItem(): ComponentBaseItem {
@@ -87,12 +87,18 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
   }
 
   public set code(code: string) {
+    if (this.componentBaseItem.state !== RevisionState.DRAFT) {
+      this.setEditorReadOnly(true);
+    }
+
     this.codeCopy = code;
     this._autoSave$.next();
   }
 
-  public setEditorReadOnly(readOnly: boolean): void {
-    const editor = this.monacoEditor;
-    editor.options.readOnly = readOnly;
+  private setEditorReadOnly(readOnly: boolean): void {
+    if (this.monacoEditor !== undefined) {
+      this.editorOptions.readOnly = readOnly;
+      this.monacoEditor.options = this.editorOptions;
+    }
   }
 }
