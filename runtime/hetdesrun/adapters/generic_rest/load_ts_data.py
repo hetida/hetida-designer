@@ -55,6 +55,7 @@ def extract_one_channel_series_from_loaded_data(
         extracted_df = df[df["timeseriesId"] == ts_id].copy()
         extracted_df.index = extracted_df["timestamp"]
         extracted_series = extracted_df["value"].sort_index()
+        extracted_series.attrs = df.attrs[ts_id]
     except KeyError as e:
         msg = (
             f"Missing keys in received timeseries records. Got columns {str(df.columns)}"
