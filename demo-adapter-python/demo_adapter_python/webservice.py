@@ -671,14 +671,27 @@ async def timeseries(
     return StreamingResponse(io_stream, media_type="application/json", headers=headers)
 
 
+def decode_attributes(data_attributes: str) -> Any:
+    base64_bytes = data_attributes.encode("utf-8")
+    logger.debug("data_attributes=%s", data_attributes)
+    df_attrs_bytes = base64.b64decode(base64_bytes)
+    df_attrs_json_str = df_attrs_bytes.decode("utf-8")
+    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
+    df_attrs = json.loads(df_attrs_json_str)
+    return df_attrs
+
+
 @demo_adapter_main_router.post("/timeseries", status_code=200)
 async def post_timeseries(
     ts_body: List[TimeseriesRecord],
     ts_id: str = Query(..., alias="timeseriesId"),
+    data_attributes: Optional[str] = Header(None),
 ) -> Dict:
     logger.info("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
     if ts_id.endswith("anomaly_score"):
         df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
+        if data_attributes is not None and len(data_attributes) != 0:
+            df.attrs = decode_attributes(data_attributes)
         set_value_in_store(ts_id, df)
         logger.info(
             "stored timeseries %s in store: %s\n with columns %s",
@@ -764,16 +777,6 @@ async def dataframe(
     io_stream.seek(0)
 
     return StreamingResponse(io_stream, media_type="application/json", headers=headers)
-
-
-def decode_attributes(data_attributes: str) -> Any:
-    base64_bytes = data_attributes.encode("utf-8")
-    logger.debug("data_attributes=%s", data_attributes)
-    df_attrs_bytes = base64.b64decode(base64_bytes)
-    df_attrs_json_str = df_attrs_bytes.decode("utf-8")
-    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
-    df_attrs = json.loads(df_attrs_json_str)
-    return df_attrs
 
 
 @demo_adapter_main_router.post("/dataframe", status_code=200)
