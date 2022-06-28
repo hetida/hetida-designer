@@ -633,6 +633,7 @@ async def timeseries(
                         "value": stored_df["value"],
                     }
                 )
+                ts_df.attrs = stored_df.attrs
             else:
                 ts_df = pd.DataFrame(
                     {
@@ -641,10 +642,13 @@ async def timeseries(
                         "value": [],
                     }
                 )
-            ts_df.attrs = {
-                "from_timestamp": from_timestamp.isoformat(),
-                "to_timestamp": to_timestamp.isoformat(),
-            }
+            # do not overwrite stored attributes!
+            ts_df.attrs.update(
+                {
+                    "from_timestamp": from_timestamp.isoformat(),
+                    "to_timestamp": to_timestamp.isoformat(),
+                }
+            )
 
         else:
             offset = 0.0
