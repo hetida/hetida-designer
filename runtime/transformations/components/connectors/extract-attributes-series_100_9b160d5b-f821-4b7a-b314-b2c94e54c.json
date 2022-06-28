@@ -31,12 +31,12 @@
             {
                 "workflow_input_name": "series",
                 "adapter_id": "demo-adapter-python",
-                "ref_id": "root.plantA.picklingUnit.influx.temp",
+                "ref_id": "root.plantA.picklingUnit.influx.anomaly_score",
                 "ref_id_type": "SOURCE",
                 "type": "timeseries(float)",
                 "filters": {
-                    "timestampFrom": "2022-06-26T16:01:00.000000000Z",
-                    "timestampTo": "2022-06-27T16:01:00.000000000Z"
+                    "timestampFrom": "2022-06-27T07:56:00.000000000Z",
+                    "timestampTo": "2022-06-28T07:56:00.000000000Z"
                 }
             }
         ],
