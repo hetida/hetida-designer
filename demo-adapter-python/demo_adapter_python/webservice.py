@@ -641,7 +641,10 @@ async def timeseries(
                         "value": [],
                     }
                 )
-            ts_df.attrs = {"from_timestamp": from_timestamp, "to_timestamp": to_timestamp}
+            ts_df.attrs = {
+                "from_timestamp": from_timestamp.isoformat(),
+                "to_timestamp": to_timestamp.isoformat(),
+            }
 
         else:
             offset = 0.0
@@ -656,8 +659,8 @@ async def timeseries(
             )
         # throws warning during pytest:
         ts_df.to_json(io_stream, lines=True, orient="records", date_format="iso")
-    
-        if len(ts_df.attrs) != 0 :
+
+        if len(ts_df.attrs) != 0:
             logger.debug("which has attributes %s", str(ts_df.attrs))
             collected_attrs[ts_id] = ts_df.attrs
 
