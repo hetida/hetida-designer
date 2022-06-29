@@ -49,6 +49,12 @@ runtime_router = APIRouter(tags=["runtime"])
     "/runtime",
     response_model=WorkflowExecutionResult,
     dependencies=get_auth_deps(),
+    include_in_schema=False,
+)
+@runtime_router.post(
+    "/runtime/",
+    response_model=WorkflowExecutionResult,
+    dependencies=get_auth_deps(),
 )
 # pylint: disable=R0911
 async def runtime_service(
@@ -233,7 +239,8 @@ async def runtime_service(
     return wf_exec_result
 
 
-@runtime_router.get("/info", response_model=VersionInfo)
+@runtime_router.get("/info", response_model=VersionInfo, include_in_schema=False)
+@runtime_router.get("/info/", response_model=VersionInfo)
 async def info_service() -> dict:
     """Version Info Endpoint
 
