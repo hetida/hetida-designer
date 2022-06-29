@@ -113,7 +113,10 @@ app.router.route_class = AdditionalLoggingRoute
 demo_adapter_main_router = APIRouter()
 
 
-@demo_adapter_main_router.get("/info", response_model=InfoResponse)
+@demo_adapter_main_router.get(
+    "/info", response_model=InfoResponse, include_in_schema=False
+)
+@demo_adapter_main_router.get("/info/", response_model=InfoResponse)
 async def info():
     return {
         "id": "python-demo-adapter",
@@ -122,7 +125,10 @@ async def info():
     }
 
 
-@demo_adapter_main_router.get("/structure", response_model=StructureResponse)
+@demo_adapter_main_router.get(
+    "/structure", response_model=StructureResponse, include_in_schema=False
+)
+@demo_adapter_main_router.get("/structure/", response_model=StructureResponse)
 async def structure(parentId: Optional[str] = None):
     """The hierarchical structure for easy assignment of sources/sinks in user interfaces
 
@@ -157,7 +163,10 @@ async def structure(parentId: Optional[str] = None):
     }
 
 
-@demo_adapter_main_router.get("/sources", response_model=MultipleSourcesResponse)
+@demo_adapter_main_router.get(
+    "/sources", response_model=MultipleSourcesResponse, include_in_schema=False
+)
+@demo_adapter_main_router.get("/sources/", response_model=MultipleSourcesResponse)
 async def sources(filter_str: Optional[str] = Query(None, alias="filter")):
 
     return_sources = get_sources(filter_str=filter_str, include_sub_objects=True)
@@ -167,6 +176,11 @@ async def sources(filter_str: Optional[str] = Query(None, alias="filter")):
     )
 
 
+@demo_adapter_main_router.get(
+    "/sources/{sourceId}/metadata",
+    response_model=List[GetMetadatum],
+    include_in_schema=False,
+)
 @demo_adapter_main_router.get(
     "/sources/{sourceId}/metadata/", response_model=List[GetMetadatum]
 )
@@ -202,7 +216,12 @@ async def get_all_metadata_source(sourceId: str):
 
 
 @demo_adapter_main_router.get(
-    "/sources/{sourceId}/metadata/{key}", response_model=GetMetadatum
+    "/sources/{sourceId}/metadata/{key}",
+    response_model=GetMetadatum,
+    include_in_schema=False,
+)
+@demo_adapter_main_router.get(
+    "/sources/{sourceId}/metadata/{key}/", response_model=GetMetadatum
 )
 async def get_metadata_source_by_key(sourceId: str, key: str):
     # pylint: disable=too-many-return-statements,too-many-branches
@@ -247,7 +266,10 @@ async def get_metadata_source_by_key(sourceId: str, key: str):
     )
 
 
-@demo_adapter_main_router.post("/sources/{sourceId}/metadata/{key}", status_code=200)
+@demo_adapter_main_router.post(
+    "/sources/{sourceId}/metadata/{key}", status_code=200, include_in_schema=False
+)
+@demo_adapter_main_router.post("/sources/{sourceId}/metadata/{key}/", status_code=200)
 async def post_metadata_source_by_key(
     sourceId: str, key: str, metadatum: PostMetadatum
 ):
@@ -270,7 +292,10 @@ async def post_metadata_source_by_key(
 
 
 @demo_adapter_main_router.get(
-    "/sources/{source_id:path}", response_model=StructureSource
+    "/sources/{source_id:path}", response_model=StructureSource, include_in_schema=False
+)
+@demo_adapter_main_router.get(
+    "/sources/{source_id:path}/", response_model=StructureSource
 )
 async def source(source_id: str):
     """Get a single source by id"""
@@ -289,13 +314,21 @@ async def source(source_id: str):
     return StructureSource.parse_obj(requested_sources[0])
 
 
-@demo_adapter_main_router.get("/sinks", response_model=MultipleSinksResponse)
+@demo_adapter_main_router.get(
+    "/sinks", response_model=MultipleSinksResponse, include_in_schema=False
+)
+@demo_adapter_main_router.get("/sinks/", response_model=MultipleSinksResponse)
 async def sinks(filter_str: Optional[str] = Query(None, alias="filter")):
     return_sinks = get_sinks(filter_str=filter_str, include_sub_objects=True)
 
     return MultipleSinksResponse(resultCount=len(return_sinks), sinks=return_sinks)
 
 
+@demo_adapter_main_router.get(
+    "/sinks/{sinkId}/metadata",
+    response_model=List[GetMetadatum],
+    include_in_schema=False,
+)
 @demo_adapter_main_router.get(
     "/sinks/{sinkId}/metadata/", response_model=List[GetMetadatum]
 )
@@ -316,7 +349,12 @@ async def get_all_metadata_sink(sinkId: str):
 
 
 @demo_adapter_main_router.get(
-    "/sinks/{sinkId}/metadata/{key}", response_model=GetMetadatum
+    "/sinks/{sinkId}/metadata/{key}",
+    response_model=GetMetadatum,
+    include_in_schema=False,
+)
+@demo_adapter_main_router.get(
+    "/sinks/{sinkId}/metadata/{key}/", response_model=GetMetadatum
 )
 async def get_metadata_sink_by_key(sinkId: str, key: str):
     key = unquote(key)
@@ -342,7 +380,10 @@ async def get_metadata_sink_by_key(sinkId: str, key: str):
     )
 
 
-@demo_adapter_main_router.post("/sinks/{sinkId}/metadata/{key}", status_code=200)
+@demo_adapter_main_router.post(
+    "/sinks/{sinkId}/metadata/{key}", status_code=200, include_in_schema=False
+)
+@demo_adapter_main_router.post("/sinks/{sinkId}/metadata/{key}/", status_code=200)
 async def post_metadata_sink_by_key(sinkId: str, key: str, metadatum: PostMetadatum):
     key = unquote(key)
     if sinkId.endswith("anomaly_score") and key == "Overshooting Allowed":
@@ -362,7 +403,10 @@ async def post_metadata_sink_by_key(sinkId: str, key: str, metadatum: PostMetada
     )
 
 
-@demo_adapter_main_router.get("/sinks/{sink_id}", response_model=StructureSink)
+@demo_adapter_main_router.get(
+    "/sinks/{sink_id}", response_model=StructureSink, include_in_schema=False
+)
+@demo_adapter_main_router.get("/sinks/{sink_id}/", response_model=StructureSink)
 async def sink(sink_id: str):
     """Get a single sink by id"""
     requested_sinks = [
@@ -380,6 +424,11 @@ async def sink(sink_id: str):
     return StructureSource.parse_obj(requested_sinks[0])
 
 
+@demo_adapter_main_router.get(
+    "/thingNodes/{thingNodeId}/metadata",
+    response_model=List[GetMetadatum],
+    include_in_schema=False,
+)
 @demo_adapter_main_router.get(
     "/thingNodes/{thingNodeId}/metadata/", response_model=List[GetMetadatum]
 )
@@ -417,7 +466,12 @@ def calculate_age(born):
 
 
 @demo_adapter_main_router.get(
-    "/thingNodes/{thingNodeId}/metadata/{key}", response_model=GetMetadatum
+    "/thingNodes/{thingNodeId}/metadata/{key}",
+    response_model=GetMetadatum,
+    include_in_schema=False,
+)
+@demo_adapter_main_router.get(
+    "/thingNodes/{thingNodeId}/metadata/{key}/", response_model=GetMetadatum
 )
 async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> GetMetadatum:
     # pylint: disable=too-many-return-statements
@@ -472,7 +526,10 @@ async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> GetMetada
 
 
 @demo_adapter_main_router.post(
-    "/thingNodes/{thingNodeId}/metadata/{key}", status_code=200
+    "/thingNodes/{thingNodeId}/metadata/{key}", status_code=200, include_in_schema=False
+)
+@demo_adapter_main_router.post(
+    "/thingNodes/{thingNodeId}/metadata/{key}/", status_code=200
 )
 async def post_metadata_thingNode_by_key(
     thingNodeId: str, key: str, metadatum: PostMetadatum
@@ -496,7 +553,10 @@ async def post_metadata_thingNode_by_key(
     )
 
 
-@demo_adapter_main_router.get("/thingNodes/{id}", response_model=StructureThingNode)
+@demo_adapter_main_router.get(
+    "/thingNodes/{id}", response_model=StructureThingNode, include_in_schema=False
+)
+@demo_adapter_main_router.get("/thingNodes/{id}/", response_model=StructureThingNode)
 async def thing_node(
     id: str,  # pylint: disable=redefined-builtin
 ) -> StructureThingNode:  # pylint: disable=redefined-builtin
@@ -516,7 +576,8 @@ async def thing_node(
     return StructureThingNode.parse_obj(requested_thing_nodes[0])
 
 
-@demo_adapter_main_router.get("/timeseries")
+@demo_adapter_main_router.get("/timeseries", include_in_schema=False)
+@demo_adapter_main_router.get("/timeseries/")
 async def timeseries(
     ids: List[str] = Query(..., alias="id", min_length=1),
     from_timestamp: datetime.datetime = Query(..., alias="from"),
@@ -576,7 +637,8 @@ async def timeseries(
     return StreamingResponse(io_stream, media_type="application/json")
 
 
-@demo_adapter_main_router.post("/timeseries", status_code=200)
+@demo_adapter_main_router.post("/timeseries", status_code=200, include_in_schema=False)
+@demo_adapter_main_router.post("/timeseries/", status_code=200)
 async def post_timeseries(
     ts_body: List[TimeseriesRecord],
     ts_id: str = Query(..., alias="timeseriesId"),
@@ -596,7 +658,8 @@ async def post_timeseries(
     raise HTTPException(404, f"No writable timeseries with id {ts_id}")
 
 
-@demo_adapter_main_router.get("/dataframe")
+@demo_adapter_main_router.get("/dataframe", include_in_schema=False)
+@demo_adapter_main_router.get("/dataframe/")
 async def dataframe(
     df_id: str = Query(..., alias="id")
 ) -> Union[HTTPException, StreamingResponse]:
@@ -661,7 +724,8 @@ async def dataframe(
     return StreamingResponse(io_stream, media_type="application/json")
 
 
-@demo_adapter_main_router.post("/dataframe", status_code=200)
+@demo_adapter_main_router.post("/dataframe", status_code=200, include_in_schema=False)
+@demo_adapter_main_router.post("/dataframe/", status_code=200)
 async def post_dataframe(
     df_body: List[Dict] = Body(
         ...,
