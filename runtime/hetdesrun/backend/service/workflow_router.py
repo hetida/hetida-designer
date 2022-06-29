@@ -51,6 +51,19 @@ workflow_router = APIRouter(
 
 
 @workflow_router.post(
+    "",
+    response_model=WorkflowRevisionFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Creates a new workflow.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {"description": "Successfully created the workflow"}
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
+@workflow_router.post(
     "/",
     response_model=WorkflowRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
@@ -110,6 +123,19 @@ async def create_workflow_revision(
 
 
 @workflow_router.get(
+    "",
+    response_model=List[WorkflowRevisionFrontendDto],
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Returns a list of all workflows",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got list of workflows"}
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
+@workflow_router.get(
     "/",
     response_model=List[WorkflowRevisionFrontendDto],
     response_model_exclude_none=True,  # needed because:
@@ -146,6 +172,17 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
 
 @workflow_router.get(
     "/{id}",
+    response_model=WorkflowRevisionFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Returns the workflow with the given id.",
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_200_OK: {"description": "Successfully got the workflow"}},
+    deprecated=True,
+    include_in_schema=False,
+)
+@workflow_router.get(
+    "/{id}/",
     response_model=WorkflowRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -190,6 +227,19 @@ async def get_workflow_revision_by_id(
 
 @workflow_router.put(
     "/{id}",
+    response_model=WorkflowRevisionFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Updates a workflow.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {"description": "Successfully updated the workflow"}
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
+@workflow_router.put(
+    "/{id}/",
     response_model=WorkflowRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -296,6 +346,19 @@ async def update_workflow_revision(
         status.HTTP_403_FORBIDDEN: {"description": "Workflow is already released"},
     },
     deprecated=True,
+    include_in_schema=False,
+)
+@workflow_router.delete(
+    "/{id}/",
+    summary="Deletes a workflow.",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_204_NO_CONTENT: {
+            "description": "Successfully deleted the workflow"
+        },
+        status.HTTP_403_FORBIDDEN: {"description": "Workflow is already released"},
+    },
+    deprecated=True,
 )
 async def delete_workflow_revision(
     # pylint: disable=redefined-builtin
@@ -337,6 +400,19 @@ async def delete_workflow_revision(
         status.HTTP_200_OK: {"description": "Successfully executed the workflow"}
     },
     deprecated=True,
+    include_in_schema=False,
+)
+@workflow_router.post(
+    "/{id}/execute/",
+    response_model=ExecutionResponseFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Executes a new workflow.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully executed the workflow"}
+    },
+    deprecated=True,
 )
 async def execute_workflow_revision(
     # pylint: disable=redefined-builtin
@@ -365,6 +441,21 @@ async def execute_workflow_revision(
 
 @workflow_router.post(
     "/{id}/wirings",
+    response_model=WorkflowRevisionFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Binds a wiring to the workflow.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "OK"},
+        status.HTTP_204_NO_CONTENT: {"description": "Successfully bound the workflow"},
+        status.HTTP_403_FORBIDDEN: {"description": "Wiring is already bound"},
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
+@workflow_router.post(
+    "/{id}/wirings/",
     response_model=WorkflowRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes

@@ -59,6 +59,20 @@ def generate_code(transformation_revision: TransformationRevision) -> str:
 
 
 @transformation_router.post(
+    "",
+    response_model=TransformationRevision,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Creates a transformation revision.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "description": "Successfully created the transformation revision"
+        }
+    },
+    include_in_schema=False,
+)
+@transformation_router.post(
     "/",
     response_model=TransformationRevision,
     response_model_exclude_none=True,  # needed because:
@@ -101,6 +115,20 @@ async def create_transformation_revision(
 
 
 @transformation_router.get(
+    "",
+    response_model=List[TransformationRevision],
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Returns combined list of all transformation revisions (components and workflows)",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully got all transformation revisions"
+        }
+    },
+    include_in_schema=False,
+)
+@transformation_router.get(
     "/",
     response_model=List[TransformationRevision],
     response_model_exclude_none=True,  # needed because:
@@ -134,6 +162,20 @@ async def get_all_transformation_revisions() -> List[TransformationRevision]:
 
 @transformation_router.get(
     "/{id}",
+    response_model=TransformationRevision,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Returns the transformation revision with the given id.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully got the transformation revision"
+        }
+    },
+    include_in_schema=False,
+)
+@transformation_router.get(
+    "/{id}/",
     response_model=TransformationRevision,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -306,6 +348,20 @@ def if_applicable_release_or_deprecate(
             "description": "Successfully updated the transformation revision"
         }
     },
+    include_in_schema=False,
+)
+@transformation_router.put(
+    "/{id}/",
+    response_model=TransformationRevision,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Updates basic attributes of a component or workflow.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "description": "Successfully updated the transformation revision"
+        }
+    },
 )
 async def update_transformation_revision(
     # pylint: disable=redefined-builtin
@@ -426,6 +482,20 @@ async def handle_trafo_revision_execution_request(
             "description": "Successfully executed the transformation revision"
         }
     },
+    include_in_schema=False,
+)
+@transformation_router.post(
+    "/execute/",
+    response_model=ExecutionResponseFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Executes a transformation revision",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully executed the transformation revision"
+        }
+    },
 )
 async def execute_transformation_revision_endpoint(
     # pylint: disable=redefined-builtin
@@ -436,6 +506,20 @@ async def execute_transformation_revision_endpoint(
 
 @transformation_router.post(
     "/execute-latest",
+    response_model=ExecutionResponseFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Executes a transformation revision",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully executed the transformation revision"
+        }
+    },
+    include_in_schema=False,
+)
+@transformation_router.post(
+    "/execute-latest/",
     response_model=ExecutionResponseFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes

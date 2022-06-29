@@ -21,6 +21,14 @@ info_router = APIRouter(
 
 
 @info_router.get(
+    "",
+    response_model=dict,
+    summary="Returns a sign of life",
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_200_OK: {"description": "Successfully got a sign of life"}},
+    include_in_schema=False,
+)
+@info_router.get(
     "/",
     response_model=dict,
     summary="Returns a sign of life",

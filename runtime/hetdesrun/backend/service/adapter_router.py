@@ -26,6 +26,16 @@ adapter_router = APIRouter(
 
 
 @adapter_router.get(
+    "",
+    response_model=List[AdapterFrontendDto],
+    summary="Returns all adapters",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got list of adapters"}
+    },
+    include_in_schema=False,
+)
+@adapter_router.get(
     "/",
     response_model=List[AdapterFrontendDto],
     summary="Returns all adapters",

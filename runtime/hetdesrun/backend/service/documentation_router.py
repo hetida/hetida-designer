@@ -41,6 +41,17 @@ documentation_router = APIRouter(
         status.HTTP_200_OK: {"description": "Successfully got the documentation"}
     },
     deprecated=True,
+    include_in_schema=False,
+)
+@documentation_router.get(
+    "/{id}/",
+    response_model=DocumentationFrontendDto,
+    summary="Returns the documentation with the given id.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got the documentation"}
+    },
+    deprecated=True,
 )
 async def get_component_revision_by_id(
     # pylint: disable=redefined-builtin
@@ -73,6 +84,19 @@ async def get_component_revision_by_id(
 
 @documentation_router.put(
     "/{id}",
+    response_model=DocumentationFrontendDto,
+    summary="Updates a documentation.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "description": "Successfully updated the documentation"
+        }
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
+@documentation_router.put(
+    "/{id}/",
     response_model=DocumentationFrontendDto,
     summary="Updates a documentation.",
     status_code=status.HTTP_201_CREATED,
@@ -131,6 +155,18 @@ async def update_documentation(
 
 @documentation_router.delete(
     "/{id}",
+    summary="Deletes a documentation.",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_204_NO_CONTENT: {
+            "description": "Successfully deleted the documentation"
+        },
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
+@documentation_router.delete(
+    "/{id}/",
     summary="Deletes a documentation.",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={

@@ -50,6 +50,19 @@ component_router = APIRouter(
 
 
 @component_router.post(
+    "",
+    response_model=ComponentRevisionFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Creates a new component.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {"description": "Successfully created the component"}
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
+@component_router.post(
     "/",
     response_model=ComponentRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
@@ -118,6 +131,17 @@ async def create_component_revision(
     status_code=status.HTTP_200_OK,
     responses={status.HTTP_200_OK: {"description": "Successfully got the component"}},
     deprecated=True,
+    include_in_schema=False,
+)
+@component_router.get(
+    "/{id}/",
+    response_model=ComponentRevisionFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Returns the component with the given id.",
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_200_OK: {"description": "Successfully got the component"}},
+    deprecated=True,
 )
 async def get_component_revision_by_id(
     # pylint: disable=redefined-builtin
@@ -155,6 +179,19 @@ async def get_component_revision_by_id(
 
 @component_router.put(
     "/{id}",
+    response_model=ComponentRevisionFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Updates a component.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {"description": "Successfully updated the component"}
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
+@component_router.put(
+    "/{id}/",
     response_model=ComponentRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -261,6 +298,19 @@ async def update_component_revision(
         status.HTTP_403_FORBIDDEN: {"description": "Component is already released"},
     },
     deprecated=True,
+    include_in_schema=False,
+)
+@component_router.delete(
+    "/{id}/",
+    summary="Deletes a component.",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_204_NO_CONTENT: {
+            "description": "Successfully deleted the component"
+        },
+        status.HTTP_403_FORBIDDEN: {"description": "Component is already released"},
+    },
+    deprecated=True,
 )
 async def delete_component_revision(
     # pylint: disable=redefined-builtin
@@ -301,6 +351,19 @@ async def delete_component_revision(
         status.HTTP_200_OK: {"description": "Successfully executed the component"}
     },
     deprecated=True,
+    include_in_schema=False,
+)
+@component_router.post(
+    "/{id}/execute/",
+    response_model=ExecutionResponseFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Executes a new component.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully executed the component"}
+    },
+    deprecated=True,
 )
 async def execute_component_revision(
     # pylint: disable=redefined-builtin
@@ -329,6 +392,21 @@ async def execute_component_revision(
 
 @component_router.post(
     "/{id}/wirings",
+    response_model=ComponentRevisionFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Binds a wiring to the component.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "OK"},
+        status.HTTP_204_NO_CONTENT: {"description": "Successfully bound the component"},
+        status.HTTP_403_FORBIDDEN: {"description": "Wiring is already bound"},
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
+@component_router.post(
+    "/{id}/wirings/",
     response_model=ComponentRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes

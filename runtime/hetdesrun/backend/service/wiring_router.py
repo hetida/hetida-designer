@@ -38,6 +38,18 @@ wiring_router = APIRouter(
         status.HTTP_201_CREATED: {"description": "Successfully updated the wiring"}
     },
     deprecated=True,
+    include_in_schema=False,
+)
+@wiring_router.put(
+    "/{id}/",
+    response_model=WiringFrontendDto,
+    response_model_exclude_none=True,
+    summary="Updates a wiring.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_201_CREATED: {"description": "Successfully updated the wiring"}
+    },
+    deprecated=True,
 )
 async def update_wiring(
     # pylint: disable=redefined-builtin

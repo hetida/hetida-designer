@@ -36,6 +36,17 @@ base_item_router = APIRouter(
 
 
 @base_item_router.get(
+    "",
+    response_model=List[TransformationRevisionFrontendDto],
+    response_model_exclude_unset=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Returns combined list of all base items (components and workflows)",
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_200_OK: {"description": "Successfully got all base items"}},
+    deprecated=True,
+    include_in_schema=False,
+)
+@base_item_router.get(
     "/",
     response_model=List[TransformationRevisionFrontendDto],
     response_model_exclude_unset=True,  # needed because:
@@ -79,6 +90,17 @@ async def get_all_transformation_revisions() -> List[TransformationRevisionFront
     status_code=status.HTTP_200_OK,
     responses={status.HTTP_200_OK: {"description": "Successfully got the base item"}},
     deprecated=True,
+    include_in_schema=False,
+)
+@base_item_router.get(
+    "/{id}/",
+    response_model=TransformationRevisionFrontendDto,
+    response_model_exclude_unset=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Returns the base item with the given id.",
+    status_code=status.HTTP_200_OK,
+    responses={status.HTTP_200_OK: {"description": "Successfully got the base item"}},
+    deprecated=True,
 )
 async def get_transformation_revision_by_id(
     # pylint: disable=redefined-builtin
@@ -111,6 +133,19 @@ async def get_transformation_revision_by_id(
     return transformation_revision_dto
 
 
+@base_item_router.post(
+    "",
+    response_model=TransformationRevisionFrontendDto,
+    response_model_exclude_unset=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Creates a new item.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {"description": "Successfully created the item"}
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
 @base_item_router.post(
     "/",
     response_model=TransformationRevisionFrontendDto,
@@ -176,6 +211,19 @@ async def create_transformation_revision(
 
 @base_item_router.put(
     "/{id}",
+    response_model=TransformationRevisionFrontendDto,
+    response_model_exclude_unset=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Updates basic attributes of a component or workflow.",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {"description": "Successfully updated the item"}
+    },
+    deprecated=True,
+    include_in_schema=False,
+)
+@base_item_router.put(
+    "/{id}/",
     response_model=TransformationRevisionFrontendDto,
     response_model_exclude_unset=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
