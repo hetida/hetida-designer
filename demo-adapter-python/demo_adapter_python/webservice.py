@@ -588,18 +588,30 @@ async def thing_node(
     return StructureThingNode.parse_obj(requested_thing_nodes[0])
 
 
+def encode_attributes(data_attrs: Any) -> str:
+    data_attrs_json_str = json.dumps(data_attrs)
+    logger.debug("df_attrs_json_str=%s", data_attrs_json_str)
+    data_attrs_bytes = data_attrs_json_str.encode("utf-8")
+    base64_bytes = base64.b64encode(data_attrs_bytes)
+    base64_str = base64_bytes.decode("utf-8")
+    logger.debug("base64_str=%s", base64_str)
+    return base64_str
+
+
 @demo_adapter_main_router.get("/timeseries")
 async def timeseries(
     ids: List[str] = Query(..., alias="id", min_length=1),
     from_timestamp: datetime.datetime = Query(..., alias="from"),
     to_timestamp: datetime.datetime = Query(..., alias="to"),
 ) -> StreamingResponse:
+    collected_attrs = {}
     io_stream = StringIO()
 
     dt_range = pd.date_range(
         start=from_timestamp, end=to_timestamp, freq="1h", tz=datetime.timezone.utc
     )
     for ts_id in ids:
+        logger.debug("loading timeseries dataframe with id %s", str(ts_id))
         ts_df = None
         if ts_id.endswith("temp"):
             offset = 100.0 if "plantA" in ts_id else 30.0
@@ -621,6 +633,7 @@ async def timeseries(
                         "value": stored_df["value"],
                     }
                 )
+                ts_df.attrs = stored_df.attrs
             else:
                 ts_df = pd.DataFrame(
                     {
@@ -629,6 +642,13 @@ async def timeseries(
                         "value": [],
                     }
                 )
+            # do not overwrite stored attributes!
+            ts_df.attrs.update(
+                {
+                    "from_timestamp": from_timestamp.isoformat(),
+                    "to_timestamp": to_timestamp.isoformat(),
+                }
+            )
 
         else:
             offset = 0.0
@@ -644,18 +664,38 @@ async def timeseries(
         # throws warning during pytest:
         ts_df.to_json(io_stream, lines=True, orient="records", date_format="iso")
 
+        if len(ts_df.attrs) != 0:
+            logger.debug("which has attributes %s", str(ts_df.attrs))
+            collected_attrs[ts_id] = ts_df.attrs
+
     io_stream.seek(0)
-    return StreamingResponse(io_stream, media_type="application/json")
+    headers = {}
+    if len(collected_attrs) != 0:
+        headers["data-attributes"] = encode_attributes(collected_attrs)
+    return StreamingResponse(io_stream, media_type="application/json", headers=headers)
+
+
+def decode_attributes(data_attributes: str) -> Any:
+    base64_bytes = data_attributes.encode("utf-8")
+    logger.debug("data_attributes=%s", data_attributes)
+    df_attrs_bytes = base64.b64decode(base64_bytes)
+    df_attrs_json_str = df_attrs_bytes.decode("utf-8")
+    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
+    df_attrs = json.loads(df_attrs_json_str)
+    return df_attrs
 
 
 @demo_adapter_main_router.post("/timeseries", status_code=200)
 async def post_timeseries(
     ts_body: List[TimeseriesRecord],
     ts_id: str = Query(..., alias="timeseriesId"),
+    data_attributes: Optional[str] = Header(None),
 ) -> Dict:
     logger.info("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
     if ts_id.endswith("anomaly_score"):
         df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
+        if data_attributes is not None and len(data_attributes) != 0:
+            df.attrs = decode_attributes(data_attributes)
         set_value_in_store(ts_id, df)
         logger.info(
             "stored timeseries %s in store: %s\n with columns %s",
@@ -666,16 +706,6 @@ async def post_timeseries(
         return {"message": "success"}
 
     raise HTTPException(404, f"No writable timeseries with id {ts_id}")
-
-
-def encode_attributes(df_attrs: Any) -> str:
-    df_attrs_json_str = json.dumps(df_attrs)
-    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
-    df_attrs_bytes = df_attrs_json_str.encode("utf-8")
-    base64_bytes = base64.b64encode(df_attrs_bytes)
-    base64_str = base64_bytes.decode("utf-8")
-    logger.debug("base64_str=%s", base64_str)
-    return base64_str
 
 
 @demo_adapter_main_router.get("/dataframe")
@@ -751,16 +781,6 @@ async def dataframe(
     io_stream.seek(0)
 
     return StreamingResponse(io_stream, media_type="application/json", headers=headers)
-
-
-def decode_attributes(data_attributes: str) -> Any:
-    base64_bytes = data_attributes.encode("utf-8")
-    logger.debug("data_attributes=%s", data_attributes)
-    df_attrs_bytes = base64.b64decode(base64_bytes)
-    df_attrs_json_str = df_attrs_bytes.decode("utf-8")
-    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
-    df_attrs = json.loads(df_attrs_json_str)
-    return df_attrs
 
 
 @demo_adapter_main_router.post("/dataframe", status_code=200)

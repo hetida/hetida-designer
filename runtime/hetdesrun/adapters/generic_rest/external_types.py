@@ -18,12 +18,15 @@ logger = logging.getLogger(__name__)
 
 
 def df_empty(
-    col_to_dtype_map: Dict[str, Union[Type, str]], index: Optional[pd.Index] = None
+    col_to_dtype_map: Dict[str, Union[Type, str]],
+    index: Optional[pd.Index] = None,
+    attrs: Any = {},
 ) -> pd.DataFrame:
     """Create empty Pandas DataFrame with columns of given dtypes"""
     df = pd.DataFrame(index=index)
     for c, d in col_to_dtype_map.items():
         df[c] = pd.Series(dtype=d)
+    df.attrs = attrs
     return df
 
 

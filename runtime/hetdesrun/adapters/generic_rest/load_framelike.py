@@ -38,7 +38,7 @@ from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_h
 logger = logging.getLogger(__name__)
 
 
-def create_empty_ts_df(data_type: ExternalType) -> pd.DataFrame:
+def create_empty_ts_df(data_type: ExternalType, attrs: Any = {}) -> pd.DataFrame:
     """Create empty timeseries dataframe with explicit dtypes"""
     dtype_dict: Dict[str, Union[Type, str]] = {
         "timeseriesId": str,
@@ -49,7 +49,7 @@ def create_empty_ts_df(data_type: ExternalType) -> pd.DataFrame:
     assert value_datatype is not None  # for mypy
     dtype_dict["value"] = value_datatype.pandas_value_type
 
-    return df_empty(dtype_dict)
+    return df_empty(dtype_dict, attrs=attrs)
 
 
 def decode_attributes(data_attributes: str) -> Any:
@@ -192,9 +192,9 @@ async def load_framelike_data(
     logger.info("Complete generic rest adapter %s framelike request", adapter_key)
     if len(df) == 0:
         if endpoint == "timeseries":
-            return create_empty_ts_df(ExternalType(common_data_type))
+            return create_empty_ts_df(ExternalType(common_data_type), attrs=df.attrs)
         # must be dataframe:
-        return df_empty({})
+        return df_empty({}, attrs=df.attrs)
 
     if "timestamp" in df.columns and endpoint == "dataframe":
         try:

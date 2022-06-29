@@ -338,6 +338,12 @@ The `timestamp` entries have to be ISO-8601 timestamps and should always have UT
 
 Type of value must be the datatype of the timeseries source (i.e. if the timeseries source with that id has type `timeseries(int)`the value of a corresponding record must be a Json integer.
 
+If additional information about the timeseries is stored in its property `attrs`, it will be included in the response header base64-encoded with the name `Data-Attributes`.
+The corresponding dictionary uses the timerseries id as key to unambiguously match the attributes to the matching timeseries.
+
+If additional information about the time series is stored in its Attributes property, it will be included in the response header base64 encoded with the name "Data Attributes".
+The corresponding dictionary uses the time series ID as a key to uniquely assign the attributes to the matching time series.
+
 #### /timeseries (POST)
 
 This endpoint accepts a single timeseries per POST request.
@@ -358,6 +364,9 @@ Payload (List of timeseries records):
 
 The same rules as described in the corresponding GET apply to `timestamp` and `value`
 
+In contrast to the corresponding GET endpoint, the information to be stored in the `attrs` property of the time series should directly be sent base64 encoded with the name `data-attributes`.
+Since only a single time series can be posted, there is no need to resolve ambiguities by specifying the id.
+
 #### /dataframe (GET)
 
 Query parameters:
@@ -376,7 +385,7 @@ This response can have arbitrary entries in the record which then correspond to 
 
 There is a special convention on "timestamp" columns: If a timestamp column exists the runtime will try to parse this column as datetimes and if this is successful will set the index of the Pandas Dataframe to this column and sort by it. If that does not work the index of the resulting Pandas Dataframe will be the default RangeIndex. In every case the column timestamp will also be available as column in the resulting Pandas DataFrame.
 
-If additional information about the data frame is stored in its property `attrs`, it will be included in the response header base64-encoded with the name `Data-Attributes`.
+If additional information about the dataframe is stored in its property `attrs`, it will be included in the response header base64-encoded with the name `Data-Attributes`.
 
 #### /dataframe (POST)
 
@@ -396,7 +405,7 @@ Payload:
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
 
-Similar to the corresponding GET endpoint, the information to be stored in the property `attrs` of the data frame must be sent base64 encoded with the name `data-attributes`.
+Anlogous to the corresponding GET endpoint, the information to be stored in the property `attrs` of the dataframe must be sent base64 encoded with the name `data-attributes`.
 
 ## A minimal Generic Rest adapter
 
