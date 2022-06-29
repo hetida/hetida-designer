@@ -161,6 +161,19 @@ class RuntimeConfig(BaseSettings):
         example="P0DT00H00M15S",
     )
 
+    auth_bearer_token_for_external_requests: Optional[str] = Field(
+        None,
+        description=(
+            "A string containing a bearer token for making external requests. "
+            "If set and there is no currently handled API request with a provided access token,"
+            " this will be used when making external requests to adapters and runtime/backend."
+            " This setting makes export/import possible when having auth activated, i.e."
+            " its intended use is for scripting using the hetdesrun Python package."
+            " Make sure the expiration of the token is long enough for your script invocation."
+        ),
+        env="HD_BEARER_TOKEN_FOR_EXTERNAL_REQUESTS",
+    )
+
     hd_adapters: str = Field(
         "demo-adapter-python|Python-Demo-Adapter"
         "|http://localhost:8092"

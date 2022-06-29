@@ -29,6 +29,16 @@ def get_auth_headers() -> Dict[str, str]:
     try:
         token = auth_ctx_dict["token"]
     except KeyError:
+        possible_fixed_token = get_config().auth_bearer_token_for_external_requests
+        if possible_fixed_token is not None:
+            logger.debug(
+                (
+                    "No stored auth token, but explicit token for external requests is present."
+                    " Using the explicitely configured token for external requests with schema"
+                    " Bearer."
+                )
+            )
+            return {"Authorization": "Bearer " + possible_fixed_token}
         logger.debug("No stored auth token. Not setting auth header")
         return {}
     logger.debug(
