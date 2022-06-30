@@ -9,15 +9,11 @@ import {
 } from '@angular/material/dialog';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { BrowserModule } from '@angular/platform-browser';
-<<<<<<< HEAD
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
-=======
 import {
   ANIMATION_MODULE_TYPE,
   BrowserAnimationsModule
 } from '@angular/platform-browser/animations';
->>>>>>> develop
+import { RouterModule } from '@angular/router';
 import {
   OwlDateTimeModule,
   OwlNativeDateTimeModule
