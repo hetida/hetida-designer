@@ -49,7 +49,7 @@ async def runtime_service(
         logger.info(
             'Workflow Parsing Exception during workflow execution ("%s")',
             str(runtime_input.job_id),
-            exc_info=True
+            exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
@@ -68,7 +68,7 @@ async def runtime_service(
         logger.info(
             'Adapter Handling Exception during data loading  ("%s")',
             str(runtime_input.job_id),
-            exc_info=True
+            exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
@@ -108,7 +108,7 @@ async def runtime_service(
         logger.info(
             'Workflow Parsing Exception during workflow execution ("%s")',
             str(runtime_input.job_id),
-            exc_info=True
+            exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
