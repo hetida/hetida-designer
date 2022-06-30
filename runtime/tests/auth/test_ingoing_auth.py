@@ -113,8 +113,6 @@ async def test_auth_without_access_token_fails(
 @pytest.mark.asyncio
 async def test_info_endpoints_access_without_access_token_succeeds(
     open_async_test_client_with_auth,
-    mocked_clean_test_db_session,
-    mocked_public_key_fetching,
 ):
     """Test auth-free access to endpoints for liveness probing"""
     client = open_async_test_client_with_auth
