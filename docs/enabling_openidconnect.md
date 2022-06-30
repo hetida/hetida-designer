@@ -9,9 +9,15 @@ Authentication has to be enabled in at least both the backend and the frontend. 
 In addition, you will need an OpenID provider, for example [keycloak](https://www.keycloak.org/), which is used here as an example.
 ## Setup
 
-We save a copy of the `docker-compose-dev.yml` with the new name `docker-compose-keycloak.yml`, modify the **hetida-designer-backend** and the **hetida-designer-frontend** service and add a **keycloak** service as follows:
+We save a copy of the `docker-compose-dev.yml` with the new name `docker-compose-keycloak.yml`, modify the **hetida-designer-frontend**, the **hetida-designer-backend** and the **hetida-designer-runtime** service and add a **keycloak** service as follows:
 
 ```yaml
+...
+
+  hetida-designer-frontend:
+    ...
+    volumes:
+      - ./hetida_designer_config_keycloak.json:/usr/share/nginx/html/assets/hetida_designer_config.json
 ...
 
   hetida-designer-backend:
@@ -29,12 +35,6 @@ We save a copy of the `docker-compose-dev.yml` with the new name `docker-compose
       HD_USE_AUTH: "true"
       ...
     ...
-...
-
-  hetida-designer-frontend:
-    ...
-    volumes:
-      - ./hetida_designer_config_keycloak.json:/usr/share/nginx/html/assets/hetida_designer_config.json
 ...
 
   hetida-designer-keycloak:
