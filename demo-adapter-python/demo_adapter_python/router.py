@@ -23,6 +23,7 @@ class HandleTrailingSlashAPIRouter(FastAPIRouter):
     Co-opted from https://github.com/tiangolo/fastapi/issues/2060#issuecomment-974527690 and
     https://github.com/tiangolo/fastapi/issues/2060#issuecomment-1158967722
     """
+
     def api_route(
         self, path: str, *, include_in_schema: bool = True, **kwargs: Any
     ) -> Callable[[DecoratedCallable], DecoratedCallable]:
