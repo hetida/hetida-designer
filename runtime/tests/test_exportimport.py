@@ -1,19 +1,16 @@
 import os
-
 from unittest import mock
-import pytest
 
+import pytest
 from starlette.testclient import TestClient
 
-from hetdesrun.webservice.application import app
-
 from hetdesrun.exportimport.importing import transformation_revision_from_python_code
-
 from hetdesrun.persistence import get_db_engine, sessionmaker
-from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.dbmodels import Base
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.webservice.application import init_app
 
-client = TestClient(app)
+client = TestClient(init_app())
 
 
 @pytest.fixture(scope="function")
@@ -29,17 +26,19 @@ def clean_test_db_engine(use_in_memory_db):
 
 
 @pytest.mark.asyncio
-async def test_tr_from_code_for_component_without_register_decorator(clean_test_db_engine):
+async def test_tr_from_code_for_component_without_register_decorator(
+    clean_test_db_engine,
+):
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
         path = os.path.join(
-                "tests",
-                "data",
-                "components",
-                "alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.py",
-            )
+            "tests",
+            "data",
+            "components",
+            "alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.py",
+        )
         with open(path) as f:
             code = f.read()
 

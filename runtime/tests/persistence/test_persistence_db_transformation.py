@@ -1,6 +1,8 @@
 from unittest import mock
+
 import pytest
 
+from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.exceptions import (
@@ -11,16 +13,13 @@ from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_latest_revision_id,
     read_single_transformation_revision,
-    store_single_transformation_revision,
     select_multiple_transformation_revisions,
+    store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
-
-from hetdesrun.utils import get_uuid_from_seed, State, Type
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
-
-from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 
 @pytest.fixture(scope="function")

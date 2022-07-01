@@ -43,5 +43,14 @@
     "python.linting.mypyEnabled": true,
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "python.sortImports.args": [
+        "--profile",
+        "black"
+    ],
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        }
+    }
 }

@@ -4,17 +4,15 @@ from uuid import UUID, uuid4
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, validator
 
-from hetdesrun.datatypes import DataType
-
 from hetdesrun.backend.service.utils import to_camel
+from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import valid_python_identifier
-
 from hetdesrun.persistence.models.io import (
-    Connector,
-    Position,
     IO,
-    IOConnector,
+    Connector,
     Constant,
+    IOConnector,
+    Position,
 )
 
 

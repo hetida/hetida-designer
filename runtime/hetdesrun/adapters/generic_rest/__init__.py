@@ -3,38 +3,30 @@
 This implements source and sink runtime adapter client for the generic rest adapter.
 """
 
-from typing import Dict, Tuple, Any, Optional, Union, List, Mapping, TypeVar
 import asyncio
-from enum import Enum
-
 from collections import defaultdict
+from enum import Enum
+from typing import Any, Dict, List, Mapping, Optional, Tuple, TypeVar, Union
 
 import pandas as pd
 from pydantic import ValidationError
 
-from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
-
 from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
-
-from hetdesrun.models.adapter_data import RefIdType
-
-from hetdesrun.models.data_selection import FilteredSource, FilteredSink
-
+from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
+from hetdesrun.adapters.generic_rest.load_dataframe import load_dataframes_from_adapter
 from hetdesrun.adapters.generic_rest.load_metadata import load_multiple_metadata
 from hetdesrun.adapters.generic_rest.load_ts_data import (
     load_grouped_timeseries_data_together,
 )
-
-from hetdesrun.adapters.generic_rest.load_dataframe import load_dataframes_from_adapter
-
 from hetdesrun.adapters.generic_rest.send_dataframe import send_dataframes_to_adapter
-from hetdesrun.adapters.generic_rest.send_ts_data import (
-    send_multiple_timeseries_to_adapter,
-)
-
 from hetdesrun.adapters.generic_rest.send_metadata import (
     send_multiple_metadata_to_adapter,
 )
+from hetdesrun.adapters.generic_rest.send_ts_data import (
+    send_multiple_timeseries_to_adapter,
+)
+from hetdesrun.models.adapter_data import RefIdType
+from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 
 def validate_type_and_ref_id(

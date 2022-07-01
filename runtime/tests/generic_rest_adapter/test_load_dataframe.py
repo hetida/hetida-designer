@@ -1,14 +1,11 @@
 from unittest import mock
 
-import pytest
 import pandas as pd
+import pytest
 
-from hetdesrun.adapters.generic_rest import (
-    load_data,
-)
-from hetdesrun.adapters.generic_rest.send_framelike import encode_attributes
+from hetdesrun.adapters.generic_rest import load_data
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
-
+from hetdesrun.adapters.generic_rest.send_framelike import encode_attributes
 from hetdesrun.models.data_selection import FilteredSource
 
 

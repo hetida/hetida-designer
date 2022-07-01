@@ -1,25 +1,19 @@
 """Parse workflow input into data structures of plain engine"""
-from typing import List, Dict, Callable, Union, Coroutine, Tuple, cast
-
 import logging
+from typing import Callable, Coroutine, Dict, List, Tuple, Union, cast
 
+from hetdesrun.component.load import ComponentCodeImportError, import_func_from_code
+from hetdesrun.datatypes import NamedDataTypedValue
+from hetdesrun.models.code import CodeModule
+from hetdesrun.models.component import ComponentRevision
 from hetdesrun.models.workflow import (
-    WorkflowNode,
     ComponentNode,
     WorkflowConnection,
     WorkflowInput,
+    WorkflowNode,
     WorkflowOutput,
 )
-from hetdesrun.models.component import ComponentRevision
-from hetdesrun.models.code import CodeModule
-from hetdesrun.runtime.engine.plain.workflow import Workflow, ComputationNode, Node
-
-from hetdesrun.component.load import (
-    import_func_from_code,
-    ComponentCodeImportError,
-)
-
-from hetdesrun.datatypes import NamedDataTypedValue
+from hetdesrun.runtime.engine.plain.workflow import ComputationNode, Node, Workflow
 
 logger = logging.getLogger(__name__)
 

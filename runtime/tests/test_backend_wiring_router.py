@@ -1,23 +1,14 @@
 from unittest import mock
+
 import pytest
 
-from starlette.testclient import TestClient
-
-from hetdesrun.webservice.application import app
-
+from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.persistence import get_db_engine, sessionmaker
-
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
 )
-
 from hetdesrun.utils import get_uuid_from_seed
-
-from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-
-
-client = TestClient(app)
 
 
 @pytest.fixture(scope="function")

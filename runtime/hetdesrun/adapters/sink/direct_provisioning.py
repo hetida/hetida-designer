@@ -4,7 +4,8 @@ This adapter is used when data is emitted directly during workflow
 execution, i.e. when it is returned as part of the execution response.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 from hetdesrun.models.data_selection import FilteredSink
 
 
