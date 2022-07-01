@@ -1,32 +1,36 @@
-import datetime
-from typing import List, Optional, Union, cast
+from typing import List, Union, Optional, cast
 from uuid import UUID, uuid4
 
-# pylint: disable=no-name-in-module
-from pydantic import BaseModel, Field, ValidationError, validator
+import datetime
 
+# pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field, validator, ValidationError
+
+from hetdesrun.utils import State, Type
 from hetdesrun.models.code import (
+    CodeBody,
     CodeModule,
-    ComponentInfo,
     NonEmptyValidStr,
     ShortNonEmptyValidStr,
     ValidStr,
 )
-from hetdesrun.models.component import ComponentNode, ComponentRevision
-from hetdesrun.models.wiring import WorkflowWiring
+
+from hetdesrun.models.component import ComponentRevision, ComponentNode
 from hetdesrun.models.workflow import WorkflowNode
-from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
+from hetdesrun.models.wiring import WorkflowWiring
+
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
+from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
+
 from hetdesrun.persistence.models.io import (
-    Connector,
-    IOConnector,
     IOInterface,
     Position,
+    Connector,
+    IOConnector,
 )
-from hetdesrun.persistence.models.link import Link, Vertex
+from hetdesrun.persistence.models.link import Vertex, Link
 from hetdesrun.persistence.models.operator import Operator
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.utils import State, Type
 
 
 def transform_to_utc_datetime(dt: datetime.datetime) -> datetime.datetime:
@@ -243,35 +247,27 @@ class TransformationRevision(BaseModel):
         return test_wiring
 
     def release(self) -> None:
-        self.released_timestamp = datetime.datetime.now(datetime.timezone.utc)
+        self.released_timestamp = datetime.datetime.utcnow()
         self.state = State.RELEASED
 
     def deprecate(self) -> None:
-        self.disabled_timestamp = datetime.datetime.now(datetime.timezone.utc)
+        self.disabled_timestamp = datetime.datetime.utcnow()
         self.state = State.DISABLED
 
-    def to_component_info(self) -> ComponentInfo:
-        if self.type != Type.COMPONENT:
-            raise ValueError(
-                f"will not convert transformation revision {self.id}"
-                f"into a component info since its type is not COMPONENT"
-            )
-        return ComponentInfo(
-            input_types_by_name={
-                io.name: io.data_type for io in self.io_interface.inputs
-            },
-            output_types_by_name={
-                io.name: io.data_type for io in self.io_interface.outputs
-            },
+    def to_code_body(self) -> CodeBody:
+        return CodeBody(
+            code=self.content,
+            function_name=self.name,
+            inputs=[input.to_component_input() for input in self.io_interface.inputs],
+            outputs=[
+                output.to_component_output() for output in self.io_interface.outputs
+            ],
             name=self.name,
-            category=self.category,
             description=self.description,
-            version_tag=self.version_tag,
+            category=self.category,
             id=self.id,
             revision_group_id=self.revision_group_id,
-            state=self.state,
-            released_timestamp=self.released_timestamp,
-            disabled_timestamp=self.disabled_timestamp,
+            version_tag=self.version_tag,
         )
 
     def to_component_revision(self) -> ComponentRevision:

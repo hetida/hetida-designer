@@ -1,22 +1,38 @@
+from typing import Dict, Any, Optional
+
 import asyncio
-import logging
+
 import urllib
+import logging
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, Optional
+
 
 import httpx
-from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
+from pydantic import (  # pylint: disable=no-name-in-module
+    BaseModel,
+    ValidationError,
+)
+
+from hetdesrun.models.data_selection import FilteredSource
+
+
+from hetdesrun.models.adapter_data import RefIdType
 
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
     AdapterHandlingException,
 )
+
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
+
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
-from hetdesrun.adapters.generic_rest.external_types import ExternalType, ValueDataType
-from hetdesrun.models.adapter_data import RefIdType
-from hetdesrun.models.data_selection import FilteredSource
-from hetdesrun.webservice.config import get_config
+
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
+
+from hetdesrun.webservice.config import runtime_config
+
+
+from hetdesrun.adapters.generic_rest.external_types import ValueDataType
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +134,7 @@ async def load_multiple_metadata(
 ) -> Dict[str, Any]:
     headers = get_generic_rest_adapter_auth_headers()
     async with httpx.AsyncClient(
-        headers=headers, verify=get_config().hd_adapters_verify_certs
+        headers=headers, verify=runtime_config.hd_adapters_verify_certs
     ) as client:
         loaded_metadata = await asyncio.gather(
             *(

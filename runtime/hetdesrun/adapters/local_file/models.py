@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Optional
+from typing import Optional, Literal, Dict, List
 
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 

@@ -1,5 +1,4 @@
 import os
-
 from hetdesrun.adapters.local_file.detect import get_local_files_and_dirs
 
 

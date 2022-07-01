@@ -1,4 +1,5 @@
 import logging
+
 from unittest import mock
 
 from hetdesrun.exportimport.importing import import_transformations
@@ -36,7 +37,7 @@ def test_component_deployment(caplog):
 def test_workflow_deployment(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
-
+    
     with mock.patch(
         "hetdesrun.utils.requests.put", return_value=response_mock
     ) as patched_put:

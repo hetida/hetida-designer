@@ -8,30 +8,35 @@ Actual data ingestion/egestion happens in the corresponding Runtime-Python-Plugi
 """
 
 
-from typing import List, Optional
+from typing import Optional, List
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query, HTTPException
 
-from hetdesrun.adapters.local_file import VERSION
-from hetdesrun.adapters.local_file.models import (
-    InfoResponse,
-    LocalFileStructureSink,
-    LocalFileStructureSource,
-    MultipleSinksResponse,
-    MultipleSourcesResponse,
-    StructureResponse,
-    StructureThingNode,
-)
+from hetdesrun.webservice.auth_dependency import get_auth_deps
+
+
 from hetdesrun.adapters.local_file.structure import (
-    get_sink_by_id,
+    get_structure,
+    get_sources,
     get_sinks,
     get_source_by_id,
-    get_sources,
-    get_structure,
+    get_sink_by_id,
     get_thing_node_by_id,
 )
+
+from hetdesrun.adapters.local_file import VERSION
+
+from hetdesrun.adapters.local_file.models import (
+    InfoResponse,
+    StructureResponse,
+    MultipleSourcesResponse,
+    MultipleSinksResponse,
+    LocalFileStructureSource,
+    LocalFileStructureSink,
+    StructureThingNode,
+)
+
 from hetdesrun.adapters.local_file.utils import from_url_representation
-from hetdesrun.webservice.auth_dependency import get_auth_deps
 
 # Note: As CORS middleware the router employs the main FastAPI app's one
 local_file_adapter_router = APIRouter(
@@ -42,7 +47,7 @@ local_file_adapter_router = APIRouter(
 @local_file_adapter_router.get(
     "/info",
     response_model=InfoResponse,
-    # no auth for info endpoint
+    dependencies=get_auth_deps(),
 )
 async def get_info_endpoint() -> InfoResponse:
     return InfoResponse(

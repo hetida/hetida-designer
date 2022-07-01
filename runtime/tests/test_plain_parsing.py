@@ -1,7 +1,7 @@
 import pytest
 
-from hetdesrun.models.run import WorkflowExecutionInput
 from hetdesrun.runtime.engine.plain.parsing import parse_workflow_input
+from hetdesrun.models.run import WorkflowExecutionInput
 
 
 @pytest.mark.asyncio

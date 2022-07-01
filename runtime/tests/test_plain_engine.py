@@ -1,14 +1,12 @@
 import logging
-
 import pytest
-
-from hetdesrun.runtime.engine.plain.workflow import ComputationNode, Workflow
 from hetdesrun.runtime.exceptions import (
-    CircularDependency,
-    MissingInputSource,
     MissingOutputException,
+    MissingInputSource,
     RuntimeExecutionError,
+    CircularDependency,
 )
+from hetdesrun.runtime.engine.plain.workflow import ComputationNode, Workflow
 
 
 @pytest.mark.asyncio
@@ -221,3 +219,4 @@ async def test_nested_workflow():
 
     res = await wf.result
     assert res["sum_result"] == 3.7
+

@@ -1,10 +1,15 @@
 from unittest import mock
 
-import pandas as pd
 import pytest
 
-from hetdesrun.adapters.generic_rest import load_data
+import pandas as pd
+
+from hetdesrun.adapters.generic_rest import (
+    load_data,
+)
+
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
+
 from hetdesrun.models.data_selection import FilteredSource
 
 

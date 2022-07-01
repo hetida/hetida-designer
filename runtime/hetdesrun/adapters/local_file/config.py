@@ -1,5 +1,6 @@
-import os
 from typing import Set
+
+import os
 
 from pydantic import BaseSettings, Field  # pylint: disable=no-name-in-module
 

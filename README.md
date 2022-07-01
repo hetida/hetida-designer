@@ -77,7 +77,7 @@ docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-  --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/", update_component_code=False);'
+  --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
 ```
 
 to install/deploy base components and some example workflows. **This step is only necessary the first time starting hetida designer!**
@@ -211,7 +211,7 @@ docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/", update_component_code=False);'
+  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
 ```
 
 In case your checked out repository directory has a different name replace `hetida-designer_hetida-designer-runtime` by `<directory name>_hetida-designer-runtime`.
@@ -243,7 +243,10 @@ OS's availability of precompiled packages for numerical libraries like **numpy**
 or **scipy**. That said, development on Linux is recommended.
 
 1. Navigate to the `runtime` folder.
-2. Create, sync and activate virtual environmnet: `./pipt shell`
+2. Create virtual environment: `python3.9 -m venv venv`
+3. Activate virtual environment: `source venv/bin/activate`
+4. Install dependency management tooling: `python -m pip install pip==21.3.1 pip-tools==6.4.0 wheel==0.37.0`
+5. Install development dependencies: `pip-sync ./requirements.txt ./requirements-dev.txt `
 
 Now a development web server using a sqlite in-memory db can be started via
 ```
@@ -265,7 +268,7 @@ When deactivating the backend endpoints you do not need to specify a database co
 This assumes existence of the Python virtual environment as described above.
 
 1. Navigate to the `runtime` folder.
-2. Activate virtuale environment with `./pipt shell`.
+2. Activate virtuale environment with `source venv/bin/activate`.
 3. Run `python -m pytest --cov=hetdesrun tests`.
 
 ## <a name="tutorial"></a> Tutorial

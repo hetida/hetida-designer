@@ -4,8 +4,9 @@ from functools import cache
 from typing import Callable, Optional
 from uuid import uuid4
 
-import aiokafka
 from pydantic import ValidationError
+
+import aiokafka
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -14,11 +15,11 @@ from hetdesrun.backend.execution import (
     execute_transformation_revision,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.webservice.config import runtime_config
 from hetdesrun.persistence.dbservice.revision import (
     DBNotFoundError,
     get_latest_revision_id,
 )
-from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -132,11 +133,11 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
 def get_kafka_worker_context() -> KafkaWorkerContext:
     """Kafka worker context singleton"""
     return KafkaWorkerContext(
-        consumer_topic=get_config().hd_kafka_consumer_topic,
-        consumer_options=get_config().hd_kafka_consumer_options,
+        consumer_topic=runtime_config.hd_kafka_consumer_topic,
+        consumer_options=runtime_config.hd_kafka_consumer_options,
         msg_handling_coroutine=consume_execution_trigger_message,
-        producer_topic=get_config().hd_kafka_response_topic,
-        producer_options=get_config().hd_kafka_producer_options,
+        producer_topic=runtime_config.hd_kafka_response_topic,
+        producer_options=runtime_config.hd_kafka_producer_options,
     )
 
 
@@ -240,7 +241,7 @@ async def producer_send_result_msg(
         str(exec_result.job_id),
     )
     await kakfa_ctx.producer.send_and_wait(
-        get_config().hd_kafka_response_topic,
+        runtime_config.hd_kafka_response_topic,
         key=None,
         value=message_value,
     )
