@@ -7,21 +7,6 @@ from urllib.parse import unquote
 
 import numpy as np
 import pandas as pd
-from demo_adapter_python import VERSION
-from demo_adapter_python.config import demo_adapter_config
-from demo_adapter_python.demo_data.sinks import get_sinks
-from demo_adapter_python.demo_data.sources import get_sources
-from demo_adapter_python.demo_data.thing_nodes import get_thing_nodes
-from demo_adapter_python.in_memory_store import (get_metadatum_from_store,
-                                                 get_value_from_store,
-                                                 set_metadatum_in_store,
-                                                 set_value_in_store)
-from demo_adapter_python.models import (GetMetadatum, InfoResponse,
-                                        MultipleSinksResponse,
-                                        MultipleSourcesResponse, PostMetadatum,
-                                        StructureResponse, StructureSink,
-                                        StructureSource, StructureThingNode,
-                                        TimeseriesRecord)
 from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware import Middleware
@@ -30,6 +15,30 @@ from fastapi.responses import StreamingResponse
 from fastapi.routing import APIRoute
 from starlette.requests import Request
 from starlette.responses import Response
+
+from demo_adapter_python import VERSION
+from demo_adapter_python.config import demo_adapter_config
+from demo_adapter_python.demo_data.sinks import get_sinks
+from demo_adapter_python.demo_data.sources import get_sources
+from demo_adapter_python.demo_data.thing_nodes import get_thing_nodes
+from demo_adapter_python.in_memory_store import (
+    get_metadatum_from_store,
+    get_value_from_store,
+    set_metadatum_in_store,
+    set_value_in_store,
+)
+from demo_adapter_python.models import (
+    GetMetadatum,
+    InfoResponse,
+    MultipleSinksResponse,
+    MultipleSourcesResponse,
+    PostMetadatum,
+    StructureResponse,
+    StructureSink,
+    StructureSource,
+    StructureThingNode,
+    TimeseriesRecord,
+)
 
 logger = logging.getLogger(__name__)
 

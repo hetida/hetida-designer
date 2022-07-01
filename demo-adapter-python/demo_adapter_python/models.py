@@ -1,8 +1,9 @@
 import datetime
 from typing import Any, Dict, List, Optional
 
-from demo_adapter_python.external_types import ExternalType, ValueDataType
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+
+from demo_adapter_python.external_types import ExternalType, ValueDataType
 
 
 class InfoResponse(BaseModel):
