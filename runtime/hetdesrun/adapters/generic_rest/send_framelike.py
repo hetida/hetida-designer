@@ -3,12 +3,12 @@
 Common utilities for sending data that is frame-like (tabular), i.e. dataframes as well as
 timeseries (where the later can be understood as special dataframe/table)
 """
-import datetime
-import logging
-import json
 import base64
+import datetime
+import json
+import logging
 from posixpath import join as posix_urljoin
-from typing import List, Any, Literal, Optional
+from typing import Any, List, Literal, Optional
 
 import httpx
 from httpx import AsyncClient

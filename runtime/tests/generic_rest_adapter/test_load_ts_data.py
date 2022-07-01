@@ -104,7 +104,7 @@ async def mock_load_generic_rest_ts_data(*args, **kwargs):
             "timeseriesId": ["id_2", "id_1", "id_1", "id_2"],
         }
     )
-    data_df.attrs={"id_1": {"a": "b"}, "id_3": {"c": 5}}
+    data_df.attrs = {"id_1": {"a": "b"}, "id_3": {"c": 5}}
     return data_df
 
 
@@ -222,7 +222,7 @@ async def test_end_to_end_load_ts_data_with_attrs():
         assert isinstance(loaded_data["inp_1"], pd.Series)
         assert len(loaded_data["inp_1"].attrs) == 1
         assert loaded_data["inp_1"].attrs["a"] == "b"
-        
+
 
 @pytest.mark.asyncio
 async def test_end_to_end_load_empty_ts_data_with_attrs():
