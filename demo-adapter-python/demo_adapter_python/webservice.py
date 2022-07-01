@@ -7,7 +7,7 @@ from urllib.parse import unquote
 
 import numpy as np
 import pandas as pd
-from fastapi import Body, FastAPI, HTTPException, Query
+from fastapi import APIRouter, Body, FastAPI, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,7 +39,6 @@ from demo_adapter_python.models import (
     StructureThingNode,
     TimeseriesRecord,
 )
-from demo_adapter_python.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +99,7 @@ class AdditionalLoggingRoute(APIRoute):
 app.router.route_class = AdditionalLoggingRoute
 
 
-demo_adapter_main_router = HandleTrailingSlashAPIRouter()
+demo_adapter_main_router = APIRouter()
 
 
 @demo_adapter_main_router.get("/info", response_model=InfoResponse)
