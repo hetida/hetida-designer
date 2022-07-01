@@ -1,13 +1,22 @@
-from unittest import mock
-
-import nest_asyncio
-import pandas as pd
 import pytest
 
+from unittest import mock
+
+from starlette.testclient import TestClient
+
+import pandas as pd
+
+from hetdesrun.webservice.application import app
+
+from hetdesrun.models.data_selection import FilteredSource, FilteredSink
+
 from hetdesrun.adapters.local_file import load_data, send_data
-from hetdesrun.models.data_selection import FilteredSink, FilteredSource
+
+import nest_asyncio
 
 nest_asyncio.apply()
+
+# client = TestClient(app)
 
 
 async def walk_thing_nodes(

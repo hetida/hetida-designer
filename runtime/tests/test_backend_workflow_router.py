@@ -1,26 +1,37 @@
-import json
-from posixpath import join as posix_urljoin
 from unittest import mock
-from uuid import UUID
-
 import pytest
 
-from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
-from hetdesrun.backend.models.wiring import WiringFrontendDto
-from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-from hetdesrun.backend.service.transformation_router import generate_code
+from starlette.testclient import TestClient
+
+import json
+from uuid import UUID
+from posixpath import join as posix_urljoin
+
+from hetdesrun.utils import get_uuid_from_seed
+
+from hetdesrun.webservice.application import app
+from hetdesrun.webservice.config import runtime_config
+
 from hetdesrun.exportimport.importing import load_json
+
 from hetdesrun.persistence import get_db_engine, sessionmaker
-from hetdesrun.persistence.dbmodels import Base
-from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
-from hetdesrun.persistence.dbservice.revision import (
-    read_single_transformation_revision,
-    store_single_transformation_revision,
-)
+
 from hetdesrun.persistence.models.io import Connector
 from hetdesrun.persistence.models.link import Link, Vertex
-from hetdesrun.utils import get_uuid_from_seed
-from hetdesrun.webservice.config import get_config
+
+from hetdesrun.persistence.dbmodels import Base
+from hetdesrun.persistence.dbservice.revision import (
+    store_single_transformation_revision,
+    read_single_transformation_revision,
+)
+from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
+
+from hetdesrun.backend.service.transformation_router import generate_code
+from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
+from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
+from hetdesrun.backend.models.wiring import WiringFrontendDto
+
+client = TestClient(app)
 
 
 @pytest.fixture(scope="function")
@@ -425,7 +436,7 @@ async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine)
         ):
             component_dto = ComponentRevisionFrontendDto(**dto_json_component_1)
             tr_component = component_dto.to_transformation_revision()
-            tr_component.content = generate_code(tr_component)
+            tr_component.content = generate_code(tr_component.to_code_body())
             store_single_transformation_revision(tr_component)
             tr_workflow_2 = WorkflowRevisionFrontendDto(
                 **dto_json_workflow_2_update
@@ -510,7 +521,7 @@ async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_en
 
                     response = await ac.put(
                         posix_urljoin(
-                            get_config().hd_backend_api_url,
+                            runtime_config.hd_backend_api_url,
                             "transformations",
                             tr_json["id"],
                         )

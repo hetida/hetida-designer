@@ -500,7 +500,7 @@ export class WorkflowEditorComponent {
   }
 
   private _updateWorkflowIfNecessary(): void {
-    if (!this.hasChanges || this.currentWorkflow.state === 'RELEASED') {
+    if (!this.hasChanges) {
       return;
     }
     this.workflowService.updateWorkflow(this.currentWorkflow);

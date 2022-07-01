@@ -4,10 +4,11 @@ from uuid import UUID, uuid4
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, root_validator
 
-from hetdesrun.backend.models.io import ConnectorFrontendDto
 from hetdesrun.backend.service.utils import to_camel
+
+from hetdesrun.backend.models.io import ConnectorFrontendDto
 from hetdesrun.persistence.models.io import Position
-from hetdesrun.persistence.models.link import Link, Vertex
+from hetdesrun.persistence.models.link import Vertex, Link
 
 
 class PointFrontendDto(BaseModel):

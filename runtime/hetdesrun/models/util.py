@@ -1,5 +1,6 @@
 from keyword import iskeyword
-from typing import Any, List, Optional, Protocol, TypeVar, Union
+
+from typing import Protocol, List, TypeVar, Any, Optional, Union
 
 
 class NamedEntity(Protocol):

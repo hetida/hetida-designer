@@ -23,7 +23,7 @@
           </mat-button-toggle>
           <button
             mat-button
-            [matMenuTriggerFor]='menu'>{{ userName$ | async }}</button>
+            [matMenuTriggerFor]='menu'>{{ userName }}</button>
         </div>
       </div>
     </mat-sidenav>
@@ -39,7 +39,7 @@
 
   <mat-menu #menu='matMenu'>
     <button
-      [disabled]='!(isAuthenticated$ | async)'
+      [disabled]='!keycloakEnabled'
       (click)='logout()'
       mat-menu-item>
       Logout

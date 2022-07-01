@@ -1,13 +1,16 @@
-from datetime import datetime
 from typing import Literal
 
-from hetdesrun.backend.models.io import ConnectorFrontendDto
+from datetime import datetime
+
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
+from hetdesrun.backend.models.io import ConnectorFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
-from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.models.io import IOInterface
+from hetdesrun.utils import Type, State
+
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import State, Type
+from hetdesrun.persistence.models.io import IOInterface
+
+from hetdesrun.models.wiring import WorkflowWiring
 
 
 class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):

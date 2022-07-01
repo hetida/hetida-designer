@@ -1,3 +1,5 @@
+import pytest
+
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 
 valid_component_dto_dict = {

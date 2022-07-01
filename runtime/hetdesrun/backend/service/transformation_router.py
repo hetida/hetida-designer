@@ -1,30 +1,38 @@
-import logging
 from typing import List, Optional
+import logging
+
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException, Path, Query, status
+from fastapi import APIRouter, Path, Query, status, HTTPException
+
+from hetdesrun.utils import Type, State
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
     ExecLatestByGroupIdInput,
     TrafoExecutionNotFoundError,
-    TrafoExecutionResultValidationError,
     TrafoExecutionRuntimeConnectionError,
+    TrafoExecutionResultValidationError,
     execute_transformation_revision,
 )
-from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-from hetdesrun.component.code import update_code
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
-from hetdesrun.persistence.dbservice.revision import (
-    get_latest_revision_id,
-    read_single_transformation_revision,
-    select_multiple_transformation_revisions,
-    store_single_transformation_revision,
-    update_or_create_single_transformation_revision,
-)
+
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.utils import State, Type
+
+from hetdesrun.persistence.dbservice.revision import (
+    read_single_transformation_revision,
+    store_single_transformation_revision,
+    select_multiple_transformation_revisions,
+    update_or_create_single_transformation_revision,
+    get_latest_revision_id,
+)
+
+from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError
+
+from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+
+from hetdesrun.models.code import CodeBody, ComponentInfo
+from hetdesrun.component.code import update_code
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +49,10 @@ transformation_router = APIRouter(
 )
 
 
-def generate_code(transformation_revision: TransformationRevision) -> str:
-    assert isinstance(transformation_revision.content, str)
+def generate_code(codegen_input: CodeBody) -> str:
     code: str = update_code(
-        existing_code=transformation_revision.content,
-        component_info=transformation_revision.to_component_info(),
+        existing_code=codegen_input.code,
+        component_info=ComponentInfo.from_code_body(codegen_input),
     )
 
     return code
@@ -72,7 +79,9 @@ async def create_transformation_revision(
 
     if transformation_revision.type == Type.COMPONENT:
         logger.debug("transformation revision has type %s", Type.COMPONENT)
-        transformation_revision.content = generate_code(transformation_revision)
+        transformation_revision.content = generate_code(
+            transformation_revision.to_code_body()
+        )
         logger.debug("generated code:\n%s", transformation_revision.content)
 
     try:
@@ -230,7 +239,7 @@ def update_content(
 ) -> TransformationRevision:
     if updated_transformation_revision.type == Type.COMPONENT:
         updated_transformation_revision.content = generate_code(
-            updated_transformation_revision
+            updated_transformation_revision.to_code_body()
         )
     elif existing_transformation_revision is not None:
         assert isinstance(
@@ -307,9 +316,6 @@ async def update_transformation_revision(
     allow_overwrite_released: bool = Query(
         False, description="Only set to True for deployment"
     ),
-    update_component_code: bool = Query(
-        True, description="Only set to False for deployment"
-    ),
 ) -> TransformationRevision:
     """Update or store a transformation revision in the data base.
 
@@ -351,10 +357,9 @@ async def update_transformation_revision(
         # with an id and either create or update the transformation revision
         pass
 
-    if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
-        updated_transformation_revision = update_content(
-            existing_transformation_revision, updated_transformation_revision
-        )
+    updated_transformation_revision = update_content(
+        existing_transformation_revision, updated_transformation_revision
+    )
 
     updated_transformation_revision = if_applicable_release_or_deprecate(
         existing_transformation_revision, updated_transformation_revision
@@ -380,7 +385,20 @@ async def update_transformation_revision(
     return persisted_transformation_revision
 
 
-async def handle_trafo_revision_execution_request(
+@transformation_router.post(
+    "/execute",
+    response_model=ExecutionResponseFrontendDto,
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Executes a transformation revision",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully executed the transformation revision"
+        }
+    },
+)
+async def execute_transformation_revision_endpoint(
     # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
@@ -405,26 +423,6 @@ async def handle_trafo_revision_execution_request(
 
     except TrafoExecutionResultValidationError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
-
-
-@transformation_router.post(
-    "/execute",
-    response_model=ExecutionResponseFrontendDto,
-    response_model_exclude_none=True,  # needed because:
-    # frontend handles attributes with value null in a different way than missing attributes
-    summary="Executes a transformation revision",
-    status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {
-            "description": "Successfully executed the transformation revision"
-        }
-    },
-)
-async def execute_transformation_revision_endpoint(
-    # pylint: disable=redefined-builtin
-    exec_by_id: ExecByIdInput,
-) -> ExecutionResponseFrontendDto:
-    return await execute_transformation_revision(exec_by_id)
 
 
 @transformation_router.post(

@@ -1,24 +1,36 @@
-import json
-from copy import deepcopy
-from posixpath import join as posix_urljoin
 from unittest import mock
-from uuid import UUID
-
+from copy import deepcopy
 import pytest
 
-from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
-from hetdesrun.backend.service.transformation_router import generate_code
-from hetdesrun.exportimport.importing import load_json
+from starlette.testclient import TestClient
+from posixpath import join as posix_urljoin
+
+import json
+from uuid import UUID, uuid4
+
+from hetdesrun.utils import get_uuid_from_seed
+
+from hetdesrun.webservice.application import app
+from hetdesrun.webservice.config import runtime_config
+
 from hetdesrun.persistence import get_db_engine, sessionmaker
+
 from hetdesrun.persistence.dbmodels import Base
-from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
     store_single_transformation_revision,
 )
+from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
+
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import get_uuid_from_seed
-from hetdesrun.webservice.config import get_config
+
+from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
+
+from hetdesrun.backend.service.transformation_router import generate_code
+
+from hetdesrun.exportimport.importing import load_json
+
+client = TestClient(app)
 
 
 @pytest.fixture(scope="function")
@@ -539,7 +551,7 @@ async def test_update_transformation_revision_with_invalid_name_workflow(
         )
 
         tr_json_workflow_2_update_invalid_name = deepcopy(tr_json_workflow_2_update)
-        tr_json_workflow_2_update_invalid_name["name"] = "'"
+        tr_json_workflow_2_update_invalid_name["name"] = "+"
 
         async with async_test_client as ac:
             response = await ac.put(
@@ -668,7 +680,7 @@ async def test_execute_for_transformation_revision(
             patched_session,
         ):
             tr_component_1 = TransformationRevision(**tr_json_component_1)
-            tr_component_1.content = generate_code(tr_component_1)
+            tr_component_1.content = generate_code(tr_component_1.to_code_body())
             store_single_transformation_revision(tr_component_1)
             tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
 
@@ -711,7 +723,7 @@ async def test_execute_for_separate_runtime_container(
             patched_session,
         ):
             with mock.patch(
-                "hetdesrun.webservice.config.runtime_config",
+                "hetdesrun.backend.execution.runtime_config",
                 is_runtime_service=False,
             ):
                 resp_mock = mock.Mock()
@@ -729,7 +741,9 @@ async def test_execute_for_separate_runtime_container(
                     return_value=resp_mock,
                 ) as mocked_post:
                     tr_component_1 = TransformationRevision(**tr_json_component_1)
-                    tr_component_1.content = generate_code(tr_component_1)
+                    tr_component_1.content = generate_code(
+                        tr_component_1.to_code_body()
+                    )
                     store_single_transformation_revision(tr_component_1)
                     tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
 
@@ -773,14 +787,14 @@ async def test_execute_latest_for_transformation_revision_works(
             patched_session,
         ):
             tr_component_1 = TransformationRevision(**tr_json_component_1)
-            tr_component_1.content = generate_code(tr_component_1)
+            tr_component_1.content = generate_code(tr_component_1.to_code_body())
             store_single_transformation_revision(tr_component_1)
 
             tr_component_1_new_revision = TransformationRevision(
                 **tr_json_component_1_new_revision
             )
             tr_component_1_new_revision.content = generate_code(
-                tr_component_1_new_revision
+                tr_component_1_new_revision.to_code_body()
             )
             tr_component_1_new_revision.release()
             store_single_transformation_revision(tr_component_1_new_revision)
@@ -823,7 +837,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
             patched_session,
         ):
             tr_component_1 = TransformationRevision(**tr_json_component_1)
-            tr_component_1.content = generate_code(tr_component_1)
+            tr_component_1.content = generate_code(tr_component_1.to_code_body())
 
             exec_latest_by_group_id_input = ExecLatestByGroupIdInput(
                 revision_group_id=tr_component_1.revision_group_id,
@@ -879,7 +893,7 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
 
                     response = await ac.put(
                         posix_urljoin(
-                            get_config().hd_backend_api_url,
+                            runtime_config.hd_backend_api_url,
                             "transformations",
                             tr_json["id"],
                         )
@@ -922,7 +936,7 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
 
 
 @pytest.mark.asyncio
-async def test_put_workflow_transformation(async_test_client, clean_test_db_engine):
+async def test_import_transformation(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
         "hetdesrun.persistence.dbservice.nesting.Session",
@@ -946,65 +960,3 @@ async def test_put_workflow_transformation(async_test_client, clean_test_db_engi
                 )
 
             assert response.status_code == 201
-
-
-@pytest.mark.asyncio
-async def test_put_component_transformation_with_update_code(
-    async_test_client, clean_test_db_engine
-):
-    patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        patched_session,
-    ):
-
-        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"
-        example_component_tr_json = load_json(path)
-
-        async with async_test_client as ac:
-            response = await ac.put(
-                posix_urljoin("/api/transformations/", example_component_tr_json["id"])
-                + "?update_component_code=True",
-                json=example_component_tr_json,
-            )
-
-        component_tr_in_db = read_single_transformation_revision(
-            example_component_tr_json["id"]
-        )
-
-        assert response.status_code == 201
-        assert "COMPONENT_INFO" in response.json()["content"]
-        assert "COMPONENT_INFO" in component_tr_in_db.content
-        assert "register" not in response.json()["content"]
-        assert "register" not in component_tr_in_db.content
-
-
-@pytest.mark.asyncio
-async def test_put_component_transformation_without_update_code(
-    async_test_client, clean_test_db_engine
-):
-    patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        patched_session,
-    ):
-
-        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"
-        example_component_tr_json = load_json(path)
-
-        async with async_test_client as ac:
-            response = await ac.put(
-                posix_urljoin("/api/transformations/", example_component_tr_json["id"])
-                + "?update_component_code=False",
-                json=example_component_tr_json,
-            )
-
-        component_tr_in_db = read_single_transformation_revision(
-            example_component_tr_json["id"]
-        )
-
-        assert response.status_code == 201
-        assert "COMPONENT_INFO" not in response.json()["content"]
-        assert "COMPONENT_INFO" not in component_tr_in_db.content
-        assert "register" in response.json()["content"]
-        assert "register" in component_tr_in_db.content

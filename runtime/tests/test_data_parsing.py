@@ -1,13 +1,15 @@
-import numpy as np
-import pandas as pd
-from pandas.api.types import is_bool_dtype, is_datetime64_any_dtype, is_float_dtype
 from pydantic import BaseModel
+
+import pandas as pd
+from pandas.api.types import is_bool_dtype, is_float_dtype, is_datetime64_any_dtype
+import numpy as np
+from hetdesrun.datatypes import parse_dynamically_from_datatypes
 
 from hetdesrun.datatypes import (
     DataType,
-    PydanticPandasDataFrame,
     PydanticPandasSeries,
-    parse_dynamically_from_datatypes,
+    PydanticPandasDataFrame,
+    AdvancedTypesOutputSerializationConfig,
 )
 
 
@@ -59,8 +61,8 @@ def test_dataframe_parsing():
     df1 = MyDfModel(df='{"a":{"0":1.0,"1":2.0,"2":null},"b":{"0":1,"1":2,"2":3}}').df
 
     assert len(df1) == 3
-    assert df1.isnull()["a"].iloc[1] == False  # pylint: disable=singleton-compariosn
-    assert df1.isnull()["a"].iloc[2] == True  # pylint: disable=singleton-compariosn
+    assert df1.isnull()["a"].iloc[1] == False
+    assert df1.isnull()["a"].iloc[2] == True
     df2 = MyDfModel(
         df={"a": {"0": 1.0, "1": 2.0, "2": None}, "b": {"0": 1, "1": 2, "2": 3}}
     ).df

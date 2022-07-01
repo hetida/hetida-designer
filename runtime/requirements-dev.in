@@ -1,4 +1,3 @@
--c requirements-base.txt
 -c requirements.txt
 pytest
 coverage

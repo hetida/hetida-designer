@@ -7,45 +7,45 @@ receives data to/from workflows during execution.
 subdirectory of the hetida designer repository is the current working directory.
 
 ## Development Setup
-Make sure Python 3.9 is installed and available on your path. You may need additional packages like a C compiler (e.g. gcc) depending on your OS's availability of precompiled packages for numerical libraries like **numpy** or **scipy**.
-
-We recommend Linux as operating system for development. In particular we point out that locked dependency files in this repository are created only for Linux environments with CPython.
+Make sure Python 3.9 is installed and available on your path. You may need additional packages like a C compiler (e.g. gcc) depending on your OS's availability of precompiled packages for numerical libraries like **numpy** or **scipy**. We recommend Linux as operating system for development.
 
 1. Navigate to the `demo-adapter-python` folder.
-2. Create, sync and activate virtual environmnet: `./pipt shell`
+2. Create virtual environment: `python3.9 -m venv venv`
+3. Activate virtual environment: `source venv/bin/activate`
+4. Install dependency management tooling: `python -m pip install pip==21.3.1 pip-tools==6.4.0 wheel==0.37.0`
+5. Install development dependencies: `pip-sync ./requirements.txt ./requirements-dev.txt`
 
 Now a development web server can be started via `python main.py`.
 
-Most following commands assume that that the virtual environment is active (step 2).
+All following commands assume that that the virtual environment is active (step 3).
 
 ## Dependency Management
-For the hetida designer python demo adapter we rely on [pip-tools](https://github.com/jazzband/pip-tools) for depedency management. We use a wrapper script called `pipt` to faciliate working with pip-tools.
+For the hetida designer python demo adapter we rely on [pip-tools](https://github.com/jazzband/pip-tools) for depedency management.
 
-### Basic dependency management
-Abstract dependencies can be added and locked using the `./pipt add` subcommand, e.g.
-```
-./pipt add 'requests>=2'
-```
-or
-```
-./pipt add --dev pytest
-```
-with deactivated virtual environment.
+### Basic pip-tools usage
+Abstract dependencies go into `requirements.in` while abstract development-only dependencies (test libraries, code quality check libraries etc) should be placed in `requirements-dev.in`.
 
-Afterwards (re)activating the environment with `./pipt shell` will automatically sync to the locked versions.
+All following commands are run with activated development virtual environment.
 
-### Upgrade Dependencies
-Upgrade and lock all dependencies with deactivated virtual environmnet via
+#### Locking Dependencies
+Lock all dependencies via
 ```
-./pipt upgrade
+rm requirements.txt requirements-dev.txt && pip-compile --generate-hashes && pip-compile --generate-hashes requirements-dev.in
 ```
-This upgrades the locked dependency files `requirements-base.txt`, `requirements.txt` and `requirements-dev.txt`.
+This updates the locked dependency files `requirements.txt` and `requirements-dev.txt`.
 
-After that
+#### Updating development virtual environment
+Update your development virtual environment to the current locked dependencies via 
+
 ```
-./pipt shell
+pip-sync requirements.txt requirements-dev.txt
 ```
-will automatically sync and activate your environment.
+
+#### Upgrade dependencies
+All dependencies are upgraded via
+```
+pip-compile --generate-hashes --upgrade && pip-compile --generate-hashes --upgrade requirements-dev.in
+```
 
 ### <a name="demo-adapter-python-tests"></a> Tests
 With activated virtual environment, run

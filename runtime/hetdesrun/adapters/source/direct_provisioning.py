@@ -4,10 +4,12 @@ This adapter is used when data is provided directly during workflow
 execution, i.e. when it is provided as part of the execution request.
 """
 
-from typing import Any, Dict
+from typing import Dict, Any
+
+from hetdesrun.models.data_selection import FilteredSource
+
 
 from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
-from hetdesrun.models.data_selection import FilteredSource
 
 
 def load_directly_provisioned_data(

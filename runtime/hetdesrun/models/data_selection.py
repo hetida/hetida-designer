@@ -1,7 +1,6 @@
 """Filter classes for adapter data selection"""
 
-from typing import Literal, Optional
-
+from typing import Optional, Literal
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 
 
