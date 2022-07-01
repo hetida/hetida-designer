@@ -53,7 +53,7 @@ def generate_code(transformation_revision: TransformationRevision) -> str:
 
 
 @transformation_router.post(
-    "/",
+    "",
     response_model=TransformationRevision,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -95,7 +95,7 @@ async def create_transformation_revision(
 
 
 @transformation_router.get(
-    "/",
+    "",
     response_model=List[TransformationRevision],
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes

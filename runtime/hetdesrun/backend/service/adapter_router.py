@@ -26,7 +26,7 @@ adapter_router = HandleTrailingSlashAPIRouter(
 
 
 @adapter_router.get(
-    "/",
+    "",
     response_model=List[AdapterFrontendDto],
     summary="Returns all adapters",
     status_code=status.HTTP_200_OK,

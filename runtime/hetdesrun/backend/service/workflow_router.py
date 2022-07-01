@@ -48,7 +48,7 @@ workflow_router = HandleTrailingSlashAPIRouter(
 
 
 @workflow_router.post(
-    "/",
+    "",
     response_model=WorkflowRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -107,7 +107,7 @@ async def create_workflow_revision(
 
 
 @workflow_router.get(
-    "/",
+    "",
     response_model=List[WorkflowRevisionFrontendDto],
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes

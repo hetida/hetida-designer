@@ -23,7 +23,7 @@ info_router = HandleTrailingSlashAPIRouter(
 
 
 @info_router.get(
-    "/",
+    "",
     response_model=dict,
     summary="Returns a sign of life",
     status_code=status.HTTP_200_OK,

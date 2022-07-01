@@ -32,7 +32,7 @@ base_item_router = HandleTrailingSlashAPIRouter(
 
 
 @base_item_router.get(
-    "/",
+    "",
     response_model=List[TransformationRevisionFrontendDto],
     response_model_exclude_unset=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -108,7 +108,7 @@ async def get_transformation_revision_by_id(
 
 
 @base_item_router.post(
-    "/",
+    "",
     response_model=TransformationRevisionFrontendDto,
     response_model_exclude_unset=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes

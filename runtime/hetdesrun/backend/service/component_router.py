@@ -48,7 +48,7 @@ component_router = HandleTrailingSlashAPIRouter(
 
 
 @component_router.post(
-    "/",
+    "",
     response_model=ComponentRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
