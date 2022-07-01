@@ -1,29 +1,26 @@
-import os
 import json
 import logging
-import unicodedata
+import os
 import re
-
-from uuid import UUID
+import unicodedata
 from pathlib import Path
 from posixpath import join as posix_urljoin
-from typing import List, Dict, Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
+from uuid import UUID
 
 import requests
 
-from hetdesrun.utils import (
-    Type,
-    State,
-    get_auth_headers,
-    get_backend_basic_auth,
-    selection_list_empty_or_contains_value,
-    criterion_unset_or_matches_value,
-)
-
-from hetdesrun.webservice.config import runtime_config
-
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
+from hetdesrun.utils import (
+    State,
+    Type,
+    criterion_unset_or_matches_value,
+    get_backend_basic_auth,
+    selection_list_empty_or_contains_value,
+)
+from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -87,16 +84,16 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
     headers = get_auth_headers()
 
     if type == Type.COMPONENT:
-        url = posix_urljoin(runtime_config.hd_backend_api_url, "components", str(id))
+        url = posix_urljoin(get_config().hd_backend_api_url, "components", str(id))
     else:
-        url = posix_urljoin(runtime_config.hd_backend_api_url, "workflows", str(id))
+        url = posix_urljoin(get_config().hd_backend_api_url, "workflows", str(id))
 
     # Get transformation revision from old backend
     response = requests.get(
         url,
-        verify=runtime_config.hd_backend_verify_certs,
-        auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
+        verify=get_config().hd_backend_verify_certs,
+        auth=get_backend_basic_auth()  # type: ignore
+        if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
     )
@@ -120,10 +117,10 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
 
     # Get documentation from old backend
     doc_response = requests.get(
-        posix_urljoin(runtime_config.hd_backend_api_url, "documentations", str(id)),
-        verify=runtime_config.hd_backend_verify_certs,
-        auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
+        posix_urljoin(get_config().hd_backend_api_url, "documentations", str(id)),
+        verify=get_config().hd_backend_verify_certs,
+        auth=get_backend_basic_auth()  # type: ignore
+        if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
     )
@@ -223,12 +220,12 @@ def export_transformations(
 
     endpoint = "transformations" if not java_backend else "base-items"
 
-    url = posix_urljoin(runtime_config.hd_backend_api_url, endpoint)
+    url = posix_urljoin(get_config().hd_backend_api_url, endpoint)
     response = requests.get(
         url,
-        verify=runtime_config.hd_backend_verify_certs,
-        auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
+        verify=get_config().hd_backend_verify_certs,
+        auth=get_backend_basic_auth()  # type: ignore
+        if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
     )

@@ -1,34 +1,19 @@
-from enum import Enum
-
-import json
 import datetime
+import json
+import logging
+from enum import Enum
+from typing import Any, Dict, Generator, List, Optional, Tuple, Type, TypedDict, Union
 from uuid import UUID
 
-import logging
-
-
-from typing import (
-    Any,
-    TypedDict,
-    Type,
-    List,
-    Dict,
-    Tuple,
-    Generator,
-    Union,
-    Optional,
-)
-
-from pydantic import (  # pylint: disable=no-name-in-module
-    create_model,
-    BaseConfig,
-    BaseModel,
-)
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
+from pydantic import (  # pylint: disable=no-name-in-module
+    BaseConfig,
+    BaseModel,
+    create_model,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,9 @@
-from typing import Optional, Any, List, Union
+from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, Field, validator  # pylint: disable=no-name-in-module
 
-from hetdesrun.models.component import UnnamedInput, ComponentOutput, ComponentNode
 from hetdesrun.models.base import AbstractNode
+from hetdesrun.models.component import ComponentNode, ComponentOutput, UnnamedInput
 from hetdesrun.models.util import valid_python_identifier
 
 

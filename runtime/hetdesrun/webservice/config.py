@@ -1,15 +1,10 @@
+import datetime
 import os
 from enum import Enum
 from typing import Optional, Union
 
 # pylint: disable=no-name-in-module
-from pydantic import (
-    BaseSettings,
-    Field,
-    SecretStr,
-    validator,
-)
-
+from pydantic import BaseSettings, Field, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
 
@@ -119,55 +114,64 @@ class RuntimeConfig(BaseSettings):
     )
 
     # HD Keycloak auth
-    hd_auth_use_keycloak: bool = Field(
-        False,
-        env="HD_AUTH_USE_KEYCLOAK",
-        description="Whether Keycloak is used for verifying requests to runtime service endpoints",
-    )
-    hd_keycloak_auth_url: Optional[str] = Field(None, env="HD_KEYCLOAK_AUTH_URL")
-    hd_keycloak_realm: Optional[str] = Field("Hetida", env="HD_KEYCLOAK_REALM")
-    hd_keycloak_runtime_audience: Optional[str] = Field(
-        "account", env="HD_KEYCLOAK_RUNTIME_AUDIENCE"
-    )
-    hd_keycloak_runtime_client_id: Optional[str] = Field(
-        None, env="HD_KEYCLOAK_RUNTIME_CLIENT_ID"
-    )
-    hd_keycloak_runtime_username: Optional[str] = Field(
-        None, env="HD_KEYCLOAK_RUNTIME_USERNAME"
-    )
-    hd_keycloak_runtime_password: Optional[str] = Field(
-        None,
-        env="HD_KEYCLOAK_RUNTIME_PASSWORD",
-        description="the password of the service user",
+
+    auth: bool = Field(
+        True,
+        description="Whether authentication checking is active.",
+        env="HD_USE_AUTH",
     )
 
-    # Keycloak Auth for generic rest adapters
-    hd_generic_rest_adapter_auth_use_keycloak: bool = Field(
-        False,
-        env="HD_GENERIC_REST_ADAPTER_AUTH_USE_KEYCLOAK",
+    auth_public_key_url: str = Field(
+        "http://hetida-designer-keycloak:8080/auth/realms/hetida-designer/protocol/openid-connect/certs",  # pylint: disable=line-too-long
+        description="URL to endpoint providing public keys for verifying bearer token signature",
+        env="HD_AUTH_PUBLIC_KEY_URL",
+    )
+
+    auth_role_key: str = Field(
+        "roles",
         description=(
-            "Whether Keycloak is used for requests from runtime to generic rest adapter endpoints"
+            "Under which key of the access token payload the roles will"
+            " be expected as a list."
         ),
+        env="HD_AUTH_ROLE_KEY",
     )
-    hd_generic_rest_adapter_keycloak_auth_url: Optional[str] = Field(
-        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_AUTH_URL"
-    )
-    hd_generic_rest_adapter_keycloak_realm: Optional[str] = Field(
-        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_REALM"
-    )
-    hd_generic_rest_adapter_keycloak_runtime_client_id: Optional[str] = Field(
-        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_CLIENT_ID"
-    )
-    hd_generic_rest_adapter_keycloak_runtime_username: Optional[str] = Field(
-        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_USERNAME"
-    )
-    hd_generic_rest_adapter_keycloak_runtime_password: Optional[str] = Field(
+
+    auth_allowed_role: Optional[str] = Field(
         None,
-        env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_PASSWORD",
-        description="the password of the service user",
+        description=(
+            "Role provided in bearer access token that is allowed access."
+            " If None, role is not checked / everybody is allowed."
+        ),
+        env="HD_AUTH_ALLOWED_ROLE",
     )
-    hd_generic_rest_adapter_keycloak_runtime_audience: Optional[str] = Field(
-        "account", env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_AUDIENCE"
+
+    auth_reload_public_key: bool = Field(
+        True,
+        description="Whether public keys for signature check will be reloaded"
+        " if a verification fails and if they are old",
+        env="HD_AUTH_RELOAD_PUBLIC_KEY",
+    )
+
+    auth_public_key_reloading_minimum_age: datetime.timedelta = Field(
+        15,
+        description="If auth fails and auth_reload_public_key is True "
+        "public keys are only tried to load again if older than this timedelta."
+        " Can be either seconds as int or float or an ISO 8601 timedelta string",  # 15 seconds
+        env="HD_AUTH_KEY_RELOAD_MINIMUM_AGE",
+        example="P0DT00H00M15S",
+    )
+
+    auth_bearer_token_for_external_requests: Optional[str] = Field(
+        None,
+        description=(
+            "A string containing a bearer token for making external requests. "
+            "If set and there is no currently handled API request with a provided access token,"
+            " this will be used when making external requests to adapters and runtime/backend."
+            " This setting makes export/import possible when having auth activated, i.e."
+            " its intended use is for scripting using the hetdesrun Python package."
+            " Make sure the expiration of the token is long enough for your script invocation."
+        ),
+        env="HD_BEARER_TOKEN_FOR_EXTERNAL_REQUESTS",
     )
 
     hd_adapters: str = Field(
@@ -209,8 +213,8 @@ class RuntimeConfig(BaseSettings):
         description=(
             "Whether Backend is protected via Basic Auth."
             " Only necessary for component deployment."
-            " If Backend is protected via Keycloak instead "
-            " use the corresponding keycloak environment variables!"
+            " If Backend is protected via OpenIDConnect instead "
+            " use the corresponding environment variables!"
         ),
     )
     hd_backend_basic_auth_user: Optional[str] = Field(
@@ -332,3 +336,7 @@ class RuntimeConfig(BaseSettings):
 environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
 
 runtime_config = RuntimeConfig(_env_file=environment_file if environment_file else None)
+
+
+def get_config() -> RuntimeConfig:
+    return runtime_config

@@ -19,9 +19,9 @@ fn_exists() {
     LC_ALL=C type "${1:-}" 2>/dev/null | grep -q 'function'
 }
 
-COMMAND=${1:-}
+COMMAND="${1:-}"
 shift
-ARGUMENTS=${@}
+ARGUMENTS=("${@}")
 
 set -euo pipefail
 
@@ -50,11 +50,30 @@ test() {
 # }
 
 lint() {
-    pylint hetdesrun
+    pylint hetdesrun "${@}"
+}
+
+imsort() {
+    isort hetdesrun tests "${@}"
 }
 
 typecheck() {
     python3 -m mypy hetdesrun
+}
+
+format() {
+    black hetdesrun tests "${@}" && echo "--> Black run."
+    isort hetdesrun tests "${@}" && echo "--> Isort run."
+}                           
+
+check() {
+    # Will fail with non-zero exit status if any tool has some complaint.
+    # If everything is okay this will have 0 exits status
+    echo "--> Running black in check mode" && black hetdesrun tests --check &&
+        echo "--> Running isort in check mode" && isort hetdesrun tests --check &&
+        echo "--> Running tests" && python -m pytest --cov=hetdesrun --cov-report=term-missing tests &&
+        echo "--> Running mypy" && mypy hetdesrun &&
+        echo "--> Running pylint ignoring fixme / TODO entries" && pylint hetdesrun tests --disable=fixme
 }
 
 #----- Execution -----#
@@ -66,7 +85,7 @@ if fn_exists "$COMMAND"; then
     # Execute
     TIMEFORMAT=$'\nTask completed in %3lR'
 
-    time "$COMMAND" $ARGUMENTS
+    time "$COMMAND" "${ARGUMENTS[@]}"
 else
     usage
 fi

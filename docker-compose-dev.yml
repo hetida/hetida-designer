@@ -29,6 +29,7 @@ services:
       - HD_DATABASE_URL=postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db
       - HD_ENSURE_DB_SCHEMA=true
       - HD_IS_RUNTIME_SERVICE=false
+      - HD_USE_AUTH=false
 
     depends_on:
       hetida-designer-db:
@@ -51,7 +52,9 @@ services:
       - 8090:8090
     environment:
       RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES: '["/mnt/mounted_local_files"]'
-      HD_IS_BACKEND_SERVICE: 'false'
+      HD_IS_BACKEND_SERVICE: "false"
+      HD_USE_AUTH: "false"
+
 
   hetida-designer-db:
     image: postgres

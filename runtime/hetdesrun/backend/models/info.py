@@ -1,16 +1,13 @@
-from uuid import UUID, uuid4
 from typing import Optional
+from uuid import UUID, uuid4
 
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, validator
 
-from hetdesrun.utils import State, Type
-
 from hetdesrun.backend.service.utils import to_camel
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import State, Type
 
 
 class BasicInformation(BaseModel):

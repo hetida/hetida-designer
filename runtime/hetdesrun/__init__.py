@@ -1,9 +1,9 @@
 import logging
-from hetdesrun.webservice.config import runtime_config
-from hetdesrun.runtime.logging import execution_context_filter
-from hetdesrun.runtime import runtime_component_logger as logger
 
 import hetdesrun_config
+from hetdesrun.runtime import runtime_component_logger as logger
+from hetdesrun.runtime.logging import execution_context_filter
+from hetdesrun.webservice.config import get_config
 
 migrations_invoked_from_py = False
 
@@ -39,7 +39,7 @@ def configure_logging(
 
     Additionally the formatter is set up to log this context information.
     """
-    the_logger.setLevel(runtime_config.log_level.value)
+    the_logger.setLevel(get_config().log_level.value)
     logging_handler = logging.StreamHandler()  # use sys.stderr by default
     # sys.stderr will be propagated by mod_wsgi to Apache error log for webservice
     if log_execution_context:

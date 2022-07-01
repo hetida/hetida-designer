@@ -1,39 +1,31 @@
+import logging
+from inspect import Parameter, signature
 from typing import (
-    Protocol,
-    Dict,
-    Tuple,
     Any,
-    List,
     Callable,
     Coroutine,
+    Dict,
+    List,
     Optional,
+    Protocol,
+    Tuple,
     Union,
 )
 
-import logging
-
-from inspect import signature, Parameter
-
-
 from cached_property import cached_property  # async compatible variant
-
 from pydantic import ValidationError
-
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
 from hetdesrun.runtime import runtime_component_logger
-from hetdesrun.runtime.logging import execution_context_filter
-
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
-
-
 from hetdesrun.runtime.exceptions import (
-    RuntimeExecutionError,
     CircularDependency,
-    MissingOutputException,
     MissingInputSource,
+    MissingOutputException,
+    RuntimeExecutionError,
     WorkflowInputDataValidationError,
 )
+from hetdesrun.runtime.logging import execution_context_filter
 
 logger = logging.getLogger(__name__)
 

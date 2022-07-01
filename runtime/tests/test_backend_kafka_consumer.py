@@ -3,12 +3,10 @@ from unittest import mock
 from uuid import UUID
 
 import pytest
-
 from pydantic import ValidationError
 
 from hetdesrun.backend.execution import TrafoExecutionError
-
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 exec_by_id_input_msg = r"""
 {
@@ -219,7 +217,7 @@ async def test_consumer_successful_exec_by_id_input():
     # check result message is shipped:
     mocked_producer.send_and_wait.assert_called_once()
     mocked_producer.send_and_wait.assert_called_with(
-        runtime_config.hd_kafka_response_topic,
+        get_config().hd_kafka_response_topic,
         key=None,
         value=exec_result.json().encode("utf8"),
     )
@@ -241,7 +239,7 @@ async def test_consumer_successful_exec_latest_by_group_id_input():
         # check result message is shipped:
         mocked_producer.send_and_wait.assert_called_once()
         mocked_producer.send_and_wait.assert_called_with(
-            runtime_config.hd_kafka_response_topic,
+            get_config().hd_kafka_response_topic,
             key=None,
             value=exec_result.json().encode("utf8"),
         )

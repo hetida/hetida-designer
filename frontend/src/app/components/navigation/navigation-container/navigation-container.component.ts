@@ -8,6 +8,7 @@ import { AbstractBaseItem } from 'src/app/model/base-item';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { Utils } from 'src/app/utils/utils';
+import { AuthService } from '../../../auth/auth.service';
 import { BaseItemService } from '../../../service/base-item/base-item.service';
 import { IAppState } from '../../../store/app.state';
 import { selectBaseItemsByCategory } from '../../../store/base-item/base-item.selectors';
@@ -22,7 +23,8 @@ export class NavigationContainerComponent implements OnInit {
     private readonly _store: Store<IAppState>,
     private readonly _baseItemService: BaseItemService,
     private readonly _popover: PopoverService,
-    private readonly _baseItemAction: BaseItemActionService
+    private readonly _baseItemAction: BaseItemActionService,
+    private readonly authService: AuthService
   ) {}
 
   readonly searchFilter = new FormControl('');
@@ -43,7 +45,9 @@ export class NavigationContainerComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this._baseItemService.fetchBaseItems();
+    this.authService.isAuthenticated$().subscribe(() => {
+      this._baseItemService.fetchBaseItems();
+    });
     combineLatest([this.filterChanges, this.searchFilterChanges])
       .pipe(
         switchMap(([baseItemType, searchString]) =>
