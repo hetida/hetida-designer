@@ -1,39 +1,31 @@
+import logging
+from inspect import Parameter, signature
 from typing import (
-    Protocol,
-    Dict,
-    Tuple,
     Any,
-    List,
     Callable,
     Coroutine,
+    Dict,
+    List,
     Optional,
+    Protocol,
+    Tuple,
     Union,
 )
 
-import logging
-
-from inspect import signature, Parameter
-
-
 from cached_property import cached_property  # async compatible variant
-
 from pydantic import ValidationError
-
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
 from hetdesrun.runtime import runtime_component_logger
-from hetdesrun.runtime.logging import execution_context_filter
-
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
-
-
 from hetdesrun.runtime.exceptions import (
-    RuntimeExecutionError,
     CircularDependency,
-    MissingOutputException,
     MissingInputSource,
+    MissingOutputException,
+    RuntimeExecutionError,
     WorkflowInputDataValidationError,
 )
+from hetdesrun.runtime.logging import execution_context_filter
 
 logger = logging.getLogger(__name__)
 
@@ -214,16 +206,13 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             )
             raise
         except Exception as e:  # uncaught exceptions from user code
-            logger.info(
-                "Exception during Component execution of component instance %s",
-                self.operator_hierarchical_name,
-                exc_info=True,
-            )
-            raise RuntimeExecutionError(
+            msg = (
                 f"Exception during Component execution of "
                 f"component instance {self.operator_hierarchical_name}"
                 f" (operator hierarchical id: {self.operator_hierarchical_id}):\n{str(e)}"
-            ).set_context(
+            )
+            logger.info(msg, exc_info=True)
+            raise RuntimeExecutionError(msg).set_context(
                 self.operator_hierarchical_id, self.operator_hierarchical_name
             ) from e
 

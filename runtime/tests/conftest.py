@@ -1,12 +1,38 @@
 from copy import deepcopy
+from unittest import mock
 
 import pytest
-
 from httpx import AsyncClient
 
-from hetdesrun.webservice.application import app
-
+from hetdesrun.persistence import get_db_engine
+from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.utils import get_uuid_from_seed
+from hetdesrun.webservice.application import init_app
+
+
+@pytest.fixture(scope="function")
+def clean_test_db_engine(use_in_memory_db):
+    if use_in_memory_db:
+        in_memory_database_url = "sqlite+pysqlite:///:memory:"
+        engine = get_db_engine(override_db_url=in_memory_database_url)
+    else:
+        engine = get_db_engine()
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    return engine
+
+
+@pytest.fixture(scope="session")
+def deactivate_auth():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.auth", False
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="session")
+def app_without_auth(deactivate_auth):
+    yield init_app()
 
 
 def pytest_addoption(parser):
@@ -24,8 +50,14 @@ def use_in_memory_db(pytestconfig):
 
 
 @pytest.fixture
-def async_test_client():
-    return AsyncClient(app=app, base_url="http://test")
+def async_test_client(app_without_auth):
+    return AsyncClient(app=app_without_auth, base_url="http://test")
+
+
+@pytest.fixture
+async def open_async_test_client(async_test_client):
+    async with async_test_client as ac:
+        yield ac
 
 
 base_workflow_json = {

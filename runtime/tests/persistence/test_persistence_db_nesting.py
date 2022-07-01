@@ -1,21 +1,18 @@
 from unittest import mock
+
 import pytest
 
+from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence import get_db_engine, sessionmaker
+from hetdesrun.persistence.dbmodels import Base
+from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
-    update_or_create_single_transformation_revision,
 )
-from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
-
-from hetdesrun.utils import get_uuid_from_seed
-
-from hetdesrun.persistence import get_db_engine, sessionmaker
+from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.io import IOInterface, IO
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.persistence.dbmodels import Base
-
-from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.utils import get_uuid_from_seed
 
 
 @pytest.fixture(scope="function")
@@ -64,10 +61,12 @@ def workflow_creator(identifier: str) -> TransformationRevision:
 def test_update_or_create_nesting(clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
-        "hetdesrun.persistence.dbservice.nesting.Session", patched_session,
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
     ):
         with mock.patch(
-            "hetdesrun.persistence.dbservice.revision.Session", patched_session,
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
         ):
             component_a = component_creator("a")
             component_a.io_interface.inputs.append(

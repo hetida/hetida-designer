@@ -1,6 +1,6 @@
 """(Pydantic) Models for ingoing / outgoing data"""
 
-from typing import Protocol, Optional, Literal
+from typing import Literal, Optional, Protocol
 
 
 class FilteredSource(Protocol):

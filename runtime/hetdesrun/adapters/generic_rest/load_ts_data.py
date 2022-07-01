@@ -1,19 +1,16 @@
-from typing import List, Dict, Tuple
-from collections import defaultdict
-
 import logging
+from collections import defaultdict
+from typing import Dict, List, Tuple
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from hetdesrun.adapters.generic_rest.load_framelike import load_framelike_data
-
-from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.exceptions import (
     AdapterClientWiringInvalidError,
     AdapterHandlingException,
 )
-
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
+from hetdesrun.adapters.generic_rest.load_framelike import load_framelike_data
 from hetdesrun.models.data_selection import FilteredSource
 
 logger = logging.getLogger(__name__)

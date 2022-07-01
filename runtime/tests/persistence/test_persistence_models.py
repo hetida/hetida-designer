@@ -1,24 +1,18 @@
-from copy import deepcopy
 from collections import namedtuple
+from copy import deepcopy
 from uuid import uuid4
 
 import pytest
-
 from pydantic import ValidationError
 
-from hetdesrun.utils import State, Type, get_uuid_from_seed
-
-from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.execution import nested_nodes
-
-from hetdesrun.persistence.models.io import IOInterface, IOConnector
-from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
-from hetdesrun.models.wiring import WorkflowWiring
-
+from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.exportimport.importing import load_json
-
+from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence.models.io import IOInterface
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 tr_json_valid_released_example = load_json(
     "./transformations/workflows/examples/iso-forest-example_100_67c14cf2-cd4e-410e-9aca-6664273ccc3f.json"
@@ -133,13 +127,14 @@ def test_tr_validator_version_tag_not_latest():
             documentation="",
         )
 
+
 def test_tr_nonemptyvalidstr_regex_validator_not_whitelisted_character():
     id = get_uuid_from_seed("test")
     with pytest.raises(ValidationError):
         TransformationRevision(
             id=id,
             revision_group_id=id,
-            name="+",
+            name="'",
             description="Test description",
             version_tag="1.0.0",
             category="Test category",
@@ -150,6 +145,7 @@ def test_tr_nonemptyvalidstr_regex_validator_not_whitelisted_character():
             test_wiring=WorkflowWiring(),
             documentation="",
         )
+
 
 def test_tr_validstr_regex_validator_empty():
     id = get_uuid_from_seed("test")
@@ -167,6 +163,7 @@ def test_tr_validstr_regex_validator_empty():
         test_wiring=WorkflowWiring(),
         documentation="",
     )
+
 
 def test_tr_nonemptyvalidstr_regex_validator_empty():
     id = get_uuid_from_seed("test")
@@ -186,6 +183,7 @@ def test_tr_nonemptyvalidstr_regex_validator_empty():
             documentation="",
         )
 
+
 def test_tr_nonemptyvalidstr_validator_max_characters():
     id = get_uuid_from_seed("test")
     with pytest.raises(ValidationError):
@@ -203,6 +201,7 @@ def test_tr_nonemptyvalidstr_validator_max_characters():
             test_wiring=WorkflowWiring(),
             documentation="",
         )
+
 
 def test_tr_shortnonemptyvalidstr_validator_max_characters():
     id = get_uuid_from_seed("test")
@@ -222,6 +221,7 @@ def test_tr_shortnonemptyvalidstr_validator_max_characters():
             documentation="",
         )
 
+
 def test_tr_nonemptyvalidstr_regex_validator_fancy_characters():
     id = get_uuid_from_seed("test")
     TransformationRevision(
@@ -229,7 +229,7 @@ def test_tr_nonemptyvalidstr_regex_validator_fancy_characters():
         revision_group_id=id,
         name="bößä",
         description="中文, español, Çok teşekkürler",
-        version_tag="(-_-) /  =.=",
+        version_tag="(-_-) /  =.= & +_+",
         category="ไทย",
         state=State.DRAFT,
         type=Type.COMPONENT,
@@ -238,6 +238,7 @@ def test_tr_nonemptyvalidstr_regex_validator_fancy_characters():
         test_wiring=WorkflowWiring(),
         documentation="",
     )
+
 
 def test_tr_validator_io_interface_fits_to_content():
     tr_json_empty_io_interface = deepcopy(tr_json_valid_released_example)

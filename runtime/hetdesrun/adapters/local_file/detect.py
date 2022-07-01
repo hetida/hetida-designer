@@ -1,13 +1,13 @@
-import os
 import json
-
-from typing import Optional, List, Tuple
+import os
+from typing import List, Optional, Tuple
 
 from pydantic import (  # pylint: disable=no-name-in-module
     BaseModel,
     Field,
     ValidationError,
 )
+
 from hetdesrun.adapters.local_file.extensions import (
     FileSupportHandler,
     get_file_support_handler,

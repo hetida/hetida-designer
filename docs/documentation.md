@@ -21,6 +21,7 @@ Further information about developing, deploying, connecting, using and running h
 - [R support](./r_support.md)
 - [Backup](./backup.md)
 - [Export and Import](./import_export.md)
+- [Enabling OpenID Connect](./enabling_openidconnect.md)
 - [Migration from 0.6 to 0.7](./migration_from_0.6_to_0.7.md)
 
 ## Adapter System
@@ -32,13 +33,14 @@ Further information about developing, deploying, connecting, using and running h
 - [Generic REST Adapters](./adapter_system/generic_rest_adapters/web_service_interface.md)
 - [General Custom Adapters](./adapter_system/general_custom_adapters/instructions.md)
 
-## Creating components and workflows
+## Creating Components and Workflows
 
 - [Versioning in hetida designer](./versioning_in_hetida_designer.md)
 - [Tips and Tricks](./faq.md)
 - [Asynchronous Components](./executing_asynchronous_functions.md)
+- [Persisting Models](./persisting_models.md)
 
-## Integration and running workflows in production
+## Integration and Running Workflows in Production
 
 - [Execution via Kafka](./execution/execution_via_kafka.md)
 - [Execution via REST API](./execution/running_transformation_revisions.md)

@@ -1,16 +1,15 @@
-from typing import List
 import logging
+from typing import List
 
-from fastapi import APIRouter, status, HTTPException
-
-from hetdesrun.webservice.config import runtime_config
+from fastapi import APIRouter, HTTPException, status
 
 from hetdesrun.backend.models.adapter import AdapterFrontendDto
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
 
-adapters = runtime_config.hd_adapters
+adapters = get_config().hd_adapters
 
 
 adapter_router = APIRouter(

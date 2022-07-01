@@ -1,15 +1,12 @@
 """Component entrypoint registration utilities"""
 
-from typing import Dict, Callable, Optional
-
 import asyncio
 import functools
-
-from hetdesrun.datatypes import DataType
-
-from hetdesrun.runtime.context import execution_context
+from typing import Callable, Dict, Optional
 
 from hetdesrun.component.load import ComponentCodeImportError
+from hetdesrun.datatypes import DataType
+from hetdesrun.runtime.context import execution_context
 
 
 class ComponentEntryPointRegistrationError(ComponentCodeImportError):
@@ -37,6 +34,9 @@ def register(
     id: Optional[str] = None,
     revision_group_id: Optional[str] = None,
     version_tag: Optional[str] = None,
+    state: Optional[str] = None,
+    released_timestamp: Optional[str] = None,
+    disabled_timestamp: Optional[str] = None,
 ) -> Callable[[Callable], Callable]:
     """Additonal features for component entrypoint functions
 
@@ -100,9 +100,12 @@ def register(
             "name": name,
             "description": description,
             "category": category,
+            "version_tag": version_tag,
             "id": id,
             "revision_group_id": revision_group_id,
-            "version_tag": version_tag,
+            "state": state,
+            "released_timestamp": released_timestamp,
+            "disabled_timestamp": disabled_timestamp,
         }
 
         return return_func_or_coro

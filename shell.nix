@@ -55,10 +55,13 @@ with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/af21d4126084
 let
   pythonPackages = python39Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
-  venvDir = toString ./runtime/nix_venv_hd_dev;
+  venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
+  venvDirPythonDemoAdapter = toString ./runtime/nix_venv_hd_dev_python_demo_adapter;
   runtimeDir = toString ./runtime;
+  pythonDemoAdapterDir = toString ./demo-adapter-python;
   backendDir = toString ./backend;
   frontendDir = toString ./frontend;
+  JUPYTER_CONFIG_DIR =  toString ./.jupyter;  
 
   waitfor = stdenv.mkDerivation {
     name = "waitfor";
@@ -80,6 +83,109 @@ let
     '';
   };
 
+  library_join = pkgs.symlinkJoin { 
+      name = "system_libraries_symlinked";
+      paths = [ pkgs.zlib pkgs.glibc ]; postBuild = "echo 'links added'; ls ."; 
+  };
+
+  symlinks_to_libs = runCommand "symlinks_to_some_libs" { } ''
+      # Gather explicit symlinks to certain library pathes.
+      # This is a simple workaround for Python imports not finding necessary libraries.
+      # It allows to add the lib path of the result explicitely 
+      # to LD_LIBRARY_PATH in nix shell environments etc.
+      #
+      # Usage in nix shell / scripts:
+      #      # (Remove double ' in following line)
+      #      export LD_LIBRARY_PATH=''${lib.makeLibraryPath [stdenv.cc.cc (toString "''${symlinks_to_libs}") ]}
+      # where "symlinks_to_libs is the result of this build.
+
+      set -e
+
+      mkdir -p $out/lib
+      
+      ln -s "${zlib}"/lib/libz.so.1 "$out"/lib/libz.so.1
+      ln -s "${glibc}"/lib/libc-2.33.so "$out"/lib/libc-2.33.so
+      ln -s "${glibc}"/lib/libc-2.33.so.1 "$out"/lib/libc-2.33.so.1
+    '';
+
+  prepare-venv = writeShellScriptBin "prepare-venv" ''
+    set -e
+    SOURCE_DATE_EPOCH=$(date +%s)    
+
+    prepare_venv() {
+        local sub_project_dir=$1
+        local venv_target_dir=$2
+        local activate_venv="''${3:-false}"
+        local configure_jupyter_in_venv="''${4:-false}"
+        local run_test_python_command="''${5:-""}"
+
+        if ! "$activate_venv" ; then
+            local PIPT_EXPLICIT_VENV_TARGET_PATH
+            local PIPT_PYTHON_INTERPRETER
+            local LD_LIBRARY_PATH
+            local PYTHONPATH
+            local JUPYTER_CONFIG_DIR
+        fi
+
+        export PIPT_EXPLICIT_VENV_TARGET_PATH="$venv_target_dir"
+        export PIPT_PYTHON_INTERPRETER="${pythonPackages.python.interpreter}"
+        local OLD_PYTHONPATH="$PYTHONPATH"
+        export PYTHONPATH="$PWD"/"$venv_target_dir"/${pythonPackages.python.sitePackages}/:"$OLD_PYTHONPATH"
+        export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "${symlinks_to_libs}") ]}
+        
+        export JUPYTER_CONFIG_DIR="$venv_target_dir"/.auto_created_jupyter_config
+        
+        local current_dir="$PWD"
+        cd "$sub_project_dir"
+        
+        ./pipt sync
+
+        cd "$current_dir"
+
+        if [[ -n "$run_test_python_command" ]]; then
+            # Test some imports (for system libraries missing / not found)
+            echo "Run test Python command: $run_test_python_command"
+            "$venv_target_dir"/bin/python -c "$run_test_python_command"
+        fi
+
+        if "$configure_jupyter_in_venv" ; then
+            echo "Configure jupyter notebook in virtual environment"
+            echo "Write jupyter config to: $JUPYTER_CONFIG_DIR"
+            rm -rf "$JUPYTER_CONFIG_DIR"
+            mkdir -p "$JUPYTER_CONFIG_DIR"
+            # "$venv_target_dir"/bin/pip install jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
+
+            mkdir -p "$JUPYTER_CONFIG_DIR"/lab/user-settings/@ryantam626/jupyterlab_code_formatter
+            echo '{"preferences": {"default_formatter": {"python": ["black"]}},}' > "$JUPYTER_CONFIG_DIR"/lab/user-settings/@ryantam626/jupyterlab_code_formatter/settings.jupyterlab-setting
+            mkdir -p "$JUPYTER_CONFIG_DIR"/lab/user-settings/@jupyterlab/shortcuts-extension
+            echo '{"shortcuts": [{"command": "jupyterlab_code_formatter:black", "keys": ["Ctrl K", "Ctrl M"], "selector": ".jp-Notebook.jp-mod-editMode"}]}' > "$JUPYTER_CONFIG_DIR"/lab/user-settings/@jupyterlab/shortcuts-extension/shortcuts.jupyterlab-settings
+
+        fi
+
+        if "$activate_venv" ; then
+            source "$venv_target_dir/bin/activate"
+        fi
+
+    }
+
+    prepare_venv "''${@}"
+  '';
+
+
+  prepare-runtime-venv = writeShellScriptBin "prepare-runtime-venv" ''
+    set -e
+
+    echo "BUILD AND ACTIVATE VENV AT ${venvDirRuntime}"
+    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/runtime "${venvDirRuntime}" true true "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
+  '';
+
+  prepare-python-demo-adapter-venv = writeShellScriptBin "prepare-python-demo-adapter-venv" ''
+    set -e
+
+    echo "BUILD AND ACTIVATING VENV AT ${venvDirPythonDemoAdapter}"
+    source ${prepare-venv}/bin/prepare-venv "${projectDir}"/demo-adapter-python "${venvDirPythonDemoAdapter}" true false "import httpx; import pydantic; import numpy; import pandas"
+  '';
+
   start-postgres = writeShellScriptBin "start-hd-postgres" ''
     
     echo "Stop possible running postgres server"
@@ -95,12 +201,22 @@ let
     postgres -D ${projectDir}/.tmp/pg_dev_db  -k ${projectDir}
   '';
 
+  start-python-demo-adapter = writeShellScriptBin "start-python-demo-adapter" ''
+      set -e
+      source ${prepare-python-demo-adapter-venv}/bin/prepare-python-demo-adapter-venv
+      cd ${pythonDemoAdapterDir}
+
+      PORT=8092 python ./main.py
+  '';
+
   start-runtime = writeShellScriptBin "start-hd-runtime" ''
       set -e
 
+      source ${prepare-runtime-venv}/bin/prepare-runtime-venv
+
       cd ${runtimeDir}
       export HD_DATABASE_URL="postgresql+psycopg2://$(whoami):hetida_designer_dbpasswd@localhost:5432/hetida_designer_db"
-    
+      export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092"
       echo "WAIT FOR POSTGRES DB"
       sleep 5 # wait for stopping possibly existing postgres instances before trying
       # wait for postgres to be up using the pg_isready utility
@@ -124,11 +240,13 @@ let
 
   init-components = writeShellScriptBin "init-hd-components" ''
       set -e
+      source ${prepare-runtime-venv}/bin/prepare-runtime-venv      
+      
       cd ${runtimeDir}
       # wait for backend
       ${waitfor}/bin/waitfor -t 60 http://localhost:8080/api/info
       # Deploy components and workflows
-      HETIDA_DESIGNER_BACKEND_API_URL=http://localhost:8080/api/ ${venvDir}/bin/python -c "from hetdesrun.exportimport.importing import import_all; import_all('./transformations');"
+      HETIDA_DESIGNER_BACKEND_API_URL=http://localhost:8080/api/ ${venvDirRuntime}/bin/python -c "from hetdesrun.exportimport.importing import import_all; import_all('./transformations', update_component_code=False);"
       echo "finished deploying components and workflows"
   '';
 
@@ -137,13 +255,14 @@ let
       frontend: ${start-frontend}/bin/start-hd-frontend
       postgres: ${start-postgres}/bin/start-hd-postgres
       initcomponents: ${init-components}/bin/init-hd-components
+      pythondemoadapter: ${start-python-demo-adapter}/bin/start-python-demo-adapter
       
   '';
   
 in pkgs.mkShell rec {
   name = "hetida-desiger-local-dev-environment";
 
-  inherit projectDir venvDir;
+  inherit projectDir venvDirRuntime;
 
   buildInputs = [
     # A Python interpreter including the 'venv' module is required to bootstrap
@@ -158,6 +277,7 @@ in pkgs.mkShell rec {
     libxslt
     libzip
     zlib
+    cacert
     # glib
     glibc
     glibcLocales
@@ -195,60 +315,15 @@ in pkgs.mkShell rec {
     OVERMIND_NO_PORT = "1";
     OVERMIND_CAN_DIE = "runtime,initcomponents";
 
-    JUPYTER_CONFIG_DIR =  toString ./.jupyter;
+
 
   shellHook = ''
     set -e
     SOURCE_DATE_EPOCH=$(date +%s)
 
-    echo "FINDING VENV at ${venvDir}"
-    if [ -d "${venvDir}" ]; then
-      echo "Skipping venv creation, '${venvDir}' already exists"
-    else
-      echo "Creating new venv environment in path: '${venvDir}'"
-      # Note that the module venv was only introduced in python 3, so for 2.7
-      # this needs to be replaced with a call to virtualenv
-      ${pythonPackages.python.interpreter} -m venv "${venvDir}"
-      
-      "${venvDir}"/bin/pip install pip-tools==6.4.0
-    fi
+    ${prepare-runtime-venv}/bin/prepare-runtime-venv
 
-    # Under some circumstances it might be necessary to add your virtual
-    # environment to PYTHONPATH, which you can do here too;
-    PYTHONPATH=$PWD/${venvDir}/${pythonPackages.python.sitePackages}/:$PYTHONPATH
-
-    # Additionally for pandas / numpy to work you need:
-    # (https://discourse.nixos.org/t/python-package-with-runtime-dependencies/5522/9)
-
-    rm -fR ${venvDir}/symbolic_links_to_system_libs
-    mkdir -p ${venvDir}/symbolic_links_to_system_libs/lib
-    ln -s ${zlib}/lib/libz.so.1 ${venvDir}/symbolic_links_to_system_libs/lib/libz.so.1
-    ln -s ${glibc}/lib/libc-2.33.so ${venvDir}/symbolic_links_to_system_libs/lib/libc-2.33.so
-    ln -s ${glibc}/lib/libc-2.33.so.1 ${venvDir}/symbolic_links_to_system_libs/lib/libc-2.33.so.1
-
-    export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "${venvDir}/symbolic_links_to_system_libs") ]}      
-
-    echo "ACTIVATING VENV AT ${venvDir}"
-    source "${venvDir}/bin/activate"
-
-    echo "INSTALL FIXED PIP, WHEEL AND PIP-TOOLS INTO VENV"
-    "${venvDir}"/bin/pip install pip==21.3.1 wheel==0.37.0 pip-tools==6.4.0 jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
-    echo "START PIP-SYNC"
-    "${venvDir}"/bin/pip-sync ${projectDir}/runtime/requirements.txt ${projectDir}/runtime/requirements-dev.txt
-
-    # Test some imports (for system libraries missing / not found)
-    echo "TESTING IMPORTING SOME PYTHON PACKAGES":
-    python -c "import numpy; import pandas; import sklearn; import scipy; # import tensorflow"
-
-
-    echo "Initialize/configure jupyter notebook in virtual environment"
-    mkdir -p ${JUPYTER_CONFIG_DIR}
-    "${venvDir}"/bin/pip install jupyterlab==3.0.16 jupyterlab-code-formatter==1.4.10
-
-    mkdir -p ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter
-    echo '{"preferences": {"default_formatter": {"python": ["black"]}},}' > ${JUPYTER_CONFIG_DIR}/lab/user-settings/@ryantam626/jupyterlab_code_formatter/settings.jupyterlab-setting
-    mkdir -p ${JUPYTER_CONFIG_DIR}/lab/user-settings/@jupyterlab/shortcuts-extension
-    echo '{"shortcuts": [{"command": "jupyterlab_code_formatter:black", "keys": ["Ctrl K", "Ctrl M"], "selector": ".jp-Notebook.jp-mod-editMode"}]}' > ${JUPYTER_CONFIG_DIR}/lab/user-settings/@jupyterlab/shortcuts-extension/shortcuts.jupyterlab-settings
+    ${prepare-python-demo-adapter-venv}/bin/prepare-python-demo-adapter-venv
 
     echo "NODE VERSION"
     which node
@@ -259,9 +334,26 @@ in pkgs.mkShell rec {
     npm --version
 
     # Install node packages
-    current_dir=$(pwd)
-    cd ./frontend && npm ci # npm-ci = sync with package-lock.json
-    cd $current_dir
+
+    PACKAGE_JSON_HASH=$(./runtime/pipt _hash_multiple ./frontend/package-lock.json)
+
+    if [[ -d ./frontend/node_modules ]] && [[ -e ./frontend/node_modules/package-lock.json.hash ]] && [[ "$PACKAGE_JSON_HASH" == "$(cat ./frontend/node_modules/package-lock.json.hash)" ]] ; then
+        echo "$PACKAGE_JSON_HASH"
+        echo "$(cat ./frontend/node_modules/package-lock.json.hash)"    
+        echo "--> Node modules probably still in sync. Not syncing again."
+        echo "--> If you are not sure, simply delete ./frontend/node_modules subdir"
+        echo "    and restart nix shell."
+    else
+        current_dir=$(pwd)
+        cd ./frontend && npm ci 
+        # npm-ci = sync with package-lock.json. Could be improved:
+        # Does not intelligently check by using
+        # hashes
+        cd $current_dir        
+        ./runtime/pipt _hash_multiple ./frontend/package-lock.json > ./frontend/node_modules/package-lock.json.hash
+    fi
+
+
 
     set +e # disable exit on error!
   '';

@@ -1,4 +1,5 @@
 from copy import deepcopy
+
 import pytest
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
@@ -101,8 +102,10 @@ def test_transformation_dto_from_transformation_revision():
     transformation_revision = TransformationRevisionFrontendDto(
         **valid_transformation
     ).to_transformation_revision()
-    transformation_revision_dto = TransformationRevisionFrontendDto.from_transformation_revision(
-        transformation_revision
+    transformation_revision_dto = (
+        TransformationRevisionFrontendDto.from_transformation_revision(
+            transformation_revision
+        )
     )
 
     assert len(transformation_revision_dto.inputs) == len(

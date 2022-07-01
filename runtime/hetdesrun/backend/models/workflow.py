@@ -1,33 +1,24 @@
-from typing import List, Dict, Optional, Tuple, Literal
+import re
+from datetime import datetime, timezone
+from typing import Dict, List, Literal, Optional, Tuple
 from uuid import UUID
 
-import re
-
-from datetime import datetime
-
 # pylint: disable=no-name-in-module
-from pydantic import validator, root_validator
+from pydantic import root_validator, validator
 
-from hetdesrun.datatypes import DataType
-from hetdesrun.utils import State, Type
-
-from hetdesrun.models.util import names_unique
-
-from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.info import BasicInformation
-from hetdesrun.backend.models.io import (
-    WorkflowIoFrontendDto,
-    ConnectorFrontendDto,
-)
+from hetdesrun.backend.models.io import ConnectorFrontendDto, WorkflowIoFrontendDto
 from hetdesrun.backend.models.link import WorkflowLinkFrontendDto
 from hetdesrun.backend.models.operator import WorkflowOperatorFrontendDto
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.io import IOInterface, IOConnector
-from hetdesrun.persistence.models.link import Link
-from hetdesrun.persistence.models.workflow import WorkflowContent
-
+from hetdesrun.backend.models.wiring import WiringFrontendDto
+from hetdesrun.datatypes import DataType
+from hetdesrun.models.util import names_unique
 from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence.models.io import IOConnector, IOInterface
+from hetdesrun.persistence.models.link import Link
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.utils import State, Type
 
 
 # is unambiguous for inputs outputs
@@ -747,7 +738,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         self, documentation: str = "", timestamp: datetime = None
     ) -> TransformationRevision:
         if timestamp is None:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
         return TransformationRevision(
             id=self.id,
             revision_group_id=self.group_id,

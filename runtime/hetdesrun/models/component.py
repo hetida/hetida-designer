@@ -1,11 +1,11 @@
-from uuid import UUID
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field, validator  # pylint: disable=no-name-in-module
-from hetdesrun.datatypes import DataType
 
-from hetdesrun.models.util import valid_python_identifier, names_unique
+from hetdesrun.datatypes import DataType
 from hetdesrun.models.base import AbstractNode
+from hetdesrun.models.util import names_unique, valid_python_identifier
 
 
 class UnnamedInput(BaseModel):
