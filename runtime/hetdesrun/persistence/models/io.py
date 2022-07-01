@@ -2,13 +2,11 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 
 # pylint: disable=no-name-in-module
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from hetdesrun.datatypes import DataType
-
-from hetdesrun.models.util import valid_python_identifier
-from hetdesrun.models.util import names_unique
 from hetdesrun.models.component import ComponentInput, ComponentOutput
+from hetdesrun.models.util import names_unique, valid_python_identifier
 from hetdesrun.models.workflow import WorkflowInput, WorkflowOutput
 
 

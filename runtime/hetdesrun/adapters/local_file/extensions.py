@@ -1,5 +1,4 @@
-from typing import Optional, List, Callable, Dict, Any
-
+from typing import Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel, validator  # pylint: disable=no-name-in-module
 

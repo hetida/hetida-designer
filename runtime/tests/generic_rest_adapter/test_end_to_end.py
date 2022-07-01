@@ -1,12 +1,9 @@
-from unittest import mock
 from copy import deepcopy
-
-from starlette.testclient import TestClient
-from hetdesrun.webservice.application import app
-
-from hetdesrun.models.wiring import WorkflowWiring
+from unittest import mock
 
 import pytest
+
+from hetdesrun.models.wiring import WorkflowWiring
 
 
 async def run_workflow_with_client(workflow_json, open_async_test_client):

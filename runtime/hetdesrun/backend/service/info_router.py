@@ -1,9 +1,10 @@
 import logging
 
 from fastapi import APIRouter, status
+
 from hetdesrun import VERSION
 from hetdesrun.backend.kafka.consumer import get_kafka_worker_context
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ async def get_info() -> dict:
         "version": VERSION,
     }
 
-    if runtime_config.hd_kafka_consumer_enabled and runtime_config.is_backend_service:
+    if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
         kafka_ctx = get_kafka_worker_context()
         info_dict["worker_process_internal_kafka_consumer_id"] = str(
             kafka_ctx.consumer_id

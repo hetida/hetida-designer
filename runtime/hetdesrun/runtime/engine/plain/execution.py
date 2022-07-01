@@ -1,6 +1,6 @@
 """Execution helpers"""
 import asyncio
-from typing import Callable, Any, Dict
+from typing import Any, Callable, Dict
 
 
 async def run_func_or_coroutine(

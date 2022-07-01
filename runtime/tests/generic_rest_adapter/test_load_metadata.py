@@ -1,32 +1,15 @@
-from typing import Dict, List, Any
-
+from typing import Any, Dict
 from unittest import mock
 
 import pytest
 
-import pandas as pd
-
 from hetdesrun.adapters.exceptions import (
-    AdapterClientWiringInvalidError,
     AdapterConnectionError,
     AdapterHandlingException,
 )
-
-from hetdesrun.adapters.generic_rest.external_types import (
-    ExternalType,
-)
-
-from hetdesrun.adapters.generic_rest import (
-    load_grouped_timeseries_data_together,
-    load_data,
-)
-
+from hetdesrun.adapters.generic_rest import load_data
+from hetdesrun.adapters.generic_rest.load_metadata import load_multiple_metadata
 from hetdesrun.models.data_selection import FilteredSource
-
-from hetdesrun.adapters.generic_rest.load_metadata import (
-    load_multiple_metadata,
-    load_single_metadatum_from_adapter,
-)
 
 
 async def detailed_mocked_async_client_get(self, url, *args, **kwargs):
