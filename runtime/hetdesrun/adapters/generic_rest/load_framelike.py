@@ -9,7 +9,7 @@ import datetime
 import json
 import logging
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Literal, Tuple, Type, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import pandas as pd
 import requests
@@ -27,7 +27,9 @@ from hetdesrun.webservice.config import get_config
 logger = logging.getLogger(__name__)
 
 
-def create_empty_ts_df(data_type: ExternalType, attrs: Any = {}) -> pd.DataFrame:
+def create_empty_ts_df(
+    data_type: ExternalType, attrs: Optional[Any] = None
+) -> pd.DataFrame:
     """Create empty timeseries dataframe with explicit dtypes"""
     dtype_dict: Dict[str, Union[Type, str]] = {
         "timeseriesId": str,
@@ -38,6 +40,8 @@ def create_empty_ts_df(data_type: ExternalType, attrs: Any = {}) -> pd.DataFrame
     assert value_datatype is not None  # for mypy
     dtype_dict["value"] = value_datatype.pandas_value_type
 
+    if attrs is None:
+        attrs = {}
     return df_empty(dtype_dict, attrs=attrs)
 
 
