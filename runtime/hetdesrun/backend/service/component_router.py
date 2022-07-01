@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException, Path, status
+from fastapi import HTTPException, Path, status
 from pydantic import ValidationError
 
 from hetdesrun.backend.execution import ExecByIdInput
@@ -30,11 +30,12 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import Type
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 
-component_router = APIRouter(
+component_router = HandleTrailingSlashAPIRouter(
     prefix="/components",
     tags=["components"],
     responses={  # are these only used for display in the Swagger UI?

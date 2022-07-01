@@ -2,7 +2,7 @@ import logging
 from typing import List, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException, Path, status
+from fastapi import HTTPException, Path, status
 from pydantic import ValidationError
 
 from hetdesrun.backend.execution import ExecByIdInput
@@ -30,11 +30,12 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import Type
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 
-workflow_router = APIRouter(
+workflow_router = HandleTrailingSlashAPIRouter(
     prefix="/workflows",
     tags=["workflows"],
     responses={
