@@ -10,7 +10,7 @@ Actual data ingestion/egestion happens in the corresponding Runtime-Python-Plugi
 
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import HTTPException, Query
 
 from hetdesrun.adapters.local_file import VERSION
 from hetdesrun.adapters.local_file.models import (
@@ -32,9 +32,10 @@ from hetdesrun.adapters.local_file.structure import (
 )
 from hetdesrun.adapters.local_file.utils import from_url_representation
 from hetdesrun.webservice.auth_dependency import get_auth_deps
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 # Note: As CORS middleware the router employs the main FastAPI app's one
-local_file_adapter_router = APIRouter(
+local_file_adapter_router = HandleTrailingSlashAPIRouter(
     prefix="/adapters/localfile", tags=["local file adapter"]
 )
 

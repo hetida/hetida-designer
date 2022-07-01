@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from fastapi import APIRouter
-
 from hetdesrun import VERSION
 from hetdesrun.models.base import VersionInfo
 from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
 from hetdesrun.runtime.service import runtime_service
 from hetdesrun.webservice.auth_dependency import get_auth_deps
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
-runtime_router = APIRouter(tags=["runtime"])
+runtime_router = HandleTrailingSlashAPIRouter(tags=["runtime"])
 
 
 @runtime_router.post(

@@ -1,14 +1,11 @@
 import json
-
 from urllib.parse import quote
 
+import pytest
 from starlette.testclient import TestClient
 
-import pytest
-
-from demo_adapter_python.webservice import app
-
 from demo_adapter_python.external_types import ExternalType
+from demo_adapter_python.webservice import app
 
 client = TestClient(app)
 
