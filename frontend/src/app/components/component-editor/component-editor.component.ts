@@ -1,5 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { EditorComponent } from 'ngx-monaco-editor';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { RevisionState } from 'src/app/enums/revision-state';
@@ -42,15 +41,15 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     this._componentBaseItem = componentBaseItem;
     this.code = this.componentBaseItem.code;
     this.lastSaved = this.componentBaseItem.code;
-    this.editorOptions.readOnly =
-      this.componentBaseItem.state !== RevisionState.DRAFT;
+    this.editorOptions = {
+      ...this.editorOptions,
+      readOnly: this.componentBaseItem.state !== RevisionState.DRAFT
+    };
   }
 
   get componentBaseItem(): ComponentBaseItem {
     return this._componentBaseItem;
   }
-
-  @ViewChild('monacoEditor') monacoEditor: EditorComponent;
 
   constructor(
     private readonly componentService: ComponentEditorService,
@@ -87,18 +86,7 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
   }
 
   public set code(code: string) {
-    if (this.componentBaseItem.state !== RevisionState.DRAFT) {
-      this.setEditorReadOnly(true);
-    }
-
     this.codeCopy = code;
     this._autoSave$.next();
-  }
-
-  private setEditorReadOnly(readOnly: boolean): void {
-    if (this.monacoEditor !== undefined) {
-      this.editorOptions.readOnly = readOnly;
-      this.monacoEditor.options = this.editorOptions;
-    }
   }
 }
