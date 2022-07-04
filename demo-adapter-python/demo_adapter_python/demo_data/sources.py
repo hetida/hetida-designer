@@ -1,4 +1,4 @@
-from typing import Optional, Any, List, Dict
+from typing import Any, Dict, List, Optional
 
 from demo_adapter_python.external_types import ExternalType
 

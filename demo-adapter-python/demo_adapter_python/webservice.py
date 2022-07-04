@@ -1,56 +1,45 @@
-from typing import Callable, Optional, List, Dict, Any, Union
-
-import logging
-import json
 import base64
 import datetime
-
+import json
+import logging
+from io import StringIO
+from typing import Any, Callable, Dict, List, Optional, Union
 from urllib.parse import unquote
 
-from io import StringIO
-
+import numpy as np
+import pandas as pd
+from fastapi import APIRouter, Body, FastAPI, Header, HTTPException, Query
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware import Middleware
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from fastapi.routing import APIRoute
 from starlette.requests import Request
 from starlette.responses import Response
 
-from fastapi import FastAPI, APIRouter, HTTPException, Query, Body, Header
-from fastapi.routing import APIRoute
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware import Middleware
-
-from fastapi.responses import StreamingResponse
-
-import pandas as pd
-import numpy as np
-
-
 from demo_adapter_python import VERSION
-
 from demo_adapter_python.config import demo_adapter_config
-
+from demo_adapter_python.demo_data.sinks import get_sinks
+from demo_adapter_python.demo_data.sources import get_sources
+from demo_adapter_python.demo_data.thing_nodes import get_thing_nodes
 from demo_adapter_python.in_memory_store import (
-    set_metadatum_in_store,
     get_metadatum_from_store,
     get_value_from_store,
+    set_metadatum_in_store,
     set_value_in_store,
 )
-
 from demo_adapter_python.models import (
-    InfoResponse,
-    StructureResponse,
-    MultipleSourcesResponse,
-    StructureSource,
-    MultipleSinksResponse,
-    StructureSink,
-    StructureThingNode,
-    PostMetadatum,
-    TimeseriesRecord,
     GetMetadatum,
+    InfoResponse,
+    MultipleSinksResponse,
+    MultipleSourcesResponse,
+    PostMetadatum,
+    StructureResponse,
+    StructureSink,
+    StructureSource,
+    StructureThingNode,
+    TimeseriesRecord,
 )
-
-from demo_adapter_python.demo_data.thing_nodes import get_thing_nodes
-from demo_adapter_python.demo_data.sources import get_sources
-from demo_adapter_python.demo_data.sinks import get_sinks
 
 logger = logging.getLogger(__name__)
 

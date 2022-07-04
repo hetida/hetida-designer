@@ -1,17 +1,12 @@
 import json
-import base64
-
 from urllib.parse import quote
 
+import pytest
 from starlette.testclient import TestClient
 
-import pytest
-
-from demo_adapter_python.webservice import app, decode_attributes, encode_attributes
-
 from demo_adapter_python.external_types import ExternalType
-
 from demo_adapter_python.in_memory_store import get_value_from_store
+from demo_adapter_python.webservice import app, decode_attributes, encode_attributes
 
 client = TestClient(app)
 

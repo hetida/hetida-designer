@@ -1,10 +1,11 @@
 import logging
 from typing import List
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import HTTPException, status
 
 from hetdesrun.backend.models.adapter import AdapterFrontendDto
 from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 adapters = get_config().hd_adapters
 
 
-adapter_router = APIRouter(
+adapter_router = HandleTrailingSlashAPIRouter(
     prefix="/adapters",
     tags=["adapters"],
     responses={  # are these only used for display in the Swagger UI?
@@ -25,7 +26,7 @@ adapter_router = APIRouter(
 
 
 @adapter_router.get(
-    "/",
+    "",
     response_model=List[AdapterFrontendDto],
     summary="Returns all adapters",
     status_code=status.HTTP_200_OK,

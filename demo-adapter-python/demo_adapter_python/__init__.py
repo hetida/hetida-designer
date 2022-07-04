@@ -2,7 +2,6 @@ import logging
 
 from demo_adapter_python.config import demo_adapter_config
 
-
 try:
     with open("VERSION", "r", encoding="utf8") as version_file:
         VERSION = version_file.read().strip()
