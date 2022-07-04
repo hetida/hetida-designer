@@ -1,8 +1,4 @@
 {
-    "apiEndpoint": "/hdapi",
-    "forwardAuthHeaders": false,
-    "keycloakEnabled": false,
-    "keycloakRealm": "hetida",
-    "keycloakClientId": "hetida-client",
-    "keycloakUrl": "hdauth"
+  "apiEndpoint": "/hdapi",
+  "authEnabled": false
 }

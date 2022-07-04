@@ -1,42 +1,36 @@
-from typing import List, Optional
 import logging
-
+from typing import List, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Path, Query, status, HTTPException
-
-from hetdesrun.utils import Type, State
+from fastapi import HTTPException, Path, Query, status
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
     ExecLatestByGroupIdInput,
     TrafoExecutionNotFoundError,
-    TrafoExecutionRuntimeConnectionError,
     TrafoExecutionResultValidationError,
+    TrafoExecutionRuntimeConnectionError,
     execute_transformation_revision,
 )
-
+from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.component.code import update_code
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.dbservice.revision import (
+    get_latest_revision_id,
+    read_single_transformation_revision,
+    select_multiple_transformation_revisions,
+    store_single_transformation_revision,
+    update_or_create_single_transformation_revision,
+)
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
-
-from hetdesrun.persistence.dbservice.revision import (
-    read_single_transformation_revision,
-    store_single_transformation_revision,
-    select_multiple_transformation_revisions,
-    update_or_create_single_transformation_revision,
-    get_latest_revision_id,
-)
-
-from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError
-
-from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-
-from hetdesrun.component.code import update_code
+from hetdesrun.utils import State, Type
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 
-transformation_router = APIRouter(
+transformation_router = HandleTrailingSlashAPIRouter(
     prefix="/transformations",
     tags=["transformations"],
     responses={
@@ -59,7 +53,7 @@ def generate_code(transformation_revision: TransformationRevision) -> str:
 
 
 @transformation_router.post(
-    "/",
+    "",
     response_model=TransformationRevision,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -101,7 +95,7 @@ async def create_transformation_revision(
 
 
 @transformation_router.get(
-    "/",
+    "",
     response_model=List[TransformationRevision],
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes

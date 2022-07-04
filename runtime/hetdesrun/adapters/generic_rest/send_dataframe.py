@@ -1,18 +1,14 @@
-from typing import Dict, List
 import asyncio
+from typing import Dict, List
 
-
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from httpx import AsyncClient
 
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
-
-from hetdesrun.models.data_selection import FilteredSink
-
 from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.models.data_selection import FilteredSink
+from hetdesrun.webservice.config import get_config
 
 
 def dataframe_to_list_of_dicts(df: pd.DataFrame) -> List[Dict]:
@@ -47,7 +43,7 @@ async def post_dataframe(
 async def post_dataframes(
     dfs: List[pd.DataFrame], ref_ids: List[str], adapter_key: str
 ) -> None:
-    async with AsyncClient(verify=runtime_config.hd_adapters_verify_certs) as client:
+    async with AsyncClient(verify=get_config().hd_adapters_verify_certs) as client:
         await asyncio.gather(
             *(
                 post_dataframe(df, ref_id, adapter_key=adapter_key, client=client)

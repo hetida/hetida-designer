@@ -1,14 +1,14 @@
-from uuid import UUID, uuid4
-from typing import Dict, Optional
-import re
 import datetime
+import re
+from typing import Dict, Optional
+from uuid import UUID, uuid4
 
-from pydantic import (
+from pydantic import (  # pylint: disable=no-name-in-module
     BaseModel,
-    Field,
     ConstrainedStr,
+    Field,
     validator,
-)  # pylint: disable=no-name-in-module
+)
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.utils import State

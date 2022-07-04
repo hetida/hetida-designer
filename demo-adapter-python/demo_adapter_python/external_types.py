@@ -1,5 +1,5 @@
-from typing import Optional, Type, Any
 from enum import Enum
+from typing import Any, Optional, Type
 
 from pydantic import create_model  # pylint: disable=no-name-in-module
 

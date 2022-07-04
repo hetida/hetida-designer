@@ -1,12 +1,10 @@
-from typing import List, Union, Optional, cast
+import datetime
+from typing import List, Optional, Union, cast
 from uuid import UUID, uuid4
 
-import datetime
-
 # pylint: disable=no-name-in-module
-from pydantic import BaseModel, Field, validator, ValidationError
+from pydantic import BaseModel, Field, ValidationError, validator
 
-from hetdesrun.utils import State, Type
 from hetdesrun.models.code import (
     CodeModule,
     ComponentInfo,
@@ -14,23 +12,21 @@ from hetdesrun.models.code import (
     ShortNonEmptyValidStr,
     ValidStr,
 )
-
-from hetdesrun.models.component import ComponentRevision, ComponentNode
-from hetdesrun.models.workflow import WorkflowNode
+from hetdesrun.models.component import ComponentNode, ComponentRevision
 from hetdesrun.models.wiring import WorkflowWiring
-
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
+from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
-
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
 from hetdesrun.persistence.models.io import (
-    IOInterface,
-    Position,
     Connector,
     IOConnector,
+    IOInterface,
+    Position,
 )
-from hetdesrun.persistence.models.link import Vertex, Link
+from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.operator import Operator
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.utils import State, Type
 
 
 def transform_to_utc_datetime(dt: datetime.datetime) -> datetime.datetime:

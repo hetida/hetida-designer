@@ -1,30 +1,18 @@
+import json
 from unittest import mock
+
 import pytest
 
-import json
-
-from starlette.testclient import TestClient
-
-from hetdesrun.webservice.application import app
-
-from hetdesrun.persistence import get_db_engine, sessionmaker
-from hetdesrun.persistence.models.io import IOInterface
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
+from hetdesrun.backend.models.info import DocumentationFrontendDto
 from hetdesrun.models.wiring import WorkflowWiring
-
+from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
 )
-
-
-from hetdesrun.utils import Type, State, get_uuid_from_seed
-
-from hetdesrun.backend.models.info import DocumentationFrontendDto
-
-
-client = TestClient(app)
+from hetdesrun.persistence.models.io import IOInterface
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 
 @pytest.fixture(scope="function")

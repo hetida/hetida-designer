@@ -1,18 +1,16 @@
-from typing import List
 import logging
+from typing import List
 from uuid import UUID
 
-from sqlalchemy import select, delete, and_
+from sqlalchemy import and_, delete, select
 from sqlalchemy.exc import IntegrityError
 
-from hetdesrun.utils import Type
-
+from hetdesrun.persistence import Session, SQLAlchemySession
+from hetdesrun.persistence.dbmodels import Descendant, NestingDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
-
-from hetdesrun.persistence import SQLAlchemySession, Session
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.persistence.dbmodels import NestingDBModel, Descendant
+from hetdesrun.utils import Type
 
 logger = logging.getLogger(__name__)
 

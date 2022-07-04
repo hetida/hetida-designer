@@ -8,13 +8,12 @@ import logging
 from posixpath import join as posix_urljoin
 from typing import List, Literal
 
-from httpx import AsyncClient
 import httpx
-
-from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
-from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
+from httpx import AsyncClient
 
 from hetdesrun.adapters.exceptions import AdapterConnectionError
+from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
+from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
 
 logger = logging.getLogger(__name__)
 

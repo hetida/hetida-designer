@@ -1,13 +1,12 @@
 """Component entrypoint registration utilities"""
 
-from typing import Dict, Callable, Optional
-
 import asyncio
 import functools
-
-from hetdesrun.datatypes import DataType
+from typing import Callable, Dict, Optional
 
 from hetdesrun.component.load import ComponentCodeImportError
+from hetdesrun.datatypes import DataType
+from hetdesrun.runtime.context import execution_context
 
 
 class ComponentEntryPointRegistrationError(ComponentCodeImportError):

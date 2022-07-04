@@ -34,7 +34,8 @@
                 "glob": "**/*",
                 "input": "node_modules/ngx-monaco-editor/assets/monaco",
                 "output": "./assets/monaco/"
-              }
+              },
+              "src/silent-renew.html"
             ],
             "styles": [
               "./node_modules/hetida-flowchart/hetida-flowchart.css",
@@ -42,7 +43,9 @@
               "./node_modules/hd-wiring/hd-wiring.css",
               "src/style/styles.scss"
             ],
-            "scripts": ["node_modules/plotly.js/dist/plotly.min.js"],
+            "scripts": [
+              "node_modules/plotly.js/dist/plotly.min.js"
+            ],
             "aot": false,
             "vendorChunk": true,
             "extractLicenses": false,
@@ -71,7 +74,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "2mb",
-                  "maximumError": "6mb"
+                  "maximumError": "7mb"
                 }
               ]
             }
@@ -108,14 +111,22 @@
               "src/style/styles.scss"
             ],
             "scripts": [],
-            "assets": ["src/favicon.ico", "src/assets"]
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ]
           }
         },
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": ["src/tsconfig.app.json", "src/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**"]
+            "tsConfig": [
+              "src/tsconfig.app.json",
+              "src/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
           }
         }
       }

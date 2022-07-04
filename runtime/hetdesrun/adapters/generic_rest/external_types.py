@@ -4,15 +4,13 @@ The generic rest adapter "types" differ from the types used in the designer.
 """
 
 
-from typing import Optional, Dict, Union, Type, Any
-from enum import Enum
 import json
-
 import logging
-
-from pydantic import create_model  # pylint: disable=no-name-in-module
+from enum import Enum
+from typing import Any, Dict, Optional, Type, Union
 
 import pandas as pd
+from pydantic import create_model  # pylint: disable=no-name-in-module
 
 logger = logging.getLogger(__name__)
 

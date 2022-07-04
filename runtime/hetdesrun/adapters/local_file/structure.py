@@ -1,29 +1,23 @@
 import os
-
-from typing import Optional, List, Callable, Tuple
-
+from typing import Callable, List, Optional, Tuple
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
-
+from hetdesrun.adapters.local_file.config import local_file_adapter_config
 from hetdesrun.adapters.local_file.detect import (
-    get_local_files_and_dirs,
     LocalFile,
+    get_local_files_and_dirs,
     local_file_from_path,
 )
-
 from hetdesrun.adapters.local_file.models import (
-    StructureThingNode,
-    LocalFileStructureSource,
     LocalFileStructureSink,
+    LocalFileStructureSource,
     StructureResponse,
+    StructureThingNode,
 )
-
 from hetdesrun.adapters.local_file.utils import (
     from_url_representation,
     to_url_representation,
 )
-
-from hetdesrun.adapters.local_file.config import local_file_adapter_config
 
 
 def source_from_local_file(local_file: LocalFile) -> LocalFileStructureSource:
