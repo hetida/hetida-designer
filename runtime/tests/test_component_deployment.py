@@ -1,11 +1,11 @@
-import pytest
 import logging
 from unittest import mock
 
-from hetdesrun.persistence import get_db_engine, sessionmaker
-from hetdesrun.persistence.dbmodels import Base
+import pytest
 
 from hetdesrun.exportimport.importing import import_transformations
+from hetdesrun.persistence import get_db_engine, sessionmaker
+from hetdesrun.persistence.dbmodels import Base
 
 
 @pytest.fixture(scope="function")
@@ -89,7 +89,9 @@ def test_component_deployment_directly_into_db(caplog, clean_test_db_engine):
                     "hetdesrun.utils.requests.put", return_value=response_mock
                 ) as patched_put:
                     caplog.clear()
-                    import_transformations("./transformations/components", directly_into_db=True)
+                    import_transformations(
+                        "./transformations/components", directly_into_db=True
+                    )
                     assert "1946d5f8-44a8-724c-176f-16f3e49963af" in caplog.text
                     # id of a component
 
