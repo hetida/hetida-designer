@@ -347,7 +347,9 @@ async def test_deprecate_transformation_revision_from_component_dto(
         assert response.json()["category"] != "Test"
         assert len(response.json()["inputs"]) == 0
 
-        tr_component_2 = read_single_transformation_revision(tr_dto_json_component_2["id"])
+        tr_component_2 = read_single_transformation_revision(
+            tr_dto_json_component_2["id"]
+        )
 
         assert tr_component_2.state.value == "DISABLED"
         assert tr_component_2.name != "new name"
