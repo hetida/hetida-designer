@@ -165,26 +165,24 @@ async def test_get_all_base_items_with_specified_state(
     ):
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_component_1 # DRAFT
+                **tr_dto_json_component_1  # DRAFT
             ).to_transformation_revision()
         )
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_component_2 # RELEASED
+                **tr_dto_json_component_2  # RELEASED
             ).to_transformation_revision()
         )
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_workflow_1 # DRAFT
+                **tr_dto_json_workflow_1  # DRAFT
             ).to_transformation_revision()
         )
         tr_workflow_2 = TransformationRevisionFrontendDto(
-                **tr_dto_json_workflow_2
-            ).to_transformation_revision()
+            **tr_dto_json_workflow_2
+        ).to_transformation_revision()
         tr_workflow_2.deprecate()
-        store_single_transformation_revision(
-            tr_workflow_2
-        )
+        store_single_transformation_revision(tr_workflow_2)
 
         async with async_test_client as ac:
             response_draft = await ac.get("/api/base-items/?state=DRAFT")
@@ -204,7 +202,9 @@ async def test_get_all_base_items_with_specified_state(
         assert response_disabled.json()[0]["id"] == tr_dto_json_workflow_2["id"]
         assert response_disabled.json()[0]["state"] == "DISABLED"
         assert response_foo.status_code == 422
-        assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+        assert (
+            "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+        )
 
 
 @pytest.mark.asyncio
@@ -217,22 +217,22 @@ async def test_get_all_base_items_with_specified_type(
     ):
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_component_1 # DRAFT
+                **tr_dto_json_component_1  # DRAFT
             ).to_transformation_revision()
         )
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_component_2 # RELEASED
+                **tr_dto_json_component_2  # RELEASED
             ).to_transformation_revision()
         )
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_workflow_1 # DRAFT
+                **tr_dto_json_workflow_1  # DRAFT
             ).to_transformation_revision()
         )
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_workflow_2 # DRAFT
+                **tr_dto_json_workflow_2  # DRAFT
             ).to_transformation_revision()
         )
 
@@ -250,8 +250,10 @@ async def test_get_all_base_items_with_specified_type(
         assert response_workflow.json()[0] == tr_dto_json_workflow_1
         assert response_workflow.json()[1] == tr_dto_json_workflow_2
         assert response_foo.status_code == 422
-        assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
-        
+        assert (
+            "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+        )
+
 
 @pytest.mark.asyncio
 async def test_get_all_base_items_with_specified_type_and_state(
@@ -263,22 +265,22 @@ async def test_get_all_base_items_with_specified_type_and_state(
     ):
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_component_1 # DRAFT
+                **tr_dto_json_component_1  # DRAFT
             ).to_transformation_revision()
         )
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_component_2 # RELEASED
+                **tr_dto_json_component_2  # RELEASED
             ).to_transformation_revision()
         )
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_workflow_1 # DRAFT
+                **tr_dto_json_workflow_1  # DRAFT
             ).to_transformation_revision()
         )
         store_single_transformation_revision(
             TransformationRevisionFrontendDto(
-                **tr_dto_json_workflow_2 # DRAFT
+                **tr_dto_json_workflow_2  # DRAFT
             ).to_transformation_revision()
         )
 
@@ -292,11 +294,12 @@ async def test_get_all_base_items_with_specified_type_and_state(
 
         assert response_released_component.status_code == 200
         assert len(response_released_component.json()) == 1
-        assert response_released_component.json()[0] ==  tr_dto_json_component_2
+        assert response_released_component.json()[0] == tr_dto_json_component_2
         assert response_draft_workflow.status_code == 200
         assert len(response_draft_workflow.json()) == 2
         assert response_draft_workflow.json()[0] == tr_dto_json_workflow_1
         assert response_draft_workflow.json()[1] == tr_dto_json_workflow_2
+
 
 @pytest.mark.asyncio
 async def test_get_transformation_revision_by_id_with_component(
