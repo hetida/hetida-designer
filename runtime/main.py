@@ -28,8 +28,10 @@ logger = logging.getLogger(__name__)
 configure_logging(logger)
 
 # must be after logging config:
-from hetdesrun.webservice.application import app
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice import get_app
+from hetdesrun.webservice.config import get_config
+
+app = get_app()
 
 
 def detect_in_memory_db() -> bool:
@@ -52,7 +54,7 @@ def detect_in_memory_db() -> bool:
 
 def run_migrations(
     alembic_dir: str = "./alembic",
-    connection_url=runtime_config.sqlalchemy_connection_string,
+    connection_url=get_config().sqlalchemy_connection_string,
 ) -> None:
     """Runs alembic migrations from within Python code
 

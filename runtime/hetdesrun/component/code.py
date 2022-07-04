@@ -5,9 +5,8 @@ to provide a very elementary support system to the designer code editor.
 """
 
 from datetime import datetime, timezone
-
-from typing import Optional, List
 from keyword import iskeyword
+from typing import List, Optional
 
 from hetdesrun.models.code import ComponentInfo
 

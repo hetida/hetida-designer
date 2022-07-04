@@ -1,9 +1,9 @@
-from typing import Optional, Dict, Any
 from collections import defaultdict
-from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.models.data_selection import FilteredSink, FilteredSource
+from typing import Any, Dict, Optional
 
 from hetdesrun.adapters import load_data_from_adapter, send_data_with_adapter
+from hetdesrun.models.data_selection import FilteredSink, FilteredSource
+from hetdesrun.models.wiring import WorkflowWiring
 
 
 async def resolve_and_load_data_from_wiring(

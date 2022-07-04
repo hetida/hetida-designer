@@ -1,19 +1,18 @@
 from typing import NamedTuple
-
 from uuid import UUID, uuid4
 
-from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Enum,
-    DateTime,
     JSON,
-    UniqueConstraint,
     CheckConstraint,
+    Column,
+    DateTime,
+    Enum,
     ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
 )
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy_utils import UUIDType
 
 from hetdesrun.utils import State, Type
