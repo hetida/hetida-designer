@@ -45,10 +45,10 @@ def run_migrations_offline():
 
     """
 
-    from hetdesrun.webservice.config import runtime_config
+    from hetdesrun.webservice.config import get_config
 
     url = (
-        runtime_config.sqlalchemy_connection_string
+        get_config().sqlalchemy_connection_string
     )  # config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,

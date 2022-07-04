@@ -1,23 +1,19 @@
 """Models for runtime execution endpoint"""
 
 
-from typing import List, Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    Field,
-    validator,
-    root_validator,
-)
+
+from pydantic import Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, root_validator, validator
 
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
-
 from hetdesrun.models.base import Result
-from hetdesrun.models.component import ComponentRevision
-from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.models.code import CodeModule
-from hetdesrun.models.wiring import WorkflowWiring, OutputWiring
+from hetdesrun.models.component import ComponentRevision
+from hetdesrun.models.wiring import OutputWiring, WorkflowWiring
+from hetdesrun.models.workflow import WorkflowNode
 
 
 class ExecutionEngine(Enum):

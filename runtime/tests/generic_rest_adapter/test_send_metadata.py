@@ -2,18 +2,9 @@ from unittest import mock
 
 import pytest
 
-import pandas as pd
-import numpy as np
-
-from hetdesrun.adapters.generic_rest import (
-    send_data,
-)
-
-from hetdesrun.adapters.generic_rest.external_types import ExternalType
-
-from hetdesrun.models.data_selection import FilteredSink
-
 from hetdesrun.adapters.exceptions import AdapterConnectionError
+from hetdesrun.adapters.generic_rest import send_data
+from hetdesrun.models.data_selection import FilteredSink
 
 
 @pytest.mark.asyncio

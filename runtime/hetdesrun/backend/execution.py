@@ -1,49 +1,39 @@
 """Handle execution of transformation revisions."""
 
-from typing import List, Dict, Union
 import json
 import logging
-from uuid import UUID, uuid4
 from posixpath import join as posix_urljoin
+from typing import Dict, List, Union
+from uuid import UUID, uuid4
 
-
-from pydantic import (
-    BaseModel,
-    ValidationError,
-    Field,
-)  # pylint: disable=no-name-in-module
 import httpx
-
-from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.models.workflow import WorkflowNode
-from hetdesrun.models.component import ComponentNode
-
-from hetdesrun.utils import Type, get_auth_headers
+from pydantic import (  # pylint: disable=no-name-in-module
+    BaseModel,
+    Field,
+    ValidationError,
+)
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-
-from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
-from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError
-
-
-from hetdesrun.webservice.config import runtime_config
-from hetdesrun.service.runtime_router import runtime_service
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
-from hetdesrun.runtime.logging import execution_context_filter
-
-
+from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.run import (
     ConfigurationInput,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-
+from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.workflow import WorkflowNode
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_all_nested_transformation_revisions,
+    read_single_transformation_revision,
 )
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.runtime.logging import execution_context_filter
+from hetdesrun.runtime.service import runtime_service
+from hetdesrun.utils import Type
+from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 logger.addFilter(execution_context_filter)
@@ -241,19 +231,19 @@ async def run_execution_input(
 
     execution_result: WorkflowExecutionResult
 
-    if runtime_config.is_runtime_service:
+    if get_config().is_runtime_service:
         execution_result = await runtime_service(execution_input)
     else:
         headers = get_auth_headers()
 
         async with httpx.AsyncClient(
-            verify=runtime_config.hd_runtime_verify_certs
+            verify=get_config().hd_runtime_verify_certs
         ) as client:
-            url = posix_urljoin(runtime_config.hd_runtime_engine_url, "runtime")
+            url = posix_urljoin(get_config().hd_runtime_engine_url, "runtime")
             try:
                 response = await client.post(
                     url,
-                    headers=headers,  # TODO: authentication
+                    headers=headers,
                     json=json.loads(
                         execution_input.json()
                     ),  # TODO: avoid double serialization.
@@ -262,6 +252,8 @@ async def run_execution_input(
                     timeout=None,
                 )
             except httpx.HTTPError as e:
+                # handles both request errors (connection problems)
+                # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
                 msg = f"Failure connecting to hd runtime endpoint ({url}):\n{str(e)}"
                 logger.info(msg)
                 raise TrafoExecutionRuntimeConnectionError(msg) from e

@@ -1,5 +1,4 @@
 import warnings
-
 from copy import deepcopy
 
 # the following line in hetdesrun.webservice.application causes a DeprecationWarning concerning
@@ -8,15 +7,9 @@ from copy import deepcopy
 # Therefore we ignore such warnings here
 warnings.filterwarnings("ignore", message="the imp module is deprecated")
 
-from starlette.testclient import TestClient
-
 import pytest
 
-from hetdesrun.webservice.application import app
-
 from hetdesrun.utils import get_uuid_from_seed
-
-client = TestClient(app)
 
 
 @pytest.mark.asyncio
@@ -39,6 +32,14 @@ async def test_swagger_ui_available(async_test_client):
 async def test_access_api_endpoint(async_test_client):
     async with async_test_client as ac:
         response = await ac.get("engine/info")
+    assert response.status_code == 200
+    assert "version" in response.json().keys()
+
+
+@pytest.mark.asyncio
+async def test_access_api_endpoint_with_trailing_slash(async_test_client):
+    async with async_test_client as ac:
+        response = await ac.get("engine/info/")
     assert response.status_code == 200
     assert "version" in response.json().keys()
 

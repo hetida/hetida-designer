@@ -1,19 +1,17 @@
-from typing import List, Union, Optional
+from typing import List, Optional, Union
+
 from pydantic import (  # pylint: disable=no-name-in-module
     BaseModel,
     Field,
-    validator,
-    StrictStr,
     StrictInt,
+    StrictStr,
+    validator,
 )
 
-
-from hetdesrun.models.util import valid_python_identifier
-
-from hetdesrun.adapters import SOURCE_ADAPTERS, SINK_ADAPTERS
-
+from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
 from hetdesrun.models.adapter_data import RefIdType
+from hetdesrun.models.util import valid_python_identifier
 
 EXPORT_MODE = False
 

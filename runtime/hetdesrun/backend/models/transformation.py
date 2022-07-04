@@ -1,6 +1,5 @@
-from typing import List
-
 from datetime import datetime
+from typing import List
 
 # pylint: disable=no-name-in-module
 from pydantic import validator
@@ -8,16 +7,12 @@ from pydantic import validator
 from hetdesrun.backend.models.info import BasicInformation
 from hetdesrun.backend.models.io import ConnectorFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
-
 from hetdesrun.models.util import names_unique
-
-from hetdesrun.utils import State, Type
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.io import IOInterface
-from hetdesrun.persistence.models.workflow import WorkflowContent
-
 from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence.models.io import IOInterface
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.utils import State, Type
 
 
 class TransformationRevisionFrontendDto(BasicInformation):

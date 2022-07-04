@@ -1,13 +1,15 @@
-from typing import Callable, Dict, Any, Union
 import asyncio
 import logging
-from hetdesrun.runtime import RuntimeExecutionError, MissingOutputDataError
-from hetdesrun.runtime.logging import execution_context_filter
+from typing import Any, Callable, Dict, Union
 
-from hetdesrun.runtime.engine.plain.workflow import Workflow
-from hetdesrun.runtime import runtime_component_logger
-
+from hetdesrun.runtime import (
+    MissingOutputDataError,
+    RuntimeExecutionError,
+    runtime_component_logger,
+)
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
+from hetdesrun.runtime.engine.plain.workflow import Workflow
+from hetdesrun.runtime.logging import execution_context_filter
 
 logger = logging.getLogger(__name__)
 

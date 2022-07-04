@@ -1,26 +1,19 @@
 from unittest import mock
 
-import pytest
-
 import pandas as pd
+import pytest
 
 from hetdesrun.adapters.exceptions import (
     AdapterClientWiringInvalidError,
     AdapterConnectionError,
 )
-
-from hetdesrun.adapters.generic_rest.external_types import (
-    ExternalType,
-)
-
 from hetdesrun.adapters.generic_rest import (
-    load_grouped_timeseries_data_together,
     load_data,
+    load_grouped_timeseries_data_together,
 )
-
-from hetdesrun.models.data_selection import FilteredSource
-
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.generic_rest.load_ts_data import load_ts_data_from_adapter
+from hetdesrun.models.data_selection import FilteredSource
 
 
 @pytest.mark.asyncio
