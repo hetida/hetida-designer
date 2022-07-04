@@ -29,18 +29,17 @@ def dataframe_to_list_of_dicts(df: pd.DataFrame) -> List[Dict]:
 
     if len(datetime_column_names) == 0:
         return df.replace({np.nan: None}).to_dict(orient="records")  # type: ignore
-    else:
-        return (
-            df.replace({np.nan: None})
-            .drop(datetime_column_names, axis=1)
-            .join(
-                [
-                    df[column_name].map(lambda x: x.isoformat())
-                    for column_name in datetime_column_names
-                ]
-            )
-            .to_dict(orient="records")
+    return (
+        df.replace({np.nan: None})
+        .drop(datetime_column_names, axis=1)
+        .join(
+            [
+                df[column_name].map(lambda x: x.isoformat())
+                for column_name in datetime_column_names
+            ]
         )
+        .to_dict(orient="records")
+    )
 
 
 async def post_dataframe(
