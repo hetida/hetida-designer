@@ -8,8 +8,7 @@ export class NotificationService {
   private readonly notificationOptions: MatSnackBarConfig = {
     verticalPosition: 'top',
     horizontalPosition: 'right',
-    duration: 5000,
-    panelClass: 'default-notification-overlay'
+    duration: 5000
   };
 
   constructor(
@@ -19,7 +18,8 @@ export class NotificationService {
 
   default(message: string) {
     this.show(message, {
-      ...this.notificationOptions
+      ...this.notificationOptions,
+      panelClass: 'default-notification-overlay'
     });
   }
 
