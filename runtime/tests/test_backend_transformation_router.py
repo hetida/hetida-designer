@@ -19,7 +19,6 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import get_uuid_from_seed
-from hetdesrun.webservice.application import app
 from hetdesrun.webservice.config import get_config, runtime_config
 
 
