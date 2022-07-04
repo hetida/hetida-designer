@@ -221,12 +221,6 @@ def import_transformation(
     if strip_wirings:
         tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
 
-    update_component_code_str = (
-        "update_component_code=True"
-        if update_component_code
-        else "update_component_code=False"
-    )
-
     response = requests.put(
         posix_urljoin(
             get_config().hd_backend_api_url, "transformations", tr_json["id"]
