@@ -1,43 +1,41 @@
 import logging
 from typing import Optional
-
 from uuid import UUID, uuid4
-from fastapi import APIRouter, Path, status, HTTPException
 
+from fastapi import HTTPException, Path, status
 from pydantic import ValidationError
 
-from hetdesrun.utils import Type
-
 from hetdesrun.backend.execution import ExecByIdInput
-from hetdesrun.backend.service.transformation_router import (
-    generate_code,
-    check_modifiability,
-    update_content,
-    if_applicable_release_or_deprecate,
-    handle_trafo_revision_execution_request,
-)
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
-from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-
+from hetdesrun.backend.models.wiring import WiringFrontendDto
+from hetdesrun.backend.service.transformation_router import (
+    check_modifiability,
+    generate_code,
+    handle_trafo_revision_execution_request,
+    if_applicable_release_or_deprecate,
+    update_content,
+)
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBBadRequestError,
+    DBIntegrityError,
+    DBNotFoundError,
+    DBTypeError,
+)
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     read_single_transformation_revision,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBTypeError,
-    DBBadRequestError,
-    DBNotFoundError,
-    DBIntegrityError,
-)
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import Type
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 
-component_router = APIRouter(
+component_router = HandleTrailingSlashAPIRouter(
     prefix="/components",
     tags=["components"],
     responses={  # are these only used for display in the Swagger UI?
@@ -50,7 +48,7 @@ component_router = APIRouter(
 
 
 @component_router.post(
-    "/",
+    "",
     response_model=ComponentRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes

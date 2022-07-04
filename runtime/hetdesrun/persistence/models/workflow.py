@@ -1,17 +1,14 @@
-from typing import List, Dict, Tuple, Optional, Union
+import re
+from typing import Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
-import re
-
 # pylint: disable=no-name-in-module
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from hetdesrun.datatypes import DataType
-
 from hetdesrun.models.util import names_unique
-from hetdesrun.models.workflow import WorkflowNode, ComponentNode
-
-from hetdesrun.persistence.models.io import Connector, IOConnector, Constant
+from hetdesrun.models.workflow import ComponentNode, WorkflowNode
+from hetdesrun.persistence.models.io import Connector, Constant, IOConnector
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import NonEmptyValidStr, Operator
 

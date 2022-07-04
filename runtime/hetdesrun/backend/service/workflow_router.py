@@ -1,44 +1,41 @@
-from typing import List, Optional
 import logging
-
+from typing import List, Optional
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Path, status, HTTPException
-
+from fastapi import HTTPException, Path, status
 from pydantic import ValidationError
 
-from hetdesrun.utils import Type
-
 from hetdesrun.backend.execution import ExecByIdInput
+from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.backend.models.wiring import WiringFrontendDto
+from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
     check_modifiability,
-    update_content,
-    if_applicable_release_or_deprecate,
     handle_trafo_revision_execution_request,
+    if_applicable_release_or_deprecate,
+    update_content,
 )
-from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-from hetdesrun.backend.models.wiring import WiringFrontendDto
-from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBBadRequestError,
+    DBIntegrityError,
+    DBNotFoundError,
+    DBTypeError,
+)
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     read_single_transformation_revision,
-    store_single_transformation_revision,
     select_multiple_transformation_revisions,
+    store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBTypeError,
-    DBBadRequestError,
-    DBNotFoundError,
-    DBIntegrityError,
-)
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import Type
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 
-workflow_router = APIRouter(
+workflow_router = HandleTrailingSlashAPIRouter(
     prefix="/workflows",
     tags=["workflows"],
     responses={
@@ -51,7 +48,7 @@ workflow_router = APIRouter(
 
 
 @workflow_router.post(
-    "/",
+    "",
     response_model=WorkflowRevisionFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -110,7 +107,7 @@ async def create_workflow_revision(
 
 
 @workflow_router.get(
-    "/",
+    "",
     response_model=List[WorkflowRevisionFrontendDto],
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes

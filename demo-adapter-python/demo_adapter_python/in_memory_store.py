@@ -1,6 +1,5 @@
-from typing import Any
-
 from multiprocessing import Manager
+from typing import Any
 
 import pandas as pd
 

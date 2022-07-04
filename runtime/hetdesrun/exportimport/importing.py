@@ -1,43 +1,33 @@
-import os
+import importlib
 import json
 import logging
-import importlib
-
-from uuid import UUID
-from posixpath import join as posix_urljoin
-from typing import List, Dict, Any, Optional
+import os
 from datetime import datetime, timezone
+from posixpath import join as posix_urljoin
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 import requests
 
-from hetdesrun.utils import (
-    Type,
-    get_uuid_from_seed,
-    get_auth_headers,
-    get_backend_basic_auth,
-    selection_list_empty_or_contains_value,
-    criterion_unset_or_matches_value,
-)
-
+from hetdesrun.component.code import update_code
 from hetdesrun.component.load import (
     ComponentCodeImportError,
     import_func_from_code,
     module_path_from_code,
 )
-
-from hetdesrun.component.code import update_code
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
-from hetdesrun.persistence.models.io import (
-    IOInterface,
-    IO,
-)
-
-from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.models.code import ComponentInfo
-
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence.models.io import IO, IOInterface
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import (
+    Type,
+    criterion_unset_or_matches_value,
+    get_backend_basic_auth,
+    get_uuid_from_seed,
+    selection_list_empty_or_contains_value,
+)
+from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -233,16 +223,16 @@ def import_transformation(
 
     response = requests.put(
         posix_urljoin(
-            runtime_config.hd_backend_api_url, "transformations", tr_json["id"]
+            get_config().hd_backend_api_url, "transformations", tr_json["id"]
         ),
         params={
             "allow_overwrite_released": True,
             "update_component_code": update_component_code,
         },
-        verify=runtime_config.hd_backend_verify_certs,
+        verify=get_config().hd_backend_verify_certs,
         json=tr_json,
-        auth=get_backend_basic_auth()
-        if runtime_config.hd_backend_use_basic_auth
+        auth=get_backend_basic_auth()  # type: ignore
+        if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
     )

@@ -1,16 +1,15 @@
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 from uuid import UUID, uuid4
 
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, StrictInt, StrictStr, validator
 
-from hetdesrun.backend.service.utils import to_camel
-from hetdesrun.models.util import valid_python_identifier
-from hetdesrun.models.adapter_data import RefIdType
-from hetdesrun.models.wiring import WorkflowWiring, InputWiring, OutputWiring
-
-from hetdesrun.adapters import SOURCE_ADAPTERS, SINK_ADAPTERS
+from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
+from hetdesrun.backend.service.utils import to_camel
+from hetdesrun.models.adapter_data import RefIdType
+from hetdesrun.models.util import valid_python_identifier
+from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
 
 EXPORT_MODE = False
 

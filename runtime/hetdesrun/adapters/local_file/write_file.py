@@ -2,10 +2,8 @@ import logging
 
 import pandas as pd
 
-from hetdesrun.adapters.local_file.structure import get_local_file_by_id
-
 from hetdesrun.adapters.exceptions import AdapterHandlingException
-
+from hetdesrun.adapters.local_file.structure import get_local_file_by_id
 from hetdesrun.adapters.local_file.utils import from_url_representation
 
 logger = logging.getLogger(__name__)

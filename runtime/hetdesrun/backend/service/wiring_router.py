@@ -1,22 +1,20 @@
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, status, HTTPException
+from fastapi import HTTPException, status
 
 from hetdesrun.backend.models.wiring import WiringFrontendDto
-
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
-
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
-
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 
-wiring_router = APIRouter(
+wiring_router = HandleTrailingSlashAPIRouter(
     prefix="/wirings",
     tags=["wirings"],
     responses={  # are these only used for display in the Swagger UI?

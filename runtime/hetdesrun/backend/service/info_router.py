@@ -1,14 +1,16 @@
 import logging
 
-from fastapi import APIRouter, status
+from fastapi import status
+
 from hetdesrun import VERSION
 from hetdesrun.backend.kafka.consumer import get_kafka_worker_context
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 
-info_router = APIRouter(
+info_router = HandleTrailingSlashAPIRouter(
     prefix="/info",
     tags=["info"],
     responses={
@@ -21,7 +23,7 @@ info_router = APIRouter(
 
 
 @info_router.get(
-    "/",
+    "",
     response_model=dict,
     summary="Returns a sign of life",
     status_code=status.HTTP_200_OK,
@@ -43,7 +45,7 @@ async def get_info() -> dict:
         "version": VERSION,
     }
 
-    if runtime_config.hd_kafka_consumer_enabled and runtime_config.is_backend_service:
+    if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
         kafka_ctx = get_kafka_worker_context()
         info_dict["worker_process_internal_kafka_consumer_id"] = str(
             kafka_ctx.consumer_id

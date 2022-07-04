@@ -1,7 +1,6 @@
 import pytest
 from httpx import AsyncClient
 
-
 from demo_adapter_python.webservice import app
 
 

@@ -4,11 +4,9 @@ from uuid import UUID, uuid4
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, root_validator
 
-from hetdesrun.persistence.models.io import Position, Connector
-
-from hetdesrun.models.workflow import WorkflowConnection
-
 from hetdesrun.datatypes import DataType
+from hetdesrun.models.workflow import WorkflowConnection
+from hetdesrun.persistence.models.io import Connector, Position
 
 
 class Vertex(BaseModel):

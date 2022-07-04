@@ -1,34 +1,31 @@
-from typing import List, Optional
 import logging
-
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Path, status, HTTPException
-
-from hetdesrun.utils import Type
+from fastapi import HTTPException, Path, status
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
-    generate_code,
     check_modifiability,
-    update_content,
+    generate_code,
     if_applicable_release_or_deprecate,
+    update_content,
 )
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
-    store_single_transformation_revision,
     select_multiple_transformation_revisions,
+    store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
-
-from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import Type
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 
-base_item_router = APIRouter(
+base_item_router = HandleTrailingSlashAPIRouter(
     prefix="/base-items",
     tags=["base items"],
     responses={
@@ -41,7 +38,7 @@ base_item_router = APIRouter(
 
 
 @base_item_router.get(
-    "/",
+    "",
     response_model=List[TransformationRevisionFrontendDto],
     response_model_exclude_unset=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -117,7 +114,7 @@ async def get_transformation_revision_by_id(
 
 
 @base_item_router.post(
-    "/",
+    "",
     response_model=TransformationRevisionFrontendDto,
     response_model_exclude_unset=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
