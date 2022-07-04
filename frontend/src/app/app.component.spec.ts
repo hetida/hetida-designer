@@ -5,6 +5,7 @@ import { StoreModule } from '@ngrx/store';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { MonacoEditorModule } from 'ngx-monaco-editor';
 import { AppComponent } from './app.component';
+import { AuthService } from './auth/auth.service';
 import { BasicTestModule } from './basic-test.module';
 import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
 import { ContentViewComponent } from './components/content-view/content-view.component';
@@ -19,6 +20,12 @@ import { WorkflowEditorComponent } from './components/workflow-editor/workflow-e
 import { appReducers } from './store/app.reducers';
 
 describe('AppComponent', () => {
+  const mockAuthService = jasmine.createSpyObj<AuthService>('AuthSerivce', [
+    'isAuthenticated$',
+    'userName$',
+    'logout'
+  ]);
+
   beforeEach(
     waitForAsync(() => {
       TestBed.configureTestingModule({
@@ -30,6 +37,12 @@ describe('AppComponent', () => {
           MonacoEditorModule,
           StoreModule.forRoot(appReducers),
           HttpClientModule
+        ],
+        providers: [
+          {
+            provide: AuthService,
+            useValue: mockAuthService
+          }
         ],
         declarations: [
           AppComponent,

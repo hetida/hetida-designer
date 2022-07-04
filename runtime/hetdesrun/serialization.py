@@ -18,11 +18,11 @@ from typing import Any
 
 import joblib
 
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 
 def get_object_path(name: str, tag: str) -> str:
-    return os.path.join(runtime_config.model_repo_path, name + "_" + tag)
+    return os.path.join(get_config().model_repo_path, name + "_" + tag)
 
 
 def symlink_latest(name: str, tag: str) -> None:

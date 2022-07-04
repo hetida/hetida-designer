@@ -1,10 +1,9 @@
 """Loading code and importing functions"""
+import importlib
+import logging
+import sys
 from types import ModuleType
 from typing import Callable, Coroutine, Union
-
-import sys
-import logging
-import importlib
 
 
 class ComponentCodeImportError(Exception):

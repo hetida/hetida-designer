@@ -37,20 +37,13 @@ jobs:
       - name: Info
         run: echo "Checking Pull Request"
 
-      - name: Sync dependencies and run black
+      - name: Sync dependencies and run checks
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"/runtime
           export PIPT_PYTHON_INTERPRETER="python3.9"
           echo "Syncinc dependencies"
           ./pipt sync
-          echo "Running black..."
-          ./pipt run black --check hetdesrun
-      
-      - name: Run tests
-        run: |
-          set -e
-          cd "$GITHUB_WORKSPACE"/runtime
-          export PIPT_PYTHON_INTERPRETER="python3.9"
-          ./pipt run python -m pytest --cov=hetdesrun --cov-report=term-missing tests
+          echo "Running checks..."
+          ./pipt run ./run check
 

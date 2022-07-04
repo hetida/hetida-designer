@@ -1,31 +1,27 @@
-from typing import List, Dict, Optional
-import logging
-from uuid import UUID
 import datetime
+import logging
+from typing import Dict, List, Optional
+from uuid import UUID
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
-from hetdesrun.utils import State, Type
-
-from hetdesrun.persistence import SQLAlchemySession
-
+from hetdesrun.persistence import Session, SQLAlchemySession
+from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBBadRequestError,
+    DBIntegrityError,
+    DBNotFoundError,
+)
 from hetdesrun.persistence.dbservice.nesting import (
     delete_own_nestings,
     find_all_nested_transformation_revisions,
     find_all_nesting_transformation_revisions,
     update_nesting,
 )
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBBadRequestError,
-    DBIntegrityError,
-    DBNotFoundError,
-)
-
-from hetdesrun.persistence import Session
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
+from hetdesrun.utils import State, Type
 
 logger = logging.getLogger(__name__)
 
