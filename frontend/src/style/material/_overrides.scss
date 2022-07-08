@@ -137,6 +137,10 @@ hd-copy-base-item-dialog {
   }
 }
 
+.mat-snack-bar-container {
+  background-color: $hd-pink;
+}
+
 // TODO: Remove important flags by increasing the specificity of these classes if possible.
 .mat-raised-button {
   border-radius: 0 !important;
