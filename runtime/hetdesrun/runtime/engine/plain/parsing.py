@@ -5,7 +5,7 @@ from typing import Callable, Coroutine, Dict, List, Tuple, Union, cast
 from hetdesrun.component.load import ComponentCodeImportError, import_func_from_code
 from hetdesrun.datatypes import DataType, NamedDataTypedValue
 from hetdesrun.models.code import CodeModule
-from hetdesrun.models.component import ComponentRevision
+from hetdesrun.models.component import ComponentOutput, ComponentRevision
 from hetdesrun.models.workflow import (
     ComponentNode,
     WorkflowConnection,
@@ -36,6 +36,15 @@ class ComponentRevisionDoesNotExist(WorkflowParsingException):
 
 class ConnectionInvalidError(WorkflowParsingException):
     pass
+
+
+def only_plot_outputs(
+    outputs: Union[List[ComponentOutput], List[WorkflowOutput]]
+) -> bool:
+    # in case of an empty output list all will yield true
+    return len(outputs) > 0 and all(
+        output.type == DataType.PlotlyJson for output in outputs
+    )
 
 
 def parse_workflow_input(
@@ -125,7 +134,7 @@ def parse_component_node(
         if name_prefix != ""
         else component_node_name,
         inputs=None,  # inputs are added later by the surrounding workflow
-        has_only_plot_outputs=comp_rev.is_pure_plot_component(),
+        has_only_plot_outputs=only_plot_outputs(comp_rev.outputs),
         operator_hierarchical_id=id_prefix + " : " + component_node.id,
     )
 
@@ -264,9 +273,7 @@ def recursively_parse_workflow_node(
 
     # Obtain input and output mappings
     wf_outputs = node.outputs
-    has_only_plot_outputs = len(wf_outputs) > 0 and all(
-        wf_output.type == DataType.PlotlyJson for wf_output in wf_outputs
-    )
+    has_only_plot_outputs = only_plot_outputs(wf_outputs)
 
     dynamic_inputs, constant_inputs = obtain_inputs_by_role(node)
 
