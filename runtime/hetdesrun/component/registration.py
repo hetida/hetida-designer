@@ -6,20 +6,10 @@ from typing import Callable, Dict, Optional
 
 from hetdesrun.component.load import ComponentCodeImportError
 from hetdesrun.datatypes import DataType
-from hetdesrun.runtime.context import execution_context
 
 
 class ComponentEntryPointRegistrationError(ComponentCodeImportError):
     pass
-
-
-def gen_default_return_for_plot_func(outputs: dict) -> dict:
-    """Generate answer for plot component if it should not be executed
-
-    If plot component is not executed, its PlotlyJson outputs should be empty dicts.
-    This function prepares this output from the provided outputs
-    """
-    return {key: {} for key in outputs.keys()}
 
 
 # pylint: disable=redefined-builtin
@@ -27,7 +17,6 @@ def register(
     *,
     inputs: Dict[str, DataType],
     outputs: Dict[str, DataType],
-    is_pure_plot_component: bool = False,
     name: Optional[str] = None,
     description: Optional[str] = None,
     category: Optional[str] = None,
@@ -49,15 +38,6 @@ def register(
     case it will not run the entrypoint function code and provide empty dictionaríes
     to the outputs (which must all be of PlotlyJson type!).
     """
-    if is_pure_plot_component and not all(
-        (output_type == DataType.PlotlyJson for output_type in outputs.values())
-    ):
-        raise ComponentEntryPointRegistrationError(
-            (
-                "If a component entrypoint function is marked as a pure plot"
-                " component, all outputs must be of PlotlyJson datatype!"
-            )
-        )
 
     def wrapper_func(func: Callable) -> Callable:
 
@@ -65,31 +45,15 @@ def register(
 
             @functools.wraps(func)
             def return_func_or_coro(*args, **kwargs):  # type: ignore
-                exe_context_config = execution_context.get()
 
-                return (
-                    func(*args, **kwargs)
-                    if (
-                        (not is_pure_plot_component)
-                        or exe_context_config.run_pure_plot_operators
-                    )
-                    else gen_default_return_for_plot_func(outputs)
-                )
+                return func(*args, **kwargs)
 
         else:
 
             @functools.wraps(func)
             async def return_func_or_coro(*args, **kwargs):  # type: ignore
-                exe_context_config = execution_context.get()
 
-                return (
-                    await func(*args, **kwargs)
-                    if (
-                        (not is_pure_plot_component)
-                        or exe_context_config.run_pure_plot_operators
-                    )
-                    else gen_default_return_for_plot_func(outputs)
-                )
+                return await func(*args, **kwargs)
 
         # add input output infos to function attributes
         return_func_or_coro.inputs = inputs  # type: ignore
