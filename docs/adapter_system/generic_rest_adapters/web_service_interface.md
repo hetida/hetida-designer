@@ -338,11 +338,16 @@ The `timestamp` entries have to be ISO-8601 timestamps and should always have UT
 
 Type of value must be the datatype of the timeseries source (i.e. if the timeseries source with that id has type `timeseries(int)`the value of a corresponding record must be a Json integer.
 
-If additional information about the timeseries is stored in its property `attrs`, it will be included in the response header base64-encoded with the name `Data-Attributes`.
+If additional information about the timeseries is stored in its property `attrs`, it will be included in the response header base64-encoded with the name `data-attributes`.
 The corresponding dictionary uses the timerseries id as key to unambiguously match the attributes to the matching timeseries.
 
-If additional information about the time series is stored in its Attributes property, it will be included in the response header base64 encoded with the name "Data Attributes".
-The corresponding dictionary uses the time series ID as a key to uniquely assign the attributes to the matching time series.
+If for example three timeseries with ids "id_1", "id_2", "id_3" and the first two timeseries have some attributes such as `{"frequency": "min", "limit": 5}` and `{"type": "noise"}`, the dictionary should look like the following before being encoded:
+```json
+{
+  "id_1": {"frequency": "min", "limit": 5},
+  "id_2": {"type": "noise"}
+}
+```
 
 #### /timeseries (POST)
 
@@ -405,6 +410,17 @@ Same rules as in the corresponding GET endpoint apply here, only timestamp handl
 
 Anlogous to the corresponding GET endpoint, the information to be stored in the property `attrs` of the dataframe must be sent as a base64 encoded JSON string with the name `data-attributes`.
 
+For example for a dataframe with attributes such as
+```
+{
+    "from_timestamp": "2020-03-11T13:00:00.000000000Z",
+    "to_timestamp": "2020-03-11T16:00:00.000000000Z"
+}
+```
+this dictionary needs at first to be converted to a JSON string. The JSON string can then get decoded to bytes, which get base64 encoded and these bytes get encoded to a string again which can be send in the header, the runtime assumes utf-8 encoding for both of these strings.
+```
+header={..., data-attributes="eyJmcm9tX3RpbWVzdGFtcCI6ICIyMDIwLTAzLTExVDEzOjAwOjAwWiIsICJ0b190aW1lc3RhbXAiOiAiMjAyMC0wMy0xMVQxNjowMDowMFoifQ==", ...}
+```
 ## A minimal Generic Rest adapter
 
 Lets imagine you want to make some tables from a SQL database available as sources in hetida designer as DataFrames. There is no metadata around. And you don't want to send result data anywhere (You take result directly from the workflow execution response, i.e. use direct provisioning (Only Output) for accessing result)
