@@ -442,7 +442,7 @@ plot_workflow_json = {
     "code_modules": [
         {  # ordinary function entry point
             "uuid": str(get_uuid_from_seed("my_code_module")),
-            "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nimport logging\ntest_logger = logging.getLogger(__name__)\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"x": DataType.Float, "y": DataType.Float}, outputs={"z": DataType.PlotlyJson}, is_pure_plot_component=True\n)\ndef main(*, x, y):\n    """entrypoint function for this component"""\n    test_logger.info("TEST in component function " + __name__)\n    # print(1 / 0)\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"z": {"a": 1.0}}',
+            "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nimport logging\ntest_logger = logging.getLogger(__name__)\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"x": DataType.Float, "y": DataType.Float}, outputs={"z": DataType.PlotlyJson}\n)\ndef main(*, x, y):\n    """entrypoint function for this component"""\n    test_logger.info("TEST in component function " + __name__)\n    # print(1 / 0)\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"z": {"a": 1.0}}',
         },
         {  # async def entrypoint
             "uuid": str(get_uuid_from_seed("const_giver_module")),
@@ -582,24 +582,3 @@ async def test_workflow_with_plot_component_and_deactivated_exec_of_plot_operato
     assert output["result"] == "ok"
 
     assert output["output_results_by_output_name"]["z"] == {}
-
-
-@pytest.mark.asyncio
-async def test_workflow_with_plot_component_with_non_plot_outputs(async_test_client):
-    """Importing a component which is marked as plot component but
-    has outputs which are not Plot Outputs should fail
-    """
-    new_plot_workflow_json = deepcopy(plot_workflow_json)
-    new_plot_workflow_json["code_modules"][0][
-        "code"
-    ] = 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nimport logging\ntest_logger = logging.getLogger(__name__)\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"x": DataType.Float, "y": DataType.Float}, outputs={"z": DataType.PlotlyJson, "w": DataType.Float}, is_pure_plot_component=True\n)\ndef main(*, x, y):\n    """entrypoint function for this component"""\n    test_logger.info("TEST in component function " + __name__)\n    # print(1 / 0)\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"z": {"a": 1.0}}'
-
-    status_code, output = await run_workflow_with_client(
-        new_plot_workflow_json, async_test_client
-    )
-
-    print(output)
-    assert status_code == 200
-
-    assert output["result"] == "failure"
-    assert "marked as a pure plot component" in output["traceback"]
