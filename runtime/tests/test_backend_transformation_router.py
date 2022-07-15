@@ -919,6 +919,18 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
                     )
                     < 0.01
                 )
+                assert (
+                    response.json()["output_results_by_output_name"][
+                        "before_step_detect"
+                    ]
+                    == {}
+                )
+                assert (
+                    response.json()["output_results_by_output_name"][
+                        "rul_regression_result_plot"
+                    ]
+                    == {}
+                )
 
 
 @pytest.mark.asyncio

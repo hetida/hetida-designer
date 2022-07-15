@@ -111,6 +111,8 @@ def generate_function_header(component_info: ComponentInfo) -> str:
         timestamp=timestamp_str,
         params_list=param_list_str,
         main_func_declaration_start=main_func_declaration_start,
+        opening_bracket="{",
+        closing_bracket="}",
     )
 
 
