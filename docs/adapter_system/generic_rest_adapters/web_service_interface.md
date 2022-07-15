@@ -364,9 +364,7 @@ Payload (List of timeseries records):
 
 The same rules as described in the corresponding GET apply to `timestamp` and `value`
 
-In contrast to the corresponding GET endpoint, the information to be stored in the `attrs` property of the time series should directly be sent base64 encoded with the name `data-attributes`.
-Since only a single time series can be posted, there is no need to resolve ambiguities by specifying the id.
-
+The information to be stored in the `attrs` property of the time series should directly be sent as base64 encoded JSON string with the name `data-attributes`.
 #### /dataframe (GET)
 
 Query parameters:
@@ -405,7 +403,7 @@ Payload:
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
 
-Anlogous to the corresponding GET endpoint, the information to be stored in the property `attrs` of the dataframe must be sent base64 encoded with the name `data-attributes`.
+Anlogous to the corresponding GET endpoint, the information to be stored in the property `attrs` of the dataframe must be sent as a base64 encoded JSON string with the name `data-attributes`.
 
 ## A minimal Generic Rest adapter
 
