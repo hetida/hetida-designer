@@ -55,7 +55,7 @@ def decode_attributes(data_attributes: str) -> Any:
     return df_attrs
 
 
-def are_sources_valid(filtered_sources: List[FilteredSource]) -> Tuple[bool, str]:
+def are_valid_sources(filtered_sources: List[FilteredSource]) -> Tuple[bool, str]:
     if len({fs.type for fs in filtered_sources}) > 1:
         return False, "Got more than one datatype in same grouped data"
 
@@ -81,8 +81,9 @@ async def load_framelike_data(
 
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
-    valid, msg = are_sources_valid(filtered_sources)
+    valid, msg = are_valid_sources(filtered_sources)
     if not valid:
+        logger.error(msg)
         raise AdapterHandlingException(msg)
 
     common_data_type = filtered_sources[0].type
