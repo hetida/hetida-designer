@@ -9,6 +9,7 @@ from keyword import iskeyword
 from typing import List, Optional
 
 from hetdesrun.models.code import ComponentInfo
+from hetdesrun.utils import State
 
 imports_template: str = """\
 # add your own imports here, e.g.
@@ -80,7 +81,7 @@ def generate_function_header(component_info: ComponentInfo) -> str:
 
     timestamp_str = ""
 
-    if component_info.released_timestamp is not None:
+    if component_info.state == State.RELEASED:
         timestamp_str = "\n    " + '"released_timestamp": "'
         if component_info.released_timestamp is not None:
             timestamp_str = (
@@ -90,7 +91,7 @@ def generate_function_header(component_info: ComponentInfo) -> str:
             timestamp_str = timestamp_str + datetime.now(timezone.utc).isoformat()
         timestamp_str = timestamp_str + '",'
 
-    if component_info.disabled_timestamp is not None:
+    if component_info.state == State.DISABLED:
         timestamp_str = "\n    " + '"disabled_timestamp": "'
         if component_info.disabled_timestamp is not None:
             timestamp_str = (
