@@ -84,10 +84,7 @@ async def load_framelike_data(
 
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
-    try:
-        check_request(filtered_sources)
-    except AdapterHandlingException as e:
-        raise AdapterHandlingException(e) from e
+    check_request(filtered_sources)
 
     common_data_type = filtered_sources[0].type
 
