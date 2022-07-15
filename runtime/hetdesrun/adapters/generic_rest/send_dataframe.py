@@ -23,7 +23,7 @@ def dataframe_to_list_of_dicts(df: pd.DataFrame) -> List[Dict]:
         )
 
     datetime_column_names = []
-    for column_name in df.columns.values.tolist():
+    for column_name in df.columns:
         if pd.api.types.is_datetime64_any_dtype(df.dtypes[column_name]):
             datetime_column_names.append(column_name)
 
