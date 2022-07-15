@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException, Path, Query, status
@@ -186,43 +186,41 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     return any(is_disabled)
 
 
-def check_modifiability(
-    existing_transformation_revision: TransformationRevision,
+def is_modifiable(
+    existing_transformation_revision: Optional[TransformationRevision],
     updated_transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = False,
-) -> None:
+) -> Tuple[bool, str]:
+    if existing_transformation_revision is None:
+        return True, ""
     if existing_transformation_revision.type != updated_transformation_revision.type:
-        msg = (
+        return False, (
             f"The type ({updated_transformation_revision.type}) of the "
             f"provided transformation revision does not\n"
             f"match the type ({existing_transformation_revision.type}) "
             f"of the stored transformation revision {existing_transformation_revision.id}!"
         )
-        logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     if (
         existing_transformation_revision.state == State.DISABLED
         and not allow_overwrite_released
     ):
-        msg = (
+        return False, (
             f"cannot modify deprecated transformation revision "
             f"{existing_transformation_revision.id}"
         )
-        logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     if (
         existing_transformation_revision.state == State.RELEASED
         and updated_transformation_revision.state != State.DISABLED
         and not allow_overwrite_released
     ):
-        msg = (
+        return False, (
             f"cannot modify released transformation revision "
             f"{existing_transformation_revision.id}"
         )
-        logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+
+    return True, ""
 
 
 def update_content(
@@ -344,17 +342,19 @@ async def update_transformation_revision(
             id, log_error=False
         )
         logger.info("found transformation revision %s", id)
-
-        check_modifiability(
-            existing_transformation_revision,
-            updated_transformation_revision,
-            allow_overwrite_released,
-        )
-
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the transformation revision
         pass
+
+    modifiable, msg = is_modifiable(
+        existing_transformation_revision,
+        updated_transformation_revision,
+        allow_overwrite_released,
+    )
+    if not modifiable:
+        logger.error(msg)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
         updated_transformation_revision = update_content(

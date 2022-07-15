@@ -6,9 +6,9 @@ from fastapi import HTTPException, Path, status
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
-    check_modifiability,
     generate_code,
     if_applicable_release_or_deprecate,
+    is_modifiable,
     update_content,
 )
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
@@ -225,14 +225,18 @@ async def update_transformation_revision(
             id, log_error=False
         )
         logger.info("found transformation revision %s", id)
-
-        check_modifiability(
-            existing_transformation_revision, updated_transformation_revision
-        )
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the component revision
         pass
+
+    modifiable, msg = is_modifiable(
+        existing_transformation_revision,
+        updated_transformation_revision,
+    )
+    if not modifiable:
+        logger.error(msg)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     if existing_transformation_revision is not None:
         updated_transformation_revision.documentation = (
