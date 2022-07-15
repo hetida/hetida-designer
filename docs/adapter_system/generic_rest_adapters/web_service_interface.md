@@ -338,13 +338,16 @@ The `timestamp` entries have to be ISO-8601 timestamps and should always have UT
 
 Type of value must be the datatype of the timeseries source (i.e. if the timeseries source with that id has type `timeseries(int)`the value of a corresponding record must be a Json integer.
 
-If additional information about the timeseries is stored in its property `attrs`, it will be included in the response header base64-encoded with the name `data-attributes`.
+If information should be stored in the `attrs` property of the requested timeseries, it must be send in the response header base64-encoded with the name `data-attributes`.
 The corresponding dictionary uses the timerseries id as key to unambiguously match the attributes to the matching timeseries.
 
-If for example three timeseries with ids "id_1", "id_2", "id_3" and the first two timeseries have some attributes such as `{"frequency": "min", "limit": 5}` and `{"type": "noise"}`, the dictionary should look like the following before being encoded:
+For example for three timeseries with ids "id_1", "id_2", "id_3" of which the first two timeseries have some attributes, the dictionary should look like the following before being encoded:
 ```json
 {
-  "id_1": {"frequency": "min", "limit": 5},
+  "id_1": {
+    "requested_start_time": "2020-03-11T13:00:00.000000000Z",
+    "requested_end_time": "2020-03-11T16:00:00.000000000Z"
+  },
   "id_2": {"type": "noise"}
 }
 ```
@@ -369,7 +372,8 @@ Payload (List of timeseries records):
 
 The same rules as described in the corresponding GET apply to `timestamp` and `value`
 
-The information to be stored in the `attrs` property of the time series should directly be sent as base64 encoded JSON string with the name `data-attributes`.
+If additional information about the timeseries is stored in its property `attrs`, it can be received via the header as base64 encoded JSON string with the name `data-attributes`.
+
 #### /dataframe (GET)
 
 Query parameters:
@@ -388,7 +392,7 @@ This response can have arbitrary entries in the record which then correspond to 
 
 There is a special convention on "timestamp" columns: If a timestamp column exists the runtime will try to parse this column as datetimes and if this is successful will set the index of the Pandas Dataframe to this column and sort by it. If that does not work the index of the resulting Pandas Dataframe will be the default RangeIndex. In every case the column timestamp will also be available as column in the resulting Pandas DataFrame.
 
-If additional information about the dataframe is stored in its property `attrs`, it will be included in the response header base64-encoded with the name `Data-Attributes`.
+If information such as `{"frequency": "h", "limit": 5}` should be stored in the property `attrs` of the requested dataframe, it must be sent as a base64 encoded JSON string with the name `Data-Attributes`.
 
 #### /dataframe (POST)
 
@@ -408,19 +412,8 @@ Payload:
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
 
-Anlogous to the corresponding GET endpoint, the information to be stored in the property `attrs` of the dataframe must be sent as a base64 encoded JSON string with the name `data-attributes`.
+Anlogous to the corresponding GET endpoint, information about the dataframe stored in its property `attrs`, will be included in the response header base64-encoded with the name `Data-Attributes`.
 
-For example for a dataframe with attributes such as
-```
-{
-    "from_timestamp": "2020-03-11T13:00:00.000000000Z",
-    "to_timestamp": "2020-03-11T16:00:00.000000000Z"
-}
-```
-this dictionary needs at first to be converted to a JSON string. The JSON string can then get decoded to bytes, which get base64 encoded and these bytes get encoded to a string again which can be send in the header, the runtime assumes utf-8 encoding for both of these strings.
-```
-header={..., data-attributes="eyJmcm9tX3RpbWVzdGFtcCI6ICIyMDIwLTAzLTExVDEzOjAwOjAwWiIsICJ0b190aW1lc3RhbXAiOiAiMjAyMC0wMy0xMVQxNjowMDowMFoifQ==", ...}
-```
 ## A minimal Generic Rest adapter
 
 Lets imagine you want to make some tables from a SQL database available as sources in hetida designer as DataFrames. There is no metadata around. And you don't want to send result data anywhere (You take result directly from the workflow execution response, i.e. use direct provisioning (Only Output) for accessing result)
