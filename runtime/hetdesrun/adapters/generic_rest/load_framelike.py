@@ -55,21 +55,18 @@ def decode_attributes(data_attributes: str) -> Any:
     return df_attrs
 
 
-def check_request(filtered_sources: List[FilteredSource]) -> None:
+def are_sources_valid(filtered_sources: List[FilteredSource]) -> Tuple[bool, str]:
     if len({fs.type for fs in filtered_sources}) > 1:
-        raise AdapterHandlingException(
-            "Got more than one datatype in same grouped data"
-        )
+        return False, "Got more than one datatype in same grouped data"
 
     if len(filtered_sources) == 0:
-        raise AdapterHandlingException("Requested fetching 0 sources")
+        return False, "Requested fetching 0 sources"
 
     if (filtered_sources[0].type == ExternalType.DATAFRAME) and len(
         filtered_sources
     ) > 1:
-        raise AdapterHandlingException(
-            "Cannot request more than one dataframe together"
-        )
+        return False, "Cannot request more than one dataframe together"
+    return True, ""
 
 
 async def load_framelike_data(
@@ -84,7 +81,9 @@ async def load_framelike_data(
 
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
-    check_request(filtered_sources)
+    valid, msg = are_sources_valid(filtered_sources)
+    if not valid:
+        raise AdapterHandlingException(msg)
 
     common_data_type = filtered_sources[0].type
 
