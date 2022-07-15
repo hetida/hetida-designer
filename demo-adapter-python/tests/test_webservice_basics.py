@@ -308,7 +308,7 @@ async def test_sending_attrs_via_get_timeseries(async_test_client):
         assert ts_id in df_attrs
         assert "to_timestamp" in df_attrs[ts_id]
         assert df_attrs[ts_id]["to_timestamp"] != "2020-01-01T00:00:00.000000000Z"
-        assert df_attrs[ts_id]["to_timestamp"] != "2020-01-01T00:00:00.000000000Z"
+        assert df_attrs[ts_id]["to_timestamp"] == "2020-01-01T00:00:00+00:00"
 
 
 @pytest.mark.asyncio
