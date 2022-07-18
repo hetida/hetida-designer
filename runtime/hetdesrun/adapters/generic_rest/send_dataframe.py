@@ -22,7 +22,17 @@ def dataframe_to_list_of_dicts(df: pd.DataFrame) -> List[Dict]:
             )
         )
 
-    return df.replace({np.nan: None}).to_dict(orient="records")  # type: ignore
+    datetime_column_names = []
+    for column_name in df.columns:
+        if pd.api.types.is_datetime64_any_dtype(df.dtypes[column_name]):
+            datetime_column_names.append(column_name)
+
+    if len(datetime_column_names) == 0:
+        return df.replace({np.nan: None}).to_dict(orient="records")  # type: ignore
+    new_df = df.replace({np.nan: None})
+    for column_name in datetime_column_names:
+        new_df[column_name] = new_df[column_name].apply(lambda x: x.isoformat())
+    return new_df.to_dict(orient="records")  # type: ignore
 
 
 async def post_dataframe(

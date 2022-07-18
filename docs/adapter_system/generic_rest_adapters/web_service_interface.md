@@ -404,9 +404,9 @@ Payload:
 
 ```
 [
-    {columnA: "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3},
-    {columnA: "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3},
-    {columnA: "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
+    {"columnA": "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3},
+    {"columnA": "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3},
+    {"columnA": "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
 ]
 ```
 
