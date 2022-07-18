@@ -10,9 +10,9 @@ from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
-    check_modifiability,
     handle_trafo_revision_execution_request,
     if_applicable_release_or_deprecate,
+    is_modifiable,
     update_content,
 )
 from hetdesrun.persistence.dbservice.exceptions import (
@@ -237,14 +237,18 @@ async def update_workflow_revision(
             id, log_error=False
         )
         logger.info("found transformation revision %s", id)
-
-        check_modifiability(
-            existing_transformation_revision, updated_transformation_revision
-        )
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the workflow revision
         pass
+
+    modifiable, msg = is_modifiable(
+        existing_transformation_revision,
+        updated_transformation_revision,
+    )
+    if not modifiable:
+        logger.error(msg)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     if existing_transformation_revision is not None:
         updated_transformation_revision.documentation = (

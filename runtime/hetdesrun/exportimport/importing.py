@@ -9,13 +9,11 @@ from uuid import UUID
 
 import requests
 
-from hetdesrun.component.code import update_code
 from hetdesrun.component.load import (
     ComponentCodeImportError,
     import_func_from_code,
     module_path_from_code,
 )
-from hetdesrun.models.code import ComponentInfo
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.dbservice.revision import (
     update_or_create_single_transformation_revision,
@@ -153,23 +151,6 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     else:
         raise ComponentCodeImportError
 
-    component_code = update_code(
-        existing_code=code,
-        component_info=ComponentInfo(
-            input_types_by_name=component_inputs,
-            output_types_by_name=component_outputs,
-            name=component_name,
-            description=component_description,
-            category=component_category,
-            version_tag=component_tag,
-            id=component_id,
-            revision_group_id=component_group_id,
-            state=component_state,
-            released_timestamp=component_released_timestamp,
-            disabled_timestamp=component_disabled_timestamp,
-        ),
-    )
-
     component_documentation = "\n".join(mod_docstring_lines[2:])
 
     transformation_revision = TransformationRevision(
@@ -202,7 +183,7 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
                 for output_name, output_data_type in component_outputs.items()
             ],
         ),
-        content=component_code,
+        content=code,
         test_wiring=WorkflowWiring(),
     )
 

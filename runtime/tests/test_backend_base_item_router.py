@@ -6,6 +6,7 @@ from hetdesrun.backend.models.transformation import TransformationRevisionFronte
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
+    read_single_transformation_revision,
     store_single_transformation_revision,
 )
 from hetdesrun.utils import get_uuid_from_seed
@@ -482,7 +483,7 @@ async def test_deprecate_transformation_revision_from_component_dto(
 
         async with async_test_client as ac:
             response = await ac.put(
-                "/api/base-items/" + str(get_uuid_from_seed("component 2")),
+                "/api/base-items/" + str(tr_dto_json_component_2["id"]),
                 json=tr_dto_json_component_2_deprecate,
             )
 
@@ -491,3 +492,11 @@ async def test_deprecate_transformation_revision_from_component_dto(
         assert response.json()["name"] != "new name"
         assert response.json()["category"] != "Test"
         assert len(response.json()["inputs"]) == 0
+
+        tr_component_2 = read_single_transformation_revision(
+            tr_dto_json_component_2["id"]
+        )
+
+        assert tr_component_2.state.value == "DISABLED"
+        assert tr_component_2.name != "new name"
+        assert "disabled_timestamp" in tr_component_2.content
