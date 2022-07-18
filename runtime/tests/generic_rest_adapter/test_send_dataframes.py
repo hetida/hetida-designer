@@ -71,8 +71,12 @@ async def test_end_to_end_send_only_dataframe_data():
             assert (len(kwargs_1["json"]) == 3) or (len(kwargs_2["json"]) == 3)
             assert (len(kwargs_1["json"]) == 2) or (len(kwargs_2["json"]) == 2)
 
-            # a dataframe frame with attributes
-            df = pd.DataFrame({"a": [1.2, 3.4, 5.9], "b": [2.9, 8.7, 2.2]})
+            # one dataframe frame with timestamps and attributes
+            df = pd.DataFrame({"a": [1.2, 3.4, 5.9], "b": [2.9, 8.7, 2.2], "timestamp": [
+                                pd.Timestamp("2020-08-03 15:30:00+0000", tz="UTC"),
+                                pd.Timestamp("2020-12-01 07:15:00+0000", tz="UTC"),
+                                pd.Timestamp("2021-01-05 09:20:00+0000", tz="UTC"),
+                            ],})
             df_attrs = {"c": "test"}
             df.attrs = df_attrs
             await send_data(
@@ -89,8 +93,9 @@ async def test_end_to_end_send_only_dataframe_data():
             func_name, args, kwargs = post_mock.mock_calls[3]
             assert kwargs["params"] == [("id", "sink_id_1")]
             assert kwargs["json"] == [
-                {"a": 1.2, "b": 2.9},
-                {"a": 3.4, "b": 8.7},
-                {"a": 5.9, "b": 2.2},
+                {"a": 1.2, "b": 2.9, "timestamp": "2020-08-03T15:30:00+00:00"},
+                {"a": 3.4, "b": 8.7, "timestamp": "2020-12-01T07:15:00+00:00"},
+                {"a": 5.9, "b": 2.2, "timestamp": "2021-01-05T09:20:00+00:00"},
             ]
             assert "data-attributes" in kwargs["headers"]
+            
