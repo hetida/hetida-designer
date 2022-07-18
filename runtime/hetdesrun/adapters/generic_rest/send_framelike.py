@@ -41,8 +41,8 @@ async def post_framelike_records(
     """Post a list of dicts (records) to the appropriate endpoint"""
     headers = get_generic_rest_adapter_auth_headers()
     if attributes is not None and len(attributes) != 0:
-        logger.debug("Sending dataframe attributes via POST request header")
-        headers["data-attributes"] = encode_attributes(attributes)
+        logger.debug("Sending Data-Attributes via POST request header")
+        headers["Data-Attributes"] = encode_attributes(attributes)
 
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 

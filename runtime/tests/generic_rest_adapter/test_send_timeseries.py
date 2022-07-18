@@ -116,8 +116,8 @@ async def test_end_to_end_send_only_timeseries_data():
             )
             # note: can be async!
             func_name_3, args_3, kwargs_3 = post_mock.mock_calls[3]
-            assert "data-attributes" in kwargs_3["headers"]
-            received_attrs = decode_attributes(kwargs_3["headers"]["data-attributes"])
+            assert "Data-Attributes" in kwargs_3["headers"]
+            received_attrs = decode_attributes(kwargs_3["headers"]["Data-Attributes"])
             for key, value in ts_1_attrs.items():
                 key in received_attrs
                 assert received_attrs[key] == value

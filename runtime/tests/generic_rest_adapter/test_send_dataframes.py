@@ -103,4 +103,4 @@ async def test_end_to_end_send_only_dataframe_data():
                 {"a": 3.4, "b": 8.7, "timestamp": "2020-12-01T07:15:00+00:00"},
                 {"a": 5.9, "b": 2.2, "timestamp": "2021-01-05T09:20:00+00:00"},
             ]
-            assert "data-attributes" in kwargs["headers"]
+            assert "Data-Attributes" in kwargs["headers"]

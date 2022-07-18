@@ -168,9 +168,9 @@ async def load_framelike_data(
                 str(end_time - start_time),
             )
 
-            if "data-attributes" in resp.headers:
-                logger.debug("Got data-attributes via GET response header")
-                data_attributes = resp.headers["data-attributes"]
+            if "Data-Attributes" in resp.headers:
+                logger.debug("Got Data-Attributes via GET response header")
+                data_attributes = resp.headers["Data-Attributes"]
                 df.attrs = decode_attributes(data_attributes)
 
             logger.debug(

@@ -50,7 +50,7 @@ middleware = [
         allow_credentials=True,
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
-        expose_headers=["data-attributes"],  # is this necessary?
+        expose_headers=["Data-Attributes"],  # is this necessary?
     )
 ]
 
@@ -660,7 +660,7 @@ async def timeseries(
     io_stream.seek(0)
     headers = {}
     if len(collected_attrs) != 0:
-        headers["data-attributes"] = encode_attributes(collected_attrs)
+        headers["Data-Attributes"] = encode_attributes(collected_attrs)
     return StreamingResponse(io_stream, media_type="application/json", headers=headers)
 
 
@@ -763,7 +763,7 @@ async def dataframe(
     logger.debug("which has attributes %s", str(df.attrs))
     df_attrs = df.attrs
     if df_attrs is not None and len(df_attrs) != 0:
-        headers["data-attributes"] = encode_attributes(df_attrs)
+        headers["Data-Attributes"] = encode_attributes(df_attrs)
 
     io_stream = StringIO()
     df.to_json(io_stream, lines=True, orient="records", date_format="iso")

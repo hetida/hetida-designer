@@ -99,7 +99,7 @@ async def test_end_to_end_load_dataframe_data_with_attrs():
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     attributes = {"b": 2}
-    resp_mock.headers = {"data-attributes": encode_attributes(attributes)}
+    resp_mock.headers = {"Data-Attributes": encode_attributes(attributes)}
     resp_mock.raw = """\n
         {"timestamp": "2020-03-11T13:45:18.194000000Z", "a": 42.3}
         {"timestamp": "2020-03-11T14:45:18.194000000Z", "a": 41.7}

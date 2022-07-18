@@ -258,10 +258,10 @@ async def test_sending_attrs_via_get_dataframe(async_test_client):
         response = await client.get(f"/dataframe?id=root.plantA.maintenance_events")
 
         assert response.status_code == 200
-        assert "data-attributes" in response.headers
-        assert isinstance(response.headers["data-attributes"], str)
+        assert "Data-Attributes" in response.headers
+        assert isinstance(response.headers["Data-Attributes"], str)
 
-        df_attrs = decode_attributes(response.headers["data-attributes"])
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
 
         assert "since_date" in df_attrs
         assert df_attrs["since_date"] == "2020-01-01T00:00:00.000Z"
@@ -276,7 +276,7 @@ async def test_receiving_attrs_via_post_dataframe(async_test_client):
         response = await client.post(
             "/dataframe?id=root.plantA.alerts",
             json=[{"column1": 1, "column2": 1.3}, {"column1": 2, "column2": 2.8}],
-            headers={"data-attributes": base64_str}
+            headers={"Data-Attributes": base64_str}
         )
 
         assert response.status_code == 200
@@ -300,10 +300,10 @@ async def test_sending_attrs_via_get_timeseries(async_test_client):
         )
 
         assert response.status_code == 200
-        assert "data-attributes" in response.headers
-        assert isinstance(response.headers["data-attributes"], str)
+        assert "Data-Attributes" in response.headers
+        assert isinstance(response.headers["Data-Attributes"], str)
 
-        df_attrs = decode_attributes(response.headers["data-attributes"])
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
 
         assert ts_id in df_attrs
         assert "to_timestamp" in df_attrs[ts_id]
@@ -324,7 +324,7 @@ async def test_receiving_attrs_via_post_timeseries(async_test_client):
                 {"timestamp": "2020-01-01T00:00:00.000000000Z", "value": 12.3},
                 {"timestamp": "2020-01-02T00:00:00.000000000Z", "value": 11.9},
             ],
-            headers={"data-attributes": base64_str}
+            headers={"Data-Attributes": base64_str}
         )
 
         assert response.status_code == 200
