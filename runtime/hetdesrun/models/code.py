@@ -127,7 +127,6 @@ class ComponentInfo(BaseModel):
     state: State
     released_timestamp: Optional[datetime.datetime] = None
     disabled_timestamp: Optional[datetime.datetime] = None
-    is_coroutine: bool = False
 
     # pylint: disable=no-self-argument,no-self-use
     @validator("version_tag")

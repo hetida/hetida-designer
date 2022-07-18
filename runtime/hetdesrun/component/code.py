@@ -45,7 +45,9 @@ function_body_template: str = """\
 """
 
 
-def generate_function_header(component_info: ComponentInfo) -> str:
+def generate_function_header(
+    component_info: ComponentInfo, is_coroutine: bool = False
+) -> str:
     """Generate entrypoint function header from the inputs and their types"""
     param_list_str = (
         ""
@@ -53,7 +55,7 @@ def generate_function_header(component_info: ComponentInfo) -> str:
         else "*, " + ", ".join(component_info.input_types_by_name.keys())
     )
 
-    main_func_declaration_start = "async def" if component_info.is_coroutine else "def"
+    main_func_declaration_start = "async def" if is_coroutine else "def"
 
     input_dict_str = (
         "{"
@@ -111,11 +113,13 @@ def generate_function_header(component_info: ComponentInfo) -> str:
     )
 
 
-def generate_complete_component_module(component_info: ComponentInfo) -> str:
+def generate_complete_component_module(
+    component_info: ComponentInfo, is_coroutine: bool = False
+) -> str:
     return (
         imports_template
         + "\n"
-        + generate_function_header(component_info)
+        + generate_function_header(component_info, is_coroutine)
         + "\n"
         + function_body_template
     )
@@ -170,9 +174,9 @@ def update_code(
     use_async_def = (len(old_func_def_lines) >= 3) and old_func_def_lines[
         -3
     ].startswith("async def")
-    component_info.is_coroutine = use_async_def
+    is_coroutine = use_async_def
 
-    new_function_header = generate_function_header(component_info)
+    new_function_header = generate_function_header(component_info, is_coroutine)
 
     return start + new_function_header + end
 
