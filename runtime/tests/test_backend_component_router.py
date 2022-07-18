@@ -457,7 +457,7 @@ async def test_execute_for_component_without_hetdesrun_imports(
         }
 
         tr = TransformationRevision(**component_tr_json)
-        tr.content = update_code(tr.content, tr.to_component_info())
+        tr.content = update_code(tr)
         assert "COMPONENT_INFO" in tr.content
 
         store_single_transformation_revision(tr)

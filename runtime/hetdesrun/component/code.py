@@ -4,11 +4,11 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
-from datetime import datetime, timezone
 from keyword import iskeyword
-from typing import List, Optional
+from typing import List
 
 from hetdesrun.models.code import ComponentInfo
+from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State
 
 imports_template: str = """\
@@ -122,8 +122,7 @@ def generate_complete_component_module(component_info: ComponentInfo) -> str:
 
 
 def update_code(
-    existing_code: Optional[str],
-    component_info: ComponentInfo,
+    tr: TransformationRevision,
 ) -> str:
     """Generate and update component code
 
@@ -136,7 +135,11 @@ def update_code(
     It only uses basic String methods and does not try to handle every case. It therefore may
     undesirably replace user code in some cases.
     """
-    if existing_code is None or existing_code == "":
+    component_info = tr.to_component_info()
+    assert isinstance(tr.content, str)
+    existing_code = tr.content
+
+    if existing_code == "":
         return generate_complete_component_module(component_info)
 
     new_function_header = generate_function_header(component_info)

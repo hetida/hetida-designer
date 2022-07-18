@@ -10,12 +10,12 @@ from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.service.transformation_router import (
-    generate_code,
     handle_trafo_revision_execution_request,
     if_applicable_release_or_deprecate,
     is_modifiable,
     update_content,
 )
+from hetdesrun.component.code import update_code
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
     DBIntegrityError,
@@ -86,7 +86,7 @@ async def create_component_revision(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     logger.debug("generate code")
-    transformation_revision.content = generate_code(transformation_revision)
+    transformation_revision.content = update_code(transformation_revision)
     logger.debug("generated code:\n%s", component_dto.code)
 
     try:

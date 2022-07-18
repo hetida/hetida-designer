@@ -42,16 +42,6 @@ transformation_router = HandleTrailingSlashAPIRouter(
 )
 
 
-def generate_code(transformation_revision: TransformationRevision) -> str:
-    assert isinstance(transformation_revision.content, str)
-    code: str = update_code(
-        existing_code=transformation_revision.content,
-        component_info=transformation_revision.to_component_info(),
-    )
-
-    return code
-
-
 @transformation_router.post(
     "",
     response_model=TransformationRevision,
@@ -73,7 +63,7 @@ async def create_transformation_revision(
 
     if transformation_revision.type == Type.COMPONENT:
         logger.debug("transformation revision has type %s", Type.COMPONENT)
-        transformation_revision.content = generate_code(transformation_revision)
+        transformation_revision.content = update_code(transformation_revision)
         logger.debug("generated code:\n%s", transformation_revision.content)
 
     try:
@@ -228,7 +218,7 @@ def update_content(
     updated_transformation_revision: TransformationRevision,
 ) -> TransformationRevision:
     if updated_transformation_revision.type == Type.COMPONENT:
-        updated_transformation_revision.content = generate_code(
+        updated_transformation_revision.content = update_code(
             updated_transformation_revision
         )
     elif existing_transformation_revision is not None:
@@ -284,7 +274,7 @@ def if_applicable_release_or_deprecate(
             )
             updated_transformation_revision.deprecate()
             if updated_transformation_revision.type == Type.COMPONENT:
-                updated_transformation_revision.content = generate_code(
+                updated_transformation_revision.content = update_code(
                     updated_transformation_revision
                 )
     return updated_transformation_revision

@@ -6,11 +6,11 @@ from fastapi import HTTPException, Path, status
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
-    generate_code,
     if_applicable_release_or_deprecate,
     is_modifiable,
     update_content,
 )
+from hetdesrun.component.code import update_code
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
@@ -150,7 +150,7 @@ async def create_transformation_revision(
 
     if transformation_revision.type == Type.COMPONENT:
         logger.debug("transformation revision has type %s", Type.COMPONENT)
-        transformation_revision.content = generate_code(transformation_revision)
+        transformation_revision.content = update_code(transformation_revision)
         logger.debug("generated code:\n%s", transformation_revision.content)
 
     try:
