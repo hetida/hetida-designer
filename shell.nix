@@ -238,23 +238,10 @@ let
       npm run start
   '';
 
-  init-components = writeShellScriptBin "init-hd-components" ''
-      set -e
-      source ${prepare-runtime-venv}/bin/prepare-runtime-venv      
-      
-      cd ${runtimeDir}
-      # wait for backend
-      ${waitfor}/bin/waitfor -t 60 http://localhost:8080/api/info
-      # Deploy components and workflows
-      HETIDA_DESIGNER_BACKEND_API_URL=http://localhost:8080/api/ ${venvDirRuntime}/bin/python -c "from hetdesrun.exportimport.importing import import_all; import_all('./transformations', update_component_code=False);"
-      echo "finished deploying components and workflows"
-  '';
-
-  procfile = writeText "procfile" ''
+   procfile = writeText "procfile" ''
       runtime: ${start-runtime}/bin/start-hd-runtime
       frontend: ${start-frontend}/bin/start-hd-frontend
       postgres: ${start-postgres}/bin/start-hd-postgres
-      initcomponents: ${init-components}/bin/init-hd-components
       pythondemoadapter: ${start-python-demo-adapter}/bin/start-python-demo-adapter
       
   '';
@@ -313,7 +300,7 @@ in pkgs.mkShell rec {
 
     OVERMIND_PROCFILE = procfile;
     OVERMIND_NO_PORT = "1";
-    OVERMIND_CAN_DIE = "runtime,initcomponents";
+    OVERMIND_CAN_DIE = "runtime";
 
 
 

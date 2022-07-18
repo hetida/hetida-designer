@@ -15,7 +15,7 @@ class LogLevel(str, Enum):
     WARNING = "WARNING"
     INFO = "INFO"
     DEBUG = "DEBUG"
-    NOTESET = "NOTSET"
+    NOTSET = "NOTSET"
 
 
 class RuntimeConfig(BaseSettings):
@@ -198,12 +198,12 @@ class RuntimeConfig(BaseSettings):
         True, env="HETIDA_DESIGNER_RUNTIME_VERIFY_CERTS"
     )
 
-    # For scripts (e.g. component deployment)
+    # For scripts (e.g. transformation deployment)
     hd_backend_api_url: str = Field(
         "http://hetida-designer-backend:8090/api/",
         env="HETIDA_DESIGNER_BACKEND_API_URL",
         description=(
-            "URL to backend. Necessary for component deployment "
+            "URL to backend. Necessary for transformation deployment "
             "and to allow runtime to access adapters endpoint."
         ),
     )

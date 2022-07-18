@@ -34,10 +34,10 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("/mnt/obj_repo/exported_data/", update_component_code=False);'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/exported_data/", update_component_code=False);'
 ```
 
-The input parameter `update_component_code` of the `import_all` function is optional and set to `True` by default. When set to `True`, the code is updated even of components in the "RELEASED" state &ndash; based on the current implementation of the `update_code` function &ndash; before they are stored in the database.
+The input parameter `update_component_code` of the `import_transformations` function is optional and set to `True` by default. When set to `True`, the code is updated even of components in the "RELEASED" state &ndash; based on the current implementation of the `update_code` function &ndash; before they are stored in the database.
 This has the advantage that the automatically generated part of the code corresponds to the latest schema and contains all relevant information about the component.
 Setting the parameter to `False` ensures that the code is not changed, but remains exactly as it has been exported.
 
@@ -50,5 +50,5 @@ Note, that the .py file does not include the test wiring of the component, which
 ## Remove test wirings when importing
 You may want to ignore the test wirings stored in the component/workflow files during import. One reason may be that the target backend validates incoming test wirings of the imported workflows and components: Adapters present in a test wiring must be registered under the same adapter key in the target backend.
 
-To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_all` function in the commands documented above.
+To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_transformations` function in the commands documented above.
 

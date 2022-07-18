@@ -58,7 +58,7 @@ def import_func_from_code(
             raise e
         logger.info(
             (
-                "Function %s from code not yet imported once."
+                "Function %s from code not yet imported once. "
                 "Importing it from provided code."
             ),
             func_name,

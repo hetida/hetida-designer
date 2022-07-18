@@ -31,7 +31,7 @@ The command will create a subdirectory `migration_data` in your current director
 
 ## Step 2: Importing into >=0.7.2
 
-Now upgrade your designer installation to 0.7.2 (As part of this you need to completely delete your database schema / all tables prior to starting the new version. For the docker-compose setup simply delete the postgres volume). Then run the following command to import the exported components and workflows from the same directory:
+Now upgrade your designer installation to 0.7.2 (As part of this you need to completely delete your database schema / all tables prior to starting the new version. For the docker-compose setup simply delete the postgres volume). Then run the following command to import the exported components and workflows from the same directory as described in the [import documentation](./import_export.md):
 
 ```shell
 docker run --rm \
@@ -40,6 +40,6 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime:0.7.2 -c 'from hetdesrun.exportimport.importing import import_all; import_all("/mnt/obj_repo/migration_data/", update_component_code=False);'
+  hetida/designer-runtime:0.7.2 -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/migration_data/", update_component_code=False);'
 ```
 
