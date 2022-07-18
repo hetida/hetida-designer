@@ -1,8 +1,8 @@
 import logging
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import HTTPException, Path, status
+from fastapi import HTTPException, Path, Query, status
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.backend.service.component_router import generate_code
@@ -41,17 +41,34 @@ base_item_router = HandleTrailingSlashAPIRouter(
     responses={status.HTTP_200_OK: {"description": "Successfully got all base items"}},
     deprecated=True,
 )
-async def get_all_transformation_revisions() -> List[TransformationRevisionFrontendDto]:
+async def get_all_transformation_revisions(
+    type: Optional[Type] = Query(  # pylint: disable=redefined-builtin
+        None,
+        description="Set to get only transformation revisions in the specified type",
+    ),
+    state: Optional[State] = Query(
+        None,
+        description="Set to get only transformation revisions in the specified state",
+    ),
+) -> List[TransformationRevisionFrontendDto]:
     """Get all transformation revisions without their content from the data base.
 
     This endpoint is deprecated and will be removed soon,
     use GET /api/transformations/ instead
     """
 
-    logger.info("get all transformation revisions")
+    msg = "get all transformation revisions"
+    if type is not None:
+        msg = msg + " of type " + type.value
+    if state is not None:
+        msg = msg + " in the state " + state.value
+    logger.info(msg)
 
     try:
-        transformation_revision_list = select_multiple_transformation_revisions()
+        transformation_revision_list = select_multiple_transformation_revisions(
+            type=type,
+            state=state,
+        )
     except DBIntegrityError as e:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,

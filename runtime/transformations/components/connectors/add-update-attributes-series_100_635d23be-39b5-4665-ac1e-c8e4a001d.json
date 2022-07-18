@@ -1,0 +1,61 @@
+{
+    "id": "635d23be-39b5-4665-ac1e-c8e4a001d06d",
+    "revision_group_id": "48f6fd85-bebf-434f-953a-19d64b042748",
+    "name": "Add/Update Attributes (Series)",
+    "description": "Add attributes to a dataframe or update attributes of a series",
+    "category": "Connectors",
+    "version_tag": "1.0.0",
+    "released_timestamp": "2022-06-27T16:15:36.902520+00:00",
+    "state": "RELEASED",
+    "type": "COMPONENT",
+    "documentation": "# Add/Update Attributes (Series)\n\n## Description\nAdd attributes to a series or update attributes of a series.\n\n## Inputs\n* **series** (Pandas Series): The input Series.\n* **attributes** (Any): A dictionary with string keys to be added to the input Series.\n\n## Outputs\n* **series** (Pandas Series): The input Series with added attributes.\n\n## Details\nAdds attributes to a series. Adding an attribute with a key, that is already included in the attributes of the series, will update the corresponding value.\n\n**Note:** Selecting \"Only Output\" for the output series means that it is wired to the \"direct provisioning\" adapter, which sends the data as a stream of records in the response to be displayed in the browser window, but not the attributes. To access the attributes, use the \"Extract Attributes (Series)\" component.\n \n**Note:** When wired to a generic REST adapter, the attributes are sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
+    "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"series\": \"SERIES\",\n        \"attributes\": \"ANY\",\n    },\n    \"outputs\": {\n        \"series\": \"SERIES\",\n    },\n    \"name\": \"Add/Update Attributes (Series)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add attributes to a dataframe or update attributes of a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"635d23be-39b5-4665-ac1e-c8e4a001d06d\",\n    \"revision_group_id\": \"48f6fd85-bebf-434f-953a-19d64b042748\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T16:15:36.895107+00:00\"\n}\n\n\ndef main(*, series, attributes):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    series.attrs.update(attributes)\n\n    return {\"series\": series}\n",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "ebc33272-dd65-4629-a651-e2a271a1c96f",
+                "name": "series",
+                "data_type": "SERIES"
+            },
+            {
+                "id": "295fe208-15a6-4a8d-9b0d-1b3b75d0454a",
+                "name": "attributes",
+                "data_type": "ANY"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "2d0d724d-4aae-4874-b353-c652043b4763",
+                "name": "series",
+                "data_type": "SERIES"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "series",
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "{\n    \"2020-01-01T01:15:27.000Z\": 42.2,\n    \"2020-01-03T08:20:03.000Z\": 18.7,\n    \"2020-01-03T08:20:04.000Z\": 25.9\n}"
+                }
+            },
+            {
+                "workflow_input_name": "attributes",
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "{\n    \"a\": true,\n    \"b\": 31.56\n}"
+                }
+            }
+        ],
+        "output_wirings": [
+            {
+                "workflow_output_name": "series",
+                "adapter_id": "demo-adapter-python",
+                "ref_id": "root.plantA.picklingUnit.influx.anomaly_score",
+                "ref_id_type": "SINK",
+                "type": "timeseries(float)"
+            }
+        ]
+    }
+}

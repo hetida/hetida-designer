@@ -149,12 +149,12 @@ def register_source_adapter(
         output_data_custom_error=output_data_error_class,
         client_wiring_invalid_error_class=client_wiring_invalid_error_class,
     )
-    SOURCE_ADAPTERS[adapter_key] = {
-        "load_sources_func": load_func,
-        "connection_error_classes": connection_errors,
-        "output_data_error_classes": output_data_errors,
-        "client_wiring_invalid_error_classes": invalid_wiring_errors,
-    }
+    SOURCE_ADAPTERS[adapter_key] = SourceAdapter(
+        load_sources_func=load_func,
+        connection_error_classes=connection_errors,
+        output_data_error_classes=output_data_errors,
+        client_wiring_invalid_error_classes=invalid_wiring_errors,
+    )
 
 
 def register_sink_adapter(
@@ -173,12 +173,12 @@ def register_sink_adapter(
         output_data_custom_error=output_data_error_class,
         client_wiring_invalid_error_class=client_wiring_invalid_error_class,
     )
-    SINK_ADAPTERS[adapter_key] = {
-        "send_sinks_func": send_func,
-        "connection_error_classes": connection_errors,
-        "output_data_error_classes": output_data_errors,
-        "client_wiring_invalid_error_classes": invalid_wiring_errors,
-    }
+    SINK_ADAPTERS[adapter_key] = SinkAdapter(
+        send_sinks_func=send_func,
+        connection_error_classes=connection_errors,
+        output_data_error_classes=output_data_errors,
+        client_wiring_invalid_error_classes=invalid_wiring_errors,
+    )
 
 
 # Registering direct provisioning adapters
@@ -237,7 +237,7 @@ def get_sink_adapter(adapter_key: Union[int, str]) -> SinkAdapter:
 
 async def load_data_from_adapter(
     adapter_key: Union[str, int],
-    wf_input_name_to_filtered_source_mapping_dict: Dict[str, Any],
+    wf_input_name_to_filtered_source_mapping_dict: Dict[str, FilteredSource],
 ) -> Dict[str, Any]:
     """Generic data loading from adapter
 

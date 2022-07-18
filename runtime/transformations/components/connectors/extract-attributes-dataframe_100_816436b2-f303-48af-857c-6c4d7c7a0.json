@@ -1,0 +1,42 @@
+{
+    "id": "816436b2-f303-48af-857c-6c4d7c7a0f4b",
+    "revision_group_id": "8264ab0e-9ab2-403e-a449-e874aa729ae6",
+    "name": "Extract Attributes (DataFrame)",
+    "description": "Extract attributes from a dataframe",
+    "category": "Connectors",
+    "version_tag": "1.0.0",
+    "released_timestamp": "2022-06-27T15:50:25.505611+00:00",
+    "state": "RELEASED",
+    "type": "COMPONENT",
+    "documentation": "# Extract Attributes\n\n## Description\nExtract attributes from a dataframe.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame.\n\n## Outputs\n* **attributes** (Any): A dictionary containing the attributes of the dataframe.\n\n## Details\n**Note**: It is not possible to provide a dataframe with attributes via manual input. To add or update the attributes of a dataframe, use the \"Add/Update Attributes (DataFrame)\" component.\n \n**Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
+    "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dataframe\": \"DATAFRAME\",\n    },\n    \"outputs\": {\n        \"attributes\": \"ANY\",\n    },\n    \"name\": \"Extract Attributes (DataFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Extract attributes from a dataframe\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"816436b2-f303-48af-857c-6c4d7c7a0f4b\",\n    \"revision_group_id\": \"8264ab0e-9ab2-403e-a449-e874aa729ae6\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T15:50:25.503462+00:00\"\n}\n\n\ndef main(*, dataframe):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    \n    return {\"attributes\": dataframe.attrs}\n",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "34eb1d9f-a8d5-40bd-bd7a-f66afd0f7958",
+                "name": "dataframe",
+                "data_type": "DATAFRAME"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "b4dd9237-3a95-4f6c-89cc-45cb890af227",
+                "name": "attributes",
+                "data_type": "ANY"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "dataframe",
+                "adapter_id": "demo-adapter-python",
+                "ref_id": "root.plantA.maintenance_events",
+                "ref_id_type": "SOURCE",
+                "type": "dataframe",
+                "filters": {}
+            }
+        ],
+        "output_wirings": []
+    }
+}
