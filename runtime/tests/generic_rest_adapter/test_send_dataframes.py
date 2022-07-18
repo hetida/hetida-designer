@@ -72,11 +72,17 @@ async def test_end_to_end_send_only_dataframe_data():
             assert (len(kwargs_1["json"]) == 2) or (len(kwargs_2["json"]) == 2)
 
             # one dataframe frame with timestamps and attributes
-            df = pd.DataFrame({"a": [1.2, 3.4, 5.9], "b": [2.9, 8.7, 2.2], "timestamp": [
-                                pd.Timestamp("2020-08-03 15:30:00+0000", tz="UTC"),
-                                pd.Timestamp("2020-12-01 07:15:00+0000", tz="UTC"),
-                                pd.Timestamp("2021-01-05 09:20:00+0000", tz="UTC"),
-                            ],})
+            df = pd.DataFrame(
+                {
+                    "a": [1.2, 3.4, 5.9],
+                    "b": [2.9, 8.7, 2.2],
+                    "timestamp": [
+                        pd.Timestamp("2020-08-03 15:30:00+0000", tz="UTC"),
+                        pd.Timestamp("2020-12-01 07:15:00+0000", tz="UTC"),
+                        pd.Timestamp("2021-01-05 09:20:00+0000", tz="UTC"),
+                    ],
+                }
+            )
             df_attrs = {"c": "test"}
             df.attrs = df_attrs
             await send_data(
@@ -98,4 +104,3 @@ async def test_end_to_end_send_only_dataframe_data():
                 {"a": 5.9, "b": 2.2, "timestamp": "2021-01-05T09:20:00+00:00"},
             ]
             assert "data-attributes" in kwargs["headers"]
-            
