@@ -338,19 +338,26 @@ The `timestamp` entries have to be ISO-8601 timestamps and should always have UT
 
 Type of value must be the datatype of the timeseries source (i.e. if the timeseries source with that id has type `timeseries(int)`the value of a corresponding record must be a Json integer.
 
-If information should be stored in the `attrs` property of the requested timeseries, it must be send in the response header base64-encoded with the name `data-attributes`.
-The corresponding dictionary uses the timerseries id as key to unambiguously match the attributes to the matching timeseries.
+##### Attaching metadata to each timeseries
+Additionally, metadata in the form of (arbitrarily nested) JSON mappings can be provided that is then attached to the Pandas Series objects' `attrs` attribute in the designer runtime during component/workflow execution.
 
-For example for three timeseries with ids "id_1", "id_2", "id_3" of which the first two timeseries have some attributes, the dictionary should look like the following before being encoded:
+For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing a mapping from timeseries ids to their metadata, e.g.:
+
 ```json
 {
   "id_1": {
     "requested_start_time": "2020-03-11T13:00:00.000000000Z",
-    "requested_end_time": "2020-03-11T16:00:00.000000000Z"
+    "requested_end_time": "2020-03-11T16:00:00.000000000Z",
+    "type": "signal"
   },
-  "id_2": {"type": "noise"}
+  "id_2": {
+    "type": "noise",
+    "anomalies": ["2020-03-11T14:45:00.000000000Z", "2020-03-11T14:48:00.000000000Z"]
+  }
 }
 ```
+
+Note: The designer runtime will default to an empty dictionary if no metadata is provided for a timeseries.
 
 #### /timeseries (POST)
 
@@ -372,7 +379,15 @@ Payload (List of timeseries records):
 
 The same rules as described in the corresponding GET apply to `timestamp` and `value`
 
-If additional information about the timeseries is stored in its property `attrs`, it can be received via the header as base64 encoded JSON string with the name `data-attributes`.
+##### Retrieving attached timeseries metadata
+Metadata stored in the Pandas Series `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string. E.g.
+```json
+{
+  "requested_start_time": "2020-03-11T13:00:00.000000000Z",
+  "requested_end_time": "2020-03-11T16:00:00.000000000Z",
+  "type": "signal"
+}
+```
 
 #### /dataframe (GET)
 
@@ -392,7 +407,20 @@ This response can have arbitrary entries in the record which then correspond to 
 
 There is a special convention on "timestamp" columns: If a timestamp column exists the runtime will try to parse this column as datetimes and if this is successful will set the index of the Pandas Dataframe to this column and sort by it. If that does not work the index of the resulting Pandas Dataframe will be the default RangeIndex. In every case the column timestamp will also be available as column in the resulting Pandas DataFrame.
 
-If information such as `{"frequency": "h", "limit": 5}` should be stored in the property `attrs` of the requested dataframe, it must be sent as a base64 encoded JSON string with the name `Data-Attributes`.
+##### Attaching metadata to the dataframe
+Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas Dataframe objects' `attrs` attribute in the designer runtime during component/workflow execution.
+
+For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata, e.g.:
+
+```json
+{
+  "column_units": {
+    "main_engine_pw" : "W",
+    "pump_throughput": "l/s",
+  },
+  "plant_name": "north-west 3"
+}
+```
 
 #### /dataframe (POST)
 
@@ -412,7 +440,8 @@ Payload:
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
 
-Anlogous to the corresponding GET endpoint, information about the dataframe stored in its property `attrs`, will be included in the response header base64-encoded with the name `Data-Attributes`.
+##### Retrieving attached dataframe metadata
+Analogous to the corresponding GET endpoint, metadata stored in the Pandas dataframe `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
 
 ## A minimal Generic Rest adapter
 
