@@ -19,7 +19,7 @@ from hetdesrun.persistence.dbservice.revision import (
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import Type
+from hetdesrun.utils import State, Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
