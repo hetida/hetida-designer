@@ -405,10 +405,10 @@ Response (Line delimited Stream of Json records):
 
 This response can have arbitrary entries in the record which then correspond to columns of a table of data. Coming from a table of data imposes restrictions which should be clear, like every key should occur in every record.
 
-There is a special convention on "timestamp" columns: If a timestamp column exists the runtime will try to parse this column as datetimes and if this is successful will set the index of the Pandas Dataframe to this column and sort by it. If that does not work the index of the resulting Pandas Dataframe will be the default RangeIndex. In every case the column timestamp will also be available as column in the resulting Pandas DataFrame.
+There is a special convention on "timestamp" columns: If a timestamp column exists the runtime will try to parse this column as datetimes and if this is successful will set the index of the Pandas DataFrame to this column and sort by it. If that does not work the index of the resulting Pandas DataFrame will be the default RangeIndex. In every case the column timestamp will also be available as column in the resulting Pandas DataFrame.
 
 ##### Attaching metadata to the dataframe
-Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas Dataframe objects' `attrs` attribute in the designer runtime during component/workflow execution.
+Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution.
 
 For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata, e.g.:
 
@@ -441,7 +441,7 @@ Payload:
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
 
 ##### Retrieving attached dataframe metadata
-Analogous to the corresponding GET endpoint, metadata stored in the Pandas dataframe `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
+Analogous to the corresponding GET endpoint, metadata stored in the Pandas DataFrame `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
 
 ## A minimal Generic Rest adapter
 
