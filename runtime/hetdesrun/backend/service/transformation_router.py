@@ -94,6 +94,25 @@ async def create_transformation_revision(
     return persisted_transformation_revision
 
 
+def get_multiple_transformation_revisions(state: State) -> List[TransformationRevision]:
+    msg = "get all transformation revisions"
+    if state is not None:
+        msg = msg + " in the state " + state.value
+    logger.info(msg)
+
+    try:
+        transformation_revision_list = select_multiple_transformation_revisions(
+            state=state
+        )
+    except DBIntegrityError as e:
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"At least one entry in the DB is no valid transformation revision:\n{str(e)}",
+        ) from e
+
+    return transformation_revision_list
+
+
 @transformation_router.get(
     "",
     response_model=List[TransformationRevision],
@@ -107,16 +126,33 @@ async def create_transformation_revision(
         }
     },
 )
-async def get_all_transformation_revisions() -> List[TransformationRevision]:
+async def get_all_transformation_revisions(
+    type: Optional[Type] = Query(  # pylint: disable=redefined-builtin
+        None,
+        description="Filter for specified type",
+    ),
+    state: Optional[State] = Query(
+        None,
+        description="Filter for specified state",
+    ),
+) -> List[TransformationRevision]:
     """Get all transformation revisions from the data base.
 
     Used by frontend for initial loading of all transformations to populate the sidebar.
     """
 
-    logger.info("get all transformation revisions")
+    msg = "get all transformation revisions"
+    if type is not None:
+        msg = msg + " of type " + type.value
+    if state is not None:
+        msg = msg + " in the state " + state.value
+    logger.info(msg)
 
     try:
-        transformation_revision_list = select_multiple_transformation_revisions()
+        transformation_revision_list = select_multiple_transformation_revisions(
+            type=type,
+            state=state,
+        )
     except DBIntegrityError as e:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
