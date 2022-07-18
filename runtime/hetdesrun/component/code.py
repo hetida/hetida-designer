@@ -7,9 +7,8 @@ to provide a very elementary support system to the designer code editor.
 from keyword import iskeyword
 from typing import List
 
-from hetdesrun.models.code import ComponentInfo
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import State
+from hetdesrun.utils import State, Type
 
 imports_template: str = """\
 # add your own imports here, e.g.
@@ -46,24 +45,30 @@ function_body_template: str = """\
 
 
 def generate_function_header(
-    component_info: ComponentInfo, is_coroutine: bool = False
+    component: TransformationRevision, is_coroutine: bool = False
 ) -> str:
     """Generate entrypoint function header from the inputs and their types"""
     param_list_str = (
         ""
-        if len(component_info.input_types_by_name.keys()) == 0
-        else "*, " + ", ".join(component_info.input_types_by_name.keys())
+        if len(component.io_interface.inputs) == 0
+        else "*, "
+        + ", ".join(
+            input.name
+            for input in component.io_interface.inputs
+            if input.name is not None
+        )
     )
 
     main_func_declaration_start = "async def" if is_coroutine else "def"
 
     input_dict_str = (
         "{"
-        + ("\n    " if len(component_info.input_types_by_name.items()) != 0 else "")
+        + ("\n    " if len(component.io_interface.inputs) != 0 else "")
         + "".join(
             [
-                '    "' + parameter + '": "' + data_type_enum.value + '",\n    '
-                for parameter, data_type_enum in component_info.input_types_by_name.items()
+                '    "' + input.name + '": "' + input.data_type.value + '",\n    '
+                for input in component.io_interface.inputs
+                if input.name is not None
             ]
         )
         + "}"
@@ -71,11 +76,12 @@ def generate_function_header(
 
     output_dict_str = (
         "{"
-        + ("\n    " if len(component_info.input_types_by_name.items()) != 0 else "")
+        + ("\n    " if len(component.io_interface.outputs) != 0 else "")
         + "".join(
             [
-                '    "' + parameter + '": "' + data_type_enum.value + '",\n    '
-                for parameter, data_type_enum in component_info.output_types_by_name.items()
+                '    "' + output.name + '": "' + output.data_type.value + '",\n    '
+                for output in component.io_interface.outputs
+                if output.name is not None
             ]
         )
         + "}"
@@ -83,28 +89,28 @@ def generate_function_header(
 
     timestamp_str = ""
 
-    if component_info.state == State.RELEASED:
-        assert component_info.released_timestamp is not None
+    if component.state == State.RELEASED:
+        assert component.released_timestamp is not None
         timestamp_str = "\n    " + '"released_timestamp": "'
-        timestamp_str = timestamp_str + component_info.released_timestamp.isoformat()
+        timestamp_str = timestamp_str + component.released_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
 
-    if component_info.state == State.DISABLED:
-        assert component_info.disabled_timestamp is not None
+    if component.state == State.DISABLED:
+        assert component.disabled_timestamp is not None
         timestamp_str = "\n    " + '"disabled_timestamp": "'
-        timestamp_str = timestamp_str + component_info.disabled_timestamp.isoformat()
+        timestamp_str = timestamp_str + component.disabled_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
 
     return function_definition_template.format(
         input_dict_content=input_dict_str,
         output_dict_content=output_dict_str,
-        name='"' + component_info.name + '"',
-        description='"' + component_info.description + '"',
-        category='"' + component_info.category + '"',
-        version_tag='"' + component_info.version_tag + '"',
-        id='"' + str(component_info.id) + '"',
-        revision_group_id='"' + str(component_info.revision_group_id) + '"',
-        state='"' + component_info.state + '"',
+        name='"' + component.name + '"',
+        description='"' + component.description + '"',
+        category='"' + component.category + '"',
+        version_tag='"' + component.version_tag + '"',
+        id='"' + str(component.id) + '"',
+        revision_group_id='"' + str(component.revision_group_id) + '"',
+        state='"' + component.state + '"',
         timestamp=timestamp_str,
         params_list=param_list_str,
         main_func_declaration_start=main_func_declaration_start,
@@ -114,12 +120,12 @@ def generate_function_header(
 
 
 def generate_complete_component_module(
-    component_info: ComponentInfo, is_coroutine: bool = False
+    component: TransformationRevision, is_coroutine: bool = False
 ) -> str:
     return (
         imports_template
         + "\n"
-        + generate_function_header(component_info, is_coroutine)
+        + generate_function_header(component, is_coroutine)
         + "\n"
         + function_body_template
     )
@@ -139,14 +145,19 @@ def update_code(
     It only uses basic String methods and does not try to handle every case. It therefore may
     undesirably replace user code in some cases.
     """
-    component_info = tr.to_component_info()
+
+    if tr.type != Type.COMPONENT:
+        raise ValueError(
+            f"will not update code of transformation revision {tr.id}"
+            f"since its type is not COMPONENT"
+        )
     assert isinstance(tr.content, str)
     existing_code = tr.content
 
     if existing_code == "":
-        return generate_complete_component_module(component_info)
+        return generate_complete_component_module(tr)
 
-    new_function_header = generate_function_header(component_info)
+    new_function_header = generate_function_header(tr)
 
     try:
         start, remaining = existing_code.split(
@@ -176,7 +187,7 @@ def update_code(
     ].startswith("async def")
     is_coroutine = use_async_def
 
-    new_function_header = generate_function_header(component_info, is_coroutine)
+    new_function_header = generate_function_header(tr, is_coroutine)
 
     return start + new_function_header + end
 

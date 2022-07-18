@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field, ValidationError, validator
 
 from hetdesrun.models.code import (
     CodeModule,
-    ComponentInfo,
     NonEmptyValidStr,
     ShortNonEmptyValidStr,
     ValidStr,
@@ -249,30 +248,6 @@ class TransformationRevision(BaseModel):
     def deprecate(self) -> None:
         self.disabled_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.state = State.DISABLED
-
-    def to_component_info(self) -> ComponentInfo:
-        if self.type != Type.COMPONENT:
-            raise ValueError(
-                f"will not convert transformation revision {self.id}"
-                f"into a component info since its type is not COMPONENT"
-            )
-        return ComponentInfo(
-            input_types_by_name={
-                io.name: io.data_type for io in self.io_interface.inputs
-            },
-            output_types_by_name={
-                io.name: io.data_type for io in self.io_interface.outputs
-            },
-            name=self.name,
-            category=self.category,
-            description=self.description,
-            version_tag=self.version_tag,
-            id=self.id,
-            revision_group_id=self.revision_group_id,
-            state=self.state,
-            released_timestamp=self.released_timestamp,
-            disabled_timestamp=self.disabled_timestamp,
-        )
 
     def to_component_revision(self) -> ComponentRevision:
         if self.type != Type.COMPONENT:

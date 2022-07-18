@@ -4,15 +4,14 @@ from hetdesrun.component.code import (
     update_code,
 )
 from hetdesrun.datatypes import DataType
-from hetdesrun.models.code import ComponentInfo, example_code, example_code_async
+from hetdesrun.models.code import example_code, example_code_async
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 
 
 def test_function_header_no_params():
-    component_info = ComponentInfo(
-        input_types_by_name={},
-        output_types_by_name={},
+    component = TransformationRevision(
+        io_interface=IOInterface(inputs=[], outputs=[]),
         name="Test Component",
         description="A test component",
         category="Tests",
@@ -20,8 +19,11 @@ def test_function_header_no_params():
         revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         version_tag="1.0.0",
         state="DRAFT",
+        type="COMPONENT",
+        content="",
+        test_wiring=[],
     )
-    func_header = generate_function_header(component_info)
+    func_header = generate_function_header(component)
     assert "main()" in func_header
     assert '"inputs": {' + "}" in func_header
     assert '"outputs": {' + "}" in func_header
@@ -29,9 +31,14 @@ def test_function_header_no_params():
 
 
 def test_function_header_multiple_inputs():
-    component_info = ComponentInfo(
-        input_types_by_name={"x": DataType.Float, "okay": DataType.Boolean},
-        output_types_by_name={"output": DataType.Float},
+    component = TransformationRevision(
+        io_interface=IOInterface(
+            inputs=[
+                IO(name="x", data_type=DataType.Float),
+                IO(name="okay", data_type=DataType.Boolean),
+            ],
+            outputs=[IO(name="output", data_type=DataType.Float)],
+        ),
         name="Test Component",
         description="A test component",
         category="Tests",
@@ -39,8 +46,11 @@ def test_function_header_multiple_inputs():
         revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
         version_tag="1.0.0",
         state="DRAFT",
+        type="COMPONENT",
+        content="",
+        test_wiring=[],
     )
-    func_header = generate_function_header(component_info)
+    func_header = generate_function_header(component)
     assert "main(*, x, okay)" in func_header
     assert (
         """
