@@ -82,23 +82,15 @@ def generate_function_header(component_info: ComponentInfo) -> str:
     timestamp_str = ""
 
     if component_info.state == State.RELEASED:
+        assert component_info.released_timestamp is not None
         timestamp_str = "\n    " + '"released_timestamp": "'
-        if component_info.released_timestamp is not None:
-            timestamp_str = (
-                timestamp_str + component_info.released_timestamp.isoformat()
-            )
-        else:
-            timestamp_str = timestamp_str + datetime.now(timezone.utc).isoformat()
+        timestamp_str = timestamp_str + component_info.released_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
 
     if component_info.state == State.DISABLED:
+        assert component_info.disabled_timestamp is not None
         timestamp_str = "\n    " + '"disabled_timestamp": "'
-        if component_info.disabled_timestamp is not None:
-            timestamp_str = (
-                timestamp_str + component_info.disabled_timestamp.isoformat()
-            )
-        else:
-            timestamp_str = timestamp_str + datetime.now(timezone.utc).isoformat()
+        timestamp_str = timestamp_str + component_info.disabled_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
 
     return function_definition_template.format(
