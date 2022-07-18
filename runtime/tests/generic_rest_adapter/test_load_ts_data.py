@@ -29,6 +29,7 @@ async def test_load_ts_adapter_request():
             {"timeseriesId": "id_1", "timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7}
             {"timeseriesId": "id_1", "timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
             """
+        resp_mock.headers = {}
 
         filtered_sources = [
             FilteredSource(
@@ -89,7 +90,7 @@ async def test_load_ts_adapter_request():
 
 
 async def mock_load_generic_rest_ts_data(*args, **kwargs):
-    return pd.DataFrame(
+    data_df = pd.DataFrame(
         {
             "timestamp": pd.to_datetime(
                 [
@@ -103,6 +104,8 @@ async def mock_load_generic_rest_ts_data(*args, **kwargs):
             "timeseriesId": ["id_2", "id_1", "id_1", "id_2"],
         }
     )
+    data_df.attrs = {"id_1": {"a": "b"}, "id_3": {"c": 5}}
+    return data_df
 
 
 @pytest.mark.asyncio
@@ -192,3 +195,57 @@ async def test_end_to_end_load_only_ts_data():
         assert len(loaded_data) == 1
         assert len(loaded_data["inp_1"]) == 2
         assert isinstance(loaded_data["inp_1"], pd.Series)
+
+
+@pytest.mark.asyncio
+async def test_end_to_end_load_ts_data_with_attrs():
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_ts_data.load_ts_data_from_adapter",
+        new=mock_load_generic_rest_ts_data,
+    ):
+        loaded_data = await load_data(
+            {
+                "inp_1": FilteredSource(
+                    ref_id="id_1",
+                    type="timeseries(float)",
+                    filters={
+                        "timestampFrom": "2018-09-01T00:00:00Z",
+                        "timestampTo": "2020-01-01T00:00:00Z",
+                    },
+                )
+            },
+            adapter_key="end_to_end_only_ts_data",
+        )
+
+        assert len(loaded_data) == 1
+        assert len(loaded_data["inp_1"]) == 2
+        assert isinstance(loaded_data["inp_1"], pd.Series)
+        assert len(loaded_data["inp_1"].attrs) == 1
+        assert loaded_data["inp_1"].attrs["a"] == "b"
+
+
+@pytest.mark.asyncio
+async def test_end_to_end_load_empty_ts_data_with_attrs():
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_ts_data.load_ts_data_from_adapter",
+        new=mock_load_generic_rest_ts_data,
+    ):
+        loaded_data = await load_data(
+            {
+                "inp_1": FilteredSource(
+                    ref_id="id_3",
+                    type="timeseries(float)",
+                    filters={
+                        "timestampFrom": "2018-09-01T00:00:00Z",
+                        "timestampTo": "2020-01-01T00:00:00Z",
+                    },
+                )
+            },
+            adapter_key="end_to_end_only_ts_data",
+        )
+
+        assert len(loaded_data) == 1
+        assert len(loaded_data["inp_1"]) == 0
+        assert isinstance(loaded_data["inp_1"], pd.Series)
+        assert len(loaded_data["inp_1"].attrs) == 1
+        assert loaded_data["inp_1"].attrs["c"] == 5

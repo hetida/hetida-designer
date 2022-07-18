@@ -5,7 +5,8 @@ import pytest
 from starlette.testclient import TestClient
 
 from demo_adapter_python.external_types import ExternalType
-from demo_adapter_python.webservice import app
+from demo_adapter_python.in_memory_store import get_value_from_store
+from demo_adapter_python.webservice import app, decode_attributes, encode_attributes
 
 client = TestClient(app)
 
@@ -196,7 +197,8 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
 
             if src["type"].startswith("timeseries"):
                 response = await client.get(
-                    f'/timeseries?id={src["id"]}&from={quote("2020-01-01T00:00:00.000000000Z")}&to={quote("2020-01-02T00:00:00.0000000Z")}'
+                    f'/timeseries?id={src["id"]}&from={quote("2020-01-01T00:00:00.000000000Z")}'
+                    f'&to={quote("2020-01-02T00:00:00.0000000Z")}'
                 )
                 assert response.status_code == 200
                 lines = response.text.splitlines()
@@ -248,3 +250,88 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                     ],
                 )
                 assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_sending_attrs_via_get_dataframe(async_test_client):
+    async with async_test_client as client:
+        response = await client.get(f"/dataframe?id=root.plantA.maintenance_events")
+
+        assert response.status_code == 200
+        assert "Data-Attributes" in response.headers
+        assert isinstance(response.headers["Data-Attributes"], str)
+
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
+
+        assert "since_date" in df_attrs
+        assert df_attrs["since_date"] == "2020-01-01T00:00:00.000Z"
+
+
+@pytest.mark.asyncio
+async def test_receiving_attrs_via_post_dataframe(async_test_client):
+    async with async_test_client as client:
+        df_attrs = {"test": "Hello world!", "answer": 42}
+        base64_str = encode_attributes(df_attrs)
+
+        response = await client.post(
+            "/dataframe?id=root.plantA.alerts",
+            json=[{"column1": 1, "column2": 1.3}, {"column1": 2, "column2": 2.8}],
+            headers={"Data-Attributes": base64_str}
+        )
+
+        assert response.status_code == 200
+
+        df_from_store = get_value_from_store("root.plantA.alerts")
+
+        assert len(df_from_store.attrs) != 0
+        assert "test" in df_from_store.attrs
+        for key, value in df_attrs.items():
+            assert df_from_store.attrs[key] == value
+
+@pytest.mark.asyncio
+async def test_sending_attrs_via_get_timeseries(async_test_client):
+    async with async_test_client as client:
+        ts_id="root.plantA.picklingUnit.influx.anomaly_score"
+
+        response = await client.get(
+            f'/timeseries?id={ts_id}'
+            f'&from={quote("2020-01-01T00:00:00.000000000Z")}'
+            f'&to={quote("2020-01-01T00:00:00.000000000Z")}'
+        )
+
+        assert response.status_code == 200
+        assert "Data-Attributes" in response.headers
+        assert isinstance(response.headers["Data-Attributes"], str)
+
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
+
+        assert ts_id in df_attrs
+        assert "to_timestamp" in df_attrs[ts_id]
+        assert df_attrs[ts_id]["to_timestamp"] != "2020-01-01T00:00:00.000000000Z"
+        assert df_attrs[ts_id]["to_timestamp"] == "2020-01-01T00:00:00+00:00"
+
+
+@pytest.mark.asyncio
+async def test_receiving_attrs_via_post_timeseries(async_test_client):
+    async with async_test_client as client:
+        df_attrs = {"test": "Hello world!", "answer": 42}
+        base64_str = encode_attributes(df_attrs)
+        ts_id="root.plantA.picklingUnit.influx.anomaly_score"
+
+        response = await client.post(
+            f"/timeseries?timeseriesId={ts_id}",
+            json=[
+                {"timestamp": "2020-01-01T00:00:00.000000000Z", "value": 12.3},
+                {"timestamp": "2020-01-02T00:00:00.000000000Z", "value": 11.9},
+            ],
+            headers={"Data-Attributes": base64_str}
+        )
+
+        assert response.status_code == 200
+
+        df_from_store = get_value_from_store("root.plantA.alerts")
+
+        assert len(df_from_store.attrs) != 0
+        assert "test" in df_from_store.attrs
+        for key, value in df_attrs.items():
+            assert df_from_store.attrs[key] == value

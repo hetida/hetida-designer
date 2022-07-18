@@ -11,7 +11,7 @@ class LogLevel(str, Enum):
     WARNING = "WARNING"
     INFO = "INFO"
     DEBUG = "DEBUG"
-    NOTESET = "NOTSET"
+    NOTSET = "NOTSET"
 
 
 class PythonDemoAdapterConfig(BaseSettings):
