@@ -43,6 +43,7 @@ async def post_dataframe(
 
     await post_framelike_records(
         records,
+        attributes=df.attrs,
         ref_id=ref_id,
         adapter_key=adapter_key,
         endpoint="dataframe",

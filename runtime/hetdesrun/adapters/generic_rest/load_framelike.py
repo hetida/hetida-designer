@@ -4,10 +4,12 @@ Common utilities for loading data that is frame-like (tabular), i.e. dataframes 
 timeseries (where the later can be understood as special dataframe/table)
 """
 
+import base64
 import datetime
+import json
 import logging
 from posixpath import join as posix_urljoin
-from typing import Dict, List, Literal, Tuple, Type, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import pandas as pd
 import requests
@@ -25,7 +27,9 @@ from hetdesrun.webservice.config import get_config
 logger = logging.getLogger(__name__)
 
 
-def create_empty_ts_df(data_type: ExternalType) -> pd.DataFrame:
+def create_empty_ts_df(
+    data_type: ExternalType, attrs: Optional[Any] = None
+) -> pd.DataFrame:
     """Create empty timeseries dataframe with explicit dtypes"""
     dtype_dict: Dict[str, Union[Type, str]] = {
         "timeseriesId": str,
@@ -36,7 +40,33 @@ def create_empty_ts_df(data_type: ExternalType) -> pd.DataFrame:
     assert value_datatype is not None  # for mypy
     dtype_dict["value"] = value_datatype.pandas_value_type
 
-    return df_empty(dtype_dict)
+    if attrs is None:
+        attrs = {}
+    return df_empty(dtype_dict, attrs=attrs)
+
+
+def decode_attributes(data_attributes: str) -> Any:
+    base64_bytes = data_attributes.encode("utf-8")
+    logger.debug("data_attributes=%s", data_attributes)
+    df_attrs_bytes = base64.b64decode(base64_bytes)
+    df_attrs_json_str = df_attrs_bytes.decode("utf-8")
+    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
+    df_attrs = json.loads(df_attrs_json_str)
+    return df_attrs
+
+
+def are_valid_sources(filtered_sources: List[FilteredSource]) -> Tuple[bool, str]:
+    if len({fs.type for fs in filtered_sources}) > 1:
+        return False, "Got more than one datatype in same grouped data"
+
+    if len(filtered_sources) == 0:
+        return False, "Requested fetching 0 sources"
+
+    if (filtered_sources[0].type == ExternalType.DATAFRAME) and len(
+        filtered_sources
+    ) > 1:
+        return False, "Cannot request more than one dataframe together"
+    return True, ""
 
 
 async def load_framelike_data(
@@ -51,20 +81,12 @@ async def load_framelike_data(
 
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
-    if len({fs.type for fs in filtered_sources}) > 1:
-        raise AdapterHandlingException(
-            "Got more than one datatype in same grouped data"
-        )
-
-    if len(filtered_sources) == 0:
-        raise AdapterHandlingException("Requested fetching 0 sources")
+    valid, msg = are_valid_sources(filtered_sources)
+    if not valid:
+        logger.error(msg)
+        raise AdapterHandlingException(msg)
 
     common_data_type = filtered_sources[0].type
-
-    if (common_data_type == ExternalType.DATAFRAME) and len(filtered_sources) > 1:
-        raise AdapterHandlingException(
-            "Cannot request more than one dataframe together"
-        )
 
     logger.info(
         (
@@ -145,6 +167,12 @@ async def load_framelike_data(
                 ),
                 str(end_time - start_time),
             )
+
+            if "Data-Attributes" in resp.headers:
+                logger.debug("Got Data-Attributes via GET response header")
+                data_attributes = resp.headers["Data-Attributes"]
+                df.attrs = decode_attributes(data_attributes)
+
             logger.debug(
                 "Received dataframe of form %s:\n%s",
                 str(df.shape) if len(df) > 0 else "EMPTY RESULT",
@@ -163,9 +191,9 @@ async def load_framelike_data(
     logger.info("Complete generic rest adapter %s framelike request", adapter_key)
     if len(df) == 0:
         if endpoint == "timeseries":
-            return create_empty_ts_df(ExternalType(common_data_type))
+            return create_empty_ts_df(ExternalType(common_data_type), attrs=df.attrs)
         # must be dataframe:
-        return df_empty({})
+        return df_empty({}, attrs=df.attrs)
 
     if "timestamp" in df.columns and endpoint == "dataframe":
         try:

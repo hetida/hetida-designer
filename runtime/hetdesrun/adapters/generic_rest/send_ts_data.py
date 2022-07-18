@@ -98,6 +98,7 @@ async def post_single_timeseries(
 
     await post_framelike_records(
         records,
+        attributes=series.attrs,
         ref_id=ref_id,
         adapter_key=adapter_key,
         endpoint="timeseries",
