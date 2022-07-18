@@ -129,11 +129,11 @@ def get_multiple_transformation_revisions(state: State) -> List[TransformationRe
 async def get_all_transformation_revisions(
     type: Optional[Type] = Query(  # pylint: disable=redefined-builtin
         None,
-        description="Set to get only transformation revisions of the specified type",
+        description="Filter for specified type",
     ),
     state: Optional[State] = Query(
         None,
-        description="Set to get only transformation revisions in the specified state",
+        description="Filter for specified state",
     ),
 ) -> List[TransformationRevision]:
     """Get all transformation revisions from the data base.
