@@ -101,7 +101,7 @@ def run_trafo_rev_deployment():
     import_transformations("./transformations", update_component_code=False, directly_into_db=True)
 
 in_memory_db = detect_in_memory_db()
-is_backend = runtime_config.is_backend_service
+is_backend = get_config().is_backend_service
 
 if in_memory_db:
     logger.info(
