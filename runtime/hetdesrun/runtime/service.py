@@ -199,7 +199,10 @@ async def runtime_service(
         )
         return WorkflowExecutionResult(
             result="failure",
-            error=f"Exception during workflow execution response serialisation: {str(e)}",
+            error=(
+                f'Exception during workflow execution ("{str(runtime_input.job_id)}")'
+                f" response serialisation: {str(e)}"
+            ),
             traceback=traceback.format_exc(),
             output_results_by_output_id={},
             output_results_by_output_name={},

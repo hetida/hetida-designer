@@ -3,6 +3,8 @@ from typing import Any
 
 import pandas as pd
 
+from demo_adapter_python.models import GetMetadatum
+
 manager = Manager()
 
 store = manager.dict()
@@ -41,7 +43,7 @@ for plant in ("plantA", "plantB"):
     store[f"root.{plant}.alerts"] = pd.DataFrame()
 
 
-def get_store():
+def get_store() -> dict:
     return store
 
 
@@ -53,9 +55,9 @@ def set_value_in_store(key: str, value: Any) -> None:
     get_store()[key] = value
 
 
-def get_metadatum_from_store(atttached_to_id: str, key: str) -> dict:
-    return store[atttached_to_id + "|" + key]
+def get_metadatum_from_store(attached_to_id: str, key: str) -> GetMetadatum:
+    return GetMetadatum(**store[attached_to_id + "|" + key])
 
 
-def set_metadatum_in_store(atttached_to_id: str, key: str, new_value: Any) -> None:
-    store[atttached_to_id + "|" + key] = new_value
+def set_metadatum_in_store(attached_to_id: str, key: str, new_value: Any) -> None:
+    store[attached_to_id + "|" + key] = new_value

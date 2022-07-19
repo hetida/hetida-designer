@@ -1,17 +1,11 @@
-import datetime
 import re
-from typing import Dict, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from pydantic import (  # pylint: disable=no-name-in-module
     BaseModel,
     ConstrainedStr,
     Field,
-    validator,
 )
-
-from hetdesrun.datatypes import DataType
-from hetdesrun.utils import State
 
 # allow only some special characters for category, description, name and version tag
 ALLOWED_CHARS_RAW_STRING = (
@@ -105,33 +99,3 @@ function called "main".
 """,
     )
     uuid: UUID
-
-
-class ComponentInfo(BaseModel):
-    """Provide meta-information about component.
-
-    Used as input for code generation to include meta-information about the component in the code.
-
-    This additional information makes it possible to recover the underlying transformation revision
-    object from the code.
-    """
-
-    input_types_by_name: Dict[str, DataType]
-    output_types_by_name: Dict[str, DataType]
-    name: NonEmptyValidStr
-    category: NonEmptyValidStr
-    description: ValidStr
-    version_tag: ShortNonEmptyValidStr
-    id: UUID = Field(default_factory=uuid4)
-    revision_group_id: UUID = Field(default_factory=uuid4)
-    state: State
-    released_timestamp: Optional[datetime.datetime] = None
-    disabled_timestamp: Optional[datetime.datetime] = None
-    is_coroutine: bool = False
-
-    # pylint: disable=no-self-argument,no-self-use
-    @validator("version_tag")
-    def version_tag_not_latest(cls, v: str) -> str:
-        if v.lower() == "latest":
-            raise ValueError('version_tag is not allowed to be "latest"')
-        return v

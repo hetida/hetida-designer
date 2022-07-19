@@ -10,12 +10,12 @@ from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.service.transformation_router import (
-    check_modifiability,
-    generate_code,
     handle_trafo_revision_execution_request,
     if_applicable_release_or_deprecate,
+    is_modifiable,
     update_content,
 )
+from hetdesrun.component.code import update_code
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
     DBIntegrityError,
@@ -86,7 +86,7 @@ async def create_component_revision(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     logger.debug("generate code")
-    transformation_revision.content = generate_code(transformation_revision)
+    transformation_revision.content = update_code(transformation_revision)
     logger.debug("generated code:\n%s", component_dto.code)
 
     try:
@@ -203,14 +203,18 @@ async def update_component_revision(
             id, log_error=False
         )
         logger.info("found transformation revision %s", id)
-
-        check_modifiability(
-            existing_transformation_revision, updated_transformation_revision
-        )
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the component revision
         pass
+
+    modifiable, msg = is_modifiable(
+        existing_transformation_revision,
+        updated_transformation_revision,
+    )
+    if not modifiable:
+        logger.error(msg)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     if existing_transformation_revision is not None:
         updated_transformation_revision.documentation = (

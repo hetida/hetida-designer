@@ -1,11 +1,16 @@
 import logging
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import HTTPException, Path, status
+from fastapi import HTTPException, Path, Query, status
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
-from hetdesrun.backend.service.component_router import generate_code
+from hetdesrun.backend.service.transformation_router import (
+    if_applicable_release_or_deprecate,
+    is_modifiable,
+    update_content,
+)
+from hetdesrun.component.code import update_code
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
@@ -13,6 +18,7 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
+from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -41,17 +47,34 @@ base_item_router = HandleTrailingSlashAPIRouter(
     responses={status.HTTP_200_OK: {"description": "Successfully got all base items"}},
     deprecated=True,
 )
-async def get_all_transformation_revisions() -> List[TransformationRevisionFrontendDto]:
+async def get_all_transformation_revisions(
+    type: Optional[Type] = Query(  # pylint: disable=redefined-builtin
+        None,
+        description="Set to get only transformation revisions in the specified type",
+    ),
+    state: Optional[State] = Query(
+        None,
+        description="Set to get only transformation revisions in the specified state",
+    ),
+) -> List[TransformationRevisionFrontendDto]:
     """Get all transformation revisions without their content from the data base.
 
     This endpoint is deprecated and will be removed soon,
     use GET /api/transformations/ instead
     """
 
-    logger.info("get all transformation revisions")
+    msg = "get all transformation revisions"
+    if type is not None:
+        msg = msg + " of type " + type.value
+    if state is not None:
+        msg = msg + " in the state " + state.value
+    logger.info(msg)
 
     try:
-        transformation_revision_list = select_multiple_transformation_revisions()
+        transformation_revision_list = select_multiple_transformation_revisions(
+            type=type,
+            state=state,
+        )
     except DBIntegrityError as e:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -144,7 +167,7 @@ async def create_transformation_revision(
 
     if transformation_revision.type == Type.COMPONENT:
         logger.debug("transformation revision has type %s", Type.COMPONENT)
-        transformation_revision.content = generate_code(transformation_revision)
+        transformation_revision.content = update_code(transformation_revision)
         logger.debug("generated code:\n%s", transformation_revision.content)
 
     try:
@@ -212,46 +235,41 @@ async def update_transformation_revision(
         updated_transformation_revision_dto.to_transformation_revision()
     )
 
+    existing_transformation_revision: Optional[TransformationRevision] = None
+
     try:
-        existing_transformation_revision = read_single_transformation_revision(id)
-
-        if (
-            existing_transformation_revision.type
-            != updated_transformation_revision_dto.type
-        ):
-            msg = (
-                f"The type ({updated_transformation_revision_dto.type}) "
-                f"of the provided transformation revision does not\n"
-                f"match the type ({existing_transformation_revision.type}) "
-                f"of the stored transformation revision {id}!"
-            )
-            logger.error(msg)
-            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
-        updated_transformation_revision.content = (
-            existing_transformation_revision.content
+        existing_transformation_revision = read_single_transformation_revision(
+            id, log_error=False
         )
-        if existing_transformation_revision.type == Type.COMPONENT:
-            updated_transformation_revision.content = generate_code(
-                updated_transformation_revision
-            )
-        updated_transformation_revision.documentation = (
-            existing_transformation_revision.documentation
-        )
-
-        if existing_transformation_revision.state == State.RELEASED:
-            if updated_transformation_revision_dto.state == State.DISABLED:
-                logger.info("deprecate transformation revision %s", id)
-                updated_transformation_revision = existing_transformation_revision
-                updated_transformation_revision.deprecate()
-            else:
-                msg = f"cannot modify released component {id}"
-                logger.error(msg)
-                raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        logger.info("found transformation revision %s", id)
     except DBNotFoundError:
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the component revision
         pass
+
+    modifiable, msg = is_modifiable(
+        existing_transformation_revision,
+        updated_transformation_revision,
+    )
+    if not modifiable:
+        logger.error(msg)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+
+    if existing_transformation_revision is not None:
+        updated_transformation_revision.documentation = (
+            existing_transformation_revision.documentation
+        )
+        updated_transformation_revision.test_wiring = (
+            existing_transformation_revision.test_wiring
+        )
+
+    updated_transformation_revision = update_content(
+        existing_transformation_revision, updated_transformation_revision
+    )
+
+    updated_transformation_revision = if_applicable_release_or_deprecate(
+        existing_transformation_revision, updated_transformation_revision
+    )
 
     try:
         persisted_transformation_revision = (

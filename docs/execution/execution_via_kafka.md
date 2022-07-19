@@ -55,14 +55,14 @@ Now we can start this new setup via the following command (ensuring correct brok
 docker-compose -f docker-compose-kafka.yml down --volumes && docker-compose -f docker-compose-kafka.yml up --force-recreate --build
 ```
 
-We will demonstrate workflow execution via Kafka using one of the example workflows provided with the default component/workflow deployment, so do not forget to run the deployment command as described in the main Readme:
+We will demonstrate workflow execution via Kafka using one of the example workflows provided with the default component/workflow deployment. Thus, if you have disabled auto-deployment, don't forget to run the base component / workflow deployment command as described in the [main Readme](../../README.md) or [import documentation](../import_export.md):
 
 ```bash
 docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/", update_component_code=False);'
+  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", update_component_code=False);'
 ```
 
 ## Workflow Execution

@@ -5,6 +5,7 @@ import pytest
 
 from hetdesrun.adapters.generic_rest import load_data
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
+from hetdesrun.adapters.generic_rest.send_framelike import encode_attributes
 from hetdesrun.models.data_selection import FilteredSource
 
 
@@ -70,6 +71,7 @@ async def test_end_to_end_load_dataframe_data_with_timestamp_column():
         {"timestamp": "2020-03-11T14:45:18.194000000Z", "a": 41.7}
         {"timestamp": "2020-03-11T15:45:18.194000000Z", "a": 15.89922333}
         """
+    resp_mock.headers = {}
     with mock.patch(
         "hetdesrun.adapters.generic_rest.load_framelike.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
@@ -90,3 +92,37 @@ async def test_end_to_end_load_dataframe_data_with_timestamp_column():
             assert isinstance(loaded_data["inp_1"], pd.DataFrame)
             assert loaded_data["inp_1"].shape == (3, 2)
             assert pd.api.types.is_datetime64tz_dtype(loaded_data["inp_1"].index)
+
+
+@pytest.mark.asyncio
+async def test_end_to_end_load_dataframe_data_with_attrs():
+    resp_mock = mock.Mock()
+    resp_mock.status_code = 200
+    attributes = {"b": 2}
+    resp_mock.headers = {"Data-Attributes": encode_attributes(attributes)}
+    resp_mock.raw = """\n
+        {"timestamp": "2020-03-11T13:45:18.194000000Z", "a": 42.3}
+        {"timestamp": "2020-03-11T14:45:18.194000000Z", "a": 41.7}
+        {"timestamp": "2020-03-11T15:45:18.194000000Z", "a": 15.89922333}
+        """
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_framelike.get_generic_rest_adapter_base_url",
+        return_value="https://hetida.de",
+    ):
+        with mock.patch(
+            "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
+            return_value=resp_mock,
+        ):
+
+            loaded_data = await load_data(
+                {
+                    "inp_1": FilteredSource(ref_id="id_1", type=ExternalType.DATAFRAME),
+                },
+                adapter_key="end_to_end_only_dataframe_data",
+            )
+
+            assert len(loaded_data) == 1
+            assert isinstance(loaded_data["inp_1"], pd.DataFrame)
+            assert loaded_data["inp_1"].shape == (3, 2)
+            assert len(loaded_data["inp_1"].attrs) == 1
+            assert loaded_data["inp_1"].attrs == attributes

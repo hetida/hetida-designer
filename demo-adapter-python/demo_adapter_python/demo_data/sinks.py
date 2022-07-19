@@ -97,7 +97,7 @@ sinks_json_objects: List[Dict[str, Any]] = [
 def get_sinks(
     parent_id: Optional[str] = None,
     filter_str: Optional[str] = None,
-    include_sub_objects=False,
+    include_sub_objects: bool = False,
 ) -> List[Dict[str, Any]]:
     if parent_id is None:
         if include_sub_objects:

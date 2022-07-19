@@ -9,14 +9,15 @@ from uuid import UUID
 
 import requests
 
-from hetdesrun.component.code import update_code
 from hetdesrun.component.load import (
     ComponentCodeImportError,
     import_func_from_code,
     module_path_from_code,
 )
-from hetdesrun.models.code import ComponentInfo
 from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence.dbservice.revision import (
+    update_or_create_single_transformation_revision,
+)
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import (
@@ -150,23 +151,6 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     else:
         raise ComponentCodeImportError
 
-    component_code = update_code(
-        existing_code=code,
-        component_info=ComponentInfo(
-            input_types_by_name=component_inputs,
-            output_types_by_name=component_outputs,
-            name=component_name,
-            description=component_description,
-            category=component_category,
-            version_tag=component_tag,
-            id=component_id,
-            revision_group_id=component_group_id,
-            state=component_state,
-            released_timestamp=component_released_timestamp,
-            disabled_timestamp=component_disabled_timestamp,
-        ),
-    )
-
     component_documentation = "\n".join(mod_docstring_lines[2:])
 
     transformation_revision = TransformationRevision(
@@ -199,7 +183,7 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
                 for output_name, output_data_type in component_outputs.items()
             ],
         ),
-        content=component_code,
+        content=code,
         test_wiring=WorkflowWiring(),
     )
 
@@ -213,50 +197,65 @@ def import_transformation(
     tr_json: dict,
     path: str,
     strip_wirings: bool = False,
+    directly_into_db: bool = False,
     update_component_code: bool = True,
 ) -> None:
-
-    headers = get_auth_headers()
 
     if strip_wirings:
         tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
 
-    response = requests.put(
-        posix_urljoin(
-            get_config().hd_backend_api_url, "transformations", tr_json["id"]
-        ),
-        params={
-            "allow_overwrite_released": True,
-            "update_component_code": update_component_code,
-        },
-        verify=get_config().hd_backend_verify_certs,
-        json=tr_json,
-        auth=get_backend_basic_auth()  # type: ignore
-        if get_config().hd_backend_use_basic_auth
-        else None,
-        headers=headers,
-    )
-    logger.info(
-        (
-            "PUT transformation status code: %d"
-            " for transformation %s"
-            " of type %s\n"
-            "with name %s"
-            " in category %s"
-        ),
-        response.status_code,
-        tr_json["id"],
-        tr_json["type"],
-        tr_json["name"],
-        tr_json["category"],
-    )
-    if response.status_code != 201:
-        msg = (
-            f"COULD NOT PUT {tr_json['type']} from path {path}\n."
-            f"Response status code {response.status_code}"
-            f"with response text:\n{response.text}"
+    if directly_into_db:
+        tr = TransformationRevision(**tr_json)
+        logger.info(
+            (
+                "Update or create database entry"
+                " for transformation revision %s of type %s\n"
+                "in category %s with name %s"
+            ),
+            str(tr.id),
+            str(tr.type),
+            tr.category,
+            tr.name,
         )
-        logger.error(msg)
+        update_or_create_single_transformation_revision(tr)
+
+    else:
+        headers = get_auth_headers()
+
+        response = requests.put(
+            posix_urljoin(
+                get_config().hd_backend_api_url, "transformations", tr_json["id"]
+            ),
+            params={
+                "allow_overwrite_released": True,
+                "update_component_code": update_component_code,
+            },
+            verify=get_config().hd_backend_verify_certs,
+            json=tr_json,
+            auth=get_backend_basic_auth()  # type: ignore
+            if get_config().hd_backend_use_basic_auth
+            else None,
+            headers=headers,
+        )
+        logger.info(
+            (
+                "PUT transformation status code: %d"
+                " for transformation revision %s of type %s\n"
+                "in category %s with name %s"
+            ),
+            response.status_code,
+            tr_json["id"],
+            tr_json["type"],
+            tr_json["name"],
+            tr_json["category"],
+        )
+        if response.status_code != 201:
+            msg = (
+                f"COULD NOT PUT {tr_json['type']} from path {path}\n."
+                f"Response status code {response.status_code}"
+                f"with response text:\n{response.text}"
+            )
+            logger.error(msg)
 
 
 # Import all transformations from download_path based on type, id, name and category
@@ -266,6 +265,7 @@ def import_transformations(
     names: Optional[List[str]] = None,
     category: Optional[str] = None,
     strip_wirings: bool = False,
+    directly_into_db: bool = False,
     update_component_code: bool = True,
 ) -> None:
     """
@@ -315,7 +315,7 @@ def import_transformations(
         for operator in transformation["content"]["operators"]:
             if operator["type"] == Type.WORKFLOW:
                 logger.info(
-                    "workflow %s contains workflow %s -> nesting level %i",
+                    "transformation %s contains workflow %s at nesting level %i",
                     str(transformation_id),
                     operator["transformation_id"],
                     level,
@@ -336,7 +336,10 @@ def import_transformations(
             level_dict[level] = []
         level_dict[level].append(transformation_id)
         logger.info(
-            "transformation %s has nesting level %i", str(transformation_id), level
+            "transformation %s of type %s has nesting level %i",
+            str(transformation_id),
+            transformation["type"],
+            level,
         )
 
     for level in sorted(level_dict):
@@ -356,22 +359,8 @@ def import_transformations(
                     transformation,
                     path_dict[transformation_id],
                     strip_wirings=strip_wirings,
+                    directly_into_db=directly_into_db,
                     update_component_code=update_component_code,
                 )
 
     logger.info("finished importing")
-
-
-def import_all(
-    download_path: str, strip_wirings: bool = False, update_component_code: bool = True
-) -> None:
-    import_transformations(
-        os.path.join(download_path, "components"),
-        strip_wirings=strip_wirings,
-        update_component_code=update_component_code,
-    )
-    import_transformations(
-        os.path.join(download_path, "workflows"),
-        strip_wirings=strip_wirings,
-        update_component_code=update_component_code,
-    )

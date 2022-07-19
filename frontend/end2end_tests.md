@@ -15,20 +15,20 @@ npx playwright install
 
 Although the tests can be run against any running Designer installation (see below), it is recommended to start a fresh designer dev docker-compose setup. This is described in the [main readme](../README.md) file. Nevertheless it is recommended to start a clean setup via
 
-```
+```bash
 docker-compose -f docker-compose-dev.yml down --volumes \
     && docker-compose -f docker-compose-dev.yml build \
     && docker-compose -f docker-compose-dev.yml up --force-recreate
 ```
 
-and then run a fresh deployment of the base components / workflows via
+and in case auto-deployment is disabled run a fresh deployment of the base components / workflows via
 
-```
+```bash
 docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_deployment \
   --network hetida-designer-network \
-  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/", update_component_code=False);'
+  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", update_component_code=False);'
 ```
 
 > :information_source: **Note:** Malformed components / workloads in the running development designer setup may interfere with end-to-end tests / lead to failing tests.
@@ -37,7 +37,7 @@ docker run --rm \
 
 Simply run
 
-```
+```bash
 npm run e2e-all
 ```
 

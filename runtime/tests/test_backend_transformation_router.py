@@ -5,9 +5,10 @@ from unittest import mock
 from uuid import UUID
 
 import pytest
+from starlette.testclient import TestClient
 
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
-from hetdesrun.backend.service.transformation_router import generate_code
+from hetdesrun.component.code import update_code
 from hetdesrun.exportimport.importing import load_json
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
@@ -18,7 +19,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import get_uuid_from_seed
-from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.config import get_config, runtime_config
 
 
 @pytest.fixture(scope="function")
@@ -400,6 +401,127 @@ async def test_get_all_transformation_revisions_with_no_db_entries(
 
 
 @pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_specified_state(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)  # DRAFT
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_2)  # RELEASED
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_1)  # DRAFT
+        )
+        tr_workflow_2 = TransformationRevision(**tr_json_workflow_2)
+        tr_workflow_2.deprecate()
+        store_single_transformation_revision(tr_workflow_2)
+        async with async_test_client as ac:
+            response_draft = await ac.get("/api/transformations/?state=DRAFT")
+            response_released = await ac.get("/api/transformations/?state=RELEASED")
+            response_disabled = await ac.get("/api/transformations/?state=DISABLED")
+            response_foo = await ac.get("/api/transformations/?state=foo")
+
+        assert response_draft.status_code == 200
+        assert len(response_draft.json()) == 2
+        assert response_draft.json()[0] == tr_json_component_1
+        assert response_draft.json()[1] == tr_json_workflow_1
+        assert response_released.status_code == 200
+        assert len(response_released.json()) == 1
+        assert response_released.json()[0] == tr_json_component_2
+        assert response_disabled.status_code == 200
+        assert len(response_disabled.json()) == 1
+        assert response_disabled.json()[0]["id"] == tr_json_workflow_2["id"]
+        assert response_disabled.json()[0]["state"] == "DISABLED"
+        assert response_foo.status_code == 422
+        assert (
+            "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+        )
+
+
+@pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_specified_type(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)  # DRAFT
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_2)  # RELEASED
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_1)  # DRAFT
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_2)  # DRAFT
+        )
+
+        async with async_test_client as ac:
+            response_component = await ac.get("/api/transformations/?type=COMPONENT")
+            response_workflow = await ac.get("/api/transformations/?type=WORKFLOW")
+            response_foo = await ac.get("/api/transformations/?type=foo")
+
+        assert response_component.status_code == 200
+        assert len(response_component.json()) == 2
+        assert response_component.json()[0] == tr_json_component_1
+        assert response_component.json()[1] == tr_json_component_2
+        assert response_workflow.status_code == 200
+        assert len(response_workflow.json()) == 2
+        assert response_workflow.json()[0] == tr_json_workflow_1
+        assert response_workflow.json()[1] == tr_json_workflow_2
+        assert response_foo.status_code == 422
+        assert (
+            "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
+        )
+
+
+@pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_specified_type_and_state(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)  # DRAFT
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_2)  # RELEASED
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_1)  # DRAFT
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_2)  # DRAFT
+        )
+
+        async with async_test_client as ac:
+            response_released_component = await ac.get(
+                "/api/transformations/?type=COMPONENT&state=RELEASED"
+            )
+            response_draft_workflow = await ac.get(
+                "/api/transformations/?type=WORKFLOW&state=DRAFT"
+            )
+
+        assert response_released_component.status_code == 200
+        assert len(response_released_component.json()) == 1
+        assert response_released_component.json()[0] == tr_json_component_2
+        assert response_draft_workflow.status_code == 200
+        assert len(response_draft_workflow.json()) == 2
+        assert response_draft_workflow.json()[0] == tr_json_workflow_1
+        assert response_draft_workflow.json()[1] == tr_json_workflow_2
+
+
+@pytest.mark.asyncio
 async def test_get_transformation_revision_by_id_with_component(
     async_test_client, clean_test_db_engine
 ):
@@ -668,7 +790,7 @@ async def test_execute_for_transformation_revision(
             patched_session,
         ):
             tr_component_1 = TransformationRevision(**tr_json_component_1)
-            tr_component_1.content = generate_code(tr_component_1)
+            tr_component_1.content = update_code(tr_component_1)
             store_single_transformation_revision(tr_component_1)
             tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
 
@@ -729,7 +851,7 @@ async def test_execute_for_separate_runtime_container(
                     return_value=resp_mock,
                 ) as mocked_post:
                     tr_component_1 = TransformationRevision(**tr_json_component_1)
-                    tr_component_1.content = generate_code(tr_component_1)
+                    tr_component_1.content = update_code(tr_component_1)
                     store_single_transformation_revision(tr_component_1)
                     tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
 
@@ -773,13 +895,13 @@ async def test_execute_latest_for_transformation_revision_works(
             patched_session,
         ):
             tr_component_1 = TransformationRevision(**tr_json_component_1)
-            tr_component_1.content = generate_code(tr_component_1)
+            tr_component_1.content = update_code(tr_component_1)
             store_single_transformation_revision(tr_component_1)
 
             tr_component_1_new_revision = TransformationRevision(
                 **tr_json_component_1_new_revision
             )
-            tr_component_1_new_revision.content = generate_code(
+            tr_component_1_new_revision.content = update_code(
                 tr_component_1_new_revision
             )
             tr_component_1_new_revision.release()
@@ -823,7 +945,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
             patched_session,
         ):
             tr_component_1 = TransformationRevision(**tr_json_component_1)
-            tr_component_1.content = generate_code(tr_component_1)
+            tr_component_1.content = update_code(tr_component_1)
 
             exec_latest_by_group_id_input = ExecLatestByGroupIdInput(
                 revision_group_id=tr_component_1.revision_group_id,
@@ -918,6 +1040,18 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
                         - 2.88
                     )
                     < 0.01
+                )
+                assert (
+                    response.json()["output_results_by_output_name"][
+                        "before_step_detect"
+                    ]
+                    == {}
+                )
+                assert (
+                    response.json()["output_results_by_output_name"][
+                        "rul_regression_result_plot"
+                    ]
+                    == {}
                 )
 
 

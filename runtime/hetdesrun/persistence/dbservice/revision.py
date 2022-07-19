@@ -228,6 +228,14 @@ def select_multiple_transformation_revisions(
         return [TransformationRevision.from_orm_model(result) for result in results]
 
 
+def nof_db_entries() -> int:
+    with Session() as session, session.begin():
+        nof_rows = session.query(TransformationRevisionDBModel.id).count()
+        logger.info("DB contains %s rows", str(nof_rows))
+
+    return nof_rows
+
+
 def get_all_nested_transformation_revisions(
     transformation_revision: TransformationRevision,
 ) -> Dict[UUID, TransformationRevision]:

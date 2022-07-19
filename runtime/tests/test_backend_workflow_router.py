@@ -8,7 +8,7 @@ import pytest
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-from hetdesrun.backend.service.transformation_router import generate_code
+from hetdesrun.component.code import update_code
 from hetdesrun.exportimport.importing import load_json
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
@@ -425,7 +425,7 @@ async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine)
         ):
             component_dto = ComponentRevisionFrontendDto(**dto_json_component_1)
             tr_component = component_dto.to_transformation_revision()
-            tr_component.content = generate_code(tr_component)
+            tr_component.content = update_code(tr_component)
             store_single_transformation_revision(tr_component)
             tr_workflow_2 = WorkflowRevisionFrontendDto(
                 **dto_json_workflow_2_update
