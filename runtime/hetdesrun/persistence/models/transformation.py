@@ -65,13 +65,13 @@ class TransformationRevision(BaseModel):
     released_timestamp: Optional[datetime.datetime] = Field(
         None,
         description="If the revision is RELEASED then this should be release timestamp",
-        examples="2022-02-09T17:33:29.236535+00:00"
+        examples="2022-02-09T17:33:29.236535+00:00",
     )
 
     disabled_timestamp: Optional[datetime.datetime] = Field(
         None,
         description="If the revision is DISABLED then this should be disable/deprecation timestamp",
-        examples="2022-02-09T17:33:29.236535+00:00"
+        examples="2022-02-09T17:33:29.236535+00:00",
     )
     state: State = Field(
         ...,
