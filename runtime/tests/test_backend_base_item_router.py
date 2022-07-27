@@ -468,7 +468,7 @@ async def test_update_transformation_revision_from_released_component_dto(
 
 
 @pytest.mark.asyncio
-async def test_deprecate_transformation_revision_from_component_dto(
+async def test_deprecate_base_item_of_type_component(
     async_test_client, clean_test_db_engine
 ):
     with mock.patch(
@@ -500,3 +500,4 @@ async def test_deprecate_transformation_revision_from_component_dto(
         assert tr_component_2.state.value == "DISABLED"
         assert tr_component_2.name != "new name"
         assert "disabled_timestamp" in tr_component_2.content
+        assert "released_timestamp" in tr_component_2.content

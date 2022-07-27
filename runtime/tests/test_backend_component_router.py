@@ -340,6 +340,8 @@ async def test_deprecate_transformation_revision_from_component_dto(
         assert response.json()["category"] != "Test"
         assert len(response.json()["inputs"]) == 0
         assert "new comment" not in response.json()["code"]
+        assert "disabled_timestamp" in response.json()["code"]
+        assert "released_timestamp" in response.json()["code"]
 
 
 @pytest.mark.asyncio
