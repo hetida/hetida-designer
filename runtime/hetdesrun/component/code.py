@@ -101,7 +101,7 @@ def generate_function_header(
         timestamp_str = timestamp_str + component.released_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
         assert component.disabled_timestamp is not None
-        timestamp_str = "\n    " + '"disabled_timestamp": "'
+        timestamp_str = timestamp_str + "\n    " + '"disabled_timestamp": "'
         timestamp_str = timestamp_str + component.disabled_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
 
