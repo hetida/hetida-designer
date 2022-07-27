@@ -590,8 +590,12 @@ def encode_attributes(data_attrs: Any) -> str:
 @demo_adapter_main_router.get("/timeseries")
 async def timeseries(
     ids: List[str] = Query(..., alias="id", min_length=1),
-    from_timestamp: datetime.datetime = Query(..., alias="from"),
-    to_timestamp: datetime.datetime = Query(..., alias="to"),
+    from_timestamp: datetime.datetime = Query(
+        ..., alias="from", example=datetime.datetime.now(datetime.timezone.utc)
+    ),
+    to_timestamp: datetime.datetime = Query(
+        ..., alias="to", example=datetime.datetime.now(datetime.timezone.utc)
+    ),
 ) -> StreamingResponse:
     collected_attrs = {}
     io_stream = StringIO()

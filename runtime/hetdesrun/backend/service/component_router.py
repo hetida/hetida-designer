@@ -314,7 +314,7 @@ async def execute_component_revision(
     """Execute a transformation revision of type component.
 
     This endpoint is deprecated and will be removed soon,
-    use POST /api/transformations/{id}/execute instead.
+    use POST /api/transformations/execute instead which uses a new model for the payload.
     """
     if job_id is None:
         job_id = uuid4()
