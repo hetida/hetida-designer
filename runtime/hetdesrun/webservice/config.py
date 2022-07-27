@@ -288,7 +288,7 @@ class RuntimeConfig(BaseSettings):
         env="HETIDA_DESIGNER_KAFKA_RESPONSE_TOPIC",
     )
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("is_runtime_service")
     def must_be_at_least_backend_or_runtime(cls, v: bool, values: dict) -> bool:
 
@@ -302,7 +302,7 @@ class RuntimeConfig(BaseSettings):
             raise ValueError(msg)
         return v
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("hd_backend_api_url")
     def backend_api_url_ends_with_slash(cls, v: str) -> str:
         """make it end with a slash"""
@@ -310,7 +310,7 @@ class RuntimeConfig(BaseSettings):
             v += "/"
         return v
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("sqlalchemy_connection_string")
     def database_url(
         cls, v: Optional[Union[SecretStr, SQLAlchemy_DB_URL]], values: dict

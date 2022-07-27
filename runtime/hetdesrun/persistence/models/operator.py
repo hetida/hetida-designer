@@ -29,7 +29,7 @@ class Operator(BaseModel):
     outputs: List[Connector]
     position: Position
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @root_validator()
     def is_not_draft(cls, values: dict) -> dict:
         if values["state"] == State.DRAFT:
