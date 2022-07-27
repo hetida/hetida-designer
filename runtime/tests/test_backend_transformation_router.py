@@ -774,6 +774,8 @@ async def test_deprecate_transformation_revision_with_component(
         assert response.status_code == 201
         assert response.json()["name"] != "new name"
         assert response.json()["category"] != "Test"
+        assert "disabled_timestamp" in response.json()["content"]
+        assert "released_timestamp" in response.json()["content"]
 
 
 @pytest.mark.asyncio
