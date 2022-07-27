@@ -155,7 +155,6 @@ async def create_transformation_revision(
 
     transformation_revision = transformation_revision_dto.to_transformation_revision(
         documentation=(
-            "\n"
             "# New Component/Workflow\n"
             "## Description\n"
             "## Inputs\n"
