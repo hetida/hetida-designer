@@ -1,5 +1,5 @@
 from multiprocessing import Manager
-from typing import Any
+from typing import Any, MutableMapping
 
 import pandas as pd
 
@@ -43,7 +43,7 @@ for plant in ("plantA", "plantB"):
     store[f"root.{plant}.alerts"] = pd.DataFrame()
 
 
-def get_store() -> dict:
+def get_store() -> MutableMapping[Any, Any]:
     return store
 
 
