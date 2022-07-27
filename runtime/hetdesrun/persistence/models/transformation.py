@@ -84,7 +84,6 @@ class TransformationRevision(BaseModel):
 
     documentation: str = Field(
         (
-            "\n"
             "# New Component/Workflow\n"
             "## Description\n"
             "## Inputs\n"
