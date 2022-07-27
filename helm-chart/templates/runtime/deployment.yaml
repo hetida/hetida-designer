@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hetida.fullname" . }}-runtime
+  labels:
+    {{- include "hetida.labels" . | nindent 4 }}
+    app.kubernetes.io/component: runtime
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "hetida.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: runtime
+  template:
+    metadata:
+      labels:
+        {{- include "hetida.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: runtime
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: hetida-runtime
+          image: "{{ .Values.components.runtime.image.repository }}:{{ .Values.components.runtime.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.components.runtime.image.pullPolicy | default .Values.image.pullPolicy}}
+          livenessProbe:
+            initialDelaySeconds: 60
+            httpGet:
+              path: /docs
+              port: http
+          readinessProbe:
+            initialDelaySeconds: 30
+            httpGet:
+              path: /docs
+              port: http
+          volumeMounts:
+          - mountPath: "/mnt/obj_repo"
+            name: runtime-obj-repo
+          ports:
+            - name: http
+              containerPort: 8090
+              protocol: TCP
+          env:
+            - name: OPENAPI_PREFIX
+              value: "{{ .Values.components.runtime.apiPrefix }}"
+            - name: RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES
+              value: '["/mnt/mounted_local_files"]'
+            - name: HD_IS_BACKEND_SERVICE
+              value: "false"
+            - name: HD_USE_AUTH
+              value: "false"
+
+      volumes:
+        - name: runtime-obj-repo
+          persistentVolumeClaim:
+            claimName: {{ include "hetida.fullname" . }}-runtime

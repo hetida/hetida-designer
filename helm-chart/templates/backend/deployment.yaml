@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hetida.fullname" . }}-backend
+  labels:
+    {{- include "hetida.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "hetida.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+  template:
+    metadata:
+      labels:
+        {{- include "hetida.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: hetida-backend
+          image: "{{ .Values.components.backend.image.repository }}:{{ .Values.components.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.components.backend.image.pullPolicy | default .Values.image.pullPolicy}}
+          ports:
+            - name: http
+              containerPort: 8090
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            httpGet:
+              path: /api/info
+              port: http
+          readinessProbe:
+            initialDelaySeconds: 30
+            httpGet:
+              path: /api/info
+              port: http
+          env:
+            - name: HD_DATABASE_URL
+              value: postgresql+psycopg2://hetida_designer_dbuser:{{ .Values.components.backend.postgresql.hetidaDbPassword }}@{{ .Values.components.backend.postgresql.address }}:5432/hetida_designer_db
+            - name: HD_ENSURE_DB_SCHEMA
+              value: "true"
+            - name: HD_IS_RUNTIME_SERVICE
+              value: "false"  
+            ## TODO:
+            - name: KAFKA_ENABLED
+              value: {{ .Values.components.backend.kafka_enabled | default "false" | quote }}
+            - name: BOOTSTRAP_SERVERS
+              value: {{ .Values.components.backend.kafka_bootstrapServers | default "" | quote }}
+            - name: EXEC_CONSUMER_GROUP
+              value: {{ .Values.components.backend.kafka_execConsumerGroup | default "" | quote }}
+            - name: ORG_HETIDA_DESIGNER_BACKEND_INSTALLED_ADAPTERS
+              value: {{ .Values.components.backend.installed_adapters }}
+      initContainers:
+      - name: init-hetida-db
+        image: docker.io/bitnami/postgresql:11.11.0-debian-10-r9
+        command:
+          - psql
+          - -h
+          - {{ .Values.components.backend.postgresql.address }}
+          - -U
+          - postgres
+          - -f
+          - ./hetida-init-db.sql
+        volumeMounts:
+          - name: postgresql-initdb
+            mountPath: /hetida-init-db.sql
+            subPath: hetida-init-db.sql
+        env:
+          - name: PGPASSWORD
+            value: {{ .Values.components.backend.postgresql.adminPassword }}
+        securityContext:
+          runAsUser: 1001
+      volumes:
+        - name: postgresql-initdb
+          configMap:
+            name: {{ include "hetida.fullname" . }}-hetida-initdb
+## TODO: Resource limits
+## Look at Initialization containers ?
+##

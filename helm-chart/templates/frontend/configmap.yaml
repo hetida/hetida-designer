@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hetida.fullname" . }}-frontend-config
+  labels:
+    {{- include "hetida.labels" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+data:
+  ## TODO: How to dynamically add the endpoint address
+  ## Replace url with : //RelativeServiceName/api
+  ## Check how to retrieve service name 
+  HETIDA_DESIGNER_WEB_CONFIG: |-
+    {
+        "apiEndpoint" : "/api"
+    }

@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hetida.fullname" . }}-hetida-initdb
+  labels:
+    {{- include "hetida.labels" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+data:
+  hetida-init-db.sql: |-
+    CREATE USER hetida_designer_dbuser PASSWORD '{{ .Values.components.backend.postgresql.hetidaDbPassword }}';
+    CREATE DATABASE hetida_designer_db;
+    GRANT ALL PRIVILEGES ON DATABASE hetida_designer_db TO hetida_designer_dbuser;
+

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hetida.fullname" . }}-backend
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: {{ .Values.components.backend.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.components.backend.service.port }}
+      targetPort: http ## target port in deployment
+      protocol: TCP
+  selector:
+    {{- include "hetida.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: backend

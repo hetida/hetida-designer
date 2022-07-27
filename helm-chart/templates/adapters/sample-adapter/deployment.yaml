@@ -1,0 +1,59 @@
+{{- if .Values.adapters.sample.enabled -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hetida.fullname" . }}-adapter-sample
+  labels:
+    {{- include "hetida.labels" . | nindent 4 }}
+    app.kubernetes.io/component: adapter-sample
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "hetida.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: adapter-sample
+  template:
+    metadata:
+      labels:
+        {{- include "hetida.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: adapter-sample
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: hetida-adapter-sample
+          image: "{{ .Values.adapters.sample.image.repository }}:{{ .Values.adapters.sample.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.adapters.sample.image.pullPolicy | default .Values.image.pullPolicy}}
+          ports:
+            - name: http
+              containerPort: 8093
+              protocol: TCP
+          # livenessProbe:
+          #   initialDelaySeconds: 60
+          #   periodSeconds: 30
+          #   httpGet:
+          #     path: /api/info
+          #     port: http
+          # readinessProbe:
+          #   initialDelaySeconds: 30
+          #   httpGet:
+          #     path: /api/info
+          #     port: http
+          # env:
+          #   - name: SOME_ENTRY
+          #     value: #Some value
+      # volumes:
+      #   - name: postgresql-initdb
+      #     configMap:
+      #       name: {{ include "hetida.fullname" . }}-hetida-initdb
+## TODO: Resource limits
+## Look at Initialization containers ?
+##
+{{- end }}

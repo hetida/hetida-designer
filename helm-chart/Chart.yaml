@@ -1,0 +1,8 @@
+apiVersion: v2
+appVersion: 0.7.6
+description: Helm chart for Hetida Designer
+name: hetida-designer
+type: application
+version: 0.0.1
+sources:
+    - "https://github.com/hetida/hetida-designer"

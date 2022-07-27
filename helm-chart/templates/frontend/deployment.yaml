@@ -1,0 +1,60 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hetida.fullname" . }}-frontend
+  labels:
+    {{- include "hetida.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "hetida.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: frontend
+  template:
+    metadata:
+      labels:
+        {{- include "hetida.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: frontend
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: frontend-config
+          configMap:
+            name: {{ include "hetida.fullname" . }}-frontend-config
+        - name: nginx-config
+          configMap:
+            name: {{ include "hetida.fullname" . }}-nginx-config
+      containers:
+        - name: hetida-frontend
+          image: "{{ .Values.components.frontend.image.repository }}:{{ .Values.components.frontend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.components.frontend.image.pullPolicy | default .Values.image.pullPolicy}}
+          volumeMounts:
+            - name: frontend-config
+              mountPath: /usr/share/nginx/html/assets/hetida_designer_config.json
+              subPath: HETIDA_DESIGNER_WEB_CONFIG
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.config # name of the data key in the configMap
+              readOnly: true
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000

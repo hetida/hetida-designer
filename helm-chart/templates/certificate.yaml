@@ -1,0 +1,20 @@
+{{- if .Values.ingress.enabled }}
+{{- if .Values.ingress.tls }}
+{{- range .Values.ingress.tls }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .secretName }}
+  labels: {{- include "hetida.labels" $ | nindent 4 }}
+spec:
+  secretName: {{ .secretName }}
+  issuerRef: {{ toYaml $.Values.ingress.issuerRef | nindent 4 }}
+  commonName: {{ .secretName }}
+  dnsNames:
+  {{- range .hosts }}
+    - {{ . | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
