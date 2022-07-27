@@ -223,6 +223,9 @@ async def update_component_revision(
         updated_transformation_revision.test_wiring = (
             existing_transformation_revision.test_wiring
         )
+        updated_transformation_revision.released_timestamp = (
+            existing_transformation_revision.released_timestamp
+        )
 
     updated_transformation_revision = update_content(
         existing_transformation_revision, updated_transformation_revision
