@@ -14,7 +14,7 @@ minikube <-p profile> addons enable ingress
 helm repo add bitnami https://charts.bitnami.com/bitnami
 kubectl create namespace hd
 helm upgrade -i -n hd postgres bitnami/postgresql --set global.postgresql.auth.postgresPassword=postgres
-helm upgrade -i -n hd test-hetida helm-chart --set components.backend.postgresql.hetidaDbPassword="12345"
+helm upgrade -i -n hd test-hetida helm-chart
 
 ```
 
