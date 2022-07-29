@@ -59,5 +59,5 @@ def get_metadatum_from_store(attached_to_id: str, key: str) -> GetMetadatum:
     return GetMetadatum(**store[attached_to_id + "|" + key])
 
 
-def set_metadatum_in_store(attached_to_id: str, key: str, new_value: Any) -> None:
+def set_metadatum_in_store(attached_to_id: str, key: str, new_value: dict) -> None:
     store[attached_to_id + "|" + key] = new_value
