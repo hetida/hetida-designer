@@ -519,7 +519,7 @@ async def post_metadata_thingNode_by_key(
     key = unquote(key)
     if thingNodeId in ["root.plantA", "root.plantB"]:
 
-        old_metadatum: Metadatum = get_metadatum_from_store(thingNodeId, key)
+        old_metadatum = get_metadatum_from_store(thingNodeId, key)
 
         print("old_metadatum", old_metadatum)
 
