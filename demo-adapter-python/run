@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+
+usage() {
+    echo "$0 [COMMAND] [ARGS]"
+    echo ""
+    echo "Hint: All commands expect a Python dev virtual environment to be active"
+    echo ""
+    echo "  Commands:"
+    echo "  - deps:upgrade    :    resolves and locks Python dependencies, upgrading them all"
+    echo "  - deps:sync       :    syncs currently activated virtual environment with locked Python dev dependencies."
+    echo "  - shell           :    Activate virtual environment, thereby creating and syncing if necessary"
+    echo "  - test            :    run pytest on demo_adapter_python code"
+    # echo "  - test_components :    run pytest/doctest on components"
+    echo "  - lint            :    call pylint"
+    echo "  - typecheck       :    run mypy static type check"
+}
+
+fn_exists() {
+    LC_ALL=C type "${1:-}" 2>/dev/null | grep -q 'function'
+}
+
+COMMAND="${1:-}"
+shift
+ARGUMENTS=("${@}")
+
+set -euo pipefail
+
+#----- subcommands -----#
+
+deps:upgrade() {
+    # upgrade and lock including dev-dependencies
+    ./pipt upgrade
+}
+
+deps:sync() {
+    # sync dev dependencies
+    ./pipt sync
+}
+
+shell() {
+    ./pipt shell
+}
+
+test() {
+    python -m pytest --cov=demo_adapter_python --cov-report=term-missing tests "$@"
+}
+
+# test_components() {
+#     python -m pytest --doctest-modules components
+# }
+
+lint() {
+    pylint demo_adapter_python "${@}"
+}
+
+imsort() {
+    isort demo_adapter_python tests "${@}"
+}
+
+typecheck() {
+    python3 -m mypy demo_adapter_python
+}
+
+format() {
+    black demo_adapter_python tests "${@}" && echo "--> Black run."
+    isort demo_adapter_python tests "${@}" && echo "--> Isort run."
+}                           
+
+check() {
+    # Will fail with non-zero exit status if any tool has some complaint.
+    # If everything is okay this will have 0 exits status
+    echo "--> Running black in check mode" && black demo_adapter_python tests --check &&
+        echo "--> Running isort in check mode" && isort demo_adapter_python tests --check &&
+        echo "--> Running tests" && python -m pytest --cov=demo_adapter_python --cov-report=term-missing tests &&
+        echo "--> Running mypy" && mypy demo_adapter_python &&
+        echo "--> Running pylint ignoring fixme / TODO entries" && pylint demo_adapter_python tests --disable=fixme
+}
+
+#----- Execution -----#
+
+if fn_exists "$COMMAND"; then
+    # cd into the script's current directory
+    cd "${0%/*}" || exit 1
+
+    # Execute
+    TIMEFORMAT=$'\nTask completed in %3lR'
+
+    time "$COMMAND" "${ARGUMENTS[@]}"
+else
+    usage
+fi
