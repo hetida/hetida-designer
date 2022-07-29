@@ -280,7 +280,7 @@ async def post_metadata_source_by_key(
             isSink=old_metadatum.isSink or True,
         )
 
-        set_metadatum_in_store(sourceId, key, new_metadatum)
+        set_metadatum_in_store(sourceId, key, new_metadatum.dict())
         return {"message": "success"}
     return HTTPException(
         404,
@@ -387,7 +387,7 @@ async def post_metadata_sink_by_key(
             isSink=old_metadatum.isSink or True,
         )
 
-        set_metadatum_in_store(sinkId, key, new_metadatum)
+        set_metadatum_in_store(sinkId, key, new_metadatum.dict())
         return {"message": "success"}
     return HTTPException(
         404,
@@ -548,7 +548,7 @@ async def post_metadata_thingNode_by_key(
             isSink=old_metadatum.isSink or True,
         )
 
-        set_metadatum_in_store(thingNodeId, key, new_metadatum)
+        set_metadatum_in_store(thingNodeId, key, new_metadatum.dict())
         return {"message": "success"}
 
     return HTTPException(
