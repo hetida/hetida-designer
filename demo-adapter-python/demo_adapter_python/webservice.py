@@ -29,8 +29,8 @@ from demo_adapter_python.in_memory_store import (
     set_value_in_store,
 )
 from demo_adapter_python.models import (
-    Metadatum,
     InfoResponse,
+    Metadatum,
     MultipleSinksResponse,
     MultipleSourcesResponse,
     PostMetadatum,
@@ -272,7 +272,7 @@ async def post_metadata_source_by_key(
             isSink=old_metadatum.isSink or True,
         )
 
-        set_metadatum_in_store(sourceId, key, new_metadatum.dict())
+        set_metadatum_in_store(sourceId, key, new_metadatum)
         return {"message": "success"}
     return HTTPException(
         404,
@@ -371,7 +371,7 @@ async def post_metadata_sink_by_key(
             isSink=old_metadatum.isSink or True,
         )
 
-        set_metadatum_in_store(sinkId, key, new_metadatum.dict())
+        set_metadatum_in_store(sinkId, key, new_metadatum)
         return {"message": "success"}
     return HTTPException(
         404,
@@ -519,7 +519,9 @@ async def post_metadata_thingNode_by_key(
     key = unquote(key)
     if thingNodeId in ["root.plantA", "root.plantB"]:
 
-        old_metadatum = get_metadatum_from_store(thingNodeId, key)
+        old_metadatum: Metadatum = get_metadatum_from_store(thingNodeId, key)
+
+        print("old_metadatum", old_metadatum)
 
         new_metadatum = Metadatum(
             key=metadatum.key,
@@ -528,7 +530,7 @@ async def post_metadata_thingNode_by_key(
             isSink=old_metadatum.isSink or True,
         )
 
-        set_metadatum_in_store(thingNodeId, key, new_metadatum.dict())
+        set_metadatum_in_store(thingNodeId, key, new_metadatum)
         return {"message": "success"}
 
     return HTTPException(
