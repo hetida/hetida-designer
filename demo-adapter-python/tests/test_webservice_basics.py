@@ -253,6 +253,48 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
 
 
 @pytest.mark.asyncio
+async def test_post_metadata_of_thing_node_get_metadata_of_thing_node(
+    async_test_client,
+):
+    async with async_test_client as client:
+        thingNodeId = "root.plantA"
+        key = "Anomaly State"
+        value = True
+        post_metadatum_json = {"key": key, "value": value}
+
+        post_response = await client.post(
+            f"/thingNodes/{thingNodeId}/metadata/{quote(key)}", json=post_metadatum_json
+        )
+
+        assert post_response.status_code == 200
+
+        get_response = await client.get(f"/thingNodes/{thingNodeId}/metadata/{quote(key)}")
+
+        assert get_response.status_code == 200
+        assert get_response.json()["value"] == value
+
+
+@pytest.mark.asyncio
+async def test_post_metadata_to_sink_get_metadata_from_source(async_test_client):
+    async with async_test_client as client:
+        sinkId = "root.plantA.picklingUnit.influx.anomaly_score"
+        key = "Overshooting Allowed"
+        value = True
+        post_metadatum_json = {"key": key, "value": value}
+        post_response = await client.post(
+            f"/sinks/{sinkId}/metadata/{quote(key)}", json=post_metadatum_json
+        )
+
+        assert post_response.status_code == 200
+
+        sourceId = sinkId
+        get_response = await client.get(f"/sources/{sourceId}/metadata/{quote(key)}")
+
+        assert get_response.status_code == 200
+        assert get_response.json()["value"] == value
+
+
+@pytest.mark.asyncio
 async def test_sending_attrs_via_get_dataframe(async_test_client):
     async with async_test_client as client:
         response = await client.get(f"/dataframe?id=root.plantA.maintenance_events")
@@ -276,7 +318,7 @@ async def test_receiving_attrs_via_post_dataframe(async_test_client):
         response = await client.post(
             "/dataframe?id=root.plantA.alerts",
             json=[{"column1": 1, "column2": 1.3}, {"column1": 2, "column2": 2.8}],
-            headers={"Data-Attributes": base64_str}
+            headers={"Data-Attributes": base64_str},
         )
 
         assert response.status_code == 200
@@ -288,13 +330,14 @@ async def test_receiving_attrs_via_post_dataframe(async_test_client):
         for key, value in df_attrs.items():
             assert df_from_store.attrs[key] == value
 
+
 @pytest.mark.asyncio
 async def test_sending_attrs_via_get_timeseries(async_test_client):
     async with async_test_client as client:
-        ts_id="root.plantA.picklingUnit.influx.anomaly_score"
+        ts_id = "root.plantA.picklingUnit.influx.anomaly_score"
 
         response = await client.get(
-            f'/timeseries?id={ts_id}'
+            f"/timeseries?id={ts_id}"
             f'&from={quote("2020-01-01T00:00:00.000000000Z")}'
             f'&to={quote("2020-01-01T00:00:00.000000000Z")}'
         )
@@ -316,7 +359,7 @@ async def test_receiving_attrs_via_post_timeseries(async_test_client):
     async with async_test_client as client:
         df_attrs = {"test": "Hello world!", "answer": 42}
         base64_str = encode_attributes(df_attrs)
-        ts_id="root.plantA.picklingUnit.influx.anomaly_score"
+        ts_id = "root.plantA.picklingUnit.influx.anomaly_score"
 
         response = await client.post(
             f"/timeseries?timeseriesId={ts_id}",
@@ -324,7 +367,7 @@ async def test_receiving_attrs_via_post_timeseries(async_test_client):
                 {"timestamp": "2020-01-01T00:00:00.000000000Z", "value": 12.3},
                 {"timestamp": "2020-01-02T00:00:00.000000000Z", "value": 11.9},
             ],
-            headers={"Data-Attributes": base64_str}
+            headers={"Data-Attributes": base64_str},
         )
 
         assert response.status_code == 200
