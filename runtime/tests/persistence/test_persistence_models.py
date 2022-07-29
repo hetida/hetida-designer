@@ -251,6 +251,24 @@ def test_tr_validator_io_interface_fits_to_content():
     )
 
 
+def test_tr_validator_disabled_requires_released_timestamp():
+    tr_json_disabled_no_released_timestamp = deepcopy(tr_json_valid_released_example)
+    tr_json_disabled_no_released_timestamp[
+        "disabled_timestamp"
+    ] = tr_json_disabled_no_released_timestamp["released_timestamp"]
+    tr_json_disabled_no_released_timestamp["state"] = "DISABLED"
+    tr_json_disabled_no_released_timestamp["released_timestamp"] = None
+    tr_set_released_timestamp = TransformationRevision(
+        **tr_json_disabled_no_released_timestamp
+    )
+
+    assert tr_set_released_timestamp.released_timestamp is not None
+    assert (
+        tr_set_released_timestamp.released_timestamp
+        == tr_set_released_timestamp.disabled_timestamp
+    )
+
+
 def test_wrap_component_in_tr_workflow():
     component_dto = ComponentRevisionFrontendDto(**valid_component_dto_dict)
     tr_component = component_dto.to_transformation_revision()
