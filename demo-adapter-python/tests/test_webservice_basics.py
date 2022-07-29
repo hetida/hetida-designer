@@ -268,7 +268,9 @@ async def test_post_metadata_of_thing_node_get_metadata_of_thing_node(
 
         assert post_response.status_code == 200
 
-        get_response = await client.get(f"/thingNodes/{thingNodeId}/metadata/{quote(key)}")
+        get_response = await client.get(
+            f"/thingNodes/{thingNodeId}/metadata/{quote(key)}"
+        )
 
         assert get_response.status_code == 200
         assert get_response.json()["value"] == value
