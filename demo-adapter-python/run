@@ -72,7 +72,7 @@ check() {
     echo "--> Running black in check mode" && black demo_adapter_python tests --check &&
         echo "--> Running isort in check mode" && isort demo_adapter_python tests --check &&
         echo "--> Running tests" && python -m pytest --cov=demo_adapter_python --cov-report=term-missing tests &&
-        echo "--> Running mypy" && mypy demo_adapter_python &&
+        echo "--> Running mypy" && mypy demo_adapter_python tests &&
         echo "--> Running pylint ignoring fixme / TODO entries" && pylint demo_adapter_python tests --disable=fixme
 }
 

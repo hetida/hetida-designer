@@ -1,18 +1,27 @@
 import json
+from typing import Any, Dict, List, Tuple
 from urllib.parse import quote
 
 import pytest
+from httpx import AsyncClient
 from starlette.testclient import TestClient
 
 from demo_adapter_python.external_types import ExternalType
 from demo_adapter_python.in_memory_store import get_value_from_store
+from demo_adapter_python.models import (
+    Metadatum,
+    StructureResponse,
+    StructureSink,
+    StructureSource,
+    StructureThingNode,
+)
 from demo_adapter_python.webservice import app, decode_attributes, encode_attributes
 
 client = TestClient(app)
 
 
 @pytest.mark.asyncio
-async def test_swagger_ui_available(async_test_client):
+async def test_swagger_ui_available(async_test_client: AsyncClient) -> None:
     async with async_test_client as client:
         response = await client.get("/docs")
     assert response.status_code == 200
@@ -20,46 +29,56 @@ async def test_swagger_ui_available(async_test_client):
 
 
 async def walk_thing_nodes(
-    parent_id,
-    tn_append_list,
-    src_append_list,
-    snk_append_list,
-    src_attached_metadata_dict,
-    snk_attached_metadata_dict,
-    tn_attached_metadata_dict,
-    open_async_test_client,
-):
+    parent_id: str,
+    tn_append_list: List[StructureThingNode],
+    src_append_list: List[StructureSource],
+    snk_append_list: List[StructureSink],
+    src_attached_metadata_dict: Dict[Tuple[str, str], Metadatum],
+    snk_attached_metadata_dict: Dict[Tuple[str, str], Metadatum],
+    tn_attached_metadata_dict: Dict[Tuple[str, str], Metadatum],
+    open_async_test_client: AsyncClient,
+) -> None:
     """Recursively walk thingnodes"""
     response_obj = (
         await open_async_test_client.get(f"/structure?parentId={parent_id}")
     ).json()
-    src_append_list += response_obj["sources"]
-    snk_append_list += response_obj["sinks"]
+    structure_response = StructureResponse(**response_obj)
+    src_append_list += structure_response.sources
+    snk_append_list += structure_response.sinks
 
-    for src in response_obj["sources"]:
-        metadata = (
-            await open_async_test_client.get(f'/sources/{src["id"]}/metadata/')
+    for src in structure_response.sources:
+        metadata_src_response = (
+            await open_async_test_client.get(f"/sources/{src.id}/metadata/")
         ).json()
-        for metadatum in metadata:
-            src_attached_metadata_dict[(src["id"], metadatum["key"])] = metadatum
+        metadata_src = [
+            Metadatum(**metadatum_json) for metadatum_json in metadata_src_response
+        ]
+        for metadatum in metadata_src:
+            src_attached_metadata_dict[(src.id, metadatum.key)] = metadatum
 
-    for snk in response_obj["sinks"]:
-        metadata = (
-            await open_async_test_client.get(f'/sinks/{snk["id"]}/metadata/')
+    for snk in structure_response.sinks:
+        metadata_snk_response = (
+            await open_async_test_client.get(f"/sinks/{snk.id}/metadata/")
         ).json()
-        for metadatum in metadata:
-            snk_attached_metadata_dict[(snk["id"], metadatum["key"])] = metadatum
+        metadata_snk = [
+            Metadatum(**metadatum_json) for metadatum_json in metadata_snk_response
+        ]
+        for metadatum in metadata_snk:
+            snk_attached_metadata_dict[(snk.id, metadatum.key)] = metadatum
 
-    metadata_tn = (
+    metadata_tn_response = (
         await open_async_test_client.get(f"/thingNodes/{parent_id}/metadata/")
     ).json()
+    metadata_tn = [
+        Metadatum(**metadatum_json) for metadatum_json in metadata_tn_response
+    ]
     for metadatum in metadata_tn:
-        tn_attached_metadata_dict[(parent_id, metadatum["key"])] = metadatum
+        tn_attached_metadata_dict[(parent_id, metadatum.key)] = metadatum
 
-    for tn in response_obj["thingNodes"]:
+    for tn in structure_response.thingNodes:
         tn_append_list.append(tn)
         await walk_thing_nodes(
-            tn["id"],
+            tn.id,
             tn_append_list,
             src_append_list,
             snk_append_list,
@@ -74,29 +93,32 @@ async def walk_thing_nodes(
     "ignore:an integer is required*"
 )  # pandas to_json currently throws a deprecation warning
 @pytest.mark.asyncio
-async def test_resources_offered_from_structure_hierarchy(async_test_client):
+async def test_resources_offered_from_structure_hierarchy(
+    async_test_client: AsyncClient,
+) -> None:
     """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""
     async with async_test_client as client:
 
         response_obj = (await client.get("/structure")).json()
 
-        assert len(response_obj["sources"]) == 0
-        assert len(response_obj["sinks"]) == 0
+        structure_response = StructureResponse(**response_obj)
+        assert len(structure_response.sources) == 0
+        assert len(structure_response.sinks) == 0
 
-        roots = response_obj["thingNodes"]
+        roots = structure_response.thingNodes
         assert len(roots) == 1
 
         root = roots[0]
 
-        all_tns = []
-        all_srcs = []
-        all_snks = []
-        tn_attached_metadata_dict = {}
-        src_attached_metadata_dict = {}
-        snk_attached_metadata_dict = {}
+        all_tns: List[StructureThingNode] = []
+        all_srcs: List[StructureSource] = []
+        all_snks: List[StructureSink] = []
+        tn_attached_metadata_dict: Dict[Tuple[str, str], Metadatum] = {}
+        src_attached_metadata_dict: Dict[Tuple[str, str], Metadatum] = {}
+        snk_attached_metadata_dict: Dict[Tuple[str, str], Metadatum] = {}
 
         await walk_thing_nodes(
-            root["id"],
+            root.id,
             tn_append_list=all_tns,
             src_append_list=all_srcs,
             snk_append_list=all_snks,
@@ -114,21 +136,16 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
         assert len(tn_attached_metadata_dict) == 8
 
         for src in all_srcs:
-            response_obj = (await client.get(f'/sources/{src["id"]}')).json()
-            for key in src.keys():
-                assert response_obj[key] == src[key]
+            response_obj = (await client.get(f"/sources/{src.id}")).json()
+            assert src == StructureSource(**response_obj)
 
         for snk in all_snks:
-            response_obj = (await client.get(f'/sinks/{snk["id"]}')).json()
-            for key in snk.keys():
-                print(response_obj)
-                assert response_obj[key] == snk[key]
+            response_obj = (await client.get(f"/sinks/{snk.id}")).json()
+            assert snk == StructureSink(**response_obj)
 
         for tn in all_tns:
-            response_obj = (await client.get(f'/thingNodes/{tn["id"]}')).json()
-            for key in tn.keys():
-                print(response_obj)
-                assert response_obj[key] == tn[key]
+            response_obj = (await client.get(f"/thingNodes/{tn.id}")).json()
+            assert tn == StructureThingNode(**response_obj)
 
         # we actually get all metadata that is available as attached to something:
         for ((src_id, key), md) in src_attached_metadata_dict.items():
@@ -137,24 +154,28 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
             ).json()
             print(response_obj, "versus", md)
             assert response_obj["key"] == key
-            assert response_obj["value"] == md["value"]
-            assert response_obj["dataType"] == md["dataType"]
+            assert response_obj["value"] == md.value
+            assert response_obj["dataType"] == md.dataType
 
-            if md.get("isSink", False):
+            if md.isSink is not None and md.isSink:
                 assert response_obj["isSink"]
-                resp = await client.post(f"/sources/{src_id}/metadata/{key}", json=md)
+                resp = await client.post(
+                    f"/sources/{src_id}/metadata/{key}", json=md.dict()
+                )
                 assert resp.status_code == 200
 
         for ((snk_id, key), md) in snk_attached_metadata_dict.items():
             response_obj = (await client.get(f"/sinks/{snk_id}/metadata/{key}")).json()
             print(response_obj, "versus", md)
             assert response_obj["key"] == key
-            assert response_obj["value"] == md["value"]
-            assert response_obj["dataType"] == md["dataType"]
+            assert response_obj["value"] == md.value
+            assert response_obj["dataType"] == md.dataType
 
-            if md.get("isSink", False):
+            if md.isSink is not None and md.isSink:
                 assert response_obj["isSink"]
-                resp = await client.post(f"/sinks/{snk_id}/metadata/{key}", json=md)
+                resp = await client.post(
+                    f"/sinks/{snk_id}/metadata/{key}", json=md.dict()
+                )
                 assert resp.status_code == 200
 
         for ((tn_id, key), md) in tn_attached_metadata_dict.items():
@@ -163,41 +184,41 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
             ).json()
             print(response_obj, "versus", md)
             assert response_obj["key"] == key
-            assert response_obj["value"] == md["value"]
-            assert response_obj["dataType"] == md["dataType"]
+            assert response_obj["value"] == md.value
+            assert response_obj["dataType"] == md.dataType
 
-            if md.get("isSink", False):
+            if md.isSink is not None and md.isSink:
                 assert response_obj["isSink"]
                 resp = await client.post(
-                    f"/thingNodes/{snk_id}/metadata/{key}", json=md
+                    f"/thingNodes/{snk_id}/metadata/{key}", json=md.dict()
                 )
                 assert resp.status_code == 200
 
         # all metadata that is a source in the tree is also found
         for src in all_srcs:
-            if src["type"].startswith("metadata"):
+            if src.type.startswith("metadata"):
                 response_obj = (
                     await client.get(
-                        f'/thingNodes/{src["thingNodeId"]}/metadata/{src["metadataKey"]}'
+                        f"/thingNodes/{src.thingNodeId}/metadata/{src.metadataKey}"
                     )
                 ).json()
                 print(response_obj, "versus", src)
 
-                assert response_obj["key"] == src["metadataKey"]
-                assert response_obj["dataType"] == (
-                    ExternalType(src["type"]).value_datatype.value
-                )
-            if src["type"].startswith("dataframe"):
-                response = await client.get(f'/dataframe?id={src["id"]}')
+                assert response_obj["key"] == src.metadataKey
+                value_datatype = ExternalType(src.type).value_datatype
+                assert value_datatype is not None
+                assert response_obj["dataType"] == (value_datatype.value)
+            if src.type.startswith("dataframe"):
+                response = await client.get(f"/dataframe?id={src.id}")
                 lines = response.text.splitlines()
                 for line in lines:
                     print(line)
                     if len(line) > 0:
                         json.loads(line)
 
-            if src["type"].startswith("timeseries"):
+            if src.type.startswith("timeseries"):
                 response = await client.get(
-                    f'/timeseries?id={src["id"]}&from={quote("2020-01-01T00:00:00.000000000Z")}'
+                    f'/timeseries?id={src.id}&from={quote("2020-01-01T00:00:00.000000000Z")}'
                     f'&to={quote("2020-01-02T00:00:00.0000000Z")}'
                 )
                 assert response.status_code == 200
@@ -209,30 +230,30 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
 
         # metadata that is a sink in the tree is also always obtainable
         for snk in all_snks:
-            if snk["type"].startswith("metadata"):
+            if snk.type.startswith("metadata"):
                 response_obj = (
                     await client.get(
-                        f'/thingNodes/{snk["thingNodeId"]}/metadata/{snk["metadataKey"]}'
+                        f"/thingNodes/{snk.thingNodeId}/metadata/{snk.metadataKey}"
                     )
                 ).json()
                 print(response_obj, "versus", snk)
 
-                assert response_obj["key"] == snk["metadataKey"]
-                assert response_obj["dataType"] == (
-                    ExternalType(snk["type"]).value_datatype.value
-                )
+                assert response_obj["key"] == snk.metadataKey
+                value_datatype = ExternalType(snk.type).value_datatype
+                assert value_datatype is not None
+                assert response_obj["dataType"] == (value_datatype.value)
 
                 resp = await client.post(
-                    f'/thingNodes/{snk["thingNodeId"]}/metadata/{snk["metadataKey"]}',
+                    f"/thingNodes/{snk.thingNodeId}/metadata/{snk.metadataKey}",
                     json=response_obj,
                 )
 
                 assert resp.status_code == 200
 
-            if snk["type"].startswith("dataframe"):
+            if snk.type.startswith("dataframe"):
                 print("Posting something for dataframe sink:", snk)
                 response = await client.post(
-                    f'/dataframe?id={snk["id"]}',
+                    f"/dataframe?id={snk.id}",
                     json=[
                         {"a": 14.5, "b": 12.3},
                         {"a": 13.5, "b": 11.9},
@@ -240,10 +261,10 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                 )
                 assert response.status_code == 200
 
-            if snk["type"].startswith("timeseries"):
+            if snk.type.startswith("timeseries"):
                 print("Posting something for timeseries sink:", snk)
                 response = await client.post(
-                    f'/timeseries?timeseriesId={snk["id"]}',
+                    f"/timeseries?timeseriesId={snk.id}",
                     json=[
                         {"timestamp": "2020-01-01T00:00:00.000000000Z", "value": 12.3},
                         {"timestamp": "2020-01-02T00:00:00.000000000Z", "value": 11.9},
@@ -254,8 +275,8 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
 
 @pytest.mark.asyncio
 async def test_post_metadata_of_thing_node_get_metadata_of_thing_node(
-    async_test_client,
-):
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
         thingNodeId = "root.plantA"
         key = "Anomaly State"
@@ -277,7 +298,9 @@ async def test_post_metadata_of_thing_node_get_metadata_of_thing_node(
 
 
 @pytest.mark.asyncio
-async def test_post_metadata_to_sink_get_metadata_from_source(async_test_client):
+async def test_post_metadata_to_sink_get_metadata_from_source(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
         sinkId = "root.plantA.picklingUnit.influx.anomaly_score"
         key = "Overshooting Allowed"
@@ -297,7 +320,7 @@ async def test_post_metadata_to_sink_get_metadata_from_source(async_test_client)
 
 
 @pytest.mark.asyncio
-async def test_sending_attrs_via_get_dataframe(async_test_client):
+async def test_sending_attrs_via_get_dataframe(async_test_client: AsyncClient) -> None:
     async with async_test_client as client:
         response = await client.get(f"/dataframe?id=root.plantA.maintenance_events")
 
@@ -312,7 +335,9 @@ async def test_sending_attrs_via_get_dataframe(async_test_client):
 
 
 @pytest.mark.asyncio
-async def test_receiving_attrs_via_post_dataframe(async_test_client):
+async def test_receiving_attrs_via_post_dataframe(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
         df_attrs = {"test": "Hello world!", "answer": 42}
         base64_str = encode_attributes(df_attrs)
@@ -334,7 +359,7 @@ async def test_receiving_attrs_via_post_dataframe(async_test_client):
 
 
 @pytest.mark.asyncio
-async def test_sending_attrs_via_get_timeseries(async_test_client):
+async def test_sending_attrs_via_get_timeseries(async_test_client: AsyncClient) -> None:
     async with async_test_client as client:
         ts_id = "root.plantA.picklingUnit.influx.anomaly_score"
 
@@ -357,7 +382,9 @@ async def test_sending_attrs_via_get_timeseries(async_test_client):
 
 
 @pytest.mark.asyncio
-async def test_receiving_attrs_via_post_timeseries(async_test_client):
+async def test_receiving_attrs_via_post_timeseries(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
         df_attrs = {"test": "Hello world!", "answer": 42}
         base64_str = encode_attributes(df_attrs)
