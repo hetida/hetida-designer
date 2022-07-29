@@ -3,7 +3,7 @@ from typing import Any, MutableMapping
 
 import pandas as pd
 
-from demo_adapter_python.models import GetMetadatum
+from demo_adapter_python.models import Metadatum
 
 manager = Manager()
 
@@ -55,8 +55,8 @@ def set_value_in_store(key: str, value: Any) -> None:
     get_store()[key] = value
 
 
-def get_metadatum_from_store(attached_to_id: str, key: str) -> GetMetadatum:
-    return GetMetadatum(**store[attached_to_id + "|" + key])
+def get_metadatum_from_store(attached_to_id: str, key: str) -> Metadatum:
+    return Metadatum(**store[attached_to_id + "|" + key])
 
 
 def set_metadatum_in_store(attached_to_id: str, key: str, new_value: dict) -> None:
