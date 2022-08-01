@@ -69,7 +69,7 @@ class PostMetadatum(BaseModel):
     value: Any = Field(..., example=True)
 
 
-class GetMetadatum(BaseModel):
+class Metadatum(BaseModel):
     key: str
     value: Optional[Any] = None
     dataType: ValueDataType
