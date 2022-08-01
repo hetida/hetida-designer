@@ -12,6 +12,9 @@ import { AuthService } from '../../../auth/auth.service';
 import { BaseItemService } from '../../../service/base-item/base-item.service';
 import { IAppState } from '../../../store/app.state';
 import { selectBaseItemsByCategory } from '../../../store/base-item/base-item.selectors';
+import { TransformationRevisionService } from '../../../service/transformation-revision/transformation-revision.service';
+import { TransformationRevisionState } from '../../../store/transformation-revision/transformation-revision.state';
+import { selectAllTransformationRevisions } from '../../../store/transformation-revision/transformaton-revision.selectors';
 
 @Component({
   selector: 'hd-navigation-container',
@@ -21,7 +24,9 @@ import { selectBaseItemsByCategory } from '../../../store/base-item/base-item.se
 export class NavigationContainerComponent implements OnInit {
   constructor(
     private readonly _store: Store<IAppState>,
+    private readonly transformationRevisionStore: Store<TransformationRevisionState>,
     private readonly _baseItemService: BaseItemService,
+    private readonly transformationRevisionService: TransformationRevisionService,
     private readonly _popover: PopoverService,
     private readonly _baseItemAction: BaseItemActionService,
     private readonly authService: AuthService
@@ -30,6 +35,7 @@ export class NavigationContainerComponent implements OnInit {
   readonly searchFilter = new FormControl('');
   readonly typeFilter = new FormControl(BaseItemType.WORKFLOW);
 
+  // TODO transformationRevisionsByCategory
   abstractBaseItemsByCategory: [string, AbstractBaseItem[]][];
 
   getFilterState(type: string): boolean {
@@ -47,11 +53,21 @@ export class NavigationContainerComponent implements OnInit {
   ngOnInit(): void {
     this.authService.isAuthenticated$().subscribe(() => {
       this._baseItemService.fetchBaseItems();
+      this.transformationRevisionService.getTransformationRevisions();
     });
+    // TODO remove after new filter selector is implemented
+    this.transformationRevisionStore
+      .select(selectAllTransformationRevisions)
+      .subscribe(transformationRevisions => {
+        console.log('hello from nav container', transformationRevisions);
+      });
+
     combineLatest([this.filterChanges, this.searchFilterChanges])
       .pipe(
         switchMap(([baseItemType, searchString]) =>
           this._store.select(
+            // TODO create and unit test this selector for transformationRevisions
+            // TODO sort alphabetically in the new selector
             selectBaseItemsByCategory(baseItemType, searchString)
           )
         )
