@@ -62,15 +62,14 @@ class TransformationRevision(BaseModel):
         description='Category in which this is classified, i.e. the "drawer" in the User Interface',
     )
     version_tag: ShortNonEmptyValidStr
-    released_timestamp: Optional[datetime.datetime] = Field(
-        None,
-        description="If the revision is RELEASED then this should be release timestamp",
-        example=datetime.datetime.now(datetime.timezone.utc),
-    )
-
     disabled_timestamp: Optional[datetime.datetime] = Field(
         None,
         description="If the revision is DISABLED then this should be disable/deprecation timestamp",
+        example=datetime.datetime.now(datetime.timezone.utc),
+    )
+    released_timestamp: Optional[datetime.datetime] = Field(
+        None,
+        description="If the revision is RELEASED then this should be release timestamp",
         example=datetime.datetime.now(datetime.timezone.utc),
     )
     state: State = Field(
@@ -125,6 +124,13 @@ class TransformationRevision(BaseModel):
         return v
 
     # pylint: disable=no-self-argument
+    @validator("disabled_timestamp")
+    def disabled_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
+        if v is None:
+            return v
+        return transform_to_utc_datetime(v)
+
+    # pylint: disable=no-self-argument
     @validator("released_timestamp")
     def released_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
         if v is None:
@@ -132,11 +138,17 @@ class TransformationRevision(BaseModel):
         return transform_to_utc_datetime(v)
 
     # pylint: disable=no-self-argument
-    @validator("disabled_timestamp")
-    def disabled_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
-        if v is None:
-            return v
-        return transform_to_utc_datetime(v)
+    @validator("released_timestamp", always=True)
+    def disabled_timestamp_requires_released_timestamp(
+        cls, v: datetime.datetime, values: dict
+    ) -> datetime.datetime:
+        if (
+            "disabled_timestamp" in values
+            and values["disabled_timestamp"] is not None
+            and v is None
+        ):
+            return values["disabled_timestamp"]
+        return v
 
     # pylint: disable=no-self-argument
     @validator("state")
@@ -303,7 +315,6 @@ class TransformationRevision(BaseModel):
             revision_group_id=self.revision_group_id,
             name=self.name,
             description=self.description,
-            category=self.category,
             type=self.type,
             state=State.RELEASED,
             version_tag=self.version_tag,
