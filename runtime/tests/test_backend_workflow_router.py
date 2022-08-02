@@ -1,3 +1,4 @@
+from copy import deepcopy
 import json
 from posixpath import join as posix_urljoin
 from unittest import mock
@@ -142,7 +143,75 @@ dto_json_workflow_2_update = {
     ],
     "wirings": [],
 }
-
+dto_json_workflow_2_publishable = {
+    "id": "c92da3cf-c9fb-9582-f9a2-c05d6e54bbd7",
+    "groupId": "868988fc-b7d3-601b-cb05-d0f957d1733d",
+    "name": "workflow 2",
+    "description": "description of workflow 2",
+    "category": "category",
+    "type": "WORKFLOW",
+    "state": "DRAFT",
+    "tag": "1.0.0",
+    "operators": [
+        {
+            "id": "57c194c3-6212-59a2-9404-48b44b4daa22",
+            "groupId": "b301ff9e-bdbb-8d7c-f6e2-7e83b919a8d3",
+            "name": "operator",
+            "description": "",
+            "category": "category",
+            "type": "COMPONENT",
+            "state": "RELEASED",
+            "tag": "1.0.0",
+            "itemId": "c3f0ffdc-ff1c-a612-668c-0a606020ffaa",
+            "inputs": [
+                {
+                    "id": "88b58637-e5b6-1013-d12e-5bfdb9d949db",
+                    "name": "operator_input",
+                    "posX": 0,
+                    "posY": 0,
+                    "type": "INT",
+                }
+            ],
+            "outputs": [
+                {
+                    "id": "a60c42e2-d0f3-34db-2707-0bf5954d3bce",
+                    "name": "operator_output",
+                    "posX": 0,
+                    "posY": 0,
+                    "type": "INT",
+                }
+            ],
+            "posX": 0,
+            "posY": 0,
+        }
+    ],
+    "links": [],
+    "inputs": [
+        {
+            "id": "b1274e65-8cfa-47a7-92d7-c85b876eb167",
+            "name": "input",
+            "posX": 0,
+            "posY": 0,
+            "type": "INT",
+            "operator": "57c194c3-6212-59a2-9404-48b44b4daa22",
+            "connector": "88b58637-e5b6-1013-d12e-5bfdb9d949db",
+            "constant": False,
+        }
+    ],
+    "outputs": [
+        {
+            "id": "755c17d7-daa6-437e-a05a-b3e1f3ed0f30",
+            "name": "output",
+            "posX": 0,
+            "posY": 0,
+            "type": "INT",
+            "operator": "57c194c3-6212-59a2-9404-48b44b4daa22",
+            "connector": "a60c42e2-d0f3-34db-2707-0bf5954d3bce",
+            "constant": False,
+        }
+    ],
+    "wirings": [],
+}
 dto_json_wiring = {
     "id": "2634db74-157b-4c07-a49d-6aedc6f9a7bc",
     "name": "STANDARD-WIRING",
@@ -341,6 +410,34 @@ async def test_update_transformation_revision_from_released_workflow_dto(
             )
 
         assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_publish_transformation_revision_from_workflow_dto(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            WorkflowRevisionFrontendDto(
+                **dto_json_workflow_2_publishable
+            ).to_transformation_revision()
+        )
+
+        dto_json_workflow_2_publish = deepcopy(dto_json_workflow_2_publishable)
+        dto_json_workflow_2_publish["state"] = "RELEASED"
+
+        async with async_test_client as ac:
+            response = await ac.put(
+                "/api/workflows/" + str(get_uuid_from_seed("workflow 2")),
+                json=dto_json_workflow_2_publish,
+            )
+
+        assert response.status_code == 201
+        assert response.json()["state"] == "RELEASED"
+        assert response.json()["name"] != "new name"
 
 
 @pytest.mark.asyncio
