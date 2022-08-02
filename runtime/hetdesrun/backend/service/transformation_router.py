@@ -380,11 +380,6 @@ async def update_transformation_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
-    if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
-        updated_transformation_revision = update_content(
-            existing_transformation_revision, updated_transformation_revision
-        )
-
     updated_transformation_revision = if_applicable_release_or_deprecate(
         existing_transformation_revision, updated_transformation_revision
     )

@@ -260,14 +260,14 @@ async def update_workflow_revision(
             existing_transformation_revision.released_timestamp
         )
 
-    updated_transformation_revision = update_content(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
     updated_transformation_revision = if_applicable_release_or_deprecate(
         existing_transformation_revision, updated_transformation_revision
     )
 
+    updated_transformation_revision = update_content(
+        existing_transformation_revision, updated_transformation_revision
+    )
+    
     try:
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(
