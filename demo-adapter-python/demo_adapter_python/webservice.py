@@ -636,6 +636,8 @@ async def post_timeseries(
     if ts_id.endswith("anomaly_score"):
         df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
         if data_attributes is not None and len(data_attributes) != 0:
+            df_from_store: pd.DataFrame = get_value_from_store(ts_id)
+            df.attrs = df_from_store.attrs
             df.attrs.update(decode_attributes(data_attributes))
         set_value_in_store(ts_id, df)
         logger.info(
@@ -739,6 +741,8 @@ async def post_dataframe(
     if df_id.endswith("alerts"):
         df = pd.DataFrame.from_dict(df_body, orient="columns")
         if data_attributes is not None and len(data_attributes) != 0:
+            df_from_store: pd.DataFrame = get_value_from_store(df_id)
+            df.attrs = df_from_store.attrs
             df.attrs.update(decode_attributes(data_attributes))
         logger.debug("storing %s", json.dumps(df_body))
         logger.debug("which has attributes %s", str(df.attrs))
