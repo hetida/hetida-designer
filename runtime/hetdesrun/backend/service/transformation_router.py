@@ -309,10 +309,8 @@ def if_applicable_release_or_deprecate(
                 **existing_transformation_revision.dict()
             )
             updated_transformation_revision.deprecate()
-            if updated_transformation_revision.type == Type.COMPONENT:
-                updated_transformation_revision.content = update_code(
-                    updated_transformation_revision
-                )
+        # prevent overwriting content during publishing or deprecating
+        updated_transformation_revision.content = existing_transformation_revision.content
     return updated_transformation_revision
 
 
