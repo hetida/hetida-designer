@@ -384,6 +384,11 @@ async def update_transformation_revision(
         existing_transformation_revision, updated_transformation_revision
     )
 
+    if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
+        updated_transformation_revision = update_content(
+            existing_transformation_revision, updated_transformation_revision
+        )
+
     try:
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(
