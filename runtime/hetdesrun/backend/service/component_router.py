@@ -193,6 +193,7 @@ async def update_component_revision(
             updated_component_dto.to_transformation_revision()
         )
     except ValidationError as e:
+        logger.error("The following validation error occured:\n%s",str(e))
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     existing_transformation_revision: Optional[TransformationRevision] = None
