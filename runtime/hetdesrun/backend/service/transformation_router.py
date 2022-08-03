@@ -297,6 +297,8 @@ def if_applicable_release_or_deprecate(
                 existing_transformation_revision.id,
             )
             updated_transformation_revision.release()
+            # prevent overwriting content during releasing
+            updated_transformation_revision.content = existing_transformation_revision.content
         if (
             existing_transformation_revision.state == State.RELEASED
             and updated_transformation_revision.state == State.DISABLED
@@ -309,8 +311,8 @@ def if_applicable_release_or_deprecate(
                 **existing_transformation_revision.dict()
             )
             updated_transformation_revision.deprecate()
-        # prevent overwriting content during publishing or deprecating
-        updated_transformation_revision.content = existing_transformation_revision.content
+            # prevent overwriting content during deprecating
+            updated_transformation_revision.content = existing_transformation_revision.content
     return updated_transformation_revision
 
 
