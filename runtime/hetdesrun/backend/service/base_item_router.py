@@ -268,11 +268,11 @@ async def update_transformation_revision(
             existing_transformation_revision.content
         )
 
-    updated_transformation_revision = update_content(
+    updated_transformation_revision = if_applicable_release_or_deprecate(
         existing_transformation_revision, updated_transformation_revision
     )
 
-    updated_transformation_revision = if_applicable_release_or_deprecate(
+    updated_transformation_revision = update_content(
         existing_transformation_revision, updated_transformation_revision
     )
 
