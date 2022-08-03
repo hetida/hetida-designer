@@ -4,17 +4,18 @@ import { Store } from '@ngrx/store';
 import { combineLatest, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { BaseItemType } from 'src/app/enums/base-item-type';
-import { AbstractBaseItem } from 'src/app/model/base-item';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { Utils } from 'src/app/utils/utils';
 import { AuthService } from '../../../auth/auth.service';
 import { BaseItemService } from '../../../service/base-item/base-item.service';
-import { IAppState } from '../../../store/app.state';
-import { selectBaseItemsByCategory } from '../../../store/base-item/base-item.selectors';
 import { TransformationRevisionService } from '../../../service/transformation-revision/transformation-revision.service';
 import { TransformationRevisionState } from '../../../store/transformation-revision/transformation-revision.state';
-import { selectAllTransformationRevisions } from '../../../store/transformation-revision/transformaton-revision.selectors';
+import {
+  selectAllTransformationRevisions,
+  selectTransformationRevisionsByCategory
+} from '../../../store/transformation-revision/transformaton-revision.selectors';
+import { TransformationRevision } from 'src/app/model/new-api/transformation-revision';
 
 @Component({
   selector: 'hd-navigation-container',
@@ -23,7 +24,6 @@ import { selectAllTransformationRevisions } from '../../../store/transformation-
 })
 export class NavigationContainerComponent implements OnInit {
   constructor(
-    private readonly _store: Store<IAppState>,
     private readonly transformationRevisionStore: Store<TransformationRevisionState>,
     private readonly _baseItemService: BaseItemService,
     private readonly transformationRevisionService: TransformationRevisionService,
@@ -36,7 +36,7 @@ export class NavigationContainerComponent implements OnInit {
   readonly typeFilter = new FormControl(BaseItemType.WORKFLOW);
 
   // TODO transformationRevisionsByCategory
-  abstractBaseItemsByCategory: [string, AbstractBaseItem[]][];
+  transformationRevisionsByCategory: [string, TransformationRevision[]][];
 
   getFilterState(type: string): boolean {
     return (this.typeFilter.value as string) === type;
@@ -65,16 +65,16 @@ export class NavigationContainerComponent implements OnInit {
     combineLatest([this.filterChanges, this.searchFilterChanges])
       .pipe(
         switchMap(([baseItemType, searchString]) =>
-          this._store.select(
+          this.transformationRevisionStore.select(
             // TODO create and unit test this selector for transformationRevisions
             // TODO sort alphabetically in the new selector
-            selectBaseItemsByCategory(baseItemType, searchString)
+            selectTransformationRevisionsByCategory(baseItemType, searchString)
           )
         )
       )
-      .subscribe(filteredAbstractBaseItems => {
-        this.abstractBaseItemsByCategory = Object.entries(
-          filteredAbstractBaseItems
+      .subscribe(filteredTransformationRevisions => {
+        this.transformationRevisionsByCategory = Object.entries(
+          filteredTransformationRevisions
         ).sort(([categoryNameA], [categoryNameB]) =>
           Utils.string.compare(categoryNameA, categoryNameB)
         );
@@ -97,7 +97,10 @@ export class NavigationContainerComponent implements OnInit {
     this._popover.closePopover();
   }
 
-  trackByBaseItemId(_: number, abstractBaseItem: AbstractBaseItem) {
-    return abstractBaseItem.id;
+  trackByTransformationRevisionId(
+    _: number,
+    transformationRevision: TransformationRevision
+  ) {
+    return transformationRevision.id;
   }
 }
