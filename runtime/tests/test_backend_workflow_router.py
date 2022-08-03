@@ -185,7 +185,22 @@ dto_json_workflow_2_publishable = {
             "posY": 0,
         }
     ],
-    "links": [],
+    "links": [
+        {
+            "id": "e8fb61ab-bfba-402e-9e7b-2df7d48fa6e7",
+            "fromOperator": "c92da3cf-c9fb-9582-f9a2-c05d6e54bbd7",
+            "fromConnector": "b1274e65-8cfa-47a7-92d7-c85b876eb167",
+            "toOperator": "57c194c3-6212-59a2-9404-48b44b4daa22",
+            "toConnector": "88b58637-e5b6-1013-d12e-5bfdb9d949db",
+        },
+        {
+            "id": "06cfa9cb-11ef-44e7-ac45-8a9280a39ed0",
+            "fromOperator": "57c194c3-6212-59a2-9404-48b44b4daa22",
+            "fromConnector": "a60c42e2-d0f3-34db-2707-0bf5954d3bce",
+            "toOperator": "c92da3cf-c9fb-9582-f9a2-c05d6e54bbd7",
+            "toConnector": "755c17d7-daa6-437e-a05a-b3e1f3ed0f30",
+        },
+    ],
     "inputs": [
         {
             "id": "b1274e65-8cfa-47a7-92d7-c85b876eb167",
@@ -428,6 +443,9 @@ async def test_publish_transformation_revision_from_workflow_dto(
 
         dto_json_workflow_2_publish = deepcopy(dto_json_workflow_2_publishable)
         dto_json_workflow_2_publish["state"] = "RELEASED"
+        # print("json inputs",dto_json_workflow_2_publish["inputs"])
+        # print("json outputs",dto_json_workflow_2_publish["outputs"])
+        print()
 
         async with async_test_client as ac:
             response = await ac.put(
