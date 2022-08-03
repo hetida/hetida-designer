@@ -487,8 +487,6 @@ async def post_metadata_thingNode_by_key(
 
         old_metadatum = get_metadatum_from_store(thingNodeId, key)
 
-        print("old_metadatum", old_metadatum)
-
         new_metadatum = Metadatum(
             key=metadatum.key,
             value=metadatum.value,
