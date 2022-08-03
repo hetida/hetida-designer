@@ -17,7 +17,7 @@ export class TransformationRevisionService {
     this.httpService
       .fetchTransformationRevisions()
       .subscribe(transformationRevisions => {
-        console.log(transformationRevisions);
+        // console.log(transformationRevisions);
         this.store.dispatch(
           setAllTransformationRevisions(transformationRevisions)
         );

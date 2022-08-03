@@ -56,11 +56,11 @@ export class NavigationContainerComponent implements OnInit {
       this.transformationRevisionService.getTransformationRevisions();
     });
     // TODO remove after new filter selector is implemented
-    this.transformationRevisionStore
-      .select(selectAllTransformationRevisions)
-      .subscribe(transformationRevisions => {
-        console.log('hello from nav container', transformationRevisions);
-      });
+    // this.transformationRevisionStore
+    //   .select(selectAllTransformationRevisions)
+    //   .subscribe(transformationRevisions => {
+    //     console.log('hello from nav container', transformationRevisions);
+    //   });
 
     combineLatest([this.filterChanges, this.searchFilterChanges])
       .pipe(

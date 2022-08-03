@@ -1,3 +1,4 @@
+import { fakeAsync, tick } from '@angular/core/testing';
 import {
   selectAllTransformationRevisions,
   selectTransformationRevisionsByCategory
@@ -9,9 +10,9 @@ describe('Transformaton revision selectors', () => {
     WORKFLOW = 'WORKFLOW'
   }
 
-  it('should select transformation revisions by category', () => {
+  it('should select transformation revisions by category', fakeAsync(() => {
     const transformationRevisions = selectAllTransformationRevisions.projector();
-
+    tick();
     const components = selectTransformationRevisionsByCategory(
       BaseItemType.COMPONENT
     );
@@ -20,7 +21,8 @@ describe('Transformaton revision selectors', () => {
       BaseItemType.WORKFLOW
     );
 
+    expect(transformationRevisions);
     expect(components);
     expect(workflows);
-  });
+  }));
 });
