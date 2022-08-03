@@ -9,10 +9,10 @@ import { PopoverService } from 'src/app/service/popover/popover.service';
 import { Utils } from 'src/app/utils/utils';
 import { AuthService } from '../../../auth/auth.service';
 import { BaseItemService } from '../../../service/base-item/base-item.service';
-import { TransformationRevisionService } from '../../../service/transformation-revision/transformation-revision.service';
-import { TransformationRevisionState } from '../../../store/transformation-revision/transformation-revision.state';
-import { selectTransformationRevisionsByCategoryAndName } from '../../../store/transformation-revision/transformaton-revision.selectors';
-import { TransformationRevision } from 'src/app/model/new-api/transformation-revision';
+import { TransformationService } from '../../../service/transformation/transformation.service';
+import { TransformationState } from '../../../store/transformation/transformation.state';
+import { selectTransformationsByCategoryAndName } from '../../../store/transformation/transformaton.selectors';
+import { Transformation } from 'src/app/model/new-api/transformation';
 
 @Component({
   selector: 'hd-navigation-container',
@@ -21,9 +21,9 @@ import { TransformationRevision } from 'src/app/model/new-api/transformation-rev
 })
 export class NavigationContainerComponent implements OnInit {
   constructor(
-    private readonly transformationRevisionStore: Store<TransformationRevisionState>,
+    private readonly transformationStore: Store<TransformationState>,
     private readonly _baseItemService: BaseItemService,
-    private readonly transformationRevisionService: TransformationRevisionService,
+    private readonly transformationRevisionService: TransformationService,
     private readonly _popover: PopoverService,
     private readonly _baseItemAction: BaseItemActionService,
     private readonly authService: AuthService
@@ -32,8 +32,7 @@ export class NavigationContainerComponent implements OnInit {
   readonly searchFilter = new FormControl('');
   readonly typeFilter = new FormControl(BaseItemType.WORKFLOW);
 
-  // TODO transformationRevisionsByCategory
-  transformationRevisionsByCategory: [string, TransformationRevision[]][];
+  transformationsByCategory: [string, Transformation[]][];
 
   getFilterState(type: string): boolean {
     return (this.typeFilter.value as string) === type;
@@ -50,30 +49,21 @@ export class NavigationContainerComponent implements OnInit {
   ngOnInit(): void {
     this.authService.isAuthenticated$().subscribe(() => {
       this._baseItemService.fetchBaseItems();
-      this.transformationRevisionService.getTransformationRevisions();
+      this.transformationRevisionService.getTransformations();
     });
-    // TODO remove after new filter selector is implemented
-    // this.transformationRevisionStore
-    //   .select(selectAllTransformationRevisions)
-    //   .subscribe(transformationRevisions => {
-    //     console.log('hello from nav container', transformationRevisions);
-    //   });
 
     combineLatest([this.filterChanges, this.searchFilterChanges])
       .pipe(
         switchMap(([baseItemType, searchString]) =>
-          this.transformationRevisionStore.select(
-            // TODO create and unit test this selector for transformationRevisions
+          this.transformationStore.select(
+            // TODO create and unit test this selector for transformations
             // TODO sort alphabetically in the new selector
-            selectTransformationRevisionsByCategoryAndName(
-              baseItemType,
-              searchString
-            )
+            selectTransformationsByCategoryAndName(baseItemType, searchString)
           )
         )
       )
       .subscribe(filteredTransformationRevisions => {
-        this.transformationRevisionsByCategory = Object.entries(
+        this.transformationsByCategory = Object.entries(
           filteredTransformationRevisions
         ).sort(([categoryNameA], [categoryNameB]) =>
           Utils.string.compare(categoryNameA, categoryNameB)
@@ -99,7 +89,7 @@ export class NavigationContainerComponent implements OnInit {
 
   trackByTransformationRevisionId(
     _: number,
-    transformationRevision: TransformationRevision
+    transformationRevision: Transformation
   ) {
     return transformationRevision.id;
   }

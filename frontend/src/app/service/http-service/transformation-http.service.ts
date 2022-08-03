@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
 import { Observable } from 'rxjs';
-import { TransformationRevision } from '../../model/new-api/transformation-revision';
+import { Transformation } from '../../model/new-api/transformation';
 
 @Injectable({
   providedIn: 'root'
 })
-export class TransformationRevisionHttpService {
+export class TransformationHttpService {
   private apiEndpoint: string;
 
   constructor(
@@ -19,10 +19,8 @@ export class TransformationRevisionHttpService {
     });
   }
 
-  public fetchTransformationRevisions(): Observable<
-    Array<TransformationRevision>
-  > {
+  public fetchTransformations(): Observable<Array<Transformation>> {
     const url = `${this.apiEndpoint}/transformations`;
-    return this.httpClient.get<Array<TransformationRevision>>(url);
+    return this.httpClient.get<Array<Transformation>>(url);
   }
 }

@@ -1,11 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { selectActiveTabItem } from 'src/app/store/tab-item/tab-item.selectors';
 import { Utils } from 'src/app/utils/utils';
-import { AbstractBaseItem } from '../../../model/base-item';
 import { IAppState } from '../../../store/app.state';
+import { Transformation } from '../../../model/new-api/transformation';
 
 @Component({
   selector: 'hd-navigation-category',
@@ -13,26 +12,25 @@ import { IAppState } from '../../../store/app.state';
   styleUrls: ['./navigation-category.component.scss']
 })
 export class NavigationCategoryComponent implements OnInit {
-  public filteredAbstractBaseItems$: Observable<AbstractBaseItem[]>;
-
-  private _abstractBaseItems: AbstractBaseItem[];
+  private _transformations: Transformation[];
 
   @Input()
-  set abstractBaseItem(abstractBaseItems: AbstractBaseItem[]) {
-    this._abstractBaseItems = abstractBaseItems.sort(
-      (abstractBaseItemA, abstractBaseItemB) =>
-        Utils.string.compare(abstractBaseItemA.name, abstractBaseItemB.name)
+  set transformations(transformations: Transformation[]) {
+    // TODO sort elsewhere?
+    this._transformations = transformations.sort(
+      (transformationA, transformationB) =>
+        Utils.string.compare(transformationA.name, transformationB.name)
     );
   }
 
-  get abstractBaseItem(): AbstractBaseItem[] {
-    return this._abstractBaseItems;
+  get transformations(): Transformation[] {
+    return this._transformations;
   }
 
   @Input()
   category = '';
 
-  public activeBaseItemId = '';
+  public activeTransformationId = '';
 
   constructor(
     private readonly store: Store<IAppState>,
@@ -42,9 +40,9 @@ export class NavigationCategoryComponent implements OnInit {
   ngOnInit() {
     this.store.select(selectActiveTabItem).subscribe(activeTabItem => {
       if (activeTabItem === null) {
-        this.activeBaseItemId = '';
+        this.activeTransformationId = '';
       } else {
-        this.activeBaseItemId = activeTabItem.baseItemId;
+        this.activeTransformationId = activeTabItem.baseItemId;
       }
     });
   }

@@ -1,13 +1,13 @@
-import { selectTransformationRevisionsByCategoryAndName } from './transformaton-revision.selectors';
+import { selectTransformationsByCategoryAndName } from './transformaton.selectors';
 import { BaseItemType } from '../../enums/base-item-type';
 import { EntityState } from '@ngrx/entity';
-import { TransformationRevision } from '../../model/new-api/transformation-revision';
+import { Transformation } from '../../model/new-api/transformation';
 import { RevisionState } from '../../enums/revision-state';
 
-describe('Transformation revision selectors', () => {
-  it('#selectTransformationRevisionsByCategory should filter for category "COMPONENT"', () => {
+describe('Transformation selectors', () => {
+  it('#selectTransformationsByCategory should filter for category "COMPONENT"', () => {
     // arrange
-    const mockEntityState: EntityState<TransformationRevision> = {
+    const mockEntityState: EntityState<Transformation> = {
       ids: ['abc'],
       entities: {
         abc: {
@@ -36,12 +36,12 @@ describe('Transformation revision selectors', () => {
     };
 
     // act
-    const filteredTransformationRevisions = selectTransformationRevisionsByCategoryAndName(
+    const filteredTransformations = selectTransformationsByCategoryAndName(
       BaseItemType.COMPONENT,
       null
     ).projector(mockEntityState);
 
     // assert
-    expect(filteredTransformationRevisions.DRAFT.length).toBe(1);
+    expect(filteredTransformations.DRAFT.length).toBe(1);
   });
 });

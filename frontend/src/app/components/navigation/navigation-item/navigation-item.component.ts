@@ -9,9 +9,10 @@ import { ComponentEditorService } from 'src/app/service/component-editor.service
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { WorkflowEditorService } from 'src/app/service/workflow-editor/workflow-editor.service';
-import { AbstractBaseItem, BaseItem } from '../../../model/base-item';
+import { BaseItem } from '../../../model/base-item';
 import { TabItemService } from '../../../service/tab-item/tab-item.service';
 import { BaseItemContextMenuComponent } from '../../base-item-context-menu/base-item-context-menu.component';
+import { Transformation } from '../../../model/new-api/transformation';
 
 @Component({
   selector: 'hd-navigation-item',
@@ -19,7 +20,7 @@ import { BaseItemContextMenuComponent } from '../../base-item-context-menu/base-
   styleUrls: ['./navigation-item.component.scss']
 })
 export class NavigationItemComponent implements OnInit {
-  @Input() abstractBaseItem: AbstractBaseItem;
+  @Input() transformation: Transformation;
 
   constructor(
     private readonly popoverService: PopoverService,
@@ -38,7 +39,7 @@ export class NavigationItemComponent implements OnInit {
 
   public selectComponent(): void {
     this.popoverService.showPopover(
-      this.abstractBaseItem.id,
+      this.transformation.id,
       navigationWidth,
       null
     );
@@ -49,16 +50,17 @@ export class NavigationItemComponent implements OnInit {
   }
 
   public editComponent(): void {
-    this.tabItemService.addBaseItemTab(this.abstractBaseItem.id);
+    this.tabItemService.addBaseItemTab(this.transformation.id);
     this.popoverService.closePopover();
   }
 
   public dragComponent(event: DragEvent): void {
+    // TODO check drag and drop
     event.dataTransfer.effectAllowed = 'all';
     event.dataTransfer.dropEffect = 'none';
     event.dataTransfer.setData(
       'hetida/baseItem',
-      JSON.stringify(this.abstractBaseItem)
+      JSON.stringify(this.transformation)
     );
   }
 
@@ -73,10 +75,11 @@ export class NavigationItemComponent implements OnInit {
 
     let baseItem$: Observable<BaseItem>;
 
-    if (this.abstractBaseItem.type === BaseItemType.WORKFLOW) {
-      baseItem$ = this._workflowService.getWorkflow(this.abstractBaseItem.id);
-    } else if (this.abstractBaseItem.type === BaseItemType.COMPONENT) {
-      baseItem$ = this._componentService.getComponent(this.abstractBaseItem.id);
+    // TODO check base item given to context menu
+    if (this.transformation.type === BaseItemType.WORKFLOW) {
+      baseItem$ = this._workflowService.getWorkflow(this.transformation.id);
+    } else if (this.transformation.type === BaseItemType.COMPONENT) {
+      baseItem$ = this._componentService.getComponent(this.transformation.id);
     } else {
       throw Error('type of abstract base item is invalid');
     }
@@ -86,12 +89,12 @@ export class NavigationItemComponent implements OnInit {
   }
 
   public get svgIcon(): string {
-    if (this.abstractBaseItem.state === RevisionState.RELEASED) {
-      return this.abstractBaseItem.type === BaseItemType.WORKFLOW
+    if (this.transformation.state === RevisionState.RELEASED) {
+      return this.transformation.type === BaseItemType.WORKFLOW
         ? 'icon-published-workflow'
         : 'icon-published-component';
     }
-    return this.abstractBaseItem.type === BaseItemType.WORKFLOW
+    return this.transformation.type === BaseItemType.WORKFLOW
       ? 'icon-workflow'
       : 'icon-component';
   }

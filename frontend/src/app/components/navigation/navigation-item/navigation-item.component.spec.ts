@@ -54,7 +54,7 @@ describe('NavigationItemComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(NavigationItemComponent);
     component = fixture.componentInstance;
-    component.abstractBaseItem = {
+    component.transformation = {
       id: 'Mock',
       name: 'Mock',
       tag: 'Mock',

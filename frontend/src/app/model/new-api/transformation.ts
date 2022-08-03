@@ -4,7 +4,7 @@ import { WorkflowContent } from './workflow-content';
 import { IoInterface } from './io-interface';
 import { TestWiring } from './test-wiring';
 
-export interface TransformationRevision {
+export interface Transformation {
   /**
    * Id of transformation (uuid)
    */
