@@ -11,10 +11,7 @@ import { AuthService } from '../../../auth/auth.service';
 import { BaseItemService } from '../../../service/base-item/base-item.service';
 import { TransformationRevisionService } from '../../../service/transformation-revision/transformation-revision.service';
 import { TransformationRevisionState } from '../../../store/transformation-revision/transformation-revision.state';
-import {
-  selectAllTransformationRevisions,
-  selectTransformationRevisionsByCategory
-} from '../../../store/transformation-revision/transformaton-revision.selectors';
+import { selectTransformationRevisionsByCategoryAndName } from '../../../store/transformation-revision/transformaton-revision.selectors';
 import { TransformationRevision } from 'src/app/model/new-api/transformation-revision';
 
 @Component({
@@ -68,7 +65,10 @@ export class NavigationContainerComponent implements OnInit {
           this.transformationRevisionStore.select(
             // TODO create and unit test this selector for transformationRevisions
             // TODO sort alphabetically in the new selector
-            selectTransformationRevisionsByCategory(baseItemType, searchString)
+            selectTransformationRevisionsByCategoryAndName(
+              baseItemType,
+              searchString
+            )
           )
         )
       )

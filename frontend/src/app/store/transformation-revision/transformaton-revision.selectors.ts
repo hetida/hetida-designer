@@ -24,7 +24,7 @@ export const selectAllTransformationRevisions = createSelector(
     )
 );
 
-export const selectTransformationRevisionsByCategory = (
+export const selectTransformationRevisionsByCategoryAndName = (
   transformationRevisionType?: BaseItemType,
   transformationRevisionNameFilter?: string
 ) => {
