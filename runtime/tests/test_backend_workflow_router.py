@@ -1,5 +1,5 @@
-from copy import deepcopy
 import json
+from copy import deepcopy
 from posixpath import join as posix_urljoin
 from unittest import mock
 from uuid import UUID

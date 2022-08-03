@@ -227,7 +227,7 @@ async def update_workflow_revision(
             updated_workflow_dto.to_transformation_revision()
         )
     except ValidationError as e:
-        logger.error("The following validation error occured:\n%s",str(e))
+        logger.error("The following validation error occured:\n%s", str(e))
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     existing_transformation_revision: Optional[TransformationRevision] = None
@@ -268,7 +268,7 @@ async def update_workflow_revision(
     updated_transformation_revision = update_content(
         existing_transformation_revision, updated_transformation_revision
     )
-    
+
     try:
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(
