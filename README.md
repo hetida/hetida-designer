@@ -56,6 +56,8 @@ git checkout release
 
 **Note:** The following command will expose ports of designer containers to your local network and depending on your OS setup these ports may be exposed to the outside world allowing arbitrary code execution. If in doubt, [restrict all port rules to localhost](https://stackoverflow.com/a/48208039) by editing the `docker-compose.yml` accordingly.
 
+**Note:** By default [base component and worklfow deployment](./docs/base_component_deployment.md) will run automatically and fill the empty database.
+
 Once you have the source code, docker and docker-compose properly set up, run
 
 ```shell
