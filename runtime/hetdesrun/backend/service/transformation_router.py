@@ -297,6 +297,10 @@ def if_applicable_release_or_deprecate(
                 existing_transformation_revision.id,
             )
             updated_transformation_revision.release()
+            # prevent overwriting content during releasing
+            updated_transformation_revision.content = (
+                existing_transformation_revision.content
+            )
         if (
             existing_transformation_revision.state == State.RELEASED
             and updated_transformation_revision.state == State.DISABLED
@@ -309,10 +313,10 @@ def if_applicable_release_or_deprecate(
                 **existing_transformation_revision.dict()
             )
             updated_transformation_revision.deprecate()
-            if updated_transformation_revision.type == Type.COMPONENT:
-                updated_transformation_revision.content = update_code(
-                    updated_transformation_revision
-                )
+            # prevent overwriting content during deprecating
+            updated_transformation_revision.content = (
+                existing_transformation_revision.content
+            )
     return updated_transformation_revision
 
 
@@ -382,14 +386,14 @@ async def update_transformation_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
+    updated_transformation_revision = if_applicable_release_or_deprecate(
+        existing_transformation_revision, updated_transformation_revision
+    )
+
     if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
         updated_transformation_revision = update_content(
             existing_transformation_revision, updated_transformation_revision
         )
-
-    updated_transformation_revision = if_applicable_release_or_deprecate(
-        existing_transformation_revision, updated_transformation_revision
-    )
 
     try:
         persisted_transformation_revision = (
