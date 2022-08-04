@@ -165,49 +165,32 @@ Here is the json message value for running the example workflow "Univariate Line
 
 ```json
 {
-    "id": "8d61a267-3a71-51cd-2817-48c320469d6b",
+    "id": "806df1b9-2fc8-4463-943f-3d258c569663",
     "wiring": {
         "input_wirings": [
             {
-                "workflow_input_name": "num_pred_series_future_days",
-                "adapter_id": "direct_provisioning",
-                "filters": {"value": "1"}
-            },
-            {
-                "workflow_input_name": "pred_series_frequency",
-                "adapter_id": "direct_provisioning",
-                "filters": {"value": "3min"}
-            },
-            {
                 "ref_id": "root.plantA.picklingUnit.influx.temp",
                 "ref_id_type": "SOURCE",
                 "type": "timeseries(float)",
-                "workflow_input_name": "timeseries",
+                "workflow_input_name": "inp_series",
                 "adapter_id": "demo-adapter-python",
                 "filters": {
-                    "timestampFrom": "2022-05-19T15:24:00.000000000Z",
-                    "timestampTo": "2022-05-19T15:24:00.000000000Z"
+                    "timestampFrom": "2022-05-01T00:00:00.000000000Z",
+                    "timestampTo": "2022-05-02T00:00:00.000000000Z"
                 }
             },
             {
-                "ref_id": "root.plantA.picklingUnit.influx.temp",
-                "ref_id_type": "SOURCE",
-                "ref_key": "Max Value",
-                "type": "metadata(float)",
                 "workflow_input_name": "limit",
-                "adapter_id": "demo-adapter-python",
-                "filters": {}
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": 1.3}
+            },
+            {
+                "workflow_input_name": "num_days_forecast",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": "10"}
             }
         ],
-        "output_wirings": [
-            {
-                "ref_id": "root.plantA.picklingUnit.influx.anomaly_score",
-                "ref_id_type": "SINK",
-                "type": "timeseries(float)",
-                "workflow_output_name": "pred_series",
-                "adapter_id": "demo-adapter-python"
-            }
-        ]
+        "output_wirings": []
     },
     "run_pure_plot_operators": false,
     "job_id": "00000000-0000-0000-0000-000000000005"
@@ -216,7 +199,7 @@ Here is the json message value for running the example workflow "Univariate Line
 
 And for your convenience the corresponding ready-to-paste one liner:
 ```
-exec_job_3: { "id": "8d61a267-3a71-51cd-2817-48c320469d6b", "wiring": { "input_wirings": [ { "workflow_input_name": "num_pred_series_future_days", "adapter_id": "direct_provisioning", "filters": {"value": "1"} }, { "workflow_input_name": "pred_series_frequency", "adapter_id": "direct_provisioning", "filters": {"value": "3min"} }, { "ref_id": "root.plantA.picklingUnit.influx.temp", "ref_id_type": "SOURCE", "type": "timeseries(float)", "workflow_input_name": "timeseries", "adapter_id": "demo-adapter-python", "filters": { "timestampFrom": "2022-05-19T15:24:00.000000000Z", "timestampTo": "2022-05-19T15:24:00.000000000Z" } }, { "ref_id": "root.plantA.picklingUnit.influx.temp", "ref_id_type": "SOURCE", "ref_key": "Max Value", "type": "metadata(float)", "workflow_input_name": "limit", "adapter_id": "demo-adapter-python", "filters": {} } ], "output_wirings": [ { "ref_id": "root.plantA.picklingUnit.influx.anomaly_score", "ref_id_type": "SINK", "type": "timeseries(float)", "workflow_output_name": "pred_series", "adapter_id": "demo-adapter-python" } ] }, "run_pure_plot_operators": false, "job_id": "00000000-0000-0000-0000-000000000005" }
+exec_job_3: { "id": "806df1b9-2fc8-4463-943f-3d258c569663", "wiring": { "input_wirings": [ { "ref_id": "root.plantA.picklingUnit.influx.temp", "ref_id_type": "SOURCE", "type": "timeseries(float)", "workflow_input_name": "inp_series", "adapter_id": "demo-adapter-python", "filters": { "timestampFrom": "2022-05-01T00:00:00.000000000Z", "timestampTo": "2022-05-02T00:00:00.000000000Z" } }, { "workflow_input_name": "limit", "adapter_id": "direct_provisioning", "filters": {"value": 1.3} }, { "workflow_input_name": "num_days_forecast", "adapter_id": "direct_provisioning", "filters": {"value": "10"} } ], "output_wirings": [ ] }, "run_pure_plot_operators": true, "job_id": "00000000-0000-0000-0000-000000000005" }
 ```
 
 ## Configuring the Kafka consumer / producer
