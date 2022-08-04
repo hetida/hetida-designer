@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from typing import Any, Dict, List, Tuple
 from urllib.parse import quote
 
@@ -359,6 +360,51 @@ async def test_receiving_attrs_via_post_dataframe(
 
 
 @pytest.mark.asyncio
+async def test_updating_and_keeping_existing_attrs_for_dataframe(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        df_attrs_1 = {"test": "Hello world!", "answer": 42}
+        base64_str_1 = encode_attributes(df_attrs_1)
+
+        response_1 = await client.post(
+            "/dataframe?id=root.plantA.alerts",
+            json=[{"column1": 1, "column2": 1.3}, {"column1": 2, "column2": 2.8}],
+            headers={"Data-Attributes": base64_str_1},
+        )
+
+        assert response_1.status_code == 200
+
+        df_from_store_1 = get_value_from_store("root.plantA.alerts")
+
+        assert len(df_from_store_1.attrs) != 0
+        assert "test" in df_from_store_1.attrs
+        for key, value in df_attrs_1.items():
+            assert df_from_store_1.attrs[key] == value
+
+        df_attrs_2 = {"test": "test"}
+        base64_str_2 = encode_attributes(df_attrs_2)
+
+        response_2 = await client.post(
+            "/dataframe?id=root.plantA.alerts",
+            json=[{"column1": 1, "column2": 1.3}, {"column1": 2, "column2": 2.8}],
+            headers={"Data-Attributes": base64_str_2},
+        )
+
+        assert response_2.status_code == 200
+
+        df_from_store_2 = get_value_from_store("root.plantA.alerts")
+
+        df_attrs = deepcopy(df_attrs_1)
+        df_attrs.update(df_attrs_2)
+
+        assert len(df_from_store_2.attrs) != 0
+        assert "test" in df_from_store_2.attrs
+        for key, value in df_attrs.items():
+            assert df_from_store_2.attrs[key] == value
+
+
+@pytest.mark.asyncio
 async def test_sending_attrs_via_get_timeseries(async_test_client: AsyncClient) -> None:
     async with async_test_client as client:
         ts_id = "root.plantA.picklingUnit.influx.anomaly_score"
@@ -401,9 +447,62 @@ async def test_receiving_attrs_via_post_timeseries(
 
         assert response.status_code == 200
 
-        df_from_store = get_value_from_store("root.plantA.alerts")
+        df_from_store = get_value_from_store(ts_id)
 
         assert len(df_from_store.attrs) != 0
         assert "test" in df_from_store.attrs
         for key, value in df_attrs.items():
             assert df_from_store.attrs[key] == value
+
+
+@pytest.mark.asyncio
+async def test_updating_and_keeping_existing_attrs_for_timeseries(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        ts_id = "root.plantA.picklingUnit.influx.anomaly_score"
+
+        df_attrs_1 = {"test": "Hello world!", "answer": 42}
+        base64_str_1 = encode_attributes(df_attrs_1)
+
+        response_1 = await client.post(
+            f"/timeseries?timeseriesId={ts_id}",
+            json=[
+                {"timestamp": "2020-01-01T00:00:00.000000000Z", "value": 12.3},
+                {"timestamp": "2020-01-02T00:00:00.000000000Z", "value": 11.9},
+            ],
+            headers={"Data-Attributes": base64_str_1},
+        )
+
+        assert response_1.status_code == 200
+
+        df_from_store_1 = get_value_from_store(ts_id)
+
+        assert len(df_from_store_1.attrs) != 0
+        assert "test" in df_from_store_1.attrs
+        for key, value in df_attrs_1.items():
+            assert df_from_store_1.attrs[key] == value
+
+        df_attrs_2 = {"test": "test"}
+        base64_str_2 = encode_attributes(df_attrs_2)
+
+        response_2 = await client.post(
+            f"/timeseries?timeseriesId={ts_id}",
+            json=[
+                {"timestamp": "2020-01-01T00:00:00.000000000Z", "value": 12.3},
+                {"timestamp": "2020-01-02T00:00:00.000000000Z", "value": 11.9},
+            ],
+            headers={"Data-Attributes": base64_str_2},
+        )
+
+        assert response_2.status_code == 200
+
+        df_from_store_2 = get_value_from_store(ts_id)
+
+        df_attrs = deepcopy(df_attrs_1)
+        df_attrs.update(df_attrs_2)
+
+        assert len(df_from_store_2.attrs) != 0
+        assert "test" in df_from_store_2.attrs
+        for key, value in df_attrs.items():
+            assert df_from_store_2.attrs[key] == value
