@@ -17,13 +17,13 @@ You can suppress the auto-deployment by setting the environment variable `HD_BAC
 ...
 ```
 
-You can also run auto-deployment even if the database is not empty by setting the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
+You can also activate auto-deployment behavior even if the database is not empty by setting the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
 In that case the base components stored in your database are overwritten by the latest (git) version and might affect the reproducibility of workflows using them. Despite that any other components or workflows that you created stay untouched.
 
 Not setting these environement variables has the same result as setting them to `true`.
 
 ## Manual Deployment of Base Component and Workflows
-If you skipped auto-deployment of base components and workflows and want to deploy them now at a later stage, you should run
+If you de-activated auto-deployment of base components and workflows and want to deploy them now at a later stage, you should run
 
 ```shell
 docker run --rm \
