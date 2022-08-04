@@ -1,7 +1,7 @@
 # Deployment of Base Component and Workflows
 
 If the database is empty the base components and workflows will be deployed automatically.
-You can suppress the auto-deployment by setting the environment variable `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS` to false `false` in the `docker-compse.yml` or `docker-compse.yml` file.
+You can suppress the auto-deployment by setting the environment variable `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
 
 
 ```yaml
@@ -17,7 +17,7 @@ You can suppress the auto-deployment by setting the environment variable `HD_BAC
 ...
 ```
 
-You can also run auto-deployment even if the database is not empty by setting the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to false `false` in the `docker-compse.yml` or `docker-compse.yml` file.
+You can also run auto-deployment even if the database is not empty by setting the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
 In that case the base components stored in your database are overwritten by the latest (git) version and might affect the reproducibility of workflows using them. Despite that any other components or workflows that you created stay untouched.
 
 Not setting these environement variables has the same result as setting them to `true`.
