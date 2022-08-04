@@ -60,6 +60,26 @@ dto_json_component_1_update = {
     "wirings": [],
     "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 1",\n    description="description of component 1",\n    category="category",\n    uuid="c3f0ffdc-ff1c-a612-668c-0a606020ffaa",\n    group_id="b301ff9e-bdbb-8d7c-f6e2-7e83b919a8d3",\n    tag="1.0.0"\n)\ndef main(*, new_input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',
 }
+dto_json_component_1_publish = {
+    "id": str(get_uuid_from_seed("component 1")),
+    "groupId": str(get_uuid_from_seed("group of component 1")),
+    "name": "new name",
+    "description": "description of component 1",
+    "category": "Test",
+    "type": "COMPONENT",
+    "state": "RELEASED",
+    "tag": "1.0.0",
+    "inputs": [
+        {
+            "id": str(get_uuid_from_seed("new input")),
+            "name": "new_input",
+            "type": "INT",
+        }
+    ],
+    "outputs": [],
+    "wirings": [],
+    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 1",\n    description="description of component 1",\n    category="category",\n    uuid="c3f0ffdc-ff1c-a612-668c-0a606020ffaa",\n    group_id="b301ff9e-bdbb-8d7c-f6e2-7e83b919a8d3",\n    tag="1.0.0"\n)\ndef main(*, new_input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',
+}
 dto_json_component_2 = {
     "id": str(get_uuid_from_seed("component 2")),
     "groupId": str(get_uuid_from_seed("group of component 2")),
@@ -312,6 +332,31 @@ async def test_update_transformation_revision_from_released_component_dto(
             )
 
         assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_publish_transformation_revision_from_component_dto(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            ComponentRevisionFrontendDto(
+                **dto_json_component_1
+            ).to_transformation_revision()
+        )
+
+        async with async_test_client as ac:
+            response = await ac.put(
+                "/api/components/" + str(get_uuid_from_seed("component 1")),
+                json=dto_json_component_1_publish,
+            )
+
+        assert response.status_code == 201
+        assert response.json()["state"] == "RELEASED"
+        assert "released_timestamp" in response.json()["code"]
 
 
 @pytest.mark.asyncio

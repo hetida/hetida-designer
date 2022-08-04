@@ -746,7 +746,9 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             description=self.description,
             category=self.category,
             version_tag=self.tag,
-            released_timestamp=timestamp if self.state == State.RELEASED else None,
+            released_timestamp=timestamp
+            if self.state in (State.RELEASED, State.DISABLED)
+            else None,
             disabled_timestamp=timestamp if self.state == State.DISABLED else None,
             state=self.state,
             type=self.type,
