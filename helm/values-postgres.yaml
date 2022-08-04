@@ -1,0 +1,11 @@
+---
+image:
+  repository: timescale/timescaledb
+  tag: latest-pg14-bitnami
+
+global:
+  postgresql:
+    auth:
+      postgresPassword: "postgres"
+
+postgresqlSharedPreloadLibraries: timescaledb,pg_stat_statements,pgaudit

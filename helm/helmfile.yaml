@@ -1,0 +1,44 @@
+---
+repositories:
+  - name: bitnami-full-index ### This should contain all the Charts before bitnami cam up with this issue here:https://github.com/bitnami/charts/issues/10539
+    url: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+  - name: bitnami-official   ### Currently not used as it is not working for the old charts. see the note above.
+    url: https://charts.bitnami.com/bitnami
+
+helmDefaults:
+  cleanupOnFail: false
+  wait: true
+  timeout: 600
+  force: false
+  historyMax: 10
+  createNamespace: false
+  skipDeps: true
+  args: []
+    #- --kubeconfig=kubeconfig.{{ .Environment.Name }}.yaml
+    #- --dry-run
+    #- --debug
+
+releases:
+
+  - name: postgresql
+    namespace: "{{ .Namespace }}"
+    chart: bitnami-full-index/postgresql
+    version: 10.3.4
+    values:
+      - postgresql/values-postgres.yaml
+      - postgresql/values-postgres.{{ .Environment.Name }}.yaml
+
+
+  - name: hetida-designer
+    namespace: "{{.Namespace}}"
+    chart: chart
+    values:
+      - values-hetida.yaml
+      - values-hetida.{{ .Environment.Name }}.yaml
+    needs:
+      - postgresql
+
+
+environments:
+  default: {}
+  minikube: {}
