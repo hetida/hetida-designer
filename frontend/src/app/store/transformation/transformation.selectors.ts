@@ -14,7 +14,7 @@ const selectTransformationState = createFeatureSelector<TransformationState>(
   'transformations'
 );
 
-// TODO do we need this?
+// TODO do we need this, change name selectAllTransformations?
 export const selectAllTransformationRevisions = createSelector(
   selectTransformationState,
   (state: TransformationState) =>
@@ -31,13 +31,13 @@ function filterByName(transformation: Transformation, name: string) {
 }
 
 export const selectTransformationsByCategoryAndName = (
-  transformationType?: BaseItemType,
+  transformationType: BaseItemType,
   name?: string
 ) => {
   return createSelector(
     selectTransformationState,
     (state: TransformationState) => {
-      return Object.values(state.entities)
+      const filteredTransformations = Object.values(state.entities)
         .filter(transformation => transformation.type === transformationType)
         .filter(
           transformation => transformation.state !== RevisionState.DISABLED
@@ -50,7 +50,14 @@ export const selectTransformationsByCategoryAndName = (
           acc[transformation.category].push(transformation);
           return acc;
         }, {} as { [category: string]: Transformation[] });
+
       // TODO sort categories alphabetically
+      const sortAlphabeticallyTransformations = Object.entries(
+        filteredTransformations
+      ).sort(([categoryNameA], [categoryNameB]) =>
+        Utils.string.compare(categoryNameA, categoryNameB)
+      );
+      return sortAlphabeticallyTransformations;
     }
   );
 };

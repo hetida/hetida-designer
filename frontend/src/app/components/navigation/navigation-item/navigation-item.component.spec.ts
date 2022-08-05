@@ -55,17 +55,26 @@ describe('NavigationItemComponent', () => {
     fixture = TestBed.createComponent(NavigationItemComponent);
     component = fixture.componentInstance;
     component.transformation = {
-      id: 'Mock',
-      name: 'Mock',
-      tag: 'Mock',
-      inputs: [],
-      outputs: [],
-      type: BaseItemType.COMPONENT,
-      groupId: 'Mock',
-      description: 'Mock',
-      category: 'Mock',
+      id: 'mockId',
+      revision_group_id: 'mockGroupId',
+      name: 'mock transformation',
+      description: 'mock description',
+      category: 'DRAFT',
+      version_tag: '0.0.1',
+      released_timestamp: new Date().toISOString(),
+      disabled_timestamp: new Date().toISOString(),
       state: RevisionState.DRAFT,
-      wirings: []
+      type: BaseItemType.COMPONENT,
+      documentation: null,
+      content: 'python code',
+      io_interface: {
+        inputs: [],
+        outputs: []
+      },
+      test_wiring: {
+        input_wirings: [],
+        output_wirings: []
+      }
     };
     fixture.detectChanges();
   });

@@ -6,12 +6,11 @@ import { switchMap } from 'rxjs/operators';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
-import { Utils } from 'src/app/utils/utils';
 import { AuthService } from '../../../auth/auth.service';
 import { BaseItemService } from '../../../service/base-item/base-item.service';
 import { TransformationService } from '../../../service/transformation/transformation.service';
 import { TransformationState } from '../../../store/transformation/transformation.state';
-import { selectTransformationsByCategoryAndName } from '../../../store/transformation/transformaton.selectors';
+import { selectTransformationsByCategoryAndName } from '../../../store/transformation/transformation.selectors';
 import { Transformation } from 'src/app/model/new-api/transformation';
 
 @Component({
@@ -23,7 +22,7 @@ export class NavigationContainerComponent implements OnInit {
   constructor(
     private readonly transformationStore: Store<TransformationState>,
     private readonly _baseItemService: BaseItemService,
-    private readonly transformationRevisionService: TransformationService,
+    private readonly transformationService: TransformationService,
     private readonly _popover: PopoverService,
     private readonly _baseItemAction: BaseItemActionService,
     private readonly authService: AuthService
@@ -32,7 +31,7 @@ export class NavigationContainerComponent implements OnInit {
   readonly searchFilter = new FormControl('');
   readonly typeFilter = new FormControl(BaseItemType.WORKFLOW);
 
-  transformationsByCategory: [string, Transformation[]][];
+  transformationsByCategoryAndName: [string, Transformation[]][];
 
   getFilterState(type: string): boolean {
     return (this.typeFilter.value as string) === type;
@@ -49,7 +48,7 @@ export class NavigationContainerComponent implements OnInit {
   ngOnInit(): void {
     this.authService.isAuthenticated$().subscribe(() => {
       this._baseItemService.fetchBaseItems();
-      this.transformationRevisionService.getTransformations();
+      this.transformationService.getTransformations();
     });
 
     combineLatest([this.filterChanges, this.searchFilterChanges])
@@ -62,12 +61,8 @@ export class NavigationContainerComponent implements OnInit {
           )
         )
       )
-      .subscribe(filteredTransformationRevisions => {
-        this.transformationsByCategory = Object.entries(
-          filteredTransformationRevisions
-        ).sort(([categoryNameA], [categoryNameB]) =>
-          Utils.string.compare(categoryNameA, categoryNameB)
-        );
+      .subscribe(filteredTransformations => {
+        this.transformationsByCategoryAndName = filteredTransformations;
       });
 
     this.filterChanges.subscribe(() => this._popover.closePopover());
@@ -87,10 +82,7 @@ export class NavigationContainerComponent implements OnInit {
     this._popover.closePopover();
   }
 
-  trackByTransformationRevisionId(
-    _: number,
-    transformationRevision: Transformation
-  ) {
-    return transformationRevision.id;
+  trackByTransformationId(_: number, transformation: Transformation) {
+    return transformation.id;
   }
 }
