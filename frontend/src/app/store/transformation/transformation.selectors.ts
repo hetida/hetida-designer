@@ -30,6 +30,10 @@ function filterByName(transformation: Transformation, name: string) {
     : transformation.name.toLowerCase().includes(name.toLowerCase());
 }
 
+/**
+ * Selects transformations from the store, filtering them by transformationType and name.
+ * Returns a key value object with the categories as keys and the corresponding transformations as values.
+ */
 export const selectTransformationsByCategoryAndName = (
   transformationType: BaseItemType,
   name?: string

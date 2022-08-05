@@ -23,10 +23,10 @@ import { Utils } from '../../../utils/utils';
 export class NavigationContainerComponent implements OnInit {
   constructor(
     private readonly transformationStore: Store<TransformationState>,
-    private readonly _baseItemService: BaseItemService,
+    private readonly baseItemService: BaseItemService,
     private readonly transformationService: TransformationService,
-    private readonly _popover: PopoverService,
-    private readonly _baseItemAction: BaseItemActionService,
+    private readonly popoverService: PopoverService,
+    private readonly baseItemActionService: BaseItemActionService,
     private readonly authService: AuthService
   ) {}
 
@@ -49,7 +49,8 @@ export class NavigationContainerComponent implements OnInit {
 
   ngOnInit(): void {
     this.authService.isAuthenticated$().subscribe(() => {
-      this._baseItemService.fetchBaseItems();
+      // TODO remove once everything is migrated to transformations
+      this.baseItemService.fetchBaseItems();
       this.transformationService.getTransformations();
     });
 
@@ -65,21 +66,21 @@ export class NavigationContainerComponent implements OnInit {
         this.transformationsByCategory = filteredTransformations;
       });
 
-    this.filterChanges.subscribe(() => this._popover.closePopover());
+    this.filterChanges.subscribe(() => this.popoverService.closePopover());
     this.typeFilter.updateValueAndValidity({ emitEvent: true });
     this.searchFilter.updateValueAndValidity({ emitEvent: true });
   }
 
   newWorkflow(): void {
-    this._baseItemAction.newWorkflow();
+    this.baseItemActionService.newWorkflow();
   }
 
   newComponent(): void {
-    this._baseItemAction.newComponent();
+    this.baseItemActionService.newComponent();
   }
 
   closePopover(): void {
-    this._popover.closePopover();
+    this.popoverService.closePopover();
   }
 
   sortByCategoryAlphabetically(

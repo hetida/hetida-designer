@@ -16,7 +16,6 @@ export class NavigationCategoryComponent implements OnInit {
 
   @Input()
   set transformations(transformations: Transformation[]) {
-    // TODO sort elsewhere?
     this._transformations = transformations.sort(
       (transformationA, transformationB) =>
         Utils.string.compare(transformationA.name, transformationB.name)

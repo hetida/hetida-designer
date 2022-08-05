@@ -67,7 +67,7 @@ export class ComponentEditorService {
   deleteComponent(componentId: string): Observable<ComponentBaseItem> {
     return this.componentHttpService.deleteComponent(componentId).pipe(
       tap(_ => {
-        this.localStorageService.removeBaseItemFromLastOpened(componentId);
+        this.localStorageService.removeItemFromLastOpened(componentId);
         this.store.dispatch(removeBaseItem(componentId));
       })
     );

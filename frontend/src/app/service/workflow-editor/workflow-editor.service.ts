@@ -58,7 +58,7 @@ export class WorkflowEditorService {
   deleteWorkflow(workflowId: string): Observable<WorkflowBaseItem> {
     return this.workflowHttpService.deleteWorkflow(workflowId).pipe(
       tap(() => {
-        this.localStorageService.removeBaseItemFromLastOpened(workflowId);
+        this.localStorageService.removeItemFromLastOpened(workflowId);
         this.store.dispatch(removeBaseItem(workflowId));
       })
     );

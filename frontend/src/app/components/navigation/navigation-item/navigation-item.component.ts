@@ -1,5 +1,5 @@
 import { ComponentPortal } from '@angular/cdk/portal';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { navigationWidth } from 'src/app/constants/popover-sizes';
@@ -19,15 +19,15 @@ import { Transformation } from '../../../model/new-api/transformation';
   templateUrl: './navigation-item.component.html',
   styleUrls: ['./navigation-item.component.scss']
 })
-export class NavigationItemComponent implements OnInit {
+export class NavigationItemComponent {
   @Input() transformation: Transformation;
 
   constructor(
     private readonly popoverService: PopoverService,
     private readonly contextMenuService: ContextMenuService,
     private readonly tabItemService: TabItemService,
-    private readonly _workflowService: WorkflowEditorService,
-    private readonly _componentService: ComponentEditorService
+    private readonly workflowEditorService: WorkflowEditorService,
+    private readonly componentEditorService: ComponentEditorService
   ) {}
 
   /**
@@ -35,18 +35,12 @@ export class NavigationItemComponent implements OnInit {
    */
   RevisionState = RevisionState;
 
-  ngOnInit() {}
-
   public selectComponent(): void {
     this.popoverService.showPopover(
       this.transformation.id,
       navigationWidth,
       null
     );
-  }
-
-  public closePopover(): void {
-    this.popoverService.closePopover();
   }
 
   public editComponent(): void {
@@ -77,9 +71,13 @@ export class NavigationItemComponent implements OnInit {
 
     // TODO check base item given to context menu
     if (this.transformation.type === BaseItemType.WORKFLOW) {
-      baseItem$ = this._workflowService.getWorkflow(this.transformation.id);
+      baseItem$ = this.workflowEditorService.getWorkflow(
+        this.transformation.id
+      );
     } else if (this.transformation.type === BaseItemType.COMPONENT) {
-      baseItem$ = this._componentService.getComponent(this.transformation.id);
+      baseItem$ = this.componentEditorService.getComponent(
+        this.transformation.id
+      );
     } else {
       throw Error('type of abstract base item is invalid');
     }
