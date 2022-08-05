@@ -12,6 +12,8 @@ import { TransformationService } from '../../../service/transformation/transform
 import { TransformationState } from '../../../store/transformation/transformation.state';
 import { selectTransformationsByCategoryAndName } from '../../../store/transformation/transformation.selectors';
 import { Transformation } from 'src/app/model/new-api/transformation';
+import { KeyValue } from '@angular/common';
+import { Utils } from '../../../utils/utils';
 
 @Component({
   selector: 'hd-navigation-container',
@@ -31,7 +33,7 @@ export class NavigationContainerComponent implements OnInit {
   readonly searchFilter = new FormControl('');
   readonly typeFilter = new FormControl(BaseItemType.WORKFLOW);
 
-  transformationsByCategoryAndName: [string, Transformation[]][];
+  transformationsByCategory: { [category: string]: Transformation[] };
 
   getFilterState(type: string): boolean {
     return (this.typeFilter.value as string) === type;
@@ -55,14 +57,12 @@ export class NavigationContainerComponent implements OnInit {
       .pipe(
         switchMap(([baseItemType, searchString]) =>
           this.transformationStore.select(
-            // TODO create and unit test this selector for transformations
-            // TODO sort alphabetically in the new selector
             selectTransformationsByCategoryAndName(baseItemType, searchString)
           )
         )
       )
       .subscribe(filteredTransformations => {
-        this.transformationsByCategoryAndName = filteredTransformations;
+        this.transformationsByCategory = filteredTransformations;
       });
 
     this.filterChanges.subscribe(() => this._popover.closePopover());
@@ -82,7 +82,10 @@ export class NavigationContainerComponent implements OnInit {
     this._popover.closePopover();
   }
 
-  trackByTransformationId(_: number, transformation: Transformation) {
-    return transformation.id;
+  sortByCategoryAlphabetically(
+    categoryA: KeyValue<string, Transformation[]>,
+    categoryB: KeyValue<string, Transformation[]>
+  ): number {
+    return Utils.string.compare(categoryA.key, categoryB.key);
   }
 }

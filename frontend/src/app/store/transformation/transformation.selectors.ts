@@ -37,7 +37,7 @@ export const selectTransformationsByCategoryAndName = (
   return createSelector(
     selectTransformationState,
     (state: TransformationState) => {
-      const filteredTransformations = Object.values(state.entities)
+      return Object.values(state.entities)
         .filter(transformation => transformation.type === transformationType)
         .filter(
           transformation => transformation.state !== RevisionState.DISABLED
@@ -50,14 +50,6 @@ export const selectTransformationsByCategoryAndName = (
           acc[transformation.category].push(transformation);
           return acc;
         }, {} as { [category: string]: Transformation[] });
-
-      // TODO sort categories alphabetically
-      const sortAlphabeticallyTransformations = Object.entries(
-        filteredTransformations
-      ).sort(([categoryNameA], [categoryNameB]) =>
-        Utils.string.compare(categoryNameA, categoryNameB)
-      );
-      return sortAlphabeticallyTransformations;
     }
   );
 };
