@@ -19,6 +19,7 @@ Further information about developing, deploying, connecting, using and running h
 
 - [Custom Python Dependencies](./custom_python_dependencies.md)
 - [R support](./r_support.md)
+- [Base Component/Workflow Deployment](./base_component_deployment.md)
 - [Backup](./backup.md)
 - [Export and Import](./import_export.md)
 - [Enabling OpenID Connect](./enabling_openidconnect.md)
