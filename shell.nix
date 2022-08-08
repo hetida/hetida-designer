@@ -217,6 +217,7 @@ let
       cd ${runtimeDir}
       export HD_DATABASE_URL="postgresql+psycopg2://$(whoami):hetida_designer_dbpasswd@localhost:5432/hetida_designer_db"
       export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092"
+      export HD_USE_AUTH=false
       echo "WAIT FOR POSTGRES DB"
       sleep 5 # wait for stopping possibly existing postgres instances before trying
       # wait for postgres to be up using the pg_isready utility
