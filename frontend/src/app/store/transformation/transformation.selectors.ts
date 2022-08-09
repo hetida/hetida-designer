@@ -24,6 +24,18 @@ export const selectAllTransformationRevisions = createSelector(
     )
 );
 
+export const selectHashedTransformationLookupById = createSelector(
+  selectAllTransformationRevisions,
+  (transformations): Record<string, Transformation> =>
+    transformations.reduce(
+      (acc, transformation): Record<string, Transformation> => ({
+        ...acc,
+        [transformation.id]: transformation
+      }),
+      {}
+    )
+);
+
 function filterByName(transformation: Transformation, name: string) {
   return Utils.string.isEmptyOrUndefined(name)
     ? true
