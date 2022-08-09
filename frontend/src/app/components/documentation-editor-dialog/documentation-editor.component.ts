@@ -8,7 +8,7 @@ import {
   OnInit,
   ViewChild
 } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SafeHtml } from '@angular/platform-browser';
 import { first } from 'rxjs/operators';
 import { DocumentationService } from 'src/app/service/documentation/documentation.service';
@@ -73,10 +73,6 @@ export class DocumentationEditorComponent implements OnInit {
     this.changeDetection.detectChanges();
   }
 
-  public onClose(): void {
-    this.dialogRef.close();
-  }
-
   public switchEdit(): void {
     this.editMode = !this.editMode;
     this.documentationService
@@ -89,7 +85,7 @@ export class DocumentationEditorComponent implements OnInit {
 
   /**
    *
-   * On editor scroll, scrolls the markdown preview proprional.
+   * On editor scroll, scrolls the markdown preview proportionally.
    *
    * @param event Scroll event
    */

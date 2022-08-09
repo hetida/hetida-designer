@@ -71,7 +71,7 @@ export class ToolbarComponent implements OnInit {
 
   // TODO
   showDocumentation() {
-    this.baseItemAction.showDocumentation(this.baseItem);
+    this.baseItemAction.showDocumentation(this.transformation.id);
   }
 
   // TODO

@@ -70,11 +70,11 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   openDocumentation() {
-    this.baseItemActionsService.showDocumentation(this.baseItem, false);
+    this.baseItemActionsService.showDocumentation(this.baseItem.id, false);
   }
 
   editDocumentation() {
-    this.baseItemActionsService.showDocumentation(this.baseItem);
+    this.baseItemActionsService.showDocumentation(this.baseItem.id);
   }
 
   async copyItem() {
@@ -99,10 +99,6 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
 
   configureIO() {
     this.baseItemActionsService.configureIO(this.baseItem);
-  }
-
-  showDocumentation() {
-    this.baseItemActionsService.showDocumentation(this.baseItem);
   }
 
   deprecate() {
