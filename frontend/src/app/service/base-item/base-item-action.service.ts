@@ -45,7 +45,6 @@ import { TabItemService } from '../tab-item/tab-item.service';
 import { WorkflowEditorService } from '../workflow-editor/workflow-editor.service';
 import { BaseItemService } from './base-item.service';
 import { Transformation } from '../../model/new-api/transformation';
-import { TransformationService } from '../transformation/transformation.service';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -57,7 +56,6 @@ export class BaseItemActionService {
   constructor(
     private readonly dialog: MatDialog,
     private readonly baseItemService: BaseItemService,
-    private readonly transformationService: TransformationService,
     private readonly workflowService: WorkflowEditorService,
     private readonly tabItemService: TabItemService,
     private readonly notificationService: NotificationService,
@@ -393,12 +391,9 @@ export class BaseItemActionService {
     }
   }
 
-  public showDocumentation(
-    abstractBaseItem: AbstractBaseItem,
-    openTabInEditMode = true
-  ) {
+  public showDocumentation(transformationId: string, openTabInEditMode = true) {
     this.tabItemService.addDocumentationTab(
-      abstractBaseItem.id,
+      transformationId,
       openTabInEditMode
     );
   }
@@ -515,7 +510,7 @@ export class BaseItemActionService {
     transformation: Transformation
   ): Observable<void> {
     this.tabItemService.deselectActiveTabItem();
-    return this.transformationService.deleteTransformation(transformation.id);
+    return this.baseItemService.deleteTransformation(transformation.id);
   }
 
   private async copyWorkflow(

@@ -24,7 +24,7 @@ describe('NavigationContainerComponent', () => {
 
   const mockBaseItemService = jasmine.createSpyObj<BaseItemService>(
     'BaseItemService',
-    ['fetchBaseItems']
+    ['fetchAllTransformations']
   );
 
   const mockAuthService = jasmine.createSpyObj<AuthService>('AuthService', {

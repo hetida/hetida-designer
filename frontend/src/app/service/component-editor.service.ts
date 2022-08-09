@@ -9,8 +9,7 @@ import { isComponentBaseItem } from '../store/base-item/base-item-guards';
 import {
   addBaseItem,
   patchComponentProperties,
-  putBaseItem,
-  removeBaseItem
+  putBaseItem
 } from '../store/base-item/base-item.actions';
 import {
   selectAbstractBaseItemById,
@@ -22,7 +21,6 @@ import {
   setExecutionRunning
 } from '../store/execution-protocol/execution-protocol.actions';
 import { ComponentHttpService } from './http-service/component-http.service';
-import { LocalStorageService } from './local-storage/local-storage.service';
 
 @Injectable({
   providedIn: 'root'
@@ -30,8 +28,7 @@ import { LocalStorageService } from './local-storage/local-storage.service';
 export class ComponentEditorService {
   constructor(
     private readonly componentHttpService: ComponentHttpService,
-    private readonly store: Store<IAppState>,
-    private readonly localStorageService: LocalStorageService
+    private readonly store: Store<IAppState>
   ) {}
 
   getComponent(id: string): Observable<ComponentBaseItem> {
@@ -60,15 +57,6 @@ export class ComponentEditorService {
     return this.componentHttpService.createComponent(componentRevision).pipe(
       tap(() => {
         this.store.dispatch(addBaseItem(componentRevision));
-      })
-    );
-  }
-
-  deleteComponent(componentId: string): Observable<ComponentBaseItem> {
-    return this.componentHttpService.deleteComponent(componentId).pipe(
-      tap(_ => {
-        this.localStorageService.removeItemFromLastOpened(componentId);
-        this.store.dispatch(removeBaseItem(componentId));
       })
     );
   }

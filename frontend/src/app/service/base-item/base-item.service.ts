@@ -25,7 +25,13 @@ import {
   Transformation
 } from '../../model/new-api/transformation';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
-import { addTransformation } from '../../store/transformation/transformation.actions';
+import {
+  addTransformation,
+  removeTransformation,
+  setAllTransformations
+} from '../../store/transformation/transformation.actions';
+import { TransformationState } from '../../store/transformation/transformation.state';
+import { LocalStorageService } from '../local-storage/local-storage.service';
 
 @Injectable({
   providedIn: 'root'
@@ -33,6 +39,8 @@ import { addTransformation } from '../../store/transformation/transformation.act
 export class BaseItemService {
   constructor(
     private readonly transformationHttpService: TransformationHttpService,
+    private readonly transformationStore: Store<TransformationState>,
+    private readonly localStorageService: LocalStorageService,
     private readonly baseItemHttpService: BaseItemHttpService,
     private readonly store: Store<IAppState>,
     private readonly workflowService: WorkflowEditorService,
@@ -110,10 +118,27 @@ export class BaseItemService {
     };
   }
 
-  fetchBaseItems(): void {
+  fetchAllTransformations(): void {
+    // TODO remove once everything is migrated to transformations
     this.baseItemHttpService.fetchBaseItems().subscribe(result => {
       this.store.dispatch(getBaseItems(result));
     });
+    this.transformationHttpService
+      .fetchTransformations()
+      .subscribe(transformations => {
+        this.transformationStore.dispatch(
+          setAllTransformations(transformations)
+        );
+      });
+  }
+
+  deleteTransformation(id: string): Observable<void> {
+    return this.transformationHttpService.deleteTransformation(id).pipe(
+      tap(_ => {
+        this.localStorageService.removeItemFromLastOpened(id);
+        this.store.dispatch(removeTransformation(id));
+      })
+    );
   }
 
   saveBaseItem(abstractBaseItem: AbstractBaseItem): void {

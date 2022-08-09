@@ -8,7 +8,6 @@ import { BaseItemActionService } from 'src/app/service/base-item/base-item-actio
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { AuthService } from '../../../auth/auth.service';
 import { BaseItemService } from '../../../service/base-item/base-item.service';
-import { TransformationService } from '../../../service/transformation/transformation.service';
 import { TransformationState } from '../../../store/transformation/transformation.state';
 import { selectTransformationsByCategoryAndName } from '../../../store/transformation/transformation.selectors';
 import { Transformation } from 'src/app/model/new-api/transformation';
@@ -24,7 +23,6 @@ export class NavigationContainerComponent implements OnInit {
   constructor(
     private readonly transformationStore: Store<TransformationState>,
     private readonly baseItemService: BaseItemService,
-    private readonly transformationService: TransformationService,
     private readonly popoverService: PopoverService,
     private readonly baseItemActionService: BaseItemActionService,
     private readonly authService: AuthService
@@ -49,9 +47,7 @@ export class NavigationContainerComponent implements OnInit {
 
   ngOnInit(): void {
     this.authService.isAuthenticated$().subscribe(() => {
-      // TODO remove once everything is migrated to transformations
-      this.baseItemService.fetchBaseItems();
-      this.transformationService.getTransformations();
+      this.baseItemService.fetchAllTransformations();
     });
 
     combineLatest([this.filterChanges, this.searchFilterChanges])
