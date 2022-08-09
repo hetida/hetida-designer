@@ -13,6 +13,7 @@ import { RevisionState } from 'src/app/enums/revision-state';
 import { BaseItem } from 'src/app/model/base-item';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
+import { Transformation } from '../../model/new-api/transformation';
 
 @Component({
   selector: 'hd-base-item-context-menu',
@@ -85,7 +86,11 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   delete() {
-    this.baseItemActionsService.delete(this.baseItem).subscribe();
+    this.baseItemActionsService
+      // TODO
+      // @ts-ignore
+      .delete(this.baseItem as Transformation)
+      .subscribe();
   }
 
   async execute() {

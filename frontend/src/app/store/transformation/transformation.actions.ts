@@ -10,3 +10,8 @@ export const addTransformation = createAction(
   '[Transformation] Add Transformation Success',
   (payload: Transformation) => ({ payload })
 );
+
+export const removeTransformation = createAction(
+  '[Transformation] Remove Transformation',
+  (payload: string) => ({ payload })
+);

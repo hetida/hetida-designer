@@ -37,4 +37,10 @@ export class TransformationHttpService {
     const url = `${this.apiEndpoint}/transformations/${transformation.id}`;
     return this.httpClient.put<Transformation>(url, transformation);
   }
+
+  public deleteTransformation(id: string): Observable<void> {
+    const url = `${this.apiEndpoint}/transformations/${id}`;
+    // tslint:disable-next-line:invalid-void
+    return this.httpClient.delete<void>(url);
+  }
 }

@@ -148,7 +148,7 @@ export class ToolbarComponent implements OnInit {
 
   // TODO
   delete() {
-    this.baseItemAction.delete(this.baseItem).subscribe();
+    this.baseItemAction.delete(this.transformation).subscribe();
   }
 
   // TODO

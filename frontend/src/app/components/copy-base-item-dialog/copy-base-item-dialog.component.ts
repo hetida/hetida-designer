@@ -4,14 +4,13 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { select, Store } from '@ngrx/store';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { first, map, startWith } from 'rxjs/operators';
-import { AbstractBaseItem } from 'src/app/model/base-item';
 import { BaseItemDialogData } from 'src/app/model/base-item-dialog-data';
 import { IAppState } from 'src/app/store/app.state';
-import { selectAbstractBaseItems } from 'src/app/store/base-item/base-item.selectors';
 import { Utils } from 'src/app/utils/utils';
-import { UniqueRevisionTagValidator } from 'src/app/validation/unique-revision-tag-validator';
 import { NotOnlyWhitespacesValidator } from 'src/app/validation/not-only-whitespaces-validator';
 import { AllowedCharsValidator } from 'src/app/validation/allowed-chars-validator';
+import { selectAllTransformations } from '../../store/transformation/transformation.selectors';
+import { Transformation } from '../../model/new-api/transformation';
 
 @Component({
   selector: 'hd-copy-base-item-dialog',
@@ -21,6 +20,7 @@ import { AllowedCharsValidator } from 'src/app/validation/allowed-chars-validato
 export class CopyBaseItemDialogComponent implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<CopyBaseItemDialogComponent>,
+    // TODO fix by reference value changes?
     @Inject(MAT_DIALOG_DATA) public data: Omit<BaseItemDialogData, 'content'>,
     private readonly store: Store<IAppState>
   ) {}
@@ -30,7 +30,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
    */
   infoForm: FormGroup;
 
-  onDelete = new EventEmitter<AbstractBaseItem>();
+  onDelete = new EventEmitter<Transformation>();
 
   private readonly categories$: BehaviorSubject<string[]> = new BehaviorSubject<
     string[]
@@ -39,20 +39,21 @@ export class CopyBaseItemDialogComponent implements OnInit {
 
   ngOnInit(): void {
     this.createFormGroup();
-    this.store
-      .pipe(select(selectAbstractBaseItems))
-      .subscribe(abstractBaseItems => {
-        this.categories$.next(
-          Array.from(
-            new Set(
-              abstractBaseItems
-                .filter(bi => bi.type === this.data.abstractBaseItem.type)
-                .map(bi => bi.category)
-                .sort(Utils.string.compare)
-            )
+    this.store.select(selectAllTransformations).subscribe(transformations => {
+      this.categories$.next(
+        Array.from(
+          new Set(
+            transformations
+              .filter(
+                transformation =>
+                  transformation.type === this.data.transformation.type
+              )
+              .map(transformation => transformation.category)
+              .sort(Utils.string.compare)
           )
-        );
-      });
+        )
+      );
+    });
   }
 
   public onCancel(): void {
@@ -64,18 +65,11 @@ export class CopyBaseItemDialogComponent implements OnInit {
     if (this.infoForm.invalid) {
       return;
     }
-    this.dialogRef.close(this.data.abstractBaseItem);
+    this.dialogRef.close(this.data.transformation);
   }
 
   public _onDelete(): void {
-    this.onDelete.next(this.data.abstractBaseItem);
-  }
-
-  /**
-   * Checks if form has error (validation)
-   */
-  public hasError(controlName: string, errorName: string) {
-    return this.infoForm.controls[controlName].hasError(errorName);
+    this.onDelete.next(this.data.transformation);
   }
 
   public isAllDataPropertiesDisabled(): boolean {
@@ -90,28 +84,29 @@ export class CopyBaseItemDialogComponent implements OnInit {
   private createFormGroup() {
     this.store
       .pipe(
-        select(selectAbstractBaseItems),
+        select(selectAllTransformations),
         first(),
-        map(baseItems =>
-          baseItems.filter(
-            baseItem => baseItem.groupId === this.data.abstractBaseItem.groupId
+        map(transformations =>
+          transformations.filter(
+            transformation =>
+              transformation.revision_group_id ===
+              this.data.transformation.revision_group_id
           )
         )
       )
-      .subscribe(abstractBaseItems => {
+      .subscribe(transformations => {
         if (
-          abstractBaseItems.find(
-            abstractBaseItem =>
-              abstractBaseItem.id === this.data.abstractBaseItem.id
+          transformations.find(
+            transformation => transformation.id === this.data.transformation.id
           ) === undefined
         ) {
-          abstractBaseItems.push(this.data.abstractBaseItem);
+          transformations.push(this.data.transformation);
         }
 
         this.infoForm = new FormGroup({
           name: new FormControl(
             {
-              value: this.data.abstractBaseItem.name,
+              value: this.data.transformation.name,
               disabled: this.data.disabledState.name
             },
             [
@@ -123,7 +118,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
           ),
           category: new FormControl(
             {
-              value: this.data.abstractBaseItem.category,
+              value: this.data.transformation.category,
               disabled: this.data.disabledState.category
             },
             [
@@ -135,20 +130,23 @@ export class CopyBaseItemDialogComponent implements OnInit {
           ),
           description: new FormControl(
             {
-              value: this.data.abstractBaseItem.description,
+              value: this.data.transformation.description,
               disabled: this.data.disabledState.description
             },
             [NotOnlyWhitespacesValidator(), AllowedCharsValidator()]
           ),
+          // TODO rename form control to version tag?
           tag: new FormControl(
             {
-              value: this.data.abstractBaseItem.tag,
+              value: this.data.transformation.version_tag,
+              // TODO disabled state rename tag?
               disabled: this.data.disabledState.tag
             },
             [
               Validators.required,
               Validators.maxLength(20),
-              UniqueRevisionTagValidator(abstractBaseItems),
+              // TODO
+              // UniqueRevisionTagValidator(transformations),
               NotOnlyWhitespacesValidator(),
               AllowedCharsValidator()
             ]
@@ -160,10 +158,10 @@ export class CopyBaseItemDialogComponent implements OnInit {
           }
 
           const withDisabledAttributes = this.infoForm.getRawValue();
-          this.data.abstractBaseItem.category = withDisabledAttributes.category.trim();
-          this.data.abstractBaseItem.description = withDisabledAttributes.description.trim();
-          this.data.abstractBaseItem.name = withDisabledAttributes.name.trim();
-          this.data.abstractBaseItem.tag = withDisabledAttributes.tag.trim();
+          this.data.transformation.category = withDisabledAttributes.category.trim();
+          this.data.transformation.description = withDisabledAttributes.description.trim();
+          this.data.transformation.name = withDisabledAttributes.name.trim();
+          this.data.transformation.version_tag = withDisabledAttributes.tag.trim();
         });
 
         this.filteredCategories$ = combineLatest([

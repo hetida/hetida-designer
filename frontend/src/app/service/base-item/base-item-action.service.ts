@@ -45,6 +45,7 @@ import { TabItemService } from '../tab-item/tab-item.service';
 import { WorkflowEditorService } from '../workflow-editor/workflow-editor.service';
 import { BaseItemService } from './base-item.service';
 import { Transformation } from '../../model/new-api/transformation';
+import { TransformationService } from '../transformation/transformation.service';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -56,6 +57,7 @@ export class BaseItemActionService {
   constructor(
     private readonly dialog: MatDialog,
     private readonly baseItemService: BaseItemService,
+    private readonly transformationService: TransformationService,
     private readonly workflowService: WorkflowEditorService,
     private readonly tabItemService: TabItemService,
     private readonly notificationService: NotificationService,
@@ -188,8 +190,8 @@ export class BaseItemActionService {
     });
 
     dialogRef.componentInstance.onDelete.subscribe(
-      (toBeDeleteBaseItem: BaseItem) =>
-        this.delete(toBeDeleteBaseItem).subscribe(isDeleted => {
+      (transformationToDelete: Transformation) =>
+        this.delete(transformationToDelete).subscribe(isDeleted => {
           if (isDeleted) {
             dialogRef.close();
           }
@@ -259,8 +261,8 @@ export class BaseItemActionService {
     });
   }
 
-  public delete(abstractBaseItem: AbstractBaseItem): Observable<boolean> {
-    if (this.isReleased(abstractBaseItem)) {
+  public delete(transformation: Transformation): Observable<boolean> {
+    if (this.isReleased(transformation)) {
       return of(false);
     }
 
@@ -271,29 +273,29 @@ export class BaseItemActionService {
     >(ConfirmDialogComponent, {
       width: '640px',
       data: {
-        title: `Delete ${abstractBaseItem.type.toLowerCase()} ${
-          abstractBaseItem.name
-        } (${abstractBaseItem.tag})`,
-        content: `Do you want to delete this ${abstractBaseItem.type.toLowerCase()} permanently?`,
-        actionOk: `Delete ${abstractBaseItem.type.toLowerCase()}`,
+        title: `Delete ${transformation.type.toLowerCase()} ${
+          transformation.name
+        } (${transformation.version_tag})`,
+        content: `Do you want to delete this ${transformation.type.toLowerCase()} permanently?`,
+        actionOk: `Delete ${transformation.type.toLowerCase()}`,
         actionCancel: 'Cancel'
       }
     });
 
     return dialogRef.afterClosed().pipe(
-      switchMap(isConformed => {
-        if (isConformed) {
-          return this.deleteAction(abstractBaseItem).pipe(
-            switchMap(() => of(isConformed))
+      switchMap(isConfirmed => {
+        if (isConfirmed) {
+          return this.doDeleteTransformation(transformation).pipe(
+            switchMap(() => of(isConfirmed))
           );
         }
-        return of(isConformed);
+        return of(isConfirmed);
       })
     );
   }
 
-  public isReleased(abstractBaseItem: AbstractBaseItem) {
-    return abstractBaseItem.state === RevisionState.RELEASED;
+  public isReleased(transformation: AbstractBaseItem | Transformation) {
+    return transformation.state === RevisionState.RELEASED;
   }
 
   public async publish(baseItem: BaseItem): Promise<void> {
@@ -509,14 +511,11 @@ export class BaseItemActionService {
     return isIncomplete;
   }
 
-  public deleteAction(
-    abstractBaseItem: AbstractBaseItem
-  ): Observable<WorkflowBaseItem | ComponentBaseItem> {
-    this.tabItemService.deselectActiveBaseItem();
-    if (abstractBaseItem.type === BaseItemType.WORKFLOW) {
-      return this.workflowService.deleteWorkflow(abstractBaseItem.id);
-    }
-    return this.componentService.deleteComponent(abstractBaseItem.id);
+  public doDeleteTransformation(
+    transformation: Transformation
+  ): Observable<void> {
+    this.tabItemService.deselectActiveTabItem();
+    return this.transformationService.deleteTransformation(transformation.id);
   }
 
   private async copyWorkflow(

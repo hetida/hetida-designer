@@ -38,7 +38,7 @@ export class TabItemService {
     });
   }
 
-  deselectActiveBaseItem() {
+  deselectActiveTabItem() {
     this.store.dispatch(unsetActiveTabItem());
   }
 
