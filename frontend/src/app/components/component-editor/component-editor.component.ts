@@ -4,8 +4,8 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ThemeService } from 'src/app/service/theme/theme.service';
 import { environment } from '../../../environments/environment';
-import { ComponentBaseItem } from '../../model/component-base-item';
 import { ComponentEditorService } from '../../service/component-editor.service';
+import { ComponentTransformation } from '../../model/new-api/transformation';
 
 @Component({
   selector: 'hd-component-editor',
@@ -22,10 +22,11 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
 
   // only temporary
   public codeCopy: string;
-  public lastSaved: string;
+  public lastSavedCode: string;
 
   private readonly _ngDestroyNotifier = new Subject();
   private readonly _autoSave$ = new Subject<void>();
+  // @ts-ignore
   private readonly _autoSaveTimer$ = this._autoSave$.pipe(
     debounceTime(environment.autosaveTimer)
   );
@@ -35,23 +36,26 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     ['light-theme', 'vs']
   ]);
 
-  private _componentBaseItem: ComponentBaseItem;
+  private _componentTransformation: ComponentTransformation;
   @Input()
-  set componentBaseItem(componentBaseItem: ComponentBaseItem) {
-    this._componentBaseItem = componentBaseItem;
-    this.code = this.componentBaseItem.code;
-    this.lastSaved = this.componentBaseItem.code;
+  set componentTransformation(
+    componentTransformation: ComponentTransformation
+  ) {
+    this._componentTransformation = componentTransformation;
+    this.code = this.componentTransformation.content;
+    this.lastSavedCode = this.componentTransformation.content;
     this.editorOptions = {
       ...this.editorOptions,
-      readOnly: this.componentBaseItem.state !== RevisionState.DRAFT
+      readOnly: this.componentTransformation.state !== RevisionState.DRAFT
     };
   }
 
-  get componentBaseItem(): ComponentBaseItem {
-    return this._componentBaseItem;
+  get componentTransformation(): ComponentTransformation {
+    return this._componentTransformation;
   }
 
   constructor(
+    // @ts-ignore
     private readonly componentService: ComponentEditorService,
     private readonly themeService: ThemeService
   ) {}
@@ -71,14 +75,15 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
         };
       });
 
-    this._autoSaveTimer$.subscribe(_ => {
-      if (this.lastSaved !== this.code) {
-        this.componentService.updateComponent({
-          ...this.componentBaseItem,
-          code: this.code
-        });
-      }
-    });
+    // TODO
+    // this._autoSaveTimer$.subscribe(_ => {
+    //   if (this.lastSavedCode !== this.code) {
+    //     this.componentService.updateComponent({
+    //       ...this.component,
+    //       code: this.code
+    //     });
+    //   }
+    // });
   }
 
   public get code(): string {

@@ -145,7 +145,7 @@ export class PopoverBaseItemComponent implements OnInit {
   }
 
   open(): void {
-    this.tabItemService.addBaseItemTab(this.abstractBaseItem.id);
+    this.tabItemService.addTransformationTab(this.abstractBaseItem.id);
     this.popoverService.closePopover();
   }
 

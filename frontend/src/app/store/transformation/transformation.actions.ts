@@ -5,3 +5,8 @@ export const setAllTransformations = createAction(
   '[Transformation] Set All',
   (payload: Transformation[]) => ({ payload })
 );
+
+export const addTransformation = createAction(
+  '[Transformation] Add Transformation Success',
+  (payload: Transformation) => ({ payload })
+);

@@ -7,8 +7,8 @@ import {
   addTabItem,
   unsetActiveTabItem
 } from '../../store/tab-item/tab-item.actions';
-import { AbstractBaseItem } from '../../model/base-item';
 import { LocalStorageService } from '../local-storage/local-storage.service';
+import { Transformation } from '../../model/new-api/transformation';
 
 @Injectable({
   providedIn: 'root'
@@ -20,31 +20,19 @@ export class TabItemService {
     private readonly localStorageService: LocalStorageService
   ) {}
 
-  addTabItem(partialTabItem: Omit<TabItem, 'id'>): void {
-    // Loads the fully expanded component or workflow state of a base
-    // item when a new tab is added to the state. The tab will only
-    // be committed to the state once the expanded base item is in
-    // the store. This ensures that the state will already be fully
-    // consistent and complete when the tab is being rendered for the
-    // first time.
-    this.baseItemService.ensureBaseItem(partialTabItem.baseItemId).subscribe({
-      complete: () => {
-        this.store.dispatch(addTabItem(partialTabItem));
-        this.localStorageService.addToLastOpened(partialTabItem.baseItemId);
-      }
+  addTransformationTab(transformationId: string): void {
+    this.addTabItem({
+      transformationId,
+      tabItemType: TabItemType.BASE_ITEM
     });
   }
 
-  addBaseItemTab(baseItemId: string): void {
-    this.addTabItem({ baseItemId, tabItemType: TabItemType.BASE_ITEM });
-  }
-
   addDocumentationTab(
-    baseItemId: string,
+    transformationId: string,
     initialDocumentationEditMode: boolean
   ) {
     this.addTabItem({
-      baseItemId,
+      transformationId,
       tabItemType: TabItemType.DOCUMENTATION,
       initialDocumentationEditMode
     });
@@ -54,11 +42,16 @@ export class TabItemService {
     this.store.dispatch(unsetActiveTabItem());
   }
 
-  createBaseItemAndOpenInNewTab(abstractBaseItem: AbstractBaseItem): void {
-    this.baseItemService.createBaseItem(abstractBaseItem).subscribe({
+  createTransformationAndOpenInNewTab(transformation: Transformation): void {
+    this.baseItemService.createTransformation(transformation).subscribe({
       complete: () => {
-        this.addBaseItemTab(abstractBaseItem.id);
+        this.addTransformationTab(transformation.id);
       }
     });
+  }
+
+  private addTabItem(partialTabItem: Omit<TabItem, 'id'>): void {
+    this.store.dispatch(addTabItem(partialTabItem));
+    this.localStorageService.addToLastOpened(partialTabItem.transformationId);
   }
 }

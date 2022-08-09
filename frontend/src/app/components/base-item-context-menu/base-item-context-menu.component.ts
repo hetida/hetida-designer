@@ -61,7 +61,7 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   openItem() {
-    this.tabItemService.addBaseItemTab(this.baseItem.id);
+    this.tabItemService.addTransformationTab(this.baseItem.id);
   }
 
   editItem() {

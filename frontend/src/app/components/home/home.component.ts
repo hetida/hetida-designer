@@ -81,7 +81,7 @@ export class HomeComponent implements OnInit {
   }
 
   select(selectedItem: BaseItem) {
-    this.tabItemService.addBaseItemTab(selectedItem.id);
+    this.tabItemService.addTransformationTab(selectedItem.id);
   }
 
   openBaseItemContextMenu(selectedItem: BaseItem, mouseEvent: MouseEvent) {

@@ -20,7 +20,7 @@ describe('BaseItemContextMenuComponent', () => {
 
       const tabItemService = jasmine.createSpyObj<TabItemService>(
         'TabItemService',
-        ['addBaseItemTab']
+        ['addTransformationTab']
       );
 
       TestBed.configureTestingModule({

@@ -15,7 +15,6 @@ export class TransformationService {
 
   getTransformations(): void {
     this.httpService.fetchTransformations().subscribe(transformations => {
-      // console.log(transformations);
       this.store.dispatch(setAllTransformations(transformations));
     });
   }

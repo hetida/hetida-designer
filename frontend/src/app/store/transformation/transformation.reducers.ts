@@ -3,11 +3,17 @@ import {
   initialTransformationState,
   transformationEntityAdapter
 } from './transformation.state';
-import { setAllTransformations } from './transformation.actions';
+import {
+  addTransformation,
+  setAllTransformations
+} from './transformation.actions';
 
 export const transformationReducers = createReducer(
   initialTransformationState,
   on(setAllTransformations, (state, action) => {
     return transformationEntityAdapter.setAll(action.payload, state);
+  }),
+  on(addTransformation, (state, action) => {
+    return transformationEntityAdapter.setOne(action.payload, state);
   })
 );

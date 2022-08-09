@@ -41,7 +41,7 @@ export class NavigationCategoryComponent implements OnInit {
       if (activeTabItem === null) {
         this.activeTransformationId = '';
       } else {
-        this.activeTransformationId = activeTabItem.baseItemId;
+        this.activeTransformationId = activeTabItem.transformationId;
       }
     });
   }

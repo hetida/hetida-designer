@@ -1,8 +1,8 @@
-<ng-container *ngIf="baseItem !== undefined">
+<ng-container *ngIf="transformation !== undefined">
   <span>
     <mat-icon
       class="clickable unselectable"
-      title="Edit {{ baseItem.type | lowercase }} details"
+      title="Edit {{ transformation.type | lowercase }} details"
       (click)="editDetails()"
     >
       edit
@@ -45,8 +45,8 @@
       >zoom_out</mat-icon
     >
   </span>
-  <span [ngClass]="baseItem.state.toLowerCase()" class="unselectable">
-    {{ baseItem.state }}
+  <span [ngClass]="transformation.state.toLowerCase()" class="unselectable">
+    {{ transformation.state }}
   </span>
   <span>
     <mat-icon

@@ -18,6 +18,7 @@ import {
   selectOrderedTabItemsWithBaseItem,
   TabItemWithBaseItem
 } from '../../store/tab-item/tab-item.selectors';
+import { isComponentTransformation } from '../../model/new-api/transformation';
 
 const HOME_TAB = 0;
 
@@ -56,6 +57,8 @@ export class ContentViewComponent implements OnInit, OnDestroy {
   // ngrx State
   _tabItems: TabItemWithBaseItem[] = [];
 
+  isComponentTransformation: typeof isComponentTransformation = isComponentTransformation;
+
   constructor(
     private readonly store: Store<IAppState>,
     private readonly popoverService: PopoverService
@@ -80,7 +83,7 @@ export class ContentViewComponent implements OnInit, OnDestroy {
             ? HOME_TAB
             : orderedTabItemsWithBaseItem.findIndex(
                 tabItem =>
-                  tabItem.baseItem.id === activeTabItem.baseItemId &&
+                  tabItem.baseItem.id === activeTabItem.transformationId &&
                   tabItem.tabItemType === activeTabItem.tabItemType
               ) + 1;
 

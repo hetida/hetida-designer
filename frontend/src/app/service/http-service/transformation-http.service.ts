@@ -23,4 +23,18 @@ export class TransformationHttpService {
     const url = `${this.apiEndpoint}/transformations`;
     return this.httpClient.get<Array<Transformation>>(url);
   }
+
+  public createTransformation(
+    transformation: Transformation
+  ): Observable<Transformation> {
+    const url = `${this.apiEndpoint}/transformations/`;
+    return this.httpClient.post<Transformation>(url, transformation);
+  }
+
+  public updateTransformation(
+    transformation: Transformation
+  ): Observable<Transformation> {
+    const url = `${this.apiEndpoint}/transformations/${transformation.id}`;
+    return this.httpClient.put<Transformation>(url, transformation);
+  }
 }

@@ -22,7 +22,7 @@ const closeAllBaseItemRelatedTabs = (
 ): ITabItemState => {
   // Find all tabs that correspond to the deleted base item.
   const tabItemIdsToClose = selectAll(state)
-    .filter(tabItem => tabItem.baseItemId === baseItemIdToRemove)
+    .filter(tabItem => tabItem.transformationId === baseItemIdToRemove)
     .map(tabItem => tabItem.id);
 
   // Immediately close all tabs whose corresponding base item has being
@@ -67,7 +67,7 @@ export const tabItemReducers = createReducer(
     addTabItem,
     (state, action): ITabItemState => {
       const tabItemToAdd: TabItem = {
-        id: `${action.payload.baseItemId}-${action.payload.tabItemType}`,
+        id: `${action.payload.transformationId}-${action.payload.tabItemType}`,
         ...action.payload
       };
       const updatedState = tabItemEntityAdapter.addOne(tabItemToAdd, state);

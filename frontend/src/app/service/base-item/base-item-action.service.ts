@@ -44,6 +44,7 @@ import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
 import { WorkflowEditorService } from '../workflow-editor/workflow-editor.service';
 import { BaseItemService } from './base-item.service';
+import { Transformation } from '../../model/new-api/transformation';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -425,7 +426,11 @@ export class BaseItemActionService {
       if (baseItem === undefined) {
         return;
       }
-      this.tabItemService.createBaseItemAndOpenInNewTab(baseItem);
+      this.tabItemService.createTransformationAndOpenInNewTab(
+        // TODO
+        // @ts-ignore
+        baseItem as Transformation
+      );
     });
   }
 
@@ -433,14 +438,17 @@ export class BaseItemActionService {
     const dialogRef = this.dialog.open<
       CopyBaseItemDialogComponent,
       Omit<BaseItemDialogData, 'content'>,
-      BaseItem | undefined
+      Transformation | undefined
     >(CopyBaseItemDialogComponent, {
       width: '640px',
       data: {
         title: 'Create new component',
         actionOk: 'Create Component',
         actionCancel: 'Cancel',
-        abstractBaseItem: this.baseItemService.createComponent(),
+        // TODO
+        // @ts-ignore
+        abstractBaseItem: this.baseItemService.getDefaultComponentTransformation() as AbstractBaseItem,
+        transformation: this.baseItemService.getDefaultComponentTransformation(),
         disabledState: {
           name: false,
           category: false,
@@ -450,9 +458,9 @@ export class BaseItemActionService {
       }
     });
 
-    dialogRef.afterClosed().subscribe(baseItem => {
-      if (baseItem) {
-        this.tabItemService.createBaseItemAndOpenInNewTab(baseItem);
+    dialogRef.afterClosed().subscribe(transformation => {
+      if (transformation) {
+        this.tabItemService.createTransformationAndOpenInNewTab(transformation);
       }
     });
   }
@@ -724,7 +732,7 @@ export class BaseItemActionService {
         // possibly edited name, description and category are correct in the code
         this.componentService.updateComponent(baseItem);
       }
-      this.tabItemService.addBaseItemTab(baseItem.id);
+      this.tabItemService.addTransformationTab(baseItem.id);
     });
   }
 

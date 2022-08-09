@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { EMPTY, Observable, of } from 'rxjs';
+import { EMPTY, Observable } from 'rxjs';
 import { first, switchMap, tap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { BaseItemType } from '../../enums/base-item-type';
@@ -10,39 +10,45 @@ import { ComponentBaseItem } from '../../model/component-base-item';
 import { WorkflowBaseItem } from '../../model/workflow-base-item';
 import { IAppState } from '../../store/app.state';
 import {
-  isBaseItem,
   isComponentBaseItem,
   isWorkflowBaseItem
 } from '../../store/base-item/base-item-guards';
 import {
-  addBaseItem,
   getBaseItems,
   putBaseItem
 } from '../../store/base-item/base-item.actions';
-import { selectAbstractBaseItemById } from '../../store/base-item/base-item.selectors';
 import { ComponentEditorService } from '../component-editor.service';
 import { BaseItemHttpService } from '../http-service/base-item-http.service';
 import { WorkflowEditorService } from '../workflow-editor/workflow-editor.service';
+import {
+  ComponentTransformation,
+  Transformation
+} from '../../model/new-api/transformation';
+import { TransformationHttpService } from '../http-service/transformation-http.service';
+import { addTransformation } from '../../store/transformation/transformation.actions';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BaseItemService {
   constructor(
+    private readonly transformationHttpService: TransformationHttpService,
     private readonly baseItemHttpService: BaseItemHttpService,
     private readonly store: Store<IAppState>,
     private readonly workflowService: WorkflowEditorService,
     private readonly componentService: ComponentEditorService
   ) {}
 
-  createBaseItem(abstractBaseItem: AbstractBaseItem): Observable<never> {
-    return this.baseItemHttpService.createBaseItem(abstractBaseItem).pipe(
-      first(),
-      tap(result => {
-        this.store.dispatch(addBaseItem(result));
-      }),
-      switchMap(() => EMPTY)
-    );
+  createTransformation(transformation: Transformation): Observable<never> {
+    return this.transformationHttpService
+      .createTransformation(transformation)
+      .pipe(
+        first(),
+        tap(result => {
+          this.store.dispatch(addTransformation(result));
+        }),
+        switchMap(() => EMPTY)
+      );
   }
 
   createWorkflow(): WorkflowBaseItem {
@@ -82,27 +88,26 @@ export class BaseItemService {
     };
   }
 
-  getBaseItem(baseItemId: string): Observable<BaseItem> {
-    return this.store.select(selectAbstractBaseItemById(baseItemId)).pipe(
-      switchMap(
-        (abstractBaseItem: AbstractBaseItem): Observable<BaseItem> => {
-          if (isBaseItem(abstractBaseItem)) {
-            return of(abstractBaseItem);
-          }
-
-          return abstractBaseItem.type === BaseItemType.COMPONENT
-            ? this.componentService.getComponent(abstractBaseItem.id)
-            : this.workflowService.getWorkflow(abstractBaseItem.id);
-        }
-      )
-    );
-  }
-
-  ensureBaseItem(baseItemId: string): Observable<never> {
-    return this.getBaseItem(baseItemId).pipe(
-      first(),
-      switchMap(() => EMPTY)
-    );
+  getDefaultComponentTransformation(): ComponentTransformation {
+    return {
+      id: uuid().toString(),
+      revision_group_id: uuid().toString(),
+      name: 'New component',
+      category: 'Draft',
+      type: BaseItemType.COMPONENT,
+      version_tag: '1.0.0',
+      state: RevisionState.DRAFT,
+      description: 'New created component',
+      io_interface: {
+        inputs: [],
+        outputs: []
+      },
+      test_wiring: {
+        input_wirings: [],
+        output_wirings: []
+      },
+      content: ''
+    };
   }
 
   fetchBaseItems(): void {

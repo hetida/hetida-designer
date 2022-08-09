@@ -8,14 +8,16 @@ import {
   TransformationState
 } from './transformation.state';
 
-const { selectAll } = transformationEntityAdapter.getSelectors();
+const {
+  selectAll,
+  selectEntities
+} = transformationEntityAdapter.getSelectors();
 
 const selectTransformationState = createFeatureSelector<TransformationState>(
   'transformations'
 );
 
-// TODO do we need this, change name selectAllTransformations?
-export const selectAllTransformationRevisions = createSelector(
+export const selectAllTransformations = createSelector(
   selectTransformationState,
   (state: TransformationState) =>
     selectAll(state).filter(
@@ -25,7 +27,7 @@ export const selectAllTransformationRevisions = createSelector(
 );
 
 export const selectHashedTransformationLookupById = createSelector(
-  selectAllTransformationRevisions,
+  selectAllTransformations,
   (transformations): Record<string, Transformation> =>
     transformations.reduce(
       (acc, transformation): Record<string, Transformation> => ({
@@ -35,6 +37,12 @@ export const selectHashedTransformationLookupById = createSelector(
       {}
     )
 );
+
+export const selectTransformationById = (transformationId: string) =>
+  createSelector(
+    selectTransformationState,
+    (state: TransformationState) => selectEntities(state)[transformationId]
+  );
 
 function filterByName(transformation: Transformation, name: string) {
   return Utils.string.isEmptyOrUndefined(name)

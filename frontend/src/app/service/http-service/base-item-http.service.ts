@@ -27,11 +27,6 @@ export class BaseItemHttpService {
     return this.http.post<AbstractBaseItem>(url, abstractBaseItem);
   }
 
-  public getBaseItem(abstractBaseItemId: string): Observable<AbstractBaseItem> {
-    const url = `${this.apiEndpoint}/base-items/${abstractBaseItemId}`;
-    return this.http.get<AbstractBaseItem>(url);
-  }
-
   public updateBaseItem(
     abstractBaseItem: AbstractBaseItem
   ): Observable<AbstractBaseItem> {

@@ -1,4 +1,5 @@
 import { AbstractBaseItem } from './base-item';
+import { Transformation } from './new-api/transformation';
 
 export interface BaseItemDialogData {
   title: string;
@@ -7,7 +8,9 @@ export interface BaseItemDialogData {
   actionCancel: string;
   deleteButtonText?: string;
   showDeleteButton?: boolean;
+  // TODO remove
   abstractBaseItem: AbstractBaseItem;
+  transformation?: Transformation;
   disabledState: {
     name: boolean;
     category: boolean;

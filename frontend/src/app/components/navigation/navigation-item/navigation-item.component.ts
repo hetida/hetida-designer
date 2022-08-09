@@ -44,7 +44,7 @@ export class NavigationItemComponent {
   }
 
   public editComponent(): void {
-    this.tabItemService.addBaseItemTab(this.transformation.id);
+    this.tabItemService.addTransformationTab(this.transformation.id);
     this.popoverService.closePopover();
   }
 
