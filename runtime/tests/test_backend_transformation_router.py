@@ -195,27 +195,24 @@ tr_json_component_3 = {
     "state": "DRAFT",
     "type": "COMPONENT",
     "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
-    "content": "# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"new_input_1\": \"STRING\",\n    },\n    \"outputs\": {\n        \"new_output_1\": \"BOOLEAN\",\n    },\n    \"name\": \"Test1\",\n    \"category\": \"Äpfel\",\n    \"description\": \"New created component test\",\n    \"version_tag\": \"1.0.1\",\n    \"id\": \"977cbb10-ca82-4893-b062-6036f918344d\",\n    \"revision_group_id\": \"a7128772-9729-4519-bc55-540327641a0c\",\n    \"state\": \"DRAFT\",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print \"test\"\n    pass",
+    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',
     "io_interface": {
         "inputs": [
             {
                 "id": "a980edcb-7ad3-49a2-a78d-bd8092fccb90",
                 "name": "new_input_1",
-                "data_type": "STRING"
+                "data_type": "STRING",
             }
         ],
         "outputs": [
             {
                 "id": "e18f0cca-502b-4352-8a03-43d3b2ec4697",
                 "name": "new_output_1",
-                "data_type": "BOOLEAN"
+                "data_type": "BOOLEAN",
             }
-        ]
+        ],
     },
-    "test_wiring": {
-        "input_wirings": [],
-        "output_wirings": []
-    }
+    "test_wiring": {"input_wirings": [], "output_wirings": []},
 }
 
 tr_json_component_3_publish = {
@@ -229,27 +226,24 @@ tr_json_component_3_publish = {
     "released_timestamp": "2019-12-01T12:00:00+00:00",
     "type": "COMPONENT",
     "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
-    "content": "# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"new_input_1\": \"STRING\",\n    },\n    \"outputs\": {\n        \"new_output_1\": \"BOOLEAN\",\n    },\n    \"name\": \"Test1\",\n    \"category\": \"Äpfel\",\n    \"description\": \"New created component test\",\n    \"version_tag\": \"1.0.1\",\n    \"id\": \"977cbb10-ca82-4893-b062-6036f918344d\",\n    \"revision_group_id\": \"a7128772-9729-4519-bc55-540327641a0c\",\n    \"state\": \"DRAFT\",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print \"test\"\n    pass",
+    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',
     "io_interface": {
         "inputs": [
             {
                 "id": "a980edcb-7ad3-49a2-a78d-bd8092fccb90",
                 "name": "new_input_1",
-                "data_type": "STRING"
+                "data_type": "STRING",
             }
         ],
         "outputs": [
             {
                 "id": "e18f0cca-502b-4352-8a03-43d3b2ec4697",
                 "name": "new_output_1",
-                "data_type": "BOOLEAN"
+                "data_type": "BOOLEAN",
             }
-        ]
+        ],
     },
-    "test_wiring": {
-        "input_wirings": [],
-        "output_wirings": []
-    }
+    "test_wiring": {"input_wirings": [], "output_wirings": []},
 }
 
 tr_json_workflow_1 = {
@@ -828,9 +822,7 @@ async def test_delete_transformation_revision_with_component(
         sessionmaker(clean_test_db_engine),
     ):
         store_single_transformation_revision(
-            TransformationRevision(
-                **tr_json_component_3
-            )
+            TransformationRevision(**tr_json_component_3)
         )
 
         async with async_test_client as ac:
@@ -852,9 +844,7 @@ async def test_publish_transformation_revision_with_component(
         sessionmaker(clean_test_db_engine),
     ):
         store_single_transformation_revision(
-            TransformationRevision(
-                **tr_json_component_3
-            )
+            TransformationRevision(**tr_json_component_3)
         )
 
         async with async_test_client as ac:

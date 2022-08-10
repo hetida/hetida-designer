@@ -14,10 +14,14 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError, DBBadRequestError
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBBadRequestError,
+    DBIntegrityError,
+    DBNotFoundError,
+)
 from hetdesrun.persistence.dbservice.revision import (
-    get_latest_revision_id,
     delete_single_transformation_revision,
+    get_latest_revision_id,
     read_single_transformation_revision,
     select_multiple_transformation_revisions,
     store_single_transformation_revision,
@@ -424,7 +428,9 @@ async def update_transformation_revision(
         status.HTTP_204_NO_CONTENT: {
             "description": "Successfully deleted the transformation revision"
         },
-        status.HTTP_403_FORBIDDEN: {"description": "Transformation revision is already released or deprecated"},
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Transformation revision is already released or deprecated"
+        },
     },
     deprecated=True,
 )
@@ -448,6 +454,7 @@ async def delete_transformation_revision(
 
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
 
 async def handle_trafo_revision_execution_request(
     # pylint: disable=redefined-builtin
