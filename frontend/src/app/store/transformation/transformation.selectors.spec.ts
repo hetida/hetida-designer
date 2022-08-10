@@ -1,4 +1,9 @@
-import { selectTransformationsByCategoryAndName } from './transformation.selectors';
+import {
+  selectAllTransformations,
+  selectHashedTransformationLookupById,
+  selectTransformationById,
+  selectTransformationsByCategoryAndName
+} from './transformation.selectors';
 import { BaseItemType } from '../../enums/base-item-type';
 import { EntityState } from '@ngrx/entity';
 import { Transformation } from '../../model/new-api/transformation';
@@ -87,7 +92,13 @@ describe('Transformation selectors', () => {
           state: RevisionState.RELEASED,
           type: BaseItemType.WORKFLOW,
           documentation: null,
-          content: 'python code',
+          content: {
+            operators: [],
+            links: [],
+            inputs: [],
+            outputs: [],
+            constants: []
+          },
           io_interface: {
             inputs: [],
             outputs: []
@@ -109,7 +120,13 @@ describe('Transformation selectors', () => {
           state: RevisionState.RELEASED,
           type: BaseItemType.WORKFLOW,
           documentation: null,
-          content: 'python code',
+          content: {
+            operators: [],
+            links: [],
+            inputs: [],
+            outputs: [],
+            constants: []
+          },
           io_interface: {
             inputs: [],
             outputs: []
@@ -131,7 +148,13 @@ describe('Transformation selectors', () => {
           state: RevisionState.DISABLED,
           type: BaseItemType.WORKFLOW,
           documentation: null,
-          content: 'python code',
+          content: {
+            operators: [],
+            links: [],
+            inputs: [],
+            outputs: [],
+            constants: []
+          },
           io_interface: {
             inputs: [],
             outputs: []
@@ -157,7 +180,7 @@ describe('Transformation selectors', () => {
 
     // Assert
     expect(filteredTransformations.EXAMPLES.length).toBe(1);
-    expect(filteredTransformations.BASIC.length).toBe(1);
+    expect(filteredTransformations.BASIC.length).toBe(2);
   });
 
   it('#selectTransformationsByCategoryAndName should filter for category "WORKFLOW"', () => {
@@ -171,7 +194,7 @@ describe('Transformation selectors', () => {
     ).projector(mockEntityState);
 
     // Assert
-    expect(filteredTransformations.BASIC.length).toBe(1);
+    expect(filteredTransformations.BASIC.length).toBe(2);
   });
 
   it('#selectTransformationsByCategoryAndName should filter for category "COMPONENT" and name', () => {
@@ -217,5 +240,35 @@ describe('Transformation selectors', () => {
 
     // Assert
     expect(filteredTransformations.BASIC.length).toBe(2);
+  });
+
+  it('#selectHashedTransformationLookupById should return a transformation lookup tabelle by id', () => {
+    // Arrange
+    const mockEntityState = createMockEntityState();
+    const ids = ['mockId3', 'mockId4'];
+
+    // Act
+    const transformations = selectAllTransformations.projector(mockEntityState);
+    const hashedTransformationLookupById = selectHashedTransformationLookupById.projector(
+      transformations
+    );
+
+    // Assert
+    expect(hashedTransformationLookupById.mockId3.id).toBe(ids[0]);
+    expect(hashedTransformationLookupById.mockId4.id).toBe(ids[1]);
+  });
+
+  it('#selectTransformationById should return a transformation selected by id', () => {
+    // Arrange
+    const mockEntityState = createMockEntityState();
+    const id = 'mockId3';
+
+    // Act
+    const transformationById = selectTransformationById(id).projector(
+      mockEntityState
+    );
+
+    // Assert
+    expect(transformationById.id).toBe(id);
   });
 });
