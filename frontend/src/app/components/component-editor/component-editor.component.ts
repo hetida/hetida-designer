@@ -4,8 +4,8 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ThemeService } from 'src/app/service/theme/theme.service';
 import { environment } from '../../../environments/environment';
-import { ComponentEditorService } from '../../service/component-editor.service';
 import { ComponentTransformation } from '../../model/new-api/transformation';
+import { BaseItemService } from '../../service/base-item/base-item.service';
 
 @Component({
   selector: 'hd-component-editor',
@@ -26,7 +26,6 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
 
   private readonly _ngDestroyNotifier = new Subject();
   private readonly _autoSave$ = new Subject<void>();
-  // @ts-ignore
   private readonly _autoSaveTimer$ = this._autoSave$.pipe(
     debounceTime(environment.autosaveTimer)
   );
@@ -37,6 +36,7 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
   ]);
 
   private _componentTransformation: ComponentTransformation;
+
   @Input()
   set componentTransformation(
     componentTransformation: ComponentTransformation
@@ -55,8 +55,7 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
   }
 
   constructor(
-    // @ts-ignore
-    private readonly componentService: ComponentEditorService,
+    private readonly baseItemService: BaseItemService,
     private readonly themeService: ThemeService
   ) {}
 
@@ -75,15 +74,14 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
         };
       });
 
-    // TODO
-    // this._autoSaveTimer$.subscribe(_ => {
-    //   if (this.lastSavedCode !== this.code) {
-    //     this.componentService.updateComponent({
-    //       ...this.component,
-    //       code: this.code
-    //     });
-    //   }
-    // });
+    this._autoSaveTimer$.subscribe(_ => {
+      if (this.lastSavedCode !== this.code) {
+        this.baseItemService.updateTransformation({
+          ...this.componentTransformation,
+          content: this.code
+        });
+      }
+    });
   }
 
   public get code(): string {

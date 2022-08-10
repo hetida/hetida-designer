@@ -28,10 +28,6 @@ import { AbstractBaseItem, BaseItem } from 'src/app/model/base-item';
 import { ComponentBaseItem } from 'src/app/model/component-base-item';
 import { WorkflowBaseItem } from 'src/app/model/workflow-base-item';
 import { WorkflowLink } from 'src/app/model/workflow-link';
-import {
-  isComponentBaseItem,
-  isWorkflowBaseItem
-} from 'src/app/store/base-item/base-item-guards';
 import { Utils } from 'src/app/utils/utils';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
@@ -160,24 +156,27 @@ export class BaseItemActionService {
       .subscribe();
   }
 
-  public editDetails(baseItem: BaseItem): void {
-    const isReleased = this.isReleased(baseItem);
+  public editDetails(transformation: Transformation): void {
+    const isReleased = this.isReleased(transformation);
     const dialogRef = this.dialog.open<
       CopyBaseItemDialogComponent,
       BaseItemDialogData,
-      BaseItem | undefined
+      Transformation | undefined
     >(CopyBaseItemDialogComponent, {
       width: '640px',
       data: {
-        title: `Edit ${baseItem.type.toLowerCase()} ${baseItem.name} ${
-          baseItem.tag
-        }`,
+        title: `Edit ${transformation.type.toLowerCase()} ${
+          transformation.name
+        } ${transformation.version_tag}`,
         content: '',
         actionOk: 'Save Details',
         actionCancel: 'Cancel',
         deleteButtonText: 'Delete Draft',
-        showDeleteButton: baseItem.state === RevisionState.DRAFT,
-        abstractBaseItem: { ...baseItem },
+        showDeleteButton: transformation.state === RevisionState.DRAFT,
+        // TODO
+        // @ts-ignore
+        abstractBaseItem: { ...(transformation as AbstractBaseItem) },
+        transformation,
         disabledState: {
           name: isReleased,
           category: isReleased,
@@ -198,15 +197,9 @@ export class BaseItemActionService {
 
     dialogRef
       .afterClosed()
-      .subscribe((selectedAbstractBaseItem: AbstractBaseItem | undefined) => {
-        if (selectedAbstractBaseItem) {
-          if (isWorkflowBaseItem(selectedAbstractBaseItem)) {
-            this.workflowService.updateWorkflow(selectedAbstractBaseItem);
-          } else if (isComponentBaseItem(selectedAbstractBaseItem)) {
-            this.componentService.updateComponent(selectedAbstractBaseItem);
-          } else {
-            throw Error('workflow or component base item expected');
-          }
+      .subscribe((transformationToUpdate: Transformation | undefined) => {
+        if (transformationToUpdate) {
+          this.baseItemService.updateTransformation(transformationToUpdate);
         }
       });
   }

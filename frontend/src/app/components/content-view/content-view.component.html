@@ -63,7 +63,7 @@
       <hd-toolbar [transformationId]="tabItem.baseItem.id"></hd-toolbar>
       <hd-component-editor
         *ngIf="isComponentTransformation(tabItem.baseItem) && matTab.isActive"
-        [component]="tabItem.baseItem"
+        [componentTransformation]="tabItem.baseItem"
         (click)="_closePopover()"
       >
       </hd-component-editor>

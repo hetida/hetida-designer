@@ -11,6 +11,11 @@ export const addTransformation = createAction(
   (payload: Transformation) => ({ payload })
 );
 
+export const updateTransformation = createAction(
+  '[Transformation] Update Transformation',
+  (payload: Transformation) => ({ payload })
+);
+
 export const removeTransformation = createAction(
   '[Transformation] Remove Transformation',
   (payload: string) => ({ payload })

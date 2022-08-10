@@ -66,7 +66,8 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   editItem() {
-    this.baseItemActionsService.editDetails(this.baseItem);
+    // @ts-ignore
+    this.baseItemActionsService.editDetails(this.baseItem as Transformation);
   }
 
   openDocumentation() {

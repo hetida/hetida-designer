@@ -6,7 +6,8 @@ import {
 import {
   addTransformation,
   removeTransformation,
-  setAllTransformations
+  setAllTransformations,
+  updateTransformation
 } from './transformation.actions';
 
 export const transformationReducers = createReducer(
@@ -16,6 +17,9 @@ export const transformationReducers = createReducer(
   }),
   on(addTransformation, (state, action) => {
     return transformationEntityAdapter.setOne(action.payload, state);
+  }),
+  on(updateTransformation, (state, action) => {
+    return transformationEntityAdapter.upsertOne(action.payload, state);
   }),
   on(removeTransformation, (state, action) => {
     return transformationEntityAdapter.removeOne(action.payload, state);

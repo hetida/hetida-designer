@@ -146,13 +146,12 @@ export class ToolbarComponent implements OnInit {
     return 'Delete';
   }
 
-  // TODO
+  // TODO test when endpoint is available
   delete() {
     this.baseItemAction.delete(this.transformation).subscribe();
   }
 
-  // TODO
   editDetails(): void {
-    this.baseItemAction.editDetails(this.baseItem);
+    this.baseItemAction.editDetails(this.transformation);
   }
 }

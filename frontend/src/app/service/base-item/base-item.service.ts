@@ -28,7 +28,8 @@ import { TransformationHttpService } from '../http-service/transformation-http.s
 import {
   addTransformation,
   removeTransformation,
-  setAllTransformations
+  setAllTransformations,
+  updateTransformation
 } from '../../store/transformation/transformation.actions';
 import { TransformationState } from '../../store/transformation/transformation.state';
 import { LocalStorageService } from '../local-storage/local-storage.service';
@@ -57,6 +58,16 @@ export class BaseItemService {
         }),
         switchMap(() => EMPTY)
       );
+  }
+
+  updateTransformation(transformation: Transformation): void {
+    this.transformationHttpService
+      .updateTransformation(transformation)
+      .subscribe(updatedTransformation => {
+        this.transformationStore.dispatch(
+          updateTransformation(updatedTransformation)
+        );
+      });
   }
 
   createWorkflow(): WorkflowBaseItem {
