@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Check pull requests
+name: End2End tests
 
 # Controls when the workflow will run
 on:
