@@ -302,6 +302,7 @@ in pkgs.mkShell rec {
     OVERMIND_PROCFILE = procfile;
     OVERMIND_NO_PORT = "1";
     OVERMIND_CAN_DIE = "runtime";
+    WAITFOR="${waitfor}/bin/waitfor";
 
 
 
