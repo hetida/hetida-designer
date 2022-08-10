@@ -820,6 +820,30 @@ async def test_update_transformation_revision_with_released_component_and_allow_
 
 
 @pytest.mark.asyncio
+async def test_delete_transformation_revision_with_component(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(
+                **tr_json_component_3
+            )
+        )
+
+        async with async_test_client as ac:
+            response = await ac.delete(
+                posix_urljoin(
+                    "/api/transformations/", str(get_uuid_from_seed("component 3"))
+                )
+            )
+
+        assert response.status_code == 204
+
+
+@pytest.mark.asyncio
 async def test_publish_transformation_revision_with_component(
     async_test_client, clean_test_db_engine
 ):
