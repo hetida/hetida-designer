@@ -48,7 +48,7 @@ jobs:
           npx playwright install
           npx playwright install-deps
 
-          sleep 30 #TODO: properly wait for designer to be up and running!
+          sleep 300 #TODO: properly wait for designer to be up and running!
           
           PLAYWRIGHT_TARGET_URL="http:/localhost:4200" npm run e2e-all
 
