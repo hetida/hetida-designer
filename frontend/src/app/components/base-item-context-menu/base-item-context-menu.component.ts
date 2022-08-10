@@ -25,14 +25,18 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   @ViewChild(MatMenuTrigger) readonly _trigger: MatMenuTrigger;
   @ViewChild(MatMenu) readonly _menu: MatMenu;
   @ViewChild('invisibleTrigger') _elementRef: ElementRef;
-  _isIncomplete$: Promise<boolean>;
+  _isIncomplete: boolean;
   _isNotPublished: boolean;
   baseItemHasEmptyInputsAndOutputs: boolean;
 
   _baseItem: BaseItem;
   @Input()
   set baseItem(baseItem: BaseItem) {
-    this._isIncomplete$ = this.baseItemActionsService.isIncomplete(baseItem);
+    // TODO
+    this._isIncomplete = this.baseItemActionsService.isIncomplete(
+      // @ts-ignore
+      baseItem as Transformation
+    );
     this._isNotPublished = baseItem.state === RevisionState.DRAFT;
     this.baseItemHasEmptyInputsAndOutputs =
       baseItem.inputs.length === 0 && baseItem.outputs.length === 0;
@@ -82,8 +86,10 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
     await this.baseItemActionsService.copy(this.baseItem);
   }
 
-  async publish() {
-    await this.baseItemActionsService.publish(this.baseItem);
+  publish() {
+    // TODO
+    // @ts-ignore
+    this.baseItemActionsService.publish(this.baseItem as Transformation);
   }
 
   delete() {
@@ -99,6 +105,8 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   configureIO() {
+    // TODO
+    // @ts-ignore
     this.baseItemActionsService.configureIO(this.baseItem);
   }
 

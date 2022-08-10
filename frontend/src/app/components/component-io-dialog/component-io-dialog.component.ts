@@ -7,16 +7,16 @@ import {
   SVGManipulatorConfiguration
 } from 'hetida-flowchart';
 import { IOType } from 'hetida-flowchart/types/IOType';
-import { ComponentBaseItem } from 'src/app/model/component-base-item';
 import { FlowchartConverterService } from 'src/app/service/type-converter/flowchart-converter.service';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import { UniqueValueValidator } from 'src/app/validation/unique-value-validator';
 import { v4 as UUID } from 'uuid';
-import { IOItem } from '../../model/io-item';
+import { ComponentTransformation } from '../../model/new-api/transformation';
+import { IO } from '../../model/new-api/io';
 
 export interface ComponentIoDialogData {
-  componentBaseItem: ComponentBaseItem;
+  componentTransformation: ComponentTransformation;
   editMode: boolean;
   actionOk: string;
   actionCancel: string;
@@ -28,7 +28,7 @@ export interface ComponentIoDialogData {
   styleUrls: ['component-io-dialog.component.scss']
 })
 export class ComponentIODialogComponent implements OnInit {
-  componentBaseItem: ComponentBaseItem;
+  componentTransformation: ComponentTransformation;
 
   _preview: FlowchartConfiguration = {
     id: '',
@@ -54,10 +54,11 @@ export class ComponentIODialogComponent implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<ComponentIODialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: ComponentIoDialogData,
+    // @ts-ignore
     private readonly _flowchartConverter: FlowchartConverterService,
     private readonly _formBuilder: FormBuilder
   ) {
-    this.componentBaseItem = this.data.componentBaseItem;
+    this.componentTransformation = this.data.componentTransformation;
 
     this._svgConfiguration = createReadOnlyConfig(
       new SVGManipulatorConfiguration()
@@ -73,10 +74,10 @@ export class ComponentIODialogComponent implements OnInit {
   }
 
   private _setupFormControl(): void {
-    const inputIOControls = this.componentBaseItem.inputs.map(
+    const inputIOControls = this.componentTransformation.io_interface.inputs.map(
       this._createIOItemControl.bind(this)
     );
-    const outputIOControls = this.componentBaseItem.outputs.map(
+    const outputIOControls = this.componentTransformation.io_interface.outputs.map(
       this._createIOItemControl.bind(this)
     );
 
@@ -90,7 +91,7 @@ export class ComponentIODialogComponent implements OnInit {
     });
   }
 
-  private _createIOItemControl(input: IOItem): FormGroup {
+  private _createIOItemControl(input: IO): FormGroup {
     return this._formBuilder.group({
       name: this._createNameControl(input),
       type: this._createTypeControl(input),
@@ -100,7 +101,7 @@ export class ComponentIODialogComponent implements OnInit {
 
   _removeInput(index: number, ioId: string) {
     this._ioItemInputsFormArray.removeAt(index);
-    this.componentBaseItem.inputs = this.componentBaseItem.inputs.filter(
+    this.componentTransformation.io_interface.inputs = this.componentTransformation.io_interface.inputs.filter(
       ioItem => ioItem.id !== ioId
     );
     this._createPreview();
@@ -108,40 +109,36 @@ export class ComponentIODialogComponent implements OnInit {
 
   _removeOutput(index: number, ioId: string) {
     this._ioItemOutputsFormArray.removeAt(index);
-    this.componentBaseItem.outputs = this.componentBaseItem.outputs.filter(
+    this.componentTransformation.io_interface.outputs = this.componentTransformation.io_interface.outputs.filter(
       ioItem => ioItem.id !== ioId
     );
     this._createPreview();
   }
 
   _inputAdd(): void {
-    const io: IOItem = {
+    const io: IO = {
       id: UUID().toString(),
       name: this._computeNextAvailableName(
         'new_input',
-        this.componentBaseItem.inputs
+        this.componentTransformation.io_interface.inputs
       ),
-      type: IOType.ANY,
-      posX: 0,
-      posY: 0
+      data_type: IOType.ANY
     };
-    this.componentBaseItem.inputs.push(io);
+    this.componentTransformation.io_interface.inputs.push(io);
     this._createPreview();
     this._setupFormControl();
   }
 
   _outputAdd(): void {
-    const io: IOItem = {
+    const io: IO = {
       id: UUID().toString(),
       name: this._computeNextAvailableName(
         'new_output',
-        this.componentBaseItem.outputs
+        this.componentTransformation.io_interface.outputs
       ),
-      type: IOType.ANY,
-      posX: 0,
-      posY: 0
+      data_type: IOType.ANY
     };
-    this.componentBaseItem.outputs.push(io);
+    this.componentTransformation.io_interface.outputs.push(io);
     this._createPreview();
     this._setupFormControl();
   }
@@ -150,7 +147,7 @@ export class ComponentIODialogComponent implements OnInit {
     if (this.data.editMode === false) {
       this.dialogRef.close();
     } else {
-      this.dialogRef.close(this.componentBaseItem);
+      this.dialogRef.close(this.componentTransformation);
     }
   }
 
@@ -159,15 +156,16 @@ export class ComponentIODialogComponent implements OnInit {
   }
 
   private _createPreview(): void {
-    if (this.componentBaseItem === undefined) {
+    if (this.componentTransformation === undefined) {
       return;
     }
-    this._preview = this._flowchartConverter.convertComponentToFlowchart(
-      this.componentBaseItem
-    );
+    // TODO
+    // this._preview = this._flowchartConverter.convertComponentToFlowchart(
+    //   this.componentTransformation
+    // );
   }
 
-  private _computeNextAvailableName(prefix: string, list: IOItem[]) {
+  private _computeNextAvailableName(prefix: string, list: IO[]) {
     if (list === undefined) {
       return `${prefix}_1`;
     }
@@ -179,7 +177,7 @@ export class ComponentIODialogComponent implements OnInit {
     return `${prefix}_${count}`;
   }
 
-  private _createNameControl(io: IOItem) {
+  private _createNameControl(io: IO) {
     const control = this._formBuilder.control(
       {
         value: io.name,
@@ -199,16 +197,16 @@ export class ComponentIODialogComponent implements OnInit {
     return control;
   }
 
-  private _createTypeControl(io: IOItem) {
+  private _createTypeControl(io: IO) {
     const control = this._formBuilder.control(
       {
-        value: io.type,
+        value: io.data_type,
         disabled: !this.data.editMode
       },
       [Validators.required]
     );
     control.valueChanges.subscribe(changes => {
-      io.type = changes;
+      io.data_type = changes;
       this._createPreview();
     });
     return control;

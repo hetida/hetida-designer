@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { NgHetidaFlowchartService } from 'ng-hetida-flowchart';
-import { timer } from 'rxjs';
+import { of, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
@@ -46,7 +46,11 @@ export class ToolbarComponent implements OnInit {
 
   ngOnInit() {
     timer(0, 100)
-      .pipe(switchMap(() => this.baseItemAction.isIncomplete(this.baseItem)))
+      .pipe(
+        switchMap(() =>
+          of(this.baseItemAction.isIncomplete(this.transformation))
+        )
+      )
       .subscribe(isIncomplete => {
         this.incompleteFlag = isIncomplete;
       });
@@ -88,15 +92,13 @@ export class ToolbarComponent implements OnInit {
 
   // TODO
   async publish(): Promise<void> {
-    await this.baseItemAction.publish(this.baseItem);
+    this.baseItemAction.publish(this.transformation);
   }
 
   // TODO
   configureIO() {
-    this.baseItemAction.configureIO(this.baseItem);
-    this.baseItemAction.isIncomplete(this.baseItem).then(b => {
-      this.incompleteFlag = b;
-    });
+    this.baseItemAction.configureIO(this.transformation);
+    this.incompleteFlag = this.baseItemAction.isIncomplete(this.transformation);
   }
 
   get deprecateTooltip(): string {

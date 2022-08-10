@@ -25,6 +25,7 @@ export class FlowchartConverterService {
     abstractBaseItem: AbstractBaseItem
   ): FlowchartConfiguration {
     const cleanedComponent = { ...abstractBaseItem };
+    // TODO remove; a component cannot have constants
     cleanedComponent.outputs = cleanedComponent.outputs.filter(
       io => !io.constant
     );

@@ -152,6 +152,14 @@ export class BaseItemService {
     );
   }
 
+  // TODO unit test
+  releaseTransformation(transformation: Transformation): void {
+    // TODO copy, do not change param attribute
+    transformation.state = RevisionState.RELEASED;
+    transformation.released_timestamp = new Date().toISOString();
+    this.updateTransformation(transformation);
+  }
+
   saveBaseItem(abstractBaseItem: AbstractBaseItem): void {
     this.baseItemHttpService
       .updateBaseItem(abstractBaseItem)

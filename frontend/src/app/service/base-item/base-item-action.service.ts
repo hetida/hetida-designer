@@ -40,7 +40,13 @@ import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
 import { WorkflowEditorService } from '../workflow-editor/workflow-editor.service';
 import { BaseItemService } from './base-item.service';
-import { Transformation } from '../../model/new-api/transformation';
+import {
+  ComponentTransformation,
+  isComponentTransformation,
+  isWorkflowTransformation,
+  Transformation,
+  WorkflowTransformation
+} from '../../model/new-api/transformation';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -60,7 +66,9 @@ export class BaseItemActionService {
   ) {}
 
   public async execute(abstractBaseItem: AbstractBaseItem) {
-    if (await this.isIncomplete(abstractBaseItem)) {
+    // TODO
+    // @ts-ignore
+    if (this.isIncomplete(abstractBaseItem as Transformation)) {
       return;
     }
     let title: string;
@@ -289,15 +297,15 @@ export class BaseItemActionService {
     return transformation.state === RevisionState.RELEASED;
   }
 
-  public async publish(baseItem: BaseItem): Promise<void> {
-    if (await this.isIncomplete(baseItem)) {
+  public publish(transformation: Transformation): void {
+    if (this.isIncomplete(transformation)) {
       this.notificationService.warn(
-        `This ${baseItem.type.toLowerCase()} is incomplete and cannot be published`
+        `This ${transformation.type.toLowerCase()} is incomplete and cannot be published`
       );
       return;
     }
 
-    if (baseItem.state === RevisionState.DRAFT) {
+    if (transformation.state === RevisionState.DRAFT) {
       const dialogRef = this.dialog.open<
         ConfirmDialogComponent,
         ConfirmDialogData,
@@ -305,16 +313,16 @@ export class BaseItemActionService {
       >(ConfirmDialogComponent, {
         width: '640px',
         data: {
-          title: `Publish component ${baseItem.name} (${baseItem.tag})`,
-          content: `Do you want to publish this ${baseItem.type.toLowerCase()}?`,
-          actionOk: `Publish ${baseItem.type.toLowerCase()}`,
+          title: `Publish component ${transformation.name} (${transformation.version_tag})`,
+          content: `Do you want to publish this ${transformation.type.toLowerCase()}?`,
+          actionOk: `Publish ${transformation.type.toLowerCase()}`,
           actionCancel: 'Cancel'
         }
       });
 
       dialogRef.afterClosed().subscribe(isConfirmed => {
         if (isConfirmed) {
-          this.baseItemService.releaseBaseItem(baseItem);
+          this.baseItemService.releaseTransformation(transformation);
         }
       });
     }
@@ -368,19 +376,21 @@ export class BaseItemActionService {
     });
   }
 
-  public configureIO(abstractBaseItem: AbstractBaseItem) {
+  public configureIO(transformation: Transformation) {
+    // TODO refactor
     if (
-      abstractBaseItem.inputs.length === 0 &&
-      abstractBaseItem.outputs.length === 0 &&
-      abstractBaseItem.type === BaseItemType.WORKFLOW
+      isWorkflowTransformation(transformation) &&
+      transformation.io_interface.inputs.length === 0 &&
+      transformation.io_interface.outputs.length === 0
     ) {
       return;
     }
 
-    if (abstractBaseItem.type === BaseItemType.COMPONENT) {
-      this.configureComponentIO(abstractBaseItem);
+    if (isComponentTransformation(transformation)) {
+      this.configureComponentIO(transformation);
     } else {
-      this.configureWorkflowIO(abstractBaseItem);
+      // @ts-ignore
+      this.configureWorkflowIO(transformation as AbstractBaseItem);
     }
   }
 
@@ -482,20 +492,16 @@ export class BaseItemActionService {
     });
   }
 
-  public async isIncomplete(
-    abstractBaseItem: AbstractBaseItem
-  ): Promise<boolean> {
-    let isIncomplete = false;
-    if (abstractBaseItem === undefined) {
-      return true;
+  public isIncomplete(transformation: Transformation): boolean {
+    let isIncomplete;
+    if (isWorkflowTransformation(transformation)) {
+      isIncomplete = this.isWorkflowIncomplete(transformation);
+    } else {
+      // TODO extract and test method
+      isIncomplete =
+        transformation.io_interface.inputs.length === 0 &&
+        transformation.io_interface.outputs.length === 0;
     }
-    if (abstractBaseItem.type === BaseItemType.WORKFLOW) {
-      isIncomplete = await this.isWorkflowIncomplete(abstractBaseItem);
-      return isIncomplete;
-    }
-    isIncomplete =
-      abstractBaseItem.inputs.length === 0 &&
-      abstractBaseItem.outputs.length === 0;
     return isIncomplete;
   }
 
@@ -506,6 +512,7 @@ export class BaseItemActionService {
     return this.baseItemService.deleteTransformation(transformation.id);
   }
 
+  // TODO unit test
   private async copyWorkflow(
     newId: string,
     groupId: string,
@@ -733,6 +740,7 @@ export class BaseItemActionService {
     return this.workflowService.createWorkflow(workflow);
   }
 
+  // TODO refactor / unit test
   /**
    * checks if the workflow is in an incomplete state
    * - has no operators
@@ -743,74 +751,66 @@ export class BaseItemActionService {
    * - there isn't a link to every output
    * - there isn't a link from every input
    */
-  private async isWorkflowIncomplete(
-    baseItem: AbstractBaseItem
-  ): Promise<boolean> {
-    const workflow = await this.workflowService
-      .getWorkflow(baseItem.id)
-      .pipe(first())
-      .toPromise();
-    if (workflow === undefined) {
-      return true;
-    }
+  private isWorkflowIncomplete(workflow: WorkflowTransformation): boolean {
+    const workflowContent = workflow.content;
+    // TODO rename
+    // @ts-ignore
     const checkName = (name: string, id: string) => {
-      const fc = new FormControl(name, [
+      const formControl = new FormControl(name, [
         PythonIdentifierValidator(false),
         PythonKeywordBlacklistValidator()
       ]);
-      if (fc.invalid) {
+      if (formControl.invalid) {
         return false;
       }
-      return workflow.links.some(
-        link => link.fromConnector === id || link.toConnector === id
+      return workflowContent.links.some(
+        link => link.start.connector.id === id || link.end.connector.id === id
       );
     };
     return (
-      workflow.operators.length === 0 ||
-      workflow.inputs.some(
-        input =>
-          input.constant === false && checkName(input.name, input.id) === false
-      ) ||
-      workflow.outputs.some(
-        output =>
-          output.constant === false &&
-          checkName(output.name, output.id) === false
-      )
+      workflowContent.operators.length === 0
+      // TODO transformation.io_interface.inputs or transformation.content.inputs
+      // || workflow.inputs.some(
+      //   input =>
+      //     input.constant === false && checkName(input.name, input.id) === false
+      // ) ||
+      // workflow.outputs.some(
+      //   output =>
+      //     output.constant === false &&
+      //     checkName(output.name, output.id) === false
+      // )
     );
   }
 
-  private configureComponentIO(abstractBaseItem: AbstractBaseItem) {
-    this.componentService
-      .getComponent(abstractBaseItem.id)
-      .pipe(first())
-      .subscribe(component => {
-        if (component === undefined) {
-          return;
-        }
+  private configureComponentIO(
+    componentTransformation: ComponentTransformation
+  ) {
+    const componentIoDialogData: ComponentIoDialogData = {
+      // TODO: Check whether the item is being mutated and if so remove the mutations. Then remove JSON.*().
+      componentTransformation: JSON.parse(
+        JSON.stringify(componentTransformation)
+      ),
+      editMode: componentTransformation.state !== RevisionState.RELEASED,
+      actionOk: 'Save',
+      actionCancel: 'Cancel'
+    };
 
-        const componentIoDialogData: ComponentIoDialogData = {
-          // TODO: Check whether the item is being mutated and if so remove the mutations. Then remove JSON.*().
-          componentBaseItem: JSON.parse(JSON.stringify(component)),
-          editMode: component.state !== RevisionState.RELEASED,
-          actionOk: 'Save',
-          actionCancel: 'Cancel'
-        };
+    const dialogRef = this.dialog.open<
+      ComponentIODialogComponent,
+      ComponentIoDialogData,
+      ComponentTransformation | undefined
+    >(ComponentIODialogComponent, {
+      minHeight: '200px',
+      data: componentIoDialogData
+    });
 
-        const dialogRef = this.dialog.open<
-          ComponentIODialogComponent,
-          ComponentIoDialogData,
-          ComponentBaseItem | undefined
-        >(ComponentIODialogComponent, {
-          minHeight: '200px',
-          data: componentIoDialogData
-        });
-
-        dialogRef.afterClosed().subscribe(componentBaseItem => {
-          if (componentBaseItem) {
-            this.componentService.updateComponent(componentBaseItem);
-          }
-        });
-      });
+    dialogRef.afterClosed().subscribe(updatedComponentTransformation => {
+      if (updatedComponentTransformation) {
+        this.baseItemService.updateTransformation(
+          updatedComponentTransformation
+        );
+      }
+    });
   }
 
   private configureWorkflowIO(abstractBaseItem: AbstractBaseItem) {

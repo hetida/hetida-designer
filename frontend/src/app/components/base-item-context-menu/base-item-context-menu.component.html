@@ -24,7 +24,7 @@
     >
       Configure IO...
     </button>
-    <button mat-menu-item *ngIf="!(_isIncomplete$ | async)" (click)="execute()">
+    <button mat-menu-item *ngIf="!_isIncomplete" (click)="execute()">
       Execute...
     </button>
     <mat-divider></mat-divider>

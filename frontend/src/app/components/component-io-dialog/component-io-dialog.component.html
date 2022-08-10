@@ -1,7 +1,9 @@
 <div class="d-flex content-space-between" mat-dialog-title>
   <h4 class="m-0 pr-1">
     Configure Input / Output for Component
-    {{ componentBaseItem.name + ' ' + componentBaseItem.tag }}
+    {{
+      componentTransformation.name + ' ' + componentTransformation.version_tag
+    }}
   </h4>
   <button (click)="_onCancel()" mat-icon-button>
     <mat-icon>close</mat-icon>
