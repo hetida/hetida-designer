@@ -43,17 +43,22 @@ jobs:
           # Start designer in background
           nix-shell --run 'overmind s' &
 
+          echo "PREPARE PLAYWRIGHT"
+
+
           cd "$GITHUB_WORKSPACE/frontend"
           npm install
           npx playwright install
           npx playwright install-deps
 
-          # sleep 300 #TODO: properly wait for designer to be up and running!
+          sleep 300 #TODO: properly wait for designer to be up and running!
 
-          nix-shell --run '"$WAITFOR -t 600 http://localhost:8080/api/info'
-          nix-shell --run '"$WAITFOR -t 600 http://localhost:8092/info'
-          nix-shell --run '"$WAITFOR -t 600 http://localhost:4200'
+          echo "WAITING FOR DESIGNER"
+          # nix-shell --run '"$WAITFOR -t 600 http://localhost:8080/api/info'
+          # nix-shell --run '"$WAITFOR -t 600 http://localhost:8092/info'
+          # nix-shell --run '"$WAITFOR -t 600 http://localhost:4200'
           
+          echo "RUN PLAYWRIGHT TESTS"
           PLAYWRIGHT_TARGET_URL="http:/localhost:4200" npm run e2e-all
 
           cd "$GITHUB_WORKSPACE"
