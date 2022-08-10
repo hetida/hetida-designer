@@ -212,7 +212,8 @@ class TransformationRevision(BaseModel):
             state = values["state"]
         except KeyError as e:
             raise ValueError(
-                "Cannot check that no names in io_interface are empty if attribute 'state' is missing"
+                "Cannot validate that no names in io_interface are empty "
+                "if attribute 'state' is missing"
             ) from e
 
         if state is not State.RELEASED:
