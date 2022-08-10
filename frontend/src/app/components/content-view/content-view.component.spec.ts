@@ -47,7 +47,7 @@ describe('ContentViewComponent', () => {
     mockStore.overrideSelector(selectContentViewStoreState, {
       orderedTabItemsWithBaseItem: [],
       activeTabItem: {
-        baseItemId: 'test',
+        transformationId: 'test',
         id: 'testId',
         tabItemType: TabItemType.BASE_ITEM
       }
