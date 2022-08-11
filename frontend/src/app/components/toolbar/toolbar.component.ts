@@ -115,7 +115,7 @@ export class ToolbarComponent implements OnInit {
 
   // TODO
   async copy() {
-    await this.baseItemAction.copy(this.baseItem);
+    await this.baseItemAction.copy(this.transformation);
   }
 
   get newRevisionTooltip(): string {
@@ -127,7 +127,7 @@ export class ToolbarComponent implements OnInit {
 
   // TODO
   async newRevision() {
-    await this.baseItemAction.newRevision(this.baseItem);
+    await this.baseItemAction.newRevision(this.transformation);
   }
 
   isReleased() {

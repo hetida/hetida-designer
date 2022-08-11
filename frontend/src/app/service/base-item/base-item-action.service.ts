@@ -212,32 +212,38 @@ export class BaseItemActionService {
       });
   }
 
-  public async newRevision(baseItem: BaseItem) {
-    if (!this.isReleased(baseItem)) {
+  // TODO unit test
+  // group id has to be the same
+  public async newRevision(transformation: Transformation) {
+    if (!this.isReleased(transformation)) {
       return;
     }
     const newId = uuid().toString();
-    const groupId = baseItem.groupId;
-    let copyOfBaseItem: BaseItem;
-    if (baseItem.type === BaseItemType.WORKFLOW) {
-      copyOfBaseItem = await this.copyWorkflow(
+    const groupId = transformation.revision_group_id;
+    let copyOfBaseItem: Transformation;
+    if (transformation.type === BaseItemType.WORKFLOW) {
+      // @ts-ignore
+      copyOfBaseItem = (await this.copyWorkflow(
         newId,
         groupId,
         'Draft',
-        baseItem
-      );
+        // @ts-ignore
+        transformation as BaseItem
+      )) as Transformation;
     } else {
-      copyOfBaseItem = await this.copyComponent(
+      // @ts-ignore
+      copyOfBaseItem = this.copyComponent(
         newId,
         groupId,
         'Draft',
-        baseItem
-      );
+        // @ts-ignore
+        transformation as Transformation
+      ) as BaseItem;
     }
     const dialogRef = this.dialog.open<
       CopyBaseItemDialogComponent,
       BaseItemDialogData,
-      BaseItem | undefined
+      Transformation | undefined
     >(CopyBaseItemDialogComponent, {
       width: '640px',
       data: {
@@ -245,7 +251,9 @@ export class BaseItemActionService {
         content: `This ${copyOfBaseItem.type.toLowerCase()} is already released. Do you want to create a new revision?`,
         actionOk: 'Create new revision',
         actionCancel: 'Cancel',
-        abstractBaseItem: copyOfBaseItem,
+        // @ts-ignore
+        abstractBaseItem: copyOfBaseItem as BaseItem,
+        transformation: copyOfBaseItem,
         disabledState: {
           name: true,
           category: false,
@@ -255,8 +263,8 @@ export class BaseItemActionService {
       }
     });
 
-    dialogRef.afterClosed().subscribe(newBaseItemRevision => {
-      this.saveAndNavigate(newBaseItemRevision);
+    dialogRef.afterClosed().subscribe(newTransformationRevision => {
+      this.saveAndNavigate(newTransformationRevision);
     });
   }
 
@@ -328,40 +336,47 @@ export class BaseItemActionService {
     }
   }
 
-  public async copy(abstractBaseItem: AbstractBaseItem) {
+  // TODO unit test
+  // has to have a new group id
+  public async copy(transformation: Transformation) {
     const newId = uuid().toString();
     const groupId = uuid().toString();
-    let copyOfBaseItem: BaseItem;
-    if (abstractBaseItem.type === BaseItemType.WORKFLOW) {
-      copyOfBaseItem = await this.copyWorkflow(
+    let copyOfBaseItem: Transformation;
+    if (transformation.type === BaseItemType.WORKFLOW) {
+      // @ts-ignore
+      copyOfBaseItem = (await this.copyWorkflow(
         newId,
         groupId,
         'Copy',
-        abstractBaseItem
-      );
+        // TODO
+        // @ts-ignore
+        transformation as Transformation
+      )) as Transformation;
     } else {
-      copyOfBaseItem = await this.copyComponent(
+      copyOfBaseItem = this.copyComponent(
         newId,
         groupId,
         'Copy',
-        abstractBaseItem
+        transformation
       );
     }
 
     let type = copyOfBaseItem.type.toLowerCase();
     type = `${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
+    // @ts-ignore
     const dialogRef = this.dialog.open<
       CopyBaseItemDialogComponent,
       Omit<BaseItemDialogData, 'content'>,
-      BaseItem | undefined
+      Transformation | undefined
     >(CopyBaseItemDialogComponent, {
       width: '640px',
       data: {
-        title: `Copy ${type} ${copyOfBaseItem.name} ${copyOfBaseItem.tag}`,
+        title: `Copy ${type} ${copyOfBaseItem.name} ${copyOfBaseItem.version_tag}`,
         actionOk: `Copy ${type}`,
         actionCancel: 'Cancel',
-        abstractBaseItem: copyOfBaseItem,
+        abstractBaseItem: copyOfBaseItem as Transformation,
+        transformation: copyOfBaseItem,
         disabledState: {
           name: false,
           category: false,
@@ -371,8 +386,8 @@ export class BaseItemActionService {
       }
     });
 
-    dialogRef.afterClosed().subscribe(baseItem => {
-      this.saveAndNavigate(baseItem);
+    dialogRef.afterClosed().subscribe(copiedTransformation => {
+      this.saveAndNavigate(copiedTransformation);
     });
   }
 
@@ -678,66 +693,42 @@ export class BaseItemActionService {
     return copy;
   }
 
-  private async copyComponent(
+  // TODO unit test
+  // state has to be draft
+  private copyComponent(
     newId: string,
     groupId: string,
     suffix: string,
-    abstractBaseItem: AbstractBaseItem
-  ): Promise<ComponentBaseItem> {
-    const component = await this.componentService
-      .getComponent(abstractBaseItem.id)
-      .pipe(first())
-      .toPromise();
-
+    componentTransformation: ComponentTransformation
+  ): Transformation {
     return {
-      ...component,
+      ...componentTransformation,
       id: newId,
-      groupId,
+      revision_group_id: groupId,
       state: RevisionState.DRAFT,
-      tag: `${component.tag} ${suffix}`,
-      inputs: component.inputs.map(input => ({
-        ...input,
-        id: uuid().toString()
-      })),
-      outputs: component.outputs.map(output => ({
-        ...output,
-        id: uuid().toString()
-      })),
-      wirings: []
+      version_tag: `${componentTransformation.version_tag} ${suffix}`,
+      io_interface: {
+        inputs: componentTransformation.io_interface.inputs.map(input => ({
+          ...input,
+          id: uuid().toString()
+        })),
+        outputs: componentTransformation.io_interface.outputs.map(output => ({
+          ...output,
+          id: uuid().toString()
+        }))
+      },
+      test_wiring: {
+        input_wirings: [],
+        output_wirings: []
+      }
     };
   }
 
-  private saveAndNavigate(baseItem: BaseItem | undefined): void {
-    if (baseItem === undefined) {
+  private saveAndNavigate(transformation: Transformation | undefined): void {
+    if (transformation === undefined) {
       return;
     }
-    // Persist...
-    let persistBaseItem$: Observable<BaseItem>;
-    if (baseItem.type === BaseItemType.WORKFLOW) {
-      persistBaseItem$ = this.saveWorkflow(baseItem);
-    } else {
-      persistBaseItem$ = this.saveComponent(baseItem);
-    }
-
-    // ...and navigate.
-    persistBaseItem$.subscribe(() => {
-      if (baseItem.type === BaseItemType.COMPONENT) {
-        // Updating component since code generation needs to run again to ensure that
-        // possibly edited name, description and category are correct in the code
-        this.componentService.updateComponent(baseItem);
-      }
-      this.tabItemService.addTransformationTab(baseItem.id);
-    });
-  }
-
-  private saveComponent(component: ComponentBaseItem) {
-    // persist new component
-    return this.componentService.createComponent(component);
-  }
-
-  private saveWorkflow(workflow: WorkflowBaseItem) {
-    // persist new workflow
-    return this.workflowService.createWorkflow(workflow);
+    this.tabItemService.createTransformationAndOpenInNewTab(transformation);
   }
 
   // TODO refactor / unit test

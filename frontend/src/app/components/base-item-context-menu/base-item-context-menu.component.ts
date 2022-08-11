@@ -83,7 +83,9 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   async copyItem() {
-    await this.baseItemActionsService.copy(this.baseItem);
+    // TODO
+    // @ts-ignore
+    await this.baseItemActionsService.copy(this.baseItem as Transformation);
   }
 
   publish() {
