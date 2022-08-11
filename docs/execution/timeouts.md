@@ -1,5 +1,6 @@
 # Timeouts during workflow execution
 
-When executing long-running workflows timeouts can occur, leading to execution errors. Timeouts can occur at different steps:
+When executing long-running workflows or loading or sending huge amounts of data, timeouts can occur, leading to execution errors. Timeouts can occur at different steps:
 * If running the workflow via the test execution button, the frontend container nginx reverse proxy can time out. To adjust these timeouts the [nginx.conf file](../../frontend/nginx.conf) must be modified. One way to do this is mounting a modified nginx.conf to the appropriate location into the service-container.
-* The runtime Gunicorn Server can time out. These timeouts can be set via `TIMEOUT` and `GRACEFUL_TIMEOUT` environment variables on the runtime service. See [gunicorn documentation](https://docs.gunicorn.org/en/stable/settings.html#timeout).
+* The backend / runtime Gunicorn Server can time out. These timeouts can be set via `TIMEOUT` and `GRACEFUL_TIMEOUT` environment variables on the backend / runtime service. See [gunicorn documentation](https://docs.gunicorn.org/en/stable/settings.html#timeout).
+* Requests for sending or receiving data from the runtime to the adapter or requests for the execution of workflows/components from the backend to the runtime can time out. These timeouts can be set via the `EXTERNAL_REQUEST_TIMEOUT` envirionment variables on the backend / runtime service.
