@@ -35,7 +35,7 @@ jobs:
 
 
       # Runs a single command using the runners shell
-      - name: End2End_tests
+      - name: Start_designer
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
@@ -55,11 +55,10 @@ jobs:
           npx playwright install
           npx playwright install-deps
 
-      - name: Run_Playwright
-        run: |
+      - name: Wait_for_designer_being_up_and_running
+        run: | 
           set -e
           cd "$GITHUB_WORKSPACE"
-          echo "WAITING FOR DESIGNER"
 
           retry() {
               local max_num_retries=$1
@@ -89,14 +88,19 @@ jobs:
                           fi
                       )
               done
-          }
+          }       
+
+          echo "WAITING FOR DESIGNER"
 
           retry 60 5 "check backend available" curl http://localhost:8080/api/info
           retry 60 5 "check py demo adaptger available" curl http://localhost:8092/info
           retry 60 5 "check frontend available" curl http://localhost:4200
 
-          # sleep 300 #TODO: properly wait for designer to be up and running!
+          echo "Successfully waited for designer being available."
 
+      - name: Run_Playwright
+        run: |
+          set -e
           cd "$GITHUB_WORKSPACE/frontend"
           
           echo "RUN PLAYWRIGHT TESTS"
@@ -105,5 +109,10 @@ jobs:
       - name: Cleanup
         run: |
           set -e
+          
           cd "$GITHUB_WORKSPACE"
+
+          echo "Kill running designer services"
           nix-shell --run 'overmind k'
+
+          echo "Cleanup completed."
