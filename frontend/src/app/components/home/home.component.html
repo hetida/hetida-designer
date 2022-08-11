@@ -17,7 +17,7 @@
       class="home-content__item"
       *ngFor="let item of lastOpenedWorkflows | async"
       (contextmenu)="
-        $event.preventDefault(); openBaseItemContextMenu(item, $event)
+        $event.preventDefault(); openTransformationContextMenu(item, $event)
       "
       (click)="select(item)"
     >
@@ -46,7 +46,7 @@
       *ngFor="let item of lastOpenedComponents | async"
       (click)="select(item)"
       (contextmenu)="
-        $event.preventDefault(); openBaseItemContextMenu(item, $event)
+        $event.preventDefault(); openTransformationContextMenu(item, $event)
       "
     >
       <mat-icon
@@ -65,9 +65,7 @@
       <span class="mat-body-strong"> Documentation </span>
     </li>
     <li class="home-content__item">
-      <a
-        href="https://github.com/hetida/hetida-designer"
-        target="_blank"
+      <a href="https://github.com/hetida/hetida-designer" target="_blank"
         >hetida designer website</a
       >
     </li>
