@@ -43,7 +43,7 @@ describe('BaseItemContextMenuComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(BaseItemContextMenuComponent);
     component = fixture.componentInstance;
-    component.baseItem = {
+    component.transformation = {
       category: 'dummy',
       description: 'dummy',
       groupId: '123',

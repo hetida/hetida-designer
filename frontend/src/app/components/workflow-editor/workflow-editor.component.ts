@@ -38,6 +38,7 @@ import {
   RenameOperatorDialogComponent,
   RenameOperatorDialogData
 } from '../rename-operator-dialog/rename-operator-dialog.component';
+import { Transformation } from '../../model/new-api/transformation';
 
 interface IdentifiableEntity {
   id: string;
@@ -83,7 +84,10 @@ export class WorkflowEditorComponent {
       componentPortal,
       position
     );
-    componentPortalRef.instance.baseItem = this.currentWorkflow;
+    // TODO
+    // @ts-ignore
+    componentPortalRef.instance.transformation = this
+      .currentWorkflow as Transformation;
   }
 
   /**

@@ -10,10 +10,10 @@ import {
 } from '@angular/core';
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { BaseItem } from 'src/app/model/base-item';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import { Transformation } from '../../model/new-api/transformation';
+import { AbstractBaseItem } from '../../model/base-item';
 
 @Component({
   selector: 'hd-base-item-context-menu',
@@ -29,22 +29,23 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   _isNotPublished: boolean;
   baseItemHasEmptyInputsAndOutputs: boolean;
 
-  _baseItem: BaseItem;
+  _transformation: Transformation;
   @Input()
-  set baseItem(baseItem: BaseItem) {
-    // TODO
+  set transformation(transformation: Transformation) {
+    // TODO should configure io be enabled even if base item has empty inputs and outputs?
     this._isIncomplete = this.baseItemActionsService.isIncomplete(
-      // @ts-ignore
-      baseItem as Transformation
+      transformation
     );
-    this._isNotPublished = baseItem.state === RevisionState.DRAFT;
+    this._isNotPublished = transformation.state === RevisionState.DRAFT;
+    // TODO is this the same as isIncomplete?
     this.baseItemHasEmptyInputsAndOutputs =
-      baseItem.inputs.length === 0 && baseItem.outputs.length === 0;
-    this._baseItem = baseItem;
+      transformation.io_interface.inputs.length === 0 &&
+      transformation.io_interface.outputs.length === 0;
+    this._transformation = transformation;
   }
 
-  get baseItem(): BaseItem {
-    return this._baseItem;
+  get transformation(): Transformation {
+    return this._transformation;
   }
 
   constructor(
@@ -66,55 +67,55 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   openItem() {
-    this.tabItemService.addTransformationTab(this.baseItem.id);
+    this.tabItemService.addTransformationTab(this.transformation.id);
   }
 
   editItem() {
-    // @ts-ignore
-    this.baseItemActionsService.editDetails(this.baseItem as Transformation);
+    // TODO check for workflows
+    this.baseItemActionsService.editDetails(this.transformation);
   }
 
   openDocumentation() {
-    this.baseItemActionsService.showDocumentation(this.baseItem.id, false);
+    this.baseItemActionsService.showDocumentation(
+      this.transformation.id,
+      false
+    );
   }
 
   editDocumentation() {
-    this.baseItemActionsService.showDocumentation(this.baseItem.id);
+    this.baseItemActionsService.showDocumentation(this.transformation.id);
   }
 
   async copyItem() {
-    // TODO
-    // @ts-ignore
-    await this.baseItemActionsService.copy(this.baseItem as Transformation);
+    // TODO check for workflows
+    await this.baseItemActionsService.copy(this.transformation);
   }
 
   publish() {
-    // TODO
-    // @ts-ignore
-    this.baseItemActionsService.publish(this.baseItem as Transformation);
+    // TODO check for workflows
+    this.baseItemActionsService.publish(this.transformation);
   }
 
   delete() {
-    this.baseItemActionsService
-      // TODO
-      // @ts-ignore
-      .delete(this.baseItem as Transformation)
-      .subscribe();
+    // TODO check for workflows
+    this.baseItemActionsService.delete(this.transformation).subscribe();
   }
 
   async execute() {
-    await this.baseItemActionsService.execute(this.baseItem);
+    // TODO
+    await this.baseItemActionsService.execute(
+      // @ts-ignore
+      this.transformation as AbstractBaseItem
+    );
   }
 
   configureIO() {
-    // TODO
-    // @ts-ignore
-    this.baseItemActionsService.configureIO(this.baseItem);
+    // TODO check for workflows
+    this.baseItemActionsService.configureIO(this.transformation);
   }
 
   deprecate() {
-    // TODO
-    // @ts-ignore
-    this.baseItemActionsService.deprecate(this.baseItem as Transformation);
+    // TODO check for workflows
+    this.baseItemActionsService.deprecate(this.transformation);
   }
 }

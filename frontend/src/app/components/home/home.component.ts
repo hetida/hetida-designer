@@ -6,7 +6,6 @@ import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { BaseItem } from 'src/app/model/base-item';
 import { Transformation } from 'src/app/model/new-api/transformation';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
@@ -87,7 +86,7 @@ export class HomeComponent implements OnInit {
 
   // TODO Change BaseItemContextMenuComponent to TransformationContextMenuComponent
   openTransformationContextMenu(
-    selectedItem: BaseItem,
+    selectedItem: Transformation,
     mouseEvent: MouseEvent
   ) {
     const { componentPortalRef } = this.contextMenuService.openContextMenu(
@@ -98,7 +97,7 @@ export class HomeComponent implements OnInit {
       }
     );
 
-    componentPortalRef.instance.baseItem = selectedItem;
+    componentPortalRef.instance.transformation = selectedItem;
   }
 
   newWorkflow(): void {

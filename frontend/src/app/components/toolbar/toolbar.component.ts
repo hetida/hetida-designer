@@ -28,7 +28,7 @@ export class ToolbarComponent implements OnInit {
   // TODO remove
   baseItem: BaseItem;
 
-  transformation: Transformation;
+  transformation: Transformation | undefined;
 
   get isWorkflow(): boolean {
     return this.transformation.type === BaseItemType.WORKFLOW;
@@ -148,7 +148,6 @@ export class ToolbarComponent implements OnInit {
     return 'Delete';
   }
 
-  // TODO test when endpoint is available
   delete() {
     this.baseItemAction.delete(this.transformation).subscribe();
   }

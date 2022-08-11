@@ -6,15 +6,17 @@ import { TestWiring } from './test-wiring';
 
 // TODO move elsewhere?
 export function isComponentTransformation(
-  transformation: Transformation
+  transformation: Transformation | null | undefined
 ): transformation is ComponentTransformation {
-  return transformation.type === BaseItemType.COMPONENT;
+  return transformation
+    ? transformation.type === BaseItemType.COMPONENT
+    : false;
 }
 
 export function isWorkflowTransformation(
-  transformation: Transformation
+  transformation: Transformation | null | undefined
 ): transformation is WorkflowTransformation {
-  return transformation.type === BaseItemType.WORKFLOW;
+  return transformation ? transformation.type === BaseItemType.WORKFLOW : false;
 }
 
 export type Transformation = ComponentTransformation | WorkflowTransformation;

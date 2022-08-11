@@ -507,11 +507,11 @@ export class BaseItemActionService {
     });
   }
 
-  public isIncomplete(transformation: Transformation): boolean {
-    let isIncomplete;
+  public isIncomplete(transformation: Transformation | undefined): boolean {
+    let isIncomplete = true;
     if (isWorkflowTransformation(transformation)) {
       isIncomplete = this.isWorkflowIncomplete(transformation);
-    } else {
+    } else if (isComponentTransformation(transformation)) {
       // TODO extract and test method
       isIncomplete =
         transformation.io_interface.inputs.length === 0 &&
