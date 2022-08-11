@@ -110,7 +110,7 @@ export class ToolbarComponent implements OnInit {
 
   // TODO
   deprecate(): void {
-    this.baseItemAction.deprecate(this.baseItem);
+    this.baseItemAction.deprecate(this.transformation);
   }
 
   // TODO

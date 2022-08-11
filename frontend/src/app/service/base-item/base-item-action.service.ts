@@ -465,8 +465,8 @@ export class BaseItemActionService {
     });
   }
 
-  public deprecate(abstractBaseItem: AbstractBaseItem) {
-    if (abstractBaseItem.state !== RevisionState.RELEASED) {
+  public deprecate(transformation: Transformation) {
+    if (transformation.state !== RevisionState.RELEASED) {
       return;
     }
     const dialogRef = this.dialog.open<
@@ -476,18 +476,18 @@ export class BaseItemActionService {
     >(ConfirmDialogComponent, {
       width: '640px',
       data: {
-        title: `Deprecate ${abstractBaseItem.type.toLowerCase()} ${
-          abstractBaseItem.name
-        } (${abstractBaseItem.tag})`,
-        content: `Do you want to deprecate this ${abstractBaseItem.type.toLowerCase()}?`,
-        actionOk: `Deprecate ${abstractBaseItem.type.toLowerCase()}`,
+        title: `Deprecate ${transformation.type.toLowerCase()} ${
+          transformation.name
+        } (${transformation.version_tag})`,
+        content: `Do you want to deprecate this ${transformation.type.toLowerCase()}?`,
+        actionOk: `Deprecate ${transformation.type.toLowerCase()}`,
         actionCancel: 'Cancel'
       }
     });
 
     dialogRef.afterClosed().subscribe(isConfirmed => {
       if (isConfirmed) {
-        this.baseItemService.disableBaseItem(abstractBaseItem);
+        this.baseItemService.disableTransformation(transformation);
       }
     });
   }

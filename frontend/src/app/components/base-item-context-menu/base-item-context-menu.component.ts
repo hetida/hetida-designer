@@ -111,6 +111,8 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   deprecate() {
-    this.baseItemActionsService.deprecate(this.baseItem);
+    // TODO
+    // @ts-ignore
+    this.baseItemActionsService.deprecate(this.baseItem as Transformation);
   }
 }

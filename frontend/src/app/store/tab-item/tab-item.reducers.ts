@@ -13,22 +13,26 @@ import {
   ITabItemState,
   tabItemEntityAdapter
 } from './tab-item.state';
+import {
+  removeTransformation,
+  updateTransformation
+} from '../transformation/transformation.actions';
 
 const { selectAll } = tabItemEntityAdapter.getSelectors();
 
-const closeAllBaseItemRelatedTabs = (
-  baseItemIdToRemove: string,
+const closeAllTransformationRelatedTabs = (
+  transformationIdToRemove: string,
   state: ITabItemState
 ): ITabItemState => {
-  // Find all tabs that correspond to the deleted base item.
+  // Find all tabs that correspond to the deleted transformation
   const tabItemIdsToClose = selectAll(state)
-    .filter(tabItem => tabItem.transformationId === baseItemIdToRemove)
+    .filter(tabItem => tabItem.transformationId === transformationIdToRemove)
     .map(tabItem => tabItem.id);
 
-  // Immediately close all tabs whose corresponding base item has being
+  // Immediately close all tabs whose corresponding transformation has been
   // deleted.
   const updatedState = tabItemEntityAdapter.removeMany(
-    tabItemIdsToClose.map(tabItemIdToClose => tabItemIdToClose),
+    tabItemIdsToClose,
     state
   );
 
@@ -97,7 +101,7 @@ export const tabItemReducers = createReducer(
   on(putBaseItem, (state, action) => {
     if (action.payload.state === RevisionState.DISABLED) {
       const baseItemIdToRemove = action.payload.id;
-      return closeAllBaseItemRelatedTabs(baseItemIdToRemove, state);
+      return closeAllTransformationRelatedTabs(baseItemIdToRemove, state);
     }
     return state;
   }),
@@ -105,7 +109,21 @@ export const tabItemReducers = createReducer(
     removeBaseItem,
     (state, action): ITabItemState => {
       const baseItemIdToRemove = action.payload;
-      return closeAllBaseItemRelatedTabs(baseItemIdToRemove, state);
+      return closeAllTransformationRelatedTabs(baseItemIdToRemove, state);
+    }
+  ),
+  on(updateTransformation, (state, action) => {
+    if (action.payload.state === RevisionState.DISABLED) {
+      const transformationIdToRemove = action.payload.id;
+      return closeAllTransformationRelatedTabs(transformationIdToRemove, state);
+    }
+    return state;
+  }),
+  on(
+    removeTransformation,
+    (state, action): ITabItemState => {
+      const transformationIdToRemove = action.payload;
+      return closeAllTransformationRelatedTabs(transformationIdToRemove, state);
     }
   ),
   on(

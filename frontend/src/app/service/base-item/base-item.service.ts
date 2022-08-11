@@ -5,21 +5,11 @@ import { first, switchMap, tap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { BaseItemType } from '../../enums/base-item-type';
 import { RevisionState } from '../../enums/revision-state';
-import { AbstractBaseItem, BaseItem } from '../../model/base-item';
 import { ComponentBaseItem } from '../../model/component-base-item';
 import { WorkflowBaseItem } from '../../model/workflow-base-item';
 import { IAppState } from '../../store/app.state';
-import {
-  isComponentBaseItem,
-  isWorkflowBaseItem
-} from '../../store/base-item/base-item-guards';
-import {
-  getBaseItems,
-  putBaseItem
-} from '../../store/base-item/base-item.actions';
-import { ComponentEditorService } from '../component-editor.service';
+import { getBaseItems } from '../../store/base-item/base-item.actions';
 import { BaseItemHttpService } from '../http-service/base-item-http.service';
-import { WorkflowEditorService } from '../workflow-editor/workflow-editor.service';
 import {
   ComponentTransformation,
   Transformation
@@ -43,9 +33,7 @@ export class BaseItemService {
     private readonly transformationStore: Store<TransformationState>,
     private readonly localStorageService: LocalStorageService,
     private readonly baseItemHttpService: BaseItemHttpService,
-    private readonly store: Store<IAppState>,
-    private readonly workflowService: WorkflowEditorService,
-    private readonly componentService: ComponentEditorService
+    private readonly store: Store<IAppState>
   ) {}
 
   createTransformation(transformation: Transformation): Observable<never> {
@@ -160,29 +148,9 @@ export class BaseItemService {
     this.updateTransformation(transformation);
   }
 
-  saveBaseItem(abstractBaseItem: AbstractBaseItem): void {
-    this.baseItemHttpService
-      .updateBaseItem(abstractBaseItem)
-      .subscribe(result => {
-        this.store.dispatch(putBaseItem(result));
-      });
-  }
-
-  disableBaseItem(abstractBaseItem: AbstractBaseItem): void {
-    abstractBaseItem.state = RevisionState.DISABLED;
-    this.saveBaseItem(abstractBaseItem);
-  }
-
-  releaseBaseItem(baseItem: BaseItem): void {
-    baseItem.state = RevisionState.RELEASED;
-    if (isWorkflowBaseItem(baseItem)) {
-      this.workflowService.updateWorkflow(baseItem);
-    } else if (isComponentBaseItem(baseItem)) {
-      this.componentService.updateComponent(baseItem);
-    } else {
-      throw Error(
-        'base item is neither a workflow base item nor a component base item'
-      );
-    }
+  disableTransformation(transformation: Transformation): void {
+    transformation.state = RevisionState.DISABLED;
+    transformation.disabled_timestamp = new Date().toISOString();
+    this.updateTransformation(transformation);
   }
 }
