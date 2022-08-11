@@ -47,6 +47,7 @@ jobs:
 
       - name: Prepare_Playwright
         run: |
+          set -e
           echo "PREPARE PLAYWRIGHT"
 
           cd "$GITHUB_WORKSPACE/frontend"
@@ -56,15 +57,45 @@ jobs:
 
       - name: Run_Playwright
         run: |
-
+          set -e
           cd "$GITHUB_WORKSPACE"
           echo "WAITING FOR DESIGNER"
 
-          # sleep 300 #TODO: properly wait for designer to be up and running!
+          retry() {
+              local max_num_retries=$1
+              shift
+              local retry_wait_seconds=$1
+              shift
+              local description=$1
+              shift
+              command_to_run=("$@")
+              # the command must exit with non-zero code on failure.
 
-          nix-shell --run 'waitfor -t 600 http://localhost:8080/api/info'
-          nix-shell --run 'waitfor -t 600 http://localhost:8092/info'
-          nix-shell --run 'waitfor -t 600 http://localhost:4200'
+              # Usage example:
+              #     retry 10 5 "alembic migrations" alembic upgrade head
+
+              for ((i = 1; i <= $max_num_retries; i += 1)); do
+                  if [[ i -gt 1 ]]; then echo "RETRY ${i} ..."; fi
+                  echo "RUNNING $description ..."
+                  "${command_to_run[@]}" && echo "RUNNING $description SUCCESS" && break ||
+                      (
+                          echo "FAILED TO RUN $description ON ATTEMPT $i"
+                          if (($i == $max_num_retries)); then
+                              echo >&2 "ERROR: FINALLY FAILED TO RUN $description."
+                              exit 1
+                          else
+                              echo "WAITING $retry_wait_seconds SECONDS BEFORE RETRYING $description"
+                              sleep $retry_wait_seconds
+                          fi
+                      )
+              done
+          }
+
+          retry 60 5 curl http://localhost:8080/api/info
+          retry 60 5 curl http://localhost:8092/info
+          retry 60 5 curl http://localhost:4200
+
+          # sleep 300 #TODO: properly wait for designer to be up and running!
 
           cd "$GITHUB_WORKSPACE/frontend"
           
@@ -73,5 +104,6 @@ jobs:
 
       - name: Cleanup
         run: |
+          set -e
           cd "$GITHUB_WORKSPACE"
           nix-shell --run 'overmind k'

@@ -266,6 +266,7 @@ in pkgs.mkShell rec {
     libzip
     zlib
     cacert
+    curl
     # glib
     glibc
     glibcLocales
