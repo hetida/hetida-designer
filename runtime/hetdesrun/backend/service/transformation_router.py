@@ -432,7 +432,6 @@ async def update_transformation_revision(
             "description": "Transformation revision is already released or deprecated"
         },
     },
-    deprecated=True,
 )
 async def delete_transformation_revision(
     # pylint: disable=redefined-builtin
@@ -447,7 +446,7 @@ async def delete_transformation_revision(
 
     try:
         delete_single_transformation_revision(id)
-        logger.info("deleted component %s", id)
+        logger.info("deleted transformation revision %s", id)
 
     except DBBadRequestError as e:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
