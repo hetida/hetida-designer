@@ -184,6 +184,68 @@ tr_json_component_2_deprecate = {
         "output_wirings": [],
     },
 }
+
+tr_json_component_3 = {
+    "id": str(get_uuid_from_seed("component 3")),
+    "revision_group_id": str(get_uuid_from_seed("group of component 3")),
+    "name": "Test1",
+    "description": "New created component test",
+    "category": "Äpfel",
+    "version_tag": "1.0.1",
+    "state": "DRAFT",
+    "type": "COMPONENT",
+    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "a980edcb-7ad3-49a2-a78d-bd8092fccb90",
+                "name": "new_input_1",
+                "data_type": "STRING",
+            }
+        ],
+        "outputs": [
+            {
+                "id": "e18f0cca-502b-4352-8a03-43d3b2ec4697",
+                "name": "new_output_1",
+                "data_type": "BOOLEAN",
+            }
+        ],
+    },
+    "test_wiring": {"input_wirings": [], "output_wirings": []},
+}
+
+tr_json_component_3_publish = {
+    "id": str(get_uuid_from_seed("component 3")),
+    "revision_group_id": str(get_uuid_from_seed("group of component 3")),
+    "name": "Test1",
+    "description": "New created component test",
+    "category": "Äpfel",
+    "version_tag": "1.0.1",
+    "state": "RELEASED",
+    "released_timestamp": "2019-12-01T12:00:00+00:00",
+    "type": "COMPONENT",
+    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "a980edcb-7ad3-49a2-a78d-bd8092fccb90",
+                "name": "new_input_1",
+                "data_type": "STRING",
+            }
+        ],
+        "outputs": [
+            {
+                "id": "e18f0cca-502b-4352-8a03-43d3b2ec4697",
+                "name": "new_output_1",
+                "data_type": "BOOLEAN",
+            }
+        ],
+    },
+    "test_wiring": {"input_wirings": [], "output_wirings": []},
+}
+
 tr_json_workflow_1 = {
     "id": str(get_uuid_from_seed("workflow 1")),
     "revision_group_id": str(get_uuid_from_seed("group of workflow 1")),
@@ -749,6 +811,53 @@ async def test_update_transformation_revision_with_released_component_and_allow_
         assert response.status_code == 201
         assert response.json()["name"] == "new name"
         assert response.json()["category"] == "Test"
+
+
+@pytest.mark.asyncio
+async def test_delete_transformation_revision_with_component(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_3)
+        )
+
+        async with async_test_client as ac:
+            response = await ac.delete(
+                posix_urljoin(
+                    "/api/transformations/", str(get_uuid_from_seed("component 3"))
+                )
+            )
+
+        assert response.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_publish_transformation_revision_with_component(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_3)
+        )
+
+        async with async_test_client as ac:
+            response = await ac.put(
+                posix_urljoin(
+                    "/api/transformations/", str(get_uuid_from_seed("component 3"))
+                ),
+                json=tr_json_component_3_publish,
+            )
+
+        assert response.status_code == 201
+        assert response.json()["state"] == "RELEASED"
+        assert "released_timestamp" in response.json()["content"]
 
 
 @pytest.mark.asyncio

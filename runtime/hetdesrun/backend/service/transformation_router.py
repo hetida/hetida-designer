@@ -14,8 +14,13 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBBadRequestError,
+    DBIntegrityError,
+    DBNotFoundError,
+)
 from hetdesrun.persistence.dbservice.revision import (
+    delete_single_transformation_revision,
     get_latest_revision_id,
     read_single_transformation_revision,
     select_multiple_transformation_revisions,
@@ -325,7 +330,7 @@ def if_applicable_release_or_deprecate(
     response_model=TransformationRevision,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
-    summary="Updates basic attributes of a component or workflow.",
+    summary="Updates a transformation revision.",
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_201_CREATED: {
@@ -413,6 +418,41 @@ async def update_transformation_revision(
     logger.debug(persisted_transformation_revision.json())
 
     return persisted_transformation_revision
+
+
+@transformation_router.delete(
+    "/{id}",
+    summary="Deletes a transformation revision.",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_204_NO_CONTENT: {
+            "description": "Successfully deleted the transformation revision"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": "Transformation revision is already released or deprecated"
+        },
+    },
+)
+async def delete_transformation_revision(
+    # pylint: disable=redefined-builtin
+    id: UUID,
+) -> None:
+    """Delete a transformation revision from the data base.
+
+    Deleting a transformation revision is only possible if it is in state DRAFT.
+    """
+
+    logger.info("delete transformation revision %s", id)
+
+    try:
+        delete_single_transformation_revision(id)
+        logger.info("deleted transformation revision %s", id)
+
+    except DBBadRequestError as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+
+    except DBNotFoundError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
 async def handle_trafo_revision_execution_request(

@@ -208,7 +208,15 @@ class TransformationRevision(BaseModel):
         cls, io_interface: IOInterface, values: dict
     ) -> IOInterface:
 
-        if values["state"] is not State.RELEASED:
+        try:
+            state = values["state"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot validate that no names in io_interface are empty "
+                "if attribute 'state' is missing"
+            ) from e
+
+        if state is not State.RELEASED:
             return io_interface
 
         for io in io_interface.inputs + io_interface.outputs:
