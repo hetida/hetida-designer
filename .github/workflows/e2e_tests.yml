@@ -91,9 +91,9 @@ jobs:
               done
           }
 
-          retry 60 5 curl http://localhost:8080/api/info
-          retry 60 5 curl http://localhost:8092/info
-          retry 60 5 curl http://localhost:4200
+          retry 60 5 "check backend available" curl http://localhost:8080/api/info
+          retry 60 5 "check py demo adaptger available" curl http://localhost:8092/info
+          retry 60 5 "check frontend available" curl http://localhost:4200
 
           # sleep 300 #TODO: properly wait for designer to be up and running!
 
