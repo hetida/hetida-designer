@@ -46,7 +46,11 @@ async def load_single_metadatum_from_adapter(
         urllib.parse.quote(str(filtered_source.ref_key)),
     )
     try:
-        resp = await client.get(url)
+        resp = await client.get(
+            url,
+            verify=get_config().hd_adapters_verify_certs,
+            timeout=get_config().external_request_timeout,
+        )  # TODO: auth?
     except httpx.HTTPError as e:
         msg = (
             f"Requesting metadata data from generic rest adapter endpoint {url}"
@@ -118,7 +122,9 @@ async def load_multiple_metadata(
 ) -> Dict[str, Any]:
     headers = get_generic_rest_adapter_auth_headers()
     async with httpx.AsyncClient(
-        headers=headers, verify=get_config().hd_adapters_verify_certs
+        headers=headers,
+        verify=get_config().hd_adapters_verify_certs,
+        timeout=get_config().external_request_timeout,
     ) as client:
         loaded_metadata = await asyncio.gather(
             *(
