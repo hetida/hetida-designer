@@ -35,31 +35,43 @@ jobs:
 
 
       # Runs a single command using the runners shell
-      - name: End2End tests
+      - name: End2End_tests
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
           
+          echo "START designer in background using overmind"
           # Start designer in background
           nix-shell --run 'overmind s' &
 
-          echo "PREPARE PLAYWRIGHT"
 
+      - name: Prepare_Playwright
+        run: |
+          echo "PREPARE PLAYWRIGHT"
 
           cd "$GITHUB_WORKSPACE/frontend"
           npm install
           npx playwright install
           npx playwright install-deps
 
+      - name: Run_Playwright
+        run: |
+
+          cd "$GITHUB_WORKSPACE"
+          echo "WAITING FOR DESIGNER"
+
           sleep 300 #TODO: properly wait for designer to be up and running!
 
-          echo "WAITING FOR DESIGNER"
           # nix-shell --run '"$WAITFOR -t 600 http://localhost:8080/api/info'
           # nix-shell --run '"$WAITFOR -t 600 http://localhost:8092/info'
           # nix-shell --run '"$WAITFOR -t 600 http://localhost:4200'
+
+          cd "$GITHUB_WORKSPACE/frontend"
           
           echo "RUN PLAYWRIGHT TESTS"
           PLAYWRIGHT_TARGET_URL="http:/localhost:4200" npm run e2e-all
 
+      - name: Cleanup
+        run: |
           cd "$GITHUB_WORKSPACE"
           nix-shell --run 'overmind k'
