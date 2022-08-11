@@ -46,11 +46,7 @@ async def load_single_metadatum_from_adapter(
         urllib.parse.quote(str(filtered_source.ref_key)),
     )
     try:
-        resp = await client.get(
-            url,
-            verify=get_config().hd_adapters_verify_certs,
-            timeout=get_config().external_request_timeout,
-        )  # TODO: auth?
+        resp = await client.get(url)
     except httpx.HTTPError as e:
         msg = (
             f"Requesting metadata data from generic rest adapter endpoint {url}"
