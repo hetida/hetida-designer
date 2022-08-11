@@ -62,9 +62,9 @@ jobs:
 
           # sleep 300 #TODO: properly wait for designer to be up and running!
 
-          nix-shell --run '"$WAITFOR -t 600 http://localhost:8080/api/info'
-          nix-shell --run '"$WAITFOR -t 600 http://localhost:8092/info'
-          nix-shell --run '"$WAITFOR -t 600 http://localhost:4200'
+          nix-shell --run 'waitfor -t 600 http://localhost:8080/api/info'
+          nix-shell --run 'waitfor -t 600 http://localhost:8092/info'
+          nix-shell --run 'waitfor -t 600 http://localhost:4200'
 
           cd "$GITHUB_WORKSPACE/frontend"
           
