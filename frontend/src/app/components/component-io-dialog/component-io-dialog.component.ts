@@ -159,10 +159,9 @@ export class ComponentIODialogComponent implements OnInit {
     if (this.componentTransformation === undefined) {
       return;
     }
-    // TODO
-    // this._preview = this._flowchartConverter.convertComponentToFlowchart(
-    //   this.componentTransformation
-    // );
+    this._preview = this._flowchartConverter.convertComponentToFlowchart(
+      this.componentTransformation
+    );
   }
 
   private _computeNextAvailableName(prefix: string, list: IO[]) {

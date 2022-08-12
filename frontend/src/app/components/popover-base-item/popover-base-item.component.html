@@ -6,7 +6,7 @@
     <mat-icon
       class="clickable"
       (click)="open()"
-      title="Open {{ abstractBaseItem.type.toLowerCase() }}"
+      title="Open {{ transformation.type.toLowerCase() }}"
       >open_in_new
     </mat-icon>
     <mat-icon class="clickable" (click)="close()" title="Close">close</mat-icon>
@@ -17,7 +17,7 @@
     *ngIf="showPopoverData.showPreview"
     (click)="open()"
     (dragstart)="_dragComponent($event)"
-    [draggable]="abstractBaseItem.state === RevisionState.RELEASED"
+    [draggable]="transformation.state === RevisionState.RELEASED"
   >
     <hetida-flowchart
       [initConfiguration]="componentPreview"
@@ -32,13 +32,13 @@
   <mat-divider></mat-divider>
   <div class="p-1">
     <mat-form-field>
-      <mat-label>{{ abstractBaseItem.type | titlecase }} name</mat-label>
+      <mat-label>{{ transformation.type | titlecase }} name</mat-label>
       <input
         id="name"
         matInput
         type="text"
         readonly
-        [value]="abstractBaseItem.name"
+        [value]="transformation.name"
       />
     </mat-form-field>
 
@@ -49,7 +49,7 @@
         matInput
         type="text"
         readonly
-        [value]="abstractBaseItem.category"
+        [value]="transformation.category"
       />
     </mat-form-field>
 
@@ -60,7 +60,7 @@
         matInput
         type="text"
         readonly
-        [value]="abstractBaseItem.description"
+        [value]="transformation.description"
       />
     </mat-form-field>
 
@@ -71,7 +71,7 @@
         matInput
         type="text"
         readonly
-        [value]="abstractBaseItem.tag"
+        [value]="transformation.version_tag"
       />
     </mat-form-field>
   </div>

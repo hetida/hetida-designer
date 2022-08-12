@@ -7,31 +7,27 @@ import {
   IOType
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { AbstractBaseItem } from 'src/app/model/base-item';
 import { Point } from 'src/app/model/point';
 import { WorkflowBaseItem } from 'src/app/model/workflow-base-item';
 import { v4 as UUID } from 'uuid';
 import { IOItem } from '../../model/io-item';
+import { Transformation } from '../../model/new-api/transformation';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FlowchartConverterService {
+  // TODO rename to convertTransformationToFlowchartForPreview?
   /**
    * converts the given base item to a flowchart configuration
-   * @param abstractBaseItem given base item
+   * @param transformation given base item
    */
   public convertComponentToFlowchart(
-    abstractBaseItem: AbstractBaseItem
+    transformation: Transformation
   ): FlowchartConfiguration {
-    const cleanedComponent = { ...abstractBaseItem };
-    // TODO remove; a component cannot have constants
-    cleanedComponent.outputs = cleanedComponent.outputs.filter(
-      io => !io.constant
-    );
-    cleanedComponent.inputs = cleanedComponent.inputs.filter(
-      io => !io.constant
-    );
+    // TODO this method is also used for workflows?
+    //   should remove constants if transformation is workflow
+    const cleanedComponent = { ...transformation };
     const operator = this.convertBaseItemToFlowchartOperator(
       cleanedComponent,
       0,
@@ -130,7 +126,9 @@ export class FlowchartConverterService {
     for (const operator of workflow.operators) {
       components.push(
         this.convertBaseItemToFlowchartOperator(
-          operator,
+          // TODO
+          // @ts-ignore
+          operator as Transformation,
           operator.posX,
           operator.posY
         )
@@ -266,12 +264,12 @@ export class FlowchartConverterService {
   // noinspection JSMethodCanBeStatic
   /**
    * converts a BaseItem to a flowchart operator, if no position is given, it will create a new operator
-   * @param baseItem BaseItem describing the Operator
+   * @param transformation BaseItem describing the Operator
    * @param posX x coordinate of the operator
    * @param posY y coordinate of the operator
    */
   private convertBaseItemToFlowchartOperator(
-    baseItem: AbstractBaseItem,
+    transformation: Transformation,
     posX: number,
     posY: number
   ): FlowchartComponent {
@@ -279,23 +277,23 @@ export class FlowchartConverterService {
     if (posX === null && posY === null) {
       uuid = UUID().toString();
     } else {
-      uuid = baseItem.id;
+      uuid = transformation.id;
     }
     const component: FlowchartComponent = {
       uuid,
-      name: baseItem.name,
-      revision: baseItem.tag,
+      name: transformation.name,
+      revision: transformation.version_tag,
       inputs: [],
       outputs: [],
       pos_x: posX,
       pos_y: posY,
-      type: baseItem.type,
-      disabled: baseItem.state === RevisionState.DISABLED
+      type: transformation.type,
+      disabled: transformation.state === RevisionState.DISABLED
     };
-    for (const io of baseItem.inputs) {
+    for (const io of transformation.io_interface.inputs) {
       component.inputs.push({
         uuid: `${uuid}_${io.id}`,
-        data_type: io.type as IOType,
+        data_type: io.data_type,
         name: io.name === undefined ? '' : io.name,
         input: true,
         pos_x: null,
@@ -304,10 +302,10 @@ export class FlowchartConverterService {
         value: ''
       });
     }
-    for (const io of baseItem.outputs) {
+    for (const io of transformation.io_interface.outputs) {
       component.outputs.push({
         uuid: `${uuid}_${io.id}`,
-        data_type: io.type as IOType,
+        data_type: io.data_type,
         name: io.name === undefined ? '' : io.name,
         input: false,
         pos_x: null,

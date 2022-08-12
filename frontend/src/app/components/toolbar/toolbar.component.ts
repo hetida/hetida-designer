@@ -90,12 +90,12 @@ export class ToolbarComponent implements OnInit {
     return 'Already published';
   }
 
-  // TODO
+  // TODO check for workflows
   async publish(): Promise<void> {
     this.baseItemAction.publish(this.transformation);
   }
 
-  // TODO
+  // TODO check for workflows
   configureIO() {
     this.baseItemAction.configureIO(this.transformation);
     this.incompleteFlag = this.baseItemAction.isIncomplete(this.transformation);
@@ -108,12 +108,12 @@ export class ToolbarComponent implements OnInit {
     return 'Deprecate';
   }
 
-  // TODO
+  // TODO check for workflows
   deprecate(): void {
     this.baseItemAction.deprecate(this.transformation);
   }
 
-  // TODO
+  // TODO check for workflows
   async copy() {
     await this.baseItemAction.copy(this.transformation);
   }
@@ -125,7 +125,7 @@ export class ToolbarComponent implements OnInit {
     return 'New revision';
   }
 
-  // TODO
+  // TODO check for workflows
   async newRevision() {
     await this.baseItemAction.newRevision(this.transformation);
   }

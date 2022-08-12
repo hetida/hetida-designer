@@ -17,8 +17,9 @@ import { ShowPopover } from 'src/app/model/show-popover';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { FlowchartConverterService } from 'src/app/service/type-converter/flowchart-converter.service';
 import { IAppState } from 'src/app/store/app.state';
-import { selectAbstractBaseItemById } from 'src/app/store/base-item/base-item.selectors';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
+import { Transformation } from '../../model/new-api/transformation';
+import { selectTransformationById } from '../../store/transformation/transformation.selectors';
 
 @Component({
   selector: 'hd-popover-base-item',
@@ -98,6 +99,8 @@ export class PopoverBaseItemComponent implements OnInit {
 
   abstractBaseItem: AbstractBaseItem | undefined;
 
+  transformation: Transformation | undefined;
+
   /**
    * Component Preview Configuration
    */
@@ -122,19 +125,21 @@ export class PopoverBaseItemComponent implements OnInit {
         switchMap((showPopoverData: ShowPopover | undefined) => {
           this.showPopoverData = showPopoverData;
           return this.store.select(
-            selectAbstractBaseItemById(showPopoverData?.itemId)
+            selectTransformationById(showPopoverData?.itemId)
           );
         })
       )
-      .subscribe((abstractBaseItem: AbstractBaseItem | undefined) => {
-        this.abstractBaseItem = abstractBaseItem;
-        this._createPreview(abstractBaseItem);
+      .subscribe((transformation: Transformation | undefined) => {
+        this.transformation = transformation;
+        if (transformation) {
+          this._createPreview(transformation);
+        }
       });
   }
 
   get _isPopoverVisible(): boolean {
     return (
-      this.abstractBaseItem !== undefined &&
+      this.transformation !== undefined &&
       this.showPopoverData !== null &&
       this.showPopoverData.visible === true
     );
@@ -149,12 +154,10 @@ export class PopoverBaseItemComponent implements OnInit {
     this.popoverService.closePopover();
   }
 
-  private _createPreview(abstractBaseItem: AbstractBaseItem): void {
-    if (this.abstractBaseItem === undefined) {
-      return;
-    }
+  private _createPreview(transformation: Transformation): void {
     this.componentPreview = this.flowchartConverter.convertComponentToFlowchart(
-      abstractBaseItem
+      // TODO check for workflows
+      transformation
     );
   }
 

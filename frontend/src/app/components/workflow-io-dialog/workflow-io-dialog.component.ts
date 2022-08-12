@@ -36,6 +36,7 @@ import { UniqueValueValidator } from 'src/app/validation/unique-value-validator'
 import { IOItem } from '../../model/io-item';
 import { WorkflowBaseItem } from '../../model/workflow-base-item';
 import { WorkflowOperator } from '../../model/workflow-operator';
+import { Transformation } from '../../model/new-api/transformation';
 
 export interface WorkflowIODialogData {
   workflow: WorkflowBaseItem;
@@ -363,7 +364,9 @@ export class WorkflowIODialogComponent {
       return;
     }
     this.preview = this.flowchartConverter.convertComponentToFlowchart(
-      this.data.workflow
+      // TODO
+      // @ts-ignore
+      this.data.workflow as Transformation
     );
   }
 }
