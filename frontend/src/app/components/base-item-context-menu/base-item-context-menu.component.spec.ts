@@ -44,18 +44,26 @@ describe('BaseItemContextMenuComponent', () => {
     fixture = TestBed.createComponent(BaseItemContextMenuComponent);
     component = fixture.componentInstance;
     component.transformation = {
-      category: 'dummy',
-      description: 'dummy',
-      groupId: '123',
-      id: '1',
-      inputs: [],
-      outputs: [],
+      id: 'mockId0',
+      revision_group_id: 'mockGroupId',
       name: 'Mock',
+      description: 'mock description',
+      category: 'EXAMPLES',
+      version_tag: '0.0.1',
+      released_timestamp: new Date().toISOString(),
+      disabled_timestamp: new Date().toISOString(),
       state: RevisionState.DRAFT,
-      tag: 't.1',
-      wirings: [],
       type: BaseItemType.COMPONENT,
-      code: ''
+      documentation: null,
+      content: 'python code',
+      io_interface: {
+        inputs: [],
+        outputs: []
+      },
+      test_wiring: {
+        input_wirings: [],
+        output_wirings: []
+      }
     };
     fixture.detectChanges();
   });
