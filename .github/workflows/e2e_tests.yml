@@ -42,6 +42,7 @@ jobs:
           
           echo "START designer in background using overmind"
           # Start designer in background
+          nix-shell --run 'echo "Running for dep buildup"'
           nix-shell --run 'overmind s' &
 
 
