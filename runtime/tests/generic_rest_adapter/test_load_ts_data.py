@@ -25,15 +25,15 @@ async def test_load_ts_adapter_request():
         resp_mock = mock.Mock()
         resp_mock.status_code = 200
         resp_mock.raw = """\n
-            {"timeseriesId": "id_1", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
-            {"timeseriesId": "id_1", "timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7}
-            {"timeseriesId": "id_1", "timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
+            {"timeseriesId": "1", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
+            {"timeseriesId": "1", "timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7}
+            {"timeseriesId": "1", "timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
             """
         resp_mock.headers = {}
 
         filtered_sources = [
             FilteredSource(
-                ref_id="id_1",
+                ref_id="1",
                 type="timeseries(float)",
                 filters={
                     "timestampFrom": "2018-09-01T00:00:00Z",
@@ -53,6 +53,7 @@ async def test_load_ts_adapter_request():
             )
 
             assert df.shape == (3, 3)
+            assert df["timeseriesId"].dtype == "string"
 
             resp_mock.status_code = 400
 
