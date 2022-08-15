@@ -266,6 +266,7 @@ in pkgs.mkShell rec {
     libzip
     zlib
     cacert
+    curl
     # glib
     glibc
     glibcLocales
@@ -302,7 +303,6 @@ in pkgs.mkShell rec {
     OVERMIND_PROCFILE = procfile;
     OVERMIND_NO_PORT = "1";
     OVERMIND_CAN_DIE = "runtime";
-
 
 
   shellHook = ''
