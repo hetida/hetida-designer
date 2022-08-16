@@ -1,0 +1,342 @@
+{
+    "id": "997cc065-06be-445f-aca3-350985bd2f86",
+    "revision_group_id": "18010fed-e0f8-4d1e-aff3-1655354f0644",
+    "name": "New workflow",
+    "description": "New created workflow",
+    "category": "Draft",
+    "version_tag": "1.0.0",
+    "state": "DRAFT",
+    "type": "WORKFLOW",
+    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+    "content": {
+        "operators": [
+            {
+                "id": "e4c3fb15-b340-41d4-80f4-65a6c2413d61",
+                "revision_group_id": "48f6fd85-bebf-434f-953a-19d64b042748",
+                "name": "Add/Update Attributes (Series)",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "635d23be-39b5-4665-ac1e-c8e4a001d06d",
+                "inputs": [
+                    {
+                        "id": "ebc33272-dd65-4629-a651-e2a271a1c96f",
+                        "name": "series",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "id": "295fe208-15a6-4a8d-9b0d-1b3b75d0454a",
+                        "name": "attributes",
+                        "data_type": "ANY",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "2d0d724d-4aae-4874-b353-c652043b4763",
+                        "name": "series",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 440,
+                    "y": 500
+                }
+            },
+            {
+                "id": "ddead328-1b4e-4b9d-b243-c971ad9c9f55",
+                "revision_group_id": "4a7450b3-c462-4c11-ab5b-faab1b3010a5",
+                "name": "Add/Update Attributes (DataFrame)",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "5372a8bb-717f-4183-a89b-94b0c8d8693a",
+                "inputs": [
+                    {
+                        "id": "b2a9b49b-1bbd-4245-8a3b-d37758a481bc",
+                        "name": "dataframe",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "id": "0f1a57e6-57f8-40b0-bb1e-bedf75df56c2",
+                        "name": "attributes",
+                        "data_type": "ANY",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "012f9b19-4718-4eef-84e0-fc387e036fbf",
+                        "name": "dataframe",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 440,
+                    "y": 300
+                }
+            },
+            {
+                "id": "b23d54c2-8bf5-4634-a3dd-bb575a99e0d8",
+                "revision_group_id": "30c08359-aeb2-4ce5-b1b0-c5ca253f9f23",
+                "name": "Extract Attributes (Series)",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "9b160d5b-f821-4b7a-b314-b2c94e54c983",
+                "inputs": [
+                    {
+                        "id": "7950ddc9-c1e7-4cf7-afa4-304db0bafc0e",
+                        "name": "series",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "62546db3-1c7d-49f3-95ae-3eb1e87ba73c",
+                        "name": "attributes",
+                        "data_type": "ANY",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 1000,
+                    "y": 502
+                }
+            },
+            {
+                "id": "756ffa52-257f-4476-9a88-b971fbdc6fb5",
+                "revision_group_id": "8264ab0e-9ab2-403e-a449-e874aa729ae6",
+                "name": "Extract Attributes (DataFrame)",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": "816436b2-f303-48af-857c-6c4d7c7a0f4b",
+                "inputs": [
+                    {
+                        "id": "34eb1d9f-a8d5-40bd-bd7a-f66afd0f7958",
+                        "name": "dataframe",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "id": "b4dd9237-3a95-4f6c-89cc-45cb890af227",
+                        "name": "attributes",
+                        "data_type": "ANY",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ],
+                "position": {
+                    "x": 1000,
+                    "y": 302
+                }
+            }
+        ],
+        "links": [
+            {
+                "id": "3ff4af70-5afd-4904-af05-70ae3be19273",
+                "start": {
+                    "operator": "ddead328-1b4e-4b9d-b243-c971ad9c9f55",
+                    "connector": {
+                        "id": "012f9b19-4718-4eef-84e0-fc387e036fbf",
+                        "name": "dataframe",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "756ffa52-257f-4476-9a88-b971fbdc6fb5",
+                    "connector": {
+                        "id": "34eb1d9f-a8d5-40bd-bd7a-f66afd0f7958",
+                        "name": "dataframe",
+                        "data_type": "DATAFRAME",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "0dc5cb20-72ca-420b-b69b-530a3a0ad272",
+                "start": {
+                    "operator": "e4c3fb15-b340-41d4-80f4-65a6c2413d61",
+                    "connector": {
+                        "id": "2d0d724d-4aae-4874-b353-c652043b4763",
+                        "name": "series",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "b23d54c2-8bf5-4634-a3dd-bb575a99e0d8",
+                    "connector": {
+                        "id": "7950ddc9-c1e7-4cf7-afa4-304db0bafc0e",
+                        "name": "series",
+                        "data_type": "SERIES",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            }
+        ],
+        "inputs": [
+            {
+                "id": "719f363a-6d95-43a3-8490-e2a68c74287a",
+                "data_type": "SERIES",
+                "operator_id": "e4c3fb15-b340-41d4-80f4-65a6c2413d61",
+                "connector_id": "ebc33272-dd65-4629-a651-e2a271a1c96f",
+                "operator_name": "Add/Update Attributes (Series)",
+                "connector_name": "series",
+                "position": {
+                    "x": 0,
+                    "y": 0
+                }
+            },
+            {
+                "id": "476fe61d-fdba-40c2-a578-86982850256e",
+                "data_type": "ANY",
+                "operator_id": "e4c3fb15-b340-41d4-80f4-65a6c2413d61",
+                "connector_id": "295fe208-15a6-4a8d-9b0d-1b3b75d0454a",
+                "operator_name": "Add/Update Attributes (Series)",
+                "connector_name": "attributes",
+                "position": {
+                    "x": 0,
+                    "y": 0
+                }
+            },
+            {
+                "id": "2d06ac10-0a80-4e2b-abcd-131899df45c3",
+                "data_type": "DATAFRAME",
+                "operator_id": "ddead328-1b4e-4b9d-b243-c971ad9c9f55",
+                "connector_id": "b2a9b49b-1bbd-4245-8a3b-d37758a481bc",
+                "operator_name": "Add/Update Attributes (DataFrame)",
+                "connector_name": "dataframe",
+                "position": {
+                    "x": 0,
+                    "y": 0
+                }
+            },
+            {
+                "id": "aedaff8f-39db-4371-98d8-754315d07d89",
+                "data_type": "ANY",
+                "operator_id": "ddead328-1b4e-4b9d-b243-c971ad9c9f55",
+                "connector_id": "0f1a57e6-57f8-40b0-bb1e-bedf75df56c2",
+                "operator_name": "Add/Update Attributes (DataFrame)",
+                "connector_name": "attributes",
+                "position": {
+                    "x": 0,
+                    "y": 0
+                }
+            }
+        ],
+        "outputs": [
+            {
+                "id": "e8e1f01c-1093-4f1d-af71-fe4b9fab20c2",
+                "data_type": "ANY",
+                "operator_id": "b23d54c2-8bf5-4634-a3dd-bb575a99e0d8",
+                "connector_id": "62546db3-1c7d-49f3-95ae-3eb1e87ba73c",
+                "operator_name": "Extract Attributes (Series)",
+                "connector_name": "attributes",
+                "position": {
+                    "x": 0,
+                    "y": 0
+                }
+            },
+            {
+                "id": "6e589cae-03ca-42e6-ac70-28c56a335826",
+                "data_type": "ANY",
+                "operator_id": "756ffa52-257f-4476-9a88-b971fbdc6fb5",
+                "connector_id": "b4dd9237-3a95-4f6c-89cc-45cb890af227",
+                "operator_name": "Extract Attributes (DataFrame)",
+                "connector_name": "attributes",
+                "position": {
+                    "x": 0,
+                    "y": 0
+                }
+            }
+        ],
+        "constants": []
+    },
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "719f363a-6d95-43a3-8490-e2a68c74287a",
+                "data_type": "SERIES"
+            },
+            {
+                "id": "476fe61d-fdba-40c2-a578-86982850256e",
+                "data_type": "ANY"
+            },
+            {
+                "id": "2d06ac10-0a80-4e2b-abcd-131899df45c3",
+                "data_type": "DATAFRAME"
+            },
+            {
+                "id": "aedaff8f-39db-4371-98d8-754315d07d89",
+                "data_type": "ANY"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "e8e1f01c-1093-4f1d-af71-fe4b9fab20c2",
+                "data_type": "ANY"
+            },
+            {
+                "id": "6e589cae-03ca-42e6-ac70-28c56a335826",
+                "data_type": "ANY"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": []
+    }
+}
