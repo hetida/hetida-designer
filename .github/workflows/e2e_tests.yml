@@ -42,6 +42,7 @@ jobs:
           
           echo "START designer in background using overmind"
           # Start designer in background
+          nix-shell --run 'echo "Running for dep buildup"'
           nix-shell --run 'overmind s' &
 
 
@@ -92,9 +93,9 @@ jobs:
 
           echo "WAITING FOR DESIGNER"
 
-          retry 60 5 "check backend available" curl http://localhost:8080/api/info
-          retry 60 5 "check py demo adaptger available" curl http://localhost:8092/info
-          retry 60 5 "check frontend available" curl http://localhost:4200
+          retry 90 5 "check backend available" curl http://localhost:8080/api/info
+          retry 90 5 "check py demo adaptger available" curl http://localhost:8092/info
+          retry 90 5 "check frontend available" curl http://localhost:4200
 
           echo "Successfully waited for designer being available."
 
