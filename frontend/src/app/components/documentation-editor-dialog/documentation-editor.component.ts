@@ -9,8 +9,7 @@ import {
 } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { Store } from '@ngrx/store';
-import { first } from 'rxjs/operators';
-import { Transformation } from 'src/app/model/new-api/transformation';
+import { first, switchMap } from 'rxjs/operators';
 import { BaseItemService } from 'src/app/service/base-item/base-item.service';
 import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
@@ -42,8 +41,6 @@ export class DocumentationEditorComponent implements OnInit {
   @ViewChild('editorRef') editorRef: ElementRef;
   @ViewChild('previewRef') previewRef: ElementRef;
 
-  private transformation: Transformation;
-
   constructor(
     private readonly transformationStore: Store<TransformationState>,
     private readonly baseItemService: BaseItemService,
@@ -66,7 +63,6 @@ export class DocumentationEditorComponent implements OnInit {
         }
         this.markdown = transformation.documentation;
         this.parsedMarkdown = this.markdownService.parseMarkdown(this.markdown);
-        this.transformation = transformation;
         this.changeDetection.detectChanges();
       });
   }
@@ -80,11 +76,18 @@ export class DocumentationEditorComponent implements OnInit {
   public switchEdit(): void {
     this.editMode = !this.editMode;
 
-    this.baseItemService.updateTransformation({
-      ...this.transformation,
-      id: this.itemId,
-      documentation: this.markdown
-    });
+    this.transformationStore
+      .select(selectTransformationById(this.itemId))
+      .pipe(
+        first(),
+        switchMap(async transformation =>
+          this.baseItemService.updateTransformation({
+            ...transformation,
+            documentation: this.markdown
+          })
+        )
+      )
+      .subscribe();
   }
 
   /**
