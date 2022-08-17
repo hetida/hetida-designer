@@ -1,6 +1,6 @@
 import logging
 from posixpath import join as posix_urljoin
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from uuid import UUID, uuid4
 
 import requests
@@ -527,8 +527,10 @@ async def execute_asynchronous_transformation_revision_endpoint(  # type: ignore
         ...,
         description="If provided execute asynchronous and post response to callback_url",
     ),
-) -> None:
+) -> Any:
     background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
+
+    return {"message": f"Execution request for job id {exec_by_id.job_id} accepted"}
 
 
 @transformation_router.post(
