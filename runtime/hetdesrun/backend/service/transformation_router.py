@@ -1,10 +1,18 @@
 import logging
-import requests
-from typing import List, Optional, Tuple
+from posixpath import join as posix_urljoin
+from typing import Any, List, Optional, Tuple
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException, Path, Query, status
-from posixpath import join as posix_urljoin
+import requests
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    HTTPException,
+    Path,
+    Query,
+    Response,
+    status,
+)
 from pydantic import HttpUrl
 
 from hetdesrun.backend.execution import (
@@ -15,7 +23,10 @@ from hetdesrun.backend.execution import (
     TrafoExecutionRuntimeConnectionError,
     execute_transformation_revision,
 )
-from hetdesrun.backend.models.info import ExecutionResponseFrontendDto, ExecutionResultReceived
+from hetdesrun.backend.models.info import (
+    ExecutionResponseFrontendDto,
+    ExecutionResultReceived,
+)
 from hetdesrun.component.code import update_code
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
@@ -484,13 +495,26 @@ async def handle_trafo_revision_execution_request(
     except TrafoExecutionResultValidationError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
+
 callback_router = APIRouter()
+
 
 @callback_router.post(
     "{$callback_url}/execution/{$job_id}", response_model=ExecutionResultReceived
 )
-def invoice_notification(body: ExecutionResponseFrontendDto):
+def invoice_notification(
+    body: ExecutionResponseFrontendDto,  # pylint: disable=unused-argument
+) -> None:
     pass
+
+
+async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> None:
+    result = await execute_transformation_revision(exec_by_id)
+    requests.post(
+        posix_urljoin(str(callback_url), "execution", str(exec_by_id.job_id)),
+        json=result,
+    )
+
 
 @transformation_router.post(
     "/execute",
@@ -506,22 +530,25 @@ def invoice_notification(body: ExecutionResponseFrontendDto):
         },
         status.HTTP_202_ACCEPTED: {
             "description": "Accepted execution request, cannot guarantee success"
-        }
+        },
     },
 )
 async def execute_transformation_revision_endpoint(
     # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
     callback_url: Optional[HttpUrl] = Query(
-        None, 
-        description = "If provided execute asynchronous and post response to callback_url"
-    )
-) -> ExecutionResponseFrontendDto:
+        None,
+        description="If provided execute asynchronous and post response to callback_url",
+    ),
+    background_tasks: Any = BackgroundTasks,
+    response: Any = Response,
+) -> Optional[ExecutionResponseFrontendDto]:
     if callback_url is None:
         return await execute_transformation_revision(exec_by_id)
-    else:
-        result = await execute_transformation_revision(exec_by_id)
-        requests.post(posix_urljoin(callback_url,"execution",exec_by_id.job_id), json=result)
+
+    background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
+    response.status.HTTP_202_ACCEPTED  # pylint: disable=pointless-statement
+    return None
 
 
 @transformation_router.post(

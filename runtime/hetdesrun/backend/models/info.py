@@ -57,5 +57,6 @@ class ExecutionResponseFrontendDto(BaseModel):
 
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
 
+
 class ExecutionResultReceived(BaseModel):
     ok: bool
