@@ -1,18 +1,10 @@
 import logging
 from posixpath import join as posix_urljoin
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 from uuid import UUID, uuid4
 
 import requests
-from fastapi import (
-    APIRouter,
-    BackgroundTasks,
-    HTTPException,
-    Path,
-    Query,
-    Response,
-    status,
-)
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Path, Query, status
 from pydantic import HttpUrl
 
 from hetdesrun.backend.execution import (
@@ -517,8 +509,30 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
 
 
 @transformation_router.post(
-    "/execute",
+    "/execute/asynchron",
     callbacks=callback_router.routes,
+    summary="Executes a transformation revision asynchronously",
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={
+        status.HTTP_202_ACCEPTED: {
+            "description": "Accepted execution request, cannot guarantee success"
+        },
+    },
+)
+async def execute_asynchronous_transformation_revision_endpoint(  # type: ignore
+    # pylint: disable=redefined-builtin
+    exec_by_id: ExecByIdInput,
+    callback_url: HttpUrl = Query(
+        ...,
+        description="If provided execute asynchronous and post response to callback_url",
+    ),
+    background_tasks=BackgroundTasks,
+) -> None:
+    background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
+
+
+@transformation_router.post(
+    "/execute",
     response_model=ExecutionResponseFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
@@ -527,28 +541,14 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
     responses={
         status.HTTP_200_OK: {
             "description": "Successfully executed the transformation revision"
-        },
-        status.HTTP_202_ACCEPTED: {
-            "description": "Accepted execution request, cannot guarantee success"
-        },
+        }
     },
 )
 async def execute_transformation_revision_endpoint(
     # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
-    callback_url: Optional[HttpUrl] = Query(
-        None,
-        description="If provided execute asynchronous and post response to callback_url",
-    ),
-    background_tasks: Any = BackgroundTasks,
-    response: Any = Response,
-) -> Optional[ExecutionResponseFrontendDto]:
-    if callback_url is None:
-        return await execute_transformation_revision(exec_by_id)
-
-    background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
-    response.status.HTTP_202_ACCEPTED  # pylint: disable=pointless-statement
-    return None
+) -> ExecutionResponseFrontendDto:
+    return await execute_transformation_revision(exec_by_id)
 
 
 @transformation_router.post(
