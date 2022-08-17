@@ -426,6 +426,7 @@ async def test_update_transformation_revision_from_released_workflow_dto(
 
         assert response.status_code == 403
 
+
 @pytest.mark.asyncio
 async def test_delete_multiple_inuputs_of_wf_at_once(
     async_test_client, clean_test_db_engine
@@ -433,16 +434,16 @@ async def test_delete_multiple_inuputs_of_wf_at_once(
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
-    ):  
-        with open("./tests/data/workflows/iso_forest_wf_dto.json", "r", encoding="utf8") as f:
+    ):
+        with open(
+            "./tests/data/workflows/iso_forest_wf_dto.json", "r", encoding="utf8"
+        ) as f:
             wf_dto_json = json.load(f)
 
         wf_dto_json["state"] = "DRAFT"
 
         store_single_transformation_revision(
-            WorkflowRevisionFrontendDto(
-                **wf_dto_json
-            ).to_transformation_revision()
+            WorkflowRevisionFrontendDto(**wf_dto_json).to_transformation_revision()
         )
 
         assert wf_dto_json["inputs"][3]["name"] == "x_max"
@@ -450,10 +451,8 @@ async def test_delete_multiple_inuputs_of_wf_at_once(
         assert wf_dto_json["inputs"][4]["name"] == "x_min"
         wf_dto_json["inputs"][4]["name"] = ""
 
-        updated_wf_dto = WorkflowRevisionFrontendDto(
-            **wf_dto_json
-        )
-        
+        updated_wf_dto = WorkflowRevisionFrontendDto(**wf_dto_json)
+
         assert updated_wf_dto.inputs[3].name == ""
         assert updated_wf_dto.inputs[4].name == ""
 
@@ -463,7 +462,8 @@ async def test_delete_multiple_inuputs_of_wf_at_once(
                 json=wf_dto_json,
             )
 
-        assert response.status_code == 403
+        assert response.status_code == 201
+
 
 @pytest.mark.asyncio
 async def test_publish_transformation_revision_from_workflow_dto(
