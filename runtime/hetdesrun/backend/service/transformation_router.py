@@ -522,11 +522,11 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
 async def execute_asynchronous_transformation_revision_endpoint(  # type: ignore
     # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
+    background_tasks: BackgroundTasks,
     callback_url: HttpUrl = Query(
         ...,
         description="If provided execute asynchronous and post response to callback_url",
     ),
-    background_tasks=BackgroundTasks,
 ) -> None:
     background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
 
