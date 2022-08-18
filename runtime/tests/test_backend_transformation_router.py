@@ -931,6 +931,46 @@ async def test_execute_for_transformation_revision(
 
 
 @pytest.mark.asyncio
+async def test_execute_for_transformation_revision_with_job_id_none(
+    async_test_client, clean_test_db_engine
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
+    ):
+        with mock.patch(
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
+        ):
+            tr_component_1 = TransformationRevision(**tr_json_component_1)
+            tr_component_1.content = update_code(tr_component_1)
+            store_single_transformation_revision(tr_component_1)
+            tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
+
+            store_single_transformation_revision(tr_workflow_2)
+
+            update_or_create_nesting(tr_workflow_2)
+
+            exec_by_id_input = ExecByIdInput(
+                id=tr_workflow_2.id,
+                wiring=tr_workflow_2.test_wiring,
+                job_id=None,
+            )
+
+            async with async_test_client as ac:
+                response = await ac.post(
+                    "/api/transformations/execute",
+                    json=json.loads(exec_by_id_input.json()),
+                )
+
+            assert response.status_code == 200
+            resp_data = response.json()
+            assert "output_types_by_output_name" in resp_data
+            assert "job_id" in resp_data
+
+
+@pytest.mark.asyncio
 async def test_execute_for_separate_runtime_container(
     async_test_client, clean_test_db_engine
 ):
