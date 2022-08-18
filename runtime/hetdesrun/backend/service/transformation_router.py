@@ -45,6 +45,7 @@ transformation_router = HandleTrailingSlashAPIRouter(
     prefix="/transformations",
     tags=["transformations"],
     responses={
+        status.HTTP_400_BAD_REQUEST: {"description": "Bad Request"},
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
         status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
@@ -462,7 +463,6 @@ async def delete_transformation_revision(
 
 
 async def handle_trafo_revision_execution_request(
-    # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision.
@@ -505,7 +505,7 @@ async def execute_transformation_revision_endpoint(
     # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
-    return await execute_transformation_revision(exec_by_id)
+    return await handle_trafo_revision_execution_request(exec_by_id)
 
 
 callback_router = APIRouter()
@@ -521,7 +521,8 @@ def invoice_notification(
 
 
 async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> None:
-    result = await execute_transformation_revision(exec_by_id)
+    result = await handle_trafo_revision_execution_request(exec_by_id)
+
     requests.post(
         posix_urljoin(str(callback_url), "execution", str(exec_by_id.job_id)),
         json=result,
@@ -535,12 +536,11 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
     status_code=status.HTTP_202_ACCEPTED,
     responses={
         status.HTTP_202_ACCEPTED: {
-            "description": "Accepted execution request, cannot guarantee success"
+            "description": "Accepted execution request"
         },
     },
 )
 async def execute_asynchronous_transformation_revision_endpoint(  # type: ignore
-    # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
     background_tasks: BackgroundTasks,
     callback_url: HttpUrl = Query(
@@ -550,7 +550,7 @@ async def execute_asynchronous_transformation_revision_endpoint(  # type: ignore
 ) -> Any:
     background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
 
-    return {"message": f"Execution request for job id {exec_by_id.job_id} accepted"}
+    return {"message": f"Execution request with job id {exec_by_id.job_id} accepted"}
 
 
 @transformation_router.post(
@@ -558,11 +558,11 @@ async def execute_asynchronous_transformation_revision_endpoint(  # type: ignore
     response_model=ExecutionResponseFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
-    summary="Executes a transformation revision",
+    summary="Executes the latest transformation revision of a revision group",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
-            "description": "Successfully executed the transformation revision"
+            "description": "Successfully executed the latest transformation revision"
         }
     },
 )
@@ -586,9 +586,6 @@ async def execute_latest_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    if exec_latest_by_group_id_input.job_id is None:
-        exec_latest_by_group_id_input.job_id = uuid4()
-
     try:
         # pylint: disable=redefined-builtin
         id = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
@@ -597,13 +594,4 @@ async def execute_latest_transformation_revision_endpoint(
 
     exec_by_id_input = exec_latest_by_group_id_input.to_exec_by_id(id)
 
-    try:
-        return await execute_transformation_revision(exec_by_id_input)
-    except TrafoExecutionNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-
-    except TrafoExecutionRuntimeConnectionError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
-
-    except TrafoExecutionResultValidationError as e:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    return await handle_trafo_revision_execution_request(exec_by_id_input)
