@@ -186,10 +186,14 @@ async def test_get_all_base_items_with_specified_state(
         store_single_transformation_revision(tr_workflow_2)
 
         async with async_test_client as ac:
-            response_draft = await ac.get("/api/base-items/?state=DRAFT")
-            response_released = await ac.get("/api/base-items/?state=RELEASED")
-            response_disabled = await ac.get("/api/base-items/?state=DISABLED")
-            response_foo = await ac.get("/api/base-items/?state=foo")
+            response_draft = await ac.get("/api/base-items/", params={"state": "DRAFT"})
+            response_released = await ac.get(
+                "/api/base-items/", params={"state": "RELEASED"}
+            )
+            response_disabled = await ac.get(
+                "/api/base-items/", params={"state": "DISABLED"}
+            )
+            response_foo = await ac.get("/api/base-items/", params={"state": "FOO"})
 
         assert response_draft.status_code == 200
         assert len(response_draft.json()) == 2
@@ -238,9 +242,13 @@ async def test_get_all_base_items_with_specified_type(
         )
 
         async with async_test_client as ac:
-            response_component = await ac.get("/api/base-items/?type=COMPONENT")
-            response_workflow = await ac.get("/api/base-items/?type=WORKFLOW")
-            response_foo = await ac.get("/api/base-items/?type=foo")
+            response_component = await ac.get(
+                "/api/base-items/", params={"type": "COMPONENT"}
+            )
+            response_workflow = await ac.get(
+                "/api/base-items/", params={"type": "WORKFLOW"}
+            )
+            response_foo = await ac.get("/api/base-items/", params={"type": "FOO"})
 
         assert response_component.status_code == 200
         assert len(response_component.json()) == 2
@@ -287,10 +295,10 @@ async def test_get_all_base_items_with_specified_type_and_state(
 
         async with async_test_client as ac:
             response_released_component = await ac.get(
-                "/api/base-items/?type=COMPONENT&state=RELEASED"
+                "/api/base-items/", params={"type": "COMPONENT", "state": "RELEASED"}
             )
             response_draft_workflow = await ac.get(
-                "/api/base-items/?type=WORKFLOW&state=DRAFT"
+                "/api/base-items/", params={"type": "WORKFLOW", "state": "DRAFT"}
             )
 
         assert response_released_component.status_code == 200

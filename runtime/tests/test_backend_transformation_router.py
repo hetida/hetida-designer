@@ -103,7 +103,7 @@ tr_json_component_1_new_revision = {
             }
         ],
     },
-    "content": "code",
+    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',
     "test_wiring": {
         "input_wirings": [
             {
@@ -483,10 +483,18 @@ async def test_get_all_transformation_revisions_with_specified_state(
         tr_workflow_2.deprecate()
         store_single_transformation_revision(tr_workflow_2)
         async with async_test_client as ac:
-            response_draft = await ac.get("/api/transformations/?state=DRAFT")
-            response_released = await ac.get("/api/transformations/?state=RELEASED")
-            response_disabled = await ac.get("/api/transformations/?state=DISABLED")
-            response_foo = await ac.get("/api/transformations/?state=foo")
+            response_draft = await ac.get(
+                "/api/transformations/", params={"state": "DRAFT"}
+            )
+            response_released = await ac.get(
+                "/api/transformations/", params={"state": "RELEASED"}
+            )
+            response_disabled = await ac.get(
+                "/api/transformations/", params={"state": "DISABLED"}
+            )
+            response_foo = await ac.get(
+                "/api/transformations/", params={"state": "FOO"}
+            )
 
         assert response_draft.status_code == 200
         assert len(response_draft.json()) == 2
@@ -527,9 +535,13 @@ async def test_get_all_transformation_revisions_with_specified_type(
         )
 
         async with async_test_client as ac:
-            response_component = await ac.get("/api/transformations/?type=COMPONENT")
-            response_workflow = await ac.get("/api/transformations/?type=WORKFLOW")
-            response_foo = await ac.get("/api/transformations/?type=foo")
+            response_component = await ac.get(
+                "/api/transformations/", params={"type": "COMPONENT"}
+            )
+            response_workflow = await ac.get(
+                "/api/transformations/", params={"type": "WORKFLOW"}
+            )
+            response_foo = await ac.get("/api/transformations/", params={"type": "FOO"})
 
         assert response_component.status_code == 200
         assert len(response_component.json()) == 2
@@ -568,10 +580,11 @@ async def test_get_all_transformation_revisions_with_specified_type_and_state(
 
         async with async_test_client as ac:
             response_released_component = await ac.get(
-                "/api/transformations/?type=COMPONENT&state=RELEASED"
+                "/api/transformations/",
+                params={"type": "COMPONENT", "state": "RELEASED"},
             )
             response_draft_workflow = await ac.get(
-                "/api/transformations/?type=WORKFLOW&state=DRAFT"
+                "/api/transformations/", params={"type": "WORKFLOW", "state": "DRAFT"}
             )
 
         assert response_released_component.status_code == 200
@@ -1039,6 +1052,82 @@ async def test_execute_for_separate_runtime_container(
 
 
 @pytest.mark.asyncio
+async def test_execute_asynchron_for_transformation_revision(
+    async_test_client, clean_test_db_engine
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
+    ):
+        with mock.patch(
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
+        ):
+            tr_component_1 = TransformationRevision(**tr_json_component_1)
+            tr_component_1.content = update_code(tr_component_1)
+            store_single_transformation_revision(tr_component_1)
+            tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
+
+            store_single_transformation_revision(tr_workflow_2)
+
+            update_or_create_nesting(tr_workflow_2)
+
+            exec_by_id_input = ExecByIdInput(
+                id=tr_workflow_2.id,
+                wiring=tr_workflow_2.test_wiring,
+                job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+            )
+
+            post_mock = mock.Mock()
+            with mock.patch(
+                "hetdesrun.backend.service.transformation_router.requests.post",
+                new=post_mock,
+            ):
+                async with async_test_client as ac:
+                    response = await ac.post(
+                        "/api/transformations/execute/asynchron",
+                        json=json.loads(exec_by_id_input.json()),
+                        params={"callback_url": "http://callback-url.com"},
+                    )
+
+                assert response.status_code == 202
+                assert "message" in response.json()
+                assert (
+                    "1270547c-b224-461d-9387-e9d9d465bbe1" in response.json()["message"]
+                )
+                assert post_mock.called
+                func_name, args, kwargs = post_mock.mock_calls[0]
+                assert func_name == ""
+                assert len(args) != 0
+                assert (
+                    args[0]
+                    == "http://callback-url.com/execution/1270547c-b224-461d-9387-e9d9d465bbe1"
+                )
+                resp_data = kwargs["json"]
+                assert "error" in resp_data
+                assert resp_data["error"] == None
+                assert "execution_id" in resp_data
+                assert resp_data["execution_id"] == None
+                assert "job_id" in resp_data
+                assert resp_data["job_id"] == "1270547c-b224-461d-9387-e9d9d465bbe1"
+                assert "output_results_by_output_name" in resp_data
+                assert len(resp_data["output_results_by_output_name"]) == 1
+                assert "wf_output" in resp_data["output_results_by_output_name"]
+                assert resp_data["output_results_by_output_name"]["wf_output"] == 100
+                assert "output_types_by_output_name" in resp_data
+                assert len(resp_data["output_types_by_output_name"]) == 1
+                assert "wf_output" in resp_data["output_types_by_output_name"]
+                assert resp_data["output_types_by_output_name"]["wf_output"] == "INT"
+                assert "response" in resp_data
+                assert resp_data["response"] == None
+                assert "result" in resp_data
+                assert resp_data["result"] == "ok"
+                assert "traceback" in resp_data
+                assert resp_data["traceback"] == None
+
+
+@pytest.mark.asyncio
 async def test_execute_latest_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
@@ -1120,6 +1209,86 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
                 "no released transformation revisions with revision group id"
                 in response.json()["detail"]
             )
+
+
+@pytest.mark.asyncio
+async def test_execute_latest_asynchron_for_transformation_revision(
+    async_test_client, clean_test_db_engine
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
+    ):
+        with mock.patch(
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
+        ):
+            tr_component_1 = TransformationRevision(**tr_json_component_1)
+            tr_component_1.content = update_code(tr_component_1)
+            store_single_transformation_revision(tr_component_1)
+
+            tr_component_1_new_revision = TransformationRevision(
+                **tr_json_component_1_new_revision
+            )
+            tr_component_1_new_revision.content = update_code(
+                tr_component_1_new_revision
+            )
+            tr_component_1_new_revision.release()
+            store_single_transformation_revision(tr_component_1_new_revision)
+
+            exec_latest_by_group_id_input = ExecLatestByGroupIdInput(
+                revision_group_id=tr_component_1.revision_group_id,
+                wiring=tr_component_1.test_wiring,
+                job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+            )
+
+            post_mock = mock.Mock()
+            with mock.patch(
+                "hetdesrun.backend.service.transformation_router.requests.post",
+                new=post_mock,
+            ):
+                async with async_test_client as ac:
+                    response = await ac.post(
+                        "/api/transformations/execute-latest/asynchron",
+                        json=json.loads(exec_latest_by_group_id_input.json()),
+                        params={"callback_url": "http://callback-url.com/"},
+                    )
+
+                assert response.status_code == 202
+                assert "message" in response.json()
+                assert (
+                    "1270547c-b224-461d-9387-e9d9d465bbe1" in response.json()["message"]
+                )
+                assert post_mock.called
+                func_name, args, kwargs = post_mock.mock_calls[0]
+                assert func_name == ""
+                assert len(args) != 0
+                assert (
+                    args[0]
+                    == "http://callback-url.com/execution/1270547c-b224-461d-9387-e9d9d465bbe1"
+                )
+                resp_data = kwargs["json"]
+                assert "error" in resp_data
+                assert resp_data["error"] == None
+                assert "execution_id" in resp_data
+                assert resp_data["execution_id"] == None
+                assert "job_id" in resp_data
+                assert resp_data["job_id"] == "1270547c-b224-461d-9387-e9d9d465bbe1"
+                assert "output_results_by_output_name" in resp_data
+                assert len(resp_data["output_results_by_output_name"]) == 1
+                assert "operator_output" in resp_data["output_results_by_output_name"]
+                assert resp_data["output_results_by_output_name"]["operator_output"] == 100
+                assert "output_types_by_output_name" in resp_data
+                assert len(resp_data["output_types_by_output_name"]) == 1
+                assert "operator_output" in resp_data["output_types_by_output_name"]
+                assert resp_data["output_types_by_output_name"]["operator_output"] == "STRING"
+                assert "response" in resp_data
+                assert resp_data["response"] == None
+                assert "result" in resp_data
+                assert resp_data["result"] == "ok"
+                assert "traceback" in resp_data
+                assert resp_data["traceback"] == None
 
 
 @pytest.mark.asyncio

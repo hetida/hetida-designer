@@ -1,3 +1,4 @@
+import json
 import logging
 from posixpath import join as posix_urljoin
 from typing import Any, List, Optional, Tuple
@@ -525,7 +526,7 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
 
     requests.post(
         posix_urljoin(str(callback_url), "execution", str(exec_by_id.job_id)),
-        json=result,
+        json=json.loads(result.json()),  # TODO: avoid double serialization.
     )
 
 
@@ -606,7 +607,7 @@ async def execute_latest_transformation_revision_endpoint(
 async def execute_latest_and_post(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput, callback_url: HttpUrl
 ) -> None:
-    result = handle_latest_trafo_revision_execution_request(
+    result = await handle_latest_trafo_revision_execution_request(
         exec_latest_by_group_id_input
     )
 
@@ -614,7 +615,7 @@ async def execute_latest_and_post(
         posix_urljoin(
             str(callback_url), "execution", str(exec_latest_by_group_id_input.job_id)
         ),
-        json=result,
+        json=json.loads(result.json()),  # TODO: avoid double serialization.
     )
 
 
