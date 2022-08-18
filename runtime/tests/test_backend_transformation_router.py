@@ -1278,11 +1278,16 @@ async def test_execute_latest_asynchron_for_transformation_revision(
                 assert "output_results_by_output_name" in resp_data
                 assert len(resp_data["output_results_by_output_name"]) == 1
                 assert "operator_output" in resp_data["output_results_by_output_name"]
-                assert resp_data["output_results_by_output_name"]["operator_output"] == 100
+                assert (
+                    resp_data["output_results_by_output_name"]["operator_output"] == 100
+                )
                 assert "output_types_by_output_name" in resp_data
                 assert len(resp_data["output_types_by_output_name"]) == 1
                 assert "operator_output" in resp_data["output_types_by_output_name"]
-                assert resp_data["output_types_by_output_name"]["operator_output"] == "STRING"
+                assert (
+                    resp_data["output_types_by_output_name"]["operator_output"]
+                    == "STRING"
+                )
                 assert "response" in resp_data
                 assert resp_data["response"] == None
                 assert "result" in resp_data
