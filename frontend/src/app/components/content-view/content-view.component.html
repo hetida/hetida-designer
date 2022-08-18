@@ -29,10 +29,10 @@
           <mat-icon>close</mat-icon>
         </button>
       </ng-template>
-      <hd-documentation-editor-dialog
+      <hd-documentation-editor
         [editMode]="tabItem.initialDocumentationEditMode"
         [itemId]="tabItem.baseItem.id"
-      ></hd-documentation-editor-dialog>
+      ></hd-documentation-editor>
     </ng-container>
     <ng-container *ngIf="_isBaseItem(tabItem)">
       <ng-template mat-tab-label>
