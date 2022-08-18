@@ -28,14 +28,14 @@ class WorkflowInput(UnnamedInput):
     )
     name_in_subnode: str
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("name", always=True)
     def name_valid_python_identifier(cls, name: Optional[str]) -> Optional[str]:
         if name is None:
             return name
         return valid_python_identifier(cls, name)
 
-    # pylint: disable=no-self-argument,no-self-use,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     @validator("constant", always=True)
     def name_or_constant_data_provided(cls, v, values, **kwargs):  # type: ignore
         if values["name"] is None and ((not v) or values["constantValue"] is None):

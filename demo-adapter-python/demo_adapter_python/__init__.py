@@ -13,7 +13,7 @@ def configure_logging(the_logger: logging.Logger) -> None:
     """Setup Logging"""
     the_logger.setLevel(demo_adapter_config.log_level.value)
     formatter = logging.Formatter(
-        "%(asctime)s %(levelname)s: %(message)s " "[in %(pathname)s:%(lineno)d]"
+        "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
     )
     logging_handler = logging.StreamHandler()
     logging_handler.setFormatter(formatter)

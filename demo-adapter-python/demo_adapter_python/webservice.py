@@ -29,8 +29,8 @@ from demo_adapter_python.in_memory_store import (
     set_value_in_store,
 )
 from demo_adapter_python.models import (
-    GetMetadatum,
     InfoResponse,
+    Metadatum,
     MultipleSinksResponse,
     MultipleSourcesResponse,
     PostMetadatum,
@@ -161,37 +161,33 @@ async def sources(
 
 
 @demo_adapter_main_router.get(
-    "/sources/{sourceId}/metadata/", response_model=List[GetMetadatum]
+    "/sources/{sourceId}/metadata/", response_model=List[Metadatum]
 )
-async def get_all_metadata_source(sourceId: str) -> List[GetMetadatum]:
+async def get_all_metadata_source(sourceId: str) -> List[Metadatum]:
     if sourceId.endswith("temp") and "plantA" in sourceId:
         return [
-            GetMetadatum(**{"key": "Max Value", "value": 300.0, "dataType": "float"}),
-            GetMetadatum(**{"key": "Min Value", "value": -100.0, "dataType": "float"}),
-            GetMetadatum(
-                **{"key": "Last Self-Check Okay", "value": True, "dataType": "boolean"}
-            ),
+            Metadatum(key="Max Value", value=300.0, dataType="float"),
+            Metadatum(key="Min Value", value=-100.0, dataType="float"),
+            Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean"),
             get_metadatum_from_store(sourceId, "Sensor Config"),
         ]
     if sourceId.endswith("temp") and "plantB" in sourceId:
         return [
-            GetMetadatum(**{"key": "Max Value", "value": 150.0, "dataType": "float"}),
-            GetMetadatum(**{"key": "Min Value", "value": -30.0, "dataType": "float"}),
-            GetMetadatum(
-                **{"key": "Last Self-Check Okay", "value": True, "dataType": "boolean"}
-            ),
+            Metadatum(key="Max Value", value=150.0, dataType="float"),
+            Metadatum(key="Min Value", value=-30.0, dataType="float"),
+            Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean"),
             get_metadatum_from_store(sourceId, "Sensor Config"),
         ]
     if sourceId.endswith("anomaly_score") and "plantA" in sourceId:
         return [
-            GetMetadatum(**{"key": "Max Value", "value": 1.0, "dataType": "float"}),
-            GetMetadatum(**{"key": "Min Value", "value": 0.0, "dataType": "float"}),
+            Metadatum(key="Max Value", value=1.0, dataType="float"),
+            Metadatum(key="Min Value", value=0.0, dataType="float"),
             get_metadatum_from_store(sourceId, "Overshooting Allowed"),
         ]
     if sourceId.endswith("anomaly_score") and "plantB" in sourceId:
         return [
-            GetMetadatum(**{"key": "Max Value", "value": 1.0, "dataType": "float"}),
-            GetMetadatum(**{"key": "Min Value", "value": 0.0, "dataType": "float"}),
+            Metadatum(key="Max Value", value=1.0, dataType="float"),
+            Metadatum(key="Min Value", value=0.0, dataType="float"),
             get_metadatum_from_store(sourceId, "Overshooting Allowed"),
         ]
 
@@ -199,64 +195,44 @@ async def get_all_metadata_source(sourceId: str) -> List[GetMetadatum]:
 
 
 @demo_adapter_main_router.get(
-    "/sources/{sourceId}/metadata/{key}", response_model=GetMetadatum
+    "/sources/{sourceId}/metadata/{key}", response_model=Metadatum
 )
-async def get_metadata_source_by_key(sourceId: str, key: str) -> GetMetadatum:
+async def get_metadata_source_by_key(sourceId: str, key: str) -> Metadatum:
     # pylint: disable=too-many-return-statements,too-many-branches
     key = unquote(key)
     if sourceId.endswith("temp") and "plantA" in sourceId:
         if key == "Max Value":
-            return GetMetadatum(
-                **{"key": "Max Value", "value": 300.0, "dataType": "float"}
-            )
+            return Metadatum(key="Max Value", value=300.0, dataType="float")
         if key == "Min Value":
-            return GetMetadatum(
-                **{"key": "Min Value", "value": -100.0, "dataType": "float"}
-            )
+            return Metadatum(key="Min Value", value=-100.0, dataType="float")
         if key == "Last Self-Check Okay":
-            return GetMetadatum(
-                **{"key": "Last Self-Check Okay", "value": True, "dataType": "boolean"}
-            )
+            return Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean")
         if key == "Sensor Config":
             return get_metadatum_from_store(sourceId, "Sensor Config")
 
     elif sourceId.endswith("temp") and "plantB" in sourceId:
         if key == "Max Value":
-            return GetMetadatum(
-                **{"key": "Max Value", "value": 150.0, "dataType": "float"}
-            )
+            return Metadatum(key="Max Value", value=150.0, dataType="float")
         if key == "Min Value":
-            return GetMetadatum(
-                **{"key": "Min Value", "value": -30.0, "dataType": "float"}
-            )
+            return Metadatum(key="Min Value", value=-30.0, dataType="float")
         if key == "Last Self-Check Okay":
-            return GetMetadatum(
-                **{"key": "Last Self-Check Okay", "value": True, "dataType": "boolean"}
-            )
+            return Metadatum(key="Last Self-Check Okay", value=True, dataType="boolean")
         if key == "Sensor Config":
             return get_metadatum_from_store(sourceId, "Sensor Config")
 
     if sourceId.endswith("anomaly_score") and "plantA" in sourceId:
         if key == "Max Value":
-            return GetMetadatum(
-                **{"key": "Max Value", "value": 1.0, "dataType": "float"}
-            )
+            return Metadatum(key="Max Value", value=1.0, dataType="float")
         if key == "Min Value":
-            return GetMetadatum(
-                **{"key": "Min Value", "value": 0.0, "dataType": "float"}
-            )
+            return Metadatum(key="Min Value", value=0.0, dataType="float")
         if key == "Overshooting Allowed":
             return get_metadatum_from_store(sourceId, "Overshooting Allowed")
 
     elif sourceId.endswith("anomaly_score") and "plantB" in sourceId:
         if key == "Max Value":
-            return GetMetadatum(
-                **{"key": "Max Value", "value": 1.0, "dataType": "float"}
-            )
+            return Metadatum(key="Max Value", value=1.0, dataType="float")
         if key == "Min Value":
-            return GetMetadatum(
-                **{"key": "Min Value", "value": 0.0, "dataType": "float"}
-            )
+            return Metadatum(key="Min Value", value=0.0, dataType="float")
         if key == "Overshooting Allowed":
             return get_metadatum_from_store(sourceId, "Overshooting Allowed")
     raise HTTPException(
@@ -273,7 +249,7 @@ async def post_metadata_source_by_key(
 
         old_metadatum = get_metadatum_from_store(sourceId, key)
 
-        new_metadatum = GetMetadatum(
+        new_metadatum = Metadatum(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
@@ -318,51 +294,43 @@ async def sinks(
 
 
 @demo_adapter_main_router.get(
-    "/sinks/{sinkId}/metadata/", response_model=List[GetMetadatum]
+    "/sinks/{sinkId}/metadata/", response_model=List[Metadatum]
 )
-async def get_all_metadata_sink(sinkId: str) -> List[GetMetadatum]:
+async def get_all_metadata_sink(sinkId: str) -> List[Metadatum]:
     if sinkId.endswith("anomaly_score") and "plantA" in sinkId:
         return [
-            GetMetadatum(**{"key": "Max Value", "value": 1.0, "dataType": "float"}),
-            GetMetadatum(**{"key": "Min Value", "value": 0.0, "dataType": "float"}),
+            Metadatum(key="Max Value", value=1.0, dataType="float"),
+            Metadatum(key="Min Value", value=0.0, dataType="float"),
             get_metadatum_from_store(sinkId, "Overshooting Allowed"),
         ]
     if sinkId.endswith("anomaly_score") and "plantB" in sinkId:
         return [
-            GetMetadatum(**{"key": "Max Value", "value": 1.0, "dataType": "float"}),
-            GetMetadatum(**{"key": "Min Value", "value": 0.0, "dataType": "float"}),
+            Metadatum(key="Max Value", value=1.0, dataType="float"),
+            Metadatum(key="Min Value", value=0.0, dataType="float"),
             get_metadatum_from_store(sinkId, "Overshooting Allowed"),
         ]
     return []
 
 
 @demo_adapter_main_router.get(
-    "/sinks/{sinkId}/metadata/{key}", response_model=GetMetadatum
+    "/sinks/{sinkId}/metadata/{key}", response_model=Metadatum
 )
-async def get_metadata_sink_by_key(sinkId: str, key: str) -> GetMetadatum:
+async def get_metadata_sink_by_key(sinkId: str, key: str) -> Metadatum:
     key = unquote(key)
 
     if sinkId.endswith("anomaly_score") and "plantA" in sinkId:
         if key == "Max Value":
-            return GetMetadatum(
-                **{"key": "Max Value", "value": 1.0, "dataType": "float"}
-            )
+            return Metadatum(key="Max Value", value=1.0, dataType="float")
         if key == "Min Value":
-            return GetMetadatum(
-                **{"key": "Min Value", "value": 0.0, "dataType": "float"}
-            )
+            return Metadatum(key="Min Value", value=0.0, dataType="float")
         if key == "Overshooting Allowed":
             return get_metadatum_from_store(sinkId, "Overshooting Allowed")
 
     elif sinkId.endswith("anomaly_score") and "plantB" in sinkId:
         if key == "Max Value":
-            return GetMetadatum(
-                **{"key": "Max Value", "value": 1.0, "dataType": "float"}
-            )
+            return Metadatum(key="Max Value", value=1.0, dataType="float")
         if key == "Min Value":
-            return GetMetadatum(
-                **{"key": "Min Value", "value": 0.0, "dataType": "float"}
-            )
+            return Metadatum(key="Min Value", value=0.0, dataType="float")
         if key == "Overshooting Allowed":
             return get_metadatum_from_store(sinkId, "Overshooting Allowed")
 
@@ -380,7 +348,7 @@ async def post_metadata_sink_by_key(
 
         old_metadatum = get_metadatum_from_store(sinkId, key)
 
-        new_metadatum = GetMetadatum(
+        new_metadatum = Metadatum(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
@@ -414,41 +382,31 @@ async def sink(sink_id: str) -> StructureSink:
 
 
 @demo_adapter_main_router.get(
-    "/thingNodes/{thingNodeId}/metadata/", response_model=List[GetMetadatum]
+    "/thingNodes/{thingNodeId}/metadata/", response_model=List[Metadatum]
 )
-async def get_all_metadata_thingNode(thingNodeId: str) -> List[GetMetadatum]:
+async def get_all_metadata_thingNode(thingNodeId: str) -> List[Metadatum]:
     if thingNodeId == "root.plantA":
         return [
-            GetMetadatum(
-                **{"key": "Temperature Unit", "value": "F", "dataType": "string"}
-            ),
-            GetMetadatum(
-                **{"key": "Pressure Unit", "value": "psi", "dataType": "string"}
-            ),
-            GetMetadatum(
-                **{  # a metadatum that is not an explicit source and calculated dynamically
-                    "key": "Plant Age in Years",
-                    "value": calculate_age(datetime.date(2012, 12, 7)),
-                    "dataType": "int",
-                }
+            Metadatum(key="Temperature Unit", value="F", dataType="string"),
+            Metadatum(key="Pressure Unit", value="psi", dataType="string"),
+            Metadatum(
+                # a metadatum that is not an explicit source and calculated dynamically
+                key="Plant Age in Years",
+                value=calculate_age(datetime.date(2012, 12, 7)),
+                dataType="int",
             ),
             # this metadatum is a sink leaf but as a source only available attached to the thingNode
             get_metadatum_from_store(thingNodeId, "Anomaly State"),
         ]
     if thingNodeId == "root.plantB":
         return [
-            GetMetadatum(
-                **{"key": "Temperature Unit", "value": "C", "dataType": "string"}
-            ),
-            GetMetadatum(
-                **{"key": "Pressure Unit", "value": "bar", "dataType": "string"}
-            ),
-            GetMetadatum(
-                **{  # a metadatum that is not an explicit source and calculated dynamically
-                    "key": "Plant Age in Years",
-                    "value": calculate_age(datetime.date(2017, 8, 22)),
-                    "dataType": "int",
-                }
+            Metadatum(key="Temperature Unit", value="C", dataType="string"),
+            Metadatum(key="Pressure Unit", value="bar", dataType="string"),
+            Metadatum(
+                # a metadatum that is not an explicit source and calculated dynamically
+                key="Plant Age in Years",
+                value=calculate_age(datetime.date(2017, 8, 22)),
+                dataType="int",
             ),
             # this metadatum is a sink leaf but as a source only available attached to the thingNode
             get_metadatum_from_store(thingNodeId, "Anomaly State"),
@@ -464,63 +422,51 @@ def calculate_age(born: datetime.date) -> int:
 
 
 @demo_adapter_main_router.get(
-    "/thingNodes/{thingNodeId}/metadata/{key}", response_model=GetMetadatum
+    "/thingNodes/{thingNodeId}/metadata/{key}", response_model=Metadatum
 )
-async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> GetMetadatum:
+async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> Metadatum:
     # pylint: disable=too-many-return-statements
     key = unquote(key)
     if thingNodeId == "root.plantA":
         if key == "Temperature Unit":
-            return GetMetadatum(
-                **{
-                    "key": "Temperature Unit",
-                    "value": "F",
-                    "dataType": "string",
-                }
+            return Metadatum(
+                key="Temperature Unit",
+                value="F",
+                dataType="string",
             )
         if key == "Pressure Unit":
-            return GetMetadatum(
-                **{
-                    "key": "Pressure Unit",
-                    "value": "psi",
-                    "dataType": "string",
-                }
+            return Metadatum(
+                key="Pressure Unit",
+                value="psi",
+                dataType="string",
             )
         if key == "Plant Age in Years":
-            return GetMetadatum(
-                **{
-                    "key": "Plant Age in Years",
-                    "value": calculate_age(datetime.date(2012, 12, 7)),
-                    "dataType": "int",
-                }
+            return Metadatum(
+                key="Plant Age in Years",
+                value=calculate_age(datetime.date(2012, 12, 7)),
+                dataType="int",
             )
         if key == "Anomaly State":
             return get_metadatum_from_store(thingNodeId, "Anomaly State")
 
     if thingNodeId == "root.plantB":
         if key == "Temperature Unit":
-            return GetMetadatum(
-                **{
-                    "key": "Temperature Unit",
-                    "value": "C",
-                    "dataType": "string",
-                }
+            return Metadatum(
+                key="Temperature Unit",
+                value="C",
+                dataType="string",
             )
         if key == "Pressure Unit":
-            return GetMetadatum(
-                **{
-                    "key": "Pressure Unit",
-                    "value": "bar",
-                    "dataType": "string",
-                }
+            return Metadatum(
+                key="Pressure Unit",
+                value="bar",
+                dataType="string",
             )
         if key == "Plant Age in Years":
-            return GetMetadatum(
-                **{
-                    "key": "Plant Age in Years",
-                    "value": calculate_age(datetime.date(2017, 8, 22)),
-                    "dataType": "int",
-                }
+            return Metadatum(
+                key="Plant Age in Years",
+                value=calculate_age(datetime.date(2017, 8, 22)),
+                dataType="int",
             )
         if key == "Anomaly State":
             return get_metadatum_from_store(thingNodeId, "Anomaly State")
@@ -541,7 +487,7 @@ async def post_metadata_thingNode_by_key(
 
         old_metadatum = get_metadatum_from_store(thingNodeId, key)
 
-        new_metadatum = GetMetadatum(
+        new_metadatum = Metadatum(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
@@ -590,8 +536,12 @@ def encode_attributes(data_attrs: Any) -> str:
 @demo_adapter_main_router.get("/timeseries")
 async def timeseries(
     ids: List[str] = Query(..., alias="id", min_length=1),
-    from_timestamp: datetime.datetime = Query(..., alias="from"),
-    to_timestamp: datetime.datetime = Query(..., alias="to"),
+    from_timestamp: datetime.datetime = Query(
+        ..., alias="from", example=datetime.datetime.now(datetime.timezone.utc)
+    ),
+    to_timestamp: datetime.datetime = Query(
+        ..., alias="to", example=datetime.datetime.now(datetime.timezone.utc)
+    ),
 ) -> StreamingResponse:
     collected_attrs = {}
     io_stream = StringIO()
@@ -684,7 +634,9 @@ async def post_timeseries(
     if ts_id.endswith("anomaly_score"):
         df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
         if data_attributes is not None and len(data_attributes) != 0:
-            df.attrs = decode_attributes(data_attributes)
+            df_from_store: pd.DataFrame = get_value_from_store(ts_id)
+            df.attrs = df_from_store.attrs
+            df.attrs.update(decode_attributes(data_attributes))
         set_value_in_store(ts_id, df)
         logger.info(
             "stored timeseries %s in store: %s\n with columns %s",
@@ -787,7 +739,9 @@ async def post_dataframe(
     if df_id.endswith("alerts"):
         df = pd.DataFrame.from_dict(df_body, orient="columns")
         if data_attributes is not None and len(data_attributes) != 0:
-            df.attrs = decode_attributes(data_attributes)
+            df_from_store: pd.DataFrame = get_value_from_store(df_id)
+            df.attrs = df_from_store.attrs
+            df.attrs.update(decode_attributes(data_attributes))
         logger.debug("storing %s", json.dumps(df_body))
         logger.debug("which has attributes %s", str(df.attrs))
         set_value_in_store(df_id, df)

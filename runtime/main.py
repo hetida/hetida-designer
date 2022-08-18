@@ -11,10 +11,9 @@ Usage: Call with activated virtual environment via
 from project directory.
 """
 
-import os
-
 # pylint: disable=wrong-import-order
 import logging
+import os
 
 if __name__ == "__main__":
     if os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None) is None:
@@ -69,11 +68,11 @@ def run_migrations(
 
     migrations_invoked_from_py = True
 
-    from alembic.config import Config
-    from alembic import command
     from pydantic import SecretStr
-    import hetdesrun.persistence.dbmodels
 
+    import hetdesrun.persistence.dbmodels
+    from alembic import command
+    from alembic.config import Config
     from hetdesrun.persistence import get_db_engine
 
     engine = get_db_engine()
@@ -95,10 +94,14 @@ def run_migrations(
     command.upgrade(alembic_cfg, "head")
     logger.info("Finished running migrations.")
 
+
 def run_trafo_rev_deployment():
     from hetdesrun.exportimport.importing import import_transformations
 
-    import_transformations("./transformations", update_component_code=False, directly_into_db=True)
+    import_transformations(
+        "./transformations", update_component_code=False, directly_into_db=True
+    )
+
 
 in_memory_db = detect_in_memory_db()
 is_backend = get_config().is_backend_service
@@ -108,7 +111,7 @@ if in_memory_db:
         "Detected in-memory db usage: Running migrations during importing of main.py."
     )
     run_migrations()
-    
+
     if is_backend:
         logger.info(
             "Detected in-memory db usage: "
@@ -133,13 +136,14 @@ if __name__ == "__main__":
             run_trafo_rev_deployment()
 
     import os
+
     import uvicorn
 
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", 8000))
     logger.info("Start app as host %s with port %s", str(host), str(port))
     uvicorn.run(
-        "hetdesrun.webservice.application:app",
+        "main:app",
         debug=True,
         reload=True,
         host=host,
