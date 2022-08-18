@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { Store } from '@ngrx/store';
-import { first, switchMap } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { BaseItemService } from 'src/app/service/base-item/base-item.service';
 import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
@@ -78,16 +78,13 @@ export class DocumentationEditorComponent implements OnInit {
 
     this.transformationStore
       .select(selectTransformationById(this.itemId))
-      .pipe(
-        first(),
-        switchMap(async transformation =>
-          this.baseItemService.updateTransformation({
-            ...transformation,
-            documentation: this.markdown
-          })
-        )
-      )
-      .subscribe();
+      .pipe(first())
+      .subscribe(transformation =>
+        this.baseItemService.updateTransformation({
+          ...transformation,
+          documentation: this.markdown
+        })
+      );
   }
 
   /**
