@@ -466,14 +466,6 @@ async def delete_transformation_revision(
 async def handle_trafo_revision_execution_request(
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
-    """Execute a transformation revision.
-
-    The transformation will be loaded from the DB and executed with the wiring sent in the request
-    body.
-
-    The test wiring will not be updated.
-    """
-
     if exec_by_id.job_id is None:
         exec_by_id.job_id = uuid4()
 
@@ -506,6 +498,13 @@ async def execute_transformation_revision_endpoint(
     # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
+    """Execute a transformation revision.
+
+    The transformation will be loaded from the DB and executed with the wiring sent in the request
+    body.
+
+    The test wiring will not be updated.
+    """
     return await handle_trafo_revision_execution_request(exec_by_id)
 
 
@@ -547,6 +546,21 @@ async def execute_asynchronous_transformation_revision_endpoint(
         description="If provided execute asynchronous and post response to callback_url",
     ),
 ) -> Any:
+    """Execute a transformation revision of asynchronously.
+
+    WARNING: Uncaught exceptions will be overwritten by the starlette exception handler so that in 
+    this scenario debugging becomes basically impossible.
+    https://github.com/tiangolo/fastapi/issues/2505
+
+    A valid input will be accepted with an according response and then the execution will run in the
+    background. The execution result will be sent to the '/execution/{job_id}' post endpoint of the
+    provided callback_url. You should have implemented such an endpoint before using this one.
+
+    The transformation will be loaded from the DB and executed with the wiring sent in the request
+    body.
+
+    The test wiring will not be updated.
+    """
     background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
 
     return {"message": f"Execution request with job id {exec_by_id.job_id} accepted"}
@@ -638,6 +652,30 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
         description="If provided execute asynchronous and post response to callback_url",
     ),
 ) -> Any:
+    """Execute the latest transformation revision of a revision group asynchronously.
+
+    WARNING: Even when the input is not changed, the execution response might change if a new latest
+    transformation revision exists.
+
+    WARNING: The inputs and outputs may be different for different revisions. In such a case,
+    calling this endpoint with the same payload as before will not work, but will result in errors.
+
+    WARNING: Uncaught exceptions will be overwritten by the starlette exception handler so that in 
+    this scenario debugging becomes basically impossible.
+    https://github.com/tiangolo/fastapi/issues/2505
+
+    A valid input will be accepted with an according response and then the execution will run in the
+    background. The execution result will be sent to the '/execution/{$job_id}' POST endpoint of the
+    provided callback_url. You should have implemented such an endpoint before using this one.
+
+    The latest transformation will be determined by the released_timestamp of the released revisions
+    of the revision group which are stored in the database.
+
+    This transformation will be loaded from the DB and executed with the wiring sent in the request
+    body.
+
+    The test wiring will not be updated.
+    """
     background_tasks.add_task(
         execute_latest_and_post, exec_latest_by_group_id_input, callback_url
     )
