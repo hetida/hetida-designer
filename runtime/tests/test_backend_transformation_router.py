@@ -958,10 +958,16 @@ async def test_execute_for_transformation_revision_with_job_id_none(
                 job_id=None,
             )
 
+            assert exec_by_id_input.job_id == None
+
+            exec_by_id_input_json = json.loads(exec_by_id_input.json())
+
+            assert hasattr(exec_by_id_input_json, "job_id") == False
+
             async with async_test_client as ac:
                 response = await ac.post(
                     "/api/transformations/execute",
-                    json=json.loads(exec_by_id_input.json()),
+                    json=exec_by_id_input_json,
                 )
 
             assert response.status_code == 200
