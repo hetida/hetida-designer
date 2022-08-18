@@ -3,15 +3,16 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
-  Inject,
   Input,
   OnInit,
   ViewChild
 } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SafeHtml } from '@angular/platform-browser';
+import { Store } from '@ngrx/store';
 import { first } from 'rxjs/operators';
-import { DocumentationService } from 'src/app/service/documentation/documentation.service';
+import { BaseItemService } from 'src/app/service/base-item/base-item.service';
+import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
+import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { Utils } from 'src/app/utils/utils';
 import { MarkdownService } from '../../service/documentation/markdown.service';
 
@@ -25,7 +26,7 @@ const INITIAL_DOCUMENTATION_TEMPLATE = `
 `;
 
 @Component({
-  selector: 'hd-documentation-editor-dialog',
+  selector: 'hd-documentation-editor',
   templateUrl: './documentation-editor.component.html',
   styleUrls: ['./documentation-editor.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -41,19 +42,18 @@ export class DocumentationEditorComponent implements OnInit {
   @ViewChild('previewRef') previewRef: ElementRef;
 
   constructor(
-    public dialogRef: MatDialogRef<DocumentationEditorComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { id: string },
-    private readonly documentationService: DocumentationService,
+    private readonly transformationStore: Store<TransformationState>,
+    private readonly baseItemService: BaseItemService,
     private readonly markdownService: MarkdownService,
     private readonly changeDetection: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.documentationService
-      .getDocumentation(this.data.id ?? this.itemId)
+    this.transformationStore
+      .select(selectTransformationById(this.itemId))
       .pipe(first())
-      .subscribe(doc => {
-        if (Utils.isNullOrUndefined(doc.document)) {
+      .subscribe(transformation => {
+        if (Utils.isNullOrUndefined(transformation.documentation)) {
           this.markdown = INITIAL_DOCUMENTATION_TEMPLATE;
           this.parsedMarkdown = this.markdownService.parseMarkdown(
             this.markdown
@@ -61,7 +61,7 @@ export class DocumentationEditorComponent implements OnInit {
           this.changeDetection.detectChanges();
           return;
         }
-        this.markdown = doc.document;
+        this.markdown = transformation.documentation;
         this.parsedMarkdown = this.markdownService.parseMarkdown(this.markdown);
         this.changeDetection.detectChanges();
       });
@@ -75,12 +75,16 @@ export class DocumentationEditorComponent implements OnInit {
 
   public switchEdit(): void {
     this.editMode = !this.editMode;
-    this.documentationService
-      .updateDocumentation({
-        id: this.data.id ?? this.itemId,
-        document: this.markdown
-      })
-      .subscribe();
+
+    this.transformationStore
+      .select(selectTransformationById(this.itemId))
+      .pipe(first())
+      .subscribe(transformation =>
+        this.baseItemService.updateTransformation({
+          ...transformation,
+          documentation: this.markdown
+        })
+      );
   }
 
   /**
