@@ -319,9 +319,7 @@ async def execute_component_revision(
     This endpoint is deprecated and will be removed soon,
     use POST /api/transformations/execute instead which uses a new model for the payload.
     """
-    if job_id is None:
-        job_id = uuid4()
-
+    
     exec_by_id = ExecByIdInput(
         id=id,
         wiring=wiring_dto.to_workflow_wiring(),
