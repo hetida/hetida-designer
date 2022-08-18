@@ -535,9 +535,7 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
     summary="Executes a transformation revision asynchronously",
     status_code=status.HTTP_202_ACCEPTED,
     responses={
-        status.HTTP_202_ACCEPTED: {
-            "description": "Accepted execution request"
-        },
+        status.HTTP_202_ACCEPTED: {"description": "Accepted execution request"},
     },
 )
 async def execute_asynchronous_transformation_revision_endpoint(  # type: ignore
@@ -552,7 +550,10 @@ async def execute_asynchronous_transformation_revision_endpoint(  # type: ignore
 
     return {"message": f"Execution request with job id {exec_by_id.job_id} accepted"}
 
-async def handle_latest_trafo_revision_execution_request(exec_latest_by_group_id_input: ExecLatestByGroupIdInput) -> ExecutionResponseFrontendDto:
+
+async def handle_latest_trafo_revision_execution_request(
+    exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
+) -> ExecutionResponseFrontendDto:
     try:
         # pylint: disable=redefined-builtin
         id = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
@@ -562,6 +563,7 @@ async def handle_latest_trafo_revision_execution_request(exec_latest_by_group_id
     exec_by_id_input = exec_latest_by_group_id_input.to_exec_by_id(id)
 
     return await handle_trafo_revision_execution_request(exec_by_id_input)
+
 
 @transformation_router.post(
     "/execute-latest",
@@ -596,4 +598,6 @@ async def execute_latest_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    return await handle_latest_trafo_revision_execution_request(exec_latest_by_group_id_input)
+    return await handle_latest_trafo_revision_execution_request(
+        exec_latest_by_group_id_input
+    )
