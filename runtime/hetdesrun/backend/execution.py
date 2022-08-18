@@ -3,7 +3,7 @@
 import json
 import logging
 from posixpath import join as posix_urljoin
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
 import httpx
@@ -45,7 +45,7 @@ class ExecByIdInput(BaseModel):
     run_pure_plot_operators: bool = Field(
         False, description="Whether pure plot components should be run."
     )
-    job_id: UUID = Field(
+    job_id: Optional[UUID] = Field(
         default_factory=uuid4,
         description="Optional job id, that can be used to track an execution job.",
     )
