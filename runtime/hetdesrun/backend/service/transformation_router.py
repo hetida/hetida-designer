@@ -538,7 +538,7 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
         status.HTTP_202_ACCEPTED: {"description": "Accepted execution request"},
     },
 )
-async def execute_asynchronous_transformation_revision_endpoint(  # type: ignore
+async def execute_asynchronous_transformation_revision_endpoint(
     exec_by_id: ExecByIdInput,
     background_tasks: BackgroundTasks,
     callback_url: HttpUrl = Query(
@@ -601,3 +601,47 @@ async def execute_latest_transformation_revision_endpoint(
     return await handle_latest_trafo_revision_execution_request(
         exec_latest_by_group_id_input
     )
+
+
+async def execute_latest_and_post(
+    exec_latest_by_group_id_input: ExecLatestByGroupIdInput, callback_url: HttpUrl
+) -> None:
+    result = handle_latest_trafo_revision_execution_request(
+        exec_latest_by_group_id_input
+    )
+
+    requests.post(
+        posix_urljoin(
+            str(callback_url), "execution", str(exec_latest_by_group_id_input.job_id)
+        ),
+        json=result,
+    )
+
+
+@transformation_router.post(
+    "/execute-latest/asynchron",
+    callbacks=callback_router.routes,
+    summary="Executes the latest transformation revision of a revision group asynchronously",
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={
+        status.HTTP_202_ACCEPTED: {
+            "description": "Accepted execution request for latest revision of revision group"
+        },
+    },
+)
+async def execute_asynchronous_latest_transformation_revision_endpoint(
+    exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
+    background_tasks: BackgroundTasks,
+    callback_url: HttpUrl = Query(
+        ...,
+        description="If provided execute asynchronous and post response to callback_url",
+    ),
+) -> Any:
+    background_tasks.add_task(
+        execute_latest_and_post, exec_latest_by_group_id_input, callback_url
+    )
+
+    return {
+        "message": "Execution request for latest revision with "
+        f"job id {exec_latest_by_group_id_input.job_id} accepted"
+    }
