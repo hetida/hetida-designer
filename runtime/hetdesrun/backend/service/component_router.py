@@ -1,6 +1,6 @@
 import logging
 from typing import Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import HTTPException, Path, status
 from pydantic import ValidationError
@@ -319,7 +319,7 @@ async def execute_component_revision(
     This endpoint is deprecated and will be removed soon,
     use POST /api/transformations/execute instead which uses a new model for the payload.
     """
-    
+
     exec_by_id = ExecByIdInput(
         id=id,
         wiring=wiring_dto.to_workflow_wiring(),
