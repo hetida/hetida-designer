@@ -1367,11 +1367,11 @@ async def test_execute_latest_asynchron_for_transformation_revision_with_excepti
             "hetdesrun.persistence.dbservice.revision.Session",
             patched_session,
         ):
-            tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
+            tr_component_1 = TransformationRevision(**tr_json_component_1)
 
-            exec_by_id_input = ExecByIdInput(
-                id=tr_workflow_2.id,
-                wiring=tr_workflow_2.test_wiring,
+            exec_latest_by_group_id_input = ExecLatestByGroupIdInput(
+                revision_group_id=tr_component_1.revision_group_id,
+                wiring=tr_component_1.test_wiring,
                 job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
             )
             async with async_test_client as ac:
@@ -1384,7 +1384,7 @@ async def test_execute_latest_asynchron_for_transformation_revision_with_excepti
 
                         await ac.post(
                             "/api/transformations/execute-latest/asynchron",
-                            json=json.loads(exec_by_id_input.json()),
+                            json=json.loads(exec_latest_by_group_id_input.json()),
                             params={"callback_url": "http://callback-url.com"},
                         )
 
@@ -1401,7 +1401,7 @@ async def test_execute_latest_asynchron_for_transformation_revision_with_excepti
                         with pytest.raises(Exception):
                             await ac.post(
                                 "/api/transformations/execute-latest/asynchron",
-                                json=json.loads(exec_by_id_input.json()),
+                                json=json.loads(exec_latest_by_group_id_input.json()),
                                 params={"callback_url": "http://callback-url.com"},
                             )
 
