@@ -530,8 +530,8 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
             json=json.loads(result.json()),  # TODO: avoid double serialization.
         )
     except HTTPException as http_e:
-        logger.info(
-            "Execution with job id %s failed due to the following error:\n%s",
+        logger.error(
+            "Execution with job id %s as background task failed with HTTP status code %s",
             str(exec_by_id.job_id),
             str(http_e),
         )
@@ -652,8 +652,8 @@ async def execute_latest_and_post(
             json=json.loads(result.json()),  # TODO: avoid double serialization.
         )
     except HTTPException as http_e:
-        logger.info(
-            "Execution with job id %s failed due to the following error:\n%s",
+        logger.error(
+            "Execution with job id %s as background task failed with HTTP status code %s",
             str(exec_latest_by_group_id_input.job_id),
             str(http_e),
         )
