@@ -529,11 +529,17 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
             posix_urljoin(str(callback_url), "execution", str(exec_by_id.job_id)),
             json=json.loads(result.json()),  # TODO: avoid double serialization.
         )
+    except HTTPException as http_e:
+        logger.info(
+            "Execution with job id %s failed due to the following error:\n%s",
+            str(exec_by_id.job_id),
+            str(http_e),
+        )
     except Exception as e:
         # necessary due to issue of starlette exception handler overwriting uncaught exceptions
         # https://github.com/tiangolo/fastapi/issues/2505
         logger.error(
-            "An error occurred during execution with job_id %s as background task:\n%s",
+            "An unexpected error occurred during execution with job id %s as background task:\n%s",
             str(exec_by_id.job_id),
             str(e),
         )
@@ -645,11 +651,17 @@ async def execute_latest_and_post(
             ),
             json=json.loads(result.json()),  # TODO: avoid double serialization.
         )
+    except HTTPException as http_e:
+        logger.info(
+            "Execution with job id %s failed due to the following error:\n%s",
+            str(exec_latest_by_group_id_input.job_id),
+            str(http_e),
+        )
     except Exception as e:
         # necessary due to issue of starlette exception handler overwriting uncaught exceptions
         # https://github.com/tiangolo/fastapi/issues/2505
         logger.error(
-            "An error occurred during execution with job_id %s as background task:\n%s",
+            "An unexpected error occurred during execution with job_id %s as background task:\n%s",
             str(exec_latest_by_group_id_input.job_id),
             str(e),
         )
