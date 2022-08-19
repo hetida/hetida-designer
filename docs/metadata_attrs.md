@@ -8,9 +8,10 @@ To extract or update the metadata the corresponding base components "Extract Att
 
 <img src="./assets/metadata_base_components.png" height="110" width=850> 
 
-When DataFrames or Series are wired to the default adapter "direct_provisioning" (`Only Output`), only the data but not the metadata from the `attrs` attribute is displayed.
-The "Extract Attributes" components provide direct (read) access to what is stored in `attrs`, so that it e.g. can be wired to the default adapter and be displayed.
-Depending on whether the key-value pair already exist, the "Add/Update Attributes" components add further values or update existing ones.
+**Note:** Neither the local file adapter nor the default adapter "direct_provisioning" (`manual input`, `Only Output`) supports sending or receiving of metadata in `attrs`.
+
+The "Extract Attributes" components provide direct (read) access to what is stored in `attrs`, so that it e.g. can be wired to the default adapter and be displayed in the frontend.
+Depending on whether the key-value pair already exist, the "Add/Update Attributes" components add further values or update existing ones, so that metadata can be stored in `attrs` using the default adapter in the dialog.
 These components are quite useful for testing components or workflows which expect Series or DataFrames with metadata.
 
 <img src="./assets/add_metadata_for_test.png" height="110" width=850> 
