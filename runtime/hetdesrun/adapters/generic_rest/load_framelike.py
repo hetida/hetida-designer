@@ -120,6 +120,7 @@ async def load_framelike_data(
                 stream=True,
                 headers=headers,
                 verify=get_config().hd_adapters_verify_certs,
+                timeout=get_config().external_request_timeout,
             )
             if (
                 resp.status_code == 404

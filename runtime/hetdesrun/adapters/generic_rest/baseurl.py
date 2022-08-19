@@ -75,7 +75,8 @@ async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestA
     else:
         # call backend service "adapters" endpoint
         async with httpx.AsyncClient(
-            verify=get_config().hd_backend_verify_certs
+            verify=get_config().hd_backend_verify_certs,
+            timeout=get_config().external_request_timeout,
         ) as client:
             try:
                 resp = await client.get(url, headers=headers)

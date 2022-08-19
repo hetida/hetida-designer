@@ -35,6 +35,14 @@ class RuntimeConfig(BaseSettings):
         env="OPENAPI_PREFIX",
         description="root path (necessary for OpenAPI UI if behind proxy)",
     )
+    external_request_timeout: int = Field(
+        90,
+        env="EXTERNAL_REQUEST_TIMEOUT",
+        description=(
+            "The time (in seconds) to wait for a response of an external REST API "
+            "such as a generic REST adapter"
+        ),
+    )
     model_repo_path: str = Field(
         "/mnt/obj_repo",
         env="MODEL_REPO_PATH",

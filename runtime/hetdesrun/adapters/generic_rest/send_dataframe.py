@@ -54,7 +54,10 @@ async def post_dataframe(
 async def post_dataframes(
     dfs: List[pd.DataFrame], ref_ids: List[str], adapter_key: str
 ) -> None:
-    async with AsyncClient(verify=get_config().hd_adapters_verify_certs) as client:
+    async with AsyncClient(
+        verify=get_config().hd_adapters_verify_certs,
+        timeout=get_config().external_request_timeout,
+    ) as client:
         await asyncio.gather(
             *(
                 post_dataframe(df, ref_id, adapter_key=adapter_key, client=client)
