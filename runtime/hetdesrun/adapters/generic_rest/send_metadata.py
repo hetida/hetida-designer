@@ -93,7 +93,9 @@ async def send_multiple_metadata_to_adapter(
     headers = get_generic_rest_adapter_auth_headers()
 
     async with httpx.AsyncClient(
-        headers=headers, verify=get_config().hd_adapters_verify_certs
+        headers=headers,
+        verify=get_config().hd_adapters_verify_certs,
+        timeout=get_config().external_request_timeout,
     ) as client:
         wf_output_names = filtered_sinks.keys()
         await asyncio.gather(

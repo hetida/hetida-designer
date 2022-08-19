@@ -44,7 +44,7 @@ class IOInterface(BaseModel):
     # pylint: disable=no-self-argument
     @validator("inputs", "outputs", each_item=False)
     def io_names_unique(cls, ios: List[IO]) -> List[IO]:
-        ios_with_name = [io for io in ios if io.name is not None]
+        ios_with_name = [io for io in ios if not (io.name is None or io.name == "")]
 
         names_unique(cls, ios_with_name)
 

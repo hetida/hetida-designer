@@ -96,6 +96,7 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
         if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
+        timeout=get_config().external_request_timeout,
     )
     logger.info(
         "GET %s status code: %i for %s with id %ss",
@@ -123,6 +124,7 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
         if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
+        timeout=get_config().external_request_timeout,
     )
     logger.info(
         "GET documentation status code: %i for %s with id %s",
@@ -228,6 +230,7 @@ def export_transformations(
         if get_config().hd_backend_use_basic_auth
         else None,
         headers=headers,
+        timeout=get_config().external_request_timeout,
     )
 
     if response.status_code != 200:

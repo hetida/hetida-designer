@@ -236,6 +236,7 @@ def import_transformation(
             if get_config().hd_backend_use_basic_auth
             else None,
             headers=headers,
+            timeout=get_config().external_request_timeout,
         )
         logger.info(
             (
