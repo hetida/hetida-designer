@@ -1152,7 +1152,7 @@ async def test_execute_asynchron_for_transformation_revision_with_http_exception
 
             with mock.patch(
                 "hetdesrun.backend.service.transformation_router."
-                "handle_latest_trafo_revision_execution_request",
+                "handle_trafo_revision_execution_request",
                 side_effect=HTTPException(404),
             ):
                 with caplog.at_level(logging.ERROR):
@@ -1166,6 +1166,47 @@ async def test_execute_asynchron_for_transformation_revision_with_http_exception
                     assert "1270547c-b224-461d-9387-e9d9d465bbe1" in caplog.text
                     assert "background task" in caplog.text
                     assert "HTTP status code 404" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_execute_asynchron_for_transformation_revision_with_unknown_exception(
+    async_test_client, clean_test_db_engine, caplog
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.nesting.Session",
+        patched_session,
+    ):
+        with mock.patch(
+            "hetdesrun.persistence.dbservice.revision.Session",
+            patched_session,
+        ):
+            tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
+
+            exec_by_id_input = ExecByIdInput(
+                id=tr_workflow_2.id,
+                wiring=tr_workflow_2.test_wiring,
+                job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+            )
+
+            
+            with mock.patch(
+                "hetdesrun.backend.service.transformation_router."
+                "handle_trafo_revision_execution_request",
+                side_effect=Exception,
+            ):
+                with caplog.at_level(logging.ERROR):
+                    with pytest.raises(Exception):
+                        async with async_test_client as ac:
+                            await ac.post(
+                                "/api/transformations/execute/asynchron",
+                                json=json.loads(exec_by_id_input.json()),
+                                params={"callback_url": "http://callback-url.com"},
+                            )
+
+                    assert "1270547c-b224-461d-9387-e9d9d465bbe1" in caplog.text
+                    assert "background task" in caplog.text
+                    assert "unexpected error" in caplog.text
 
 
 @pytest.mark.asyncio
