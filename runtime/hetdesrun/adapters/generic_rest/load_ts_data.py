@@ -37,12 +37,17 @@ async def load_ts_data_from_adapter(
     It therefore currently isn't async.
     """
 
-    return await load_framelike_data(
+    df = await load_framelike_data(
         filtered_sources=filtered_sources,
         additional_params=[("from", from_timestamp), ("to", to_timestamp)],
         adapter_key=adapter_key,
         endpoint="timeseries",
     )
+
+    if "timeseriesId" in df.columns:
+        df["timeseriesId"] = df["timeseriesId"].astype("string")
+
+    return df
 
 
 def extract_one_channel_series_from_loaded_data(

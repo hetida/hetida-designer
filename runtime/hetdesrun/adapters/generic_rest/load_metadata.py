@@ -118,7 +118,9 @@ async def load_multiple_metadata(
 ) -> Dict[str, Any]:
     headers = get_generic_rest_adapter_auth_headers()
     async with httpx.AsyncClient(
-        headers=headers, verify=get_config().hd_adapters_verify_certs
+        headers=headers,
+        verify=get_config().hd_adapters_verify_certs,
+        timeout=get_config().external_request_timeout,
     ) as client:
         loaded_metadata = await asyncio.gather(
             *(

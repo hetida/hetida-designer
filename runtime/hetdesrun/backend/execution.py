@@ -237,7 +237,8 @@ async def run_execution_input(
         headers = get_auth_headers()
 
         async with httpx.AsyncClient(
-            verify=get_config().hd_runtime_verify_certs
+            verify=get_config().hd_runtime_verify_certs,
+            timeout=get_config().external_request_timeout,
         ) as client:
             url = posix_urljoin(get_config().hd_runtime_engine_url, "runtime")
             try:
