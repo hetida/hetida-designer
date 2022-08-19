@@ -1156,8 +1156,7 @@ async def test_execute_asynchron_for_transformation_revision_with_exception(
                         "handle_trafo_revision_execution_request",
                         side_effect=HTTPException(404),
                     ):
-                    
-                        
+
                         await ac.post(
                             "/api/transformations/execute/asynchron",
                             json=json.loads(exec_by_id_input.json()),
@@ -1382,8 +1381,7 @@ async def test_execute_latest_asynchron_for_transformation_revision_with_excepti
                         "handle_latest_trafo_revision_execution_request",
                         side_effect=HTTPException(404),
                     ):
-                    
-                        
+
                         await ac.post(
                             "/api/transformations/execute-latest/asynchron",
                             json=json.loads(exec_by_id_input.json()),
