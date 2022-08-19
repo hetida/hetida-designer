@@ -521,12 +521,23 @@ def invoice_notification(
 
 
 async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> None:
-    result = await handle_trafo_revision_execution_request(exec_by_id)
+    try:
+        result = await handle_trafo_revision_execution_request(exec_by_id)
+        logger.info("Finished execution with job_id %s", str(exec_by_id.job_id))
 
-    requests.post(
-        posix_urljoin(str(callback_url), "execution", str(exec_by_id.job_id)),
-        json=json.loads(result.json()),  # TODO: avoid double serialization.
-    )
+        requests.post(
+            posix_urljoin(str(callback_url), "execution", str(exec_by_id.job_id)),
+            json=json.loads(result.json()),  # TODO: avoid double serialization.
+        )
+    except Exception as e:
+        # necessary due to issue of starlette exception handler overwriting uncaught exceptions
+        # https://github.com/tiangolo/fastapi/issues/2505
+        logger.error(
+            "An error occurred during execution with job_id %s as background task:\n%s",
+            str(exec_by_id.job_id),
+            str(e),
+        )
+        raise Exception from e
 
 
 @transformation_router.post(
@@ -547,10 +558,6 @@ async def execute_asynchronous_transformation_revision_endpoint(
     ),
 ) -> Any:
     """Execute a transformation revision of asynchronously.
-
-    WARNING: Uncaught exceptions will be overwritten by the starlette exception handler so that in 
-    this scenario debugging becomes basically impossible.
-    https://github.com/tiangolo/fastapi/issues/2505
 
     A valid input will be accepted with an according response and then the execution will run in the
     background. The execution result will be sent to the '/execution/{job_id}' post endpoint of the
@@ -621,16 +628,32 @@ async def execute_latest_transformation_revision_endpoint(
 async def execute_latest_and_post(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput, callback_url: HttpUrl
 ) -> None:
-    result = await handle_latest_trafo_revision_execution_request(
-        exec_latest_by_group_id_input
-    )
+    try:
+        result = await handle_latest_trafo_revision_execution_request(
+            exec_latest_by_group_id_input
+        )
+        logger.info(
+            "Finished execution with job_id %s",
+            str(exec_latest_by_group_id_input.job_id),
+        )
 
-    requests.post(
-        posix_urljoin(
-            str(callback_url), "execution", str(exec_latest_by_group_id_input.job_id)
-        ),
-        json=json.loads(result.json()),  # TODO: avoid double serialization.
-    )
+        requests.post(
+            posix_urljoin(
+                str(callback_url),
+                "execution",
+                str(exec_latest_by_group_id_input.job_id),
+            ),
+            json=json.loads(result.json()),  # TODO: avoid double serialization.
+        )
+    except Exception as e:
+        # necessary due to issue of starlette exception handler overwriting uncaught exceptions
+        # https://github.com/tiangolo/fastapi/issues/2505
+        logger.error(
+            "An error occurred during execution with job_id %s as background task:\n%s",
+            str(exec_latest_by_group_id_input.job_id),
+            str(e),
+        )
+        raise Exception from e
 
 
 @transformation_router.post(
@@ -659,10 +682,6 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
 
     WARNING: The inputs and outputs may be different for different revisions. In such a case,
     calling this endpoint with the same payload as before will not work, but will result in errors.
-
-    WARNING: Uncaught exceptions will be overwritten by the starlette exception handler so that in 
-    this scenario debugging becomes basically impossible.
-    https://github.com/tiangolo/fastapi/issues/2505
 
     A valid input will be accepted with an according response and then the execution will run in the
     background. The execution result will be sent to the '/execution/{$job_id}' POST endpoint of the
