@@ -6,6 +6,7 @@ from unittest import mock
 from uuid import UUID
 
 import pytest
+from fastapi import HTTPException
 from starlette.testclient import TestClient
 
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
@@ -972,11 +973,11 @@ async def test_execute_for_transformation_revision_with_job_id_none(
                 job_id=None,
             )
 
-            assert exec_by_id_input.job_id == None
+            assert exec_by_id_input.job_id is None
 
             exec_by_id_input_json = json.loads(exec_by_id_input.json())
 
-            assert hasattr(exec_by_id_input_json, "job_id") == False
+            assert hasattr(exec_by_id_input_json, "job_id") is False
 
             async with async_test_client as ac:
                 response = await ac.post(
@@ -1107,9 +1108,9 @@ async def test_execute_asynchron_for_transformation_revision(
                 )
                 resp_data = kwargs["json"]
                 assert "error" in resp_data
-                assert resp_data["error"] == None
+                assert resp_data["error"] is None
                 assert "execution_id" in resp_data
-                assert resp_data["execution_id"] == None
+                assert resp_data["execution_id"] is None
                 assert "job_id" in resp_data
                 assert resp_data["job_id"] == "1270547c-b224-461d-9387-e9d9d465bbe1"
                 assert "output_results_by_output_name" in resp_data
@@ -1121,11 +1122,11 @@ async def test_execute_asynchron_for_transformation_revision(
                 assert "wf_output" in resp_data["output_types_by_output_name"]
                 assert resp_data["output_types_by_output_name"]["wf_output"] == "INT"
                 assert "response" in resp_data
-                assert resp_data["response"] == None
+                assert resp_data["response"] is None
                 assert "result" in resp_data
                 assert resp_data["result"] == "ok"
                 assert "traceback" in resp_data
-                assert resp_data["traceback"] == None
+                assert resp_data["traceback"] is None
 
 
 @pytest.mark.asyncio
@@ -1149,22 +1150,22 @@ async def test_execute_asynchron_for_transformation_revision_with_http_exception
                 job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
             )
 
-            post_mock = mock.Mock()
             with mock.patch(
-                "hetdesrun.backend.service.transformation_router.requests.post",
-                new=post_mock,
+                "hetdesrun.backend.service.transformation_router."
+                "handle_latest_trafo_revision_execution_request",
+                side_effect=HTTPException(404),
             ):
                 with caplog.at_level(logging.ERROR):
                     async with async_test_client as ac:
-                        response = await ac.post(
+                        await ac.post(
                             "/api/transformations/execute/asynchron",
                             json=json.loads(exec_by_id_input.json()),
                             params={"callback_url": "http://callback-url.com"},
                         )
 
                     assert "1270547c-b224-461d-9387-e9d9d465bbe1" in caplog.text
-                    assert "as background task" in caplog.text
-                assert not post_mock.called
+                    assert "background task" in caplog.text
+                    assert "HTTP status code 404" in caplog.text
 
 
 @pytest.mark.asyncio
@@ -1310,9 +1311,9 @@ async def test_execute_latest_asynchron_for_transformation_revision(
                 )
                 resp_data = kwargs["json"]
                 assert "error" in resp_data
-                assert resp_data["error"] == None
+                assert resp_data["error"] is None
                 assert "execution_id" in resp_data
-                assert resp_data["execution_id"] == None
+                assert resp_data["execution_id"] is None
                 assert "job_id" in resp_data
                 assert resp_data["job_id"] == "1270547c-b224-461d-9387-e9d9d465bbe1"
                 assert "output_results_by_output_name" in resp_data
@@ -1329,11 +1330,11 @@ async def test_execute_latest_asynchron_for_transformation_revision(
                     == "STRING"
                 )
                 assert "response" in resp_data
-                assert resp_data["response"] == None
+                assert resp_data["response"] is None
                 assert "result" in resp_data
                 assert resp_data["result"] == "ok"
                 assert "traceback" in resp_data
-                assert resp_data["traceback"] == None
+                assert resp_data["traceback"] is None
 
 
 @pytest.mark.asyncio
