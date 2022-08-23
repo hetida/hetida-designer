@@ -1,0 +1,17 @@
+{
+    "id": "7d886bd1-fa75-4e48-9d9d-84ea1ead9a7d",
+    "wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "duration",
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "1500"
+                }
+            }
+        ],
+        "output_wirings": []
+    },
+    "run_pure_plot_operators": false,
+    "job_id": "00000000-0000-0000-0000-000000000042"
+}

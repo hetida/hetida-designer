@@ -1,0 +1,40 @@
+{
+    "id": "7d886bd1-fa75-4e48-9d9d-84ea1ead9a7d",
+    "revision_group_id": "73bf3780-64d9-4e8e-83ff-89e4a84b31c0",
+    "name": "Sleep",
+    "description": "New created component",
+    "category": "Test",
+    "version_tag": "1.0.0",
+    "state": "DRAFT",
+    "type": "COMPONENT",
+    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+    "content": "import time\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"duration\": \"INT\",\n    },\n    \"outputs\": {\n        \"message\": \"STRING\",\n    },\n    \"name\": \"Sleep\",\n    \"category\": \"Test\",\n    \"description\": \"New created component\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"7d886bd1-fa75-4e48-9d9d-84ea1ead9a7d\",\n    \"revision_group_id\": \"73bf3780-64d9-4e8e-83ff-89e4a84b31c0\",\n    \"state\": \"DRAFT\",\n}\n\n\ndef main(*, duration):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    time.sleep(duration)\n    return {\"message\": f\"Woke up after {duration} seconds\"}",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "000664f5-6abe-4ff9-bfa7-71f919aa856f",
+                "name": "duration",
+                "data_type": "INT"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "5a880a35-609e-4fd7-a610-c173a98f6726",
+                "name": "message",
+                "data_type": "STRING"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "duration",
+                "adapter_id": "direct_provisioning",
+                "filters": {
+                    "value": "1"
+                }
+            }
+        ],
+        "output_wirings": []
+    }
+}
