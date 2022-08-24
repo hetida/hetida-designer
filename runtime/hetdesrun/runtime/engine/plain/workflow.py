@@ -27,6 +27,7 @@ from hetdesrun.runtime.exceptions import (
     WorkflowInputDataValidationError,
 )
 from hetdesrun.runtime.logging import execution_context_filter
+from hetdesrun.utils import Type
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +146,9 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             raise MissingInputSource(
                 f"Inputs of computation node operator {self.operator_hierarchical_id} are missing"
             ).set_context(
-                component_id=self.component_id,
+                transformation_id=self.component_id,
+                transformation_name=self.component_name,
+                transformation_type=Type.COMPONENT,
                 operator_hierarchical_id=self.operator_hierarchical_id,
                 operator_hierarchical_name=self.operator_hierarchical_name,
             )
@@ -166,7 +169,9 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 )
                 logger.info(msg)
                 raise CircularDependency(msg).set_context(
-                    component_id=self.component_id,
+                    transformation_id=self.component_id,
+                    transformation_name=self.component_name,
+                    transformation_type=Type.COMPONENT,
                     operator_hierarchical_id=self.operator_hierarchical_id,
                     operator_hierarchical_name=self.operator_hierarchical_name,
                 )
@@ -183,7 +188,9 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
                 ).set_context(
-                    component_id=self.component_id,
+                    transformation_id=self.component_id,
+                    transformation_name=self.component_name,
+                    transformation_type=Type.COMPONENT,
                     operator_hierarchical_id=self.operator_hierarchical_id,
                     operator_hierarchical_name=self.operator_hierarchical_name,
                 ) from e
@@ -198,7 +205,9 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             function_result = function_result if function_result is not None else {}
         except RuntimeExecutionError as e:  # user code may raise runtime execution errors
             e.set_context(
-                component_id=self.component_id,
+                transformation_id=self.component_id,
+                transformation_name=self.component_name,
+                transformation_type=Type.COMPONENT,
                 operator_hierarchical_id=self.operator_hierarchical_id,
                 operator_hierarchical_name=self.operator_hierarchical_name,
             )
@@ -222,7 +231,9 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             )
             logger.info(msg, exc_info=True)
             raise RuntimeExecutionError(msg).set_context(
-                component_id=self.component_id,
+                transformation_id=self.component_id,
+                transformation_name=self.component_name,
+                transformation_type=Type.COMPONENT,
                 operator_hierarchical_id=self.operator_hierarchical_id,
                 operator_hierarchical_name=self.operator_hierarchical_name,
             ) from e
@@ -237,7 +248,9 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             )
             logger.info(msg)
             raise RuntimeExecutionError(msg).set_context(
-                component_id=self.component_id,
+                transformation_id=self.component_id,
+                transformation_name=self.component_name,
+                transformation_type=Type.COMPONENT,
                 operator_hierarchical_id=self.operator_hierarchical_id,
                 operator_hierarchical_name=self.operator_hierarchical_name,
             )
@@ -247,8 +260,10 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
     async def _compute_result(self) -> Dict[str, Any]:
         # set filter for contextualized logging
         execution_context_filter.bind_context(
-            currently_executed_instance_id=self.operator_hierarchical_id,
-            currently_executed_component_id=self.component_id,
+            currently_executed_transformation_id=self.component_id,
+            currently_executed_transformation_name=self.component_name,
+            currently_executed_transformation_type=Type.COMPONENT,
+            currently_executed_hierarchical_operator_id=self.operator_hierarchical_id,
             currently_executed_component_node_name=self.operator_hierarchical_name,
         )
 
@@ -384,9 +399,11 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
         self._wire_workflow_inputs()
 
         execution_context_filter.bind_context(
-            currently_executed_instance_id=self.operator_hierarchical_id,
-            currently_executed_component_id=None,
-            currently_executed_component_node_name=self.operator_hierarchical_name,
+            currently_executed_transformation_id=None,
+            currently_executed_transformation_name=None,
+            currently_executed_transformation_type=Type.WORKFLOW,
+            currently_executed_hierarchical_operator_id=self.operator_hierarchical_id,
+            currently_executed_hierarchical_name=self.operator_hierarchical_name,
         )
 
         runtime_component_logger.info(
@@ -425,7 +442,9 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
                 ).set_context(
-                    component_id="UNKOWN",
+                    transformation_id="UNKOWN",
+                    transformation_name="UNKNOWN",
+                    transformation_type=Type.WORKFLOW,
                     operator_hierarchical_id=self.operator_hierarchical_id,
                     operator_hierarchical_name="workflow",
                 ) from e

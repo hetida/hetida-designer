@@ -49,9 +49,11 @@ def configure_logging(
         "[in %(pathname)s:%(lineno)d"
         + (
             (
-                ", component instance: %(currently_executed_instance_id)s"
-                ", component id: %(currently_executed_component_id)s"
-                ", component node name: %(currently_executed_component_node_name)s"
+                ", transformation id: %(currently_executed_transformation_id)s"
+                ", transformation name: %(currently_executed_transformation_name)s"
+                ", transformation type: %(currently_executed_transformation_type)s"
+                ", operator id(s): %(currently_executed_hierarchical_operator_id)s"
+                ", operator name(s): %(currently_executed_hierarchical_operator_name)s"
                 ", job id: %(job_id)s"
                 "]"
             )
