@@ -8,7 +8,7 @@ from hetdesrun.adapters import AdapterHandlingException
 from hetdesrun.datatypes import NamedDataTypedValue
 from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
 from hetdesrun.runtime import RuntimeExecutionError
-from runtime.hetdesrun.runtime.configuration import execution_config
+from hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.engine.plain import workflow_execution_plain
 from hetdesrun.runtime.engine.plain.parsing import (
     WorkflowParsingException,
