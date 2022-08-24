@@ -13,11 +13,11 @@ from typing import (
 )
 
 from cached_property import cached_property  # async compatible variant
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
 from hetdesrun.runtime import runtime_component_logger
-from hetdesrun.runtime.context import execution_context
+from runtime.hetdesrun.runtime.context import execution_config
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
 from hetdesrun.runtime.exceptions import (
     CircularDependency,
@@ -33,6 +33,14 @@ logger = logging.getLogger(__name__)
 
 logger.addFilter(execution_context_filter)
 runtime_component_logger.addFilter(execution_context_filter)
+
+
+class ExecutionContext(BaseModel):
+    transformation_id: str
+    transformation_name: str
+    transformation_type: str
+    operator_hierarchical_id: str
+    operator_hierarchical_name: str
 
 
 class Node(Protocol):
@@ -119,6 +127,13 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         self.operator_hierarchical_name = operator_hierarchical_name
         self.component_id = component_id
         self.component_name = component_name
+        self.context = ExecutionContext(
+            transformation_id=self.component_id,
+            transformation_name=self.component_name,
+            transformation_type=Type.COMPONENT,
+            operator_hierarchical_id=self.operator_hierarchical_id,
+            operator_hierarchical_name=self.operator_hierarchical_name,
+        )
         self._in_computation = False
 
     def add_inputs(self, new_inputs: Dict[str, Tuple[Node, str]]) -> None:
@@ -145,13 +160,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             logger.info("Computation node execution failed due to missing input source")
             raise MissingInputSource(
                 f"Inputs of computation node operator {self.operator_hierarchical_id} are missing"
-            ).set_context(
-                transformation_id=self.component_id,
-                transformation_name=self.component_name,
-                transformation_type=Type.COMPONENT,
-                operator_hierarchical_id=self.operator_hierarchical_id,
-                operator_hierarchical_name=self.operator_hierarchical_name,
-            )
+            ).set_context(**self.context.dict())
 
     async def _gather_data_from_inputs(self) -> Dict[str, Any]:
         """Get data from inputs and handle possible cycles"""
@@ -168,13 +177,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                     f" of operator {another_node.operator_hierarchical_id}"
                 )
                 logger.info(msg)
-                raise CircularDependency(msg).set_context(
-                    transformation_id=self.component_id,
-                    transformation_name=self.component_name,
-                    transformation_type=Type.COMPONENT,
-                    operator_hierarchical_id=self.operator_hierarchical_id,
-                    operator_hierarchical_name=self.operator_hierarchical_name,
-                )
+                raise CircularDependency(msg).set_context(**self.context.dict())
             # actually get input data from other nodes
             try:
                 input_value_dict[input_name] = (await another_node.result)[output_name]
@@ -187,13 +190,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 raise MissingOutputException(
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
-                ).set_context(
-                    transformation_id=self.component_id,
-                    transformation_name=self.component_name,
-                    transformation_type=Type.COMPONENT,
-                    operator_hierarchical_id=self.operator_hierarchical_id,
-                    operator_hierarchical_name=self.operator_hierarchical_name,
-                ) from e
+                ).set_context(**self.context.dict()) from e
         return input_value_dict
 
     async def _run_comp_func(self, input_values: Dict[str, Any]) -> Dict[str, Any]:
@@ -204,13 +201,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             )
             function_result = function_result if function_result is not None else {}
         except RuntimeExecutionError as e:  # user code may raise runtime execution errors
-            e.set_context(
-                transformation_id=self.component_id,
-                transformation_name=self.component_name,
-                transformation_type=Type.COMPONENT,
-                operator_hierarchical_id=self.operator_hierarchical_id,
-                operator_hierarchical_name=self.operator_hierarchical_name,
-            )
+            e.set_context(**self.context.dict())
             logger.info(
                 (
                     "User raised Runtime execution exception during component execution"
@@ -230,13 +221,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 f" (operator hierarchical id: {self.operator_hierarchical_id}):\n{str(e)}"
             )
             logger.info(msg, exc_info=True)
-            raise RuntimeExecutionError(msg).set_context(
-                transformation_id=self.component_id,
-                transformation_name=self.component_name,
-                transformation_type=Type.COMPONENT,
-                operator_hierarchical_id=self.operator_hierarchical_id,
-                operator_hierarchical_name=self.operator_hierarchical_name,
-            ) from e
+            raise RuntimeExecutionError(msg).set_context(**self.context.dict()) from e
 
         if not isinstance(
             function_result, dict
@@ -247,13 +232,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 f"component {self.operator_hierarchical_name} did not return an output dict!"
             )
             logger.info(msg)
-            raise RuntimeExecutionError(msg).set_context(
-                transformation_id=self.component_id,
-                transformation_name=self.component_name,
-                transformation_type=Type.COMPONENT,
-                operator_hierarchical_id=self.operator_hierarchical_id,
-                operator_hierarchical_name=self.operator_hierarchical_name,
-            )
+            raise RuntimeExecutionError(msg).set_context(**self.context.dict())
 
         return function_result
 
@@ -350,6 +329,14 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
         self.operator_hierarchical_id = operator_hierarchical_id
         self.operator_hierarchical_name = operator_hierarchical_name
 
+        self.context = ExecutionContext(
+            transformation_id="",
+            transformation_name="",
+            transformation_type=Type.WORKFLOW,
+            operator_hierarchical_id=self.operator_hierarchical_id,
+            operator_hierarchical_name=self.operator_hierarchical_name,
+        )
+
     def add_inputs(self, new_inputs: Dict[str, Tuple[Node, str]]) -> None:
         self.inputs.update(new_inputs)
 
@@ -414,7 +401,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
 
         # gather result from workflow operators
         results = {}
-        exe_context_config = execution_context.get()
+        exe_context_config = execution_config.get()
 
         for (
             wf_output_name,
@@ -441,13 +428,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
                 raise MissingOutputException(
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
-                ).set_context(
-                    transformation_id="UNKOWN",
-                    transformation_name="UNKNOWN",
-                    transformation_type=Type.WORKFLOW,
-                    operator_hierarchical_id=self.operator_hierarchical_id,
-                    operator_hierarchical_name="workflow",
-                ) from e
+                ).set_context(**self.context.dict()) from e
 
         # cleanup
         execution_context_filter.clear_context()
