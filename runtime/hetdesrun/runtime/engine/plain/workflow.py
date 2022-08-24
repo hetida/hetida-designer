@@ -152,9 +152,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         """Check and handle missing inputs"""
         if not self.all_required_inputs_set():
             logger.info("Computation node execution failed due to missing input source")
-            raise MissingInputSource(
-                f"Inputs of computation node operator {self.operator_hierarchical_id} are missing"
-            ).set_context(self.context)
+            raise MissingInputSource("Inputs of computation node are missing").set_context(self.context)
 
     async def _gather_data_from_inputs(self) -> Dict[str, Any]:
         """Get data from inputs and handle possible cycles"""
