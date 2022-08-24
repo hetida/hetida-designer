@@ -7,7 +7,7 @@ from uuid import UUID
 
 import pytest
 from fastapi import HTTPException
-from starlette.testclient import TestClient
+from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.component.code import update_code
@@ -21,7 +21,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import get_uuid_from_seed
-from hetdesrun.webservice.config import get_config, runtime_config
+from hetdesrun.webservice.config import get_config
 
 
 @pytest.fixture(scope="function")
@@ -1049,7 +1049,7 @@ async def test_execute_for_separate_runtime_container(
 
 
 @pytest.mark.asyncio
-async def test_execute_asynchron_for_transformation_revision(
+async def test_execute_asynchron_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
@@ -1076,10 +1076,10 @@ async def test_execute_asynchron_for_transformation_revision(
                 job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
             )
 
-            post_mock = mock.Mock()
+            send_mock = mock.AsyncMock()
             with mock.patch(
-                "hetdesrun.backend.service.transformation_router.requests.post",
-                new=post_mock,
+                "hetdesrun.backend.service.transformation_router.send_result_to_callback_url",
+                new=send_mock,
             ):
                 async with async_test_client as ac:
                     response = await ac.post(
@@ -1093,35 +1093,21 @@ async def test_execute_asynchron_for_transformation_revision(
                 assert (
                     "1270547c-b224-461d-9387-e9d9d465bbe1" in response.json()["message"]
                 )
-                assert post_mock.called
-                func_name, args, kwargs = post_mock.mock_calls[0]
+                assert send_mock.called
+                func_name, args, kwargs = send_mock.mock_calls[0]
                 assert func_name == ""
-                assert len(args) != 0
+                assert len(kwargs) == 0
+                assert len(args) == 2
                 assert (
                     args[0]
-                    == "http://callback-url.com/execution/1270547c-b224-461d-9387-e9d9d465bbe1"
+                    == "http://callback-url.com/"
                 )
-                resp_data = kwargs["json"]
-                assert "error" in resp_data
-                assert resp_data["error"] is None
-                assert "execution_id" in resp_data
-                assert resp_data["execution_id"] is None
-                assert "job_id" in resp_data
-                assert resp_data["job_id"] == "1270547c-b224-461d-9387-e9d9d465bbe1"
-                assert "output_results_by_output_name" in resp_data
-                assert len(resp_data["output_results_by_output_name"]) == 1
-                assert "wf_output" in resp_data["output_results_by_output_name"]
-                assert resp_data["output_results_by_output_name"]["wf_output"] == 100
-                assert "output_types_by_output_name" in resp_data
-                assert len(resp_data["output_types_by_output_name"]) == 1
-                assert "wf_output" in resp_data["output_types_by_output_name"]
-                assert resp_data["output_types_by_output_name"]["wf_output"] == "INT"
-                assert "response" in resp_data
-                assert resp_data["response"] is None
-                assert "result" in resp_data
-                assert resp_data["result"] == "ok"
-                assert "traceback" in resp_data
-                assert resp_data["traceback"] is None
+                assert args[1] == ExecutionResponseFrontendDto(
+                    job_id="1270547c-b224-461d-9387-e9d9d465bbe1",
+                    output_results_by_output_name={"wf_output": 100},
+                    output_types_by_output_name={"wf_output": "STRING"},
+                    result="ok"
+                )
 
 
 @pytest.mark.asyncio
@@ -1160,7 +1146,7 @@ async def test_execute_asynchron_for_transformation_revision_with_exception(
 
                         assert "1270547c-b224-461d-9387-e9d9d465bbe1" in caplog.text
                         assert "background task" in caplog.text
-                        assert "HTTP status code 404" in caplog.text
+                        assert "Not Found" in caplog.text
 
                     caplog.clear()
                     with mock.patch(
@@ -1265,7 +1251,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
 
 
 @pytest.mark.asyncio
-async def test_execute_latest_asynchron_for_transformation_revision(
+async def test_execute_latest_asynchron_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
@@ -1296,10 +1282,10 @@ async def test_execute_latest_asynchron_for_transformation_revision(
                 job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
             )
 
-            post_mock = mock.Mock()
+            send_mock = mock.AsyncMock()
             with mock.patch(
-                "hetdesrun.backend.service.transformation_router.requests.post",
-                new=post_mock,
+                "hetdesrun.backend.service.transformation_router.send_result_to_callback_url",
+                new=send_mock,
             ):
                 async with async_test_client as ac:
                     response = await ac.post(
@@ -1313,41 +1299,21 @@ async def test_execute_latest_asynchron_for_transformation_revision(
                 assert (
                     "1270547c-b224-461d-9387-e9d9d465bbe1" in response.json()["message"]
                 )
-                assert post_mock.called
-                func_name, args, kwargs = post_mock.mock_calls[0]
+                assert send_mock.called
+                func_name, args, kwargs = send_mock.mock_calls[0]
                 assert func_name == ""
-                assert len(args) != 0
+                assert len(kwargs) == 0
+                assert len(args) == 2
                 assert (
                     args[0]
-                    == "http://callback-url.com/execution/1270547c-b224-461d-9387-e9d9d465bbe1"
+                    == "http://callback-url.com/"
                 )
-                resp_data = kwargs["json"]
-                assert "error" in resp_data
-                assert resp_data["error"] is None
-                assert "execution_id" in resp_data
-                assert resp_data["execution_id"] is None
-                assert "job_id" in resp_data
-                assert resp_data["job_id"] == "1270547c-b224-461d-9387-e9d9d465bbe1"
-                assert "output_results_by_output_name" in resp_data
-                assert len(resp_data["output_results_by_output_name"]) == 1
-                assert "operator_output" in resp_data["output_results_by_output_name"]
-                assert (
-                    resp_data["output_results_by_output_name"]["operator_output"] == 100
+                assert args[1] == ExecutionResponseFrontendDto(
+                    job_id="1270547c-b224-461d-9387-e9d9d465bbe1",
+                    output_results_by_output_name={"operator_output": 100},
+                    output_types_by_output_name={"operator_output": "STRING"},
+                    result="ok"
                 )
-                assert "output_types_by_output_name" in resp_data
-                assert len(resp_data["output_types_by_output_name"]) == 1
-                assert "operator_output" in resp_data["output_types_by_output_name"]
-                assert (
-                    resp_data["output_types_by_output_name"]["operator_output"]
-                    == "STRING"
-                )
-                assert "response" in resp_data
-                assert resp_data["response"] is None
-                assert "result" in resp_data
-                assert resp_data["result"] == "ok"
-                assert "traceback" in resp_data
-                assert resp_data["traceback"] is None
-
 
 @pytest.mark.asyncio
 async def test_execute_latest_asynchron_for_transformation_revision_with_exception(
@@ -1385,7 +1351,7 @@ async def test_execute_latest_asynchron_for_transformation_revision_with_excepti
 
                         assert "1270547c-b224-461d-9387-e9d9d465bbe1" in caplog.text
                         assert "background task" in caplog.text
-                        assert "HTTP status code 404" in caplog.text
+                        assert "Not Found" in caplog.text
 
                     caplog.clear()
                     with mock.patch(

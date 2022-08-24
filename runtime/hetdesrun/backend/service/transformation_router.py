@@ -522,39 +522,49 @@ def invoice_notification(
     pass
 
 
+async def send_result_to_callback_url(
+    callback_url: HttpUrl, result: ExecutionResponseFrontendDto
+) -> None:
+    headers = get_auth_headers()
+    async with httpx.AsyncClient(
+        verify=get_config().hd_backend_verify_certs,
+        timeout=get_config().external_request_timeout,
+    ) as client:
+        try:
+            await client.post(
+                posix_urljoin(
+                    str(callback_url),
+                    "execution",
+                    str(result.job_id),
+                ),
+                headers=headers,
+                json=json.loads(result.json()),  # TODO: avoid double serialization.
+                # see https://github.com/samuelcolvin/pydantic/issues/1409 and
+                # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+            )
+        except httpx.HTTPError as http_err:
+            # handles both request errors (connection problems)
+            # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
+            msg = (
+                f"Failure connecting to callback url ({callback_url}):\n{str(http_err)}"
+            )
+            logger.info(msg)
+
+
 async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> None:
     try:
-        result = await handle_trafo_revision_execution_request(exec_by_id)
-        logger.info("Finished execution with job_id %s", str(exec_by_id.job_id))
-
-        headers = get_auth_headers()
-        async with httpx.AsyncClient(
-            verify=get_config().hd_backend_verify_certs,
-            timeout=get_config().external_request_timeout,
-        ) as client:
-            try:
-                await client.post(
-                    posix_urljoin(
-                        str(callback_url),
-                        "execution",
-                        str(exec_by_id.job_id),
-                    ),
-                    headers=headers,
-                    json=json.loads(result.json()),  # TODO: avoid double serialization.
-                    # see https://github.com/samuelcolvin/pydantic/issues/1409 and
-                    # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
-                )
-            except httpx.HTTPError as http_err:
-                # handles both request errors (connection problems)
-                # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
-                msg = f"Failure connecting to callback url ({callback_url}):\n{str(http_err)}"
-                logger.info(msg)
-    except HTTPException as http_exc:
-        logger.error(
-            "Execution with job id %s as background task failed:\n%s",
-            str(exec_by_id.job_id),
-            str(http_exc.detail),
-        )
+        try:
+            result = await handle_trafo_revision_execution_request(exec_by_id)
+            logger.info("Finished execution with job_id %s", str(exec_by_id.job_id))
+        except HTTPException as http_exc:
+            logger.error(
+                "Execution with job id %s as background task failed:\n%s",
+                str(exec_by_id.job_id),
+                str(http_exc.detail),
+            )
+        else:
+            await send_result_to_callback_url(callback_url, result)
+            logger.info("Sent result of execution with job_id %s", str(exec_by_id.job_id))
     except Exception as e:
         # necessary due to issue of starlette exception handler overwriting uncaught exceptions
         # https://github.com/tiangolo/fastapi/issues/2505
@@ -655,42 +665,23 @@ async def execute_latest_and_post(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput, callback_url: HttpUrl
 ) -> None:
     try:
-        result = await handle_latest_trafo_revision_execution_request(
-            exec_latest_by_group_id_input
-        )
-        logger.info(
-            "Finished execution with job_id %s",
-            str(exec_latest_by_group_id_input.job_id),
-        )
-
-        headers = get_auth_headers()
-        async with httpx.AsyncClient(
-            verify=get_config().hd_backend_verify_certs,
-            timeout=get_config().external_request_timeout,
-        ) as client:
-            try:
-                await client.post(
-                    posix_urljoin(
-                        str(callback_url),
-                        "execution",
-                        str(exec_latest_by_group_id_input.job_id),
-                    ),
-                    headers=headers,
-                    json=json.loads(result.json()),  # TODO: avoid double serialization.
-                    # see https://github.com/samuelcolvin/pydantic/issues/1409 and
-                    # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
-                )
-            except httpx.HTTPError as http_err:
-                # handles both request errors (connection problems)
-                # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
-                msg = f"Failure connecting to callback url ({callback_url}):\n{str(http_err)}"
-                logger.info(msg)
-    except HTTPException as http_exc:
-        logger.error(
-            "Execution with job id %s as background task failed:\n%s",
-            str(exec_latest_by_group_id_input.job_id),
-            str(http_exc.detail),
-        )
+        try:
+            result = await handle_latest_trafo_revision_execution_request(
+                exec_latest_by_group_id_input
+            )
+            logger.info(
+                "Finished execution with job_id %s",
+                str(exec_latest_by_group_id_input.job_id),
+            )
+        except HTTPException as http_exc:
+            logger.error(
+                "Execution with job id %s as background task failed:\n%s",
+                str(exec_latest_by_group_id_input.job_id),
+                str(http_exc.detail),
+            )
+        else:
+            await send_result_to_callback_url(callback_url, result)
+            logger.info("Sent result of execution with job_id %s", str(exec_latest_by_group_id_input.job_id))
     except Exception as e:
         # necessary due to issue of starlette exception handler overwriting uncaught exceptions
         # https://github.com/tiangolo/fastapi/issues/2505
