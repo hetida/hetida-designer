@@ -243,7 +243,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             currently_executed_component_node_name=self.operator_hierarchical_name,
         )
 
-        logger.info(
+        runtime_component_logger.info(
             "Starting computation for operator %s of type component with operator id %s",
             self.operator_hierarchical_name,
             self.operator_hierarchical_id,
@@ -380,7 +380,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
             currently_executed_component_node_name=self.operator_hierarchical_name,
         )
 
-        logger.info(
+        runtime_component_logger.info(
             "Starting computation for operator %s of type workflow with operator id %s",
             self.operator_hierarchical_name,
             self.operator_hierarchical_id,
@@ -408,7 +408,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
                 )
             except KeyError as e:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
-                logger.info(
+                runtime_component_logger.info(
                     "Execution failed due to missing output of a node",
                     exc_info=True,
                 )
