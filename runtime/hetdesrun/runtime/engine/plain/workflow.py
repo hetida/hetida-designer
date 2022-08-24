@@ -234,11 +234,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         # set filter for contextualized logging
         execution_context_filter.bind_context(**self.context.dict())
 
-        runtime_component_logger.info(
-            "Starting computation for operator %s of type component with operator id %s",
-            self.operator_hierarchical_name,
-            self.operator_hierarchical_id,
-        )
+        runtime_component_logger.info("Starting computation")
         self._in_computation = True
 
         self._check_inputs()
@@ -376,11 +372,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
 
         execution_context_filter.bind_context(**self.context.dict())
 
-        runtime_component_logger.info(
-            "Starting computation for operator %s of type workflow with operator id %s",
-            self.operator_hierarchical_name,
-            self.operator_hierarchical_id,
-        )
+        runtime_component_logger.info("Starting computation")
 
         # gather result from workflow operators
         results = {}
