@@ -17,7 +17,7 @@ from pydantic import BaseModel, ValidationError
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
 from hetdesrun.runtime import runtime_component_logger
-from runtime.hetdesrun.runtime.context import execution_config
+from runtime.hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
 from hetdesrun.runtime.exceptions import (
     CircularDependency,

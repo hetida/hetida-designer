@@ -8,7 +8,7 @@ from hetdesrun.adapters import AdapterHandlingException
 from hetdesrun.datatypes import NamedDataTypedValue
 from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
 from hetdesrun.runtime import RuntimeExecutionError
-from hetdesrun.runtime.context import execution_context
+from runtime.hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.engine.plain import workflow_execution_plain
 from hetdesrun.runtime.engine.plain.parsing import (
     WorkflowParsingException,
@@ -38,7 +38,7 @@ async def runtime_service(
         model_to_pretty_json_str(runtime_input),
     )
 
-    execution_context.set(runtime_input.configuration)
+    execution_config.set(runtime_input.configuration)
 
     # Parse Workflow
     try:
