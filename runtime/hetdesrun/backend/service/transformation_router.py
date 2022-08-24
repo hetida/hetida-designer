@@ -4,7 +4,7 @@ from posixpath import join as posix_urljoin
 from typing import Any, List, Optional, Tuple
 from uuid import UUID, uuid4
 
-import requests
+import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Path, Query, status
 from pydantic import HttpUrl
 
@@ -37,6 +37,8 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
+from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
@@ -525,15 +527,33 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
         result = await handle_trafo_revision_execution_request(exec_by_id)
         logger.info("Finished execution with job_id %s", str(exec_by_id.job_id))
 
-        requests.post(
-            posix_urljoin(str(callback_url), "execution", str(exec_by_id.job_id)),
-            json=json.loads(result.json()),  # TODO: avoid double serialization.
-        )
-    except HTTPException as http_e:
+        headers = get_auth_headers()
+        async with httpx.AsyncClient(
+            verify=get_config().hd_backend_verify_certs,
+            timeout=get_config().external_request_timeout,
+        ) as client:
+            try:
+                await client.post(
+                    posix_urljoin(
+                        str(callback_url),
+                        "execution",
+                        str(exec_by_id.job_id),
+                    ),
+                    headers=headers,
+                    json=json.loads(result.json()),  # TODO: avoid double serialization.
+                    # see https://github.com/samuelcolvin/pydantic/issues/1409 and
+                    # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                )
+            except httpx.HTTPError as http_err:
+                # handles both request errors (connection problems)
+                # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
+                msg = f"Failure connecting to callback url ({callback_url}):\n{str(http_err)}"
+                logger.info(msg)
+    except HTTPException as http_exc:
         logger.error(
-            "Execution with job id %s as background task failed with HTTP status code %s",
+            "Execution with job id %s as background task failed:\n%s",
             str(exec_by_id.job_id),
-            str(http_e),
+            str(http_exc.detail),
         )
     except Exception as e:
         # necessary due to issue of starlette exception handler overwriting uncaught exceptions
@@ -643,19 +663,33 @@ async def execute_latest_and_post(
             str(exec_latest_by_group_id_input.job_id),
         )
 
-        requests.post(
-            posix_urljoin(
-                str(callback_url),
-                "execution",
-                str(exec_latest_by_group_id_input.job_id),
-            ),
-            json=json.loads(result.json()),  # TODO: avoid double serialization.
-        )
-    except HTTPException as http_e:
+        headers = get_auth_headers()
+        async with httpx.AsyncClient(
+            verify=get_config().hd_backend_verify_certs,
+            timeout=get_config().external_request_timeout,
+        ) as client:
+            try:
+                await client.post(
+                    posix_urljoin(
+                        str(callback_url),
+                        "execution",
+                        str(exec_latest_by_group_id_input.job_id),
+                    ),
+                    headers=headers,
+                    json=json.loads(result.json()),  # TODO: avoid double serialization.
+                    # see https://github.com/samuelcolvin/pydantic/issues/1409 and
+                    # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+                )
+            except httpx.HTTPError as http_err:
+                # handles both request errors (connection problems)
+                # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
+                msg = f"Failure connecting to callback url ({callback_url}):\n{str(http_err)}"
+                logger.info(msg)
+    except HTTPException as http_exc:
         logger.error(
-            "Execution with job id %s as background task failed with HTTP status code %s",
+            "Execution with job id %s as background task failed:\n%s",
             str(exec_latest_by_group_id_input.job_id),
-            str(http_e),
+            str(http_exc.detail),
         )
     except Exception as e:
         # necessary due to issue of starlette exception handler overwriting uncaught exceptions
