@@ -151,7 +151,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
     def _check_inputs(self) -> None:
         """Check and handle missing inputs"""
         if not self.all_required_inputs_set():
-            logger.info("Computation node execution failed due to missing input source")
+            logger.error("Computation node execution failed due to missing input source")
             raise MissingInputSource("Inputs of computation node are missing").set_context(self.context)
 
     async def _gather_data_from_inputs(self) -> Dict[str, Any]:
@@ -168,14 +168,14 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                     f" whith input '{input_name}' pointing to output '{output_name}'"
                     f" of operator {another_node.operator_hierarchical_id}"
                 )
-                logger.info(msg)
+                logger.error(msg)
                 raise CircularDependency(msg).set_context(self.context)
             # actually get input data from other nodes
             try:
                 input_value_dict[input_name] = (await another_node.result)[output_name]
             except KeyError as e:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
-                logger.info(
+                logger.error(
                     "Execution failed due to missing output of a node",
                     exc_info=True,
                 )
@@ -194,7 +194,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             function_result = function_result if function_result is not None else {}
         except RuntimeExecutionError as e:  # user code may raise runtime execution errors
             e.set_context(self.context)
-            logger.info(
+            logger.error(
                 (
                     "User raised Runtime execution exception during component execution"
                     " of operator %s with UUID %s of component %s with UUID %s"
@@ -212,7 +212,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 f"component instance {self.operator_hierarchical_name}"
                 f" (operator hierarchical id: {self.operator_hierarchical_id}):\n{str(e)}"
             )
-            logger.info(msg, exc_info=True)
+            logger.error(msg, exc_info=True)
             raise RuntimeExecutionError(msg).set_context(self.context) from e
 
         if not isinstance(
@@ -223,7 +223,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 f"Component function of component instance {self.operator_hierarchical_id} from "
                 f"component {self.operator_hierarchical_name} did not return an output dict!"
             )
-            logger.info(msg)
+            logger.error(msg)
             raise RuntimeExecutionError(msg).set_context(self.context)
 
         return function_result
@@ -341,7 +341,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
             raise WorkflowInputDataValidationError(
                 "The provided data or some constant values could not be parsed into the "
                 "respective workflow input datatypes"
-            ) from e
+            ).set_context(self.context) from e
 
         Const_Node = ComputationNode(
             func=lambda: parsed_values,
@@ -394,7 +394,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
                 )
             except KeyError as e:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
-                runtime_component_logger.info(
+                runtime_component_logger.error(
                     "Execution failed due to missing output of a node",
                     exc_info=True,
                 )
