@@ -548,7 +548,7 @@ async def send_result_to_callback_url(
             msg = (
                 f"Failure connecting to callback url ({callback_url}):\n{str(http_err)}"
             )
-            logger.info(msg)
+            logger.error(msg)
 
 
 async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> None:
