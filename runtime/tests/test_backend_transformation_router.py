@@ -946,7 +946,7 @@ async def test_execute_for_transformation_revision(
 
 
 @pytest.mark.asyncio
-async def test_execute_for_transformation_revision_with_job_id_none(
+async def test_execute_for_transformation_revision_without_job_id(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
@@ -967,15 +967,10 @@ async def test_execute_for_transformation_revision_with_job_id_none(
 
             update_or_create_nesting(tr_workflow_2)
 
-            exec_by_id_input = ExecByIdInput(
-                id=tr_workflow_2.id,
-                wiring=tr_workflow_2.test_wiring,
-                job_id=None,
-            )
-
-            assert exec_by_id_input.job_id is None
-
-            exec_by_id_input_json = json.loads(exec_by_id_input.json())
+            exec_by_id_input_json = {
+                "id": str(tr_workflow_2.id),
+                "wiring": json.loads(tr_workflow_2.test_wiring.json()),
+            }
 
             assert hasattr(exec_by_id_input_json, "job_id") is False
 

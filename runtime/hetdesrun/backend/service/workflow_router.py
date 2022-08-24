@@ -354,13 +354,19 @@ async def execute_workflow_revision(
     This endpoint is deprecated and will be removed soon,
     use POST /api/transformations/execute instead which uses a new model for the payload.
     """
-
-    exec_by_id = ExecByIdInput(
-        id=id,
-        wiring=wiring_dto.to_workflow_wiring(),
-        run_pure_plot_operators=run_pure_plot_operators,
-        job_id=job_id,
-    )
+    if job_id is None:
+        exec_by_id = ExecByIdInput(
+            id=id,
+            wiring=wiring_dto.to_workflow_wiring(),
+            run_pure_plot_operators=run_pure_plot_operators,
+        )
+    else:
+        exec_by_id = ExecByIdInput(
+            id=id,
+            wiring=wiring_dto.to_workflow_wiring(),
+            run_pure_plot_operators=run_pure_plot_operators,
+            job_id=job_id,
+        )
 
     return await handle_trafo_revision_execution_request(exec_by_id)
 
