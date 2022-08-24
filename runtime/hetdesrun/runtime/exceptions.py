@@ -16,14 +16,20 @@ class RuntimeExecutionError(Exception):
         self,
         context: ExecutionContext,
     ) -> "RuntimeExecutionError":
-        self.currently_executed_transformation_id = context.transformation_id
-        self.currently_executed_transformation_name = context.transformation_name
-        self.currently_executed_transformation_type = context.transformation_type
+        self.currently_executed_transformation_id = (
+            context.currently_executed_transformation_id
+        )
+        self.currently_executed_transformation_name = (
+            context.currently_executed_transformation_name
+        )
+        self.currently_executed_transformation_type = (
+            context.currently_executed_transformation_type
+        )
         self.currently_executed_hierarchical_operator_id = (
-            context.operator_hierarchical_id
+            context.currently_executed_operator_hierarchical_id
         )
         self.currently_executed_hierarchical_operator_name = (
-            context.operator_hierarchical_name
+            context.currently_executed_operator_hierarchical_name
         )
         return self
 

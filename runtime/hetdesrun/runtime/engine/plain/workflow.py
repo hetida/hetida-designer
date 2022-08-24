@@ -121,11 +121,11 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         self.component_id = component_id
         self.component_name = component_name
         self.context = ExecutionContext(
-            transformation_id=self.component_id,
-            transformation_name=self.component_name,
-            transformation_type=Type.COMPONENT,
-            operator_hierarchical_id=self.operator_hierarchical_id,
-            operator_hierarchical_name=self.operator_hierarchical_name,
+            currently_executed_transformation_id=self.component_id,
+            currently_executed_transformation_name=self.component_name,
+            currently_executed_transformation_type=Type.COMPONENT,
+            currently_executed_operator_hierarchical_id=self.operator_hierarchical_id,
+            currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,
         )
         self._in_computation = False
 
@@ -231,13 +231,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
 
     async def _compute_result(self) -> Dict[str, Any]:
         # set filter for contextualized logging
-        execution_context_filter.bind_context(
-            currently_executed_transformation_id=self.component_id,
-            currently_executed_transformation_name=self.component_name,
-            currently_executed_transformation_type=Type.COMPONENT,
-            currently_executed_hierarchical_operator_id=self.operator_hierarchical_id,
-            currently_executed_component_node_name=self.operator_hierarchical_name,
-        )
+        execution_context_filter.bind_context(**self.context.dict())
 
         runtime_component_logger.info(
             "Starting computation for operator %s of type component with operator id %s",
@@ -323,11 +317,11 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
         self.operator_hierarchical_name = operator_hierarchical_name
 
         self.context = ExecutionContext(
-            transformation_id="",
-            transformation_name="",
-            transformation_type=Type.WORKFLOW,
-            operator_hierarchical_id=self.operator_hierarchical_id,
-            operator_hierarchical_name=self.operator_hierarchical_name,
+            currently_executed_transformation_id="UNKNOWN",
+            currently_executed_transformation_name="UNKNOWN",
+            currently_executed_transformation_type=Type.WORKFLOW,
+            currently_executed_operator_hierarchical_id=self.operator_hierarchical_id,
+            currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,
         )
 
     def add_inputs(self, new_inputs: Dict[str, Tuple[Node, str]]) -> None:
@@ -378,13 +372,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
     async def result(self) -> Dict[str, Any]:
         self._wire_workflow_inputs()
 
-        execution_context_filter.bind_context(
-            currently_executed_transformation_id=None,
-            currently_executed_transformation_name=None,
-            currently_executed_transformation_type=Type.WORKFLOW,
-            currently_executed_hierarchical_operator_id=self.operator_hierarchical_id,
-            currently_executed_hierarchical_name=self.operator_hierarchical_name,
-        )
+        execution_context_filter.bind_context(**self.context.dict())
 
         runtime_component_logger.info(
             "Starting computation for operator %s of type workflow with operator id %s",
