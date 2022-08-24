@@ -145,6 +145,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             raise MissingInputSource(
                 f"Inputs of computation node operator {self.operator_hierarchical_id} are missing"
             ).set_context(
+                component_id=self.component_id,
                 operator_hierarchical_id=self.operator_hierarchical_id,
                 operator_hierarchical_name=self.operator_hierarchical_name,
             )
@@ -165,6 +166,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 )
                 logger.info(msg)
                 raise CircularDependency(msg).set_context(
+                    component_id=self.component_id,
                     operator_hierarchical_id=self.operator_hierarchical_id,
                     operator_hierarchical_name=self.operator_hierarchical_name,
                 )
@@ -181,6 +183,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
                 ).set_context(
+                    component_id=self.component_id,
                     operator_hierarchical_id=self.operator_hierarchical_id,
                     operator_hierarchical_name=self.operator_hierarchical_name,
                 ) from e
@@ -195,7 +198,9 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             function_result = function_result if function_result is not None else {}
         except RuntimeExecutionError as e:  # user code may raise runtime execution errors
             e.set_context(
-                self.operator_hierarchical_id, self.operator_hierarchical_name
+                component_id=self.component_id,
+                operator_hierarchical_id=self.operator_hierarchical_id,
+                operator_hierarchical_name=self.operator_hierarchical_name,
             )
             logger.info(
                 (
@@ -217,7 +222,9 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             )
             logger.info(msg, exc_info=True)
             raise RuntimeExecutionError(msg).set_context(
-                self.operator_hierarchical_id, self.operator_hierarchical_name
+                component_id=self.component_id,
+                operator_hierarchical_id=self.operator_hierarchical_id,
+                operator_hierarchical_name=self.operator_hierarchical_name,
             ) from e
 
         if not isinstance(
@@ -230,7 +237,9 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             )
             logger.info(msg)
             raise RuntimeExecutionError(msg).set_context(
-                self.operator_hierarchical_id, self.operator_hierarchical_name
+                component_id=self.component_id,
+                operator_hierarchical_id=self.operator_hierarchical_id,
+                operator_hierarchical_name=self.operator_hierarchical_name,
             )
 
         return function_result
@@ -416,6 +425,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
                 ).set_context(
+                    component_id="UNKOWN",
                     operator_hierarchical_id=self.operator_hierarchical_id,
                     operator_hierarchical_name="workflow",
                 ) from e

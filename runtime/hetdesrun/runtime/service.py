@@ -122,8 +122,8 @@ async def runtime_service(
         logger.info(
             'Exception during workflow execution ("%s") in instance %s of component %s',
             str(runtime_input.job_id),
-            e.currently_executed_node_instance,
-            e.currently_executed_component,
+            e.currently_executed_instance_id,
+            e.currently_executed_component_node_name,
             exc_info=True,
         )
         return WorkflowExecutionResult(
