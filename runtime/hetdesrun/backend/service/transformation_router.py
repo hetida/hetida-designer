@@ -543,7 +543,7 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
             str(exec_by_id.job_id),
             str(e),
         )
-        raise Exception from e
+        raise e
 
 
 @transformation_router.post(
@@ -665,7 +665,7 @@ async def execute_latest_and_post(
             str(exec_latest_by_group_id_input.job_id),
             str(e),
         )
-        raise Exception from e
+        raise e
 
 
 @transformation_router.post(
