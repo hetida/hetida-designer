@@ -153,7 +153,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             logger.info("Computation node execution failed due to missing input source")
             raise MissingInputSource(
                 f"Inputs of computation node operator {self.operator_hierarchical_id} are missing"
-            ).set_context(**self.context.dict())
+            ).set_context(self.context)
 
     async def _gather_data_from_inputs(self) -> Dict[str, Any]:
         """Get data from inputs and handle possible cycles"""
@@ -170,7 +170,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                     f" of operator {another_node.operator_hierarchical_id}"
                 )
                 logger.info(msg)
-                raise CircularDependency(msg).set_context(**self.context.dict())
+                raise CircularDependency(msg).set_context(self.context)
             # actually get input data from other nodes
             try:
                 input_value_dict[input_name] = (await another_node.result)[output_name]
@@ -183,7 +183,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 raise MissingOutputException(
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
-                ).set_context(**self.context.dict()) from e
+                ).set_context(self.context) from e
         return input_value_dict
 
     async def _run_comp_func(self, input_values: Dict[str, Any]) -> Dict[str, Any]:
@@ -194,7 +194,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             )
             function_result = function_result if function_result is not None else {}
         except RuntimeExecutionError as e:  # user code may raise runtime execution errors
-            e.set_context(**self.context.dict())
+            e.set_context(self.context)
             logger.info(
                 (
                     "User raised Runtime execution exception during component execution"
@@ -214,7 +214,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 f" (operator hierarchical id: {self.operator_hierarchical_id}):\n{str(e)}"
             )
             logger.info(msg, exc_info=True)
-            raise RuntimeExecutionError(msg).set_context(**self.context.dict()) from e
+            raise RuntimeExecutionError(msg).set_context(self.context) from e
 
         if not isinstance(
             function_result, dict
@@ -225,7 +225,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 f"component {self.operator_hierarchical_name} did not return an output dict!"
             )
             logger.info(msg)
-            raise RuntimeExecutionError(msg).set_context(**self.context.dict())
+            raise RuntimeExecutionError(msg).set_context(self.context)
 
         return function_result
 
@@ -421,7 +421,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
                 raise MissingOutputException(
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
-                ).set_context(**self.context.dict()) from e
+                ).set_context(self.context) from e
 
         # cleanup
         execution_context_filter.clear_context()

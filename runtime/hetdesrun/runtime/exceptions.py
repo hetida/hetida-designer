@@ -1,3 +1,6 @@
+from hetdesrun.runtime.context import ExecutionContext
+
+
 class RuntimeExecutionError(Exception):
     """Highest Level Exception for Runtime Execution"""
 
@@ -11,17 +14,17 @@ class RuntimeExecutionError(Exception):
 
     def set_context(
         self,
-        transformation_id: str,
-        transformation_name: str,
-        transformation_type: str,
-        operator_hierarchical_id: str,
-        operator_hierarchical_name: str,
+        context: ExecutionContext,
     ) -> "RuntimeExecutionError":
-        self.currently_executed_transformation_id = transformation_id
-        self.currently_executed_transformation_name = transformation_name
-        self.currently_executed_transformation_type = transformation_type
-        self.currently_executed_hierarchical_operator_id = operator_hierarchical_id
-        self.currently_executed_hierarchical_operator_name = operator_hierarchical_name
+        self.currently_executed_transformation_id = context.transformation_id
+        self.currently_executed_transformation_name = context.transformation_name
+        self.currently_executed_transformation_type = context.transformation_type
+        self.currently_executed_hierarchical_operator_id = (
+            context.operator_hierarchical_id
+        )
+        self.currently_executed_hierarchical_operator_name = (
+            context.operator_hierarchical_name
+        )
         return self
 
 
