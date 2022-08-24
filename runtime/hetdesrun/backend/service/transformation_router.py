@@ -513,9 +513,7 @@ async def execute_transformation_revision_endpoint(
 callback_router = APIRouter()
 
 
-@callback_router.post(
-    "{$callback_url}/execution/{$job_id}", response_model=ExecutionResultReceived
-)
+@callback_router.post("{$callback_url}", response_model=ExecutionResultReceived)
 def invoice_notification(
     body: ExecutionResponseFrontendDto,  # pylint: disable=unused-argument
 ) -> None:
@@ -532,11 +530,7 @@ async def send_result_to_callback_url(
     ) as client:
         try:
             await client.post(
-                posix_urljoin(
-                    str(callback_url),
-                    "execution",
-                    str(result.job_id),
-                ),
+                callback_url,
                 headers=headers,
                 json=json.loads(result.json()),  # TODO: avoid double serialization.
                 # see https://github.com/samuelcolvin/pydantic/issues/1409 and
