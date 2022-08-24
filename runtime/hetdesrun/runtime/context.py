@@ -7,3 +7,4 @@ class ExecutionContext(BaseModel):
     currently_executed_transformation_type: str
     currently_executed_operator_hierarchical_id: str
     currently_executed_operator_hierarchical_name: str
+    currently_executed_job_id: str

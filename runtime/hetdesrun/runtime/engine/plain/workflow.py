@@ -126,6 +126,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             currently_executed_transformation_type=Type.COMPONENT,
             currently_executed_operator_hierarchical_id=self.operator_hierarchical_id,
             currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,
+            currently_executed_job_id="UNKNOWN",
         )
         self._in_computation = False
 
@@ -322,6 +323,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
             currently_executed_transformation_type=Type.WORKFLOW,
             currently_executed_operator_hierarchical_id=self.operator_hierarchical_id,
             currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,
+            currently_executed_job_id="UNKNOWN",
         )
 
     def add_inputs(self, new_inputs: Dict[str, Tuple[Node, str]]) -> None:
