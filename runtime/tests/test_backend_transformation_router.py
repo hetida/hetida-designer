@@ -7,9 +7,9 @@ from uuid import UUID
 
 import pytest
 from fastapi import HTTPException
-from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
+from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
 from hetdesrun.exportimport.importing import load_json
 from hetdesrun.persistence import get_db_engine, sessionmaker
@@ -1085,7 +1085,7 @@ async def test_execute_asynchron_for_transformation_revision_works(
                     response = await ac.post(
                         "/api/transformations/execute/asynchron",
                         json=json.loads(exec_by_id_input.json()),
-                        params={"callback_url": "http://callback-url.com"},
+                        params={"callback_url": "http://callback-url.com/"},
                     )
 
                 assert response.status_code == 202
@@ -1098,15 +1098,12 @@ async def test_execute_asynchron_for_transformation_revision_works(
                 assert func_name == ""
                 assert len(kwargs) == 0
                 assert len(args) == 2
-                assert (
-                    args[0]
-                    == "http://callback-url.com/"
-                )
+                assert args[0] == "http://callback-url.com/"
                 assert args[1] == ExecutionResponseFrontendDto(
                     job_id="1270547c-b224-461d-9387-e9d9d465bbe1",
                     output_results_by_output_name={"wf_output": 100},
-                    output_types_by_output_name={"wf_output": "STRING"},
-                    result="ok"
+                    output_types_by_output_name={"wf_output": "INT"},
+                    result="ok",
                 )
 
 
@@ -1304,16 +1301,14 @@ async def test_execute_latest_asynchron_for_transformation_revision_works(
                 assert func_name == ""
                 assert len(kwargs) == 0
                 assert len(args) == 2
-                assert (
-                    args[0]
-                    == "http://callback-url.com/"
-                )
+                assert args[0] == "http://callback-url.com/"
                 assert args[1] == ExecutionResponseFrontendDto(
                     job_id="1270547c-b224-461d-9387-e9d9d465bbe1",
                     output_results_by_output_name={"operator_output": 100},
                     output_types_by_output_name={"operator_output": "STRING"},
-                    result="ok"
+                    result="ok",
                 )
+
 
 @pytest.mark.asyncio
 async def test_execute_latest_asynchron_for_transformation_revision_with_exception(

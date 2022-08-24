@@ -564,7 +564,9 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
             )
         else:
             await send_result_to_callback_url(callback_url, result)
-            logger.info("Sent result of execution with job_id %s", str(exec_by_id.job_id))
+            logger.info(
+                "Sent result of execution with job_id %s", str(exec_by_id.job_id)
+            )
     except Exception as e:
         # necessary due to issue of starlette exception handler overwriting uncaught exceptions
         # https://github.com/tiangolo/fastapi/issues/2505
@@ -681,7 +683,10 @@ async def execute_latest_and_post(
             )
         else:
             await send_result_to_callback_url(callback_url, result)
-            logger.info("Sent result of execution with job_id %s", str(exec_latest_by_group_id_input.job_id))
+            logger.info(
+                "Sent result of execution with job_id %s",
+                str(exec_latest_by_group_id_input.job_id),
+            )
     except Exception as e:
         # necessary due to issue of starlette exception handler overwriting uncaught exceptions
         # https://github.com/tiangolo/fastapi/issues/2505
