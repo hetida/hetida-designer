@@ -15,6 +15,7 @@ from hetdesrun.runtime.engine.plain.parsing import (
     parse_workflow_input,
 )
 from hetdesrun.runtime.engine.plain.workflow import obtain_all_nodes
+from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.utils import model_to_pretty_json_str
 from hetdesrun.wiring import (
     resolve_and_load_data_from_wiring,
@@ -39,6 +40,9 @@ async def runtime_service(
     )
 
     execution_config.set(runtime_input.configuration)
+    execution_context_filter.bind_context(
+        currently_executed_job_id=runtime_input.job_id
+    )
 
     # Parse Workflow
     try:

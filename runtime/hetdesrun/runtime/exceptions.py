@@ -14,8 +14,7 @@ class RuntimeExecutionError(Exception):
         super().__init__(*args, **kwargs)
 
     def set_context(
-        self,
-        context: ExecutionContext,
+        self, context: ExecutionContext, job_id: str = "UNKNOWN"
     ) -> "RuntimeExecutionError":
         self.currently_executed_transformation_id = (
             context.currently_executed_transformation_id
@@ -32,7 +31,7 @@ class RuntimeExecutionError(Exception):
         self.currently_executed_hierarchical_operator_name = (
             context.currently_executed_operator_hierarchical_name
         )
-        self.currently_executed_job_id = context.currently_executed_job_id
+        self.currently_executed_job_id = job_id
         return self
 
 
