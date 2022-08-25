@@ -10,7 +10,7 @@ class RuntimeExecutionError(Exception):
         self.currently_executed_transformation_type = None
         self.currently_executed_hierarchical_operator_id = None
         self.currently_executed_hierarchical_operator_name = None
-        self.currently_executed_hierarchical_job_id = None
+        self.currently_executed_job_id = None
         super().__init__(*args, **kwargs)
 
     def set_context(

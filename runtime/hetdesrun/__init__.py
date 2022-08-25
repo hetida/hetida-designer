@@ -53,7 +53,7 @@ def configure_logging(
                 ", transformation name: %(currently_executed_transformation_name)s"
                 ", transformation type: %(currently_executed_transformation_type)s"
                 ", operator id(s): %(currently_executed_operator_hierarchical_id)s"
-                ", operator name(s): %(currently_executed_operator__hierarchicalname)s"
+                ", operator name(s): %(currently_executed_operator_hierarchical_name)s"
                 ", job id: %(currently_executed_job_id)s"
                 "]"
             )
