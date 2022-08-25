@@ -49,8 +49,10 @@ def configure_logging(
         "[in %(pathname)s:%(lineno)d"
         + (
             (
-                ",\n    %(currently_executed_transformation_type).1s id: %(currently_executed_transformation_id)s"
-                ", %(currently_executed_transformation_type).1s name: %(currently_executed_transformation_name)s"
+                ",\n    %(currently_executed_transformation_type).1s"
+                " id: %(currently_executed_transformation_id)s"
+                ", %(currently_executed_transformation_type).1s"
+                " name: %(currently_executed_transformation_name)s"
                 ", J id: %(currently_executed_job_id)s"
                 ",\n    O id(s): %(currently_executed_operator_hierarchical_id)s"
                 ",\n    O name(s): %(currently_executed_operator_hierarchical_name)s"
