@@ -46,8 +46,12 @@ class ExecutionContextFilter(logging.Filter):
     """Filter to enrich log records with execution environment information"""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.currently_executed_node_instance = None
-        self.currently_executed_component = None
+        self.currently_executed_transformation_id = None
+        self.currently_executed_transformation_name = None
+        self.currently_executed_transformation_type = None
+        self.currently_executed_operator_hierarchical_id = None
+        self.currently_executed_operator_hierarchical_name = None
+        self.currently_executed_job_id = None
         super().__init__(*args, **kwargs)
 
     def bind_context(self, **kwargs: Any) -> None:
@@ -65,16 +69,24 @@ class ExecutionContextFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> Literal[True]:
         context_dict = _get_context()
 
-        record.currently_executed_instance_id = context_dict.get(  # type: ignore
-            "currently_executed_instance_id", None
+        record.currently_executed_transformation_id = context_dict.get(  # type: ignore
+            "currently_executed_transformation_id", None
         )
-        record.currently_executed_component_id = context_dict.get(  # type: ignore
-            "currently_executed_component_id", None
+        record.currently_executed_transformation_name = context_dict.get(  # type: ignore
+            "currently_executed_transformation_name", None
         )
-        record.currently_executed_component_node_name = context_dict.get(  # type: ignore
-            "currently_executed_component_node_name", None
+        record.currently_executed_transformation_type = context_dict.get(  # type: ignore
+            "currently_executed_transformation_type", None
         )
-        record.job_id = context_dict.get("job_id", None)  # type: ignore
+        record.currently_executed_operator_hierarchical_id = context_dict.get(  # type: ignore
+            "currently_executed_operator_hierarchical_id", None
+        )
+        record.currently_executed_operator_hierarchical_name = context_dict.get(  # type: ignore
+            "currently_executed_operator_hierarchical_name", None
+        )
+        record.currently_executed_job_id = context_dict.get(  # type: ignore
+            "currently_executed_job_id", None
+        )
         return True
 
 
