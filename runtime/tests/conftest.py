@@ -150,6 +150,8 @@ base_workflow_json = {
                 "component_uuid": str(get_uuid_from_seed("my_const_giver")),
             },
         ],
+        "tr_name": "my transformation",
+        "tr_id": str(get_uuid_from_seed("my_transformation"))
     },
     "configuration": {
         "name": "string",

@@ -300,7 +300,9 @@ class TransformationRevision(BaseModel):
         )
 
     def to_workflow_node(
-        self, operator_id: UUID, sub_nodes: List[Union[ComponentNode, WorkflowNode]]
+        self,
+        operator_id: UUID,
+        sub_nodes: List[Union[ComponentNode, WorkflowNode]],
     ) -> WorkflowNode:
         if self.type != Type.WORKFLOW:
             raise ValueError(
@@ -308,7 +310,13 @@ class TransformationRevision(BaseModel):
                 f"into a workflow node since its type is not WORKFLOW"
             )
         assert isinstance(self.content, WorkflowContent)  # hint for mypy
-        return self.content.to_workflow_node(operator_id, self.name, sub_nodes)
+        return self.content.to_workflow_node(
+            transformation_id=self.id,
+            transformation_name=self.name,
+            operator_id=operator_id,
+            operator_name=self.name,
+            sub_nodes=sub_nodes,
+        )
 
     def to_code_module(self) -> CodeModule:
         if self.type != Type.COMPONENT:
@@ -385,7 +393,7 @@ class TransformationRevision(BaseModel):
         return TransformationRevision(
             id=uuid4(),
             revision_group_id=uuid4(),
-            name=self.name,
+            name="Wrapper Workflow",
             category=self.category,
             version_tag=self.version_tag,
             released_timestamp=self.released_timestamp,

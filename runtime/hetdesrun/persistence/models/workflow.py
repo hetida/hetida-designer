@@ -414,8 +414,10 @@ class WorkflowContent(BaseModel):
 
     def to_workflow_node(
         self,
+        transformation_id: UUID,
+        transformation_name: str,
         operator_id: Optional[UUID],
-        name: Optional[str],
+        operator_name: Optional[str],
         sub_nodes: List[Union[WorkflowNode, ComponentNode]],
     ) -> WorkflowNode:
 
@@ -465,7 +467,9 @@ class WorkflowContent(BaseModel):
             ],
             inputs=inputs,
             outputs=outputs,
-            name=name,
+            name=operator_name,
+            tr_id=str(transformation_id),
+            tr_name=transformation_name,
         )
 
     class Config:
