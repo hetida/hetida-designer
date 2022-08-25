@@ -79,10 +79,10 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         func: Union[Coroutine, Callable],
         inputs: Optional[Dict[str, Tuple[Node, str]]] = None,
         has_only_plot_outputs: bool = False,
-        operator_hierarchical_id: str = "UNKNOWN",
         component_id: str = "UNKNOWN",
-        operator_hierarchical_name: str = "UNKNOWN",
         component_name: str = "UNKNOWN",
+        operator_hierarchical_id: str = "UNKNOWN",
+        operator_hierarchical_name: str = "UNKNOWN",
     ) -> None:
         """
         inputs is a dict {input_name : (another_node, output_name)}, i.e. mapping input names to
@@ -122,11 +122,12 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         self.component_name = component_name
         self.context = ExecutionContext(
             currently_executed_transformation_id=self.component_id,
-            currently_executed_transformation_name=self.component_name,
+            currently_executed_transformation_name=self.component_name
+            if self.component_name is not None
+            else "UNKNOWN",
             currently_executed_transformation_type=Type.COMPONENT,
             currently_executed_operator_hierarchical_id=self.operator_hierarchical_id,
             currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,
-            currently_executed_job_id="UNKNOWN",
         )
         self._in_computation = False
 
@@ -321,7 +322,6 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
             currently_executed_transformation_type=Type.WORKFLOW,
             currently_executed_operator_hierarchical_id=self.operator_hierarchical_id,
             currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,
-            currently_executed_job_id="UNKNOWN",
         )
 
     def add_inputs(self, new_inputs: Dict[str, Tuple[Node, str]]) -> None:

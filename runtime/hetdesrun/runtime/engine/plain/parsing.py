@@ -130,6 +130,7 @@ def parse_component_node(
     return ComputationNode(
         func=component_func,
         component_id=component_node.component_uuid,
+        component_name=comp_rev.name,
         operator_hierarchical_name=name_prefix + " : " + component_node_name
         if name_prefix != ""
         else component_node_name,
