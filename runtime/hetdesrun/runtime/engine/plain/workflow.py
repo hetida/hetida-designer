@@ -350,11 +350,8 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
         Const_Node = ComputationNode(
             func=lambda: parsed_values,
             inputs={},
-            operator_hierarchical_name="constant_provider",
-            operator_hierarchical_id=self.operator_hierarchical_id
-            + ":constant_provider"
-            + "_"
-            + id_suffix,
+            operator_hierarchical_name="\\constant_provider_" + id_suffix + "\\",
+            operator_hierarchical_id="\\" + self.operator_hierarchical_id + "\\",
         )
         if add_new_provider_node_to_workflow:  # make it part of the workflow
             self.sub_nodes.append(Const_Node)

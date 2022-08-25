@@ -95,6 +95,7 @@ async def test_computation_cycle_detection():
     with pytest.raises(CircularDependency):
         res = await target_node.result
 
+
 @pytest.mark.skip
 @pytest.mark.asyncio
 async def test_computation_nodes_user_raised_runtime_error_and_logging(caplog):

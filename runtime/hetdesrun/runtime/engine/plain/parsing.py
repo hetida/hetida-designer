@@ -58,7 +58,11 @@ def parse_workflow_input(
     code_module_dict: Dict[str, CodeModule] = {str(c.uuid): c for c in code_modules}
 
     workflow = recursively_parse_workflow_node(
-        workflow_node, component_dict, code_module_dict, name_prefix="\\", id_prefix="\\"
+        workflow_node,
+        component_dict,
+        code_module_dict,
+        name_prefix="\\",
+        id_prefix="\\",
     )
 
     return workflow
