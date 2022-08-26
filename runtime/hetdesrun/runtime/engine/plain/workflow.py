@@ -30,9 +30,6 @@ from hetdesrun.runtime.exceptions import (
 from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.utils import Type
 
-logger = logging.getLogger(__name__)
-
-logger.addFilter(execution_context_filter)
 runtime_component_logger.addFilter(execution_context_filter)
 
 
