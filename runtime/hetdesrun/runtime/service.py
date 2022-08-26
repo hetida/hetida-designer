@@ -124,18 +124,21 @@ async def runtime_service(
 
     except RuntimeExecutionError as e:
         logger.info(
-            'Exception during workflow execution ("%s") in instance %s (%s) of %s %s (%s)',
-            str(runtime_input.job_id),
-            e.currently_executed_hierarchical_operator_name,
-            e.currently_executed_hierarchical_operator_id,
-            e.currently_executed_transformation_type,
-            e.currently_executed_transformation_name,
-            e.currently_executed_transformation_id,
+            "Exception during execution!",
             exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
-            error=str(e),
+            error=(
+                "Exception during execution!\n"
+                f"                tr type: {e.currently_executed_transformation_type},"
+                f" tr id: {e.currently_executed_transformation_id},"
+                f" tr name: {e.currently_executed_transformation_name},"
+                f" job id: {runtime_input.job_id}\n"
+                f"                op id(s): %{e.currently_executed_hierarchical_operator_id},\n"
+                f"                op name(s): {e.currently_executed_hierarchical_operator_name}\n"
+                f"                reason: {e}"
+            ),
             traceback=traceback.format_exc(),
             output_results_by_output_name={},
             job_id=runtime_input.job_id,
