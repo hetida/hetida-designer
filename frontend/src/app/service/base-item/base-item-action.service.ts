@@ -4,8 +4,9 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   ConfirmClickEvent,
   ExecutionDialogData,
-  Wiring,
-  WiringDialogComponent
+  TestWiring,
+  WiringDialogComponent,
+  WiringItem
 } from 'hd-wiring';
 import { combineLatest, iif, Observable, of } from 'rxjs';
 import { finalize, first, switchMap, tap } from 'rxjs/operators';
@@ -25,7 +26,6 @@ import {
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { AbstractBaseItem, BaseItem } from 'src/app/model/base-item';
-import { ComponentBaseItem } from 'src/app/model/component-base-item';
 import { WorkflowBaseItem } from 'src/app/model/workflow-base-item';
 import { WorkflowLink } from 'src/app/model/workflow-link';
 import { Utils } from 'src/app/utils/utils';
@@ -47,6 +47,7 @@ import {
   Transformation,
   WorkflowTransformation
 } from '../../model/new-api/transformation';
+import { ComponentBaseItem } from 'src/app/model/component-base-item';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -65,16 +66,11 @@ export class BaseItemActionService {
     private readonly wiringService: WiringHttpService
   ) {}
 
-  public async execute(abstractBaseItem: AbstractBaseItem) {
-    // TODO
-    // @ts-ignore
-    if (this.isIncomplete(abstractBaseItem as Transformation)) {
-      return;
-    }
+  public async execute(transformation: Transformation) {
     let title: string;
-    if (abstractBaseItem.type === BaseItemType.COMPONENT) {
+    if (transformation.type === BaseItemType.COMPONENT) {
       title = 'Execute Component';
-    } else if (abstractBaseItem.type === BaseItemType.WORKFLOW) {
+    } else if (transformation.type === BaseItemType.WORKFLOW) {
       title = 'Execute Workflow';
     } else {
       console.warn(
@@ -85,6 +81,14 @@ export class BaseItemActionService {
 
     const adapterList = await this.wiringService.getAdapterList().toPromise();
 
+    const wiringItem: WiringItem = {
+      id: transformation.id,
+      test_wiring: transformation.test_wiring,
+      io_interface: transformation.io_interface,
+      name: transformation.name,
+      version_tag: transformation.version_tag
+    };
+
     const dialogRef = this.dialog.open<
       WiringDialogComponent,
       ExecutionDialogData,
@@ -92,7 +96,7 @@ export class BaseItemActionService {
     >(WiringDialogComponent, {
       data: {
         title,
-        wiringItem: abstractBaseItem,
+        wiringItem,
         adapterList
       }
     });
@@ -102,13 +106,13 @@ export class BaseItemActionService {
       return this.componentService
         .bindWiringToComponent(
           executeTestClickEvent.id,
-          executeTestClickEvent.wiring
+          executeTestClickEvent.test_wiring
         )
         .pipe(
           switchMap(() =>
             this.componentService.testComponent(
               executeTestClickEvent.id,
-              executeTestClickEvent.wiring
+              executeTestClickEvent.test_wiring
             )
           )
         );
@@ -120,13 +124,13 @@ export class BaseItemActionService {
       return this.workflowService
         .bindWiringToWorkflow(
           executeTestClickEvent.id,
-          executeTestClickEvent.wiring
+          executeTestClickEvent.test_wiring
         )
         .pipe(
           switchMap(() =>
             this.workflowService.testWorkflow(
               executeTestClickEvent.id,
-              executeTestClickEvent.wiring
+              executeTestClickEvent.test_wiring
             )
           )
         );
@@ -140,23 +144,26 @@ export class BaseItemActionService {
       .pipe(
         tap(() => dialogRef.close()),
         switchMap(executeTestClickEvent => {
-          let saveOrUpdate$: Observable<Wiring>;
-          if (Utils.isDefined(executeTestClickEvent.wiring.id)) {
+          console.log(executeTestClickEvent.id);
+          console.log(executeTestClickEvent.test_wiring);
+
+          let saveOrUpdate$: Observable<TestWiring>;
+          if (Utils.isDefined(executeTestClickEvent.test_wiring)) {
             saveOrUpdate$ = this.wiringService.updateWiring(
-              executeTestClickEvent.wiring
+              executeTestClickEvent.test_wiring
             );
           } else {
             saveOrUpdate$ = this.wiringService.saveWiring(
-              executeTestClickEvent.wiring
+              executeTestClickEvent.test_wiring
             );
           }
           return combineLatest([of(executeTestClickEvent.id), saveOrUpdate$]);
         }),
         switchMap(([wiringItemId, savedWiring]) =>
           iif(
-            () => abstractBaseItem.type === BaseItemType.WORKFLOW,
-            workflowExecution$({ id: wiringItemId, wiring: savedWiring }),
-            componentExecution$({ id: wiringItemId, wiring: savedWiring })
+            () => transformation.type === BaseItemType.WORKFLOW,
+            workflowExecution$({ id: wiringItemId, test_wiring: savedWiring }),
+            componentExecution$({ id: wiringItemId, test_wiring: savedWiring })
           )
         ),
         finalize(() => dialogRef.close())
@@ -539,7 +546,7 @@ export class BaseItemActionService {
       .pipe(first(workflowBaseItem => workflowBaseItem !== undefined))
       .toPromise();
 
-    const wirings: Wiring[] = [];
+    const wirings: TestWiring[] = [];
     const links: WorkflowLink[] = [];
     // give new ids to everything
     const copy = {

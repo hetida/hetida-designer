@@ -1,10 +1,10 @@
-import { RefIdType } from 'src/app/enums/ref-id-type';
+import { AdapterDataType, NodeSourceType } from 'hd-wiring';
 
 export interface OutputWiring {
   workflow_output_name: string;
-  adapter_id: number | string;
+  adapter_id: string;
   ref_id?: string;
-  ref_id_type?: RefIdType;
+  ref_id_type?: NodeSourceType;
   ref_key?: string;
-  type?: string;
+  type?: AdapterDataType;
 }

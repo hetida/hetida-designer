@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Wiring } from 'hd-wiring';
+import { TestWiring } from 'hd-wiring';
 import { Observable } from 'rxjs';
 import { WorkflowBaseItem } from '../../model/workflow-base-item';
 import { ConfigService } from '../configuration/config.service';
@@ -46,23 +46,23 @@ export class WorkflowHttpService {
 
   public executeWorkflow(
     id: string,
-    wiring: Wiring
+    testWiring: TestWiring
   ): Observable<WorkflowBaseItem> {
     const url = `${this.apiEndpoint}/workflows/${id}/execute`;
     const httpParams = new HttpParams().append(
       'run_pure_plot_operators',
       'true'
     );
-    return this.http.post<WorkflowBaseItem>(url, wiring, {
+    return this.http.post<WorkflowBaseItem>(url, testWiring, {
       params: httpParams
     });
   }
 
   public bindWiringToWorkflow(
     id: string,
-    wiring: Wiring
+    testWiring: TestWiring
   ): Observable<WorkflowBaseItem> {
     const url = `${this.apiEndpoint}/workflows/${id}/wirings`;
-    return this.http.post<WorkflowBaseItem>(url, wiring);
+    return this.http.post<WorkflowBaseItem>(url, testWiring);
   }
 }

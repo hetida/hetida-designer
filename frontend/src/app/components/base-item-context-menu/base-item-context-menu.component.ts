@@ -13,7 +13,6 @@ import { RevisionState } from 'src/app/enums/revision-state';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import { Transformation } from '../../model/new-api/transformation';
-import { AbstractBaseItem } from '../../model/base-item';
 
 @Component({
   selector: 'hd-base-item-context-menu',
@@ -102,11 +101,8 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   async execute() {
-    // TODO
-    await this.baseItemActionsService.execute(
-      // @ts-ignore
-      this.transformation as AbstractBaseItem
-    );
+    // TODO check for workflows
+    await this.baseItemActionsService.execute(this.transformation);
   }
 
   configureIO() {

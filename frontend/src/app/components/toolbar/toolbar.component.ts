@@ -80,7 +80,7 @@ export class ToolbarComponent implements OnInit {
 
   // TODO
   async execute() {
-    await this.baseItemAction.execute(this.baseItem);
+    await this.baseItemAction.execute(this.transformation);
   }
 
   get publishTooltip(): string {

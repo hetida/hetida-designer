@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Wiring } from 'hd-wiring';
+import { TestWiring } from 'hd-wiring';
 import { Observable } from 'rxjs';
 import { ComponentBaseItem } from '../../model/component-base-item';
 import { ConfigService } from '../configuration/config.service';
@@ -46,20 +46,23 @@ export class ComponentHttpService {
 
   public executeComponent(
     id: string,
-    wiring: Wiring
+    testWiring: TestWiring
   ): Observable<ComponentBaseItem> {
-    const url = `${this.apiEndpoint}/components/${id}/execute`;
+    const url = `${this.apiEndpoint}/transformations/execute/`;
+
     const httpParams = new HttpParams().append(
       'run_pure_plot_operators',
       'true'
     );
-    return this.http.post<ComponentBaseItem>(url, wiring, {
+    console.log(id);
+
+    return this.http.post<ComponentBaseItem>(url, testWiring, {
       params: httpParams
     });
   }
 
-  public bindWiringToComponent(id: string, workflowWiring: Wiring) {
-    const url = `${this.apiEndpoint}/components/${id}/wirings`;
+  public bindWiringToComponent(id: string, workflowWiring: TestWiring) {
+    // const url = `${this.apiEndpoint}/components/${id}/wirings`;
     return this.http.post<ComponentBaseItem>(url, workflowWiring);
   }
 }

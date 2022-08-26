@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { Wiring } from 'hd-wiring';
+import { TestWiring } from 'hd-wiring';
 import { iif, Observable, of } from 'rxjs';
 import { finalize, switchMap, switchMapTo, tap } from 'rxjs/operators';
 import { ComponentBaseItem } from '../model/component-base-item';
@@ -61,16 +61,19 @@ export class ComponentEditorService {
     );
   }
 
-  testComponent(id: string, wiring: Wiring): Observable<ComponentBaseItem> {
+  testComponent(
+    id: string,
+    testWiring: TestWiring
+  ): Observable<ComponentBaseItem> {
     return of(null).pipe(
       tap(() => this.store.dispatch(setExecutionRunning())),
-      switchMapTo(this.componentHttpService.executeComponent(id, wiring)),
+      switchMapTo(this.componentHttpService.executeComponent(id, testWiring)),
       tap(result => this.store.dispatch(setExecutionProtocol(result))),
       finalize(() => this.store.dispatch(setExecutionFinished()))
     );
   }
 
-  bindWiringToComponent(componentId: string, workflowWiring: Wiring) {
+  bindWiringToComponent(componentId: string, workflowWiring: TestWiring) {
     return this.componentHttpService
       .bindWiringToComponent(componentId, workflowWiring)
       .pipe(

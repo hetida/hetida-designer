@@ -1,11 +1,15 @@
-import { RefIdType } from 'src/app/enums/ref-id-type';
+import {
+  AdapterDataType,
+  NodeSourceType,
+  WiringDateRangeFilter
+} from 'hd-wiring';
 
 export interface InputWiring {
   workflow_input_name: string;
-  adapter_id: number | string;
+  adapter_id: string;
   ref_id?: string;
-  ref_id_type?: RefIdType;
+  ref_id_type?: NodeSourceType;
   ref_key?: string;
-  type?: string;
-  filters?: any[];
+  type?: AdapterDataType;
+  filters?: WiringDateRangeFilter | null | undefined;
 }
