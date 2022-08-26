@@ -134,6 +134,8 @@ base_workflow_json = {
                 "component_uuid": str(get_uuid_from_seed("my_const_giver")),
             },
         ],
+        "tr_id": "tr_id",
+        "tr_name": "tr_name",
     },
     "configuration": {
         "name": "string",
@@ -264,6 +266,8 @@ series_input_workflow_json = {
                 "component_uuid": str(get_uuid_from_seed("my_const_giver")),
             },
         ],
+        "tr_id": "tr_id",
+        "tr_name": "tr_name",
     },
     "configuration": {"name": "string", "engine": "plain"},
     "workflow_wiring": {
@@ -391,6 +395,8 @@ def main(*, x, y):
                 "component_uuid": str(get_uuid_from_seed("my_component")),
             }
         ],
+        "tr_id": "tr_id",
+        "tr_name": "tr_name",
     },
     "configuration": {"name": "string", "engine": "plain"},
     "workflow_wiring": {
@@ -528,6 +534,8 @@ plot_workflow_json = {
                 "component_uuid": str(get_uuid_from_seed("my_const_giver")),
             },
         ],
+        "tr_id": "tr_id",
+        "tr_name": "tr_name",
     },
     "configuration": {
         "name": "string",

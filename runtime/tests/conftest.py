@@ -151,7 +151,7 @@ base_workflow_json = {
             },
         ],
         "tr_name": "my transformation",
-        "tr_id": str(get_uuid_from_seed("my_transformation"))
+        "tr_id": str(get_uuid_from_seed("my_transformation")),
     },
     "configuration": {
         "name": "string",

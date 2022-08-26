@@ -99,7 +99,7 @@ def gen_execution_input_from_single_component(
             ],
             name="root node",
             tr_id="root_node",
-            tr_name="Wrapper Workflow"
+            tr_name="Wrapper Workflow",
         ),
         configuration=ConfigurationInput(engine="plain", run_pure_plot_operators=True),
         workflow_wiring=WorkflowWiring(

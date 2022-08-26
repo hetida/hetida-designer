@@ -605,7 +605,9 @@
                         "id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
                         "name": null
                     }
-                ]
+                ],
+                "tr_id": "tr_id",
+                "tr_name": "tr_name"
             },
             {
                 "connections": [
@@ -756,9 +758,13 @@
                         "id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
                         "name": null
                     }
-                ]
+                ],
+                "tr_id": "tr_id",
+                "tr_name": "tr_name"
             }
-        ]
+        ],
+        "tr_id": "tr_id",
+        "tr_name": "tr_name"
     },
     "workflow_wiring": {
         "input_wirings": [
