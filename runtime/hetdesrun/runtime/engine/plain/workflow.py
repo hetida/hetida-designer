@@ -197,23 +197,12 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         except RuntimeExecutionError as e:  # user code may raise runtime execution errors
             e.set_context(self.context)
             runtime_component_logger.error(
-                (
-                    "User raised Runtime execution exception during component execution"
-                    " of operator %s with UUID %s of component %s with UUID %s"
-                ),
-                self.operator_hierarchical_name,
-                self.operator_hierarchical_id,
-                self.component_name,
-                self.component_id,
+                "User raised RuntimeExecutionError!",
                 exc_info=True,
             )
-            raise
+            raise e
         except Exception as e:  # uncaught exceptions from user code
-            msg = (
-                f"Exception during Component execution of "
-                f"component instance {self.operator_hierarchical_name}"
-                f" (operator hierarchical id: {self.operator_hierarchical_id}):\n{str(e)}"
-            )
+            msg = "Unexpected error from user code"
             runtime_component_logger.error(msg, exc_info=True)
             raise RuntimeExecutionError(msg).set_context(self.context) from e
 
@@ -243,7 +232,10 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         input_values = await self._gather_data_from_inputs()
 
         # Actual execution of current node
-        function_result = await self._run_comp_func(input_values)
+        try:
+            function_result = await self._run_comp_func(input_values)
+        except RuntimeExecutionError as e:
+            raise e
 
         # cleanup
         self._in_computation = False
@@ -253,7 +245,10 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
 
     @cached_property  # compute each nodes result only once
     async def result(self) -> Dict[str, Any]:
-        return await self._compute_result()
+        try:
+            return await self._compute_result()
+        except RuntimeExecutionError as e:
+            raise e
 
 
 class Workflow:  # pylint: disable=too-many-instance-attributes
@@ -403,6 +398,8 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
                 ).set_context(self.context) from e
+            except RuntimeExecutionError as e:
+                raise e
 
         # cleanup
         execution_context_filter.clear_context()
