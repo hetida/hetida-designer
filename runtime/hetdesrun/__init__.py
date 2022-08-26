@@ -52,7 +52,6 @@ def configure_logging(
                 ",\n    tr type: %(currently_executed_transformation_type)s"
                 ", tr id: %(currently_executed_transformation_id)s"
                 ", tr name: %(currently_executed_transformation_name)s"
-                ", tr tag: %(currently_executed_transformation_tag)s"
                 ", job id: %(currently_executed_job_id)s"
                 ",\n    op id(s): %(currently_executed_operator_hierarchical_id)s"
                 ",\n    op name(s): %(currently_executed_operator_hierarchical_name)s"
