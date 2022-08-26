@@ -54,7 +54,6 @@ export class ComponentHttpService {
       'run_pure_plot_operators',
       'true'
     );
-    console.log(id);
 
     return this.http.post<ComponentBaseItem>(url, testWiring, {
       params: httpParams
@@ -62,7 +61,7 @@ export class ComponentHttpService {
   }
 
   public bindWiringToComponent(id: string, workflowWiring: TestWiring) {
-    // const url = `${this.apiEndpoint}/components/${id}/wirings`;
+    const url = `${this.apiEndpoint}/components/${id}/wirings`;
     return this.http.post<ComponentBaseItem>(url, workflowWiring);
   }
 }

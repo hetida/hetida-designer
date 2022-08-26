@@ -144,9 +144,6 @@ export class BaseItemActionService {
       .pipe(
         tap(() => dialogRef.close()),
         switchMap(executeTestClickEvent => {
-          console.log(executeTestClickEvent.id);
-          console.log(executeTestClickEvent.test_wiring);
-
           let saveOrUpdate$: Observable<TestWiring>;
           if (Utils.isDefined(executeTestClickEvent.test_wiring)) {
             saveOrUpdate$ = this.wiringService.updateWiring(
