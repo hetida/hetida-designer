@@ -166,9 +166,8 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             # Cycle detection logic
             if another_node._in_computation:  # pylint: disable=protected-access
                 msg = (
-                    f"Circular Dependency detected at operator {self.operator_hierarchical_id}"
-                    f" whith input '{input_name}' pointing to output '{output_name}'"
-                    f" of operator {another_node.operator_hierarchical_id}"
+                    f"Circular Dependency detected whith input '{input_name}' pointing to "
+                    f"output '{output_name}' of operator {another_node.operator_hierarchical_id}"
                 )
                 runtime_component_logger.error(msg)
                 raise CircularDependency(msg).set_context(self.context)
