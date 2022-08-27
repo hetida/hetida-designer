@@ -136,7 +136,7 @@ async def runtime_service(
                 f" tr id: {e.currently_executed_transformation_id},"
                 f" tr name: {e.currently_executed_transformation_name},"
                 f" job id: {runtime_input.job_id}\n"
-                f"                  op id(s): %{e.currently_executed_hierarchical_operator_id},\n"
+                f"                  op id(s): {e.currently_executed_hierarchical_operator_id},\n"
                 f"                  op name(s): {e.currently_executed_hierarchical_operator_name}\n"
                 f"                  reason: {e}"
             ),
