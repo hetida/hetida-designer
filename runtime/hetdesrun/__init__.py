@@ -1,7 +1,7 @@
 import logging
 
 import hetdesrun_config
-from hetdesrun.runtime import runtime_component_logger as logger
+from hetdesrun.runtime import runtime_execution_logger as logger
 from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.webservice.config import get_config
 

@@ -15,7 +15,7 @@ from cached_property import cached_property  # async compatible variant
 from pydantic import ValidationError
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
-from hetdesrun.runtime import runtime_component_logger
+from hetdesrun.runtime import runtime_execution_logger
 from hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.context import ExecutionContext
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
@@ -29,7 +29,7 @@ from hetdesrun.runtime.exceptions import (
 from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.utils import Type
 
-runtime_component_logger.addFilter(execution_context_filter)
+runtime_execution_logger.addFilter(execution_context_filter)
 
 
 class Node(Protocol):
@@ -150,7 +150,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
     def _check_inputs(self) -> None:
         """Check and handle missing inputs"""
         if not self.all_required_inputs_set():
-            runtime_component_logger.error(
+            runtime_execution_logger.error(
                 "Computation node execution failed due to missing input source"
             )
             raise MissingInputSource(
@@ -170,14 +170,14 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                     f"Circular Dependency detected whith input '{input_name}' pointing to "
                     f"output '{output_name}' of operator {another_node.operator_hierarchical_id}"
                 )
-                runtime_component_logger.error(msg)
+                runtime_execution_logger.error(msg)
                 raise CircularDependency(msg).set_context(self.context)
             # actually get input data from other nodes
             try:
                 input_value_dict[input_name] = (await another_node.result)[output_name]
             except KeyError as e:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
-                runtime_component_logger.error(
+                runtime_execution_logger.error(
                     "Execution failed due to missing output of a node",
                     exc_info=True,
                 )
@@ -196,14 +196,14 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             function_result = function_result if function_result is not None else {}
         except RuntimeExecutionError as e:  # user code may raise runtime execution errors
             e.set_context(self.context)
-            runtime_component_logger.error(
+            runtime_execution_logger.error(
                 "User raised RuntimeExecutionError!",
                 exc_info=True,
             )
             raise e
         except Exception as e:  # uncaught exceptions from user code
             msg = "Unexpected error from user code"
-            runtime_component_logger.error(msg, exc_info=True)
+            runtime_execution_logger.error(msg, exc_info=True)
             raise RuntimeExecutionError(msg).set_context(self.context) from e
 
         if not isinstance(
@@ -214,7 +214,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 f"Component function of component instance {self.operator_hierarchical_id} from "
                 f"component {self.operator_hierarchical_name} did not return an output dict!"
             )
-            runtime_component_logger.error(msg)
+            runtime_execution_logger.error(msg)
             raise RuntimeExecutionError(msg).set_context(self.context)
 
         return function_result
@@ -223,7 +223,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         # set filter for contextualized logging
         execution_context_filter.bind_context(**self.context.dict())
 
-        runtime_component_logger.info("Starting computation")
+        runtime_execution_logger.info("Starting computation")
         self._in_computation = True
 
         self._check_inputs()
@@ -370,7 +370,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
 
         execution_context_filter.bind_context(**self.context.dict())
 
-        runtime_component_logger.info("Starting computation")
+        runtime_execution_logger.info("Starting computation")
 
         # gather result from workflow operators
         results = {}
@@ -394,7 +394,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
                 )
             except KeyError as e:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
-                runtime_component_logger.error(
+                runtime_execution_logger.error(
                     "Execution failed due to missing output of a node",
                     exc_info=True,
                 )
