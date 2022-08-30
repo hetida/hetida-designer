@@ -151,6 +151,9 @@ async def test_basic_workflow_execution():
         sub_nodes=[source_node, target_node],
         input_mappings={},
         output_mappings={"sum_result": (target_node, "sum")},
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
     )
 
     res = await wf.result
@@ -172,6 +175,9 @@ async def test_workflow_with_inputs_via_constant_node():
         sub_nodes=[target_node],
         input_mappings={"first": (target_node, "c"), "second": (target_node, "d")},
         output_mappings={"sum_result": (target_node, "sum")},
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
         operator_hierarchical_name="Workflow",
         operator_hierarchical_id="Workflow",
     )
@@ -212,12 +218,18 @@ async def test_nested_workflow():
             "sub_wf_first_inp": (source_node, "a"),
             "sub_wf_second_inp": (source_node, "b"),
         },
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
     )
 
     wf = Workflow(
         sub_nodes=[source_node, sub_wf],
         input_mappings={},
         output_mappings={"sum_result": (sub_wf, "sub_wf_sum_outp")},
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
     )
 
     res = await wf.result
