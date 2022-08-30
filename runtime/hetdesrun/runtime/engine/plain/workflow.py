@@ -263,6 +263,8 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
         output_mappings: Dict[
             str, Tuple[Node, str]
         ],  # map sub_node outputs to wf outputs
+        tr_id: str,
+        tr_name: str,
         inputs: Optional[Dict[str, Tuple[Node, str]]] = None,
         has_only_plot_outputs: bool = False,
         operator_hierarchical_id: str = "UNKNOWN",
@@ -308,8 +310,8 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
         self.operator_hierarchical_name = operator_hierarchical_name
 
         self.context = ExecutionContext(
-            currently_executed_transformation_id="UNKNOWN",
-            currently_executed_transformation_name="UNKNOWN",
+            currently_executed_transformation_id=tr_id,
+            currently_executed_transformation_name=tr_name,
             currently_executed_transformation_type=Type.WORKFLOW,
             currently_executed_operator_hierarchical_id=self.operator_hierarchical_id,
             currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,

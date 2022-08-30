@@ -294,6 +294,8 @@ def recursively_parse_workflow_node(
         sub_nodes=list(new_sub_nodes.values()),
         input_mappings=input_mappings,
         output_mappings=output_mappings,
+        tr_id=node.tr_id,
+        tr_name=node.tr_name,
         has_only_plot_outputs=has_only_plot_outputs,
         operator_hierarchical_id=id_prefix + node.id + "\\",
         operator_hierarchical_name=name_prefix + node_name + "\\",
