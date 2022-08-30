@@ -35,7 +35,8 @@ async def runtime_service(
 
     # pylint: disable=too-many-return-statements
     logger.info(
-        "WORKFLOW EXECUTION INPUT JSON:\n%s",
+        'WORKFLOW EXECUTION ("%s") INPUT JSON:\n%s',
+        str(runtime_input.job_id),
         model_to_pretty_json_str(runtime_input),
     )
 
@@ -125,6 +126,7 @@ async def runtime_service(
     except RuntimeExecutionError as e:
         logger.info(
             "Runtime Execution Error during workflow execution (%s)",
+            str(runtime_input.job_id)
             # exc_info=True,
             # TODO: if the error has been logged before the traceback here is not helpful
         )
@@ -195,7 +197,11 @@ async def runtime_service(
         job_id=runtime_input.job_id,
     )
 
-    logger.info("Workflow Execution Result Pydantic Object: \n%s", wf_exec_result)
+    logger.info(
+        'Workflow Execution ("%s") Result Pydantic Object: \n%s',
+        str(runtime_input.job_id),
+        wf_exec_result,
+    )
 
     # catch arbitrary serialisation errors
     # (because user can produce arbitrary non-serializable objects)
@@ -220,7 +226,10 @@ async def runtime_service(
             job_id=runtime_input.job_id,
         )
 
-    logger.info("Workflow Execution Result serialized successfully.")
+    logger.info(
+        'Workflow Execution ("%s") Result serialized successfully.',
+        str(runtime_input.job_id),
+    )
 
     # TODO: avoid double serialization
     return wf_exec_result
