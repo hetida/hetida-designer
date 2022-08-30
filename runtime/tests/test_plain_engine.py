@@ -114,7 +114,7 @@ async def test_computation_nodes_user_raised_runtime_error_and_logging(caplog):
         func=add_two_values,
         inputs={
             "c": (source_node, "a"),
-            "d": (source_node,"b"),
+            "d": (source_node, "b"),
         },
     )
 
