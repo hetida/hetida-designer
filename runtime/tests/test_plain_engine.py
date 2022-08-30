@@ -96,7 +96,6 @@ async def test_computation_cycle_detection():
         res = await target_node.result
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_computation_nodes_user_raised_runtime_error_and_logging(caplog):
     def provide_two_values():
@@ -115,11 +114,7 @@ async def test_computation_nodes_user_raised_runtime_error_and_logging(caplog):
         func=add_two_values,
         inputs={
             "c": (source_node, "a"),
-            "d": (
-                source_node,
-                # b is not present in the output of source_node
-                "b",
-            ),
+            "d": (source_node,"b"),
         },
     )
 
@@ -129,9 +124,6 @@ async def test_computation_nodes_user_raised_runtime_error_and_logging(caplog):
             res = await target_node.result
 
         assert "User raised" in caplog.text
-        assert "UNKNOWN" in caplog.text
-        assert "SOURCE_ID" in caplog.text
-        assert "TEST_SOURCE_OPERATOR" in caplog.text
 
 
 @pytest.mark.asyncio
