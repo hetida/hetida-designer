@@ -48,6 +48,7 @@ class ExecutionContextFilter(logging.Filter):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.currently_executed_transformation_id = None
         self.currently_executed_transformation_name = None
+        self.currently_executed_transformation_tag = None
         self.currently_executed_transformation_type = None
         self.currently_executed_operator_hierarchical_id = None
         self.currently_executed_operator_hierarchical_name = None
@@ -74,6 +75,9 @@ class ExecutionContextFilter(logging.Filter):
         )
         record.currently_executed_transformation_name = context_dict.get(  # type: ignore
             "currently_executed_transformation_name", None
+        )
+        record.currently_executed_transformation_tag = context_dict.get(  # type: ignore
+            "currently_executed_transformation_tag", None
         )
         record.currently_executed_transformation_type = context_dict.get(  # type: ignore
             "currently_executed_transformation_type", None
