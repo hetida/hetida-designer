@@ -135,6 +135,7 @@ def parse_component_node(
         func=component_func,
         component_id=component_node.component_uuid,
         component_name=comp_rev.name if comp_rev.name is not None else "UNKNOWN",
+        component_tag=comp_rev.tag,
         operator_hierarchical_name=name_prefix + component_node_name + "\\"
         if name_prefix != ""
         else component_node_name,
@@ -296,6 +297,7 @@ def recursively_parse_workflow_node(
         output_mappings=output_mappings,
         tr_id=node.tr_id,
         tr_name=node.tr_name,
+        tr_tag=node.tr_tag,
         has_only_plot_outputs=has_only_plot_outputs,
         operator_hierarchical_id=id_prefix + node.id + "\\",
         operator_hierarchical_name=name_prefix + node_name + "\\",

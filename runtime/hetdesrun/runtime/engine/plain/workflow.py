@@ -1,4 +1,3 @@
-import logging
 from inspect import Parameter, signature
 from typing import (
     Any,
@@ -78,6 +77,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         has_only_plot_outputs: bool = False,
         component_id: str = "UNKNOWN",
         component_name: str = "UNKNOWN",
+        component_tag: str = "UNKNOWN",
         operator_hierarchical_id: str = "UNKNOWN",
         operator_hierarchical_name: str = "UNKNOWN",
     ) -> None:
@@ -122,6 +122,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
             currently_executed_transformation_name=self.component_name
             if self.component_name is not None
             else "UNKNOWN",
+            currently_executed_transformation_tag=component_tag,
             currently_executed_transformation_type=Type.COMPONENT,
             currently_executed_operator_hierarchical_id=self.operator_hierarchical_id,
             currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,
@@ -265,6 +266,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
         ],  # map sub_node outputs to wf outputs
         tr_id: str,
         tr_name: str,
+        tr_tag: str,
         inputs: Optional[Dict[str, Tuple[Node, str]]] = None,
         has_only_plot_outputs: bool = False,
         operator_hierarchical_id: str = "UNKNOWN",
@@ -312,6 +314,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
         self.context = ExecutionContext(
             currently_executed_transformation_id=tr_id,
             currently_executed_transformation_name=tr_name,
+            currently_executed_transformation_tag=tr_tag,
             currently_executed_transformation_type=Type.WORKFLOW,
             currently_executed_operator_hierarchical_id=self.operator_hierarchical_id,
             currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,

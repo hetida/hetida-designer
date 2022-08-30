@@ -148,6 +148,7 @@ def nested_nodes(
                     tr_workflow.content.to_workflow_node(
                         transformation_id=all_nested_tr[operator.id].id,
                         transformation_name=all_nested_tr[operator.id].name,
+                        transformation_tag=all_nested_tr[operator.id].version_tag,
                         operator_id=operator.id,
                         operator_name=operator.name,
                         sub_nodes=children_nodes(tr_workflow.content, tr_children),

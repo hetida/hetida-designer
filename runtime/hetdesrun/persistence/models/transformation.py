@@ -279,6 +279,7 @@ class TransformationRevision(BaseModel):
         return ComponentRevision(
             uuid=self.id,
             name=self.name,
+            tag=self.version_tag,
             code_module_uuid=self.id,
             function_name="main",
             inputs=[input.to_component_input() for input in self.io_interface.inputs],
@@ -313,6 +314,7 @@ class TransformationRevision(BaseModel):
         return self.content.to_workflow_node(
             transformation_id=self.id,
             transformation_name=self.name,
+            transformation_tag=self.version_tag,
             operator_id=operator_id,
             operator_name=self.name,
             sub_nodes=sub_nodes,

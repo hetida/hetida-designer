@@ -416,6 +416,7 @@ class WorkflowContent(BaseModel):
         self,
         transformation_id: UUID,
         transformation_name: str,
+        transformation_tag: str,
         operator_id: Optional[UUID],
         operator_name: Optional[str],
         sub_nodes: List[Union[WorkflowNode, ComponentNode]],
@@ -470,6 +471,7 @@ class WorkflowContent(BaseModel):
             name=operator_name,
             tr_id=str(transformation_id),
             tr_name=transformation_name,
+            tr_tag=transformation_tag,
         )
 
     class Config:
