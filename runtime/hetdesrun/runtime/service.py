@@ -123,8 +123,7 @@ async def runtime_service(
     except RuntimeExecutionError as e:
         runtime_logger.info(
             "Runtime Execution Error during workflow execution",
-            # exc_info=True,
-            # TODO: if the error has been logged before the traceback here is not helpful
+            exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
