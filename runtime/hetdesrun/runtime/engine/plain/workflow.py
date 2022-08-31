@@ -115,12 +115,10 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         self.has_only_plot_outputs = has_only_plot_outputs
         self.operator_hierarchical_id = operator_hierarchical_id
         self.operator_hierarchical_name = operator_hierarchical_name
-        self.component_id = component_id
-        self.component_name = component_name
         self.context = ExecutionContext(
-            currently_executed_transformation_id=self.component_id,
-            currently_executed_transformation_name=self.component_name
-            if self.component_name is not None
+            currently_executed_transformation_id=component_id,
+            currently_executed_transformation_name=component_name
+            if component_name is not None
             else "UNKNOWN",
             currently_executed_transformation_tag=component_tag,
             currently_executed_transformation_type=Type.COMPONENT,
