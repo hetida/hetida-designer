@@ -86,7 +86,7 @@ def load_func(
             f"The code module with UUID {str(code_module_uuid)}, which was referenced by"
             f" component revision with UUID {component.uuid}, was not provided"
         )
-        runtime_logger.info(msg)
+        runtime_logger.warning(msg)
         raise NodeFunctionLoadingError(msg) from e
 
     try:
@@ -100,7 +100,7 @@ def load_func(
             f"{component.code_module_uuid}, Component uuid: {component.uuid}, "
             f"function name: {component.function_name})"
         )
-        runtime_logger.info(msg)
+        runtime_logger.warning(msg)
         raise NodeFunctionLoadingError(msg) from e
     return component_func
 
@@ -127,7 +127,7 @@ def parse_component_node(
             f' the workflow in operator "{str(component_node.name)}" is not present in'
             " the provided components"
         )
-        runtime_logger.info(msg)
+        runtime_logger.warning(msg)
         raise ComponentRevisionDoesNotExist(msg) from e
 
     # Load entrypoint function
@@ -164,7 +164,7 @@ def apply_connections(
                 f"Referenced Source Node with UUID {conn.input_in_workflow_id} of a connection"
                 " could not be found"
             )
-            runtime_logger.info(msg)
+            runtime_logger.warning(msg)
             raise ConnectionInvalidError(msg) from e
 
         try:
@@ -174,7 +174,7 @@ def apply_connections(
                 f"Referenced Target Node with UUID {conn.output_in_workflow_id} of a connection"
                 " could not be found"
             )
-            runtime_logger.info(msg)
+            runtime_logger.warning(msg)
             raise ConnectionInvalidError(msg) from e
 
         referenced_target_node.add_inputs(
