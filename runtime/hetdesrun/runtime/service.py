@@ -32,13 +32,13 @@ async def runtime_service(
     This function is used by the runtime endpoint
     """
 
+    # pylint: disable=too-many-return-statements
     execution_config.set(runtime_input.configuration)
     execution_context_filter.bind_context(
         currently_executed_job_id=runtime_input.job_id
     )
     job_id_context_filter.bind_context(currently_executed_job_id=runtime_input.job_id)
 
-    # pylint: disable=too-many-return-statements
     runtime_logger.info(
         "WORKFLOW EXECUTION INPUT JSON:\n%s",
         model_to_pretty_json_str(runtime_input),
