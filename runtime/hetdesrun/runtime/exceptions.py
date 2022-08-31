@@ -7,6 +7,7 @@ class RuntimeExecutionError(Exception):
     def __init__(self, *args, **kwargs):  # type: ignore
         self.currently_executed_transformation_id = None
         self.currently_executed_transformation_name = None
+        self.currently_executed_transformation_tag = None
         self.currently_executed_transformation_type = None
         self.currently_executed_hierarchical_operator_id = None
         self.currently_executed_hierarchical_operator_name = None
@@ -21,6 +22,9 @@ class RuntimeExecutionError(Exception):
         )
         self.currently_executed_transformation_name = (
             context.currently_executed_transformation_name
+        )
+        self.currently_executed_transformation_tag = (
+            context.currently_executed_transformation_tag
         )
         self.currently_executed_transformation_type = (
             context.currently_executed_transformation_type
