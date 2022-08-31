@@ -41,8 +41,7 @@ async def runtime_service(
 
     # pylint: disable=too-many-return-statements
     runtime_logger.info(
-        'WORKFLOW EXECUTION ("%s") INPUT JSON:\n%s',
-        str(runtime_input.job_id),
+        'WORKFLOW EXECUTION INPUT JSON:\n%s',
         model_to_pretty_json_str(runtime_input),
     )
 
