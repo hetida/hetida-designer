@@ -1,5 +1,4 @@
 """Parse workflow input into data structures of plain engine"""
-import logging
 from typing import Callable, Coroutine, Dict, List, Tuple, Union, cast
 
 from hetdesrun.component.load import ComponentCodeImportError, import_func_from_code
