@@ -13,9 +13,11 @@ from hetdesrun.models.workflow import (
     WorkflowNode,
     WorkflowOutput,
 )
+from hetdesrun.runtime import runtime_logger
 from hetdesrun.runtime.engine.plain.workflow import ComputationNode, Node, Workflow
+from hetdesrun.runtime.logging import job_id_context_filter
 
-logger = logging.getLogger(__name__)
+runtime_logger.addFilter(job_id_context_filter)
 
 
 class WorkflowParsingException(Exception):
@@ -81,10 +83,10 @@ def load_func(
         # refering existing component revisions) which require actual recursive parsing
         # of the complete workflow structure.
         msg = (
-            f"The code module with UUID {str(code_module_uuid)} which was referenced by"
-            f"component revision with UUID {component.uuid} was not provided"
+            f"The code module with UUID {str(code_module_uuid)}, which was referenced by"
+            f" component revision with UUID {component.uuid}, was not provided"
         )
-        logger.info(msg)
+        runtime_logger.info(msg)
         raise NodeFunctionLoadingError(msg) from e
 
     try:
@@ -96,9 +98,9 @@ def load_func(
         msg = (
             f"Could not load node function (Code module uuid: "
             f"{component.code_module_uuid}, Component uuid: {component.uuid}, "
-            f" function name: {component.function_name})"
+            f"function name: {component.function_name})"
         )
-        logger.info(msg)
+        runtime_logger.info(msg)
         raise NodeFunctionLoadingError(msg) from e
     return component_func
 
@@ -122,10 +124,10 @@ def parse_component_node(
     except KeyError as e:
         msg = (
             f"The component revision with UUID {component_node.component_uuid} referenced in"
-            f"the workflow in operator {str(component_node.name)} is not present in"
+            f' the workflow in operator "{str(component_node.name)}" is not present in'
             " the provided components"
         )
-        logger.info(msg)
+        runtime_logger.info(msg)
         raise ComponentRevisionDoesNotExist(msg) from e
 
     # Load entrypoint function
@@ -162,7 +164,7 @@ def apply_connections(
                 f"Referenced Source Node with UUID {conn.input_in_workflow_id} of a connection"
                 " could not be found"
             )
-            logger.info(msg)
+            runtime_logger.info(msg)
             raise ConnectionInvalidError(msg) from e
 
         try:
@@ -172,7 +174,7 @@ def apply_connections(
                 f"Referenced Target Node with UUID {conn.output_in_workflow_id} of a connection"
                 " could not be found"
             )
-            logger.info(msg)
+            runtime_logger.info(msg)
             raise ConnectionInvalidError(msg) from e
 
         referenced_target_node.add_inputs(
