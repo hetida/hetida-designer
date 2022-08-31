@@ -53,8 +53,7 @@ async def runtime_service(
         )
     except WorkflowParsingException as e:
         runtime_logger.info(
-            'Workflow Parsing Exception during workflow execution ("%s")',
-            str(runtime_input.job_id),
+            'Workflow Parsing Exception during workflow execution',
             exc_info=True,
         )
         return WorkflowExecutionResult(
@@ -72,8 +71,7 @@ async def runtime_service(
         )
     except AdapterHandlingException as exc:
         runtime_logger.info(
-            'Adapter Handling Exception during data loading  ("%s")',
-            str(runtime_input.job_id),
+            'Adapter Handling Exception during data loading',
             exc_info=True,
         )
         return WorkflowExecutionResult(
@@ -112,8 +110,7 @@ async def runtime_service(
             res = await computation_node.result  # pylint: disable=unused-variable
     except WorkflowParsingException as e:
         runtime_logger.info(
-            'Workflow Parsing Exception during workflow execution ("%s")',
-            str(runtime_input.job_id),
+            'Workflow Parsing Exception during workflow execution',
             exc_info=True,
         )
         return WorkflowExecutionResult(
@@ -126,8 +123,7 @@ async def runtime_service(
 
     except RuntimeExecutionError as e:
         runtime_logger.info(
-            "Runtime Execution Error during workflow execution (%s)",
-            str(runtime_input.job_id)
+            "Runtime Execution Error during workflow execution",
             # exc_info=True,
             # TODO: if the error has been logged before the traceback here is not helpful
         )
@@ -158,8 +154,7 @@ async def runtime_service(
         )
 
         runtime_logger.info(
-            'Execution Results ("%s"):\n%s',
-            str(runtime_input.job_id),
+            'Execution Results:\n%s',
             all_results_str
             if len(all_results_str) <= 100
             else (all_results_str[:50] + " ... " + all_results_str[-50:]),
@@ -177,10 +172,9 @@ async def runtime_service(
     except AdapterHandlingException as exc:
         runtime_logger.info(
             (
-                'Adapter Handling Exception during data sending ("%s"). '
+                'Adapter Handling Exception during data sending. '
                 "Sending data to external sources may be partly done."
             ),
-            str(runtime_input.job_id),
             exc_info=True,
         )
         return WorkflowExecutionResult(
@@ -199,8 +193,7 @@ async def runtime_service(
     )
 
     runtime_logger.info(
-        'Workflow Execution ("%s") Result Pydantic Object: \n%s',
-        str(runtime_input.job_id),
+        'Workflow Execution Result Pydantic Object: \n%s',
         wf_exec_result,
     )
 
@@ -210,16 +203,14 @@ async def runtime_service(
         jsonable_encoder(wf_exec_result)
     except Exception as e:  # pylint: disable=broad-except
         runtime_logger.info(
-            'Exception during workflow execution ("%s") response serialisation: %s',
-            str(runtime_input.job_id),
+            'Exception during workflow execution response serialisation: %s',
             str(e),
             exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
             error=(
-                f'Exception during workflow execution ("{str(runtime_input.job_id)}")'
-                f" response serialisation: {str(e)}"
+                f"Exception during workflow execution response serialisation: {str(e)}"
             ),
             traceback=traceback.format_exc(),
             output_results_by_output_id={},
@@ -227,10 +218,7 @@ async def runtime_service(
             job_id=runtime_input.job_id,
         )
 
-    runtime_logger.info(
-        'Workflow Execution ("%s") Result serialized successfully.',
-        str(runtime_input.job_id),
-    )
+    runtime_logger.info('Workflow Execution Result serialized successfully.')
 
     # TODO: avoid double serialization
     return wf_exec_result
