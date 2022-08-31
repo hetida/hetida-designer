@@ -232,10 +232,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         input_values = await self._gather_data_from_inputs()
 
         # Actual execution of current node
-        try:
-            function_result = await self._run_comp_func(input_values)
-        except RuntimeExecutionError as e:
-            raise e
+        function_result = await self._run_comp_func(input_values)
 
         # cleanup
         self._in_computation = False
@@ -245,10 +242,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
 
     @cached_property  # compute each nodes result only once
     async def result(self) -> Dict[str, Any]:
-        try:
-            return await self._compute_result()
-        except RuntimeExecutionError as e:
-            raise e
+        return await self._compute_result()
 
 
 class Workflow:  # pylint: disable=too-many-instance-attributes

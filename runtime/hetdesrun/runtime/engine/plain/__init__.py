@@ -19,8 +19,5 @@ runtime_execution_logger.addFilter(execution_context_filter)
 
 
 async def workflow_execution_plain(workflow: Workflow) -> Dict[str, Any]:
-    try:
-        res: Dict[str, Any] = await workflow.result
-    except RuntimeExecutionError as e:
-        raise e
+    res: Dict[str, Any] = await workflow.result
     return res
