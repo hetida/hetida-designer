@@ -48,7 +48,7 @@ async def runtime_service(
     # Parse Workflow
     try:
         parsed_wf = parse_workflow_input(
-            runtime_input.workflow, runtime_input.components, []
+            runtime_input.workflow, runtime_input.components, runtime_input.code_modules
         )
     except WorkflowParsingException as e:
         runtime_logger.info(
@@ -133,7 +133,6 @@ async def runtime_service(
                 f"                  tr type: {e.currently_executed_transformation_type},"
                 f" tr id: {e.currently_executed_transformation_id},"
                 f" tr name: {e.currently_executed_transformation_name},"
-                f" job id: {runtime_input.job_id}\n"
                 f"                  op id(s): {e.currently_executed_hierarchical_operator_id},\n"
                 f"                  op name(s): {e.currently_executed_hierarchical_operator_name}\n"
                 f"                  reason: {e}"
