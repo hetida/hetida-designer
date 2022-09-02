@@ -40,9 +40,12 @@ The first lines of the resulting error message will then e.g. look like:
 	"result": "failure",
 	"traceback": "Traceback (most recent call last):
 	...
+  File \"<string>\", line 28, in main
 ValueError: 42
 ...
 ```
+
+The last line shows the value of the variable `interesting_value`, normally an error message would be displayed there. The second to last line shows in which line of your component code the error occurred.
 
 ## <a name="debugging-workflows"></a> Debugging workflow revisions
 
