@@ -21,6 +21,33 @@ docker run --rm \
 
 The command will create a subdirectory `exported_data` in your current directory with subfolders `components` and `workflows` each of which contains subfolders corresponding to the categories in which the components and workflows are stored in individual json files.
 
+To export only selected components and workflows instead of all, import and run `export_transformations` instead of `export_all` which accepts several optional input parameters to filter for the desired components and workflows.
+
+- type: must be either "COMPONENT" or "WORKFLOW" (if specified)
+- ids: a list of ids, only components/workflows whose ids are included in this list will be exported
+- names: a list of names, only components/workflows whose names are included in this list will be exported
+- category: a category, only components/workflows in this category will be exported
+- include_deprecated: if set to false, deprecated components/workflows will **not** be exported (default: true)
+
+If more than one of these parameters is specified, only the components/workflows that pass all filters will be exported, which corresponds to a logical "and" connection of the filter criteria.
+
+The exported JSON files are automatically saved in subfolders corresponding to the categories of the exported components and workflows.
+
+**Note:** Storing a workflow in the database that contains components or other workflows that are not yet stored in the database will result in an error.
+Thus, when using export with filters, it is recommended to ensure that all nested components/workflows are exported.
+
+For example, the shell command to export the components that return the mathematical constants e and $\pi$ is
+
+```shell
+docker run --rm \
+  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
+  --name htdruntime_export \
+  --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
+  --network hetida-designer-network \
+  --entrypoint python \
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.export import export_transformations; export_transformations("/mnt/obj_repo/exported_data/", type="COMPONENT", category="Arithmetic", names=["E", "Pi"]);'
+```
+
 ## Importing all components and workflows
 
 > :warning: IMPORTANT: If you have existing workflows/components in your installation you should do a complete database backup as is described in [backup](./backup.md), just in case something bad happens! Note that importing overwrites possibly existing revisions with the same id.
