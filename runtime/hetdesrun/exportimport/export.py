@@ -170,6 +170,7 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
 def export_transformations(
     download_path: str,
     type: Optional[Type] = None,
+    state: Optional[State] = None,
     ids: Optional[List[UUID]] = None,
     names: Optional[List[str]] = None,
     category: Optional[str] = None,
@@ -247,11 +248,13 @@ def export_transformations(
 
     for transformation in response.json():
         transformation_id = transformation["id"].lower()
+        transformation_state = transformation["state"]
         transformation_type = transformation["type"]
         transformation_name = transformation["name"]
         transformation_category = transformation["category"]
         logger.info(
-            "found transformation %s of type %s\nwith name %s in category %s",
+            "found %s transformation %s of type %s\nwith name %s in category %s",
+            transformation_state,
             transformation_id,
             transformation_type,
             transformation_name,
@@ -269,6 +272,7 @@ def export_transformations(
 
         if (
             criterion_unset_or_matches_value(type, transformation_type)
+            and criterion_unset_or_matches_value(state, transformation_state)
             and selection_list_empty_or_contains_value(ids, transformation_id)
             and selection_list_empty_or_contains_value(names, transformation_name)
             and criterion_unset_or_matches_value(category, transformation_category)
