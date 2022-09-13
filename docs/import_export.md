@@ -24,6 +24,7 @@ The command will create a subdirectory `exported_data` in your current directory
 To export only selected components and workflows instead of all, import and run `export_transformations` instead of `export_all` which accepts several optional input parameters to filter for the desired components and workflows.
 
 - type: must be either "COMPONENT" or "WORKFLOW" (if specified)
+- state: must be either "DRAFT", "RELEASED" or "DISABLED" (if specified)
 - ids: a list of ids, only components/workflows whose ids are included in this list will be exported
 - names: a list of names, only components/workflows whose names are included in this list will be exported
 - category: a category, only components/workflows in this category will be exported
