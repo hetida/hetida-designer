@@ -21,6 +21,7 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import (
+    State,
     Type,
     criterion_unset_or_matches_value,
     get_backend_basic_auth,
@@ -262,6 +263,8 @@ def import_transformation(
 # Import all transformations from download_path based on type, id, name and category
 def import_transformations(
     download_path: str,
+    type: Optional[Type] = None,
+    state: Optional[State] = None,
     ids: Optional[List[UUID]] = None,
     names_and_tags: Optional[List[Tuple[str,str]]] = None,
     category: Optional[str] = None,
@@ -348,7 +351,9 @@ def import_transformations(
         for transformation_id in level_dict[level]:
             transformation = transformation_dict[transformation_id]
             if (
-                selection_list_empty_or_contains_value(ids, transformation_id)
+                criterion_unset_or_matches_value(type, transformation["type"])
+                and criterion_unset_or_matches_value(state, transformation["state"])
+                and selection_list_empty_or_contains_value(ids, transformation_id)
                 and selection_list_empty_or_contains_value(
                     names_and_tags, (transformation["name"], transformation["version_tag"])
                 )
