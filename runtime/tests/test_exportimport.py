@@ -347,3 +347,33 @@ async def test_export_transformations_filtered_by_ids(tmpdir):
 
         for file_path in json_files[:2]:
             assert tmpdir.join(file_path) in exported_paths
+
+
+@pytest.mark.asyncio
+async def test_export_transformations_without_deprecated(tmpdir):
+    tr_list_state = deepcopy(tr_list)
+    tr_list_state[-1]["state"] = "DISABLED"
+    tr_list_state[-2]["state"] = "DRAFT"
+    tr_list_state[-3]["state"] = "DRAFT"
+    resp_mock = mock.Mock()
+    resp_mock.status_code = 200
+    resp_mock.json = mock.Mock(return_value=tr_list_state)
+
+    with mock.patch(
+        "hetdesrun.exportimport.export.requests.get",
+        return_value=resp_mock,
+    ) as mocked_get:
+
+        export_transformations(tmpdir, include_deprecated=False)
+
+        exported_paths = []
+        for root, _, files in os.walk(tmpdir):
+            for file in files:
+                ext = os.path.splitext(file)[1]
+                if ext == ".json":
+                    exported_paths.append(os.path.join(root, file))
+
+        assert len(exported_paths) == 14
+
+        for file_path in json_files[:-1]:
+            assert tmpdir.join(file_path) in exported_paths
