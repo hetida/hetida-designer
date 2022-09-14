@@ -29,8 +29,7 @@ def clean_test_db_engine(use_in_memory_db):
     return engine
 
 
-@pytest.mark.asyncio
-async def test_tr_from_code_for_component_without_register_decorator(
+def test_tr_from_code_for_component_without_register_decorator(
     clean_test_db_engine,
 ):
     with mock.patch(
@@ -89,8 +88,7 @@ for file_path in json_files:
     tr_list.append(tr_json)
 
 
-@pytest.mark.asyncio
-async def test_export_all_transformations(tmpdir):
+def test_export_all_transformations(tmpdir):
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=tr_list)
@@ -137,8 +135,7 @@ def mock_get_trafo_from_java_backend(id, type):
     return tr_dict[str(id)]
 
 
-@pytest.mark.asyncio
-async def test_export_all_base_items(tmpdir):
+def test_export_all_base_items(tmpdir):
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=bi_list)
@@ -171,8 +168,7 @@ async def test_export_all_base_items(tmpdir):
                 assert tmpdir.join(file_path) in exported_paths
 
 
-@pytest.mark.asyncio
-async def test_export_transformations_filtered_by_type(tmpdir):
+def test_export_transformations_filtered_by_type(tmpdir):
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=tr_list)
@@ -201,8 +197,7 @@ async def test_export_transformations_filtered_by_type(tmpdir):
             assert tmpdir.join(file_path) in exported_paths
 
 
-@pytest.mark.asyncio
-async def test_export_transformations_filtered_by_state(tmpdir):
+def test_export_transformations_filtered_by_state(tmpdir):
     tr_list_state = deepcopy(tr_list)
     tr_list_state[-1]["state"] = "DISABLED"
     tr_list_state[-2]["state"] = "DRAFT"
@@ -267,8 +262,7 @@ async def test_export_transformations_filtered_by_state(tmpdir):
             assert tmpdir.join(file_path) in exported_paths
 
 
-@pytest.mark.asyncio
-async def test_export_transformations_filtered_by_category(tmpdir):
+def test_export_transformations_filtered_by_category(tmpdir):
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=tr_list)
@@ -293,8 +287,7 @@ async def test_export_transformations_filtered_by_category(tmpdir):
             assert tmpdir.join(file_path) in exported_paths
 
 
-@pytest.mark.asyncio
-async def test_export_transformations_filtered_by_names_and_tags(tmpdir):
+def test_export_transformations_filtered_by_names_and_tags(tmpdir):
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=tr_list)
@@ -322,8 +315,7 @@ async def test_export_transformations_filtered_by_names_and_tags(tmpdir):
             assert tmpdir.join(file_path) in exported_paths
 
 
-@pytest.mark.asyncio
-async def test_export_transformations_filtered_by_ids(tmpdir):
+def test_export_transformations_filtered_by_ids(tmpdir):
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=tr_list)
@@ -354,8 +346,7 @@ async def test_export_transformations_filtered_by_ids(tmpdir):
             assert tmpdir.join(file_path) in exported_paths
 
 
-@pytest.mark.asyncio
-async def test_export_transformations_without_deprecated(tmpdir):
+def test_export_transformations_without_deprecated(tmpdir):
     tr_list_state = deepcopy(tr_list)
     tr_list_state[-1]["state"] = "DISABLED"
     tr_list_state[-2]["state"] = "DRAFT"
@@ -384,8 +375,7 @@ async def test_export_transformations_without_deprecated(tmpdir):
             assert tmpdir.join(file_path) in exported_paths
 
 
-@pytest.mark.asyncio
-async def test_export_transformations_combined_filters(tmpdir):
+def test_export_transformations_combined_filters(tmpdir):
     tr_list_state = deepcopy(tr_list)
     tr_list_state[-1]["state"] = "DISABLED"
     tr_list_state[-2]["state"] = "DRAFT"
