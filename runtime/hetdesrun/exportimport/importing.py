@@ -4,7 +4,7 @@ import logging
 import os
 from datetime import datetime, timezone
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 import requests
@@ -263,7 +263,7 @@ def import_transformation(
 def import_transformations(
     download_path: str,
     ids: Optional[List[UUID]] = None,
-    names: Optional[List[str]] = None,
+    names_and_tags: Optional[List[Tuple[str,str]]] = None,
     category: Optional[str] = None,
     strip_wirings: bool = False,
     directly_into_db: bool = False,
@@ -350,7 +350,7 @@ def import_transformations(
             if (
                 selection_list_empty_or_contains_value(ids, transformation_id)
                 and selection_list_empty_or_contains_value(
-                    names, transformation["name"]
+                    names_and_tags, (transformation["name"], transformation["version_tag"])
                 )
                 and criterion_unset_or_matches_value(
                     category, transformation["category"]
