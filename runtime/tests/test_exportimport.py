@@ -5,6 +5,7 @@ from unittest import mock
 import pytest
 from starlette.testclient import TestClient
 
+from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.exportimport.export import export_all, export_transformations
 from hetdesrun.exportimport.importing import transformation_revision_from_python_code
 from hetdesrun.persistence import get_db_engine, sessionmaker
@@ -106,7 +107,7 @@ async def test_export_all_transformations(tmpdir):
         _, args, _ = mocked_get.mock_calls[1]
         assert "transformations" in args[0]
 
-        exported_paths= []
+        exported_paths = []
         for root, _, files in os.walk(tmpdir):
             for file in files:
                 ext = os.path.splitext(file)[1]
@@ -115,3 +116,55 @@ async def test_export_all_transformations(tmpdir):
 
         for file_path in json_files:
             assert tmpdir.join(file_path) in exported_paths
+
+
+bi_list = []
+
+for file_path in json_files:
+    with open(root_path + file_path, encoding="utf-8") as f:
+        tr = TransformationRevision(**json.load(f))
+        bi = TransformationRevisionFrontendDto.from_transformation_revision(tr)
+        bi_json = json.loads(bi.json())
+    bi_list.append(bi_json)
+
+
+def mock_get_trafo_from_java_backend(id, type):
+    tr_dict = {}
+    for tr_json in tr_list:
+        tr_dict[tr_json["id"]] = tr_json
+
+    return tr_dict[str(id)]
+
+
+@pytest.mark.asyncio
+async def test_export_all_base_items(tmpdir):
+    resp_mock = mock.Mock()
+    resp_mock.status_code = 200
+    resp_mock.json = mock.Mock(return_value=bi_list)
+
+    with mock.patch(
+        "hetdesrun.exportimport.export.requests.get",
+        return_value=resp_mock,
+    ) as mocked_get:
+        with mock.patch(
+            "hetdesrun.exportimport.export.get_transformation_from_java_backend",
+            new=mock_get_trafo_from_java_backend,
+        ):
+
+            export_all(tmpdir, java_backend=True)
+
+            assert mocked_get.call_count == 2
+            _, args, _ = mocked_get.mock_calls[0]
+            assert "base-items" in args[0]
+            _, args, _ = mocked_get.mock_calls[1]
+            assert "base-items" in args[0]
+
+            exported_paths = []
+            for root, _, files in os.walk(tmpdir):
+                for file in files:
+                    ext = os.path.splitext(file)[1]
+                    if ext == ".json":
+                        exported_paths.append(os.path.join(root, file))
+
+            for file_path in json_files:
+                assert tmpdir.join(file_path) in exported_paths
