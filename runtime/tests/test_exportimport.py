@@ -243,6 +243,7 @@ async def test_export_transformations_filtered_by_state(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
+        # increased by twelve more exported JSON files
         assert len(exported_paths) == 14
 
         for file_path in json_files[:-1]:
@@ -259,6 +260,7 @@ async def test_export_transformations_filtered_by_state(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
+        # increased by one more exported JSON file
         assert len(exported_paths) == 15
 
         for file_path in json_files:
@@ -376,4 +378,55 @@ async def test_export_transformations_without_deprecated(tmpdir):
         assert len(exported_paths) == 14
 
         for file_path in json_files[:-1]:
+            assert tmpdir.join(file_path) in exported_paths
+
+
+@pytest.mark.asyncio
+async def test_export_transformations_combined_filters(tmpdir):
+    tr_list_state = deepcopy(tr_list)
+    tr_list_state[-1]["state"] = "DISABLED"
+    tr_list_state[-2]["state"] = "DRAFT"
+    tr_list_state[-3]["state"] = "DRAFT"
+    resp_mock = mock.Mock()
+    resp_mock.status_code = 200
+    resp_mock.json = mock.Mock(return_value=tr_list_state)
+
+    with mock.patch(
+        "hetdesrun.exportimport.export.requests.get",
+        return_value=resp_mock,
+    ) as mocked_get:
+
+        export_transformations(tmpdir, type="WORKFLOW", include_deprecated=False)
+
+        assert mocked_get.call_count == 1
+
+        exported_paths = []
+        for root, _, files in os.walk(tmpdir):
+            for file in files:
+                ext = os.path.splitext(file)[1]
+                if ext == ".json":
+                    exported_paths.append(os.path.join(root, file))
+
+        assert len(exported_paths) == 2
+
+        for file_path in json_files[-3:-1]:
+            assert tmpdir.join(file_path) in exported_paths
+
+        export_transformations(
+            tmpdir, category="Basic", names=["Filter", "Consecutive differences"]
+        )
+
+        assert mocked_get.call_count == 2
+
+        exported_paths = []
+        for root, _, files in os.walk(tmpdir):
+            for file in files:
+                ext = os.path.splitext(file)[1]
+                if ext == ".json":
+                    exported_paths.append(os.path.join(root, file))
+
+        # increased by one more exported JSON file
+        assert len(exported_paths) == 3
+
+        for file_path in json_files[1:2]:
             assert tmpdir.join(file_path) in exported_paths
