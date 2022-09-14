@@ -168,3 +168,33 @@ async def test_export_all_base_items(tmpdir):
 
             for file_path in json_files:
                 assert tmpdir.join(file_path) in exported_paths
+
+
+@pytest.mark.asyncio
+async def test_export_transformations_filtered_by_type(tmpdir):
+    resp_mock = mock.Mock()
+    resp_mock.status_code = 200
+    resp_mock.json = mock.Mock(return_value=tr_list)
+
+    with mock.patch(
+        "hetdesrun.exportimport.export.requests.get",
+        return_value=resp_mock,
+    ) as mocked_get:
+
+        export_transformations(tmpdir, type="COMPONENT")
+
+        assert mocked_get.call_count == 1
+        _, args, _ = mocked_get.mock_calls[0]
+        assert "transformations" in args[0]
+
+        exported_paths = []
+        for root, _, files in os.walk(tmpdir):
+            for file in files:
+                ext = os.path.splitext(file)[1]
+                if ext == ".json":
+                    exported_paths.append(os.path.join(root, file))
+
+        assert len(exported_paths) == 12
+
+        for file_path in json_files[:12]:
+                assert tmpdir.join(file_path) in exported_paths
