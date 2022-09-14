@@ -3,15 +3,10 @@ import os
 from copy import deepcopy
 from unittest import mock
 
-from starlette.testclient import TestClient
-
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.exportimport.export import export_all, export_transformations
 from hetdesrun.exportimport.importing import transformation_revision_from_python_code
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.webservice.application import init_app
-
-client = TestClient(init_app())
 
 
 def test_tr_from_code_for_component_without_register_decorator():
