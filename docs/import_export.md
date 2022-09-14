@@ -32,7 +32,7 @@ To export only selected components and workflows instead of all, import and run 
 
 If more than one of these parameters is specified, only the components/workflows that pass all filters will be exported, which corresponds to a logical "and" connection of the filter criteria.
 
-The exported JSON files are automatically saved in subfolders corresponding to the categories of the exported components and workflows.
+The exported JSON files are automatically saved in subfolders corresponding to the categories of the exported components and workflows within subfolders corresponding to their type ("components" or "workflows").
 
 **Note:** Storing a workflow in the database that contains components or other workflows that are not yet stored in the database will result in an error.
 Thus, when using export with filters, it is recommended to ensure that all nested components/workflows are exported.
