@@ -101,10 +101,8 @@ async def test_export_all_transformations(tmpdir):
 
         export_all(tmpdir)
 
-        assert mocked_get.call_count == 2
+        assert mocked_get.call_count == 1
         _, args, _ = mocked_get.mock_calls[0]
-        assert "transformations" in args[0]
-        _, args, _ = mocked_get.mock_calls[1]
         assert "transformations" in args[0]
 
         exported_paths = []
@@ -155,10 +153,8 @@ async def test_export_all_base_items(tmpdir):
 
             export_all(tmpdir, java_backend=True)
 
-            assert mocked_get.call_count == 2
+            assert mocked_get.call_count == 1
             _, args, _ = mocked_get.mock_calls[0]
-            assert "base-items" in args[0]
-            _, args, _ = mocked_get.mock_calls[1]
             assert "base-items" in args[0]
 
             exported_paths = []

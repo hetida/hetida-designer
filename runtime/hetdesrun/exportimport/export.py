@@ -288,13 +288,4 @@ def export_transformations(
 
 
 def export_all(download_path: str, java_backend: bool = False) -> None:
-    export_transformations(
-        os.path.join(download_path),
-        type=Type.COMPONENT,
-        java_backend=java_backend,
-    )
-    export_transformations(
-        os.path.join(download_path),
-        type=Type.WORKFLOW,
-        java_backend=java_backend,
-    )
+    export_transformations(download_path, java_backend=java_backend)
