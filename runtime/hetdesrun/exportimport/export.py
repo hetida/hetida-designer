@@ -256,13 +256,13 @@ def export_transformations(
         )
         transformation_category = transformation["category"]
         logger.info(
-            "found %s transformation %s of type %s\nwith name %s and tag %s in category %s",
+            "found %s transformation %s of type %s\nin category %s with name %s and tag %s",
             transformation_state,
             transformation_id,
             transformation_type,
+            transformation_category,
             transformation_name,
             transformation_tag,
-            transformation_category,
         )
 
         if java_backend:
