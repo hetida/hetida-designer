@@ -56,7 +56,7 @@ def save_transformation(tr_json: dict, download_path: str) -> None:
     type = tr_json["type"]
     category = tr_json["category"]
     tag = tr_json["version_tag"]
-    cat_dir = os.path.join(download_path, type.lower()+"s", slugify(category))
+    cat_dir = os.path.join(download_path, type.lower() + "s", slugify(category))
     Path(cat_dir).mkdir(parents=True, exist_ok=True)
     path = os.path.join(
         cat_dir,

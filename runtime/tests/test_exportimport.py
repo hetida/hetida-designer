@@ -1,6 +1,6 @@
-from copy import deepcopy
 import json
 import os
+from copy import deepcopy
 from unittest import mock
 
 import pytest
@@ -164,7 +164,7 @@ async def test_export_all_base_items(tmpdir):
                     ext = os.path.splitext(file)[1]
                     if ext == ".json":
                         exported_paths.append(os.path.join(root, file))
-            
+
             assert len(exported_paths) == len(json_files)
 
             for file_path in json_files:
@@ -198,7 +198,7 @@ async def test_export_transformations_filtered_by_type(tmpdir):
         assert len(exported_paths) == 12
 
         for file_path in json_files[:12]:
-                assert tmpdir.join(file_path) in exported_paths
+            assert tmpdir.join(file_path) in exported_paths
 
 
 @pytest.mark.asyncio
@@ -230,7 +230,7 @@ async def test_export_transformations_filtered_by_state(tmpdir):
         assert len(exported_paths) == 2
 
         for file_path in json_files[-3:-1]:
-                assert tmpdir.join(file_path) in exported_paths
+            assert tmpdir.join(file_path) in exported_paths
 
         export_transformations(tmpdir, state="RELEASED")
 
@@ -246,7 +246,7 @@ async def test_export_transformations_filtered_by_state(tmpdir):
         assert len(exported_paths) == 14
 
         for file_path in json_files[:-1]:
-                assert tmpdir.join(file_path) in exported_paths
+            assert tmpdir.join(file_path) in exported_paths
 
         export_transformations(tmpdir, state="DISABLED")
 
@@ -262,7 +262,8 @@ async def test_export_transformations_filtered_by_state(tmpdir):
         assert len(exported_paths) == 15
 
         for file_path in json_files:
-                assert tmpdir.join(file_path) in exported_paths
+            assert tmpdir.join(file_path) in exported_paths
+
 
 @pytest.mark.asyncio
 async def test_export_transformations_filtered_by_category(tmpdir):
@@ -287,7 +288,7 @@ async def test_export_transformations_filtered_by_category(tmpdir):
         assert len(exported_paths) == 3
 
         for file_path in json_files[-3:]:
-                assert tmpdir.join(file_path) in exported_paths
+            assert tmpdir.join(file_path) in exported_paths
 
 
 @pytest.mark.asyncio
@@ -301,7 +302,7 @@ async def test_export_transformations_filtered_by_names(tmpdir):
         return_value=resp_mock,
     ) as mocked_get:
 
-        export_transformations(tmpdir, names=["Filter","Consecutive differences"])
+        export_transformations(tmpdir, names=["Filter", "Consecutive differences"])
 
         exported_paths = []
         for root, _, files in os.walk(tmpdir):
@@ -313,5 +314,36 @@ async def test_export_transformations_filtered_by_names(tmpdir):
         assert len(exported_paths) == 2
 
         for file_path in json_files[:2]:
-                assert tmpdir.join(file_path) in exported_paths
+            assert tmpdir.join(file_path) in exported_paths
 
+
+@pytest.mark.asyncio
+async def test_export_transformations_filtered_by_ids(tmpdir):
+    resp_mock = mock.Mock()
+    resp_mock.status_code = 200
+    resp_mock.json = mock.Mock(return_value=tr_list)
+
+    with mock.patch(
+        "hetdesrun.exportimport.export.requests.get",
+        return_value=resp_mock,
+    ) as mocked_get:
+
+        export_transformations(
+            tmpdir,
+            ids=[
+                "ce801dcb-8ce1-14ad-029d-a14796dcac92",
+                "18260aab-bdd6-af5c-cac1-7bafde85188f",
+            ],
+        )
+
+        exported_paths = []
+        for root, _, files in os.walk(tmpdir):
+            for file in files:
+                ext = os.path.splitext(file)[1]
+                if ext == ".json":
+                    exported_paths.append(os.path.join(root, file))
+
+        assert len(exported_paths) == 2
+
+        for file_path in json_files[:2]:
+            assert tmpdir.join(file_path) in exported_paths
