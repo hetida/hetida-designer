@@ -2,11 +2,19 @@ import json
 import os
 from copy import deepcopy
 from unittest import mock
+from uuid import UUID
 
+from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
-from hetdesrun.exportimport.export import export_all, export_transformations
+from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
+from hetdesrun.exportimport.export import (
+    export_all,
+    export_transformations,
+    get_transformation_from_java_backend,
+)
 from hetdesrun.exportimport.importing import transformation_revision_from_python_code
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import Type
 
 
 def test_tr_from_code_for_component_without_register_decorator():
@@ -61,6 +69,11 @@ for file_path in json_files:
         tr_json = json.load(f)
     tr_list.append(tr_json)
 
+tr_dict = {}
+
+for tr_json in tr_list:
+    tr_dict[tr_json["id"]] = tr_json
+
 
 def test_export_all_transformations(tmpdir):
     resp_mock = mock.Mock()
@@ -101,11 +114,55 @@ for file_path in json_files:
     bi_list.append(bi_json)
 
 
-def mock_get_trafo_from_java_backend(id, type):
-    tr_dict = {}
-    for tr_json in tr_list:
-        tr_dict[tr_json["id"]] = tr_json
+def java_backend_mock(url, *args, **kwargs):
+    call_infos_from_url = url.rsplit("/", 3)
+    bi_id = call_infos_from_url[-1]
+    endpoint = call_infos_from_url[-2]
 
+    response_mock = mock.Mock()
+    response_mock.status_code = 200
+
+    if endpoint == "components":
+        dto = ComponentRevisionFrontendDto.from_transformation_revision(
+            TransformationRevision(**tr_dict[bi_id])
+        )
+        response_mock.json = mock.Mock(return_value=json.loads(dto.json(by_alias=True)))
+
+    if endpoint == "workflows":
+        dto = WorkflowRevisionFrontendDto.from_transformation_revision(
+            TransformationRevision(**tr_dict[bi_id])
+        )
+        response_mock.json = mock.Mock(return_value=json.loads(dto.json(by_alias=True)))
+
+    if endpoint == "documentations":
+        response_mock.json = mock.Mock(
+            return_value={"document": tr_dict[bi_id]["documentation"]}
+        )
+
+    return response_mock
+
+
+def test_get_transformation_from_java_backend():
+    with mock.patch(
+        "hetdesrun.exportimport.export.requests.get",
+        new=java_backend_mock,
+    ):
+        tr_id_str = "18260aab-bdd6-af5c-cac1-7bafde85188f"
+        tr_from_dict = tr_dict[tr_id_str]
+        tr_from_backend = get_transformation_from_java_backend(
+            UUID(tr_id_str), Type.COMPONENT
+        )
+
+        # released timestamp cannot be the same
+        # it is not set for java backend objects
+        #  and set to "now" during conversion
+        del tr_from_backend["released_timestamp"]
+        del tr_from_dict["released_timestamp"]
+
+        assert tr_from_backend == tr_from_dict
+
+
+def mock_get_trafo_from_java_backend(id, type):
     return tr_dict[str(id)]
 
 
