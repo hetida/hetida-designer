@@ -114,6 +114,8 @@ async def test_export_all_transformations(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
+        assert len(exported_paths) == len(json_files)
+
         for file_path in json_files:
             assert tmpdir.join(file_path) in exported_paths
 
@@ -165,6 +167,8 @@ async def test_export_all_base_items(tmpdir):
                     ext = os.path.splitext(file)[1]
                     if ext == ".json":
                         exported_paths.append(os.path.join(root, file))
+            
+            assert len(exported_paths) == len(json_files)
 
             for file_path in json_files:
                 assert tmpdir.join(file_path) in exported_paths
