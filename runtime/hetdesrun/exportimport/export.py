@@ -5,7 +5,7 @@ import re
 import unicodedata
 from pathlib import Path
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 import requests
@@ -172,7 +172,7 @@ def export_transformations(
     type: Optional[Type] = None,
     state: Optional[State] = None,
     ids: Optional[List[UUID]] = None,
-    names: Optional[List[str]] = None,
+    names_and_tags: Optional[List[Tuple[str]]] = None,
     category: Optional[str] = None,
     include_deprecated: bool = True,
     java_backend: bool = False,
@@ -251,13 +251,17 @@ def export_transformations(
         transformation_state = transformation["state"]
         transformation_type = transformation["type"]
         transformation_name = transformation["name"]
+        transformation_tag = (
+            transformation["version_tag"] if not java_backend else transformation["tag"]
+        )
         transformation_category = transformation["category"]
         logger.info(
-            "found %s transformation %s of type %s\nwith name %s in category %s",
+            "found %s transformation %s of type %s\nwith name %s and tag %s in category %s",
             transformation_state,
             transformation_id,
             transformation_type,
             transformation_name,
+            transformation_tag,
             transformation_category,
         )
 
@@ -274,7 +278,9 @@ def export_transformations(
             criterion_unset_or_matches_value(type, transformation_type)
             and criterion_unset_or_matches_value(state, transformation_state)
             and selection_list_empty_or_contains_value(ids, transformation_id)
-            and selection_list_empty_or_contains_value(names, transformation_name)
+            and selection_list_empty_or_contains_value(
+                names_and_tags, (transformation_name, transformation_tag)
+            )
             and criterion_unset_or_matches_value(category, transformation_category)
         ):
             if include_deprecated or transformation["state"] != State.DISABLED:

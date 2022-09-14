@@ -294,7 +294,7 @@ async def test_export_transformations_filtered_by_category(tmpdir):
 
 
 @pytest.mark.asyncio
-async def test_export_transformations_filtered_by_names(tmpdir):
+async def test_export_transformations_filtered_by_names_and_tags(tmpdir):
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=tr_list)
@@ -304,7 +304,10 @@ async def test_export_transformations_filtered_by_names(tmpdir):
         return_value=resp_mock,
     ) as mocked_get:
 
-        export_transformations(tmpdir, names=["Filter", "Consecutive differences"])
+        export_transformations(
+            tmpdir,
+            names_and_tags=[("Filter", "1.0.0"), ("Consecutive differences", "1.0.0")],
+        )
 
         exported_paths = []
         for root, _, files in os.walk(tmpdir):
@@ -413,7 +416,9 @@ async def test_export_transformations_combined_filters(tmpdir):
             assert tmpdir.join(file_path) in exported_paths
 
         export_transformations(
-            tmpdir, category="Basic", names=["Filter", "Consecutive differences"]
+            tmpdir,
+            category="Basic",
+            names_and_tags=[("Filter", "1.0.0"), ("Consecutive differences", "1.0.0")],
         )
 
         assert mocked_get.call_count == 2
