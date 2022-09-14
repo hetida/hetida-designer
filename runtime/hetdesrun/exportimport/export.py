@@ -56,7 +56,7 @@ def save_transformation(tr_json: dict, download_path: str) -> None:
     type = tr_json["type"]
     category = tr_json["category"]
     tag = tr_json["version_tag"]
-    cat_dir = os.path.join(download_path, slugify(category))
+    cat_dir = os.path.join(download_path, type.lower()+"s", slugify(category))
     Path(cat_dir).mkdir(parents=True, exist_ok=True)
     path = os.path.join(
         cat_dir,
@@ -289,12 +289,12 @@ def export_transformations(
 
 def export_all(download_path: str, java_backend: bool = False) -> None:
     export_transformations(
-        os.path.join(download_path, "components"),
+        os.path.join(download_path),
         type=Type.COMPONENT,
         java_backend=java_backend,
     )
     export_transformations(
-        os.path.join(download_path, "workflows"),
+        os.path.join(download_path),
         type=Type.WORKFLOW,
         java_backend=java_backend,
     )
