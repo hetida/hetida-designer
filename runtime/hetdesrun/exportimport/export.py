@@ -147,7 +147,6 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
 
     # Generate transformation revision
     if type == Type.COMPONENT:
-        revision_json["type"] = Type.COMPONENT
         frontend_dto = ComponentRevisionFrontendDto(
             **revision_json,
         )
@@ -160,7 +159,8 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
         documentation=doc_text
     )
 
-    tr_json = json.loads(transformation_revision.json())
+    # for consistency with endpoints exclude none in JSON
+    tr_json = json.loads(transformation_revision.json(exclude_none=True))
 
     return tr_json
 
