@@ -246,6 +246,16 @@ def export_transformations(
     id_list = []
     transformation_dict: Dict[UUID, dict] = {}
 
+    def get_nested_tr_ids(tr_id: str, nested_id_list: List[str]) -> None:
+        operators = transformation_dict[tr_id]["content"]["operators"]
+        go_further_ids: List[str] = []
+        for operator in operators:
+            nested_id_list.append(operator["transformation_id"])
+            if operator["type"] == Type.WORKFLOW.value:
+                go_further_ids.append(operator["transformation_id"])
+        for tr_id in go_further_ids:
+            get_nested_tr_ids(tr_id, nested_id_list)
+
     for transformation in response.json():
         transformation_id = transformation["id"].lower()
         transformation_state = transformation["state"]
@@ -286,7 +296,10 @@ def export_transformations(
             if include_deprecated or transformation["state"] != State.DISABLED:
                 logger.info("transformation %s will be exported", transformation_id)
                 id_list.append(transformation_id)
-                id_list.extend(get_all_nested_transformation_ids(transformation_id))
+                if transformation_type == Type.WORKFLOW.value:
+                    nested_ids = []
+                    get_nested_tr_ids(transformation_id, nested_ids)
+                    id_list.extend(nested_ids)
 
     # Export individual transformation
     for transformation_id in id_list:
