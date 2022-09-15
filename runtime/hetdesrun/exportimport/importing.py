@@ -263,7 +263,7 @@ def import_transformation(
 # Import all transformations from download_path based on type, id, name and category
 def import_transformations(
     download_path: str,
-    type: Optional[Type] = None, # pylint: disable=redefined-builtin
+    type: Optional[Type] = None,  # pylint: disable=redefined-builtin
     state: Optional[State] = None,
     ids: Optional[List[UUID]] = None,
     names_and_tags: Optional[List[Tuple[str, str]]] = None,
