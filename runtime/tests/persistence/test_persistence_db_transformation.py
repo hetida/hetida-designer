@@ -211,12 +211,13 @@ def test_multiple_select(clean_test_db_engine):
 
         tr_uuid_2 = get_uuid_from_seed("test_multiple_select_2")
         tr_object_2 = tr_object_1.copy()
+        tr_object_2.category = "Another category"
         tr_object_2.id = tr_uuid_2
         tr_object_2.version_tag = "1.0.1"
         store_single_transformation_revision(tr_object_2)
 
-        tr_object_3 = tr_object_template.copy()
         tr_uuid_3 = get_uuid_from_seed("test_multiple_select_3")
+        tr_object_3 = tr_object_template.copy()
         tr_object_3.id = tr_uuid_3
         tr_object_3.revision_group_id = tr_uuid_3
         tr_object_3.release()
@@ -240,7 +241,26 @@ def test_multiple_select(clean_test_db_engine):
         results = select_multiple_transformation_revisions(type=Type.WORKFLOW)
         assert len(results) == 0
 
-        # TODO: Test more cases: E.g. Combined filters
+        results = select_multiple_transformation_revisions(category="Test category")
+        assert len(results) == 2
+
+        results = select_multiple_transformation_revisions(
+            names_and_tags=[("Test", "1.0.1")]
+        )
+        assert len(results) == 1
+
+        results = select_multiple_transformation_revisions(ids=[tr_uuid_3, tr_uuid_2])
+        assert len(results) == 2
+
+        results = select_multiple_transformation_revisions(
+            ids=[tr_uuid_3, tr_uuid_1], names_and_tags=[("Test", "1.0.1")]
+        )
+        assert len(results) == 0
+
+        results = select_multiple_transformation_revisions(
+            category="Test category", state=State.RELEASED
+        )
+        assert len(results) == 1
 
 
 def test_get_latest_revision_id(clean_test_db_engine):
