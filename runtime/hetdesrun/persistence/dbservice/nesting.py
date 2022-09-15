@@ -145,3 +145,14 @@ def update_or_create_nesting(transformation_revision: TransformationRevision) ->
             update_nesting(
                 session, transformation_revision.id, transformation_revision.content
             )
+
+
+def get_all_nested_transformation_ids(transformation_id: UUID) -> List[UUID]:
+    with Session() as session, session.begin():
+        descendants = find_all_nested_transformation_revisions(
+            session, transformation_id
+        )
+
+    nested_ids = [descendant.transformation_id for descendant in descendants]
+
+    return nested_ids
