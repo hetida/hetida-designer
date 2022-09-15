@@ -1,8 +1,32 @@
 import logging
 from unittest import mock
+from uuid import UUID
 
-from hetdesrun.exportimport.importing import import_transformations
+from hetdesrun.exportimport.importing import (
+    import_transformation,
+    import_transformations,
+    load_json,
+)
 from hetdesrun.persistence import sessionmaker
+from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
+from hetdesrun.persistence.models.transformation import TransformationRevision
+
+
+def test_import_single_transformation(clean_test_db_engine):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        path = (
+            "./transformations/components/arithmetic/"
+            "consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json"
+        )
+        tr_json = load_json(path)
+        import_transformation(tr_json, path, directly_into_db=True)
+        persisted_tr = read_single_transformation_revision(UUID(tr_json["id"]))
+        tr = TransformationRevision(**tr_json)
+
+        assert persisted_tr == tr
 
 
 def test_component_import_via_rest_api(caplog):
