@@ -20,7 +20,7 @@ def clean_test_db_engine(use_in_memory_db):
     return engine
 
 
-def test_component_deployment_via_rest_api(caplog):
+def test_component_import_via_rest_api(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
 
@@ -49,7 +49,7 @@ def test_component_deployment_via_rest_api(caplog):
             assert "COULD NOT PUT COMPONENT" in caplog.text
 
 
-def test_workflow_deployment_via_rest_api(caplog):
+def test_workflow_import_via_rest_api(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
 
@@ -70,7 +70,7 @@ def test_workflow_deployment_via_rest_api(caplog):
         assert "COULD NOT PUT WORKFLOW" in caplog.text
 
 
-def test_component_deployment_directly_into_db(caplog, clean_test_db_engine):
+def test_component_import_directly_into_db(caplog, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
         "hetdesrun.persistence.dbservice.nesting.Session",
