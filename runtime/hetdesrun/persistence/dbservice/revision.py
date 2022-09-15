@@ -253,12 +253,12 @@ def get_all_nested_transformation_revisions(
             session, transformation_revision.id
         )
 
-    nested_transformation_revisions: Dict[UUID, TransformationRevision] = {}
+        nested_transformation_revisions: Dict[UUID, TransformationRevision] = {}
 
-    for descendant in descendants:
-        nested_transformation_revisions[descendant.operator_id] = select_tr_by_id(
-            session, descendant.transformation_id
-        )
+        for descendant in descendants:
+            nested_transformation_revisions[descendant.operator_id] = select_tr_by_id(
+                session, descendant.transformation_id
+            )
 
     return nested_transformation_revisions
 
