@@ -2,7 +2,7 @@ import logging
 from typing import List, Optional, Tuple
 from uuid import UUID, uuid4
 
-from fastapi import HTTPException, Path, Query, status
+from fastapi import Body, HTTPException, Path, Query, status
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -14,6 +14,7 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
+from hetdesrun.models.code import NonEmptyValidStr, ShortNonEmptyValidStr, ValidStr
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
     DBIntegrityError,
@@ -21,6 +22,7 @@ from hetdesrun.persistence.dbservice.exceptions import (
 )
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
+    get_all_nested_transformation_revisions,
     get_latest_revision_id,
     read_single_transformation_revision,
     select_multiple_transformation_revisions,
@@ -130,29 +132,73 @@ async def get_all_transformation_revisions(
         None,
         description="Filter for specified state",
     ),
+    category: Optional[ValidStr] = Query(
+        None,
+        description="Filter for specified category",
+    ),
+    ids: Optional[List[UUID]] = Query(
+        None,
+        description="Filter for specified ids",
+    ),
+    names_and_tags: Optional[
+        List[Tuple[NonEmptyValidStr, ShortNonEmptyValidStr]]
+    ] = Body(
+        None,
+        description="Filter for specified tuples of name and tag",
+    ),
+    include_dependencies: Optional[bool] = Query(
+        False,
+        description=(
+            "Set to True to additionally get those transformation revisions "
+            "that the selected ones depend on"
+        ),
+    ),
 ) -> List[TransformationRevision]:
     """Get all transformation revisions from the data base.
 
-    Used by frontend for initial loading of all transformations to populate the sidebar.
+    Used by frontend for initial loading of all transformations to populate the sidebar
+    and to export selected transformation revisions.
     """
 
     msg = "get all transformation revisions"
     if type is not None:
         msg = msg + " of type " + type.value
     if state is not None:
-        msg = msg + " in the state " + state.value
+        msg = msg + " in state " + state.value
+    if category is not None:
+        msg = msg + " in category " + category
+    if ids is not None:
+        msg = msg + "\nwith ids " + str(ids)
+    if names_and_tags is not None:
+        msg = msg + "\nwith names and tags " + str(names_and_tags)
     logger.info(msg)
 
     try:
         transformation_revision_list = select_multiple_transformation_revisions(
             type=type,
             state=state,
+            category=category,
+            ids=ids,
+            names_and_tags=names_and_tags,
         )
     except DBIntegrityError as e:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"At least one entry in the DB is no valid transformation revision:\n{str(e)}",
         ) from e
+
+    if include_dependencies:
+        tr_ids = [tr.id for tr in transformation_revision_list]
+        for tr in transformation_revision_list:
+            if tr.type == Type.WORKFLOW:
+                nested_tr_dict = get_all_nested_transformation_revisions(tr)
+                for (
+                    nested_tr_id
+                ) in nested_tr_dict:  # pylint: disable=consider-using-dict-items
+                    if nested_tr_id not in tr_ids:
+                        transformation_revision_list.append(
+                            nested_tr_dict[nested_tr_id]
+                        )
 
     return transformation_revision_list
 
