@@ -8,7 +8,6 @@ from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.exportimport.export import (
-    export_all,
     export_transformations,
     get_transformation_from_java_backend,
 )
@@ -57,7 +56,7 @@ def test_export_all_transformations(tmpdir):
         return_value=resp_mock,
     ) as mocked_get:
 
-        export_all(tmpdir)
+        export_transformations(tmpdir)
 
         assert mocked_get.call_count == 1
         _, args, _ = mocked_get.mock_calls[0]
@@ -152,7 +151,7 @@ def test_export_all_base_items(tmpdir):
             new=mock_get_trafo_from_java_backend,
         ):
 
-            export_all(tmpdir, java_backend=True)
+            export_transformations(tmpdir, java_backend=True)
 
             assert mocked_get.call_count == 1
             _, args, _ = mocked_get.mock_calls[0]

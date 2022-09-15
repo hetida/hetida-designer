@@ -303,7 +303,3 @@ def export_transformations(
     # Export individual transformation
     for transformation_id in id_list:
         save_transformation(transformation_dict[transformation_id], download_path)
-
-
-def export_all(download_path: str, java_backend: bool = False) -> None:
-    export_transformations(download_path, java_backend=java_backend)
