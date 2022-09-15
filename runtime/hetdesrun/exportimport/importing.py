@@ -266,7 +266,7 @@ def import_transformations(
     type: Optional[Type] = None,
     state: Optional[State] = None,
     ids: Optional[List[UUID]] = None,
-    names_and_tags: Optional[List[Tuple[str,str]]] = None,
+    names_and_tags: Optional[List[Tuple[str, str]]] = None,
     category: Optional[str] = None,
     strip_wirings: bool = False,
     directly_into_db: bool = False,
@@ -355,7 +355,8 @@ def import_transformations(
                 and criterion_unset_or_matches_value(state, transformation["state"])
                 and selection_list_empty_or_contains_value(ids, transformation_id)
                 and selection_list_empty_or_contains_value(
-                    names_and_tags, (transformation["name"], transformation["version_tag"])
+                    names_and_tags,
+                    (transformation["name"], transformation["version_tag"]),
                 )
                 and criterion_unset_or_matches_value(
                     category, transformation["category"]
