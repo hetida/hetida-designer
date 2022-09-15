@@ -202,9 +202,11 @@ def test_export_transformations_filtered_by_type(tmpdir):
 
 def test_export_transformations_filtered_by_state(tmpdir):
     tr_list_state = deepcopy(tr_list)
+    tr_list_state[0]["state"] = "DRAFT"
+    tr_list_state[1]["state"] = "DRAFT"
     tr_list_state[-1]["state"] = "DISABLED"
-    tr_list_state[-2]["state"] = "DRAFT"
-    tr_list_state[-3]["state"] = "DRAFT"
+    tr_list_state[-2]["state"] = "DISABLED"
+    tr_list_state[-3]["state"] = "DISABLED"
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=tr_list_state)
@@ -227,7 +229,7 @@ def test_export_transformations_filtered_by_state(tmpdir):
 
         assert len(exported_paths) == 2
 
-        for file_path in json_files[-3:-1]:
+        for file_path in json_files[:2]:
             assert tmpdir.join(file_path) in exported_paths
 
         export_transformations(tmpdir, state="RELEASED")
@@ -241,10 +243,10 @@ def test_export_transformations_filtered_by_state(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
-        # increased by twelve more exported JSON files
-        assert len(exported_paths) == 14
+        # increased by ten more exported JSON files
+        assert len(exported_paths) == 12
 
-        for file_path in json_files[:-1]:
+        for file_path in json_files[:-3]:
             assert tmpdir.join(file_path) in exported_paths
 
         export_transformations(tmpdir, state="DISABLED")
@@ -258,7 +260,7 @@ def test_export_transformations_filtered_by_state(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
-        # increased by one more exported JSON file
+        # increased by three more exported JSON file
         assert len(exported_paths) == 15
 
         for file_path in json_files:
@@ -275,7 +277,7 @@ def test_export_transformations_filtered_by_category(tmpdir):
         return_value=resp_mock,
     ) as mocked_get:
 
-        export_transformations(tmpdir, category="Examples")
+        export_transformations(tmpdir, category="Basic")
 
         exported_paths = []
         for root, _, files in os.walk(tmpdir):
@@ -284,9 +286,9 @@ def test_export_transformations_filtered_by_category(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
-        assert len(exported_paths) == 3
+        assert len(exported_paths) == 4
 
-        for file_path in json_files[-3:]:
+        for file_path in json_files[1:5]:
             assert tmpdir.join(file_path) in exported_paths
 
 
@@ -381,8 +383,6 @@ def test_export_transformations_without_deprecated(tmpdir):
 def test_export_transformations_combined_filters(tmpdir):
     tr_list_state = deepcopy(tr_list)
     tr_list_state[-1]["state"] = "DISABLED"
-    tr_list_state[-2]["state"] = "DRAFT"
-    tr_list_state[-3]["state"] = "DRAFT"
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=tr_list_state)
@@ -392,7 +392,11 @@ def test_export_transformations_combined_filters(tmpdir):
         return_value=resp_mock,
     ) as mocked_get:
 
-        export_transformations(tmpdir, type="WORKFLOW", include_deprecated=False)
+        export_transformations(
+            tmpdir,
+            category="Basic",
+            names_and_tags=[("Filter", "1.0.0"), ("Consecutive differences", "1.0.0")],
+        )
 
         assert mocked_get.call_count == 1
 
@@ -403,16 +407,12 @@ def test_export_transformations_combined_filters(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
-        assert len(exported_paths) == 2
+        assert len(exported_paths) == 1
 
-        for file_path in json_files[-3:-1]:
+        for file_path in json_files[1:2]:
             assert tmpdir.join(file_path) in exported_paths
 
-        export_transformations(
-            tmpdir,
-            category="Basic",
-            names_and_tags=[("Filter", "1.0.0"), ("Consecutive differences", "1.0.0")],
-        )
+        export_transformations(tmpdir, type="WORKFLOW", include_deprecated=False)
 
         assert mocked_get.call_count == 2
 
@@ -423,8 +423,10 @@ def test_export_transformations_combined_filters(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
-        # increased by one more exported JSON file
-        assert len(exported_paths) == 3
+        assert len(exported_paths) == 13
 
-        for file_path in json_files[1:2]:
+        for file_path in json_files[:-5]:
+            assert tmpdir.join(file_path) in exported_paths
+
+        for file_path in json_files[-4:-1]:
             assert tmpdir.join(file_path) in exported_paths
