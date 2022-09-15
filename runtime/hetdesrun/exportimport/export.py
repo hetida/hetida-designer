@@ -12,7 +12,6 @@ import requests
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-from hetdesrun.persistence.dbservice.nesting import get_all_nested_transformation_ids
 from hetdesrun.utils import (
     State,
     Type,
@@ -244,7 +243,7 @@ def export_transformations(
         raise Exception(msg)
 
     id_list = []
-    transformation_dict: Dict[UUID, dict] = {}
+    transformation_dict: Dict[str, dict] = {}
 
     def get_nested_tr_ids(tr_id: str, nested_id_list: List[str]) -> None:
         operators = transformation_dict[tr_id]["content"]["operators"]
@@ -253,8 +252,8 @@ def export_transformations(
             nested_id_list.append(operator["transformation_id"])
             if operator["type"] == Type.WORKFLOW.value:
                 go_further_ids.append(operator["transformation_id"])
-        for tr_id in go_further_ids:
-            get_nested_tr_ids(tr_id, nested_id_list)
+        for nested_tr_id in go_further_ids:
+            get_nested_tr_ids(nested_tr_id, nested_id_list)
 
     for transformation in response.json():
         transformation_id = transformation["id"].lower()
@@ -297,7 +296,7 @@ def export_transformations(
                 logger.info("transformation %s will be exported", transformation_id)
                 id_list.append(transformation_id)
                 if transformation_type == Type.WORKFLOW.value:
-                    nested_ids = []
+                    nested_ids: List[str] = []
                     get_nested_tr_ids(transformation_id, nested_ids)
                     id_list.extend(nested_ids)
 
