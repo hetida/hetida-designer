@@ -1,11 +1,12 @@
 import datetime
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
+from hetdesrun.models.code import NonEmptyValidStr, ShortNonEmptyValidStr, ValidStr
 from hetdesrun.persistence import Session, SQLAlchemySession
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import (
@@ -201,15 +202,23 @@ def delete_single_transformation_revision(
 
 # pylint: disable=redefined-builtin
 def select_multiple_transformation_revisions(
-    category: Optional[str] = None,
-    revision_group_id: Optional[UUID] = None,
     type: Optional[Type] = None,
     state: Optional[State] = None,
+    category: Optional[ValidStr] = None,
+    revision_group_id: Optional[UUID] = None,
+    ids: Optional[List[UUID]] = None,
+    names_and_tags: Optional[
+        List[Tuple[NonEmptyValidStr, ShortNonEmptyValidStr]]
+    ] = None,
 ) -> List[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
     with Session() as session, session.begin():
         selection = select(TransformationRevisionDBModel)
 
+        if type is not None:
+            selection = selection.where(TransformationRevisionDBModel.type == type)
+        if state is not None:
+            selection = selection.where(TransformationRevisionDBModel.state == state)
         if category is not None:
             selection = selection.where(
                 TransformationRevisionDBModel.category == category
@@ -218,10 +227,13 @@ def select_multiple_transformation_revisions(
             selection = selection.where(
                 TransformationRevisionDBModel.revision_group_id == revision_group_id
             )
-        if type is not None:
-            selection = selection.where(TransformationRevisionDBModel.type == type)
-        if state is not None:
-            selection = selection.where(TransformationRevisionDBModel.state == state)
+        if ids is not None:
+            selection = selection.where(TransformationRevisionDBModel.id in ids)
+        if names_and_tags is not None:
+            selection = selection.where(
+                TransformationRevisionDBModel.name,
+                TransformationRevisionDBModel.version_tag in names_and_tags,
+            )
 
         results = session.execute(selection).scalars().all()
 
