@@ -3,7 +3,7 @@ import logging
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select, tuple_, update
 from sqlalchemy.exc import IntegrityError
 
 from hetdesrun.models.code import NonEmptyValidStr, ShortNonEmptyValidStr, ValidStr
@@ -228,11 +228,13 @@ def select_multiple_transformation_revisions(
                 TransformationRevisionDBModel.revision_group_id == revision_group_id
             )
         if ids is not None:
-            selection = selection.where(TransformationRevisionDBModel.id in ids)
+            selection = selection.where(TransformationRevisionDBModel.id.in_(ids))
         if names_and_tags is not None:
             selection = selection.where(
-                TransformationRevisionDBModel.name,
-                TransformationRevisionDBModel.version_tag in names_and_tags,
+                tuple_(
+                    TransformationRevisionDBModel.name,
+                    TransformationRevisionDBModel.version_tag,
+                ).in_(names_and_tags),
             )
 
         results = session.execute(selection).scalars().all()
