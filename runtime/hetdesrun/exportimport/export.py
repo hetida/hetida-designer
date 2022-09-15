@@ -12,6 +12,7 @@ import requests
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
+from hetdesrun.persistence.dbservice.nesting import get_all_nested_transformation_ids
 from hetdesrun.utils import (
     State,
     Type,
@@ -285,6 +286,7 @@ def export_transformations(
             if include_deprecated or transformation["state"] != State.DISABLED:
                 logger.info("transformation %s will be exported", transformation_id)
                 id_list.append(transformation_id)
+                id_list.extend(get_all_nested_transformation_ids(transformation_id))
 
     # Export individual transformation
     for transformation_id in id_list:
