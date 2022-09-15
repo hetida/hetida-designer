@@ -16,7 +16,7 @@ from hetdesrun.persistence.dbservice.exceptions import (
 from hetdesrun.persistence.dbservice.nesting import (
     delete_own_nestings,
     find_all_nested_transformation_revisions,
-    find_all_nesting_transformation_revisions,
+    find_all_nestings,
     update_nesting,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -126,7 +126,7 @@ def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> 
         "pass on deprecation for transformation revision %s", str(transformation_id)
     )
 
-    sup_nestings = find_all_nesting_transformation_revisions(session, transformation_id)
+    sup_nestings = find_all_nestings(session, transformation_id)
 
     for nesting in sup_nestings:
         transformation_revision = select_tr_by_id(session, nesting.workflow_id)

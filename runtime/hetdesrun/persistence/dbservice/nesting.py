@@ -59,7 +59,7 @@ def find_all_nested_transformation_revisions(
     return descendants
 
 
-def find_all_nesting_transformation_revisions(
+def find_all_nestings(
     session: SQLAlchemySession, nested_transformation_id: UUID
 ) -> List[NestingDBModel]:
     result = session.execute(
