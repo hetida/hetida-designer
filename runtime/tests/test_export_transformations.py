@@ -12,36 +12,8 @@ from hetdesrun.exportimport.export import (
     export_transformations,
     get_transformation_from_java_backend,
 )
-from hetdesrun.exportimport.importing import transformation_revision_from_python_code
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import Type
-
-
-def test_tr_from_code_for_component_without_register_decorator():
-    path = os.path.join(
-        "tests",
-        "data",
-        "components",
-        "alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.py",
-    )
-    with open(path) as f:
-        code = f.read()
-
-    tr_json = transformation_revision_from_python_code(code, path)
-
-    tr = TransformationRevision(**tr_json)
-
-    assert tr.name == "Alerts from Score"
-    assert tr.category == "Anomaly Detection"
-    assert "anomalous situations" in tr.description
-    assert tr.version_tag == "1.0.0"
-    assert str(tr.id) == "38f168ef-cb06-d89c-79b3-0cd823f32e9d"
-    assert str(tr.revision_group_id) == "38f168ef-cb06-d89c-79b3-0cd823f32e9d"
-    assert len(tr.io_interface.inputs) == 2
-    assert len(tr.io_interface.outputs) == 1
-    assert tr.type == "COMPONENT"
-    assert "COMPONENT_INFO" in tr.content
-
 
 root_path = "./transformations"
 json_files = [
