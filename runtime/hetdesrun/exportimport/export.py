@@ -243,7 +243,6 @@ def export_transformations(
         raise Exception(msg)
 
     id_list = []
-    type_dict: Dict[UUID, Type] = {}
     transformation_dict: Dict[UUID, dict] = {}
 
     for transformation in response.json():
@@ -286,7 +285,6 @@ def export_transformations(
             if include_deprecated or transformation["state"] != State.DISABLED:
                 logger.info("transformation %s will be exported", transformation_id)
                 id_list.append(transformation_id)
-                type_dict[transformation_id] = transformation_type
 
     # Export individual transformation
     for transformation_id in id_list:
