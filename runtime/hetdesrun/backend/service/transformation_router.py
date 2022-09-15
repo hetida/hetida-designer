@@ -1,8 +1,10 @@
 import logging
-from typing import List, Optional, Tuple
+import json
+from typing import Any, List, Optional, Tuple
 from uuid import UUID, uuid4
 
-from fastapi import Body, HTTPException, Path, Query, status
+from fastapi import HTTPException, Path, Query, status
+from pydantic import BaseModel
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -35,6 +37,14 @@ from hetdesrun.utils import State, Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
+
+
+class NameAndTag(BaseModel):
+    name: NonEmptyValidStr
+    tag: ShortNonEmptyValidStr
+
+    def to_tuple(self) -> Tuple[NonEmptyValidStr, ShortNonEmptyValidStr]:
+        return (self.name, self.tag)
 
 
 transformation_router = HandleTrailingSlashAPIRouter(
@@ -121,11 +131,12 @@ async def get_all_transformation_revisions(
         None,
         description="Filter for specified ids",
     ),
-    names_and_tags: Optional[
-        List[Tuple[NonEmptyValidStr, ShortNonEmptyValidStr]]
-    ] = Body(
+    names_and_tags: Optional[List[Any]] = Query(
         None,
-        description="Filter for specified tuples of name and tag",
+        description=(
+            "Filter for specified list of name and tag: "
+            """Specify as {"name": <name>, "tag": <tag>}"""
+        ),
     ),
     include_dependencies: Optional[bool] = Query(
         False,
@@ -151,7 +162,19 @@ async def get_all_transformation_revisions(
     if ids is not None:
         msg = msg + "\nwith ids " + str(ids)
     if names_and_tags is not None:
+        name_and_tag_tuple_list: List[
+            Tuple[NonEmptyValidStr, ShortNonEmptyValidStr]
+        ] = []
+        for name_and_tag in names_and_tags:
+            try:
+                name_and_tag_tuple_list.append(NameAndTag(**json.loads(name_and_tag)).to_tuple())
+            except ValueError as e:
+                msg = f"ValidationError for names_and_tags query parameter:\n{str(e)}"
+                logger.error(msg)
+                raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg) from e
+        names_and_tags = name_and_tag_tuple_list
         msg = msg + "\nwith names and tags " + str(names_and_tags)
+
     logger.info(msg)
 
     try:
