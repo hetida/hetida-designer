@@ -91,25 +91,6 @@ async def create_transformation_revision(
     return persisted_transformation_revision
 
 
-def get_multiple_transformation_revisions(state: State) -> List[TransformationRevision]:
-    msg = "get all transformation revisions"
-    if state is not None:
-        msg = msg + " in the state " + state.value
-    logger.info(msg)
-
-    try:
-        transformation_revision_list = select_multiple_transformation_revisions(
-            state=state
-        )
-    except DBIntegrityError as e:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"At least one entry in the DB is no valid transformation revision:\n{str(e)}",
-        ) from e
-
-    return transformation_revision_list
-
-
 @transformation_router.get(
     "",
     response_model=List[TransformationRevision],
