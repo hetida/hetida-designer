@@ -1083,7 +1083,7 @@ async def test_execute_asynchron_for_transformation_revision_works(
             ):
                 async with async_test_client as ac:
                     response = await ac.post(
-                        "/api/transformations/execute/asynchron",
+                        "/api/transformations/execute-async",
                         json=json.loads(exec_by_id_input.json()),
                         params={"callback_url": "http://callback-url.com/"},
                     )
@@ -1108,7 +1108,7 @@ async def test_execute_asynchron_for_transformation_revision_works(
 
 
 @pytest.mark.asyncio
-async def test_execute_asynchron_for_transformation_revision_with_exception(
+async def test_execute_async_for_transformation_revision_with_exception(
     async_test_client, clean_test_db_engine, caplog
 ):
     patched_session = sessionmaker(clean_test_db_engine)
@@ -1136,7 +1136,7 @@ async def test_execute_asynchron_for_transformation_revision_with_exception(
                     ):
 
                         await ac.post(
-                            "/api/transformations/execute/asynchron",
+                            "/api/transformations/execute-async",
                             json=json.loads(exec_by_id_input.json()),
                             params={"callback_url": "http://callback-url.com"},
                         )
@@ -1153,7 +1153,7 @@ async def test_execute_asynchron_for_transformation_revision_with_exception(
                     ):
                         with pytest.raises(Exception):
                             await ac.post(
-                                "/api/transformations/execute/asynchron",
+                                "/api/transformations/execute-async",
                                 json=json.loads(exec_by_id_input.json()),
                                 params={"callback_url": "http://callback-url.com"},
                             )
@@ -1248,7 +1248,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
 
 
 @pytest.mark.asyncio
-async def test_execute_latest_asynchron_for_transformation_revision_works(
+async def test_execute_latest_async_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
@@ -1286,7 +1286,7 @@ async def test_execute_latest_asynchron_for_transformation_revision_works(
             ):
                 async with async_test_client as ac:
                     response = await ac.post(
-                        "/api/transformations/execute-latest/asynchron",
+                        "/api/transformations/execute-latest-async",
                         json=json.loads(exec_latest_by_group_id_input.json()),
                         params={"callback_url": "http://callback-url.com/"},
                     )
@@ -1311,7 +1311,7 @@ async def test_execute_latest_asynchron_for_transformation_revision_works(
 
 
 @pytest.mark.asyncio
-async def test_execute_latest_asynchron_for_transformation_revision_with_exception(
+async def test_execute_latest_async_for_transformation_revision_with_exception(
     async_test_client, clean_test_db_engine, caplog
 ):
     patched_session = sessionmaker(clean_test_db_engine)
@@ -1339,7 +1339,7 @@ async def test_execute_latest_asynchron_for_transformation_revision_with_excepti
                     ):
 
                         await ac.post(
-                            "/api/transformations/execute-latest/asynchron",
+                            "/api/transformations/execute-latest-async",
                             json=json.loads(exec_latest_by_group_id_input.json()),
                             params={"callback_url": "http://callback-url.com"},
                         )
@@ -1356,7 +1356,7 @@ async def test_execute_latest_asynchron_for_transformation_revision_with_excepti
                     ):
                         with pytest.raises(Exception):
                             await ac.post(
-                                "/api/transformations/execute-latest/asynchron",
+                                "/api/transformations/execute-latest-async",
                                 json=json.loads(exec_latest_by_group_id_input.json()),
                                 params={"callback_url": "http://callback-url.com"},
                             )

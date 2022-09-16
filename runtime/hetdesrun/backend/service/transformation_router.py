@@ -513,7 +513,7 @@ callback_router = APIRouter()
 
 
 @callback_router.post("{$callback_url}", response_model=ExecutionResultReceived)
-def invoice_notification(
+def receive_execution_response(
     body: ExecutionResponseFrontendDto,  # pylint: disable=unused-argument
 ) -> None:
     pass
@@ -542,9 +542,12 @@ async def send_result_to_callback_url(
                 f"Failure connecting to callback url ({callback_url}):\n{str(http_err)}"
             )
             logger.error(msg)
+            # no re-raise reasonable, see comment in execute_and_post function
 
 
 async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> None:
+    # necessary general try-except block due to issue of starlette exception handler
+    # overwriting uncaught exceptions https://github.com/tiangolo/fastapi/issues/2505
     try:
         try:
             result = await handle_trafo_revision_execution_request(exec_by_id)
@@ -555,14 +558,13 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
                 str(exec_by_id.job_id),
                 str(http_exc.detail),
             )
+            # no re-raise reasonable due to issue mentioned above
         else:
             await send_result_to_callback_url(callback_url, result)
             logger.info(
                 "Sent result of execution with job_id %s", str(exec_by_id.job_id)
             )
     except Exception as e:
-        # necessary due to issue of starlette exception handler overwriting uncaught exceptions
-        # https://github.com/tiangolo/fastapi/issues/2505
         logger.error(
             "An unexpected error occurred during execution with job id %s as background task:\n%s",
             str(exec_by_id.job_id),
@@ -572,7 +574,7 @@ async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> 
 
 
 @transformation_router.post(
-    "/execute/asynchron",
+    "/execute-async",
     callbacks=callback_router.routes,
     summary="Executes a transformation revision asynchronously",
     status_code=status.HTTP_202_ACCEPTED,
@@ -590,9 +592,9 @@ async def execute_asynchronous_transformation_revision_endpoint(
 ) -> Any:
     """Execute a transformation revision of asynchronously.
 
-    A valid input will be accepted with an according response and then the execution will run in the
-    background. The execution result will be sent to the '/execution/{job_id}' post endpoint of the
-    provided callback_url. You should have implemented such an endpoint before using this one.
+    A valid input is accepted with a corresponding response and the execution then runs in the
+    background. The result of the execution is sent to the specified callback_url.
+    You should have implemented an appropriate endpoint before using this one.
 
     The transformation will be loaded from the DB and executed with the wiring sent in the request
     body.
@@ -659,6 +661,8 @@ async def execute_latest_transformation_revision_endpoint(
 async def execute_latest_and_post(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput, callback_url: HttpUrl
 ) -> None:
+    # necessary general try-except block due to issue of starlette exception handler
+    # overwriting uncaught exceptions https://github.com/tiangolo/fastapi/issues/2505
     try:
         try:
             result = await handle_latest_trafo_revision_execution_request(
@@ -674,6 +678,7 @@ async def execute_latest_and_post(
                 str(exec_latest_by_group_id_input.job_id),
                 str(http_exc.detail),
             )
+            # no re-raise reasonable due to issue mentioned above
         else:
             await send_result_to_callback_url(callback_url, result)
             logger.info(
@@ -681,8 +686,6 @@ async def execute_latest_and_post(
                 str(exec_latest_by_group_id_input.job_id),
             )
     except Exception as e:
-        # necessary due to issue of starlette exception handler overwriting uncaught exceptions
-        # https://github.com/tiangolo/fastapi/issues/2505
         logger.error(
             "An unexpected error occurred during execution with job_id %s as background task:\n%s",
             str(exec_latest_by_group_id_input.job_id),
@@ -692,7 +695,7 @@ async def execute_latest_and_post(
 
 
 @transformation_router.post(
-    "/execute-latest/asynchron",
+    "/execute-latest-async",
     callbacks=callback_router.routes,
     summary="Executes the latest transformation revision of a revision group asynchronously",
     status_code=status.HTTP_202_ACCEPTED,
@@ -718,9 +721,9 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
     WARNING: The inputs and outputs may be different for different revisions. In such a case,
     calling this endpoint with the same payload as before will not work, but will result in errors.
 
-    A valid input will be accepted with an according response and then the execution will run in the
-    background. The execution result will be sent to the '/execution/{$job_id}' POST endpoint of the
-    provided callback_url. You should have implemented such an endpoint before using this one.
+    A valid input is accepted with a corresponding response and the execution then runs in the
+    background. The result of the execution is sent to the specified callback_url.
+    You should have implemented an appropriate endpoint before using this one.
 
     The latest transformation will be determined by the released_timestamp of the released revisions
     of the revision group which are stored in the database.
