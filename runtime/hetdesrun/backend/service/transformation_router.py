@@ -15,10 +15,7 @@ from hetdesrun.backend.execution import (
     TrafoExecutionRuntimeConnectionError,
     execute_transformation_revision,
 )
-from hetdesrun.backend.models.info import (
-    ExecutionResponseFrontendDto,
-    ExecutionResultReceived,
-)
+from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
@@ -512,7 +509,7 @@ async def execute_transformation_revision_endpoint(
 callback_router = APIRouter()
 
 
-@callback_router.post("{$callback_url}", response_model=ExecutionResultReceived)
+@callback_router.post("{$callback_url}", response_model=ExecutionResponseFrontendDto)
 def receive_execution_response(
     body: ExecutionResponseFrontendDto,  # pylint: disable=unused-argument
 ) -> None:
