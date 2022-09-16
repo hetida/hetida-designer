@@ -5,20 +5,15 @@ import re
 import unicodedata
 from pathlib import Path
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Union
 from uuid import UUID
 
 import requests
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-from hetdesrun.utils import (
-    State,
-    Type,
-    criterion_unset_or_matches_value,
-    get_backend_basic_auth,
-    selection_list_empty_or_contains_value,
-)
+from hetdesrun.models.code import NonEmptyValidStr
+from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
 
@@ -171,9 +166,9 @@ def export_transformations(
     download_path: str,
     type: Optional[Type] = None,
     state: Optional[State] = None,
-    ids: Optional[List[UUID]] = None,
-    names_and_tags: Optional[List[Tuple[str]]] = None,
     category: Optional[str] = None,
+    ids: Optional[List[UUID]] = None,
+    names: Optional[List[NonEmptyValidStr]] = None,
     include_deprecated: bool = True,
     java_backend: bool = False,
 ) -> None:
@@ -222,10 +217,24 @@ def export_transformations(
     headers = get_auth_headers()
 
     endpoint = "transformations" if not java_backend else "base-items"
+    params = (
+        {
+            "type": type,
+            "state": state,
+            "category": category,
+            "ids": [str(id) for id in ids] if ids is not None else None,
+            "names": names,
+            "include_dependencies": True,
+            "include_deprecated": include_deprecated,
+        }
+        if not java_backend
+        else {}
+    )
 
     url = posix_urljoin(get_config().hd_backend_api_url, endpoint)
     response = requests.get(
         url,
+        params=params,
         verify=get_config().hd_backend_verify_certs,
         auth=get_backend_basic_auth()  # type: ignore
         if get_config().hd_backend_use_basic_auth
@@ -242,64 +251,14 @@ def export_transformations(
         )
         raise Exception(msg)
 
-    id_list = []
-    transformation_dict: Dict[str, dict] = {}
+    transformation_list: List[dict] = []
 
-    def get_nested_tr_ids(tr_id: str, nested_id_list: List[str]) -> None:
-        operators = transformation_dict[tr_id]["content"]["operators"]
-        go_further_ids: List[str] = []
-        for operator in operators:
-            nested_id_list.append(operator["transformation_id"])
-            if operator["type"] == Type.WORKFLOW.value:
-                go_further_ids.append(operator["transformation_id"])
-        for nested_tr_id in go_further_ids:
-            get_nested_tr_ids(nested_tr_id, nested_id_list)
-
-    for transformation in response.json():
-        transformation_id = transformation["id"].lower()
-        transformation_state = transformation["state"]
-        transformation_type = transformation["type"]
-        transformation_name = transformation["name"]
-        transformation_tag = (
-            transformation["version_tag"] if not java_backend else transformation["tag"]
-        )
-        transformation_category = transformation["category"]
-        logger.info(
-            "found %s transformation %s of type %s\nin category %s with name %s and tag %s",
-            transformation_state,
-            transformation_id,
-            transformation_type,
-            transformation_category,
-            transformation_name,
-            transformation_tag,
-        )
-
-        if java_backend:
-            transformation_dict[
-                transformation_id
-            ] = get_transformation_from_java_backend(
-                transformation_id, transformation_type
-            )
-        else:
-            transformation_dict[transformation_id] = transformation
-
-        if (
-            criterion_unset_or_matches_value(type, transformation_type)
-            and criterion_unset_or_matches_value(state, transformation_state)
-            and selection_list_empty_or_contains_value(ids, transformation_id)
-            and selection_list_empty_or_contains_value(
-                names_and_tags, (transformation_name, transformation_tag)
-            )
-            and criterion_unset_or_matches_value(category, transformation_category)
-        ):
-            if include_deprecated or transformation["state"] != State.DISABLED:
-                logger.info("transformation %s will be exported", transformation_id)
-                id_list.append(transformation_id)
-                if transformation_type == Type.WORKFLOW.value:
-                    nested_ids: List[str] = []
-                    get_nested_tr_ids(transformation_id, nested_ids)
-                    id_list.extend(nested_ids)
+    if java_backend:
+        for trafo_json in transformation_list:
+            get_transformation_from_java_backend(trafo_json["id"], trafo_json["type"])
+    else:
+        transformation_list = response.json()
 
     # Export individual transformation
-    for transformation_id in id_list:
-        save_transformation(transformation_dict[transformation_id], download_path)
+    for transformation in transformation_list:
+        save_transformation(transformation, download_path)
