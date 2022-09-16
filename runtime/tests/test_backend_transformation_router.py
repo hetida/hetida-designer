@@ -481,7 +481,7 @@ async def test_get_all_transformation_revisions_with_specified_state(
         )
         tr_workflow_2 = TransformationRevision(**tr_json_workflow_2)
         tr_workflow_2.deprecate()
-        store_single_transformation_revision(tr_workflow_2)
+        store_single_transformation_revision(tr_workflow_2)  # DISABLED
         async with async_test_client as ac:
             response_draft = await ac.get("/api/transformations/?state=DRAFT")
             response_released = await ac.get("/api/transformations/?state=RELEASED")
@@ -669,7 +669,48 @@ async def test_get_all_transformation_revisions_with_specified_names(
 
 
 @pytest.mark.asyncio
-async def test_get_all_transformation_revisions_with_specified_combined_filters(
+async def test_get_all_transformation_revisions_without_including_deprecated(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)  # DRAFT
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_2)  # RELEASED
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_1)  # DRAFT
+        )
+        tr_workflow_2 = TransformationRevision(**tr_json_workflow_2)
+        tr_workflow_2.deprecate()
+        store_single_transformation_revision(tr_workflow_2)  # DISABLED
+        url = "/api/transformations/"
+        async with async_test_client as ac:
+            response_without_deprecated = await ac.get(
+                url,
+                params={"include_deprecated": False},
+            )
+            response_with_deprecated = await ac.get(url)
+
+        assert response_without_deprecated.status_code == 200
+        assert len(response_without_deprecated.json()) == 3
+        assert response_without_deprecated.json()[0] == tr_json_component_1
+        assert response_without_deprecated.json()[1] == tr_json_component_2
+        assert response_without_deprecated.json()[2] == tr_json_workflow_1
+        assert response_with_deprecated.status_code == 200
+        assert len(response_with_deprecated.json()) == 4
+        assert response_with_deprecated.json()[0] == tr_json_component_1
+        assert response_with_deprecated.json()[1] == tr_json_component_2
+        assert response_with_deprecated.json()[2] == tr_json_workflow_1
+        assert response_with_deprecated.json()[3]["id"] == tr_json_workflow_2["id"]
+
+
+@pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_combined_filters(
     async_test_client, clean_test_db_engine
 ):
     with mock.patch(

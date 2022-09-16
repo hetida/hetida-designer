@@ -264,6 +264,11 @@ def test_multiple_select(clean_test_db_engine):
         )
         assert len(results) == 1
 
+        tr_object_3.deprecate()
+        update_or_create_single_transformation_revision(tr_object_3)
+        results = select_multiple_transformation_revisions(include_deprecated=False)
+        assert len(results) == 2
+
 
 def test_get_latest_revision_id(clean_test_db_engine):
     with mock.patch(
