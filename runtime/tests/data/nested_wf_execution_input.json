@@ -64,7 +64,8 @@
                     "type": "PLOTLYJSON"
                 }
             ],
-            "uuid": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c"
+            "uuid": "8fba9b51-a0f1-6c6c-a6d4-e224103b819c",
+            "tag": "1.0.0"
         },
         {
             "code_module_uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f",
@@ -89,7 +90,8 @@
                     "type": "ANY"
                 }
             ],
-            "uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f"
+            "uuid": "18260aab-bdd6-af5c-cac1-7bafde85188f",
+            "tag": "1.0.0"
         },
         {
             "code_module_uuid": "8d61a267-3a71-51cd-2817-48c320469d6b",
@@ -139,7 +141,8 @@
                     "type": "FLOAT"
                 }
             ],
-            "uuid": "8d61a267-3a71-51cd-2817-48c320469d6b"
+            "uuid": "8d61a267-3a71-51cd-2817-48c320469d6b",
+            "tag": "1.0.0"
         },
         {
             "code_module_uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92",
@@ -159,7 +162,8 @@
                     "type": "SERIES"
                 }
             ],
-            "uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92"
+            "uuid": "ce801dcb-8ce1-14ad-029d-a14796dcac92",
+            "tag": "1.0.0"
         },
         {
             "code_module_uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f",
@@ -179,7 +183,8 @@
                     "type": "FLOAT"
                 }
             ],
-            "uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f"
+            "uuid": "57eea09f-d28e-89af-4e81-2027697a3f0f",
+            "tag": "1.0.0"
         },
         {
             "code_module_uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac",
@@ -209,7 +214,8 @@
                     "type": "ANY"
                 }
             ],
-            "uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac"
+            "uuid": "bf469c0a-d17c-ca6f-59ac-9838b2ff67ac",
+            "tag": "1.0.0"
         },
         {
             "code_module_uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
@@ -229,7 +235,8 @@
                     "type": "SERIES"
                 }
             ],
-            "uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6"
+            "uuid": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+            "tag": "1.0.0"
         },
         {
             "code_module_uuid": "f759e4c0-1468-0f2e-9740-41302b860193",
@@ -254,7 +261,8 @@
                     "type": "ANY"
                 }
             ],
-            "uuid": "f759e4c0-1468-0f2e-9740-41302b860193"
+            "uuid": "f759e4c0-1468-0f2e-9740-41302b860193",
+            "tag": "1.0.0"
         },
         {
             "code_module_uuid": "c8e3bc64-b214-6486-31db-92a8888d8991",
@@ -274,7 +282,8 @@
                     "type": "STRING"
                 }
             ],
-            "uuid": "c8e3bc64-b214-6486-31db-92a8888d8991"
+            "uuid": "c8e3bc64-b214-6486-31db-92a8888d8991",
+            "tag": "1.0.0"
         },
         {
             "code_module_uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051",
@@ -309,7 +318,8 @@
                     "type": "PLOTLYJSON"
                 }
             ],
-            "uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051"
+            "uuid": "9c3f88ce-1311-241e-18b7-acf7d3f5a051",
+            "tag": "1.0.0"
         },
         {
             "code_module_uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
@@ -329,7 +339,8 @@
                     "type": "STRING"
                 }
             ],
-            "uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b"
+            "uuid": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+            "tag": "1.0.0"
         }
     ],
     "configuration": {
@@ -605,7 +616,10 @@
                         "id": "92988b62-4321-4f35-8734-7ca4fec2d0f6",
                         "name": null
                     }
-                ]
+                ],
+                "tr_id": "tr_id",
+                "tr_name": "tr_name",
+                "tr_tag": "tr_tag"
             },
             {
                 "connections": [
@@ -756,9 +770,15 @@
                         "id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
                         "name": null
                     }
-                ]
+                ],
+                "tr_id": "tr_id",
+                "tr_name": "tr_name",
+                "tr_tag": "tr_tag"
             }
-        ]
+        ],
+        "tr_id": "tr_id",
+        "tr_name": "tr_name",
+        "tr_tag": "tr_tag"
     },
     "workflow_wiring": {
         "input_wirings": [

@@ -61,6 +61,7 @@ class ComponentRevision(BaseModel):
 
     uuid: UUID
     name: Optional[str] = Field(None, description="component name")
+    tag: str
     code_module_uuid: UUID = Field(
         ...,
         description=(

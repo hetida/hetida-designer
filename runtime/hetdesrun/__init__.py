@@ -1,8 +1,9 @@
 import logging
 
 import hetdesrun_config
-from hetdesrun.runtime import runtime_component_logger as logger
-from hetdesrun.runtime.logging import execution_context_filter
+from hetdesrun.runtime import runtime_execution_logger as logger
+from hetdesrun.runtime import runtime_logger as job_logger
+from hetdesrun.runtime.logging import execution_context_filter, job_id_context_filter
 from hetdesrun.webservice.config import get_config
 
 migrations_invoked_from_py = False
@@ -15,7 +16,9 @@ except FileNotFoundError:
 
 
 def configure_logging(
-    the_logger: logging.Logger, log_execution_context: bool = False
+    the_logger: logging.Logger,
+    log_execution_context: bool = False,
+    log_job_id_context: bool = False,
 ) -> None:
     """Configure logging
 
@@ -42,22 +45,32 @@ def configure_logging(
     the_logger.setLevel(get_config().log_level.value)
     logging_handler = logging.StreamHandler()  # use sys.stderr by default
     # sys.stderr will be propagated by mod_wsgi to Apache error log for webservice
+    if log_job_id_context:
+        logging_handler.addFilter(job_id_context_filter)
     if log_execution_context:
         logging_handler.addFilter(execution_context_filter)
     formatter = logging.Formatter(
         "%(asctime)s %(process)d %(levelname)s: %(message)s "
         "[in %(pathname)s:%(lineno)d"
         + (
+            ", job id: %(currently_executed_job_id)s"
+            if log_job_id_context or log_execution_context
+            else ""
+        )
+        + (
             (
-                ", component instance: %(currently_executed_instance_id)s"
-                ", component id: %(currently_executed_component_id)s"
-                ", component node name: %(currently_executed_component_node_name)s"
-                ", job id: %(job_id)s"
-                "]"
+                ",\n    tr type: %(currently_executed_transformation_type)s"
+                ", tr id: %(currently_executed_transformation_id)s"
+                ", tr name: %(currently_executed_transformation_name)s"
+                ", tr tag: %(currently_executed_transformation_tag)s"
+                ",\n    op id(s): %(currently_executed_operator_hierarchical_id)s"
+                ",\n    op name(s): %(currently_executed_operator_hierarchical_name)s"
+                "\n"
             )
             if log_execution_context
-            else "]"
+            else ""
         )
+        + "]"
     )
     logging_handler.setFormatter(formatter)
     the_logger.addHandler(logging_handler)
@@ -69,3 +82,4 @@ configure_logging(main_logger)
 main_logger.info("Logging setup complete.")
 
 configure_logging(logger, log_execution_context=True)
+configure_logging(job_logger, log_job_id_context=True)

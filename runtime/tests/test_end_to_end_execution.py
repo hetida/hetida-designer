@@ -64,6 +64,7 @@ def gen_execution_input_from_single_component(
         components=[
             ComponentRevision(
                 uuid=component_uuid,
+                tag=tr_component_json["version_tag"],
                 name=tr_component_json["name"],
                 code_module_uuid=code_module_uuid,
                 function_name="main",
@@ -98,6 +99,9 @@ def gen_execution_input_from_single_component(
                 for comp_output in comp_outputs
             ],
             name="root node",
+            tr_id="root_node",
+            tr_name="Wrapper Workflow",
+            tr_tag="1.0.0",
         ),
         configuration=ConfigurationInput(engine="plain", run_pure_plot_operators=True),
         workflow_wiring=WorkflowWiring(

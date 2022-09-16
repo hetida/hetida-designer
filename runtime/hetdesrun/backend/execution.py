@@ -149,9 +149,12 @@ def nested_nodes(
                 }
                 sub_nodes.append(
                     tr_workflow.content.to_workflow_node(
-                        operator.id,
-                        operator.name,
-                        children_nodes(tr_workflow.content, tr_children),
+                        transformation_id=all_nested_tr[operator.id].id,
+                        transformation_name=all_nested_tr[operator.id].name,
+                        transformation_tag=all_nested_tr[operator.id].version_tag,
+                        operator_id=operator.id,
+                        operator_name=operator.name,
+                        sub_nodes=children_nodes(tr_workflow.content, tr_children),
                     )
                 )
 
@@ -195,7 +198,8 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         tr.id: tr for tr in nested_transformations.values() if tr.type == Type.COMPONENT
     }
     workflow_node = tr_workflow.to_workflow_node(
-        uuid4(), nested_nodes(tr_workflow, nested_transformations)
+        operator_id=uuid4(),
+        sub_nodes=nested_nodes(tr_workflow, nested_transformations),
     )
 
     execution_input = WorkflowExecutionInput(
