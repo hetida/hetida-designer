@@ -97,6 +97,12 @@ async def create_transformation_revision(
     return persisted_transformation_revision
 
 
+def info(text: str, param: Optional[Any], case: Optional[bool] = None) -> str:
+    if param is not None and case is None or case is True:
+        return text + str(param)
+    return ""
+
+
 @transformation_router.get(
     "",
     response_model=List[TransformationRevision],
@@ -152,21 +158,24 @@ async def get_all_transformation_revisions(
     and to export selected transformation revisions.
     """
 
-    msg = "get all transformation revisions"
-    if type is not None:
-        msg = msg + " of type " + type.value
-    if state is not None:
-        msg = msg + " in state " + state.value
-    if category is not None:
-        msg = msg + " in category " + category
-    if not include_deprecated:
-        msg = msg + " unless they are deprecated "
-    if ids is not None:
-        msg = msg + "\nwith ids " + str(ids)
-    if names is not None:
-        msg = msg + "\nwith names " + str(names)
-    if include_dependencies:
-        msg = msg + "\n and all dependant transformation revisions"
+    msg = (
+        "get all transformation revisions"
+        + info(" of type ", type)
+        + info(" in state ", state)
+        + info(" in category ", category)
+        + info(
+            " unless they are deprecated",
+            include_deprecated,
+            case=not include_deprecated,
+        )
+        + info("\nwith ids ", ids)
+        + info("\nwith names ", names)
+        + info(
+            "\nand all dependency transformation revisions",
+            include_dependencies,
+            case=include_dependencies,
+        )
+    )
 
     logger.info(msg)
 
