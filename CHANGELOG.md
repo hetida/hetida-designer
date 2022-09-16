@@ -1,6 +1,6 @@
 ## 0.8.0
 * authentication via OpenID Connect. See [documentation](https://github.com/hetida/hetida-designer/blob/develop/docs/enabling_openidconnect.md).
-* automatic deployment of base components. Documented [here](https://github.com/hetida/.hetida-designer/blob/develop/docs/base_component_deployment.md).
+* automatic deployment of base components. Documented [here](https://github.com/hetida/hetida-designer/blob/develop/docs/base_component_deployment.md).
 * usability improvements wiring / selection dialog
 * adapter system: directly attach any metadata as attributes to dataframes / series. See for example [here](https://github.com/hetida/hetida-designer/blob/develop/docs/adapter_system/generic_rest_adapters/web_service_interface.md#dataframe-get)
 * additional playwright end2end tests

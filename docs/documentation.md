@@ -38,6 +38,7 @@ Further information about developing, deploying, connecting, using and running h
 
 - [Versioning in hetida designer](./versioning_in_hetida_designer.md)
 - [Tips and Tricks](./faq.md)
+- [DataFrames and Series with Metadata](./metadata_attrs.md)
 - [Asynchronous Components](./executing_asynchronous_functions.md)
 - [Persisting Models](./persisting_models.md)
 
