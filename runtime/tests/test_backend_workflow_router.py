@@ -666,8 +666,8 @@ async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_en
                             get_config().hd_backend_api_url,
                             "transformations",
                             tr_json["id"],
-                        )
-                        + "?allow_overwrite_released=True",
+                        ),
+                        params={"allow_overwrite_released": True},
                         json=tr_json,
                     )
 

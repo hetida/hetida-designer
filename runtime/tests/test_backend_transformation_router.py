@@ -787,13 +787,14 @@ async def test_get_all_transformation_revisions_with_combined_filters(
             TransformationRevision(**tr_json_workflow_2)  # DRAFT
         )
 
+        url = "/api/transformations/"
         async with async_test_client as ac:
             response_released_component = await ac.get(
-                "/api/transformations/",
+                url,
                 params={"type": "COMPONENT", "state": "RELEASED"},
             )
             response_draft_workflow = await ac.get(
-                "/api/transformations/", params={"type": "WORKFLOW", "state": "DRAFT"}
+                url, params={"type": "WORKFLOW", "state": "DRAFT"}
             )
 
         assert response_released_component.status_code == 200
@@ -1056,8 +1057,8 @@ async def test_update_transformation_revision_with_released_component_and_allow_
             response = await ac.put(
                 posix_urljoin(
                     "/api/transformations/", str(get_uuid_from_seed("component 2"))
-                )
-                + "?allow_overwrite_released=true",
+                ),
+                params={"allow_overwrite_released": True},
                 json=tr_json_component_2_update,
             )
 
@@ -1643,8 +1644,8 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
                             get_config().hd_backend_api_url,
                             "transformations",
                             tr_json["id"],
-                        )
-                        + "?allow_overwrite_released=True",
+                        ),
+                        params={"allow_overwrite_released": True},
                         json=tr_json,
                     )
 
@@ -1736,8 +1737,8 @@ async def test_put_component_transformation_with_update_code(
 
         async with async_test_client as ac:
             response = await ac.put(
-                posix_urljoin("/api/transformations/", example_component_tr_json["id"])
-                + "?update_component_code=True",
+                posix_urljoin("/api/transformations/", example_component_tr_json["id"]),
+                params={"update_component_code": True},
                 json=example_component_tr_json,
             )
 
@@ -1767,8 +1768,8 @@ async def test_put_component_transformation_without_update_code(
 
         async with async_test_client as ac:
             response = await ac.put(
-                posix_urljoin("/api/transformations/", example_component_tr_json["id"])
-                + "?update_component_code=False",
+                posix_urljoin("/api/transformations/", example_component_tr_json["id"]),
+                params={"update_component_code": False},
                 json=example_component_tr_json,
             )
 
