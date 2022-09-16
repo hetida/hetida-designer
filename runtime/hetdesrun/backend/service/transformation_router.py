@@ -1,8 +1,11 @@
+import json
 import logging
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from uuid import UUID, uuid4
 
-from fastapi import HTTPException, Path, Query, status
+import httpx
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Path, Query, status
+from pydantic import HttpUrl
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -32,6 +35,8 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
+from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
@@ -41,6 +46,7 @@ transformation_router = HandleTrailingSlashAPIRouter(
     prefix="/transformations",
     tags=["transformations"],
     responses={
+        status.HTTP_400_BAD_REQUEST: {"description": "Bad Request"},
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
         status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
@@ -494,17 +500,8 @@ async def delete_transformation_revision(
 
 
 async def handle_trafo_revision_execution_request(
-    # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
-    """Execute a transformation revision.
-
-    The transformation will be loaded from the DB and executed with the wiring sent in the request
-    body.
-
-    The test wiring will not be updated.
-    """
-
     if exec_by_id.job_id is None:
         exec_by_id.job_id = uuid4()
 
@@ -537,7 +534,125 @@ async def execute_transformation_revision_endpoint(
     # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
-    return await execute_transformation_revision(exec_by_id)
+    """Execute a transformation revision.
+
+    The transformation will be loaded from the DB and executed with the wiring sent in the request
+    body.
+
+    The test wiring will not be updated.
+    """
+    return await handle_trafo_revision_execution_request(exec_by_id)
+
+
+callback_router = APIRouter()
+
+
+@callback_router.post("{$callback_url}", response_model=ExecutionResponseFrontendDto)
+def receive_execution_response(
+    body: ExecutionResponseFrontendDto,  # pylint: disable=unused-argument
+) -> None:
+    pass
+
+
+async def send_result_to_callback_url(
+    callback_url: HttpUrl, result: ExecutionResponseFrontendDto
+) -> None:
+    headers = get_auth_headers()
+    async with httpx.AsyncClient(
+        verify=get_config().hd_backend_verify_certs,
+        timeout=get_config().external_request_timeout,
+    ) as client:
+        try:
+            await client.post(
+                callback_url,
+                headers=headers,
+                json=json.loads(result.json()),  # TODO: avoid double serialization.
+                # see https://github.com/samuelcolvin/pydantic/issues/1409 and
+                # https://github.com/samuelcolvin/pydantic/issues/1409#issuecomment-877175194
+            )
+        except httpx.HTTPError as http_err:
+            # handles both request errors (connection problems)
+            # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
+            msg = (
+                f"Failure connecting to callback url ({callback_url}):\n{str(http_err)}"
+            )
+            logger.error(msg)
+            # no re-raise reasonable, see comment in execute_and_post function
+
+
+async def execute_and_post(exec_by_id: ExecByIdInput, callback_url: HttpUrl) -> None:
+    # necessary general try-except block due to issue of starlette exception handler
+    # overwriting uncaught exceptions https://github.com/tiangolo/fastapi/issues/2505
+    try:
+        try:
+            result = await handle_trafo_revision_execution_request(exec_by_id)
+            logger.info("Finished execution with job_id %s", str(exec_by_id.job_id))
+        except HTTPException as http_exc:
+            logger.error(
+                "Execution with job id %s as background task failed:\n%s",
+                str(exec_by_id.job_id),
+                str(http_exc.detail),
+            )
+            # no re-raise reasonable due to issue mentioned above
+        else:
+            await send_result_to_callback_url(callback_url, result)
+            logger.info(
+                "Sent result of execution with job_id %s", str(exec_by_id.job_id)
+            )
+    except Exception as e:
+        logger.error(
+            "An unexpected error occurred during execution with job id %s as background task:\n%s",
+            str(exec_by_id.job_id),
+            str(e),
+        )
+        raise e
+
+
+@transformation_router.post(
+    "/execute-async",
+    callbacks=callback_router.routes,
+    summary="Executes a transformation revision asynchronously",
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={
+        status.HTTP_202_ACCEPTED: {"description": "Accepted execution request"},
+    },
+)
+async def execute_asynchronous_transformation_revision_endpoint(
+    exec_by_id: ExecByIdInput,
+    background_tasks: BackgroundTasks,
+    callback_url: HttpUrl = Query(
+        ...,
+        description="If provided execute asynchronous and post response to callback_url",
+    ),
+) -> Any:
+    """Execute a transformation revision of asynchronously.
+
+    A valid input is accepted with a corresponding response and the execution then runs in the
+    background. The result of the execution is sent to the specified callback_url.
+    You should have implemented an appropriate endpoint before using this one.
+
+    The transformation will be loaded from the DB and executed with the wiring sent in the request
+    body.
+
+    The test wiring will not be updated.
+    """
+    background_tasks.add_task(execute_and_post, exec_by_id, callback_url)
+
+    return {"message": f"Execution request with job id {exec_by_id.job_id} accepted"}
+
+
+async def handle_latest_trafo_revision_execution_request(
+    exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
+) -> ExecutionResponseFrontendDto:
+    try:
+        # pylint: disable=redefined-builtin
+        id = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
+    except DBNotFoundError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    exec_by_id_input = exec_latest_by_group_id_input.to_exec_by_id(id)
+
+    return await handle_trafo_revision_execution_request(exec_by_id_input)
 
 
 @transformation_router.post(
@@ -545,11 +660,11 @@ async def execute_transformation_revision_endpoint(
     response_model=ExecutionResponseFrontendDto,
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
-    summary="Executes a transformation revision",
+    summary="Executes the latest transformation revision of a revision group",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
-            "description": "Successfully executed the transformation revision"
+            "description": "Successfully executed the latest transformation revision"
         }
     },
 )
@@ -573,24 +688,91 @@ async def execute_latest_transformation_revision_endpoint(
     The test wiring will not be updated.
     """
 
-    if exec_latest_by_group_id_input.job_id is None:
-        exec_latest_by_group_id_input.job_id = uuid4()
+    return await handle_latest_trafo_revision_execution_request(
+        exec_latest_by_group_id_input
+    )
 
+
+async def execute_latest_and_post(
+    exec_latest_by_group_id_input: ExecLatestByGroupIdInput, callback_url: HttpUrl
+) -> None:
+    # necessary general try-except block due to issue of starlette exception handler
+    # overwriting uncaught exceptions https://github.com/tiangolo/fastapi/issues/2505
     try:
-        # pylint: disable=redefined-builtin
-        id = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
-    except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+        try:
+            result = await handle_latest_trafo_revision_execution_request(
+                exec_latest_by_group_id_input
+            )
+            logger.info(
+                "Finished execution with job_id %s",
+                str(exec_latest_by_group_id_input.job_id),
+            )
+        except HTTPException as http_exc:
+            logger.error(
+                "Execution with job id %s as background task failed:\n%s",
+                str(exec_latest_by_group_id_input.job_id),
+                str(http_exc.detail),
+            )
+            # no re-raise reasonable due to issue mentioned above
+        else:
+            await send_result_to_callback_url(callback_url, result)
+            logger.info(
+                "Sent result of execution with job_id %s",
+                str(exec_latest_by_group_id_input.job_id),
+            )
+    except Exception as e:
+        logger.error(
+            "An unexpected error occurred during execution with job_id %s as background task:\n%s",
+            str(exec_latest_by_group_id_input.job_id),
+            str(e),
+        )
+        raise e
 
-    exec_by_id_input = exec_latest_by_group_id_input.to_exec_by_id(id)
 
-    try:
-        return await execute_transformation_revision(exec_by_id_input)
-    except TrafoExecutionNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+@transformation_router.post(
+    "/execute-latest-async",
+    callbacks=callback_router.routes,
+    summary="Executes the latest transformation revision of a revision group asynchronously",
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={
+        status.HTTP_202_ACCEPTED: {
+            "description": "Accepted execution request for latest revision of revision group"
+        },
+    },
+)
+async def execute_asynchronous_latest_transformation_revision_endpoint(
+    exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
+    background_tasks: BackgroundTasks,
+    callback_url: HttpUrl = Query(
+        ...,
+        description="If provided execute asynchronous and post response to callback_url",
+    ),
+) -> Any:
+    """Execute the latest transformation revision of a revision group asynchronously.
 
-    except TrafoExecutionRuntimeConnectionError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+    WARNING: Even when the input is not changed, the execution response might change if a new latest
+    transformation revision exists.
 
-    except TrafoExecutionResultValidationError as e:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    WARNING: The inputs and outputs may be different for different revisions. In such a case,
+    calling this endpoint with the same payload as before will not work, but will result in errors.
+
+    A valid input is accepted with a corresponding response and the execution then runs in the
+    background. The result of the execution is sent to the specified callback_url.
+    You should have implemented an appropriate endpoint before using this one.
+
+    The latest transformation will be determined by the released_timestamp of the released revisions
+    of the revision group which are stored in the database.
+
+    This transformation will be loaded from the DB and executed with the wiring sent in the request
+    body.
+
+    The test wiring will not be updated.
+    """
+    background_tasks.add_task(
+        execute_latest_and_post, exec_latest_by_group_id_input, callback_url
+    )
+
+    return {
+        "message": "Execution request for latest revision with "
+        f"job id {exec_latest_by_group_id_input.job_id} accepted"
+    }

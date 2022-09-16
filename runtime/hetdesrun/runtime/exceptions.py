@@ -1,16 +1,41 @@
+from hetdesrun.runtime.context import ExecutionContext
+
+
 class RuntimeExecutionError(Exception):
     """Highest Level Exception for Runtime Execution"""
 
     def __init__(self, *args, **kwargs):  # type: ignore
-        self.currently_executed_node_instance = None
-        self.currently_executed_component = None
+        self.currently_executed_transformation_id = None
+        self.currently_executed_transformation_name = None
+        self.currently_executed_transformation_tag = None
+        self.currently_executed_transformation_type = None
+        self.currently_executed_hierarchical_operator_id = None
+        self.currently_executed_hierarchical_operator_name = None
+        self.currently_executed_job_id = None
         super().__init__(*args, **kwargs)
 
     def set_context(
-        self, operator_hierarchical_id: str, operator_hierarchical_name: str
+        self, context: ExecutionContext, job_id: str = "UNKNOWN"
     ) -> "RuntimeExecutionError":
-        self.currently_executed_node_instance = operator_hierarchical_id
-        self.currently_executed_component = operator_hierarchical_name
+        self.currently_executed_transformation_id = (
+            context.currently_executed_transformation_id
+        )
+        self.currently_executed_transformation_name = (
+            context.currently_executed_transformation_name
+        )
+        self.currently_executed_transformation_tag = (
+            context.currently_executed_transformation_tag
+        )
+        self.currently_executed_transformation_type = (
+            context.currently_executed_transformation_type
+        )
+        self.currently_executed_hierarchical_operator_id = (
+            context.currently_executed_operator_hierarchical_id
+        )
+        self.currently_executed_hierarchical_operator_name = (
+            context.currently_executed_operator_hierarchical_name
+        )
+        self.currently_executed_job_id = job_id
         return self
 
 

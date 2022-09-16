@@ -11,4 +11,5 @@ from hetdesrun.runtime.exceptions import (
     WorkflowOutputValidationError,
 )
 
-runtime_component_logger = logging.getLogger(base_module_path)
+runtime_execution_logger = logging.getLogger(base_module_path)
+runtime_logger = logging.getLogger("hetdesrun_runtime_service")

@@ -74,6 +74,7 @@ base_workflow_json = {
     "components": [
         {
             "uuid": str(get_uuid_from_seed("my_component")),
+            "tag": "my version tag",
             "inputs": [
                 {
                     "name": "x",
@@ -98,6 +99,7 @@ base_workflow_json = {
         },
         {
             "uuid": str(get_uuid_from_seed("my_const_giver")),
+            "tag": "my version tag",
             "inputs": [],
             "outputs": [
                 {
@@ -150,6 +152,9 @@ base_workflow_json = {
                 "component_uuid": str(get_uuid_from_seed("my_const_giver")),
             },
         ],
+        "tr_name": "my transformation",
+        "tr_id": str(get_uuid_from_seed("my_transformation")),
+        "tr_tag": "my version tag",
     },
     "configuration": {
         "name": "string",
