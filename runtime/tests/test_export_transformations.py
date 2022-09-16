@@ -291,7 +291,7 @@ def test_export_transformations_filtered_by_category(tmpdir):
             assert tmpdir.join(file_path) in exported_paths
 
 
-def test_export_transformations_filtered_by_names_and_tags(tmpdir):
+def test_export_transformations_filtered_by_names(tmpdir):
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=tr_list)
@@ -303,7 +303,7 @@ def test_export_transformations_filtered_by_names_and_tags(tmpdir):
 
         export_transformations(
             tmpdir,
-            names_and_tags=[("Filter", "1.0.0"), ("Consecutive differences", "1.0.0")],
+            names=["Filter", "Consecutive differences"],
         )
 
         exported_paths = []
@@ -394,7 +394,7 @@ def test_export_transformations_combined_filters(tmpdir):
         export_transformations(
             tmpdir,
             category="Basic",
-            names_and_tags=[("Filter", "1.0.0"), ("Consecutive differences", "1.0.0")],
+            names=["Filter", "Consecutive differences"],
         )
 
         assert mocked_get.call_count == 1
