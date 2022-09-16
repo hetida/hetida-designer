@@ -153,10 +153,14 @@ async def get_all_transformation_revisions(
         msg = msg + " in state " + state.value
     if category is not None:
         msg = msg + " in category " + category
+    if not include_deprecated:
+        msg = msg + " unless they are deprecated "
     if ids is not None:
         msg = msg + "\nwith ids " + str(ids)
     if names is not None:
-        msg = msg + "\nwith names and tags " + str(names)
+        msg = msg + "\nwith names " + str(names)
+    if include_dependencies:
+        msg = msg + "\n and all dependant transformation revisions"
 
     logger.info(msg)
 

@@ -710,6 +710,49 @@ async def test_get_all_transformation_revisions_without_including_deprecated(
 
 
 @pytest.mark.asyncio
+async def test_get_all_transformation_revisions_including_dependencies(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        tr_component_1 = TransformationRevision(**tr_json_component_1)
+        tr_component_1.deprecate()
+        store_single_transformation_revision(tr_component_1)
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_2)
+        )
+        url = "/api/transformations/"
+        async with async_test_client as ac:
+            response_without_dependencies = await ac.get(
+                url,
+                params={"type": "WORKFLOW"},
+            )
+            response_include_dependencies = await ac.get(
+                url,
+                params={"type": "WORKFLOW", "include_dependencies": True},
+            )
+            response_without_deprecated = await ac.get(
+                url,
+                params={"include_deprecated": False},
+            )
+            response_without_deprecated_include_dependencies = await ac.get(
+                url,
+                params={"include_dependencies": True, "include_deprecated": False},
+            )
+
+        assert response_without_dependencies.status_code == 200
+        assert len(response_without_dependencies.json()) == 1
+        assert response_include_dependencies.status_code == 200
+        assert len(response_include_dependencies.json()) == 2
+        assert response_without_deprecated.status_code == 200
+        assert len(response_without_deprecated.json()) == 1
+        assert response_without_deprecated_include_dependencies.status_code == 200
+        assert len(response_without_deprecated_include_dependencies.json()) == 2
+
+
+@pytest.mark.asyncio
 async def test_get_all_transformation_revisions_with_combined_filters(
     async_test_client, clean_test_db_engine
 ):
