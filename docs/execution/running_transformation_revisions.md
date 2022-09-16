@@ -272,6 +272,18 @@ The response:
 }
 ```
 
+## Running workflow and component revisions asynchronously
+
+Instead of waiting for the response with the execution result, it is possible to just trigger the execution by sending the execution input in the body and a callback URL as query parameter to the POST web service endpoint
+
+`/api/transformations/execute-async`
+
+or for the execution of the latest revision to the corresponding POST web service endpoint
+
+`/api/transformations/execute-latest-async`.
+
+The execution result is then sent to the specified callback url in the request body once it has been determined.
+
 ## Running workflow and component revisions using Kafka
 
 see the documentation for [Execution via Apache Kafka](./execution_via_kafka.md).

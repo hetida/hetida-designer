@@ -47,7 +47,10 @@ class ExecByIdInput(BaseModel):
     )
     job_id: UUID = Field(
         default_factory=uuid4,
-        description="Optional job id, that can be used to track an execution job.",
+        description=(
+            "Id to identify an individual execution job, "
+            "will be generated if it is not provided."
+        ),
     )
 
 

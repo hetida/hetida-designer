@@ -1,6 +1,6 @@
 import logging
 from typing import List, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import HTTPException, Path, status
 from pydantic import ValidationError
@@ -355,14 +355,18 @@ async def execute_workflow_revision(
     use POST /api/transformations/execute instead which uses a new model for the payload.
     """
     if job_id is None:
-        job_id = uuid4()
-
-    exec_by_id = ExecByIdInput(
-        id=id,
-        wiring=wiring_dto.to_workflow_wiring(),
-        run_pure_plot_operators=run_pure_plot_operators,
-        job_id=job_id,
-    )
+        exec_by_id = ExecByIdInput(
+            id=id,
+            wiring=wiring_dto.to_workflow_wiring(),
+            run_pure_plot_operators=run_pure_plot_operators,
+        )
+    else:
+        exec_by_id = ExecByIdInput(
+            id=id,
+            wiring=wiring_dto.to_workflow_wiring(),
+            run_pure_plot_operators=run_pure_plot_operators,
+            job_id=job_id,
+        )
 
     return await handle_trafo_revision_execution_request(exec_by_id)
 

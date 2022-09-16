@@ -48,8 +48,8 @@ In order to add an output for an intermediate variable, which is passed from an 
 These components are in the category "Connectors".
 The output of the "Pass through" operator can be used, to set a new workflow output.
 
-<img src="./faq/workflow_without_debugging.png" height="250" width=1090>
-<img src="./faq/workflow_debugging.png" height="250" width=1090>
+<img src="./assets/workflow_without_debugging.png" height="250" width=1090>
+<img src="./assets/workflow_debugging.png" height="250" width=1090>
 
 ## <a name="data-type-parsing"></a> Explicitely specify data type to enable correct parsing
 
@@ -70,7 +70,7 @@ unsupported operand type(s) for +: 'dict' and 'dict'",
 
 This can be avoided by putting a "Pass through (Series)" component in front of it, so that the input data type is changed and thus explicit:
 
-<img src="./faq/parsing_any.png" height="160" width=485>
-<img src="./faq/parsing_series.png" height="140" width=730>
+<img src="./assets/parsing_any.png" height="160" width=485>
+<img src="./assets/parsing_series.png" height="140" width=730>
 
 So the general tip is to avoid ANY as input that needs to be wired and instead to put the respective Pass Through component in front.
