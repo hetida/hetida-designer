@@ -1,10 +1,8 @@
 import logging
-import json
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException, Path, Query, status
-from pydantic import BaseModel
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -16,7 +14,7 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
-from hetdesrun.models.code import NonEmptyValidStr, ShortNonEmptyValidStr, ValidStr
+from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
     DBIntegrityError,
@@ -37,14 +35,6 @@ from hetdesrun.utils import State, Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
-
-
-class NameAndTag(BaseModel):
-    name: NonEmptyValidStr
-    tag: ShortNonEmptyValidStr
-
-    def to_tuple(self) -> Tuple[NonEmptyValidStr, ShortNonEmptyValidStr]:
-        return (self.name, self.tag)
 
 
 transformation_router = HandleTrailingSlashAPIRouter(
@@ -129,20 +119,24 @@ async def get_all_transformation_revisions(
     ),
     ids: Optional[List[UUID]] = Query(
         None,
-        description="Filter for specified ids",
+        description="Filter for specified list of ids",
     ),
-    names_and_tags: Optional[List[Any]] = Query(
+    names: Optional[List[NonEmptyValidStr]] = Query(
         None,
-        description=(
-            "Filter for specified list of name and tag: "
-            """Specify as {"name": <name>, "tag": <tag>}"""
-        ),
+        description=("Filter for specified list of names"),
     ),
-    include_dependencies: Optional[bool] = Query(
+    include_dependencies: bool = Query(
         False,
         description=(
             "Set to True to additionally get those transformation revisions "
             "that the selected ones depend on"
+        ),
+    ),
+    include_deprecated: bool = Query(
+        True,
+        description=(
+            "Set to False to omit transfromation revisions with state DISABLED "
+            "this will not affect included dependent transformation revisions"
         ),
     ),
 ) -> List[TransformationRevision]:
@@ -161,19 +155,8 @@ async def get_all_transformation_revisions(
         msg = msg + " in category " + category
     if ids is not None:
         msg = msg + "\nwith ids " + str(ids)
-    if names_and_tags is not None:
-        name_and_tag_tuple_list: List[
-            Tuple[NonEmptyValidStr, ShortNonEmptyValidStr]
-        ] = []
-        for name_and_tag in names_and_tags:
-            try:
-                name_and_tag_tuple_list.append(NameAndTag(**json.loads(name_and_tag)).to_tuple())
-            except ValueError as e:
-                msg = f"ValidationError for names_and_tags query parameter:\n{str(e)}"
-                logger.error(msg)
-                raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg) from e
-        names_and_tags = name_and_tag_tuple_list
-        msg = msg + "\nwith names and tags " + str(names_and_tags)
+    if names is not None:
+        msg = msg + "\nwith names and tags " + str(names)
 
     logger.info(msg)
 
@@ -183,7 +166,8 @@ async def get_all_transformation_revisions(
             state=state,
             category=category,
             ids=ids,
-            names_and_tags=names_and_tags,
+            names=names,
+            include_deprecated=include_deprecated,
         )
     except DBIntegrityError as e:
         raise HTTPException(

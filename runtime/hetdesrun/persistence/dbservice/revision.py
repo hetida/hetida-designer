@@ -1,12 +1,12 @@
 import datetime
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from uuid import UUID
 
-from sqlalchemy import delete, select, tuple_, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
-from hetdesrun.models.code import NonEmptyValidStr, ShortNonEmptyValidStr, ValidStr
+from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence import Session, SQLAlchemySession
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import (
@@ -207,9 +207,8 @@ def select_multiple_transformation_revisions(
     category: Optional[ValidStr] = None,
     revision_group_id: Optional[UUID] = None,
     ids: Optional[List[UUID]] = None,
-    names_and_tags: Optional[
-        List[Tuple[NonEmptyValidStr, ShortNonEmptyValidStr]]
-    ] = None,
+    names: Optional[List[NonEmptyValidStr]] = None,
+    include_deprecated: bool = True,
 ) -> List[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
     with Session() as session, session.begin():
@@ -229,12 +228,13 @@ def select_multiple_transformation_revisions(
             )
         if ids is not None:
             selection = selection.where(TransformationRevisionDBModel.id.in_(ids))
-        if names_and_tags is not None:
+        if names is not None:
             selection = selection.where(
-                tuple_(
-                    TransformationRevisionDBModel.name,
-                    TransformationRevisionDBModel.version_tag,
-                ).in_(names_and_tags),
+                TransformationRevisionDBModel.name.in_(names),
+            )
+        if not include_deprecated:
+            selection = selection.where(
+                TransformationRevisionDBModel.state != State.DISABLED
             )
 
         results = session.execute(selection).scalars().all()

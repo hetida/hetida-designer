@@ -214,6 +214,7 @@ def test_multiple_select(clean_test_db_engine):
         tr_object_2.category = "Another category"
         tr_object_2.id = tr_uuid_2
         tr_object_2.version_tag = "1.0.1"
+        tr_object_2.name = "Test 2"
         store_single_transformation_revision(tr_object_2)
 
         tr_uuid_3 = get_uuid_from_seed("test_multiple_select_3")
@@ -244,18 +245,19 @@ def test_multiple_select(clean_test_db_engine):
         results = select_multiple_transformation_revisions(category="Test category")
         assert len(results) == 2
 
-        results = select_multiple_transformation_revisions(
-            names_and_tags=[("Test", "1.0.1")]
-        )
-        assert len(results) == 1
+        results = select_multiple_transformation_revisions(names=["Test"])
+        assert len(results) == 2
 
         results = select_multiple_transformation_revisions(ids=[tr_uuid_3, tr_uuid_2])
         assert len(results) == 2
 
-        results = select_multiple_transformation_revisions(
-            ids=[tr_uuid_3, tr_uuid_1], names_and_tags=[("Test", "1.0.1")]
-        )
+        results = select_multiple_transformation_revisions(ids=[])
         assert len(results) == 0
+
+        results = select_multiple_transformation_revisions(
+            ids=[tr_uuid_3, tr_uuid_2], names=["Test"]
+        )
+        assert len(results) == 1
 
         results = select_multiple_transformation_revisions(
             category="Test category", state=State.RELEASED

@@ -629,11 +629,11 @@ async def test_get_all_transformation_revisions_with_specified_ids(
         assert response_two_ids.json()[0] == tr_json_component_1
         assert response_two_ids.json()[1] == tr_json_component_2
         assert response_no_ids.status_code == 200
-        assert len(response_no_ids.json()) == 0
+        assert len(response_no_ids.json()) == 3
 
 
 @pytest.mark.asyncio
-async def test_get_all_transformation_revisions_with_specified_names_and_tags(
+async def test_get_all_transformation_revisions_with_specified_names(
     async_test_client, clean_test_db_engine
 ):
     with mock.patch(
@@ -654,27 +654,18 @@ async def test_get_all_transformation_revisions_with_specified_names_and_tags(
 
         url = "/api/transformations/"
         async with async_test_client as ac:
-            response_names_and_tags = await ac.get(
+            response_names = await ac.get(
                 url,
-                params={
-                    "names_and_tags": [
-                        {"name": "component 0", "tag": "1.0.0"},
-                        {"name": "component 1", "tag": "1.0.0"},
-                        {"name": "component 2", "tag": "1.0.0"},
-                    ]
-                },
+                params={"names": ["component 0", "component 1"]},
             )
-            response_empty_tag = await ac.get(url, params={"ids": []})
+            response_empty_names = await ac.get(url, params={"names": []})
 
-        assert response_names_and_tags.status_code == 200
-        assert len(response_names_and_tags.json()) == 2
-        assert response_names_and_tags.json()[0] == tr_json_component_1
-        assert response_names_and_tags.json()[1] == tr_json_component_2
-        assert response_empty_tag.status_code == 422
-        assert (
-            "string does not match regex"
-            in response_empty_tag.json()["detail"][0]["msg"]
-        )
+        assert response_names.status_code == 200
+        assert len(response_names.json()) == 2
+        assert response_names.json()[0] == tr_json_component_1
+        assert response_names.json()[1] == tr_json_component_1_new_revision
+        assert response_empty_names.status_code == 200
+        assert len(response_empty_names.json()) == 3
 
 
 @pytest.mark.asyncio
