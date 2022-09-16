@@ -37,6 +37,7 @@ class BearerVerifierOptions(BaseModel):
         " if no options are provided explicitely on invoking the verify_token"
         " method of the BearerVerifier",
     )
+    verify_ssl: bool = Field(True)
 
 
 class BearerVerifier:
@@ -63,6 +64,7 @@ class BearerVerifier:
         reload_public_key: bool = True,
         public_key_reloading_minimum_age: int = 15,
         default_decoding_options: dict = DEFAULT_OPTIONS,
+        verify_ssl: bool = True,
     ) -> "BearerVerifier":
         """Return a 'BearerVerifier' object bases on the provided parameters."""
         return cls(
@@ -72,6 +74,7 @@ class BearerVerifier:
                 reload_public_key=reload_public_key,
                 public_key_reloading_minimum_age=public_key_reloading_minimum_age,
                 default_decoding_options=default_decoding_options,
+                verify_ssl=verify_ssl,
             )
         )
 
@@ -134,7 +137,7 @@ class BearerVerifier:
             return
         url = self.verifier_options.auth_url
         try:
-            resp = httpx.get(url)
+            resp = httpx.get(url, verify=self.verifier_options.verify_ssl)
         except httpx.HTTPError as e:
             logger.info(
                 "Error trying to get public key from auth service."

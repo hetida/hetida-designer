@@ -135,6 +135,8 @@ class RuntimeConfig(BaseSettings):
         env="HD_AUTH_PUBLIC_KEY_URL",
     )
 
+    auth_verify_certs: bool = Field(True, env="HD_AUTH_VERIFY_CERTS")
+
     auth_role_key: str = Field(
         "roles",
         description=(
