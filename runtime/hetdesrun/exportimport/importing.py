@@ -213,6 +213,9 @@ def deprecate_older_revisions_in_group(tr_json: dict) -> None:
                 < datetime.fromisoformat(tr_json["released_timestamp"])
             ):
                 revision_group_tr_json["state"] = State.DISABLED.value
+                revision_group_tr_json["disabled_timestamp"] = datetime.now(
+                    timezone.utc
+                )
                 logger.info(
                     "Disable transformation revision %s with released timestamp %s"
                 )
