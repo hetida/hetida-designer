@@ -187,6 +187,10 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
 
 
 def deprecate_older_revisions_in_group(tr_json: dict) -> None:
+    logger.info(
+        "Deprecate outdated transformation revisions of revision revision group %s",
+        tr_json["revision_group_id"],
+    )
     get_response = requests.get(
         posix_urljoin(get_config().hd_backend_api_url, "transformations"),
         params={"revision_group_id": tr_json["revision_group_id"]},
