@@ -10,10 +10,7 @@ from hetdesrun.exportimport.importing import (
     transformation_revision_from_python_code,
 )
 from hetdesrun.persistence import sessionmaker
-from hetdesrun.persistence.dbservice.revision import (
-    read_single_transformation_revision,
-    select_multiple_transformation_revisions,
-)
+from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
 from hetdesrun.persistence.models.transformation import TransformationRevision
 
 
@@ -137,3 +134,21 @@ def test_component_import_directly_into_db(caplog, clean_test_db_engine):
 
             # did not try to upload via REST API
             assert patched_put.call_count == 0
+
+
+def test_import_with_deprecate_older_versions():
+    response_mock = mock.Mock()
+    response_mock.status_code = 201
+
+    with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock):
+
+        with mock.patch(
+            "hetdesrun.exportimport.importing.deprecate_older_revisions_in_group",
+            return_value=None,
+        ) as patched_deprecate_group:
+
+            import_transformations(
+                "./transformations/components", deprecate_older_revisions=True
+            )
+
+    assert patched_deprecate_group.call_count > 10
