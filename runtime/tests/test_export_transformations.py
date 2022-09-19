@@ -3,6 +3,7 @@ import os
 from copy import deepcopy
 from unittest import mock
 from uuid import UUID
+from xml.etree.ElementInclude import include
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
@@ -39,6 +40,13 @@ for file_path in json_files:
     with open(root_path + file_path, encoding="utf-8") as f:
         tr_json = json.load(f)
     tr_list.append(tr_json)
+
+tr_list[0]["state"] = "DRAFT"
+del tr_list[0]["released_timestamp"]
+tr_list[1]["state"] = "DRAFT"
+del tr_list[1]["released_timestamp"]
+tr_list[-1]["state"] = "DISABLED"
+tr_list[-2]["state"] = "DISABLED"
 
 tr_dict = {}
 
@@ -127,8 +135,9 @@ def test_get_transformation_from_java_backend():
         # released timestamp cannot be the same
         # it is not set for java backend objects
         #  and set to "now" during conversion
-        del tr_from_backend["released_timestamp"]
-        del tr_from_dict["released_timestamp"]
+        if "released_timestamp" in tr_from_backend:
+            del tr_from_backend["released_timestamp"]
+            del tr_from_dict["released_timestamp"]
 
         assert tr_from_backend == tr_from_dict
 
@@ -169,22 +178,39 @@ def test_export_all_base_items(tmpdir):
             for file_path in json_files:
                 assert tmpdir.join(file_path) in exported_paths
 
+def get_response_mock(url, *args, **kwargs):
+    response_tr_list = tr_list
+    params = kwargs["params"]
+    if params["type"] is not None:
+        response_tr_list = [tr for tr in response_tr_list if tr["type"] == params["type"]]
+    if params["state"] is not None:
+        response_tr_list = [tr for tr in response_tr_list if tr["state"] == params["state"]]
+    if params["category"] is not None:
+        response_tr_list = [tr for tr in response_tr_list if tr["category"] == params["category"]]
+    if params["ids"] is not None:
+        response_tr_list = [tr for tr in response_tr_list if tr["id"] in params["ids"]]
+    if params["names"] is not None:
+        response_tr_list = [tr for tr in response_tr_list if tr["name"] in params["names"]]
+    if params["include_deprecated"] is False:
+        response_tr_list = [tr for tr in response_tr_list if tr["state"] != "DISABLED"]
+    if params["include_dependencies"] is True:
+        for tr in response_tr_list:
+            if tr["type"] == "WORKFLOW":
+                for operator in tr["content"]["operators"]:
+                    response_tr_list.append(tr_dict[operator["transformation_id"]])
+    response_mock = mock.Mock()
+    response_mock.status_code = 200
+    response_mock.json = mock.Mock(return_value=response_tr_list)
+    return response_mock
+
 
 def test_export_transformations_filtered_by_type(tmpdir):
-    resp_mock = mock.Mock()
-    resp_mock.status_code = 200
-    resp_mock.json = mock.Mock(return_value=tr_list)
-
     with mock.patch(
         "hetdesrun.exportimport.export.requests.get",
-        return_value=resp_mock,
-    ) as mocked_get:
+        new=get_response_mock,
+    ):
 
         export_transformations(tmpdir, type="COMPONENT")
-
-        assert mocked_get.call_count == 1
-        _, args, _ = mocked_get.mock_calls[0]
-        assert "transformations" in args[0]
 
         exported_paths = []
         for root, _, files in os.walk(tmpdir):
@@ -200,24 +226,12 @@ def test_export_transformations_filtered_by_type(tmpdir):
 
 
 def test_export_transformations_filtered_by_state(tmpdir):
-    tr_list_state = deepcopy(tr_list)
-    tr_list_state[0]["state"] = "DRAFT"
-    tr_list_state[1]["state"] = "DRAFT"
-    tr_list_state[-1]["state"] = "DISABLED"
-    tr_list_state[-2]["state"] = "DISABLED"
-    tr_list_state[-3]["state"] = "DISABLED"
-    resp_mock = mock.Mock()
-    resp_mock.status_code = 200
-    resp_mock.json = mock.Mock(return_value=tr_list_state)
-
     with mock.patch(
         "hetdesrun.exportimport.export.requests.get",
-        return_value=resp_mock,
-    ) as mocked_get:
+        new=get_response_mock,
+    ):
 
         export_transformations(tmpdir, state="DRAFT")
-
-        assert mocked_get.call_count == 1
 
         exported_paths = []
         for root, _, files in os.walk(tmpdir):
@@ -233,8 +247,6 @@ def test_export_transformations_filtered_by_state(tmpdir):
 
         export_transformations(tmpdir, state="RELEASED")
 
-        assert mocked_get.call_count == 2
-
         exported_paths = []
         for root, _, files in os.walk(tmpdir):
             for file in files:
@@ -242,16 +254,14 @@ def test_export_transformations_filtered_by_state(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
-        # increased by ten more exported JSON files
-        assert len(exported_paths) == 12
+        # increased by eleven more exported JSON files
+        assert len(exported_paths) == 13
 
-        for file_path in json_files[:-3]:
+        for file_path in json_files[:-2]:
             assert tmpdir.join(file_path) in exported_paths
 
         export_transformations(tmpdir, state="DISABLED")
 
-        assert mocked_get.call_count == 3
-
         exported_paths = []
         for root, _, files in os.walk(tmpdir):
             for file in files:
@@ -259,7 +269,7 @@ def test_export_transformations_filtered_by_state(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
-        # increased by three more exported JSON file
+        # increased by two more exported JSON file
         assert len(exported_paths) == 15
 
         for file_path in json_files:
@@ -267,14 +277,10 @@ def test_export_transformations_filtered_by_state(tmpdir):
 
 
 def test_export_transformations_filtered_by_category(tmpdir):
-    resp_mock = mock.Mock()
-    resp_mock.status_code = 200
-    resp_mock.json = mock.Mock(return_value=tr_list)
-
     with mock.patch(
         "hetdesrun.exportimport.export.requests.get",
-        return_value=resp_mock,
-    ) as mocked_get:
+        new=get_response_mock,
+    ):
 
         export_transformations(tmpdir, category="Basic")
 
@@ -292,14 +298,10 @@ def test_export_transformations_filtered_by_category(tmpdir):
 
 
 def test_export_transformations_filtered_by_names(tmpdir):
-    resp_mock = mock.Mock()
-    resp_mock.status_code = 200
-    resp_mock.json = mock.Mock(return_value=tr_list)
-
     with mock.patch(
         "hetdesrun.exportimport.export.requests.get",
-        return_value=resp_mock,
-    ) as mocked_get:
+        new=get_response_mock,
+    ):
 
         export_transformations(
             tmpdir,
@@ -320,14 +322,10 @@ def test_export_transformations_filtered_by_names(tmpdir):
 
 
 def test_export_transformations_filtered_by_ids(tmpdir):
-    resp_mock = mock.Mock()
-    resp_mock.status_code = 200
-    resp_mock.json = mock.Mock(return_value=tr_list)
-
     with mock.patch(
         "hetdesrun.exportimport.export.requests.get",
-        return_value=resp_mock,
-    ) as mocked_get:
+        new=get_response_mock,
+    ):
 
         export_transformations(
             tmpdir,
@@ -351,18 +349,10 @@ def test_export_transformations_filtered_by_ids(tmpdir):
 
 
 def test_export_transformations_without_deprecated(tmpdir):
-    tr_list_state = deepcopy(tr_list)
-    tr_list_state[-1]["state"] = "DISABLED"
-    tr_list_state[-2]["state"] = "DRAFT"
-    tr_list_state[-3]["state"] = "DRAFT"
-    resp_mock = mock.Mock()
-    resp_mock.status_code = 200
-    resp_mock.json = mock.Mock(return_value=tr_list_state)
-
     with mock.patch(
         "hetdesrun.exportimport.export.requests.get",
-        return_value=resp_mock,
-    ) as mocked_get:
+        new=get_response_mock,
+    ):
 
         export_transformations(tmpdir, include_deprecated=False)
 
@@ -373,31 +363,23 @@ def test_export_transformations_without_deprecated(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
-        assert len(exported_paths) == 14
+        assert len(exported_paths) == 13
 
-        for file_path in json_files[:-1]:
+        for file_path in json_files[:-2]:
             assert tmpdir.join(file_path) in exported_paths
 
 
 def test_export_transformations_combined_filters(tmpdir):
-    tr_list_state = deepcopy(tr_list)
-    tr_list_state[-1]["state"] = "DISABLED"
-    resp_mock = mock.Mock()
-    resp_mock.status_code = 200
-    resp_mock.json = mock.Mock(return_value=tr_list_state)
-
     with mock.patch(
         "hetdesrun.exportimport.export.requests.get",
-        return_value=resp_mock,
-    ) as mocked_get:
+        new=get_response_mock,
+    ):
 
         export_transformations(
             tmpdir,
             category="Basic",
             names=["Filter", "Consecutive differences"],
         )
-
-        assert mocked_get.call_count == 1
 
         exported_paths = []
         for root, _, files in os.walk(tmpdir):
@@ -413,8 +395,6 @@ def test_export_transformations_combined_filters(tmpdir):
 
         export_transformations(tmpdir, type="WORKFLOW", include_deprecated=False)
 
-        assert mocked_get.call_count == 2
-
         exported_paths = []
         for root, _, files in os.walk(tmpdir):
             for file in files:
@@ -422,10 +402,10 @@ def test_export_transformations_combined_filters(tmpdir):
                 if ext == ".json":
                     exported_paths.append(os.path.join(root, file))
 
-        assert len(exported_paths) == 13
+        assert len(exported_paths) == 8
 
-        for file_path in json_files[:-5]:
+        for file_path in json_files[:6]:
             assert tmpdir.join(file_path) in exported_paths
-
-        for file_path in json_files[-4:-1]:
+        
+        for file_path in (json_files[7],json_files[-3]):
             assert tmpdir.join(file_path) in exported_paths
