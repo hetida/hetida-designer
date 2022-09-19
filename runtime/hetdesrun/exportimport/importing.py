@@ -20,7 +20,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import Type, get_backend_basic_auth, get_uuid_from_seed
+from hetdesrun.utils import State, Type, get_backend_basic_auth, get_uuid_from_seed
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
 
@@ -186,6 +186,59 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     return tr_json
 
 
+def deprecate_older_revisions_in_group(tr_json: dict) -> None:
+    get_response = requests.get(
+        posix_urljoin(get_config().hd_backend_api_url, "transformations"),
+        params={"revision_group_id": tr_json["revision_group_id"]},
+        verify=get_config().hd_backend_verify_certs,
+        auth=get_backend_basic_auth()  # type: ignore
+        if get_config().hd_backend_use_basic_auth
+        else None,
+        headers=get_auth_headers(),
+        timeout=get_config().external_request_timeout,
+    )
+
+    if get_response.status_code != 200:
+        msg = (
+            "COULD NOT GET transformation revisions for "
+            f'revision group id {tr_json["revision_group_id"]}\n.'
+            f"Response status code {get_response.status_code}"
+            f"with response text:\n{get_response.text}"
+        )
+        logger.error(msg)
+    else:
+        for revision_group_tr_json in get_response.json():
+            if revision_group_tr_json["state"] == State.RELEASED.value and (
+                datetime.fromisoformat(revision_group_tr_json["released_timestamp"])
+                < datetime.fromisoformat(tr_json["released_timestamp"])
+            ):
+                revision_group_tr_json["state"] = State.DISABLED.value
+                logger.info(
+                    "Disable transformation revision %s with released timestamp %s"
+                )
+                put_response = requests.put(
+                    posix_urljoin(
+                        get_config().hd_backend_api_url,
+                        "transformations",
+                        revision_group_tr_json["id"],
+                    ),
+                    verify=get_config().hd_backend_verify_certs,
+                    json=revision_group_tr_json,
+                    auth=get_backend_basic_auth()  # type: ignore
+                    if get_config().hd_backend_use_basic_auth
+                    else None,
+                    headers=get_auth_headers(),
+                    timeout=get_config().external_request_timeout,
+                )
+                if put_response.status_code != 201:
+                    msg = (
+                        f"COULD NOT PUT {revision_group_tr_json['type']}\n."
+                        f"Response status code {put_response.status_code}"
+                        f"with response text:\n{put_response.text}"
+                    )
+                    logger.error(msg)
+
+
 # Base function to import a transformation revision
 def import_transformation(
     tr_json: dict,
@@ -193,6 +246,7 @@ def import_transformation(
     strip_wirings: bool = False,
     directly_into_db: bool = False,
     update_component_code: bool = True,
+    deprecate_older_revisions: bool = False,
 ) -> None:
 
     if strip_wirings:
@@ -252,6 +306,9 @@ def import_transformation(
             )
             logger.error(msg)
 
+        if deprecate_older_revisions:
+            deprecate_older_revisions_in_group(tr_json)
+
 
 # Import all transformations from download_path based on type, id, name and category
 def import_transformations(
@@ -259,6 +316,7 @@ def import_transformations(
     strip_wirings: bool = False,
     directly_into_db: bool = False,
     update_component_code: bool = True,
+    deprecate_older_revisions: bool = False,
 ) -> None:
     """
     This function imports all transformations together with their documentations
@@ -344,6 +402,7 @@ def import_transformations(
                 strip_wirings=strip_wirings,
                 directly_into_db=directly_into_db,
                 update_component_code=update_component_code,
+                deprecate_older_revisions=deprecate_older_revisions,
             )
 
     logger.info("finished importing")
