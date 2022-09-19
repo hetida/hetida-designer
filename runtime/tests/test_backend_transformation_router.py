@@ -602,6 +602,32 @@ async def test_get_all_transformation_revisions_with_specified_category(
 
 
 @pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_specified_revision_group_id(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        tr_component_1 = TransformationRevision(**tr_json_component_1)
+        store_single_transformation_revision(tr_component_1)
+
+        tr_component_1_new_revision = TransformationRevision(
+            **tr_json_component_1_new_revision
+        )
+        store_single_transformation_revision(tr_component_1_new_revision)
+
+        url = "/api/transformations/"
+        async with async_test_client as ac:
+            response_category = await ac.get(url, params={"revision_group_id": str(tr_component_1.revision_group_id)})
+
+        assert response_category.status_code == 200
+        assert len(response_category.json()) == 2
+        assert response_category.json()[0] == tr_json_component_1
+        assert response_category.json()[1] == tr_json_component_1_new_revision
+
+
+@pytest.mark.asyncio
 async def test_get_all_transformation_revisions_with_specified_ids(
     async_test_client, clean_test_db_engine
 ):

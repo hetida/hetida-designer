@@ -129,6 +129,9 @@ async def get_all_transformation_revisions(
         None,
         description="Filter for specified category",
     ),
+    revision_group_id: Optional[UUID] = Query(
+        None, description="Filter for specified revision group id"
+    ),
     ids: Optional[List[UUID]] = Query(
         None,
         description="Filter for specified list of ids",
@@ -163,6 +166,7 @@ async def get_all_transformation_revisions(
         + info(" of type ", type)
         + info(" in state ", state)
         + info(" in category ", category)
+        + info(" with group_id ", revision_group_id)
         + info(
             " unless they are deprecated",
             include_deprecated,
@@ -184,6 +188,7 @@ async def get_all_transformation_revisions(
             type=type,
             state=state,
             category=category,
+            revision_group_id=revision_group_id,
             ids=ids,
             names=names,
             include_deprecated=include_deprecated,
