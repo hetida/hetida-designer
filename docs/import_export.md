@@ -26,7 +26,7 @@ To export only selected components and workflows instead of all, the `export_tra
 - type: must be either "COMPONENT" or "WORKFLOW" (if specified)
 - state: must be either "DRAFT", "RELEASED" or "DISABLED" (if specified)
 - ids: a list of ids, only components/workflows whose ids are included in this list will be exported
-- names_and_tags: a list of name and tag tuples, only components/workflows whose combinations of name and tag are included in this list will be exported
+- names: a list of names, only components/workflows whose names are included in this list will be exported
 - category: a category, only components/workflows in this category will be exported
 - include_deprecated: if set to false, deprecated components/workflows will **not** be exported (default: true)
 
@@ -35,7 +35,7 @@ If more than one of these parameters is specified, only the components/workflows
 The exported JSON files are automatically saved in subfolders corresponding to the categories of the exported components and workflows within subfolders corresponding to their type ("components" or "workflows").
 
 **Note:** Storing a workflow in the database that contains components or other workflows that are not yet stored in the database will result in an error.
-Thus, when using export with filters, it is recommended to ensure that all nested components/workflows are exported.
+Therefore, the export function also automatically exports all revisions of dependency transformation revisions, regardless of whether they match the filters.
 
 For example, the shell command to export the components that return the mathematical constants e and $\pi$ is
 
