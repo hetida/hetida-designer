@@ -217,7 +217,9 @@ def deprecate_older_revisions_in_group(tr_json: dict) -> None:
                     timezone.utc
                 )
                 logger.info(
-                    "Disable transformation revision %s with released timestamp %s"
+                    "Disable transformation revision %s with released timestamp %s",
+                    revision_group_tr_json["id"],
+                    revision_group_tr_json["released_timestamp"]
                 )
                 put_response = requests.put(
                     posix_urljoin(
