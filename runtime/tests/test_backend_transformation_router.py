@@ -619,7 +619,9 @@ async def test_get_all_transformation_revisions_with_specified_revision_group_id
 
         url = "/api/transformations/"
         async with async_test_client as ac:
-            response_category = await ac.get(url, params={"revision_group_id": str(tr_component_1.revision_group_id)})
+            response_category = await ac.get(
+                url, params={"revision_group_id": str(tr_component_1.revision_group_id)}
+            )
 
         assert response_category.status_code == 200
         assert len(response_category.json()) == 2
