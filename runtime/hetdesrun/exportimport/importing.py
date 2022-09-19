@@ -4,7 +4,7 @@ import logging
 import os
 from datetime import datetime, timezone
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import requests
@@ -20,14 +20,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import (
-    State,
-    Type,
-    criterion_unset_or_matches_value,
-    get_backend_basic_auth,
-    get_uuid_from_seed,
-    selection_list_empty_or_contains_value,
-)
+from hetdesrun.utils import Type, get_backend_basic_auth, get_uuid_from_seed
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
 
@@ -263,11 +256,6 @@ def import_transformation(
 # Import all transformations from download_path based on type, id, name and category
 def import_transformations(
     download_path: str,
-    type: Optional[Type] = None,  # pylint: disable=redefined-builtin
-    state: Optional[State] = None,
-    ids: Optional[List[UUID]] = None,
-    names_and_tags: Optional[List[Tuple[str, str]]] = None,
-    category: Optional[str] = None,
     strip_wirings: bool = False,
     directly_into_db: bool = False,
     update_component_code: bool = True,
@@ -350,24 +338,12 @@ def import_transformations(
         logger.info("importing level %i transformations", level)
         for transformation_id in level_dict[level]:
             transformation = transformation_dict[transformation_id]
-            if (
-                criterion_unset_or_matches_value(type, transformation["type"])
-                and criterion_unset_or_matches_value(state, transformation["state"])
-                and selection_list_empty_or_contains_value(ids, transformation_id)
-                and selection_list_empty_or_contains_value(
-                    names_and_tags,
-                    (transformation["name"], transformation["version_tag"]),
-                )
-                and criterion_unset_or_matches_value(
-                    category, transformation["category"]
-                )
-            ):
-                import_transformation(
-                    transformation,
-                    path_dict[transformation_id],
-                    strip_wirings=strip_wirings,
-                    directly_into_db=directly_into_db,
-                    update_component_code=update_component_code,
-                )
+            import_transformation(
+                transformation,
+                path_dict[transformation_id],
+                strip_wirings=strip_wirings,
+                directly_into_db=directly_into_db,
+                update_component_code=update_component_code,
+            )
 
     logger.info("finished importing")

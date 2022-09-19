@@ -69,8 +69,6 @@ The input parameter `update_component_code` of the `import_transformations` func
 This has the advantage that the automatically generated part of the code corresponds to the latest schema and contains all relevant information about the component.
 Setting the parameter to `False` ensures that the code is not changed, but remains exactly as it has been exported.
 
-Similar to the `export_transformations` function, the same optional parameters can be used in the `import_transformations` function to import only selected transformation revisions.
-
 ## Importing components from single python files
 
 Components are also importable from python files, which can be created by simply copying the component code from the hetida designer user interface into a .py file. When importing such a file, the module docstring from the third line onwards will be used as documentation.
