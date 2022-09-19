@@ -254,8 +254,12 @@ def export_transformations(
     transformation_list: List[dict] = []
 
     if java_backend:
-        for trafo_json in transformation_list:
-            get_transformation_from_java_backend(trafo_json["id"], trafo_json["type"])
+        for trafo_json in response.json():
+            transformation_list.append(
+                get_transformation_from_java_backend(
+                    trafo_json["id"], trafo_json["type"]
+                )
+            )
     else:
         transformation_list = response.json()
 
