@@ -76,7 +76,11 @@ Components are also importable from python files, which can be created by simply
 Note, that the .py file does not include the test wiring of the component, which is included in the json export format above. Components as .py files should be located in the same subdirectories as ordinary component files.
 
 ## Remove test wirings when importing
+
 You may want to ignore the test wirings stored in the component/workflow files during import. One reason may be that the target backend validates incoming test wirings of the imported workflows and components: Adapters present in a test wiring must be registered under the same adapter key in the target backend.
 
 To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_transformations` function in the commands documented above.
 
+## Deprecate older revisions when importion new ones
+
+To make clear that only the latet revision group of a revision should be used, you might want to deprecate all revisions of the same revision group which have been released earlier than the newly imported revision. To automatically trigger their deprecation, simply add a keyword parameter `deprecate_older_revisions=True` to the call of the `import_transformations` function.
