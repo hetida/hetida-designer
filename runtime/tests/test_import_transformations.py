@@ -149,7 +149,7 @@ def test_import_with_deprecate_older_versions():
     with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock):
 
         with mock.patch(
-            "hetdesrun.exportimport.importing.deprecate_older_revisions_in_group",
+            "hetdesrun.exportimport.importing.deprecate_all_but_latest",
             return_value=None,
         ) as patched_deprecate_group:
 
