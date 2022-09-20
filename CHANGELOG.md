@@ -1,6 +1,7 @@
-* improved contextualized logging
-* async (web hook / callback) execution web endpoint
-* minor imporvements
+## 8.0.1
+* improve contextualized logging
+* add async (web hook / callback) execution web endpoint
+* minor improvements and fixes
 ## 0.8.0
 * authentication via OpenID Connect. See [documentation](https://github.com/hetida/hetida-designer/blob/develop/docs/enabling_openidconnect.md).
 * automatic deployment of base components. Documented [here](https://github.com/hetida/hetida-designer/blob/develop/docs/base_component_deployment.md).
