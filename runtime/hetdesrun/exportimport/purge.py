@@ -4,11 +4,13 @@ from typing import Dict, Set
 from uuid import UUID
 
 from hetdesrun.exportimport.utils import (
+    delete_transformation_revision,
     get_transformation_revisions,
     update_or_create_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State
+from runtime.hetdesrun.exportimport.importing import import_transformations
 
 logger = logging.getLogger(__name__)
 
@@ -54,3 +56,19 @@ def deprecate_all_but_latest_per_group(directly_into_db: bool = False) -> None:
 
     for revision_group_id in revision_group_ids:
         deprecate_all_but_latest_in_group(revision_group_id, directly_into_db)
+
+
+def delete_drafts(directly_into_db: bool = False) -> None:
+    tr_list = get_transformation_revisions(params={"state": State.DRAFT})
+
+    for tr in tr_list:
+        delete_transformation_revision(tr.id, directly_into_db=directly_into_db)
+
+
+def delete_all_restart(directly_into_db: bool = False) -> None:
+    tr_list = get_transformation_revisions()
+
+    for tr in tr_list:
+        delete_transformation_revision(tr.id, directly_into_db=directly_into_db)
+
+    import_transformations("./transformations", directly_into_db=directly_into_db)
