@@ -24,7 +24,7 @@ docker run --rm \
   --name htdruntime_export \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.purge deprecate_all_but_latest_per_group; deprecate_all_but_latest_per_group();'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge deprecate_all_but_latest_per_group; deprecate_all_but_latest_per_group();'
 ```
 
 ## Delete Draft Transformation Revisions
@@ -37,7 +37,7 @@ docker run --rm \
   --name htdruntime_export \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.purge delete_drafts; delete_drafts();'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge delete_drafts; delete_drafts();'
 ```
 
 ## Delete Unused Deprecated Transformation Revisions
@@ -50,7 +50,7 @@ docker run --rm \
   --name htdruntime_export \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.purge delete_unused_deprecated; delete_unused_deprecated();'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge delete_unused_deprecated; delete_unused_deprecated();'
 ```
 
 ## Delete All Transformation Revisions and Restart
@@ -63,5 +63,5 @@ docker run --rm \
   --name htdruntime_export \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.purge delete_all_restart; delete_all_restart();'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge delete_all_restart; delete_all_restart();'
 ```
