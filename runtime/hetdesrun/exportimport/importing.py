@@ -244,7 +244,8 @@ def deprecate_all_but_latest_in_group(
     )
 
     tr_list = get_transformation_revisions(
-        params={"revision_group_id": revision_group_id, "state": State.RELEASED}
+        params={"revision_group_id": revision_group_id, "state": State.RELEASED},
+        directly_into_db=directly_into_db,
     )
 
     released_tr_dict: Dict[datetime, TransformationRevision] = {}
@@ -257,35 +258,14 @@ def deprecate_all_but_latest_in_group(
 
     for released_timestamp, tr in released_tr_dict.items():
         tr.deprecate()
-        if directly_into_db:
-            update_or_create_single_transformation_revision(tr)
-        else:
-            logger.info(
-                "Deprecated transformation revision %s with released timestamp %s",
-                tr.id,
-                released_timestamp,
-            )
-            put_response = requests.put(
-                posix_urljoin(
-                    get_config().hd_backend_api_url,
-                    "transformations",
-                    str(tr.id),
-                ),
-                verify=get_config().hd_backend_verify_certs,
-                json=json.loads(tr.json()),
-                auth=get_backend_basic_auth()  # type: ignore
-                if get_config().hd_backend_use_basic_auth
-                else None,
-                headers=get_auth_headers(),
-                timeout=get_config().external_request_timeout,
-            )
-            if put_response.status_code != 201:
-                msg = (
-                    f"COULD NOT PUT {tr.id}\n."
-                    f"Response status code {put_response.status_code}"
-                    f"with response text:\n{put_response.text}"
-                )
-                logger.error(msg)
+        logger.info(
+            "Deprecated transformation revision %s with released timestamp %s",
+            tr.id,
+            released_timestamp,
+        )
+        import_transformation(
+            json.loads(json.dumps(tr)), directly_into_db=directly_into_db
+        )
 
 
 # Base function to import a transformation revision
