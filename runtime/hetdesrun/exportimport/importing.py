@@ -352,7 +352,6 @@ def import_transformations(
         import_transformations("./transformations/components")
     """
 
-    path_dict = {}
     transformation_dict = {}
     revision_group_ids: Set[UUID] = set()
 
@@ -379,7 +378,6 @@ def import_transformations(
                 transformation_json = load_json(path)
             revision_group_ids.add(transformation_json["revision_group_id"])
             transformation_dict[transformation_json["id"]] = transformation_json
-            path_dict[transformation_json["id"]] = path
 
     def nesting_level(transformation_id: UUID, level: int) -> int:
 
