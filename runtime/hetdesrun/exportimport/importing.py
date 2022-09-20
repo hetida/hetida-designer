@@ -211,7 +211,6 @@ def deprecate_all_but_latest(revision_group_id: UUID) -> None:
             f"with response text:\n{get_response.text}"
         )
         logger.error(msg)
-        raise HTTPError
 
     released_tr_dict: Dict[datetime,TransformationRevision] = {}
     for released_tr_json in get_response.json():
@@ -419,5 +418,6 @@ def import_transformations(
     logger.info("finished importing")
 
     if deprecate_older_revisions:
+        logger.info("deprecate all but latest revision of imported revision groups")
         for revision_group_id in revision_group_ids:
             deprecate_all_but_latest(revision_group_id)
