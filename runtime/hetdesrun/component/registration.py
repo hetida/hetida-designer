@@ -26,17 +26,15 @@ def register(
     state: Optional[str] = None,
     released_timestamp: Optional[str] = None,
     disabled_timestamp: Optional[str] = None,
+    is_pure_plot_component: Optional[bool] = None  # pylint: disable=unused-argument
 ) -> Callable[[Callable], Callable]:
     """Additonal features for component entrypoint functions
 
     This decorator can be used to provide additional features for component entrypoint
     functions which may depend on datatype infos on the inputs and outputs.
 
-    is_pure_plot_component: This marks the component as a "pure plot" component
-    meaning that this component should not be executed when the appropriate
-    workflow execution flag named "run_pure_plot_operators" is set to False. In this
-    case it will not run the entrypoint function code and provide empty dictionaríes
-    to the outputs (which must all be of PlotlyJson type!).
+    is_pure_plot_component: This is deprecated and only exists for backwards compatibility,
+    but it is ignored.
     """
 
     def wrapper_func(func: Callable) -> Callable:
