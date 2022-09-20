@@ -213,17 +213,17 @@ def deprecate_all_but_latest(revision_group_id: UUID) -> None:
         logger.error(msg)
         raise HTTPError
 
-    revision_group_released_tr_dict: Dict[datetime,TransformationRevision] = {}
-    for revision_group_tr_json in get_response.json():
-        if revision_group_tr_json["state"] == State.RELEASED.value:
-            revision_group_tr = TransformationRevision(**revision_group_tr_json)
-            assert revision_group_tr.released_timestamp is not None # hint for mypy
-            revision_group_released_tr_dict[revision_group_tr.released_timestamp] = revision_group_tr
+    released_tr_dict: Dict[datetime,TransformationRevision] = {}
+    for released_tr_json in get_response.json():
+        if released_tr_json["state"] == State.RELEASED.value:
+            released_tr = TransformationRevision(**released_tr_json)
+            assert released_tr.released_timestamp is not None # hint for mypy
+            released_tr_dict[released_tr.released_timestamp] = released_tr
 
-    latest_timestamp = min(revision_group_released_tr_dict.keys())
-    del revision_group_released_tr_dict[latest_timestamp]
+    latest_timestamp = min(released_tr_dict.keys())
+    del released_tr_dict[latest_timestamp]
 
-    for released_timestamp, tr in revision_group_released_tr_dict.items():
+    for released_timestamp, tr in released_tr_dict.items():
         tr.deprecate()
         logger.info(
             "Deprecated transformation revision %s with released timestamp %s",
