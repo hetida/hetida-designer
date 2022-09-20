@@ -223,17 +223,11 @@ def get_transformation_revisions(
     return tr_list
 
 
-# Base function to import a transformation revision
 def import_transformation(
     tr_json: dict,
-    path: str,
-    strip_wirings: bool = False,
     directly_into_db: bool = False,
     update_component_code: bool = True,
 ) -> None:
-
-    if strip_wirings:
-        tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
 
     if directly_into_db:
         tr = TransformationRevision(**tr_json)
@@ -251,8 +245,6 @@ def import_transformation(
         update_or_create_single_transformation_revision(tr)
 
     else:
-        headers = get_auth_headers()
-
         response = requests.put(
             posix_urljoin(
                 get_config().hd_backend_api_url, "transformations", tr_json["id"]
@@ -266,24 +258,21 @@ def import_transformation(
             auth=get_backend_basic_auth()  # type: ignore
             if get_config().hd_backend_use_basic_auth
             else None,
-            headers=headers,
+            headers=get_auth_headers(),
             timeout=get_config().external_request_timeout,
         )
         logger.info(
             (
-                "PUT transformation status code: %d"
-                " for transformation revision %s of type %s\n"
-                "in category %s with name %s"
+                "PUT %s with id %s in category %s with name %s"
             ),
-            response.status_code,
-            tr_json["id"],
             tr_json["type"],
-            tr_json["name"],
+            tr_json["id"],
             tr_json["category"],
+            tr_json["name"],
         )
         if response.status_code != 201:
             msg = (
-                f"COULD NOT PUT {tr_json['type']} from path {path}\n."
+                f'COULD NOT PUT {tr_json["type"]} with id {tr_json["id"]}\n.'
                 f"Response status code {response.status_code}"
                 f"with response text:\n{response.text}"
             )
@@ -319,7 +308,7 @@ def deprecate_all_but_latest_in_group(
             released_timestamp,
         )
         import_transformation(
-            json.loads(json.dumps(tr)), directly_into_db=directly_into_db
+            json.loads(tr.json()), directly_into_db=directly_into_db
         )
 
 
@@ -435,10 +424,10 @@ def import_transformations(
         logger.info("importing level %i transformations", level)
         for transformation_id in level_dict[level]:
             transformation = transformation_dict[transformation_id]
+            if strip_wirings:
+                transformation["test_wiring"] = {"input_wirings": [], "output_wirings": []}
             import_transformation(
                 transformation,
-                path_dict[transformation_id],
-                strip_wirings=strip_wirings,
                 directly_into_db=directly_into_db,
                 update_component_code=update_component_code,
             )

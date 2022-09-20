@@ -56,7 +56,7 @@ def test_import_single_transformation(clean_test_db_engine):
             "consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json"
         )
         tr_json = load_json(path)
-        import_transformation(tr_json, path, directly_into_db=True)
+        import_transformation(tr_json, directly_into_db=True)
         persisted_tr = read_single_transformation_revision(UUID(tr_json["id"]))
         tr = TransformationRevision(**tr_json)
 
