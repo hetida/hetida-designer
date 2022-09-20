@@ -187,6 +187,35 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     return tr_json
 
 
+def get_transformation_revisions_from_path(download_path: str) -> Dict[str, dict]:
+    transformation_dict = {}
+
+    for root, _, files in os.walk(download_path):
+        for file in files:
+            path = os.path.join(root, file)
+            ext = os.path.splitext(path)[1]
+            if ext not in (".py", ".json"):
+                logger.warning(
+                    "Invalid file extension '%s' to load transformation revision from: %s",
+                    ext,
+                    path,
+                )
+                continue
+            if ext == ".py":
+                logger.info("Loading transformation from python file %s", path)
+                python_file = load_python_file(path)
+                if python_file is not None:
+                    transformation_json = transformation_revision_from_python_code(
+                        python_file, path
+                    )
+            if ext == ".json":
+                logger.info("Loading transformation from json file %s", path)
+                transformation_json = load_json(path)
+            transformation_dict[transformation_json["id"]] = transformation_json
+
+    return transformation_dict
+
+
 def get_transformation_revisions(
     params: Optional[dict] = None, directly_into_db: bool = False
 ) -> List[TransformationRevision]:
@@ -352,32 +381,7 @@ def import_transformations(
         import_transformations("./transformations/components")
     """
 
-    transformation_dict = {}
-    revision_group_ids: Set[UUID] = set()
-
-    for root, _, files in os.walk(download_path):
-        for file in files:
-            path = os.path.join(root, file)
-            ext = os.path.splitext(path)[1]
-            if ext not in (".py", ".json"):
-                logger.warning(
-                    "Invalid file extension '%s' to load transformation revision from: %s",
-                    ext,
-                    path,
-                )
-                continue
-            if ext == ".py":
-                logger.info("Loading transformation from python file %s", path)
-                python_file = load_python_file(path)
-                if python_file is not None:
-                    transformation_json = transformation_revision_from_python_code(
-                        python_file, path
-                    )
-            if ext == ".json":
-                logger.info("Loading transformation from json file %s", path)
-                transformation_json = load_json(path)
-            revision_group_ids.add(transformation_json["revision_group_id"])
-            transformation_dict[transformation_json["id"]] = transformation_json
+    transformation_dict = get_transformation_revisions_from_path(download_path)
 
     def nesting_level(transformation_id: UUID, level: int) -> int:
 
@@ -434,6 +438,10 @@ def import_transformations(
     logger.info("finished importing")
 
     if deprecate_older_revisions:
+        revision_group_ids = set(
+            transformation["revision_group_id"]
+            for _, transformation in transformation_dict.items()
+        )
         logger.info("deprecate all but latest revision of imported revision groups")
         for revision_group_id in revision_group_ids:
             deprecate_all_but_latest_in_group(
