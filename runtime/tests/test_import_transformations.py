@@ -192,7 +192,9 @@ def test_deprecate_all_but_latest_in_group():
             "hetdesrun.exportimport.importing.requests.put",
             return_value=put_response_mock,
         ) as patched_put:
-            deprecate_all_but_latest_in_group(revision_group_id=import_wf_json["revision_group_id"])
+            deprecate_all_but_latest_in_group(
+                revision_group_id=import_wf_json["revision_group_id"]
+            )
 
             assert patched_get.call_count == 1
 

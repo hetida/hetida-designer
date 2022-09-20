@@ -187,6 +187,45 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     return tr_json
 
 
+def deprecate_all_but_latest_per_group(directly_into_db: bool = False) -> None:
+    tr_list: List[TransformationRevision] = []
+
+    if directly_into_db:
+        tr_list = select_multiple_transformation_revisions(state=State.RELEASED)
+    else:
+        get_response = requests.get(
+            posix_urljoin(get_config().hd_backend_api_url, "transformations"),
+            params={
+                "state": State.RELEASED.value,
+            },
+            verify=get_config().hd_backend_verify_certs,
+            auth=get_backend_basic_auth()  # type: ignore
+            if get_config().hd_backend_use_basic_auth
+            else None,
+            headers=get_auth_headers(),
+            timeout=get_config().external_request_timeout,
+        )
+
+        if get_response.status_code != 200:
+            msg = (
+                "COULD NOT GET transformation revisions. "
+                f"Response status code {get_response.status_code}"
+                f"with response text:\n{get_response.text}"
+            )
+            logger.error(msg)
+
+        for tr_json in get_response.json():
+            tr_list.append(TransformationRevision(**tr_json))
+
+    revision_group_ids: Set[UUID] = set()
+
+    for tr in tr_list:
+        revision_group_ids.add(tr.revision_group_id)
+
+    for revision_group_id in revision_group_ids:
+        deprecate_all_but_latest_in_group(revision_group_id, directly_into_db)
+
+
 def deprecate_all_but_latest_in_group(
     revision_group_id: UUID, directly_into_db: bool = False
 ) -> None:
@@ -226,7 +265,6 @@ def deprecate_all_but_latest_in_group(
 
         for tr_json in get_response.json():
             tr_list.append(TransformationRevision(**tr_json))
-        
 
     released_tr_dict: Dict[datetime, TransformationRevision] = {}
     for released_tr in tr_list:
