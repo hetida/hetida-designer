@@ -327,12 +327,25 @@ def import_transformations(
     update_component_code: bool = True,
     deprecate_older_revisions: bool = False,
 ) -> None:
-    """
-    This function imports all transformations together with their documentations
-    that match all provided criteria.
+    """Import transforamtions.
+
+    This function imports all transformations together with their documentations.
     The download_path should be a path which contains the exported transformations
     organized in subdirectories corresponding to the categories.
-    WARNING: Overwrites possible existing files!
+    The following parameters can be used to 
+
+    - directly_into_db: If direct access to the database is possible, set this to true
+        to ommit the detour via the backend
+    - strip_wirings: Set to true to reset the test wiring to empty input and output
+        wirings for each transformation revision
+    - update_component_code: Set to false if you want to keep the componen code
+        unchanged
+    - deprecate_older_versions: Set to true to deprecate all but the latest revision
+        for all revision groups imported. This might result in all imported revisions to
+        be deprecated if these are older than the latest revision in the database.
+
+    WARNING: Overwrites possibly existing transformation revisions!
+
     Usage:
         import_transformations("./transformations/components")
     """
