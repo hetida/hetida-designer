@@ -149,7 +149,7 @@ def test_import_with_deprecate_older_versions():
     with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock):
 
         with mock.patch(
-            "hetdesrun.exportimport.importing.deprecate_all_but_latest",
+            "hetdesrun.exportimport.importing.deprecate_all_but_latest_in_group",
             return_value=None,
         ) as patched_deprecate_group:
 
@@ -192,7 +192,7 @@ def test_deprecate_all_but_latest_in_group():
             "hetdesrun.exportimport.importing.requests.put",
             return_value=put_response_mock,
         ) as patched_put:
-            deprecate_all_but_latest_in_group(import_wf_json)
+            deprecate_all_but_latest_in_group(revision_group_id=import_wf_json["revision_group_id"])
 
             assert patched_get.call_count == 1
 

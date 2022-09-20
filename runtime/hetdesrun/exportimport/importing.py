@@ -5,7 +5,6 @@ import os
 from datetime import datetime, timezone
 from posixpath import join as posix_urljoin
 from typing import Any, Dict, List, Optional, Set
-from urllib.error import HTTPError
 from uuid import UUID
 
 import requests
@@ -17,6 +16,7 @@ from hetdesrun.component.load import (
 )
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.dbservice.revision import (
+    select_multiple_transformation_revisions,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.io import IO, IOInterface
@@ -187,69 +187,86 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     return tr_json
 
 
-def deprecate_all_but_latest_in_group(revision_group_id: UUID) -> None:
+def deprecate_all_but_latest_in_group(
+    revision_group_id: UUID, directly_into_db: bool = False
+) -> None:
     logger.info(
         "Deprecate outdated transformation revisions of revision revision group %s",
         str(revision_group_id),
     )
-    get_response = requests.get(
-        posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-        params={"revision_group_id": str(revision_group_id)},
-        verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()  # type: ignore
-        if get_config().hd_backend_use_basic_auth
-        else None,
-        headers=get_auth_headers(),
-        timeout=get_config().external_request_timeout,
-    )
 
-    if get_response.status_code != 200:
-        msg = (
-            "COULD NOT GET transformation revisions for "
-            f'revision group id {revision_group_id}\n.'
-            f"Response status code {get_response.status_code}"
-            f"with response text:\n{get_response.text}"
+    tr_list: List[TransformationRevision] = []
+    if directly_into_db:
+        tr_list = select_multiple_transformation_revisions(
+            revision_group_id=revision_group_id, state=State.RELEASED
         )
-        logger.error(msg)
-
-    released_tr_dict: Dict[datetime,TransformationRevision] = {}
-    for released_tr_json in get_response.json():
-        if released_tr_json["state"] == State.RELEASED.value:
-            released_tr = TransformationRevision(**released_tr_json)
-            assert released_tr.released_timestamp is not None # hint for mypy
-            released_tr_dict[released_tr.released_timestamp] = released_tr
-
-    latest_timestamp = max(released_tr_dict.keys())
-    del released_tr_dict[latest_timestamp]
-
-    for released_timestamp, tr in released_tr_dict.items():
-        tr.deprecate()
-        logger.info(
-            "Deprecated transformation revision %s with released timestamp %s",
-            tr.id,
-            released_timestamp,
-        )
-        put_response = requests.put(
-            posix_urljoin(
-                get_config().hd_backend_api_url,
-                "transformations",
-                str(tr.id),
-            ),
+    else:
+        get_response = requests.get(
+            posix_urljoin(get_config().hd_backend_api_url, "transformations"),
+            params={
+                "revision_group_id": str(revision_group_id),
+                "state": State.RELEASED.value,
+            },
             verify=get_config().hd_backend_verify_certs,
-            json=json.loads(tr.json()),
             auth=get_backend_basic_auth()  # type: ignore
             if get_config().hd_backend_use_basic_auth
             else None,
             headers=get_auth_headers(),
             timeout=get_config().external_request_timeout,
         )
-        if put_response.status_code != 201:
+
+        if get_response.status_code != 200:
             msg = (
-                f"COULD NOT PUT {tr.id}\n."
-                f"Response status code {put_response.status_code}"
-                f"with response text:\n{put_response.text}"
+                "COULD NOT GET transformation revisions for "
+                f"revision group id {revision_group_id}\n."
+                f"Response status code {get_response.status_code}"
+                f"with response text:\n{get_response.text}"
             )
             logger.error(msg)
+
+        for tr_json in get_response.json():
+            tr_list.append(TransformationRevision(**tr_json))
+        
+
+    released_tr_dict: Dict[datetime, TransformationRevision] = {}
+    for released_tr in tr_list:
+        assert released_tr.released_timestamp is not None  # hint for mypy
+        released_tr_dict[released_tr.released_timestamp] = released_tr
+
+    latest_timestamp = max(released_tr_dict.keys())
+    del released_tr_dict[latest_timestamp]
+
+    for released_timestamp, tr in released_tr_dict.items():
+        tr.deprecate()
+        if directly_into_db:
+            update_or_create_single_transformation_revision(tr)
+        else:
+            logger.info(
+                "Deprecated transformation revision %s with released timestamp %s",
+                tr.id,
+                released_timestamp,
+            )
+            put_response = requests.put(
+                posix_urljoin(
+                    get_config().hd_backend_api_url,
+                    "transformations",
+                    str(tr.id),
+                ),
+                verify=get_config().hd_backend_verify_certs,
+                json=json.loads(tr.json()),
+                auth=get_backend_basic_auth()  # type: ignore
+                if get_config().hd_backend_use_basic_auth
+                else None,
+                headers=get_auth_headers(),
+                timeout=get_config().external_request_timeout,
+            )
+            if put_response.status_code != 201:
+                msg = (
+                    f"COULD NOT PUT {tr.id}\n."
+                    f"Response status code {put_response.status_code}"
+                    f"with response text:\n{put_response.text}"
+                )
+                logger.error(msg)
 
 
 # Base function to import a transformation revision
@@ -332,7 +349,7 @@ def import_transformations(
     This function imports all transformations together with their documentations.
     The download_path should be a path which contains the exported transformations
     organized in subdirectories corresponding to the categories.
-    The following parameters can be used to 
+    The following parameters can be used to
 
     - directly_into_db: If direct access to the database is possible, set this to true
         to ommit the detour via the backend
@@ -433,4 +450,6 @@ def import_transformations(
     if deprecate_older_revisions:
         logger.info("deprecate all but latest revision of imported revision groups")
         for revision_group_id in revision_group_ids:
-            deprecate_all_but_latest_in_group(revision_group_id)
+            deprecate_all_but_latest_in_group(
+                revision_group_id, directly_into_db=directly_into_db
+            )
