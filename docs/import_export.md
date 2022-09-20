@@ -83,4 +83,5 @@ To ignore test wirings when importing, simply add a keyword parameter `strip_wir
 
 ## Deprecate older revisions when importion new ones
 
-To make clear that only the latet revision group of a revision should be used, you might want to deprecate all revisions of the same revision group which have been released earlier than the newly imported revision. To automatically trigger their deprecation, simply add a keyword parameter `deprecate_older_revisions=True` to the call of the `import_transformations` function.
+To make it clear that only the latest revision group of a revision should be used, it may be useful to deprecate all other revisions of the same revision group. To trigger their deprecation automatically for all imported revision groups, simply add a keyword parameter `deprecate_older_revisions=True` to the call to the `import_transformations` function.
+If the latest revision of a revision group is stored in the database, all imported transformation revisions of this group will be deprecated.
