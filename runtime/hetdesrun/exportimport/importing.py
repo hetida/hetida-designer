@@ -187,35 +187,41 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     return tr_json
 
 
-def deprecate_all_but_latest_per_group(directly_into_db: bool = False) -> None:
+def get_transformation_revisions(
+    params: dict = {}, directly_into_db: bool = False
+) -> List[TransformationRevision]:
+    if directly_into_db:
+        return select_multiple_transformation_revisions(**params)
+
+    get_response = requests.get(
+        posix_urljoin(get_config().hd_backend_api_url, "transformations"),
+        params=json.loads(json.dumps(params)),
+        verify=get_config().hd_backend_verify_certs,
+        auth=get_backend_basic_auth()  # type: ignore
+        if get_config().hd_backend_use_basic_auth
+        else None,
+        headers=get_auth_headers(),
+        timeout=get_config().external_request_timeout,
+    )
+
+    if get_response.status_code != 200:
+        msg = (
+            "COULD NOT GET transformation revisions. "
+            f"Response status code {get_response.status_code}"
+            f"with response text:\n{get_response.text}"
+        )
+        logger.error(msg)
+
     tr_list: List[TransformationRevision] = []
 
-    if directly_into_db:
-        tr_list = select_multiple_transformation_revisions(state=State.RELEASED)
-    else:
-        get_response = requests.get(
-            posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-            params={
-                "state": State.RELEASED.value,
-            },
-            verify=get_config().hd_backend_verify_certs,
-            auth=get_backend_basic_auth()  # type: ignore
-            if get_config().hd_backend_use_basic_auth
-            else None,
-            headers=get_auth_headers(),
-            timeout=get_config().external_request_timeout,
-        )
+    for tr_json in get_response.json():
+        tr_list.append(TransformationRevision(**tr_json))
+    
+    return tr_list
 
-        if get_response.status_code != 200:
-            msg = (
-                "COULD NOT GET transformation revisions. "
-                f"Response status code {get_response.status_code}"
-                f"with response text:\n{get_response.text}"
-            )
-            logger.error(msg)
 
-        for tr_json in get_response.json():
-            tr_list.append(TransformationRevision(**tr_json))
+def deprecate_all_but_latest_per_group(directly_into_db: bool = False) -> None:
+    tr_list = get_transformation_revisions(params={"state": State.RELEASED})
 
     revision_group_ids: Set[UUID] = set()
 
@@ -234,37 +240,9 @@ def deprecate_all_but_latest_in_group(
         str(revision_group_id),
     )
 
-    tr_list: List[TransformationRevision] = []
-    if directly_into_db:
-        tr_list = select_multiple_transformation_revisions(
-            revision_group_id=revision_group_id, state=State.RELEASED
-        )
-    else:
-        get_response = requests.get(
-            posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-            params={
-                "revision_group_id": str(revision_group_id),
-                "state": State.RELEASED.value,
-            },
-            verify=get_config().hd_backend_verify_certs,
-            auth=get_backend_basic_auth()  # type: ignore
-            if get_config().hd_backend_use_basic_auth
-            else None,
-            headers=get_auth_headers(),
-            timeout=get_config().external_request_timeout,
-        )
-
-        if get_response.status_code != 200:
-            msg = (
-                "COULD NOT GET transformation revisions for "
-                f"revision group id {revision_group_id}\n."
-                f"Response status code {get_response.status_code}"
-                f"with response text:\n{get_response.text}"
-            )
-            logger.error(msg)
-
-        for tr_json in get_response.json():
-            tr_list.append(TransformationRevision(**tr_json))
+    tr_list = get_transformation_revisions(
+        params={"revision_group_id": revision_group_id, "state": State.RELEASED}
+    )
 
     released_tr_dict: Dict[datetime, TransformationRevision] = {}
     for released_tr in tr_list:
