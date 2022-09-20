@@ -21,6 +21,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type, get_backend_basic_auth, get_uuid_from_seed
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
@@ -187,7 +188,9 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     return tr_json
 
 
-def get_transformation_revisions_from_path(download_path: str) -> Dict[str, dict]:
+def get_transformation_revisions_from_path(
+    download_path: str,
+) -> Dict[UUID, TransformationRevision]:
     transformation_dict = {}
 
     for root, _, files in os.walk(download_path):
@@ -211,7 +214,14 @@ def get_transformation_revisions_from_path(download_path: str) -> Dict[str, dict
             if ext == ".json":
                 logger.info("Loading transformation from json file %s", path)
                 transformation_json = load_json(path)
-            transformation_dict[transformation_json["id"]] = transformation_json
+            try:
+                transformation = TransformationRevision(**transformation_json)
+            except ValueError as err:
+                logger.error(
+                    "ValueError for json from path %s:\n%s", download_path, str(err)
+                )
+            else:
+                transformation_dict[transformation.id] = transformation
 
     return transformation_dict
 
@@ -253,13 +263,11 @@ def get_transformation_revisions(
 
 
 def update_or_create_transformation_revision(
-    tr_json: dict,
+    tr: TransformationRevision,
     directly_into_db: bool = False,
     update_component_code: bool = True,
 ) -> None:
-
     if directly_into_db:
-        tr = TransformationRevision(**tr_json)
         logger.info(
             (
                 "Update or create database entry"
@@ -272,18 +280,17 @@ def update_or_create_transformation_revision(
             tr.name,
         )
         update_or_create_single_transformation_revision(tr)
-
     else:
         response = requests.put(
             posix_urljoin(
-                get_config().hd_backend_api_url, "transformations", tr_json["id"]
+                get_config().hd_backend_api_url, "transformations", str(tr.id)
             ),
             params={
                 "allow_overwrite_released": True,
                 "update_component_code": update_component_code,
             },
             verify=get_config().hd_backend_verify_certs,
-            json=tr_json,
+            json=json.loads(tr.json()),
             auth=get_backend_basic_auth()  # type: ignore
             if get_config().hd_backend_use_basic_auth
             else None,
@@ -292,14 +299,14 @@ def update_or_create_transformation_revision(
         )
         logger.info(
             ("PUT %s with id %s in category %s with name %s"),
-            tr_json["type"],
-            tr_json["id"],
-            tr_json["category"],
-            tr_json["name"],
+            tr.type,
+            tr.id,
+            tr.category,
+            tr.name,
         )
         if response.status_code != 201:
             msg = (
-                f'COULD NOT PUT {tr_json["type"]} with id {tr_json["id"]}\n.'
+                f"COULD NOT PUT {tr.type} with id {tr.id}\n."
                 f"Response status code {response.status_code}"
                 f"with response text:\n{response.text}"
             )
@@ -335,7 +342,7 @@ def deprecate_all_but_latest_in_group(
             released_timestamp,
         )
         update_or_create_transformation_revision(
-            json.loads(tr.json()), directly_into_db=directly_into_db
+            tr, directly_into_db=directly_into_db
         )
 
 
@@ -387,19 +394,22 @@ def import_transformations(
 
         transformation = transformation_dict[transformation_id]
 
+        if transformation.type == Type.COMPONENT:
+            return level
+
         level = level + 1
         nextlevel = level
-
-        for operator in transformation["content"]["operators"]:
-            if operator["type"] == Type.WORKFLOW:
+        assert isinstance(transformation.content, WorkflowContent)
+        for operator in transformation.content.operators:
+            if operator.type == Type.WORKFLOW:
                 logger.info(
                     "transformation %s contains workflow %s at nesting level %i",
                     str(transformation_id),
-                    operator["transformation_id"],
+                    operator.transformation_id,
                     level,
                 )
                 nextlevel = max(
-                    nextlevel, nesting_level(operator["transformation_id"], level=level)
+                    nextlevel, nesting_level(operator.transformation_id, level=level)
                 )
 
         return nextlevel
@@ -407,16 +417,14 @@ def import_transformations(
     level_dict: Dict[int, List[UUID]] = {}
 
     for transformation_id, transformation in transformation_dict.items():
-        level = 0
-        if transformation["type"] == Type.WORKFLOW:
-            level = nesting_level(transformation_id, level=level)
+        level = nesting_level(transformation_id, level=0)
         if level not in level_dict:
             level_dict[level] = []
         level_dict[level].append(transformation_id)
         logger.info(
             "transformation %s of type %s has nesting level %i",
             str(transformation_id),
-            transformation["type"],
+            transformation.type,
             level,
         )
 
@@ -425,10 +433,7 @@ def import_transformations(
         for transformation_id in level_dict[level]:
             transformation = transformation_dict[transformation_id]
             if strip_wirings:
-                transformation["test_wiring"] = {
-                    "input_wirings": [],
-                    "output_wirings": [],
-                }
+                transformation.test_wiring = WorkflowWiring()
             update_or_create_transformation_revision(
                 transformation,
                 directly_into_db=directly_into_db,
@@ -439,7 +444,7 @@ def import_transformations(
 
     if deprecate_older_revisions:
         revision_group_ids = set(
-            transformation["revision_group_id"]
+            transformation.revision_group_id
             for _, transformation in transformation_dict.items()
         )
         logger.info("deprecate all but latest revision of imported revision groups")
