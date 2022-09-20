@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 
 from hetdesrun.exportimport.importing import (
     deprecate_all_but_latest_in_group,
-    import_transformation,
+    update_or_create_transformation_revision,
     import_transformations,
     load_json,
     transformation_revision_from_python_code,
@@ -56,7 +56,7 @@ def test_import_single_transformation(clean_test_db_engine):
             "consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json"
         )
         tr_json = load_json(path)
-        import_transformation(tr_json, directly_into_db=True)
+        update_or_create_transformation_revision(tr_json, directly_into_db=True)
         persisted_tr = read_single_transformation_revision(UUID(tr_json["id"]))
         tr = TransformationRevision(**tr_json)
 

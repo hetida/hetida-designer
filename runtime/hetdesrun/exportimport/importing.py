@@ -223,7 +223,7 @@ def get_transformation_revisions(
     return tr_list
 
 
-def import_transformation(
+def update_or_create_transformation_revision(
     tr_json: dict,
     directly_into_db: bool = False,
     update_component_code: bool = True,
@@ -262,9 +262,7 @@ def import_transformation(
             timeout=get_config().external_request_timeout,
         )
         logger.info(
-            (
-                "PUT %s with id %s in category %s with name %s"
-            ),
+            ("PUT %s with id %s in category %s with name %s"),
             tr_json["type"],
             tr_json["id"],
             tr_json["category"],
@@ -307,7 +305,7 @@ def deprecate_all_but_latest_in_group(
             tr.id,
             released_timestamp,
         )
-        import_transformation(
+        update_or_create_transformation_revision(
             json.loads(tr.json()), directly_into_db=directly_into_db
         )
 
@@ -425,8 +423,11 @@ def import_transformations(
         for transformation_id in level_dict[level]:
             transformation = transformation_dict[transformation_id]
             if strip_wirings:
-                transformation["test_wiring"] = {"input_wirings": [], "output_wirings": []}
-            import_transformation(
+                transformation["test_wiring"] = {
+                    "input_wirings": [],
+                    "output_wirings": [],
+                }
+            update_or_create_transformation_revision(
                 transformation,
                 directly_into_db=directly_into_db,
                 update_component_code=update_component_code,
