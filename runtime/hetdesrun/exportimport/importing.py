@@ -219,7 +219,7 @@ def deprecate_all_but_latest(revision_group_id: UUID) -> None:
             assert released_tr.released_timestamp is not None # hint for mypy
             released_tr_dict[released_tr.released_timestamp] = released_tr
 
-    latest_timestamp = min(released_tr_dict.keys())
+    latest_timestamp = max(released_tr_dict.keys())
     del released_tr_dict[latest_timestamp]
 
     for released_timestamp, tr in released_tr_dict.items():
