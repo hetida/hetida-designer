@@ -160,8 +160,8 @@ async def get_all_transformation_revisions(
             "Set to True to obtain only those transformation revisions with "
             "state DISABLED that are not contained in workflows that do not "
             "have the state DISABLED themselves, too."
-        )
-    )
+        ),
+    ),
 ) -> List[TransformationRevision]:
     """Get all transformation revisions from the data base.
 
