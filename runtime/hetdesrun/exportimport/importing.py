@@ -188,8 +188,11 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
 
 
 def get_transformation_revisions(
-    params: dict = {}, directly_into_db: bool = False
+    params: Optional[dict] = None, directly_into_db: bool = False
 ) -> List[TransformationRevision]:
+    if params is None:
+        params = {}
+
     if directly_into_db:
         return select_multiple_transformation_revisions(**params)
 
@@ -216,7 +219,7 @@ def get_transformation_revisions(
 
     for tr_json in get_response.json():
         tr_list.append(TransformationRevision(**tr_json))
-    
+
     return tr_list
 
 
