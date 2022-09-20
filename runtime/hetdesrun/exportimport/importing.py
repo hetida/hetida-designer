@@ -4,7 +4,7 @@ import logging
 import os
 from datetime import datetime, timezone
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Set, Optional
+from typing import Any, Dict, List, Optional, Set
 from urllib.error import HTTPError
 from uuid import UUID
 
@@ -187,7 +187,7 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     return tr_json
 
 
-def deprecate_all_but_latest(revision_group_id: UUID) -> None:
+def deprecate_all_but_latest_in_group(revision_group_id: UUID) -> None:
     logger.info(
         "Deprecate outdated transformation revisions of revision revision group %s",
         str(revision_group_id),
@@ -433,4 +433,4 @@ def import_transformations(
     if deprecate_older_revisions:
         logger.info("deprecate all but latest revision of imported revision groups")
         for revision_group_id in revision_group_ids:
-            deprecate_all_but_latest(revision_group_id)
+            deprecate_all_but_latest_in_group(revision_group_id)

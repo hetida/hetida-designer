@@ -8,7 +8,7 @@ from unittest import mock
 from uuid import UUID, uuid4
 
 from hetdesrun.exportimport.importing import (
-    deprecate_all_but_latest,
+    deprecate_all_but_latest_in_group,
     import_transformation,
     import_transformations,
     load_json,
@@ -192,7 +192,7 @@ def test_deprecate_all_but_latest_in_group():
             "hetdesrun.exportimport.importing.requests.put",
             return_value=put_response_mock,
         ) as patched_put:
-            deprecate_all_but_latest(import_wf_json)
+            deprecate_all_but_latest_in_group(import_wf_json)
 
             assert patched_get.call_count == 1
 
