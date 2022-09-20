@@ -160,7 +160,7 @@ def test_import_with_deprecate_older_versions():
     assert patched_deprecate_group.call_count > 10
 
 
-def test_deprecate_older_revisions_in_group():
+def test_deprecate_all_but_latest_in_group():
     path = os.path.join(
         "tests",
         "data",
