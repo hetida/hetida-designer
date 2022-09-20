@@ -2,10 +2,12 @@ import json
 import logging
 from posixpath import join as posix_urljoin
 from typing import List, Optional
+from uuid import UUID
 
 import requests
 
 from hetdesrun.persistence.dbservice.revision import (
+    delete_single_transformation_revision,
     select_multiple_transformation_revisions,
     update_or_create_single_transformation_revision,
 )
@@ -98,6 +100,32 @@ def update_or_create_transformation_revision(
         if response.status_code != 201:
             msg = (
                 f"COULD NOT PUT {tr.type} with id {tr.id}\n."
+                f"Response status code {response.status_code}"
+                f"with response text:\n{response.text}"
+            )
+            logger.error(msg)
+
+
+def delete_transformation_revision(id: UUID, directly_into_db: bool = False) -> None:
+    if directly_into_db:
+        delete_single_transformation_revision(id)
+    else:
+        response = requests.delete(
+            posix_urljoin(get_config().hd_backend_api_url, "transformations", str(id)),
+            verify=get_config().hd_backend_verify_certs,
+            auth=get_backend_basic_auth()  # type: ignore
+            if get_config().hd_backend_use_basic_auth
+            else None,
+            headers=get_auth_headers(),
+            timeout=get_config().external_request_timeout,
+        )
+        logger.info(
+            ("DELETE transformation revision with id %s "),
+            id,
+        )
+        if response.status_code != 204:
+            msg = (
+                f"COULD NOT DELETE transforamtion revision with id {id}\n."
                 f"Response status code {response.status_code}"
                 f"with response text:\n{response.text}"
             )
