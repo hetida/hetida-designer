@@ -3,28 +3,21 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 from uuid import UUID
-
-import requests
 
 from hetdesrun.component.load import (
     ComponentCodeImportError,
     import_func_from_code,
     module_path_from_code,
 )
+from hetdesrun.exportimport.purge import deprecate_all_but_latest_in_group
+from hetdesrun.exportimport.utils import update_or_create_transformation_revision
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.dbservice.revision import (
-    select_multiple_transformation_revisions,
-    update_or_create_single_transformation_revision,
-)
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.utils import State, Type, get_backend_basic_auth, get_uuid_from_seed
-from hetdesrun.webservice.auth_dependency import get_auth_headers
-from hetdesrun.webservice.config import get_config
+from hetdesrun.utils import Type, get_uuid_from_seed
 
 logger = logging.getLogger(__name__)
 
@@ -224,138 +217,6 @@ def get_transformation_revisions_from_path(
                 transformation_dict[transformation.id] = transformation
 
     return transformation_dict
-
-
-def get_transformation_revisions(
-    params: Optional[dict] = None, directly_into_db: bool = False
-) -> List[TransformationRevision]:
-    if params is None:
-        params = {}
-
-    if directly_into_db:
-        return select_multiple_transformation_revisions(**params)
-
-    get_response = requests.get(
-        posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-        params=json.loads(json.dumps(params)),
-        verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()  # type: ignore
-        if get_config().hd_backend_use_basic_auth
-        else None,
-        headers=get_auth_headers(),
-        timeout=get_config().external_request_timeout,
-    )
-
-    if get_response.status_code != 200:
-        msg = (
-            "COULD NOT GET transformation revisions. "
-            f"Response status code {get_response.status_code}"
-            f"with response text:\n{get_response.text}"
-        )
-        logger.error(msg)
-
-    tr_list: List[TransformationRevision] = []
-
-    for tr_json in get_response.json():
-        tr_list.append(TransformationRevision(**tr_json))
-
-    return tr_list
-
-
-def update_or_create_transformation_revision(
-    tr: TransformationRevision,
-    directly_into_db: bool = False,
-    update_component_code: bool = True,
-) -> None:
-    if directly_into_db:
-        logger.info(
-            (
-                "Update or create database entry"
-                " for transformation revision %s of type %s\n"
-                "in category %s with name %s"
-            ),
-            str(tr.id),
-            str(tr.type),
-            tr.category,
-            tr.name,
-        )
-        update_or_create_single_transformation_revision(tr)
-    else:
-        response = requests.put(
-            posix_urljoin(
-                get_config().hd_backend_api_url, "transformations", str(tr.id)
-            ),
-            params={
-                "allow_overwrite_released": True,
-                "update_component_code": update_component_code,
-            },
-            verify=get_config().hd_backend_verify_certs,
-            json=json.loads(tr.json()),
-            auth=get_backend_basic_auth()  # type: ignore
-            if get_config().hd_backend_use_basic_auth
-            else None,
-            headers=get_auth_headers(),
-            timeout=get_config().external_request_timeout,
-        )
-        logger.info(
-            ("PUT %s with id %s in category %s with name %s"),
-            tr.type,
-            tr.id,
-            tr.category,
-            tr.name,
-        )
-        if response.status_code != 201:
-            msg = (
-                f"COULD NOT PUT {tr.type} with id {tr.id}\n."
-                f"Response status code {response.status_code}"
-                f"with response text:\n{response.text}"
-            )
-            logger.error(msg)
-
-
-def deprecate_all_but_latest_in_group(
-    revision_group_id: UUID, directly_into_db: bool = False
-) -> None:
-    logger.info(
-        "Deprecate outdated transformation revisions of revision revision group %s",
-        str(revision_group_id),
-    )
-
-    tr_list = get_transformation_revisions(
-        params={"revision_group_id": revision_group_id, "state": State.RELEASED},
-        directly_into_db=directly_into_db,
-    )
-
-    released_tr_dict: Dict[datetime, TransformationRevision] = {}
-    for released_tr in tr_list:
-        assert released_tr.released_timestamp is not None  # hint for mypy
-        released_tr_dict[released_tr.released_timestamp] = released_tr
-
-    latest_timestamp = max(released_tr_dict.keys())
-    del released_tr_dict[latest_timestamp]
-
-    for released_timestamp, tr in released_tr_dict.items():
-        tr.deprecate()
-        logger.info(
-            "Deprecated transformation revision %s with released timestamp %s",
-            tr.id,
-            released_timestamp,
-        )
-        update_or_create_transformation_revision(
-            tr, directly_into_db=directly_into_db
-        )
-
-
-def deprecate_all_but_latest_per_group(directly_into_db: bool = False) -> None:
-    tr_list = get_transformation_revisions(params={"state": State.RELEASED})
-
-    revision_group_ids: Set[UUID] = set()
-
-    for tr in tr_list:
-        revision_group_ids.add(tr.revision_group_id)
-
-    for revision_group_id in revision_group_ids:
-        deprecate_all_but_latest_in_group(revision_group_id, directly_into_db)
 
 
 def import_transformations(
