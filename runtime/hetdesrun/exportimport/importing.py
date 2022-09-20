@@ -4,7 +4,8 @@ import logging
 import os
 from datetime import datetime, timezone
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Set, Optional
+from urllib.error import HTTPError
 from uuid import UUID
 
 import requests
@@ -186,14 +187,14 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     return tr_json
 
 
-def deprecate_older_revisions_in_group(tr_json: dict) -> None:
+def deprecate_all_but_latest(revision_group_id: UUID) -> None:
     logger.info(
         "Deprecate outdated transformation revisions of revision revision group %s",
-        tr_json["revision_group_id"],
+        str(revision_group_id),
     )
     get_response = requests.get(
         posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-        params={"revision_group_id": tr_json["revision_group_id"]},
+        params={"revision_group_id": str(revision_group_id)},
         verify=get_config().hd_backend_verify_certs,
         auth=get_backend_basic_auth()  # type: ignore
         if get_config().hd_backend_use_basic_auth
@@ -205,47 +206,51 @@ def deprecate_older_revisions_in_group(tr_json: dict) -> None:
     if get_response.status_code != 200:
         msg = (
             "COULD NOT GET transformation revisions for "
-            f'revision group id {tr_json["revision_group_id"]}\n.'
+            f'revision group id {revision_group_id}\n.'
             f"Response status code {get_response.status_code}"
             f"with response text:\n{get_response.text}"
         )
         logger.error(msg)
-    else:
-        for revision_group_tr_json in get_response.json():
-            if revision_group_tr_json["state"] == State.RELEASED.value and (
-                datetime.fromisoformat(revision_group_tr_json["released_timestamp"])
-                < datetime.fromisoformat(tr_json["released_timestamp"])
-            ):
-                revision_group_tr_json["state"] = State.DISABLED.value
-                revision_group_tr_json["disabled_timestamp"] = datetime.now(
-                    timezone.utc
-                )
-                logger.info(
-                    "Disable transformation revision %s with released timestamp %s",
-                    revision_group_tr_json["id"],
-                    revision_group_tr_json["released_timestamp"],
-                )
-                put_response = requests.put(
-                    posix_urljoin(
-                        get_config().hd_backend_api_url,
-                        "transformations",
-                        revision_group_tr_json["id"],
-                    ),
-                    verify=get_config().hd_backend_verify_certs,
-                    json=revision_group_tr_json,
-                    auth=get_backend_basic_auth()  # type: ignore
-                    if get_config().hd_backend_use_basic_auth
-                    else None,
-                    headers=get_auth_headers(),
-                    timeout=get_config().external_request_timeout,
-                )
-                if put_response.status_code != 201:
-                    msg = (
-                        f"COULD NOT PUT {revision_group_tr_json['type']}\n."
-                        f"Response status code {put_response.status_code}"
-                        f"with response text:\n{put_response.text}"
-                    )
-                    logger.error(msg)
+        raise HTTPError
+
+    revision_group_released_tr_dict: Dict[datetime,TransformationRevision] = {}
+    for revision_group_tr_json in get_response.json():
+        if revision_group_tr_json["state"] == State.RELEASED.value:
+            revision_group_tr = TransformationRevision(**revision_group_tr_json)
+            assert revision_group_tr.released_timestamp is not None # hint for mypy
+            revision_group_released_tr_dict[revision_group_tr.released_timestamp] = revision_group_tr
+
+    latest_timestamp = min(revision_group_released_tr_dict.keys())
+    del revision_group_released_tr_dict[latest_timestamp]
+
+    for released_timestamp, tr in revision_group_released_tr_dict.items():
+        tr.deprecate()
+        logger.info(
+            "Deprecated transformation revision %s with released timestamp %s",
+            tr.id,
+            released_timestamp,
+        )
+        put_response = requests.put(
+            posix_urljoin(
+                get_config().hd_backend_api_url,
+                "transformations",
+                str(tr.id),
+            ),
+            verify=get_config().hd_backend_verify_certs,
+            json=json.loads(tr.json()),
+            auth=get_backend_basic_auth()  # type: ignore
+            if get_config().hd_backend_use_basic_auth
+            else None,
+            headers=get_auth_headers(),
+            timeout=get_config().external_request_timeout,
+        )
+        if put_response.status_code != 201:
+            msg = (
+                f"COULD NOT PUT {tr.id}\n."
+                f"Response status code {put_response.status_code}"
+                f"with response text:\n{put_response.text}"
+            )
+            logger.error(msg)
 
 
 # Base function to import a transformation revision
@@ -255,7 +260,6 @@ def import_transformation(
     strip_wirings: bool = False,
     directly_into_db: bool = False,
     update_component_code: bool = True,
-    deprecate_older_revisions: bool = False,
 ) -> None:
 
     if strip_wirings:
@@ -315,9 +319,6 @@ def import_transformation(
             )
             logger.error(msg)
 
-        if deprecate_older_revisions:
-            deprecate_older_revisions_in_group(tr_json)
-
 
 # Import all transformations from download_path based on type, id, name and category
 def import_transformations(
@@ -339,6 +340,7 @@ def import_transformations(
 
     path_dict = {}
     transformation_dict = {}
+    revision_group_ids: Set[UUID] = set()
 
     for root, _, files in os.walk(download_path):
         for file in files:
@@ -361,6 +363,7 @@ def import_transformations(
             if ext == ".json":
                 logger.info("Loading transformation from json file %s", path)
                 transformation_json = load_json(path)
+            revision_group_ids.add(transformation_json["revision_group_id"])
             transformation_dict[transformation_json["id"]] = transformation_json
             path_dict[transformation_json["id"]] = path
 
@@ -411,7 +414,10 @@ def import_transformations(
                 strip_wirings=strip_wirings,
                 directly_into_db=directly_into_db,
                 update_component_code=update_component_code,
-                deprecate_older_revisions=deprecate_older_revisions,
             )
 
     logger.info("finished importing")
+
+    if deprecate_older_revisions:
+        for revision_group_id in revision_group_ids:
+            deprecate_all_but_latest(revision_group_id)
