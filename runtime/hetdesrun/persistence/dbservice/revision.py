@@ -218,7 +218,8 @@ def is_unused(transformation_id: UUID) -> bool:
             .where(TransformationRevisionDBModel.state != State.DISABLED)
         )
 
-    if selection is None:
+    results = session.execute(selection).scalars().all()
+    if len(results) == 0:
         return True
 
     return False
