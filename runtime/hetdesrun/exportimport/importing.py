@@ -11,8 +11,10 @@ from hetdesrun.component.load import (
     import_func_from_code,
     module_path_from_code,
 )
-from hetdesrun.exportimport.purge import deprecate_all_but_latest_in_group
-from hetdesrun.exportimport.utils import update_or_create_transformation_revision
+from hetdesrun.exportimport.utils import (
+    deprecate_all_but_latest_in_group,
+    update_or_create_transformation_revision,
+)
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision

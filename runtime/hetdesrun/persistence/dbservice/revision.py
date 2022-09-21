@@ -199,6 +199,7 @@ def delete_single_transformation_revision(
             )
         )
 
+
 def is_unused(transformation_id: UUID) -> bool:
     """Determine if transformation revision is unused.
 
@@ -211,13 +212,16 @@ def is_unused(transformation_id: UUID) -> bool:
 
         containing_wf_ids = [nesting.workflow_id for nesting in sup_nestings]
 
-        selection = select(TransformationRevisionDBModel).where(TransformationRevisionDBModel.id.in_(containing_wf_ids)).where(TransformationRevisionDBModel.state != State.DISABLED)
-    
-    if (selection is None):
+        selection = (
+            select(TransformationRevisionDBModel)
+            .where(TransformationRevisionDBModel.id.in_(containing_wf_ids))
+            .where(TransformationRevisionDBModel.state != State.DISABLED)
+        )
+
+    if selection is None:
         return True
 
     return False
-
 
 
 # pylint: disable=redefined-builtin

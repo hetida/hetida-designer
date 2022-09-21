@@ -1,7 +1,8 @@
 import json
 import logging
+from datetime import datetime
 from posixpath import join as posix_urljoin
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 import requests
@@ -12,7 +13,7 @@ from hetdesrun.persistence.dbservice.revision import (
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import get_backend_basic_auth
+from hetdesrun.utils import State, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
 
@@ -106,7 +107,9 @@ def update_or_create_transformation_revision(
             logger.error(msg)
 
 
-def delete_transformation_revision(id: UUID, directly_into_db: bool = False) -> None:
+def delete_transformation_revision(
+    id: UUID, directly_into_db: bool = False  # pylint: disable=redefined-builtin
+) -> None:
     if directly_into_db:
         delete_single_transformation_revision(id)
     else:
@@ -130,3 +133,34 @@ def delete_transformation_revision(id: UUID, directly_into_db: bool = False) -> 
                 f"with response text:\n{response.text}"
             )
             logger.error(msg)
+
+
+def deprecate_all_but_latest_in_group(
+    revision_group_id: UUID, directly_into_db: bool = False
+) -> None:
+    logger.info(
+        "Deprecate outdated transformation revisions of revision revision group %s",
+        str(revision_group_id),
+    )
+
+    tr_list = get_transformation_revisions(
+        params={"revision_group_id": revision_group_id, "state": State.RELEASED},
+        directly_into_db=directly_into_db,
+    )
+
+    released_tr_dict: Dict[datetime, TransformationRevision] = {}
+    for released_tr in tr_list:
+        assert released_tr.released_timestamp is not None  # hint for mypy
+        released_tr_dict[released_tr.released_timestamp] = released_tr
+
+    latest_timestamp = max(released_tr_dict.keys())
+    del released_tr_dict[latest_timestamp]
+
+    for released_timestamp, tr in released_tr_dict.items():
+        tr.deprecate()
+        logger.info(
+            "Deprecated transformation revision %s with released timestamp %s",
+            tr.id,
+            released_timestamp,
+        )
+        update_or_create_transformation_revision(tr, directly_into_db=directly_into_db)
