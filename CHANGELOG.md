@@ -1,4 +1,4 @@
-## 8.0.1
+## 0.8.1
 * improve contextualized logging
 * add async (web hook / callback) execution web endpoint
 * minor improvements and fixes
