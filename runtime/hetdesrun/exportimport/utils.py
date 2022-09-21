@@ -21,12 +21,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_transformation_revisions(
-    params: Optional[dict] = None, directly_into_db: bool = False
+    params: Optional[dict] = None, directly_from_db: bool = False
 ) -> List[TransformationRevision]:
     if params is None:
         params = {}
 
-    if directly_into_db:
+    if directly_from_db:
         return select_multiple_transformation_revisions(**params)
 
     get_response = requests.get(
@@ -58,10 +58,10 @@ def get_transformation_revisions(
 
 def update_or_create_transformation_revision(
     tr: TransformationRevision,
-    directly_into_db: bool = False,
+    directly_in_db: bool = False,
     update_component_code: bool = True,
 ) -> None:
-    if directly_into_db:
+    if directly_in_db:
         logger.info(
             (
                 "Update or create database entry"
@@ -108,9 +108,9 @@ def update_or_create_transformation_revision(
 
 
 def delete_transformation_revision(
-    id: UUID, directly_into_db: bool = False  # pylint: disable=redefined-builtin
+    id: UUID, directly_in_db: bool = False  # pylint: disable=redefined-builtin
 ) -> None:
-    if directly_into_db:
+    if directly_in_db:
         delete_single_transformation_revision(id)
     else:
         response = requests.delete(
@@ -136,7 +136,7 @@ def delete_transformation_revision(
 
 
 def deprecate_all_but_latest_in_group(
-    revision_group_id: UUID, directly_into_db: bool = False
+    revision_group_id: UUID, directly_in_db: bool = False
 ) -> None:
     logger.info(
         "Deprecate outdated transformation revisions of revision revision group %s",
@@ -145,7 +145,7 @@ def deprecate_all_but_latest_in_group(
 
     tr_list = get_transformation_revisions(
         params={"revision_group_id": revision_group_id, "state": State.RELEASED},
-        directly_into_db=directly_into_db,
+        directly_from_db=directly_in_db,
     )
 
     released_tr_dict: Dict[datetime, TransformationRevision] = {}
@@ -163,4 +163,4 @@ def deprecate_all_but_latest_in_group(
             tr.id,
             released_timestamp,
         )
-        update_or_create_transformation_revision(tr, directly_into_db=directly_into_db)
+        update_or_create_transformation_revision(tr, directly_in_db=directly_in_db)

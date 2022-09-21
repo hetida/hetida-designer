@@ -50,7 +50,7 @@ def test_import_single_transformation(clean_test_db_engine):
         )
         tr_json = load_json(path)
         tr = TransformationRevision(**tr_json)
-        update_or_create_transformation_revision(tr, directly_into_db=True)
+        update_or_create_transformation_revision(tr, directly_in_db=True)
         persisted_tr = read_single_transformation_revision(tr.id)
 
         assert persisted_tr == tr

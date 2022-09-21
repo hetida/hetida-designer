@@ -299,7 +299,7 @@ def import_transformations(
                 transformation.test_wiring = WorkflowWiring()
             update_or_create_transformation_revision(
                 transformation,
-                directly_into_db=directly_into_db,
+                directly_in_db=directly_into_db,
                 update_component_code=update_component_code,
             )
 
@@ -313,5 +313,5 @@ def import_transformations(
         logger.info("deprecate all but latest revision of imported revision groups")
         for revision_group_id in revision_group_ids:
             deprecate_all_but_latest_in_group(
-                revision_group_id, directly_into_db=directly_into_db
+                revision_group_id, directly_in_db=directly_into_db
             )
