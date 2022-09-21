@@ -8,6 +8,7 @@ from uuid import UUID
 import requests
 from pydantic import BaseModel
 
+from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     select_multiple_transformation_revisions,
@@ -17,9 +18,9 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
-from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 
 logger = logging.getLogger(__name__)
+
 
 class FilterParams(BaseModel):
     type: Optional[Type]
@@ -30,6 +31,7 @@ class FilterParams(BaseModel):
     names: Optional[List[NonEmptyValidStr]]
     include_deprecated: bool = True
     unused: bool = False
+
 
 def get_transformation_revisions(
     params: Optional[FilterParams] = None, directly_from_db: bool = False
