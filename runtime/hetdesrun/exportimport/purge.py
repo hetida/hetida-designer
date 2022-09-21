@@ -76,7 +76,7 @@ def delete_drafts(directly_into_db: bool = False) -> None:
 
 def delete_unused_deprecated(directly_into_db: bool = False) -> None:
     tr_list = get_transformation_revisions(
-        params={"state": State.DISABLED},
+        params={"state": State.DISABLED, "unused": True},
         directly_into_db=directly_into_db,
     )
 

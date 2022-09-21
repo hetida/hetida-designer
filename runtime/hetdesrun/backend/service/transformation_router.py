@@ -154,12 +154,11 @@ async def get_all_transformation_revisions(
             "this will not affect included dependent transformation revisions"
         ),
     ),
-    unused_deprecated: bool = Query(
+    unused: bool = Query(
         False,
         description=(
-            "Set to True to obtain only those transformation revisions with "
-            "state DISABLED that are not contained in workflows that do not "
-            "have the state DISABLED themselves, too."
+            "Set to True to obtain only those transformation revisions that are "
+            "not contained in workflows that do not have the state DISABLED."
         ),
     ),
 ) -> List[TransformationRevision]:
@@ -181,9 +180,9 @@ async def get_all_transformation_revisions(
             case=not include_deprecated,
         )
         + info(
-            " that are deprecated and unused",
-            unused_deprecated,
-            case=unused_deprecated,
+            " that are unused",
+            unused,
+            case=unused,
         )
         + info("\nwith ids ", ids)
         + info("\nwith names ", names)
@@ -205,7 +204,7 @@ async def get_all_transformation_revisions(
             ids=ids,
             names=names,
             include_deprecated=include_deprecated,
-            unused_deprecated=unused_deprecated,
+            unused=unused,
         )
     except DBIntegrityError as e:
         raise HTTPException(

@@ -199,6 +199,26 @@ def delete_single_transformation_revision(
             )
         )
 
+def is_unused(transformation_id: UUID) -> bool:
+    """Determine if transformation revision is unused.
+
+    More precisely: Determine if specified transformation revision is only contained in
+    transformation revisions which are deprecated, i.e. have the state DISABLED.
+    """
+
+    with Session() as session, session.begin():
+        sup_nestings = find_all_nestings(session, transformation_id)
+
+        containing_wf_ids = [nesting.workflow_id for nesting in sup_nestings]
+
+        selection = select(TransformationRevisionDBModel).where(TransformationRevisionDBModel.id.in_(containing_wf_ids)).where(TransformationRevisionDBModel.state != State.DISABLED)
+    
+    if (selection is None):
+        return True
+
+    return False
+
+
 
 # pylint: disable=redefined-builtin
 def select_multiple_transformation_revisions(
@@ -209,6 +229,7 @@ def select_multiple_transformation_revisions(
     ids: Optional[List[UUID]] = None,
     names: Optional[List[NonEmptyValidStr]] = None,
     include_deprecated: bool = True,
+    unused: bool = False,
 ) -> List[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
     with Session() as session, session.begin():
@@ -239,7 +260,12 @@ def select_multiple_transformation_revisions(
 
         results = session.execute(selection).scalars().all()
 
-        return [TransformationRevision.from_orm_model(result) for result in results]
+        tr_list = [TransformationRevision.from_orm_model(result) for result in results]
+
+        if unused:
+            tr_list = [tr for tr in tr_list if is_unused(tr.id)]
+
+        return tr_list
 
 
 def nof_db_entries() -> int:
