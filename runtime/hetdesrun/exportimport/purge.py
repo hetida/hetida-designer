@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Dict, Set
+from typing import Dict, List, Set
 from uuid import UUID
 
 from hetdesrun.exportimport.utils import (
@@ -11,6 +11,9 @@ from hetdesrun.exportimport.utils import (
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State
 from runtime.hetdesrun.exportimport.importing import import_transformations
+from runtime.hetdesrun.persistence.dbservice.revision import (
+    all_containing_transformation_revisions_deprecated,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +50,9 @@ def deprecate_all_but_latest_in_group(
 
 
 def deprecate_all_but_latest_per_group(directly_into_db: bool = False) -> None:
-    tr_list = get_transformation_revisions(params={"state": State.RELEASED}, directly_into_db=directly_into_db)
+    tr_list = get_transformation_revisions(
+        params={"state": State.RELEASED}, directly_into_db=directly_into_db
+    )
 
     revision_group_ids: Set[UUID] = set()
 
@@ -55,18 +60,25 @@ def deprecate_all_but_latest_per_group(directly_into_db: bool = False) -> None:
         revision_group_ids.add(tr.revision_group_id)
 
     for revision_group_id in revision_group_ids:
-        deprecate_all_but_latest_in_group(revision_group_id, directly_into_db=directly_into_db)
+        deprecate_all_but_latest_in_group(
+            revision_group_id, directly_into_db=directly_into_db
+        )
 
 
 def delete_drafts(directly_into_db: bool = False) -> None:
-    tr_list = get_transformation_revisions(params={"state": State.DRAFT}, directly_into_db=directly_into_db)
+    tr_list = get_transformation_revisions(
+        params={"state": State.DRAFT}, directly_into_db=directly_into_db
+    )
 
     for tr in tr_list:
         delete_transformation_revision(tr.id, directly_into_db=directly_into_db)
 
 
 def delete_unused_deprecated(directly_into_db: bool = False) -> None:
-    tr_list = get_transformation_revisions(params={"state": State.DISABLED},directly_into_db=directly_into_db)
+    tr_list = get_transformation_revisions(
+        params={"state": State.DISABLED},
+        directly_into_db=directly_into_db,
+    )
 
     for tr in tr_list:
         delete_transformation_revision(tr.id, directly_into_db=directly_into_db)
