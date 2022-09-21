@@ -47,7 +47,7 @@ def deprecate_all_but_latest_in_group(
 
 
 def deprecate_all_but_latest_per_group(directly_into_db: bool = False) -> None:
-    tr_list = get_transformation_revisions(params={"state": State.RELEASED})
+    tr_list = get_transformation_revisions(params={"state": State.RELEASED}, directly_into_db=directly_into_db)
 
     revision_group_ids: Set[UUID] = set()
 
@@ -55,25 +55,25 @@ def deprecate_all_but_latest_per_group(directly_into_db: bool = False) -> None:
         revision_group_ids.add(tr.revision_group_id)
 
     for revision_group_id in revision_group_ids:
-        deprecate_all_but_latest_in_group(revision_group_id, directly_into_db)
+        deprecate_all_but_latest_in_group(revision_group_id, directly_into_db=directly_into_db)
 
 
 def delete_drafts(directly_into_db: bool = False) -> None:
-    tr_list = get_transformation_revisions(params={"state": State.DRAFT})
+    tr_list = get_transformation_revisions(params={"state": State.DRAFT}, directly_into_db=directly_into_db)
 
     for tr in tr_list:
         delete_transformation_revision(tr.id, directly_into_db=directly_into_db)
 
 
 def delete_unused_deprecated(directly_into_db: bool = False) -> None:
-    tr_list = get_transformation_revisions(params={"unused_deprecated": True})
+    tr_list = get_transformation_revisions(params={"state": State.DISABLED},directly_into_db=directly_into_db)
 
     for tr in tr_list:
         delete_transformation_revision(tr.id, directly_into_db=directly_into_db)
 
 
 def delete_all_restart(directly_into_db: bool = False) -> None:
-    tr_list = get_transformation_revisions()
+    tr_list = get_transformation_revisions(directly_into_db=directly_into_db)
 
     for tr in tr_list:
         delete_transformation_revision(tr.id, directly_into_db=directly_into_db)
