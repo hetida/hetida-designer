@@ -1,7 +1,10 @@
+from copy import deepcopy
 from unittest import mock
+from uuid import UUID, uuid4
 
 import pytest
 
+from hetdesrun.datatypes import DataType
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
@@ -17,8 +20,16 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
-from hetdesrun.persistence.models.io import IOInterface
+from hetdesrun.persistence.models.io import (
+    IO,
+    Connector,
+    IOConnector,
+    IOInterface,
+    Position,
+)
+from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 
@@ -268,6 +279,137 @@ def test_multiple_select(clean_test_db_engine):
         update_or_create_single_transformation_revision(tr_object_3)
         results = select_multiple_transformation_revisions(include_deprecated=False)
         assert len(results) == 2
+
+
+def test_multiple_select_unused(clean_test_db_engine):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        tr_component_not_contained = TransformationRevision(
+            id=uuid4(),
+            revision_group_id=uuid4(),
+            name="name",
+            category="category",
+            version_tag="1.0.0",
+            type=Type.COMPONENT,
+            documentation="",
+            state=State.DRAFT,
+            content="",
+            io_interface=IOInterface(),
+            test_wiring=WorkflowWiring(),
+        )
+
+        tr_component_contained_only_in_deprecated = deepcopy(tr_component_not_contained)
+        tr_component_contained_only_in_deprecated.id = uuid4()
+        tr_component_contained_only_in_deprecated.revision_group_id = uuid4()
+        tr_component_contained_only_in_deprecated.io_interface = IOInterface(
+            outputs=[IO(id=uuid4(), name="o", data_type=DataType.Any)]
+        )
+        tr_component_contained_only_in_deprecated.release()
+
+        tr_component_contained_not_only_in_deprecated = deepcopy(
+            tr_component_contained_only_in_deprecated
+        )
+        tr_component_contained_not_only_in_deprecated.id = uuid4()
+        tr_component_contained_not_only_in_deprecated.revision_group_id = uuid4()
+
+        update_or_create_single_transformation_revision(tr_component_not_contained)
+        update_or_create_single_transformation_revision(
+            tr_component_contained_only_in_deprecated
+        )
+        update_or_create_single_transformation_revision(
+            tr_component_contained_only_in_deprecated
+        )
+
+        operator_in_deprecated = tr_component_contained_only_in_deprecated.to_operator()
+        assert isinstance(operator_in_deprecated.id, UUID)
+        output_connector_deprecated = IOConnector(
+            id=uuid4(),
+            operator_id=operator_in_deprecated.id,
+            connector_id=operator_in_deprecated.outputs[0].id,
+            operator_name=operator_in_deprecated.name,
+            connector_name=operator_in_deprecated.outputs[0].name,
+            data_type=operator_in_deprecated.outputs[0].data_type,
+        )
+        tr_workflow_deprecated = TransformationRevision(
+            id=uuid4(),
+            revision_group_id=uuid4(),
+            name="name",
+            category="category",
+            version_tag="1.0.0",
+            type=Type.WORKFLOW,
+            documentation="",
+            state=State.DRAFT,
+            content=WorkflowContent(
+                operators=[operator_in_deprecated],
+                outputs=[output_connector_deprecated],
+                links=[
+                    Link(
+                        id=uuid4(),
+                        start=Vertex(
+                            operator=operator_in_deprecated.id,
+                            connector=operator_in_deprecated.outputs[0],
+                        ),
+                        end=Vertex(
+                            operator=None, connector=output_connector_deprecated
+                        ),
+                    )
+                ],
+            ),
+            io_interface=IOInterface(),
+            test_wiring=WorkflowWiring(),
+        )
+
+        tr_workflow_not_deprecated = deepcopy(tr_workflow_deprecated)
+        tr_workflow_not_deprecated.id = uuid4()
+        tr_workflow_not_deprecated.revision_group_id = uuid4()
+        operator_in_not_deprecated = (
+            tr_component_contained_not_only_in_deprecated.to_operator()
+        )
+        tr_workflow_not_deprecated.content.operators = [operator_in_not_deprecated]
+        output_connector_not_deprecated = IOConnector(
+            id=uuid4(),
+            operator_id=operator_in_not_deprecated.id,
+            connector_id=operator_in_not_deprecated.outputs[0].id,
+            operator_name=operator_in_not_deprecated.name,
+            connector_name=operator_in_not_deprecated.outputs[0].name,
+            data_type=operator_in_not_deprecated.outputs[0].data_type,
+        )
+        tr_workflow_not_deprecated.content.links = [
+            Link(
+                id=uuid4(),
+                start=Vertex(
+                    operator=operator_in_not_deprecated.id,
+                    connector=operator_in_not_deprecated.outputs[0],
+                ),
+                end=Vertex(operator=None, connector=output_connector_not_deprecated),
+            )
+        ]
+
+        tr_workflow_deprecated.release()
+        tr_workflow_deprecated.deprecate()
+        update_or_create_single_transformation_revision(tr_workflow_deprecated)
+
+        tr_workflow_not_deprecated.release()
+        update_or_create_single_transformation_revision(
+            tr_component_contained_only_in_deprecated
+        )
+
+        results = select_multiple_transformation_revisions(
+            ids=[tr_component_not_contained.id], unused=True
+        )
+        assert len(results) == 1
+
+        results = select_multiple_transformation_revisions(
+            ids=[tr_component_contained_only_in_deprecated.id], unused=True
+        )
+        assert len(results) == 1
+
+        results = select_multiple_transformation_revisions(
+            ids=[tr_component_contained_not_only_in_deprecated.id], unused=True
+        )
+        assert len(results) == 0
 
 
 def test_get_latest_revision_id(clean_test_db_engine):
