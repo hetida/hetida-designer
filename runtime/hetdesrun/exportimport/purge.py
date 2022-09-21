@@ -4,6 +4,7 @@ from uuid import UUID
 
 from hetdesrun.exportimport.importing import import_transformations
 from hetdesrun.exportimport.utils import (
+    FilterParams,
     delete_transformation_revision,
     deprecate_all_but_latest_in_group,
     get_transformation_revisions,
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def deprecate_all_but_latest_per_group(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(
-        params={"state": State.RELEASED}, directly_from_db=directly_in_db
+        params=FilterParams(state=State.RELEASED), directly_from_db=directly_in_db
     )
 
     revision_group_ids: Set[UUID] = set()
@@ -31,7 +32,7 @@ def deprecate_all_but_latest_per_group(directly_in_db: bool = False) -> None:
 
 def delete_drafts(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(
-        params={"state": State.DRAFT}, directly_from_db=directly_in_db
+        params=FilterParams(state=State.DRAFT), directly_from_db=directly_in_db
     )
 
     for tr in tr_list:
@@ -40,7 +41,7 @@ def delete_drafts(directly_in_db: bool = False) -> None:
 
 def delete_unused_deprecated(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(
-        params={"state": State.DISABLED, "unused": True},
+        params=FilterParams(state=State.DISABLED, unused=True),
         directly_from_db=directly_in_db,
     )
 

@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 import requests
+from pydantic import BaseModel
 
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -13,15 +14,25 @@ from hetdesrun.persistence.dbservice.revision import (
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import State, get_backend_basic_auth
+from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
+from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 
 logger = logging.getLogger(__name__)
 
+class FilterParams(BaseModel):
+    type: Optional[Type]
+    state: Optional[State]
+    category: Optional[ValidStr]
+    revision_group_id: Optional[UUID]
+    ids: Optional[List[UUID]]
+    names: Optional[List[NonEmptyValidStr]]
+    include_deprecated: bool = True
+    unused: bool = False
 
 def get_transformation_revisions(
-    params: Optional[dict] = None, directly_from_db: bool = False
+    params: Optional[FilterParams] = None, directly_from_db: bool = False
 ) -> List[TransformationRevision]:
     if params is None:
         params = {}
@@ -31,7 +42,7 @@ def get_transformation_revisions(
 
     get_response = requests.get(
         posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-        params=json.loads(json.dumps(params)),
+        params=json.loads(params.json()),
         verify=get_config().hd_backend_verify_certs,
         auth=get_backend_basic_auth()  # type: ignore
         if get_config().hd_backend_use_basic_auth
@@ -144,7 +155,7 @@ def deprecate_all_but_latest_in_group(
     )
 
     tr_list = get_transformation_revisions(
-        params={"revision_group_id": revision_group_id, "state": State.RELEASED},
+        params=FilterParams(revision_group_id=revision_group_id, state=State.RELEASED),
         directly_from_db=directly_in_db,
     )
 
