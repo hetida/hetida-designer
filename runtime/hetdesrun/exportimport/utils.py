@@ -27,7 +27,14 @@ logger = logging.getLogger(__name__)
 
 def info(text: str, param: Optional[Any], case: Optional[bool] = None) -> str:
     if param is not None and case is None or case is True:
-        return text + str(param)
+        param_string = ""
+        if hasattr(param, "value"):
+            param_string = str(param.value)
+        elif isinstance(param, List):
+            param_string = ", ".join(str(element) for element in param)
+        else:
+            str(param)
+        return text + param_string
     return ""
 
 
@@ -39,6 +46,7 @@ class FilterParams(BaseModel):
     ids: Optional[List[UUID]]
     names: Optional[List[NonEmptyValidStr]]
     include_deprecated: bool = True
+    include_dependencies: bool = False
     unused: bool = False
 
     def str(self) -> str:
@@ -67,7 +75,7 @@ def get_transformation_revisions(
     params: FilterParams = FilterParams(), directly_from_db: bool = False
 ) -> List[TransformationRevision]:
     logger.info(
-        "Getting " + params.str() + "directly from db" if directly_from_db else ""
+        "Getting " + params.str() + " directly from db" if directly_from_db else ""
     )
 
     tr_list: List[TransformationRevision] = []
@@ -265,13 +273,19 @@ def structure_ids_by_nesting_level(
 def delete_transformation_revisions(
     tr_list: List[TransformationRevision], directly_in_db: bool = False
 ) -> None:
-    tr_dict = {tr.id: tr for tr in tr_list}
-    level_dict = structure_ids_by_nesting_level(tr_dict)
+    delete_tr_ids = [tr.id for tr in tr_list]
+    tr_list_including_dependencies = get_transformation_revisions(
+        params=FilterParams(ids=delete_tr_ids, include_dependencies=True),
+        directly_from_db=directly_in_db,
+    )
+    depencency_tr_dict = {tr.id: tr for tr in tr_list_including_dependencies}
+    level_dict = structure_ids_by_nesting_level(depencency_tr_dict)
 
     for level in sorted(level_dict, reverse=True):
         logger.info("Deleting level %i transformation revisions", level)
         for tr_id in level_dict[level]:
-            delete_transformation_revision(tr_id, directly_in_db=directly_in_db)
+            if tr_id in delete_tr_ids:
+                delete_transformation_revision(tr_id, directly_in_db=directly_in_db)
 
 
 def deprecate_all_but_latest_in_group(

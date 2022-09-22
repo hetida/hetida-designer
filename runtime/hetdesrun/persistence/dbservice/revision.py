@@ -242,6 +242,7 @@ def select_multiple_transformation_revisions(
     ids: Optional[List[UUID]] = None,
     names: Optional[List[NonEmptyValidStr]] = None,
     include_deprecated: bool = True,
+    include_dependencies: bool = False,
     unused: bool = False,
 ) -> List[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
@@ -277,6 +278,17 @@ def select_multiple_transformation_revisions(
 
         if unused:
             tr_list = [tr for tr in tr_list if is_unused(tr.id)]
+
+        if include_dependencies:
+            tr_ids = [tr.id for tr in tr_list]
+            for tr in tr_list:
+                if tr.type == Type.WORKFLOW:
+                    nested_tr_dict = get_all_nested_transformation_revisions(tr)
+                    for (
+                        nested_tr_id
+                    ) in nested_tr_dict:  # pylint: disable=consider-using-dict-items
+                        if nested_tr_id not in tr_ids:
+                            tr_list.append(nested_tr_dict[nested_tr_id])
 
         return tr_list
 

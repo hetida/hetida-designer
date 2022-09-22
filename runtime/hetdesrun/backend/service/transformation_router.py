@@ -199,6 +199,7 @@ async def get_all_transformation_revisions(
             ids=ids,
             names=names,
             include_deprecated=include_deprecated,
+            include_dependencies=include_dependencies,
             unused=unused,
         )
     except DBIntegrityError as e:
@@ -206,19 +207,6 @@ async def get_all_transformation_revisions(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"At least one entry in the DB is no valid transformation revision:\n{str(e)}",
         ) from e
-
-    if include_dependencies:
-        tr_ids = [tr.id for tr in transformation_revision_list]
-        for tr in transformation_revision_list:
-            if tr.type == Type.WORKFLOW:
-                nested_tr_dict = get_all_nested_transformation_revisions(tr)
-                for (
-                    nested_tr_id
-                ) in nested_tr_dict:  # pylint: disable=consider-using-dict-items
-                    if nested_tr_id not in tr_ids:
-                        transformation_revision_list.append(
-                            nested_tr_dict[nested_tr_id]
-                        )
 
     return transformation_revision_list
 

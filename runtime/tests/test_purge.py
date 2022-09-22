@@ -164,6 +164,10 @@ def test_delete_transformation_revision(caplog):
             assert "Not found error in DB" in caplog.text
 
 
+def test_delete_transformation_revisions():
+    pass
+
+
 def test_update_or_create_transformation_revision(caplog):
     with mock.patch(
         "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
@@ -371,7 +375,7 @@ def test_delete_drafts():
             assert kwargs["params"].state == State.DRAFT
             assert kwargs["directly_from_db"] == False
 
-            assert mocked_delete.call_count == 2 # one more than before
+            assert mocked_delete.call_count == 2  # one more than before
             _, args, _ = mocked_delete.mock_calls[1]
             assert args[0] == [example_tr_draft]
 
@@ -405,7 +409,7 @@ def test_delete_unused_deprecated():
             assert kwargs["params"].state == State.DISABLED
             assert kwargs["directly_from_db"] == False
 
-            assert mocked_delete.call_count == 2 # one more than before
+            assert mocked_delete.call_count == 2  # one more than before
             _, args, _ = mocked_delete.mock_calls[1]
             assert args[0] == [example_tr_released_old, example_tr_deprecated]
 
