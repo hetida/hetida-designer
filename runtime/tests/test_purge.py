@@ -344,7 +344,7 @@ def test_deprecate_all_but_latest_per_group():
 
 def test_delete_drafts():
     with mock.patch(
-        "hetdesrun.exportimport.purge.delete_transformation_revision",
+        "hetdesrun.exportimport.purge.delete_transformation_revisions",
         return_value=None,
     ) as mocked_delete:
         with mock.patch(
@@ -358,7 +358,7 @@ def test_delete_drafts():
             assert kwargs["params"].state == State.DRAFT
             assert kwargs["directly_from_db"] == False
 
-            assert mocked_delete.call_count == 0
+            assert mocked_delete.call_count == 1
 
         with mock.patch(
             "hetdesrun.exportimport.purge.get_transformation_revisions",
@@ -371,14 +371,14 @@ def test_delete_drafts():
             assert kwargs["params"].state == State.DRAFT
             assert kwargs["directly_from_db"] == False
 
-            assert mocked_delete.call_count == 1
-            _, args, _ = mocked_delete.mock_calls[0]
-            assert args[0] == example_tr_draft.id
+            assert mocked_delete.call_count == 2 # one more than before
+            _, args, _ = mocked_delete.mock_calls[1]
+            assert args[0] == [example_tr_draft]
 
 
 def test_delete_unused_deprecated():
     with mock.patch(
-        "hetdesrun.exportimport.purge.delete_transformation_revision",
+        "hetdesrun.exportimport.purge.delete_transformation_revisions",
         return_value=None,
     ) as mocked_delete:
         with mock.patch(
@@ -392,7 +392,7 @@ def test_delete_unused_deprecated():
             assert kwargs["params"].state == State.DISABLED
             assert kwargs["directly_from_db"] == False
 
-            assert mocked_delete.call_count == 0
+            assert mocked_delete.call_count == 1
 
         with mock.patch(
             "hetdesrun.exportimport.purge.get_transformation_revisions",
@@ -405,16 +405,14 @@ def test_delete_unused_deprecated():
             assert kwargs["params"].state == State.DISABLED
             assert kwargs["directly_from_db"] == False
 
-            assert mocked_delete.call_count == 2
-            _, args, _ = mocked_delete.mock_calls[0]
-            assert args[0] == example_tr_released_old.id
+            assert mocked_delete.call_count == 2 # one more than before
             _, args, _ = mocked_delete.mock_calls[1]
-            assert args[0] == example_tr_deprecated.id
+            assert args[0] == [example_tr_released_old, example_tr_deprecated]
 
 
 def test_delete_all_restart():
     with mock.patch(
-        "hetdesrun.exportimport.purge.delete_transformation_revision",
+        "hetdesrun.exportimport.purge.delete_transformation_revisions",
         return_value=None,
     ) as mocked_delete:
         with mock.patch(
@@ -431,7 +429,7 @@ def test_delete_all_restart():
                 _, _, kwargs = patched_get.mock_calls[0]
                 assert kwargs["directly_from_db"] == False
 
-                assert mocked_delete.call_count == 0
+                assert mocked_delete.call_count == 1
 
                 assert mocked_import.call_count == 1
 
@@ -450,18 +448,14 @@ def test_delete_all_restart():
                 _, _, kwargs = patched_get.mock_calls[0]
                 assert kwargs["directly_from_db"] == False
 
-                assert mocked_delete.call_count == 4
-                _, args, kwargs = mocked_delete.mock_calls[0]
-                assert args[0] == example_tr_draft.id
-                assert kwargs["directly_in_db"] == False
+                assert mocked_delete.call_count == 2  # one more than before
                 _, args, kwargs = mocked_delete.mock_calls[1]
-                assert args[0] == example_tr_released_old.id
-                assert kwargs["directly_in_db"] == False
-                _, args, kwargs = mocked_delete.mock_calls[2]
-                assert args[0] == example_tr_released.id
-                assert kwargs["directly_in_db"] == False
-                _, args, kwargs = mocked_delete.mock_calls[3]
-                assert args[0] == example_tr_deprecated.id
+                assert args[0] == [
+                    example_tr_draft,
+                    example_tr_released_old,
+                    example_tr_released,
+                    example_tr_deprecated,
+                ]
                 assert kwargs["directly_in_db"] == False
 
                 assert mocked_import.call_count == 2  # one more than before
