@@ -5,7 +5,7 @@ from uuid import UUID
 from hetdesrun.exportimport.importing import import_transformations
 from hetdesrun.exportimport.utils import (
     FilterParams,
-    delete_transformation_revision,
+    delete_transformation_revisions,
     deprecate_all_but_latest_in_group,
     get_transformation_revisions,
 )
@@ -35,8 +35,7 @@ def delete_drafts(directly_in_db: bool = False) -> None:
         params=FilterParams(state=State.DRAFT), directly_from_db=directly_in_db
     )
 
-    for tr in tr_list:
-        delete_transformation_revision(tr.id, directly_in_db=directly_in_db)
+    delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
 
 
 def delete_unused_deprecated(directly_in_db: bool = False) -> None:
@@ -45,14 +44,12 @@ def delete_unused_deprecated(directly_in_db: bool = False) -> None:
         directly_from_db=directly_in_db,
     )
 
-    for tr in tr_list:
-        delete_transformation_revision(tr.id, directly_in_db=directly_in_db)
+    delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
 
 
 def delete_all_and_refill(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(directly_from_db=directly_in_db)
 
-    for tr in tr_list:
-        delete_transformation_revision(tr.id, directly_in_db=directly_in_db)
+    delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
 
     import_transformations("./transformations", directly_into_db=directly_in_db)

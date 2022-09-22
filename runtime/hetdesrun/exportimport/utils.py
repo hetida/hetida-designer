@@ -217,12 +217,12 @@ def delete_transformation_revision(
             logger.error(msg)
 
 
-def determine_nesting_level(
-    transformation_id: UUID, transformation_dict: Dict[UUID, TransformationRevision]
-) -> int:
+def structure_ids_by_nesting_level(
+    transformation_dict: Dict[UUID, TransformationRevision]
+) -> Dict[int, List[UUID]]:
     def nesting_level(
         transformation_id: UUID,
-        level: int,
+        level: int = 0,
     ) -> int:
         transformation = transformation_dict[transformation_id]
 
@@ -246,7 +246,32 @@ def determine_nesting_level(
 
         return nextlevel
 
-    return nesting_level(transformation_id, level=0)
+    ids_by_nesting_level: Dict[int, List[UUID]] = {}
+    for tr_id, tr in transformation_dict.items():
+        level = nesting_level(tr_id)
+        if level not in ids_by_nesting_level:
+            ids_by_nesting_level[level] = []
+        ids_by_nesting_level[level].append(tr_id)
+        logger.info(
+            "%s %s has nesting level %i",
+            tr.type.value,
+            str(tr_id),
+            level,
+        )
+
+    return ids_by_nesting_level
+
+
+def delete_transformation_revisions(
+    tr_list: List[TransformationRevision], directly_in_db: bool = False
+) -> None:
+    tr_dict = {tr.id: tr for tr in tr_list}
+    level_dict = structure_ids_by_nesting_level(tr_dict)
+
+    for level in sorted(level_dict, reverse=True):
+        logger.info("Deleting level %i transformation revisions", level)
+        for tr_id in level_dict[level]:
+            delete_transformation_revision(tr_id, directly_in_db=directly_in_db)
 
 
 def deprecate_all_but_latest_in_group(

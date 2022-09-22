@@ -3,7 +3,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from hetdesrun.component.load import (
@@ -13,7 +13,7 @@ from hetdesrun.component.load import (
 )
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
-    determine_nesting_level,
+    structure_ids_by_nesting_level,
     update_or_create_transformation_revision,
 )
 from hetdesrun.models.wiring import WorkflowWiring
@@ -253,25 +253,11 @@ def import_transformations(
 
     transformation_dict = get_transformation_revisions_from_path(download_path)
 
-    level_dict: Dict[int, List[UUID]] = {}
+    ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
 
-    for transformation_id, transformation in transformation_dict.items():
-        level = determine_nesting_level(
-            transformation_id, transformation_dict=transformation_dict
-        )
-        if level not in level_dict:
-            level_dict[level] = []
-        level_dict[level].append(transformation_id)
-        logger.info(
-            "transformation %s of type %s has nesting level %i",
-            str(transformation_id),
-            transformation.type,
-            level,
-        )
-
-    for level in sorted(level_dict):
-        logger.info("importing level %i transformations", level)
-        for transformation_id in level_dict[level]:
+    for level in sorted(ids_by_nesting_level):
+        logger.info("importing level %i transformation revisions", level)
+        for transformation_id in ids_by_nesting_level[level]:
             transformation = transformation_dict[transformation_id]
             if strip_wirings:
                 transformation.test_wiring = WorkflowWiring()
