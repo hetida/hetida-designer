@@ -168,7 +168,7 @@ def update_or_create_single_transformation_revision(
 
 # pylint: disable=redefined-builtin
 def delete_single_transformation_revision(
-    id: UUID, type: Optional[Type] = None
+    id: UUID, type: Optional[Type] = None, ignore_state: bool = False
 ) -> None:
     with Session() as session, session.begin():
 
@@ -183,7 +183,7 @@ def delete_single_transformation_revision(
             logger.error(msg)
             raise DBBadRequestError(msg)
 
-        if transformation_revision.state != State.DRAFT:
+        if not ignore_state and transformation_revision.state != State.DRAFT:
             msg = (
                 f"Transformation revision {id} cannot be deleted "
                 f"since it is in the state {transformation_revision.state}"

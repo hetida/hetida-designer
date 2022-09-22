@@ -192,6 +192,8 @@ def test_deleting(clean_test_db_engine):
         with pytest.raises(DBBadRequestError):
             delete_single_transformation_revision(tr_released_uuid)
 
+        delete_single_transformation_revision(tr_released_uuid, ignore_state=True)
+
 
 def test_multiple_select(clean_test_db_engine):
     with mock.patch(

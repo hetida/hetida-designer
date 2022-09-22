@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     select_multiple_transformation_revisions,
@@ -89,7 +90,20 @@ def update_or_create_transformation_revision(
         )
         if update_component_code and tr.type == Type.COMPONENT:
             tr.content = update_code(tr)
-        update_or_create_single_transformation_revision(tr)
+        try:
+            update_or_create_single_transformation_revision(tr)
+        except DBNotFoundError as not_found_err:
+            logger.error(
+                "not found error in DB when trying to access entry for id %s\n%s",
+                id,
+                not_found_err,
+            )
+        except DBIntegrityError as integrity_err:
+            logger.error(
+                "integrity error in DB when trying to access entry for id %s\n%s",
+                id,
+                integrity_err,
+            )
     else:
         response = requests.put(
             posix_urljoin(
@@ -127,10 +141,18 @@ def delete_transformation_revision(
     id: UUID, directly_in_db: bool = False  # pylint: disable=redefined-builtin
 ) -> None:
     if directly_in_db:
-        delete_single_transformation_revision(id)
+        try:
+            delete_single_transformation_revision(id, ignore_state=True)
+        except DBNotFoundError as not_found_err:
+            logger.error(
+                "not found error in DB when trying to access entry for id %s\n%s",
+                id,
+                not_found_err,
+            )
     else:
         response = requests.delete(
             posix_urljoin(get_config().hd_backend_api_url, "transformations", str(id)),
+            params={"ignore_state": True},
             verify=get_config().hd_backend_verify_certs,
             auth=get_backend_basic_auth()  # type: ignore
             if get_config().hd_backend_use_basic_auth
@@ -179,4 +201,17 @@ def deprecate_all_but_latest_in_group(
             tr.id,
             released_timestamp,
         )
-        update_or_create_transformation_revision(tr, directly_in_db=directly_in_db)
+        try:
+            update_or_create_transformation_revision(tr, directly_in_db=directly_in_db)
+        except DBNotFoundError as not_found_err:
+            logger.error(
+                "not found error in DB when trying to access entry for id %s\n%s",
+                tr.id,
+                not_found_err,
+            )
+        except DBIntegrityError as integrity_err:
+            logger.error(
+                "integrity error in DB when trying to access entry for id %s\n%s",
+                tr.id,
+                integrity_err,
+            )

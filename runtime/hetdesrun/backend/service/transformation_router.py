@@ -484,6 +484,9 @@ async def update_transformation_revision(
         )
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
+        logger.error(
+            "not found error in DB when trying to access entry for id %s\n%s", id, e
+        )
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     logger.debug(persisted_transformation_revision.json())
@@ -507,6 +510,12 @@ async def update_transformation_revision(
 async def delete_transformation_revision(
     # pylint: disable=redefined-builtin
     id: UUID,
+    ignore_state: bool = Query(
+        False,
+        description=(
+            "Set to true to enable deletion of released and deprecated transformation revisions"
+        ),
+    ),
 ) -> None:
     """Delete a transformation revision from the data base.
 
@@ -516,7 +525,7 @@ async def delete_transformation_revision(
     logger.info("delete transformation revision %s", id)
 
     try:
-        delete_single_transformation_revision(id)
+        delete_single_transformation_revision(id, ignore_state=ignore_state)
         logger.info("deleted transformation revision %s", id)
 
     except DBBadRequestError as e:

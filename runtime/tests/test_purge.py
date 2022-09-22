@@ -8,7 +8,7 @@ from unittest import mock
 from uuid import uuid4
 
 from hetdesrun.exportimport.purge import (
-    delete_all_restart,
+    delete_all_and_refill,
     delete_drafts,
     delete_unused_deprecated,
     deprecate_all_but_latest_per_group,
@@ -21,6 +21,7 @@ from hetdesrun.exportimport.utils import (
     update_or_create_transformation_revision,
 )
 from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
@@ -131,10 +132,18 @@ def test_delete_transformation_revision(caplog):
             delete_transformation_revision(id, directly_in_db=True)
             assert mocked_delete_from_db.call_count == 1
             assert mocked_delete_from_backend.call_count == 0
+            _, args, kwargs = mocked_delete_from_db.mock_calls[0]
+            assert args[0] == id
+            assert kwargs["ignore_state"] == True
 
             delete_transformation_revision(id)
             assert mocked_delete_from_db.call_count == 1  # no second call
             assert mocked_delete_from_backend.call_count == 1
+            _, args, kwargs = mocked_delete_from_backend.mock_calls[0]
+            assert args[0] == posix_urljoin(
+                get_config().hd_backend_api_url, "transformations", str(id)
+            )
+            assert kwargs["params"]["ignore_state"] == True
 
     with caplog.at_level(logging.ERROR):
         resp_mock = mock.Mock()
@@ -145,6 +154,14 @@ def test_delete_transformation_revision(caplog):
             caplog.clear()
             delete_transformation_revision(uuid4())
             assert "COULD NOT DELETE transformation revision with id" in caplog.text
+
+        with mock.patch(
+            "hetdesrun.exportimport.utils.delete_single_transformation_revision",
+            side_effect=DBNotFoundError,
+        ):
+            caplog.clear()
+            delete_transformation_revision(example_tr_draft, directly_in_db=True)
+            assert "not found error in DB" in caplog.text
 
 
 def test_update_or_create_transformation_revision(caplog):
@@ -203,8 +220,28 @@ def test_update_or_create_transformation_revision(caplog):
             update_or_create_transformation_revision(example_tr_draft)
             assert "COULD NOT PUT" in caplog.text
 
+        with mock.patch(
+            "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
+            side_effect=DBNotFoundError,
+        ):
+            caplog.clear()
+            update_or_create_transformation_revision(
+                example_tr_draft, directly_in_db=True
+            )
+            assert "not found error in DB" in caplog.text
 
-def test_deprecate_all_but_latest_in_group():
+        with mock.patch(
+            "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
+            side_effect=DBIntegrityError,
+        ):
+            caplog.clear()
+            update_or_create_transformation_revision(
+                example_tr_draft, directly_in_db=True
+            )
+            assert "integrity error in DB" in caplog.text
+
+
+def test_deprecate_all_but_latest_in_group(caplog):
     path = os.path.join(
         "tests",
         "data",
@@ -246,6 +283,27 @@ def test_deprecate_all_but_latest_in_group():
             del update_json["disabled_timestamp"]
             del deprecated_stored_json["disabled_timestamp"]
             assert update_json == deprecated_stored_json
+
+        with caplog.at_level(logging.ERROR):
+            with mock.patch(
+                "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
+                side_effect=DBNotFoundError,
+            ):
+                caplog.clear()
+                deprecate_all_but_latest_in_group(
+                    revision_group_id=import_wf.revision_group_id, directly_in_db=True
+                )
+                assert "not found error in DB" in caplog.text
+
+            with mock.patch(
+                "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
+                side_effect=DBIntegrityError,
+            ):
+                caplog.clear()
+                deprecate_all_but_latest_in_group(
+                    revision_group_id=import_wf.revision_group_id, directly_in_db=True
+                )
+                assert "integrity error in DB" in caplog.text
 
 
 def test_deprecate_all_but_latest_per_group():
@@ -367,7 +425,7 @@ def test_delete_all_restart():
                 "hetdesrun.exportimport.purge.get_transformation_revisions",
                 return_value=[],
             ) as patched_get:
-                delete_all_restart()
+                delete_all_and_refill()
 
                 assert patched_get.call_count == 1
                 _, _, kwargs = patched_get.mock_calls[0]
@@ -386,7 +444,7 @@ def test_delete_all_restart():
                     example_tr_deprecated,
                 ],
             ) as patched_get:
-                delete_all_restart()
+                delete_all_and_refill()
 
                 assert patched_get.call_count == 1
                 _, _, kwargs = patched_get.mock_calls[0]

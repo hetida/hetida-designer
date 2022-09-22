@@ -6,7 +6,7 @@ from unittest import mock
 from uuid import UUID
 
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
@@ -1105,21 +1105,45 @@ async def test_delete_transformation_revision_with_component(
         sessionmaker(clean_test_db_engine),
     ):
         store_single_transformation_revision(
-            TransformationRevision(**tr_json_component_3)
+            TransformationRevision(**tr_json_component_2)  # RELEASED
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_3)  # DRAFT
         )
 
         async with async_test_client as ac:
             response = await ac.delete(
                 posix_urljoin(
+                    "/api/transformations/", str(get_uuid_from_seed("component 1"))
+                )
+            )
+            assert response.status_code == 404
+
+            response = await ac.delete(
+                posix_urljoin(
+                    "/api/transformations/", str(get_uuid_from_seed("component 2"))
+                )
+            )
+            assert response.status_code == 403
+
+            response = await ac.delete(
+                posix_urljoin(
+                    "/api/transformations/", str(get_uuid_from_seed("component 2"))
+                ),
+                params={"ignore_state": True},
+            )
+            assert response.status_code == 204
+            tr_list = select_multiple_transformation_revisions()
+            assert len(tr_list) == 1  # component 3 is still stored in db
+
+            response = await ac.delete(
+                posix_urljoin(
                     "/api/transformations/", str(get_uuid_from_seed("component 3"))
                 )
             )
-
-        assert response.status_code == 204
-
-        tr_list = select_multiple_transformation_revisions()
-
-        assert len(tr_list) == 0
+            assert response.status_code == 204
+            tr_list = select_multiple_transformation_revisions()
+            assert len(tr_list) == 0
 
 
 @pytest.mark.asyncio

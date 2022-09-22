@@ -49,7 +49,7 @@ def delete_unused_deprecated(directly_in_db: bool = False) -> None:
         delete_transformation_revision(tr.id, directly_in_db=directly_in_db)
 
 
-def delete_all_restart(directly_in_db: bool = False) -> None:
+def delete_all_and_refill(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(directly_from_db=directly_in_db)
 
     for tr in tr_list:
