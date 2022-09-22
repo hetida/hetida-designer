@@ -17,6 +17,7 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
+from hetdesrun.exportimport.utils import info
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
@@ -95,12 +96,6 @@ async def create_transformation_revision(
     logger.debug(persisted_transformation_revision.json())
 
     return persisted_transformation_revision
-
-
-def info(text: str, param: Optional[Any], case: Optional[bool] = None) -> str:
-    if param is not None and case is None or case is True:
-        return text + str(param)
-    return ""
 
 
 @transformation_router.get(

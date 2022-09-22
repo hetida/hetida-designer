@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import datetime
 from posixpath import join as posix_urljoin
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import requests
@@ -24,6 +24,12 @@ from hetdesrun.webservice.config import get_config
 logger = logging.getLogger(__name__)
 
 
+def info(text: str, param: Optional[Any], case: Optional[bool] = None) -> str:
+    if param is not None and case is None or case is True:
+        return text + str(param)
+    return ""
+
+
 class FilterParams(BaseModel):
     type: Optional[Type]
     state: Optional[State]
@@ -34,40 +40,70 @@ class FilterParams(BaseModel):
     include_deprecated: bool = True
     unused: bool = False
 
+    def str(self) -> str:
+        return (
+            "all transformation revisions"
+            + info(" of type ", self.type)
+            + info(" in state ", self.state)
+            + info(" in category ", self.category)
+            + info(" with group_id ", self.revision_group_id)
+            + info(
+                " unless they are deprecated",
+                self.include_deprecated,
+                case=not self.include_deprecated,
+            )
+            + info(
+                " that are unused",
+                self.unused,
+                case=self.unused,
+            )
+            + info("\nwith ids ", self.ids)
+            + info("\nwith names ", self.names)
+        )
+
 
 def get_transformation_revisions(
     params: FilterParams = FilterParams(), directly_from_db: bool = False
 ) -> List[TransformationRevision]:
+    logger.info("Getting " + params.str() + "directly from db" if directly_from_db else "")
     if directly_from_db:
-        return select_multiple_transformation_revisions(
+        tr_list = select_multiple_transformation_revisions(
             **params.dict(exclude_none=True)
         )
-
-    get_response = requests.get(
-        posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-        params=json.loads(params.json(exclude_none=True)),
-        verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()  # type: ignore
-        if get_config().hd_backend_use_basic_auth
-        else None,
-        headers=get_auth_headers(),
-        timeout=get_config().external_request_timeout,
-    )
-
-    if get_response.status_code != 200:
-        msg = (
-            "COULD NOT GET transformation revisions. "
-            f"Response status code {get_response.status_code}"
-            f"with response text:\n{get_response.text}"
+    else:
+        get_response = requests.get(
+            posix_urljoin(get_config().hd_backend_api_url, "transformations"),
+            params=json.loads(params.json(exclude_none=True)),
+            verify=get_config().hd_backend_verify_certs,
+            auth=get_backend_basic_auth()  # type: ignore
+            if get_config().hd_backend_use_basic_auth
+            else None,
+            headers=get_auth_headers(),
+            timeout=get_config().external_request_timeout,
         )
-        logger.error(msg)
-        return []
 
-    tr_list: List[TransformationRevision] = []
+        if get_response.status_code != 200:
+            msg = (
+                "COULD NOT GET transformation revisions. "
+                f"Response status code {get_response.status_code}"
+                f"with response text:\n{get_response.text}"
+            )
+            logger.error(msg)
+            return []
 
-    for tr_json in get_response.json():
-        tr_list.append(TransformationRevision(**tr_json))
+        tr_list: List[TransformationRevision] = []
 
+        for tr_json in get_response.json():
+            tr_list.append(TransformationRevision(**tr_json))
+
+    for tr in tr_list:
+        logger.info(
+            ("Found %s with id %s\n" "in category %s with name %s"),
+            str(tr.type.value),
+            str(tr.id),
+            tr.category,
+            tr.name,
+        )
     return tr_list
 
 
@@ -94,13 +130,13 @@ def update_or_create_transformation_revision(
             update_or_create_single_transformation_revision(tr)
         except DBNotFoundError as not_found_err:
             logger.error(
-                "not found error in DB when trying to access entry for id %s\n%s",
+                "Not found error in DB when trying to access entry for id %s\n%s",
                 id,
                 not_found_err,
             )
         except DBIntegrityError as integrity_err:
             logger.error(
-                "integrity error in DB when trying to access entry for id %s\n%s",
+                "Integrity error in DB when trying to access entry for id %s\n%s",
                 id,
                 integrity_err,
             )
@@ -142,10 +178,14 @@ def delete_transformation_revision(
 ) -> None:
     if directly_in_db:
         try:
+            logger.info(
+                ("Delete transformation revision with id %s from DB"),
+                id,
+            )
             delete_single_transformation_revision(id, ignore_state=True)
         except DBNotFoundError as not_found_err:
             logger.error(
-                "not found error in DB when trying to access entry for id %s\n%s",
+                "Not found error in DB when trying to access entry for id %s\n%s",
                 id,
                 not_found_err,
             )
@@ -205,13 +245,13 @@ def deprecate_all_but_latest_in_group(
             update_or_create_transformation_revision(tr, directly_in_db=directly_in_db)
         except DBNotFoundError as not_found_err:
             logger.error(
-                "not found error in DB when trying to access entry for id %s\n%s",
+                "Not found error in DB when trying to access entry for id %s\n%s",
                 tr.id,
                 not_found_err,
             )
         except DBIntegrityError as integrity_err:
             logger.error(
-                "integrity error in DB when trying to access entry for id %s\n%s",
+                "Integrity error in DB when trying to access entry for id %s\n%s",
                 tr.id,
                 integrity_err,
             )
