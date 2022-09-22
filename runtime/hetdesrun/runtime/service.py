@@ -1,3 +1,4 @@
+import datetime
 import traceback
 from typing import Optional
 
@@ -24,7 +25,7 @@ from hetdesrun.wiring import (
 runtime_logger.addFilter(job_id_context_filter)
 
 
-async def runtime_service(
+async def runtime_service(  # pylint: disable=too-many-return-statements
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:
     """Running stuff with appropriate error handling, serializing etc.
@@ -32,7 +33,8 @@ async def runtime_service(
     This function is used by the runtime endpoint
     """
 
-    # pylint: disable=too-many-return-statements
+    start_runtime_service_handling_timestamp = datetime.datetime.utcnow()
+
     execution_config.set(runtime_input.configuration)
     execution_context_filter.bind_context(
         currently_executed_job_id=runtime_input.job_id
@@ -97,6 +99,9 @@ async def runtime_service(
     # run workflow
 
     all_nodes = obtain_all_nodes(parsed_wf)
+
+    start_pure_exec_timestamp = datetime.datetime.utcnow()
+
     try:
         workflow_result = await workflow_execution_plain(parsed_wf)
 
@@ -106,6 +111,9 @@ async def runtime_service(
         for computation_node in all_nodes:
 
             res = await computation_node.result  # pylint: disable=unused-variable
+
+        pure_execution_time = datetime.datetime.utcnow() - start_pure_exec_timestamp
+
     except WorkflowParsingException as e:
         runtime_logger.info(
             "Workflow Parsing Exception during workflow execution",
@@ -187,6 +195,7 @@ async def runtime_service(
         node_results=node_results,
         output_results_by_output_name=direct_return_data,
         job_id=runtime_input.job_id,
+        pure_execution_time=pure_execution_time,
     )
 
     runtime_logger.info(
@@ -216,6 +225,12 @@ async def runtime_service(
         )
 
     runtime_logger.info("Workflow Execution Result serialized successfully.")
+
+    runtime_service_handling_duration = (
+        datetime.datetime.utcnow() - start_runtime_service_handling_timestamp
+    )
+
+    wf_exec_result.runtime_service_handling_time = runtime_service_handling_duration
 
     # TODO: avoid double serialization
     return wf_exec_result

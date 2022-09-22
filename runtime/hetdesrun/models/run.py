@@ -1,6 +1,7 @@
 """Models for runtime execution endpoint"""
 
 
+import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -153,4 +154,24 @@ class WorkflowExecutionResult(BaseModel):
     error: Optional[str] = Field(None, description="error string")
     traceback: Optional[str] = Field(None, description="traceback")
     job_id: UUID
+    pure_execution_time: Optional[datetime.timedelta] = Field(
+        None,
+        description=(
+            "Pure execution time after parsing workflow/data "
+            "and before serializing/sending results."
+            " Only available if execution was successful."
+        ),
+    )
+
+    runtime_service_handling_time: Optional[datetime.timedelta] = Field(
+        None,
+        description=(
+            "Full runtime handling duration."
+            " Includes Workflow parsing, data loading via adapters,"
+            " execution, sending result data via adapters."
+            " Does not include parsing the execution request itself and"
+            " serialization/sending its response."
+            " Only available if execution was successful."
+        ),
+    )
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
