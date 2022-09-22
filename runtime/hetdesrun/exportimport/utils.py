@@ -1,8 +1,9 @@
 import json
 import logging
 from datetime import datetime
+from enum import Enum
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from uuid import UUID
 
 import requests
@@ -13,7 +14,7 @@ from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
-    select_multiple_transformation_revisions,
+    get_multiple_transformation_revisions,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -25,10 +26,16 @@ from hetdesrun.webservice.config import get_config
 logger = logging.getLogger(__name__)
 
 
-def info(text: str, param: Optional[Any], case: Optional[bool] = None) -> str:
+def info(
+    text: str,
+    param: Optional[
+        Union[UUID, List[UUID], Enum, List[NonEmptyValidStr], ValidStr, bool]
+    ],
+    case: Optional[bool] = None,
+) -> str:
     if param is not None and case is None or case is True:
         param_string = ""
-        if hasattr(param, "value"):
+        if isinstance(param, Enum):
             param_string = str(param.value)
         elif isinstance(param, List):
             param_string = ", ".join(str(element) for element in param)
@@ -81,7 +88,7 @@ def get_transformation_revisions(
     tr_list: List[TransformationRevision] = []
 
     if directly_from_db:
-        tr_list = select_multiple_transformation_revisions(
+        tr_list = get_multiple_transformation_revisions(
             **params.dict(exclude_none=True)
         )
     else:

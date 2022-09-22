@@ -23,8 +23,8 @@ from hetdesrun.persistence.dbservice.exceptions import (
 )
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
+    get_multiple_transformation_revisions,
     read_single_transformation_revision,
-    select_multiple_transformation_revisions,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
@@ -126,7 +126,7 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
 
     logger.info("get all workflows")
 
-    transformation_revision_list = select_multiple_transformation_revisions(
+    transformation_revision_list = get_multiple_transformation_revisions(
         type=Type.WORKFLOW
     )
 

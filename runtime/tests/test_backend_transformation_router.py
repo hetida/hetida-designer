@@ -16,8 +16,8 @@ from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
+    get_multiple_transformation_revisions,
     read_single_transformation_revision,
-    select_multiple_transformation_revisions,
     store_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -1133,7 +1133,7 @@ async def test_delete_transformation_revision_with_component(
                 params={"ignore_state": True},
             )
             assert response.status_code == 204
-            tr_list = select_multiple_transformation_revisions()
+            tr_list = get_multiple_transformation_revisions()
             assert len(tr_list) == 1  # component 3 is still stored in db
 
             response = await ac.delete(
@@ -1142,7 +1142,7 @@ async def test_delete_transformation_revision_with_component(
                 )
             )
             assert response.status_code == 204
-            tr_list = select_multiple_transformation_revisions()
+            tr_list = get_multiple_transformation_revisions()
             assert len(tr_list) == 0
 
 

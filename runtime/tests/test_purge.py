@@ -56,7 +56,7 @@ example_tr_deprecated.revision_group_id = uuid4()
 def test_get_transformation_revisions(caplog):
     tr_list = [example_tr_draft]
     with mock.patch(
-        "hetdesrun.exportimport.utils.select_multiple_transformation_revisions",
+        "hetdesrun.exportimport.utils.get_multiple_transformation_revisions",
         return_value=tr_list,
     ) as mocked_get_from_db:
         resp_mock = mock.Mock()
@@ -75,7 +75,8 @@ def test_get_transformation_revisions(caplog):
             assert mocked_get_from_backend.call_count == 0
             _, args, kwargs = mocked_get_from_db.mock_calls[0]
             assert len(args) == 0
-            assert len(kwargs) == 2
+            assert len(kwargs) == 3
+            assert kwargs["include_dependencies"] == False  # default value
             assert kwargs["include_deprecated"] == True  # default value
             assert kwargs["unused"] == False  # default value
 

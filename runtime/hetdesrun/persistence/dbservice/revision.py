@@ -233,17 +233,14 @@ def is_unused(transformation_id: UUID) -> bool:
     return False
 
 
-# pylint: disable=redefined-builtin
 def select_multiple_transformation_revisions(
-    type: Optional[Type] = None,
+    type: Optional[Type] = None,  # pylint: disable=redefined-builtin
     state: Optional[State] = None,
     category: Optional[ValidStr] = None,
     revision_group_id: Optional[UUID] = None,
     ids: Optional[List[UUID]] = None,
     names: Optional[List[NonEmptyValidStr]] = None,
     include_deprecated: bool = True,
-    include_dependencies: bool = False,
-    unused: bool = False,
 ) -> List[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
     with Session() as session, session.begin():
@@ -276,21 +273,47 @@ def select_multiple_transformation_revisions(
 
         tr_list = [TransformationRevision.from_orm_model(result) for result in results]
 
-        if unused:
-            tr_list = [tr for tr in tr_list if is_unused(tr.id)]
-
-        if include_dependencies:
-            tr_ids = [tr.id for tr in tr_list]
-            for tr in tr_list:
-                if tr.type == Type.WORKFLOW:
-                    nested_tr_dict = get_all_nested_transformation_revisions(tr)
-                    for (
-                        nested_tr_id
-                    ) in nested_tr_dict:  # pylint: disable=consider-using-dict-items
-                        if nested_tr_id not in tr_ids:
-                            tr_list.append(nested_tr_dict[nested_tr_id])
-
         return tr_list
+
+
+def get_multiple_transformation_revisions(
+    type: Optional[Type] = None,  # pylint: disable=redefined-builtin
+    state: Optional[State] = None,
+    category: Optional[ValidStr] = None,
+    revision_group_id: Optional[UUID] = None,
+    ids: Optional[List[UUID]] = None,
+    names: Optional[List[NonEmptyValidStr]] = None,
+    include_deprecated: bool = True,
+    include_dependencies: bool = False,
+    unused: bool = False,
+) -> List[TransformationRevision]:
+    """Filterable selection of transformation revisions from db"""
+
+    tr_list = select_multiple_transformation_revisions(
+        type=type,
+        state=state,
+        category=category,
+        revision_group_id=revision_group_id,
+        ids=ids,
+        names=names,
+        include_deprecated=include_deprecated,
+    )
+
+    if unused:
+        tr_list = [tr for tr in tr_list if is_unused(tr.id)]
+
+    if include_dependencies:
+        tr_ids = [tr.id for tr in tr_list]
+        for tr in tr_list:
+            if tr.type == Type.WORKFLOW:
+                nested_tr_dict = get_all_nested_transformation_revisions(tr)
+                for (
+                    nested_tr_id
+                ) in nested_tr_dict:  # pylint: disable=consider-using-dict-items
+                    if nested_tr_id not in tr_ids:
+                        tr_list.append(nested_tr_dict[nested_tr_id])
+
+    return tr_list
 
 
 def nof_db_entries() -> int:
@@ -329,7 +352,7 @@ def get_all_nested_transformation_revisions(
 
 
 def get_latest_revision_id(revision_group_id: UUID) -> UUID:
-    revision_group_list = select_multiple_transformation_revisions(
+    revision_group_list = get_multiple_transformation_revisions(
         state=State.RELEASED, revision_group_id=revision_group_id
     )
     if len(revision_group_list) == 0:
