@@ -8,7 +8,7 @@ There are cleanup options of varying scope:
 
 3. Delete unused deprecated transformation revisions
 
-4. Delete all transformation revisions and restart
+4. Delete all transformation revisions and refill with base transformation revisions
 
 The first two actions can easily be performed for individual transformation revisions via the user interface, doing so regularly is recommended. Apart from that, there are also functions for all four actions that automatically apply them to all matching transformation revisions.
 
@@ -53,9 +53,9 @@ docker run --rm \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.purge delete_unused_deprecated; delete_unused_deprecated();'
 ```
 
-## Delete All Transformation Revisions and Restart
+## Delete All Transformation Revisions and Refill 
 
-To delete all transformation revisions and deploy the latest version of base components and sample workflows from the hetida designer git repository execute the following command.
+To delete all transformation revisions and deploy the specified version of base components and sample workflows from the hetida designer git repository in the version correspond execute the following command. 
 
 ```shell
 docker run --rm \
@@ -63,5 +63,5 @@ docker run --rm \
   --name htdruntime_export \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge delete_all_restart; delete_all_restart();'
+  hetida/designer-runtime:<version> -c 'from hetdesrun.exportimport.purge delete_all_and_refill; delete_all_refill();'
 ```
