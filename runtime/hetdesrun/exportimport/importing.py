@@ -13,12 +13,12 @@ from hetdesrun.component.load import (
 )
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
+    determine_nesting_level,
     update_or_create_transformation_revision,
 )
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import Type, get_uuid_from_seed
 
 logger = logging.getLogger(__name__)
@@ -253,34 +253,12 @@ def import_transformations(
 
     transformation_dict = get_transformation_revisions_from_path(download_path)
 
-    def nesting_level(transformation_id: UUID, level: int) -> int:
-
-        transformation = transformation_dict[transformation_id]
-
-        if transformation.type == Type.COMPONENT:
-            return level
-
-        level = level + 1
-        nextlevel = level
-        assert isinstance(transformation.content, WorkflowContent)
-        for operator in transformation.content.operators:
-            if operator.type == Type.WORKFLOW:
-                logger.info(
-                    "transformation %s contains workflow %s at nesting level %i",
-                    str(transformation_id),
-                    operator.transformation_id,
-                    level,
-                )
-                nextlevel = max(
-                    nextlevel, nesting_level(operator.transformation_id, level=level)
-                )
-
-        return nextlevel
-
     level_dict: Dict[int, List[UUID]] = {}
 
     for transformation_id, transformation in transformation_dict.items():
-        level = nesting_level(transformation_id, level=0)
+        level = determine_nesting_level(
+            transformation_id, transformation_dict=transformation_dict
+        )
         if level not in level_dict:
             level_dict[level] = []
         level_dict[level].append(transformation_id)

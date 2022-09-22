@@ -161,7 +161,7 @@ def test_delete_transformation_revision(caplog):
         ):
             caplog.clear()
             delete_transformation_revision(example_tr_draft, directly_in_db=True)
-            assert "not found error in DB" in caplog.text
+            assert "Not found error in DB" in caplog.text
 
 
 def test_update_or_create_transformation_revision(caplog):
@@ -228,7 +228,7 @@ def test_update_or_create_transformation_revision(caplog):
             update_or_create_transformation_revision(
                 example_tr_draft, directly_in_db=True
             )
-            assert "not found error in DB" in caplog.text
+            assert "Not found error in DB" in caplog.text
 
         with mock.patch(
             "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
@@ -238,7 +238,7 @@ def test_update_or_create_transformation_revision(caplog):
             update_or_create_transformation_revision(
                 example_tr_draft, directly_in_db=True
             )
-            assert "integrity error in DB" in caplog.text
+            assert "Integrity error in DB" in caplog.text
 
 
 def test_deprecate_all_but_latest_in_group(caplog):
@@ -293,7 +293,7 @@ def test_deprecate_all_but_latest_in_group(caplog):
                 deprecate_all_but_latest_in_group(
                     revision_group_id=import_wf.revision_group_id, directly_in_db=True
                 )
-                assert "not found error in DB" in caplog.text
+                assert "Not found error in DB" in caplog.text
 
             with mock.patch(
                 "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
@@ -303,7 +303,7 @@ def test_deprecate_all_but_latest_in_group(caplog):
                 deprecate_all_but_latest_in_group(
                     revision_group_id=import_wf.revision_group_id, directly_in_db=True
                 )
-                assert "integrity error in DB" in caplog.text
+                assert "Integrity error in DB" in caplog.text
 
 
 def test_deprecate_all_but_latest_per_group():

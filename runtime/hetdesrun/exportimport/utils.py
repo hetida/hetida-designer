@@ -17,6 +17,7 @@ from hetdesrun.persistence.dbservice.revision import (
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
@@ -65,7 +66,12 @@ class FilterParams(BaseModel):
 def get_transformation_revisions(
     params: FilterParams = FilterParams(), directly_from_db: bool = False
 ) -> List[TransformationRevision]:
-    logger.info("Getting " + params.str() + "directly from db" if directly_from_db else "")
+    logger.info(
+        "Getting " + params.str() + "directly from db" if directly_from_db else ""
+    )
+
+    tr_list: List[TransformationRevision] = []
+
     if directly_from_db:
         tr_list = select_multiple_transformation_revisions(
             **params.dict(exclude_none=True)
@@ -91,14 +97,12 @@ def get_transformation_revisions(
             logger.error(msg)
             return []
 
-        tr_list: List[TransformationRevision] = []
-
         for tr_json in get_response.json():
             tr_list.append(TransformationRevision(**tr_json))
 
     for tr in tr_list:
         logger.info(
-            ("Found %s with id %s\n" "in category %s with name %s"),
+            ("Found %s with id %s in category %s with name %s"),
             str(tr.type.value),
             str(tr.id),
             tr.category,
@@ -211,6 +215,38 @@ def delete_transformation_revision(
                 f"with response text:\n{response.text}"
             )
             logger.error(msg)
+
+
+def determine_nesting_level(
+    transformation_id: UUID, transformation_dict: Dict[UUID, TransformationRevision]
+) -> int:
+    def nesting_level(
+        transformation_id: UUID,
+        level: int,
+    ) -> int:
+        transformation = transformation_dict[transformation_id]
+
+        if transformation.type == Type.COMPONENT:
+            return level
+
+        level = level + 1
+        nextlevel = level
+        assert isinstance(transformation.content, WorkflowContent)
+        for operator in transformation.content.operators:
+            if operator.type == Type.WORKFLOW:
+                logger.info(
+                    "transformation %s contains workflow %s at nesting level %i",
+                    str(transformation_id),
+                    operator.transformation_id,
+                    level,
+                )
+                nextlevel = max(
+                    nextlevel, nesting_level(operator.transformation_id, level=level)
+                )
+
+        return nextlevel
+
+    return nesting_level(transformation_id, level=0)
 
 
 def deprecate_all_but_latest_in_group(
