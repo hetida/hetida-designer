@@ -24,7 +24,7 @@ docker run --rm \
   --name htdruntime_export \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge deprecate_all_but_latest_per_group; deprecate_all_but_latest_per_group();'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import deprecate_all_but_latest_per_group; deprecate_all_but_latest_per_group();'
 ```
 
 ## Delete Draft Transformation Revisions
@@ -37,7 +37,7 @@ docker run --rm \
   --name htdruntime_export \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge delete_drafts; delete_drafts();'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import delete_drafts; delete_drafts();'
 ```
 
 ## Delete Unused Deprecated Transformation Revisions
@@ -50,12 +50,12 @@ docker run --rm \
   --name htdruntime_export \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge delete_unused_deprecated; delete_unused_deprecated();'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import delete_unused_deprecated; delete_unused_deprecated();'
 ```
 
 ## Delete All Transformation Revisions and Refill 
 
-To delete all transformation revisions and deploy the specified version of base components and sample workflows from the hetida designer git repository in the version correspond execute the following command. 
+To delete all transformation revisions and deploy the specified version of base components and sample workflows from the hetida designer git repository in the version correspond execute the following command. The version must be at least 8.0.2, earlier versions do not contain this feature.
 
 ```shell
 docker run --rm \
@@ -63,5 +63,5 @@ docker run --rm \
   --name htdruntime_export \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
-  hetida/designer-runtime:<version> -c 'from hetdesrun.exportimport.purge delete_all_and_refill; delete_all_refill();'
+  hetida/designer-runtime:<version> -c 'from hetdesrun.exportimport.purge import delete_all_and_refill; delete_all_refill();'
 ```
