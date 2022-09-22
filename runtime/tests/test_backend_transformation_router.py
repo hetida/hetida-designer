@@ -1099,12 +1099,10 @@ async def test_execute_asynchron_for_transformation_revision_works(
                 assert len(kwargs) == 0
                 assert len(args) == 2
                 assert args[0] == "http://callback-url.com/"
-                assert args[1] == ExecutionResponseFrontendDto(
-                    job_id="1270547c-b224-461d-9387-e9d9d465bbe1",
-                    output_results_by_output_name={"wf_output": 100},
-                    output_types_by_output_name={"wf_output": "INT"},
-                    result="ok",
-                )
+                assert args[1].job_id == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
+                assert args[1].output_results_by_output_name == {"wf_output": 100}
+                assert args[1].output_types_by_output_name == {"wf_output": "INT"}
+                assert str(args[1].result) == "ok"
 
 
 @pytest.mark.asyncio
@@ -1302,12 +1300,13 @@ async def test_execute_latest_async_for_transformation_revision_works(
                 assert len(kwargs) == 0
                 assert len(args) == 2
                 assert args[0] == "http://callback-url.com/"
-                assert args[1] == ExecutionResponseFrontendDto(
-                    job_id="1270547c-b224-461d-9387-e9d9d465bbe1",
-                    output_results_by_output_name={"operator_output": 100},
-                    output_types_by_output_name={"operator_output": "STRING"},
-                    result="ok",
-                )
+
+                assert args[1].job_id == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
+                assert args[1].output_results_by_output_name == {"operator_output": 100}
+                assert args[1].output_types_by_output_name == {
+                    "operator_output": "STRING"
+                }
+                assert str(args[1].result) == "ok"
 
 
 @pytest.mark.asyncio

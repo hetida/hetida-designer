@@ -283,6 +283,8 @@ async def run_execution_input(
         result=execution_result.result,
         traceback=execution_result.traceback,
         job_id=execution_input.job_id,
+        pure_execution_time=execution_result.pure_execution_time,
+        runtime_service_handling_time=execution_result.runtime_service_handling_time,
     )
 
     return execution_response
