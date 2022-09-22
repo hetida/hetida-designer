@@ -285,6 +285,8 @@ async def run_execution_input(
         job_id=execution_input.job_id,
         pure_execution_time=execution_result.pure_execution_time,
         runtime_service_handling_time=execution_result.runtime_service_handling_time,
+        load_data_duration=execution_result.load_data_duration,
+        send_data_duration=execution_result.send_data_duration,
     )
 
     return execution_response

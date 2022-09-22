@@ -25,7 +25,7 @@ from hetdesrun.wiring import (
 runtime_logger.addFilter(job_id_context_filter)
 
 
-async def runtime_service(  # pylint: disable=too-many-return-statements
+async def runtime_service(  # pylint: disable=too-many-return-statements,too-many-statements
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:
     """Running stuff with appropriate error handling, serializing etc.
@@ -66,9 +66,12 @@ async def runtime_service(  # pylint: disable=too-many-return-statements
 
     # Load data
     try:
+        start_load_data_timestamp = datetime.datetime.utcnow()
         loaded_data = await resolve_and_load_data_from_wiring(
             runtime_input.workflow_wiring
         )
+
+        load_data_duration = datetime.datetime.utcnow() - start_load_data_timestamp
     except AdapterHandlingException as exc:
         runtime_logger.info(
             "Adapter Handling Exception during data loading",
@@ -171,9 +174,12 @@ async def runtime_service(  # pylint: disable=too-many-return-statements
 
     # Send data via wiring to sinks and gather data for direct returning
     try:
+        start_send_data_timestamp = datetime.datetime.utcnow()
         direct_return_data: dict = await resolve_and_send_data_from_wiring(
             runtime_input.workflow_wiring, workflow_result
         )
+        send_data_duration = datetime.datetime.utcnow() - start_send_data_timestamp
+
     except AdapterHandlingException as exc:
         runtime_logger.info(
             (
@@ -196,6 +202,8 @@ async def runtime_service(  # pylint: disable=too-many-return-statements
         output_results_by_output_name=direct_return_data,
         job_id=runtime_input.job_id,
         pure_execution_time=pure_execution_time,
+        load_data_duration=load_data_duration,
+        send_data_duration=send_data_duration,
     )
 
     runtime_logger.info(
