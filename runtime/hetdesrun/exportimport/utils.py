@@ -8,6 +8,7 @@ from uuid import UUID
 import requests
 from pydantic import BaseModel
 
+from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -34,17 +35,16 @@ class FilterParams(BaseModel):
 
 
 def get_transformation_revisions(
-    params: Optional[FilterParams] = None, directly_from_db: bool = False
+    params: FilterParams = FilterParams(), directly_from_db: bool = False
 ) -> List[TransformationRevision]:
-    if params is None:
-        params = {}
-
     if directly_from_db:
-        return select_multiple_transformation_revisions(**params)
+        return select_multiple_transformation_revisions(
+            **params.dict(exclude_none=True)
+        )
 
     get_response = requests.get(
         posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-        params=json.loads(params.json()),
+        params=json.loads(params.json(exclude_none=True)),
         verify=get_config().hd_backend_verify_certs,
         auth=get_backend_basic_auth()  # type: ignore
         if get_config().hd_backend_use_basic_auth
@@ -60,6 +60,7 @@ def get_transformation_revisions(
             f"with response text:\n{get_response.text}"
         )
         logger.error(msg)
+        return []
 
     tr_list: List[TransformationRevision] = []
 
@@ -77,15 +78,17 @@ def update_or_create_transformation_revision(
     if directly_in_db:
         logger.info(
             (
-                "Update or create database entry"
-                " for transformation revision %s of type %s\n"
+                "Update or create DB entry"
+                " for %s with id %s\n"
                 "in category %s with name %s"
             ),
-            str(tr.id),
             str(tr.type),
+            str(tr.id),
             tr.category,
             tr.name,
         )
+        if update_component_code and tr.type == Type.COMPONENT:
+            tr.content = update_code(tr)
         update_or_create_single_transformation_revision(tr)
     else:
         response = requests.put(
@@ -141,7 +144,7 @@ def delete_transformation_revision(
         )
         if response.status_code != 204:
             msg = (
-                f"COULD NOT DELETE transforamtion revision with id {id}\n."
+                f"COULD NOT DELETE transformation revision with id {id}\n."
                 f"Response status code {response.status_code}"
                 f"with response text:\n{response.text}"
             )
