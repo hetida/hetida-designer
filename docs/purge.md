@@ -63,5 +63,5 @@ docker run --rm \
   --name htdruntime_export \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
-  hetida/designer-runtime:<version> -c 'from hetdesrun.exportimport.purge import delete_all_and_refill; delete_all_refill();'
+  hetida/designer-runtime:<version> -c 'from hetdesrun.exportimport.purge import delete_all_and_refill; delete_all_and_refill();'
 ```
