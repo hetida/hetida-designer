@@ -10,6 +10,7 @@ from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
+    DBIntegrityError,
     DBNotFoundError,
 )
 from hetdesrun.persistence.dbservice.revision import (
@@ -142,57 +143,84 @@ def test_creating(clean_test_db_engine):
 
 
 def test_deleting(clean_test_db_engine):
+    patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
+        patched_session,
     ):
-        tr_draft_uuid = get_uuid_from_seed("draft")
+        with mock.patch(
+            "hetdesrun.persistence.dbservice.nesting.Session",
+            patched_session,
+        ):
+            tr_draft_uuid = get_uuid_from_seed("draft")
 
-        tr_draft_object = TransformationRevision(
-            id=tr_draft_uuid,
-            revision_group_id=tr_draft_uuid,
-            name="Test",
-            description="Test description",
-            version_tag="1.0.0",
-            category="Test category",
-            state=State.DRAFT,
-            type=Type.COMPONENT,
-            content="code",
-            io_interface=IOInterface(),
-            test_wiring=WorkflowWiring(),
-            documentation="",
-        )
+            tr_draft_object = TransformationRevision(
+                id=tr_draft_uuid,
+                revision_group_id=tr_draft_uuid,
+                name="Test",
+                description="Test description",
+                version_tag="1.0.0",
+                category="Test category",
+                state=State.DRAFT,
+                type=Type.COMPONENT,
+                content="code",
+                io_interface=IOInterface(),
+                test_wiring=WorkflowWiring(),
+                documentation="",
+            )
 
-        tr_released_uuid = get_uuid_from_seed("released")
+            tr_released_uuid = get_uuid_from_seed("released")
 
-        tr_released_object = TransformationRevision(
-            id=tr_released_uuid,
-            revision_group_id=tr_released_uuid,
-            name="Test",
-            description="Test description",
-            version_tag="1.0.0",
-            category="Test category",
-            released_timestamp="2021-12-24 00:00",
-            state=State.RELEASED,
-            type=Type.COMPONENT,
-            content="code",
-            io_interface=IOInterface(),
-            test_wiring=WorkflowWiring(),
-            documentation="",
-        )
+            tr_released_object = TransformationRevision(
+                id=tr_released_uuid,
+                revision_group_id=tr_released_uuid,
+                name="Test",
+                description="Test description",
+                version_tag="1.0.0",
+                category="Test category",
+                released_timestamp="2021-12-24 00:00",
+                state=State.RELEASED,
+                type=Type.COMPONENT,
+                content="code",
+                io_interface=IOInterface(),
+                test_wiring=WorkflowWiring(),
+                documentation="",
+            )
 
-        store_single_transformation_revision(tr_draft_object)
-        store_single_transformation_revision(tr_released_object)
+            tr_workflow_uuid = get_uuid_from_seed("workflow")
 
-        delete_single_transformation_revision(tr_draft_uuid)
+            tr_workflow = TransformationRevision(
+                id=tr_workflow_uuid,
+                revision_group_id=tr_workflow_uuid,
+                name="Test",
+                description="Test description",
+                version_tag="1.0.0",
+                category="Test category",
+                state=State.DRAFT,
+                type=Type.WORKFLOW,
+                content=WorkflowContent(operators=[tr_released_object.to_operator()]),
+                io_interface=IOInterface(),
+                test_wiring=WorkflowWiring(),
+                documentation="",
+            )
 
-        with pytest.raises(DBNotFoundError):
-            read_single_transformation_revision(tr_draft_uuid)
+            store_single_transformation_revision(tr_draft_object)
+            store_single_transformation_revision(tr_released_object)
+            update_or_create_single_transformation_revision(tr_workflow)
 
-        with pytest.raises(DBBadRequestError):
-            delete_single_transformation_revision(tr_released_uuid)
+            delete_single_transformation_revision(tr_draft_uuid)
 
-        delete_single_transformation_revision(tr_released_uuid, ignore_state=True)
+            with pytest.raises(DBNotFoundError):
+                read_single_transformation_revision(tr_draft_uuid)
+
+            with pytest.raises(DBBadRequestError):
+                delete_single_transformation_revision(tr_released_uuid)
+
+            # with pytest.raises(DBIntegrityError):
+            #     delete_single_transformation_revision(tr_released_uuid, ignore_state=True)
+
+            delete_single_transformation_revision(tr_workflow_uuid, ignore_state=True)
+            delete_single_transformation_revision(tr_released_uuid, ignore_state=True)
 
 
 def test_multiple_select(clean_test_db_engine):

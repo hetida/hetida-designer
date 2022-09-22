@@ -71,10 +71,10 @@ def find_all_nestings(
     return [row[0] for row in result.all()]
 
 
-def delete_own_nestings(session: SQLAlchemySession, workflow_id: UUID) -> None:
-    logger.debug("delete own nestings of workflow %s", str(workflow_id))
+def delete_own_nestings(session: SQLAlchemySession, id: UUID) -> None:
+    logger.debug("delete nestings of transformation revision %s if existing", str(id))
     session.execute(
-        delete(NestingDBModel).where(NestingDBModel.workflow_id == workflow_id)
+        delete(NestingDBModel).where(NestingDBModel.workflow_id == id)
     )
 
 

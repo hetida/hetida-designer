@@ -193,11 +193,19 @@ def delete_single_transformation_revision(
 
         delete_own_nestings(session, transformation_revision.id)
 
-        session.execute(
-            delete(TransformationRevisionDBModel).where(
-                TransformationRevisionDBModel.id == transformation_revision.id
+        try:
+            session.execute(
+                delete(TransformationRevisionDBModel).where(
+                    TransformationRevisionDBModel.id == transformation_revision.id
+                )
             )
-        )
+        except IntegrityError as e:
+            msg = (
+                f"Integrity Error while trying to delete transformation revision "
+                f"with id {transformation_revision.id}. Error was:\n{str(e)}"
+            )
+            logger.error(msg)
+            raise DBIntegrityError(msg) from e
 
 
 def is_unused(transformation_id: UUID) -> bool:
