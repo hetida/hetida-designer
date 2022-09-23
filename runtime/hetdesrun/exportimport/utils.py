@@ -323,17 +323,4 @@ def deprecate_all_but_latest_in_group(
             tr.id,
             released_timestamp,
         )
-        try:
-            update_or_create_transformation_revision(tr, directly_in_db=directly_in_db)
-        except DBNotFoundError as not_found_err:
-            logger.error(
-                "Not found error in DB when trying to access entry for id %s\n%s",
-                tr.id,
-                not_found_err,
-            )
-        except DBIntegrityError as integrity_err:
-            logger.error(
-                "Integrity error in DB when trying to access entry for id %s\n%s",
-                tr.id,
-                integrity_err,
-            )
+        update_or_create_transformation_revision(tr, directly_in_db=directly_in_db)

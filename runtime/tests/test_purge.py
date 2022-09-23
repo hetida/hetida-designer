@@ -289,27 +289,6 @@ def test_deprecate_all_but_latest_in_group(caplog):
             del deprecated_stored_json["disabled_timestamp"]
             assert update_json == deprecated_stored_json
 
-        with caplog.at_level(logging.ERROR):
-            with mock.patch(
-                "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
-                side_effect=DBNotFoundError,
-            ):
-                caplog.clear()
-                deprecate_all_but_latest_in_group(
-                    revision_group_id=import_wf.revision_group_id, directly_in_db=True
-                )
-                assert "Not found error in DB" in caplog.text
-
-            with mock.patch(
-                "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
-                side_effect=DBIntegrityError,
-            ):
-                caplog.clear()
-                deprecate_all_but_latest_in_group(
-                    revision_group_id=import_wf.revision_group_id, directly_in_db=True
-                )
-                assert "Integrity error in DB" in caplog.text
-
 
 def test_deprecate_all_but_latest_per_group():
     with mock.patch(
