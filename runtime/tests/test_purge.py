@@ -16,6 +16,7 @@ from hetdesrun.exportimport.purge import (
 from hetdesrun.exportimport.utils import (
     FilterParams,
     delete_transformation_revision,
+    delete_transformation_revisions,
     deprecate_all_but_latest_in_group,
     get_transformation_revisions,
     update_or_create_transformation_revision,
@@ -24,6 +25,7 @@ from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.config import get_config
 
@@ -166,7 +168,66 @@ def test_delete_transformation_revision(caplog):
 
 
 def test_delete_transformation_revisions():
-    pass
+    component_operator = example_tr_released.to_operator()
+    example_wf_contained = TransformationRevision(
+        type=Type.WORKFLOW,
+        state=State.DRAFT,
+        category="category",
+        name="name",
+        version_tag="1.0.0",
+        description="",
+        id=uuid4(),
+        revision_group_id=uuid4(),
+        io_interface=IOInterface(),
+        content=WorkflowContent(operators=[component_operator]),
+        documentation="",
+        test_wiring=WorkflowWiring(),
+    )
+    workflow_operator = example_wf_contained.to_operator()
+    example_wf_containing = TransformationRevision(
+        type=Type.WORKFLOW,
+        state=State.DRAFT,
+        category="category",
+        name="name",
+        version_tag="1.0.0",
+        description="",
+        id=uuid4(),
+        revision_group_id=uuid4(),
+        io_interface=IOInterface(),
+        content=WorkflowContent(operators=[workflow_operator]),
+        documentation="",
+        test_wiring=WorkflowWiring(),
+    )
+    with mock.patch(
+        "hetdesrun.exportimport.utils.delete_transformation_revision", return_value=None
+    ) as mocked_delete:
+        with mock.patch(
+            "hetdesrun.exportimport.utils.get_transformation_revisions",
+            return_value=[
+                example_tr_released,
+                example_wf_contained,
+                example_wf_containing,
+            ],
+        ) as mocked_get:
+            delete_transformation_revisions(
+                [example_tr_released, example_wf_contained, example_wf_containing]
+            )
+            assert mocked_get.call_count == 1
+            _, _, kwargs = mocked_get.mock_calls[0]
+            assert kwargs["params"].ids == [
+                example_tr_released.id,
+                example_wf_contained.id,
+                example_wf_containing.id,
+            ]
+            assert kwargs["params"].include_dependencies == True
+
+            assert mocked_delete.call_count == 3
+            _, args, _ = mocked_delete.mock_calls[0]
+            assert args[0] == example_wf_containing.id
+            _, args, _ = mocked_delete.mock_calls[1]
+            assert args[0] == example_wf_contained.id
+            _, args, _ = mocked_delete.mock_calls[2]
+            assert args[0] == example_tr_released.id
 
 
 def test_update_or_create_transformation_revision(caplog):
