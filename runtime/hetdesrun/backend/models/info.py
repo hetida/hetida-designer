@@ -96,6 +96,15 @@ class ExecutionResponseFrontendDto(BaseModel):
         ),
     )
 
+    prepare_execution_input_duration: Optional[datetime.timedelta] = Field(
+        None,
+        description=(
+            "Duration of loading transformation revision(s) from db,"
+            " and preparing execution input"
+            " Only available if execution was successful."
+        ),
+    )
+
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
 
 

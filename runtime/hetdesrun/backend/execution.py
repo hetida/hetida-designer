@@ -1,5 +1,6 @@
 """Handle execution of transformation revisions."""
 
+import datetime
 import json
 import logging
 from posixpath import join as posix_urljoin
@@ -301,5 +302,16 @@ async def execute_transformation_revision(
     """
 
     execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
+
+    # prepare execution input
+    start_preparing_execution = datetime.datetime.utcnow()
     execution_input = prepare_execution_input(exec_by_id_input)
-    return await run_execution_input(execution_input)
+    prepare_execution_input_duration = (
+        datetime.datetime.utcnow() - start_preparing_execution
+    )
+
+    exec_resp_frontend_dto = await run_execution_input(execution_input)
+    exec_resp_frontend_dto.prepare_execution_input_duration = (
+        prepare_execution_input_duration
+    )
+    return exec_resp_frontend_dto
