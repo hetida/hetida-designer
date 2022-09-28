@@ -15,11 +15,60 @@ from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import ComponentRevision
 from hetdesrun.models.wiring import OutputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
+from hetdesrun.utils import check_explicit_utc
 
 
 class ExecutionEngine(Enum):
     # Currently only built-in execution engine
     Plain = "plain"
+
+
+class PerformanceMeasuredStep(BaseModel):
+    name: str
+    start: Optional[datetime.datetime] = None
+    end: Optional[datetime.datetime] = None
+    duration: Optional[datetime.timedelta] = None
+
+    @classmethod
+    def create_and_begin(cls, name: str) -> "PerformanceMeasuredStep":
+        new_step = cls(name=name)
+        new_step.begin()
+        return new_step
+
+    # pylint: disable=no-self-argument
+    @validator("start")
+    def start_utc_datetime(cls, start):  # type: ignore
+        if not check_explicit_utc(start):
+            return ValueError("start datetime for measurement must be explicit utc")
+        return start
+
+    # pylint: disable=no-self-argument
+    @validator("end")
+    def end_utc_datetime(cls, end):  # type: ignore
+        if not check_explicit_utc(end):
+            return ValueError("end datetime for measurement must be explicit utc")
+        return end
+
+    def begin(self) -> None:
+        self.start = datetime.datetime.now(datetime.timezone.utc)
+
+    def stop(self) -> None:
+        if self.start is None:
+            raise ValueError(
+                f"Cannot stop measurement {self.name} if it was not started before!"
+            )
+
+        self.end = datetime.datetime.now(datetime.timezone.utc)
+        self.duration = self.end - self.start
+
+
+class AllMeasuredSteps(BaseModel):
+    internal_full: Optional[PerformanceMeasuredStep] = None
+    prepare_execution_input: Optional[PerformanceMeasuredStep] = None
+    runtime_service_handling: Optional[PerformanceMeasuredStep] = None
+    pure_execution: Optional[PerformanceMeasuredStep] = None
+    load_data: Optional[PerformanceMeasuredStep] = None
+    send_data: Optional[PerformanceMeasuredStep] = None
 
 
 class ConfigurationInput(BaseModel):
@@ -154,44 +203,7 @@ class WorkflowExecutionResult(BaseModel):
     error: Optional[str] = Field(None, description="error string")
     traceback: Optional[str] = Field(None, description="traceback")
     job_id: UUID
-    pure_execution_time: Optional[datetime.timedelta] = Field(
-        None,
-        description=(
-            "Pure execution time after parsing workflow/data "
-            "and before serializing/sending results."
-            " Only available if execution was successful."
-        ),
-    )
 
-    runtime_service_handling_time: Optional[datetime.timedelta] = Field(
-        None,
-        description=(
-            "Full runtime handling duration."
-            " Includes Workflow parsing, data loading via adapters,"
-            " execution, sending result data via adapters."
-            " Does not include parsing the execution request itself and"
-            " serialization/sending its response."
-            " Only available if execution was successful."
-        ),
-    )
+    measured_steps: AllMeasuredSteps = AllMeasuredSteps()
 
-    load_data_duration: Optional[datetime.timedelta] = Field(
-        None,
-        description=(
-            "Duration of loading data via adapter system as specified in wiring"
-            " Includes parsing of directly provisioned data"
-            " (i.e. as part of request json)."
-            " Only available if execution was successful."
-        ),
-    )
-
-    send_data_duration: Optional[datetime.timedelta] = Field(
-        None,
-        description=(
-            "Duration of sending result data via adapter system as specified in wiring"
-            " Includes serialization of directly provisioned data for"
-            " (i.e. as part of request response)."
-            " Only available if execution was successful."
-        ),
-    )
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types

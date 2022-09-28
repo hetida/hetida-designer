@@ -1,5 +1,6 @@
 """Utilities for scripting and in particular component/workflow deployment"""
 
+import datetime
 import json
 import logging
 import random
@@ -16,6 +17,17 @@ from hetdesrun.datatypes import DataType
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
+
+
+def check_aware(dt: datetime.datetime) -> bool:
+    """check whether datetime is non-naive"""
+    # see https://stackoverflow.com/a/27596917
+    return dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None
+
+
+def check_explicit_utc(dt: datetime.datetime) -> bool:
+    """check whether datetime is explicitely utc"""
+    return check_aware(dt) and dt.utcoffset().total_seconds() == 0  # type: ignore
 
 
 def get_backend_basic_auth() -> Tuple[Optional[str], Optional[str]]:

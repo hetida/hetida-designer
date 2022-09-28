@@ -1,4 +1,3 @@
-import datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -7,6 +6,7 @@ from pydantic import BaseModel, Field, validator
 
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
+from hetdesrun.models.run import AllMeasuredSteps
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
 
@@ -55,55 +55,8 @@ class ExecutionResponseFrontendDto(BaseModel):
     result: str
     traceback: Optional[str]
     job_id: UUID
-    pure_execution_time: Optional[datetime.timedelta] = Field(
-        None,
-        description=(
-            "Pure execution time after parsing workflow/data "
-            "and before serializing/sending results."
-            " Only available if execution was successful."
-        ),
-    )
 
-    runtime_service_handling_time: Optional[datetime.timedelta] = Field(
-        None,
-        description=(
-            "Full runtime handling duration."
-            " Includes Workflow parsing, data loading via adapters,"
-            " execution, sending result data via adapters."
-            " Does not include parsing the execution request itself and"
-            " serialization/sending its response."
-            " Only available if execution was successful."
-        ),
-    )
-
-    load_data_duration: Optional[datetime.timedelta] = Field(
-        None,
-        description=(
-            "Duration of loading data via adapter system as specified in wiring"
-            " Includes parsing of directly provisioned data"
-            " (i.e. as part of request json)."
-            " Only available if execution was successful."
-        ),
-    )
-
-    send_data_duration: Optional[datetime.timedelta] = Field(
-        None,
-        description=(
-            "Duration of sending result data via adapter system as specified in wiring"
-            " Includes serialization of directly provisioned data for"
-            " (i.e. as part of request response)."
-            " Only available if execution was successful."
-        ),
-    )
-
-    prepare_execution_input_duration: Optional[datetime.timedelta] = Field(
-        None,
-        description=(
-            "Duration of loading transformation revision(s) from db,"
-            " and preparing execution input"
-            " Only available if execution was successful."
-        ),
-    )
+    measured_steps: AllMeasuredSteps = AllMeasuredSteps()
 
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
 

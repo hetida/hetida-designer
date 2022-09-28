@@ -1,6 +1,5 @@
 """Handle execution of transformation revisions."""
 
-import datetime
 import json
 import logging
 from posixpath import join as posix_urljoin
@@ -18,6 +17,7 @@ from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.run import (
     ConfigurationInput,
+    PerformanceMeasuredStep,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
@@ -284,10 +284,7 @@ async def run_execution_input(
         result=execution_result.result,
         traceback=execution_result.traceback,
         job_id=execution_input.job_id,
-        pure_execution_time=execution_result.pure_execution_time,
-        runtime_service_handling_time=execution_result.runtime_service_handling_time,
-        load_data_duration=execution_result.load_data_duration,
-        send_data_duration=execution_result.send_data_duration,
+        measured_steps=execution_result.measured_steps,
     )
 
     return execution_response
@@ -304,14 +301,17 @@ async def execute_transformation_revision(
     execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
 
     # prepare execution input
-    start_preparing_execution = datetime.datetime.utcnow()
-    execution_input = prepare_execution_input(exec_by_id_input)
-    prepare_execution_input_duration = (
-        datetime.datetime.utcnow() - start_preparing_execution
+
+    prep_exec_input_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "prepare_execution_input"
     )
 
+    execution_input = prepare_execution_input(exec_by_id_input)
+
+    prep_exec_input_measured_step.stop()
+
     exec_resp_frontend_dto = await run_execution_input(execution_input)
-    exec_resp_frontend_dto.prepare_execution_input_duration = (
-        prepare_execution_input_duration
+    exec_resp_frontend_dto.measured_steps.prepare_execution_input = (
+        prep_exec_input_measured_step
     )
     return exec_resp_frontend_dto
