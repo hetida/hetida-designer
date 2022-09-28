@@ -65,6 +65,7 @@ class PerformanceMeasuredStep(BaseModel):
 class AllMeasuredSteps(BaseModel):
     internal_full: Optional[PerformanceMeasuredStep] = None
     prepare_execution_input: Optional[PerformanceMeasuredStep] = None
+    run_execution_input: Optional[PerformanceMeasuredStep] = None
     runtime_service_handling: Optional[PerformanceMeasuredStep] = None
     pure_execution: Optional[PerformanceMeasuredStep] = None
     load_data: Optional[PerformanceMeasuredStep] = None

@@ -233,6 +233,10 @@ async def run_execution_input(
 
     Raises subtypes of TrafoExecutionError on errors.
     """
+    run_execution_input_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "run_execution_input"
+    )
+
     output_types = {
         output.name: output.type for output in execution_input.workflow.outputs
     }
@@ -285,6 +289,10 @@ async def run_execution_input(
         traceback=execution_result.traceback,
         job_id=execution_input.job_id,
         measured_steps=execution_result.measured_steps,
+    )
+
+    execution_response.measured_steps.run_execution_input = (
+        run_execution_input_measured_step
     )
 
     return execution_response
