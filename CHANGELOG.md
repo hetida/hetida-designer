@@ -1,3 +1,6 @@
+## 0.8.2
+* add some time measurement to successful execution output
+* update base images
 ## 0.8.1
 * improve contextualized logging
 * add async (web hook / callback) execution web endpoint
