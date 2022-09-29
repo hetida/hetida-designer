@@ -291,10 +291,11 @@ async def run_execution_input(
         measured_steps=execution_result.measured_steps,
     )
 
+    run_execution_input_measured_step.stop()
+
     execution_response.measured_steps.run_execution_input = (
         run_execution_input_measured_step
     )
-
     return execution_response
 
 
