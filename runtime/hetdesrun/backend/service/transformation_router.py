@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from typing import Any, List, Optional, Tuple
 from uuid import UUID, uuid4
 
@@ -486,6 +487,8 @@ async def handle_trafo_revision_execution_request(
 
     internal_full_measured_step.stop()
     exec_response.measured_steps.internal_full = internal_full_measured_step
+    if get_config().advanced_performance_measurement_active:
+        exec_response.process_id = os.getpid()
     return exec_response
 
 

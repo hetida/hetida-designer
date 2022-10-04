@@ -57,6 +57,13 @@ class ExecutionResponseFrontendDto(BaseModel):
     job_id: UUID
 
     measured_steps: AllMeasuredSteps = AllMeasuredSteps()
+    process_id: Optional[int] = Field(
+        None,
+        description=(
+            "Process Id (PID) of the process handling the request, "
+            "if advanced performance measuring is configured."
+        ),
+    )
 
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
 

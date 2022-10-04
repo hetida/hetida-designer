@@ -30,6 +30,17 @@ class RuntimeConfig(BaseSettings):
         description="Python logging level as string, i.e. one of "
         + ", ".join(['"' + x.value + '"' for x in list(LogLevel)]),
     )
+
+    advanced_performance_measurement_active: bool = Field(
+        True,
+        env="HD_ADVANCED_PERFORMANCE_MEASUREMENT_INFORMATION",
+        description=(
+            "Whether some additional information is returned by execution requests."
+            " At the moment this setting only affects the process id (PID),"
+            " while time measurements are always provided."
+        ),
+    )
+
     swagger_prefix: str = Field(
         "",
         env="OPENAPI_PREFIX",

@@ -955,7 +955,7 @@ shell() {
 
 PYREQ_CONTENT=$(
     cat <<'END_HEREDOC'
-from typing import Dict, List
+from typing import Dict, List, Optional
 import os
 import sys
 
@@ -975,9 +975,10 @@ class WritableRequirement:
     line to a file again.
     """
 
-    def __init__(self, req_source: str, req_object: Requirement):
+    def __init__(self, req_source: str, req_object: Requirement, comment: Optional[str]=None):
         self.req_source = req_source
         self.req_object = req_object
+        self.comment = comment
 
 
 def parse_reqs_from_file(path) -> List[WritableRequirement]:
@@ -991,10 +992,24 @@ def parse_reqs_from_file(path) -> List[WritableRequirement]:
         for parsed_req in parse_requirements(path, PipSession())
     ]
 
+def writable_req_from_line(line: str) -> WritableRequirement:
+    stripped_line = line.strip("\n").strip()
+    comment_split_line_segments = line.split("#", 1)
+    pure_req_line=comment_split_line_segments[0]
+    if len(comment_split_line_segments)>1:
+        comment = comment_split_line_segments[1]
+    else:
+        comment = None
+    return WritableRequirement(
+        pure_req_line.replace(" ", "").strip(os.linesep),
+        Requirement.parse(pure_req_line),
+        comment
+    )
+
 
 def parse_reqs_from_list(list_of_req_specs: List[str]) -> List[WritableRequirement]:
     return [
-        WritableRequirement(x.replace(" ", "").strip(os.linesep), Requirement.parse(x))
+        writable_req_from_line(x)
         for x in list_of_req_specs if x.replace(" ", "").strip(os.linesep) != ""
     ]
 
@@ -1006,7 +1021,9 @@ def parse_reqs_from_lines_of_file(path):
     else:
         with open(path, "r") as f:
             lines = [line.strip("\n").strip() for line in f.readlines()]
-    return parse_reqs_from_list([line for line in lines if not line.startswith("-c ")])
+    return parse_reqs_from_list([line for line in lines if not 
+        ( line.startswith("-c ") or len(line)==0 or line.startswith("#") )
+    ])
 
 
 # requirements Syntax: https://www.python.org/dev/peps/pep-0508/
@@ -1056,7 +1073,10 @@ def write_new_reqs_to_file(
         if constraint_files is not None:
             for constraint_path in constraint_files:
                 f.write("-c " + constraint_path + "\n")
-        f.write(os.linesep.join([req.req_source for req in new_req_dict.values()]))
+        f.write(os.linesep.join([
+                req.req_source + ((" #" + req.comment) if req.comment is not None else "")
+            for req in new_req_dict.values()
+        ]))
         f.write(os.linesep)
 
 
