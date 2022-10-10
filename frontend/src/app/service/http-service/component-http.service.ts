@@ -46,16 +46,16 @@ export class ComponentHttpService {
 
   public executeComponent(
     id: string,
-    testWiring: TestWiring
+    wiring: TestWiring
   ): Observable<ComponentBaseItem> {
-    const url = `${this.apiEndpoint}/transformations/execute/`;
+    const url = `${this.apiEndpoint}/components/${id}/execute`;
 
     const httpParams = new HttpParams().append(
       'run_pure_plot_operators',
       'true'
     );
 
-    return this.http.post<ComponentBaseItem>(url, testWiring, {
+    return this.http.post<ComponentBaseItem>(url, wiring, {
       params: httpParams
     });
   }

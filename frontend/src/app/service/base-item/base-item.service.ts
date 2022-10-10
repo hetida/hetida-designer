@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { EMPTY, Observable } from 'rxjs';
-import { first, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, of } from 'rxjs';
+import { finalize, first, switchMap, switchMapTo, tap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { BaseItemType } from '../../enums/base-item-type';
 import { RevisionState } from '../../enums/revision-state';
@@ -23,6 +23,12 @@ import {
 } from '../../store/transformation/transformation.actions';
 import { TransformationState } from '../../store/transformation/transformation.state';
 import { LocalStorageService } from '../local-storage/local-storage.service';
+import { TestWiring } from 'hd-wiring';
+import {
+  setExecutionFinished,
+  setExecutionProtocol,
+  setExecutionRunning
+} from 'src/app/store/execution-protocol/execution-protocol.actions';
 
 @Injectable({
   providedIn: 'root'
@@ -152,5 +158,19 @@ export class BaseItemService {
     transformation.state = RevisionState.DISABLED;
     transformation.disabled_timestamp = new Date().toISOString();
     this.updateTransformation(transformation);
+  }
+
+  testTransformation(
+    id: string,
+    test_wiring: TestWiring
+  ): Observable<Transformation> {
+    return of(null).pipe(
+      tap(() => this.store.dispatch(setExecutionRunning())),
+      switchMapTo(
+        this.transformationHttpService.executeTransformation(id, test_wiring)
+      ),
+      tap(result => this.store.dispatch(setExecutionProtocol(result))),
+      finalize(() => this.store.dispatch(setExecutionFinished()))
+    );
   }
 }

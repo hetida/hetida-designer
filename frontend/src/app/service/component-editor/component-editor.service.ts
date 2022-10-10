@@ -3,24 +3,24 @@ import { Store } from '@ngrx/store';
 import { TestWiring } from 'hd-wiring';
 import { iif, Observable, of } from 'rxjs';
 import { finalize, switchMap, switchMapTo, tap } from 'rxjs/operators';
-import { ComponentBaseItem } from '../model/component-base-item';
-import { IAppState } from '../store/app.state';
-import { isComponentBaseItem } from '../store/base-item/base-item-guards';
+import { ComponentBaseItem } from '../../model/component-base-item';
+import { IAppState } from '../../store/app.state';
+import { isComponentBaseItem } from '../../store/base-item/base-item-guards';
 import {
   addBaseItem,
   patchComponentProperties,
   putBaseItem
-} from '../store/base-item/base-item.actions';
+} from '../../store/base-item/base-item.actions';
 import {
   selectAbstractBaseItemById,
   selectComponentBaseItemById
-} from '../store/base-item/base-item.selectors';
+} from '../../store/base-item/base-item.selectors';
 import {
   setExecutionFinished,
   setExecutionProtocol,
   setExecutionRunning
-} from '../store/execution-protocol/execution-protocol.actions';
-import { ComponentHttpService } from './http-service/component-http.service';
+} from '../../store/execution-protocol/execution-protocol.actions';
+import { ComponentHttpService } from '../http-service/component-http.service';
 
 @Injectable({
   providedIn: 'root'
@@ -61,13 +61,10 @@ export class ComponentEditorService {
     );
   }
 
-  testComponent(
-    id: string,
-    testWiring: TestWiring
-  ): Observable<ComponentBaseItem> {
+  testComponent(id: string, wiring: TestWiring): Observable<ComponentBaseItem> {
     return of(null).pipe(
       tap(() => this.store.dispatch(setExecutionRunning())),
-      switchMapTo(this.componentHttpService.executeComponent(id, testWiring)),
+      switchMapTo(this.componentHttpService.executeComponent(id, wiring)),
       tap(result => this.store.dispatch(setExecutionProtocol(result))),
       finalize(() => this.store.dispatch(setExecutionFinished()))
     );

@@ -46,23 +46,23 @@ export class WorkflowHttpService {
 
   public executeWorkflow(
     id: string,
-    testWiring: TestWiring
+    wiring: TestWiring
   ): Observable<WorkflowBaseItem> {
     const url = `${this.apiEndpoint}/workflows/${id}/execute`;
     const httpParams = new HttpParams().append(
       'run_pure_plot_operators',
       'true'
     );
-    return this.http.post<WorkflowBaseItem>(url, testWiring, {
+    return this.http.post<WorkflowBaseItem>(url, wiring, {
       params: httpParams
     });
   }
 
   public bindWiringToWorkflow(
     id: string,
-    testWiring: TestWiring
+    wiring: TestWiring
   ): Observable<WorkflowBaseItem> {
     const url = `${this.apiEndpoint}/workflows/${id}/wirings`;
-    return this.http.post<WorkflowBaseItem>(url, testWiring);
+    return this.http.post<WorkflowBaseItem>(url, wiring);
   }
 }

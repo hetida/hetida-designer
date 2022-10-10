@@ -73,12 +73,11 @@ export class ToolbarComponent implements OnInit {
     this.flowchartService.showEntireWorkflow(this.transformation.id);
   }
 
-  // TODO
   showDocumentation() {
     this.baseItemAction.showDocumentation(this.transformation.id);
   }
 
-  // TODO
+  // TODO check for workflows
   async execute() {
     await this.baseItemAction.execute(this.transformation);
   }

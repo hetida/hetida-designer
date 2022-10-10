@@ -59,7 +59,7 @@ export interface AbstractBaseItem {
   outputs: IOItem[];
 
   /**
-   * TestWiring
+   * Wiring
    */
   wirings: TestWiring[];
 }

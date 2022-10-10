@@ -28,7 +28,7 @@ export class WiringHttpService {
 
   updateWiring(workflowWiring: TestWiring): Observable<TestWiring> {
     return this._http.put<TestWiring>(
-      `${this._apiEndpoint}/wirings/${workflowWiring}`, // id
+      `${this._apiEndpoint}/wirings/${workflowWiring}`, // workflowWiring.id
       workflowWiring
     );
   }
