@@ -119,6 +119,8 @@ export class BaseItemActionService {
             .select(selectTransformationById(executeTestClickEvent.id))
             .pipe(first())
             .subscribe(transformationToUpdate =>
+              // TODO if a transformation is set too released,
+              // it can't be updated by a new test_wiring and will throw a error 403 (Forbidden)
               this.baseItemService.updateTransformation({
                 ...transformationToUpdate,
                 test_wiring: executeTestClickEvent.test_wiring
