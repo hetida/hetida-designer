@@ -54,14 +54,18 @@ export class BaseItemService {
       );
   }
 
-  updateTransformation(transformation: Transformation): void {
-    this.transformationHttpService
+  updateTransformation(
+    transformation: Transformation
+  ): Observable<Transformation> {
+    return this.transformationHttpService
       .updateTransformation(transformation)
-      .subscribe(updatedTransformation => {
-        this.transformationStore.dispatch(
-          updateTransformation(updatedTransformation)
-        );
-      });
+      .pipe(
+        tap(updatedTransformation => {
+          this.transformationStore.dispatch(
+            updateTransformation(updatedTransformation)
+          );
+        })
+      );
   }
 
   createWorkflow(): WorkflowBaseItem {

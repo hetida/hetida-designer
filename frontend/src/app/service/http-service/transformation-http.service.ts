@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { ConfigService } from '../configuration/config.service';
 import { Observable } from 'rxjs';
 import { Transformation } from '../../model/new-api/transformation';
@@ -50,15 +50,9 @@ export class TransformationHttpService {
     wiring: TestWiring
   ): Observable<Transformation> {
     const url = `${this.apiEndpoint}/transformations/execute`;
-    const body = { id, wiring };
-    const httpParams = new HttpParams().append(
-      'run_pure_plot_operators',
-      'true'
-    );
+    const body = { id, wiring, run_pure_plot_operators: true };
 
-    return this.httpClient.post<Transformation>(url, body, {
-      params: httpParams
-    });
+    return this.httpClient.post<Transformation>(url, body);
   }
 
   public getAdapterList(): Observable<Adapter[]> {

@@ -7,8 +7,8 @@ import {
   TestWiring,
   WiringDialogComponent
 } from 'hd-wiring';
-import { combineLatest, Observable, of } from 'rxjs';
-import { finalize, first, switchMap, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { finalize, first, map, switchMap, tap } from 'rxjs/operators';
 import {
   ComponentIODialogComponent,
   ComponentIoDialogData
@@ -114,27 +114,29 @@ export class BaseItemActionService {
     dialogRef.componentInstance.confirmClick
       .pipe(
         tap(() => dialogRef.close()),
-        switchMap(executeTestClickEvent => {
+        switchMap(executeTestClickEvent =>
           this.transformationStore
             .select(selectTransformationById(executeTestClickEvent.id))
-            .pipe(first())
-            .subscribe(transformationToUpdate =>
-              // TODO if a transformation is set too released,
-              // it can't be updated by a new test_wiring and will throw a error 403 (Forbidden)
-              this.baseItemService.updateTransformation({
-                ...transformationToUpdate,
-                test_wiring: executeTestClickEvent.test_wiring
-              })
-            );
-          return combineLatest([
-            of(executeTestClickEvent.id),
-            of(executeTestClickEvent.test_wiring)
-          ]);
-        }),
-        switchMap(([wiringItemId, savedWiring]) =>
+            .pipe(
+              first(),
+              map(selectedTransformation => ({
+                selectedTransformation,
+                executeTestClickEvent
+              }))
+            )
+        ),
+        switchMap(({ selectedTransformation, executeTestClickEvent }) =>
+          // TODO if a transformation is set too released,
+          // it can't be updated by a new test_wiring and will throw a error 403 (Forbidden)
+          this.baseItemService.updateTransformation({
+            ...selectedTransformation,
+            test_wiring: executeTestClickEvent.test_wiring
+          })
+        ),
+        switchMap(updatedTransformation$ =>
           transformationExecution$({
-            id: wiringItemId,
-            test_wiring: savedWiring
+            id: updatedTransformation$.id,
+            test_wiring: updatedTransformation$.test_wiring
           })
         ),
         finalize(() => dialogRef.close())
