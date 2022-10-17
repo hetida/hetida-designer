@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, validator
 
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
+from hetdesrun.models.run import AllMeasuredSteps
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
 
@@ -54,6 +55,15 @@ class ExecutionResponseFrontendDto(BaseModel):
     result: str
     traceback: Optional[str]
     job_id: UUID
+
+    measured_steps: AllMeasuredSteps = AllMeasuredSteps()
+    process_id: Optional[int] = Field(
+        None,
+        description=(
+            "Process Id (PID) of the process handling the request, "
+            "if advanced performance measuring is configured."
+        ),
+    )
 
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
 

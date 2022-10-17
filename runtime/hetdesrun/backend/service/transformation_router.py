@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from typing import Any, List, Optional, Tuple
 from uuid import UUID, uuid4
 
@@ -19,6 +20,7 @@ from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
 from hetdesrun.exportimport.utils import info
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
+from hetdesrun.models.run import PerformanceMeasuredStep
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
     DBIntegrityError,
@@ -520,11 +522,16 @@ async def delete_transformation_revision(
 async def handle_trafo_revision_execution_request(
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
+
+    internal_full_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "internal_full"
+    )
     if exec_by_id.job_id is None:
         exec_by_id.job_id = uuid4()
 
     try:
-        return await execute_transformation_revision(exec_by_id)
+        exec_response = await execute_transformation_revision(exec_by_id)
+
     except TrafoExecutionNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
@@ -533,6 +540,12 @@ async def handle_trafo_revision_execution_request(
 
     except TrafoExecutionResultValidationError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+    internal_full_measured_step.stop()
+    exec_response.measured_steps.internal_full = internal_full_measured_step
+    if get_config().advanced_performance_measurement_active:
+        exec_response.process_id = os.getpid()
+    return exec_response
 
 
 @transformation_router.post(

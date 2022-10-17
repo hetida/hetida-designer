@@ -17,6 +17,7 @@ from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.run import (
     ConfigurationInput,
+    PerformanceMeasuredStep,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
@@ -232,6 +233,10 @@ async def run_execution_input(
 
     Raises subtypes of TrafoExecutionError on errors.
     """
+    run_execution_input_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "run_execution_input"
+    )
+
     output_types = {
         output.name: output.type for output in execution_input.workflow.outputs
     }
@@ -283,8 +288,14 @@ async def run_execution_input(
         result=execution_result.result,
         traceback=execution_result.traceback,
         job_id=execution_input.job_id,
+        measured_steps=execution_result.measured_steps,
     )
 
+    run_execution_input_measured_step.stop()
+
+    execution_response.measured_steps.run_execution_input = (
+        run_execution_input_measured_step
+    )
     return execution_response
 
 
@@ -297,5 +308,19 @@ async def execute_transformation_revision(
     """
 
     execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
+
+    # prepare execution input
+
+    prep_exec_input_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "prepare_execution_input"
+    )
+
     execution_input = prepare_execution_input(exec_by_id_input)
-    return await run_execution_input(execution_input)
+
+    prep_exec_input_measured_step.stop()
+
+    exec_resp_frontend_dto = await run_execution_input(execution_input)
+    exec_resp_frontend_dto.measured_steps.prepare_execution_input = (
+        prep_exec_input_measured_step
+    )
+    return exec_resp_frontend_dto

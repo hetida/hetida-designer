@@ -5,7 +5,11 @@ from fastapi.encoders import jsonable_encoder
 
 from hetdesrun.adapters import AdapterHandlingException
 from hetdesrun.datatypes import NamedDataTypedValue
-from hetdesrun.models.run import WorkflowExecutionInput, WorkflowExecutionResult
+from hetdesrun.models.run import (
+    PerformanceMeasuredStep,
+    WorkflowExecutionInput,
+    WorkflowExecutionResult,
+)
 from hetdesrun.runtime import RuntimeExecutionError, runtime_logger
 from hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.engine.plain import workflow_execution_plain
@@ -24,7 +28,7 @@ from hetdesrun.wiring import (
 runtime_logger.addFilter(job_id_context_filter)
 
 
-async def runtime_service(
+async def runtime_service(  # pylint: disable=too-many-return-statements,too-many-statements
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:
     """Running stuff with appropriate error handling, serializing etc.
@@ -32,7 +36,10 @@ async def runtime_service(
     This function is used by the runtime endpoint
     """
 
-    # pylint: disable=too-many-return-statements
+    runtime_service_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "runtime_service"
+    )
+
     execution_config.set(runtime_input.configuration)
     execution_context_filter.bind_context(
         currently_executed_job_id=runtime_input.job_id
@@ -64,9 +71,13 @@ async def runtime_service(
 
     # Load data
     try:
+        load_data_measured_step = PerformanceMeasuredStep.create_and_begin("load_data")
+
         loaded_data = await resolve_and_load_data_from_wiring(
             runtime_input.workflow_wiring
         )
+
+        load_data_measured_step.stop()
     except AdapterHandlingException as exc:
         runtime_logger.info(
             "Adapter Handling Exception during data loading",
@@ -97,6 +108,11 @@ async def runtime_service(
     # run workflow
 
     all_nodes = obtain_all_nodes(parsed_wf)
+
+    pure_execution_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "pure_execution"
+    )
+
     try:
         workflow_result = await workflow_execution_plain(parsed_wf)
 
@@ -106,6 +122,9 @@ async def runtime_service(
         for computation_node in all_nodes:
 
             res = await computation_node.result  # pylint: disable=unused-variable
+
+        pure_execution_measured_step.stop()
+
     except WorkflowParsingException as e:
         runtime_logger.info(
             "Workflow Parsing Exception during workflow execution",
@@ -163,9 +182,14 @@ async def runtime_service(
 
     # Send data via wiring to sinks and gather data for direct returning
     try:
+        send_data_measured_step = PerformanceMeasuredStep.create_and_begin("send_data")
+
         direct_return_data: dict = await resolve_and_send_data_from_wiring(
             runtime_input.workflow_wiring, workflow_result
         )
+
+        send_data_measured_step.stop()
+
     except AdapterHandlingException as exc:
         runtime_logger.info(
             (
@@ -188,6 +212,11 @@ async def runtime_service(
         output_results_by_output_name=direct_return_data,
         job_id=runtime_input.job_id,
     )
+
+    # attach measured steps
+    wf_exec_result.measured_steps.pure_execution = pure_execution_measured_step
+    wf_exec_result.measured_steps.load_data = load_data_measured_step
+    wf_exec_result.measured_steps.send_data = send_data_measured_step
 
     runtime_logger.info(
         "Workflow Execution Result Pydantic Object: \n%s",
@@ -216,6 +245,12 @@ async def runtime_service(
         )
 
     runtime_logger.info("Workflow Execution Result serialized successfully.")
+
+    runtime_service_measured_step.stop()
+
+    wf_exec_result.measured_steps.runtime_service_handling = (
+        runtime_service_measured_step
+    )
 
     # TODO: avoid double serialization
     return wf_exec_result

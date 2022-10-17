@@ -149,7 +149,7 @@ async def load_framelike_data(
                 raise AdapterConnectionError(msg)
             logger.info("Start reading in and parsing framelike data")
 
-            df = pd.read_json(resp.raw, lines=True)
+            df: pd.DataFrame = pd.read_json(resp.raw, lines=True)
             end_time = datetime.datetime.now(datetime.timezone.utc)
             logger.info(
                 (
@@ -157,8 +157,8 @@ async def load_framelike_data(
                     " at %s. DataFrame shape is %s with columns %s"
                 ),
                 end_time.isoformat(),
-                str(df.shape),
-                str(df.columns),
+                str(df.shape),  # pylint: disable=no-member
+                str(df.columns),  # pylint: disable=no-member
             )
             logger.info(
                 (
@@ -174,6 +174,7 @@ async def load_framelike_data(
                 data_attributes = resp.headers["Data-Attributes"]
                 df.attrs = decode_attributes(data_attributes)
 
+            # pylint: disable=no-member
             logger.debug(
                 "Received dataframe of form %s:\n%s",
                 str(df.shape) if len(df) > 0 else "EMPTY RESULT",
@@ -196,6 +197,7 @@ async def load_framelike_data(
         # must be dataframe:
         return df_empty({}, attrs=df.attrs)
 
+    # pylint: disable=no-member
     if "timestamp" in df.columns and endpoint == "dataframe":
         try:
             parsed_timestamps = pd.to_datetime(df["timestamp"])
@@ -207,6 +209,7 @@ async def load_framelike_data(
                 str(e),
             )
         else:
+            # pylint: disable=no-member
             df.index = parsed_timestamps
             df = df.sort_index()
 

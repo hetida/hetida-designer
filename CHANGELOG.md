@@ -1,9 +1,12 @@
-## 8.0.1
+## 0.8.2
+* add some time measurement to successful execution output
+* update base images
+## 0.8.1
 * improve contextualized logging
 * add async (web hook / callback) execution web endpoint
 * minor improvements and fixes
 ## 0.8.0
-* authentication via OpenID Connect. See [documentation](https://github.com/hetida/hetida-designer/blob/develop/docs/enabling_openidconnect.md).
+* authentication via OpenID Connect. See [documentation](https://github.com/hetida/hetida-designer/blob/develop/docs/enabling_openidconnect_auth.md). **When upgrading, you may have to explicitely deactivate auth via `HD_USE_AUTH=false` environment variables for runtime and backend service in your setup, since it is activated per default for both these services. See the changed default docker-compose setup!** 
 * automatic deployment of base components. Documented [here](https://github.com/hetida/hetida-designer/blob/develop/docs/base_component_deployment.md).
 * usability improvements wiring / selection dialog
 * adapter system: directly attach any metadata as attributes to dataframes / series. See for example [here](https://github.com/hetida/hetida-designer/blob/develop/docs/adapter_system/generic_rest_adapters/web_service_interface.md#dataframe-get)

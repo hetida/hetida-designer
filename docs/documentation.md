@@ -25,6 +25,10 @@ Further information about developing, deploying, connecting, using and running h
 - [Enabling OpenID Connect](./enabling_openidconnect.md)
 - [Migration from 0.6 to 0.7](./migration_from_0.6_to_0.7.md)
 
+## Authentication
+
+- [Enabling OpenID Connect Authentication](enabling_openidconnect_auth.md)
+
 ## Adapter System
 
 - [Introduction to the Adapter System](./adapter_system/intro.md)
