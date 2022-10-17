@@ -121,16 +121,16 @@ export class BaseItemActionService {
               first(),
               map(selectedTransformation => ({
                 selectedTransformation,
-                executeTestClickEvent
+                test_wiring: executeTestClickEvent.test_wiring
               }))
             )
         ),
-        switchMap(({ selectedTransformation, executeTestClickEvent }) =>
+        switchMap(({ selectedTransformation, test_wiring }) =>
           // TODO if a transformation is set too released,
           // it can't be updated by a new test_wiring and will throw a error 403 (Forbidden)
           this.baseItemService.updateTransformation({
             ...selectedTransformation,
-            test_wiring: executeTestClickEvent.test_wiring
+            test_wiring
           })
         ),
         switchMap(updatedTransformation$ =>

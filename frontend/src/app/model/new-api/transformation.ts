@@ -1,8 +1,7 @@
 import { RevisionState } from 'src/app/enums/revision-state';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { WorkflowContent } from './workflow-content';
-import { IoInterface } from './io-interface';
-import { TestWiring } from './test-wiring';
+import { IoInterface, TestWiring } from 'hd-wiring';
 
 // TODO move elsewhere?
 export function isComponentTransformation(
