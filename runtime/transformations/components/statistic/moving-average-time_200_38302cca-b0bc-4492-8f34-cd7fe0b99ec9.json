@@ -1,0 +1,89 @@
+{
+  "category": "Statistic",
+  "content": "from typing import Dict, Literal, Optional\n\nimport numpy as np\nimport pandas as pd\nfrom pandas.tseries.frequencies import to_offset\n\n\ndef freqstr2timedelta(freqstr: str) -> pd.Timedelta:\n    \"\"\"Transform frequency string to Pandas Timedelta.\"\"\"\n    try:\n        return pd.to_timedelta(freqstr)\n    except ValueError:\n        return pd.to_timedelta(to_offset(freqstr))\n\n\ndef calculate_moving_mean(\n    timeseries: pd.Series,\n    window_size: pd.Timedelta,\n    window_offset: pd.Timedelta,\n    closed: Literal[\"left\", \"right\"],\n    label_position: Literal[\"left\", \"center\", \"right\"],\n) -> pd.Series:\n    \"\"\"Calculate the moving mean.\n\n    timeseries (Pandas Series): Series to perform the rolling average calculation on.\n    window_size (Pandas Timedelta): Time span of each window.\n    window_offset (Pandas Timedelta): Offset of the window starts compared to 1970-01-01 00:00:00.\n    closed (string): The string must be either \"left\" or \"right\".\n        In case a datapoint is on the left or right border of a window this option\n        determines if it belongs to that window or not, but potentially a neighbouring window.\n    label_position (string): The string must be either \"left\", \"center\", or \"right\".\n        This option determines which timestamp is provided to represent the window for the\n        corresponding mean in the output time series. \n    \"\"\"\n    engine: Optional[Literal[\"cython\", \"numba\"]] = None\n    engine_kwargs: Dict[Literal, bool] = (\n        {\"nopython\": True, \"nogil\": False, \"parallel\": False}\n        if engine == \"numba\"\n        else {}\n    )\n\n    if label_position in [\"left\", \"right\"]:\n        return timeseries.resample(\n            rule=window_size,\n            closed=closed,\n            label=label_position,\n            origin=\"epoch\",  # default: \"start_day\"\n            # both have the same result for frequencies\n            # which are multiples of a day or divde a day evenly\n            # for other frequencies \"start_day\" will result in\n            # varying output depending on the start of the series\n            offset=window_offset,\n        ).mean()\n    # label_position == \"center\"\n    return timeseries.resample(\n        rule=window_size,\n        closed=closed,\n        label=\"left\",\n        origin=\"epoch\",\n        offset=window_offset,\n    ).mean().shift(freq=(window_size / 2))\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"timeseries\": \"SERIES\",\n        \"window_size\": \"STRING\",\n        \"window_offset\": \"STRING\",\n        \"closed\": \"STRING\",\n        \"label_position\": \"STRING\",\n    },\n    \"outputs\": {\n        \"window_means\": \"SERIES\",\n    },\n    \"name\": \"Moving average time\",\n    \"category\": \"Statistic\",\n    \"description\": \"Calculates the moving average for a constant time interval\",\n    \"version_tag\": \"2.0.0\",\n    \"id\": \"38302cca-b0bc-4492-8f34-cd7fe0b99ec9\",\n    \"revision_group_id\": \"a2ba0da0-5a9a-60e9-6af5-e07917988021\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-10-20T09:43:42.864689+00:00\",\n}\n\n\ndef main(*, timeseries, window_size, window_offset, closed, label_position):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your code here.\n\n    return {\n        \"window_means\": calculate_moving_mean(\n            timeseries=timeseries,\n            window_size=freqstr2timedelta(window_size),\n            window_offset=freqstr2timedelta(window_offset),\n            closed=closed,\n            label_position=label_position,\n        )\n    }\n",
+  "description": "Calculates the moving average for a constant time interval",
+  "documentation": "# Moving average time\n\n## Description\nThis component calculates the mean of observations in fixed time intervals moving non-overlapping over the data.\n\n## Inputs\n* **timeseries** (Pandas Series): Series to perform the moving mean calculation on.\n* **window_size** (str): Time span of each window. Can be either a pandas frequency string based on [date offset aliases](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases) or a timedelta string.\n* **window_offset** (Pandas Timedelta): Offset of the window starts compared to 1970-01-01 00:00:00. Can be either a pandas frequency string based on [date offset aliases](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases) or a timedelta string.\n* **closed** (string): The string must be either \"left\" or \"right\". In case a datapoint is on the left or right border of a window this option determines if it belongs to that window or not, but potentially a neighbouring window.\n* **label_position** (string): The string must be either \"left\", \"center\", or \"right\". This option determines which timestamp is provided to represent the window for the corresponding mean in the output time series. \n\n## Outputs\n* **window_means** (Pandas Series): Series with the calculated means of each window.\n\n## Details\nThe **timeseries** observations are associated to the time periods defined by **window_size** and **window_offset**.\n\nThe parameter **closed** is used to determine if an observation just on the border of a window belongs to that window. The value \"left\" means that . In order to cover all observations exactly once either \"left\" or \"right\" must be chosen, \"both\" or \"neither\" are not allowed.\n\nThe mean of all datapoints associated to the same time period is calculated. Depending on the value of **label_position** the timestamp of the left window border, the right window border or the center of the window is used to identify to which window the mean value belongs.\n\nThe timeseries does not need to have a regular frequency and the window size may be smaller then the smallest distance between succeding observations, which will result in a mean of 0 for the respective window.\n\n## Examples\nThe json input of a typical call of this component is\n```\n{\n    \"timeseries\": {\n        \"2022-12-06 23:17:14+00:00\": 14.360453,\n        \"2022-12-06 23:18:14+00:00\": 14.872439,\n        \"2022-12-06 23:19:14+00:00\": 15.803046,\n        \"2022-12-06 23:20:14+00:00\": 13.661063,\n        \"2022-12-06 23:21:14+00:00\": 14.969653,\n        \"2022-12-06 23:22:14+00:00\": 13.530460,\n        \"2022-12-06 23:23:14+00:00\": 14.009814,\n        \"2022-12-06 23:24:14+00:00\": 13.708907,\n        \"2022-12-06 23:25:14+00:00\": 15.119281,\n        \"2022-12-06 23:26:14+00:00\": 15.666053,\n        \"2022-12-06 23:27:14+00:00\": 15.488811,\n        \"2022-12-06 23:28:14+00:00\": 15.515572,\n        \"2022-12-06 23:29:14+00:00\": 14.767891,\n        \"2022-12-06 23:30:14+00:00\": 13.726783,\n        \"2022-12-06 23:31:14+00:00\": 14.997352,\n        \"2022-12-06 23:32:14+00:00\": 13.015161,\n        \"2022-12-06 23:33:14+00:00\": 15.079884,\n        \"2022-12-06 23:34:14+00:00\": 15.001638,\n        \"2022-12-06 23:35:14+00:00\": 16.035476,\n        \"2022-12-06 23:36:14+00:00\": 14.545874,\n        \"2022-12-06 23:37:14+00:00\": 13.970260,\n        \"2022-12-06 23:38:14+00:00\": 15.045999,\n        \"2022-12-06 23:39:14+00:00\": 13.824304,\n        \"2022-12-06 23:40:14+00:00\": 13.620449,\n        \"2022-12-06 23:41:14+00:00\": 15.146005,\n        \"2022-12-06 23:42:14+00:00\": 14.796941,\n        \"2022-12-06 23:43:14+00:00\": 17.036046,\n        \"2022-12-06 23:44:14+00:00\": 14.976151,\n        \"2022-12-06 23:45:14+00:00\": 14.637615,\n        \"2022-12-06 23:46:14+00:00\": 15.195011,\n        \"2022-12-06 23:47:14+00:00\": 14.082022,\n        \"2022-12-06 23:48:14+00:00\": 15.311653,\n        \"2022-12-06 23:49:14+00:00\": 15.534084,\n        \"2022-12-06 23:50:14+00:00\": 15.020099,\n        \"2022-12-06 23:51:14+00:00\": 14.020416,\n        \"2022-12-06 23:52:14+00:00\": 13.779699,\n        \"2022-12-06 23:53:14+00:00\": 14.407253,\n        \"2022-12-06 23:54:14+00:00\": 15.180839,\n        \"2022-12-06 23:55:14+00:00\": 14.618573,\n        \"2022-12-06 23:56:14+00:00\": 14.194774,\n        \"2022-12-06 23:57:14+00:00\": 14.653221,\n        \"2022-12-06 23:58:14+00:00\": 14.911146,\n        \"2022-12-06 23:59:14+00:00\": 14.951289,\n        \"2022-12-07 00:00:14+00:00\": 15.005731,\n        \"2022-12-07 00:01:14+00:00\": 15.708401,\n        \"2022-12-07 00:02:14+00:00\": 13.605439,\n        \"2022-12-07 00:03:14+00:00\": 14.620927,\n        \"2022-12-07 00:04:14+00:00\": 15.181250,\n        \"2022-12-07 00:05:14+00:00\": 13.912724,\n        \"2022-12-07 00:06:14+00:00\": 14.060204\n    },\n    \"window_size\": \"5min\",\n    \"window_offset\": \"4min\",\n    \"closed\": \"left\",\n    \"label_positions\": \"left\"\n}\n```\nThe expected output is\n```\n\"mean_windows\": {\n    \"2022-12-06T23:14:00.000Z\": 14.616446,\n    \"2022-12-06T23:19:00.000Z\": 14.3948072,\n    \"2022-12-06T23:24:00.000Z\": 15.0997248,\n    \"2022-12-06T23:29:00.000Z\": 14.3174142,\n    \"2022-12-06T23:34:00.000Z\": 14.9198494,\n    \"2022-12-06T23:39:00.000Z\": 14.884749,\n    \"2022-12-06T23:44:00.000Z\": 14.8404904,\n    \"2022-12-06T23:49:00.000Z\": 14.5523102,\n    \"2022-12-06T23:54:00.000Z\": 14.7117106,\n    \"2022-12-06T23:59:00.000Z\": 14.7783574,\n    \"2022-12-07T00:04:00.000Z\": 14.384726\n}\n```",
+  "id": "38302cca-b0bc-4492-8f34-cd7fe0b99ec9",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "SERIES",
+        "id": "d458a196-147e-478c-a584-ea50b3c30e7b",
+        "name": "timeseries"
+      },
+      {
+        "data_type": "STRING",
+        "id": "4812fe10-d93f-4075-ba86-f5be995e8a2d",
+        "name": "window_size"
+      },
+      {
+        "data_type": "STRING",
+        "id": "116011ba-2f9b-465d-88f5-7e9f1879fd77",
+        "name": "window_offset"
+      },
+      {
+        "data_type": "STRING",
+        "id": "678f149d-6ef2-489b-8780-4ffed28f98d3",
+        "name": "closed"
+      },
+      {
+        "data_type": "STRING",
+        "id": "7276a08e-f388-4dac-b0d2-d1960b664c5a",
+        "name": "label_position"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "SERIES",
+        "id": "94c0cee5-ef87-4087-89a5-95eb41d6de43",
+        "name": "window_means"
+      }
+    ]
+  },
+  "name": "Moving average time",
+  "released_timestamp": "2022-10-20T09:43:42.864689+00:00",
+  "revision_group_id": "a2ba0da0-5a9a-60e9-6af5-e07917988021",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2022-12-06 23:17:14+00:00\": 14.360453,\n    \"2022-12-06 23:18:14+00:00\": 14.872439,\n    \"2022-12-06 23:19:14+00:00\": 15.803046,\n    \"2022-12-06 23:20:14+00:00\": 13.661063,\n    \"2022-12-06 23:21:14+00:00\": 14.969653,\n    \"2022-12-06 23:22:14+00:00\": 13.530460,\n    \"2022-12-06 23:23:14+00:00\": 14.009814,\n    \"2022-12-06 23:24:14+00:00\": 13.708907,\n    \"2022-12-06 23:25:14+00:00\": 15.119281,\n    \"2022-12-06 23:26:14+00:00\": 15.666053,\n    \"2022-12-06 23:27:14+00:00\": 15.488811,\n    \"2022-12-06 23:28:14+00:00\": 15.515572,\n    \"2022-12-06 23:29:14+00:00\": 14.767891,\n    \"2022-12-06 23:30:14+00:00\": 13.726783,\n    \"2022-12-06 23:31:14+00:00\": 14.997352,\n    \"2022-12-06 23:32:14+00:00\": 13.015161,\n    \"2022-12-06 23:33:14+00:00\": 15.079884,\n    \"2022-12-06 23:34:14+00:00\": 15.001638,\n    \"2022-12-06 23:35:14+00:00\": 16.035476,\n    \"2022-12-06 23:36:14+00:00\": 14.545874,\n    \"2022-12-06 23:37:14+00:00\": 13.970260,\n    \"2022-12-06 23:38:14+00:00\": 15.045999,\n    \"2022-12-06 23:39:14+00:00\": 13.824304,\n    \"2022-12-06 23:40:14+00:00\": 13.620449,\n    \"2022-12-06 23:41:14+00:00\": 15.146005,\n    \"2022-12-06 23:42:14+00:00\": 14.796941,\n    \"2022-12-06 23:43:14+00:00\": 17.036046,\n    \"2022-12-06 23:44:14+00:00\": 14.976151,\n    \"2022-12-06 23:45:14+00:00\": 14.637615,\n    \"2022-12-06 23:46:14+00:00\": 15.195011,\n    \"2022-12-06 23:47:14+00:00\": 14.082022,\n    \"2022-12-06 23:48:14+00:00\": 15.311653,\n    \"2022-12-06 23:49:14+00:00\": 15.534084,\n    \"2022-12-06 23:50:14+00:00\": 15.020099,\n    \"2022-12-06 23:51:14+00:00\": 14.020416,\n    \"2022-12-06 23:52:14+00:00\": 13.779699,\n    \"2022-12-06 23:53:14+00:00\": 14.407253,\n    \"2022-12-06 23:54:14+00:00\": 15.180839,\n    \"2022-12-06 23:55:14+00:00\": 14.618573,\n    \"2022-12-06 23:56:14+00:00\": 14.194774,\n    \"2022-12-06 23:57:14+00:00\": 14.653221,\n    \"2022-12-06 23:58:14+00:00\": 14.911146,\n    \"2022-12-06 23:59:14+00:00\": 14.951289,\n    \"2022-12-07 00:00:14+00:00\": 15.005731,\n    \"2022-12-07 00:01:14+00:00\": 15.708401,\n    \"2022-12-07 00:02:14+00:00\": 13.605439,\n    \"2022-12-07 00:03:14+00:00\": 14.620927,\n    \"2022-12-07 00:04:14+00:00\": 15.181250,\n    \"2022-12-07 00:05:14+00:00\": 13.912724,\n    \"2022-12-07 00:06:14+00:00\": 14.060204\n}"
+        },
+        "workflow_input_name": "timeseries"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "5min"
+        },
+        "workflow_input_name": "window_size"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "4min"
+        },
+        "workflow_input_name": "window_offset"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "left"
+        },
+        "workflow_input_name": "closed"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "left"
+        },
+        "workflow_input_name": "label_position"
+      }
+    ],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "2.0.0"
+}
