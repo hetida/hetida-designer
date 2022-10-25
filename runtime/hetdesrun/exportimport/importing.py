@@ -9,6 +9,7 @@ from uuid import UUID
 
 import requests
 
+from hetdesrun.backend.service.transformation_router import is_modifiable
 from hetdesrun.component.load import (
     ComponentCodeImportError,
     import_func_from_code,
@@ -16,6 +17,7 @@ from hetdesrun.component.load import (
 )
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.dbservice.revision import (
+    read_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.io import IO, IOInterface
@@ -29,6 +31,7 @@ from hetdesrun.utils import (
 )
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
+from runtime.hetdesrun.persistence.dbservice.exceptions import DBNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -198,6 +201,7 @@ def import_transformation(
     path: str,
     strip_wirings: bool = False,
     directly_into_db: bool = False,
+    allow_overwrite_released: bool = True,
     update_component_code: bool = True,
 ) -> None:
 
@@ -217,7 +221,24 @@ def import_transformation(
             tr.category,
             tr.name,
         )
-        update_or_create_single_transformation_revision(tr)
+
+        existing_tr: Optional[TransformationRevision] = None
+        try:
+            read_single_transformation_revision(tr.id)
+        except DBNotFoundError:
+            pass
+        
+        modifiable, msg = is_modifiable(existing_tr, tr, allow_overwrite_released)
+        
+        if modifiable:
+            update_or_create_single_transformation_revision(tr)
+        else:
+            logger.info(
+                "%s from path %s already in DB:\n%s",
+                tr_json["type"],
+                path,
+                msg
+            )
 
     else:
         headers = get_auth_headers()
@@ -227,7 +248,7 @@ def import_transformation(
                 get_config().hd_backend_api_url, "transformations", tr_json["id"]
             ),
             params={
-                "allow_overwrite_released": True,
+                "allow_overwrite_released": allow_overwrite_released,
                 "update_component_code": update_component_code,
             },
             verify=get_config().hd_backend_verify_certs,
@@ -251,12 +272,20 @@ def import_transformation(
             tr_json["category"],
         )
         if response.status_code != 201:
-            msg = (
-                f"COULD NOT PUT {tr_json['type']} from path {path}\n."
-                f"Response status code {response.status_code}"
-                f"with response text:\n{response.text}"
-            )
-            logger.error(msg)
+            if allow_overwrite_released is False and response.status_code == 403:
+                # other reason for 403: type of object in DB and of passed object do not match
+                logger.info(
+                    "%s from path %s already in DB and released/deprecated",
+                    tr_json["type"],
+                    path,
+                )
+            else:
+                msg = (
+                    f'COULD NOT PUT {tr_json["type"]} from path {path}\n.'
+                    f"Response status code {response.status_code}"
+                    f"with response text:\n{response.text}"
+                )
+                logger.error(msg)
 
 
 # Import all transformations from download_path based on type, id, name and category
@@ -267,6 +296,7 @@ def import_transformations(
     category: Optional[str] = None,
     strip_wirings: bool = False,
     directly_into_db: bool = False,
+    allow_overwrite_released: bool = True,
     update_component_code: bool = True,
 ) -> None:
     """
@@ -361,6 +391,7 @@ def import_transformations(
                     path_dict[transformation_id],
                     strip_wirings=strip_wirings,
                     directly_into_db=directly_into_db,
+                    allow_overwrite_released=allow_overwrite_released,
                     update_component_code=update_component_code,
                 )
 

@@ -343,7 +343,13 @@ def if_applicable_release_or_deprecate(
     responses={
         status.HTTP_201_CREATED: {
             "description": "Successfully updated the transformation revision"
-        }
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "description": "Id from path does not match id from object in request body"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": "DB entry is not modifyable due to status or none matching types"
+        },
     },
 )
 async def update_transformation_revision(
@@ -376,7 +382,7 @@ async def update_transformation_revision(
             f"transformation revision DTO {updated_transformation_revision.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
     existing_transformation_revision: Optional[TransformationRevision] = None
 
