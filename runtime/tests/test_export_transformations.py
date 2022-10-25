@@ -34,23 +34,23 @@ json_files = [
     "/workflows/examples/linear-rul-from-last-positive-step_100_3d504361-e351-4d52-8734-391aa47e8f24.json",
 ]
 
-tr_list = []
+tr_json_list = []
 
 for file_path in json_files:
     with open(root_path + file_path, encoding="utf-8") as f:
         tr_json = json.load(f)
-    tr_list.append(tr_json)
+    tr_json_list.append(tr_json)
 
-tr_dict = {}
+tr_json_dict = {}
 
-for tr_json in tr_list:
-    tr_dict[tr_json["id"]] = tr_json
+for tr_json in tr_json_list:
+    tr_json_dict[tr_json["id"]] = tr_json
 
 
 def test_export_all_transformations(tmpdir):
     resp_mock = mock.Mock()
     resp_mock.status_code = 200
-    resp_mock.json = mock.Mock(return_value=tr_list)
+    resp_mock.json = mock.Mock(return_value=tr_json_list)
 
     with mock.patch(
         "hetdesrun.exportimport.export.requests.get",
@@ -96,19 +96,19 @@ def java_backend_mock(url, *args, **kwargs):
 
     if endpoint == "components":
         dto = ComponentRevisionFrontendDto.from_transformation_revision(
-            TransformationRevision(**tr_dict[bi_id])
+            TransformationRevision(**tr_json_dict[bi_id])
         )
         response_mock.json = mock.Mock(return_value=json.loads(dto.json(by_alias=True)))
 
     if endpoint == "workflows":
         dto = WorkflowRevisionFrontendDto.from_transformation_revision(
-            TransformationRevision(**tr_dict[bi_id])
+            TransformationRevision(**tr_json_dict[bi_id])
         )
         response_mock.json = mock.Mock(return_value=json.loads(dto.json(by_alias=True)))
 
     if endpoint == "documentations":
         response_mock.json = mock.Mock(
-            return_value={"document": tr_dict[bi_id]["documentation"]}
+            return_value={"document": tr_json_dict[bi_id]["documentation"]}
         )
 
     return response_mock
@@ -120,22 +120,23 @@ def test_get_transformation_from_java_backend():
         new=java_backend_mock,
     ):
         tr_id_str = "18260aab-bdd6-af5c-cac1-7bafde85188f"
-        tr_from_dict = tr_dict[tr_id_str]
+        tr_from_dict = tr_json_dict[tr_id_str]
         tr_from_backend = get_transformation_from_java_backend(
             UUID(tr_id_str), Type.COMPONENT
         )
+        tr_json_from_backend = json.loads(tr_from_backend.json(exclude_none=True))
 
         # released timestamp cannot be the same
         # it is not set for java backend objects
         #  and set to "now" during conversion
-        del tr_from_backend["released_timestamp"]
+        del tr_json_from_backend["released_timestamp"]
         del tr_from_dict["released_timestamp"]
 
-        assert tr_from_backend == tr_from_dict
+        assert tr_json_from_backend == tr_from_dict
 
 
 def mock_get_trafo_from_java_backend(id, type):
-    return tr_dict[str(id)]
+    return TransformationRevision(**tr_json_dict[str(id)])
 
 
 def test_export_all_base_items(tmpdir):
