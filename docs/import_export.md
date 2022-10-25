@@ -62,15 +62,14 @@ You can use the [autodeployment feature](./base_component_deployment.md) or you 
 ### Import new components and workflows via autodeploy
 
 If you (re-)start the backend container, e.g. to deploy the latest release, without setting the environment variables `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS` and `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file, all base components and example workflows will be (re-)imported.
-
-:warn: **Warning:** Existing base components and example workflows will be overwritten.
+To disable overwriting existing base components and example workflows with status `RELEASED` or `DISABLED` you can additionally set the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file. Components and workflows with status `DRAFT` will be overwritten in any case.
 
 ### Import new compoments and workflows running a command in a local docker instance
 The base components and example workflows provided with hetida designer are contained in the `transformations/' directory within the docker container.
 
 **Note:** The version of the components and workflows imported depends on the version of the image you use when running this command instead of the version of the hetida designer instance to which they are imported.
 
-:warn: **Warning:** Existing base components and example workflows will be overwritten.
+To disable overwriting existing base components and example workflows with status `RELEASED` or `DISABLED` you can set the input parameter `allow_overwrite_released` to `False`. Components and workflows with status `DRAFT` will be overwritten in any case.
 
 You can simply run the following command to import all components and workflows from there:
 
@@ -80,14 +79,14 @@ docker run --rm \
   --name htdruntime_import \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("transformations/", update_component_code=False);'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("transformations/", allow_overwrite_released=False, update_component_code=False);'
 ```
 
-If you run the command in the same environment as your instance is running you can bypass the REST API and more directly access the database by setting the optional input paramter `directly_into_db' to true, which is most likely faster:
+If you run the command in the same environment as your instance is running, you can bypass the REST API and more directly access the database by setting the optional input paramter `directly_into_db' to true, which is most likely faster:
 
 ```shell
 docker run --rm \
   --name htdruntime_import \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("transformations/", update_component_code=False, directly_into_db=True);'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("transformations/", allow_overwrite_released=False, update_component_code=False, directly_into_db=True);'
 ```
