@@ -53,6 +53,8 @@ docker run --rm \
 
 > :warning: IMPORTANT: If you have existing workflows/components in your installation you should do a complete database backup as is described in [backup](./backup.md), just in case something bad happens! Note that importing overwrites possibly existing revisions with the same id.
 
+To disable overwriting existing base components and example workflows with status `RELEASED` or `DISABLED` you can set the input parameter `allow_overwrite_released` to `False`. Components and workflows with status `DRAFT` will be overwritten in any case.
+
 Simply run the following command to import the exported components and workflows from the same directory:
 
 ```shell
@@ -62,12 +64,23 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/exported_data/", update_component_code=False);'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/exported_data/", allow_overwrite_released=False, update_component_code=False);'
 ```
 
 The input parameter `update_component_code` of the `import_transformations` function is optional and set to `True` by default. When set to `True`, the code is updated even of components in the "RELEASED" state &ndash; based on the current implementation of the `update_code` function &ndash; before they are stored in the database.
 This has the advantage that the automatically generated part of the code corresponds to the latest schema and contains all relevant information about the component.
 Setting the parameter to `False` ensures that the code is not changed, but remains exactly as it has been exported.
+
+## Importing directly into the database
+
+If you run the command in the same environment as your instance is running, you can bypass the REST API and more directly access the database by setting the optional input paramter `directly_into_db` to true, which is most likely faster:
+
+```shell
+docker run --rm \
+  --name htdruntime_import \
+  --entrypoint python \
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/exported_data/"", directly_into_db=True);'
+```
 
 ## Importing components from single python files
 
@@ -88,20 +101,12 @@ If the latest revision of a revision group is stored in the database, all import
 
 ## Import new components and workflows added to the git repository
 
-There are two different ways to import new components and workflows added to the git repository.
-You can use the [autodeployment feature](./base_component_deployment.md) or you can use the import feature described [above](#import).
+If you (re-)start the backend container, you can use the [autodeployment feature](./base_component_deployment.md).
+For a running backend container you can use the function `import_transformations`.
 
-### Import new components and workflows via autodeploy
-
-If you (re-)start the backend container, e.g. to deploy the latest release, without setting the environment variables `HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS` and `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file, all base components and example workflows will be (re-)imported.
-To disable overwriting existing base components and example workflows with status `RELEASED` or `DISABLED` you can additionally set the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file. Components and workflows with status `DRAFT` will be overwritten in any case.
-
-### Import new compoments and workflows running a command in a local docker instance
-The base components and example workflows provided with hetida designer are contained in the `transformations/' directory within the docker container.
+The base components and example workflows provided with hetida designer are contained in the `transformations/` directory within the docker container.
 
 **Note:** The version of the components and workflows imported depends on the version of the image you use when running this command instead of the version of the hetida designer instance to which they are imported.
-
-To disable overwriting existing base components and example workflows with status `RELEASED` or `DISABLED` you can set the input parameter `allow_overwrite_released` to `False`. Components and workflows with status `DRAFT` will be overwritten in any case.
 
 You can simply run the following command to import all components and workflows from there:
 
@@ -111,14 +116,5 @@ docker run --rm \
   --name htdruntime_import \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("transformations/", allow_overwrite_released=False, update_component_code=False);'
-```
-
-If you run the command in the same environment as your instance is running, you can bypass the REST API and more directly access the database by setting the optional input paramter `directly_into_db' to true, which is most likely faster:
-
-```shell
-docker run --rm \
-  --name htdruntime_import \
-  --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("transformations/", allow_overwrite_released=False, update_component_code=False, directly_into_db=True);'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("transformations/");'
 ```
