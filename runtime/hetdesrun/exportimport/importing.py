@@ -16,6 +16,7 @@ from hetdesrun.component.load import (
     module_path_from_code,
 )
 from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
     update_or_create_single_transformation_revision,
@@ -31,7 +32,6 @@ from hetdesrun.utils import (
 )
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
-from runtime.hetdesrun.persistence.dbservice.exceptions import DBNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -227,17 +227,14 @@ def import_transformation(
             read_single_transformation_revision(tr.id)
         except DBNotFoundError:
             pass
-        
+
         modifiable, msg = is_modifiable(existing_tr, tr, allow_overwrite_released)
-        
+
         if modifiable:
             update_or_create_single_transformation_revision(tr)
         else:
             logger.info(
-                "%s from path %s already in DB:\n%s",
-                tr_json["type"],
-                path,
-                msg
+                "%s from path %s already in DB:\n%s", tr_json["type"], path, msg
             )
 
     else:
