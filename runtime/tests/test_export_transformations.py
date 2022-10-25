@@ -135,7 +135,7 @@ def test_get_transformation_from_java_backend():
 
 
 def mock_get_trafo_from_java_backend(id, type):
-    TransformationRevision(**tr_json_dict[str(id)])
+    return TransformationRevision(**tr_json_dict[str(id)])
 
 
 def test_export_all_base_items(tmpdir):
@@ -151,7 +151,6 @@ def test_export_all_base_items(tmpdir):
             "hetdesrun.exportimport.export.get_transformation_from_java_backend",
             new=mock_get_trafo_from_java_backend,
         ):
-
             export_transformations(tmpdir, java_backend=True)
 
             assert mocked_get.call_count == 1
