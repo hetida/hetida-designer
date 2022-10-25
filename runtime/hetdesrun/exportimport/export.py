@@ -14,10 +14,10 @@ from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.exportimport.utils import FilterParams, get_transformation_revisions
 from hetdesrun.models.code import NonEmptyValidStr
+from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
-from hetdesrun.persistence.models.transformation import TransformationRevision
 
 logger = logging.getLogger(__name__)
 
@@ -51,23 +51,34 @@ def save_transformation(tr: TransformationRevision, download_path: str) -> None:
     Path(cat_dir).mkdir(parents=True, exist_ok=True)
     path = os.path.join(
         cat_dir,
-        slugify(tr.name) + "_" + slugify(tr.version_tag) + "_" + str(tr.id).lower() + ".json",
+        slugify(tr.name)
+        + "_"
+        + slugify(tr.version_tag)
+        + "_"
+        + str(tr.id).lower()
+        + ".json",
     )
 
     # Save the transformation revision
     with open(path, "w", encoding="utf8") as f:
         try:
-            json.dump(json.loads(tr.json(exclude_none=True)), f, indent=2, sort_keys=True)
+            json.dump(
+                json.loads(tr.json(exclude_none=True)), f, indent=2, sort_keys=True
+            )
             logger.info("exported %s '%s' to %s", tr.type, tr.name, path)
         except KeyError:
             logger.error(
-                "Could not safe the %s with id %s on the local system.", tr.type, str(tr.id)
+                "Could not safe the %s with id %s on the local system.",
+                tr.type,
+                str(tr.id),
             )
 
 
 ##Base function to get transformation via REST API from DB (old endpoints)
 # pylint: disable=redefined-builtin
-def get_transformation_from_java_backend(id: UUID, type: Type) -> TransformationRevision:
+def get_transformation_from_java_backend(
+    id: UUID, type: Type
+) -> TransformationRevision:
     """
     Loads a single transformation revision together with its documentation based on its id
     """
