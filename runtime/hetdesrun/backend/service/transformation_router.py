@@ -18,13 +18,14 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
-from hetdesrun.exportimport.utils import info, is_modifiable
+from hetdesrun.exportimport.utils import info
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.run import PerformanceMeasuredStep
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
     DBIntegrityError,
     DBNotFoundError,
+    DBUpdateForbidden,
 )
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -406,15 +407,6 @@ async def update_transformation_revision(
         # with an id and either create or update the transformation revision
         pass
 
-    modifiable, msg = is_modifiable(
-        existing_transformation_revision,
-        updated_transformation_revision,
-        allow_overwrite_released,
-    )
-    if not modifiable:
-        logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
     updated_transformation_revision = if_applicable_release_or_deprecate(
         existing_transformation_revision, updated_transformation_revision
     )
@@ -427,20 +419,24 @@ async def update_transformation_revision(
     try:
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(
-                updated_transformation_revision
+                updated_transformation_revision,
+                allow_overwrite_released=allow_overwrite_released,
             )
         )
         logger.info("updated transformation revision %s", id)
     except DBIntegrityError as e:
         logger.error(
-            "integrity error in DB when trying to access entry for id %s\n%s", id, e
+            "Integrity error in DB when trying to access entry for id %s\n%s", id, e
         )
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         logger.error(
-            "not found error in DB when trying to access entry for id %s\n%s", id, e
+            "Not found error in DB when trying to access entry for id %s\n%s", id, e
         )
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBUpdateForbidden as e:
+        logger.error("Update forbidden for entry with id %s\n%s", id, e)
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     logger.debug(persisted_transformation_revision.json())
 

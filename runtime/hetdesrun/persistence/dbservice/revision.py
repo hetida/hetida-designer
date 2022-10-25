@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
@@ -13,6 +13,7 @@ from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
     DBIntegrityError,
     DBNotFoundError,
+    DBUpdateForbidden,
 )
 from hetdesrun.persistence.dbservice.nesting import (
     delete_own_nestings,
@@ -141,16 +142,66 @@ def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> 
         update_tr(session, transformation_revision)
 
 
+def is_modifiable(
+    existing_transformation_revision: Optional[TransformationRevision],
+    updated_transformation_revision: TransformationRevision,
+    allow_overwrite_released: bool = False,
+) -> Tuple[bool, str]:
+    if existing_transformation_revision is None:
+        return True, ""
+    if existing_transformation_revision.type != updated_transformation_revision.type:
+        return False, (
+            f"The type ({updated_transformation_revision.type}) of the "
+            f"provided transformation revision does not\n"
+            f"match the type ({existing_transformation_revision.type}) "
+            f"of the stored transformation revision {existing_transformation_revision.id}!"
+        )
+
+    if (
+        existing_transformation_revision.state == State.DISABLED
+        and not allow_overwrite_released
+    ):
+        return False, (
+            f"Cannot modify deprecated transformation revision "
+            f"{existing_transformation_revision.id}!"
+        )
+
+    if (
+        existing_transformation_revision.state == State.RELEASED
+        and updated_transformation_revision.state != State.DISABLED
+        and not allow_overwrite_released
+    ):
+        return False, (
+            f"Cannot modify released transformation revision "
+            f"{existing_transformation_revision.id}!"
+        )
+
+    return True, ""
+
+
 def update_or_create_single_transformation_revision(
     transformation_revision: TransformationRevision,
+    allow_overwrite_released: bool = False,
 ) -> TransformationRevision:
     with Session() as session, session.begin():
 
         try:
-            select_tr_by_id(session, transformation_revision.id, log_error=False)
-            update_tr(session, transformation_revision)
+            existing_transformation_revision = select_tr_by_id(
+                session, transformation_revision.id, log_error=False
+            )
         except DBNotFoundError:
             add_tr(session, transformation_revision)
+        else:
+            modifiable, msg = is_modifiable(
+                existing_transformation_revision=existing_transformation_revision,
+                updated_transformation_revision=transformation_revision,
+                allow_overwrite_released=allow_overwrite_released,
+            )
+
+            if modifiable is False:
+                raise DBUpdateForbidden(msg)
+
+            update_tr(session, transformation_revision)
 
         if transformation_revision.state == State.DISABLED:
             pass_on_deprecation(session, transformation_revision.id)

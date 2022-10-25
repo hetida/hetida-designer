@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from enum import Enum
 from posixpath import join as posix_urljoin
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 from uuid import UUID
 
 import requests
@@ -11,11 +11,14 @@ from pydantic import BaseModel
 
 from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBIntegrityError,
+    DBNotFoundError,
+    DBUpdateForbidden,
+)
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_multiple_transformation_revisions,
-    read_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -119,49 +122,12 @@ def get_transformation_revisions(
     for tr in tr_list:
         logger.info(
             ("Found %s with id %s in category %s with name %s"),
-            str(tr.type.value),
+            tr.type.value,
             str(tr.id),
             tr.category,
             tr.name,
         )
     return tr_list
-
-
-def is_modifiable(
-    existing_transformation_revision: Optional[TransformationRevision],
-    updated_transformation_revision: TransformationRevision,
-    allow_overwrite_released: bool = False,
-) -> Tuple[bool, str]:
-    if existing_transformation_revision is None:
-        return True, ""
-    if existing_transformation_revision.type != updated_transformation_revision.type:
-        return False, (
-            f"The type ({updated_transformation_revision.type}) of the "
-            f"provided transformation revision does not\n"
-            f"match the type ({existing_transformation_revision.type}) "
-            f"of the stored transformation revision {existing_transformation_revision.id}!"
-        )
-
-    if (
-        existing_transformation_revision.state == State.DISABLED
-        and not allow_overwrite_released
-    ):
-        return False, (
-            f"cannot modify deprecated transformation revision "
-            f"{existing_transformation_revision.id}"
-        )
-
-    if (
-        existing_transformation_revision.state == State.RELEASED
-        and updated_transformation_revision.state != State.DISABLED
-        and not allow_overwrite_released
-    ):
-        return False, (
-            f"cannot modify released transformation revision "
-            f"{existing_transformation_revision.id}"
-        )
-
-    return True, ""
 
 
 def update_or_create_transformation_revision(
@@ -177,7 +143,7 @@ def update_or_create_transformation_revision(
                 " for %s with id %s\n"
                 "in category %s with name %s"
             ),
-            str(tr.type),
+            tr.type.value,
             str(tr.id),
             tr.category,
             tr.name,
@@ -185,25 +151,28 @@ def update_or_create_transformation_revision(
         if update_component_code and tr.type == Type.COMPONENT:
             tr.content = update_code(tr)
 
-        existing_tr: Optional[TransformationRevision] = None
         try:
-            read_single_transformation_revision(tr.id)
-        except DBNotFoundError:
-            pass
-
-        modifiable, msg = is_modifiable(existing_tr, tr, allow_overwrite_released)
-
-        if modifiable:
-            try:
-                update_or_create_single_transformation_revision(tr)
-            except DBIntegrityError as integrity_err:
-                logger.error(
-                    "Integrity error in DB when trying to access entry for id %s\n%s",
-                    id,
-                    integrity_err,
-                )
-        else:
-            logger.info("%s with id %s already in DB:\n%s", tr.type, str(tr.id), msg)
+            update_or_create_single_transformation_revision(
+                tr, allow_overwrite_released=allow_overwrite_released
+            )
+        except DBNotFoundError as not_found_err:
+            logger.error(
+                "Not found error in DB when trying to access entry for id %s\n%s",
+                id,
+                not_found_err,
+            )
+        except DBIntegrityError as integrity_err:
+            logger.error(
+                "Integrity error in DB when trying to access entry for id %s\n%s",
+                id,
+                integrity_err,
+            )
+        except DBUpdateForbidden as forbidden_err:
+            logger.info(
+                "Update forbidden for entry with id %s:\n%s",
+                str(tr.id),
+                forbidden_err,
+            )
 
     else:
         response = requests.put(
@@ -224,7 +193,7 @@ def update_or_create_transformation_revision(
         )
         logger.info(
             ("PUT %s with id %s in category %s with name %s"),
-            tr.type,
+            tr.type.value,
             tr.id,
             tr.category,
             tr.name,
@@ -235,13 +204,13 @@ def update_or_create_transformation_revision(
                 # other reason for 403: type of object in DB and of passed object do not match
                 logger.info(
                     "%s with id %s already in DB and released/deprecated",
-                    tr.type,
+                    tr.type.value,
                     str(tr.id),
                 )
             else:
                 msg = (
                     f"COULD NOT PUT {tr.type} with id {tr.id}\n."
-                    f"Response status code {response.status_code}"
+                    f"Response status code {response.status_code} "
                     f"with response text:\n{response.text}"
                 )
                 logger.error(msg)
@@ -281,7 +250,7 @@ def delete_transformation_revision(
         if response.status_code != 204:
             msg = (
                 f"COULD NOT DELETE transformation revision with id {id}\n."
-                f"Response status code {response.status_code}"
+                f"Response status code {response.status_code} "
                 f"with response text:\n{response.text}"
             )
             logger.error(msg)

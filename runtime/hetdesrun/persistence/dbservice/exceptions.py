@@ -16,3 +16,7 @@ class DBBadRequestError(DBError):
 
 class DBTypeError(DBError):
     pass
+
+
+class DBUpdateForbidden(DBError):
+    pass

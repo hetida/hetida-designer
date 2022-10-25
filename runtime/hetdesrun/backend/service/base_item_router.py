@@ -8,11 +8,14 @@ from pydantic import ValidationError
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
     if_applicable_release_or_deprecate,
-    is_modifiable,
     update_content,
 )
 from hetdesrun.component.code import update_code
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBIntegrityError,
+    DBNotFoundError,
+    DBUpdateForbidden,
+)
 from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
     read_single_transformation_revision,
@@ -251,14 +254,6 @@ async def update_transformation_revision(
         # with an id and either create or update the component revision
         pass
 
-    modifiable, msg = is_modifiable(
-        existing_transformation_revision,
-        updated_transformation_revision,
-    )
-    if not modifiable:
-        logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
     if existing_transformation_revision is not None:
         updated_transformation_revision.documentation = (
             existing_transformation_revision.documentation
@@ -292,6 +287,8 @@ async def update_transformation_revision(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBUpdateForbidden as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     persisted_transformation_dto = (
         TransformationRevisionFrontendDto.from_transformation_revision(
