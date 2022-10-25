@@ -3,7 +3,6 @@ import os
 from copy import deepcopy
 from unittest import mock
 from uuid import UUID
-from xml.etree.ElementInclude import include
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
@@ -120,7 +119,7 @@ def test_get_transformation_from_java_backend():
         new=java_backend_mock,
     ):
         tr_id_str = "18260aab-bdd6-af5c-cac1-7bafde85188f"
-        tr_from_dict = tr_json_dict[tr_id_str]
+        tr_json_from_dict = deepcopy(tr_json_dict[tr_id_str])
         tr_from_backend = get_transformation_from_java_backend(
             UUID(tr_id_str), Type.COMPONENT
         )
@@ -130,13 +129,13 @@ def test_get_transformation_from_java_backend():
         # it is not set for java backend objects
         #  and set to "now" during conversion
         del tr_json_from_backend["released_timestamp"]
-        del tr_from_dict["released_timestamp"]
+        del tr_json_from_dict["released_timestamp"]
 
-        assert tr_json_from_backend == tr_from_dict
+        assert tr_json_from_backend == tr_json_from_dict
 
 
 def mock_get_trafo_from_java_backend(id, type):
-    return TransformationRevision(**tr_json_dict[str(id)])
+    TransformationRevision(**tr_json_dict[str(id)])
 
 
 def test_export_all_base_items(tmpdir):
