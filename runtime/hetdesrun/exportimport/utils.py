@@ -9,12 +9,14 @@ from uuid import UUID
 import requests
 from pydantic import BaseModel
 
+from hetdesrun.backend.service.transformation_router import is_modifiable
 from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_multiple_transformation_revisions,
+    read_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -129,6 +131,7 @@ def get_transformation_revisions(
 def update_or_create_transformation_revision(
     tr: TransformationRevision,
     directly_in_db: bool = False,
+    allow_overwrite_released: bool = True,
     update_component_code: bool = True,
 ) -> None:
     if directly_in_db:
@@ -145,31 +148,40 @@ def update_or_create_transformation_revision(
         )
         if update_component_code and tr.type == Type.COMPONENT:
             tr.content = update_code(tr)
+        
+        existing_tr: Optional[TransformationRevision] = None
         try:
-            update_or_create_single_transformation_revision(tr)
-        except DBNotFoundError as not_found_err:
-            logger.error(
-                "Not found error in DB when trying to access entry for id %s\n%s",
-                id,
-                not_found_err,
+            read_single_transformation_revision(tr.id)
+        except DBNotFoundError:
+            pass
+
+        modifiable, msg = is_modifiable(existing_tr, tr, allow_overwrite_released)
+
+        if modifiable:
+            try:
+                update_or_create_single_transformation_revision(tr)
+            except DBIntegrityError as integrity_err:
+                logger.error(
+                    "Integrity error in DB when trying to access entry for id %s\n%s",
+                    id,
+                    integrity_err,
+                )
+        else:
+            logger.info(
+                "%s with id %s already in DB:\n%s", tr.type, str(tr.id), msg
             )
-        except DBIntegrityError as integrity_err:
-            logger.error(
-                "Integrity error in DB when trying to access entry for id %s\n%s",
-                id,
-                integrity_err,
-            )
+
     else:
         response = requests.put(
             posix_urljoin(
                 get_config().hd_backend_api_url, "transformations", str(tr.id)
             ),
             params={
-                "allow_overwrite_released": True,
+                "allow_overwrite_released": allow_overwrite_released,
                 "update_component_code": update_component_code,
             },
             verify=get_config().hd_backend_verify_certs,
-            json=json.loads(tr.json()),
+            json=json.loads(tr.json()), # TODO: avoid double serialization
             auth=get_backend_basic_auth()  # type: ignore
             if get_config().hd_backend_use_basic_auth
             else None,
@@ -183,13 +195,22 @@ def update_or_create_transformation_revision(
             tr.category,
             tr.name,
         )
+        
         if response.status_code != 201:
-            msg = (
-                f"COULD NOT PUT {tr.type} with id {tr.id}\n."
-                f"Response status code {response.status_code}"
-                f"with response text:\n{response.text}"
-            )
-            logger.error(msg)
+            if allow_overwrite_released is False and response.status_code == 403:
+                # other reason for 403: type of object in DB and of passed object do not match
+                logger.info(
+                    "%s with id %s already in DB and released/deprecated",
+                    tr.type,
+                    str(tr.id),
+                )
+            else:
+                msg = (
+                    f"COULD NOT PUT {tr.type} with id {tr.id}\n."
+                    f"Response status code {response.status_code}"
+                    f"with response text:\n{response.text}"
+                )
+                logger.error(msg)
 
 
 def delete_transformation_revision(

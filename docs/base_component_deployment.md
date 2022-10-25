@@ -18,7 +18,10 @@ You can suppress the auto-deployment by setting the environment variable `HD_BAC
 ```
 
 You can also activate auto-deployment behavior even if the database is not empty by setting the environment variable `HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
-In that case the base components stored in your database are overwritten by the latest (git) version and might affect the reproducibility of workflows using them. Despite that any other components or workflows that you created stay untouched.
+In that case the base components and workflows stored in your database are overwritten by the latest (git) version and might affect the reproducibility of workflows using them. Despite that any other components or workflows that you created stay untouched.
+
+You can disable overwriting released and disabled components and workflows during the auo-deployment by setting the environment variable `HD_BACKEND_ALLOW_OVERWRITE_RELEASED` to `false` in the `docker-compose.yml` or `docker-compose-dev.yml` file.
+It is recommended to allow overwriting so that bug fixes of released components and workflows are automatically deployed. If you disabled overwriting during auto-deploy, you can deploy such updates manually as described below.
 
 Not setting these environement variables has the same result as setting them to `true`.
 
@@ -32,6 +35,7 @@ docker run --rm \
   --network hetida-designer-network \
   --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/");'
 ```
+Check the documentation of [Export and Import of Components/Workflows](./import_export.md) for an introduction of the available options.
 
 Note that in the case of the development environment it makes sense to run the deployment command using the locally
 built runtime image via

@@ -17,6 +17,7 @@ from hetdesrun.exportimport.utils import (
     update_or_create_transformation_revision,
 )
 from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import Type, get_uuid_from_seed
@@ -225,6 +226,7 @@ def import_transformations(
     download_path: str,
     strip_wirings: bool = False,
     directly_into_db: bool = False,
+    allow_overwrite_released: bool = True,
     update_component_code: bool = True,
     deprecate_older_revisions: bool = False,
 ) -> None:
@@ -264,6 +266,7 @@ def import_transformations(
             update_or_create_transformation_revision(
                 transformation,
                 directly_in_db=directly_into_db,
+                allow_overwrite_released=allow_overwrite_released,
                 update_component_code=update_component_code,
             )
 
