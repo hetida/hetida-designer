@@ -348,14 +348,12 @@ def test_multiple_select_unused(clean_test_db_engine):
         update_or_create_single_transformation_revision(
             tr_component_contained_only_in_deprecated
         )
-        update_or_create_single_transformation_revision(
-            tr_component_contained_only_in_deprecated
-        )
 
         operator_in_deprecated = tr_component_contained_only_in_deprecated.to_operator()
         assert isinstance(operator_in_deprecated.id, UUID)
         output_connector_deprecated = IOConnector(
             id=uuid4(),
+            name=operator_in_deprecated.outputs[0].name,
             operator_id=operator_in_deprecated.id,
             connector_id=operator_in_deprecated.outputs[0].id,
             operator_name=operator_in_deprecated.name,
@@ -391,40 +389,53 @@ def test_multiple_select_unused(clean_test_db_engine):
             test_wiring=WorkflowWiring(),
         )
 
-        tr_workflow_not_deprecated = deepcopy(tr_workflow_deprecated)
-        tr_workflow_not_deprecated.id = uuid4()
-        tr_workflow_not_deprecated.revision_group_id = uuid4()
         operator_in_not_deprecated = (
             tr_component_contained_not_only_in_deprecated.to_operator()
         )
-        tr_workflow_not_deprecated.content.operators = [operator_in_not_deprecated]
         output_connector_not_deprecated = IOConnector(
             id=uuid4(),
+            name=operator_in_not_deprecated.outputs[0].name,
             operator_id=operator_in_not_deprecated.id,
             connector_id=operator_in_not_deprecated.outputs[0].id,
             operator_name=operator_in_not_deprecated.name,
             connector_name=operator_in_not_deprecated.outputs[0].name,
             data_type=operator_in_not_deprecated.outputs[0].data_type,
         )
-        tr_workflow_not_deprecated.content.links = [
-            Link(
-                id=uuid4(),
-                start=Vertex(
-                    operator=operator_in_not_deprecated.id,
-                    connector=operator_in_not_deprecated.outputs[0],
-                ),
-                end=Vertex(operator=None, connector=output_connector_not_deprecated),
-            )
-        ]
+        tr_workflow_not_deprecated = TransformationRevision(
+            id=uuid4(),
+            revision_group_id=uuid4(),
+            name="name",
+            category="category",
+            version_tag="1.0.0",
+            type=Type.WORKFLOW,
+            documentation="",
+            state=State.DRAFT,
+            content=WorkflowContent(
+                operators=[operator_in_not_deprecated],
+                outputs=[output_connector_not_deprecated],
+                links=[
+                    Link(
+                        id=uuid4(),
+                        start=Vertex(
+                            operator=operator_in_not_deprecated.id,
+                            connector=operator_in_not_deprecated.outputs[0],
+                        ),
+                        end=Vertex(
+                            operator=None, connector=output_connector_not_deprecated
+                        ),
+                    )
+                ],
+            ),
+            io_interface=IOInterface(outputs=[output_connector_not_deprecated.to_io()]),
+            test_wiring=WorkflowWiring(),
+        )
 
         tr_workflow_deprecated.release()
         tr_workflow_deprecated.deprecate()
         update_or_create_single_transformation_revision(tr_workflow_deprecated)
 
         tr_workflow_not_deprecated.release()
-        update_or_create_single_transformation_revision(
-            tr_component_contained_only_in_deprecated
-        )
+        update_or_create_single_transformation_revision(tr_workflow_not_deprecated)
 
         results = get_multiple_transformation_revisions(
             ids=[tr_component_not_contained.id], unused=True
