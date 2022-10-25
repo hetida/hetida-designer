@@ -172,7 +172,8 @@ def export_transformations(
     include_deprecated: bool = True,
     java_backend: bool = False,
 ) -> None:
-    """
+    """Export transformation revisions.
+
     Exports all transformations, together with their documentation, and saves them as json files
     in subdirectories of the provided path corresponding to the respective category,
     based on the provide criteria. If more than one criterion is provided,

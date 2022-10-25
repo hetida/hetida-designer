@@ -241,7 +241,9 @@ def import_transformations(
         to ommit the detour via the backend
     - strip_wirings: Set to true to reset the test wiring to empty input and output
         wirings for each transformation revision
-    - update_component_code: Set to false if you want to keep the componen code
+    - allow_overwrite_released: Set to false to disable overwriting of transformation
+        revisions with state "RELEASED" or "DISABLED"
+    - update_component_code: Set to false if you want to keep the component code
         unchanged
     - deprecate_older_versions: Set to true to deprecate all but the latest revision
         for all revision groups imported. This might result in all imported revisions to
