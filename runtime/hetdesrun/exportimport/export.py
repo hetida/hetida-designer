@@ -12,6 +12,7 @@ import requests
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
+from hetdesrun.exportimport.utils import FilterParams, get_transformation_revisions
 from hetdesrun.models.code import NonEmptyValidStr
 from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import get_auth_headers
@@ -170,6 +171,7 @@ def export_transformations(
     ids: Optional[List[UUID]] = None,
     names: Optional[List[NonEmptyValidStr]] = None,
     include_deprecated: bool = True,
+    directly_from_db: bool = False,
     java_backend: bool = False,
 ) -> None:
     """Export transformation revisions.
@@ -181,12 +183,20 @@ def export_transformations(
 
     WARNING: Overwrites existing files with the same name!
 
-    Args:
+    Arguments:
         download_path (str): The directory on the local system, where we save the transformations.
-        type (Type): One of the two types of the enum Type: WORKFLOW or COMPONENT
+
+    Keyword Arguments:
+        type (Type): One of the two values of the enum Type: WORKFLOW or COMPONENT
+        state (State): One of the three values of the enum State: DRAFT, RELEASED or DISABLED
+        category (str): The category of the transformations.
         ids (List[UUID]): The ids of the transformations.
         names (List[str]): The names of the transformations.
-        include_deprecated (Optional[bool]): If set to True, disabled transformations are exported.
+        include_deprecated (bool = True): Set to False to export only transformation revisions
+            with state DRAFT or RELEASED.
+        directly_from_db (bool = False): Set to True to export directly from the databse.
+        java_backend (bool = False): Set to True to export from a hetida designer instance with a
+            version smaller than 0.7.
 
     Usage examples:
         export_transformations("/mnt/obj_repo/migration_data")
@@ -215,46 +225,27 @@ def export_transformations(
 
     hetdesrun.backend.models.wiring.EXPORT_MODE = True
 
-    headers = get_auth_headers()
-
-    endpoint = "transformations" if not java_backend else "base-items"
-    params = (
-        {
-            "type": type,
-            "state": state,
-            "category": category,
-            "ids": [str(id) for id in ids] if ids is not None else None,
-            "names": names,
-            "include_dependencies": True,
-            "include_deprecated": include_deprecated,
-        }
-        if not java_backend
-        else {}
-    )
-
-    url = posix_urljoin(get_config().hd_backend_api_url, endpoint)
-    response = requests.get(
-        url,
-        params=params,
-        verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()  # type: ignore
-        if get_config().hd_backend_use_basic_auth
-        else None,
-        headers=headers,
-        timeout=get_config().external_request_timeout,
-    )
-
-    if response.status_code != 200:
-        msg = (
-            f"No transformation revision found at url {url}.\n"
-            f" Status code was {str(response.status_code)}.\n"
-            f" Response was: {str(response.text)}"
-        )
-        raise Exception(msg)
-
-    transformation_list: List[dict] = []
-
     if java_backend:
+        url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
+        response = requests.get(
+            url,
+            verify=get_config().hd_backend_verify_certs,
+            auth=get_backend_basic_auth()  # type: ignore
+            if get_config().hd_backend_use_basic_auth
+            else None,
+            headers=get_auth_headers(),
+            timeout=get_config().external_request_timeout,
+        )
+
+        if response.status_code != 200:
+            msg = (
+                f"COULD NOT GET transformation revisions from URL {url}.\n"
+                f"Response status code {str(response.status_code)} "
+                f"with response text: {str(response.text)}"
+            )
+            raise Exception(msg)
+
+        transformation_list: List[dict] = []
         for trafo_json in response.json():
             transformation_list.append(
                 get_transformation_from_java_backend(
@@ -262,7 +253,17 @@ def export_transformations(
                 )
             )
     else:
-        transformation_list = response.json()
+        params = FilterParams(
+            type=type,
+            state=state,
+            category=category,
+            ids=[str(id) for id in ids] if ids is not None else None,
+            names=names,
+            include_dependencies=True,
+            include_deprecated=include_deprecated,
+        )
+
+        get_transformation_revisions(params=params, directly_from_db=directly_from_db)
 
     # Export individual transformation
     for transformation in transformation_list:
