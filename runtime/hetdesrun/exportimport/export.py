@@ -17,6 +17,7 @@ from hetdesrun.models.code import NonEmptyValidStr
 from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
+from hetdesrun.persistence.models.transformation import TransformationRevision
 
 logger = logging.getLogger(__name__)
 
@@ -44,35 +45,29 @@ def slugify(value: str, allow_unicode: bool = False) -> str:
 
 
 ##Base function to save transformation
-def save_transformation(tr_json: dict, download_path: str) -> None:
+def save_transformation(tr: TransformationRevision, download_path: str) -> None:
     # Create directory on local system
-    uuid = tr_json["id"]
-    name = tr_json["name"]
-    # pylint: disable=redefined-builtin
-    type = tr_json["type"]
-    category = tr_json["category"]
-    tag = tr_json["version_tag"]
-    cat_dir = os.path.join(download_path, type.lower() + "s", slugify(category))
+    cat_dir = os.path.join(download_path, tr.type.lower() + "s", slugify(tr.category))
     Path(cat_dir).mkdir(parents=True, exist_ok=True)
     path = os.path.join(
         cat_dir,
-        slugify(name) + "_" + slugify(tag) + "_" + uuid.lower() + ".json",
+        slugify(tr.name) + "_" + slugify(tr.version_tag) + "_" + str(tr.id).lower() + ".json",
     )
 
     # Save the transformation revision
     with open(path, "w", encoding="utf8") as f:
         try:
-            json.dump(dict(tr_json.items()), f, indent=2, sort_keys=True)
-            logger.info("exported %s '%s' to %s", type, name, path)
+            json.dump(json.loads(tr.json(exclude_none=True)), f, indent=2, sort_keys=True)
+            logger.info("exported %s '%s' to %s", tr.type, tr.name, path)
         except KeyError:
             logger.error(
-                "Could not safe the %s with id %s on the local system.", type, uuid
+                "Could not safe the %s with id %s on the local system.", tr.type, str(tr.id)
             )
 
 
 ##Base function to get transformation via REST API from DB (old endpoints)
 # pylint: disable=redefined-builtin
-def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
+def get_transformation_from_java_backend(id: UUID, type: Type) -> TransformationRevision:
     """
     Loads a single transformation revision together with its documentation based on its id
     """
@@ -96,14 +91,14 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
     )
     logger.info(
         "GET %s status code: %i for %s with id %ss",
-        type,
+        type.value.lower,
         response.status_code,
-        type,
+        type.value.lower,
         str(id),
     )
     if response.status_code != 200:
         msg = (
-            f"COULD NOT GET {type} with id {id}.\n"
+            f"COULD NOT GET {type.value.lower} with id {id}.\n"
             f"Response status code {response.status_code} "
             f"with response text:\n{response.json()['detail']}"
         )
@@ -125,7 +120,7 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
     logger.info(
         "GET documentation status code: %i for %s with id %s",
         response.status_code,
-        type,
+        type.value.lower,
         str(id),
     )
     if response.status_code != 200:
@@ -155,10 +150,7 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
         documentation=doc_text
     )
 
-    # for consistency with endpoints exclude none in JSON
-    tr_json = json.loads(transformation_revision.json(exclude_none=True))
-
-    return tr_json
+    return transformation_revision
 
 
 ##Export transformations based on type, id, name and category if provided
@@ -225,6 +217,8 @@ def export_transformations(
 
     hetdesrun.backend.models.wiring.EXPORT_MODE = True
 
+    transformation_list: List[TransformationRevision] = []
+
     if java_backend:
         url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
         response = requests.get(
@@ -245,7 +239,6 @@ def export_transformations(
             )
             raise Exception(msg)
 
-        transformation_list: List[dict] = []
         for trafo_json in response.json():
             transformation_list.append(
                 get_transformation_from_java_backend(
@@ -263,7 +256,9 @@ def export_transformations(
             include_deprecated=include_deprecated,
         )
 
-        get_transformation_revisions(params=params, directly_from_db=directly_from_db)
+        transformation_list = get_transformation_revisions(
+            params=params, directly_from_db=directly_from_db
+        )
 
     # Export individual transformation
     for transformation in transformation_list:
