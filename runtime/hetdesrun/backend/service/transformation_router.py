@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional
 from uuid import UUID, uuid4
 
 import httpx
@@ -18,7 +18,7 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
-from hetdesrun.exportimport.utils import info
+from hetdesrun.exportimport.utils import info, is_modifiable
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.run import PerformanceMeasuredStep
 from hetdesrun.persistence.dbservice.exceptions import (
@@ -270,43 +270,6 @@ def contains_deprecated(transformation_id: UUID) -> bool:
         is_disabled.append(operator.state == State.DISABLED)
 
     return any(is_disabled)
-
-
-def is_modifiable(
-    existing_transformation_revision: Optional[TransformationRevision],
-    updated_transformation_revision: TransformationRevision,
-    allow_overwrite_released: bool = False,
-) -> Tuple[bool, str]:
-    if existing_transformation_revision is None:
-        return True, ""
-    if existing_transformation_revision.type != updated_transformation_revision.type:
-        return False, (
-            f"The type ({updated_transformation_revision.type}) of the "
-            f"provided transformation revision does not\n"
-            f"match the type ({existing_transformation_revision.type}) "
-            f"of the stored transformation revision {existing_transformation_revision.id}!"
-        )
-
-    if (
-        existing_transformation_revision.state == State.DISABLED
-        and not allow_overwrite_released
-    ):
-        return False, (
-            f"cannot modify deprecated transformation revision "
-            f"{existing_transformation_revision.id}"
-        )
-
-    if (
-        existing_transformation_revision.state == State.RELEASED
-        and updated_transformation_revision.state != State.DISABLED
-        and not allow_overwrite_released
-    ):
-        return False, (
-            f"cannot modify released transformation revision "
-            f"{existing_transformation_revision.id}"
-        )
-
-    return True, ""
 
 
 def update_content(

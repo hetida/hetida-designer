@@ -17,7 +17,6 @@ from hetdesrun.exportimport.utils import (
     update_or_create_transformation_revision,
 )
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import Type, get_uuid_from_seed

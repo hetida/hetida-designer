@@ -3,13 +3,12 @@ import logging
 from datetime import datetime
 from enum import Enum
 from posixpath import join as posix_urljoin
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 import requests
 from pydantic import BaseModel
 
-from hetdesrun.backend.service.transformation_router import is_modifiable
 from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
@@ -108,7 +107,7 @@ def get_transformation_revisions(
         if get_response.status_code != 200:
             msg = (
                 "COULD NOT GET transformation revisions. "
-                f"Response status code {get_response.status_code}"
+                f"Response status code {get_response.status_code} "
                 f"with response text:\n{get_response.text}"
             )
             logger.error(msg)
@@ -126,6 +125,43 @@ def get_transformation_revisions(
             tr.name,
         )
     return tr_list
+
+
+def is_modifiable(
+    existing_transformation_revision: Optional[TransformationRevision],
+    updated_transformation_revision: TransformationRevision,
+    allow_overwrite_released: bool = False,
+) -> Tuple[bool, str]:
+    if existing_transformation_revision is None:
+        return True, ""
+    if existing_transformation_revision.type != updated_transformation_revision.type:
+        return False, (
+            f"The type ({updated_transformation_revision.type}) of the "
+            f"provided transformation revision does not\n"
+            f"match the type ({existing_transformation_revision.type}) "
+            f"of the stored transformation revision {existing_transformation_revision.id}!"
+        )
+
+    if (
+        existing_transformation_revision.state == State.DISABLED
+        and not allow_overwrite_released
+    ):
+        return False, (
+            f"cannot modify deprecated transformation revision "
+            f"{existing_transformation_revision.id}"
+        )
+
+    if (
+        existing_transformation_revision.state == State.RELEASED
+        and updated_transformation_revision.state != State.DISABLED
+        and not allow_overwrite_released
+    ):
+        return False, (
+            f"cannot modify released transformation revision "
+            f"{existing_transformation_revision.id}"
+        )
+
+    return True, ""
 
 
 def update_or_create_transformation_revision(
@@ -148,7 +184,7 @@ def update_or_create_transformation_revision(
         )
         if update_component_code and tr.type == Type.COMPONENT:
             tr.content = update_code(tr)
-        
+
         existing_tr: Optional[TransformationRevision] = None
         try:
             read_single_transformation_revision(tr.id)
@@ -167,9 +203,7 @@ def update_or_create_transformation_revision(
                     integrity_err,
                 )
         else:
-            logger.info(
-                "%s with id %s already in DB:\n%s", tr.type, str(tr.id), msg
-            )
+            logger.info("%s with id %s already in DB:\n%s", tr.type, str(tr.id), msg)
 
     else:
         response = requests.put(
@@ -181,7 +215,7 @@ def update_or_create_transformation_revision(
                 "update_component_code": update_component_code,
             },
             verify=get_config().hd_backend_verify_certs,
-            json=json.loads(tr.json()), # TODO: avoid double serialization
+            json=json.loads(tr.json()),  # TODO: avoid double serialization.
             auth=get_backend_basic_auth()  # type: ignore
             if get_config().hd_backend_use_basic_auth
             else None,
@@ -195,7 +229,7 @@ def update_or_create_transformation_revision(
             tr.category,
             tr.name,
         )
-        
+
         if response.status_code != 201:
             if allow_overwrite_released is False and response.status_code == 403:
                 # other reason for 403: type of object in DB and of passed object do not match
