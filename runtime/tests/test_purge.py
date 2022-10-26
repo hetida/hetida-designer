@@ -7,6 +7,8 @@ from posixpath import join as posix_urljoin
 from unittest import mock
 from uuid import uuid4
 
+import pytest
+
 from hetdesrun.exportimport.purge import (
     delete_all_and_refill,
     delete_drafts,
@@ -22,7 +24,11 @@ from hetdesrun.exportimport.utils import (
     update_or_create_transformation_revision,
 )
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError, DBUpdateForbidden
+from hetdesrun.persistence.dbservice.exceptions import (
+    DBIntegrityError,
+    DBNotFoundError,
+    DBUpdateForbidden,
+)
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -230,7 +236,7 @@ def test_delete_transformation_revisions():
             assert args[0] == example_tr_released.id
 
 
-def test_update_or_create_transformation_revision(caplog):
+def test_update_or_create_transformation_revision_happy_pathexi(caplog):
     with mock.patch(
         "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
         return_value=None,
@@ -276,6 +282,8 @@ def test_update_or_create_transformation_revision(caplog):
             assert kwargs["params"]["allow_overwrite_released"] == True
             assert kwargs["params"]["update_component_code"] == True
 
+
+def test_update_or_create_transformation_revision_rest_api_error(caplog):
     with caplog.at_level(logging.ERROR):
         resp_mock = mock.Mock()
         resp_mock.status_code = 400
@@ -285,46 +293,60 @@ def test_update_or_create_transformation_revision(caplog):
             caplog.clear()
             update_or_create_transformation_revision(example_tr_draft)
             assert "COULD NOT PUT" in caplog.text
-    
-    with caplog.at_level(logging.ERROR):
+
+
+def test_update_or_create_transformation_revision_rest_api_update_forbidden(caplog):
+    with caplog.at_level(logging.INFO):
         resp_mock = mock.Mock()
         resp_mock.status_code = 403
         with mock.patch(
             "hetdesrun.exportimport.utils.requests.put", return_value=resp_mock
         ):
             caplog.clear()
-            update_or_create_transformation_revision(example_tr_draft, allow_overwrite_released=False)
+            update_or_create_transformation_revision(
+                example_tr_draft, allow_overwrite_released=False
+            )
             assert "already in DB and released/deprecated" in caplog.text
 
-    with mock.patch(
-        "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
-        side_effect=DBNotFoundError,
-    ):
-        caplog.clear()
-        update_or_create_transformation_revision(
-            example_tr_draft, directly_in_db=True
-        )
-        assert "Not found error in DB" in caplog.text
 
-    with mock.patch(
-        "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
-        side_effect=DBIntegrityError,
-    ):
-        caplog.clear()
-        update_or_create_transformation_revision(
-            example_tr_draft, directly_in_db=True
-        )
-        assert "Integrity error in DB" in caplog.text
-    with mock.patch(
-        "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
-        side_effect=DBUpdateForbidden,
-    ):
-        caplog.clear()
-        update_or_create_transformation_revision(
-            example_tr_draft, directly_in_db=True
-        )
-        assert "Update forbidden for entry" in caplog.text
+def test_update_or_create_transformation_revision_db_not_found(caplog):
+    with caplog.at_level(logging.ERROR):
+        with mock.patch(
+            "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
+            side_effect=DBNotFoundError,
+        ):
+            caplog.clear()
+            update_or_create_transformation_revision(
+                example_tr_draft, directly_in_db=True
+            )
+            assert "Not found error in DB" in caplog.text
 
+
+def test_update_or_create_transformation_revision_db_integrity_error(caplog):
+    with caplog.at_level(logging.ERROR):
+        with mock.patch(
+            "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
+            side_effect=DBIntegrityError,
+        ):
+            caplog.clear()
+            update_or_create_transformation_revision(
+                example_tr_draft, directly_in_db=True
+            )
+            assert "Integrity error in DB" in caplog.text
+
+
+def test_update_or_create_transformation_revision_db_update_forbidden(caplog):
+    with caplog.at_level(logging.INFO):
+        with pytest.raises(DBUpdateForbidden):
+            with mock.patch(
+                "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
+                side_effect=DBUpdateForbidden,
+            ):
+                caplog.clear()
+                update_or_create_transformation_revision(
+                    example_tr_draft, directly_in_db=True
+                )
+                assert "Update forbidden for entry" in caplog.text
 
 
 def test_deprecate_all_but_latest_in_group(caplog):

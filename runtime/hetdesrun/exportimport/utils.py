@@ -181,7 +181,6 @@ def update_or_create_transformation_revision(
                     str(tr.id),
                     forbidden_err,
                 )
-            
 
     else:
         response = requests.put(
