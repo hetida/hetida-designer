@@ -17,16 +17,15 @@ from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
+    is_unused,
     read_single_transformation_revision,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.io import (
     IO,
-    Connector,
     IOConnector,
     IOInterface,
-    Position,
 )
 from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -436,6 +435,10 @@ def test_multiple_select_unused(clean_test_db_engine):
 
         tr_workflow_not_deprecated.release()
         update_or_create_single_transformation_revision(tr_workflow_not_deprecated)
+
+        assert is_unused(tr_component_not_contained.id) is True
+        assert is_unused(tr_component_contained_only_in_deprecated.id) is True
+        assert is_unused(tr_component_contained_not_only_in_deprecated.id) is False
 
         results = get_multiple_transformation_revisions(
             ids=[tr_component_not_contained.id], unused=True
