@@ -175,12 +175,11 @@ def update_or_create_transformation_revision(
                     forbidden_err,
                 )
                 raise DBUpdateForbidden(forbidden_err) from forbidden_err
-            else:
-                logger.info(
-                    "%s with id %s already in DB and released/deprecated",
-                    str(tr.id),
-                    forbidden_err,
-                )
+            logger.info(
+                "%s with id %s already in DB and released/deprecated",
+                str(tr.id),
+                forbidden_err,
+            )
 
     else:
         response = requests.put(

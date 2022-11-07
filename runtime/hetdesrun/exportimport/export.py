@@ -5,7 +5,7 @@ import re
 import unicodedata
 from pathlib import Path
 from posixpath import join as posix_urljoin
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 from uuid import UUID
 
 import requests
