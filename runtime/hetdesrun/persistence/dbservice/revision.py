@@ -143,12 +143,10 @@ def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> 
 
 
 def is_modifiable(
-    existing_transformation_revision: Optional[TransformationRevision],
+    existing_transformation_revision: TransformationRevision,
     updated_transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = False,
 ) -> Tuple[bool, str]:
-    if existing_transformation_revision is None:
-        return True, ""
     if existing_transformation_revision.type != updated_transformation_revision.type:
         return False, (
             f"The type ({updated_transformation_revision.type}) of the "

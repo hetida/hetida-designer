@@ -12,21 +12,19 @@ from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
     DBIntegrityError,
     DBNotFoundError,
+    DBUpdateForbidden,
 )
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_latest_revision_id,
     get_multiple_transformation_revisions,
+    is_modifiable,
     is_unused,
     read_single_transformation_revision,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
-from hetdesrun.persistence.models.io import (
-    IO,
-    IOConnector,
-    IOInterface,
-)
+from hetdesrun.persistence.models.io import IO, IOConnector, IOInterface
 from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -77,6 +75,89 @@ def test_storing_and_receiving(clean_test_db_engine):
         wrong_tr_uuid = get_uuid_from_seed("wrong id")
         with pytest.raises(DBNotFoundError):
             received_tr_object = read_single_transformation_revision(wrong_tr_uuid)
+
+
+def test_is_modifiable():
+    tr_uuid = get_uuid_from_seed("test_updating")
+
+    tr_object = TransformationRevision(
+        id=tr_uuid,
+        revision_group_id=tr_uuid,
+        name="Test",
+        description="Test description",
+        version_tag="1.0.0",
+        category="Test category",
+        state=State.DRAFT,
+        type=Type.COMPONENT,
+        content="code",
+        io_interface=IOInterface(),
+        test_wiring=WorkflowWiring(),
+        documentation="",
+    )
+
+    changed_type_tr = deepcopy(tr_object)
+    changed_type_tr.type = Type.WORKFLOW
+    assert (
+        is_modifiable(
+            existing_transformation_revision=tr_object,
+            updated_transformation_revision=changed_type_tr,
+        )[0]
+        is False
+    )
+
+    changed_name_tr = deepcopy(tr_object)
+    changed_name_tr.name = "Name"
+    assert (
+        is_modifiable(
+            existing_transformation_revision=tr_object,
+            updated_transformation_revision=changed_name_tr,
+        )[0]
+        is True
+    )
+
+    tr_object.release()
+    changed_name_released_tr = deepcopy(tr_object)
+    changed_name_released_tr.name = "Other name"
+    assert (
+        is_modifiable(
+            existing_transformation_revision=tr_object,
+            updated_transformation_revision=changed_name_released_tr,
+        )[0]
+        is False
+    )
+    assert (
+        is_modifiable(
+            existing_transformation_revision=tr_object,
+            updated_transformation_revision=changed_name_released_tr,
+            allow_overwrite_released=True,
+        )[0]
+        is True
+    )
+
+    deprecated_tr = deepcopy(tr_object)
+    deprecated_tr.deprecate()
+    assert (
+        is_modifiable(
+            existing_transformation_revision=tr_object,
+            updated_transformation_revision=deprecated_tr,
+        )[0]
+        is True
+    )
+    assert (
+        is_modifiable(
+            existing_transformation_revision=deprecated_tr,
+            updated_transformation_revision=tr_object,
+        )[0]
+        is False
+    )
+    assert (
+        is_modifiable(
+            existing_transformation_revision=deprecated_tr,
+            updated_transformation_revision=tr_object,
+            allow_overwrite_released=True,
+        )[0]
+        is True
+    )
 
 
 def test_updating(clean_test_db_engine):
@@ -215,8 +296,17 @@ def test_deleting(clean_test_db_engine):
             with pytest.raises(DBBadRequestError):
                 delete_single_transformation_revision(tr_released_uuid)
 
+            with pytest.raises(DBBadRequestError):
+                delete_single_transformation_revision(
+                    tr_workflow_uuid, type=Type.COMPONENT
+                )
+
+            # sqlite does not seem to care about the violation of the ForeignKeyConstraint
+            # due to the tr_released_object being an operator of tr_workflow in the nesting table
             # with pytest.raises(DBIntegrityError):
-            #     delete_single_transformation_revision(tr_released_uuid, ignore_state=True)
+            #     delete_single_transformation_revision(
+            #         tr_released_uuid, ignore_state=True
+            #     )
 
             delete_single_transformation_revision(tr_workflow_uuid, ignore_state=True)
             delete_single_transformation_revision(tr_released_uuid, ignore_state=True)
