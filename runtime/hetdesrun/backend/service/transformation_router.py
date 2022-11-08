@@ -477,11 +477,11 @@ async def delete_transformation_revision(
         delete_single_transformation_revision(id, ignore_state=ignore_state)
         logger.info("deleted transformation revision %s", id)
 
-    except DBBadRequestError as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
-
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    except (DBBadRequestError, DBIntegrityError) as e:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
 
 async def handle_trafo_revision_execution_request(
