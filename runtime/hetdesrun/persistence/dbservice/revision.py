@@ -217,7 +217,7 @@ def update_or_create_single_transformation_revision(
         return select_tr_by_id(session, transformation_revision.id)
 
 
-def delete_tr(session, tr_id) -> None:
+def delete_tr(session: SQLAlchemySession, tr_id: UUID) -> None:
     try:
         session.execute(
             delete(TransformationRevisionDBModel).where(
@@ -260,7 +260,7 @@ def delete_single_transformation_revision(
 
         delete_own_nestings(session, transformation_revision.id)
 
-        delete_tr(transformation_revision.id)
+        delete_tr(session, transformation_revision.id)
 
 
 def is_unused(transformation_id: UUID) -> bool:
