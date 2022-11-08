@@ -44,7 +44,7 @@ def info(
         elif isinstance(param, List):
             param_string = ", ".join(str(element) for element in param)
         else:
-            str(param)
+            param_string = str(param)
         return text + param_string
     return ""
 
@@ -66,7 +66,7 @@ class FilterParams(BaseModel):
             + info(" of type ", self.type)
             + info(" in state ", self.state)
             + info(" in category ", self.category)
-            + info(" with group_id ", self.revision_group_id)
+            + info(" with revision group id ", self.revision_group_id)
             + info(
                 " unless they are deprecated",
                 self.include_deprecated,
@@ -79,6 +79,11 @@ class FilterParams(BaseModel):
             )
             + info("\nwith ids ", self.ids)
             + info("\nwith names ", self.names)
+            + info(
+                " including their dependencies",
+                self.include_dependencies,
+                case=self.include_dependencies,
+            )
         )
 
 
@@ -121,9 +126,10 @@ def get_transformation_revisions(
 
     for tr in tr_list:
         logger.info(
-            ("Found %s with id %s in category %s with name %s"),
+            ("Found %s with id %s and revision group id %s in category '%s' with name '%s'"),
             tr.type.value,
             str(tr.id),
+            str(tr.revision_group_id),
             tr.category,
             tr.name,
         )
