@@ -126,7 +126,9 @@ def get_transformation_revisions(
 
     for tr in tr_list:
         logger.info(
-            ("Found %s with id %s and revision group id %s in category '%s' with name '%s'"),
+            (
+                "Found %s with id %s and revision group id %s in category '%s' with name '%s'"
+            ),
             tr.type.value,
             str(tr.id),
             str(tr.revision_group_id),
