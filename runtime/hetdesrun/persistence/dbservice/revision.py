@@ -205,6 +205,7 @@ def update_or_create_single_transformation_revision(
 
         if transformation_revision.state == State.DISABLED:
             pass_on_deprecation(session, transformation_revision.id)
+            return select_tr_by_id(session, transformation_revision.id)
 
         if transformation_revision.type == Type.WORKFLOW:
             assert isinstance(
