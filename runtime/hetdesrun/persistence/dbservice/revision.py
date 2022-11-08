@@ -217,6 +217,22 @@ def update_or_create_single_transformation_revision(
         return select_tr_by_id(session, transformation_revision.id)
 
 
+def delete_tr(session, tr_id) -> None:
+    try:
+        session.execute(
+            delete(TransformationRevisionDBModel).where(
+                TransformationRevisionDBModel.id == tr_id
+            )
+        )
+    except IntegrityError as e:
+        msg = (
+            f"Integrity Error while trying to delete transformation revision "
+            f"with id {tr_id}. Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise DBIntegrityError(msg) from e
+
+
 # pylint: disable=redefined-builtin
 def delete_single_transformation_revision(
     id: UUID, type: Optional[Type] = None, ignore_state: bool = False
@@ -228,8 +244,8 @@ def delete_single_transformation_revision(
         transformation_revision: TransformationRevision = result
         if type is not None and transformation_revision.type != type:
             msg = (
-                f"Transformation revision {id} has type {transformation_revision.type}"
-                f"Delete request with type {type} will not be executed"
+                f"Transformation revision {id} has type {transformation_revision.type}, "
+                f"delete request with type {type} will not be executed"
             )
             logger.error(msg)
             raise DBBadRequestError(msg)
@@ -244,19 +260,7 @@ def delete_single_transformation_revision(
 
         delete_own_nestings(session, transformation_revision.id)
 
-        try:
-            session.execute(
-                delete(TransformationRevisionDBModel).where(
-                    TransformationRevisionDBModel.id == transformation_revision.id
-                )
-            )
-        except IntegrityError as e:
-            msg = (
-                f"Integrity Error while trying to delete transformation revision "
-                f"with id {transformation_revision.id}. Error was:\n{str(e)}"
-            )
-            logger.error(msg)
-            raise DBIntegrityError(msg) from e
+        delete_tr(transformation_revision.id)
 
 
 def is_unused(transformation_id: UUID) -> bool:
