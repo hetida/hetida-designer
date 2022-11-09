@@ -5,6 +5,8 @@ from unittest import mock
 from uuid import uuid4
 
 import pytest
+from httpx import HTTPError
+
 from hetdesrun.webservice.auth_outgoing import (
     ClientCredentialsGrantCredentials,
     PasswordGrantCredentials,
@@ -16,8 +18,6 @@ from hetdesrun.webservice.auth_outgoing import (
     obtain_token_from_auth_provider,
     refresh_token_from_auth_provider,
 )
-from httpx import HTTPError
-
 
 
 @pytest.fixture(scope="function")

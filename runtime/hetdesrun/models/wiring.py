@@ -41,7 +41,7 @@ class OutputWiring(BaseModel):
     type: Optional[ExternalType] = Field(
         None,
         description="Type of data. If present then must be one of "
-        + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),
+        + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),  # type: ignore
     )
 
     # pylint: disable=no-self-argument
@@ -99,7 +99,7 @@ class InputWiring(BaseModel):
     type: Optional[ExternalType] = Field(
         None,
         description="Type of data. If present then must be one of "
-        + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),
+        + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),  # type: ignore
     )
     filters: dict = {}
 

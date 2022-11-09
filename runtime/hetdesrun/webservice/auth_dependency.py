@@ -5,10 +5,11 @@ from typing import Any, Dict, List
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBasicCredentials, HTTPBearer
+from starlette.status import HTTP_403_FORBIDDEN
+
 from hetdesrun.webservice.auth import AuthentificationError, BearerVerifier
 from hetdesrun.webservice.auth_outgoing import create_or_get_named_access_token_manager
 from hetdesrun.webservice.config import ExternalAuthMode, InternalAuthMode, get_config
-from starlette.status import HTTP_403_FORBIDDEN
 
 logger = logging.getLogger(__name__)
 
@@ -98,10 +99,9 @@ async def get_auth_headers(external: bool = False) -> Dict[str, str]:
             access_token = await access_token_manager.get_access_token()
             return {"Authorization": "Bearer " + access_token}
 
-        else:
-            msg = f"Unknown config option for external_auth_mode: {external_mode}"
-            logger.error(msg)
-            raise ValueError(msg)
+        msg = f"Unknown config option for external_auth_mode: {external_mode}"
+        logger.error(msg)
+        raise ValueError(msg)
 
     # internal
 
@@ -118,10 +118,10 @@ async def get_auth_headers(external: bool = False) -> Dict[str, str]:
         )
         access_token = await access_token_manager.get_access_token()
         return {"Authorization": "Bearer " + access_token}
-    else:
-        msg = f"Unknown config option for internal_auth_mode: {internal_mode}"
-        logger.error(msg)
-        raise ValueError(msg)
+
+    msg = f"Unknown config option for internal_auth_mode: {internal_mode}"
+    logger.error(msg)
+    raise ValueError(msg)
 
 
 def sync_wrapped_get_auth_headers(external: bool = False) -> Dict[str, str]:

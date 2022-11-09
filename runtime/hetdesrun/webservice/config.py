@@ -3,11 +3,11 @@ import os
 from enum import Enum
 from typing import Optional, Union
 
-from hetdesrun.webservice.auth_outgoing import ServiceCredentials
-
 # pylint: disable=no-name-in-module
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
+
+from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
 
 class LogLevel(str, Enum):
@@ -223,7 +223,9 @@ class RuntimeConfig(BaseSettings):
             ", ".join(['"' + x.value + '"' for x in list(InternalAuthMode)])
         ),
     )
-    internal_auth_client_credentials: Optional[Json[ServiceCredentials]] = Field(
+    internal_auth_client_credentials: Optional[
+        Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
+    ] = Field(
         None,
         description=(
             "Client credentials as json encoded string."
@@ -246,7 +248,9 @@ class RuntimeConfig(BaseSettings):
             ", ".join(['"' + x.value + '"' for x in list(ExternalAuthMode)])
         ),
     )
-    external_auth_client_credentials: Optional[Json[ServiceCredentials]] = Field(
+    external_auth_client_credentials: Optional[
+        Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
+    ] = Field(
         None,
         description="Client credentials as json encoded string.",
         example=(
@@ -374,8 +378,10 @@ class RuntimeConfig(BaseSettings):
     # pylint: disable=no-self-argument
     @validator("internal_auth_client_credentials")
     def internal_auth_client_credentials_set_if_internal_auth_mode_is_client(
-        cls, v: Optional[Json[ServiceCredentials]], values: dict
-    ) -> Optional[Json[ServiceCredentials]]:
+        cls,
+        v: Optional[Json[ServiceCredentials]],  # pylint: disable=unsubscriptable-object
+        values: dict,
+    ) -> Optional[Json[ServiceCredentials]]:  # pylint: disable=unsubscriptable-object
 
         internal_auth_mode = values["internal_auth_mode"]
 
@@ -390,8 +396,10 @@ class RuntimeConfig(BaseSettings):
     # pylint: disable=no-self-argument
     @validator("external_auth_client_credentials")
     def external_auth_client_credentials_set_if_external_auth_mode_is_client(
-        cls, v: Optional[Json[ServiceCredentials]], values: dict
-    ) -> Optional[Json[ServiceCredentials]]:
+        cls,
+        v: Optional[Json[ServiceCredentials]],  # pylint: disable=unsubscriptable-object
+        values: dict,
+    ) -> Optional[Json[ServiceCredentials]]:  # pylint: disable=unsubscriptable-object
 
         external_auth_mode = values["external_auth_mode"]
 

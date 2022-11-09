@@ -47,7 +47,7 @@ class LocalFile(BaseModel):
 
 
 def parse_settings_file(
-    *, data_file_path: str = None, settings_file_path: str = None
+    *, data_file_path: Optional[str] = None, settings_file_path: Optional[str] = None
 ) -> SettingsFile:
     if settings_file_path is None:
         if data_file_path is None:

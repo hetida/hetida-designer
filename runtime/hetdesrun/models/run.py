@@ -135,15 +135,15 @@ class WorkflowExecutionInput(BaseModel):
 
     # pylint: disable=no-self-argument
     @root_validator(skip_on_failure=True)
-    def check_wiring_complete(cls, values):  # type: ignore
+    def check_wiring_complete(cls, values: dict) -> dict:  # type: ignore
         """Every (non-constant) Workflow input/output must be wired
 
         Checks whether there is a wiring for every non-constant workflow input
         and for every workflow output.
         """
 
-        wiring: WorkflowWiring = values.get("workflow_wiring")
-        workflow: WorkflowNode = values.get("workflow")
+        wiring: WorkflowWiring = values.get("workflow_wiring")  # type: ignore
+        workflow: WorkflowNode = values.get("workflow")  # type: ignore
 
         # Check that every Workflow Input is wired:
         wired_input_names = set(

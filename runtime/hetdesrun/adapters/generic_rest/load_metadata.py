@@ -5,6 +5,8 @@ from posixpath import join as posix_urljoin
 from typing import Any, Dict, Optional
 
 import httpx
+from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
+
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
     AdapterHandlingException,
@@ -15,7 +17,6 @@ from hetdesrun.adapters.generic_rest.external_types import ExternalType, ValueDa
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.data_selection import FilteredSource
 from hetdesrun.webservice.config import get_config
-from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
 
 logger = logging.getLogger(__name__)
 

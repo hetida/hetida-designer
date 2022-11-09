@@ -9,6 +9,9 @@ import pytest_asyncio
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from httpx import AsyncClient
+from jose import constants, jwk, jwt
+
 from hetdesrun.persistence import sessionmaker
 from hetdesrun.webservice.application import init_app
 from hetdesrun.webservice.auth_dependency import ExternalAuthMode, InternalAuthMode
@@ -16,8 +19,6 @@ from hetdesrun.webservice.auth_outgoing import (
     ClientCredentialsGrantCredentials,
     ServiceCredentials,
 )
-from httpx import AsyncClient
-from jose import constants, jwk, jwt
 
 token_response_stub = {
     "access_token": "nothing",
