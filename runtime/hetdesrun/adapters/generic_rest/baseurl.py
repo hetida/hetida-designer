@@ -15,6 +15,7 @@ from hetdesrun.adapters.exceptions import (
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.backend.models.adapter import AdapterFrontendDto
 from hetdesrun.backend.service.adapter_router import get_all_adapters
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -47,8 +48,15 @@ class BackendRegisteredGenericRestAdapters(BaseModel):
 
 async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestAdapter]:
     """Loads generic REST adapter infos from the corresponding designer backend endpoint"""
-
-    headers = await get_generic_rest_adapter_auth_headers(external=True)
+    try:
+        headers = await get_generic_rest_adapter_auth_headers(external=False)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failure trying to get auth headers for adapter base url request. Error was:\n"
+            + str(e)
+        )
+        logger.info(msg)
+        raise AdapterHandlingException(msg) from e
 
     url = posix_urljoin(get_config().hd_backend_api_url, "adapters/")
     logger.info("Start getting Generic REST Adapter URLS from HD Backend url %s", url)

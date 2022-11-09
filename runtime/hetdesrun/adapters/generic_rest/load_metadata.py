@@ -16,6 +16,7 @@ from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_bas
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, ValueDataType
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -116,7 +117,16 @@ async def load_single_metadatum_from_adapter(
 async def load_multiple_metadata(
     data_to_load: Dict[str, FilteredSource], adapter_key: str
 ) -> Dict[str, Any]:
-    headers = await get_generic_rest_adapter_auth_headers(external=True)
+    try:
+        headers = await get_generic_rest_adapter_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for loading multiple metadata from adapter"
+            f"with key {adapter_key}. Error was:\n{str(e)}"
+        )
+        logger.info(msg)
+        raise AdapterHandlingException(msg) from e
+
     async with httpx.AsyncClient(
         headers=headers,
         verify=get_config().hd_adapters_verify_certs,
