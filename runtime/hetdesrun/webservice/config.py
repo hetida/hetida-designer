@@ -3,11 +3,11 @@ import os
 from enum import Enum
 from typing import Optional, Union
 
+from hetdesrun.webservice.auth_outgoing import ServiceCredentials
+
 # pylint: disable=no-name-in-module
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
-
-from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
 
 class LogLevel(str, Enum):
@@ -222,6 +222,7 @@ class RuntimeConfig(BaseSettings):
             " One of "
             ", ".join(['"' + x.value + '"' for x in list(InternalAuthMode)])
         ),
+        env="HD_INTERNAL_AUTH_MODE",
     )
     internal_auth_client_credentials: Optional[
         Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
@@ -238,6 +239,7 @@ class RuntimeConfig(BaseSettings):
             ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
             ' "post_kwargs": {}}'
         ),
+        env="HD_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
     )
     external_auth_mode: ExternalAuthMode = Field(
         ExternalAuthMode.FORWARD_OR_FIXED,
@@ -247,6 +249,7 @@ class RuntimeConfig(BaseSettings):
             " One of "
             ", ".join(['"' + x.value + '"' for x in list(ExternalAuthMode)])
         ),
+        env="HD_EXTERNAL_AUTH_MODE",
     )
     external_auth_client_credentials: Optional[
         Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
@@ -259,6 +262,7 @@ class RuntimeConfig(BaseSettings):
             ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
             ' "post_kwargs": {}}'
         ),
+        env="HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
     )
 
     hd_adapters: str = Field(
