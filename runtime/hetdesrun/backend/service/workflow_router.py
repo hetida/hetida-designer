@@ -73,7 +73,6 @@ async def create_workflow_revision(
     try:
         transformation_revision = workflow_dto.to_transformation_revision(
             documentation=(
-                "\n"
                 "# New Component/Workflow\n"
                 "## Description\n"
                 "## Inputs\n"
@@ -228,6 +227,7 @@ async def update_workflow_revision(
             updated_workflow_dto.to_transformation_revision()
         )
     except ValidationError as e:
+        logger.error("The following validation error occured:\n%s", str(e))
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     existing_transformation_revision: Optional[TransformationRevision] = None
@@ -257,12 +257,15 @@ async def update_workflow_revision(
         updated_transformation_revision.test_wiring = (
             existing_transformation_revision.test_wiring
         )
+        updated_transformation_revision.released_timestamp = (
+            existing_transformation_revision.released_timestamp
+        )
 
-    updated_transformation_revision = update_content(
+    updated_transformation_revision = if_applicable_release_or_deprecate(
         existing_transformation_revision, updated_transformation_revision
     )
 
-    updated_transformation_revision = if_applicable_release_or_deprecate(
+    updated_transformation_revision = update_content(
         existing_transformation_revision, updated_transformation_revision
     )
 
@@ -349,7 +352,7 @@ async def execute_workflow_revision(
     """Execute a transformation revision of type workflow.
 
     This endpoint is deprecated and will be removed soon,
-    use POST /api/transformations/{id}/execute instead.
+    use POST /api/transformations/execute instead which uses a new model for the payload.
     """
     if job_id is None:
         job_id = uuid4()

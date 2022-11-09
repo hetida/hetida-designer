@@ -28,7 +28,7 @@ class WorkflowLinkFrontendDto(BaseModel):
     path: List[PointFrontendDto] = []
 
     @root_validator()
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def no_self_reference(cls, values: dict) -> dict:
         if values["to_operator"] == values["from_operator"]:
             raise ValueError(

@@ -21,7 +21,7 @@ class IoWiringFrontendDto(BaseModel):
     ref_key: Optional[str] = None
     type: Optional[ExternalType] = None
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("type")
     def metadata_type_includes_additional_fields(
         cls, v: Optional[ExternalType], values: dict
@@ -42,12 +42,12 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
     workflow_output_name: str
     adapter_id: Union[StrictInt, StrictStr]
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("workflow_output_name")
     def name_valid_python_identifier(cls, workflow_output_name: str) -> str:
         return valid_python_identifier(cls, workflow_output_name)
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("adapter_id")
     def adapter_id_known(
         cls, v: Union[StrictInt, StrictStr]
@@ -91,12 +91,12 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
     filters: dict = {}
     value: Optional[str] = None
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("workflow_input_name")
     def name_valid_python_identifier(cls, workflow_input_name: str) -> str:
         return valid_python_identifier(cls, workflow_input_name)
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("adapter_id")
     def adapter_id_known(
         cls, v: Union[StrictInt, StrictStr]
@@ -140,7 +140,7 @@ class WiringFrontendDto(BaseModel):
     input_wirings: List[InputWiringFrontendDto]
     output_wirings: List[OutputWiringFrontendDto]
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("input_wirings", each_item=False)
     def input_names_unique(
         cls, input_wirings: List[InputWiringFrontendDto]
@@ -154,7 +154,7 @@ class WiringFrontendDto(BaseModel):
             "Duplicates in workflow input names occuring in the input wirings not allowed."
         )
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("output_wirings", each_item=False)
     def output_names_unique(
         cls, output_wirings: List[OutputWiringFrontendDto]

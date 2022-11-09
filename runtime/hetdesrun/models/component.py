@@ -33,7 +33,7 @@ class ComponentInput(UnnamedInput):
 
     name: str = Field(..., example="x", description="must be a valid Python identifier")
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         return valid_python_identifier(cls, name)
@@ -50,7 +50,7 @@ class ComponentOutput(BaseModel):
         example=DataType.Integer,
     )
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         return valid_python_identifier(cls, name)
@@ -79,17 +79,17 @@ class ComponentRevision(BaseModel):
     inputs: List[ComponentInput]
     outputs: List[ComponentOutput]
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("function_name")
     def function_name_valid_python_identifier(cls, function_name: str) -> str:
         return valid_python_identifier(cls, function_name)
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("inputs", each_item=False)
     def input_names_unique(cls, inputs: List[ComponentInput]) -> List[ComponentInput]:
         return names_unique(cls, inputs)
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("outputs", each_item=False)
     def output_names_unique(
         cls, outputs: List[ComponentOutput]

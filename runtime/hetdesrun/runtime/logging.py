@@ -50,16 +50,16 @@ class ExecutionContextFilter(logging.Filter):
         self.currently_executed_component = None
         super().__init__(*args, **kwargs)
 
-    def bind_context(self, **kwargs: Any) -> None:  # pylint: disable=no-self-use
+    def bind_context(self, **kwargs: Any) -> None:
         _get_context().update(kwargs)
 
-    def unbind_context(self, *args: str) -> None:  # pylint: disable=no-self-use
+    def unbind_context(self, *args: str) -> None:
         """Remove entries with provided keys from context"""
         ctx_dict = _get_context()
         for key in args:
             ctx_dict.pop(key, None)
 
-    def clear_context(self) -> None:  # pylint: disable=no-self-use
+    def clear_context(self) -> None:
         _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
 
     def filter(self, record: logging.LogRecord) -> Literal[True]:

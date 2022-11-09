@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, Path, Query, status
+from pydantic import ValidationError
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
@@ -155,7 +156,6 @@ async def create_transformation_revision(
 
     transformation_revision = transformation_revision_dto.to_transformation_revision(
         documentation=(
-            "\n"
             "# New Component/Workflow\n"
             "## Description\n"
             "## Inputs\n"
@@ -231,9 +231,13 @@ async def update_transformation_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
-    updated_transformation_revision = (
-        updated_transformation_revision_dto.to_transformation_revision()
-    )
+    try:
+        updated_transformation_revision = (
+            updated_transformation_revision_dto.to_transformation_revision()
+        )
+    except ValidationError as e:
+        logger.error("The following validation error occured:\n%s", str(e))
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
     existing_transformation_revision: Optional[TransformationRevision] = None
 
@@ -262,12 +266,18 @@ async def update_transformation_revision(
         updated_transformation_revision.test_wiring = (
             existing_transformation_revision.test_wiring
         )
+        updated_transformation_revision.released_timestamp = (
+            existing_transformation_revision.released_timestamp
+        )
+        updated_transformation_revision.content = (
+            existing_transformation_revision.content
+        )
 
-    updated_transformation_revision = update_content(
+    updated_transformation_revision = if_applicable_release_or_deprecate(
         existing_transformation_revision, updated_transformation_revision
     )
 
-    updated_transformation_revision = if_applicable_release_or_deprecate(
+    updated_transformation_revision = update_content(
         existing_transformation_revision, updated_transformation_revision
     )
 

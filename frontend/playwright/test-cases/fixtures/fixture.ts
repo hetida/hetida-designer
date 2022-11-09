@@ -9,9 +9,21 @@ type HetidaDesignerFixture = {
 export const test = base.extend<HetidaDesignerFixture>({
   page: async ({ baseURL, page }, use) => {
     page.on('console', msg => {
+      const ignoreErrorMessages = [
+        '[ERROR] 0-undefined - The authority URL MUST be provided in the configuration! ',
+        '[ERROR] 0-undefined - The clientId is required and missing from your config!',
+        '[ERROR] 0-undefined - Validation of config rejected with errors. Config is NOT set.'
+      ];
+
       if (msg.type() === 'error') {
-        // this makes tests fail whenever an error is logged to the browser console
-        throw new Error(msg.text());
+        const messages = msg.text().split('\n');
+
+        for (const message of messages) {
+          if (!ignoreErrorMessages.includes(message)) {
+            // this makes tests fail whenever an error is logged to the browser console
+            throw new Error(message);
+          }
+        }
       }
     });
 

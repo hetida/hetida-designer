@@ -66,7 +66,7 @@ class WorkflowExecutionInput(BaseModel):
 
     job_id: UUID = Field(default_factory=uuid4)
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("components")
     def components_unique(
         cls, components: List[ComponentRevision]
@@ -75,14 +75,14 @@ class WorkflowExecutionInput(BaseModel):
             raise ValueError("Components not unique!")
         return components
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("code_modules")
     def code_modules_unique(cls, code_modules: List[CodeModule]) -> List[CodeModule]:
         if len(set(c.uuid for c in code_modules)) != len(code_modules):
             raise ValueError("Code Modules not unique!")
         return code_modules
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @root_validator(skip_on_failure=True)
     def check_wiring_complete(cls, values):  # type: ignore
         """Every (non-constant) Workflow input/output must be wired

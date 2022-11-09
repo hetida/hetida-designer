@@ -69,7 +69,7 @@ class PostMetadatum(BaseModel):
     value: Any = Field(..., example=True)
 
 
-class GetMetadatum(BaseModel):
+class Metadatum(BaseModel):
     key: str
     value: Optional[Any] = None
     dataType: ValueDataType
@@ -77,5 +77,7 @@ class GetMetadatum(BaseModel):
 
 
 class TimeseriesRecord(BaseModel):
-    timestamp: datetime.datetime
+    timestamp: datetime.datetime = Field(
+        ..., example=datetime.datetime.now(datetime.timezone.utc)
+    )
     value: Any = Field(..., example=0.25)

@@ -1,0 +1,119 @@
+# This is a basic workflow to help you get started with Actions
+
+name: End2End tests
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "develop" branch
+  push:
+     branches: [ "develop" ]
+  pull_request:
+    branches: [ "develop" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 12
+
+      - uses: cachix/install-nix-action@v17
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+
+      # Runs a single command using the runners shell
+      - name: Start_designer
+        run: |
+          set -e
+          cd "$GITHUB_WORKSPACE"
+          
+          echo "START designer in background using overmind"
+          # Start designer in background
+          nix-shell --run 'echo "Running for dep buildup"'
+          nix-shell --run 'overmind s' &
+
+
+      - name: Prepare_Playwright
+        run: |
+          set -e
+          echo "PREPARE PLAYWRIGHT"
+
+          cd "$GITHUB_WORKSPACE/frontend"
+          npm install
+          npx playwright install
+          npx playwright install-deps
+
+      - name: Wait_for_designer_being_up_and_running
+        run: | 
+          set -e
+          cd "$GITHUB_WORKSPACE"
+
+          retry() {
+              local max_num_retries=$1
+              shift
+              local retry_wait_seconds=$1
+              shift
+              local description=$1
+              shift
+              command_to_run=("$@")
+              # the command must exit with non-zero code on failure.
+
+              # Usage example:
+              #     retry 10 5 "alembic migrations" alembic upgrade head
+
+              for ((i = 1; i <= $max_num_retries; i += 1)); do
+                  if [[ i -gt 1 ]]; then echo "RETRY ${i} ..."; fi
+                  echo "RUNNING $description ..."
+                  "${command_to_run[@]}" && echo "RUNNING $description SUCCESS" && break ||
+                      (
+                          echo "FAILED TO RUN $description ON ATTEMPT $i"
+                          if (($i == $max_num_retries)); then
+                              echo >&2 "ERROR: FINALLY FAILED TO RUN $description."
+                              exit 1
+                          else
+                              echo "WAITING $retry_wait_seconds SECONDS BEFORE RETRYING $description"
+                              sleep $retry_wait_seconds
+                          fi
+                      )
+              done
+          }       
+
+          echo "WAITING FOR DESIGNER"
+
+          retry 90 5 "check backend available" curl http://localhost:8080/api/info
+          retry 90 5 "check py demo adaptger available" curl http://localhost:8092/info
+          retry 90 5 "check frontend available" curl http://localhost:4200
+
+          echo "Successfully waited for designer being available."
+
+      - name: Run_Playwright
+        run: |
+          set -e
+          cd "$GITHUB_WORKSPACE/frontend"
+          
+          echo "RUN PLAYWRIGHT TESTS"
+          PLAYWRIGHT_TARGET_URL="http:/localhost:4200" npm run e2e-all
+
+      - name: Cleanup
+        run: |
+          set -e
+          
+          cd "$GITHUB_WORKSPACE"
+
+          echo "Kill running designer services"
+          nix-shell --run 'overmind k'
+
+          echo "Cleanup completed."
