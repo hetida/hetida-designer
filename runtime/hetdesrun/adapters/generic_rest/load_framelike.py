@@ -80,6 +80,7 @@ async def load_framelike_data(
 ) -> pd.DataFrame:
     """Load framelike data from REST endpoint"""
 
+    # pylint: disable=too-many-statements
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
     valid, msg = are_valid_sources(filtered_sources)

@@ -3,11 +3,11 @@ import os
 from enum import Enum
 from typing import Optional, Union
 
-from hetdesrun.webservice.auth_outgoing import ServiceCredentials
-
 # pylint: disable=no-name-in-module
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
+
+from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
 
 class LogLevel(str, Enum):
@@ -211,7 +211,7 @@ class RuntimeConfig(BaseSettings):
             " its intended use is for scripting using the hetdesrun Python package."
             " Make sure the expiration of the token is long enough for your script invocation."
         ),
-        env="HD_BEARER_TOKEN_FOR_EXTERNAL_REQUESTS",
+        env="HD_BEARER_TOKEN_FOR_OUTGOING_REQUESTS",
     )
 
     internal_auth_mode: InternalAuthMode = Field(
