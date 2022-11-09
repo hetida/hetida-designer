@@ -100,7 +100,7 @@ async def load_framelike_data(
         str(common_data_type),
     )
 
-    headers = get_generic_rest_adapter_auth_headers()
+    headers = await get_generic_rest_adapter_auth_headers(external=True)
 
     with requests.Session() as session:
         try:

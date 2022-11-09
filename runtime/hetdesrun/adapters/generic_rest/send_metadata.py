@@ -5,7 +5,6 @@ from posixpath import join as posix_urljoin
 from typing import Any, Dict
 
 import httpx
-
 from hetdesrun.adapters.exceptions import AdapterConnectionError
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
@@ -90,7 +89,7 @@ async def send_multiple_metadata_to_adapter(
     data_to_send: Dict[str, Any],
     adapter_key: str,
 ) -> None:
-    headers = get_generic_rest_adapter_auth_headers()
+    headers = await get_generic_rest_adapter_auth_headers(external=True)
 
     async with httpx.AsyncClient(
         headers=headers,

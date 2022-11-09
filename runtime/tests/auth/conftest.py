@@ -1,4 +1,5 @@
 import datetime
+from copy import deepcopy
 from typing import List, Optional, Union
 from unittest import mock
 from uuid import uuid4
@@ -8,11 +9,183 @@ import pytest_asyncio
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from hetdesrun.persistence import sessionmaker
+from hetdesrun.webservice.application import init_app
+from hetdesrun.webservice.auth_dependency import ExternalAuthMode, InternalAuthMode
+from hetdesrun.webservice.auth_outgoing import (
+    ClientCredentialsGrantCredentials,
+    ServiceCredentials,
+)
 from httpx import AsyncClient
 from jose import constants, jwk, jwt
 
-from hetdesrun.persistence import sessionmaker
-from hetdesrun.webservice.application import init_app
+token_response_stub = {
+    "access_token": "nothing",
+    "expires_in": 1200,
+    "refresh_expires_in": 1800,
+    "refresh_token": "nothing",
+    "token_type": "bearer",
+    "not-before-policy": 0,
+    "scope": "email profile",
+    "session_state": "123",
+}
+
+
+@pytest.fixture(scope="function")
+def valid_token_response(valid_access_token):
+    token_response_dict = deepcopy(token_response_stub)
+    token_response_dict["access_token"] = valid_access_token
+    token_response_dict["refresh_token"] = valid_access_token
+
+    return token_response_dict
+
+
+@pytest.fixture(scope="function")
+def mocked_token_request(valid_token_response):
+    mocked_resp = mock.Mock
+    mocked_resp.json = mock.Mock(return_value=valid_token_response)
+
+    async def mocked_post_to_auth_provider(*args, **kwargs):
+        mocked_post_to_auth_provider.last_called_args = deepcopy(args)
+        mocked_post_to_auth_provider.last_called_kwargs = deepcopy(kwargs)
+        return mocked_resp
+
+    mocked_post_to_auth_provider.token_response_dict = deepcopy(valid_token_response)
+
+    with mock.patch(
+        "hetdesrun.webservice.auth_outgoing.post_to_auth_provider",
+        mocked_post_to_auth_provider,
+    ) as test_mocked_post_to_auth_provider:
+        yield test_mocked_post_to_auth_provider
+
+
+@pytest.fixture(scope="function")
+def outgoing_auth_internal_mode_off():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.internal_auth_mode",
+        InternalAuthMode.OFF,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def outgoing_auth_external_mode_off():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.external_auth_mode",
+        ExternalAuthMode.OFF,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def outgoing_auth_internal_mode_forward_or_fixed():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.internal_auth_mode",
+        InternalAuthMode.FORWARD_OR_FIXED,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def outgoing_auth_external_mode_forward_or_fixed():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.external_auth_mode",
+        ExternalAuthMode.FORWARD_OR_FIXED,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def outgoing_auth_internal_mode_client():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.internal_auth_mode",
+        InternalAuthMode.CLIENT,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def outgoing_auth_external_mode_client():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.external_auth_mode",
+        ExternalAuthMode.CLIENT,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def auth_bearer_token_for_outgoing_requests_is_set():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.auth_bearer_token_for_outgoing_requests",
+        "some token string",
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def auth_bearer_token_for_outgoing_requests_not_set():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.auth_bearer_token_for_outgoing_requests",
+        None,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def outgoing_auth_external_mode_off():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.external_auth_mode",
+        ExternalAuthMode.OFF,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def set_request_auth_context():
+    with mock.patch(
+        "hetdesrun.webservice.auth_dependency.get_request_auth_context",
+        return_value={"token": "token from request"},
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def unset_request_auth_context():
+    with mock.patch(
+        "hetdesrun.webservice.auth_dependency.get_request_auth_context",
+        return_value={},
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="package")
+def service_client_credentials():
+    return ServiceCredentials(
+        realm="my-realm",
+        grant_credentials=ClientCredentialsGrantCredentials(
+            client_id="my-client", client_secret="my-client-secret"
+        ),
+        auth_url="https://test.com/auth",
+        post_client_kwargs={"verify": False},
+    )
+
+
+@pytest.fixture(scope="function")
+def set_external_client_creds(service_client_credentials):
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.external_auth_client_credentials",
+        service_client_credentials,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="function")
+def set_internal_client_creds(service_client_credentials):
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.internal_auth_client_credentials",
+        service_client_credentials,
+    ) as _fixture:
+        yield _fixture
 
 
 @pytest.fixture(scope="package")

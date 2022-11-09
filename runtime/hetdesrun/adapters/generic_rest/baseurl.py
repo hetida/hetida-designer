@@ -48,7 +48,7 @@ class BackendRegisteredGenericRestAdapters(BaseModel):
 async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestAdapter]:
     """Loads generic REST adapter infos from the corresponding designer backend endpoint"""
 
-    headers = get_generic_rest_adapter_auth_headers()
+    headers = await get_generic_rest_adapter_auth_headers(external=True)
 
     url = posix_urljoin(get_config().hd_backend_api_url, "adapters/")
     logger.info("Start getting Generic REST Adapter URLS from HD Backend url %s", url)

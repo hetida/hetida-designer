@@ -7,12 +7,6 @@ from typing import Dict, List, Union
 from uuid import UUID, uuid4
 
 import httpx
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    Field,
-    ValidationError,
-)
-
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.run import (
@@ -35,6 +29,11 @@ from hetdesrun.runtime.service import runtime_service
 from hetdesrun.utils import Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
+from pydantic import (  # pylint: disable=no-name-in-module
+    BaseModel,
+    Field,
+    ValidationError,
+)
 
 logger = logging.getLogger(__name__)
 logger.addFilter(execution_context_filter)
@@ -246,7 +245,7 @@ async def run_execution_input(
     if get_config().is_runtime_service:
         execution_result = await runtime_service(execution_input)
     else:
-        headers = get_auth_headers()
+        headers = await get_auth_headers(external=False)
 
         async with httpx.AsyncClient(
             verify=get_config().hd_runtime_verify_certs,

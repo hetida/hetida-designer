@@ -6,8 +6,6 @@ from uuid import UUID, uuid4
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Path, Query, status
-from pydantic import HttpUrl
-
 from hetdesrun.backend.execution import (
     ExecByIdInput,
     ExecLatestByGroupIdInput,
@@ -38,6 +36,7 @@ from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
+from pydantic import HttpUrl
 
 logger = logging.getLogger(__name__)
 
@@ -532,7 +531,7 @@ def receive_execution_response(
 async def send_result_to_callback_url(
     callback_url: HttpUrl, result: ExecutionResponseFrontendDto
 ) -> None:
-    headers = get_auth_headers()
+    headers = await get_auth_headers(external=True)
     async with httpx.AsyncClient(
         verify=get_config().hd_backend_verify_certs,
         timeout=get_config().external_request_timeout,

@@ -11,11 +11,10 @@ from posixpath import join as posix_urljoin
 from typing import Any, List, Literal, Optional
 
 import httpx
-from httpx import AsyncClient
-
 from hetdesrun.adapters.exceptions import AdapterConnectionError
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
+from httpx import AsyncClient
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +38,7 @@ async def post_framelike_records(
     client: AsyncClient,
 ) -> None:
     """Post a list of dicts (records) to the appropriate endpoint"""
-    headers = get_generic_rest_adapter_auth_headers()
+    headers = await get_generic_rest_adapter_auth_headers(external=True)
     if attributes is not None and len(attributes) != 0:
         logger.debug("Sending Data-Attributes via POST request header")
         headers["Data-Attributes"] = encode_attributes(attributes)

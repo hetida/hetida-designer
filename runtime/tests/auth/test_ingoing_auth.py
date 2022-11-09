@@ -1,7 +1,6 @@
 import asyncio
 
 import pytest
-
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 
 
@@ -19,7 +18,7 @@ async def test_auth_with_correct_access_token_works(
         headers={"Authorization": "Bearer " + valid_access_token},
     )
     assert response.status_code == 200
-    auth_headers = get_auth_headers()
+    auth_headers = await get_auth_headers()
     assert len(auth_headers) > 0
     assert auth_headers["Authorization"].startswith("Bearer ")
 
@@ -44,7 +43,7 @@ async def test_auth_headers_stored_correctly(
     async def request_task(sleep_time_before, access_token):
         await asyncio.sleep(sleep_time_before)
 
-        auth_headers_before_request = get_auth_headers()
+        auth_headers_before_request = await get_auth_headers()
         assert len(auth_headers_before_request) == 0
 
         response = await client.get(
@@ -53,7 +52,7 @@ async def test_auth_headers_stored_correctly(
         )
         assert response.status_code == 200
 
-        auth_headers_after_response = get_auth_headers()
+        auth_headers_after_response = await get_auth_headers()
 
         assert len(auth_headers_after_response) > 0
         assert auth_headers_after_response["Authorization"].startswith("Bearer ")
@@ -74,7 +73,7 @@ async def test_auth_headers_stored_correctly(
 
     # not leaked: after all tasks completed, the context var should be set back to its
     # default which leads to empty auth headers.
-    last_auth_headers = get_auth_headers()
+    last_auth_headers = await get_auth_headers()
     assert len(last_auth_headers) == 0
 
 

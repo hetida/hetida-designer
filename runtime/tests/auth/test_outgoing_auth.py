@@ -5,9 +5,7 @@ from unittest import mock
 from uuid import uuid4
 
 import pytest
-from httpx import HTTPError
-
-from hetdesrun.webservice.auth_external import (
+from hetdesrun.webservice.auth_outgoing import (
     ClientCredentialsGrantCredentials,
     PasswordGrantCredentials,
     ServiceAuthenticationError,
@@ -18,45 +16,8 @@ from hetdesrun.webservice.auth_external import (
     obtain_token_from_auth_provider,
     refresh_token_from_auth_provider,
 )
+from httpx import HTTPError
 
-token_response_stub = {
-    "access_token": "nothing",
-    "expires_in": 1200,
-    "refresh_expires_in": 1800,
-    "refresh_token": "nothing",
-    "token_type": "bearer",
-    "not-before-policy": 0,
-    "scope": "email profile",
-    "session_state": "123",
-}
-
-
-@pytest.fixture(scope="function")
-def valid_token_response(valid_access_token):
-    token_response_dict = deepcopy(token_response_stub)
-    token_response_dict["access_token"] = valid_access_token
-    token_response_dict["refresh_token"] = valid_access_token
-
-    return token_response_dict
-
-
-@pytest.fixture(scope="function")
-def mocked_token_request(valid_token_response):
-    mocked_resp = mock.Mock
-    mocked_resp.json = mock.Mock(return_value=valid_token_response)
-
-    async def mocked_post_to_auth_provider(*args, **kwargs):
-        mocked_post_to_auth_provider.last_called_args = deepcopy(args)
-        mocked_post_to_auth_provider.last_called_kwargs = deepcopy(kwargs)
-        return mocked_resp
-
-    mocked_post_to_auth_provider.token_response_dict = deepcopy(valid_token_response)
-
-    with mock.patch(
-        "hetdesrun.webservice.auth_external.post_to_auth_provider",
-        mocked_post_to_auth_provider,
-    ) as test_mocked_post_to_auth_provider:
-        yield test_mocked_post_to_auth_provider
 
 
 @pytest.fixture(scope="function")
@@ -67,7 +28,7 @@ def http_error_token_request():
         raise HTTPError("test error")
 
     with mock.patch(
-        "hetdesrun.webservice.auth_external.post_to_auth_provider",
+        "hetdesrun.webservice.auth_outgoing.post_to_auth_provider",
         mocked_post_to_auth_provider,
     ) as test_mocked_post_to_auth_provider:
         yield test_mocked_post_to_auth_provider
@@ -87,7 +48,7 @@ def json_parsing_error_token_request():
         return mocked_resp
 
     with mock.patch(
-        "hetdesrun.webservice.auth_external.post_to_auth_provider",
+        "hetdesrun.webservice.auth_outgoing.post_to_auth_provider",
         mocked_post_to_auth_provider,
     ) as test_mocked_post_to_auth_provider:
         yield test_mocked_post_to_auth_provider
@@ -104,7 +65,7 @@ def invalid_token_response_mocked_token_request(valid_token_response):
         return mocked_resp
 
     with mock.patch(
-        "hetdesrun.webservice.auth_external.post_to_auth_provider",
+        "hetdesrun.webservice.auth_outgoing.post_to_auth_provider",
         mocked_post_to_auth_provider,
     ) as test_mocked_post_to_auth_provider:
         yield test_mocked_post_to_auth_provider
@@ -364,7 +325,7 @@ def obtain_token_works(result_token_info):
 
     mocked_obtain_func.num_called = 0
     with mock.patch(
-        "hetdesrun.webservice.auth_external.obtain_token_from_auth_provider",
+        "hetdesrun.webservice.auth_outgoing.obtain_token_from_auth_provider",
         mocked_obtain_func,
     ) as mocked:
         yield mocked
@@ -381,7 +342,7 @@ def obtain_token_raises():
     mocked_obtain_func.num_called = 0
 
     with mock.patch(
-        "hetdesrun.webservice.auth_external.obtain_token_from_auth_provider",
+        "hetdesrun.webservice.auth_outgoing.obtain_token_from_auth_provider",
         mocked_obtain_func,
     ) as _mocked_obtain_token_function_raises:
         yield _mocked_obtain_token_function_raises
@@ -397,7 +358,7 @@ def refresh_token_works(result_token_info):
 
     mocked_obtain_func.num_called = 0
     with mock.patch(
-        "hetdesrun.webservice.auth_external.refresh_token_from_auth_provider",
+        "hetdesrun.webservice.auth_outgoing.refresh_token_from_auth_provider",
         mocked_obtain_func,
     ) as mocked:
         yield mocked
@@ -414,22 +375,10 @@ def refresh_token_raises():
     mocked_obtain_func.num_called = 0
 
     with mock.patch(
-        "hetdesrun.webservice.auth_external.refresh_token_from_auth_provider",
+        "hetdesrun.webservice.auth_outgoing.refresh_token_from_auth_provider",
         mocked_obtain_func,
     ) as _mocked_obtain_token_function_raises:
         yield _mocked_obtain_token_function_raises
-
-
-# TODO
-# all combinations of
-#     access due, still okay
-#     refresh due, still okay
-#     existing token info yes / no
-#     mocked_obtain works, raises ServiceAuthenticationError
-#     mocked_refresh works, raises ServiceAuthenticationError
-#
-# mocks for both called funcs (obtain, refresh)
-# called with
 
 
 @pytest.mark.asyncio

@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import requests
-
 from hetdesrun.component.load import (
     ComponentCodeImportError,
     import_func_from_code,
@@ -27,7 +26,7 @@ from hetdesrun.utils import (
     get_uuid_from_seed,
     selection_list_empty_or_contains_value,
 )
-from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -220,7 +219,7 @@ def import_transformation(
         update_or_create_single_transformation_revision(tr)
 
     else:
-        headers = get_auth_headers()
+        headers = sync_wrapped_get_auth_headers(external=True)
 
         response = requests.put(
             posix_urljoin(

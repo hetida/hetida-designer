@@ -5,8 +5,6 @@ from posixpath import join as posix_urljoin
 from typing import Any, Dict, Optional
 
 import httpx
-from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
-
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
     AdapterHandlingException,
@@ -17,6 +15,7 @@ from hetdesrun.adapters.generic_rest.external_types import ExternalType, ValueDa
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.data_selection import FilteredSource
 from hetdesrun.webservice.config import get_config
+from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +115,7 @@ async def load_single_metadatum_from_adapter(
 async def load_multiple_metadata(
     data_to_load: Dict[str, FilteredSource], adapter_key: str
 ) -> Dict[str, Any]:
-    headers = get_generic_rest_adapter_auth_headers()
+    headers = await get_generic_rest_adapter_auth_headers(external=True)
     async with httpx.AsyncClient(
         headers=headers,
         verify=get_config().hd_adapters_verify_certs,
