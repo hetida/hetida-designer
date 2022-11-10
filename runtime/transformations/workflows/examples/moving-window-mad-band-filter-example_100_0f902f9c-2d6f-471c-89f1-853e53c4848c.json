@@ -1,0 +1,1000 @@
+{
+  "category": "Examples",
+  "content": {
+    "constants": [],
+    "inputs": [
+      {
+        "connector_id": "f103c395-92b6-444d-320a-93950ed6d857",
+        "connector_name": "input",
+        "data_type": "SERIES",
+        "id": "ebfc029c-f71e-4938-8252-d30711d5c556",
+        "name": "series",
+        "operator_id": "72c87733-08db-431b-97de-da064f66fc05",
+        "operator_name": "Pass Through (Series)",
+        "position": {
+          "x": -555,
+          "y": 432
+        }
+      },
+      {
+        "connector_id": "d7ee8fb5-c52b-431a-2a80-c11ca727d9ce",
+        "connector_name": "input",
+        "data_type": "INT",
+        "id": "11cacbef-ce5b-419e-bcca-b70c92a935aa",
+        "name": "min_num_datapoints_in_window",
+        "operator_id": "1d67d478-85a4-4ccf-bf69-b73b327d87fa",
+        "operator_name": "Pass Through (Integer)",
+        "position": {
+          "x": -555,
+          "y": 557
+        }
+      },
+      {
+        "connector_id": "57af13c4-c4be-4cc0-9d49-098154bc23bc",
+        "connector_name": "buffer_factor",
+        "data_type": "FLOAT",
+        "id": "835a3e98-d05e-49e4-a56e-fc3e18c0cb61",
+        "name": "buffer_factor",
+        "operator_id": "2a5444c1-6c91-4697-804d-6f27e0272e1e",
+        "operator_name": "Infer Window Size",
+        "position": {
+          "x": -45,
+          "y": 267
+        }
+      },
+      {
+        "connector_id": "3fbf12d9-e297-4e19-94a2-2b7ed3cba32f",
+        "connector_name": "mad_scaling_factor",
+        "data_type": "FLOAT",
+        "id": "c6f6805b-4dcf-4621-a213-9a3fe7d2b3d9",
+        "name": "mad_scaling_factor",
+        "operator_id": "44eac08d-ca1e-4837-8e3b-046bee0a1b0b",
+        "operator_name": "Moving Window MAD Band Filter",
+        "position": {
+          "x": 430,
+          "y": 522
+        }
+      },
+      {
+        "connector_id": "258ed00c-589a-4191-bf9b-9ba2d91986db",
+        "connector_name": "min_band_width_factor",
+        "data_type": "FLOAT",
+        "id": "26a6b9f1-8832-416c-9f87-7106905cbca5",
+        "name": "min_band_width_factor",
+        "operator_id": "44eac08d-ca1e-4837-8e3b-046bee0a1b0b",
+        "operator_name": "Moving Window MAD Band Filter",
+        "position": {
+          "x": 430,
+          "y": 552
+        }
+      }
+    ],
+    "links": [
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "ad0fb04c-fa46-f59d-5d59-054e6fc7b766",
+            "name": "data",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "ec91517d-99d0-4707-861e-5ede39da8ef6"
+        },
+        "id": "5ec774ae-1024-4543-83bd-798b6fc55315",
+        "path": [
+          {
+            "x": 65,
+            "y": 442
+          },
+          {
+            "x": 380,
+            "y": 442
+          },
+          {
+            "x": 405,
+            "y": 607
+          },
+          {
+            "x": 1075,
+            "y": 607
+          },
+          {
+            "x": 1080,
+            "y": 542
+          },
+          {
+            "x": 1140,
+            "y": 540
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "72c87733-08db-431b-97de-da064f66fc05"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "c85c22fe-6e56-4f3e-a969-552847ac013f",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "2a5444c1-6c91-4697-804d-6f27e0272e1e"
+        },
+        "id": "4495bf4e-b1e0-42df-8b08-6d3e0d2a0a85",
+        "path": [
+          {
+            "x": 65,
+            "y": 442
+          },
+          {
+            "x": 130,
+            "y": 442
+          },
+          {
+            "x": 175,
+            "y": 217
+          },
+          {
+            "x": 195,
+            "y": 217
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "72c87733-08db-431b-97de-da064f66fc05"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "INT",
+            "id": "861001bc-7d9e-4315-8290-3af665a98417",
+            "name": "min_num_desired_datapoints_in_window",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "2a5444c1-6c91-4697-804d-6f27e0272e1e"
+        },
+        "id": "fb043c93-e9d2-4c62-a720-16c89c789c8e",
+        "path": [
+          {
+            "x": 65,
+            "y": 567
+          },
+          {
+            "x": 90,
+            "y": 567
+          },
+          {
+            "x": 155,
+            "y": 247
+          },
+          {
+            "x": 195,
+            "y": 247
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "INT",
+            "id": "57043fae-046c-7dee-2f17-8e069a2dac90",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "1d67d478-85a4-4ccf-bf69-b73b327d87fa"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "DATAFRAME",
+            "id": "1393fcf7-0562-4b47-b655-144e3dac4106",
+            "name": "band_filter_dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "c6c815a9-60f3-4ef1-b6f2-54384cc15ec5"
+        },
+        "id": "23aec92d-07a8-48ef-a04e-2d74f1d579e7",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "DATAFRAME",
+            "id": "b783e836-dc11-4f7a-a642-07bd5d5a195c",
+            "name": "band_filter_dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "44eac08d-ca1e-4837-8e3b-046bee0a1b0b"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "c84b0db5-bbe6-c5ef-a30d-79015134c4cf",
+            "name": "filter_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "ec91517d-99d0-4707-861e-5ede39da8ef6"
+        },
+        "id": "afad524b-a2be-4d92-8f0e-8b9e95423fe9",
+        "path": [
+          {
+            "x": 1050,
+            "y": 472
+          },
+          {
+            "x": 1090,
+            "y": 472
+          },
+          {
+            "x": 1105,
+            "y": 567
+          },
+          {
+            "x": 1140,
+            "y": 570
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "3160f65d-48ea-4942-b647-75034172c8bb",
+            "name": "filter_mask",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "44eac08d-ca1e-4837-8e3b-046bee0a1b0b"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "2890da86-d4dd-4ece-a917-8574da4692ef",
+            "name": "window_size",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "44eac08d-ca1e-4837-8e3b-046bee0a1b0b"
+        },
+        "id": "4094feb8-8d63-4164-b2d1-d831defc1509",
+        "path": [
+          {
+            "x": 575,
+            "y": 217
+          },
+          {
+            "x": 615,
+            "y": 217
+          },
+          {
+            "x": 630,
+            "y": 472
+          },
+          {
+            "x": 670,
+            "y": 472
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "c8a9eff0-b531-482e-90d8-0d19903f7f4f",
+            "name": "frequency_string",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "2a5444c1-6c91-4697-804d-6f27e0272e1e"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "228b2073-8946-47d7-9bc5-e3f606413291",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "44eac08d-ca1e-4837-8e3b-046bee0a1b0b"
+        },
+        "id": "31d27e89-9953-423d-8263-264783d7a6e7",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "72c87733-08db-431b-97de-da064f66fc05"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "INT",
+            "id": "77ec0e96-81ee-4a4d-a2a6-99ad0ab71bdf",
+            "name": "min_num_datapoints_in_window",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "44eac08d-ca1e-4837-8e3b-046bee0a1b0b"
+        },
+        "id": "78e1c1e7-d653-4208-82cf-4b0902157d02",
+        "path": [
+          {
+            "x": 65,
+            "y": 567
+          },
+          {
+            "x": 90,
+            "y": 567
+          },
+          {
+            "x": 105,
+            "y": 502
+          },
+          {
+            "x": 670,
+            "y": 502
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "INT",
+            "id": "57043fae-046c-7dee-2f17-8e069a2dac90",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "1d67d478-85a4-4ccf-bf69-b73b327d87fa"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f103c395-92b6-444d-320a-93950ed6d857",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "72c87733-08db-431b-97de-da064f66fc05"
+        },
+        "id": "ed6937de-4c82-4906-9b50-6ebb73f3a539",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "ebfc029c-f71e-4938-8252-d30711d5c556",
+            "name": "series",
+            "position": {
+              "x": -555,
+              "y": 432
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "INT",
+            "id": "d7ee8fb5-c52b-431a-2a80-c11ca727d9ce",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "1d67d478-85a4-4ccf-bf69-b73b327d87fa"
+        },
+        "id": "4834b7c1-0a31-4e3d-acfd-d837b15354c6",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "INT",
+            "id": "11cacbef-ce5b-419e-bcca-b70c92a935aa",
+            "name": "min_num_datapoints_in_window",
+            "position": {
+              "x": -555,
+              "y": 557
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "FLOAT",
+            "id": "57af13c4-c4be-4cc0-9d49-098154bc23bc",
+            "name": "buffer_factor",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "2a5444c1-6c91-4697-804d-6f27e0272e1e"
+        },
+        "id": "a2793d6c-dd32-4fbe-a4b9-8bb9d741290a",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "FLOAT",
+            "id": "835a3e98-d05e-49e4-a56e-fc3e18c0cb61",
+            "name": "buffer_factor",
+            "position": {
+              "x": -45,
+              "y": 267
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "FLOAT",
+            "id": "3fbf12d9-e297-4e19-94a2-2b7ed3cba32f",
+            "name": "mad_scaling_factor",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "44eac08d-ca1e-4837-8e3b-046bee0a1b0b"
+        },
+        "id": "3b0d4978-389c-4c10-bcb3-503396b71ef3",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "FLOAT",
+            "id": "c6f6805b-4dcf-4621-a213-9a3fe7d2b3d9",
+            "name": "mad_scaling_factor",
+            "position": {
+              "x": 430,
+              "y": 522
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "FLOAT",
+            "id": "258ed00c-589a-4191-bf9b-9ba2d91986db",
+            "name": "min_band_width_factor",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "44eac08d-ca1e-4837-8e3b-046bee0a1b0b"
+        },
+        "id": "2c7c9101-95d2-4ab7-a15e-160e90b6d9f2",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "FLOAT",
+            "id": "26a6b9f1-8832-416c-9f87-7106905cbca5",
+            "name": "min_band_width_factor",
+            "position": {
+              "x": 430,
+              "y": 552
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "e10bc7d3-bb16-4917-ade7-2a0f75847565",
+            "name": "filtered",
+            "position": {
+              "x": 1600,
+              "y": 530
+            }
+          }
+        },
+        "id": "00a28ab0-3e68-46b9-b375-21a4e0d796bc",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "4309e6d9-dc4d-781c-4ef4-e2d8fa1d195c",
+            "name": "filtered",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "ec91517d-99d0-4707-861e-5ede39da8ef6"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "e042973f-627e-4d6c-9763-753dc7ff89fd",
+            "name": "band_filter_plot",
+            "position": {
+              "x": 1600,
+              "y": 432
+            }
+          }
+        },
+        "id": "eb215499-11f6-4045-9923-db1f3250ca2a",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "a36ab320-ae3d-48f0-b57c-5e541e987615",
+            "name": "band_filter_plot",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "c6c815a9-60f3-4ef1-b6f2-54384cc15ec5"
+        }
+      }
+    ],
+    "operators": [
+      {
+        "id": "72c87733-08db-431b-97de-da064f66fc05",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "id": "f103c395-92b6-444d-320a-93950ed6d857",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Pass Through (Series)",
+        "outputs": [
+          {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": -305,
+          "y": 372
+        },
+        "revision_group_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+        "state": "RELEASED",
+        "transformation_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "1d67d478-85a4-4ccf-bf69-b73b327d87fa",
+        "inputs": [
+          {
+            "data_type": "INT",
+            "id": "d7ee8fb5-c52b-431a-2a80-c11ca727d9ce",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Pass Through (Integer)",
+        "outputs": [
+          {
+            "data_type": "INT",
+            "id": "57043fae-046c-7dee-2f17-8e069a2dac90",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": -305,
+          "y": 497
+        },
+        "revision_group_id": "57eea09f-d28e-89af-4e81-2027697a3f0f",
+        "state": "RELEASED",
+        "transformation_id": "57eea09f-d28e-89af-4e81-2027697a3f0f",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "ec91517d-99d0-4707-861e-5ede39da8ef6",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "id": "ad0fb04c-fa46-f59d-5d59-054e6fc7b766",
+            "name": "data",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "SERIES",
+            "id": "c84b0db5-bbe6-c5ef-a30d-79015134c4cf",
+            "name": "filter_series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Filter",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "4309e6d9-dc4d-781c-4ef4-e2d8fa1d195c",
+            "name": "filtered",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1150,
+          "y": 470
+        },
+        "revision_group_id": "18260aab-bdd6-af5c-cac1-7bafde85188f",
+        "state": "RELEASED",
+        "transformation_id": "18260aab-bdd6-af5c-cac1-7bafde85188f",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "2a5444c1-6c91-4697-804d-6f27e0272e1e",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "id": "c85c22fe-6e56-4f3e-a969-552847ac013f",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "INT",
+            "id": "861001bc-7d9e-4315-8290-3af665a98417",
+            "name": "min_num_desired_datapoints_in_window",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "FLOAT",
+            "id": "57af13c4-c4be-4cc0-9d49-098154bc23bc",
+            "name": "buffer_factor",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Infer Window Size",
+        "outputs": [
+          {
+            "data_type": "STRING",
+            "id": "c8a9eff0-b531-482e-90d8-0d19903f7f4f",
+            "name": "frequency_string",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 205,
+          "y": 147
+        },
+        "revision_group_id": "a9614fc3-e7a0-4df1-8a8c-a1c8cadeb84b",
+        "state": "RELEASED",
+        "transformation_id": "4615ec0d-99bd-40ba-a88b-643dd28fa6e7",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "c6c815a9-60f3-4ef1-b6f2-54384cc15ec5",
+        "inputs": [
+          {
+            "data_type": "DATAFRAME",
+            "id": "1393fcf7-0562-4b47-b655-144e3dac4106",
+            "name": "band_filter_dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Band Filter Plot",
+        "outputs": [
+          {
+            "data_type": "PLOTLYJSON",
+            "id": "a36ab320-ae3d-48f0-b57c-5e541e987615",
+            "name": "band_filter_plot",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1150,
+          "y": 372
+        },
+        "revision_group_id": "02836778-e7d9-4352-952d-9927f34b58fe",
+        "state": "RELEASED",
+        "transformation_id": "ff2392cb-b0ff-4672-803f-4fb44ecca5b5",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "44eac08d-ca1e-4837-8e3b-046bee0a1b0b",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "id": "228b2073-8946-47d7-9bc5-e3f606413291",
+            "name": "series",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "2890da86-d4dd-4ece-a917-8574da4692ef",
+            "name": "window_size",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "INT",
+            "id": "77ec0e96-81ee-4a4d-a2a6-99ad0ab71bdf",
+            "name": "min_num_datapoints_in_window",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "FLOAT",
+            "id": "3fbf12d9-e297-4e19-94a2-2b7ed3cba32f",
+            "name": "mad_scaling_factor",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "FLOAT",
+            "id": "258ed00c-589a-4191-bf9b-9ba2d91986db",
+            "name": "min_band_width_factor",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Moving Window MAD Band Filter",
+        "outputs": [
+          {
+            "data_type": "DATAFRAME",
+            "id": "b783e836-dc11-4f7a-a642-07bd5d5a195c",
+            "name": "band_filter_dataframe",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "SERIES",
+            "id": "3160f65d-48ea-4942-b647-75034172c8bb",
+            "name": "filter_mask",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 680,
+          "y": 372
+        },
+        "revision_group_id": "4cf6f5e7-e4de-4714-8929-5206c595a148",
+        "state": "RELEASED",
+        "transformation_id": "bf698fbb-1e2e-47ca-a4f8-72b06b011985",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      }
+    ],
+    "outputs": [
+      {
+        "connector_id": "4309e6d9-dc4d-781c-4ef4-e2d8fa1d195c",
+        "connector_name": "connector_name",
+        "data_type": "ANY",
+        "id": "e10bc7d3-bb16-4917-ade7-2a0f75847565",
+        "name": "filtered",
+        "operator_id": "ec91517d-99d0-4707-861e-5ede39da8ef6",
+        "operator_name": "Filter",
+        "position": {
+          "x": 1600,
+          "y": 530
+        }
+      },
+      {
+        "connector_id": "a36ab320-ae3d-48f0-b57c-5e541e987615",
+        "connector_name": "connector_name",
+        "data_type": "PLOTLYJSON",
+        "id": "e042973f-627e-4d6c-9763-753dc7ff89fd",
+        "name": "band_filter_plot",
+        "operator_id": "c6c815a9-60f3-4ef1-b6f2-54384cc15ec5",
+        "operator_name": "Band Filter Plot",
+        "position": {
+          "x": 1600,
+          "y": 432
+        }
+      }
+    ]
+  },
+  "description": "Example workflow to apply a moving window median absolute deviation (MAD) bandpass filter",
+  "documentation": "# Moving Window MAD Band Filter Example\n\nThis workflow is an example of applying a moving window MAD band filter on a timeseries.\n\n## Examples\nThe json input of a typical call of this workflow is\n```\n{\n    \"series\": {\n        \"2022-01-01T00:00:00Z\": 1.058,\n        \"2022-01-01T00:20:48Z\": 0.699,\n        \"2022-01-01T00:41:37Z\": 1.08,\n        \"2022-01-01T01:02:26Z\": 1.054,\n        \"2022-01-01T01:23:15Z\": 0.763,\n        \"2022-01-01T01:44:04Z\": 1.034,\n        \"2022-01-01T02:04:53Z\": 0.965,\n        \"2022-01-01T02:25:42Z\": 0.601,\n        \"2022-01-01T02:46:31Z\": 0.933,\n        \"2022-01-01T03:07:20Z\": 1.081,\n        \"2022-01-01T03:28:09Z\": 2.1,\n        \"2022-01-01T03:48:58Z\": 0.988,\n        \"2022-01-01T04:09:47Z\": 0.741,\n        \"2022-01-01T04:30:36Z\": 0.647,\n        \"2022-01-01T04:51:25Z\": 0.556,\n        \"2022-01-01T05:12:14Z\": 0.453,\n        \"2022-01-01T05:33:03Z\": 1.009,\n        \"2022-01-01T05:53:52Z\": 1.72,\n        \"2022-01-01T06:14:41Z\": 1.002,\n        \"2022-01-01T06:56:19Z\": 0.857,\n        \"2022-01-01T07:17:08Z\": 0.864,\n        \"2022-01-01T07:37:57Z\": 0.606,\n        \"2022-01-01T07:58:46Z\": 0.899,\n        \"2022-01-01T08:40:24Z\": 0.62,\n        \"2022-01-01T10:03:40Z\": 0.721,\n        \"2022-01-01T10:24:29Z\": 1.193,\n        \"2022-01-01T10:45:18Z\": 0.833,\n        \"2022-01-01T11:06:07Z\": 2.06,\n        \"2022-01-01T11:26:56Z\": 0.68,\n        \"2022-01-01T11:47:45Z\": 1.136,\n        \"2022-01-01T12:08:34Z\": 0.62,\n        \"2022-01-01T12:29:23Z\": 0.946,\n        \"2022-01-01T12:50:12Z\": 0.746,\n        \"2022-01-01T13:11:01Z\": 0.833,\n        \"2022-01-01T13:31:50Z\": 0.857,\n        \"2022-01-01T14:13:28Z\": 0.947,\n        \"2022-01-01T14:34:17Z\": 0.841,\n        \"2022-01-01T14:55:06Z\": 0.668,\n        \"2022-01-01T15:15:55Z\": 0.675,\n        \"2022-01-01T15:36:44Z\": 0.84,\n        \"2022-01-01T15:57:33Z\": 0.821,\n        \"2022-01-01T16:18:22Z\": 0.625,\n        \"2022-01-01T16:39:11Z\": 1.155,\n        \"2022-01-01T17:00:00Z\": 0.968\n    },\n    \"min_num_datapoints_in_window\": 10,\n    \"mad_scaling_factor\": 4.4478,\n    \"min_band_width_factor\": 1,\n    \"buffer_factor\": 1.4\n}\n```",
+  "id": "0f902f9c-2d6f-471c-89f1-853e53c4848c",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "SERIES",
+        "id": "ebfc029c-f71e-4938-8252-d30711d5c556",
+        "name": "series"
+      },
+      {
+        "data_type": "INT",
+        "id": "11cacbef-ce5b-419e-bcca-b70c92a935aa",
+        "name": "min_num_datapoints_in_window"
+      },
+      {
+        "data_type": "FLOAT",
+        "id": "835a3e98-d05e-49e4-a56e-fc3e18c0cb61",
+        "name": "buffer_factor"
+      },
+      {
+        "data_type": "FLOAT",
+        "id": "c6f6805b-4dcf-4621-a213-9a3fe7d2b3d9",
+        "name": "mad_scaling_factor"
+      },
+      {
+        "data_type": "FLOAT",
+        "id": "26a6b9f1-8832-416c-9f87-7106905cbca5",
+        "name": "min_band_width_factor"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "e10bc7d3-bb16-4917-ade7-2a0f75847565",
+        "name": "filtered"
+      },
+      {
+        "data_type": "PLOTLYJSON",
+        "id": "e042973f-627e-4d6c-9763-753dc7ff89fd",
+        "name": "band_filter_plot"
+      }
+    ]
+  },
+  "name": "Moving Window MAD Band Filter Example",
+  "released_timestamp": "2022-11-10T14:12:55.359905+00:00",
+  "revision_group_id": "916b006f-6fde-4ec6-aa5e-22c658c534e0",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2022-01-01T00:00:00Z\": 1.058,\n    \"2022-01-01T00:20:48Z\": 0.699,\n    \"2022-01-01T00:41:37Z\": 1.08,\n    \"2022-01-01T01:02:26Z\": 1.054,\n    \"2022-01-01T01:23:15Z\": 0.763,\n    \"2022-01-01T01:44:04Z\": 1.034,\n    \"2022-01-01T02:04:53Z\": 0.965,\n    \"2022-01-01T02:25:42Z\": 0.601,\n    \"2022-01-01T02:46:31Z\": 0.933,\n    \"2022-01-01T03:07:20Z\": 1.081,\n    \"2022-01-01T03:28:09Z\": 2.1,\n    \"2022-01-01T03:48:58Z\": 0.988,\n    \"2022-01-01T04:09:47Z\": 0.741,\n    \"2022-01-01T04:30:36Z\": 0.647,\n    \"2022-01-01T04:51:25Z\": 0.556,\n    \"2022-01-01T05:12:14Z\": 0.453,\n    \"2022-01-01T05:33:03Z\": 1.009,\n    \"2022-01-01T05:53:52Z\": 1.72,\n    \"2022-01-01T06:14:41Z\": 1.002,\n    \"2022-01-01T06:56:19Z\": 0.857,\n    \"2022-01-01T07:17:08Z\": 0.864,\n    \"2022-01-01T07:37:57Z\": 0.606,\n    \"2022-01-01T07:58:46Z\": 0.899,\n    \"2022-01-01T08:40:24Z\": 0.62,\n    \"2022-01-01T10:03:40Z\": 0.721,\n    \"2022-01-01T10:24:29Z\": 1.193,\n    \"2022-01-01T10:45:18Z\": 0.833,\n    \"2022-01-01T11:06:07Z\": 2.06,\n    \"2022-01-01T11:26:56Z\": 0.68,\n    \"2022-01-01T11:47:45Z\": 1.136,\n    \"2022-01-01T12:08:34Z\": 0.62,\n    \"2022-01-01T12:29:23Z\": 0.946,\n    \"2022-01-01T12:50:12Z\": 0.746,\n    \"2022-01-01T13:11:01Z\": 0.833,\n    \"2022-01-01T13:31:50Z\": 0.857,\n    \"2022-01-01T14:13:28Z\": 0.947,\n    \"2022-01-01T14:34:17Z\": 0.841,\n    \"2022-01-01T14:55:06Z\": 0.668,\n    \"2022-01-01T15:15:55Z\": 0.675,\n    \"2022-01-01T15:36:44Z\": 0.84,\n    \"2022-01-01T15:57:33Z\": 0.821,\n    \"2022-01-01T16:18:22Z\": 0.625,\n    \"2022-01-01T16:39:11Z\": 1.155,\n    \"2022-01-01T17:00:00Z\": 0.968\n}"
+        },
+        "workflow_input_name": "series"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "10"
+        },
+        "workflow_input_name": "min_num_datapoints_in_window"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "1.4"
+        },
+        "workflow_input_name": "buffer_factor"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "4.4478"
+        },
+        "workflow_input_name": "mad_scaling_factor"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "1"
+        },
+        "workflow_input_name": "min_band_width_factor"
+      }
+    ],
+    "output_wirings": []
+  },
+  "type": "WORKFLOW",
+  "version_tag": "1.0.0"
+}
