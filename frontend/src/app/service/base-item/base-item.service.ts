@@ -29,6 +29,7 @@ import {
   setExecutionProtocol,
   setExecutionRunning
 } from 'src/app/store/execution-protocol/execution-protocol.actions';
+import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 
 @Injectable({
   providedIn: 'root'
@@ -151,23 +152,27 @@ export class BaseItemService {
   }
 
   // TODO unit test
-  releaseTransformation(transformation: Transformation): void {
+  releaseTransformation(
+    transformation: Transformation
+  ): Observable<Transformation> {
     // TODO copy, do not change param attribute
     transformation.state = RevisionState.RELEASED;
     transformation.released_timestamp = new Date().toISOString();
-    this.updateTransformation(transformation);
+    return this.updateTransformation(transformation);
   }
 
-  disableTransformation(transformation: Transformation): void {
+  disableTransformation(
+    transformation: Transformation
+  ): Observable<Transformation> {
     transformation.state = RevisionState.DISABLED;
     transformation.disabled_timestamp = new Date().toISOString();
-    this.updateTransformation(transformation);
+    return this.updateTransformation(transformation);
   }
 
   testTransformation(
     id: string,
     test_wiring: TestWiring
-  ): Observable<Transformation> {
+  ): Observable<ExecutionResponse> {
     return of(null).pipe(
       tap(() => this.store.dispatch(setExecutionRunning())),
       switchMapTo(

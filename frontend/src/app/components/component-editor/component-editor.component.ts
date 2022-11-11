@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
-import { debounceTime, takeUntil } from 'rxjs/operators';
+import { of, Subject } from 'rxjs';
+import { debounceTime, switchMap, takeUntil } from 'rxjs/operators';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ThemeService } from 'src/app/service/theme/theme.service';
 import { environment } from '../../../environments/environment';
@@ -74,14 +74,19 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
         };
       });
 
-    this._autoSaveTimer$.subscribe(_ => {
-      if (this.lastSavedCode !== this.code) {
-        this.baseItemService.updateTransformation({
-          ...this.componentTransformation,
-          content: this.code
-        });
-      }
-    });
+    this._autoSaveTimer$
+      .pipe(
+        switchMap(() => {
+          if (this.lastSavedCode !== this.code) {
+            return this.baseItemService.updateTransformation({
+              ...this.componentTransformation,
+              content: this.code
+            });
+          }
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   public get code(): string {

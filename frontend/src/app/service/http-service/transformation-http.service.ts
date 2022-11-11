@@ -4,6 +4,7 @@ import { ConfigService } from '../configuration/config.service';
 import { Observable } from 'rxjs';
 import { Transformation } from '../../model/new-api/transformation';
 import { Adapter, TestWiring } from 'hd-wiring';
+import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 
 @Injectable({
   providedIn: 'root'
@@ -48,11 +49,11 @@ export class TransformationHttpService {
   public executeTransformation(
     id: string,
     wiring: TestWiring
-  ): Observable<Transformation> {
+  ): Observable<ExecutionResponse> {
     const url = `${this.apiEndpoint}/transformations/execute`;
     const body = { id, wiring, run_pure_plot_operators: true };
 
-    return this.httpClient.post<Transformation>(url, body);
+    return this.httpClient.post<ExecutionResponse>(url, body);
   }
 
   public getAdapterList(): Observable<Adapter[]> {

@@ -48,6 +48,7 @@ import {
 import { Store } from '@ngrx/store';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
+import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -100,7 +101,7 @@ export class BaseItemActionService {
 
     const transformationExecution$ = (
       executeTestClickEvent: ConfirmClickEvent
-    ): Observable<Transformation> => {
+    ): Observable<ExecutionResponse> => {
       return this.baseItemService.testTransformation(
         executeTestClickEvent.id,
         executeTestClickEvent.test_wiring
@@ -126,7 +127,7 @@ export class BaseItemActionService {
             )
         ),
         switchMap(({ selectedTransformation, test_wiring }) =>
-          // TODO if a transformation is set too released,
+          // TODO if a transformation is set to released,
           // it can't be updated by a new test_wiring and will throw a error 403 (Forbidden)
           this.baseItemService.updateTransformation({
             ...selectedTransformation,
@@ -185,11 +186,17 @@ export class BaseItemActionService {
 
     dialogRef
       .afterClosed()
-      .subscribe((transformationToUpdate: Transformation | undefined) => {
-        if (transformationToUpdate) {
-          this.baseItemService.updateTransformation(transformationToUpdate);
-        }
-      });
+      .pipe(
+        switchMap((transformationToUpdate: Transformation | undefined) => {
+          if (transformationToUpdate) {
+            return this.baseItemService.updateTransformation(
+              transformationToUpdate
+            );
+          }
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   // TODO unit test
@@ -308,11 +315,17 @@ export class BaseItemActionService {
         }
       });
 
-      dialogRef.afterClosed().subscribe(isConfirmed => {
-        if (isConfirmed) {
-          this.baseItemService.releaseTransformation(transformation);
-        }
-      });
+      dialogRef
+        .afterClosed()
+        .pipe(
+          switchMap(isConfirmed => {
+            if (isConfirmed) {
+              return this.baseItemService.releaseTransformation(transformation);
+            }
+            return of(null);
+          })
+        )
+        .subscribe();
     }
   }
 
@@ -480,11 +493,17 @@ export class BaseItemActionService {
       }
     });
 
-    dialogRef.afterClosed().subscribe(isConfirmed => {
-      if (isConfirmed) {
-        this.baseItemService.disableTransformation(transformation);
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(
+        switchMap(isConfirmed => {
+          if (isConfirmed) {
+            return this.baseItemService.disableTransformation(transformation);
+          }
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   public isIncomplete(transformation: Transformation | undefined): boolean {
@@ -775,13 +794,19 @@ export class BaseItemActionService {
       data: componentIoDialogData
     });
 
-    dialogRef.afterClosed().subscribe(updatedComponentTransformation => {
-      if (updatedComponentTransformation) {
-        this.baseItemService.updateTransformation(
-          updatedComponentTransformation
-        );
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(
+        switchMap(updatedComponentTransformation => {
+          if (updatedComponentTransformation) {
+            return this.baseItemService.updateTransformation(
+              updatedComponentTransformation
+            );
+          }
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   private configureWorkflowIO(abstractBaseItem: AbstractBaseItem) {
