@@ -1,13 +1,15 @@
 from copy import deepcopy
+from sqlite3 import Connection as SQLite3Connection
 from unittest import mock
 from uuid import UUID, uuid4
 
 import pytest
+from sqlalchemy import event
+from sqlalchemy.future.engine import Engine
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence import get_db_engine, sessionmaker
-from hetdesrun.persistence.dbmodels import Base
+from hetdesrun.persistence import sessionmaker
 from hetdesrun.persistence.dbservice.exceptions import (
     DBBadRequestError,
     DBIntegrityError,
@@ -31,16 +33,11 @@ from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 
-@pytest.fixture(scope="function")
-def clean_test_db_engine(use_in_memory_db):
-    if use_in_memory_db:
-        in_memory_database_url = "sqlite+pysqlite:///:memory:"
-        engine = get_db_engine(override_db_url=in_memory_database_url)
-    else:
-        engine = get_db_engine()
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    return engine
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) -> None:  # type: ignore
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
 
 
 def test_storing_and_receiving(clean_test_db_engine):
@@ -301,12 +298,10 @@ def test_deleting(clean_test_db_engine):
                     tr_workflow_uuid, type=Type.COMPONENT
                 )
 
-            # sqlite does not seem to care about the violation of the ForeignKeyConstraint
-            # due to the tr_released_object being an operator of tr_workflow in the nesting table
-            # with pytest.raises(DBIntegrityError):
-            #     delete_single_transformation_revision(
-            #         tr_released_uuid, ignore_state=True
-            #     )
+            with pytest.raises(DBIntegrityError):
+                delete_single_transformation_revision(
+                    tr_released_uuid, ignore_state=True
+                )
 
             delete_single_transformation_revision(tr_workflow_uuid, ignore_state=True)
             delete_single_transformation_revision(tr_released_uuid, ignore_state=True)
