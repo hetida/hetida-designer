@@ -84,11 +84,25 @@ docker run --rm \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/exported_data/"", directly_into_db=True);'
 ```
 
-## Importing components from single python files
+## Importing components from python files
 
-Components are also importable from python files, which can be created by simply copying the component code from the hetida designer user interface into a .py file. When importing such a file, the module docstring from the third line onwards will be used as documentation.
+Components can be imported not only from `.json` files, but also from `.py` files. Such Python files should contain the code itself defining a main function as well as a dictionary called `COMPONENT_INFO` containing the attributes of the corresponding component, just like the components created in the web application.
 
-Note, that the .py file does not include the test wiring of the component, which is included in the json export format above. Components as .py files should be located in the same subdirectories as ordinary component files.
+Attributes that are not provided will be set to the following default values:
+* id: `<randomly generated UUID>`
+* revision_group_id: `<randomly generated UUID>`
+* name: `"Unnamed Component"`
+* version_tag: `"1.0.0"`
+* description: `"No description provided"`
+* category: `"Other"`
+* state: `"RELEASED"`
+* released_timestamp: `<time of import>`
+* inputs: `{}`
+* outputs: `{}`
+
+If present, the module docstring (except for its title line) is used as documentation. 
+
+**Note:** There is no possibility to include the test wiring of the component in `.py` files. The test wiring can only be included in the `.json` export format.
 
 ## Remove test wirings when importing
 

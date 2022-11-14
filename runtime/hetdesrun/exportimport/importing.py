@@ -4,7 +4,7 @@ import logging
 import os
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from hetdesrun.component.load import (
     ComponentCodeImportError,
@@ -81,12 +81,10 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
             "Other"
         )
 
-        component_id = main_func.registered_metadata["id"] or (  # type: ignore
-            get_uuid_from_seed(str(component_name))
-        )
+        component_id = main_func.registered_metadata["id"] or (uuid4())  # type: ignore
 
         component_group_id = main_func.registered_metadata["revision_group_id"] or (  # type: ignore
-            get_uuid_from_seed(str(component_name))
+            uuid4()
         )
 
         component_tag = main_func.registered_metadata["version_tag"] or ("1.0.0")  # type: ignore
@@ -122,10 +120,8 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
         component_description = info_dict.get("description", "No description provided")
         component_category = info_dict.get("category", "Other")
         component_tag = info_dict.get("version_tag", "1.0.0")
-        component_id = info_dict.get("id", get_uuid_from_seed(str(component_name)))
-        component_group_id = info_dict.get(
-            "revision_group_id", get_uuid_from_seed(str(component_name))
-        )
+        component_id = info_dict.get("id", uuid4())
+        component_group_id = info_dict.get("revision_group_id", uuid4())
         component_state = info_dict.get("state", "RELEASED")
         component_released_timestamp = info_dict.get(
             "released_timestamp",
