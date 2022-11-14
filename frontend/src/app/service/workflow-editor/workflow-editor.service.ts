@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { Wiring } from 'hd-wiring';
+import { TestWiring } from 'hd-wiring';
 import { iif, Observable, of } from 'rxjs';
 import { finalize, switchMap, switchMapTo, tap } from 'rxjs/operators';
 import { WorkflowBaseItem } from '../../model/workflow-base-item';
@@ -72,7 +72,7 @@ export class WorkflowEditorService {
     );
   }
 
-  bindWiringToWorkflow(workflowId: string, wiring: Wiring) {
+  bindWiringToWorkflow(workflowId: string, wiring: TestWiring) {
     return this.workflowHttpService
       .bindWiringToWorkflow(workflowId, wiring)
       .pipe(
@@ -82,7 +82,7 @@ export class WorkflowEditorService {
       );
   }
 
-  testWorkflow(id: string, wiring: Wiring): Observable<WorkflowBaseItem> {
+  testWorkflow(id: string, wiring: TestWiring): Observable<WorkflowBaseItem> {
     return of(null).pipe(
       tap(() => this.store.dispatch(setExecutionRunning())),
       switchMapTo(this.workflowHttpService.executeWorkflow(id, wiring)),

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MaterialModule } from 'src/app/material.module';
-import { ComponentEditorService } from '../component-editor.service';
+import { ComponentEditorService } from '../component-editor/component-editor.service';
 import { WiringHttpService } from '../http-service/wiring-http.service';
 import { TabItemService } from '../tab-item/tab-item.service';
 import { WorkflowEditorService } from '../workflow-editor/workflow-editor.service';

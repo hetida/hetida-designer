@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Adapter, Wiring } from 'hd-wiring';
+import { Adapter, TestWiring } from 'hd-wiring';
 import { Observable } from 'rxjs';
 import { ConfigService } from '../configuration/config.service';
 
@@ -19,16 +19,16 @@ export class WiringHttpService {
     });
   }
 
-  saveWiring(workflowWiring: Wiring): Observable<Wiring> {
-    return this._http.post<Wiring>(
+  saveWiring(workflowWiring: TestWiring): Observable<TestWiring> {
+    return this._http.post<TestWiring>(
       `${this._apiEndpoint}/wirings`,
       workflowWiring
     );
   }
 
-  updateWiring(workflowWiring: Wiring): Observable<Wiring> {
-    return this._http.put<Wiring>(
-      `${this._apiEndpoint}/wirings/${workflowWiring.id}`,
+  updateWiring(workflowWiring: TestWiring): Observable<TestWiring> {
+    return this._http.put<TestWiring>(
+      `${this._apiEndpoint}/wirings/${workflowWiring}`, // workflowWiring.id
       workflowWiring
     );
   }

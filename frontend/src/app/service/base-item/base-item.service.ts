@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { EMPTY, Observable } from 'rxjs';
-import { first, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, of } from 'rxjs';
+import { finalize, first, switchMap, switchMapTo, tap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { BaseItemType } from '../../enums/base-item-type';
 import { RevisionState } from '../../enums/revision-state';
@@ -23,6 +23,13 @@ import {
 } from '../../store/transformation/transformation.actions';
 import { TransformationState } from '../../store/transformation/transformation.state';
 import { LocalStorageService } from '../local-storage/local-storage.service';
+import { TestWiring } from 'hd-wiring';
+import {
+  setExecutionFinished,
+  setExecutionProtocol,
+  setExecutionRunning
+} from 'src/app/store/execution-protocol/execution-protocol.actions';
+import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 
 @Injectable({
   providedIn: 'root'
@@ -48,14 +55,18 @@ export class BaseItemService {
       );
   }
 
-  updateTransformation(transformation: Transformation): void {
-    this.transformationHttpService
+  updateTransformation(
+    transformation: Transformation
+  ): Observable<Transformation> {
+    return this.transformationHttpService
       .updateTransformation(transformation)
-      .subscribe(updatedTransformation => {
-        this.transformationStore.dispatch(
-          updateTransformation(updatedTransformation)
-        );
-      });
+      .pipe(
+        tap(updatedTransformation => {
+          this.transformationStore.dispatch(
+            updateTransformation(updatedTransformation)
+          );
+        })
+      );
   }
 
   createWorkflow(): WorkflowBaseItem {
@@ -141,16 +152,34 @@ export class BaseItemService {
   }
 
   // TODO unit test
-  releaseTransformation(transformation: Transformation): void {
+  releaseTransformation(
+    transformation: Transformation
+  ): Observable<Transformation> {
     // TODO copy, do not change param attribute
     transformation.state = RevisionState.RELEASED;
     transformation.released_timestamp = new Date().toISOString();
-    this.updateTransformation(transformation);
+    return this.updateTransformation(transformation);
   }
 
-  disableTransformation(transformation: Transformation): void {
+  disableTransformation(
+    transformation: Transformation
+  ): Observable<Transformation> {
     transformation.state = RevisionState.DISABLED;
     transformation.disabled_timestamp = new Date().toISOString();
-    this.updateTransformation(transformation);
+    return this.updateTransformation(transformation);
+  }
+
+  testTransformation(
+    id: string,
+    test_wiring: TestWiring
+  ): Observable<ExecutionResponse> {
+    return of(null).pipe(
+      tap(() => this.store.dispatch(setExecutionRunning())),
+      switchMapTo(
+        this.transformationHttpService.executeTransformation(id, test_wiring)
+      ),
+      tap(result => this.store.dispatch(setExecutionProtocol(result))),
+      finalize(() => this.store.dispatch(setExecutionFinished()))
+    );
   }
 }

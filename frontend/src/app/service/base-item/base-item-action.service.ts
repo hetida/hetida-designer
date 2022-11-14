@@ -4,11 +4,11 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   ConfirmClickEvent,
   ExecutionDialogData,
-  Wiring,
+  TestWiring,
   WiringDialogComponent
 } from 'hd-wiring';
-import { combineLatest, iif, Observable, of } from 'rxjs';
-import { finalize, first, switchMap, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { finalize, first, map, switchMap, tap } from 'rxjs/operators';
 import {
   ComponentIODialogComponent,
   ComponentIoDialogData
@@ -25,7 +25,6 @@ import {
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { AbstractBaseItem, BaseItem } from 'src/app/model/base-item';
-import { ComponentBaseItem } from 'src/app/model/component-base-item';
 import { WorkflowBaseItem } from 'src/app/model/workflow-base-item';
 import { WorkflowLink } from 'src/app/model/workflow-link';
 import { Utils } from 'src/app/utils/utils';
@@ -34,7 +33,6 @@ import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keywo
 import * as uuid from 'uuid';
 import { BaseItemDialogData } from '../../model/base-item-dialog-data';
 import { IOItem } from '../../model/io-item';
-import { ComponentEditorService } from '../component-editor.service';
 import { WiringHttpService } from '../http-service/wiring-http.service';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
@@ -47,6 +45,10 @@ import {
   Transformation,
   WorkflowTransformation
 } from '../../model/new-api/transformation';
+import { Store } from '@ngrx/store';
+import { TransformationState } from 'src/app/store/transformation/transformation.state';
+import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
+import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -57,24 +59,24 @@ import {
 export class BaseItemActionService {
   constructor(
     private readonly dialog: MatDialog,
+    private readonly transformationStore: Store<TransformationState>,
     private readonly baseItemService: BaseItemService,
     private readonly workflowService: WorkflowEditorService,
     private readonly tabItemService: TabItemService,
     private readonly notificationService: NotificationService,
-    private readonly componentService: ComponentEditorService,
     private readonly wiringService: WiringHttpService
   ) {}
 
-  public async execute(abstractBaseItem: AbstractBaseItem) {
-    // TODO
-    // @ts-ignore
-    if (this.isIncomplete(abstractBaseItem as Transformation)) {
+  public async execute(transformation: Transformation) {
+    if (this.isIncomplete(transformation)) {
       return;
     }
+
     let title: string;
-    if (abstractBaseItem.type === BaseItemType.COMPONENT) {
+
+    if (transformation.type === BaseItemType.COMPONENT) {
       title = 'Execute Component';
-    } else if (abstractBaseItem.type === BaseItemType.WORKFLOW) {
+    } else if (transformation.type === BaseItemType.WORKFLOW) {
       title = 'Execute Workflow';
     } else {
       console.warn(
@@ -92,44 +94,18 @@ export class BaseItemActionService {
     >(WiringDialogComponent, {
       data: {
         title,
-        wiringItem: abstractBaseItem,
+        wiringItem: transformation,
         adapterList
       }
     });
-    const componentExecution$ = (
-      executeTestClickEvent: ConfirmClickEvent
-    ): Observable<ComponentBaseItem> => {
-      return this.componentService
-        .bindWiringToComponent(
-          executeTestClickEvent.id,
-          executeTestClickEvent.wiring
-        )
-        .pipe(
-          switchMap(() =>
-            this.componentService.testComponent(
-              executeTestClickEvent.id,
-              executeTestClickEvent.wiring
-            )
-          )
-        );
-    };
 
-    const workflowExecution$ = (
+    const transformationExecution$ = (
       executeTestClickEvent: ConfirmClickEvent
-    ): Observable<WorkflowBaseItem> => {
-      return this.workflowService
-        .bindWiringToWorkflow(
-          executeTestClickEvent.id,
-          executeTestClickEvent.wiring
-        )
-        .pipe(
-          switchMap(() =>
-            this.workflowService.testWorkflow(
-              executeTestClickEvent.id,
-              executeTestClickEvent.wiring
-            )
-          )
-        );
+    ): Observable<ExecutionResponse> => {
+      return this.baseItemService.testTransformation(
+        executeTestClickEvent.id,
+        executeTestClickEvent.test_wiring
+      );
     };
 
     dialogRef.componentInstance.cancelDialogClick.subscribe(() => {
@@ -139,25 +115,30 @@ export class BaseItemActionService {
     dialogRef.componentInstance.confirmClick
       .pipe(
         tap(() => dialogRef.close()),
-        switchMap(executeTestClickEvent => {
-          let saveOrUpdate$: Observable<Wiring>;
-          if (Utils.isDefined(executeTestClickEvent.wiring.id)) {
-            saveOrUpdate$ = this.wiringService.updateWiring(
-              executeTestClickEvent.wiring
-            );
-          } else {
-            saveOrUpdate$ = this.wiringService.saveWiring(
-              executeTestClickEvent.wiring
-            );
-          }
-          return combineLatest([of(executeTestClickEvent.id), saveOrUpdate$]);
-        }),
-        switchMap(([wiringItemId, savedWiring]) =>
-          iif(
-            () => abstractBaseItem.type === BaseItemType.WORKFLOW,
-            workflowExecution$({ id: wiringItemId, wiring: savedWiring }),
-            componentExecution$({ id: wiringItemId, wiring: savedWiring })
-          )
+        switchMap(executeTestClickEvent =>
+          this.transformationStore
+            .select(selectTransformationById(executeTestClickEvent.id))
+            .pipe(
+              first(),
+              map(selectedTransformation => ({
+                selectedTransformation,
+                test_wiring: executeTestClickEvent.test_wiring
+              }))
+            )
+        ),
+        switchMap(({ selectedTransformation, test_wiring }) =>
+          // TODO if a transformation is set to released,
+          // it can't be updated by a new test_wiring and will throw a error 403 (Forbidden)
+          this.baseItemService.updateTransformation({
+            ...selectedTransformation,
+            test_wiring
+          })
+        ),
+        switchMap(updatedTransformation$ =>
+          transformationExecution$({
+            id: updatedTransformation$.id,
+            test_wiring: updatedTransformation$.test_wiring
+          })
         ),
         finalize(() => dialogRef.close())
       )
@@ -205,11 +186,17 @@ export class BaseItemActionService {
 
     dialogRef
       .afterClosed()
-      .subscribe((transformationToUpdate: Transformation | undefined) => {
-        if (transformationToUpdate) {
-          this.baseItemService.updateTransformation(transformationToUpdate);
-        }
-      });
+      .pipe(
+        switchMap((transformationToUpdate: Transformation | undefined) => {
+          if (transformationToUpdate) {
+            return this.baseItemService.updateTransformation(
+              transformationToUpdate
+            );
+          }
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   // TODO unit test
@@ -328,11 +315,17 @@ export class BaseItemActionService {
         }
       });
 
-      dialogRef.afterClosed().subscribe(isConfirmed => {
-        if (isConfirmed) {
-          this.baseItemService.releaseTransformation(transformation);
-        }
-      });
+      dialogRef
+        .afterClosed()
+        .pipe(
+          switchMap(isConfirmed => {
+            if (isConfirmed) {
+              return this.baseItemService.releaseTransformation(transformation);
+            }
+            return of(null);
+          })
+        )
+        .subscribe();
     }
   }
 
@@ -500,11 +493,17 @@ export class BaseItemActionService {
       }
     });
 
-    dialogRef.afterClosed().subscribe(isConfirmed => {
-      if (isConfirmed) {
-        this.baseItemService.disableTransformation(transformation);
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(
+        switchMap(isConfirmed => {
+          if (isConfirmed) {
+            return this.baseItemService.disableTransformation(transformation);
+          }
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   public isIncomplete(transformation: Transformation | undefined): boolean {
@@ -539,7 +538,7 @@ export class BaseItemActionService {
       .pipe(first(workflowBaseItem => workflowBaseItem !== undefined))
       .toPromise();
 
-    const wirings: Wiring[] = [];
+    const wirings: TestWiring[] = [];
     const links: WorkflowLink[] = [];
     // give new ids to everything
     const copy = {
@@ -795,13 +794,19 @@ export class BaseItemActionService {
       data: componentIoDialogData
     });
 
-    dialogRef.afterClosed().subscribe(updatedComponentTransformation => {
-      if (updatedComponentTransformation) {
-        this.baseItemService.updateTransformation(
-          updatedComponentTransformation
-        );
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(
+        switchMap(updatedComponentTransformation => {
+          if (updatedComponentTransformation) {
+            return this.baseItemService.updateTransformation(
+              updatedComponentTransformation
+            );
+          }
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   private configureWorkflowIO(abstractBaseItem: AbstractBaseItem) {

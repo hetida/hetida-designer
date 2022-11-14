@@ -13,7 +13,7 @@ import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keywo
 import { UniqueValueValidator } from 'src/app/validation/unique-value-validator';
 import { v4 as UUID } from 'uuid';
 import { ComponentTransformation } from '../../model/new-api/transformation';
-import { IO } from '../../model/new-api/io';
+import { IO } from 'hd-wiring';
 
 export interface ComponentIoDialogData {
   componentTransformation: ComponentTransformation;

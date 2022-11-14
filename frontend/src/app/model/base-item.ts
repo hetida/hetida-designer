@@ -1,4 +1,4 @@
-import { Wiring } from 'hd-wiring';
+import { TestWiring } from 'hd-wiring';
 import { BaseItemType } from '../enums/base-item-type';
 import { RevisionState } from '../enums/revision-state';
 import { ComponentBaseItem } from './component-base-item';
@@ -59,7 +59,7 @@ export interface AbstractBaseItem {
   outputs: IOItem[];
 
   /**
-   * wiring
+   * Wiring
    */
-  wirings: Wiring[];
+  wirings: TestWiring[];
 }
