@@ -16,7 +16,8 @@ from hetdesrun.exportimport.utils import FilterParams, get_transformation_revisi
 from hetdesrun.models.code import NonEmptyValidStr
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type, get_backend_basic_auth
-from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -82,8 +83,15 @@ def get_transformation_from_java_backend(
     """
     Loads a single transformation revision together with its documentation based on its id
     """
-
-    headers = get_auth_headers()
+    try:
+        headers = sync_wrapped_get_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for external request to old java backend."
+            f" Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise Exception(msg) from e
 
     if type == Type.COMPONENT:
         url = posix_urljoin(get_config().hd_backend_api_url, "components", str(id))
@@ -229,6 +237,15 @@ def export_transformations(
     hetdesrun.backend.models.wiring.EXPORT_MODE = True
 
     transformation_list: List[TransformationRevision] = []
+    try:
+        headers = sync_wrapped_get_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for external request for exporting transformations."
+            f" Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise Exception(msg) from e
 
     if java_backend:
         url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
@@ -238,7 +255,7 @@ def export_transformations(
             auth=get_backend_basic_auth()  # type: ignore
             if get_config().hd_backend_use_basic_auth
             else None,
-            headers=get_auth_headers(),
+            headers=headers,
             timeout=get_config().external_request_timeout,
         )
 

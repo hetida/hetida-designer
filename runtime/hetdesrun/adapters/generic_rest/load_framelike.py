@@ -22,6 +22,7 @@ from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_h
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, df_empty
 from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -79,6 +80,7 @@ async def load_framelike_data(
 ) -> pd.DataFrame:
     """Load framelike data from REST endpoint"""
 
+    # pylint: disable=too-many-statements
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
     valid, msg = are_valid_sources(filtered_sources)
@@ -99,8 +101,15 @@ async def load_framelike_data(
         str(additional_params),
         str(common_data_type),
     )
-
-    headers = get_generic_rest_adapter_auth_headers()
+    try:
+        headers = await get_generic_rest_adapter_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for loading framelike data from adapter"
+            f"with key {adapter_key}. Error was:\n{str(e)}"
+        )
+        logger.info(msg)
+        raise AdapterHandlingException(msg) from e
 
     with requests.Session() as session:
         try:

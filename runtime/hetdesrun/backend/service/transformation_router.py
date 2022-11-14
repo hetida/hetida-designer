@@ -39,6 +39,7 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -553,7 +554,16 @@ def receive_execution_response(
 async def send_result_to_callback_url(
     callback_url: HttpUrl, result: ExecutionResponseFrontendDto
 ) -> None:
-    headers = get_auth_headers()
+
+    try:
+        headers = await get_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for sending result to callback url."
+            f" Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+
     async with httpx.AsyncClient(
         verify=get_config().hd_backend_verify_certs,
         timeout=get_config().external_request_timeout,

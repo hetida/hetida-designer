@@ -4,8 +4,10 @@ from enum import Enum
 from typing import Optional, Union
 
 # pylint: disable=no-name-in-module
-from pydantic import BaseSettings, Field, SecretStr, validator
+from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
+
+from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
 
 class LogLevel(str, Enum):
@@ -16,6 +18,18 @@ class LogLevel(str, Enum):
     INFO = "INFO"
     DEBUG = "DEBUG"
     NOTSET = "NOTSET"
+
+
+class ExternalAuthMode(str, Enum):
+    OFF = "OFF"
+    CLIENT = "CLIENT"
+    FORWARD_OR_FIXED = "FORWARD_OR_FIXED"
+
+
+class InternalAuthMode(str, Enum):
+    OFF = "OFF"
+    CLIENT = "CLIENT"
+    FORWARD_OR_FIXED = "FORWARD_OR_FIXED"
 
 
 class RuntimeConfig(BaseSettings):
@@ -136,7 +150,10 @@ class RuntimeConfig(BaseSettings):
 
     auth: bool = Field(
         True,
-        description="Whether authentication checking is active.",
+        description=(
+            "Whether authentication checking is active. This configures"
+            " ingoing auth, i.e. whether bearer tokens are checked."
+        ),
         env="HD_USE_AUTH",
     )
 
@@ -182,17 +199,70 @@ class RuntimeConfig(BaseSettings):
         example="P0DT00H00M15S",
     )
 
-    auth_bearer_token_for_external_requests: Optional[str] = Field(
+    auth_bearer_token_for_outgoing_requests: Optional[str] = Field(
         None,
         description=(
-            "A string containing a bearer token for making external requests. "
+            "A string containing a bearer token for making outgoing requests. "
             "If set and there is no currently handled API request with a provided access token,"
-            " this will be used when making external requests to adapters and runtime/backend."
+            " this will be used when making outgoing requests to adapters or runtime/backend"
+            " if the corrsponding auth mode (internal/external) for outgoing request"
+            " is FORWARD_OR_FIXED."
             " This setting makes export/import possible when having auth activated, i.e."
             " its intended use is for scripting using the hetdesrun Python package."
             " Make sure the expiration of the token is long enough for your script invocation."
         ),
-        env="HD_BEARER_TOKEN_FOR_EXTERNAL_REQUESTS",
+        env="HD_BEARER_TOKEN_FOR_OUTGOING_REQUESTS",
+    )
+
+    internal_auth_mode: InternalAuthMode = Field(
+        InternalAuthMode.FORWARD_OR_FIXED,
+        description=(
+            "How outgoing requests to internal services should be handled."
+            " For example from backend to runtime if both are run as separate services."
+            " One of "
+            ", ".join(['"' + x.value + '"' for x in list(InternalAuthMode)])
+        ),
+        env="HD_INTERNAL_AUTH_MODE",
+    )
+    internal_auth_client_credentials: Optional[
+        Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
+    ] = Field(
+        None,
+        description=(
+            "Client credentials as json encoded string."
+            " For details confer the ServiceCredentials model class in the auth_outgoing.py"
+            " file."
+        ),
+        example=(
+            '{"realm": "my-realm", "auth_url": "https://test.com/auth", "audience": "account",'
+            ' "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",'
+            ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
+            ' "post_kwargs": {}}'
+        ),
+        env="HD_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
+    )
+    external_auth_mode: ExternalAuthMode = Field(
+        ExternalAuthMode.FORWARD_OR_FIXED,
+        description=(
+            "How outgoing requests to external services should be handled."
+            " For example from runtime to adapters or during export/import."
+            " One of "
+            ", ".join(['"' + x.value + '"' for x in list(ExternalAuthMode)])
+        ),
+        env="HD_EXTERNAL_AUTH_MODE",
+    )
+    external_auth_client_credentials: Optional[
+        Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
+    ] = Field(
+        None,
+        description="Client credentials as json encoded string.",
+        example=(
+            '{"realm": "my-realm", "auth_url": "https://test.com/auth", "audience": "account",'
+            ' "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",'
+            ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
+            ' "post_kwargs": {}}'
+        ),
+        env="HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
     )
 
     hd_adapters: str = Field(
@@ -308,6 +378,42 @@ class RuntimeConfig(BaseSettings):
         description="The topic to which the execution consumer send execution results",
         env="HETIDA_DESIGNER_KAFKA_RESPONSE_TOPIC",
     )
+
+    # pylint: disable=no-self-argument
+    @validator("internal_auth_client_credentials")
+    def internal_auth_client_credentials_set_if_internal_auth_mode_is_client(
+        cls,
+        v: Optional[Json[ServiceCredentials]],  # pylint: disable=unsubscriptable-object
+        values: dict,
+    ) -> Optional[Json[ServiceCredentials]]:  # pylint: disable=unsubscriptable-object
+
+        internal_auth_mode = values["internal_auth_mode"]
+
+        if internal_auth_mode == InternalAuthMode.CLIENT and v is None:
+            msg = (
+                "If internal auth mode is set to CLIENT, "
+                "internal auth client credentials must be configured"
+            )
+            raise ValueError(msg)
+        return v
+
+    # pylint: disable=no-self-argument
+    @validator("external_auth_client_credentials")
+    def external_auth_client_credentials_set_if_external_auth_mode_is_client(
+        cls,
+        v: Optional[Json[ServiceCredentials]],  # pylint: disable=unsubscriptable-object
+        values: dict,
+    ) -> Optional[Json[ServiceCredentials]]:  # pylint: disable=unsubscriptable-object
+
+        external_auth_mode = values["external_auth_mode"]
+
+        if external_auth_mode == ExternalAuthMode.CLIENT and v is None:
+            msg = (
+                "If external auth mode is set to CLIENT, "
+                "external auth client credentials must be configured"
+            )
+            raise ValueError(msg)
+        return v
 
     # pylint: disable=no-self-argument
     @validator("is_runtime_service")

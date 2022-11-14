@@ -44,9 +44,11 @@
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
     "editor.formatOnSave": true,
-    "python.sortImports.args": [
+    "isort.args": [
         "--profile",
-        "black"
+        "black",
+        "-p",
+        "hetdesrun"
     ],
     "[python]": {
         "editor.codeActionsOnSave": {

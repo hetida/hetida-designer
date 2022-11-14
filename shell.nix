@@ -53,7 +53,7 @@
 with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/af21d41260846fb9c9840a75e310e56dfe97d6a3.tar.gz") {};
 
 let
-  pythonPackages = python39Packages; # Fix Python version from the used nixpkgs commit
+  pythonPackages = python310Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
   venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
   venvDirPythonDemoAdapter = toString ./runtime/nix_venv_hd_dev_python_demo_adapter;
@@ -255,7 +255,7 @@ in pkgs.mkShell rec {
   buildInputs = [
     # A Python interpreter including the 'venv' module is required to bootstrap
     # the environment (>36)
-    python39Packages.python
+    python310Packages.python
 
     # Some libraries that may be required by Python libraries we want to use.
     taglib

@@ -24,7 +24,8 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type, get_backend_basic_auth
-from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,15 @@ def get_transformation_revisions(
             **params.dict(exclude_none=True)
         )
     else:
+        try:
+            headers = sync_wrapped_get_auth_headers(external=True)
+        except ServiceAuthenticationError as e:
+            msg = (
+                "Failed to get auth headers for external request for importing transformations."
+                f" Error was:\n{str(e)}"
+            )
+            logger.error(msg)
+            raise Exception(msg) from e
         get_response = requests.get(
             posix_urljoin(get_config().hd_backend_api_url, "transformations"),
             params=json.loads(params.json(exclude_none=True)),
@@ -108,7 +118,7 @@ def get_transformation_revisions(
             auth=get_backend_basic_auth()  # type: ignore
             if get_config().hd_backend_use_basic_auth
             else None,
-            headers=get_auth_headers(),
+            headers=headers,
             timeout=get_config().external_request_timeout,
         )
 
@@ -190,6 +200,16 @@ def update_or_create_transformation_revision(
             )
 
     else:
+        try:
+            headers = sync_wrapped_get_auth_headers(external=True)
+        except ServiceAuthenticationError as e:
+            msg = (
+                "Failed to get auth headers for external request for importing transformations."
+                f" Error was:\n{str(e)}"
+            )
+            logger.error(msg)
+            raise Exception(msg) from e
+
         response = requests.put(
             posix_urljoin(
                 get_config().hd_backend_api_url, "transformations", str(tr.id)
@@ -203,7 +223,7 @@ def update_or_create_transformation_revision(
             auth=get_backend_basic_auth()  # type: ignore
             if get_config().hd_backend_use_basic_auth
             else None,
-            headers=get_auth_headers(),
+            headers=headers,
             timeout=get_config().external_request_timeout,
         )
         logger.info(
@@ -248,6 +268,16 @@ def delete_transformation_revision(
                 not_found_err,
             )
     else:
+        try:
+            headers = sync_wrapped_get_auth_headers(external=True)
+        except ServiceAuthenticationError as e:
+            msg = (
+                "Failed to get auth headers for external request for importing transformations."
+                f" Error was:\n{str(e)}"
+            )
+            logger.error(msg)
+            raise Exception(msg) from e
+
         response = requests.delete(
             posix_urljoin(get_config().hd_backend_api_url, "transformations", str(id)),
             params={"ignore_state": True},
@@ -255,7 +285,7 @@ def delete_transformation_revision(
             auth=get_backend_basic_auth()  # type: ignore
             if get_config().hd_backend_use_basic_auth
             else None,
-            headers=get_auth_headers(),
+            headers=headers,
             timeout=get_config().external_request_timeout,
         )
         logger.info(
