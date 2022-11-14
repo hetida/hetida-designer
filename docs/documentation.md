@@ -24,6 +24,7 @@ Further information about developing, deploying, connecting, using and running h
 - [Export and Import](./import_export.md)
 - [Enabling OpenID Connect](./enabling_openidconnect.md)
 - [Migration from 0.6 to 0.7](./migration_from_0.6_to_0.7.md)
+- [Migration from 0.6 to 0.8](./migration_from_0.6_to_0.8.md)
 - [Clean up](./cleanup.md)
 
 ## Authentication

@@ -24,7 +24,7 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime:0.7.2 -c 'from hetdesrun.exportimport.export import export_transformations; export_transformations("/mnt/obj_repo/migration_data/", True);'
+  hetida/designer-runtime:0.7.2 -c 'from hetdesrun.exportimport.export import export_all; export_all("/mnt/obj_repo/migration_data/", True);'
 ```
 
 The command will create a subdirectory `migration_data` in your current directory with subfolders `components` and `workflows` each of which contains subfolders corresponding to the categories in which the components and workflows are stored in individual json files.
@@ -42,4 +42,3 @@ docker run --rm \
   --entrypoint python \
   hetida/designer-runtime:0.7.2 -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/migration_data/", update_component_code=False);'
 ```
-
