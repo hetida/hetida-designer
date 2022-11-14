@@ -100,7 +100,7 @@ Attributes that are not provided will be set to the following default values:
 * inputs: `{}`
 * outputs: `{}`
 
-If present, the module docstring (except for its title line) is used as documentation. 
+If present, the module docstring (starting from its third line) is used as documentation. 
 
 **Note:** There is no possibility to include the test wiring of the component in `.py` files. The test wiring can only be included in the `.json` export format.
 
@@ -112,7 +112,7 @@ To ignore test wirings when importing, simply add a keyword parameter `strip_wir
 
 ## Deprecate older revisions when importing new ones
 
-To make it clear that only the latest revision group of a revision should be used, it may be useful to deprecate all other revisions of the same revision group. To trigger their deprecation automatically for all imported revision groups, simply add a keyword parameter `deprecate_older_revisions=True` to the call to the `import_transformations` function.
+To ensure that only the latest revision of a revision group can be used, you can deprecate all other revisions of the same revision group during import by setting the parameter `deprecate_older_revisions=True` in the `import_transformations` function call.
 If the latest revision of a revision group is stored in the database, all imported transformation revisions of this group will be deprecated.
 
 ## Import new components and workflows added to the git repository
