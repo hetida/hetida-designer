@@ -1,4 +1,4 @@
-# Purge your Database: Clean Up the Components and Transformations
+# Clean Up the Components and Transformations in the Database
 
 There are cleanup options of varying scope:
 
@@ -8,7 +8,7 @@ There are cleanup options of varying scope:
 
 3. Delete unused deprecated transformation revisions
 
-4. Delete all transformation revisions and refill with base transformation revisions
+4. Purge: Delete all transformation revisions and refill with base transformation revisions
 
 The first two actions can easily be performed for individual transformation revisions via the user interface, doing so regularly is recommended. Apart from that, there are also functions for all four actions that automatically apply them to all matching transformation revisions.
 
@@ -22,7 +22,6 @@ After inserting the hetida designer backend API URL of your instance you can use
 docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=<...>" \
   --name htdruntime_export \
-  --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import deprecate_all_but_latest_per_group; deprecate_all_but_latest_per_group();'
 ```
@@ -35,7 +34,6 @@ To delete all draft transformation revisions just execute the following command:
 docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=<...>" \
   --name htdruntime_export \
-  --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import delete_drafts; delete_drafts();'
 ```
@@ -48,12 +46,11 @@ In this case "unused" deprecated transformation revisions are those that are eit
 docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=<...>" \
   --name htdruntime_export \
-  --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import delete_unused_deprecated; delete_unused_deprecated();'
 ```
 
-## Delete All Transformation Revisions and Refill 
+## Purge 
 
 To delete all transformation revisions and deploy the specified version of base components and sample workflows from the hetida designer git repository in the version correspond execute the following command. The version must be at least 8.0.2, earlier versions do not contain this feature.
 
@@ -61,7 +58,6 @@ To delete all transformation revisions and deploy the specified version of base 
 docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=<...>" \
   --name htdruntime_export \
-  --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --entrypoint python \
   hetida/designer-runtime:<version> -c 'from hetdesrun.exportimport.purge import delete_all_and_refill; delete_all_and_refill();'
 ```
