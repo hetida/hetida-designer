@@ -21,6 +21,8 @@ docker run --rm \
 
 The command will create a subdirectory `exported_data` in your current directory with subfolders `components` and `workflows` each of which contains subfolders corresponding to the categories in which the components and workflows are stored in individual json files.
 
+## Exporting selected components and workflows
+
 To export only selected components and workflows instead of all, the `export_transformations` accepts several optional input parameters to filter for the desired components and workflows.
 
 - type: must be either "COMPONENT" or "WORKFLOW" (if specified)
@@ -46,7 +48,7 @@ docker run --rm \
   --mount type=bind,source="$(pwd)",target=/mnt/obj_repo \
   --network hetida-designer-network \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.export import export_transformations; export_transformations("/mnt/obj_repo/exported_data/", type="COMPONENT", category="Arithmetic", names_and_tags=[("E", "1.0.0"), ("Pi", "1.0.0")]);'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.export import export_transformations; export_transformations("/mnt/obj_repo/exported_data/", type="COMPONENT", category="Arithmetic", names=["E", "Pi"]);'
 ```
 
 ## <a name="import"></a> Importing all components and workflows
