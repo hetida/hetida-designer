@@ -12,6 +12,7 @@ from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_bas
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.data_selection import FilteredSink
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -90,7 +91,15 @@ async def send_multiple_metadata_to_adapter(
     data_to_send: Dict[str, Any],
     adapter_key: str,
 ) -> None:
-    headers = get_generic_rest_adapter_auth_headers()
+    try:
+        headers = await get_generic_rest_adapter_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for sending multiple metadata to adapter"
+            f"with key {adapter_key}. Error was:\n{str(e)}"
+        )
+        logger.info(msg)
+        raise AdapterConnectionError(msg) from e
 
     async with httpx.AsyncClient(
         headers=headers,

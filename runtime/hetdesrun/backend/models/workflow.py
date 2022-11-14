@@ -735,7 +735,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         )
 
     def to_transformation_revision(
-        self, documentation: str = "", timestamp: datetime = None
+        self, documentation: str = "", timestamp: Optional[datetime] = None
     ) -> TransformationRevision:
         if timestamp is None:
             timestamp = datetime.now(timezone.utc)

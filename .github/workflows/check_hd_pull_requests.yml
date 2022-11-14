@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-python@v4.0.0
         with:
           # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
-          python-version: 3.9
+          python-version: 3.10
           # Used to specify a package manager for caching in the default directory. Supported values: pip, pipenv, poetry.
           cache: pip
 
@@ -41,7 +41,7 @@ jobs:
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"/runtime
-          export PIPT_PYTHON_INTERPRETER="python3.9"
+          export PIPT_PYTHON_INTERPRETER="python3.10"
           echo "Syncinc dependencies"
           ./pipt sync
           echo "Running checks..."

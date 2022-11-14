@@ -27,7 +27,8 @@ from hetdesrun.utils import (
     get_uuid_from_seed,
     selection_list_empty_or_contains_value,
 )
-from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -220,7 +221,15 @@ def import_transformation(
         update_or_create_single_transformation_revision(tr)
 
     else:
-        headers = get_auth_headers()
+        try:
+            headers = sync_wrapped_get_auth_headers(external=True)
+        except ServiceAuthenticationError as e:
+            msg = (
+                "Failed to get auth headers for external request for importing transformations."
+                f" Error was:\n{str(e)}"
+            )
+            logger.error(msg)
+            raise Exception(msg) from e
 
         response = requests.put(
             posix_urljoin(

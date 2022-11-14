@@ -34,6 +34,7 @@ from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.runtime.service import runtime_service
 from hetdesrun.utils import Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -246,7 +247,15 @@ async def run_execution_input(
     if get_config().is_runtime_service:
         execution_result = await runtime_service(execution_input)
     else:
-        headers = get_auth_headers()
+        try:
+            headers = await get_auth_headers(external=False)
+        except ServiceAuthenticationError as e:
+            msg = (
+                "Failed to get auth headers for internal runtime execution request."
+                f" Error was:\n{str(e)}"
+            )
+            logger.info(msg)
+            raise TrafoExecutionRuntimeConnectionError(msg) from e
 
         async with httpx.AsyncClient(
             verify=get_config().hd_runtime_verify_certs,
