@@ -432,6 +432,9 @@ def test_multiple_select_unused(clean_test_db_engine):
         update_or_create_single_transformation_revision(
             tr_component_contained_only_in_deprecated
         )
+        update_or_create_single_transformation_revision(
+            tr_component_contained_not_only_in_deprecated
+        )
 
         operator_in_deprecated = tr_component_contained_only_in_deprecated.to_operator()
         assert isinstance(operator_in_deprecated.id, UUID)

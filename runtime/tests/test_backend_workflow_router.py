@@ -20,6 +20,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.io import Connector
 from hetdesrun.persistence.models.link import Link, Vertex
+from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
@@ -142,6 +143,26 @@ dto_json_workflow_2_update = {
         },
     ],
     "wirings": [],
+}
+dto_json_component_1_publish = {
+    "id": str(get_uuid_from_seed("component 1")),
+    "groupId": str(get_uuid_from_seed("group of component 1")),
+    "name": "new name",
+    "description": "description of component 1",
+    "category": "Test",
+    "type": "COMPONENT",
+    "state": "RELEASED",
+    "tag": "1.0.0",
+    "inputs": [
+        {
+            "id": str(get_uuid_from_seed("new input")),
+            "name": "new_input",
+            "type": "INT",
+        }
+    ],
+    "outputs": [],
+    "wirings": [],
+    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 1",\n    description="description of component 1",\n    category="category",\n    uuid="c3f0ffdc-ff1c-a612-668c-0a606020ffaa",\n    group_id="b301ff9e-bdbb-8d7c-f6e2-7e83b919a8d3",\n    tag="1.0.0"\n)\ndef main(*, new_input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',
 }
 dto_json_workflow_2_publishable = {
     "id": "c92da3cf-c9fb-9582-f9a2-c05d6e54bbd7",
@@ -363,6 +384,11 @@ async def test_update_transformation_revision_from_workflow_dto(
         sessionmaker(clean_test_db_engine),
     ):
         store_single_transformation_revision(
+            ComponentRevisionFrontendDto(
+                **dto_json_component_1
+            ).to_transformation_revision()
+        )
+        store_single_transformation_revision(
             WorkflowRevisionFrontendDto(
                 **dto_json_workflow_2
             ).to_transformation_revision()
@@ -390,6 +416,12 @@ async def test_update_transformation_revision_from_non_existing_workflow_dto(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
+        store_single_transformation_revision(
+            ComponentRevisionFrontendDto(
+                **dto_json_component_1
+            ).to_transformation_revision()
+        )
+
         async with async_test_client as ac:
             response = await ac.put(
                 "/api/workflows/" + str(get_uuid_from_seed("workflow 2")),
@@ -428,13 +460,26 @@ async def test_update_transformation_revision_from_released_workflow_dto(
 
 
 @pytest.mark.asyncio
-async def test_delete_multiple_inuputs_of_wf_at_once(
+async def test_delete_multiple_inputs_of_wf_at_once(
     async_test_client, clean_test_db_engine
 ):
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
+        json_files = [
+            "./transformations/components/visualization/2d-grid-generator_100_096c6181-4ba5-0ee7-361a-3c32eee8c0c2.json",
+            "./transformations/components/connectors/name-series_100_a4064897-66d3-9601-328e-5ae9036665c5.json",
+            "./transformations/components/connectors/combine-into-dataframe_100_68f91351-a1f5-9959-414a-2c72003f3226.json",
+            "./transformations/components/connectors/combine-as-named-column-into-dataframe_100_0d08af64-3f34-cddc-354b-d6a26c3f1aab.json",
+            "./transformations/components/anomaly-detection/isolation-forest_100_cdec1d55-5bb6-8e8d-4571-fbc0ebf5a354.json",
+            "./transformations/components/visualization/contour-plot_100_f7530499-51b2-dd01-0d21-c24ee6f8c37e.json",
+            "./transformations/components/connectors/forget_100_d1fb4ae5-ef27-26b8-7a58-40b7cd8412e7.json",
+        ]
+        for file in json_files:
+            tr_json = load_json(file)
+            store_single_transformation_revision(TransformationRevision(**tr_json))
+
         with open(
             "./tests/data/workflows/iso_forest_wf_dto.json", "r", encoding="utf8"
         ) as f:
@@ -473,6 +518,11 @@ async def test_publish_transformation_revision_from_workflow_dto(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
+        store_single_transformation_revision(
+            ComponentRevisionFrontendDto(
+                **dto_json_component_1_publish
+            ).to_transformation_revision()
+        )
         store_single_transformation_revision(
             WorkflowRevisionFrontendDto(
                 **dto_json_workflow_2_publishable
@@ -550,6 +600,11 @@ async def test_set_test_wiring_to_workflow(async_test_client, clean_test_db_engi
         sessionmaker(clean_test_db_engine),
     ):
 
+        store_single_transformation_revision(
+            ComponentRevisionFrontendDto(
+                **dto_json_component_1
+            ).to_transformation_revision()
+        )
         store_single_transformation_revision(
             WorkflowRevisionFrontendDto(
                 **dto_json_workflow_2_update

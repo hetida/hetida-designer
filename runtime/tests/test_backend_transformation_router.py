@@ -956,6 +956,9 @@ async def test_create_transformation_revision_with_workflow(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)
+        )
 
         async with async_test_client as ac:
             response = await ac.post("/api/transformations/", json=tr_json_workflow_2)
@@ -972,6 +975,9 @@ async def test_update_transformation_revision_with_workflow(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)
+        )
         store_single_transformation_revision(
             TransformationRevision(**tr_json_workflow_2)
         )
@@ -1002,6 +1008,9 @@ async def test_update_transformation_revision_with_invalid_name_workflow(
         sessionmaker(clean_test_db_engine),
     ):
         store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)
+        )
+        store_single_transformation_revision(
             TransformationRevision(**tr_json_workflow_2)
         )
 
@@ -1030,6 +1039,10 @@ async def test_update_transformation_revision_with_non_existing_workflow(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)
+        )
+
         async with async_test_client as ac:
             response = await ac.put(
                 posix_urljoin(
@@ -1762,6 +1775,19 @@ async def test_put_workflow_transformation(async_test_client, clean_test_db_engi
             "hetdesrun.persistence.dbservice.revision.Session",
             patched_session,
         ):
+            json_files = [
+                "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
+                "./transformations/components/arithmetic/consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json",
+                "./transformations/components/basic/filter_100_18260aab-bdd6-af5c-cac1-7bafde85188f.json",
+                "./transformations/components/basic/greater-or-equal_100_f759e4c0-1468-0f2e-9740-41302b860193.json",
+                "./transformations/components/basic/last-datetime-index_100_c8e3bc64-b214-6486-31db-92a8888d8991.json",
+                "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.json",
+                "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
+            ]
+
+            for file in json_files:
+                tr_json = load_json(file)
+                store_single_transformation_revision(TransformationRevision(**tr_json))
 
             example_workflow_tr_json = load_json(
                 "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json"
