@@ -36,7 +36,7 @@ Most following commands assume that that the virtual environment is active (step
 
 ## Dependency Management
 For the hetida designer runtime/backend we rely on [pip-tools](https://github.com/jazzband/pip-tools) for depedency management. We use a wrapper script called `pipt` to faciliate working with pip-tools.
-Pip-tools supports having a tree of interdependant dependency sets such that each set is locked with its locked dependant dependency sets as constraints. This is called ["layered dependencies"](https://github.com/jazzband/pip-tools#workflow-for-layered-requirements) in the pip-tools documentation.
+Pip-tools supports having a tree of interdependent dependency sets such that each set is locked with its locked dependent dependency sets as constraints. This is called ["layered dependencies"](https://github.com/jazzband/pip-tools#workflow-for-layered-requirements) in the pip-tools documentation.
 
 This feature allows users of the runtime to [merge their specific Python dependencies](../docs/custom_python_dependencies.md) in their own docker images.
 

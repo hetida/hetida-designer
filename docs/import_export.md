@@ -35,7 +35,7 @@ If more than one of these parameters is specified, only the components/workflows
 The exported JSON files are automatically saved in subfolders corresponding to the categories of the exported components and workflows within subfolders corresponding to their type ("components" or "workflows").
 
 **Note:** Storing a workflow in the database that contains components or other workflows that are not yet stored in the database will result in an error.
-Therefore, the export function also automatically exports all revisions of dependency transformation revisions, regardless of whether they match the filters.
+Therefore, the export function also automatically exports all revisions of dependent transformation revisions, regardless of whether they match the filters.
 
 For example, the shell command to export the components that return the mathematical constants e and $\pi$ is
 
