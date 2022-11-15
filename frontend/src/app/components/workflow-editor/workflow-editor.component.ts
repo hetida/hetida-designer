@@ -38,7 +38,10 @@ import {
   RenameOperatorDialogComponent,
   RenameOperatorDialogData
 } from '../rename-operator-dialog/rename-operator-dialog.component';
-import { Transformation } from '../../model/new-api/transformation';
+import {
+  Transformation,
+  WorkflowTransformation
+} from '../../model/new-api/transformation';
 
 interface IdentifiableEntity {
   id: string;
@@ -70,7 +73,7 @@ export class WorkflowEditorComponent {
   }
 
   @Input()
-  set workflowBaseItem(workflowBaseItem: WorkflowBaseItem) {
+  set workflowBaseItem(workflowBaseItem: WorkflowTransformation) {
     this._convertWorkflowToFlowchart(workflowBaseItem);
   }
 
@@ -461,7 +464,7 @@ export class WorkflowEditorComponent {
       }
       operator.name = data;
       this.workflowService.updateWorkflow(this.currentWorkflow);
-      this._convertWorkflowToFlowchart(this.currentWorkflow);
+      // this._convertWorkflowToFlowchart(this.currentWorkflow);
     });
   }
 
@@ -511,7 +514,7 @@ export class WorkflowEditorComponent {
     this.hasChanges = false;
   }
 
-  private _convertWorkflowToFlowchart(workflow: WorkflowBaseItem): void {
+  private _convertWorkflowToFlowchart(workflow: WorkflowTransformation): void {
     if (workflow.state === RevisionState.RELEASED) {
       this.flowchartManipulatorConfiguration = createReadOnlyConfig(
         this.flowchartManipulatorConfiguration
@@ -521,7 +524,7 @@ export class WorkflowEditorComponent {
     this.flowchartConfiguration = this.flowchartConverter.convertWorkflowToFlowchart(
       workflow
     );
-    this.currentWorkflow = workflow;
+    this.currentWorkflow = (workflow as unknown) as WorkflowBaseItem;
     if (
       this.currentWorkflow.operators.some(
         operator => operator.state === RevisionState.DISABLED
