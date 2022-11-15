@@ -112,7 +112,10 @@ async def post_multiple_timeseries(
     sink_types: List[ExternalType],
     adapter_key: str,
 ) -> None:
-    async with AsyncClient(verify=get_config().hd_adapters_verify_certs) as client:
+    async with AsyncClient(
+        verify=get_config().hd_adapters_verify_certs,
+        timeout=get_config().external_request_timeout,
+    ) as client:
         await asyncio.gather(
             *(
                 post_single_timeseries(

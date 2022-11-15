@@ -35,6 +35,14 @@ class RuntimeConfig(BaseSettings):
         env="OPENAPI_PREFIX",
         description="root path (necessary for OpenAPI UI if behind proxy)",
     )
+    external_request_timeout: int = Field(
+        90,
+        env="EXTERNAL_REQUEST_TIMEOUT",
+        description=(
+            "The time (in seconds) to wait for a response of an external REST API "
+            "such as a generic REST adapter"
+        ),
+    )
     model_repo_path: str = Field(
         "/mnt/obj_repo",
         env="MODEL_REPO_PATH",
@@ -126,6 +134,8 @@ class RuntimeConfig(BaseSettings):
         description="URL to endpoint providing public keys for verifying bearer token signature",
         env="HD_AUTH_PUBLIC_KEY_URL",
     )
+
+    auth_verify_certs: bool = Field(True, env="HD_AUTH_VERIFY_CERTS")
 
     auth_role_key: str = Field(
         "roles",

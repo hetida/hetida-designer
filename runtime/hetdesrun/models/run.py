@@ -1,6 +1,7 @@
 """Models for runtime execution endpoint"""
 
 
+import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -14,11 +15,61 @@ from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import ComponentRevision
 from hetdesrun.models.wiring import OutputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
+from hetdesrun.utils import check_explicit_utc
 
 
 class ExecutionEngine(Enum):
     # Currently only built-in execution engine
     Plain = "plain"
+
+
+class PerformanceMeasuredStep(BaseModel):
+    name: str
+    start: Optional[datetime.datetime] = None
+    end: Optional[datetime.datetime] = None
+    duration: Optional[datetime.timedelta] = None
+
+    @classmethod
+    def create_and_begin(cls, name: str) -> "PerformanceMeasuredStep":
+        new_step = cls(name=name)
+        new_step.begin()
+        return new_step
+
+    # pylint: disable=no-self-argument
+    @validator("start")
+    def start_utc_datetime(cls, start):  # type: ignore
+        if not check_explicit_utc(start):
+            return ValueError("start datetime for measurement must be explicit utc")
+        return start
+
+    # pylint: disable=no-self-argument
+    @validator("end")
+    def end_utc_datetime(cls, end):  # type: ignore
+        if not check_explicit_utc(end):
+            return ValueError("end datetime for measurement must be explicit utc")
+        return end
+
+    def begin(self) -> None:
+        self.start = datetime.datetime.now(datetime.timezone.utc)
+
+    def stop(self) -> None:
+        if self.start is None:
+            raise ValueError(
+                f"Cannot stop measurement {self.name} if it was not started before!"
+            )
+
+        self.end = datetime.datetime.now(datetime.timezone.utc)
+        self.duration = self.end - self.start
+
+
+class AllMeasuredSteps(BaseModel):
+    internal_full: Optional[PerformanceMeasuredStep] = None
+    prepare_execution_input: Optional[PerformanceMeasuredStep] = None
+    run_execution_input: Optional[PerformanceMeasuredStep] = None
+    runtime_service_handling: Optional[PerformanceMeasuredStep] = None
+    pure_execution: Optional[PerformanceMeasuredStep] = None
+    load_data: Optional[PerformanceMeasuredStep] = None
+    send_data: Optional[PerformanceMeasuredStep] = None
 
 
 class ConfigurationInput(BaseModel):
@@ -153,4 +204,7 @@ class WorkflowExecutionResult(BaseModel):
     error: Optional[str] = Field(None, description="error string")
     traceback: Optional[str] = Field(None, description="traceback")
     job_id: UUID
+
+    measured_steps: AllMeasuredSteps = AllMeasuredSteps()
+
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types

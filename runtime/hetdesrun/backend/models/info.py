@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, validator
 
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
+from hetdesrun.models.run import AllMeasuredSteps
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
 
@@ -55,4 +56,10 @@ class ExecutionResponseFrontendDto(BaseModel):
     traceback: Optional[str]
     job_id: UUID
 
+    measured_steps: AllMeasuredSteps = AllMeasuredSteps()
+
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
+
+
+class ExecutionResultReceived(BaseModel):
+    ok: bool

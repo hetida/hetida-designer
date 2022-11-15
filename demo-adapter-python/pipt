@@ -391,7 +391,7 @@ _infer_venv_path() {
                 VENV_NAME=venv
             else
                 VENV_BASE_PATH=$HOME/.pipt/venvs
-                CURRENT_DIR_ABSOLUTE_PATH="$(readlink -f "$PWD")"
+                CURRENT_DIR_ABSOLUTE_PATH="$(readlink -f "$PWD" || realpath -L "$PWD")"
                 WORKING_DIR_BASENAME="${CURRENT_DIR_ABSOLUTE_PATH##*/}"
                 WORKING_DIR_HASH=$(_hash_multiple -s "$CURRENT_DIR_ABSOLUTE_PATH")
                 WORKING_DIR_ABBREVIATED_HASH=${WORKING_DIR_HASH::8}

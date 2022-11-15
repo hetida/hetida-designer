@@ -17,6 +17,7 @@ from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.run import (
     ConfigurationInput,
+    PerformanceMeasuredStep,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
@@ -47,7 +48,10 @@ class ExecByIdInput(BaseModel):
     )
     job_id: UUID = Field(
         default_factory=uuid4,
-        description="Optional job id, that can be used to track an execution job.",
+        description=(
+            "Id to identify an individual execution job, "
+            "will be generated if it is not provided."
+        ),
     )
 
 
@@ -146,9 +150,12 @@ def nested_nodes(
                 }
                 sub_nodes.append(
                     tr_workflow.content.to_workflow_node(
-                        operator.id,
-                        operator.name,
-                        children_nodes(tr_workflow.content, tr_children),
+                        transformation_id=all_nested_tr[operator.id].id,
+                        transformation_name=all_nested_tr[operator.id].name,
+                        transformation_tag=all_nested_tr[operator.id].version_tag,
+                        operator_id=operator.id,
+                        operator_name=operator.name,
+                        sub_nodes=children_nodes(tr_workflow.content, tr_children),
                     )
                 )
 
@@ -192,7 +199,8 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         tr.id: tr for tr in nested_transformations.values() if tr.type == Type.COMPONENT
     }
     workflow_node = tr_workflow.to_workflow_node(
-        uuid4(), nested_nodes(tr_workflow, nested_transformations)
+        operator_id=uuid4(),
+        sub_nodes=nested_nodes(tr_workflow, nested_transformations),
     )
 
     execution_input = WorkflowExecutionInput(
@@ -225,6 +233,10 @@ async def run_execution_input(
 
     Raises subtypes of TrafoExecutionError on errors.
     """
+    run_execution_input_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "run_execution_input"
+    )
+
     output_types = {
         output.name: output.type for output in execution_input.workflow.outputs
     }
@@ -237,7 +249,8 @@ async def run_execution_input(
         headers = get_auth_headers()
 
         async with httpx.AsyncClient(
-            verify=get_config().hd_runtime_verify_certs
+            verify=get_config().hd_runtime_verify_certs,
+            timeout=get_config().external_request_timeout,
         ) as client:
             url = posix_urljoin(get_config().hd_runtime_engine_url, "runtime")
             try:
@@ -275,8 +288,14 @@ async def run_execution_input(
         result=execution_result.result,
         traceback=execution_result.traceback,
         job_id=execution_input.job_id,
+        measured_steps=execution_result.measured_steps,
     )
 
+    run_execution_input_measured_step.stop()
+
+    execution_response.measured_steps.run_execution_input = (
+        run_execution_input_measured_step
+    )
     return execution_response
 
 
@@ -289,5 +308,19 @@ async def execute_transformation_revision(
     """
 
     execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
+
+    # prepare execution input
+
+    prep_exec_input_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "prepare_execution_input"
+    )
+
     execution_input = prepare_execution_input(exec_by_id_input)
-    return await run_execution_input(execution_input)
+
+    prep_exec_input_measured_step.stop()
+
+    exec_resp_frontend_dto = await run_execution_input(execution_input)
+    exec_resp_frontend_dto.measured_steps.prepare_execution_input = (
+        prep_exec_input_measured_step
+    )
+    return exec_resp_frontend_dto

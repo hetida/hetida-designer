@@ -275,7 +275,7 @@ def test_wrap_component_in_tr_workflow():
 
     tr_workflow = tr_component.wrap_component_in_tr_workflow()
 
-    assert valid_component_dto_dict["name"] == tr_workflow.name
+    assert "Wrapper Workflow" == tr_workflow.name
     assert valid_component_dto_dict["category"] == tr_workflow.category
     assert valid_component_dto_dict["tag"] == tr_workflow.version_tag
     assert valid_component_dto_dict["state"] == tr_workflow.state
@@ -313,4 +313,5 @@ def test_to_workflow_node():
     assert len(workflow_node.outputs) == len(valid_component_dto_dict["outputs"])
     assert len(workflow_node.sub_nodes) == 1
     assert len(workflow_node.connections) == 0
-    assert workflow_node.name == valid_component_dto_dict["name"]
+    assert workflow_node.name == "Wrapper Workflow"
+    assert workflow_node.tr_name == "Wrapper Workflow"

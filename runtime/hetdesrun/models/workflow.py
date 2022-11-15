@@ -73,6 +73,9 @@ class WorkflowNode(AbstractNode):
     inputs: List[WorkflowInput]
     outputs: List[WorkflowOutput]
     name: Optional[str] = Field(None, description="workflow node name")
+    tr_id: str
+    tr_name: str
+    tr_tag: str
 
 
 WorkflowNode.update_forward_refs()
