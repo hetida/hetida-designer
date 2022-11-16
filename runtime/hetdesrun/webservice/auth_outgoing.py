@@ -13,7 +13,7 @@ import threading
 from enum import Enum
 from functools import cache
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Dict, Literal, Optional, Type, Union
 
 from httpx import AsyncClient, HTTPError, Response
 from pydantic import (  # pylint: disable=no-name-in-module
@@ -95,7 +95,26 @@ class ServiceCredentials(BaseModel):
 class TokenType(str, Enum):
     """Supported token types"""
 
-    bearer = "bearer"
+    bearer = "bearer", str, "Bearer", "BEARER"
+
+    def __new__(cls, *values: Any) -> "TokenType":
+        obj = str.__new__(cls, values[0])  #  type: ignore
+
+        # first value is canonical value (e.g. what you get when calling TokenType.bearer.value)
+        obj._value_ = values[0]
+
+        cls.parse_type: Type  # for mypy
+        obj.parse_type = values[1]  # set parse_type to second tuple entry
+
+        for other_value in values[2:]:
+            # register other values in order to allow initializations TokenType("Bearer")
+            # and TokenType("BEARER") to work. This uses an internal attribute of Enum!
+            # pylint: disable=no-member
+            cls._value2member_map_[other_value] = obj  # type: ignore
+
+        # pylint: disable=no-member
+        obj._all_values = (values[0],) + values[1:]  # type: ignore
+        return obj  # type:ignore
 
 
 class TokenResponse(BaseModel):
