@@ -110,14 +110,14 @@ def get_transformation_from_java_backend(
     )
     logger.info(
         "GET %s status code: %i for %s with id %ss",
-        type.value.lower,
+        type.value,
         response.status_code,
-        type.value.lower,
+        type.value,
         str(id),
     )
     if response.status_code != 200:
         msg = (
-            f"COULD NOT GET {type.value.lower} with id {id}.\n"
+            f"COULD NOT GET {type.value} with id {id}.\n"
             f"Response status code {response.status_code} "
             f"with response text:\n{response.json()['detail']}"
         )
@@ -139,7 +139,7 @@ def get_transformation_from_java_backend(
     logger.info(
         "GET documentation status code: %i for %s with id %s",
         response.status_code,
-        type.value.lower,
+        type.value,
         str(id),
     )
     if response.status_code != 200:
