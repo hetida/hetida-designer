@@ -11,6 +11,7 @@ from hetdesrun.backend.service.transformation_router import (
     update_content,
 )
 from hetdesrun.component.code import update_code
+from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
@@ -64,18 +65,14 @@ async def get_all_transformation_revisions(
     use GET /api/transformations/ instead
     """
 
-    msg = "get all transformation revisions"
-    if type is not None:
-        msg = msg + " of type " + type.value
-    if state is not None:
-        msg = msg + " in the state " + state.value
-    logger.info(msg)
+    params = FilterParams(
+        type=type,
+        state=state,
+    )
+    logger.info("get all transformation revisions with %s", repr(params))
 
     try:
-        transformation_revision_list = get_multiple_transformation_revisions(
-            type=type,
-            state=state,
-        )
+        transformation_revision_list = get_multiple_transformation_revisions(params)
     except DBIntegrityError as e:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,

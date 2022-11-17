@@ -18,9 +18,9 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
-from hetdesrun.exportimport.utils import info
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.run import PerformanceMeasuredStep
+from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -162,44 +162,23 @@ async def get_all_transformation_revisions(
     and to export selected transformation revisions.
     """
 
-    msg = (
-        "get all transformation revisions"
-        + info(" of type ", type)
-        + info(" in state ", state)
-        + info(" in category ", category)
-        + info(" with group_id ", revision_group_id)
-        + info(
-            " unless they are deprecated",
-            include_deprecated,
-            case=not include_deprecated,
-        )
-        + info(
-            " that are unused",
-            unused,
-            case=unused,
-        )
-        + info("\nwith ids ", ids)
-        + info("\nwith names ", names)
-        + info(
-            "\nand all dependency transformation revisions",
-            include_dependencies,
-            case=include_dependencies,
-        )
+    filter_params = FilterParams(
+        type=type,
+        state=state,
+        category=category,
+        revision_group_id=revision_group_id,
+        ids=ids,
+        names=names,
+        include_dependencies=include_dependencies,
+        include_deprecated=include_deprecated,
+        unused=unused,
     )
 
-    logger.info(msg)
+    logger.info("get all transformation revisions with %s", repr(filter_params))
 
     try:
         transformation_revision_list = get_multiple_transformation_revisions(
-            type=type,
-            state=state,
-            category=category,
-            revision_group_id=revision_group_id,
-            ids=ids,
-            names=names,
-            include_deprecated=include_deprecated,
-            include_dependencies=include_dependencies,
-            unused=unused,
+            filter_params
         )
     except DBIntegrityError as e:
         raise HTTPException(

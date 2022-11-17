@@ -73,17 +73,18 @@ def test_get_transformation_revisions(caplog):
             "hetdesrun.exportimport.utils.requests.get", return_value=resp_mock
         ) as mocked_get_from_backend:
             returned_from_db_tr_list = get_transformation_revisions(
-                directly_from_db=True
+                params=FilterParams(), directly_from_db=True
             )
             assert returned_from_db_tr_list == tr_list
             assert mocked_get_from_db.call_count == 1
             assert mocked_get_from_backend.call_count == 0
             _, args, kwargs = mocked_get_from_db.mock_calls[0]
-            assert len(args) == 0
-            assert len(kwargs) == 3
-            assert kwargs["include_dependencies"] == False  # default value
-            assert kwargs["include_deprecated"] == True  # default value
-            assert kwargs["unused"] == False  # default value
+            assert len(args) == 1
+            assert len(kwargs) == 0
+            assert isinstance(args[0], FilterParams)
+            assert args[0].include_dependencies == False  # default value
+            assert args[0].include_deprecated == True  # default value
+            assert args[0].unused == False  # default value
 
             params = FilterParams(
                 type=Type.COMPONENT,

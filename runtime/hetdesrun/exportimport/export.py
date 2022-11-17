@@ -13,7 +13,7 @@ import requests
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.exportimport.utils import FilterParams, get_transformation_revisions
-from hetdesrun.models.code import NonEmptyValidStr
+from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
@@ -178,7 +178,7 @@ def export_transformations(
     download_path: str,
     type: Optional[Type] = None,
     state: Optional[State] = None,
-    category: Optional[str] = None,
+    category: Optional[ValidStr] = None,
     ids: Optional[List[UUID]] = None,
     names: Optional[List[NonEmptyValidStr]] = None,
     include_deprecated: bool = True,
@@ -278,7 +278,7 @@ def export_transformations(
             type=type,
             state=state,
             category=category,
-            ids=[str(id) for id in ids] if ids is not None else None,
+            ids=ids,
             names=names,
             include_dependencies=True,
             include_deprecated=include_deprecated,

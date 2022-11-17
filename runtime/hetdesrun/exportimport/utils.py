@@ -1,16 +1,14 @@
 import json
 import logging
 from datetime import datetime
-from enum import Enum
 from posixpath import join as posix_urljoin
-from typing import Dict, List, Optional, Union
+from typing import Dict, List
 from uuid import UUID
 
 import requests
-from pydantic import BaseModel
 
 from hetdesrun.component.code import update_code
-from hetdesrun.models.code import NonEmptyValidStr, ValidStr
+from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -28,83 +26,19 @@ from hetdesrun.webservice.config import get_config
 logger = logging.getLogger(__name__)
 
 
-def info(
-    text: str,
-    param: Optional[
-        Union[UUID, List[UUID], Enum, List[NonEmptyValidStr], ValidStr, bool]
-    ],
-    case: Optional[bool] = None,
-) -> str:
-    """Create a properly formatted info string for an input parameter depending on its type.
-
-    This function is used to generate nice log and error messages.
-
-    The output string is empty if the input **param** is None or in case of a boolean parameter,
-    if the input **case** is False, so that the information can be omitted for default values.
-    """
-    if param is not None and case is None or case is True:
-        param_string = ""
-        if isinstance(param, Enum):
-            param_string = param.value
-        elif isinstance(param, List):
-            param_string = ", ".join(str(element) for element in param)
-        else:
-            param_string = str(param)
-        return text + param_string
-    return ""
-
-
-class FilterParams(BaseModel):
-    type: Optional[Type]
-    state: Optional[State]
-    category: Optional[ValidStr]
-    revision_group_id: Optional[UUID]
-    ids: Optional[List[UUID]]
-    names: Optional[List[NonEmptyValidStr]]
-    include_deprecated: bool = True
-    include_dependencies: bool = False
-    unused: bool = False
-
-    def str(self) -> str:
-        return (
-            "all transformation revisions"
-            + info(" of type ", self.type)
-            + info(" in state ", self.state)
-            + info(" in category ", self.category)
-            + info(" with revision group id ", self.revision_group_id)
-            + info(
-                " unless they are deprecated",
-                self.include_deprecated,
-                case=not self.include_deprecated,
-            )
-            + info(
-                " that are unused",
-                self.unused,
-                case=self.unused,
-            )
-            + info("\nwith ids ", self.ids)
-            + info("\nwith names ", self.names)
-            + info(
-                " including their dependencies",
-                self.include_dependencies,
-                case=self.include_dependencies,
-            )
-        )
-
-
 def get_transformation_revisions(
     params: FilterParams = FilterParams(), directly_from_db: bool = False
 ) -> List[TransformationRevision]:
     logger.info(
-        "Getting " + params.str() + " directly from db" if directly_from_db else ""
+        "Getting transformation revisions with " + repr(params) + " directly from db"
+        if directly_from_db
+        else ""
     )
 
     tr_list: List[TransformationRevision] = []
 
     if directly_from_db:
-        tr_list = get_multiple_transformation_revisions(
-            **params.dict(exclude_none=True)
-        )
+        tr_list = get_multiple_transformation_revisions(params)
     else:
         try:
             headers = sync_wrapped_get_auth_headers(external=True)

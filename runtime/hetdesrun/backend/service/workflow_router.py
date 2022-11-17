@@ -14,6 +14,7 @@ from hetdesrun.backend.service.transformation_router import (
     if_applicable_release_or_deprecate,
     update_content,
 )
+from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -122,7 +123,7 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
     logger.info("get all workflows")
 
     transformation_revision_list = get_multiple_transformation_revisions(
-        type=Type.WORKFLOW
+        FilterParams(type=Type.WORKFLOW)
     )
 
     logger.info("got all workflows")

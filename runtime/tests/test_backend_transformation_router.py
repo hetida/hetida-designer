@@ -6,14 +6,13 @@ from unittest import mock
 from uuid import UUID
 
 import pytest
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
-from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
 from hetdesrun.exportimport.importing import load_json
 from hetdesrun.persistence import get_db_engine, sessionmaker
-from hetdesrun.persistence.dbmodels import Base
+from hetdesrun.persistence.dbmodels import Base, FilterParams
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
@@ -836,37 +835,6 @@ async def test_get_all_transformation_revisions_with_combined_filters(
 
 
 @pytest.mark.asyncio
-async def test_get_all_transformation_revisions_include_dependencies(
-    async_test_client, clean_test_db_engine
-):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(
-            TransformationRevision(**tr_json_component_1)
-        )
-        store_single_transformation_revision(
-            TransformationRevision(**tr_json_workflow_2)
-        )
-
-        url = "/api/transformations/"
-        async with async_test_client as ac:
-            response_two_ids = await ac.get(
-                url,
-                params={
-                    "ids": [get_uuid_from_seed("workflow 2")],
-                    "include_dependencies": True,
-                },
-            )
-
-        assert response_two_ids.status_code == 200
-        assert len(response_two_ids.json()) == 2
-        assert response_two_ids.json()[0] == tr_json_workflow_2
-        assert response_two_ids.json()[1] == tr_json_component_1
-
-
-@pytest.mark.asyncio
 async def test_get_transformation_revision_by_id_with_component(
     async_test_client, clean_test_db_engine
 ):
@@ -1146,7 +1114,7 @@ async def test_delete_transformation_revision_with_component(
                 params={"ignore_state": True},
             )
             assert response.status_code == 204
-            tr_list = get_multiple_transformation_revisions()
+            tr_list = get_multiple_transformation_revisions(FilterParams())
             assert len(tr_list) == 1  # component 3 is still stored in db
 
             response = await ac.delete(
@@ -1155,7 +1123,7 @@ async def test_delete_transformation_revision_with_component(
                 )
             )
             assert response.status_code == 204
-            tr_list = get_multiple_transformation_revisions()
+            tr_list = get_multiple_transformation_revisions(FilterParams())
             assert len(tr_list) == 0
 
 

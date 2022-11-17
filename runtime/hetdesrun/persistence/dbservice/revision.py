@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence import Session, SQLAlchemySession
-from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
+from hetdesrun.persistence.dbmodels import FilterParams, TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.nesting import (
     delete_own_nestings,
@@ -331,32 +331,24 @@ def select_multiple_transformation_revisions(
 
 
 def get_multiple_transformation_revisions(
-    type: Optional[Type] = None,  # pylint: disable=redefined-builtin
-    state: Optional[State] = None,
-    category: Optional[ValidStr] = None,
-    revision_group_id: Optional[UUID] = None,
-    ids: Optional[List[UUID]] = None,
-    names: Optional[List[NonEmptyValidStr]] = None,
-    include_deprecated: bool = True,
-    include_dependencies: bool = False,
-    unused: bool = False,
+    params: FilterParams,
 ) -> List[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
 
     tr_list = select_multiple_transformation_revisions(
-        type=type,
-        state=state,
-        category=category,
-        revision_group_id=revision_group_id,
-        ids=ids,
-        names=names,
-        include_deprecated=include_deprecated,
+        type=params.type,
+        state=params.state,
+        category=params.category,
+        revision_group_id=params.revision_group_id,
+        ids=params.ids,
+        names=params.names,
+        include_deprecated=params.include_deprecated,
     )
 
-    if unused:
+    if params.unused:
         tr_list = [tr for tr in tr_list if is_unused(tr.id)]
 
-    if include_dependencies:
+    if params.include_dependencies:
         tr_ids = [tr.id for tr in tr_list]
         for tr in tr_list:
             if tr.type == Type.WORKFLOW:
@@ -407,7 +399,7 @@ def get_all_nested_transformation_revisions(
 
 def get_latest_revision_id(revision_group_id: UUID) -> UUID:
     revision_group_list = get_multiple_transformation_revisions(
-        state=State.RELEASED, revision_group_id=revision_group_id
+        FilterParams(state=State.RELEASED, revision_group_id=revision_group_id)
     )
     if len(revision_group_list) == 0:
         msg = (
