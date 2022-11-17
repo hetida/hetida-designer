@@ -8,15 +8,3 @@ class DBIntegrityError(DBError):
 
 class DBNotFoundError(DBError):
     pass
-
-
-class DBBadRequestError(DBError):
-    pass
-
-
-class DBTypeError(DBError):
-    pass
-
-
-class DBUpdateForbidden(DBError):
-    pass

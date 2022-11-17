@@ -9,17 +9,17 @@ from sqlalchemy.exc import IntegrityError
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence import Session, SQLAlchemySession
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBBadRequestError,
-    DBIntegrityError,
-    DBNotFoundError,
-    DBUpdateForbidden,
-)
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.nesting import (
     delete_own_nestings,
     find_all_nested_transformation_revisions,
     find_all_nestings,
     update_nesting,
+)
+from hetdesrun.persistence.models.exceptions import (
+    ModifyForbidden,
+    StateConflict,
+    TypeConflict,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -197,7 +197,7 @@ def update_or_create_single_transformation_revision(
             )
 
             if modifiable is False:
-                raise DBUpdateForbidden(msg)
+                raise ModifyForbidden(msg)
 
             update_tr(session, transformation_revision)
 
@@ -247,7 +247,7 @@ def delete_single_transformation_revision(
                 f"delete request with type {type} will not be executed"
             )
             logger.error(msg)
-            raise DBBadRequestError(msg)
+            raise TypeConflict(msg)
 
         if not ignore_state and transformation_revision.state != State.DRAFT:
             msg = (
@@ -255,7 +255,7 @@ def delete_single_transformation_revision(
                 f"since it is in the state {transformation_revision.state}"
             )
             logger.error(msg)
-            raise DBBadRequestError(msg)
+            raise StateConflict(msg)
 
         delete_own_nestings(session, transformation_revision.id)
 
@@ -388,7 +388,7 @@ def get_all_nested_transformation_revisions(
             f"because its type is not WORKFLOW"
         )
         logger.error(msg)
-        raise DBBadRequestError(msg)
+        raise TypeConflict(msg)
 
     with Session() as session, session.begin():
         descendants = find_all_nested_transformation_revisions(

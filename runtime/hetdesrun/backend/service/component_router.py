@@ -15,19 +15,14 @@ from hetdesrun.backend.service.transformation_router import (
     update_content,
 )
 from hetdesrun.component.code import update_code
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBBadRequestError,
-    DBIntegrityError,
-    DBNotFoundError,
-    DBTypeError,
-    DBUpdateForbidden,
-)
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     read_single_transformation_revision,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
+from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
@@ -238,7 +233,7 @@ async def update_component_revision(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except DBUpdateForbidden as e:
+    except ModelConstraintViolation as e:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
@@ -279,10 +274,7 @@ async def delete_component_revision(
         delete_single_transformation_revision(id, type=Type.COMPONENT)
         logger.info("deleted component %s", id)
 
-    except DBTypeError as e:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=str(e)) from e
-
-    except DBBadRequestError as e:
+    except ModelConstraintViolation as e:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     except DBNotFoundError as e:
@@ -381,7 +373,7 @@ async def bind_wiring_to_component_revision(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except DBUpdateForbidden as e:
+    except ModelConstraintViolation as e:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(

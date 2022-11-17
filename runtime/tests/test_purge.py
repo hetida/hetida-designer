@@ -24,11 +24,8 @@ from hetdesrun.exportimport.utils import (
     update_or_create_transformation_revision,
 )
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBIntegrityError,
-    DBNotFoundError,
-    DBUpdateForbidden,
-)
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.models.exceptions import ModifyForbidden
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -337,10 +334,10 @@ def test_update_or_create_transformation_revision_db_integrity_error(caplog):
 
 def test_update_or_create_transformation_revision_db_update_forbidden(caplog):
     with caplog.at_level(logging.INFO):
-        with pytest.raises(DBUpdateForbidden):
+        with pytest.raises(ModifyForbidden):
             with mock.patch(
                 "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
-                side_effect=DBUpdateForbidden,
+                side_effect=ModifyForbidden,
             ):
                 caplog.clear()
                 update_or_create_transformation_revision(

@@ -10,12 +10,7 @@ from sqlalchemy.future.engine import Engine
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence import sessionmaker
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBBadRequestError,
-    DBIntegrityError,
-    DBNotFoundError,
-    DBUpdateForbidden,
-)
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_latest_revision_id,
@@ -26,6 +21,7 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
+from hetdesrun.persistence.models.exceptions import StateConflict, TypeConflict
 from hetdesrun.persistence.models.io import IO, IOConnector, IOInterface
 from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -290,10 +286,10 @@ def test_deleting(clean_test_db_engine):
             with pytest.raises(DBNotFoundError):
                 read_single_transformation_revision(tr_draft_uuid)
 
-            with pytest.raises(DBBadRequestError):
+            with pytest.raises(StateConflict):
                 delete_single_transformation_revision(tr_released_uuid)
 
-            with pytest.raises(DBBadRequestError):
+            with pytest.raises(TypeConflict):
                 delete_single_transformation_revision(
                     tr_workflow_uuid, type=Type.COMPONENT
                 )

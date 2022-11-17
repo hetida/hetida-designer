@@ -21,12 +21,7 @@ from hetdesrun.component.code import update_code
 from hetdesrun.exportimport.utils import info
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.run import PerformanceMeasuredStep
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBBadRequestError,
-    DBIntegrityError,
-    DBNotFoundError,
-    DBUpdateForbidden,
-)
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_latest_revision_id,
@@ -35,6 +30,7 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
+from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
@@ -435,8 +431,8 @@ async def update_transformation_revision(
             "Not found error in DB when trying to access entry for id %s\n%s", id, e
         )
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except DBUpdateForbidden as e:
-        logger.error("Update forbidden for entry with id %s\n%s", id, e)
+    except ModelConstraintViolation as e:
+        logger.error("Update forbidden for transformation with id %s\n%s", id, e)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     logger.debug(persisted_transformation_revision.json())
@@ -481,7 +477,7 @@ async def delete_transformation_revision(
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
-    except (DBBadRequestError, DBIntegrityError) as e:
+    except (ModelConstraintViolation, DBIntegrityError) as e:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
 

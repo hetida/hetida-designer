@@ -11,17 +11,14 @@ from hetdesrun.backend.service.transformation_router import (
     update_content,
 )
 from hetdesrun.component.code import update_code
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBIntegrityError,
-    DBNotFoundError,
-    DBUpdateForbidden,
-)
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
     read_single_transformation_revision,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
+from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
@@ -287,7 +284,7 @@ async def update_transformation_revision(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except DBUpdateForbidden as e:
+    except ModelConstraintViolation as e:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_transformation_dto = (

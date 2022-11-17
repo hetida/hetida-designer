@@ -11,16 +11,13 @@ from pydantic import BaseModel
 
 from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBIntegrityError,
-    DBNotFoundError,
-    DBUpdateForbidden,
-)
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_multiple_transformation_revisions,
     update_or_create_single_transformation_revision,
 )
+from hetdesrun.persistence.models.exceptions import ModifyForbidden
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type, get_backend_basic_auth
@@ -192,8 +189,9 @@ def update_or_create_transformation_revision(
                 id,
                 integrity_err,
             )
-        except DBUpdateForbidden as forbidden_err:
+        except ModifyForbidden as forbidden_err:
             if allow_overwrite_released:
+                # This covers reasons independent of the state, such as changing the type
                 logger.error(
                     "Update forbidden for entry with id %s:\n%s",
                     str(tr.id),
