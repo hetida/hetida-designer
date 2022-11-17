@@ -38,10 +38,17 @@ def info(
     ],
     case: Optional[bool] = None,
 ) -> str:
+    """Create a properly formatted info string for an input parameter depending on its type.
+
+    This function is used to generate nice log and error messages.
+
+    The output string is empty if the input **param** is None or in case of a boolean parameter,
+    if the input **case** is False, so that the information can be omitted for default values.
+    """
     if param is not None and case is None or case is True:
         param_string = ""
         if isinstance(param, Enum):
-            param_string = str(param.value)
+            param_string = param.value
         elif isinstance(param, List):
             param_string = ", ".join(str(element) for element in param)
         else:
