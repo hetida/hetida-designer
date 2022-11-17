@@ -456,7 +456,7 @@ async def test_update_transformation_revision_from_released_workflow_dto(
                 json=dto_json_workflow_1_update,
             )
 
-        assert response.status_code == 403
+        assert response.status_code == 409
 
 
 @pytest.mark.asyncio

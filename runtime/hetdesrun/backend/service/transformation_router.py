@@ -360,7 +360,7 @@ def if_applicable_release_or_deprecate(
             "description": "Id from path does not match id from object in request body"
         },
         status.HTTP_409_CONFLICT: {
-            "description": "DB entry is not modifyable due to status or none matching types"
+            "description": "DB entry is not modifiable due to status or non-matching types"
         },
     },
 )

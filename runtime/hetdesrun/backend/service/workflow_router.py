@@ -41,7 +41,7 @@ workflow_router = HandleTrailingSlashAPIRouter(
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
         status.HTTP_404_NOT_FOUND: {"description": "Workflow not found"},
-        status.HTTP_409_FORBIDDEN: {"description": "Conflict"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )

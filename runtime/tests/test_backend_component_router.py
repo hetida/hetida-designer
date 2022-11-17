@@ -331,7 +331,7 @@ async def test_update_transformation_revision_from_released_component_dto(
                 json=dto_json_component_2_update,
             )
 
-        assert response.status_code == 403
+        assert response.status_code == 409
 
 
 @pytest.mark.asyncio

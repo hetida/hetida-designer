@@ -97,7 +97,7 @@ async def test_update_documentation_of_component_dto_with_unmatching_ids(
                 json=json_of_new_documentation,
             )
 
-        assert response.status_code == 403
+        assert response.status_code == 409
         assert "does not match" in response.json()["detail"]
 
 

@@ -20,7 +20,7 @@ documentation_router = HandleTrailingSlashAPIRouter(
     responses={  # are these only used for display in the Swagger UI?
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
         status.HTTP_404_NOT_FOUND: {"description": "Documentation not found"},
-        status.HTTP_409_FORBIDDEN: {"description": "Forbidden"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )

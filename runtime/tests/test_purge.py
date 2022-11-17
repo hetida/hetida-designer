@@ -298,7 +298,7 @@ def test_update_or_create_transformation_revision_rest_api_error(caplog):
 def test_update_or_create_transformation_revision_rest_api_update_forbidden(caplog):
     with caplog.at_level(logging.INFO):
         resp_mock = mock.Mock()
-        resp_mock.status_code = 403
+        resp_mock.status_code = 409
         with mock.patch(
             "hetdesrun.exportimport.utils.requests.put", return_value=resp_mock
         ):

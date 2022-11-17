@@ -1080,7 +1080,7 @@ async def test_update_transformation_revision_with_released_component(
                 json=tr_json_component_2_update,
             )
 
-        assert response.status_code == 403
+        assert response.status_code == 409
 
 
 @pytest.mark.asyncio
@@ -1137,7 +1137,7 @@ async def test_delete_transformation_revision_with_component(
                     "/api/transformations/", str(get_uuid_from_seed("component 2"))
                 )
             )
-            assert response.status_code == 403
+            assert response.status_code == 409
 
             response = await ac.delete(
                 posix_urljoin(

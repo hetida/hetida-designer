@@ -235,8 +235,8 @@ def update_or_create_transformation_revision(
         )
 
         if response.status_code != 201:
-            if allow_overwrite_released is False and response.status_code == 403:
-                # other reason for 403: type of object in DB and of passed object do not match
+            if allow_overwrite_released is False and response.status_code == 409:
+                # other reason for 409: type of object in DB and of passed object do not match
                 logger.info(
                     "%s with id %s already in DB and released/deprecated",
                     tr.type.value,
