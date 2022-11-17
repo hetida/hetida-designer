@@ -192,7 +192,7 @@ def update_or_create_transformation_revision(
                     str(tr.id),
                     forbidden_err,
                 )
-                raise DBUpdateForbidden(forbidden_err) from forbidden_err
+                raise forbidden_err
             logger.info(
                 "%s with id %s already in DB and released/deprecated",
                 str(tr.id),
