@@ -6,8 +6,7 @@ from pydantic import BaseModel, Field, root_validator
 
 from hetdesrun.backend.models.io import ConnectorFrontendDto
 from hetdesrun.backend.service.utils import to_camel
-from hetdesrun.persistence.models.io import Position
-from hetdesrun.persistence.models.link import Link, Vertex
+from hetdesrun.persistence.models.link import Link, Point, Vertex
 
 
 class PointFrontendDto(BaseModel):
@@ -49,8 +48,8 @@ class WorkflowLinkFrontendDto(BaseModel):
             else workflow_id,
             toConnector=link.end.connector.id,
             path=[
-                PointFrontendDto(posX=position.x, posY=position.y)
-                for position in link.path
+                PointFrontendDto(id=point.id, posX=point.x, posY=point.y)
+                for point in link.path
             ],
         )
 
@@ -72,7 +71,9 @@ class WorkflowLinkFrontendDto(BaseModel):
                 operator=self.to_operator if self.to_operator != workflow_id else None,
                 connector=to_connector.to_connector(),
             ),
-            path=[Position(x=point.pos_x, y=point.pos_y) for point in self.path],
+            path=[
+                Point(id=point.id, x=point.pos_x, y=point.pos_y) for point in self.path
+            ],
         )
 
     class Config:

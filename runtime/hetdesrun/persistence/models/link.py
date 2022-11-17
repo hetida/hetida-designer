@@ -22,6 +22,12 @@ class Vertex(BaseModel):
     )
 
 
+class Point(Position):
+    """"Represents points at which lines representing links are kinked."""
+    
+    id: UUID = Field(default_factory=uuid4)
+
+
 class Link(BaseModel):
     """Links determine how parameter values are passed through the workflow.
 
@@ -33,7 +39,7 @@ class Link(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     start: Vertex
     end: Vertex
-    path: List[Position] = []
+    path: List[Point] = []
 
     # pylint: disable=no-self-argument
     @root_validator()
