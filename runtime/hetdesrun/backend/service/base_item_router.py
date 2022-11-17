@@ -34,7 +34,7 @@ base_item_router = HandleTrailingSlashAPIRouter(
     tags=["base items"],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
@@ -232,7 +232,7 @@ async def update_transformation_revision(
             f"the id of the provided base item DTO {updated_transformation_revision_dto.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
     try:
         updated_transformation_revision = (
@@ -288,7 +288,7 @@ async def update_transformation_revision(
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except DBUpdateForbidden as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_transformation_dto = (
         TransformationRevisionFrontendDto.from_transformation_revision(

@@ -52,8 +52,8 @@ transformation_router = HandleTrailingSlashAPIRouter(
     responses={
         status.HTTP_400_BAD_REQUEST: {"description": "Bad Request"},
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
@@ -258,7 +258,7 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     if transformation_revision.type is not Type.WORKFLOW:
         msg = f"transformation revision {id} is not a workflow!"
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
     assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
 
@@ -359,7 +359,7 @@ def if_applicable_release_or_deprecate(
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
             "description": "Id from path does not match id from object in request body"
         },
-        status.HTTP_403_FORBIDDEN: {
+        status.HTTP_409_CONFLICT: {
             "description": "DB entry is not modifyable due to status or none matching types"
         },
     },
@@ -437,7 +437,7 @@ async def update_transformation_revision(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except DBUpdateForbidden as e:
         logger.error("Update forbidden for entry with id %s\n%s", id, e)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     logger.debug(persisted_transformation_revision.json())
 
@@ -452,7 +452,7 @@ async def update_transformation_revision(
         status.HTTP_204_NO_CONTENT: {
             "description": "Successfully deleted the transformation revision"
         },
-        status.HTTP_403_FORBIDDEN: {
+        status.HTTP_409_CONFLICT: {
             "description": "Transformation revision is already released or deprecated"
         },
     },
@@ -482,7 +482,7 @@ async def delete_transformation_revision(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
     except (DBBadRequestError, DBIntegrityError) as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
 
 async def handle_trafo_revision_execution_request(

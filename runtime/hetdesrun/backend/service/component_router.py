@@ -40,8 +40,8 @@ component_router = HandleTrailingSlashAPIRouter(
     tags=["components"],
     responses={  # are these only used for display in the Swagger UI?
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Component not found"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
@@ -186,7 +186,7 @@ async def update_component_revision(
             f"the id of the component revision DTO {updated_component_dto.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
     try:
         updated_transformation_revision = (
@@ -239,7 +239,7 @@ async def update_component_revision(
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except DBUpdateForbidden as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
@@ -257,7 +257,7 @@ async def update_component_revision(
         status.HTTP_204_NO_CONTENT: {
             "description": "Successfully deleted the component"
         },
-        status.HTTP_403_FORBIDDEN: {"description": "Component is already released"},
+        status.HTTP_409_CONFLICT: {"description": "Component is already released"},
     },
     deprecated=True,
 )
@@ -283,7 +283,7 @@ async def delete_component_revision(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=str(e)) from e
 
     except DBBadRequestError as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
@@ -341,7 +341,7 @@ async def execute_component_revision(
     responses={
         status.HTTP_200_OK: {"description": "OK"},
         status.HTTP_204_NO_CONTENT: {"description": "Successfully bound the component"},
-        status.HTTP_403_FORBIDDEN: {"description": "Wiring is already bound"},
+        status.HTTP_409_CONFLICT: {"description": "Wiring is already bound"},
     },
     deprecated=True,
 )
@@ -381,6 +381,8 @@ async def bind_wiring_to_component_revision(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBUpdateForbidden as e:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_component_dto = ComponentRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision

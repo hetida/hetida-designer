@@ -40,8 +40,8 @@ workflow_router = HandleTrailingSlashAPIRouter(
     tags=["workflows"],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Workflow not found"},
+        status.HTTP_409_FORBIDDEN: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
@@ -220,7 +220,7 @@ async def update_workflow_revision(
             f"the id of the provided workflow revision DTO {updated_workflow_dto.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
     try:
         updated_transformation_revision = (
@@ -273,7 +273,7 @@ async def update_workflow_revision(
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except DBUpdateForbidden as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
@@ -291,7 +291,7 @@ async def update_workflow_revision(
         status.HTTP_204_NO_CONTENT: {
             "description": "Successfully deleted the workflow"
         },
-        status.HTTP_403_FORBIDDEN: {"description": "Workflow is already released"},
+        status.HTTP_409_CONFLICT: {"description": "Workflow is already released"},
     },
     deprecated=True,
 )
@@ -317,7 +317,7 @@ async def delete_workflow_revision(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=str(e)) from e
 
     except DBBadRequestError as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
@@ -375,7 +375,7 @@ async def execute_workflow_revision(
     responses={
         status.HTTP_200_OK: {"description": "OK"},
         status.HTTP_204_NO_CONTENT: {"description": "Successfully bound the workflow"},
-        status.HTTP_403_FORBIDDEN: {"description": "Wiring is already bound"},
+        status.HTTP_409_CONFLICT: {"description": "Wiring is already bound"},
     },
     deprecated=True,
 )
@@ -415,6 +415,8 @@ async def bind_wiring_to_workflow_revision(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBUpdateForbidden as e:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
