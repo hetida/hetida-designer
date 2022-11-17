@@ -23,8 +23,8 @@ class Vertex(BaseModel):
 
 
 class Point(Position):
-    """"Represents points at which lines representing links are kinked."""
-    
+    """ "Represents points at which lines representing links are kinked."""
+
     id: UUID = Field(default_factory=uuid4)
 
 
