@@ -155,6 +155,15 @@ def is_modifiable(
             f"of the stored transformation revision {existing_transformation_revision.id}!"
         )
 
+    existing_tr_dict = existing_transformation_revision.dict()
+    updated_tr_dict = updated_transformation_revision.dict()
+    # allow changing one of the above attributes regardless of the state
+    for attribute in ["test_wiring", "documentation"]:
+        del existing_tr_dict[attribute]
+        del updated_tr_dict[attribute]
+    if existing_tr_dict == updated_tr_dict:
+        return True, ""
+
     if (
         existing_transformation_revision.state == State.DISABLED
         and not allow_overwrite_released
