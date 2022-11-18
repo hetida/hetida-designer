@@ -5,7 +5,7 @@ import re
 import unicodedata
 from pathlib import Path
 from posixpath import join as posix_urljoin
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 from uuid import UUID
 
 import requests
@@ -172,6 +172,22 @@ def get_transformation_from_java_backend(
     return transformation_revision
 
 
+def selection_list_empty_or_contains_value(
+    selection_list: Optional[List[Any]], actual_value: Any
+) -> bool:
+    if selection_list is None:
+        return True
+    return actual_value in selection_list
+
+
+def criterion_unset_or_matches_value(
+    criterion: Optional[Any], actual_value: Any
+) -> bool:
+    if criterion is None:
+        return True
+    return bool(actual_value == criterion)
+
+
 ##Export transformations based on type, id, name and category if provided
 # pylint: disable=redefined-builtin
 def export_transformations(
@@ -268,11 +284,18 @@ def export_transformations(
             raise Exception(msg)
 
         for trafo_json in response.json():
-            transformation_list.append(
-                get_transformation_from_java_backend(
-                    trafo_json["id"], trafo_json["type"]
-                )
-            )
+            if (
+                criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
+                and selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
+                and selection_list_empty_or_contains_value(names, trafo_json["name"])
+                and criterion_unset_or_matches_value(category, trafo_json["category"])
+            ):
+                if include_deprecated or trafo_json["state"] != State.DISABLED:
+                    transformation_list.append(
+                        get_transformation_from_java_backend(
+                            trafo_json["id"], trafo_json["type"]
+                        )
+                    )
     else:
         params = FilterParams(
             type=type,
