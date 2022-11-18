@@ -9,6 +9,7 @@ from typing import Any, List, Optional, Union
 from uuid import UUID
 
 import requests
+from pydantic import ValidationError
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
@@ -283,6 +284,7 @@ def export_transformations(
             )
             raise Exception(msg)
 
+        failed_exports: List[Any] = []
         for trafo_json in response.json():
             if (
                 criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
@@ -291,11 +293,26 @@ def export_transformations(
                 and criterion_unset_or_matches_value(category, trafo_json["category"])
             ):
                 if include_deprecated or trafo_json["state"] != State.DISABLED:
-                    transformation_list.append(
-                        get_transformation_from_java_backend(
-                            trafo_json["id"], trafo_json["type"]
+                    try:
+                        transformation = get_transformation_from_java_backend(
+                            UUID(trafo_json["id"]), Type(trafo_json["type"])
                         )
-                    )
+                    except ValidationError as e:
+                        failed_exports.append((trafo_json, e))
+                    else:
+                        save_transformation(transformation, download_path)
+        for export in failed_exports:
+            trafo_json = export[0]
+            error = export[1]
+            logger.error(
+                "Could not export %s with id %s in category '%s' with name '%s' and tag '%s':\n%s",
+                trafo_json["type"],
+                trafo_json["id"],
+                trafo_json["category"],
+                trafo_json["name"],
+                trafo_json["tag"],
+                error,
+            )
     else:
         params = FilterParams(
             type=type,
@@ -311,6 +328,6 @@ def export_transformations(
             params=params, directly_from_db=directly_from_db
         )
 
-    # Export individual transformation
-    for transformation in transformation_list:
-        save_transformation(transformation, download_path)
+        # Export individual transformation
+        for transformation in transformation_list:
+            save_transformation(transformation, download_path)
