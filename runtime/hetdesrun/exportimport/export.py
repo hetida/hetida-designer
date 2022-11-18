@@ -265,6 +265,11 @@ def export_transformations(
         raise Exception(msg) from e
 
     if java_backend:
+        for index, id in enumerate(ids):
+            if not isinstance(id, UUID):
+                ids[index] = UUID(id)
+
+        
         url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
         response = requests.get(
             url,
