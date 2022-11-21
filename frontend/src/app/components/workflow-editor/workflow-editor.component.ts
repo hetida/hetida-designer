@@ -73,8 +73,8 @@ export class WorkflowEditorComponent {
   }
 
   @Input()
-  set workflowBaseItem(workflowBaseItem: WorkflowTransformation) {
-    this._convertWorkflowToFlowchart(workflowBaseItem);
+  set workflowBaseItem(workflowTransformation: WorkflowTransformation) {
+    this._convertWorkflowToFlowchart(workflowTransformation);
   }
 
   openContextMenu(mouseEvent: CustomEvent): void {
@@ -524,19 +524,21 @@ export class WorkflowEditorComponent {
     this.flowchartConfiguration = this.flowchartConverter.convertWorkflowToFlowchart(
       workflow
     );
-    this.currentWorkflow = (workflow as unknown) as WorkflowBaseItem;
-    if (
-      this.currentWorkflow.operators.some(
-        operator => operator.state === RevisionState.DISABLED
-      )
-    ) {
-      // https://github.com/angular/angular/issues/15634#issuecomment-345504902
-      setTimeout(() =>
-        this.notificationService.warn(
-          'This workflow contains disabled components! Consider updating them to a newer revision!'
-        )
-      );
-    }
+
+    this.currentWorkflow = ({ ...workflow } as unknown) as WorkflowBaseItem;
+    // TODO
+    // if (
+    //   this.currentWorkflow.operators.some(
+    //     operator => operator.state === RevisionState.DISABLED
+    //   )
+    // ) {
+    //   // https://github.com/angular/angular/issues/15634#issuecomment-345504902
+    //   setTimeout(() =>
+    //     this.notificationService.warn(
+    //       'This workflow contains disabled components! Consider updating them to a newer revision!'
+    //     )
+    //   );
+    // }
   }
 
   /**

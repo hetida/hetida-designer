@@ -7,7 +7,6 @@ import {
   IOType
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { Operator } from 'src/app/model/new-api/operator';
 import { Point } from 'src/app/model/point';
 import { v4 as UUID } from 'uuid';
 import {
@@ -25,11 +24,11 @@ export class FlowchartConverterService {
    * @param transformation given base item
    */
   public convertComponentToFlowchart(
-    transformation: WorkflowTransformation
+    transformation: Transformation
   ): FlowchartConfiguration {
     // TODO this method is also used for workflows?
     // should remove constants if transformation is workflow
-    const cleanedComponent = { ...transformation.content.operators };
+    const cleanedComponent = { ...transformation };
     const operator = this.convertBaseItemToFlowchartOperator(
       cleanedComponent,
       0,
@@ -67,13 +66,13 @@ export class FlowchartConverterService {
       io: this.convertWorkflowIOToFlowchartIO(workflowClean),
       links: this.convertWorkflowLinksToFlowchartLinks(workflowClean)
     } as FlowchartConfiguration;
-
+    // TODO no need anymore
     // this.convertWorkflowConstants(workflowClean, flowchart);
 
     return flowchart;
   }
 
-  // TODO No need anymore
+  // TODO no need anymore
   // private convertWorkflowConstants(
   //   workflow: WorkflowBaseItem,
   //   flowchart: FlowchartConfiguration
@@ -125,9 +124,28 @@ export class FlowchartConverterService {
     const components: Array<FlowchartComponent> = [];
 
     for (const operator of workflow.content.operators) {
+      const transformation: Transformation = {
+        id: operator.id,
+        revision_group_id: operator.revision_group_id,
+        name: operator.name,
+        category: '',
+        version_tag: operator.version_tag,
+        state: operator.state,
+        type: operator.type,
+        content: null,
+        io_interface: {
+          inputs: operator.inputs,
+          outputs: operator.outputs
+        },
+        test_wiring: {
+          input_wirings: [],
+          output_wirings: []
+        }
+      };
+
       components.push(
         this.convertBaseItemToFlowchartOperator(
-          operator,
+          transformation,
           operator.position.x,
           operator.position.y
         )
@@ -194,15 +212,41 @@ export class FlowchartConverterService {
     workflow: WorkflowTransformation
   ): FlowchartComponentLink[] {
     const links: Array<FlowchartComponentLink> = [];
+
     for (const link of workflow.content.links) {
-      const linkPath = link.path.map(point => [point.x, point.y]);
+      // filter constant links
+      if (
+        workflow.content.constants.find(constant => constant.id === link.id)
+      ) {
+        continue;
+      }
+
+      const linkPath = link.path.map(position => [position.x, position.y]);
+      // TODO Check for id
       // const linkIds = link.path.map(point => point.id);
+      const linkIds = link.path.map(() => UUID().toString());
+
+      let linkStartOperator = '';
+      let linkEndOperator = '';
+      // if no operator id is given use the transformation id instead
+      if (link.start.operator !== undefined) {
+        linkStartOperator = link.start.operator;
+      } else {
+        linkStartOperator = workflow.id;
+      }
+
+      if (link.end.operator !== undefined) {
+        linkEndOperator = link.end.operator;
+      } else {
+        linkEndOperator = workflow.id;
+      }
+
       links.push({
         uuid: link.id,
-        from: `link-${link.start.operator}_${link.start.connector.id}`,
-        to: `link-${link.end.operator}_${link.end.connector.id}`,
+        from: `link-${linkStartOperator}_${link.start.connector.id}`,
+        to: `link-${linkEndOperator}_${link.end.connector.id}`,
         path: linkPath.length === 0 ? null : linkPath,
-        path_ids: null // linkIds.length === 0 ? null : linkIds
+        path_ids: linkIds.length === 0 ? null : linkIds
       });
     }
     return links;
@@ -270,7 +314,7 @@ export class FlowchartConverterService {
    * @param posY y coordinate of the operator
    */
   private convertBaseItemToFlowchartOperator(
-    transformation: Operator,
+    transformation: Transformation,
     posX: number,
     posY: number
   ): FlowchartComponent {
@@ -292,7 +336,7 @@ export class FlowchartConverterService {
       disabled: transformation.state === RevisionState.DISABLED
     };
 
-    for (const io of transformation.inputs) {
+    for (const io of transformation.io_interface.inputs) {
       component.inputs.push({
         uuid: `${uuid}_${io.id}`,
         data_type: io.data_type,
@@ -304,7 +348,7 @@ export class FlowchartConverterService {
         value: ''
       });
     }
-    for (const io of transformation.outputs) {
+    for (const io of transformation.io_interface.outputs) {
       component.outputs.push({
         uuid: `${uuid}_${io.id}`,
         data_type: io.data_type,
@@ -316,7 +360,6 @@ export class FlowchartConverterService {
         value: ''
       });
     }
-    console.log(component);
     return component;
   }
 }
