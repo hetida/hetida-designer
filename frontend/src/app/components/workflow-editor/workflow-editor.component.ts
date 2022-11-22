@@ -56,7 +56,7 @@ export class WorkflowEditorComponent {
   flowchartConfiguration: FlowchartConfiguration | undefined = undefined;
   flowchartManipulatorConfiguration: SVGManipulatorConfiguration = new SVGManipulatorConfiguration();
 
-  private currentWorkflow: WorkflowBaseItem;
+  private currentWorkflow: WorkflowTransformation;
   private hasChanges = false;
 
   constructor(
@@ -127,13 +127,13 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateLink(element: HTMLElement): void {
-    const link = this.currentWorkflow.links.find(
+    const link = this.currentWorkflow.content.links.find(
       workflowLink => workflowLink.id === element.id
     );
     if (link === undefined) {
       return;
     }
-    const pathData = this.flowchartConverter.convertLinkPathToPoints(element);
+    const pathData = this.flowchartConverter.convertLinkPathToPosition(element);
     if (link.path.length === 0 && pathData.length === 0) {
       return;
     }
@@ -261,7 +261,7 @@ export class WorkflowEditorComponent {
     if (element.getAttribute('dispatcher') !== 'link') {
       return;
     }
-    const link = this.currentWorkflow.links.find(
+    const link = this.currentWorkflow.content.links.find(
       wfLink => wfLink.id === element.id
     );
     if (link !== undefined) {
@@ -275,7 +275,7 @@ export class WorkflowEditorComponent {
       element,
       false
     );
-    const linkPath = this.flowchartConverter.convertLinkPathToPoints(element);
+    const linkPath = this.flowchartConverter.convertLinkPathToPosition(element);
 
     const newLink: WorkflowLink = {
       id: UUID().toString(),
@@ -285,7 +285,7 @@ export class WorkflowEditorComponent {
       toOperator: linkTargetIds.operatorId,
       path: linkPath
     };
-    this.currentWorkflow.links.push(newLink);
+    this.currentWorkflow.content.links.push(newLink);
     element.id = newLink.id;
     this.hasChanges = true;
   }

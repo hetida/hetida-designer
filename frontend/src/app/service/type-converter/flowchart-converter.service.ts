@@ -7,6 +7,7 @@ import {
   IOType
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
+import { Position } from 'src/app/model/new-api/position';
 import { Point } from 'src/app/model/point';
 import { v4 as UUID } from 'uuid';
 import {
@@ -253,10 +254,10 @@ export class FlowchartConverterService {
   }
 
   /**
-   * converts the svg path data and the id's of the points to a Point array
+   * converts the svg path data and the id's of the position to a position array
    * @param link svg link element
    */
-  public convertLinkPathToPoints(link: Element): Point[] {
+  public convertLinkPathToPosition(link: Element): Position[] {
     const linkPath = link.getAttribute('d');
     const linkIds = link.getAttribute('custom-path');
     if (linkPath === null || linkIds === null) {
@@ -270,17 +271,17 @@ export class FlowchartConverterService {
         .split(' ')
         .map(str => Number(str))
     );
+    // TODO Need newIds?
     const newIds = linkIds
       .split(',')
       .map(id => (id === 'x' ? UUID().toString() : id));
     link.setAttribute('custom-path', newIds.join(','));
     return coordinates.map(
-      (coords, index) =>
+      coords =>
         ({
-          posX: coords[0],
-          posY: coords[1],
-          id: newIds[index]
-        } as Point)
+          x: coords[0],
+          y: coords[1]
+        } as Position)
     );
   }
 
