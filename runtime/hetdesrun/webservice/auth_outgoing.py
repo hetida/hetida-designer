@@ -119,9 +119,11 @@ class TokenType(str, Enum):
 
 class TokenResponse(BaseModel):
     access_token: str
-    refresh_token: str
+    refresh_token: Optional[
+        str
+    ] = None  # client credential grants don't provide refreh token
     expires_in: int
-    refresh_expires_in: int
+    refresh_expires_in: int = 0
     token_type: TokenType
     not_before_policy: int = Field(
         ...,
@@ -129,7 +131,7 @@ class TokenResponse(BaseModel):
         le=0,
         description="Expect tokens to be usable immediately!",
     )
-    session_state: str
+    session_state: str = ""
     scope: str
     issue_timestamp: datetime.datetime = Field(
         ...,
@@ -281,6 +283,9 @@ def access_token_still_valid_enough(token_info: TokenResponse) -> bool:
 
 def should_try_refresh(token_info: TokenResponse) -> bool:
     """Checks both tokens' expirations whether a refresh is desirable"""
+    if token_info.refresh_token is None:
+        logger.debug("No refresh token found in token info.")
+        return False
     now = datetime.datetime.now(datetime.timezone.utc)
 
     time_since_issue_in_seconds = (now - token_info.issue_timestamp).total_seconds()
@@ -313,6 +318,7 @@ async def obtain_or_refresh_token(
 
         logger.debug("Access token not fresh enough. Trying to update.")
         if should_try_refresh(existing_token_info):
+            assert existing_token_info.refresh_token is not None  # for mypy
             logger.debug(
                 "Refresh token fresh enough. Trying to update from refresh token"
             )
@@ -369,6 +375,7 @@ class AccessTokenManager:
         self.creds = creds
         self._current_token_info = None
         self._token_thread_lock = threading.Lock()
+        self._token_async_lock = asyncio.Lock()
 
     async def _obtain_or_refresh_token_info(self) -> None:
         token_info = await obtain_or_refresh_token(self.creds, self._current_token_info)
@@ -377,7 +384,8 @@ class AccessTokenManager:
 
     async def get_access_token(self) -> str:
         """Provides a valid access token"""
-        await self._obtain_or_refresh_token_info()
+        async with self._token_async_lock:
+            await self._obtain_or_refresh_token_info()
         assert self._current_token_info is not None  # for mypy
         return self._current_token_info.access_token
 
