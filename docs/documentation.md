@@ -53,3 +53,4 @@ Further information about developing, deploying, connecting, using and running h
 - [Execution via Kafka](./execution/execution_via_kafka.md)
 - [Execution via REST API](./execution/running_transformation_revisions.md)
 - [Timeouts](./execution/timeouts.md)
+- [Scaling](./execution/scaling.md)
