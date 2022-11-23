@@ -269,7 +269,6 @@ def export_transformations(
             if not isinstance(id, UUID):
                 ids[index] = UUID(id)
 
-        
         url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
         response = requests.get(
             url,
