@@ -196,7 +196,7 @@ def export_transformations(
     type: Optional[Type] = None,
     state: Optional[State] = None,
     category: Optional[ValidStr] = None,
-    ids: Optional[List[UUID]] = None,
+    ids: Optional[List[Union[UUID, str]]] = None,
     names: Optional[List[NonEmptyValidStr]] = None,
     include_deprecated: bool = True,
     directly_from_db: bool = False,
@@ -265,9 +265,8 @@ def export_transformations(
         raise Exception(msg) from e
 
     if java_backend:
-        for index, id in enumerate(ids):
-            if not isinstance(id, UUID):
-                ids[index] = UUID(id)
+        if ids is not None:
+            ids = [UUID(id) for id in ids if isinstance(id, str)]
 
         url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
         response = requests.get(
