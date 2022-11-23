@@ -7,6 +7,8 @@ import {
   IOType
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
+import { Connector } from 'src/app/model/new-api/connector';
+import { IOConnector } from 'src/app/model/new-api/io-connector';
 import { Position } from 'src/app/model/new-api/position';
 import { Point } from 'src/app/model/point';
 import { v4 as UUID } from 'uuid';
@@ -290,7 +292,7 @@ export class FlowchartConverterService {
    * @param link given link element
    * @param from if the start (true) or the end (false) operator and connectors should be extracted
    */
-  public getLinkOperatorAndConnector(
+  public getLinkOperatorAndConnectorId(
     link: Element,
     from: boolean
   ): { operatorId: string; connectorId: string } {
@@ -305,6 +307,33 @@ export class FlowchartConverterService {
       operatorId: ids[0],
       connectorId: ids[1]
     };
+  }
+
+  /**
+   * extracts the connector from the given connector id
+   * @param id given connector id
+   * @param workflowIOConnector workflow IOConnector
+   */
+  public getConnectorById(
+    id: string,
+    workflowIOConnector: IOConnector[]
+  ): Connector {
+    const ioConnector: IOConnector = workflowIOConnector.find(
+      wfConnector => wfConnector.id === id
+    );
+
+    if (ioConnector === undefined) {
+      return undefined;
+    }
+
+    const connector: Connector = {
+      id: ioConnector.connector_id,
+      name: ioConnector.connector_name,
+      data_type: ioConnector.data_type,
+      position: ioConnector.position
+    };
+
+    return connector;
   }
 
   // noinspection JSMethodCanBeStatic

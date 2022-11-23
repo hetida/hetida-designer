@@ -42,6 +42,9 @@ import {
   Transformation,
   WorkflowTransformation
 } from '../../model/new-api/transformation';
+import { Link } from 'src/app/model/new-api/link';
+import { IOConnector } from 'src/app/model/new-api/io-connector';
+import { Connector } from 'src/app/model/new-api/connector';
 
 interface IdentifiableEntity {
   id: string;
@@ -267,24 +270,38 @@ export class WorkflowEditorComponent {
     if (link !== undefined) {
       return;
     }
-    const linkSourceIds = this.flowchartConverter.getLinkOperatorAndConnector(
+
+    const linkSourceIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
       element,
       true
     );
-    const linkTargetIds = this.flowchartConverter.getLinkOperatorAndConnector(
+    const linkTargetIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
       element,
       false
     );
+    const startConnector = this.flowchartConverter.getConnectorById(
+      linkSourceIds.connectorId,
+      this.currentWorkflow.content.outputs
+    );
+    const endConnector = this.flowchartConverter.getConnectorById(
+      linkTargetIds.connectorId,
+      this.currentWorkflow.content.inputs
+    );
     const linkPath = this.flowchartConverter.convertLinkPathToPosition(element);
 
-    const newLink: WorkflowLink = {
+    const newLink: Link = {
       id: UUID().toString(),
-      fromConnector: linkSourceIds.connectorId,
-      fromOperator: linkSourceIds.operatorId,
-      toConnector: linkTargetIds.connectorId,
-      toOperator: linkTargetIds.operatorId,
+      start: {
+        operator: linkSourceIds.operatorId,
+        connector: startConnector
+      },
+      end: {
+        operator: linkTargetIds.operatorId,
+        connector: endConnector
+      },
       path: linkPath
     };
+
     this.currentWorkflow.content.links.push(newLink);
     element.id = newLink.id;
     this.hasChanges = true;
@@ -525,20 +542,20 @@ export class WorkflowEditorComponent {
       workflow
     );
 
-    this.currentWorkflow = ({ ...workflow } as unknown) as WorkflowBaseItem;
-    // TODO
-    // if (
-    //   this.currentWorkflow.operators.some(
-    //     operator => operator.state === RevisionState.DISABLED
-    //   )
-    // ) {
-    //   // https://github.com/angular/angular/issues/15634#issuecomment-345504902
-    //   setTimeout(() =>
-    //     this.notificationService.warn(
-    //       'This workflow contains disabled components! Consider updating them to a newer revision!'
-    //     )
-    //   );
-    // }
+    this.currentWorkflow = workflow;
+
+    if (
+      this.currentWorkflow.operators.some(
+        operator => operator.state === RevisionState.DISABLED
+      )
+    ) {
+      // https://github.com/angular/angular/issues/15634#issuecomment-345504902
+      setTimeout(() =>
+        this.notificationService.warn(
+          'This workflow contains disabled components! Consider updating them to a newer revision!'
+        )
+      );
+    }
   }
 
   /**
