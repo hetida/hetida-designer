@@ -47,11 +47,11 @@ The third pattern excels if your workloads do not release the GIL and you need t
 
 Since the data science code executed by the runtime is often CPU-heavy, running runtime instances and other service instances on the same cluster node is usually not a good idea. Other services may not get enough CPU resources when running runtime workloads and if you reserve CPU resources for them you have to limit the runtime CPU resources, usually by a fixed amount, leading to non-optimal CPU usage. Consequently
 
-> You should employ reserved "runtime" nodes. I.e. cluister nodes equipped with appropriate (i.e. high) CPU and memory resources in your cluster on which only runtime pods can be run.
+> You should employ reserved "runtime" nodes. I.e. cluster nodes equipped with appropriate (i.e. high) CPU and memory resources in your cluster on which only runtime pods can be run.
 
 In k8s this can be achieved via node selectors or the node taint mechanism.
 
-> For an efficient, low-effort load balancing it is also recommended to equip these "runtime" nodes with equal resources, i.e. give them all the same amount of CPU cores and memory.
+> For an efficient, low-effort load balancing it is also recommended to equip these "runtime" nodes with equal resources, i.e. give them all the same (high, compared to other nodes) amount of CPU cores and memory.
 
 ### Understanding the impact of load-balancing mechanisms
 
@@ -74,13 +74,13 @@ This allows gunicorn to assign requests to the worker processes that are idle. A
 ### Inter-service load balancing
 An ideal solution would be to
 
-> use an intelligent inter-service load balancer between backend and runtime which ideally takes current and expected load into consideration, has some knowledge about job resource needs and maybe even queues request to decide later, where to distribute them to.
+> use an intelligent inter-service load balancer between backend and runtime which ideally takes current and expected load into consideration, has some knowledge about job resource needs and maybe even queues request to controll the amount of parallely executed tasks.
 
 For example an intelligent load balancer could analyze execution requests and learn from past executions which workflows take a long time to run. Or it could make use of prior knowledge from model registering / experiment management processes. 
 
 Of course this is a highliy-customized load balancing strategy, so at the end this would require to write your own individual load balancing service.
 
-Depending on your scenario It may also be sufficient to just employ a simple load balancer incorporating the "least connection" strategy, for example using an extra[nginx](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/) service or kube-proxy in [IPVS-proxy mode](https://kubernetes.io/docs/concepts/services-networking/service/#proxy-mode-ipvs).
+Depending on your scenario It may also be sufficient to just employ a simple load balancer incorporating the "least connection" strategy, for example using an extra [nginx](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/) service or just kube-proxy in [IPVS-proxy mode](https://kubernetes.io/docs/concepts/services-networking/service/#proxy-mode-ipvs).
 
 ### Understanding async execution and IO behaviour
 As mentioned above, the hetida designer runtime runs workflows inside the default async event loop of a worker process. During workflow execution, between each operator execution, control is given back to the event loop, allowing other tasks to gain control. Furthermore operator entry point functions can be async and consequently even inside code execution control can switch to other tasks on the event loop.
