@@ -18,6 +18,7 @@ from hetdesrun.runtime.engine.plain.parsing import (
     parse_workflow_input,
 )
 from hetdesrun.runtime.engine.plain.workflow import obtain_all_nodes
+from hetdesrun.runtime.exceptions import WorkflowInputDataValidationError
 from hetdesrun.runtime.logging import execution_context_filter, job_id_context_filter
 from hetdesrun.utils import model_to_pretty_json_str
 from hetdesrun.wiring import (
@@ -68,6 +69,18 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
             output_results_by_output_name={},
             job_id=runtime_input.job_id,
         )
+    except WorkflowInputDataValidationError as e:
+        runtime_logger.info(
+            "Workflow Input Data Validation Error during workflow execution",
+            exc_info=True,
+        )
+        return WorkflowExecutionResult(
+            result="failure",
+            error=str(e),
+            traceback=traceback.format_exc(),
+            output_results_by_output_name={},
+            job_id=runtime_input.job_id,
+        )
 
     # Load data
     try:
@@ -101,9 +114,22 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
     ]
 
     # Provide data as constants
-    parsed_wf.add_constant_providing_node(
-        constant_providing_data, id_suffix="dynamic_data"
-    )
+    try:
+        parsed_wf.add_constant_providing_node(
+            constant_providing_data, id_suffix="dynamic_data"
+        )
+    except WorkflowInputDataValidationError as exc:
+        runtime_logger.info(
+            "Input Data Validation Error during data provision",
+            exc_info=True,
+        )
+        return WorkflowExecutionResult(
+            result="failure",
+            error=str(exc),
+            traceback=traceback.format_exc(),
+            output_results_by_output_name={},
+            job_id=runtime_input.job_id,
+        )
 
     # run workflow
 
