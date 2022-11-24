@@ -1,0 +1,1021 @@
+{
+  "category": "Examples",
+  "content": {
+    "constants": [],
+    "inputs": [
+      {
+        "connector_id": "f103c395-92b6-444d-320a-93950ed6d857",
+        "connector_name": "input",
+        "data_type": "SERIES",
+        "id": "c4be35c1-25a7-42bb-88ba-3953f5fb38ac",
+        "name": "timeseries",
+        "operator_id": "8bac6582-0568-4391-ac88-4e60e26ca7c4",
+        "operator_name": "timeseries",
+        "position": {
+          "x": -485,
+          "y": 332
+        }
+      },
+      {
+        "connector_id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+        "connector_name": "input",
+        "data_type": "STRING",
+        "id": "f212a92f-802b-4a4b-ba45-ac64fe8c0c0e",
+        "name": "window_size",
+        "operator_id": "77bdd760-f1b8-4630-82f1-451d30ca69da",
+        "operator_name": "window_size",
+        "position": {
+          "x": -480,
+          "y": 492
+        }
+      },
+      {
+        "connector_id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+        "connector_name": "input",
+        "data_type": "STRING",
+        "id": "c8843c5e-e871-4459-921a-d77dbf3d7bfd",
+        "name": "interval_type",
+        "operator_id": "124c32b3-c184-411b-879a-418726cf68d1",
+        "operator_name": "interval_type",
+        "position": {
+          "x": -475,
+          "y": 632
+        }
+      },
+      {
+        "connector_id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+        "connector_name": "input",
+        "data_type": "STRING",
+        "id": "3c17faff-a996-495f-964b-32dbdfe3bcad",
+        "name": "label_position",
+        "operator_id": "06f34744-258d-4615-8516-0152ee01814b",
+        "operator_name": "label_position",
+        "position": {
+          "x": -480,
+          "y": 782
+        }
+      },
+      {
+        "connector_id": "8aa8f60e-0bd5-41d4-b511-372b3660c189",
+        "connector_name": "window_frequency",
+        "data_type": "STRING",
+        "id": "0f685fe9-541a-477d-99f5-4afe50287b30",
+        "name": "window_frequency",
+        "operator_id": "e2a9236d-e420-426b-9f1e-59af4fcde251",
+        "operator_name": "Moving Time Window Mean",
+        "position": {
+          "x": 385,
+          "y": 320
+        }
+      },
+      {
+        "connector_id": "a29e7af3-4be2-4cbb-9f78-1b7520ed5142",
+        "connector_name": "frequency_offset",
+        "data_type": "STRING",
+        "id": "c71f2f87-8982-4f9e-bd5b-841dcbfcb755",
+        "name": "frequency_offset",
+        "operator_id": "e2a9236d-e420-426b-9f1e-59af4fcde251",
+        "operator_name": "Moving Time Window Mean",
+        "position": {
+          "x": 385,
+          "y": 350
+        }
+      },
+      {
+        "connector_id": "6276625e-33a2-4e01-8b55-0c452e5c46ac",
+        "connector_name": "plotting_mode",
+        "data_type": "STRING",
+        "id": "5d8b2526-b1f2-4294-9293-1f72d737cae5",
+        "name": "plotting_mode",
+        "operator_id": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5",
+        "operator_name": "Moving Window Aggregated Timeseries Plot",
+        "position": {
+          "x": 1170,
+          "y": 810
+        }
+      }
+    ],
+    "links": [
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "2e68e763-81db-4127-84cb-80e0c7e3f080",
+            "name": "label_position",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e2a9236d-e420-426b-9f1e-59af4fcde251"
+        },
+        "id": "0099bffd-f699-474e-8333-10b1056127ef",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "06f34744-258d-4615-8516-0152ee01814b"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "5bfe6402-81cc-49ef-beb2-456bbfbbd6cb",
+            "name": "timeseries",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e2a9236d-e420-426b-9f1e-59af4fcde251"
+        },
+        "id": "93982faa-40fc-41c1-9008-0f6fb6cbac18",
+        "path": [
+          {
+            "x": 135,
+            "y": 342
+          },
+          {
+            "x": 375,
+            "y": 272
+          },
+          {
+            "x": 625,
+            "y": 270
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "8bac6582-0568-4391-ac88-4e60e26ca7c4"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "abb7a7e9-fda2-4e74-9e0c-14574410008a",
+            "name": "interval_type",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e2a9236d-e420-426b-9f1e-59af4fcde251"
+        },
+        "id": "ff8e3157-d871-40d5-a290-cf0a6192a63c",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "124c32b3-c184-411b-879a-418726cf68d1"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "1c0ddc42-cd17-4378-9f07-9930c1a1f7f2",
+            "name": "window_size",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e2a9236d-e420-426b-9f1e-59af4fcde251"
+        },
+        "id": "26433460-2dc6-486a-9df9-743c610c6a20",
+        "path": [
+          {
+            "x": 140,
+            "y": 502
+          },
+          {
+            "x": 370,
+            "y": 302
+          },
+          {
+            "x": 625,
+            "y": 300
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "77bdd760-f1b8-4630-82f1-451d30ca69da"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "6c8f83ee-3c55-45be-b893-72c0301ee355",
+            "name": "aggregated_timeseries",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5"
+        },
+        "id": "a64a979e-f6b5-44ce-8bd9-5376736b38fd",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "c81dedf8-99e5-431f-ab4e-b6db9eaf7772",
+            "name": "window_means",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e2a9236d-e420-426b-9f1e-59af4fcde251"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "93d14beb-1ec6-4c16-9954-797cc91ec152",
+            "name": "window_size",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5"
+        },
+        "id": "7c4be7e7-0d34-4c5a-8699-15496b22f06e",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "77bdd760-f1b8-4630-82f1-451d30ca69da"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "0f92fa34-ee3d-4e3c-927d-4f82a9bb7afd",
+            "name": "original_timeseries",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5"
+        },
+        "id": "c40cd133-e464-404b-b66e-c94c5f8d33ce",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "8bac6582-0568-4391-ac88-4e60e26ca7c4"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "a306bb25-1271-4d8c-b3d5-9f4db23807d9",
+            "name": "interval_type",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5"
+        },
+        "id": "94190951-f237-4f53-93d5-6eb95ec6b753",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "124c32b3-c184-411b-879a-418726cf68d1"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "629d3bfb-3e54-49d6-ba48-7959a5482139",
+            "name": "label_position",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5"
+        },
+        "id": "82b2d3f9-e435-4fe6-b454-bf2139c92150",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "06f34744-258d-4615-8516-0152ee01814b"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "f103c395-92b6-444d-320a-93950ed6d857",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "8bac6582-0568-4391-ac88-4e60e26ca7c4"
+        },
+        "id": "087ed967-0fe9-4b8b-92e3-c63170448c1a",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "SERIES",
+            "id": "c4be35c1-25a7-42bb-88ba-3953f5fb38ac",
+            "name": "timeseries",
+            "position": {
+              "x": -485,
+              "y": 332
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "77bdd760-f1b8-4630-82f1-451d30ca69da"
+        },
+        "id": "66759a89-24c8-464b-9a29-20550f608854",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "f212a92f-802b-4a4b-ba45-ac64fe8c0c0e",
+            "name": "window_size",
+            "position": {
+              "x": -480,
+              "y": 492
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "124c32b3-c184-411b-879a-418726cf68d1"
+        },
+        "id": "cd42b820-250c-4315-9db7-10e52cf183fc",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "c8843c5e-e871-4459-921a-d77dbf3d7bfd",
+            "name": "interval_type",
+            "position": {
+              "x": -475,
+              "y": 632
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "06f34744-258d-4615-8516-0152ee01814b"
+        },
+        "id": "bf9ad03f-0ced-4346-b843-48ced0c6be95",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "3c17faff-a996-495f-964b-32dbdfe3bcad",
+            "name": "label_position",
+            "position": {
+              "x": -480,
+              "y": 782
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "8aa8f60e-0bd5-41d4-b511-372b3660c189",
+            "name": "window_frequency",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e2a9236d-e420-426b-9f1e-59af4fcde251"
+        },
+        "id": "3a340b85-049a-4cf7-b57b-2f586ebeca95",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "0f685fe9-541a-477d-99f5-4afe50287b30",
+            "name": "window_frequency",
+            "position": {
+              "x": 385,
+              "y": 320
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "a29e7af3-4be2-4cbb-9f78-1b7520ed5142",
+            "name": "frequency_offset",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e2a9236d-e420-426b-9f1e-59af4fcde251"
+        },
+        "id": "71a70745-9ab7-47f7-bf21-18744abfca98",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "c71f2f87-8982-4f9e-bd5b-841dcbfcb755",
+            "name": "frequency_offset",
+            "position": {
+              "x": 385,
+              "y": 350
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "6276625e-33a2-4e01-8b55-0c452e5c46ac",
+            "name": "plotting_mode",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5"
+        },
+        "id": "48048401-f718-4d4e-8e9f-0cd10d98f3bc",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "5d8b2526-b1f2-4294-9293-1f72d737cae5",
+            "name": "plotting_mode",
+            "position": {
+              "x": 1170,
+              "y": 810
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "6c856da8-a189-4766-9ca6-c4d4269678e3",
+            "name": "plot",
+            "position": {
+              "x": 1870,
+              "y": 660
+            }
+          }
+        },
+        "id": "05135d27-b5e0-4982-b5b6-38de98e79d16",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "PLOTLYJSON",
+            "id": "5c3b2c95-872a-4d08-91ff-a847532af488",
+            "name": "plot",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5"
+        }
+      }
+    ],
+    "operators": [
+      {
+        "id": "8bac6582-0568-4391-ac88-4e60e26ca7c4",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "id": "f103c395-92b6-444d-320a-93950ed6d857",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "timeseries",
+        "outputs": [
+          {
+            "data_type": "SERIES",
+            "id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": -235,
+          "y": 272
+        },
+        "revision_group_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+        "state": "RELEASED",
+        "transformation_id": "bfa27afc-dea8-b8aa-4b15-94402f0739b6",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "77bdd760-f1b8-4630-82f1-451d30ca69da",
+        "inputs": [
+          {
+            "data_type": "STRING",
+            "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "window_size",
+        "outputs": [
+          {
+            "data_type": "STRING",
+            "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": -230,
+          "y": 432
+        },
+        "revision_group_id": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+        "state": "RELEASED",
+        "transformation_id": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "124c32b3-c184-411b-879a-418726cf68d1",
+        "inputs": [
+          {
+            "data_type": "STRING",
+            "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "interval_type",
+        "outputs": [
+          {
+            "data_type": "STRING",
+            "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": -225,
+          "y": 572
+        },
+        "revision_group_id": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+        "state": "RELEASED",
+        "transformation_id": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "06f34744-258d-4615-8516-0152ee01814b",
+        "inputs": [
+          {
+            "data_type": "STRING",
+            "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "label_position",
+        "outputs": [
+          {
+            "data_type": "STRING",
+            "id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
+            "name": "output",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": -230,
+          "y": 722
+        },
+        "revision_group_id": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+        "state": "RELEASED",
+        "transformation_id": "2b1b474f-ddf5-1f4d-fec4-17ef9122112b",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "e2a9236d-e420-426b-9f1e-59af4fcde251",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "id": "5bfe6402-81cc-49ef-beb2-456bbfbbd6cb",
+            "name": "timeseries",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "1c0ddc42-cd17-4378-9f07-9930c1a1f7f2",
+            "name": "window_size",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "8aa8f60e-0bd5-41d4-b511-372b3660c189",
+            "name": "window_frequency",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "a29e7af3-4be2-4cbb-9f78-1b7520ed5142",
+            "name": "frequency_offset",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "abb7a7e9-fda2-4e74-9e0c-14574410008a",
+            "name": "interval_type",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "2e68e763-81db-4127-84cb-80e0c7e3f080",
+            "name": "label_position",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Moving Time Window Mean",
+        "outputs": [
+          {
+            "data_type": "SERIES",
+            "id": "c81dedf8-99e5-431f-ab4e-b6db9eaf7772",
+            "name": "window_means",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 635,
+          "y": 200
+        },
+        "revision_group_id": "0b98c587-601f-4a03-9f17-02f857d3a741",
+        "state": "RELEASED",
+        "transformation_id": "e4682ac2-9a53-4fac-a4ea-e766666ee27e",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5",
+        "inputs": [
+          {
+            "data_type": "SERIES",
+            "id": "0f92fa34-ee3d-4e3c-927d-4f82a9bb7afd",
+            "name": "original_timeseries",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "SERIES",
+            "id": "6c8f83ee-3c55-45be-b893-72c0301ee355",
+            "name": "aggregated_timeseries",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "93d14beb-1ec6-4c16-9954-797cc91ec152",
+            "name": "window_size",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "a306bb25-1271-4d8c-b3d5-9f4db23807d9",
+            "name": "interval_type",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "629d3bfb-3e54-49d6-ba48-7959a5482139",
+            "name": "label_position",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "6276625e-33a2-4e01-8b55-0c452e5c46ac",
+            "name": "plotting_mode",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Moving Window Aggregated Timeseries Plot",
+        "outputs": [
+          {
+            "data_type": "PLOTLYJSON",
+            "id": "5c3b2c95-872a-4d08-91ff-a847532af488",
+            "name": "plot",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1420,
+          "y": 600
+        },
+        "revision_group_id": "f8c5e505-bb87-4814-bf77-6ce1698851ff",
+        "state": "RELEASED",
+        "transformation_id": "eb46db4e-aab5-4f93-8330-9423f0a2a34a",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      }
+    ],
+    "outputs": [
+      {
+        "connector_id": "5c3b2c95-872a-4d08-91ff-a847532af488",
+        "connector_name": "connector_name",
+        "data_type": "PLOTLYJSON",
+        "id": "6c856da8-a189-4766-9ca6-c4d4269678e3",
+        "name": "plot",
+        "operator_id": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5",
+        "operator_name": "Moving Window Aggregated Timeseries Plot",
+        "position": {
+          "x": 1870,
+          "y": 660
+        }
+      }
+    ]
+  },
+  "description": "Calculates shifted time window averages for a contant frequency",
+  "documentation": "# Moving Time Window Mean Example\n## Description\nThis workflow calculates the mean of observations in time windows of fixed size moving over the data with a fixed frequency and plots the aggregated timeseries together with the original timeseries.\n\n## Inputs\n* **timeseries** (Pandas Series): Series to perform the moving mean calculation on.\n* **window_size** (String): Time span of each window. Can be either a pandas frequency string based on [date offset aliases](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases) or a timedelta string.\n* **window_frequency** (String): Time span between window starts. Can be either a pandas frequency string based on [date offset aliases](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases) or a timedelta string. For directly consecutive, non-overlapping windows set **window_frequency** to the same value as **window_size**.\n* **frequency_offset** (String): Offset of the window starts compared to 1970-01-01 00:00:00. Can be either a pandas frequency string based on [date offset aliases](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases) or a timedelta string. In most cases no offset is necessary, so this can be set to zero with any time unit, e.g. \"0S\". \n* **interval_type** (String): The string must be one of \"left_closed\", \"right_open\", \"right_closed\", \"left_open\", \"closed\", or \"open\". In case a datapoint is on the left or right border of a window this option determines if it belongs to that window or not, but potentially a neighbouring window.\n* **label_position** (String): The string must be either \"left\", \"center\", or \"right\". This option determines which timestamp is provided to represent the window for the corresponding mean in the output time series.\n* **plotting_mode** (String): The string must be either \"lines\" or \"dots_and_windows\"\n\n## Outputs\n* **plot** (Plotly JSON): The generated Plotly JSON. This is used by the hetida designer frontend for plotting the results.\n\n## Details\nThe datapoints of the **timeseries** are associated with time windows whose lengths are specified by **window_size**, and which are repeated with the frequency specified by **window_frequency** and the offset specified by **frequency_offset**.\n\nThe parameter **interval_type** is used to determine if a datapoint just on the edge of a window belongs to that window. The values \"left_closed\" and \"right_open\" mean that a point on the left edge of a window belongs to this window, whereas a point on its right edge does not belong to it. The values \"right_closed\" and \"left_open\" mean the same but vice versa, wheras \"closed\" means that both belong to the window, and \"open\" means that none of these points belong to the window.\n\nThe mean of all datapoints associated to the same time period is calculated. The value of **label_position** determines at which position of the window the label for the mean value of the window should be placed.\n\nThe time series does not need to have a regular frequency, and the window size can even be smaller than the smallest distance between successive observations, which then results in empty windows. For empty windows, the result value is NaN.\nIf NaN values are present in the original time series, they are eliminated before calculating the mean.\n\nTo reduce the runtime, if possible (**window_frequency** and **window_size** are identical, the **label_position** is \"left\" or \"right\") the pandas function resample is used instead of the pandas function rolling.\n\nIf the **plotting_mode** is set to 'lines' the window mean values as well as the datapoints are displayed as lines or if it is set to 'dots_and_windows' they are displayed by individual markers together with the windows for which the mean values have been calculated. In that case:\n* The **window_size** is indicated by plotting lines of the corresponding horizontal length at the position of each aggregation value.\n* The **interval_type** specifies which sides of the windows are closed, which is indicated by horizontal triangles at the edges of this line, pointing inward.\n* A dot indicates the position of the timestamp along the line corresponding to the aggregation value corresponding to **label_position**. Technically, the line is placed relative to the dot according to this information, which can be important when looking for reasons for unexpected results.\n* A dot indicates the position of the timestamp along the line corresponding to the aggregation value of **label_position**. Technically, the line is placed relative to the point according to this information, which can be important when looking for reasons for unexpected results.\n\n## Examples\nThe json input of a typical call of this component is\n```\n{\n    \"data_timeseries\": {\n        \"2022-12-06 23:17:14+00:00\": 14.360248,\n        \"2022-12-06 23:22:14+00:00\": 14.473486,\n        \"2022-12-06 23:27:14+00:00\": 14.744616,\n        \"2022-12-06 23:32:14+00:00\": 15.729985,\n        \"2022-12-06 23:37:14+00:00\": 14.945974,\n        \"2022-12-06 23:42:14+00:00\": 15.311936,\n        \"2022-12-06 23:47:14+00:00\": 13.721003,\n        \"2022-12-06 23:52:14+00:00\": 14.616136,\n        \"2022-12-06 23:57:14+00:00\": 13.544031,\n        \"2022-12-07 00:02:14+00:00\": 14.823713,\n        \"2022-12-07 00:07:14+00:00\": 15.258110,\n        \"2022-12-07 00:12:14+00:00\": 14.669657,\n        \"2022-12-07 00:17:14+00:00\": 13.963869,\n        \"2022-12-07 00:22:14+00:00\": 14.962489,\n        \"2022-12-07 00:27:14+00:00\": 13.811295,\n        \"2022-12-07 00:32:14+00:00\": 14.672031,\n        \"2022-12-07 00:37:14+00:00\": 15.038961,\n        \"2022-12-07 00:42:14+00:00\": 15.581626,\n        \"2022-12-07 00:47:14+00:00\": 15.183799,\n        \"2022-12-07 00:52:14+00:00\": 14.859828,\n        \"2022-12-07 00:57:14+00:00\": 14.865390,\n        \"2022-12-07 01:02:14+00:00\": 14.221285,\n        \"2022-12-07 01:07:14+00:00\": 14.225866,\n        \"2022-12-07 01:12:14+00:00\": 15.461512,\n        \"2022-12-07 01:17:14+00:00\": 12.252256,\n        \"2022-12-07 01:22:14+00:00\": 13.686977,\n        \"2022-12-07 01:27:14+00:00\": 13.787693,\n        \"2022-12-07 01:32:14+00:00\": 14.528163,\n        \"2022-12-07 01:37:14+00:00\": 14.218455,\n        \"2022-12-07 01:42:14+00:00\": 13.477046,\n        \"2022-12-07 01:47:14+00:00\": 13.925391,\n        \"2022-12-07 01:52:14+00:00\": 14.947494,\n        \"2022-12-07 01:57:14+00:00\": 14.591019,\n        \"2022-12-07 02:02:14+00:00\": 15.930415,\n        \"2022-12-07 02:07:14+00:00\": 15.072922,\n        \"2022-12-07 02:12:14+00:00\": 14.875850,\n        \"2022-12-07 02:17:14+00:00\": 15.044753,\n        \"2022-12-07 02:22:14+00:00\": 15.525060,\n        \"2022-12-07 02:27:14+00:00\": 13.597114,\n        \"2022-12-07 02:32:14+00:00\": 14.499883,\n        \"2022-12-07 02:37:14+00:00\": 14.095923,\n        \"2022-12-07 02:42:14+00:00\": 15.211422,\n        \"2022-12-07 02:47:14+00:00\": 14.847283,\n        \"2022-12-07 02:52:14+00:00\": 15.036699,\n        \"2022-12-07 02:57:14+00:00\": 14.336612,\n        \"2022-12-07 03:02:14+00:00\": 14.517888,\n        \"2022-12-07 03:07:14+00:00\": 13.787849,\n        \"2022-12-07 03:12:14+00:00\": 13.190419,\n        \"2022-12-07 03:17:14+00:00\": 15.435615,\n        \"2022-12-07 03:22:14+00:00\": 13.426738\n    },\n    \"window_size\": \"15min\",\n    \"window_frequency\": \"5min\",\n    \"frequency_offset\": \"4min\",\n    \"interval type\": \"left closed\",\n    \"label_positions\": \"left\"\n    \"plotting_mode\": \"dots_and_windows\"\n}\n```",
+  "id": "0580751a-70ed-4f73-99c8-41541eb86af3",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "SERIES",
+        "id": "c4be35c1-25a7-42bb-88ba-3953f5fb38ac",
+        "name": "timeseries"
+      },
+      {
+        "data_type": "STRING",
+        "id": "f212a92f-802b-4a4b-ba45-ac64fe8c0c0e",
+        "name": "window_size"
+      },
+      {
+        "data_type": "STRING",
+        "id": "c8843c5e-e871-4459-921a-d77dbf3d7bfd",
+        "name": "interval_type"
+      },
+      {
+        "data_type": "STRING",
+        "id": "3c17faff-a996-495f-964b-32dbdfe3bcad",
+        "name": "label_position"
+      },
+      {
+        "data_type": "STRING",
+        "id": "0f685fe9-541a-477d-99f5-4afe50287b30",
+        "name": "window_frequency"
+      },
+      {
+        "data_type": "STRING",
+        "id": "c71f2f87-8982-4f9e-bd5b-841dcbfcb755",
+        "name": "frequency_offset"
+      },
+      {
+        "data_type": "STRING",
+        "id": "5d8b2526-b1f2-4294-9293-1f72d737cae5",
+        "name": "plotting_mode"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "PLOTLYJSON",
+        "id": "6c856da8-a189-4766-9ca6-c4d4269678e3",
+        "name": "plot"
+      }
+    ]
+  },
+  "name": "Moving Time Window Mean Example",
+  "released_timestamp": "2022-11-23T17:09:59.621738+00:00",
+  "revision_group_id": "ecbcb3f0-4873-4233-a1d0-9d0316036156",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2022-12-06 23:17:14+00:00\": 14.360248,\n    \"2022-12-06 23:22:14+00:00\": 14.473486,\n    \"2022-12-06 23:27:14+00:00\": 14.744616,\n    \"2022-12-06 23:32:14+00:00\": 15.729985,\n    \"2022-12-06 23:37:14+00:00\": 14.945974,\n    \"2022-12-06 23:42:14+00:00\": 15.311936,\n    \"2022-12-06 23:47:14+00:00\": 13.721003,\n    \"2022-12-06 23:52:14+00:00\": 14.616136,\n    \"2022-12-06 23:57:14+00:00\": 13.544031,\n    \"2022-12-07 00:02:14+00:00\": 14.823713,\n    \"2022-12-07 00:07:14+00:00\": 15.258110,\n    \"2022-12-07 00:12:14+00:00\": 14.669657,\n    \"2022-12-07 00:17:14+00:00\": 13.963869,\n    \"2022-12-07 00:22:14+00:00\": 14.962489,\n    \"2022-12-07 00:27:14+00:00\": 13.811295,\n    \"2022-12-07 00:32:14+00:00\": 14.672031,\n    \"2022-12-07 00:37:14+00:00\": 15.038961,\n    \"2022-12-07 00:42:14+00:00\": 15.581626,\n    \"2022-12-07 00:47:14+00:00\": 15.183799,\n    \"2022-12-07 00:52:14+00:00\": 14.859828,\n    \"2022-12-07 00:57:14+00:00\": 14.865390,\n    \"2022-12-07 01:02:14+00:00\": 14.221285,\n    \"2022-12-07 01:07:14+00:00\": 14.225866,\n    \"2022-12-07 01:12:14+00:00\": 15.461512,\n    \"2022-12-07 01:17:14+00:00\": 12.252256,\n    \"2022-12-07 01:22:14+00:00\": 13.686977,\n    \"2022-12-07 01:27:14+00:00\": 13.787693,\n    \"2022-12-07 01:32:14+00:00\": 14.528163,\n    \"2022-12-07 01:37:14+00:00\": 14.218455,\n    \"2022-12-07 01:42:14+00:00\": 13.477046,\n    \"2022-12-07 01:47:14+00:00\": 13.925391,\n    \"2022-12-07 01:52:14+00:00\": 14.947494,\n    \"2022-12-07 01:57:14+00:00\": 14.591019,\n    \"2022-12-07 02:02:14+00:00\": 15.930415,\n    \"2022-12-07 02:07:14+00:00\": 15.072922,\n    \"2022-12-07 02:12:14+00:00\": 14.875850,\n    \"2022-12-07 02:17:14+00:00\": 15.044753,\n    \"2022-12-07 02:22:14+00:00\": 15.525060,\n    \"2022-12-07 02:27:14+00:00\": 13.597114,\n    \"2022-12-07 02:32:14+00:00\": 14.499883,\n    \"2022-12-07 02:37:14+00:00\": 14.095923,\n    \"2022-12-07 02:42:14+00:00\": 15.211422,\n    \"2022-12-07 02:47:14+00:00\": 14.847283,\n    \"2022-12-07 02:52:14+00:00\": 15.036699,\n    \"2022-12-07 02:57:14+00:00\": 14.336612,\n    \"2022-12-07 03:02:14+00:00\": 14.517888,\n    \"2022-12-07 03:07:14+00:00\": 13.787849,\n    \"2022-12-07 03:12:14+00:00\": 13.190419,\n    \"2022-12-07 03:17:14+00:00\": 15.435615,\n    \"2022-12-07 03:22:14+00:00\": 13.426738\n}"
+        },
+        "workflow_input_name": "timeseries"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "15min"
+        },
+        "workflow_input_name": "window_size"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "left_closed"
+        },
+        "workflow_input_name": "interval_type"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "center"
+        },
+        "workflow_input_name": "label_position"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "5min"
+        },
+        "workflow_input_name": "window_frequency"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "4min"
+        },
+        "workflow_input_name": "frequency_offset"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "dots_and_windows"
+        },
+        "workflow_input_name": "plotting_mode"
+      }
+    ],
+    "output_wirings": []
+  },
+  "type": "WORKFLOW",
+  "version_tag": "1.0.0"
+}
