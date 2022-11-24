@@ -464,6 +464,7 @@ export class WorkflowEditorComponent {
       }
       operator.name = data;
       this.workflowService.updateWorkflow(this.currentWorkflow);
+      // TODO
       // this._convertWorkflowToFlowchart(this.currentWorkflow);
     });
   }
