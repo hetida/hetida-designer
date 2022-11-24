@@ -19,7 +19,8 @@ from hetdesrun.utils import (
     get_backend_basic_auth,
     selection_list_empty_or_contains_value,
 )
-from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -80,8 +81,15 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
     """
     Loads a single transformation revision together with its documentation based on its id
     """
-
-    headers = get_auth_headers()
+    try:
+        headers = sync_wrapped_get_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for external request to old java backend."
+            f" Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise Exception(msg) from e
 
     if type == Type.COMPONENT:
         url = posix_urljoin(get_config().hd_backend_api_url, "components", str(id))
@@ -218,7 +226,15 @@ def export_transformations(
 
     hetdesrun.backend.models.wiring.EXPORT_MODE = True
 
-    headers = get_auth_headers()
+    try:
+        headers = sync_wrapped_get_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for external request for exporting transformations."
+            f" Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise Exception(msg) from e
 
     endpoint = "transformations" if not java_backend else "base-items"
 

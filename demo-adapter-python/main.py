@@ -13,10 +13,9 @@ from project directory.
 
 # pylint: disable=wrong-import-order
 import logging
+
 from demo_adapter_python import configure_logging
-
 from demo_adapter_python.webservice import app
-
 
 logger = logging.getLogger(__name__)
 configure_logging(logger)
@@ -24,6 +23,7 @@ configure_logging(logger)
 if __name__ == "__main__":
 
     import os
+
     import uvicorn
 
     host = os.environ.get("HOST", "127.0.0.1")
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     logger.info("Start app as host %s with port %s", str(host), str(port))
     uvicorn.run(
         "demo_adapter_python.webservice:app",
-        debug=True,
+        log_level="debug",
         reload=True,
         host=host,
         port=port,

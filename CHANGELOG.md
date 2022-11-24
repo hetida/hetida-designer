@@ -1,3 +1,4 @@
+* more flexible authentication for outgoing requests
 ## 0.8.2
 * add some time measurement to successful execution output
 * update base images

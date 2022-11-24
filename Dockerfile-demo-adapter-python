@@ -1,5 +1,5 @@
 ##### Build stage
-FROM python:3.9.14-slim-bullseye as base
+FROM python:3.10.8-slim-bullseye as base
 
 ENV TIMEOUT=60
 
