@@ -772,10 +772,13 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             transformation_revision.content, WorkflowContent
         )  # hint for mypy
 
+        # TODO: Check if this is still the case!
         # !!! If IO is not yet linked ambiguous which operator belongs to IO !!!
         # !!! default values might cause problems !!!
         inputs: List[WorkflowIoFrontendDto] = []
         # pylint: disable=redefined-builtin
+        # TODO: It might be more efficient to use content.inputs instead of io_interface.inputs!
+        # the former have attributes operator_id and connector_id
         for input in transformation_revision.io_interface.inputs:
             operator_id, connector_id = opposite_link_end_by_connector_id(
                 input.id, transformation_revision.content.links
@@ -791,6 +794,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                     input, operator_id, connector_id, pos_x, pos_y
                 )
             )
+        # TODO: Check if attributes operator_id and connector_id can be used here!
         for constant in transformation_revision.content.constants:
             operator_id, connector_id = opposite_link_end_by_connector_id(
                 constant.id, transformation_revision.content.links
@@ -803,6 +807,8 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             )
 
         outputs: List[WorkflowIoFrontendDto] = []
+        # TODO: It might be more efficient to use content.outputs instead of io_interface.outputs!
+        # the former have attributes operator_id and connector_id
         for output in transformation_revision.io_interface.outputs:
             operator_id, connector_id = opposite_link_end_by_connector_id(
                 output.id, transformation_revision.content.links

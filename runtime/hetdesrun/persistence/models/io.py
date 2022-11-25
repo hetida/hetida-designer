@@ -116,6 +116,7 @@ class IOConnector(IO):
             position=self.position,
         )
 
+    # TODO: Check if attributes instead of input parameters can be used here!
     def to_workflow_input(
         self, operator_id: UUID, connector_name: str
     ) -> WorkflowInput:
@@ -129,6 +130,7 @@ class IOConnector(IO):
             constant=False,
         )
 
+    # TODO: Check if attributes instead of input parameters can be used here!
     def to_workflow_output(
         self, operator_id: UUID, connector_name: str
     ) -> WorkflowOutput:
@@ -177,6 +179,7 @@ class Constant(IOConnector):
             id=self.id, name=self.name, data_type=self.data_type, position=self.position
         )
 
+    # TODO: Check if attributes instead of input parameters can be used here!
     def to_workflow_input(
         self, operator_id: UUID, connector_name: str
     ) -> WorkflowInput:
