@@ -57,21 +57,9 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
         parsed_wf = parse_workflow_input(
             runtime_input.workflow, runtime_input.components, runtime_input.code_modules
         )
-    except WorkflowParsingException as e:
+    except (WorkflowParsingException, WorkflowInputDataValidationError) as e:
         runtime_logger.info(
             "Workflow Parsing Exception during workflow execution",
-            exc_info=True,
-        )
-        return WorkflowExecutionResult(
-            result="failure",
-            error=str(e),
-            traceback=traceback.format_exc(),
-            output_results_by_output_name={},
-            job_id=runtime_input.job_id,
-        )
-    except WorkflowInputDataValidationError as e:
-        runtime_logger.info(
-            "Workflow Input Data Validation Error during workflow execution",
             exc_info=True,
         )
         return WorkflowExecutionResult(
