@@ -113,6 +113,7 @@ export class FlowchartConverterService {
       connector.constant = true;
       connector.value = constant.value;
 
+      // TODO: Maybe links to constants can be removed from the API completely, since they are deleted here anyway.
       flowchart.links = flowchart.links.filter(
         link =>
           (isInput ? link.to : link.from) !==
