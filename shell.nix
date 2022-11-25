@@ -146,6 +146,7 @@ let
             # Test some imports (for system libraries missing / not found)
             echo "Run test Python command: $run_test_python_command"
             "$venv_target_dir"/bin/python -c "$run_test_python_command"
+            echo "Test command completed."
         fi
 
         if "$configure_jupyter_in_venv" ; then
@@ -163,8 +164,10 @@ let
         fi
 
         if "$activate_venv" ; then
+            echo "Activating venv"
             source "$venv_target_dir/bin/activate"
         fi
+        echo "finished prepare_venv"
 
     }
 
