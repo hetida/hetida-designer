@@ -1,5 +1,6 @@
 import datetime
 import logging
+from copy import deepcopy
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
@@ -142,6 +143,16 @@ def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> 
         update_tr(session, transformation_revision)
 
 
+def tr_same_except_for_wiring_and_docu(
+    tr_A: TransformationRevision, tr_B: TransformationRevision
+) -> bool:
+    tr_compare = deepcopy(tr_A)
+    tr_compare.test_wiring = tr_B.test_wiring
+    tr_compare.documentation = tr_B.documentation
+    are_equal = tr_compare == tr_B
+    return are_equal
+
+
 def is_modifiable(
     existing_transformation_revision: TransformationRevision,
     updated_transformation_revision: TransformationRevision,
@@ -155,13 +166,9 @@ def is_modifiable(
             f"of the stored transformation revision {existing_transformation_revision.id}!"
         )
 
-    existing_tr_dict = existing_transformation_revision.dict()
-    updated_tr_dict = updated_transformation_revision.dict()
-    # allow changing one of the above attributes regardless of the state
-    for attribute in ["test_wiring", "documentation"]:
-        del existing_tr_dict[attribute]
-        del updated_tr_dict[attribute]
-    if existing_tr_dict == updated_tr_dict:
+    if tr_same_except_for_wiring_and_docu(
+        existing_transformation_revision, updated_transformation_revision
+    ):
         return True, ""
 
     if (
