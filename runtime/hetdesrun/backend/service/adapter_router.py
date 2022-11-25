@@ -18,8 +18,8 @@ adapter_router = HandleTrailingSlashAPIRouter(
     tags=["adapters"],
     responses={  # are these only used for display in the Swagger UI?
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
@@ -51,7 +51,7 @@ async def get_all_adapters() -> List[AdapterFrontendDto]:
                 '"id|name|url|internalUrl,id2|name2|url2|internalUrl2,..."'
             )
             logger.error(msg)
-            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+            raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
         adapter_list.append(
             AdapterFrontendDto(

@@ -3,33 +3,23 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Optional
-from uuid import UUID
-
-import requests
+from typing import Any, Dict, Optional
+from uuid import UUID, uuid4
 
 from hetdesrun.component.load import (
     ComponentCodeImportError,
     import_func_from_code,
     module_path_from_code,
 )
-from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.dbservice.revision import (
-    update_or_create_single_transformation_revision,
+from hetdesrun.exportimport.utils import (
+    deprecate_all_but_latest_in_group,
+    structure_ids_by_nesting_level,
+    update_or_create_transformation_revision,
 )
+from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import (
-    Type,
-    criterion_unset_or_matches_value,
-    get_backend_basic_auth,
-    get_uuid_from_seed,
-    selection_list_empty_or_contains_value,
-)
-from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
-from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
-from hetdesrun.webservice.config import get_config
+from hetdesrun.utils import Type, get_uuid_from_seed
 
 logger = logging.getLogger(__name__)
 
@@ -91,12 +81,10 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
             "Other"
         )
 
-        component_id = main_func.registered_metadata["id"] or (  # type: ignore
-            get_uuid_from_seed(str(component_name))
-        )
+        component_id = main_func.registered_metadata["id"] or (uuid4())  # type: ignore
 
         component_group_id = main_func.registered_metadata["revision_group_id"] or (  # type: ignore
-            get_uuid_from_seed(str(component_name))
+            uuid4()
         )
 
         component_tag = main_func.registered_metadata["version_tag"] or ("1.0.0")  # type: ignore
@@ -132,10 +120,8 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
         component_description = info_dict.get("description", "No description provided")
         component_category = info_dict.get("category", "Other")
         component_tag = info_dict.get("version_tag", "1.0.0")
-        component_id = info_dict.get("id", get_uuid_from_seed(str(component_name)))
-        component_group_id = info_dict.get(
-            "revision_group_id", get_uuid_from_seed(str(component_name))
-        )
+        component_id = info_dict.get("id", uuid4())
+        component_group_id = info_dict.get("revision_group_id", uuid4())
         component_state = info_dict.get("state", "RELEASED")
         component_released_timestamp = info_dict.get(
             "released_timestamp",
@@ -193,102 +179,9 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
     return tr_json
 
 
-# Base function to import a transformation revision
-def import_transformation(
-    tr_json: dict,
-    path: str,
-    strip_wirings: bool = False,
-    directly_into_db: bool = False,
-    update_component_code: bool = True,
-) -> None:
-
-    if strip_wirings:
-        tr_json["test_wiring"] = {"input_wirings": [], "output_wirings": []}
-
-    if directly_into_db:
-        tr = TransformationRevision(**tr_json)
-        logger.info(
-            (
-                "Update or create database entry"
-                " for transformation revision %s of type %s\n"
-                "in category %s with name %s"
-            ),
-            str(tr.id),
-            str(tr.type),
-            tr.category,
-            tr.name,
-        )
-        update_or_create_single_transformation_revision(tr)
-
-    else:
-        try:
-            headers = sync_wrapped_get_auth_headers(external=True)
-        except ServiceAuthenticationError as e:
-            msg = (
-                "Failed to get auth headers for external request for importing transformations."
-                f" Error was:\n{str(e)}"
-            )
-            logger.error(msg)
-            raise Exception(msg) from e
-
-        response = requests.put(
-            posix_urljoin(
-                get_config().hd_backend_api_url, "transformations", tr_json["id"]
-            ),
-            params={
-                "allow_overwrite_released": True,
-                "update_component_code": update_component_code,
-            },
-            verify=get_config().hd_backend_verify_certs,
-            json=tr_json,
-            auth=get_backend_basic_auth()  # type: ignore
-            if get_config().hd_backend_use_basic_auth
-            else None,
-            headers=headers,
-            timeout=get_config().external_request_timeout,
-        )
-        logger.info(
-            (
-                "PUT transformation status code: %d"
-                " for transformation revision %s of type %s\n"
-                "in category %s with name %s"
-            ),
-            response.status_code,
-            tr_json["id"],
-            tr_json["type"],
-            tr_json["name"],
-            tr_json["category"],
-        )
-        if response.status_code != 201:
-            msg = (
-                f"COULD NOT PUT {tr_json['type']} from path {path}\n."
-                f"Response status code {response.status_code}"
-                f"with response text:\n{response.text}"
-            )
-            logger.error(msg)
-
-
-# Import all transformations from download_path based on type, id, name and category
-def import_transformations(
+def get_transformation_revisions_from_path(
     download_path: str,
-    ids: Optional[List[UUID]] = None,
-    names: Optional[List[str]] = None,
-    category: Optional[str] = None,
-    strip_wirings: bool = False,
-    directly_into_db: bool = False,
-    update_component_code: bool = True,
-) -> None:
-    """
-    This function imports all transformations together with their documentations
-    that match all provided criteria.
-    The download_path should be a path which contains the exported transformations
-    organized in subdirectories corresponding to the categories.
-    WARNING: Overwrites possible existing files!
-    Usage:
-        import_transformations("./transformations/components")
-    """
-
-    path_dict = {}
+) -> Dict[UUID, TransformationRevision]:
     transformation_dict = {}
 
     for root, _, files in os.walk(download_path):
@@ -312,65 +205,77 @@ def import_transformations(
             if ext == ".json":
                 logger.info("Loading transformation from json file %s", path)
                 transformation_json = load_json(path)
-            transformation_dict[transformation_json["id"]] = transformation_json
-            path_dict[transformation_json["id"]] = path
-
-    def nesting_level(transformation_id: UUID, level: int) -> int:
-
-        transformation = transformation_dict[transformation_id]
-
-        level = level + 1
-        nextlevel = level
-
-        for operator in transformation["content"]["operators"]:
-            if operator["type"] == Type.WORKFLOW:
-                logger.info(
-                    "transformation %s contains workflow %s at nesting level %i",
-                    str(transformation_id),
-                    operator["transformation_id"],
-                    level,
+            try:
+                transformation = TransformationRevision(**transformation_json)
+            except ValueError as err:
+                logger.error(
+                    "ValueError for json from path %s:\n%s", download_path, str(err)
                 )
-                nextlevel = max(
-                    nextlevel, nesting_level(operator["transformation_id"], level=level)
-                )
+            else:
+                transformation_dict[transformation.id] = transformation
 
-        return nextlevel
+    return transformation_dict
 
-    level_dict: Dict[int, List[UUID]] = {}
 
-    for transformation_id, transformation in transformation_dict.items():
-        level = 0
-        if transformation["type"] == Type.WORKFLOW:
-            level = nesting_level(transformation_id, level=level)
-        if level not in level_dict:
-            level_dict[level] = []
-        level_dict[level].append(transformation_id)
-        logger.info(
-            "transformation %s of type %s has nesting level %i",
-            str(transformation_id),
-            transformation["type"],
-            level,
-        )
+def import_transformations(
+    download_path: str,
+    strip_wirings: bool = False,
+    directly_into_db: bool = False,
+    allow_overwrite_released: bool = True,
+    update_component_code: bool = True,
+    deprecate_older_revisions: bool = False,
+) -> None:
+    """Import all transforamtions from specified download path.
 
-    for level in sorted(level_dict):
-        logger.info("importing level %i transformations", level)
-        for transformation_id in level_dict[level]:
+    This function imports all transformations together with their documentations.
+    The download_path should be a path which contains the exported transformations
+    organized in subdirectories corresponding to the categories.
+    The following parameters can be used to
+
+    - directly_into_db: If direct access to the database is possible, set this to true
+        to ommit the detour via the backend
+    - strip_wirings: Set to true to reset the test wiring to empty input and output
+        wirings for each transformation revision
+    - allow_overwrite_released: Set to false to disable overwriting of transformation
+        revisions with state "RELEASED" or "DISABLED"
+    - update_component_code: Set to false if you want to keep the component code
+        unchanged
+    - deprecate_older_versions: Set to true to deprecate all but the latest revision
+        for all revision groups imported. This might result in all imported revisions to
+        be deprecated if these are older than the latest revision in the database.
+
+    WARNING: Overwrites possibly existing transformation revisions!
+
+    Usage:
+        import_transformations("./transformations/components")
+    """
+
+    transformation_dict = get_transformation_revisions_from_path(download_path)
+
+    ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
+
+    for level in sorted(ids_by_nesting_level):
+        logger.info("importing level %i transformation revisions", level)
+        for transformation_id in ids_by_nesting_level[level]:
             transformation = transformation_dict[transformation_id]
-            if (
-                selection_list_empty_or_contains_value(ids, transformation_id)
-                and selection_list_empty_or_contains_value(
-                    names, transformation["name"]
-                )
-                and criterion_unset_or_matches_value(
-                    category, transformation["category"]
-                )
-            ):
-                import_transformation(
-                    transformation,
-                    path_dict[transformation_id],
-                    strip_wirings=strip_wirings,
-                    directly_into_db=directly_into_db,
-                    update_component_code=update_component_code,
-                )
+            if strip_wirings:
+                transformation.test_wiring = WorkflowWiring()
+            update_or_create_transformation_revision(
+                transformation,
+                directly_in_db=directly_into_db,
+                allow_overwrite_released=allow_overwrite_released,
+                update_component_code=update_component_code,
+            )
 
     logger.info("finished importing")
+
+    if deprecate_older_revisions:
+        revision_group_ids = set(
+            transformation.revision_group_id
+            for _, transformation in transformation_dict.items()
+        )
+        logger.info("deprecate all but latest revision of imported revision groups")
+        for revision_group_id in revision_group_ids:
+            deprecate_all_but_latest_in_group(
+                revision_group_id, directly_in_db=directly_into_db
+            )

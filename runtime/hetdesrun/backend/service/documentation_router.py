@@ -19,8 +19,8 @@ documentation_router = HandleTrailingSlashAPIRouter(
     tags=["documentations"],
     responses={  # are these only used for display in the Swagger UI?
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Documentation not found"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
@@ -96,7 +96,7 @@ async def update_documentation(
             f"the id of the documentation DTO {documentation_dto.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
     try:
         transformation_revision = read_single_transformation_revision(id)

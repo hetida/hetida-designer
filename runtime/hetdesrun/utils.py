@@ -157,19 +157,3 @@ def plotly_fig_to_json_dict(fig: Figure) -> Any:
     # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
     # should be definitely compatible with the plotly javascript library:
     return json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
-
-
-def selection_list_empty_or_contains_value(
-    selection_list: Optional[List[Any]], actual_value: Any
-) -> bool:
-    if selection_list is None:
-        return True
-    return actual_value in selection_list
-
-
-def criterion_unset_or_matches_value(
-    criterion: Optional[Any], actual_value: Any
-) -> bool:
-    if criterion is None:
-        return True
-    return bool(actual_value == criterion)

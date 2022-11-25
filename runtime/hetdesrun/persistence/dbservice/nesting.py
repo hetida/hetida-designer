@@ -59,7 +59,7 @@ def find_all_nested_transformation_revisions(
     return descendants
 
 
-def find_all_nesting_transformation_revisions(
+def find_all_nestings(
     session: SQLAlchemySession, nested_transformation_id: UUID
 ) -> List[NestingDBModel]:
     result = session.execute(
@@ -72,7 +72,9 @@ def find_all_nesting_transformation_revisions(
 
 
 def delete_own_nestings(session: SQLAlchemySession, workflow_id: UUID) -> None:
-    logger.debug("delete own nestings of workflow %s", str(workflow_id))
+    logger.debug(
+        "delete nestings of transformation revision %s if existing", str(workflow_id)
+    )
     session.execute(
         delete(NestingDBModel).where(NestingDBModel.workflow_id == workflow_id)
     )

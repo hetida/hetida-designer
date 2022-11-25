@@ -8,17 +8,18 @@ from pydantic import ValidationError
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
     if_applicable_release_or_deprecate,
-    is_modifiable,
     update_content,
 )
 from hetdesrun.component.code import update_code
+from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
+    get_multiple_transformation_revisions,
     read_single_transformation_revision,
-    select_multiple_transformation_revisions,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
+from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
@@ -31,7 +32,7 @@ base_item_router = HandleTrailingSlashAPIRouter(
     tags=["base items"],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
@@ -64,18 +65,14 @@ async def get_all_transformation_revisions(
     use GET /api/transformations/ instead
     """
 
-    msg = "get all transformation revisions"
-    if type is not None:
-        msg = msg + " of type " + type.value
-    if state is not None:
-        msg = msg + " in the state " + state.value
-    logger.info(msg)
+    params = FilterParams(
+        type=type,
+        state=state,
+    )
+    logger.info("get all transformation revisions with %s", repr(params))
 
     try:
-        transformation_revision_list = select_multiple_transformation_revisions(
-            type=type,
-            state=state,
-        )
+        transformation_revision_list = get_multiple_transformation_revisions(params)
     except DBIntegrityError as e:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -229,7 +226,7 @@ async def update_transformation_revision(
             f"the id of the provided base item DTO {updated_transformation_revision_dto.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
     try:
         updated_transformation_revision = (
@@ -250,14 +247,6 @@ async def update_transformation_revision(
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the component revision
         pass
-
-    modifiable, msg = is_modifiable(
-        existing_transformation_revision,
-        updated_transformation_revision,
-    )
-    if not modifiable:
-        logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     if existing_transformation_revision is not None:
         updated_transformation_revision.documentation = (
@@ -292,6 +281,8 @@ async def update_transformation_revision(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except ModelConstraintViolation as e:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_transformation_dto = (
         TransformationRevisionFrontendDto.from_transformation_revision(

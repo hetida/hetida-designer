@@ -5,20 +5,18 @@ import re
 import unicodedata
 from pathlib import Path
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional, Union
 from uuid import UUID
 
 import requests
+from pydantic import ValidationError
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-from hetdesrun.utils import (
-    State,
-    Type,
-    criterion_unset_or_matches_value,
-    get_backend_basic_auth,
-    selection_list_empty_or_contains_value,
-)
+from hetdesrun.exportimport.utils import FilterParams, get_transformation_revisions
+from hetdesrun.models.code import NonEmptyValidStr, ValidStr
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
@@ -49,35 +47,40 @@ def slugify(value: str, allow_unicode: bool = False) -> str:
 
 
 ##Base function to save transformation
-def save_transformation(tr_json: dict, download_path: str) -> None:
+def save_transformation(tr: TransformationRevision, download_path: str) -> None:
     # Create directory on local system
-    uuid = tr_json["id"]
-    name = tr_json["name"]
-    # pylint: disable=redefined-builtin
-    type = tr_json["type"]
-    category = tr_json["category"]
-    tag = tr_json["version_tag"]
-    cat_dir = os.path.join(download_path, slugify(category))
+    cat_dir = os.path.join(download_path, tr.type.lower() + "s", slugify(tr.category))
     Path(cat_dir).mkdir(parents=True, exist_ok=True)
     path = os.path.join(
         cat_dir,
-        slugify(name) + "_" + slugify(tag) + "_" + uuid.lower() + ".json",
+        slugify(tr.name)
+        + "_"
+        + slugify(tr.version_tag)
+        + "_"
+        + str(tr.id).lower()
+        + ".json",
     )
 
     # Save the transformation revision
     with open(path, "w", encoding="utf8") as f:
         try:
-            json.dump(dict(tr_json.items()), f, indent=2, sort_keys=True)
-            logger.info("exported %s '%s' to %s", type, name, path)
+            json.dump(
+                json.loads(tr.json(exclude_none=True)), f, indent=2, sort_keys=True
+            )
+            logger.info("exported %s '%s' to %s", tr.type, tr.name, path)
         except KeyError:
             logger.error(
-                "Could not safe the %s with id %s on the local system.", type, uuid
+                "Could not safe the %s with id %s on the local system.",
+                tr.type,
+                str(tr.id),
             )
 
 
 ##Base function to get transformation via REST API from DB (old endpoints)
 # pylint: disable=redefined-builtin
-def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
+def get_transformation_from_java_backend(
+    id: UUID, type: Type
+) -> TransformationRevision:
     """
     Loads a single transformation revision together with its documentation based on its id
     """
@@ -108,14 +111,14 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
     )
     logger.info(
         "GET %s status code: %i for %s with id %ss",
-        type,
+        type.value,
         response.status_code,
-        type,
+        type.value,
         str(id),
     )
     if response.status_code != 200:
         msg = (
-            f"COULD NOT GET {type} with id {id}.\n"
+            f"COULD NOT GET {type.value} with id {id}.\n"
             f"Response status code {response.status_code} "
             f"with response text:\n{response.json()['detail']}"
         )
@@ -137,7 +140,7 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
     logger.info(
         "GET documentation status code: %i for %s with id %s",
         response.status_code,
-        type,
+        type.value,
         str(id),
     )
     if response.status_code != 200:
@@ -155,7 +158,6 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
 
     # Generate transformation revision
     if type == Type.COMPONENT:
-        revision_json["type"] = Type.COMPONENT
         frontend_dto = ComponentRevisionFrontendDto(
             **revision_json,
         )
@@ -168,9 +170,23 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
         documentation=doc_text
     )
 
-    tr_json = json.loads(transformation_revision.json())
+    return transformation_revision
 
-    return tr_json
+
+def selection_list_empty_or_contains_value(
+    selection_list: Optional[List[Any]], actual_value: Any
+) -> bool:
+    if selection_list is None:
+        return True
+    return actual_value in selection_list
+
+
+def criterion_unset_or_matches_value(
+    criterion: Optional[Any], actual_value: Any
+) -> bool:
+    if criterion is None:
+        return True
+    return bool(actual_value == criterion)
 
 
 ##Export transformations based on type, id, name and category if provided
@@ -178,13 +194,16 @@ def get_transformation_from_java_backend(id: UUID, type: Type) -> Any:
 def export_transformations(
     download_path: str,
     type: Optional[Type] = None,
-    ids: Optional[List[UUID]] = None,
-    names: Optional[List[str]] = None,
-    category: Optional[str] = None,
+    state: Optional[State] = None,
+    category: Optional[ValidStr] = None,
+    ids: Optional[List[Union[UUID, str]]] = None,
+    names: Optional[List[NonEmptyValidStr]] = None,
     include_deprecated: bool = True,
+    directly_from_db: bool = False,
     java_backend: bool = False,
 ) -> None:
-    """
+    """Export transformation revisions.
+
     Exports all transformations, together with their documentation, and saves them as json files
     in subdirectories of the provided path corresponding to the respective category,
     based on the provide criteria. If more than one criterion is provided,
@@ -192,12 +211,20 @@ def export_transformations(
 
     WARNING: Overwrites existing files with the same name!
 
-    Args:
+    Arguments:
         download_path (str): The directory on the local system, where we save the transformations.
-        type (Type): One of the two types of the enum Type: WORKFLOW or COMPONENT
+
+    Keyword Arguments:
+        type (Type): One of the two values of the enum Type: WORKFLOW or COMPONENT
+        state (State): One of the three values of the enum State: DRAFT, RELEASED or DISABLED
+        category (str): The category of the transformations.
         ids (List[UUID]): The ids of the transformations.
         names (List[str]): The names of the transformations.
-        include_deprecated (Optional[bool]): If set to True, disabled transformations are exported.
+        include_deprecated (bool = True): Set to False to export only transformation revisions
+            with state DRAFT or RELEASED.
+        directly_from_db (bool = False): Set to True to export directly from the databse.
+        java_backend (bool = False): Set to True to export from a hetida designer instance with a
+            version smaller than 0.7.
 
     Usage examples:
         export_transformations("/mnt/obj_repo/migration_data")
@@ -226,6 +253,7 @@ def export_transformations(
 
     hetdesrun.backend.models.wiring.EXPORT_MODE = True
 
+    transformation_list: List[TransformationRevision] = []
     try:
         headers = sync_wrapped_get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
@@ -236,77 +264,73 @@ def export_transformations(
         logger.error(msg)
         raise Exception(msg) from e
 
-    endpoint = "transformations" if not java_backend else "base-items"
+    if java_backend:
+        if ids is not None:
+            ids = [UUID(id) for id in ids if isinstance(id, str)]
 
-    url = posix_urljoin(get_config().hd_backend_api_url, endpoint)
-    response = requests.get(
-        url,
-        verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()  # type: ignore
-        if get_config().hd_backend_use_basic_auth
-        else None,
-        headers=headers,
-        timeout=get_config().external_request_timeout,
-    )
-
-    if response.status_code != 200:
-        msg = (
-            f"No transformation revision found at url {url}.\n"
-            f" Status code was {str(response.status_code)}.\n"
-            f" Response was: {str(response.text)}"
-        )
-        raise Exception(msg)
-
-    id_list = []
-    type_dict: Dict[UUID, Type] = {}
-    transformation_dict: Dict[UUID, dict] = {}
-
-    for transformation in response.json():
-        transformation_id = transformation["id"].lower()
-        transformation_type = transformation["type"]
-        transformation_name = transformation["name"]
-        transformation_category = transformation["category"]
-        logger.info(
-            "found transformation %s of type %s\nwith name %s in category %s",
-            transformation_id,
-            transformation_type,
-            transformation_name,
-            transformation_category,
+        url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
+        response = requests.get(
+            url,
+            verify=get_config().hd_backend_verify_certs,
+            auth=get_backend_basic_auth()  # type: ignore
+            if get_config().hd_backend_use_basic_auth
+            else None,
+            headers=headers,
+            timeout=get_config().external_request_timeout,
         )
 
-        if java_backend:
-            transformation_dict[
-                transformation_id
-            ] = get_transformation_from_java_backend(
-                transformation_id, transformation_type
+        if response.status_code != 200:
+            msg = (
+                f"COULD NOT GET transformation revisions from URL {url}.\n"
+                f"Response status code {str(response.status_code)} "
+                f"with response text: {str(response.text)}"
             )
-        else:
-            transformation_dict[transformation_id] = transformation
+            raise Exception(msg)
 
-        if (
-            criterion_unset_or_matches_value(type, transformation_type)
-            and selection_list_empty_or_contains_value(ids, transformation_id)
-            and selection_list_empty_or_contains_value(names, transformation_name)
-            and criterion_unset_or_matches_value(category, transformation_category)
-        ):
-            if include_deprecated or transformation["state"] != State.DISABLED:
-                logger.info("transformation %s will be exported", transformation_id)
-                id_list.append(transformation_id)
-                type_dict[transformation_id] = transformation_type
+        failed_exports: List[Any] = []
+        for trafo_json in response.json():
+            if (
+                criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
+                and selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
+                and selection_list_empty_or_contains_value(names, trafo_json["name"])
+                and criterion_unset_or_matches_value(category, trafo_json["category"])
+            ):
+                if include_deprecated or trafo_json["state"] != State.DISABLED:
+                    try:
+                        transformation = get_transformation_from_java_backend(
+                            UUID(trafo_json["id"]), Type(trafo_json["type"])
+                        )
+                    except ValidationError as e:
+                        failed_exports.append((trafo_json, e))
+                    else:
+                        save_transformation(transformation, download_path)
+        for export in failed_exports:
+            trafo_json = export[0]
+            error = export[1]
+            logger.error(
+                "Could not export %s with id %s in category '%s' with name '%s' and tag '%s':\n%s",
+                trafo_json["type"],
+                trafo_json["id"],
+                trafo_json["category"],
+                trafo_json["name"],
+                trafo_json["tag"],
+                error,
+            )
+    else:
+        params = FilterParams(
+            type=type,
+            state=state,
+            category=category,
+            ids=ids,
+            names=names,
+            include_dependencies=True,
+            include_deprecated=include_deprecated,
+        )
 
-    # Export individual transformation
-    for transformation_id in id_list:
-        save_transformation(transformation_dict[transformation_id], download_path)
+        transformation_list = get_transformation_revisions(
+            params=params, directly_from_db=directly_from_db
+        )
 
-
-def export_all(download_path: str, java_backend: bool = False) -> None:
-    export_transformations(
-        os.path.join(download_path, "components"),
-        type=Type.COMPONENT,
-        java_backend=java_backend,
-    )
-    export_transformations(
-        os.path.join(download_path, "workflows"),
-        type=Type.WORKFLOW,
-        java_backend=java_backend,
-    )
+        # Export individual transformation
+        for transformation in transformation_list:
+            save_transformation(transformation, download_path)

@@ -42,6 +42,7 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
     # Run autodeployment if autodeployment is wanted
     _autodeploy="${HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}" # to lower case
     _preserve_db_entries="${HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY,,}" # to lower case
+    _allow_overwrite_released="${HD_BACKEND_ALLOW_OVERWRITE_RELEASED,,}" # to lower case
     echo "HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=$HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS"
     if [[ "$_autodeploy" == $_true_equiv ]]; then
         echo "CHECKING NUMBER OF DB ENTRIES"
@@ -57,7 +58,13 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
                 echo "SKIPPING TRANSFORMATION REVISION AUTO DEPLOYMENT"
             else
                 echo "RUNNING TRANSFORMATION REVISION AUTO DEPLOYMENT POSSIBLY OVERWRITING EXISTING DB ENTRIES"
-                python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
+                if [["$_allow_overwrite_released" == $_true_equiv]]; then
+                    echo "INCLUDING RELEASED AND DEPRECATED TRANSFORMATION REVISIONS"
+                    python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
+                else
+                    echo "EXCEPT FOR RELEASED AND DEPRECATED TRANSFORMATION REVISIONS"
+                    python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, allow_overwrite_released=False, update_component_code=False);'
+                fi
             fi
         fi
     else

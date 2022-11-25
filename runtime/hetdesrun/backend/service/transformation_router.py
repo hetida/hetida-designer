@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional
 from uuid import UUID, uuid4
 
 import httpx
@@ -18,20 +18,19 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
+from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.run import PerformanceMeasuredStep
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBBadRequestError,
-    DBIntegrityError,
-    DBNotFoundError,
-)
+from hetdesrun.persistence.dbmodels import FilterParams
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
     get_latest_revision_id,
+    get_multiple_transformation_revisions,
     read_single_transformation_revision,
-    select_multiple_transformation_revisions,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
+from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
@@ -49,8 +48,8 @@ transformation_router = HandleTrailingSlashAPIRouter(
     responses={
         status.HTTP_400_BAD_REQUEST: {"description": "Bad Request"},
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
@@ -98,25 +97,6 @@ async def create_transformation_revision(
     return persisted_transformation_revision
 
 
-def get_multiple_transformation_revisions(state: State) -> List[TransformationRevision]:
-    msg = "get all transformation revisions"
-    if state is not None:
-        msg = msg + " in the state " + state.value
-    logger.info(msg)
-
-    try:
-        transformation_revision_list = select_multiple_transformation_revisions(
-            state=state
-        )
-    except DBIntegrityError as e:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"At least one entry in the DB is no valid transformation revision:\n{str(e)}",
-        ) from e
-
-    return transformation_revision_list
-
-
 @transformation_router.get(
     "",
     response_model=List[TransformationRevision],
@@ -139,23 +119,66 @@ async def get_all_transformation_revisions(
         None,
         description="Filter for specified state",
     ),
+    category: Optional[ValidStr] = Query(
+        None,
+        description="Filter for specified category",
+    ),
+    revision_group_id: Optional[UUID] = Query(
+        None, description="Filter for specified revision group id"
+    ),
+    ids: Optional[List[UUID]] = Query(
+        None,
+        description="Filter for specified list of ids",
+    ),
+    names: Optional[List[NonEmptyValidStr]] = Query(
+        None,
+        description=("Filter for specified list of names"),
+    ),
+    include_dependencies: bool = Query(
+        False,
+        description=(
+            "Set to True to additionally get those transformation revisions "
+            "that the selected ones depend on"
+        ),
+    ),
+    include_deprecated: bool = Query(
+        True,
+        description=(
+            "Set to False to omit transformation revisions with state DISABLED "
+            "this will not affect included dependent transformation revisions"
+        ),
+    ),
+    unused: bool = Query(
+        False,
+        description=(
+            "Set to True to obtain only those transformation revisions that are "
+            "not contained in workflows that do not have the state DISABLED."
+        ),
+    ),
 ) -> List[TransformationRevision]:
     """Get all transformation revisions from the data base.
 
-    Used by frontend for initial loading of all transformations to populate the sidebar.
+    Used by frontend for initial loading of all transformations to populate the sidebar
+    and to export selected transformation revisions.
     """
 
-    msg = "get all transformation revisions"
-    if type is not None:
-        msg = msg + " of type " + type.value
-    if state is not None:
-        msg = msg + " in the state " + state.value
-    logger.info(msg)
+    filter_params = FilterParams(
+        type=type,
+        state=state,
+        category=category,
+        revision_group_id=revision_group_id,
+        ids=ids,
+        names=names,
+        include_dependencies=include_dependencies,
+        include_deprecated=include_deprecated,
+        unused=unused,
+    )
+
+    logger.info("get all transformation revisions with %s", repr(filter_params))
 
     try:
-        transformation_revision_list = select_multiple_transformation_revisions(
-            type=type,
-            state=state,
+        transformation_revision_list = get_multiple_transformation_revisions(
+            filter_params
         )
     except DBIntegrityError as e:
         raise HTTPException(
@@ -210,7 +233,7 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     if transformation_revision.type is not Type.WORKFLOW:
         msg = f"transformation revision {id} is not a workflow!"
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
     assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
 
@@ -224,43 +247,6 @@ def contains_deprecated(transformation_id: UUID) -> bool:
         is_disabled.append(operator.state == State.DISABLED)
 
     return any(is_disabled)
-
-
-def is_modifiable(
-    existing_transformation_revision: Optional[TransformationRevision],
-    updated_transformation_revision: TransformationRevision,
-    allow_overwrite_released: bool = False,
-) -> Tuple[bool, str]:
-    if existing_transformation_revision is None:
-        return True, ""
-    if existing_transformation_revision.type != updated_transformation_revision.type:
-        return False, (
-            f"The type ({updated_transformation_revision.type}) of the "
-            f"provided transformation revision does not\n"
-            f"match the type ({existing_transformation_revision.type}) "
-            f"of the stored transformation revision {existing_transformation_revision.id}!"
-        )
-
-    if (
-        existing_transformation_revision.state == State.DISABLED
-        and not allow_overwrite_released
-    ):
-        return False, (
-            f"cannot modify deprecated transformation revision "
-            f"{existing_transformation_revision.id}"
-        )
-
-    if (
-        existing_transformation_revision.state == State.RELEASED
-        and updated_transformation_revision.state != State.DISABLED
-        and not allow_overwrite_released
-    ):
-        return False, (
-            f"cannot modify released transformation revision "
-            f"{existing_transformation_revision.id}"
-        )
-
-    return True, ""
 
 
 def update_content(
@@ -344,7 +330,13 @@ def if_applicable_release_or_deprecate(
     responses={
         status.HTTP_201_CREATED: {
             "description": "Successfully updated the transformation revision"
-        }
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "description": "Id from path does not match id from object in request body"
+        },
+        status.HTTP_409_CONFLICT: {
+            "description": "DB entry is not modifiable due to status or non-matching types"
+        },
     },
 )
 async def update_transformation_revision(
@@ -377,7 +369,7 @@ async def update_transformation_revision(
             f"transformation revision DTO {updated_transformation_revision.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
     existing_transformation_revision: Optional[TransformationRevision] = None
 
@@ -391,15 +383,6 @@ async def update_transformation_revision(
         # with an id and either create or update the transformation revision
         pass
 
-    modifiable, msg = is_modifiable(
-        existing_transformation_revision,
-        updated_transformation_revision,
-        allow_overwrite_released,
-    )
-    if not modifiable:
-        logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
-
     updated_transformation_revision = if_applicable_release_or_deprecate(
         existing_transformation_revision, updated_transformation_revision
     )
@@ -412,17 +395,24 @@ async def update_transformation_revision(
     try:
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(
-                updated_transformation_revision
+                updated_transformation_revision,
+                allow_overwrite_released=allow_overwrite_released,
             )
         )
         logger.info("updated transformation revision %s", id)
     except DBIntegrityError as e:
         logger.error(
-            "integrity error in DB when trying to access entry for id %s\n%s", id, e
+            "Integrity error in DB when trying to access entry for id %s\n%s", id, e
         )
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
+        logger.error(
+            "Not found error in DB when trying to access entry for id %s\n%s", id, e
+        )
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except ModelConstraintViolation as e:
+        logger.error("Update forbidden for transformation with id %s\n%s", id, e)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     logger.debug(persisted_transformation_revision.json())
 
@@ -437,7 +427,7 @@ async def update_transformation_revision(
         status.HTTP_204_NO_CONTENT: {
             "description": "Successfully deleted the transformation revision"
         },
-        status.HTTP_403_FORBIDDEN: {
+        status.HTTP_409_CONFLICT: {
             "description": "Transformation revision is already released or deprecated"
         },
     },
@@ -445,6 +435,12 @@ async def update_transformation_revision(
 async def delete_transformation_revision(
     # pylint: disable=redefined-builtin
     id: UUID,
+    ignore_state: bool = Query(
+        False,
+        description=(
+            "Set to true to enable deletion of released and deprecated transformation revisions"
+        ),
+    ),
 ) -> None:
     """Delete a transformation revision from the data base.
 
@@ -454,14 +450,14 @@ async def delete_transformation_revision(
     logger.info("delete transformation revision %s", id)
 
     try:
-        delete_single_transformation_revision(id)
+        delete_single_transformation_revision(id, ignore_state=ignore_state)
         logger.info("deleted transformation revision %s", id)
-
-    except DBBadRequestError as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
 
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    except (ModelConstraintViolation, DBIntegrityError) as e:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
 
 async def handle_trafo_revision_execution_request(
