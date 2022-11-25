@@ -76,19 +76,36 @@ class Connector(IO):
 
 
 class IOConnector(IO):
-    operator_id: UUID
-    connector_id: UUID
-    operator_name: str
-    connector_name: str
-    position: Position = Position(x=0, y=0)
+    """Represents in- and outputs of WorkflowContent.
+
+    The attribute id inherited from IO will be used in a link connecting this in- or output to an
+    operator.
+    """
+
+    operator_id: UUID = Field(
+        ..., description="Id of the operator to which this IOConnector is connected"
+    )
+    connector_id: UUID = Field(
+        ...,
+        description="Id of the connector of the operator to which this IOConnector is connected",
+    )
+    operator_name: str = Field(
+        ...,
+        description="Name of the operator to which this IOConnector is connected. Is displayed in the IO dialog.",
+    )
+    connector_name: str = Field(
+        ...,
+        description="Name of the connector of the operator to which this IOConnector is connected. Is displayed in the IO dialog.",
+    )
+    position: Position = Field(
+        Position(x=0, y=0), description="Position of this IOConnector"
+    )
 
     def to_io(self) -> IO:
         return IO(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
-            operator_id=self.operator_id,
-            connector_id=self.connector_id,
         )
 
     def to_connector(self) -> Connector:
@@ -146,7 +163,7 @@ class Constant(IOConnector):
 
     # the frontend requires a string for the constant value
     # the runtime will take care of the correct data type before execution
-    value: str
+    value: str = Field(..., description="Value of the Constant")
 
     # pylint: disable=no-self-argument
     @root_validator()
