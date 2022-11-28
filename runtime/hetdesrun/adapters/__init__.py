@@ -29,8 +29,6 @@ from typing import (
 from hetdesrun.adapters.exceptions import *
 from hetdesrun.adapters.generic_rest import load_data as generic_rest_adapter_load_func
 from hetdesrun.adapters.generic_rest import send_data as generic_rest_adapter_send_func
-from hetdesrun.adapters.local_file import load_data as local_file_load_data
-from hetdesrun.adapters.local_file import send_data as local_file_send_data
 from hetdesrun.adapters.sink.direct_provisioning import send_directly_provisioned_data
 from hetdesrun.adapters.source.direct_provisioning import load_directly_provisioned_data
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
@@ -202,15 +200,6 @@ register_sink_adapter(
     adapter_key="direct_provisioning",
     send_func=send_directly_provisioned_data,
 )
-
-
-# Registering local file adapter
-
-register_source_adapter(
-    adapter_key="local-file-adapter", load_func=local_file_load_data
-)
-
-register_sink_adapter(adapter_key="local-file-adapter", send_func=local_file_send_data)
 
 
 def get_source_adapter(adapter_key: Union[int, str]) -> SourceAdapter:

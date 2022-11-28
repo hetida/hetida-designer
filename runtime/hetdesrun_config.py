@@ -41,6 +41,16 @@ Example:
     register_sink_adapter("my_adapter_key", my_sink_adapter_send_func)
 """
 
+# Registering local file adapter
+from hetdesrun.adapters.local_file import load_data as local_file_load_data
+from hetdesrun.adapters.local_file import send_data as local_file_send_data
+
+register_source_adapter(
+    adapter_key="local-file-adapter", load_func=local_file_load_data
+)
+
+register_sink_adapter(adapter_key="local-file-adapter", send_func=local_file_send_data)
+
 
 # Registering File Support Handlers for the local file adapter
 from hetdesrun.adapters.local_file.extensions import (
