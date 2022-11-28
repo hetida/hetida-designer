@@ -91,11 +91,17 @@ class IOConnector(IO):
     )
     operator_name: str = Field(
         ...,
-        description="Name of the operator to which this IOConnector is connected. Is displayed in the IO dialog.",
+        description=(
+            "Name of the operator to which this IOConnector is connected. "
+            "Is displayed in the IO dialog."
+        ),
     )
     connector_name: str = Field(
         ...,
-        description="Name of the connector of the operator to which this IOConnector is connected. Is displayed in the IO dialog.",
+        description=(
+            "Name of the connector of the operator to which this IOConnector is connected. "
+            "Is displayed in the IO dialog."
+        ),
     )
     position: Position = Field(
         Position(x=0, y=0), description="Position of this IOConnector"
