@@ -423,6 +423,8 @@ class WorkflowContent(BaseModel):
     ) -> WorkflowNode:
 
         inputs = []
+        # TODO: Simplify code and increase efficiency by adjusting to_workflow_input
+        # to use operator_id and connector_name attributes!
         for input_connector in self.inputs:
             link = get_link_by_output_connector(None, input_connector.id, self.links)
             if link is not None and link.end.connector.name is not None:
@@ -433,6 +435,8 @@ class WorkflowContent(BaseModel):
                         link.end.operator, link.end.connector.name
                     )
                 )
+        # TODO: Simplify code and increase efficiency by adjusting to_workflow_input
+        # to use operator_id and connector_name attributes!
         for constant in self.constants:
             cn_constant = constant.to_connector()
             link = get_link_by_output_connector(None, cn_constant.id, self.links)
@@ -444,7 +448,8 @@ class WorkflowContent(BaseModel):
                         link.end.operator, link.end.connector.name
                     )
                 )
-
+        # TODO: Simplify code and increase efficiency by adjusting to_workflow_output
+        # to use operator_id and connector_name attributes!
         outputs = []
         for output_connector in self.outputs:
             link = get_link_by_input_connector(None, output_connector.id, self.links)
