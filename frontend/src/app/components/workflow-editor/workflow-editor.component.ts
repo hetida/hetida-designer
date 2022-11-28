@@ -38,7 +38,10 @@ import {
   RenameOperatorDialogComponent,
   RenameOperatorDialogData
 } from '../rename-operator-dialog/rename-operator-dialog.component';
-import { Transformation } from '../../model/new-api/transformation';
+import {
+  Transformation,
+  WorkflowTransformation
+} from '../../model/new-api/transformation';
 
 interface IdentifiableEntity {
   id: string;
@@ -70,8 +73,8 @@ export class WorkflowEditorComponent {
   }
 
   @Input()
-  set workflowBaseItem(workflowBaseItem: WorkflowBaseItem) {
-    this._convertWorkflowToFlowchart(workflowBaseItem);
+  set workflowBaseItem(workflowTransformation: WorkflowTransformation) {
+    this._convertWorkflowToFlowchart(workflowTransformation);
   }
 
   openContextMenu(mouseEvent: CustomEvent): void {
@@ -461,7 +464,8 @@ export class WorkflowEditorComponent {
       }
       operator.name = data;
       this.workflowService.updateWorkflow(this.currentWorkflow);
-      this._convertWorkflowToFlowchart(this.currentWorkflow);
+      // TODO
+      // this._convertWorkflowToFlowchart(this.currentWorkflow);
     });
   }
 
@@ -511,7 +515,7 @@ export class WorkflowEditorComponent {
     this.hasChanges = false;
   }
 
-  private _convertWorkflowToFlowchart(workflow: WorkflowBaseItem): void {
+  private _convertWorkflowToFlowchart(workflow: WorkflowTransformation): void {
     if (workflow.state === RevisionState.RELEASED) {
       this.flowchartManipulatorConfiguration = createReadOnlyConfig(
         this.flowchartManipulatorConfiguration
@@ -521,19 +525,21 @@ export class WorkflowEditorComponent {
     this.flowchartConfiguration = this.flowchartConverter.convertWorkflowToFlowchart(
       workflow
     );
-    this.currentWorkflow = workflow;
-    if (
-      this.currentWorkflow.operators.some(
-        operator => operator.state === RevisionState.DISABLED
-      )
-    ) {
-      // https://github.com/angular/angular/issues/15634#issuecomment-345504902
-      setTimeout(() =>
-        this.notificationService.warn(
-          'This workflow contains disabled components! Consider updating them to a newer revision!'
-        )
-      );
-    }
+
+    this.currentWorkflow = ({ ...workflow } as unknown) as WorkflowBaseItem;
+    // TODO
+    // if (
+    //   this.currentWorkflow.operators.some(
+    //     operator => operator.state === RevisionState.DISABLED
+    //   )
+    // ) {
+    //   // https://github.com/angular/angular/issues/15634#issuecomment-345504902
+    //   setTimeout(() =>
+    //     this.notificationService.warn(
+    //       'This workflow contains disabled components! Consider updating them to a newer revision!'
+    //     )
+    //   );
+    // }
   }
 
   /**
