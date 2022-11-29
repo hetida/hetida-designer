@@ -39,13 +39,18 @@ def get_structure(parent_id: Optional[str] = None) -> StructureResponse:
             sinks=[blob.to_sink() for blob in blobs],
         )
 
+def filter_blobs(filter_str: Optional[str], blobs: List[Blob]):
+    if filter_str is None:
+        filter_str = ""
+
+    return [blob for blob in blobs if filter_str in blob.id]
 
 def get_sources(filter_str: Optional[str]) -> List[BlobStorageStructureSource]:
-    return [blob.to_source() for blob in get_all_blobs()]
+    return [blob.to_source() for blob in filter_blobs(filter_str, get_all_blobs())]
 
 
 def get_sinks(filter_str: Optional[str]) -> List[BlobStorageStructureSink]:
-    return [blob.to_source() for blob in get_all_blobs()]
+    return [blob.to_source() for blob in filter_blobs(filter_str, get_all_blobs())]
 
 
 def get_thing_node_by_id(thing_node_id: str) -> Optional[StructureThingNode]:
