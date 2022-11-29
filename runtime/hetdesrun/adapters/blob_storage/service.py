@@ -1,9 +1,12 @@
 from typing import List
+from logging import getLogger
 
 from hetdesrun.adapters.blob_storage.models import Blob, Bucket
 
+logger = getLogger(__name__)
 
 def get_buckets() -> List[Bucket]:
+    logger.info("get buckets")
     return [
         Bucket(id="bucketA", name="Bucket A"),
         Bucket(id="bucketB", name="Bucket B"),
