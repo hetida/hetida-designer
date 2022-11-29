@@ -18,10 +18,10 @@
       },
       {
         "connector_id": "9f517001-688c-4a09-bcea-76c1bf54ec5b",
-        "connector_name": "postive_step_size",
+        "connector_name": "positive_step_size",
         "data_type": "FLOAT",
         "id": "8080f74f-ce6f-4e0f-b3bb-b222f8341969",
-        "name": "postive_step_size",
+        "name": "positive_step_size",
         "operator_id": "244973af-0daa-4d4e-9a6f-570642162b7f",
         "operator_name": "Data From Last Positive Step",
         "position": {
@@ -200,7 +200,7 @@
           "connector": {
             "data_type": "FLOAT",
             "id": "9f517001-688c-4a09-bcea-76c1bf54ec5b",
-            "name": "postive_step_size",
+            "name": "positive_step_size",
             "position": {
               "x": 190,
               "y": 250
@@ -214,7 +214,7 @@
           "connector": {
             "data_type": "FLOAT",
             "id": "8080f74f-ce6f-4e0f-b3bb-b222f8341969",
-            "name": "postive_step_size",
+            "name": "positive_step_size",
             "position": {
               "x": 70,
               "y": 210
@@ -477,7 +477,7 @@
           {
             "data_type": "FLOAT",
             "id": "9f517001-688c-4a09-bcea-76c1bf54ec5b",
-            "name": "postive_step_size",
+            "name": "positive_step_size",
             "position": {
               "x": 190,
               "y": 250
@@ -670,7 +670,7 @@
       {
         "data_type": "FLOAT",
         "id": "8080f74f-ce6f-4e0f-b3bb-b222f8341969",
-        "name": "postive_step_size"
+        "name": "positive_step_size"
       },
       {
         "data_type": "FLOAT",
@@ -729,7 +729,7 @@
         "filters": {
           "value": "0.25"
         },
-        "workflow_input_name": "postive_step_size"
+        "workflow_input_name": "positive_step_size"
       },
       {
         "adapter_id": "direct_provisioning",
