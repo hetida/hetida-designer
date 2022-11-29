@@ -1819,6 +1819,45 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
                 == None
             )
 
+            tr_group_id_any = UUID("1946d5f8-44a8-724c-176f-16f3e49963af")
+            tr_group_id_series = UUID("bfa27afc-dea8-b8aa-4b15-94402f0739b6")
+            exec_latest_by_group_id_input_nan = ExecLatestByGroupIdInput(
+                revision_group_id=tr_group_id_any, wiring=wiring_nan
+            )
+            exec_latest_by_group_id_input_nat = ExecLatestByGroupIdInput(
+                revision_group_id=tr_group_id_series, wiring=wiring_nat
+            )
+            response_latest_nan = await ac.post(
+                "/api/transformations/execute-latest",
+                json=json.loads(exec_latest_by_group_id_input_nan.json()),
+            )
+
+            assert response_latest_nan.status_code == 200
+            assert "output_results_by_output_name" in response_latest_nan.json()
+            output_results_by_output_name = response_latest_nan.json()[
+                "output_results_by_output_name"
+            ]
+            assert "output" in output_results_by_output_name
+            assert len(output_results_by_output_name["output"]) == 3
+            assert output_results_by_output_name["output"]["1"] == None
+
+            response_latest_nat = await ac.post(
+                "/api/transformations/execute-latest",
+                json=json.loads(exec_latest_by_group_id_input_nat.json()),
+            )
+
+            assert response_latest_nat.status_code == 200
+            assert "output_results_by_output_name" in response_latest_nat.json()
+            output_results_by_output_name = response_latest_nat.json()[
+                "output_results_by_output_name"
+            ]
+            assert "output" in output_results_by_output_name
+            assert len(output_results_by_output_name["output"]) == 2
+            assert (
+                output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
+                == None
+            )
+
 
 @pytest.mark.asyncio
 async def test_put_workflow_transformation(async_test_client, clean_test_db_engine):
