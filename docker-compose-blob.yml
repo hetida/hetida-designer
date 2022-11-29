@@ -28,7 +28,7 @@ services:
     environment:
       - HD_DATABASE_URL=postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@hetida-designer-db:5432/hetida_designer_db
       - HD_ENSURE_DB_SCHEMA=true
-      - HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,local-file-adapter|Local-File-Adapter|http://localhost:8090/adapters/localfile|http://hetida-designer-runtime:8090/adapters/localfile,blob-storage-adapter|Local-File-Adapter|http://localhost:8090/adapters/blob|http://hetida-designer-runtime:8090/adapters/blob"
+      - HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,local-file-adapter|Local-File-Adapter|http://localhost:8090/adapters/localfile|http://hetida-designer-runtime:8090/adapters/localfile,blob-storage-adapter|Blob-Storage-Adapter|http://localhost:8090/adapters/blob|http://hetida-designer-runtime:8090/adapters/blob"
       - HD_IS_RUNTIME_SERVICE=false
       - HD_USE_AUTH=false
 
