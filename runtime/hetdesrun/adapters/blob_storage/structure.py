@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import List, Optional
 
 from hetdesrun.adapters.blob_storage.models import (
@@ -15,12 +16,15 @@ from hetdesrun.adapters.blob_storage.service import (
     get_buckets,
 )
 
+logger = getLogger(__name__)
+
 
 def get_structure(parent_id: Optional[str] = None) -> StructureResponse:
     """Obtain structure for corresponding adapter web service endpoint.
 
     parent_id is the name of a bucket or None.
     """
+    logger.info("Get structure for parent_id '%s'", parent_id)
     if parent_id is None:  # get root nodes
         return StructureResponse(
             id="blob-storage-adapter",
@@ -39,11 +43,13 @@ def get_structure(parent_id: Optional[str] = None) -> StructureResponse:
             sinks=[blob.to_sink() for blob in blobs],
         )
 
+
 def filter_blobs(filter_str: Optional[str], blobs: List[Blob]):
     if filter_str is None:
         filter_str = ""
 
     return [blob for blob in blobs if filter_str in blob.id]
+
 
 def get_sources(filter_str: Optional[str]) -> List[BlobStorageStructureSource]:
     return [blob.to_source() for blob in filter_blobs(filter_str, get_all_blobs())]
