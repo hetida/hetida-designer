@@ -1,6 +1,6 @@
-"""Web service endpoints for frontend for the local file adapter
+"""Web service endpoints for frontend for the blob storate adapter
 
-Note that the local file adapter is not a generic rest adapter, so these webendpoints
+Note that the blob storage adapter is not a generic rest adapter, so these webendpoints
 have the sole purpose to tell the frontend which data sources and sinks are available and
 can be wired.
 
