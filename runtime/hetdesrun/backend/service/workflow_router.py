@@ -320,8 +320,6 @@ async def delete_workflow_revision(
 @workflow_router.post(
     "/{id}/execute",
     response_model=ExecutionResponseFrontendDto,
-    response_model_exclude_none=True,  # needed because:
-    # frontend handles attributes with value null in a different way than missing attributes
     summary="Executes a new workflow.",
     status_code=status.HTTP_200_OK,
     responses={
