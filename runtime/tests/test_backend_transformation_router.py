@@ -11,6 +11,7 @@ from fastapi import HTTPException
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.component.code import update_code
 from hetdesrun.exportimport.importing import load_json
+from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base, FilterParams
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
@@ -1730,6 +1731,93 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
                     ]
                     == {}
                 )
+
+
+@pytest.mark.asyncio
+async def test_execute_for_transformation_revision_with_nan_and_nat_input(
+    async_test_client, clean_test_db_engine
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        patched_session,
+    ):
+        async with async_test_client as ac:
+
+            json_files = [
+                "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+                "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
+            ]
+
+            for file in json_files:
+                tr_json = load_json(file)
+
+                response_nan = await ac.put(
+                    posix_urljoin(
+                        get_config().hd_backend_api_url,
+                        "transformations",
+                        tr_json["id"],
+                    ),
+                    params={"allow_overwrite_released": True},
+                    json=tr_json,
+                )
+
+            tr_id_any = UUID("1946d5f8-44a8-724c-176f-16f3e49963af")
+            tr_id_series = UUID("bfa27afc-dea8-b8aa-4b15-94402f0739b6")
+            wiring_nan = WorkflowWiring(
+                input_wirings=[
+                    InputWiring(
+                        adapter_id="direct_provisioning",
+                        workflow_input_name="input",
+                        filters={"value": '{"0":1.2,"1":null, "2":5}'},
+                    ),
+                ],
+                output_wirings=[],
+            )
+            wiring_nat = WorkflowWiring(
+                input_wirings=[
+                    InputWiring(
+                        adapter_id="direct_provisioning",
+                        workflow_input_name="input",
+                        filters={
+                            "value": '{"2020-05-01T00:00:00.000Z": "2020-05-01T01:00:00.000Z", "2020-05-01T02:00:00.000Z": null}'
+                        },
+                    ),
+                ],
+                output_wirings=[],
+            )
+            exec_by_id_input_nan = ExecByIdInput(id=tr_id_any, wiring=wiring_nan)
+            exec_by_id_input_nat = ExecByIdInput(id=tr_id_series, wiring=wiring_nat)
+            response_nan = await ac.post(
+                "/api/transformations/execute",
+                json=json.loads(exec_by_id_input_nan.json()),
+            )
+
+            assert response_nan.status_code == 200
+            assert "output_results_by_output_name" in response_nan.json()
+            output_results_by_output_name = response_nan.json()[
+                "output_results_by_output_name"
+            ]
+            assert "output" in output_results_by_output_name
+            assert len(output_results_by_output_name["output"]) == 3
+            assert output_results_by_output_name["output"]["1"] == None
+
+            response_nat = await ac.post(
+                "/api/transformations/execute",
+                json=json.loads(exec_by_id_input_nat.json()),
+            )
+
+            assert response_nat.status_code == 200
+            assert "output_results_by_output_name" in response_nat.json()
+            output_results_by_output_name = response_nat.json()[
+                "output_results_by_output_name"
+            ]
+            assert "output" in output_results_by_output_name
+            assert len(output_results_by_output_name["output"]) == 2
+            assert (
+                output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
+                == None
+            )
 
 
 @pytest.mark.asyncio
