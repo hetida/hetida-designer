@@ -1,3 +1,5 @@
+## 0.8.4
+* fix outgoing auth config parsing
 ## 0.8.3
 * some new timeseries related base components and example workflows
 * improved export / import supporting clean-up operations and filters

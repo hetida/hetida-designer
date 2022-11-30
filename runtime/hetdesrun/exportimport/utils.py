@@ -114,13 +114,13 @@ def update_or_create_transformation_revision(
         except DBNotFoundError as not_found_err:
             logger.error(
                 "Not found error in DB when trying to access entry for id %s\n%s",
-                id,
+                str(tr.id),
                 not_found_err,
             )
         except DBIntegrityError as integrity_err:
             logger.error(
                 "Integrity error in DB when trying to access entry for id %s\n%s",
-                id,
+                str(tr.id),
                 integrity_err,
             )
         except ModifyForbidden as forbidden_err:

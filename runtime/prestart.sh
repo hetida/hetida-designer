@@ -38,15 +38,15 @@ _is_backend_service="${HD_IS_BACKEND_SERVICE,,}" # to lower case
 echo "HD_IS_BACKEND_SERVICE=$HD_IS_BACKEND_SERVICE"
 if [[ "$_is_backend_service" == $_true_equiv ]]; then
     retry 10 5 "alembic migrations" alembic upgrade head
-    
+
     # Run autodeployment if autodeployment is wanted
-    _autodeploy="${HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}" # to lower case
-    _preserve_db_entries="${HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY,,}" # to lower case
+    _autodeploy="${HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS,,}"        # to lower case
+    _preserve_db_entries="${HD_BACKEND_PRESERVE_DB_ON_AUTODEPLOY,,}"     # to lower case
     _allow_overwrite_released="${HD_BACKEND_ALLOW_OVERWRITE_RELEASED,,}" # to lower case
     echo "HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS=$HD_BACKEND_AUTODEPLOY_BASE_TRANSFORMATIONS"
     if [[ "$_autodeploy" == $_true_equiv ]]; then
         echo "CHECKING NUMBER OF DB ENTRIES"
-        nof_db_entries=$( python -c "from hetdesrun.persistence.dbservice.revision import nof_db_entries; print(nof_db_entries())" | tail -1 )
+        nof_db_entries=$(python -c "from hetdesrun.persistence.dbservice.revision import nof_db_entries; print(nof_db_entries())" | tail -1)
         if [[ $nof_db_entries -eq 0 ]]; then
             echo "DB IS EMPTY"
             echo "RUNNING TRANSFORMATION REVISION AUTO DEPLOYMENT"
@@ -58,7 +58,7 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
                 echo "SKIPPING TRANSFORMATION REVISION AUTO DEPLOYMENT"
             else
                 echo "RUNNING TRANSFORMATION REVISION AUTO DEPLOYMENT POSSIBLY OVERWRITING EXISTING DB ENTRIES"
-                if [["$_allow_overwrite_released" == $_true_equiv]]; then
+                if [[ "$_allow_overwrite_released" == $_true_equiv ]]; then
                     echo "INCLUDING RELEASED AND DEPRECATED TRANSFORMATION REVISIONS"
                     python -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("./transformations/", directly_into_db=True, update_component_code=False);'
                 else
