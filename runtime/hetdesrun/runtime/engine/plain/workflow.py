@@ -379,8 +379,8 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
                 results[wf_output_name] = (
                     (await sub_node.result)[sub_node_output_name]
                     if not (
-                        sub_node.has_only_plot_outputs
-                        and not exe_context_config.run_pure_plot_operators
+                        sub_node.has_only_plot_outputs is True
+                        and exe_context_config.run_pure_plot_operators is False
                     )
                     else {}
                 )

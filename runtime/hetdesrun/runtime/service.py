@@ -138,7 +138,7 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
             res = (
                 await computation_node.result
                 if not (
-                    computation_node.has_only_plot_outputs
+                    computation_node.has_only_plot_outputs is True
                     and runtime_input.configuration.run_pure_plot_operators is False
                 )
                 else {}
