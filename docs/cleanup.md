@@ -52,12 +52,12 @@ docker run --rm \
 
 ## 4. Purge 
 
-To delete all transformation revisions and deploy the specified version of base components and sample workflows from the hetida designer git repository in the version correspond execute the following command. The version must be at least 8.0.2, earlier versions do not contain this feature.
+To delete all transformation revisions and deploy the versions of base components and example workflows included in the executing image's code run:
 
 ```shell
 docker run --rm \
   -e "HETIDA_DESIGNER_BACKEND_API_URL=<...>" \
   --name htdruntime_export \
   --entrypoint python \
-  hetida/designer-runtime:<version> -c 'from hetdesrun.exportimport.purge import delete_all_and_refill; delete_all_and_refill();'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import delete_all_and_refill; delete_all_and_refill();'
 ```
