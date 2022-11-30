@@ -582,9 +582,9 @@ async def test_get_all_transformation_revisions_with_specified_category(
 
         url = "/api/transformations/"
         async with async_test_client as ac:
-            response_category = await ac.get(url, params={"category": "category"})
-            response_aepfel = await ac.get(url, params={"category": "Äpfel"})
-            response_single_quote = await ac.get(url, params={"category": "'"})
+            response_category = await ac.get(url, params={"categories": ["category"]})
+            response_aepfel = await ac.get(url, params={"categories": ["Äpfel"]})
+            response_single_quote = await ac.get(url, params={"categories": ["'"]})
 
         assert response_category.status_code == 200
         assert len(response_category.json()) == 3
@@ -619,14 +619,14 @@ async def test_get_all_transformation_revisions_with_specified_revision_group_id
 
         url = "/api/transformations/"
         async with async_test_client as ac:
-            response_category = await ac.get(
+            response = await ac.get(
                 url, params={"revision_group_id": str(tr_component_1.revision_group_id)}
             )
 
-        assert response_category.status_code == 200
-        assert len(response_category.json()) == 2
-        assert response_category.json()[0] == tr_json_component_1
-        assert response_category.json()[1] == tr_json_component_1_new_revision
+        assert response.status_code == 200
+        assert len(response.json()) == 2
+        assert response.json()[0] == tr_json_component_1
+        assert response.json()[1] == tr_json_component_1_new_revision
 
 
 @pytest.mark.asyncio

@@ -373,7 +373,7 @@ def test_multiple_select(clean_test_db_engine):
         assert len(results) == 0
 
         results = get_multiple_transformation_revisions(
-            FilterParams(category="Test category")
+            FilterParams(categories=["Test category"])
         )
         assert len(results) == 2
 
@@ -394,7 +394,7 @@ def test_multiple_select(clean_test_db_engine):
         assert len(results) == 1
 
         results = get_multiple_transformation_revisions(
-            FilterParams(category="Test category", state=State.RELEASED)
+            FilterParams(categories=["Test category"], state=State.RELEASED)
         )
         assert len(results) == 1
 

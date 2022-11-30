@@ -26,9 +26,6 @@ class FilterParams(BaseModel):
     # pylint: disable=too-many-instance-attributes
     type: Optional[Type] = Field(None, description="Filter for specified type")
     state: Optional[State] = Field(None, description="Filter for specified state")
-    category: Optional[ValidStr] = Field(
-        None, description="Filter for specified category"
-    )
     categories: Optional[List[ValidStr]] = Field(
         None, description="Filter for specified list of categories"
     )

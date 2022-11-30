@@ -89,7 +89,7 @@ def test_get_transformation_revisions(caplog):
             params = FilterParams(
                 type=Type.COMPONENT,
                 state=State.DRAFT,
-                category="",
+                categories=[""],
                 revision_group_id=uuid4(),
                 ids=[uuid4(), uuid4()],
                 names=["ö(-.-)ö", ","],
@@ -104,7 +104,7 @@ def test_get_transformation_revisions(caplog):
             )
             assert kwargs["params"]["type"] == params.type.value
             assert kwargs["params"]["state"] == params.state.value
-            assert kwargs["params"]["category"] == params.category
+            assert kwargs["params"]["categories"] == params.categories
             assert kwargs["params"]["revision_group_id"] == str(
                 params.revision_group_id
             )
