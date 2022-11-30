@@ -189,6 +189,36 @@ def criterion_unset_or_matches_value(
     return bool(actual_value == criterion)
 
 
+def passes_all_filters(
+    trafo_json: Any,
+    type: Optional[Type] = None,
+    categories: Optional[List[ValidStr]] = None,
+    ids: Optional[List[Union[UUID, str]]] = None,
+    names: Optional[List[NonEmptyValidStr]] = None,
+    include_deprecated: bool = True,
+) -> bool:
+    if ids is not None:
+        ids = [UUID(id) for id in ids if isinstance(id, str)]
+
+    filter_type = criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
+    filter_ids = selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
+    filter_names = selection_list_empty_or_contains_value(names, trafo_json["name"])
+    filter_categories = selection_list_empty_or_contains_value(
+        categories, trafo_json["category"]
+    )
+    filter_state = include_deprecated or trafo_json["state"] != State.DISABLED
+
+    filter = (
+        filter_type
+        and filter_ids
+        and filter_names
+        and filter_categories
+        and filter_state
+    )
+
+    return filter
+
+
 ##Export transformations based on type, id, name and category if provided
 # pylint: disable=redefined-builtin
 def export_transformations(
@@ -267,12 +297,9 @@ def export_transformations(
 
     if java_backend:
         if categories_with_prefix is not None:
-            logger.warning(
-                'For the java backend the filter parameter "categories_with_prefix" is not provided!'
-            )
-            return
-        if ids is not None:
-            ids = [UUID(id) for id in ids if isinstance(id, str)]
+            msg = 'For the java backend the filter option "categories_with_prefix" is not provided!'
+            logger.error(msg)
+            raise Exception(msg)
 
         url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
         response = requests.get(
@@ -295,23 +322,17 @@ def export_transformations(
 
         failed_exports: List[Any] = []
         for trafo_json in response.json():
-            if (
-                criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
-                and selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
-                and selection_list_empty_or_contains_value(names, trafo_json["name"])
-                and selection_list_empty_or_contains_value(
-                    categories, trafo_json["category"]
-                )
+            if passes_all_filters(
+                trafo_json, type, categories, ids, names, include_deprecated
             ):
-                if include_deprecated or trafo_json["state"] != State.DISABLED:
-                    try:
-                        transformation = get_transformation_from_java_backend(
-                            UUID(trafo_json["id"]), Type(trafo_json["type"])
-                        )
-                    except ValidationError as e:
-                        failed_exports.append((trafo_json, e))
-                    else:
-                        save_transformation(transformation, download_path)
+                try:
+                    transformation = get_transformation_from_java_backend(
+                        UUID(trafo_json["id"]), Type(trafo_json["type"])
+                    )
+                except ValidationError as e:
+                    failed_exports.append((trafo_json, e))
+                else:
+                    save_transformation(transformation, download_path)
         for export in failed_exports:
             trafo_json = export[0]
             error = export[1]
