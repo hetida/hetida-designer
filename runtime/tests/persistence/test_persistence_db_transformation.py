@@ -333,7 +333,7 @@ def test_multiple_select(clean_test_db_engine):
 
         tr_uuid_2 = get_uuid_from_seed("test_multiple_select_2")
         tr_object_2 = tr_object_1.copy()
-        tr_object_2.category = "Another category"
+        tr_object_2.category = "Test another category"
         tr_object_2.id = tr_uuid_2
         tr_object_2.version_tag = "1.0.1"
         tr_object_2.name = "Test 2"
@@ -376,6 +376,17 @@ def test_multiple_select(clean_test_db_engine):
             FilterParams(categories=["Test category"])
         )
         assert len(results) == 2
+
+        results = get_multiple_transformation_revisions(
+            FilterParams(categories=["Test category", "Test another category"])
+        )
+        assert len(results) == 3
+
+        results = get_multiple_transformation_revisions(FilterParams(categories_with_prefix="Test "))
+        assert len(results) == 3
+        
+        results = get_multiple_transformation_revisions(FilterParams(categories_with_prefix="Test cat"))
+        assert len(results) ==2
 
         results = get_multiple_transformation_revisions(FilterParams(names=["Test"]))
         assert len(results) == 2

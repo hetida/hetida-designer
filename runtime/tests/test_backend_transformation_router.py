@@ -561,7 +561,7 @@ async def test_get_all_transformation_revisions_with_specified_type(
 
 
 @pytest.mark.asyncio
-async def test_get_all_transformation_revisions_with_specified_category(
+async def test_get_all_transformation_revisions_with_specified_categories(
     async_test_client, clean_test_db_engine
 ):
     with mock.patch(
@@ -570,6 +570,9 @@ async def test_get_all_transformation_revisions_with_specified_category(
     ):
         store_single_transformation_revision(
             TransformationRevision(**tr_json_component_1)  # category
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_2_update)  # Test
         )
         store_single_transformation_revision(
             TransformationRevision(**tr_json_component_3)  # Äpfel
@@ -585,6 +588,9 @@ async def test_get_all_transformation_revisions_with_specified_category(
         async with async_test_client as ac:
             response_category = await ac.get(url, params={"categories": ["category"]})
             response_aepfel = await ac.get(url, params={"categories": ["Äpfel"]})
+            response_test_aepfel = await ac.get(
+                url, params={"categories": ["Test", "Äpfel"]}
+            )
             response_single_quote = await ac.get(url, params={"categories": ["'"]})
 
         assert response_category.status_code == 200
@@ -595,6 +601,53 @@ async def test_get_all_transformation_revisions_with_specified_category(
         assert response_aepfel.status_code == 200
         assert len(response_aepfel.json()) == 1
         assert response_aepfel.json()[0] == tr_json_component_3
+        assert len(response_test_aepfel.json()) == 2
+        assert response_test_aepfel.json()[0] == tr_json_component_2_update
+        assert response_test_aepfel.json()[1] == tr_json_component_3
+        assert response_single_quote.status_code == 422
+        assert (
+            "string does not match regex"
+            in response_single_quote.json()["detail"][0]["msg"]
+        )
+
+
+@pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_specified_categories_with_prefix(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)  # category
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_2_update)  # Test
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_3)  # Äpfel
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_1)  # category
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_2)  # category
+        )
+
+        url = "/api/transformations/"
+        async with async_test_client as ac:
+            response_cat = await ac.get(url, params={"categories_with_prefix": "cat"})
+            response_single_quote = await ac.get(
+                url, params={"categories_with_prefix": "'"}
+            )
+
+        assert response_cat.status_code == 200
+        assert len(response_cat.json()) == 3
+        assert response_cat.json()[0] == tr_json_component_1
+        assert response_cat.json()[1] == tr_json_workflow_1
+        assert response_cat.json()[2] == tr_json_workflow_2
+
         assert response_single_quote.status_code == 422
         assert (
             "string does not match regex"
