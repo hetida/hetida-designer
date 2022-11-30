@@ -307,6 +307,7 @@ def select_multiple_transformation_revisions(
     type: Optional[Type] = None,  # pylint: disable=redefined-builtin
     state: Optional[State] = None,
     categories: Optional[List[ValidStr]] = None,
+    categories_with_prefix: Optional[ValidStr] = None,
     revision_group_id: Optional[UUID] = None,
     ids: Optional[List[UUID]] = None,
     names: Optional[List[NonEmptyValidStr]] = None,
@@ -323,6 +324,12 @@ def select_multiple_transformation_revisions(
         if categories is not None:
             selection = selection.where(
                 TransformationRevisionDBModel.category.in_(categories)
+            )
+        if categories_with_prefix is not None:
+            selection = selection.where(
+                TransformationRevisionDBModel.category.startswith(
+                    categories_with_prefix, autoescape=True
+                )
             )
         if revision_group_id is not None:
             selection = selection.where(
@@ -346,30 +353,15 @@ def select_multiple_transformation_revisions(
         return tr_list
 
 
-def get_all_categories() -> List[ValidStr]:
-    pass
-
-
-def get_categories_with_prefix(prefix: ValidStr) -> List[ValidStr]:
-    categories = get_all_categories()
-    return [category for category in categories if str(category).startswith(prefix)]
-
-
 def get_multiple_transformation_revisions(
     params: FilterParams,
 ) -> List[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
-    categories = [] if params.categories is None else params.categories
-    if params.categories_with_prefix is not None:
-        categories_with_prefix = get_categories_with_prefix(
-            params.categories_with_prefix
-        )
-        categories = categories + categories_with_prefix
-
     tr_list = select_multiple_transformation_revisions(
         type=params.type,
         state=params.state,
         categories=params.categories,
+        categories_with_prefix=params.categories_with_prefix,
         revision_group_id=params.revision_group_id,
         ids=params.ids,
         names=params.names,
