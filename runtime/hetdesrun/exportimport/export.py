@@ -266,6 +266,11 @@ def export_transformations(
         raise Exception(msg) from e
 
     if java_backend:
+        if categories_with_prefix is not None:
+            logger.warning(
+                'For the java backend the filter parameter "categories_with_prefix" is not provided!'
+            )
+            return
         if ids is not None:
             ids = [UUID(id) for id in ids if isinstance(id, str)]
 
@@ -294,7 +299,9 @@ def export_transformations(
                 criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
                 and selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
                 and selection_list_empty_or_contains_value(names, trafo_json["name"])
-                and criterion_unset_or_matches_value(category, trafo_json["category"])
+                and selection_list_empty_or_contains_value(
+                    categories, trafo_json["category"]
+                )
             ):
                 if include_deprecated or trafo_json["state"] != State.DISABLED:
                     try:
