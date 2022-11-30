@@ -29,6 +29,12 @@ class FilterParams(BaseModel):
     category: Optional[ValidStr] = Field(
         None, description="Filter for specified category"
     )
+    categories: Optional[List[ValidStr]] = Field(
+        None, description="Filter for specified list of categories"
+    )
+    categories_with_prefix: Optional[ValidStr] = Field(
+        None, description="Filter for categories starting with specified string"
+    )
     revision_group_id: Optional[UUID] = Field(
         None, description="Filter for specified revision group id"
     )

@@ -119,9 +119,11 @@ async def get_all_transformation_revisions(
         None,
         description="Filter for specified state",
     ),
-    category: Optional[ValidStr] = Query(
-        None,
-        description="Filter for specified category",
+    categories: Optional[List[ValidStr]] = Query(
+        None, description="Filter for specified list of categories"
+    ),
+    categories_with_prefix: Optional[ValidStr] = Query(
+        None, description="Filter for categories starting with specified string"
     ),
     revision_group_id: Optional[UUID] = Query(
         None, description="Filter for specified revision group id"
@@ -165,7 +167,8 @@ async def get_all_transformation_revisions(
     filter_params = FilterParams(
         type=type,
         state=state,
-        category=category,
+        categories=categories,
+        categories_with_prefix=categories_with_prefix,
         revision_group_id=revision_group_id,
         ids=ids,
         names=names,
