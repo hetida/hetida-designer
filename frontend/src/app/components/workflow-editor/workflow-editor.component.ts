@@ -13,27 +13,15 @@ import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
-import {
-  selectAbstractBaseItemById,
-  selectAbstractComponentBaseItems,
-  selectAbstractWorkflowBaseItems
-} from 'src/app/store/base-item/base-item.selectors';
 import { v4 as UUID } from 'uuid';
 import { popoverMinHeight, popoverWidth } from '../../constants/popover-sizes';
-import { AbstractBaseItem, BaseItem } from '../../model/base-item';
-import { IOItem } from '../../model/io-item';
-import { WorkflowBaseItem } from '../../model/workflow-base-item';
-import { WorkflowLink } from '../../model/workflow-link';
-import { WorkflowOperator } from '../../model/workflow-operator';
 import { NotificationService } from '../../service/notifications/notification.service';
 import { FlowchartConverterService } from '../../service/type-converter/flowchart-converter.service';
-import { WorkflowEditorService } from '../../service/workflow-editor/workflow-editor.service';
-import { IAppState } from '../../store/app.state';
 import { BaseItemContextMenuComponent } from '../base-item-context-menu/base-item-context-menu.component';
-import {
-  OperatorChangeRevisionDialogComponent,
-  OperatorChangeRevisionDialogData
-} from '../operator-change-revision-dialog/operator-change-revision-dialog.component';
+// import {
+//   OperatorChangeRevisionDialogComponent,
+//   OperatorChangeRevisionDialogData
+// } from '../operator-change-revision-dialog/operator-change-revision-dialog.component';
 import {
   RenameOperatorDialogComponent,
   RenameOperatorDialogData
@@ -43,8 +31,11 @@ import {
   WorkflowTransformation
 } from '../../model/new-api/transformation';
 import { Link } from 'src/app/model/new-api/link';
+import { Operator } from 'src/app/model/new-api/operator';
 import { IOConnector } from 'src/app/model/new-api/io-connector';
-import { Connector } from 'src/app/model/new-api/connector';
+import { TransformationState } from 'src/app/store/transformation/transformation.state';
+import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
+import { BaseItemService } from 'src/app/service/base-item/base-item.service';
 
 interface IdentifiableEntity {
   id: string;
@@ -63,9 +54,9 @@ export class WorkflowEditorComponent {
   private hasChanges = false;
 
   constructor(
-    private readonly store: Store<IAppState>,
+    private readonly transformationStore: Store<TransformationState>,
     private readonly notificationService: NotificationService,
-    private readonly workflowService: WorkflowEditorService,
+    private readonly baseItemService: BaseItemService,
     private readonly flowchartConverter: FlowchartConverterService,
     private readonly popoverService: PopoverService,
     private readonly dialog: MatDialog,
@@ -90,8 +81,6 @@ export class WorkflowEditorComponent {
       componentPortal,
       position
     );
-    // TODO
-    // @ts-ignore
     componentPortalRef.instance.transformation = this
       .currentWorkflow as Transformation;
   }
@@ -116,7 +105,7 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateOperator(element: HTMLElement): void {
-    const operator = this.currentWorkflow.operators.find(
+    const operator = this.currentWorkflow.content.operators.find(
       operatorCandidate => operatorCandidate.id === element.id
     );
     if (operator === undefined) {
@@ -149,7 +138,7 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateInput(element: HTMLElement): void {
-    this._updateIoItem(element, this.currentWorkflow.inputs);
+    this._updateIoItem(element, this.currentWorkflow.content.inputs);
   }
 
   /**
@@ -157,17 +146,17 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateOutput(element: HTMLElement): void {
-    this._updateIoItem(element, this.currentWorkflow.outputs);
+    this._updateIoItem(element, this.currentWorkflow.content.outputs);
   }
 
-  private _updateIoItem(element: HTMLElement, ioItems: IOItem[]) {
+  private _updateIoItem(element: HTMLElement, ioConnectors: IOConnector[]) {
     const id = element.id.split('_')[1];
-    const ioItem = ioItems.find(input => input.id === id);
-    if (ioItem === undefined) {
+    const ioConnector = ioConnectors.find(input => input.id === id);
+    if (ioConnector === undefined) {
       return;
     }
-    ioItem.posX = Number(element.getAttribute('x'));
-    ioItem.posY = Number(element.getAttribute('y'));
+    ioConnector.position.x = Number(element.getAttribute('x'));
+    ioConnector.position.y = Number(element.getAttribute('y'));
     this.hasChanges = true;
   }
 
@@ -181,20 +170,20 @@ export class WorkflowEditorComponent {
     if (removedElement === null || removedElement === undefined) {
       throw new Error('No element associated with the event!');
     }
-    this.currentWorkflow.operators = this._removeById(
-      this.currentWorkflow.operators,
+    this.currentWorkflow.content.operators = this._removeById(
+      this.currentWorkflow.content.operators,
       removedElement.id
     );
-    this.currentWorkflow.inputs = this._removeById(
-      this.currentWorkflow.inputs,
+    this.currentWorkflow.content.inputs = this._removeById(
+      this.currentWorkflow.content.inputs,
       removedElement.id
     );
-    this.currentWorkflow.outputs = this._removeById(
-      this.currentWorkflow.outputs,
+    this.currentWorkflow.content.outputs = this._removeById(
+      this.currentWorkflow.content.outputs,
       removedElement.id
     );
-    this.currentWorkflow.links = this._removeById(
-      this.currentWorkflow.links,
+    this.currentWorkflow.content.links = this._removeById(
+      this.currentWorkflow.content.links,
       removedElement.id
     );
     this.hasChanges = true;
@@ -208,19 +197,16 @@ export class WorkflowEditorComponent {
       identifiableEntity => identifiableEntity.id !== id
     );
   }
-
-  private _removeOperatorLinks(
-    links: WorkflowLink[],
-    deletedOperator: WorkflowOperator
-  ) {
-    return links.filter(
-      link =>
-        !(
-          link.fromOperator === deletedOperator.id ||
-          link.toOperator === deletedOperator.id
-        )
-    );
-  }
+  // TODO
+  // private _removeOperatorLinks(links: Link[], deletedOperator: Operator) {
+  //   return links.filter(
+  //     link =>
+  //       !(
+  //         link.start.operator === deletedOperator.id ||
+  //         link.end.operator === deletedOperator.id
+  //       )
+  //   );
+  // }
 
   /**
    * handles additions to the workflow
@@ -243,8 +229,8 @@ export class WorkflowEditorComponent {
     if (element.getAttribute('dispatcher') !== 'operator') {
       return;
     }
-    if (this.currentWorkflow.operators !== undefined) {
-      const operator = this.currentWorkflow.operators.find(
+    if (this.currentWorkflow.content.operators !== undefined) {
+      const operator = this.currentWorkflow.content.operators.find(
         operatorCandidate => operatorCandidate.id === element.id
       );
       if (operator === undefined) {
@@ -312,19 +298,20 @@ export class WorkflowEditorComponent {
    * since the flowchart library doesn't need all the data we handle this here and not on the create event
    * @param event drop event, carrying the baseItem and flowchartComponent data
    */
-  dropInterceptor(event: CustomEvent): void {
-    if (event.detail.baseItemJSON === '') {
-      return;
-    }
-    const baseItem = JSON.parse(event.detail.baseItemJSON) as BaseItem;
-    const newOperator = this._createNewOperator(
-      baseItem,
-      event.detail.svgX as number,
-      event.detail.svgY as number
-    );
-    this.currentWorkflow.operators.push(newOperator);
-    this.workflowService.updateWorkflow(this.currentWorkflow);
-  }
+  // TODO
+  // dropInterceptor(event: CustomEvent): void {
+  //   if (event.detail.baseItemJSON === '') {
+  //     return;
+  //   }
+  //   const baseItem = JSON.parse(event.detail.baseItemJSON) as BaseItem;
+  //   const newOperator = this._createNewOperator(
+  //     baseItem,
+  //     event.detail.svgX as number,
+  //     event.detail.svgY as number
+  //   );
+  //   this.currentWorkflow.content.operators.push(newOperator);
+  //   this.workflowService.updateWorkflow(this.currentWorkflow);
+  // }
 
   /**
    * set selected element from workflow editor view to selection in sidebar
@@ -338,7 +325,7 @@ export class WorkflowEditorComponent {
       return;
     }
     const target = event.target;
-    const operator = this.currentWorkflow.operators.find(
+    const operator = this.currentWorkflow.content.operators.find(
       op => op.id === target.id
     );
     if (operator !== undefined) {
@@ -346,7 +333,7 @@ export class WorkflowEditorComponent {
       const bodyRect = document.body.getBoundingClientRect();
       const openToRight = targetRect.right + popoverWidth < bodyRect.right;
       this.popoverService.showPopover(
-        operator.itemId,
+        operator.id,
         openToRight ? targetRect.right : targetRect.left,
         targetRect.top,
         openToRight,
@@ -381,79 +368,80 @@ export class WorkflowEditorComponent {
    * checks whether or not to open the revision change dialog
    * @param event event used to determine the targeted operator
    */
-  changeRevision(event: Event): void {
-    const currentOperator = this._extractCurrentOperatorFromEvent(event);
-    if (!currentOperator) {
-      return;
-    }
+  // TODO
+  // changeRevision(event: Event): void {
+  //   const currentOperator = this._extractCurrentOperatorFromEvent(event);
+  //   if (!currentOperator) {
+  //     return;
+  //   }
 
-    const selector =
-      currentOperator.type === BaseItemType.WORKFLOW
-        ? selectAbstractWorkflowBaseItems
-        : selectAbstractComponentBaseItems;
-    this.store
-      .select(selector)
-      .pipe(first())
-      .subscribe(abstractBaseItems => {
-        const available = abstractBaseItems.filter(
-          abstractBaseItem =>
-            abstractBaseItem.groupId === currentOperator.groupId &&
-            abstractBaseItem.id !== currentOperator.itemId &&
-            abstractBaseItem.state === RevisionState.RELEASED
-        );
+  //   const selector =
+  //     currentOperator.type === BaseItemType.WORKFLOW
+  //       ? selectAbstractWorkflowBaseItems
+  //       : selectAbstractComponentBaseItems;
+  //   this.store
+  //     .select(selector)
+  //     .pipe(first())
+  //     .subscribe(abstractBaseItems => {
+  //       const available = abstractBaseItems.filter(
+  //         abstractBaseItem =>
+  //           abstractBaseItem.groupId === currentOperator.groupId &&
+  //           abstractBaseItem.id !== currentOperator.itemId &&
+  //           abstractBaseItem.state === RevisionState.RELEASED
+  //       );
 
-        if (available.length === 0) {
-          this.notificationService.info(
-            `This ${currentOperator.type.toLowerCase()} has no other revision.`
-          );
-        } else {
-          this._openRevisionChangeDialog(available, currentOperator);
-        }
-      });
-  }
+  //       if (available.length === 0) {
+  //         this.notificationService.info(
+  //           `This ${currentOperator.type.toLowerCase()} has no other revision.`
+  //         );
+  //       } else {
+  //         this._openRevisionChangeDialog(available, currentOperator);
+  //       }
+  //     });
+  // }
 
-  private _openRevisionChangeDialog(
-    revisionList: AbstractBaseItem[],
-    operator: WorkflowOperator
-  ): void {
-    const dialogRef = this.dialog.open<
-      OperatorChangeRevisionDialogComponent,
-      OperatorChangeRevisionDialogData,
-      AbstractBaseItem | undefined
-    >(OperatorChangeRevisionDialogComponent, {
-      width: '640px',
-      data: {
-        revisions: revisionList
-      }
-    });
-    dialogRef.afterClosed().subscribe(data => {
-      if (data === undefined) {
-        return;
-      }
-      const replacementWorkflowOperator = this._createNewOperator(
-        data,
-        operator.posX,
-        operator.posY
-      );
+  // private _openRevisionChangeDialog(
+  //   revisionList: AbstractBaseItem[],
+  //   operator: WorkflowOperator
+  // ): void {
+  //   const dialogRef = this.dialog.open<
+  //     OperatorChangeRevisionDialogComponent,
+  //     OperatorChangeRevisionDialogData,
+  //     AbstractBaseItem | undefined
+  //   >(OperatorChangeRevisionDialogComponent, {
+  //     width: '640px',
+  //     data: {
+  //       revisions: revisionList
+  //     }
+  //   });
+  //   dialogRef.afterClosed().subscribe(data => {
+  //     if (data === undefined) {
+  //       return;
+  //     }
+  //     const replacementWorkflowOperator = this._createNewOperator(
+  //       data,
+  //       operator.posX,
+  //       operator.posY
+  //     );
 
-      const copyOfCurrentWorkflow = JSON.parse(
-        JSON.stringify(this.currentWorkflow)
-      ) as WorkflowBaseItem;
+  //     const copyOfCurrentWorkflow = JSON.parse(
+  //       JSON.stringify(this.currentWorkflow)
+  //     ) as WorkflowBaseItem;
 
-      // update workflow
-      copyOfCurrentWorkflow.operators = this._removeById(
-        copyOfCurrentWorkflow.operators,
-        operator.id
-      );
-      copyOfCurrentWorkflow.links = this._removeOperatorLinks(
-        copyOfCurrentWorkflow.links,
-        operator
-      );
+  //     // update workflow
+  //     copyOfCurrentWorkflow.operators = this._removeById(
+  //       copyOfCurrentWorkflow.operators,
+  //       operator.id
+  //     );
+  //     copyOfCurrentWorkflow.links = this._removeOperatorLinks(
+  //       copyOfCurrentWorkflow.links,
+  //       operator
+  //     );
 
-      copyOfCurrentWorkflow.operators.push(replacementWorkflowOperator);
-      this.workflowService.updateWorkflow(copyOfCurrentWorkflow);
-    });
-  }
+  //     copyOfCurrentWorkflow.operators.push(replacementWorkflowOperator);
+  //     this.workflowService.updateWorkflow(copyOfCurrentWorkflow);
+  //   });
+  // }
 
   renameOperator(event: Event): void {
     const currentOperator = this._extractCurrentOperatorFromEvent(event);
@@ -463,7 +451,7 @@ export class WorkflowEditorComponent {
     this._openRenameOperatorDialog(currentOperator);
   }
 
-  private _openRenameOperatorDialog(operator: WorkflowOperator): void {
+  private _openRenameOperatorDialog(operator: Operator): void {
     const dialogRef = this.dialog.open<
       RenameOperatorDialogComponent,
       RenameOperatorDialogData,
@@ -480,38 +468,39 @@ export class WorkflowEditorComponent {
         return;
       }
       operator.name = data;
-      this.workflowService.updateWorkflow(this.currentWorkflow);
-      // TODO
-      // this._convertWorkflowToFlowchart(this.currentWorkflow);
+      this.baseItemService
+        .updateTransformation(this.currentWorkflow)
+        .subscribe();
+      this._convertWorkflowToFlowchart(this.currentWorkflow);
     });
   }
-
+  // TODO
   copyOperator(event: ClipboardEvent): void {
     const currentOperator = this._extractCurrentOperatorFromEvent(event);
     if (!currentOperator) {
       return;
     }
-    this.store
-      .pipe(select(selectAbstractBaseItemById(currentOperator.itemId)), first())
-      .subscribe(abstractBaseItem => {
+    this.transformationStore
+      .pipe(select(selectTransformationById(currentOperator.id)), first())
+      .subscribe(transformation => {
         const copyOperator = this._createNewOperator(
-          abstractBaseItem,
-          currentOperator.posX + 100,
-          currentOperator.posY + 100
+          transformation,
+          currentOperator.position.x + 100,
+          currentOperator.position.y + 100
         );
-        this.currentWorkflow.operators.push(copyOperator);
-        this.workflowService.updateWorkflow(this.currentWorkflow);
+        this.currentWorkflow.content.operators.push(copyOperator);
+        this.baseItemService
+          .updateTransformation(this.currentWorkflow)
+          .subscribe();
       });
   }
 
-  private _extractCurrentOperatorFromEvent(
-    event: Event
-  ): WorkflowOperator | null {
+  private _extractCurrentOperatorFromEvent(event: Event): Operator | null {
     const element = event.target as HTMLElement;
     if (element === null) {
       return null;
     }
-    const currentOperator = this.currentWorkflow.operators.find(
+    const currentOperator = this.currentWorkflow.content.operators.find(
       operator => operator.id === element.id
     );
     if (
@@ -528,7 +517,7 @@ export class WorkflowEditorComponent {
     if (!this.hasChanges || this.currentWorkflow.state === 'RELEASED') {
       return;
     }
-    this.workflowService.updateWorkflow(this.currentWorkflow);
+    this.baseItemService.updateTransformation(this.currentWorkflow).subscribe();
     this.hasChanges = false;
   }
 
@@ -546,7 +535,7 @@ export class WorkflowEditorComponent {
     this.currentWorkflow = workflow;
 
     if (
-      this.currentWorkflow.operators.some(
+      this.currentWorkflow.content.operators.some(
         operator => operator.state === RevisionState.DISABLED
       )
     ) {
@@ -560,41 +549,45 @@ export class WorkflowEditorComponent {
   }
 
   /**
-   * creates a new workflow operator based on the base item and flowchart data
-   * @param abstractBaseItem base item definition
+   * creates a new workflow operator based on the transformation and flowchart data
+   * @param transformation transformation definition
    * @param posX x co-ordinate of the operator
    * @param posY y co-ordinate of the operator
    */
   private _createNewOperator(
-    abstractBaseItem: AbstractBaseItem,
-    posX: number,
-    posY: number
-  ): WorkflowOperator {
-    const newOperator: WorkflowOperator = {
-      ...abstractBaseItem,
-      itemId: abstractBaseItem.id,
-      posY,
-      posX,
-      id: UUID().toString()
+    transformation: Transformation,
+    x: number,
+    y: number
+  ): Operator {
+    const newOperator: Operator = {
+      ...transformation,
+      id: UUID().toString(),
+      transformation_id: transformation.id,
+      inputs: transformation.io_interface.inputs.map(input => ({
+        ...input,
+        position: null
+      })),
+      outputs: transformation.io_interface.outputs.map(output => ({
+        ...output,
+        position: null
+      })),
+      position: { x, y }
     };
-    const sameBaseItems = this.currentWorkflow.operators.filter(
-      workflowOperator => workflowOperator.itemId === newOperator.itemId
+    const sameOperator = this.currentWorkflow.content.operators.filter(
+      workflowOperator => workflowOperator.id === newOperator.id
     );
-    if (sameBaseItems.length > 0) {
-      newOperator.name = `${newOperator.name} (${sameBaseItems.length + 1})`;
+    if (sameOperator.length > 0) {
+      newOperator.name = `${newOperator.name} (${sameOperator.length + 1})`;
     }
     return newOperator;
   }
 
-  private _updateOperatorPosition(
-    element: HTMLElement,
-    operator: WorkflowOperator
-  ) {
+  private _updateOperatorPosition(element: HTMLElement, operator: Operator) {
     const newPosX = Number(element.getAttribute('x'));
     const newPosY = Number(element.getAttribute('y'));
-    if (operator.posX !== newPosX || operator.posY !== newPosY) {
-      operator.posX = newPosX;
-      operator.posY = newPosY;
+    if (operator.position.x !== newPosX || operator.position.y !== newPosY) {
+      operator.position.x = newPosX;
+      operator.position.y = newPosY;
       this.hasChanges = true;
     }
   }

@@ -1,10 +1,10 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { WorkflowOperator } from 'src/app/model/workflow-operator';
+import { Operator } from 'src/app/model/new-api/operator';
 
 export interface RenameOperatorDialogData {
-  operator: WorkflowOperator;
+  operator: Operator;
 }
 
 @Component({

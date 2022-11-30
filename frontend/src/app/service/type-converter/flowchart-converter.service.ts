@@ -10,7 +10,6 @@ import { RevisionState } from 'src/app/enums/revision-state';
 import { Connector } from 'src/app/model/new-api/connector';
 import { IOConnector } from 'src/app/model/new-api/io-connector';
 import { Position } from 'src/app/model/new-api/position';
-import { Point } from 'src/app/model/point';
 import { v4 as UUID } from 'uuid';
 import {
   Transformation,
@@ -244,7 +243,7 @@ export class FlowchartConverterService {
         .split(' ')
         .map(str => Number(str))
     );
-    // TODO Need newIds?
+
     const newIds = linkIds
       .split(',')
       .map(id => (id === 'x' ? UUID().toString() : id));
@@ -283,7 +282,7 @@ export class FlowchartConverterService {
   /**
    * extracts the connector from the given connector id
    * @param id given connector id
-   * @param workflowIOConnector workflow IOConnector
+   * @param workflowIOConnector given workflow IOConnector
    */
   public getConnectorById(
     id: string,
