@@ -495,8 +495,6 @@ async def handle_trafo_revision_execution_request(
 @transformation_router.post(
     "/execute",
     response_model=ExecutionResponseFrontendDto,
-    response_model_exclude_none=True,  # needed because:
-    # frontend handles attributes with value null in a different way than missing attributes
     summary="Executes a transformation revision",
     status_code=status.HTTP_200_OK,
     responses={
@@ -642,8 +640,6 @@ async def handle_latest_trafo_revision_execution_request(
 @transformation_router.post(
     "/execute-latest",
     response_model=ExecutionResponseFrontendDto,
-    response_model_exclude_none=True,  # needed because:
-    # frontend handles attributes with value null in a different way than missing attributes
     summary="Executes the latest transformation revision of a revision group",
     status_code=status.HTTP_200_OK,
     responses={

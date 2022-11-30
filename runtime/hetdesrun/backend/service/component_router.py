@@ -284,8 +284,6 @@ async def delete_component_revision(
 @component_router.post(
     "/{id}/execute",
     response_model=ExecutionResponseFrontendDto,
-    response_model_exclude_none=True,  # needed because:
-    # frontend handles attributes with value null in a different way than missing attributes
     summary="Executes a new component.",
     status_code=status.HTTP_200_OK,
     responses={
