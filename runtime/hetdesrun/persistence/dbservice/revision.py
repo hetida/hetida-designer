@@ -359,7 +359,7 @@ def get_multiple_transformation_revisions(
     params: FilterParams,
 ) -> List[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
-    categories = params.categories
+    categories = [] if params.categories is None else params.categories
     if params.categories_with_prefix is not None:
         categories_with_prefix = get_categories_with_prefix(
             params.categories_with_prefix
