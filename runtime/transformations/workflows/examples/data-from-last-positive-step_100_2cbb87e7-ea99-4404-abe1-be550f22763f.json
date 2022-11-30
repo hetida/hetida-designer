@@ -8,7 +8,7 @@
         "connector_name": "input",
         "data_type": "FLOAT",
         "id": "9f517001-688c-4a09-bcea-76c1bf54ec5b",
-        "name": "postive_step_size",
+        "name": "positive_step_size",
         "operator_id": "addefd98-a5bb-4878-a237-71289fb17ac2",
         "operator_name": "Pass Through (Float)",
         "position": {
@@ -412,7 +412,7 @@
           "connector": {
             "data_type": "FLOAT",
             "id": "9f517001-688c-4a09-bcea-76c1bf54ec5b",
-            "name": "postive_step_size",
+            "name": "positive_step_size",
             "position": {
               "x": 190,
               "y": 250
@@ -816,7 +816,7 @@
       {
         "data_type": "FLOAT",
         "id": "9f517001-688c-4a09-bcea-76c1bf54ec5b",
-        "name": "postive_step_size"
+        "name": "positive_step_size"
       },
       {
         "data_type": "SERIES",
@@ -850,7 +850,7 @@
         "filters": {
           "value": "0.25"
         },
-        "workflow_input_name": "postive_step_size"
+        "workflow_input_name": "positive_step_size"
       }
     ],
     "output_wirings": []
