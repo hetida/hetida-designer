@@ -352,7 +352,7 @@ def get_all_categories() -> List[ValidStr]:
 
 def get_categories_with_prefix(prefix: ValidStr) -> List[ValidStr]:
     categories = get_all_categories()
-    return [category for category in categories if str(category).startwith(prefix)]
+    return [category for category in categories if str(category).startswith(prefix)]
 
 
 def get_multiple_transformation_revisions(
