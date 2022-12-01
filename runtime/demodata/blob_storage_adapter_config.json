@@ -1,0 +1,27 @@
+{
+    "bucket_level": 2,
+    "structure": {
+        "supercategory I": {
+            "category i": {
+                "subcategory A": [
+                    "object a",
+                    "object b"
+                ],
+                "subcategory B": [
+                    "object c"
+                ],
+                "subcategory C": [],
+                "subcategory D": [
+                    "object d",
+                    "object e"
+                ]
+            },
+            "category ii": {
+                "subcategory E": [
+                    "object f"
+                ]
+            },
+            "category iii": {}
+        }
+    }
+}
