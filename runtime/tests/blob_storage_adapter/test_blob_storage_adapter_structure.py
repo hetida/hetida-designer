@@ -4,10 +4,11 @@ import nest_asyncio
 import pandas as pd
 import pytest
 
-from hetdesrun.adapters.local_file import load_data, send_data
+from hetdesrun.adapters.blob_storage import load_data, send_data
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 nest_asyncio.apply()
+
 
 async def walk_thing_nodes(
     parent_id,
@@ -68,27 +69,31 @@ async def walk_thing_nodes(
             open_async_test_client,
         )
 
+
 @pytest.mark.asyncio
-async def test_access_info(async_test_client):
+async def test_access_blob_storage_adapter_info(async_test_client):
     async with async_test_client as ac:
         response = await ac.get("adapters/blob/info")
     assert response.status_code == 200
     assert "version" in response.json().keys()
 
+
 @pytest.mark.asyncio
 # @pytest.mark.filterwarnings(
 #     "ignore:an integer is required*"
 # )  # pandas to_json currently throws a deprecation warning
-async def test_resources_offered_from_structure_hierarchy(async_test_client):
+async def test_resources_offered_from_blob_storage_adapter_structure_hierarchy(
+    async_test_client,
+):
     """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""
     async with async_test_client as client:
 
         response = await client.get("/adapters/blob/structure")
-        
+
         assert response.status_code == 200
 
         response_obj = response.json()
-        
+
         assert len(response_obj["sources"]) == 0
         assert len(response_obj["sinks"]) == 0
 
@@ -179,9 +184,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
 
         for ((tn_id, key), md) in tn_attached_metadata_dict.items():
             response_obj = (
-                await client.get(
-                    f"/adapters/blob/thingNodes/{tn_id}/metadata/{key}"
-                )
+                await client.get(f"/adapters/blob/thingNodes/{tn_id}/metadata/{key}")
             ).json()
             print(response_obj, "versus", md)
             assert response_obj["key"] == key
