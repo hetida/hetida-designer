@@ -137,11 +137,11 @@ def init_app() -> FastAPI:
 
     if get_config().is_runtime_service:
         adapters = get_adapter_dict()
-        if "local_file_adapter" in adapters:
+        if "local-file-adapter" in adapters:
             app.include_router(
                 local_file_adapter_router
             )  # auth dependency set individually per endpoint
-        if "blob_storage_adapter" in adapters:
+        if "blob-storage-adapter" in adapters:
             app.include_router(
                 blob_storage_adapter_router
             )  # auth dependency set individually per endpoint
