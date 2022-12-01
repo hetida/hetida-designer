@@ -1,9 +1,10 @@
-from typing import List
 from logging import getLogger
+from typing import List
 
 from hetdesrun.adapters.blob_storage.models import Blob, Bucket
 
 logger = getLogger(__name__)
+
 
 def get_buckets() -> List[Bucket]:
     logger.info("get buckets")
@@ -44,9 +45,10 @@ def get_blobs_in_bucket(bucket_id: str) -> List[Blob]:
                 bucket_name="Bucket B",
             ),
         ]
+    return []
 
 
-def get_all_blobs() -> List(Blob):
+def get_all_blobs() -> List[Blob]:
     blob_list: List[Blob] = []
     for bucket in get_buckets():
         for blob in get_blobs_in_bucket(bucket.id):
@@ -55,13 +57,19 @@ def get_all_blobs() -> List(Blob):
 
 
 def get_bucket_by_id(bucket_id: str) -> Bucket:
+    if bucket_id not in ("bucketA", "bucketB"):
+        raise Exception
     if bucket_id == "bucketA":
         return Bucket(id="bucketA", name="Bucket A")
-    if bucket_id == "bucketB":
-        return Bucket(id="bucketB", name="Bucket B")
+    # bucket_id == "bucketB":
+    return Bucket(id="bucketB", name="Bucket B")
 
 
 def get_blob_by_id(blob_id: str) -> Blob:
+    if blob_id not in (
+        ["bucketA.blobI", "bucketA.blobI", "bucketB.blobI", "bucketB.blobII"]
+    ):
+        raise Exception
     if blob_id == "bucketA.blobI":
         return Blob(
             id="bucketA.blobI",
@@ -83,10 +91,10 @@ def get_blob_by_id(blob_id: str) -> Blob:
             bucket_id="bucketB",
             bucket_name="Bucket B",
         )
-    if blob_id == "bucketB.blobI":
-        return Blob(
-            id="bucketB.blobII",
-            name="Blob II",
-            bucket_id="bucketB",
-            bucket_name="Bucket B",
-        )
+    # blob_id == "bucketB.blobI":
+    return Blob(
+        id="bucketB.blobII",
+        name="Blob II",
+        bucket_id="bucketB",
+        bucket_name="Bucket B",
+    )

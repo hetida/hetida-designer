@@ -60,7 +60,7 @@ class Bucket(BaseModel):
     id: str
     name: str
 
-    def to_thing_node(self) -> StructureThingNode():
+    def to_thing_node(self) -> StructureThingNode:
         return StructureThingNode(
             id=self.id, name=self.name, parentId=None, description="Bucket"
         )

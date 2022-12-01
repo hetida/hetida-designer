@@ -18,18 +18,20 @@ async def load_data(
     return {
         wf_input_name: load_blob_from_storage(filtered_source.ref_id)
         for wf_input_name, filtered_source in wf_input_name_to_filtered_source_mapping_dict.items()
+        if filtered_source.ref_id is not None
     }
 
 
 async def send_data(
     wf_output_name_to_filtered_sink_mapping_dict: Dict[str, FilteredSink],
-    wf_output_name_to_value_mapping_dict,
+    wf_output_name_to_value_mapping_dict: Dict[str, Any],
     adapter_key: str,  # pylint: disable=unused-argument
 ) -> Dict[str, Any]:
     for (
         wf_output_name,
         filtered_sink,
     ) in wf_output_name_to_filtered_sink_mapping_dict.items():
-        blob = wf_output_name_to_value_mapping_dict[wf_output_name]
-        write_blob_to_storage(blob, filtered_sink.ref_id)
+        if filtered_sink.ref_id is not None:
+            blob = wf_output_name_to_value_mapping_dict[wf_output_name]
+            write_blob_to_storage(blob, filtered_sink.ref_id)
     return {}
