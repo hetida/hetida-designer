@@ -28,4 +28,4 @@ async def test_get_all_adapters(async_test_client, clean_test_db_engine):
             response = await ac.get("/api/adapters/")
 
         assert response.status_code == 200
-        assert len(response.json()) == 3
+        assert len(response.json()) == 4
