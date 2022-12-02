@@ -16,6 +16,7 @@ from hetdesrun.adapters.blob_storage import VERSION
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
     BlobStorageStructureSource,
+    IdString,
     InfoResponse,
     MultipleSinksResponse,
     MultipleSourcesResponse,
@@ -23,14 +24,15 @@ from hetdesrun.adapters.blob_storage.models import (
     StructureThingNode,
 )
 from hetdesrun.adapters.blob_storage.structure import (
+    get_filtered_sinks,
+    get_filtered_sources,
     get_sink_by_id,
-    get_sinks,
+    get_sinks_by_parent_id,
     get_source_by_id,
-    get_sources,
-    get_structure,
+    get_sources_by_parent_id,
     get_thing_node_by_id,
+    get_thing_nodes_by_parent_id,
 )
-from hetdesrun.adapters.local_file.utils import from_url_representation
 from hetdesrun.webservice.auth_dependency import get_auth_deps
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -57,7 +59,13 @@ async def get_info_endpoint() -> InfoResponse:
     dependencies=get_auth_deps(),
 )
 async def get_structure_endpoint(parentId: Optional[str] = None) -> StructureResponse:
-    return get_structure(parent_id=parentId)
+    return StructureResponse(
+        id="blob-storage-adapter",
+        name="Blob Storage Adapter",
+        thingNodes=get_thing_nodes_by_parent_id(parentId),
+        sources=get_sources_by_parent_id(parentId),
+        sinks=get_sinks_by_parent_id(parentId),
+    )
 
 
 @blob_storage_adapter_router.get(
@@ -68,7 +76,7 @@ async def get_structure_endpoint(parentId: Optional[str] = None) -> StructureRes
 async def get_sources_endpoint(
     filter_str: Optional[str] = Query(None, alias="filter")
 ) -> MultipleSourcesResponse:
-    found_sources = get_sources(filter_str=filter_str)
+    found_sources = get_filtered_sources(filter_str=filter_str)
     return MultipleSourcesResponse(
         resultCount=len(found_sources),
         sources=found_sources,
@@ -83,7 +91,7 @@ async def get_sources_endpoint(
 async def get_sinks_endpoint(
     filter_str: Optional[str] = Query(None, alias="filter")
 ) -> MultipleSinksResponse:
-    found_sinks = get_sinks(filter_str=filter_str)
+    found_sinks = get_filtered_sinks(filter_str=filter_str)
     return MultipleSinksResponse(
         resultCount=len(found_sinks),
         sinks=found_sinks,
@@ -96,30 +104,28 @@ async def get_sinks_endpoint(
     dependencies=get_auth_deps(),
 )
 async def get_sources_metadata(
-    sourceId: str,  # pylint: disable=unused-argument
+    sourceId: IdString,  # pylint: disable=unused-argument
 ) -> List:
     """Get metadata attached to sources
 
-    This adapter does not implement metadata. Therefore this will always result
+    This adapter does not implement attached metadata. Therefore this will always result
     in an empty list!
     """
     return []
 
 
 @blob_storage_adapter_router.get(
-    "/sources/{sourceId:path}",
+    "/sources/{sourceId}",
     response_model=BlobStorageStructureSource,
     dependencies=get_auth_deps(),
 )
-async def get_single_source(sourceId: str) -> BlobStorageStructureSource:
+async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
     possible_source = get_source_by_id(sourceId)
 
     if possible_source is None:
         raise HTTPException(
             status_code=404,
-            detail="Could not find loadable local file at path "
-            + from_url_representation(sourceId)
-            + " or path not in configured local_dirs",
+            detail="Could not find Sourche with id " + sourceId,
         )
 
     return possible_source
@@ -130,27 +136,29 @@ async def get_single_source(sourceId: str) -> BlobStorageStructureSource:
     response_model=List,
     dependencies=get_auth_deps(),
 )
-async def get_sinks_metadata(sinkId: str) -> List:  # pylint: disable=unused-argument
+async def get_sinks_metadata(
+    sinkId: IdString,
+) -> List:  # pylint: disable=unused-argument
     """Get metadata attached to sinks
 
-    This adapter does not implement metadata. Therefore this will always result
+    This adapter does not implement attached metadata. Therefore this will always result
     in an empty list!
     """
     return []
 
 
 @blob_storage_adapter_router.get(
-    "/sinks/{sinkId:path}",
+    "/sinks/{sinkId}",
     response_model=BlobStorageStructureSink,
     dependencies=get_auth_deps(),
 )
-async def get_single_sink(sinkId: str) -> BlobStorageStructureSink:
+async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
     possible_sink = get_sink_by_id(sinkId)
 
     if possible_sink is None:
         raise HTTPException(
             status_code=404,
-            detail="Could not find BLOB " + sinkId,
+            detail="Could not find Sink with id " + sinkId,
         )
 
     return possible_sink
@@ -162,11 +170,11 @@ async def get_single_sink(sinkId: str) -> BlobStorageStructureSink:
     dependencies=get_auth_deps(),
 )
 async def get_thing_nodes_metadata(
-    thingNodeId: str,  # pylint: disable=unused-argument
+    thingNodeId: IdString,  # pylint: disable=unused-argument
 ) -> List:
     """Get metadata attached to thing Nodes.
 
-    This adapter does not implement metadata. Therefore this will always result
+    This adapter does not implement attached metadata. Therefore this will always result
     in an empty list!
     """
     return []
@@ -178,14 +186,14 @@ async def get_thing_nodes_metadata(
     dependencies=get_auth_deps(),
 )
 async def get_single_thingNode(
-    thingNodeId: str,
+    thingNodeId: IdString,
 ) -> StructureThingNode:
     possible_thing_node = get_thing_node_by_id(thingNodeId)
 
     if possible_thing_node is None:
         raise HTTPException(
             status_code=404,
-            detail="Could not find bucket " + thingNodeId,
+            detail="Could not find ThingNode with id " + thingNodeId,
         )
 
     return possible_thing_node

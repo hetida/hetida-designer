@@ -1,70 +1,62 @@
 from logging import getLogger
-from typing import List, Optional
+from typing import List, Optional, Union
 
+from hetdesrun.adapters.blob_storage import snks, srcs, tns
 from hetdesrun.adapters.blob_storage.models import (
-    Blob,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
-    StructureResponse,
+    IdString,
     StructureThingNode,
-)
-from hetdesrun.adapters.blob_storage.service import (
-    get_all_blobs,
-    get_blob_by_id,
-    get_blobs_in_bucket,
-    get_bucket_by_id,
-    get_buckets,
 )
 
 logger = getLogger(__name__)
 
 
-def get_structure(parent_id: Optional[str] = None) -> StructureResponse:
-    """Obtain structure for corresponding adapter web service endpoint.
-
-    parent_id is the name of a bucket or None.
-    """
-    logger.info("Get structure for parent_id '%s'", parent_id)
-    if parent_id is None:  # get root nodes
-        return StructureResponse(
-            id="blob-storage-adapter",
-            name="Blob Storage Adapter",
-            thingNodes=[bucket.to_thing_node() for bucket in get_buckets()],
-            sources=[],
-            sinks=[],
-        )
-    blobs = get_blobs_in_bucket(parent_id)
-    return StructureResponse(
-        id="blob-storage-adapter",
-        name="Blob Storage Adapter",
-        thingNodes=[],
-        sources=[blob.to_source() for blob in blobs],
-        sinks=[blob.to_sink() for blob in blobs],
-    )
-
-
-def filter_blobs(filter_str: Optional[str], blobs: List[Blob]) -> List[Blob]:
+def filter_sinks_or_sources(
+    filter_str: Optional[str],
+    sinks_or_sources: Union[
+        List[BlobStorageStructureSource], List[BlobStorageStructureSink]
+    ],
+) -> Union[List[BlobStorageStructureSource], List[BlobStorageStructureSink]]:
     if filter_str is None:
         filter_str = ""
 
-    return [blob for blob in blobs if filter_str in blob.id]
+    return [sos for sos in sinks_or_sources if filter_str in sos.id]
 
 
-def get_sources(filter_str: Optional[str]) -> List[BlobStorageStructureSource]:
-    return [blob.to_source() for blob in filter_blobs(filter_str, get_all_blobs())]
+def get_thing_nodes_by_parent_id(
+    parent_id: Optional[IdString] = None,
+) -> List[StructureThingNode]:
+    return [tn for tn in tns if tn.parentId == parent_id]
 
 
-def get_sinks(filter_str: Optional[str]) -> List[BlobStorageStructureSink]:
-    return [blob.to_sink() for blob in filter_blobs(filter_str, get_all_blobs())]
+def get_sources_by_parent_id(
+    parent_id: Optional[IdString] = None,
+) -> List[BlobStorageStructureSource]:
+    [src for src in srcs if src.id.startswith(parent_id) and len(src.id) != parent_id]
 
 
-def get_thing_node_by_id(thing_node_id: str) -> Optional[StructureThingNode]:
-    return get_bucket_by_id(thing_node_id).to_thing_node()
+def get_sinks_by_parent_id(
+    parent_id: Optional[IdString] = None,
+) -> List[BlobStorageStructureSink]:
+    [snk for snk in snks if snk.id.startswith(parent_id) and len(snk.id) != parent_id]
 
 
-def get_source_by_id(source_id: str) -> Optional[BlobStorageStructureSource]:
-    return get_blob_by_id(source_id).to_source()
+def get_filtered_sources(filter_str: Optional[str]) -> List[BlobStorageStructureSource]:
+    return filter_sinks_or_sources(filter_str=filter_str, sinks_or_sources=srcs)
 
 
-def get_sink_by_id(sink_id: str) -> Optional[BlobStorageStructureSink]:
-    return get_blob_by_id(sink_id).to_sink()
+def get_filtered_sinks(filter_str: Optional[str]) -> List[BlobStorageStructureSink]:
+    return filter_sinks_or_sources(filter_str=filter_str, sinks_or_sources=snks)
+
+
+def get_thing_node_by_id(thing_node_id: IdString) -> Optional[StructureThingNode]:
+    return [tn for tn in tns if tn.id == thing_node_id]
+
+
+def get_source_by_id(source_id: IdString) -> Optional[BlobStorageStructureSource]:
+    return [src for src in srcs if src.id == source_id]
+
+
+def get_sink_by_id(sink_id: IdString) -> Optional[BlobStorageStructureSink]:
+    return [snk for snk in snks if snk.id == sink_id]
