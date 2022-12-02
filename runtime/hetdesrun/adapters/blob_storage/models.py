@@ -19,7 +19,7 @@ class BucketName(ConstrainedStr):
 
 class IdString(ConstrainedStr):
     min_length = 1
-    regex = re.compile(r"[a-z0-9/-]+")
+    regex = re.compile(r"[a-zA-Z0-9/-]+")
 
 
 class ObjectKey(BaseModel):
@@ -64,7 +64,7 @@ class BlobStorageStructureSource(BaseModel):
     type: Literal["metadata(any)"] = "metadata(any)"
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
-    metadataKey: Literal[None] = None
+    metadataKey: Optional[str] = None
     filters: Optional[Dict[str, Dict]] = {}
 
     @classmethod
@@ -105,7 +105,7 @@ class BlobStorageStructureSink(BaseModel):
     type: Literal["metadata(any)"] = "metadata(any)"
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
-    metadataKey: Literal[None] = None
+    metadataKey: Optional[str] = None
     filters: Optional[Dict[str, Dict]] = {}
 
     @classmethod
@@ -146,8 +146,7 @@ class Category(BaseModel):
         self, parent_id: Optional[IdString], separator: Literal["-", "/"]
     ) -> StructureThingNode:
         return StructureThingNode(
-            id=(parent_id if parent_id is not None else "")
-            + separator
+            id=(parent_id + separator if parent_id is not None else "")
             + self.name.lower(),
             parentId=parent_id,
             name=self.name,

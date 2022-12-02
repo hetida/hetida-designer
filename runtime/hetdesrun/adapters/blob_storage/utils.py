@@ -52,10 +52,16 @@ def walk_structure(
     level: int,
 ) -> None:
     """Recursively walk structure_json."""
+    logger.info(
+        "Walk through structure with parent_id %s, bucket_level %i, level %i",
+        parent_id,
+        bucket_level,
+        level,
+    )
     for category in structure:
         try:
             thing_node = category.to_thing_node(
-                parent_id, separator="/" if bucket_level > level else "-"
+                parent_id, separator="-" if level <= bucket_level else "/"
             )
         except ValidationError as error:
             msg = (
@@ -64,7 +70,7 @@ def walk_structure(
             )
             logger.error(msg)
             raise ThingNodeInvalidError(msg) from error
-
+        logger.info("Created thingnode %s", str(thing_node))
         tn_append_list.append(thing_node)
 
         if level == bucket_level:
@@ -99,19 +105,19 @@ def walk_structure(
                 level=level + 1,
             )
         else:
-            if level > bucket_level:
+            if level < bucket_level:
+                msg = (
+                    f"Category {str(category)} has too few levels of subcategories ({level}) "
+                    f"to generate buckets with bucket level {str(bucket_level)}"
+                )
+                logger.error(msg)
+                raise ConfigIncompleteError(msg)
+            else:
                 snk_append_list.append(
                     BlobStorageStructureSink.from_thing_node(
                         thing_node, name="Next Trained Model"
                     )
                 )
-            else:
-                msg = (
-                    f"Category {str(category)} has to few levels of subcategories ({level}) "
-                    f"to generate buckets with bucket level {str(bucket_level)}"
-                )
-                logger.error(msg)
-                raise ConfigIncompleteError(msg)
 
 
 def get_setup_from_config() -> Tuple[
