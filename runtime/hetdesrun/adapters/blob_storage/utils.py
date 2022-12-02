@@ -1,6 +1,6 @@
 import json
 from logging import getLogger
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import ValidationError
 
@@ -54,7 +54,9 @@ def walk_structure(
     """Recursively walk structure_json."""
     for category in structure:
         try:
-            thing_node = category.to_thing_node(parent_id)
+            thing_node = category.to_thing_node(
+                parent_id, separator="/" if bucket_level > level else "-"
+            )
         except ValidationError as error:
             msg = (
                 f"Validation Error for transformation of category {str(category)} "
@@ -73,7 +75,7 @@ def walk_structure(
                 logger.error(msg)
                 raise BucketNameInvalidError(msg) from error
 
-        if category.substructure is not None:
+        if category.substructure is not None and len(category.substructure) != 0:
             try:
                 substructure = [
                     Category(**subcategory_json)
@@ -112,7 +114,9 @@ def walk_structure(
                 raise ConfigIncompleteError(msg)
 
 
-def get_setup_from_config() -> None:
+def get_setup_from_config() -> Tuple[
+    List[StructureThingNode], List[BucketName], List[BlobStorageStructureSink]
+]:
     config_json = load_config_file()
 
     bucket_level: int = config_json["bucket_level"]

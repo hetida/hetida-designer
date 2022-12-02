@@ -58,7 +58,9 @@ async def get_info_endpoint() -> InfoResponse:
     response_model=StructureResponse,
     dependencies=get_auth_deps(),
 )
-async def get_structure_endpoint(parentId: Optional[str] = None) -> StructureResponse:
+async def get_structure_endpoint(
+    parentId: Optional[IdString] = None,
+) -> StructureResponse:
     return StructureResponse(
         id="blob-storage-adapter",
         name="Blob Storage Adapter",
@@ -137,8 +139,8 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
     dependencies=get_auth_deps(),
 )
 async def get_sinks_metadata(
-    sinkId: IdString,
-) -> List:  # pylint: disable=unused-argument
+    sinkId: IdString,  # pylint: disable=unused-argument
+) -> List:
     """Get metadata attached to sinks
 
     This adapter does not implement attached metadata. Therefore this will always result

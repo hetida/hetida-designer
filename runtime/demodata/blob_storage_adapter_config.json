@@ -12,10 +12,7 @@
                         {
                             "name": "A",
                             "description": "Subcategory",
-                            "substructure": [
-                                "object a",
-                                "object b"
-                            ]
+                            "substructure": []
                         },
                         {
                             "name": "B",
