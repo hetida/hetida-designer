@@ -60,6 +60,15 @@ class BlobStorageStructureSink(BaseModel):
     metadataKey: Literal[None] = None
     filters: Optional[Dict[str, Dict]] = {}
 
+    @classmethod
+    def from_thing_node(cls, thing_node: StructureThingNode, name: str):
+        return BlobStorageStructureSink(
+            id=thing_node.id + "next",
+            thingNodeId=thing_node.id,
+            name=name,
+            path=thing_node.id,
+        )
+
 
 class MultipleSinksResponse(BaseModel):
     resultCount: int
@@ -85,45 +94,4 @@ class Category(BaseModel):
             parentId=parent_id,
             name=self.name,
             description=self.description,
-        )
-
-
-class Bucket(BaseModel):
-    id: str
-    name: str
-
-    def to_thing_node(self) -> StructureThingNode:
-        return StructureThingNode(
-            id=self.id, name=self.name, parentId=None, description="Bucket"
-        )
-
-
-class Blob(BaseModel):
-    id: str
-    name: str
-    bucket_id: str
-    bucket_name: str
-
-    def to_source(self) -> BlobStorageStructureSource:
-        return BlobStorageStructureSource(
-            id=self.id,
-            thingNodeId=self.bucket_id,
-            name=self.name,
-            type="metadata(any)",
-            visible=True,
-            metadataKey=self.name,
-            path=self.bucket_name,
-            filters={},
-        )
-
-    def to_sink(self) -> BlobStorageStructureSink:
-        return BlobStorageStructureSink(
-            id=self.id,
-            thingNodeId=self.bucket_id,
-            name=self.name,
-            type="metadata(any)",
-            visible=True,
-            metadataKey=self.name,
-            path=self.bucket_name,
-            filters={},
         )

@@ -98,9 +98,18 @@ def walk_structure(
             )
         else:
             if level > bucket_level:
-                snk_append_list.append(BlobStorageStructureSink())
+                snk_append_list.append(
+                    BlobStorageStructureSink.from_thing_node(
+                        thing_node, name="Next Trained Model"
+                    )
+                )
             else:
-                raise ConfigIncompleteError
+                msg = (
+                    f"Category {str(category)} has to few levels of subcategories ({level}) "
+                    f"to generate buckets with bucket level {str(bucket_level)}"
+                )
+                logger.error(msg)
+                raise ConfigIncompleteError(msg)
 
 
 def get_setup_from_config() -> None:
@@ -115,15 +124,17 @@ def get_setup_from_config() -> None:
         raise CategoryInvalidError from error
 
     thing_nodes: List[StructureThingNode] = []
-    buckets: List[BucketName] = []
+    bucket_names: List[BucketName] = []
     sinks: List[BlobStorageStructureSink] = []
 
     walk_structure(
         parent_id=None,
         tn_append_list=thing_nodes,
-        bucket_append_list=buckets,
+        bucket_append_list=bucket_names,
         snk_append_list=sinks,
         structure=structure,
         bucket_level=bucket_level,
         level=1,
     )
+
+    return thing_nodes, bucket_names, sinks
