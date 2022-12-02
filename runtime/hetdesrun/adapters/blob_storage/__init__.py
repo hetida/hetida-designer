@@ -1,5 +1,7 @@
 from typing import Any, Dict
 
+from hetdesrun.adapters.blob_storage.utils import get_setup_from_config
+from hetdesrun.adapters.blob_storage.service import get_buckets
 from hetdesrun.adapters.blob_storage.load_blob import load_blob_from_storage
 from hetdesrun.adapters.blob_storage.write_blob import write_blob_to_storage
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
@@ -10,6 +12,9 @@ try:
 except FileNotFoundError:
     VERSION = "dev snapshot"
 
+
+tns, bucket_names_from_setup, snks = get_setup_from_config()
+bucket_names_from_storage = get_buckets()
 
 async def load_data(
     wf_input_name_to_filtered_source_mapping_dict: Dict[str, FilteredSource],
