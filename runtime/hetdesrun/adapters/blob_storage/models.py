@@ -1,6 +1,24 @@
-from typing import Dict, List, Literal, Optional
+import re
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, ConstrainedStr, Field
+
+
+class ThingNodeName(ConstrainedStr):
+    min_length = 1
+    max_length = 63
+    regex = re.compile(r"[a-zA-Z0-9]+")
+
+
+class BucketName(ConstrainedStr):
+    min_length = 3
+    max_length = 63
+    regex = re.compile(r"[a-z0-9]+")
+
+
+class IdString(ConstrainedStr):
+    min_length = 1
+    regex = re.compile(r"[a-z0-9-]+")
 
 
 class InfoResponse(BaseModel):
@@ -10,9 +28,9 @@ class InfoResponse(BaseModel):
 
 
 class StructureThingNode(BaseModel):
-    id: str
-    parentId: Optional[str] = None
-    name: str
+    id: IdString
+    parentId: Optional[IdString] = None
+    name: ThingNodeName
     description: str
 
 
@@ -54,6 +72,20 @@ class StructureResponse(BaseModel):
     thingNodes: List[StructureThingNode]
     sources: List[BlobStorageStructureSource]
     sinks: List[BlobStorageStructureSink]
+
+
+class Category(BaseModel):
+    name: ThingNodeName
+    description: str
+    substructure: Optional[List[Dict[str, Any]]] = None
+
+    def to_thing_node(self, parent_id: Optional[IdString]) -> StructureThingNode:
+        return StructureThingNode(
+            id=(parent_id if parent_id is not None else "") + "-" + self.name.lower(),
+            parentId=parent_id,
+            name=self.name,
+            description=self.description,
+        )
 
 
 class Bucket(BaseModel):
