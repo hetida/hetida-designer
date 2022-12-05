@@ -158,7 +158,9 @@ def get_setup_from_config() -> Tuple[
 
 
 def setup_adapter() -> Tuple[
-    List[StructureThingNode], List[BlobStorageStructureSource], List[BlobStorageStructureSink]
+    List[StructureThingNode],
+    List[BlobStorageStructureSource],
+    List[BlobStorageStructureSink],
 ]:
     thing_node_list, bucket_names_from_setup, sink_list = get_setup_from_config()
     bucket_names_from_storage = get_buckets()
