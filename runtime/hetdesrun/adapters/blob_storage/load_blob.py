@@ -38,6 +38,6 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         "Load data for source id %s from storage in bucket %s under object key %s",
         source.id,
         bucket_name,
-        object_key,
+        object_key.string,
     )
     return {source.id}
