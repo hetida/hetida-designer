@@ -93,3 +93,28 @@ def get_sink_by_id(sink_id: IdString) -> BlobStorageStructureSink:
         logger.error(msg)
         raise SinksNotUnique(msg)
     return snk_list[0]
+
+
+def get_source_by_thing_node_id_and_metadata_key(
+    thing_node_id: IdString, metadata_key: str
+) -> BlobStorageStructureSource:
+    src_list = [
+        src
+        for src in srcs
+        if src.thingNodeId == thing_node_id and src.metadataKey == metadata_key
+    ]
+    if len(src_list) == 0:
+        msg = (
+            f"Found no source with thing node id {thing_node_id} "
+            f"and metadata key {metadata_key}!"
+        )
+        logger.error(msg)
+        raise SourceNotFound(msg)
+    if len(src_list) > 1:
+        msg = (
+            f"Found more than one source with thing node id {thing_node_id} "
+            f"and metadata key {metadata_key}:\n{str(src_list)}"
+        )
+        logger.error(msg)
+        raise SourcesNotUnique(msg)
+    return src_list[0]

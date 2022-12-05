@@ -2,7 +2,9 @@ import logging
 from typing import Any, Dict
 
 from hetdesrun.adapters.blob_storage.models import IdString
-from hetdesrun.adapters.blob_storage.structure import get_source_by_id
+from hetdesrun.adapters.blob_storage.structure import (
+    get_source_by_thing_node_id_and_metadata_key,
+)
 from hetdesrun.models.data_selection import FilteredSource
 
 logger = logging.getLogger(__name__)
@@ -13,19 +15,29 @@ async def load_data(
     adapter_key: str,  # pylint: disable=unused-argument
 ) -> Dict[str, Any]:
     return {
-        wf_input_name: load_blob_from_storage(filtered_source.ref_id)
+        wf_input_name: load_blob_from_storage(
+            filtered_source.ref_id, filtered_source.ref_key
+        )
         for wf_input_name, filtered_source in wf_input_name_to_filtered_source_mapping_dict.items()
-        if filtered_source.ref_id is not None
+        if filtered_source.ref_id is not None and filtered_source.ref_key is not None
     }
 
 
-def load_blob_from_storage(source_id: str) -> Any:
-    source = get_source_by_id(IdString(source_id))
+def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
+    logger.info(
+        "Identify source with thing node id %s and metadata key %s",
+        thing_node_id,
+        metadata_key,
+    )
+    source = get_source_by_thing_node_id_and_metadata_key(
+        IdString(thing_node_id), metadata_key
+    )
+    logger.info("Get bucket name and object key from source with id %s", source.id)
     bucket_name, object_key = source.to_bucket_name_and_object_key()
     logger.info(
         "Load data for source id %s from storage in bucket %s under object key %s",
-        source_id,
+        source.id,
         bucket_name,
         object_key,
     )
-    return {source_id}
+    return {source.id}
