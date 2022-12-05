@@ -56,6 +56,7 @@ def walk_structure(
     snk_append_list: List[BlobStorageStructureSink],
     structure: List[Category],
     bucket_level: int,
+    total_nof_levels: int,
     level: int,
 ) -> None:
     """Recursively walk structure_json."""
@@ -109,13 +110,14 @@ def walk_structure(
                 snk_append_list=snk_append_list,
                 structure=substructure,
                 bucket_level=bucket_level,
+                total_nof_levels=total_nof_levels,
                 level=level + 1,
             )
         else:  # category.substructure is None or len(category.substructure) == 0
-            if level < bucket_level:
+            if level < total_nof_levels:
                 msg = (
                     f"Category {str(category)} has too few levels of subcategories ({level}) "
-                    f"to generate buckets with bucket level {str(bucket_level)}"
+                    f"to match the total number of levels ({total_nof_levels})"
                 )
                 logger.error(msg)
                 raise ConfigIncompleteError(msg)
@@ -133,6 +135,7 @@ def get_setup_from_config() -> Tuple[
     config_json = load_config_file()
 
     bucket_level: int = config_json["bucket_level"]
+    total_nof_levels: int = config_json["total_number_of_levels"]
     structure_json: List[Dict[str, Any]] = config_json["structure"]
 
     try:
@@ -151,6 +154,7 @@ def get_setup_from_config() -> Tuple[
         snk_append_list=sinks,
         structure=structure,
         bucket_level=bucket_level,
+        total_nof_levels=total_nof_levels,
         level=1,
     )
 

@@ -1,5 +1,6 @@
 {
     "bucket_level": 2,
+    "total_number_of_levels": 3,
     "structure": [
         {
             "name": "I",
@@ -45,7 +46,18 @@
                 {
                     "name": "iii",
                     "description": "Category",
-                    "substructure": null
+                    "substructure": [
+                        {
+                            "name": "F",
+                            "description": "Subcategory",
+                            "substructure": null
+                        },
+                        {
+                            "name": "G",
+                            "description": "Subcategory",
+                            "substructure": null
+                        }
+                    ]
                 }
             ]
         }
