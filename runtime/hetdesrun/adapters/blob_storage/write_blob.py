@@ -24,8 +24,8 @@ async def send_data(
 
 
 def write_blob_to_storage(data: Any, thing_node_id: str) -> None:
-    # deepest level thing nodes have the same ids as their corresponding sinks
-    sink = get_sink_by_id(IdString(thing_node_id))
+    sink_id = IdString(thing_node_id+"/next")
+    sink = get_sink_by_id(sink_id)
 
     bucket_name, object_key = sink.to_bucket_name_and_object_key()
     logger.info(
@@ -33,5 +33,5 @@ def write_blob_to_storage(data: Any, thing_node_id: str) -> None:
         str(data),
         thing_node_id,
         bucket_name,
-        object_key,
+        object_key.string,
     )
