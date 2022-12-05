@@ -24,11 +24,7 @@ def get_sources_by_parent_id(
 ) -> List[BlobStorageStructureSource]:
     if parent_id is None:
         return []
-    return [
-        src
-        for src in srcs
-        if src.thingNodeId == parent_id
-    ]
+    return [src for src in srcs if src.thingNodeId == parent_id]
 
 
 def get_sinks_by_parent_id(
@@ -36,11 +32,7 @@ def get_sinks_by_parent_id(
 ) -> List[BlobStorageStructureSink]:
     if parent_id is None:
         return []
-    return [
-        snk
-        for snk in snks
-        if snk.thingNodeId == parent_id
-    ]
+    return [snk for snk in snks if snk.thingNodeId == parent_id]
 
 
 def get_filtered_sources(filter_str: Optional[str]) -> List[BlobStorageStructureSource]:
