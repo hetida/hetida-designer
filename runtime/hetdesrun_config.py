@@ -42,8 +42,8 @@ Example:
 """
 
 # Registering blob storage adapter
-from hetdesrun.adapters.blob_storage import load_data as blob_storage_load_data
-from hetdesrun.adapters.blob_storage import send_data as blob_storage_send_data
+from hetdesrun.adapters.blob_storage.load_blob import load_data as blob_storage_load_data
+from hetdesrun.adapters.blob_storage.write_blob import send_data as blob_storage_send_data
 
 register_source_adapter(
     adapter_key="blob-storage-adapter", load_func=blob_storage_load_data

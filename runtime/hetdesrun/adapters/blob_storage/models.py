@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from pydantic import BaseModel, ConstrainedStr, Field
 
@@ -84,11 +84,10 @@ class BlobStorageStructureSource(BaseModel):
             metadataKey=name,
         )
 
-    def bucket_name(self) -> BucketName:
-        return BucketName(self.thingNodeId.split(sep="/", maxsplit=1)[0])
-
-    def object_key(self) -> ObjectKey:
-        return ObjectKey.from_string(
+    def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
+        return BucketName(
+            self.thingNodeId.split(sep="/", maxsplit=1)[0]
+        ), ObjectKey.from_string(
             IdString(self.thingNodeId.split(sep="/", maxsplit=1)[1])
         )
 
@@ -120,8 +119,10 @@ class BlobStorageStructureSink(BaseModel):
             metadataKey=name,
         )
 
-    def bucket_name(self) -> BucketName:
-        return BucketName(self.thingNodeId.split(sep="/", maxsplit=1)[0])
+    def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
+        return BucketName(
+            self.thingNodeId.split(sep="/", maxsplit=1)[0]
+        ), ObjectKey.from_name(IdString(self.thingNodeId.split(sep="/", maxsplit=1)[1]))
 
 
 class MultipleSinksResponse(BaseModel):
