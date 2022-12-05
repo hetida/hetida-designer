@@ -386,7 +386,7 @@ export class WorkflowEditorComponent {
           transformation =>
             transformation.revision_group_id ===
               currentOperator.revision_group_id &&
-            transformation.id !== currentOperator.id &&
+            transformation.id !== currentOperator.transformation_id &&
             transformation.state === RevisionState.RELEASED
         );
 
