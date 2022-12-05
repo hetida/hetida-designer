@@ -36,11 +36,12 @@ class ObjectKey(BaseModel):
 
     @classmethod
     def from_string(cls, string: IdString) -> "ObjectKey":
-        if "_" not in string:
+        try:
+            name, timestring = string.rsplit("_", maxsplit=1)
+        except ValueError as e:
             raise ValueError(
                 f"String {string} not a valid ObjectKey string, because it contains no '_'!"
-            )
-        name, timestring = string.rsplit("_", maxsplit=1)
+            ) from e
         return ObjectKey(
             string=string,
             name=name,
@@ -89,11 +90,12 @@ class BlobStorageStructureSource(BaseModel):
         )
 
     def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
-        if "/" not in self.id:
+        try:
+            bucket_name_string, object_key_string = self.id.split(sep="/", maxsplit=1)
+        except ValueError as e:
             raise ValueError(
                 f"Id {self.id} not valid for a source, because it contains no '/'!"
-            )
-        bucket_name_string, object_key_string = self.id.split(sep="/", maxsplit=1)
+            ) from e
         return BucketName(bucket_name_string), ObjectKey.from_string(
             IdString(object_key_string)
         )
