@@ -12,3 +12,4 @@ except FileNotFoundError:
 
 
 tns, srcs, snks = setup_adapter()
+logger.info("Setup of Blob Storage Adapter complete!")
