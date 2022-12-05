@@ -121,10 +121,10 @@ def walk_structure(
                 raise ConfigIncompleteError(msg)
             # level >= bucket_level
             sink = BlobStorageStructureSink.from_thing_node(
-                    thing_node, name="Next Trained Model"
-                )
+                thing_node, name="Next Trained Model"
+            )
             snk_append_list.append(sink)
-            logger.debug("Created sink:\n%s",str(sink))
+            logger.debug("Created sink:\n%s", str(sink))
 
 
 def get_setup_from_config() -> Tuple[
@@ -166,7 +166,7 @@ def setup_adapter() -> Tuple[
     if len(bucket_names_from_setup) != len(set(bucket_names_from_setup)):
         seen = set()
         duplicates = []
-        for bucket_name in bucket_names_from_storage:
+        for bucket_name in bucket_names_from_setup:
             if bucket_name in seen:
                 duplicates.append(bucket_name)
             else:
@@ -196,9 +196,9 @@ def setup_adapter() -> Tuple[
         object_key_strings = get_object_key_strings_in_bucket(bucket_name)
         for oks in object_key_strings:
             source = BlobStorageStructureSource.from_bucket_name_and_object_key(
-                    bucket_name=bucket_name, object_key=ObjectKey.from_string(oks)
-                )
+                bucket_name=bucket_name, object_key=ObjectKey.from_string(oks)
+            )
             source_list.append(source)
-            logger.debug("Created source:\n%s",source)
+            logger.debug("Created source:\n%s", source)
 
     return thing_node_list, source_list, sink_list
