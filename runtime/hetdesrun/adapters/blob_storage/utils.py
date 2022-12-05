@@ -104,7 +104,7 @@ def walk_structure(
                 bucket_level=bucket_level,
                 level=level + 1,
             )
-        else:
+        else: # category.substructure is None or len(category.substructure) == 0
             if level < bucket_level:
                 msg = (
                     f"Category {str(category)} has too few levels of subcategories ({level}) "
@@ -112,12 +112,12 @@ def walk_structure(
                 )
                 logger.error(msg)
                 raise ConfigIncompleteError(msg)
-            else:
-                snk_append_list.append(
-                    BlobStorageStructureSink.from_thing_node(
-                        thing_node, name="Next Trained Model"
-                    )
+            # level >= bucket_level
+            snk_append_list.append(
+                BlobStorageStructureSink.from_thing_node(
+                    thing_node, name="Next Trained Model"
                 )
+            )
 
 
 def get_setup_from_config() -> Tuple[

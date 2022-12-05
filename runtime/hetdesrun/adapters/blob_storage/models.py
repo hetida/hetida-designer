@@ -58,8 +58,8 @@ class StructureThingNode(BaseModel):
 
 
 class BlobStorageStructureSource(BaseModel):
-    id: str
-    thingNodeId: str
+    id: IdString
+    thingNodeId: IdString
     name: str
     type: Literal["metadata(any)"] = "metadata(any)"
     visible: Literal[True] = True
@@ -99,8 +99,8 @@ class MultipleSourcesResponse(BaseModel):
 
 
 class BlobStorageStructureSink(BaseModel):
-    id: str
-    thingNodeId: str
+    id: IdString
+    thingNodeId: IdString
     name: str
     type: Literal["metadata(any)"] = "metadata(any)"
     visible: Literal[True] = True
@@ -147,7 +147,7 @@ class Category(BaseModel):
     ) -> StructureThingNode:
         return StructureThingNode(
             id=(parent_id + separator if parent_id is not None else "")
-            + self.name.lower(),
+            + (self.name.lower() if separator == "-" else self.name),
             parentId=parent_id,
             name=self.name,
             description=self.description,

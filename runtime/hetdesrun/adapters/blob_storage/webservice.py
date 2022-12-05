@@ -101,7 +101,7 @@ async def get_sinks_endpoint(
 
 
 @blob_storage_adapter_router.get(
-    "/sources/{sourceId}/metadata/",
+    "/sources/{sourceId:path}/metadata/",
     response_model=List,
     dependencies=get_auth_deps(),
 )
@@ -117,7 +117,7 @@ async def get_sources_metadata(
 
 
 @blob_storage_adapter_router.get(
-    "/sources/{sourceId}",
+    "/sources/{sourceId:path}",
     response_model=BlobStorageStructureSource,
     dependencies=get_auth_deps(),
 )
@@ -134,7 +134,7 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
 
 
 @blob_storage_adapter_router.get(
-    "/sinks/{sinkId}/metadata/",
+    "/sinks/{sinkId:path}/metadata/",
     response_model=List,
     dependencies=get_auth_deps(),
 )
@@ -150,7 +150,7 @@ async def get_sinks_metadata(
 
 
 @blob_storage_adapter_router.get(
-    "/sinks/{sinkId}",
+    "/sinks/{sinkId:path}",
     response_model=BlobStorageStructureSink,
     dependencies=get_auth_deps(),
 )
@@ -167,7 +167,7 @@ async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
 
 
 @blob_storage_adapter_router.get(
-    "/thingNodes/{thingNodeId}/metadata/",
+    "/thingNodes/{thingNodeId:path}/metadata/",
     response_model=List,
     dependencies=get_auth_deps(),
 )
@@ -183,7 +183,7 @@ async def get_thing_nodes_metadata(
 
 
 @blob_storage_adapter_router.get(
-    "/thingNodes/{thingNodeId}",
+    "/thingNodes/{thingNodeId:path}",
     response_model=StructureThingNode,
     dependencies=get_auth_deps(),
 )

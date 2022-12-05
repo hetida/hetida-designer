@@ -27,7 +27,7 @@ def get_sources_by_parent_id(
     return [
         src
         for src in srcs
-        if str(src.id).startswith(parent_id) and len(src.id) != parent_id
+        if src.thingNodeId == parent_id
     ]
 
 
@@ -39,7 +39,7 @@ def get_sinks_by_parent_id(
     return [
         snk
         for snk in snks
-        if str(snk.id).startswith(parent_id) and len(snk.id) != parent_id
+        if snk.thingNodeId == parent_id
     ]
 
 
