@@ -10,9 +10,17 @@ Actual data ingestion/egestion happens in the corresponding Runtime-Python-Plugi
 
 from typing import List, Optional
 
-from fastapi import HTTPException, Query
+from fastapi import HTTPException, Query, status
 
 from hetdesrun.adapters.blob_storage import VERSION
+from hetdesrun.adapters.blob_storage.exceptions import (
+    SinkNotFound,
+    SinksNotUnique,
+    SourceNotFound,
+    SourcesNotUnique,
+    ThingNodeNotFound,
+    ThingNodesNotUnique,
+)
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
     BlobStorageStructureSource,
@@ -122,15 +130,20 @@ async def get_sources_metadata(
     dependencies=get_auth_deps(),
 )
 async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
-    possible_source = get_source_by_id(sourceId)
-
-    if possible_source is None:
+    try:
+        source = get_source_by_id(sourceId)
+    except SourceNotFound as not_found_error:
         raise HTTPException(
-            status_code=404,
-            detail="Could not find Sourche with id " + sourceId,
-        )
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Could not find Source with id " + sourceId,
+        ) from not_found_error
+    except SourcesNotUnique as not_unique_error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Sink with id " + sourceId + " not unique!",
+        ) from not_unique_error
 
-    return possible_source
+    return source
 
 
 @blob_storage_adapter_router.get(
@@ -155,15 +168,20 @@ async def get_sinks_metadata(
     dependencies=get_auth_deps(),
 )
 async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
-    possible_sink = get_sink_by_id(sinkId)
-
-    if possible_sink is None:
+    try:
+        sink = get_sink_by_id(sinkId)
+    except SinkNotFound as not_found_error:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Could not find Sink with id " + sinkId,
-        )
+        ) from not_found_error
+    except SinksNotUnique as not_unique_error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Sink with id " + sinkId + " not unique!",
+        ) from not_unique_error
 
-    return possible_sink
+    return sink
 
 
 @blob_storage_adapter_router.get(
@@ -190,12 +208,17 @@ async def get_thing_nodes_metadata(
 async def get_single_thingNode(
     thingNodeId: IdString,
 ) -> StructureThingNode:
-    possible_thing_node = get_thing_node_by_id(thingNodeId)
-
-    if possible_thing_node is None:
+    try:
+        thing_node = get_thing_node_by_id(thingNodeId)
+    except ThingNodeNotFound as not_found_error:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Could not find ThingNode with id " + thingNodeId,
-        )
+        ) from not_found_error
+    except ThingNodesNotUnique as not_unique_error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="ThingNode with id " + thingNodeId + " not unique!",
+        ) from not_unique_error
 
-    return possible_thing_node
+    return thing_node
