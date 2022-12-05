@@ -41,6 +41,17 @@ Example:
     register_sink_adapter("my_adapter_key", my_sink_adapter_send_func)
 """
 
+# Registering blob storage adapter
+from hetdesrun.adapters.blob_storage import load_data as blob_storage_load_data
+from hetdesrun.adapters.blob_storage import send_data as blob_storage_send_data
+
+register_source_adapter(
+    adapter_key="blob-storage-adapter", load_func=blob_storage_load_data
+)
+
+register_sink_adapter(adapter_key="blob-storage-adapter", send_func=blob_storage_send_data)
+
+
 # Registering local file adapter
 from hetdesrun.adapters.local_file import load_data as local_file_load_data
 from hetdesrun.adapters.local_file import send_data as local_file_send_data
