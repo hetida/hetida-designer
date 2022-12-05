@@ -19,7 +19,7 @@ class BucketName(ConstrainedStr):
 
 class IdString(ConstrainedStr):
     min_length = 1
-    regex = re.compile(r"[a-zA-Z0-9/-]+")
+    regex = re.compile(r"[a-zA-Z0-9/\-_]+")
 
 
 class ObjectKey(BaseModel):
@@ -31,12 +31,16 @@ class ObjectKey(BaseModel):
     def from_name(cls, name: IdString) -> "ObjectKey":
         now = datetime.now(timezone.utc)
         return ObjectKey(
-            string=name + "-" + now.strftime("%YY%mM%dD%Hh%Mm%Ss"), name=name, time=now
+            string=name + "_" + now.strftime("%YY%mM%dD%Hh%Mm%Ss"), name=name, time=now
         )
 
     @classmethod
     def from_string(cls, string: IdString) -> "ObjectKey":
-        name, timestring = string.rsplit("-", maxsplit=1)
+        if "_" not in string:
+            raise ValueError(
+                f"String {string} not a valid ObjectKey string, because it contains no '_'!"
+            )
+        name, timestring = string.rsplit("_", maxsplit=1)
         return ObjectKey(
             string=string,
             name=name,
@@ -85,8 +89,14 @@ class BlobStorageStructureSource(BaseModel):
         )
 
     def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
+        if "/" not in self.id:
+            raise ValueError(
+                f"Id {self.id} not valid for a source, because it contains no '/'!"
+            )
         bucket_name_string, object_key_string = self.id.split(sep="/", maxsplit=1)
-        return BucketName(bucket_name_string), ObjectKey.from_string(IdString(object_key_string))
+        return BucketName(bucket_name_string), ObjectKey.from_string(
+            IdString(object_key_string)
+        )
 
 
 class MultipleSourcesResponse(BaseModel):
@@ -117,10 +127,16 @@ class BlobStorageStructureSink(BaseModel):
         )
 
     def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
+        if not "/" in self.thingNodeId:
+            raise ValueError(
+                f"thingNodeId {self.thingNodeId} not valid for a sink, because it contains no '/'!"
+            )
         bucket_name_string, object_key_name = self.thingNodeId.split(
             sep="/", maxsplit=1
         )
-        return BucketName(bucket_name_string), ObjectKey.from_name(IdString(object_key_name))
+        return BucketName(bucket_name_string), ObjectKey.from_name(
+            IdString(object_key_name)
+        )
 
 
 class MultipleSinksResponse(BaseModel):
