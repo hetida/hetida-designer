@@ -7,16 +7,23 @@ from pydantic import ValidationError
 from hetdesrun.adapters.blob_storage.exceptions import (
     BucketNameInvalidError,
     CategoryInvalidError,
+    ConfigError,
     ConfigIncompleteError,
     MissingConfigError,
     ThingNodeInvalidError,
 )
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
+    BlobStorageStructureSource,
     BucketName,
     Category,
     IdString,
+    ObjectKey,
     StructureThingNode,
+)
+from hetdesrun.adapters.blob_storage.service import (
+    get_buckets,
+    get_object_key_strings_in_bucket,
 )
 
 logger = getLogger(__name__)
@@ -104,7 +111,7 @@ def walk_structure(
                 bucket_level=bucket_level,
                 level=level + 1,
             )
-        else: # category.substructure is None or len(category.substructure) == 0
+        else:  # category.substructure is None or len(category.substructure) == 0
             if level < bucket_level:
                 msg = (
                     f"Category {str(category)} has too few levels of subcategories ({level}) "
@@ -148,3 +155,31 @@ def get_setup_from_config() -> Tuple[
     )
 
     return thing_nodes, bucket_names, sinks
+
+
+def setup_adapter() -> Tuple[
+    List[StructureThingNode], List[BlobStorageStructureSource], List[BlobStorageStructureSink]
+]:
+    thing_node_list, bucket_names_from_setup, sink_list = get_setup_from_config()
+    bucket_names_from_storage = get_buckets()
+    if len(bucket_names_from_setup) != len(bucket_names_from_storage):
+        msg = (
+            f"Number of bucket names generated from config file:\n{str(bucket_names_from_setup)}\n"
+            f"does not match number of actual buckets:\n{bucket_names_from_storage}"
+        )
+        logger.error(msg)
+        raise ConfigError(msg)
+    source_list: List[BlobStorageStructureSource] = []
+    for bucket_name in bucket_names_from_setup:
+        if bucket_name not in bucket_names_from_storage:
+            msg = f"Bucket {bucket_name} generated from config file but not existent in storage!"
+            logger.error(msg)
+            raise ConfigError(msg)
+        object_key_strings = get_object_key_strings_in_bucket(bucket_name)
+        for oks in object_key_strings:
+            source_list.append(
+                BlobStorageStructureSource.from_bucket_name_and_object_key(
+                    bucket_name=bucket_name, object_key=ObjectKey.from_string(oks)
+                )
+            )
+    return thing_node_list, source_list, sink_list
