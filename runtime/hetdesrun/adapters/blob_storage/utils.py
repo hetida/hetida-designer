@@ -120,11 +120,11 @@ def walk_structure(
                 logger.error(msg)
                 raise ConfigIncompleteError(msg)
             # level >= bucket_level
-            snk_append_list.append(
-                BlobStorageStructureSink.from_thing_node(
+            sink = BlobStorageStructureSink.from_thing_node(
                     thing_node, name="Next Trained Model"
                 )
-            )
+            snk_append_list.append(sink)
+            logger.debug("Created sink:\n%s",str(sink))
 
 
 def get_setup_from_config() -> Tuple[
@@ -163,6 +163,21 @@ def setup_adapter() -> Tuple[
     List[BlobStorageStructureSink],
 ]:
     thing_node_list, bucket_names_from_setup, sink_list = get_setup_from_config()
+    if len(bucket_names_from_setup) != len(set(bucket_names_from_setup)):
+        seen = set()
+        duplicates = []
+        for bucket_name in bucket_names_from_storage:
+            if bucket_name in seen:
+                duplicates.append(bucket_name)
+            else:
+                seen.add(bucket_name)
+        msg = (
+            "The bucket names generated from the config file are not unique!\n"
+            "They contain the following duplicates: "
+            + ", ".join(duplicate for duplicate in duplicates)
+        )
+        raise ConfigError(msg)
+
     bucket_names_from_storage = get_buckets()
     if len(bucket_names_from_setup) != len(bucket_names_from_storage):
         msg = (
@@ -171,6 +186,7 @@ def setup_adapter() -> Tuple[
         )
         logger.error(msg)
         raise ConfigError(msg)
+
     source_list: List[BlobStorageStructureSource] = []
     for bucket_name in bucket_names_from_setup:
         if bucket_name not in bucket_names_from_storage:
@@ -179,9 +195,10 @@ def setup_adapter() -> Tuple[
             raise ConfigError(msg)
         object_key_strings = get_object_key_strings_in_bucket(bucket_name)
         for oks in object_key_strings:
-            source_list.append(
-                BlobStorageStructureSource.from_bucket_name_and_object_key(
+            source = BlobStorageStructureSource.from_bucket_name_and_object_key(
                     bucket_name=bucket_name, object_key=ObjectKey.from_string(oks)
                 )
-            )
+            source_list.append(source)
+            logger.debug("Created source:\n%s",source)
+
     return thing_node_list, source_list, sink_list
