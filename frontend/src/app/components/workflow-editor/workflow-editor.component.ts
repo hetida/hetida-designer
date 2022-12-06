@@ -334,7 +334,7 @@ export class WorkflowEditorComponent {
       event.detail.svgY as number
     );
     this.currentWorkflow.content.operators.push(newOperator);
-    this.baseItemService.updateTransformation(this.currentWorkflow);
+    this.baseItemService.updateTransformation(this.currentWorkflow).subscribe();
   }
 
   /**
