@@ -134,8 +134,15 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
         # to ensure that every node is run, even if in a part of the graph not leading
         # to a final output. This is necessary for example for the Store Model component.
         for computation_node in all_nodes:
-
-            res = await computation_node.result  # pylint: disable=unused-variable
+            # pylint: disable=unused-variable
+            res = (
+                await computation_node.result
+                if not (
+                    computation_node.has_only_plot_outputs is True
+                    and runtime_input.configuration.run_pure_plot_operators is False
+                )
+                else {}
+            )
 
         pure_execution_measured_step.stop()
 
