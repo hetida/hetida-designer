@@ -22,4 +22,6 @@ def get_object_key_strings_in_bucket(bucket_name: BucketName) -> List[IdString]:
         ]
     if bucket_name == "i-ii":
         return [IdString("E_2022Y01M02D14h23m18s")]
+    if bucket_name == "i-iii":
+        return [IdString("H_2022Y12M05D14h41m55s")]
     return []
