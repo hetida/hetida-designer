@@ -81,11 +81,12 @@ class BlobStorageStructureSource(BaseModel):
             + " - "
             + object_key.time.astimezone(timezone.utc).isoformat(sep=" ")
         )
+        thing_node_id = bucket_name + "/" + object_key.name
         return BlobStorageStructureSource(
             id=bucket_name + "/" + object_key.string,
-            thingNodeId=bucket_name + "/" + object_key.name,
+            thingNodeId=thing_node_id,
             name=name,
-            path=bucket_name + "/" + object_key.string,
+            path=thing_node_id,
             metadataKey=name,
         )
 
