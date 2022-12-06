@@ -838,11 +838,6 @@ valid_workflow_example_iso_forest: dict = {
                     "workflowOutputName": "contour_plot",
                     "adapterId": "direct_provisioning",
                 },
-                {
-                    "id": "d01005c7-552c-48a4-972c-28cd7044597a",
-                    "workflowOutputName": "xs",
-                    "adapterId": "direct_provisioning",
-                },
             ],
         }
     ],
