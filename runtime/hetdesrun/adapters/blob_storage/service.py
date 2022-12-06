@@ -6,11 +6,6 @@ from hetdesrun.adapters.blob_storage.models import BucketName, IdString
 logger = getLogger(__name__)
 
 
-def get_buckets() -> List[BucketName]:
-    logger.info("get buckets")
-    return [BucketName("i-i"), BucketName("i-ii"), BucketName("i-iii")]
-
-
 def get_object_key_strings_in_bucket(bucket_name: BucketName) -> List[IdString]:
     if bucket_name == "i-i":
         return [

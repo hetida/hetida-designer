@@ -20,10 +20,7 @@ from hetdesrun.adapters.blob_storage.models import (
     ObjectKey,
     StructureThingNode,
 )
-from hetdesrun.adapters.blob_storage.service import (
-    get_buckets,
-    get_object_key_strings_in_bucket,
-)
+from hetdesrun.adapters.blob_storage.service import get_object_key_strings_in_bucket
 
 logger = getLogger(__name__)
 
@@ -95,9 +92,9 @@ def walk_structure(
             logger.debug("Created sink:\n%s", str(sink))
 
 
-def get_setup_from_config(path: str = "demodata/blob_storage_adapter_config.json") -> Tuple[
-    List[StructureThingNode], List[BucketName], List[BlobStorageStructureSink]
-]:
+def get_setup_from_config(
+    path: str = "demodata/blob_storage_adapter_config.json",
+) -> Tuple[List[StructureThingNode], List[BucketName], List[BlobStorageStructureSink]]:
     try:
         config = BlobAdapterConfig.parse_file(path)
     except FileNotFoundError as error:
@@ -144,25 +141,18 @@ def setup_adapter() -> Tuple[
         )
         raise ConfigError(msg)
 
-    bucket_names_from_storage = get_buckets()
-    if len(bucket_names_from_setup) != len(bucket_names_from_storage):
-        msg = (
-            f"Number of bucket names generated from config file:\n{str(bucket_names_from_setup)}\n"
-            f"does not match number of actual buckets:\n{bucket_names_from_storage}"
-        )
-        logger.error(msg)
-        raise ConfigError(msg)
-
     source_list: List[BlobStorageStructureSource] = []
     for bucket_name in bucket_names_from_setup:
-        if bucket_name not in bucket_names_from_storage:
-            msg = f"Bucket {bucket_name} generated from config file but not existent in storage!"
-            logger.error(msg)
-            raise ConfigError(msg)
         object_key_strings = get_object_key_strings_in_bucket(bucket_name)
-        for oks in object_key_strings:
+        for object_key_string in object_key_strings:
+            object_key = ObjectKey.from_string(object_key_string)
+
+            # ignore objects that do not match the config hierarchy
+            thing_node_id = IdString(bucket_name + "/" + object_key.name)
+            if len([tn for tn in thing_node_list if tn.id == thing_node_id]) == 0:
+                continue
             source = BlobStorageStructureSource.from_bucket_name_and_object_key(
-                bucket_name=bucket_name, object_key=ObjectKey.from_string(oks)
+                bucket_name=bucket_name, object_key=object_key
             )
             source_list.append(source)
             logger.debug("Created source:\n%s", source)
