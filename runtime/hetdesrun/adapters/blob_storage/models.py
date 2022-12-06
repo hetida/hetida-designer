@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Tuple
 
 from pydantic import BaseModel, ConstrainedStr, Field
 
@@ -158,7 +158,7 @@ class StructureResponse(BaseModel):
 class Category(BaseModel):
     name: ThingNodeName
     description: str
-    substructure: Optional[List[Dict[str, Any]]] = None
+    substructure: Optional[List["Category"]] = None
 
     def to_thing_node(
         self, parent_id: Optional[IdString], separator: Literal["-", "/"]
@@ -170,3 +170,9 @@ class Category(BaseModel):
             name=self.name,
             description=self.description,
         )
+
+
+class BlobAdapterConfig(BaseModel):
+    bucket_level: int
+    total_number_of_levels: int
+    structure: List[Category]

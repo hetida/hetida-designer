@@ -1,18 +1,17 @@
-import json
 from logging import getLogger
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from pydantic import ValidationError
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     BucketNameInvalidError,
-    CategoryInvalidError,
     ConfigError,
     ConfigIncompleteError,
     MissingConfigError,
     ThingNodeInvalidError,
 )
 from hetdesrun.adapters.blob_storage.models import (
+    BlobAdapterConfig,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
     BucketName,
@@ -29,26 +28,6 @@ from hetdesrun.adapters.blob_storage.service import (
 logger = getLogger(__name__)
 
 
-def load_config_file(path: str = "demodata/blob_storage_adapter_config.json") -> Any:
-    try:
-        with open(path, encoding="ascii") as f:
-            config_json = json.load(f)
-    except FileNotFoundError as error:
-        msg = f"Could not find json file at path {path}:\n{str(error)}"
-        logger.error(msg)
-        raise MissingConfigError(msg) from error
-
-    if "bucket_level" not in config_json or "structure" not in config_json:
-        msg = (
-            f"The config file {path} is incomplete.\n"
-            'Both "bucket_level" and "structure" must be provided.'
-        )
-        logger.error(msg)
-        raise ConfigIncompleteError(msg)
-
-    return config_json
-
-
 def walk_structure(
     parent_id: Optional[IdString],
     tn_append_list: List[StructureThingNode],
@@ -59,7 +38,7 @@ def walk_structure(
     total_nof_levels: int,
     level: int,
 ) -> None:
-    """Recursively walk structure_json."""
+    """Recursively walk structure from config_json."""
     logger.info(
         "Walk through structure with parent_id %s, bucket_level %i, level %i",
         parent_id,
@@ -89,26 +68,13 @@ def walk_structure(
                 logger.error(msg)
                 raise BucketNameInvalidError(msg) from error
 
-        if category.substructure is not None and len(category.substructure) != 0:
-            try:
-                substructure = [
-                    Category(**subcategory_json)
-                    for subcategory_json in category.substructure
-                ]
-            except ValidationError as error:
-                msg = (
-                    "Validation Error for transformation of substructure from category "
-                    f"{category.name} to a list of categories."
-                )
-                logger.error(msg)
-                raise CategoryInvalidError(msg) from error
-
+        if category.substructure is not None:
             walk_structure(
                 parent_id=thing_node.id,
                 tn_append_list=tn_append_list,
                 bucket_append_list=bucket_append_list,
                 snk_append_list=snk_append_list,
-                structure=substructure,
+                structure=category.substructure,
                 bucket_level=bucket_level,
                 total_nof_levels=total_nof_levels,
                 level=level + 1,
@@ -129,19 +95,15 @@ def walk_structure(
             logger.debug("Created sink:\n%s", str(sink))
 
 
-def get_setup_from_config() -> Tuple[
+def get_setup_from_config(path: str = "demodata/blob_storage_adapter_config.json") -> Tuple[
     List[StructureThingNode], List[BucketName], List[BlobStorageStructureSink]
 ]:
-    config_json = load_config_file()
-
-    bucket_level: int = config_json["bucket_level"]
-    total_nof_levels: int = config_json["total_number_of_levels"]
-    structure_json: List[Dict[str, Any]] = config_json["structure"]
-
     try:
-        structure = [Category(**category_json) for category_json in structure_json]
-    except ValidationError as error:
-        raise CategoryInvalidError from error
+        config = BlobAdapterConfig.parse_file(path)
+    except FileNotFoundError as error:
+        msg = f"Could not find json file at path {path}:\n{str(error)}"
+        logger.error(msg)
+        raise MissingConfigError(msg) from error
 
     thing_nodes: List[StructureThingNode] = []
     bucket_names: List[BucketName] = []
@@ -152,9 +114,9 @@ def get_setup_from_config() -> Tuple[
         tn_append_list=thing_nodes,
         bucket_append_list=bucket_names,
         snk_append_list=sinks,
-        structure=structure,
-        bucket_level=bucket_level,
-        total_nof_levels=total_nof_levels,
+        structure=config.structure,
+        bucket_level=config.bucket_level,
+        total_nof_levels=config.total_number_of_levels,
         level=1,
     )
 

@@ -18,10 +18,6 @@ class ConfigIncompleteError(ConfigError):
     pass
 
 
-class CategoryInvalidError(ConfigError):
-    pass
-
-
 class ThingNodeInvalidError(ConfigError):
     pass
 

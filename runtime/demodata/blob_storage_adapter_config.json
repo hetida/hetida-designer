@@ -22,13 +22,11 @@
                         },
                         {
                             "name": "C",
-                            "description": "Subcategory",
-                            "substructure": []
+                            "description": "Subcategory"
                         },
                         {
                             "name": "D",
-                            "description": "Subcategory",
-                            "substructure": null
+                            "description": "Subcategory"
                         }
                     ]
                 },
@@ -38,8 +36,7 @@
                     "substructure": [
                         {
                             "name": "E",
-                            "description": "Subcategory",
-                            "substructure": null
+                            "description": "Subcategory"
                         }
                     ]
                 },
@@ -49,13 +46,11 @@
                     "substructure": [
                         {
                             "name": "F",
-                            "description": "Subcategory",
-                            "substructure": null
+                            "description": "Subcategory"
                         },
                         {
                             "name": "G",
-                            "description": "Subcategory",
-                            "substructure": null
+                            "description": "Subcategory"
                         }
                     ]
                 }
