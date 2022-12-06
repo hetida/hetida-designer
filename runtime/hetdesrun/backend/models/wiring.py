@@ -26,8 +26,16 @@ class IoWiringFrontendDto(BaseModel):
     def metadata_type_includes_additional_fields(
         cls, v: Optional[ExternalType], values: dict
     ) -> Optional[ExternalType]:
+        try:
+            ref_id_type = values["ref_id_type"]
+            ref_key = values["ref_key"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if metadata type includes additional fields if any of the attributes "
+                "'ref_id_type', 'ref_key' is missing!"
+            ) from e
         if v is not None and (GeneralType(v.general_type) == GeneralType.METADATA):
-            if values["ref_id_type"] is None or values["ref_key"] is None:
+            if ref_id_type is None or ref_key is None:
                 raise ValueError(
                     "metadata datatype in OutputWiring requires additional fields "
                     '"ref_id_type" and "ref_key". At least one of them is missing.'
