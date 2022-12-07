@@ -48,6 +48,9 @@ class ObjectKey(BaseModel):
             time=datetime.strptime(timestring, "%YY%mM%dD%Hh%Mm%Ss"),
         )
 
+    def to_thing_node_id(self, bucket_name: BucketName) -> IdString:
+        return bucket_name + "/" + self.name
+
 
 class InfoResponse(BaseModel):
     id: str
@@ -81,7 +84,7 @@ class BlobStorageStructureSource(BaseModel):
             + " - "
             + object_key.time.astimezone(timezone.utc).isoformat(sep=" ")
         )
-        thing_node_id = bucket_name + "/" + object_key.name
+        thing_node_id = object_key.to_thing_node_id(bucket_name)
         return BlobStorageStructureSource(
             id=bucket_name + "/" + object_key.string,
             thingNodeId=thing_node_id,

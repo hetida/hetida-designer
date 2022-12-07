@@ -77,6 +77,8 @@ def walk_structure(
                 level=level + 1,
             )
         else:  # category.substructure is None or len(category.substructure) == 0
+            # TODO: use validator to check if all end-nodes have the same lavel, define that as height
+            # TODO: validate that bucket_level is smaller than height
             if level < total_nof_levels:
                 msg = (
                     f"Category {str(category)} has too few levels of subcategories ({level}) "
@@ -120,6 +122,17 @@ def get_setup_from_config(
     return thing_nodes, bucket_names, sinks
 
 
+def find_duplicates(list: List) -> List:
+    seen = set()
+    duplicates = []
+    for item in list:
+        if item in seen:
+            duplicates.append(item)
+        else:
+            seen.add(item)
+    return duplicates
+
+
 def setup_adapter() -> Tuple[
     List[StructureThingNode],
     List[BlobStorageStructureSource],
@@ -127,17 +140,12 @@ def setup_adapter() -> Tuple[
 ]:
     thing_node_list, bucket_names_from_setup, sink_list = get_setup_from_config()
     if len(bucket_names_from_setup) != len(set(bucket_names_from_setup)):
-        seen = set()
-        duplicates = []
-        for bucket_name in bucket_names_from_setup:
-            if bucket_name in seen:
-                duplicates.append(bucket_name)
-            else:
-                seen.add(bucket_name)
         msg = (
             "The bucket names generated from the config file are not unique!\n"
             "They contain the following duplicates: "
-            + ", ".join(duplicate for duplicate in duplicates)
+            + ", ".join(
+                duplicate for duplicate in find_duplicates(bucket_names_from_setup)
+            )
         )
         raise ConfigError(msg)
 
@@ -148,7 +156,7 @@ def setup_adapter() -> Tuple[
             object_key = ObjectKey.from_string(object_key_string)
 
             # ignore objects that do not match the config hierarchy
-            thing_node_id = IdString(bucket_name + "/" + object_key.name)
+            thing_node_id = object_key.to_thing_node_id(bucket_name)
             if len([tn for tn in thing_node_list if tn.id == thing_node_id]) == 0:
                 continue
             source = BlobStorageStructureSource.from_bucket_name_and_object_key(
