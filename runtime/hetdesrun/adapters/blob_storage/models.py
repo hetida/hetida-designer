@@ -8,18 +8,18 @@ from pydantic import BaseModel, ConstrainedStr, Field, validator
 class ThingNodeName(ConstrainedStr):
     min_length = 1
     max_length = 63
-    regex = re.compile(r"[a-zA-Z0-9]+")
+    regex = re.compile(r"^[a-zA-Z0-9]+$")
 
 
 class BucketName(ConstrainedStr):
     min_length = 3
     max_length = 63
-    regex = re.compile(r"[a-z0-9]+")
+    regex = re.compile(r"^[a-z0-9]+$")
 
 
 class IdString(ConstrainedStr):
     min_length = 1
-    regex = re.compile(r"[a-zA-Z0-9/\-_]+")
+    regex = re.compile(r"^[a-zA-Z0-9/\-_]+$")
 
 
 class ObjectKey(BaseModel):
@@ -27,9 +27,16 @@ class ObjectKey(BaseModel):
     name: IdString
     time: datetime
 
+    # pylint: disable=no-self-argument
+    @validator("time")
+    def has_timezone_utc(cls, time: datetime) -> datetime:
+        if time.tzinfo != timezone.utc:
+            raise ValueError("The ObjectKey attribute time must have timezone UTC!")
+        return time
+
     @classmethod
     def from_name(cls, name: IdString) -> "ObjectKey":
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(microsecond=0)
         return ObjectKey(
             string=name + "_" + now.strftime("%YY%mM%dD%Hh%Mm%Ss"), name=name, time=now
         )
@@ -45,7 +52,9 @@ class ObjectKey(BaseModel):
         return ObjectKey(
             string=string,
             name=name,
-            time=datetime.strptime(timestring, "%YY%mM%dD%Hh%Mm%Ss"),
+            time=datetime.strptime(timestring, "%YY%mM%dD%Hh%Mm%Ss").replace(
+                tzinfo=timezone.utc
+            ),
         )
 
     def to_thing_node_id(self, bucket_name: BucketName) -> IdString:
@@ -69,11 +78,40 @@ class BlobStorageStructureSource(BaseModel):
     id: IdString
     thingNodeId: IdString
     name: str
+    path: str = Field(..., description="Display path used in Designer Frontend")
+    metadataKey: str
     type: Literal["metadata(any)"] = "metadata(any)"
     visible: Literal[True] = True
-    path: str = Field(..., description="Display path used in Designer Frontend")
-    metadataKey: Optional[str] = None
     filters: Optional[Dict[str, Dict]] = {}
+
+    # pylint: disable=no-self-argumeng
+    @validator("thingNodeId")
+    def thing_node_id_matches_id(cls, thingNodeId: IdString, values: dict) -> IdString:
+        try:
+            id = values["id"]  # pylint: disable=redefine-builtin
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if thing node id matches id if attribute id is missing!"
+            ) from e
+
+        thing_node_id_from_id = str(id).split(sep="_")[0]
+        if thing_node_id_from_id != thingNodeId:
+            raise ValueError(
+                f"BlobStorageStructureSource thing node id {thingNodeId} does not match id {id}!"
+            )
+        return thingNodeId
+
+    # pylint: disable=no-self-argument
+    @validator("name")
+    def name_matches_id(cls, name: str, values: dict) -> str:
+        try:
+            id = values["id"]  # pylint: disable=redefine-builtin
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if name matches id if attribute id is missing!"
+            ) from e
+
+        return name
 
     @classmethod
     def from_bucket_name_and_object_key(
@@ -114,10 +152,10 @@ class BlobStorageStructureSink(BaseModel):
     id: IdString
     thingNodeId: IdString
     name: str
+    path: str = Field(..., description="Display path used in Designer Frontend")
+    metadataKey: str
     type: Literal["metadata(any)"] = "metadata(any)"
     visible: Literal[True] = True
-    path: str = Field(..., description="Display path used in Designer Frontend")
-    metadataKey: Optional[str] = None
     filters: Optional[Dict[str, Dict]] = {}
 
     @classmethod
@@ -125,7 +163,7 @@ class BlobStorageStructureSink(BaseModel):
         cls, thing_node: StructureThingNode, name: str
     ) -> "BlobStorageStructureSink":
         return BlobStorageStructureSink(
-            id=thing_node.id + "/next",
+            id=thing_node.id + "_next",
             thingNodeId=thing_node.id,
             name=name,
             path=thing_node.id,
@@ -167,7 +205,6 @@ class Category(BaseModel):
     def set_level_and_get_depth(self, level: int) -> int:
         self.level = level
         if self.substructure is not None and len(self.substructure) != 0:
-            assert isinstance(self.substructure, List[Category])
             depths: List[int] = []
             for category in self.substructure:
                 depths.append(category.set_level_and_get_depth(self.level + 1))
