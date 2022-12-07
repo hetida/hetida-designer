@@ -40,7 +40,6 @@ def walk_structure(
         parent_id,
     )
     for category in structure:
-        assert isinstance(level, int)
         try:
             thing_node = category.to_thing_node(
                 parent_id, separator="-" if level <= bucket_level else "/"
@@ -63,7 +62,7 @@ def walk_structure(
                 logger.error(msg)
                 raise BucketNameInvalidError(msg) from error
 
-        if category.substructure is not None:
+        if category.substructure is not None and len(category.substructure) != 0:
             walk_structure(
                 parent_id=thing_node.id,
                 tn_append_list=tn_append_list,
@@ -79,7 +78,7 @@ def walk_structure(
                 thing_node, name="Next Trained Model"
             )
             snk_append_list.append(sink)
-            logger.debug("Created sink:\n%s", str(sink))
+            logger.info("Created sink:\n%s", str(sink))
 
 
 def get_setup_from_config(
