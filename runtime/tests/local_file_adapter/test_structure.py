@@ -281,3 +281,4 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
             )  # option from the settings file of the only test sink
 
         assert to_excel_mock.called_once
+        assert True == False
