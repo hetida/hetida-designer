@@ -167,6 +167,7 @@ class Category(BaseModel):
     def set_level_and_get_depth(self, level: int) -> int:
         self.level = level
         if self.substructure is not None and len(self.substructure) != 0:
+            assert isinstance(self.substructure, List[Category])
             depths: List[int] = []
             for category in self.substructure:
                 depths.append(category.set_level_and_get_depth(self.level + 1))
@@ -196,7 +197,7 @@ class BlobAdapterConfig(BaseModel):
         cls, total_number_of_levels: Optional[int], values: dict
     ) -> int:
         try:
-            structure = values["structure"]
+            structure: List[Category] = values["structure"]
         except KeyError as e:
             raise ValueError(
                 "Cannot determine total number of levels in structure if attribute "
@@ -214,7 +215,7 @@ class BlobAdapterConfig(BaseModel):
         if total_number_of_levels is not None and total_number_of_levels != depth:
             raise ValueError("The provided total_number_of_levels is incorrect!")
 
-        return depths
+        return depth
 
     # pylint: disable=no-self-argument
     @validator("bucket_level")
@@ -230,10 +231,11 @@ class BlobAdapterConfig(BaseModel):
             ) from e
 
         if total_number_of_levels is None:
-            raise ValueError(
-                "Cannot check if bucket level is smaller than total number of levels if attribute"
-                "'total_number_of_levels' is None!"
-            )
+            return bucket_level
+        #     raise ValueError(
+        #         "Cannot check if bucket level is smaller than total number of levels if attribute"
+        #         "'total_number_of_levels' is None!"
+        #     )
 
         if not bucket_level < total_number_of_levels:
             raise ValueError(

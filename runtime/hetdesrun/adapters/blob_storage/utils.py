@@ -32,6 +32,7 @@ def walk_structure(
     structure: List[Category],
     bucket_level: int,
     total_nof_levels: Optional[int],
+    level: int,
 ) -> None:
     """Recursively walk structure from config_json."""
     logger.info(
@@ -39,10 +40,10 @@ def walk_structure(
         parent_id,
     )
     for category in structure:
-        assert isinstance(category.level, int)
+        assert isinstance(level, int)
         try:
             thing_node = category.to_thing_node(
-                parent_id, separator="-" if category.level <= bucket_level else "/"
+                parent_id, separator="-" if level <= bucket_level else "/"
             )
         except ValidationError as error:
             msg = (
@@ -54,7 +55,7 @@ def walk_structure(
         logger.info("Created thingnode %s", str(thing_node))
         tn_append_list.append(thing_node)
 
-        if category.level == bucket_level:
+        if level == bucket_level:
             try:
                 bucket_append_list.append(BucketName(thing_node.id))
             except ValidationError as error:
@@ -71,6 +72,7 @@ def walk_structure(
                 structure=category.substructure,
                 bucket_level=bucket_level,
                 total_nof_levels=total_nof_levels,
+                level=level + 1,
             )
         else:  # category.substructure is None or len(category.substructure) == 0
             sink = BlobStorageStructureSink.from_thing_node(
@@ -102,6 +104,7 @@ def get_setup_from_config(
         structure=config.structure,
         bucket_level=config.bucket_level,
         total_nof_levels=config.total_number_of_levels,
+        level=1,
     )
 
     return thing_nodes, bucket_names, sinks
