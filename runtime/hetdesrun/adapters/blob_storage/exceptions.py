@@ -14,10 +14,6 @@ class MissingConfigError(ConfigError):
     pass
 
 
-class ConfigIncompleteError(ConfigError):
-    pass
-
-
 class ThingNodeInvalidError(ConfigError):
     pass
 

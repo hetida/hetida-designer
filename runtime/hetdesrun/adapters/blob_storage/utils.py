@@ -6,7 +6,6 @@ from pydantic import ValidationError
 from hetdesrun.adapters.blob_storage.exceptions import (
     BucketNameInvalidError,
     ConfigError,
-    ConfigIncompleteError,
     MissingConfigError,
     ThingNodeInvalidError,
 )
@@ -32,20 +31,18 @@ def walk_structure(
     snk_append_list: List[BlobStorageStructureSink],
     structure: List[Category],
     bucket_level: int,
-    total_nof_levels: int,
-    level: int,
+    total_nof_levels: Optional[int],
 ) -> None:
     """Recursively walk structure from config_json."""
     logger.info(
-        "Walk through structure with parent_id %s, bucket_level %i, level %i",
+        "Walk through structure with parent_id %s",
         parent_id,
-        bucket_level,
-        level,
     )
     for category in structure:
+        assert isinstance(category.level, int)
         try:
             thing_node = category.to_thing_node(
-                parent_id, separator="-" if level <= bucket_level else "/"
+                parent_id, separator="-" if category.level <= bucket_level else "/"
             )
         except ValidationError as error:
             msg = (
@@ -57,7 +54,7 @@ def walk_structure(
         logger.info("Created thingnode %s", str(thing_node))
         tn_append_list.append(thing_node)
 
-        if level == bucket_level:
+        if category.level == bucket_level:
             try:
                 bucket_append_list.append(BucketName(thing_node.id))
             except ValidationError as error:
@@ -74,19 +71,8 @@ def walk_structure(
                 structure=category.substructure,
                 bucket_level=bucket_level,
                 total_nof_levels=total_nof_levels,
-                level=level + 1,
             )
         else:  # category.substructure is None or len(category.substructure) == 0
-            # TODO: use validator to check if all end-nodes have the same lavel, define that as height
-            # TODO: validate that bucket_level is smaller than height
-            if level < total_nof_levels:
-                msg = (
-                    f"Category {str(category)} has too few levels of subcategories ({level}) "
-                    f"to match the total number of levels ({total_nof_levels})"
-                )
-                logger.error(msg)
-                raise ConfigIncompleteError(msg)
-            # level >= bucket_level
             sink = BlobStorageStructureSink.from_thing_node(
                 thing_node, name="Next Trained Model"
             )
@@ -116,16 +102,15 @@ def get_setup_from_config(
         structure=config.structure,
         bucket_level=config.bucket_level,
         total_nof_levels=config.total_number_of_levels,
-        level=1,
     )
 
     return thing_nodes, bucket_names, sinks
 
 
-def find_duplicates(list: List) -> List:
+def find_duplicates(item_list: List) -> List:
     seen = set()
     duplicates = []
-    for item in list:
+    for item in item_list:
         if item in seen:
             duplicates.append(item)
         else:

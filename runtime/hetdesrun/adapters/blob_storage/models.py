@@ -1,8 +1,8 @@
 import re
 from datetime import datetime, timezone
-from typing import Dict, List, Literal, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Set, Tuple
 
-from pydantic import BaseModel, ConstrainedStr, Field
+from pydantic import BaseModel, ConstrainedStr, Field, validator
 
 
 class ThingNodeName(ConstrainedStr):
@@ -49,7 +49,7 @@ class ObjectKey(BaseModel):
         )
 
     def to_thing_node_id(self, bucket_name: BucketName) -> IdString:
-        return bucket_name + "/" + self.name
+        return IdString(bucket_name + "/" + self.name)
 
 
 class InfoResponse(BaseModel):
@@ -162,6 +162,16 @@ class Category(BaseModel):
     name: ThingNodeName
     description: str
     substructure: Optional[List["Category"]] = None
+    level: Optional[int] = None
+
+    def set_level_and_get_depth(self, level: int) -> int:
+        self.level = level
+        if self.substructure is not None and len(self.substructure) != 0:
+            depths: List[int] = []
+            for category in self.substructure:
+                depths.append(category.set_level_and_get_depth(self.level + 1))
+            return max(depths)
+        return level
 
     def to_thing_node(
         self, parent_id: Optional[IdString], separator: Literal["-", "/"]
@@ -176,6 +186,58 @@ class Category(BaseModel):
 
 
 class BlobAdapterConfig(BaseModel):
-    bucket_level: int
-    total_number_of_levels: int
     structure: List[Category]
+    total_number_of_levels: Optional[int] = None
+    bucket_level: int
+
+    # pylint: disable=no-self-argument
+    @validator("total_number_of_levels")
+    def set_levels_and_determine_total_number_of_levels(
+        cls, total_number_of_levels: Optional[int], values: dict
+    ) -> int:
+        try:
+            structure = values["structure"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot determine total number of levels in structure if attribute "
+                "'structure' is missing!"
+            ) from e
+
+        depths: Set[int] = set()
+        for category in structure:
+            depths.add(category.set_level_and_get_depth(level=1))
+
+        if len(depths) != 0:
+            raise ValueError("All end nodes of the structure must have the same level!")
+
+        depth = depths.pop()
+        if total_number_of_levels is not None and total_number_of_levels != depth:
+            raise ValueError("The provided total_number_of_levels is incorrect!")
+
+        return depths
+
+    # pylint: disable=no-self-argument
+    @validator("bucket_level")
+    def bucket_level_smaller_than_total_nof_levels(
+        cls, bucket_level: int, values: dict
+    ) -> int:
+        try:
+            total_number_of_levels = values["total_number_of_levels"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if bucket level is smaller than total number of levels if attribute"
+                "'total_number_of_levels' is missing!"
+            ) from e
+
+        if total_number_of_levels is None:
+            raise ValueError(
+                "Cannot check if bucket level is smaller than total number of levels if attribute"
+                "'total_number_of_levels' is None!"
+            )
+
+        if not bucket_level < total_number_of_levels:
+            raise ValueError(
+                "The bucket level must be smaller than the total number of levels!"
+            )
+
+        return bucket_level
