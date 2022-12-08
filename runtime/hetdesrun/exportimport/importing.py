@@ -292,7 +292,7 @@ def import_transformations(
 
 
 def generate_import_order_file(
-    download_path: str, transform_py_to_json: bool = False
+    download_path: str, destination: str, transform_py_to_json: bool = False
 ) -> None:
     """Generate a file with paths sorted in import order.
 
@@ -316,7 +316,7 @@ def generate_import_order_file(
     ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
 
     with open(
-        os.path.join(download_path, "json_import_order.txt"), "w", encoding="utf8"
+        os.path.join(destination), "w", encoding="utf8"
     ) as file:
         for level in sorted(ids_by_nesting_level):
             logger.info("importing level %i transformation revisions", level)

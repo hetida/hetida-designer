@@ -155,7 +155,7 @@ def test_import_with_deprecate_older_versions():
     assert patched_deprecate_group.call_count > 10
 
 
-def test_generate_import_order_file(tmp_path):
+def test_generate_import_order_file_without_transform_py_to_json(tmp_path):
     download_path = tmp_path.joinpath("transformations")
     shutil.copytree("./transformations", download_path)
 
@@ -170,14 +170,12 @@ def test_generate_import_order_file(tmp_path):
             "hetdesrun.exportimport.importing.deprecate_all_but_latest_in_group",
             return_value=None,
         ) as patched_deprecate_group:
-
-            generate_import_order_file(
-                str(download_path),
-            )
+            json_import_order = tmp_path.joinpath("json_import_order.txt")
+            generate_import_order_file(str(download_path), str(json_import_order))
 
             assert patched_deprecate_group.call_count == 0
             assert rest_api_mock.call_count == 0
-            json_import_order = download_path.joinpath("json_import_order.txt")
+
             assert os.path.exists(str(json_import_order))
             list_of_json_paths = []
             with open(json_import_order, "r", encoding="utf8") as file:
@@ -194,8 +192,11 @@ def test_generate_import_order_file_with_transform_py_to_json(tmp_path):
     download_path = tmp_path.joinpath("transformations")
     shutil.copytree("./transformations", download_path)
 
-    generate_import_order_file(str(download_path), transform_py_to_json=True)
-    json_import_order = download_path.joinpath("json_import_order.txt")
+    json_import_order = tmp_path.joinpath("json_import_order.txt")
+    generate_import_order_file(
+        str(download_path), str(json_import_order), transform_py_to_json=True
+    )
+    
     assert os.path.exists(str(json_import_order))
     list_of_json_paths = []
     with open(json_import_order, "r", encoding="utf8") as file:

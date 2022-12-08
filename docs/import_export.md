@@ -117,13 +117,13 @@ If the latest revision of a revision group is stored in the database, all import
 
 ## Generate file with paths to json files in import order
 
-To generate a file which contains line by line the paths to all exported `.json` files in the order in which they should be imported, just execute the following command with the path to the directory to which the `.json` files have been exported.
+To generate a file which contains line by line the paths to all exported `.json` files in the order in which they should be imported, just execute the following command with the path to the directory to which the `.json` files have been exported and the path to where this file should be written.
 
 ```shell
 docker run --rm \
   --name htdruntime_import \
   --entrypoint python \
-  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import generate_import_order_file; generate_import_order_file("exported_data");'
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import generate_import_order_file; generate_import_order_file("exported_data", "json_import_order.txt");'
 ```
 
 In case this directory contains also component code as `.py` files that you want to import as `.json` files, set the option `transform_py_to_json` to `True` and the corresponding `.json` files will be generated and added to the list of paths in the generated newly file.
