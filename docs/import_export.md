@@ -117,7 +117,10 @@ If the latest revision of a revision group is stored in the database, all import
 
 ## Generate file with paths to json files in import order
 
-To generate a file which contains line by line the paths to all exported `.json` files in the order in which they should be imported, just execute the following command with the path to the directory to which the `.json` files have been exported and the path to where this file should be written.
+When importing transformation revisions, the order is important to avoid problems caused by nested revisions that have not yet been imported.
+The `import_transformation` function takes care of this problem, but there may be reasons why you cannot use it.
+There is a service function that creates a file containing line by line the paths to all exported `.json` files in the order in which they should be imported.
+To create such a file, simply run the following command with the path to the directory where the `.json` files were exported, e.g. `exported_data"`, and the path where this file should be written, e.g. `json_import_order.txt"`.
 
 ```shell
 docker run --rm \
