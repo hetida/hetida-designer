@@ -39,9 +39,15 @@ import {
   selectTransformationById
 } from 'src/app/store/transformation/transformation.selectors';
 import { BaseItemService } from 'src/app/service/base-item/base-item.service';
+import { Connector } from 'src/app/model/new-api/connector';
 
 interface IdentifiableEntity {
   id: string;
+}
+
+export interface VertexIds {
+  operatorId: string;
+  connectorId: string;
 }
 
 @Component({
@@ -260,22 +266,42 @@ export class WorkflowEditorComponent {
       return;
     }
 
-    const linkSourceIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
+    const linkSourceIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
       element,
       true
     );
-    const linkTargetIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
+    const linkTargetIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
       element,
       false
     );
-    const startConnector = this.flowchartConverter.getConnectorById(
-      linkSourceIds.connectorId,
-      this.currentWorkflow.content.outputs
-    );
-    const endConnector = this.flowchartConverter.getConnectorById(
-      linkTargetIds.connectorId,
-      this.currentWorkflow.content.inputs
-    );
+
+    let startConnector: Connector;
+    let endConnector: Connector;
+
+    if (linkSourceIds.operatorId === this.currentWorkflow.id) {
+      startConnector = this.flowchartConverter.getConnectorFromOperatorById(
+        linkSourceIds,
+        this.currentWorkflow,
+        true
+      );
+      endConnector = this.flowchartConverter.getConnectorFromOperatorById(
+        linkTargetIds,
+        this.currentWorkflow,
+        true
+      );
+    } else {
+      startConnector = this.flowchartConverter.getConnectorFromOperatorById(
+        linkSourceIds,
+        this.currentWorkflow,
+        false
+      );
+      endConnector = this.flowchartConverter.getConnectorFromOperatorById(
+        linkTargetIds,
+        this.currentWorkflow,
+        false
+      );
+    }
+
     const linkPath = this.flowchartConverter.convertLinkPathToPosition(element);
 
     const newLink: Link = {

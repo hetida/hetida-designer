@@ -8,7 +8,6 @@ import {
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Connector } from 'src/app/model/new-api/connector';
-import { IOConnector } from 'src/app/model/new-api/io-connector';
 import { Position } from 'src/app/model/new-api/position';
 import { v4 as UUID } from 'uuid';
 import {
@@ -17,6 +16,7 @@ import {
 } from '../../model/new-api/transformation';
 import { Operator } from 'src/app/model/new-api/operator';
 import { Constant } from 'src/app/model/new-api/constant';
+import { VertexIds } from 'src/app/components/workflow-editor/workflow-editor.component';
 
 @Injectable({
   providedIn: 'root'
@@ -281,29 +281,45 @@ export class FlowchartConverterService {
 
   /**
    * extracts the connector from the given connector id
-   * @param id given connector id
-   * @param workflowIOConnector given workflow IOConnector
+   * @param vertexIds given linkSourceIds or linkTargetIds
+   * @param workflowTransformation current workflow
+   * @param isCurrentWorkflowId is true if linkSource operator id = currentWorkflow id
    */
-  public getConnectorById(
-    id: string,
-    workflowIOConnector: IOConnector[]
+  public getConnectorFromOperatorById(
+    vertexIds: VertexIds,
+    workflowTransformation: WorkflowTransformation,
+    isCurrentWorkflowId: boolean
   ): Connector {
-    const ioConnector: IOConnector = workflowIOConnector.find(
-      wfConnector => wfConnector.id === id
-    );
+    let foundConnector: Connector;
 
-    if (ioConnector === undefined) {
+    if (isCurrentWorkflowId) {
+      const ios = [
+        ...workflowTransformation.io_interface.inputs,
+        ...workflowTransformation.io_interface.outputs
+      ];
+
+      const foundIo = ios.find(io => io.id === vertexIds.connectorId);
+
+      foundConnector = {
+        ...foundIo,
+        position: { x: 0, y: 0 }
+      };
+    } else {
+      const foundOperator = workflowTransformation.content.operators.find(
+        operator => operator.id === vertexIds.operatorId
+      );
+      const connectors = [...foundOperator.inputs, ...foundOperator.outputs];
+
+      foundConnector = connectors.find(
+        connector => connector.id === vertexIds.connectorId
+      );
+    }
+
+    if (foundConnector === undefined) {
       return undefined;
     }
 
-    const connector: Connector = {
-      id: ioConnector.connector_id,
-      name: ioConnector.connector_name,
-      data_type: ioConnector.data_type,
-      position: ioConnector.position
-    };
-
-    return connector;
+    return foundConnector;
   }
 
   // noinspection JSMethodCanBeStatic
