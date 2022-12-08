@@ -315,9 +315,7 @@ def generate_import_order_file(
 
     ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
 
-    with open(
-        os.path.join(destination), "w", encoding="utf8"
-    ) as file:
+    with open(os.path.join(destination), "w", encoding="utf8") as file:
         for level in sorted(ids_by_nesting_level):
             logger.info("importing level %i transformation revisions", level)
             for transformation_id in ids_by_nesting_level[level]:

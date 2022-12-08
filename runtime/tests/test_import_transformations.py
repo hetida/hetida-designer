@@ -196,7 +196,7 @@ def test_generate_import_order_file_with_transform_py_to_json(tmp_path):
     generate_import_order_file(
         str(download_path), str(json_import_order), transform_py_to_json=True
     )
-    
+
     assert os.path.exists(str(json_import_order))
     list_of_json_paths = []
     with open(json_import_order, "r", encoding="utf8") as file:
