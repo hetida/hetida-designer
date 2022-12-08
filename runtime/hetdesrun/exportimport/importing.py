@@ -11,6 +11,7 @@ from hetdesrun.component.load import (
     import_func_from_code,
     module_path_from_code,
 )
+from hetdesrun.exportimport.export import save_transformation
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
     structure_ids_by_nesting_level,
@@ -180,7 +181,7 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
 
 
 def get_transformation_revisions_from_path(
-    download_path: str,
+    download_path: str, transform_py_to_json: bool = False
 ) -> Tuple[Dict[UUID, TransformationRevision], Dict[UUID, str]]:
     transformation_dict: Dict[UUID, TransformationRevision] = {}
     path_dict: Dict[UUID, str] = {}
@@ -214,7 +215,13 @@ def get_transformation_revisions_from_path(
                 )
             else:
                 transformation_dict[transformation.id] = transformation
-                if ext == ".json":
+                if ext == ".py":
+                    if transform_py_to_json:
+                        path = save_transformation(
+                            tr=transformation, download_path=download_path
+                        )
+                        path_dict[transformation.id] = path
+                else:
                     path_dict[transformation.id] = path
 
     return transformation_dict, path_dict
@@ -259,7 +266,7 @@ def import_transformations(
     """
 
     transformation_dict, path_dict = get_transformation_revisions_from_path(
-        download_path
+        download_path, export_list_of_paths
     )
 
     ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
