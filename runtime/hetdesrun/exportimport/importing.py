@@ -3,7 +3,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 from uuid import UUID, uuid4
 
 from hetdesrun.component.load import (
@@ -181,8 +181,9 @@ def transformation_revision_from_python_code(code: str, path: str) -> Any:
 
 def get_transformation_revisions_from_path(
     download_path: str,
-) -> Dict[UUID, TransformationRevision]:
-    transformation_dict = {}
+) -> Tuple[Dict[UUID, TransformationRevision], Dict[UUID, str]]:
+    transformation_dict: Dict[UUID, TransformationRevision] = {}
+    path_dict: Dict[UUID, str] = {}
 
     for root, _, files in os.walk(download_path):
         for file in files:
@@ -213,8 +214,9 @@ def get_transformation_revisions_from_path(
                 )
             else:
                 transformation_dict[transformation.id] = transformation
+                path_dict[transformation.id] = path
 
-    return transformation_dict
+    return transformation_dict, path_dict
 
 
 def import_transformations(
@@ -224,6 +226,7 @@ def import_transformations(
     allow_overwrite_released: bool = True,
     update_component_code: bool = True,
     deprecate_older_revisions: bool = False,
+    export_list_of_paths: bool = False,
 ) -> None:
     """Import all transforamtions from specified download path.
 
@@ -250,22 +253,35 @@ def import_transformations(
         import_transformations("./transformations/components")
     """
 
-    transformation_dict = get_transformation_revisions_from_path(download_path)
+    transformation_dict, path_dict = get_transformation_revisions_from_path(
+        download_path
+    )
 
     ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
 
+    if export_list_of_paths:
+        # pylint: disable=consider-using-with
+        file = open(
+            os.path.join(download_path, "json_import_order.txt"), "w", encoding="utf8"
+        )
     for level in sorted(ids_by_nesting_level):
         logger.info("importing level %i transformation revisions", level)
         for transformation_id in ids_by_nesting_level[level]:
             transformation = transformation_dict[transformation_id]
             if strip_wirings:
                 transformation.test_wiring = WorkflowWiring()
-            update_or_create_transformation_revision(
-                transformation,
-                directly_in_db=directly_into_db,
-                allow_overwrite_released=allow_overwrite_released,
-                update_component_code=update_component_code,
-            )
+            if export_list_of_paths:
+                file.write(path_dict[transformation_id])
+                file.write("\n")
+            else:
+                update_or_create_transformation_revision(
+                    transformation,
+                    directly_in_db=directly_into_db,
+                    allow_overwrite_released=allow_overwrite_released,
+                    update_component_code=update_component_code,
+                )
+    if export_list_of_paths:
+        file.close()
 
     logger.info("finished importing")
 
