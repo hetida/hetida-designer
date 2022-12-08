@@ -3,7 +3,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID, uuid4
 
 from hetdesrun.component.load import (
@@ -214,7 +214,8 @@ def get_transformation_revisions_from_path(
                 )
             else:
                 transformation_dict[transformation.id] = transformation
-                path_dict[transformation.id] = path
+                if ext == ".json":
+                    path_dict[transformation.id] = path
 
     return transformation_dict, path_dict
 
@@ -243,9 +244,13 @@ def import_transformations(
         revisions with state "RELEASED" or "DISABLED"
     - update_component_code: Set to false if you want to keep the component code
         unchanged
-    - deprecate_older_versions: Set to true to deprecate all but the latest revision
+    - deprecate_older_revisions: Set to true to deprecate all but the latest revision
         for all revision groups imported. This might result in all imported revisions to
         be deprecated if these are older than the latest revision in the database.
+    - export_list_of_paths: Set to true to instead of updating the revisions just get a list of
+        absolute paths in the order in which they should be imported in order to avoid issues due
+        to not yet imported nested revisions. This option disables the deprecation of older
+        revisions.
 
     WARNING: Overwrites possibly existing transformation revisions!
 
@@ -259,11 +264,7 @@ def import_transformations(
 
     ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
 
-    if export_list_of_paths:
-        # pylint: disable=consider-using-with
-        file = open(
-            os.path.join(download_path, "json_import_order.txt"), "w", encoding="utf8"
-        )
+    sorted_paths: List[str] = []
     for level in sorted(ids_by_nesting_level):
         logger.info("importing level %i transformation revisions", level)
         for transformation_id in ids_by_nesting_level[level]:
@@ -271,8 +272,7 @@ def import_transformations(
             if strip_wirings:
                 transformation.test_wiring = WorkflowWiring()
             if export_list_of_paths:
-                file.write(path_dict[transformation_id])
-                file.write("\n")
+                sorted_paths.append(path_dict[transformation_id])
             else:
                 update_or_create_transformation_revision(
                     transformation,
@@ -281,11 +281,16 @@ def import_transformations(
                     update_component_code=update_component_code,
                 )
     if export_list_of_paths:
-        file.close()
+        with open(
+            os.path.join(download_path, "json_import_order.txt"), "w", encoding="utf8"
+        ) as file:
+            for path in sorted_paths:
+                file.write(path)
+                file.write("\n")
 
     logger.info("finished importing")
 
-    if deprecate_older_revisions:
+    if deprecate_older_revisions and not export_list_of_paths:
         revision_group_ids = set(
             transformation.revision_group_id
             for _, transformation in transformation_dict.items()
