@@ -1,3 +1,8 @@
+## 0.8.5
+* fix NaN value serialization (should now be serialized to null json values)
+* fix broken pure plot execution config
+* more bug fixes
+* improvements for example workflows
 ## 0.8.4
 * fix outgoing auth config parsing
 ## 0.8.3
