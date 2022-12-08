@@ -253,10 +253,6 @@ def import_transformations(
     - deprecate_older_revisions: Set to true to deprecate all but the latest revision
         for all revision groups imported. This might result in all imported revisions to
         be deprecated if these are older than the latest revision in the database.
-    - export_list_of_json_paths: Set to true to instead of updating the revisions just get a list
-        of absolute paths in the order in which they should be imported in order to avoid issues
-        due to not yet imported nested revisions. This option disables the deprecation of older
-        revisions.
 
     WARNING: Overwrites possibly existing transformation revisions!
 
@@ -298,6 +294,15 @@ def import_transformations(
 def generate_import_order_file(
     download_path: str, transform_py_to_json: bool = False
 ) -> None:
+    """Generate a file with paths sorted in import order.
+    
+    Generate a file the paths to all json files in download_path in the order in which they should
+    be imported in order to avoid issues due to not yet imported nested revisions.
+
+    Set the parameter transform_py_to_json to True, to generate .json files based on the .py files
+    for components (if creating TransformationRevisions out of them works) and include their paths
+    in the generated file.
+    """
     transformation_dict, path_dict = get_transformation_revisions_from_path(
         download_path, transform_py_to_json
     )
