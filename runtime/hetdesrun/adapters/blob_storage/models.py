@@ -84,17 +84,17 @@ class BlobStorageStructureSource(BaseModel):
     visible: Literal[True] = True
     filters: Optional[Dict[str, Dict]] = {}
 
-    # pylint: disable=no-self-argumeng
+    # pylint: disable=no-self-argument
     @validator("thingNodeId")
     def thing_node_id_matches_id(cls, thingNodeId: IdString, values: dict) -> IdString:
         try:
-            id = values["id"]  # pylint: disable=redefine-builtin
+            id = values["id"]  # pylint: disable=redefined-builtin
         except KeyError as e:
             raise ValueError(
                 "Cannot check if thing node id matches id if attribute id is missing!"
             ) from e
 
-        thing_node_id_from_id = str(id).split(sep="_")[0]
+        thing_node_id_from_id = str(id).rsplit(sep="_",maxsplit=1)[0]
         if thing_node_id_from_id != thingNodeId:
             raise ValueError(
                 f"BlobStorageStructureSource thing node id {thingNodeId} does not match id {id}!"
@@ -105,7 +105,7 @@ class BlobStorageStructureSource(BaseModel):
     @validator("name")
     def name_matches_id(cls, name: str, values: dict) -> str:
         try:
-            id = values["id"]  # pylint: disable=redefine-builtin
+            id = values["id"]  # pylint: disable=redefined-builtin
         except KeyError as e:
             raise ValueError(
                 "Cannot check if name matches id if attribute id is missing!"
