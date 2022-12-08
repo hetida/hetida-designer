@@ -234,7 +234,7 @@ def import_transformations(
     allow_overwrite_released: bool = True,
     update_component_code: bool = True,
     deprecate_older_revisions: bool = False,
-    export_list_of_paths: bool = False,
+    export_list_of_json_paths: bool = False,
 ) -> None:
     """Import all transforamtions from specified download path.
 
@@ -254,9 +254,9 @@ def import_transformations(
     - deprecate_older_revisions: Set to true to deprecate all but the latest revision
         for all revision groups imported. This might result in all imported revisions to
         be deprecated if these are older than the latest revision in the database.
-    - export_list_of_paths: Set to true to instead of updating the revisions just get a list of
-        absolute paths in the order in which they should be imported in order to avoid issues due
-        to not yet imported nested revisions. This option disables the deprecation of older
+    - export_list_of_json_paths: Set to true to instead of updating the revisions just get a list
+        of absolute paths in the order in which they should be imported in order to avoid issues
+        due to not yet imported nested revisions. This option disables the deprecation of older
         revisions.
 
     WARNING: Overwrites possibly existing transformation revisions!
@@ -266,7 +266,7 @@ def import_transformations(
     """
 
     transformation_dict, path_dict = get_transformation_revisions_from_path(
-        download_path, export_list_of_paths
+        download_path, export_list_of_json_paths
     )
 
     ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
@@ -278,7 +278,7 @@ def import_transformations(
             transformation = transformation_dict[transformation_id]
             if strip_wirings:
                 transformation.test_wiring = WorkflowWiring()
-            if export_list_of_paths:
+            if export_list_of_json_paths:
                 sorted_paths.append(path_dict[transformation_id])
             else:
                 update_or_create_transformation_revision(
@@ -287,7 +287,7 @@ def import_transformations(
                     allow_overwrite_released=allow_overwrite_released,
                     update_component_code=update_component_code,
                 )
-    if export_list_of_paths:
+    if export_list_of_json_paths:
         with open(
             os.path.join(download_path, "json_import_order.txt"), "w", encoding="utf8"
         ) as file:
@@ -297,7 +297,7 @@ def import_transformations(
 
     logger.info("finished importing")
 
-    if deprecate_older_revisions and not export_list_of_paths:
+    if deprecate_older_revisions and not export_list_of_json_paths:
         revision_group_ids = set(
             transformation.revision_group_id
             for _, transformation in transformation_dict.items()
