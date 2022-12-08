@@ -184,7 +184,7 @@ def test_generate_import_order_file(tmp_path):
                 for line in file:
                     path = line[:-1]  # remove line break
                     list_of_json_paths.append(path)
-            assert len(list_of_json_paths) == 147
+            assert len(list_of_json_paths) == 143
             assert all(
                 os.path.splitext(path)[1] == ".json" for path in list_of_json_paths
             )
@@ -194,9 +194,7 @@ def test_generate_import_order_file_with_transform_py_to_json(tmp_path):
     download_path = tmp_path.joinpath("transformations")
     shutil.copytree("./transformations", download_path)
 
-    generate_import_order_file(
-        str(download_path),transform_py_to_json=True
-    )
+    generate_import_order_file(str(download_path), transform_py_to_json=True)
     json_import_order = download_path.joinpath("json_import_order.txt")
     assert os.path.exists(str(json_import_order))
     list_of_json_paths = []

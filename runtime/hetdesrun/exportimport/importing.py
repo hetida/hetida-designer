@@ -295,7 +295,7 @@ def generate_import_order_file(
     download_path: str, transform_py_to_json: bool = False
 ) -> None:
     """Generate a file with paths sorted in import order.
-    
+
     Generate a file the paths to all json files in download_path in the order in which they should
     be imported in order to avoid issues due to not yet imported nested revisions.
 
@@ -321,5 +321,6 @@ def generate_import_order_file(
         for level in sorted(ids_by_nesting_level):
             logger.info("importing level %i transformation revisions", level)
             for transformation_id in ids_by_nesting_level[level]:
-                file.write(path_dict[transformation_id])
-                file.write("\n")
+                if transformation_id in path_dict.keys():
+                    file.write(path_dict[transformation_id])
+                    file.write("\n")
