@@ -36,7 +36,7 @@ json_files = [
 tr_json_list = []
 
 for file_path in json_files:
-    with open(root_path + file_path, encoding="utf-8") as f:
+    with open(root_path + file_path, encoding="utf8") as f:
         tr_json = json.load(f)
     tr_json_list.append(tr_json)
 
@@ -78,7 +78,7 @@ def test_export_all_transformations(tmpdir):
 bi_list = []
 
 for file_path in json_files:
-    with open(root_path + file_path, encoding="utf-8") as f:
+    with open(root_path + file_path, encoding="utf8") as f:
         tr = TransformationRevision(**json.load(f))
         bi = TransformationRevisionFrontendDto.from_transformation_revision(tr)
         bi_json = json.loads(bi.json())

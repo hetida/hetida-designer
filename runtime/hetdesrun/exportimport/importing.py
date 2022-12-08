@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 def load_json(path: str) -> Any:
     try:
-        with open(path, encoding="utf-8") as f:
+        with open(path, encoding="utf8") as f:
             workflow_json = json.load(f)
     except FileNotFoundError:
         logger.error("Could not find json file at path %s", path)
@@ -37,7 +37,7 @@ def load_json(path: str) -> Any:
 
 def load_python_file(path: str) -> Optional[str]:
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf8") as f:
             python_file = f.read()
     except FileNotFoundError:
         logger.error("Could not find python file at path %s", path)
