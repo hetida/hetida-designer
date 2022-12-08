@@ -4,6 +4,7 @@ import shutil
 from unittest import mock
 
 from hetdesrun.exportimport.importing import (
+    generate_import_order_file,
     import_transformations,
     load_json,
     transformation_revision_from_python_code,
@@ -154,9 +155,10 @@ def test_import_with_deprecate_older_versions():
     assert patched_deprecate_group.call_count > 10
 
 
-def test_import_with_export_list_of_json_paths(tmp_path):
+def test_generate_import_order_file(tmp_path):
     download_path = tmp_path.joinpath("transformations")
     shutil.copytree("./transformations", download_path)
+
     response_mock = mock.Mock()
     response_mock.status_code = 201
 
@@ -169,10 +171,8 @@ def test_import_with_export_list_of_json_paths(tmp_path):
             return_value=None,
         ) as patched_deprecate_group:
 
-            import_transformations(
+            generate_import_order_file(
                 str(download_path),
-                deprecate_older_revisions=True,
-                export_list_of_json_paths=True,
             )
 
             assert patched_deprecate_group.call_count == 0
@@ -188,11 +188,28 @@ def test_import_with_export_list_of_json_paths(tmp_path):
             assert all(
                 os.path.splitext(path)[1] == ".json" for path in list_of_json_paths
             )
-            assert (
-                str(
-                    download_path.joinpath(
-                        "components/time-length-operations/merge-timeseries"
-                        "-deduplicating-timestamps_100_b1dba357-b6d5-43cd-ac3e-7b6cd829be37.json"
-                    )
-                )
-            ) in list_of_json_paths
+
+
+def test_generate_import_order_file_with_transform_py_to_json(tmp_path):
+    download_path = tmp_path.joinpath("transformations")
+    shutil.copytree("./transformations", download_path)
+
+    generate_import_order_file(
+        str(download_path),transform_py_to_json=True
+    )
+    json_import_order = download_path.joinpath("json_import_order.txt")
+    assert os.path.exists(str(json_import_order))
+    list_of_json_paths = []
+    with open(json_import_order, "r", encoding="utf8") as file:
+        for line in file:
+            path = line[:-1]  # remove line break
+            list_of_json_paths.append(path)
+    assert len(list_of_json_paths) == 147
+    assert (
+        str(
+            download_path.joinpath(
+                "components/time-length-operations/merge-timeseries"
+                "-deduplicating-timestamps_100_b1dba357-b6d5-43cd-ac3e-7b6cd829be37.json"
+            )
+        )
+    ) in list_of_json_paths
