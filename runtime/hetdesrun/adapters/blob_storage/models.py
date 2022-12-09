@@ -398,11 +398,11 @@ class Category(BaseModel):
 class BlobAdapterConfig(BaseModel):
     """Define the Blob Storage Hierarchy.
 
-    The Amazon S3 data model is a flat structure: You create a bucket, and the bucket stores
-    objects. There is no hierarchy of subbuckets or subfolders. However, the logical hierarchy of
-    the adapter is infered to the object keys by using key name prefixes and delimiters.
-    the Amazon S3 console and the AWS SDKs can infer hierarchy from such prefixes and delementers
-    and introduce the concept of folders.
+    The Amazon S3 data model is a flat structure: You can create buckets and store objects in them.
+    There is no hierarchy of subbuckets or subfolders. However, the hierarchy of the adapter is
+    transferred to the bucket names and object keys by using key name prefixes and delimiters.
+    The Amazon S3 console and the AWS SDKs can infer hierarchy from object keys with such prefixes
+    and delimiters and introduce the concept of folders.
     """
 
     structure: List[Category]
