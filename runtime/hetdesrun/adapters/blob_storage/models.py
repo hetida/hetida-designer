@@ -407,7 +407,7 @@ class Category(BaseModel):
         )
 
 
-class BlobAdapterConfig(BaseModel):
+class BlobStorageAdapterConfig(BaseModel):
     """Define the Blob Storage Hierarchy.
 
     The Amazon S3 data model is a flat structure: You can create buckets and store objects in them.

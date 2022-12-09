@@ -19,7 +19,6 @@ from hetdesrun.adapters.blob_storage.utils import find_duplicates, walk_structur
 
 def test_blob_storage_utils_walk_structure_happy_path():
     bucket_level = 2
-    total_number_of_levels = 3
     structure = [
         Category(
             **{
@@ -72,7 +71,6 @@ def test_blob_storage_utils_walk_structure_happy_path():
         snk_append_list=sinks,
         structure=structure,
         bucket_level=bucket_level,
-        total_nof_levels=total_number_of_levels,
         level=1,
     )
 

@@ -10,7 +10,7 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     ThingNodeInvalidError,
 )
 from hetdesrun.adapters.blob_storage.models import (
-    BlobAdapterConfig,
+    BlobStorageAdapterConfig,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
     BucketName,
@@ -81,7 +81,7 @@ def get_setup_from_config(
     path: str = "demodata/blob_storage_adapter_config.json",
 ) -> Tuple[List[StructureThingNode], List[BucketName], List[BlobStorageStructureSink]]:
     try:
-        config = BlobAdapterConfig.parse_file(path)
+        config = BlobStorageAdapterConfig.parse_file(path)
     except FileNotFoundError as error:
         msg = f"Could not find json file at path {path}:\n{str(error)}"
         logger.error(msg)
