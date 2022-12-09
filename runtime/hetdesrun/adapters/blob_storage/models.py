@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, timezone
-from typing import Dict, List, Literal, Optional, Set, Tuple
+from typing import Dict, List, Literal, Optional, Tuple
 
 from pydantic import BaseModel, ConstrainedStr, Field, ValidationError, validator
 
@@ -297,7 +297,9 @@ class BlobStorageStructureSink(BaseModel):
                 "of the corresponding thing node!"
             )
         if sink_name_end != "Next Trained Model":
-            raise ValueError(f"The sink name '{name}' must end with 'Next Trained Model'!")
+            raise ValueError(
+                f"The sink name '{name}' must end with 'Next Trained Model'!"
+            )
 
         return name
 
@@ -416,65 +418,35 @@ class BlobAdapterConfig(BaseModel):
     """
 
     structure: List[Category]
-    total_number_of_levels: Optional[int] = None
     bucket_level: int
-    bucket_name_separator: Literal["-"] = "-"
-    object_key_separator: Literal["!", "-", "_", ".", "'", "(", ")", "/"] = "/"
-    date_separator: Literal["_"] = "_"
-    identfier_separator: Literal[" - "] = " - "
-    time_string_format: str = "%YY%mM%dD%Hh%Mm%Ss"
-    sink_id_ending: str = "next"
-    sink_name_ending: str = "Next Trained Model"
+    # bucket_name_separator: Literal["-"] = "-"
+    # object_key_separator: Literal["!", "-", "_", ".", "'", "(", ")", "/"] = "/"
+    # date_separator: Literal["_"] = "_"
+    # identfier_separator: Literal[" - "] = " - "
+    # time_string_format: str = "%YY%mM%dD%Hh%Mm%Ss"
+    # sink_id_ending: str = "next"
+    # sink_name_ending: str = "Next Trained Model"
 
     # pylint: disable=no-self-argument
-    @validator("total_number_of_levels")
-    def set_levels_and_determine_total_number_of_levels(
-        cls, total_number_of_levels: Optional[int], values: dict
-    ) -> int:
+    @validator("bucket_level")
+    def structure_deeper_than_bucket_level(cls, bucket_level: int, values: dict) -> int:
         try:
             structure: List[Category] = values["structure"]
         except KeyError as e:
             raise ValueError(
-                "Cannot determine total number of levels in structure if attribute "
-                "'structure' is missing!"
+                f"Cannot check if structure is deeper than the bucket_level '{bucket_level}' "
+                "if the attribute 'structure' is missing!"
             ) from e
 
-        depths: Set[int] = set()
+        depths: List[int] = []
         for category in structure:
-            depths.add(category.set_level_and_get_depth(level=1))
+            depths.append(category.set_level_and_get_depth(level=1))
 
-        if len(depths) != 0:
-            raise ValueError("All end nodes of the structure must have the same level!")
-
-        depth = depths.pop()
-        if total_number_of_levels is not None and total_number_of_levels != depth:
-            raise ValueError("The provided total_number_of_levels is incorrect!")
-
-        return depth
-
-    # pylint: disable=no-self-argument
-    @validator("bucket_level")
-    def bucket_level_smaller_than_total_nof_levels(
-        cls, bucket_level: int, values: dict
-    ) -> int:
-        try:
-            total_number_of_levels = values["total_number_of_levels"]
-        except KeyError as e:
+        if not min(depths) > bucket_level:
             raise ValueError(
-                "Cannot check if bucket level is smaller than total number of levels if attribute"
-                "'total_number_of_levels' is missing!"
-            ) from e
-
-        if total_number_of_levels is None:
-            return bucket_level
-        #     raise ValueError(
-        #         "Cannot check if bucket level is smaller than total number of levels if attribute"
-        #         "'total_number_of_levels' is None!"
-        #     )
-
-        if not bucket_level < total_number_of_levels:
-            raise ValueError(
-                "The bucket level must be smaller than the total number of levels!"
+                "Each branch of the structure must be deeper than "
+                f"the bucket level '{bucket_level}'!"
             )
 
+        values["structure"] = structure
         return bucket_level

@@ -31,7 +31,6 @@ def walk_structure(
     snk_append_list: List[BlobStorageStructureSink],
     structure: List[Category],
     bucket_level: int,
-    total_nof_levels: Optional[int],
     level: int,
 ) -> None:
     """Recursively walk structure from config_json."""
@@ -70,7 +69,6 @@ def walk_structure(
                 snk_append_list=snk_append_list,
                 structure=category.substructure,
                 bucket_level=bucket_level,
-                total_nof_levels=total_nof_levels,
                 level=level + 1,
             )
         else:  # category.substructure is None or len(category.substructure) == 0
@@ -100,7 +98,6 @@ def get_setup_from_config(
         snk_append_list=sinks,
         structure=config.structure,
         bucket_level=config.bucket_level,
-        total_nof_levels=config.total_number_of_levels,
         level=1,
     )
 

@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from hetdesrun.adapters.blob_storage.models import (
+    BlobAdapterConfig,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
     BucketName,
@@ -277,3 +278,57 @@ def test_blob_storage_class_category():
     assert thing_node_from_category.parentId == "i"
     assert thing_node_from_category.name == "I"
     assert thing_node_from_category.description == "Category"
+
+
+def test_blob_storage_class_adapter_config():
+    config = BlobAdapterConfig(
+        **{
+            "bucket_level": 2,
+            "structure": [
+                {
+                    "name": "I",
+                    "description": "Super Category",
+                    "substructure": [
+                        {
+                            "name": "i",
+                            "description": "Category",
+                            "substructure": [
+                                {
+                                    "name": "A",
+                                    "description": "Subcategory",
+                                    "substructure": [],
+                                },
+                                {
+                                    "name": "B",
+                                    "description": "Subcategory",
+                                    "substructure": None,
+                                },
+                                {"name": "C", "description": "Subcategory"},
+                                {"name": "D", "description": "Subcategory"},
+                            ],
+                        },
+                        {
+                            "name": "ii",
+                            "description": "Category",
+                            "substructure": [
+                                {"name": "E", "description": "Subcategory"}
+                            ],
+                        },
+                        {
+                            "name": "iii",
+                            "description": "Category",
+                            "substructure": [
+                                {"name": "F", "description": "Subcategory"},
+                                {"name": "G", "description": "Subcategory"},
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+    )
+
+    assert config.bucket_level == 2
+    assert config.structure[0].level == 1
+    assert config.structure[0].substructure[0].level == 2
+    assert config.structure[0].substructure[0].substructure[0].level == 3
