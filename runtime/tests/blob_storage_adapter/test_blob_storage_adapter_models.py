@@ -240,3 +240,40 @@ def test_blob_storage_class_structure_sink():
             path="i-ii/A",
             metadataKey="B - Next Trained Model",
         )
+
+
+def test_blob_storage_class_category():
+    category = Category(
+        name="I",
+        description="Category",
+        substructure=[
+            Category(name="A", description="Subcategory"),
+            Category(name="B", description="Subcategory"),
+        ],
+    )
+
+    assert category.name == "I"
+    assert category.description == "Category"
+    assert len(category.substructure) == 2
+    assert isinstance(category.substructure[0], Category)
+    assert category.substructure[0].name == "A"
+    assert category.substructure[0].description == "Subcategory"
+    assert category.substructure[0].substructure == None
+    assert category.substructure[0].level == None
+    assert category.substructure[1].name == "B"
+    assert category.substructure[1].description == "Subcategory"
+    assert category.substructure[1].substructure == None
+    assert category.substructure[1].level == None
+    assert category.level is None
+
+    depth = category.set_level_and_get_depth(level=2)
+    assert depth == 3
+    assert category.level == 2
+    assert category.substructure[0].level == 3
+    assert category.substructure[1].level == 3
+
+    thing_node_from_category = category.to_thing_node(parent_id="i", separator="-")
+    assert thing_node_from_category.id == "i-i"
+    assert thing_node_from_category.parentId == "i"
+    assert thing_node_from_category.name == "I"
+    assert thing_node_from_category.description == "Category"
