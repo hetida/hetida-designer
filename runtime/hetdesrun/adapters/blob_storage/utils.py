@@ -74,9 +74,7 @@ def walk_structure(
                 level=level + 1,
             )
         else:  # category.substructure is None or len(category.substructure) == 0
-            sink = BlobStorageStructureSink.from_thing_node(
-                thing_node, name="Next Trained Model"
-            )
+            sink = BlobStorageStructureSink.from_thing_node(thing_node)
             snk_append_list.append(sink)
             logger.info("Created sink:\n%s", str(sink))
 

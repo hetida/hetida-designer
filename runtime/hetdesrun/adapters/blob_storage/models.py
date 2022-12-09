@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timezone
 from typing import Dict, List, Literal, Optional, Set, Tuple
 
-from pydantic import BaseModel, ConstrainedStr, Field, validator
+from pydantic import BaseModel, ConstrainedStr, Field, ValidationError, validator
 
 
 class ThingNodeName(ConstrainedStr):
@@ -85,19 +85,43 @@ class BlobStorageStructureSource(BaseModel):
     filters: Optional[Dict[str, Dict]] = {}
 
     # pylint: disable=no-self-argument
+    @validator("id")
+    def id_matches_scheme(cls, id: IdString) -> IdString:
+        if "/" not in id:
+            raise ValueError("The source id must contain at least one '/'!")
+        bucket_name, object_key_string = id.split(sep="/", maxsplit=1)
+        try:
+            BucketName(bucket_name)
+        except ValidationError as e:
+            raise ValueError(
+                "The first part of the source id before the first '/' must "
+                "correspond to a bucket name!\nBut it does not:\n" + str(e)
+            ) from e
+
+        try:
+            ObjectKey.from_string(IdString(object_key_string))
+        except ValidationError as e:
+            raise ValueError(
+                "The second part of the source id after the first '/' must "
+                "correspond to an object key string!\nBut it does not:\n" + str(e)
+            ) from e
+        return id
+
+    # pylint: disable=no-self-argument
     @validator("thingNodeId")
     def thing_node_id_matches_id(cls, thingNodeId: IdString, values: dict) -> IdString:
         try:
             id = values["id"]  # pylint: disable=redefined-builtin
         except KeyError as e:
             raise ValueError(
-                "Cannot check if thing node id matches id if attribute id is missing!"
+                "Cannot check if the source's thingNodeId matches its id "
+                "if the attribute 'id' is missing!"
             ) from e
 
-        thing_node_id_from_id = str(id).rsplit(sep="_",maxsplit=1)[0]
+        thing_node_id_from_id = str(id).rsplit(sep="_", maxsplit=1)[0]
         if thing_node_id_from_id != thingNodeId:
             raise ValueError(
-                f"BlobStorageStructureSource thing node id {thingNodeId} does not match id {id}!"
+                f"The source's thing node id {thingNodeId} does not match its id {id}!"
             )
         return thingNodeId
 
@@ -108,10 +132,57 @@ class BlobStorageStructureSource(BaseModel):
             id = values["id"]  # pylint: disable=redefined-builtin
         except KeyError as e:
             raise ValueError(
-                "Cannot check if name matches id if attribute id is missing!"
+                "Cannot check if the source's name matches its id if the attribute 'id' is missing!"
             ) from e
+        file_string_from_id = id.rsplit(sep="/", maxsplit=1)[1]
+        file_ok = ObjectKey.from_string(IdString(file_string_from_id))
+        thing_node_name, source_time = name.split(" - ")
+        if thing_node_name != file_ok.name:
+            raise ValueError(
+                "The source name must start with the name of the corresponding thing node!"
+            )
+        if file_ok.time.astimezone(timezone.utc).isoformat(sep=" ") != source_time:
+            raise ValueError(
+                "The time in the source's name must match to the time in the its id!"
+            )
 
         return name
+
+    # pylint: disable=no-self-argument
+    @validator("path")
+    def path_matches_thing_node_id(cls, path: str, values: dict) -> str:
+        try:
+            thingNodeId = values["thingNodeId"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if source's path matches its thingNodeId "
+                "if the attribute 'thingNodeId' is missing!"
+            ) from e
+
+        if path != thingNodeId:
+            raise ValueError(
+                "The source's path must be the same string as its thingNodeId!"
+            )
+
+        return path
+
+    # pylint: disable=no-self-argument
+    @validator("metadataKey")
+    def metadata_key_matches_name(cls, metadataKey: str, values: dict) -> str:
+        try:
+            name = values["name"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if source's metadataKey matches its name "
+                "if the attribute 'name' is missing!"
+            ) from e
+
+        if metadataKey != name:
+            raise ValueError(
+                "The COUR's metadataKey must be the same string as its name!"
+            )
+
+        return metadataKey
 
     @classmethod
     def from_bucket_name_and_object_key(
@@ -158,16 +229,117 @@ class BlobStorageStructureSink(BaseModel):
     visible: Literal[True] = True
     filters: Optional[Dict[str, Dict]] = {}
 
+    # pylint: disable=no-self-argument
+    @validator("id")
+    def id_matches_scheme(cls, id: IdString) -> IdString:
+        if "/" not in id:
+            raise ValueError("The sink id must contain at least one '/'!")
+        bucket_name, object_key_string = id.split(sep="/", maxsplit=1)
+        try:
+            BucketName(bucket_name)
+        except ValidationError as e:
+            raise ValueError(
+                "The first part of the sink id before the first '/' must "
+                "correspond to a bucket name!\nBut it does not:\n" + str(e)
+            ) from e
+
+        if not object_key_string.endswith("_next"):
+            raise ValueError(
+                "The the sink id must end with '_next'!"
+            )
+        return id
+
+    # pylint: disable=no-self-argument
+    @validator("thingNodeId")
+    def thing_node_id_matches_id(cls, thingNodeId: IdString, values: dict) -> IdString:
+        try:
+            id = values["id"]  # pylint: disable=redefined-builtin
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if the sink's thingNodeId matches its id "
+                "if the attribute 'id' is missing!"
+            ) from e
+
+        thing_node_id_from_id = str(id).rsplit(sep="_", maxsplit=1)[0]
+        if thing_node_id_from_id != thingNodeId:
+            raise ValueError(
+                f"The sink's thing node id {thingNodeId} does not match its id {id}!"
+            )
+        return thingNodeId
+
+    # pylint: disable=no-self-argument
+    @validator("name")
+    def name_matches_id(cls, name: str, values: dict) -> str:
+        try:
+            id = values["id"]  # pylint: disable=redefined-builtin
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if the sink's name matches its id if the attribute 'id' is missing!"
+            ) from e
+
+        file_string_from_id = id.rsplit(sep="/", maxsplit=1)[1]
+        thing_node_name_from_id = file_string_from_id.split("_",maxsplit=1)[0]
+        
+        if " - " not in name:
+            raise ValueError()
+        thing_node_name, sink_name_end = name.split(" - ")
+        if thing_node_name != thing_node_name_from_id:
+            raise ValueError(
+                "The sink name must start with the name of the corresponding thing node!"
+            )
+        if sink_name_end != 'Next Trained Model':
+            raise ValueError(
+                "The sink name must end with 'Next Trained Model'!"
+            )
+
+        return name
+
+    # pylint: disable=no-self-argument
+    @validator("path")
+    def path_matches_thing_node_id(cls, path: str, values: dict) -> str:
+        try:
+            thingNodeId = values["thingNodeId"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if sink's path matches its thingNodeId "
+                "if the attribute 'thingNodeId' is missing!"
+            ) from e
+
+        if path != thingNodeId:
+            raise ValueError(
+                f"The sink's path '{path}' must be the same string as its thingNodeId '{thingNodeId}'!"
+            )
+
+        return path
+
+    # pylint: disable=no-self-argument
+    @validator("metadataKey")
+    def metadata_key_matches_name(cls, metadataKey: str, values: dict) -> str:
+        try:
+            name = values["name"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if sink's metadataKey matches its name "
+                "if the attribute 'name' is missing!"
+            ) from e
+
+        if metadataKey != name:
+            raise ValueError(
+                "The sink's metadataKey must be the same string as its name!"
+            )
+
+        return metadataKey
+
     @classmethod
     def from_thing_node(
-        cls, thing_node: StructureThingNode, name: str
+        cls, thing_node: StructureThingNode
     ) -> "BlobStorageStructureSink":
         return BlobStorageStructureSink(
             id=thing_node.id + "_next",
             thingNodeId=thing_node.id,
-            name=name,
+            name=thing_node.name + " - " + "Next Trained Model",
             path=thing_node.id,
-            metadataKey=name,
+            metadataKey=thing_node.name + " - " + "Next Trained Model",
         )
 
     def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
@@ -239,6 +411,10 @@ class BlobAdapterConfig(BaseModel):
     bucket_name_separator: Literal["-"] = "-"
     object_key_separator: Literal["!", "-", "_", ".", "'", "(", ")", "/"] = "/"
     date_separator: Literal["_"] = "_"
+    identfier_separator: Literal[" - "] = " - "
+    time_string_format: str = "%YY%mM%dD%Hh%Mm%Ss"
+    sink_id_ending: str = "next"
+    sink_name_ending: str = "Next Trained Model"
 
     # pylint: disable=no-self-argument
     @validator("total_number_of_levels")

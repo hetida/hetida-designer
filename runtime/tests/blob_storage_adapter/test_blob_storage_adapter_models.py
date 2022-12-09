@@ -117,21 +117,71 @@ def test_blob_storage_class_structure_source():
     )
     assert src_from_bkt_and_ok == source
 
+    with pytest.raises(ValidationError):
+        # invalid id
+        BlobStorageStructureSource(
+            id="A_2022Y01M02D14h23m18s",
+            thingNodeId="A",
+            name="A - 2022-01-02 14:23:18+00:00",
+            path="A",
+            metadataKey="A - 2022-01-02 14:23:18+00:00",
+        )
+
+    with pytest.raises(ValidationError):
+        # thingNodeId does not match id
+        BlobStorageStructureSource(
+            id="i-ii/A_2022Y01M02D14h23m18s",
+            thingNodeId="i-ii/B",
+            name="A - 2022-01-02 14:23:18+00:00",
+            path="i-ii/A",
+            metadataKey="A - 2022-01-02 14:23:18+00:00",
+        )
+
+    with pytest.raises(ValidationError):
+        # name does not match id
+        BlobStorageStructureSource(
+            id="i-ii/A_2022Y01M02D14h23m18s",
+            thingNodeId="i-ii/A",
+            name="B - 2022-01-02 14:23:18+00:00",
+            path="i-ii/A",
+            metadataKey="A - 2022-01-02 14:23:18+00:00",
+        )
+
+    with pytest.raises(ValidationError):
+        # path does not match thingNodeId
+        BlobStorageStructureSource(
+            id="i-ii/A_2022Y01M02D14h23m18s",
+            thingNodeId="i-ii/A",
+            name="A - 2022-01-02 14:23:18+00:00",
+            path="i-ii/A",
+            metadataKey="B - 2022-01-02 14:23:18+00:00",
+        )
+
+    with pytest.raises(ValidationError):
+        # metadataKey does not match name
+        BlobStorageStructureSource(
+            id="i-ii/A_2022Y01M02D14h23m18s",
+            thingNodeId="i-ii/A",
+            name="A - 2022-01-02 14:23:18+00:00",
+            path="i-ii/A",
+            metadataKey="B - 2022-01-02 14:23:18+00:00",
+        )
+
 
 def test_blob_storage_class_structure_sink():
     sink = BlobStorageStructureSink(
         id="i-ii/A_next",
         thingNodeId="i-ii/A",
-        name="Next Trained Model",
+        name="A - Next Trained Model",
         path="i-ii/A",
-        metadataKey="Next Trained Model",
+        metadataKey="A - Next Trained Model",
     )
 
     assert sink.id == "i-ii/A_next"
     assert sink.thingNodeId == "i-ii/A"
-    assert sink.name == "Next Trained Model"
+    assert sink.name == "A - Next Trained Model"
     assert sink.path == "i-ii/A"
-    assert sink.metadataKey == "Next Trained Model"
+    assert sink.metadataKey == "A - Next Trained Model"
     assert sink.type == "metadata(any)"
     assert sink.visible == True
     assert sink.filters == {}
@@ -139,3 +189,54 @@ def test_blob_storage_class_structure_sink():
     snk_bucket_name, snk_object_key = sink.to_bucket_name_and_object_key()
     assert snk_bucket_name == "i-ii"
     assert snk_object_key.name == "A"
+
+    sink_from_thing_node = BlobStorageStructureSink.from_thing_node(
+        thing_node=StructureThingNode(
+            id="i-ii/A",
+            parentId="i-ii",
+            name="A",
+            description="",
+        )
+    )
+
+    assert sink_from_thing_node == sink
+
+    with pytest.raises(ValidationError):
+        # thingNodeId does not match id
+        BlobStorageStructureSource(
+            id="i-ii/A_next",
+            thingNodeId="i-ii/B",
+            name="A - Next Trained Model",
+            path="i-ii/A",
+            metadataKey="A - Next Trained Model",
+        )
+
+    with pytest.raises(ValidationError):
+        # name does not match id
+        BlobStorageStructureSource(
+            id="i-ii/A_next",
+            thingNodeId="i-ii/A",
+            name="B - Next Trained Model",
+            path="i-ii/A",
+            metadataKey="A - Next Trained Model",
+        )
+
+    with pytest.raises(ValidationError):
+        # path does not match thingNodeId
+        BlobStorageStructureSink(
+            id="i-ii/A_next",
+            thingNodeId="i-ii/A",
+            name="A - Next Trained Model",
+            path="i-ii/A",
+            metadataKey="B - Next Trained Model",
+        )
+
+    with pytest.raises(ValidationError):
+        # metadataKey does not match name
+        BlobStorageStructureSink(
+            id="i-ii/A_next",
+            thingNodeId="i-ii/A",
+            name="A - Next Trained Model",
+            path="i-ii/A",
+            metadataKey="B - Next Trained Model",
+        )
