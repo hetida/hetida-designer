@@ -86,24 +86,27 @@ class BlobStorageStructureSource(BaseModel):
 
     # pylint: disable=no-self-argument
     @validator("id")
-    def id_matches_scheme(cls, id: IdString) -> IdString:
+    def id_matches_scheme(
+        cls, id: IdString  # pylint: disable=redefined-builtin
+    ) -> IdString:
         if "/" not in id:
-            raise ValueError("The source id must contain at least one '/'!")
+            raise ValueError(f"The source id '{id}' must contain at least one '/'!")
         bucket_name, object_key_string = id.split(sep="/", maxsplit=1)
         try:
             BucketName(bucket_name)
         except ValidationError as e:
             raise ValueError(
-                "The first part of the source id before the first '/' must "
-                "correspond to a bucket name!\nBut it does not:\n" + str(e)
+                f"The first part '{bucket_name}' of the source id '{id}' before the first '/' "
+                "must correspond to a bucket name!\nBut it does not:\n" + str(e)
             ) from e
 
         try:
             ObjectKey.from_string(IdString(object_key_string))
         except ValidationError as e:
             raise ValueError(
-                "The second part of the source id after the first '/' must "
-                "correspond to an object key string!\nBut it does not:\n" + str(e)
+                f"The second part '{object_key_string}' of the source id '{id}' after the first "
+                "'/' must correspond to an object key string!\nBut it does not:\n"
+                + str(e)
             ) from e
         return id
 
@@ -114,7 +117,7 @@ class BlobStorageStructureSource(BaseModel):
             id = values["id"]  # pylint: disable=redefined-builtin
         except KeyError as e:
             raise ValueError(
-                "Cannot check if the source's thingNodeId matches its id "
+                f"Cannot check if the source's thingNodeId '{thingNodeId}' matches its id "
                 "if the attribute 'id' is missing!"
             ) from e
 
@@ -132,18 +135,20 @@ class BlobStorageStructureSource(BaseModel):
             id = values["id"]  # pylint: disable=redefined-builtin
         except KeyError as e:
             raise ValueError(
-                "Cannot check if the source's name matches its id if the attribute 'id' is missing!"
+                f"Cannot check if the source's name '{name}' matches its id "
+                "if the attribute 'id' is missing!"
             ) from e
         file_string_from_id = id.rsplit(sep="/", maxsplit=1)[1]
         file_ok = ObjectKey.from_string(IdString(file_string_from_id))
         thing_node_name, source_time = name.split(" - ")
         if thing_node_name != file_ok.name:
             raise ValueError(
-                "The source name must start with the name of the corresponding thing node!"
+                f"The source name '{name}' must start with the name '{file_ok.name}' "
+                "of the corresponding thing node!"
             )
         if file_ok.time.astimezone(timezone.utc).isoformat(sep=" ") != source_time:
             raise ValueError(
-                "The time in the source's name must match to the time in the its id!"
+                f"The time in the source's name '{name}' must match to the time in its id '{id}'!"
             )
 
         return name
@@ -155,13 +160,14 @@ class BlobStorageStructureSource(BaseModel):
             thingNodeId = values["thingNodeId"]
         except KeyError as e:
             raise ValueError(
-                "Cannot check if source's path matches its thingNodeId "
+                f"Cannot check if source's path '{path}' matches its thingNodeId "
                 "if the attribute 'thingNodeId' is missing!"
             ) from e
 
         if path != thingNodeId:
             raise ValueError(
-                "The source's path must be the same string as its thingNodeId!"
+                f"The source path '{path}' must be the same string as "
+                f"its thingNodeId '{thingNodeId}'!"
             )
 
         return path
@@ -173,13 +179,14 @@ class BlobStorageStructureSource(BaseModel):
             name = values["name"]
         except KeyError as e:
             raise ValueError(
-                "Cannot check if source's metadataKey matches its name "
+                f"Cannot check if source's metadataKey {metadataKey} matches its name "
                 "if the attribute 'name' is missing!"
             ) from e
 
         if metadataKey != name:
             raise ValueError(
-                "The COUR's metadataKey must be the same string as its name!"
+                f"The source's metadataKey '{metadataKey}' must be the same string as "
+                f"its name '{name}'!"
             )
 
         return metadataKey
@@ -231,22 +238,22 @@ class BlobStorageStructureSink(BaseModel):
 
     # pylint: disable=no-self-argument
     @validator("id")
-    def id_matches_scheme(cls, id: IdString) -> IdString:
+    def id_matches_scheme(
+        cls, id: IdString  # pylint: disable=redefined-builtin
+    ) -> IdString:
         if "/" not in id:
-            raise ValueError("The sink id must contain at least one '/'!")
-        bucket_name, object_key_string = id.split(sep="/", maxsplit=1)
+            raise ValueError(f"The sink id '{id}' must contain at least one '/'!")
+        bucket_name = id.split(sep="/", maxsplit=1)[0]
         try:
             BucketName(bucket_name)
         except ValidationError as e:
             raise ValueError(
-                "The first part of the sink id before the first '/' must "
+                f"The first part '{bucket_name}' of the sink id '{id}' before the first '/' must "
                 "correspond to a bucket name!\nBut it does not:\n" + str(e)
             ) from e
 
-        if not object_key_string.endswith("_next"):
-            raise ValueError(
-                "The the sink id must end with '_next'!"
-            )
+        if not id.endswith("_next"):
+            raise ValueError(f"The the sink id '{id}' must end with '_next'!")
         return id
 
     # pylint: disable=no-self-argument
@@ -256,14 +263,14 @@ class BlobStorageStructureSink(BaseModel):
             id = values["id"]  # pylint: disable=redefined-builtin
         except KeyError as e:
             raise ValueError(
-                "Cannot check if the sink's thingNodeId matches its id "
+                f"Cannot check if the sink's thingNodeId '{thingNodeId}' matches its id "
                 "if the attribute 'id' is missing!"
             ) from e
 
         thing_node_id_from_id = str(id).rsplit(sep="_", maxsplit=1)[0]
         if thing_node_id_from_id != thingNodeId:
             raise ValueError(
-                f"The sink's thing node id {thingNodeId} does not match its id {id}!"
+                f"The sink's thing node id '{thingNodeId}' does not match its id '{id}'!"
             )
         return thingNodeId
 
@@ -274,23 +281,23 @@ class BlobStorageStructureSink(BaseModel):
             id = values["id"]  # pylint: disable=redefined-builtin
         except KeyError as e:
             raise ValueError(
-                "Cannot check if the sink's name matches its id if the attribute 'id' is missing!"
+                f"Cannot check if the sink's name '{name}' matches its id if the attribute 'id' "
+                "is missing!"
             ) from e
 
         file_string_from_id = id.rsplit(sep="/", maxsplit=1)[1]
-        thing_node_name_from_id = file_string_from_id.split("_",maxsplit=1)[0]
-        
+        thing_node_name_from_id = file_string_from_id.split("_", maxsplit=1)[0]
+
         if " - " not in name:
             raise ValueError()
         thing_node_name, sink_name_end = name.split(" - ")
         if thing_node_name != thing_node_name_from_id:
             raise ValueError(
-                "The sink name must start with the name of the corresponding thing node!"
+                f"The sink name '{name}' must start with the name '{thing_node_name_from_id}' "
+                "of the corresponding thing node!"
             )
-        if sink_name_end != 'Next Trained Model':
-            raise ValueError(
-                "The sink name must end with 'Next Trained Model'!"
-            )
+        if sink_name_end != "Next Trained Model":
+            raise ValueError(f"The sink name '{name}' must end with 'Next Trained Model'!")
 
         return name
 
@@ -301,13 +308,14 @@ class BlobStorageStructureSink(BaseModel):
             thingNodeId = values["thingNodeId"]
         except KeyError as e:
             raise ValueError(
-                "Cannot check if sink's path matches its thingNodeId "
+                f"Cannot check if sink's path '{path}' matches its thingNodeId "
                 "if the attribute 'thingNodeId' is missing!"
             ) from e
 
         if path != thingNodeId:
             raise ValueError(
-                f"The sink's path '{path}' must be the same string as its thingNodeId '{thingNodeId}'!"
+                f"The sink's path '{path}' must be the same string as "
+                f"its thingNodeId '{thingNodeId}'!"
             )
 
         return path
@@ -319,13 +327,14 @@ class BlobStorageStructureSink(BaseModel):
             name = values["name"]
         except KeyError as e:
             raise ValueError(
-                "Cannot check if sink's metadataKey matches its name "
+                f"Cannot check if sink's metadataKey '{metadataKey}' matches its name "
                 "if the attribute 'name' is missing!"
             ) from e
 
         if metadataKey != name:
             raise ValueError(
-                "The sink's metadataKey must be the same string as its name!"
+                f"The sink's metadataKey '{metadataKey}' must be the same string as "
+                f"its name '{name}'!"
             )
 
         return metadataKey
@@ -378,6 +387,7 @@ class Category(BaseModel):
         self.level = level
         if self.substructure is not None and len(self.substructure) != 0:
             depths: List[int] = []
+            # pylint: disable=not-an-iterable
             for category in self.substructure:
                 depths.append(category.set_level_and_get_depth(self.level + 1))
             return max(depths)
