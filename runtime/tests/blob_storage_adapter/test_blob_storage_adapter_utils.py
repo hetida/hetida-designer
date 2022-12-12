@@ -4,184 +4,78 @@ from unittest import mock
 
 import pytest
 
-from hetdesrun.adapters.blob_storage.exceptions import (
-    BucketNameInvalidError,
-    ThingNodeInvalidError,
-)
 from hetdesrun.adapters.blob_storage.models import (
-    BlobStorageStructureSink,
     BucketName,
-    Category,
+    IdString,
     StructureThingNode,
 )
-from hetdesrun.adapters.blob_storage.utils import find_duplicates, walk_structure
+from hetdesrun.adapters.blob_storage.utils import create_sources
 
 
-def test_blob_storage_utils_walk_structure_happy_path():
-    bucket_level = 2
-    structure = [
-        Category(
-            **{
-                "name": "I",
-                "description": "Super Category",
-                "substructure": [
-                    {
-                        "name": "i",
-                        "description": "Category",
-                        "substructure": [
-                            {
-                                "name": "A",
-                                "description": "Subcategory",
-                                "substructure": [],
-                            },
-                            {
-                                "name": "B",
-                                "description": "Subcategory",
-                                "substructure": None,
-                            },
-                            {"name": "C", "description": "Subcategory"},
-                            {"name": "D", "description": "Subcategory"},
-                        ],
-                    },
-                    {
-                        "name": "ii",
-                        "description": "Category",
-                        "substructure": [{"name": "E", "description": "Subcategory"}],
-                    },
-                    {
-                        "name": "iii",
-                        "description": "Category",
-                        "substructure": [
-                            {"name": "F", "description": "Subcategory"},
-                            {"name": "G", "description": "Subcategory"},
-                        ],
-                    },
-                ],
-            }
-        )
-    ]
-    thing_nodes: List[StructureThingNode] = []
-    bucket_names: List[BucketName] = []
-    sinks: List[BlobStorageStructureSink] = []
-
-    walk_structure(
-        parent_id=None,
-        tn_append_list=thing_nodes,
-        bucket_append_list=bucket_names,
-        snk_append_list=sinks,
-        structure=structure,
-        bucket_level=bucket_level,
-        level=1,
+def mocked_adapter() -> List[StructureThingNode]:
+    return (
+        [
+            StructureThingNode(
+                id="i/A", parent_id="i", name="A", description="Category"
+            ),
+            StructureThingNode(
+                id="ii/B", parent_id="ii", name="B", description="Category"
+            ),
+            StructureThingNode(
+                id="ii/C", parent_id="ii", name="C", description="Category"
+            ),
+        ],
     )
 
-    assert len(thing_nodes) == 11
-    assert len(bucket_names) == 3
-    assert len(sinks) == 7
+
+def mocked_bucket_names() -> List[BucketName]:
+    return [BucketName("i"), BucketName("ii")]
 
 
-@pytest.mark.skip("Error message not in log")
-def test_blob_storage_utils_walk_structure_thing_node_invalid_error(caplog):
-    bucket_level = 2
-    total_number_of_levels = 3
-    structure = [
-        Category(
-            **{
-                "name": "I",
-                "description": "Super Category",
-                "substructure": [
-                    {
-                        "name": "i",
-                        "description": "Category",
-                        "substructure": [
-                            {"name": "C", "description": "Subcategory"},
-                        ],
-                    },
-                ],
-            }
-        )
-    ]
-    thing_nodes: List[StructureThingNode] = []
-    bucket_names: List[BucketName] = []
-    sinks: List[BlobStorageStructureSink] = []
-    with caplog.at_level(logging.ERROR):
-        caplog.clear()
+def mocked_get_oks_in_bucket(bucket_name: BucketName) -> List[IdString]:
+    if bucket_name == "i":
+        return [IdString("A_2022Y01M02D14h23m18s"), IdString("A_2022Y01M02D14h57m31s")]
+    if bucket_name == "ii":
+        return [
+            IdString("B_2022Y01M02D14h25m56s"),
+            IdString("D_2022Y03M08D17h23m18s"),
+            IdString("D_2022Y04M02D13h28m29s"),
+        ]
+
+
+def test_blob_storage_utils_create_sources():
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.thing_nodes",
+        new_callable=mock.PropertyMock,
+        return_value=[
+            StructureThingNode(
+                id="i/A", parent_id="i", name="A", description="Category"
+            ),
+            StructureThingNode(
+                id="ii/B", parent_id="ii", name="B", description="Category"
+            ),
+            StructureThingNode(
+                id="ii/C", parent_id="ii", name="C", description="Category"
+            ),
+        ],
+    ):
         with mock.patch(
-            "hetdesrun.adapters.blob_storage.models.Category.to_thing_node",
-            side_effect=ThingNodeInvalidError,
+            "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.bucket_names",
+            new_callable=mock.PropertyMock,
+            return_value=[BucketName("i"), BucketName("ii")],
         ):
-            with pytest.raises(ThingNodeInvalidError):
-                walk_structure(
-                    parent_id=None,
-                    tn_append_list=thing_nodes,
-                    bucket_append_list=bucket_names,
-                    snk_append_list=sinks,
-                    structure=structure,
-                    bucket_level=bucket_level,
-                    total_nof_levels=total_number_of_levels,
-                    level=1,
-                )
-
-        assert "ValidationError for transformation of category " in caplog.text
-
-
-@pytest.mark.skip("ConstrainedStr does seem to not behave as expected")
-def test_blob_storage_utils_walk_structure_bucket_name_invalid_error(caplog):
-    bucket_level = 2
-    total_number_of_levels = 3
-    structure = [
-        Category(
-            **{
-                "name": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
-                "description": "Super Category",
-                "substructure": [
-                    {
-                        "name": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
-                        "description": "Category",
-                        "substructure": [
-                            {"name": "C", "description": "Subcategory"},
-                        ],
-                    },
-                ],
-            }
-        )
-    ]
-    thing_nodes: List[StructureThingNode] = []
-    bucket_names: List[BucketName] = []
-    sinks: List[BlobStorageStructureSink] = []
-    with caplog.at_level(logging.INFO):
-        caplog.clear()
-        with pytest.raises(BucketNameInvalidError):
-
-            walk_structure(
-                parent_id=None,
-                tn_append_list=thing_nodes,
-                bucket_append_list=bucket_names,
-                snk_append_list=sinks,
-                structure=structure,
-                bucket_level=bucket_level,
-                total_nof_levels=total_number_of_levels,
-                level=1,
-            )
-        assert (
-            "ValidationError for transformation of "
-            "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii-iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii to BucketName"
-        ) in caplog.text
-
-
-def test_blob_storage_utils_get_setup_from_config():
-    # TODO: implement test_blob_storage_utils_get_setup_from_config
-    pass
-
-
-def test_blob_storage_utils_find_duplicates():
-    item_list = ["apple", "banana", "cherry", "apple", "banana"]
-    duplicates = find_duplicates(item_list)
-
-    assert len(duplicates) == 2
-    assert "apple" in duplicates
-    assert "banana" in duplicates
-
-
-def test_blob_storage_utils_setup_adapter():
-    # TODO: implement test_blob_storage_utils_setup_adapter
-    pass
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.utils.get_object_key_strings_in_bucket",
+                new=mocked_get_oks_in_bucket,
+            ):
+                sources = create_sources()
+                assert len(sources) == 3
+                assert sources[0].id == "i/A_2022Y01M02D14h23m18s"
+                assert sources[0].thingNodeId == "i/A"
+                assert sources[0].name == "A - 2022-01-02 14:23:18+00:00"
+                assert sources[1].id == "i/A_2022Y01M02D14h57m31s"
+                assert sources[1].thingNodeId == "i/A"
+                assert sources[1].name == "A - 2022-01-02 14:57:31+00:00"
+                assert sources[2].id == "ii/B_2022Y01M02D14h25m56s"
+                assert sources[2].thingNodeId == "ii/B"
+                assert sources[2].name == "B - 2022-01-02 14:25:56+00:00"

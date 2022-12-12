@@ -472,7 +472,7 @@ class Category(BaseModel):
             # pylint: disable=not-an-iterable
             for category in self.substructure:
                 category.create_structure(
-                    thing_nodes, bucket_names, sinks, bucket_level, parent_id
+                    thing_nodes, bucket_names, sinks, bucket_level, thing_node.id
                 )
         else:  # category.substructure is None or len(category.substructure) == 0
             sink = BlobStorageStructureSink.from_thing_node(thing_node)
@@ -505,7 +505,13 @@ class AdapterHierarchy(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-        keep_untouched = (cached_property,)
+        keep_untouched = (
+            cached_property,
+        )  # cached_property currently not supported by pydantic
+        # https://github.com/pydantic/pydantic/issues/1241
+        frozen = True  # methods decorated with cache, don't get self passed as default argument
+        # https://github.com/pydantic/pydantic/issues/3376
+        # does not help because list are not hashable...
 
     # pylint: disable=no-self-argument
     @validator("bucket_level")
@@ -531,7 +537,7 @@ class AdapterHierarchy(BaseModel):
         values["structure"] = structure
         return bucket_level
 
-    @cache
+    # @cache
     def create_structure(
         self,
     ) -> Tuple[
