@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   ConfirmClickEvent,
   ExecutionDialogData,
+  IO,
   TestWiring,
   WiringDialogComponent
 } from 'hd-wiring';
@@ -49,6 +50,7 @@ import { Store } from '@ngrx/store';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
+import { IOConnector } from 'src/app/model/new-api/io-connector';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -397,8 +399,7 @@ export class BaseItemActionService {
     if (isComponentTransformation(transformation)) {
       this.configureComponentIO(transformation);
     } else {
-      // @ts-ignore
-      this.configureWorkflowIO(transformation as AbstractBaseItem);
+      this.configureWorkflowIO(transformation);
     }
   }
 
@@ -809,26 +810,28 @@ export class BaseItemActionService {
       .subscribe();
   }
 
-  private configureWorkflowIO(abstractBaseItem: AbstractBaseItem) {
-    this.workflowService
-      .getWorkflow(abstractBaseItem.id)
+  private configureWorkflowIO(workflowTransformation: WorkflowTransformation) {
+    this.transformationStore
+      .select(selectTransformationById(workflowTransformation.id))
       .pipe(first())
-      .subscribe(workflowBaseItem => {
-        if (workflowBaseItem === undefined) {
+      .subscribe(selectedTransformation => {
+        if (selectedTransformation === undefined) {
           return;
         }
 
         const dialogRef = this.dialog.open<
           WorkflowIODialogComponent,
           WorkflowIODialogData,
-          false | { inputs: IOItem[]; outputs: IOItem[] }
+          false | { inputs: IOConnector[]; outputs: IOConnector[] }
         >(WorkflowIODialogComponent, {
           width: '95%',
           minHeight: '200px',
           data: {
             // TODO refactor all mutations in workflow dialog component and remove stringify .
-            workflow: JSON.parse(JSON.stringify(workflowBaseItem)),
-            editMode: workflowBaseItem.state !== RevisionState.RELEASED,
+            workflowTransformation: JSON.parse(
+              JSON.stringify(selectedTransformation)
+            ),
+            editMode: selectedTransformation.state !== RevisionState.RELEASED,
             actionOk: 'Save',
             actionCancel: 'Cancel'
           }
@@ -840,45 +843,47 @@ export class BaseItemActionService {
           .subscribe(result => {
             if (result) {
               const ioItemIds = [...result.inputs, ...result.outputs].map(
-                ioItem => `${ioItem.operator}_${ioItem.connector}`
+                ioItem => `${ioItem.operator_id}_${ioItem.connector_id}`
               );
 
-              const innerLinks = workflowBaseItem.links.filter(link => {
-                const fromIoItemId = `${link.fromOperator}_${link.fromConnector}`;
-                const toIoItemId = `${link.toOperator}_${link.toConnector}`;
-                const isOuterLink =
-                  ioItemIds.includes(fromIoItemId) ||
-                  ioItemIds.includes(toIoItemId);
-                return !isOuterLink;
-              });
+              const innerLinks = workflowTransformation.content.links.filter(
+                link => {
+                  const fromIoItemId = `${link.start.operator}_${link.start.connector}`;
+                  const toIoItemId = `${link.end.operator}_${link.end.connector}`;
+                  const isOuterLink =
+                    ioItemIds.includes(fromIoItemId) ||
+                    ioItemIds.includes(toIoItemId);
+                  return !isOuterLink;
+                }
+              );
 
               const inputIoItems = this._updateIoItemPositions(
                 result.inputs,
                 true,
-                workflowBaseItem
+                workflowTransformation
               );
               const outputIoItems = this._updateIoItemPositions(
                 result.outputs,
                 false,
-                workflowBaseItem
+                workflowTransformation
               );
               const links = [
                 ...innerLinks,
                 ...this._createLinks(
                   inputIoItems,
                   outputIoItems,
-                  workflowBaseItem
+                  workflowTransformation
                 )
               ];
 
-              const updatedWorkflow = {
-                ...workflowBaseItem,
+              const updatedWorkflowTransformation = {
+                ...workflowTransformation,
                 inputs: inputIoItems,
                 outputs: outputIoItems,
                 links
               };
 
-              this.workflowService.updateWorkflow(updatedWorkflow);
+              this.baseItemService.updateTransformation(updatedWorkflowTransformation).subscribe();
             }
           });
       });
