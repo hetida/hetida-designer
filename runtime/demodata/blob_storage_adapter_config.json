@@ -1,5 +1,5 @@
 {
-    "bucket_level": 2,
+    "object_key_depth": 1,
     "structure": [
         {
             "name": "I",

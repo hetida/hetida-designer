@@ -315,18 +315,18 @@ def test_blob_storage_class_category():
     assert category.substructure[0].name == "A"
     assert category.substructure[0].description == "Subcategory"
     assert category.substructure[0].substructure == None
-    assert category.substructure[0].level == None
+    assert category.substructure[0].get_depth() == None
     assert category.substructure[1].name == "B"
     assert category.substructure[1].description == "Subcategory"
     assert category.substructure[1].substructure == None
-    assert category.substructure[1].level == None
-    assert category.level is None
+    assert category.substructure[1].get_depth() == None
+    assert category.get_depth() is None
 
-    depth = category.set_level_and_get_depth(level=2)
+    depth = category.get_depth()
     assert depth == 3
-    assert category.level == 2
-    assert category.substructure[0].level == 3
-    assert category.substructure[1].level == 3
+    assert category.get_depth() == 2
+    assert category.substructure[0].get_depth() == 3
+    assert category.substructure[1].get_depth() == 3
 
     thing_node_from_category = category.to_thing_node(parent_id="i", separator="-")
     assert thing_node_from_category.id == "i-i"
@@ -341,7 +341,7 @@ def test_blob_storage_class_category():
         thing_nodes=thing_nodes,
         bucket_names=bucket_names,
         sinks=sinks,
-        bucket_level=2,
+        object_key_depth=1,
         parent_id="i",
     )
     assert len(thing_nodes) == 3
@@ -377,7 +377,7 @@ def test_blob_storage_utils_find_duplicates():
 def test_blob_storage_class_adapter_hierarchy():
     adapter_hierarchy = AdapterHierarchy(
         **{
-            "bucket_level": 2,
+            "object_key_depth": 1,
             "structure": [
                 {
                     "name": "I",
@@ -422,10 +422,10 @@ def test_blob_storage_class_adapter_hierarchy():
         }
     )
 
-    assert adapter_hierarchy.bucket_level == 2
-    assert adapter_hierarchy.structure[0].level == 1
-    assert adapter_hierarchy.structure[0].substructure[0].level == 2
-    assert adapter_hierarchy.structure[0].substructure[0].substructure[0].level == 3
+    assert adapter_hierarchy.object_key_depth == 1
+    assert adapter_hierarchy.structure[0].get_depth() == 3
+    assert adapter_hierarchy.structure[0].substructure[0].get_depth() == 2
+    assert adapter_hierarchy.structure[0].substructure[0].substructure[0].get_depth() == 1
 
     thing_nodes = adapter_hierarchy.thing_nodes
     bucket_names = adapter_hierarchy.bucket_names
@@ -438,7 +438,7 @@ def test_blob_storage_class_adapter_hierarchy():
 
 @pytest.mark.skip("Error message not in log")
 def test_blob_storage_class_adapter_hierarchy_with_thing_node_invalid_error(caplog):
-    bucket_level = 2
+    object_key_depth = 1
     structure = [
         Category(
             **{
@@ -462,14 +462,14 @@ def test_blob_storage_class_adapter_hierarchy_with_thing_node_invalid_error(capl
             "hetdesrun.adapters.blob_storage.models.Category.to_thing_node",
             side_effect=ThingNodeInvalidError,
         ):
-            AdapterHierarchy(bucket_level=bucket_level, structure=structure)
+            AdapterHierarchy(object_key_depth=object_key_depth, structure=structure)
 
         assert "ValidationError for transformation of category " in caplog.text
 
 
 @pytest.mark.skip("ConstrainedStr does seem to not behave as expected")
 def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error(caplog):
-    bucket_level = 2
+    object_key_depth = 2
     structure = [
         Category(
             **{
@@ -491,7 +491,7 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error(caplog):
         caplog.clear()
         with pytest.raises(BucketNameInvalidError):
 
-            AdapterHierarchy(bucket_level=bucket_level, structure=structure)
+            AdapterHierarchy(object_key_depth=object_key_depth, structure=structure)
         assert (
             "ValidationError for transformation of "
             "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii-iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii to BucketName"

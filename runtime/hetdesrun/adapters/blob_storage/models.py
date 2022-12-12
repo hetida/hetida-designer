@@ -413,18 +413,20 @@ class StructureResponse(BaseModel):
 class Category(BaseModel):
     name: ThingNodeName
     description: str
-    substructure: Optional[List["Category"]] = None
-    level: Optional[int] = None
+    substructure: Optional[Tuple["Category", ...]] = None
 
-    def set_level_and_get_depth(self, level: int) -> int:
-        self.level = level
+    class Config:
+        frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
+
+    def get_depth(self) -> int:
+        depth = 1
         if self.substructure is not None and len(self.substructure) != 0:
             depths: List[int] = []
             # pylint: disable=not-an-iterable
             for category in self.substructure:
-                depths.append(category.set_level_and_get_depth(self.level + 1))
-            return max(depths)
-        return level
+                depths.append(category.get_depth())
+            depth = depth + max(depths)
+        return depth
 
     def to_thing_node(
         self, parent_id: Optional[IdString], separator: Literal["-", "/"]
@@ -442,19 +444,18 @@ class Category(BaseModel):
         thing_nodes: List[StructureThingNode],
         bucket_names: List[BucketName],
         sinks: List[BlobStorageStructureSink],
-        bucket_level: int,
+        object_key_depth: int,
         parent_id: Optional[IdString],
     ) -> None:
-        assert self.level is not None
         thing_node = self.to_thing_node(
             parent_id,
             separator=OBJECT_KEY_DIR_SEPARATOR
-            if self.level > bucket_level
+            if self.get_depth() < object_key_depth
             else BUCKET_NAME_DIR_SEPARATOR,
         )
         thing_nodes.append(thing_node)
 
-        if self.level == bucket_level:
+        if self.get_depth() == object_key_depth:
             try:
                 bucket_names.append(BucketName(thing_node.id))
             except ValidationError as error:
@@ -466,7 +467,7 @@ class Category(BaseModel):
             # pylint: disable=not-an-iterable
             for category in self.substructure:
                 category.create_structure(
-                    thing_nodes, bucket_names, sinks, bucket_level, thing_node.id
+                    thing_nodes, bucket_names, sinks, object_key_depth, thing_node.id
                 )
         else:  # category.substructure is None or len(category.substructure) == 0
             sink = BlobStorageStructureSink.from_thing_node(thing_node)
@@ -484,6 +485,20 @@ def find_duplicates(item_list: List) -> List:
     return duplicates
 
 
+@cache
+def create_blob_storage_adapter_structure_objects_from_hierarchy(
+    object_key_depth: int, structure: Tuple[Category, ...]
+) -> Tuple[List[StructureThingNode], List[BucketName], List[BlobStorageStructureSink]]:
+    thing_nodes: List[StructureThingNode] = []
+    bucket_names: List[BucketName] = []
+    sinks: List[BlobStorageStructureSink] = []
+    for category in structure:
+        category.create_structure(
+            thing_nodes, bucket_names, sinks, object_key_depth, parent_id=None
+        )
+    return thing_nodes, bucket_names, sinks
+
+
 class AdapterHierarchy(BaseModel):
     """Define the Blob Storage Hierarchy.
 
@@ -494,8 +509,8 @@ class AdapterHierarchy(BaseModel):
     and delimiters and introduce the concept of folders.
     """
 
-    structure: List[Category]
-    bucket_level: int
+    structure: Tuple[Category, ...]
+    object_key_depth: int
 
     class Config:
         arbitrary_types_allowed = True
@@ -503,48 +518,42 @@ class AdapterHierarchy(BaseModel):
             cached_property,
         )  # cached_property currently not supported by pydantic
         # https://github.com/pydantic/pydantic/issues/1241
-        frozen = True  # methods decorated with cache, don't get self passed as default argument
-        # https://github.com/pydantic/pydantic/issues/3376
-        # does not help because list are not hashable...
+        frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
 
     # pylint: disable=no-self-argument
-    @validator("bucket_level")
-    def structure_deeper_than_bucket_level(cls, bucket_level: int, values: dict) -> int:
+    @validator("object_key_depth")
+    def structure_deeper_than_object_key_depth(
+        cls, object_key_depth: int, values: dict
+    ) -> int:
         try:
             structure: List[Category] = values["structure"]
         except KeyError as e:
             raise ValueError(
-                f"Cannot check if structure is deeper than the bucket_level '{bucket_level}' "
-                "if the attribute 'structure' is missing!"
+                "Cannot check if structure is deeper than the object key depth "
+                f"'{object_key_depth}' if the attribute 'structure' is missing!"
             ) from e
 
         depths: List[int] = []
         for category in structure:
-            depths.append(category.set_level_and_get_depth(level=1))
+            depths.append(category.get_depth())
 
-        if not min(depths) > bucket_level:
+        if not min(depths) > object_key_depth:
             raise ValueError(
                 "Each branch of the structure must be deeper than "
-                f"the bucket level '{bucket_level}'!"
+                f"the object key depth '{object_key_depth}'!"
             )
 
         values["structure"] = structure
-        return bucket_level
+        return object_key_depth
 
-    # @cache
     def create_structure(
         self,
     ) -> Tuple[
         List[StructureThingNode], List[BucketName], List[BlobStorageStructureSink]
     ]:
-        thing_nodes: List[StructureThingNode] = []
-        bucket_names: List[BucketName] = []
-        sinks: List[BlobStorageStructureSink] = []
-        for category in self.structure:
-            category.create_structure(
-                thing_nodes, bucket_names, sinks, self.bucket_level, parent_id=None
-            )
-        return thing_nodes, bucket_names, sinks
+        return create_blob_storage_adapter_structure_objects_from_hierarchy(
+            object_key_depth=self.object_key_depth, structure=self.structure
+        )
 
     @cached_property
     def thing_nodes(self) -> List[StructureThingNode]:
