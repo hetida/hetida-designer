@@ -287,7 +287,6 @@ def test_blob_storage_class_category():
     assert thing_node_from_category.name == "I"
     assert thing_node_from_category.description == "Category"
 
-
     thing_nodes: List[StructureThingNode] = []
     bucket_names: List[BucketName] = []
     sinks: List[BlobStorageStructureSink] = []
