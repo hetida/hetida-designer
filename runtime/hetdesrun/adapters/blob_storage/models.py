@@ -503,6 +503,10 @@ class AdapterHierarchy(BaseModel):
     structure: List[Category]
     bucket_level: int
 
+    class Config:
+        arbitrary_types_allowed = True
+        keep_untouched = (cached_property,)
+
     # pylint: disable=no-self-argument
     @validator("bucket_level")
     def structure_deeper_than_bucket_level(cls, bucket_level: int, values: dict) -> int:
