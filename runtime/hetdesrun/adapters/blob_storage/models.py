@@ -236,15 +236,9 @@ class BlobStorageStructureSource(BaseModel):
         )
 
     def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
-        try:
-            bucket_name_string, object_key_string = self.id.split(
-                sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
-            )
-        except ValueError as e:
-            raise ValueError(
-                f"Id {self.id} not valid for a source, "
-                f"because it contains no '{OBJECT_KEY_DIR_SEPARATOR}'!"
-            ) from e
+        bucket_name_string, object_key_string = self.id.split(
+            sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
+        )
         return BucketName(bucket_name_string), ObjectKey.from_string(
             IdString(object_key_string)
         )

@@ -74,6 +74,20 @@ def test_blob_storage_class_id_string():
 
 
 def test_blob_storage_class_object_key():
+    with pytest.raises(ValidationError):
+        object_key = ObjectKey(
+            string="A_2022Y01M02D14h23m18s",
+            name="A",
+            time=datetime(
+                year=2022,
+                month=1,
+                day=2,
+                hour=14,
+                minute=23,
+                second=18,
+            ),
+        )
+
     object_key = ObjectKey(
         string="A_2022Y01M02D14h23m18s",
         name="A",
@@ -101,6 +115,9 @@ def test_blob_storage_class_object_key():
     thing_node_id = object_key.to_thing_node_id(bucket_name="i-ii")
     assert thing_node_id == "i-ii/A"
 
+    with pytest.raises(ValueError):
+        ObjectKey.from_string("A")
+
 
 def test_blob_storage_class_structure_source():
     source = BlobStorageStructureSource(
@@ -127,12 +144,32 @@ def test_blob_storage_class_structure_source():
     assert src_from_bkt_and_ok == source
 
     with pytest.raises(ValidationError):
-        # invalid id
+        # invalid id due to no object key dir separator
         BlobStorageStructureSource(
             id="A_2022Y01M02D14h23m18s",
             thingNodeId="A",
             name="A - 2022-01-02 14:23:18+00:00",
             path="A",
+            metadataKey="A - 2022-01-02 14:23:18+00:00",
+        )
+
+    with pytest.raises(ValidationError):
+        # invalid id due to bucket name part invalid
+        BlobStorageStructureSource(
+            id="I-ii/A_2022Y01M02D14h23m18s",
+            thingNodeId="i-ii/A",
+            name="A - 2022-01-02 14:23:18+00:00",
+            path="i-ii/A",
+            metadataKey="A - 2022-01-02 14:23:18+00:00",
+        )
+
+    with pytest.raises(ValidationError):
+        # invalid id due to object key part invalid
+        BlobStorageStructureSource(
+            id="i-ii/A2022Y01M02D14h23m18s",
+            thingNodeId="i-ii/A",
+            name="A - 2022-01-02 14:23:18+00:00",
+            path="i-ii/A",
             metadataKey="A - 2022-01-02 14:23:18+00:00",
         )
 
@@ -147,7 +184,7 @@ def test_blob_storage_class_structure_source():
         )
 
     with pytest.raises(ValidationError):
-        # name does not match id
+        # name does not match id due to thing node name
         BlobStorageStructureSource(
             id="i-ii/A_2022Y01M02D14h23m18s",
             thingNodeId="i-ii/A",
@@ -157,13 +194,23 @@ def test_blob_storage_class_structure_source():
         )
 
     with pytest.raises(ValidationError):
-        # path does not match thingNodeId
+        # name does not match id due to timestamp
         BlobStorageStructureSource(
             id="i-ii/A_2022Y01M02D14h23m18s",
             thingNodeId="i-ii/A",
             name="A - 2022-01-02 14:23:18+00:00",
             path="i-ii/A",
-            metadataKey="B - 2022-01-02 14:23:18+00:00",
+            metadataKey="A - 2023-01-02 14:23:18+00:00",
+        )
+
+    with pytest.raises(ValidationError):
+        # path does not match thingNodeId
+        BlobStorageStructureSource(
+            id="i-ii/A_2022Y01M02D14h23m18s",
+            thingNodeId="i-ii/A",
+            name="A - 2022-01-02 14:23:18+00:00",
+            path="i-ii/B",
+            metadataKey="A - 2022-01-02 14:23:18+00:00",
         )
 
     with pytest.raises(ValidationError):
