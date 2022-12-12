@@ -1,6 +1,5 @@
 from logging import getLogger
-
-from hetdesrun.adapters.blob_storage.utils import setup_adapter
+from typing import Final
 
 logger = getLogger(__name__)
 
@@ -10,6 +9,10 @@ try:
 except FileNotFoundError:
     VERSION = "dev snapshot"
 
-
-tns, srcs, snks = setup_adapter()
-logger.info("Setup of Blob Storage Adapter complete!")
+BUCKET_NAME_DIR_SEPARATOR: Final = "-"
+OBJECT_KEY_DIR_SEPARATOR: Final = "/"
+IDENTIFIER_SEPARATOR: Final = "_"
+LEAF_NAME_SEPARATOR: Final = " - "
+TIME_STRING_FORMAT: Final = "%YY%mM%dD%Hh%Mm%Ss"
+SINK_ID_ENDING: Final = "next"
+SINK_NAME_ENDING: Final = "Next Object"

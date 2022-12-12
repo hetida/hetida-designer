@@ -1,8 +1,23 @@
 import re
 from datetime import datetime, timezone
+from functools import cache, cached_property
 from typing import Dict, List, Literal, Optional, Tuple
 
 from pydantic import BaseModel, ConstrainedStr, Field, ValidationError, validator
+
+from hetdesrun.adapters.blob_storage import (
+    BUCKET_NAME_DIR_SEPARATOR,
+    IDENTIFIER_SEPARATOR,
+    LEAF_NAME_SEPARATOR,
+    OBJECT_KEY_DIR_SEPARATOR,
+    SINK_ID_ENDING,
+    SINK_NAME_ENDING,
+)
+from hetdesrun.adapters.blob_storage.exceptions import (
+    BucketNameInvalidError,
+    ConfigError,
+    MissingConfigError,
+)
 
 
 class ThingNodeName(ConstrainedStr):
@@ -19,7 +34,12 @@ class BucketName(ConstrainedStr):
 
 class IdString(ConstrainedStr):
     min_length = 1
-    regex = re.compile(r"^[a-zA-Z0-9/\-_]+$")
+    regex = re.compile(
+        (
+            r"^[a-zA-Z0-9"
+            rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+$"
+        )
+    )
 
 
 class ObjectKey(BaseModel):
@@ -38,16 +58,19 @@ class ObjectKey(BaseModel):
     def from_name(cls, name: IdString) -> "ObjectKey":
         now = datetime.now(timezone.utc).replace(microsecond=0)
         return ObjectKey(
-            string=name + "_" + now.strftime("%YY%mM%dD%Hh%Mm%Ss"), name=name, time=now
+            string=name + IDENTIFIER_SEPARATOR + now.strftime("%YY%mM%dD%Hh%Mm%Ss"),
+            name=name,
+            time=now,
         )
 
     @classmethod
     def from_string(cls, string: IdString) -> "ObjectKey":
         try:
-            name, timestring = string.rsplit("_", maxsplit=1)
+            name, timestring = string.rsplit(IDENTIFIER_SEPARATOR, maxsplit=1)
         except ValueError as e:
             raise ValueError(
-                f"String {string} not a valid ObjectKey string, because it contains no '_'!"
+                f"String {string} not a valid ObjectKey string, "
+                f"because it contains no '{IDENTIFIER_SEPARATOR}'!"
             ) from e
         return ObjectKey(
             string=string,
@@ -58,7 +81,7 @@ class ObjectKey(BaseModel):
         )
 
     def to_thing_node_id(self, bucket_name: BucketName) -> IdString:
-        return IdString(bucket_name + "/" + self.name)
+        return IdString(bucket_name + OBJECT_KEY_DIR_SEPARATOR + self.name)
 
 
 class InfoResponse(BaseModel):
@@ -89,14 +112,17 @@ class BlobStorageStructureSource(BaseModel):
     def id_matches_scheme(
         cls, id: IdString  # pylint: disable=redefined-builtin
     ) -> IdString:
-        if "/" not in id:
-            raise ValueError(f"The source id '{id}' must contain at least one '/'!")
+        if OBJECT_KEY_DIR_SEPARATOR not in id:
+            raise ValueError(
+                f"The source id '{id}' must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'!"
+            )
         bucket_name, object_key_string = id.split(sep="/", maxsplit=1)
         try:
             BucketName(bucket_name)
         except ValidationError as e:
             raise ValueError(
-                f"The first part '{bucket_name}' of the source id '{id}' before the first '/' "
+                f"The first part '{bucket_name}' of the source id '{id}' "
+                f"before the first '{OBJECT_KEY_DIR_SEPARATOR}' "
                 "must correspond to a bucket name!\nBut it does not:\n" + str(e)
             ) from e
 
@@ -121,7 +147,7 @@ class BlobStorageStructureSource(BaseModel):
                 "if the attribute 'id' is missing!"
             ) from e
 
-        thing_node_id_from_id = str(id).rsplit(sep="_", maxsplit=1)[0]
+        thing_node_id_from_id = str(id).rsplit(sep=IDENTIFIER_SEPARATOR, maxsplit=1)[0]
         if thing_node_id_from_id != thingNodeId:
             raise ValueError(
                 f"The source's thing node id {thingNodeId} does not match its id {id}!"
@@ -138,9 +164,9 @@ class BlobStorageStructureSource(BaseModel):
                 f"Cannot check if the source's name '{name}' matches its id "
                 "if the attribute 'id' is missing!"
             ) from e
-        file_string_from_id = id.rsplit(sep="/", maxsplit=1)[1]
+        file_string_from_id = id.rsplit(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
         file_ok = ObjectKey.from_string(IdString(file_string_from_id))
-        thing_node_name, source_time = name.split(" - ")
+        thing_node_name, source_time = name.split(LEAF_NAME_SEPARATOR)
         if thing_node_name != file_ok.name:
             raise ValueError(
                 f"The source name '{name}' must start with the name '{file_ok.name}' "
@@ -197,12 +223,12 @@ class BlobStorageStructureSource(BaseModel):
     ) -> "BlobStorageStructureSource":
         name = (
             object_key.name
-            + " - "
+            + LEAF_NAME_SEPARATOR
             + object_key.time.astimezone(timezone.utc).isoformat(sep=" ")
         )
         thing_node_id = object_key.to_thing_node_id(bucket_name)
         return BlobStorageStructureSource(
-            id=bucket_name + "/" + object_key.string,
+            id=bucket_name + OBJECT_KEY_DIR_SEPARATOR + object_key.string,
             thingNodeId=thing_node_id,
             name=name,
             path=thing_node_id,
@@ -211,10 +237,13 @@ class BlobStorageStructureSource(BaseModel):
 
     def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
         try:
-            bucket_name_string, object_key_string = self.id.split(sep="/", maxsplit=1)
+            bucket_name_string, object_key_string = self.id.split(
+                sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
+            )
         except ValueError as e:
             raise ValueError(
-                f"Id {self.id} not valid for a source, because it contains no '/'!"
+                f"Id {self.id} not valid for a source, "
+                f"because it contains no '{OBJECT_KEY_DIR_SEPARATOR}'!"
             ) from e
         return BucketName(bucket_name_string), ObjectKey.from_string(
             IdString(object_key_string)
@@ -241,19 +270,24 @@ class BlobStorageStructureSink(BaseModel):
     def id_matches_scheme(
         cls, id: IdString  # pylint: disable=redefined-builtin
     ) -> IdString:
-        if "/" not in id:
-            raise ValueError(f"The sink id '{id}' must contain at least one '/'!")
-        bucket_name = id.split(sep="/", maxsplit=1)[0]
+        if OBJECT_KEY_DIR_SEPARATOR not in id:
+            raise ValueError(
+                f"The sink id '{id}' must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'!"
+            )
+        bucket_name = id.split(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[0]
         try:
             BucketName(bucket_name)
         except ValidationError as e:
             raise ValueError(
-                f"The first part '{bucket_name}' of the sink id '{id}' before the first '/' must "
+                f"The first part '{bucket_name}' of the sink id '{id}' "
+                "before the first '{OBJECT_KEY_DIR_SEPARATOR}' must "
                 "correspond to a bucket name!\nBut it does not:\n" + str(e)
             ) from e
 
-        if not id.endswith("_next"):
-            raise ValueError(f"The the sink id '{id}' must end with '_next'!")
+        if not id.endswith(IDENTIFIER_SEPARATOR + SINK_ID_ENDING):
+            raise ValueError(
+                f"The the sink id '{id}' must end with '{IDENTIFIER_SEPARATOR+SINK_ID_ENDING}'!"
+            )
         return id
 
     # pylint: disable=no-self-argument
@@ -285,20 +319,22 @@ class BlobStorageStructureSink(BaseModel):
                 "is missing!"
             ) from e
 
-        file_string_from_id = id.rsplit(sep="/", maxsplit=1)[1]
-        thing_node_name_from_id = file_string_from_id.split("_", maxsplit=1)[0]
+        file_string_from_id = id.rsplit(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
+        thing_node_name_from_id = file_string_from_id.split(
+            IDENTIFIER_SEPARATOR, maxsplit=1
+        )[0]
 
-        if " - " not in name:
+        if LEAF_NAME_SEPARATOR not in name:
             raise ValueError()
-        thing_node_name, sink_name_end = name.split(" - ")
+        thing_node_name, sink_name_end = name.split(LEAF_NAME_SEPARATOR)
         if thing_node_name != thing_node_name_from_id:
             raise ValueError(
                 f"The sink name '{name}' must start with the name '{thing_node_name_from_id}' "
                 "of the corresponding thing node!"
             )
-        if sink_name_end != "Next Trained Model":
+        if sink_name_end != SINK_NAME_ENDING:
             raise ValueError(
-                f"The sink name '{name}' must end with 'Next Trained Model'!"
+                f"The sink name '{name}' must end with '{SINK_NAME_ENDING}'!"
             )
 
         return name
@@ -346,20 +382,21 @@ class BlobStorageStructureSink(BaseModel):
         cls, thing_node: StructureThingNode
     ) -> "BlobStorageStructureSink":
         return BlobStorageStructureSink(
-            id=thing_node.id + "_next",
+            id=thing_node.id + IDENTIFIER_SEPARATOR + SINK_ID_ENDING,
             thingNodeId=thing_node.id,
-            name=thing_node.name + " - " + "Next Trained Model",
+            name=thing_node.name + LEAF_NAME_SEPARATOR + SINK_NAME_ENDING,
             path=thing_node.id,
-            metadataKey=thing_node.name + " - " + "Next Trained Model",
+            metadataKey=thing_node.name + LEAF_NAME_SEPARATOR + SINK_NAME_ENDING,
         )
 
     def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
-        if not "/" in self.thingNodeId:
+        if not OBJECT_KEY_DIR_SEPARATOR in self.thingNodeId:
             raise ValueError(
-                f"thingNodeId {self.thingNodeId} not valid for a sink, because it contains no '/'!"
+                f"thingNodeId {self.thingNodeId} not valid for a sink, "
+                f"because it contains no {OBJECT_KEY_DIR_SEPARATOR}!"
             )
         bucket_name_string, object_key_name = self.thingNodeId.split(
-            sep="/", maxsplit=1
+            sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
         )
         return BucketName(bucket_name_string), ObjectKey.from_name(
             IdString(object_key_name)
@@ -406,8 +443,54 @@ class Category(BaseModel):
             description=self.description,
         )
 
+    def create_structure(
+        self,
+        thing_nodes: List[StructureThingNode],
+        bucket_names: List[BucketName],
+        sinks: List[BlobStorageStructureSink],
+        bucket_level: int,
+        parent_id: Optional[IdString],
+    ) -> None:
+        assert self.level is not None
+        thing_node = self.to_thing_node(
+            parent_id,
+            separator=OBJECT_KEY_DIR_SEPARATOR
+            if self.level > bucket_level
+            else BUCKET_NAME_DIR_SEPARATOR,
+        )
+        thing_nodes.append(thing_node)
 
-class BlobStorageAdapterConfig(BaseModel):
+        if self.level == bucket_level:
+            try:
+                bucket_names.append(BucketName(thing_node.id))
+            except ValidationError as error:
+                raise BucketNameInvalidError(
+                    f"Validation Error for transformation of {thing_node.id} to BucketName."
+                ) from error
+
+        if self.substructure is not None and len(self.substructure) != 0:
+            # pylint: disable=not-an-iterable
+            for category in self.substructure:
+                category.create_structure(
+                    thing_nodes, bucket_names, sinks, bucket_level, parent_id
+                )
+        else:  # category.substructure is None or len(category.substructure) == 0
+            sink = BlobStorageStructureSink.from_thing_node(thing_node)
+            sinks.append(sink)
+
+
+def find_duplicates(item_list: List) -> List:
+    seen = set()
+    duplicates = []
+    for item in item_list:
+        if item in seen:
+            duplicates.append(item)
+        else:
+            seen.add(item)
+    return duplicates
+
+
+class AdapterHierarchy(BaseModel):
     """Define the Blob Storage Hierarchy.
 
     The Amazon S3 data model is a flat structure: You can create buckets and store objects in them.
@@ -419,13 +502,6 @@ class BlobStorageAdapterConfig(BaseModel):
 
     structure: List[Category]
     bucket_level: int
-    # bucket_name_separator: Literal["-"] = "-"
-    # object_key_separator: Literal["!", "-", "_", ".", "'", "(", ")", "/"] = "/"
-    # date_separator: Literal["_"] = "_"
-    # identfier_separator: Literal[" - "] = " - "
-    # time_string_format: str = "%YY%mM%dD%Hh%Mm%Ss"
-    # sink_id_ending: str = "next"
-    # sink_name_ending: str = "Next Trained Model"
 
     # pylint: disable=no-self-argument
     @validator("bucket_level")
@@ -450,3 +526,57 @@ class BlobStorageAdapterConfig(BaseModel):
 
         values["structure"] = structure
         return bucket_level
+
+    @cache
+    def create_structure(
+        self,
+    ) -> Tuple[
+        List[StructureThingNode], List[BucketName], List[BlobStorageStructureSink]
+    ]:
+        thing_nodes: List[StructureThingNode] = []
+        bucket_names: List[BucketName] = []
+        sinks: List[BlobStorageStructureSink] = []
+        for category in self.structure:
+            category.create_structure(
+                thing_nodes, bucket_names, sinks, self.bucket_level, parent_id=None
+            )
+        return thing_nodes, bucket_names, sinks
+
+    @cached_property
+    def thing_nodes(self) -> List[StructureThingNode]:
+        thing_nodes, _, _ = self.create_structure()
+        return thing_nodes
+
+    @cached_property
+    def bucket_names(self) -> List[BucketName]:
+        _, bucket_names, _ = self.create_structure()
+        if len(bucket_names) != len(set(bucket_names)):
+            msg = (
+                "The bucket names generated from the config file are not unique!\n"
+                "They contain the following duplicates: "
+                + ", ".join(duplicate for duplicate in find_duplicates(bucket_names))
+            )
+            raise ConfigError(msg)
+        return bucket_names
+
+    @cached_property
+    def sinks(self) -> List[BlobStorageStructureSink]:
+        _, _, sinks = self.create_structure()
+        return sinks
+
+    @classmethod
+    def from_file(
+        cls,
+        path: str = "demodata/blob_storage_adapter_config.json",
+    ) -> "AdapterHierarchy":
+        try:
+            return AdapterHierarchy.parse_file(path)
+        except FileNotFoundError as error:
+            raise MissingConfigError(
+                f"Could not find json file at path {path}:\n{str(error)}"
+            ) from error
+
+
+@cache
+def get_adapter_structure() -> AdapterHierarchy:
+    return AdapterHierarchy.from_file()

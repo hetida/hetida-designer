@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from hetdesrun.adapters.blob_storage.models import (
-    BlobStorageAdapterConfig,
+    AdapterHierarchy,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
     BucketName,
@@ -281,7 +281,7 @@ def test_blob_storage_class_category():
 
 
 def test_blob_storage_class_adapter_config():
-    config = BlobStorageAdapterConfig(
+    config = AdapterHierarchy(
         **{
             "bucket_level": 2,
             "structure": [
