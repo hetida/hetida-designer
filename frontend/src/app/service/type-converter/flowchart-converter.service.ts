@@ -7,7 +7,8 @@ import {
   IOType
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { Point } from 'src/app/model/point';
+import { Connector } from 'src/app/model/new-api/connector';
+import { Position } from 'src/app/model/new-api/position';
 import { v4 as UUID } from 'uuid';
 import {
   Transformation,
@@ -15,6 +16,7 @@ import {
 } from '../../model/new-api/transformation';
 import { Operator } from 'src/app/model/new-api/operator';
 import { Constant } from 'src/app/model/new-api/constant';
+import { VertexIds } from 'src/app/components/workflow-editor/workflow-editor.component';
 
 @Injectable({
   providedIn: 'root'
@@ -224,10 +226,10 @@ export class FlowchartConverterService {
   }
 
   /**
-   * converts the svg path data and the id's of the points to a Point array
+   * converts the svg path data and the id's of the position to a position array
    * @param link svg link element
    */
-  public convertLinkPathToPoints(link: Element): Point[] {
+  public convertLinkPathToPositions(link: Element): Position[] {
     const linkPath = link.getAttribute('d');
     const linkIds = link.getAttribute('custom-path');
     if (linkPath === null || linkIds === null) {
@@ -241,18 +243,15 @@ export class FlowchartConverterService {
         .split(' ')
         .map(str => Number(str))
     );
+
     const newIds = linkIds
       .split(',')
       .map(id => (id === 'x' ? UUID().toString() : id));
     link.setAttribute('custom-path', newIds.join(','));
-    return coordinates.map(
-      (coords, index) =>
-        ({
-          posX: coords[0],
-          posY: coords[1],
-          id: newIds[index]
-        } as Point)
-    );
+    return coordinates.map(coords => ({
+      x: coords[0],
+      y: coords[1]
+    }));
   }
 
   /**
@@ -260,7 +259,7 @@ export class FlowchartConverterService {
    * @param link given link element
    * @param from if the start (true) or the end (false) operator and connectors should be extracted
    */
-  public getLinkOperatorAndConnector(
+  public getLinkOperatorAndConnectorId(
     link: Element,
     from: boolean
   ): { operatorId: string; connectorId: string } {
@@ -275,6 +274,46 @@ export class FlowchartConverterService {
       operatorId: ids[0],
       connectorId: ids[1]
     };
+  }
+
+  /**
+   * Extract the connector from the operator or workflow given the vertex ids.
+   * @param vertexIds given linkSourceIds or linkTargetIds
+   * @param workflowTransformation current workflow
+   * @param searchInWorkflowIoInterface if true, search for the connector in the workflow io interface
+   * instead of the workflow content operators
+   */
+  public getConnectorFromOperatorById(
+    vertexIds: VertexIds,
+    workflowTransformation: WorkflowTransformation,
+    searchInWorkflowIoInterface: boolean
+  ): Connector {
+    let foundConnector: Connector;
+
+    if (searchInWorkflowIoInterface) {
+      const ios = [
+        ...workflowTransformation.io_interface.inputs,
+        ...workflowTransformation.io_interface.outputs
+      ];
+
+      const foundIo = ios.find(io => io.id === vertexIds.connectorId);
+
+      foundConnector = {
+        ...foundIo,
+        position: { x: 0, y: 0 }
+      };
+    } else {
+      const foundOperator = workflowTransformation.content.operators.find(
+        operator => operator.id === vertexIds.operatorId
+      );
+      const connectors = [...foundOperator.inputs, ...foundOperator.outputs];
+
+      foundConnector = connectors.find(
+        connector => connector.id === vertexIds.connectorId
+      );
+    }
+
+    return foundConnector;
   }
 
   // noinspection JSMethodCanBeStatic

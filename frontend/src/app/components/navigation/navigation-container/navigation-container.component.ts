@@ -45,6 +45,10 @@ export class NavigationContainerComponent implements OnInit {
     return this.searchFilter.valueChanges;
   }
 
+  trackCategory(_index: number, category: any) {
+    return category.key;
+  }
+
   ngOnInit(): void {
     this.authService.isAuthenticated$().subscribe(() => {
       this.baseItemService.fetchAllTransformations();

@@ -13,22 +13,10 @@ import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
-import {
-  selectAbstractBaseItemById,
-  selectAbstractComponentBaseItems,
-  selectAbstractWorkflowBaseItems
-} from 'src/app/store/base-item/base-item.selectors';
 import { v4 as UUID } from 'uuid';
 import { popoverMinHeight, popoverWidth } from '../../constants/popover-sizes';
-import { AbstractBaseItem, BaseItem } from '../../model/base-item';
-import { IOItem } from '../../model/io-item';
-import { WorkflowBaseItem } from '../../model/workflow-base-item';
-import { WorkflowLink } from '../../model/workflow-link';
-import { WorkflowOperator } from '../../model/workflow-operator';
 import { NotificationService } from '../../service/notifications/notification.service';
 import { FlowchartConverterService } from '../../service/type-converter/flowchart-converter.service';
-import { WorkflowEditorService } from '../../service/workflow-editor/workflow-editor.service';
-import { IAppState } from '../../store/app.state';
 import { BaseItemContextMenuComponent } from '../base-item-context-menu/base-item-context-menu.component';
 import {
   OperatorChangeRevisionDialogComponent,
@@ -42,9 +30,24 @@ import {
   Transformation,
   WorkflowTransformation
 } from '../../model/new-api/transformation';
+import { Link } from 'src/app/model/new-api/link';
+import { Operator } from 'src/app/model/new-api/operator';
+import { IOConnector } from 'src/app/model/new-api/io-connector';
+import { TransformationState } from 'src/app/store/transformation/transformation.state';
+import {
+  selectAllTransformations,
+  selectTransformationById
+} from 'src/app/store/transformation/transformation.selectors';
+import { BaseItemService } from 'src/app/service/base-item/base-item.service';
+import { Connector } from 'src/app/model/new-api/connector';
 
 interface IdentifiableEntity {
   id: string;
+}
+
+export interface VertexIds {
+  operatorId: string;
+  connectorId: string;
 }
 
 @Component({
@@ -56,13 +59,13 @@ export class WorkflowEditorComponent {
   flowchartConfiguration: FlowchartConfiguration | undefined = undefined;
   flowchartManipulatorConfiguration: SVGManipulatorConfiguration = new SVGManipulatorConfiguration();
 
-  private currentWorkflow: WorkflowBaseItem;
+  private currentWorkflow: WorkflowTransformation;
   private hasChanges = false;
 
   constructor(
-    private readonly store: Store<IAppState>,
+    private readonly transformationStore: Store<TransformationState>,
     private readonly notificationService: NotificationService,
-    private readonly workflowService: WorkflowEditorService,
+    private readonly baseItemService: BaseItemService,
     private readonly flowchartConverter: FlowchartConverterService,
     private readonly popoverService: PopoverService,
     private readonly dialog: MatDialog,
@@ -87,10 +90,7 @@ export class WorkflowEditorComponent {
       componentPortal,
       position
     );
-    // TODO
-    // @ts-ignore
-    componentPortalRef.instance.transformation = this
-      .currentWorkflow as Transformation;
+    componentPortalRef.instance.transformation = this.currentWorkflow;
   }
 
   /**
@@ -113,7 +113,7 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateOperator(element: HTMLElement): void {
-    const operator = this.currentWorkflow.operators.find(
+    const operator = this.currentWorkflow.content.operators.find(
       operatorCandidate => operatorCandidate.id === element.id
     );
     if (operator === undefined) {
@@ -127,13 +127,15 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateLink(element: HTMLElement): void {
-    const link = this.currentWorkflow.links.find(
+    const link = this.currentWorkflow.content.links.find(
       workflowLink => workflowLink.id === element.id
     );
     if (link === undefined) {
       return;
     }
-    const pathData = this.flowchartConverter.convertLinkPathToPoints(element);
+    const pathData = this.flowchartConverter.convertLinkPathToPositions(
+      element
+    );
     if (link.path.length === 0 && pathData.length === 0) {
       return;
     }
@@ -146,7 +148,7 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateInput(element: HTMLElement): void {
-    this._updateIoItem(element, this.currentWorkflow.inputs);
+    this._updateIoItem(element, this.currentWorkflow.content.inputs);
   }
 
   /**
@@ -154,17 +156,17 @@ export class WorkflowEditorComponent {
    * @param element updated element
    */
   private _checkAndUpdateOutput(element: HTMLElement): void {
-    this._updateIoItem(element, this.currentWorkflow.outputs);
+    this._updateIoItem(element, this.currentWorkflow.content.outputs);
   }
 
-  private _updateIoItem(element: HTMLElement, ioItems: IOItem[]) {
+  private _updateIoItem(element: HTMLElement, ioConnectors: IOConnector[]) {
     const id = element.id.split('_')[1];
-    const ioItem = ioItems.find(input => input.id === id);
-    if (ioItem === undefined) {
+    const ioConnector = ioConnectors.find(input => input.id === id);
+    if (ioConnector === undefined) {
       return;
     }
-    ioItem.posX = Number(element.getAttribute('x'));
-    ioItem.posY = Number(element.getAttribute('y'));
+    ioConnector.position.x = Number(element.getAttribute('x'));
+    ioConnector.position.y = Number(element.getAttribute('y'));
     this.hasChanges = true;
   }
 
@@ -178,20 +180,20 @@ export class WorkflowEditorComponent {
     if (removedElement === null || removedElement === undefined) {
       throw new Error('No element associated with the event!');
     }
-    this.currentWorkflow.operators = this._removeById(
-      this.currentWorkflow.operators,
+    this.currentWorkflow.content.operators = this._removeById(
+      this.currentWorkflow.content.operators,
       removedElement.id
     );
-    this.currentWorkflow.inputs = this._removeById(
-      this.currentWorkflow.inputs,
+    this.currentWorkflow.content.inputs = this._removeById(
+      this.currentWorkflow.content.inputs,
       removedElement.id
     );
-    this.currentWorkflow.outputs = this._removeById(
-      this.currentWorkflow.outputs,
+    this.currentWorkflow.content.outputs = this._removeById(
+      this.currentWorkflow.content.outputs,
       removedElement.id
     );
-    this.currentWorkflow.links = this._removeById(
-      this.currentWorkflow.links,
+    this.currentWorkflow.content.links = this._removeById(
+      this.currentWorkflow.content.links,
       removedElement.id
     );
     this.hasChanges = true;
@@ -206,15 +208,12 @@ export class WorkflowEditorComponent {
     );
   }
 
-  private _removeOperatorLinks(
-    links: WorkflowLink[],
-    deletedOperator: WorkflowOperator
-  ) {
+  private _removeOperatorLinks(links: Link[], deletedOperator: Operator) {
     return links.filter(
       link =>
         !(
-          link.fromOperator === deletedOperator.id ||
-          link.toOperator === deletedOperator.id
+          link.start.operator === deletedOperator.id ||
+          link.end.operator === deletedOperator.id
         )
     );
   }
@@ -240,8 +239,8 @@ export class WorkflowEditorComponent {
     if (element.getAttribute('dispatcher') !== 'operator') {
       return;
     }
-    if (this.currentWorkflow.operators !== undefined) {
-      const operator = this.currentWorkflow.operators.find(
+    if (this.currentWorkflow.content.operators !== undefined) {
+      const operator = this.currentWorkflow.content.operators.find(
         operatorCandidate => operatorCandidate.id === element.id
       );
       if (operator === undefined) {
@@ -261,31 +260,58 @@ export class WorkflowEditorComponent {
     if (element.getAttribute('dispatcher') !== 'link') {
       return;
     }
-    const link = this.currentWorkflow.links.find(
+    const link = this.currentWorkflow.content.links.find(
       wfLink => wfLink.id === element.id
     );
     if (link !== undefined) {
       return;
     }
-    const linkSourceIds = this.flowchartConverter.getLinkOperatorAndConnector(
+
+    const linkSourceIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
       element,
       true
     );
-    const linkTargetIds = this.flowchartConverter.getLinkOperatorAndConnector(
+    // TODO
+    // Draw a link from workflow-output to operator-output and check if the workflow-output is set in linkTargetIds.
+    const linkTargetIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
       element,
       false
     );
-    const linkPath = this.flowchartConverter.convertLinkPathToPoints(element);
 
-    const newLink: WorkflowLink = {
+    const sourceIsWorkflowInput =
+      linkSourceIds.operatorId === this.currentWorkflow.id;
+    const startConnector: Connector = this.flowchartConverter.getConnectorFromOperatorById(
+      linkSourceIds,
+      this.currentWorkflow,
+      sourceIsWorkflowInput
+    );
+
+    const targetIsWorkflowOutput =
+      linkTargetIds.operatorId === this.currentWorkflow.id;
+    const endConnector: Connector = this.flowchartConverter.getConnectorFromOperatorById(
+      linkTargetIds,
+      this.currentWorkflow,
+      targetIsWorkflowOutput
+    );
+
+    const linkPath = this.flowchartConverter.convertLinkPathToPositions(
+      element
+    );
+
+    const newLink: Link = {
       id: UUID().toString(),
-      fromConnector: linkSourceIds.connectorId,
-      fromOperator: linkSourceIds.operatorId,
-      toConnector: linkTargetIds.connectorId,
-      toOperator: linkTargetIds.operatorId,
+      start: {
+        operator: linkSourceIds.operatorId,
+        connector: startConnector
+      },
+      end: {
+        operator: linkTargetIds.operatorId,
+        connector: endConnector
+      },
       path: linkPath
     };
-    this.currentWorkflow.links.push(newLink);
+
+    this.currentWorkflow.content.links.push(newLink);
     element.id = newLink.id;
     this.hasChanges = true;
   }
@@ -295,19 +321,20 @@ export class WorkflowEditorComponent {
    * since the flowchart library doesn't need all the data we handle this here and not on the create event
    * @param event drop event, carrying the baseItem and flowchartComponent data
    */
-  dropInterceptor(event: CustomEvent): void {
-    if (event.detail.baseItemJSON === '') {
-      return;
-    }
-    const baseItem = JSON.parse(event.detail.baseItemJSON) as BaseItem;
-    const newOperator = this._createNewOperator(
-      baseItem,
-      event.detail.svgX as number,
-      event.detail.svgY as number
-    );
-    this.currentWorkflow.operators.push(newOperator);
-    this.workflowService.updateWorkflow(this.currentWorkflow);
-  }
+  // TODO
+  // dropInterceptor(event: CustomEvent): void {
+  //   if (event.detail.baseItemJSON === '') {
+  //     return;
+  //   }
+  //   const baseItem = JSON.parse(event.detail.baseItemJSON) as BaseItem;
+  //   const newOperator = this._createNewOperator(
+  //     baseItem,
+  //     event.detail.svgX as number,
+  //     event.detail.svgY as number
+  //   );
+  //   this.currentWorkflow.content.operators.push(newOperator);
+  //   this.workflowService.updateWorkflow(this.currentWorkflow);
+  // }
 
   /**
    * set selected element from workflow editor view to selection in sidebar
@@ -321,7 +348,7 @@ export class WorkflowEditorComponent {
       return;
     }
     const target = event.target;
-    const operator = this.currentWorkflow.operators.find(
+    const operator = this.currentWorkflow.content.operators.find(
       op => op.id === target.id
     );
     if (operator !== undefined) {
@@ -329,7 +356,7 @@ export class WorkflowEditorComponent {
       const bodyRect = document.body.getBoundingClientRect();
       const openToRight = targetRect.right + popoverWidth < bodyRect.right;
       this.popoverService.showPopover(
-        operator.itemId,
+        operator.transformation_id,
         openToRight ? targetRect.right : targetRect.left,
         targetRect.top,
         openToRight,
@@ -364,25 +391,23 @@ export class WorkflowEditorComponent {
    * checks whether or not to open the revision change dialog
    * @param event event used to determine the targeted operator
    */
+
   changeRevision(event: Event): void {
     const currentOperator = this._extractCurrentOperatorFromEvent(event);
     if (!currentOperator) {
       return;
     }
 
-    const selector =
-      currentOperator.type === BaseItemType.WORKFLOW
-        ? selectAbstractWorkflowBaseItems
-        : selectAbstractComponentBaseItems;
-    this.store
-      .select(selector)
+    this.transformationStore
+      .select(selectAllTransformations)
       .pipe(first())
-      .subscribe(abstractBaseItems => {
-        const available = abstractBaseItems.filter(
-          abstractBaseItem =>
-            abstractBaseItem.groupId === currentOperator.groupId &&
-            abstractBaseItem.id !== currentOperator.itemId &&
-            abstractBaseItem.state === RevisionState.RELEASED
+      .subscribe(transformations => {
+        const available = transformations.filter(
+          transformation =>
+            transformation.revision_group_id ===
+              currentOperator.revision_group_id &&
+            transformation.id !== currentOperator.transformation_id &&
+            transformation.state === RevisionState.RELEASED
         );
 
         if (available.length === 0) {
@@ -396,13 +421,13 @@ export class WorkflowEditorComponent {
   }
 
   private _openRevisionChangeDialog(
-    revisionList: AbstractBaseItem[],
-    operator: WorkflowOperator
+    revisionList: Transformation[],
+    operator: Operator
   ): void {
     const dialogRef = this.dialog.open<
       OperatorChangeRevisionDialogComponent,
       OperatorChangeRevisionDialogData,
-      AbstractBaseItem | undefined
+      Transformation | undefined
     >(OperatorChangeRevisionDialogComponent, {
       width: '640px',
       data: {
@@ -413,28 +438,30 @@ export class WorkflowEditorComponent {
       if (data === undefined) {
         return;
       }
-      const replacementWorkflowOperator = this._createNewOperator(
+      const replacementOperator = this._createNewOperator(
         data,
-        operator.posX,
-        operator.posY
+        operator.position.x,
+        operator.position.y
       );
 
       const copyOfCurrentWorkflow = JSON.parse(
         JSON.stringify(this.currentWorkflow)
-      ) as WorkflowBaseItem;
+      ) as WorkflowTransformation;
 
       // update workflow
-      copyOfCurrentWorkflow.operators = this._removeById(
-        copyOfCurrentWorkflow.operators,
+      copyOfCurrentWorkflow.content.operators = this._removeById(
+        copyOfCurrentWorkflow.content.operators,
         operator.id
       );
-      copyOfCurrentWorkflow.links = this._removeOperatorLinks(
-        copyOfCurrentWorkflow.links,
+      copyOfCurrentWorkflow.content.links = this._removeOperatorLinks(
+        copyOfCurrentWorkflow.content.links,
         operator
       );
 
-      copyOfCurrentWorkflow.operators.push(replacementWorkflowOperator);
-      this.workflowService.updateWorkflow(copyOfCurrentWorkflow);
+      copyOfCurrentWorkflow.content.operators.push(replacementOperator);
+      this.baseItemService
+        .updateTransformation(copyOfCurrentWorkflow)
+        .subscribe();
     });
   }
 
@@ -446,7 +473,7 @@ export class WorkflowEditorComponent {
     this._openRenameOperatorDialog(currentOperator);
   }
 
-  private _openRenameOperatorDialog(operator: WorkflowOperator): void {
+  private _openRenameOperatorDialog(operator: Operator): void {
     const dialogRef = this.dialog.open<
       RenameOperatorDialogComponent,
       RenameOperatorDialogData,
@@ -463,9 +490,10 @@ export class WorkflowEditorComponent {
         return;
       }
       operator.name = data;
-      this.workflowService.updateWorkflow(this.currentWorkflow);
-      // TODO
-      // this._convertWorkflowToFlowchart(this.currentWorkflow);
+      this.baseItemService
+        .updateTransformation(this.currentWorkflow)
+        .subscribe();
+      this._convertWorkflowToFlowchart(this.currentWorkflow);
     });
   }
 
@@ -474,27 +502,30 @@ export class WorkflowEditorComponent {
     if (!currentOperator) {
       return;
     }
-    this.store
-      .pipe(select(selectAbstractBaseItemById(currentOperator.itemId)), first())
-      .subscribe(abstractBaseItem => {
+    this.transformationStore
+      .pipe(
+        select(selectTransformationById(currentOperator.transformation_id)),
+        first()
+      )
+      .subscribe(transformation => {
         const copyOperator = this._createNewOperator(
-          abstractBaseItem,
-          currentOperator.posX + 100,
-          currentOperator.posY + 100
+          transformation,
+          currentOperator.position.x + 100,
+          currentOperator.position.y + 100
         );
-        this.currentWorkflow.operators.push(copyOperator);
-        this.workflowService.updateWorkflow(this.currentWorkflow);
+        this.currentWorkflow.content.operators.push(copyOperator);
+        this.baseItemService
+          .updateTransformation(this.currentWorkflow)
+          .subscribe();
       });
   }
 
-  private _extractCurrentOperatorFromEvent(
-    event: Event
-  ): WorkflowOperator | null {
+  private _extractCurrentOperatorFromEvent(event: Event): Operator | null {
     const element = event.target as HTMLElement;
     if (element === null) {
       return null;
     }
-    const currentOperator = this.currentWorkflow.operators.find(
+    const currentOperator = this.currentWorkflow.content.operators.find(
       operator => operator.id === element.id
     );
     if (
@@ -511,8 +542,9 @@ export class WorkflowEditorComponent {
     if (!this.hasChanges || this.currentWorkflow.state === 'RELEASED') {
       return;
     }
-    this.workflowService.updateWorkflow(this.currentWorkflow);
-    this.hasChanges = false;
+    this.baseItemService
+      .updateTransformation(this.currentWorkflow)
+      .subscribe(() => (this.hasChanges = false));
   }
 
   private _convertWorkflowToFlowchart(workflow: WorkflowTransformation): void {
@@ -526,58 +558,63 @@ export class WorkflowEditorComponent {
       workflow
     );
 
-    this.currentWorkflow = ({ ...workflow } as unknown) as WorkflowBaseItem;
-    // TODO
-    // if (
-    //   this.currentWorkflow.operators.some(
-    //     operator => operator.state === RevisionState.DISABLED
-    //   )
-    // ) {
-    //   // https://github.com/angular/angular/issues/15634#issuecomment-345504902
-    //   setTimeout(() =>
-    //     this.notificationService.warn(
-    //       'This workflow contains disabled components! Consider updating them to a newer revision!'
-    //     )
-    //   );
-    // }
+    this.currentWorkflow = workflow;
+
+    if (
+      this.currentWorkflow.content.operators.some(
+        operator => operator.state === RevisionState.DISABLED
+      )
+    ) {
+      // https://github.com/angular/angular/issues/15634#issuecomment-345504902
+      setTimeout(() =>
+        this.notificationService.warn(
+          'This workflow contains disabled components! Consider updating them to a newer revision!'
+        )
+      );
+    }
   }
 
   /**
-   * creates a new workflow operator based on the base item and flowchart data
-   * @param abstractBaseItem base item definition
+   * creates a new workflow operator based on the transformation and flowchart data
+   * @param transformation transformation definition
    * @param posX x co-ordinate of the operator
    * @param posY y co-ordinate of the operator
    */
   private _createNewOperator(
-    abstractBaseItem: AbstractBaseItem,
+    transformation: Transformation,
     posX: number,
     posY: number
-  ): WorkflowOperator {
-    const newOperator: WorkflowOperator = {
-      ...abstractBaseItem,
-      itemId: abstractBaseItem.id,
-      posY,
-      posX,
-      id: UUID().toString()
+  ): Operator {
+    const newOperator: Operator = {
+      ...transformation,
+      id: UUID().toString(),
+      transformation_id: transformation.id,
+      inputs: transformation.io_interface.inputs.map(input => ({
+        ...input,
+        position: { x: 0, y: 0 }
+      })),
+      outputs: transformation.io_interface.outputs.map(output => ({
+        ...output,
+        position: { x: 0, y: 0 }
+      })),
+      position: { x: posX, y: posY }
     };
-    const sameBaseItems = this.currentWorkflow.operators.filter(
-      workflowOperator => workflowOperator.itemId === newOperator.itemId
+    const sameOperator = this.currentWorkflow.content.operators.filter(
+      workflowOperator =>
+        workflowOperator.transformation_id === newOperator.transformation_id
     );
-    if (sameBaseItems.length > 0) {
-      newOperator.name = `${newOperator.name} (${sameBaseItems.length + 1})`;
+    if (sameOperator.length > 0) {
+      newOperator.name = `${newOperator.name} (${sameOperator.length + 1})`;
     }
     return newOperator;
   }
 
-  private _updateOperatorPosition(
-    element: HTMLElement,
-    operator: WorkflowOperator
-  ) {
+  private _updateOperatorPosition(element: HTMLElement, operator: Operator) {
     const newPosX = Number(element.getAttribute('x'));
     const newPosY = Number(element.getAttribute('y'));
-    if (operator.posX !== newPosX || operator.posY !== newPosY) {
-      operator.posX = newPosX;
-      operator.posY = newPosY;
+    if (operator.position.x !== newPosX || operator.position.y !== newPosY) {
+      operator.position.x = newPosX;
+      operator.position.y = newPosY;
       this.hasChanges = true;
     }
   }

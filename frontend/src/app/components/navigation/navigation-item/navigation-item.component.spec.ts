@@ -3,7 +3,6 @@ import { provideMockStore } from '@ngrx/store/testing';
 import { BasicTestModule } from 'src/app/basic-test.module';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { ComponentEditorService } from 'src/app/service/component-editor/component-editor.service';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { WorkflowEditorService } from 'src/app/service/workflow-editor/workflow-editor.service';
@@ -21,7 +20,6 @@ describe('NavigationItemComponent', () => {
   const mockTabItemService = jasmine.createSpy();
 
   const mockWorkflowEditorService = jasmine.createSpy();
-  const mockComponentEditorService = jasmine.createSpy();
 
   beforeEach(
     waitForAsync(() => {
@@ -33,10 +31,6 @@ describe('NavigationItemComponent', () => {
           {
             provide: WorkflowEditorService,
             useValue: mockWorkflowEditorService
-          },
-          {
-            provide: ComponentEditorService,
-            useValue: mockComponentEditorService
           },
           {
             provide: ContextMenuService,

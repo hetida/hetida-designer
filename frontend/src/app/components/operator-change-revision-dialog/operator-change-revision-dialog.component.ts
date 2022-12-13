@@ -1,9 +1,9 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { AbstractBaseItem } from 'src/app/model/base-item';
+import { Transformation } from 'src/app/model/new-api/transformation';
 
 export interface OperatorChangeRevisionDialogData {
-  revisions: AbstractBaseItem[];
+  revisions: Transformation[];
 }
 
 @Component({
@@ -12,7 +12,7 @@ export interface OperatorChangeRevisionDialogData {
   styleUrls: ['./operator-change-revision-dialog.component.scss']
 })
 export class OperatorChangeRevisionDialogComponent implements OnInit {
-  public selectedRevision: AbstractBaseItem | null = null;
+  public selectedRevision: Transformation | null = null;
 
   constructor(
     public dialogRef: MatDialogRef<OperatorChangeRevisionDialogComponent>,

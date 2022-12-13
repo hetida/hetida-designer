@@ -16,7 +16,7 @@ import { AbstractBaseItem } from 'src/app/model/base-item';
 import { ShowPopover } from 'src/app/model/show-popover';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { FlowchartConverterService } from 'src/app/service/type-converter/flowchart-converter.service';
-import { IAppState } from 'src/app/store/app.state';
+import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import { Transformation } from '../../model/new-api/transformation';
 import { selectTransformationById } from '../../store/transformation/transformation.selectors';
@@ -84,7 +84,7 @@ export class PopoverBaseItemComponent implements OnInit {
   }
 
   constructor(
-    private readonly store: Store<IAppState>,
+    private readonly transformationStore: Store<TransformationState>,
     private readonly flowchartConverter: FlowchartConverterService,
     private readonly popoverService: PopoverService,
     private readonly tabItemService: TabItemService
@@ -124,7 +124,7 @@ export class PopoverBaseItemComponent implements OnInit {
       .pipe(
         switchMap((showPopoverData: ShowPopover | undefined) => {
           this.showPopoverData = showPopoverData;
-          return this.store.select(
+          return this.transformationStore.select(
             selectTransformationById(showPopoverData?.itemId)
           );
         })
@@ -150,7 +150,7 @@ export class PopoverBaseItemComponent implements OnInit {
   }
 
   open(): void {
-    this.tabItemService.addTransformationTab(this.abstractBaseItem.id);
+    this.tabItemService.addTransformationTab(this.transformation.id);
     this.popoverService.closePopover();
   }
 
