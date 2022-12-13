@@ -229,7 +229,7 @@ export class FlowchartConverterService {
    * converts the svg path data and the id's of the position to a position array
    * @param link svg link element
    */
-  public convertLinkPathToPosition(link: Element): Position[] {
+  public convertLinkPathToPositions(link: Element): Position[] {
     const linkPath = link.getAttribute('d');
     const linkIds = link.getAttribute('custom-path');
     if (linkPath === null || linkIds === null) {
@@ -248,13 +248,10 @@ export class FlowchartConverterService {
       .split(',')
       .map(id => (id === 'x' ? UUID().toString() : id));
     link.setAttribute('custom-path', newIds.join(','));
-    return coordinates.map(
-      coords =>
-        ({
-          x: coords[0],
-          y: coords[1]
-        } as Position)
-    );
+    return coordinates.map(coords => ({
+      x: coords[0],
+      y: coords[1]
+    }));
   }
 
   /**
@@ -280,19 +277,20 @@ export class FlowchartConverterService {
   }
 
   /**
-   * extracts the connector from the given connector id
+   * Extract the connector from the operator or workflow given the vertex ids.
    * @param vertexIds given linkSourceIds or linkTargetIds
    * @param workflowTransformation current workflow
-   * @param isCurrentWorkflowId is true if linkSource operator id = currentWorkflow id
+   * @param searchInWorkflowIoInterface if true, search for the connector in the workflow io interface
+   * instead of the workflow content operators
    */
   public getConnectorFromOperatorById(
     vertexIds: VertexIds,
     workflowTransformation: WorkflowTransformation,
-    isCurrentWorkflowId: boolean
+    searchInWorkflowIoInterface: boolean
   ): Connector {
     let foundConnector: Connector;
 
-    if (isCurrentWorkflowId) {
+    if (searchInWorkflowIoInterface) {
       const ios = [
         ...workflowTransformation.io_interface.inputs,
         ...workflowTransformation.io_interface.outputs
@@ -313,10 +311,6 @@ export class FlowchartConverterService {
       foundConnector = connectors.find(
         connector => connector.id === vertexIds.connectorId
       );
-    }
-
-    if (foundConnector === undefined) {
-      return undefined;
     }
 
     return foundConnector;

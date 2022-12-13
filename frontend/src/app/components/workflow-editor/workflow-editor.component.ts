@@ -90,8 +90,7 @@ export class WorkflowEditorComponent {
       componentPortal,
       position
     );
-    componentPortalRef.instance.transformation = this
-      .currentWorkflow as Transformation;
+    componentPortalRef.instance.transformation = this.currentWorkflow;
   }
 
   /**
@@ -134,7 +133,9 @@ export class WorkflowEditorComponent {
     if (link === undefined) {
       return;
     }
-    const pathData = this.flowchartConverter.convertLinkPathToPosition(element);
+    const pathData = this.flowchartConverter.convertLinkPathToPositions(
+      element
+    );
     if (link.path.length === 0 && pathData.length === 0) {
       return;
     }
@@ -270,39 +271,32 @@ export class WorkflowEditorComponent {
       element,
       true
     );
+    // TODO
+    // Draw a link from workflow-output to operator-output and check if the workflow-output is set in linkTargetIds.
     const linkTargetIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
       element,
       false
     );
 
-    let startConnector: Connector;
-    let endConnector: Connector;
+    const sourceIsWorkflowInput =
+      linkSourceIds.operatorId === this.currentWorkflow.id;
+    const startConnector: Connector = this.flowchartConverter.getConnectorFromOperatorById(
+      linkSourceIds,
+      this.currentWorkflow,
+      sourceIsWorkflowInput
+    );
 
-    if (linkSourceIds.operatorId === this.currentWorkflow.id) {
-      startConnector = this.flowchartConverter.getConnectorFromOperatorById(
-        linkSourceIds,
-        this.currentWorkflow,
-        true
-      );
-      endConnector = this.flowchartConverter.getConnectorFromOperatorById(
-        linkTargetIds,
-        this.currentWorkflow,
-        true
-      );
-    } else {
-      startConnector = this.flowchartConverter.getConnectorFromOperatorById(
-        linkSourceIds,
-        this.currentWorkflow,
-        false
-      );
-      endConnector = this.flowchartConverter.getConnectorFromOperatorById(
-        linkTargetIds,
-        this.currentWorkflow,
-        false
-      );
-    }
+    const targetIsWorkflowOutput =
+      linkTargetIds.operatorId === this.currentWorkflow.id;
+    const endConnector: Connector = this.flowchartConverter.getConnectorFromOperatorById(
+      linkTargetIds,
+      this.currentWorkflow,
+      targetIsWorkflowOutput
+    );
 
-    const linkPath = this.flowchartConverter.convertLinkPathToPosition(element);
+    const linkPath = this.flowchartConverter.convertLinkPathToPositions(
+      element
+    );
 
     const newLink: Link = {
       id: UUID().toString(),
@@ -548,8 +542,9 @@ export class WorkflowEditorComponent {
     if (!this.hasChanges || this.currentWorkflow.state === 'RELEASED') {
       return;
     }
-    this.baseItemService.updateTransformation(this.currentWorkflow).subscribe();
-    this.hasChanges = false;
+    this.baseItemService
+      .updateTransformation(this.currentWorkflow)
+      .subscribe(() => (this.hasChanges = false));
   }
 
   private _convertWorkflowToFlowchart(workflow: WorkflowTransformation): void {
