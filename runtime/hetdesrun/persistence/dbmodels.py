@@ -29,6 +29,13 @@ class FilterParams(BaseModel):
     category: Optional[ValidStr] = Field(
         None, description="Filter for specified category"
     )
+    categories: Optional[List[ValidStr]] = Field(
+        None, description="Filter for several specified categories"
+    )
+    category_prefix: Optional[str] = Field(
+        None,
+        description="Category prefix that must be matched exactly (case-sensitive).",
+    )
     revision_group_id: Optional[UUID] = Field(
         None, description="Filter for specified revision group id"
     )
@@ -41,15 +48,15 @@ class FilterParams(BaseModel):
     include_deprecated: bool = Field(
         True,
         description=(
-            "Set to True to additionally get those transformation revisions "
-            "that the selected ones depend on"
+            "Set to False to omit transformation revisions with state DISABLED "
+            "this will not affect included dependent transformation revisions"
         ),
     )
     include_dependencies: bool = Field(
         False,
         description=(
-            "Set to False to omit transformation revisions with state DISABLED "
-            "this will not affect included dependent transformation revisions"
+            "Set to True to additionally get those transformation revisions "
+            "that the selected ones depend on"
         ),
     )
     unused: bool = Field(
