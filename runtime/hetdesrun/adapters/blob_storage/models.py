@@ -96,6 +96,32 @@ class StructureThingNode(BaseModel):
     name: ThingNodeName
     description: str
 
+    # pylint: disable=no-self-argument
+    @validator("name")
+    def id_consists_of_parent_id_and_lowered_name(
+        name: ThingNodeName, values: dict
+    ) -> ThingNodeName:
+        try:
+            id = values["id"]  # pylint: disable=redefined-builtin
+            parent_id = values["parentId"]
+        except KeyError as e:
+            raise ValueError(
+                f"Cannot check if id consists of parent id and lowered name '{name}' "
+                "if the attribute 'id' is missing!"
+            ) from e
+
+        if id not in (
+            (parent_id + separator if parent_id is not None else "")
+            + (name.lower() if separator == BUCKET_NAME_DIR_SEPARATOR else name)
+            for separator in (BUCKET_NAME_DIR_SEPARATOR, OBJECT_KEY_DIR_SEPARATOR)
+        ):
+            raise ValueError(
+                f"The id '{id}' of a thing node must consist of its parent id '{parent_id}' "
+                f"connected by one of the separators {BUCKET_NAME_DIR_SEPARATOR} or "
+                f"{OBJECT_KEY_DIR_SEPARATOR} with its name '{name}'!"
+            )
+        return name
+
 
 class BlobStorageStructureSource(BaseModel):
     id: IdString
@@ -434,7 +460,11 @@ class Category(BaseModel):
     ) -> StructureThingNode:
         return StructureThingNode(
             id=(parent_id + separator if parent_id is not None else "")
-            + (self.name.lower() if separator == "-" else self.name),
+            + (
+                self.name.lower()
+                if separator == BUCKET_NAME_DIR_SEPARATOR
+                else self.name
+            ),
             parentId=parent_id,
             name=self.name,
             description=self.description,

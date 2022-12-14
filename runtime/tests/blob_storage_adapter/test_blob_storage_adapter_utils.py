@@ -49,13 +49,13 @@ def test_blob_storage_utils_create_sources():
         new_callable=mock.PropertyMock,
         return_value=[
             StructureThingNode(
-                id="i/A", parent_id="i", name="A", description="Category"
+                id="i/A", parentId="i", name="A", description="Category"
             ),
             StructureThingNode(
-                id="ii/B", parent_id="ii", name="B", description="Category"
+                id="ii/B", parentId="ii", name="B", description="Category"
             ),
             StructureThingNode(
-                id="ii/C", parent_id="ii", name="C", description="Category"
+                id="ii/C", parentId="ii", name="C", description="Category"
             ),
         ],
     ):
