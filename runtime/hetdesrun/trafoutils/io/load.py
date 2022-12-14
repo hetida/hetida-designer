@@ -15,10 +15,10 @@ from hetdesrun.component.load import (
     import_func_from_code,
     module_path_from_code,
 )
-from hetdesrun.exportimport.export import save_transformation
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.io.save import save_transformation_into_directory
 from hetdesrun.utils import Type, get_uuid_from_seed
 
 logger = logging.getLogger(__name__)
@@ -232,8 +232,9 @@ def load_transformation_revisions_from_directory(
                 transformation_dict[transformation.id] = transformation
                 if ext == ".py":
                     if transform_py_to_json:
-                        path = save_transformation(
-                            tr=transformation, download_path=download_path
+                        path = save_transformation_into_directory(
+                            transformation_revision=transformation,
+                            directory_path=download_path,
                         )
                         path_dict[transformation.id] = path
                 else:
