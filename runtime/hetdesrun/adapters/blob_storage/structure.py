@@ -22,7 +22,7 @@ logger = getLogger(__name__)
 
 
 def get_thing_nodes_by_parent_id(
-    parent_id: Optional[IdString] = None,
+    parent_id: Optional[IdString],
 ) -> List[StructureThingNode]:
     return [
         tn for tn in get_adapter_structure().thing_nodes if tn.parentId == parent_id
@@ -30,7 +30,7 @@ def get_thing_nodes_by_parent_id(
 
 
 def get_sources_by_parent_id(
-    parent_id: Optional[IdString] = None,
+    parent_id: Optional[IdString],
 ) -> List[BlobStorageStructureSource]:
     if parent_id is None:
         return []
@@ -38,7 +38,7 @@ def get_sources_by_parent_id(
 
 
 def get_sinks_by_parent_id(
-    parent_id: Optional[IdString] = None,
+    parent_id: Optional[IdString],
 ) -> List[BlobStorageStructureSink]:
     if parent_id is None:
         return []
