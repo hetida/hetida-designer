@@ -107,6 +107,7 @@ def test_blob_storage_get_thing_node_by_id():
 
     with mock.patch(
         "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.thing_nodes",
+        new_callable=mock.PropertyMock,
         return_value=[
             StructureThingNode(
                 id="i-ii", parentId="i", name="ii", description="Category"
@@ -161,6 +162,7 @@ def test_blob_storage_get_sink_by_id():
 
     with mock.patch(
         "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
+        new_callable=mock.PropertyMock,
         return_value=[
             BlobStorageStructureSink(
                 id="i-i/A_next",
@@ -213,7 +215,7 @@ def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
                 path="i-i/A",
                 metadataKey="A - 2022-01-02 14:57:31+00:00",
             ),
-        ]
+        ],
     ):
         with pytest.raises(SourcesNotUnique):
             source_by_tn_id_and_md_key = get_source_by_thing_node_id_and_metadata_key(
@@ -237,6 +239,7 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
         )
     with mock.patch(
         "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
+        new_callable=mock.PropertyMock,
         return_value=[
             BlobStorageStructureSink(
                 id="i-i/A_next",
@@ -254,9 +257,7 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
             ),
         ],
     ):
-        # with pytest.raises(SinksNotUnique):
-        sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
-            thing_node_id="i-i/A", metadata_key="A - Next Object"
-        )
-        assert 0 == 1
-
+        with pytest.raises(SinksNotUnique):
+            sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
+                thing_node_id="i-i/A", metadata_key="A - Next Object"
+            )
