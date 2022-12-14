@@ -76,9 +76,7 @@ class ObjectKey(BaseModel):
         return ObjectKey(
             string=string,
             name=name,
-            time=datetime.fromisoformat(timestring).replace(
-                tzinfo=timezone.utc
-            ),
+            time=datetime.fromisoformat(timestring).replace(tzinfo=timezone.utc),
         )
 
     def to_thing_node_id(self, bucket_name: BucketName) -> IdString:
@@ -100,7 +98,7 @@ class StructureThingNode(BaseModel):
     # pylint: disable=no-self-argument
     @validator("name")
     def id_consists_of_parent_id_and_lowered_name(
-        name: ThingNodeName, values: dict
+        cls, name: ThingNodeName, values: dict
     ) -> ThingNodeName:
         try:
             id = values["id"]  # pylint: disable=redefined-builtin
@@ -113,7 +111,7 @@ class StructureThingNode(BaseModel):
 
         if id not in (
             (parent_id + separator if parent_id is not None else "")
-            + (name.lower() if separator == BUCKET_NAME_DIR_SEPARATOR else name)
+            + (str(name).lower() if separator == BUCKET_NAME_DIR_SEPARATOR else name)
             for separator in (BUCKET_NAME_DIR_SEPARATOR, OBJECT_KEY_DIR_SEPARATOR)
         ):
             raise ValueError(

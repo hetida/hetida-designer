@@ -213,7 +213,9 @@ def test_blob_storage_class_structure_source():
         )
 
     assert "The source's thing node id 'i-ii/B'" in str(exc_info.value)
-    assert "does not match its id 'i-ii/A_2022-01-02T14:23:18+00:00'" in str(exc_info.value)
+    assert "does not match its id 'i-ii/A_2022-01-02T14:23:18+00:00'" in str(
+        exc_info.value
+    )
 
     with pytest.raises(ValidationError) as exc_info:
         # name invalid due to missing separator

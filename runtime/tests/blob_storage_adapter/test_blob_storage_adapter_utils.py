@@ -34,7 +34,10 @@ def mocked_bucket_names() -> List[BucketName]:
 
 def mocked_get_oks_in_bucket(bucket_name: BucketName) -> List[IdString]:
     if bucket_name == "i":
-        return [IdString("A_2022-01-02T14:23:18+00:00"), IdString("A_2022-01-02T14:57:31+00:00")]
+        return [
+            IdString("A_2022-01-02T14:23:18+00:00"),
+            IdString("A_2022-01-02T14:57:31+00:00"),
+        ]
     if bucket_name == "ii":
         return [
             IdString("B_2022-01-02T14:25:56+00:00"),
