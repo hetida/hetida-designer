@@ -449,13 +449,13 @@ class Category(BaseModel):
     ) -> None:
         thing_node = self.to_thing_node(
             parent_id,
-            separator=OBJECT_KEY_DIR_SEPARATOR
-            if self.get_depth() < object_key_depth
-            else BUCKET_NAME_DIR_SEPARATOR,
+            separator=BUCKET_NAME_DIR_SEPARATOR
+            if self.get_depth() > object_key_depth
+            else OBJECT_KEY_DIR_SEPARATOR,
         )
         thing_nodes.append(thing_node)
 
-        if self.get_depth() == object_key_depth:
+        if self.get_depth() == object_key_depth + 1:
             try:
                 bucket_names.append(BucketName(thing_node.id))
             except ValidationError as error:
@@ -580,7 +580,7 @@ class AdapterHierarchy(BaseModel):
     @classmethod
     def from_file(
         cls,
-        path: str = "demodata/blob_storage_adapter_config.json",
+        path: str = "demodata/blob_storage_adapter_hierarchy.json",
     ) -> "AdapterHierarchy":
         try:
             return AdapterHierarchy.parse_file(path)

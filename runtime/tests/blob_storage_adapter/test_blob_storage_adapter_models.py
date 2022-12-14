@@ -315,18 +315,12 @@ def test_blob_storage_class_category():
     assert category.substructure[0].name == "A"
     assert category.substructure[0].description == "Subcategory"
     assert category.substructure[0].substructure == None
-    assert category.substructure[0].get_depth() == None
+    assert category.substructure[0].get_depth() == 1
     assert category.substructure[1].name == "B"
     assert category.substructure[1].description == "Subcategory"
     assert category.substructure[1].substructure == None
-    assert category.substructure[1].get_depth() == None
-    assert category.get_depth() is None
-
-    depth = category.get_depth()
-    assert depth == 3
+    assert category.substructure[1].get_depth() == 1
     assert category.get_depth() == 2
-    assert category.substructure[0].get_depth() == 3
-    assert category.substructure[1].get_depth() == 3
 
     thing_node_from_category = category.to_thing_node(parent_id="i", separator="-")
     assert thing_node_from_category.id == "i-i"
