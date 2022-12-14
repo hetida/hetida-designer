@@ -13,9 +13,10 @@ from pydantic import ValidationError
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-from hetdesrun.exportimport.utils import FilterParams, get_transformation_revisions
+from hetdesrun.exportimport.utils import get_transformation_revisions
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError

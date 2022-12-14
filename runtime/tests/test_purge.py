@@ -16,7 +16,6 @@ from hetdesrun.exportimport.purge import (
     deprecate_all_but_latest_per_group,
 )
 from hetdesrun.exportimport.utils import (
-    FilterParams,
     delete_transformation_revision,
     delete_transformation_revisions,
     deprecate_all_but_latest_in_group,
@@ -29,6 +28,7 @@ from hetdesrun.persistence.models.exceptions import ModifyForbidden
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.config import get_config
 

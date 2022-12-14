@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence import Session, SQLAlchemySession
-from hetdesrun.persistence.dbmodels import FilterParams, TransformationRevisionDBModel
+from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.nesting import (
     delete_own_nestings,
@@ -24,6 +24,7 @@ from hetdesrun.persistence.models.exceptions import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type
 
 logger = logging.getLogger(__name__)

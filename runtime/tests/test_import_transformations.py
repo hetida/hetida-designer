@@ -6,13 +6,15 @@ from unittest import mock
 from hetdesrun.exportimport.importing import (
     generate_import_order_file,
     import_transformations,
-    load_json,
-    transformation_revision_from_python_code,
     update_or_create_transformation_revision,
 )
 from hetdesrun.persistence import sessionmaker
 from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.io.load import (
+    load_json,
+    transformation_revision_from_python_code,
+)
 
 
 def test_tr_from_code_for_component_without_register_decorator():
@@ -25,7 +27,7 @@ def test_tr_from_code_for_component_without_register_decorator():
     with open(path) as f:
         code = f.read()
 
-    tr_json = transformation_revision_from_python_code(code, path)
+    tr_json = transformation_revision_from_python_code(code)
 
     tr = TransformationRevision(**tr_json)
 

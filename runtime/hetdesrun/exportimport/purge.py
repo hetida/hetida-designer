@@ -4,11 +4,11 @@ from uuid import UUID
 
 from hetdesrun.exportimport.importing import import_transformations
 from hetdesrun.exportimport.utils import (
-    FilterParams,
     delete_transformation_revisions,
     deprecate_all_but_latest_in_group,
     get_transformation_revisions,
 )
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State
 
 logger = logging.getLogger(__name__)

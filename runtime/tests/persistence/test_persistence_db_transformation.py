@@ -10,7 +10,6 @@ from sqlalchemy.future.engine import Engine
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence import sessionmaker
-from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -27,6 +26,7 @@ from hetdesrun.persistence.models.io import IO, IOConnector, IOInterface
 from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 
