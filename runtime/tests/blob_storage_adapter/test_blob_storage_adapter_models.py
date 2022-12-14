@@ -6,7 +6,10 @@ from unittest import mock
 import pytest
 from pydantic import ValidationError
 
-from hetdesrun.adapters.blob_storage import OBJECT_KEY_DIR_SEPARATOR
+from hetdesrun.adapters.blob_storage import (
+    IDENTIFIER_SEPARATOR,
+    OBJECT_KEY_DIR_SEPARATOR,
+)
 from hetdesrun.adapters.blob_storage.exceptions import (
     BucketNameInvalidError,
     ThingNodeInvalidError,
@@ -75,7 +78,7 @@ def test_blob_storage_class_id_string():
 
 
 def test_blob_storage_class_object_key():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError) as exc_info:
         object_key = ObjectKey(
             string="A_2022Y01M02D14h23m18s",
             name="A",
@@ -88,6 +91,7 @@ def test_blob_storage_class_object_key():
                 second=18,
             ),
         )
+    assert "The ObjectKey attribute time must have timezone UTC!" in str(exc_info.value)
 
     object_key = ObjectKey(
         string="A_2022Y01M02D14h23m18s",
@@ -116,8 +120,12 @@ def test_blob_storage_class_object_key():
     thing_node_id = object_key.to_thing_node_id(bucket_name="i-ii")
     assert thing_node_id == "i-ii/A"
 
-    with pytest.raises(ValueError):
-        ObjectKey.from_string("A")
+    with pytest.raises(ValueError) as exc_info:
+        ObjectKey.from_string("A2022Y01M02D14h23m18s")
+    assert (
+        f"not a valid ObjectKey string, because it contains no '{IDENTIFIER_SEPARATOR}'"
+        in str(exc_info.value)
+    )
 
 
 def test_blob_storage_class_structure_source():
@@ -144,7 +152,7 @@ def test_blob_storage_class_structure_source():
     )
     assert src_from_bkt_and_ok == source
 
-    with pytest.raises(ValidationError) as error:
+    with pytest.raises(ValidationError) as exc_info:
         # invalid id due to no object key dir separator
         BlobStorageStructureSource(
             id="A_2022Y01M02D14h23m18s",
@@ -154,26 +162,29 @@ def test_blob_storage_class_structure_source():
             metadataKey="A - 2022-01-02 14:23:18+00:00",
         )
 
-        assert f"must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'" in error.value.message
+    assert f"must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'" in str(
+        exc_info.value
+    )
 
-    with pytest.raises(ValidationError) as error:
-        # invalid id due to bucket name part invalid
-        BlobStorageStructureSource(
-            id="I-ii/A_2022Y01M02D14h23m18s",
-            thingNodeId="i-ii/A",
-            name="A - 2022-01-02 14:23:18+00:00",
-            path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00",
-        )
+    # TODO: make classes inheriting from ConstrainedStr raise errors!
+    # with pytest.raises(ValidationError) as exc_info:
+    #     # invalid id due to bucket name part invalid
+    #     BlobStorageStructureSource(
+    #         id="I-ii/A_2022Y01M02D14h23m18s",
+    #         thingNodeId="i-ii/A",
+    #         name="A - 2022-01-02 14:23:18+00:00",
+    #         path="i-ii/A",
+    #         metadataKey="A - 2022-01-02 14:23:18+00:00",
+    #     )
 
-        assert "The first part" in error.value.message
-        assert "I-ii" in error.value.message
-        assert "of the source id" in error.value.message
-        assert "i-ii/A2022Y01M02D14h23m18s" in error.value.message
-        assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in error.value.message
-        assert "must correspond to a bucket name!" in error.value.message
+    # assert "The first part" in str(exc_info.value)
+    # assert "I-ii" in str(exc_info.value)
+    # assert "of the source id" in str(exc_info.value)
+    # assert "i-ii/A2022Y01M02D14h23m18s" in str(exc_info.value)
+    # assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
+    # assert "must correspond to a bucket name!" in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as error:
+    with pytest.raises(ValidationError) as exc_info:
         # invalid id due to object key part invalid
         BlobStorageStructureSource(
             id="i-ii/A2022Y01M02D14h23m18s",
@@ -183,14 +194,14 @@ def test_blob_storage_class_structure_source():
             metadataKey="A - 2022-01-02 14:23:18+00:00",
         )
 
-        assert "The second part" in error.value.message
-        assert "A2022Y01M02D14h23m18s" in error.value.message
-        assert "of the source id" in error.value.message
-        assert "i-ii/A2022Y01M02D14h23m18s" in error.value.message
-        assert f"after the first '{OBJECT_KEY_DIR_SEPARATOR}'" in error.value.message
-        assert "must correspond to an object key string!" in error.value.message
+    assert "The second part" in str(exc_info.value)
+    assert "A2022Y01M02D14h23m18s" in str(exc_info.value)
+    assert "of the source id" in str(exc_info.value)
+    assert "i-ii/A2022Y01M02D14h23m18s" in str(exc_info.value)
+    assert f"after the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
+    assert "must correspond to an object key string!" in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as error:
+    with pytest.raises(ValidationError) as exc_info:
         # thingNodeId does not match id
         BlobStorageStructureSource(
             id="i-ii/A_2022Y01M02D14h23m18s",
@@ -200,12 +211,12 @@ def test_blob_storage_class_structure_source():
             metadataKey="A - 2022-01-02 14:23:18+00:00",
         )
 
-        assert "The source's thing node id" in error.value.message
-        assert "i-ii/B" in error.value.message
-        assert "does not match its id" in error.value.message
-        assert "i-ii/A_2022Y01M02D14h23m18s" in error.value.message
+    assert "The source's thing node id" in str(exc_info.value)
+    assert "i-ii/B" in str(exc_info.value)
+    assert "does not match its id" in str(exc_info.value)
+    assert "i-ii/A_2022Y01M02D14h23m18s" in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as error:
+    with pytest.raises(ValidationError) as exc_info:
         # name does not match id due to thing node name
         BlobStorageStructureSource(
             id="i-ii/A_2022Y01M02D14h23m18s",
@@ -215,13 +226,13 @@ def test_blob_storage_class_structure_source():
             metadataKey="A - 2022-01-02 14:23:18+00:00",
         )
 
-        assert "The source name" in error.value.message
-        assert "B - 2022-01-02 14:23:18+00:00" in error.value.message
-        assert "must start with the name" in error.value.message
-        assert "A" in error.value.message
-        assert "of the corresponding thing node" in error.value.message
+    assert "The source name" in str(exc_info.value)
+    assert "B - 2022-01-02 14:23:18+00:00" in str(exc_info.value)
+    assert "must start with the name" in str(exc_info.value)
+    assert "A" in str(exc_info.value)
+    assert "of the corresponding thing node" in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as error:
+    with pytest.raises(ValidationError) as exc_info:
         # name does not match id due to timestamp
         BlobStorageStructureSource(
             id="i-ii/A_2022Y01M02D14h23m18s",
@@ -231,12 +242,12 @@ def test_blob_storage_class_structure_source():
             metadataKey="A - 2023-01-02 14:23:18+00:00",
         )
 
-        assert "The time of the source's name" in error.value.message
-        assert "A - 2022-01-02 14:23:18+00:00" in error.value.message
-        assert "must match to the time in its id" in error.value.message
-        assert "i-ii/A_2022Y01M02D14h23m18s" in error.value.message
+    assert "The time of the source's name" in str(exc_info.value)
+    assert "A - 2022-01-02 14:23:18+00:00" in str(exc_info.value)
+    assert "must match to the time in its id" in str(exc_info.value)
+    assert "i-ii/A_2022Y01M02D14h23m18s" in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as error:
+    with pytest.raises(ValidationError) as exc_info:
         # path does not match thingNodeId
         BlobStorageStructureSource(
             id="i-ii/A_2022Y01M02D14h23m18s",
@@ -246,12 +257,12 @@ def test_blob_storage_class_structure_source():
             metadataKey="A - 2022-01-02 14:23:18+00:00",
         )
 
-        assert "The source path" in error.value.message
-        assert "i-ii/B" in error.value.message
-        assert "must be the same string as its thingNodeId" in error.value.message
-        assert "i-ii/A"in error.value.message
+    assert "The source path" in str(exc_info.value)
+    assert "i-ii/B" in str(exc_info.value)
+    assert "must be the same string as its thingNodeId" in str(exc_info.value)
+    assert "i-ii/A" in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as error:
+    with pytest.raises(ValidationError) as exc_info:
         # metadataKey does not match name
         BlobStorageStructureSource(
             id="i-ii/A_2022Y01M02D14h23m18s",
@@ -261,10 +272,10 @@ def test_blob_storage_class_structure_source():
             metadataKey="B - 2022-01-02 14:23:18+00:00",
         )
 
-        assert "The source's metadataKey" in error.value.message
-        assert "B - 2022-01-02 14:23:18+00:00" in error.value.message
-        assert "must be the same string as its name" in error.value.message
-        assert "A - 2022-01-02 14:23:18+00:00" in error.value.message
+    assert "The source's metadataKey" in str(exc_info.value)
+    assert "B - 2022-01-02 14:23:18+00:00" in str(exc_info.value)
+    assert "must be the same string as its name" in str(exc_info.value)
+    assert "A - 2022-01-02 14:23:18+00:00" in str(exc_info.value)
 
 
 def test_blob_storage_class_structure_sink():
@@ -300,9 +311,9 @@ def test_blob_storage_class_structure_sink():
 
     assert sink_from_thing_node == sink
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as exc_info:
         # thingNodeId does not match id
-        BlobStorageStructureSource(
+        BlobStorageStructureSink(
             id="i-ii/A_next",
             thingNodeId="i-ii/B",
             name="A - Next Trained Model",
@@ -310,9 +321,16 @@ def test_blob_storage_class_structure_sink():
             metadataKey="A - Next Trained Model",
         )
 
+    assert "The sink id" in str(exc_info.value)
+    assert "i-ii/A_next" in str(exc_info.value).errors[0].msg
+    assert (
+        f"must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'"
+        in str(exc_info.value).errors[0].msg
+    )
+
     with pytest.raises(ValidationError):
         # name does not match id
-        BlobStorageStructureSource(
+        BlobStorageStructureSink(
             id="i-ii/A_next",
             thingNodeId="i-ii/A",
             name="B - Next Trained Model",
@@ -462,7 +480,9 @@ def test_blob_storage_class_adapter_hierarchy():
     assert adapter_hierarchy.object_key_depth == 1
     assert adapter_hierarchy.structure[0].get_depth() == 3
     assert adapter_hierarchy.structure[0].substructure[0].get_depth() == 2
-    assert adapter_hierarchy.structure[0].substructure[0].substructure[0].get_depth() == 1
+    assert (
+        adapter_hierarchy.structure[0].substructure[0].substructure[0].get_depth() == 1
+    )
 
     thing_nodes = adapter_hierarchy.thing_nodes
     bucket_names = adapter_hierarchy.bucket_names

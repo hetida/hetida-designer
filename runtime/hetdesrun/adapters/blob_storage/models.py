@@ -128,7 +128,7 @@ class BlobStorageStructureSource(BaseModel):
 
         try:
             ObjectKey.from_string(IdString(object_key_string))
-        except ValidationError as e:
+        except ValueError as e:
             raise ValueError(
                 f"The second part '{object_key_string}' of the source id '{id}' after the first "
                 "'/' must correspond to an object key string!\nBut it does not:\n"
