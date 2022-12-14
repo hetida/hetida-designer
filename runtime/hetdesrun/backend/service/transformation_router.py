@@ -1,12 +1,21 @@
 import json
 import logging
 import os
-from typing import Any, List, Optional
+from enum import Enum
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Path, Query, status
-from pydantic import HttpUrl
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    HTTPException,
+    Path,
+    Query,
+    Response,
+    status,
+)
+from pydantic import BaseModel, Field, HttpUrl
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -20,7 +29,7 @@ from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.run import PerformanceMeasuredStep
-from hetdesrun.persistence.dbmodels import FilterParams
+from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -33,6 +42,8 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.trafoutils.filter.mapping import filter_and_order_trafos
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
@@ -320,6 +331,193 @@ def if_applicable_release_or_deprecate(
     return updated_transformation_revision
 
 
+class UpdateProcessStatus(str, Enum):
+    NOT_TRIED = "NOT_TRIED"
+    FAILED = "FAILED"
+    SUCCESS = "SUCCESS"
+    IGNORED = "IGNORED"
+
+
+class TrafoUpdateProcessSummary(BaseModel):
+    status: UpdateProcessStatus
+    msg: str = Field("", description="details / error messages")
+
+
+@transformation_router.put(
+    "",
+    status_code=status.HTTP_207_MULTI_STATUS,
+    summary="Update (import) a list of transformation revisions",
+    responses={
+        status.HTTP_207_MULTI_STATUS: {
+            "description": (
+                "Processed request to update multiple transformation revisions. "
+                "See response for details."
+            )
+        }
+    },
+)
+async def update_transformation_revisions(
+    updated_transformation_revisions: List[TransformationRevision],
+    response: Response,
+    type: Optional[Type] = Query(  # pylint: disable=redefined-builtin
+        None,
+        description="Filter for specified type",
+    ),
+    state: Optional[State] = Query(
+        None,
+        description="Filter for specified state",
+    ),
+    categories: Optional[List[ValidStr]] = Query(
+        None, description="Filter for categories", alias="category"
+    ),
+    category_prefix: Optional[str] = Query(
+        None,
+        description="Category prefix that must be matched exactly (case-sensitive).",
+    ),
+    revision_group_id: Optional[UUID] = Query(
+        None, description="Filter for specified revision group id"
+    ),
+    ids: Optional[List[UUID]] = Query(
+        None, description="Filter for specified list of ids", alias="id"
+    ),
+    names: Optional[List[NonEmptyValidStr]] = Query(
+        None, description=("Filter for specified list of names"), alias="name"
+    ),
+    include_deprecated: bool = Query(
+        True,
+        description=(
+            "Set to False to omit transformation revisions with state DISABLED "
+            "this will not affect included dependent transformation revisions"
+        ),
+    ),
+    include_dependencies: bool = Query(
+        True,
+        description=(
+            "Set to True to additionally import those transformation revisions "
+            "of the provided trafos that the selected/filtered ones depend on."
+        ),
+    ),
+    allow_overwrite_released: bool = Query(
+        False, description="Only set to True for deployment"
+    ),
+    update_component_code: bool = Query(
+        True, description="Only set to False for deployment"
+    ),
+    strip_wirings: bool = Query(
+        False,
+        description=(
+            "Whether test wirings should be removed before importing."
+            "This can be necessary if an adapter used in a test wiring is not "
+            "available on this system."
+        ),
+    ),
+    abort_on_error: bool = Query(
+        False,
+        description=(
+            "If updating/creating fails for some trafo revisions and this setting is true,"
+            " no attempt will be made to update/create the remaining trafo revs."
+            " Note that the order in which updating/creating happens may differ from"
+            " the ordering of the provided list since they are ordered by dependency"
+            " relation before trying to process them. So it may be difficult to determine."
+            " which trafos have been skipped / are missing and which have been successfully"
+            " processed. Note that already processed actions will not be reversed."
+        ),
+    ),
+) -> Dict[UUID, TrafoUpdateProcessSummary]:
+    """Update/store multiple transformation revisions
+
+    This updates or creates the given transformation revisions. Automatically
+    determines correct order (by dependency / nesting) so that depending trafo
+    revisions can be provided in arbitrary order to this endpoint.
+
+    Returns detailed info about success/failure for each transformation revision.
+
+    This endpoint can be used to import related sets of transformation revisions.
+    Such a set does not have to be closed under dependency relation, e.g. elements
+    of it can refer base components.
+    """
+    filter_params = FilterParams(
+        type=type,
+        state=state,
+        categories=categories,
+        category_prefix=category_prefix,
+        revision_group_id=revision_group_id,
+        ids=ids,
+        names=names,
+        include_deprecated=include_deprecated,
+        include_dependencies=include_dependencies,
+    )
+
+    trafos_to_process = filter_and_order_trafos(
+        updated_transformation_revisions,
+        filter_params,
+        raise_on_missing_dependency=False,
+    )
+
+    trafos_to_process_dict = {
+        trafo_rev.id: trafo_rev for trafo_rev in trafos_to_process
+    }
+
+    success_per_trafo = {
+        trafo_key: TrafoUpdateProcessSummary(
+            status=UpdateProcessStatus.NOT_TRIED, msg=""
+        )
+        if trafo_key in trafos_to_process_dict
+        else TrafoUpdateProcessSummary(
+            status=UpdateProcessStatus.IGNORED, msg="filtered out"
+        )
+        for trafo_key in [trafo.id for trafo in updated_transformation_revisions]
+    }
+
+    for transformation in trafos_to_process:
+        logger.debug(
+            "Importing transformation %s with tag %s with id %s",
+            transformation.name,
+            transformation.version_tag,
+            str(transformation.id),
+        )
+        if strip_wirings:
+            transformation.test_wiring = WorkflowWiring()
+        try:
+            # TDOD: Which refactored function to call here?
+            update_or_create_transformation_revision(
+                transformation,
+                directly_in_db=True,
+                allow_overwrite_released=allow_overwrite_released,
+                update_component_code=update_component_code,
+            )
+        except Exception as e:  # TODO: What exactly do we need to catch?
+            success_per_trafo[transformation.id].status = UpdateProcessStatus.FAILED
+
+            msg = (
+                f"Update of trafo {transformation.name} with tag {transformation.version_tag}"
+                f" with id {str(transformation.id)} as part of multiple update failed."
+                f" Error was: {str(e)}"
+            )
+            logger.warning(msg)
+            success_per_trafo[transformation.id].msg = msg
+
+            if abort_on_error:
+                abort_msg = (
+                    "Aborting multiple update process due to error while updating trafo"
+                    f" {transformation.name} with id {transformation.id}. Error was:\n{str(e)}"
+                )
+                logger.error(abort_msg)
+                response.status_code = status.HTTP_207_MULTI_STATUS
+                return success_per_trafo
+        else:
+            logger.info(
+                "Successfully imported transformation revision %s with tag %s with id %s",
+                transformation.name,
+                transformation.version_tag,
+                str(transformation.id),
+            )
+            success_per_trafo[transformation.id].status = UpdateProcessStatus.SUCCESS
+
+    response.status_code = status.HTTP_207_MULTI_STATUS
+    return success_per_trafo
+
+
 @transformation_router.put(
     "/{id}",
     response_model=TransformationRevision,
@@ -350,7 +548,7 @@ async def update_transformation_revision(
         True, description="Only set to False for deployment"
     ),
 ) -> TransformationRevision:
-    """Update or store a transformation revision in the data base.
+    """Update or store a transformation revision in the database.
 
     If no DB entry with the provided id is found, it will be created.
 
