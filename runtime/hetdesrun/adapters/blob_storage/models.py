@@ -150,7 +150,7 @@ class BlobStorageStructureSource(BaseModel):
         thing_node_id_from_id = str(id).rsplit(sep=IDENTIFIER_SEPARATOR, maxsplit=1)[0]
         if thing_node_id_from_id != thingNodeId:
             raise ValueError(
-                f"The source's thing node id {thingNodeId} does not match its id {id}!"
+                f"The source's thing node id '{thingNodeId}' does not match its id '{id}'!"
             )
         return thingNodeId
 
@@ -166,6 +166,10 @@ class BlobStorageStructureSource(BaseModel):
             ) from e
         file_string_from_id = id.rsplit(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
         file_ok = ObjectKey.from_string(IdString(file_string_from_id))
+        if LEAF_NAME_SEPARATOR not in name:
+            raise ValueError(
+                f"The source name '{name}' must contain the string '{LEAF_NAME_SEPARATOR}'!"
+            )
         thing_node_name, source_time = name.split(LEAF_NAME_SEPARATOR)
         if thing_node_name != file_ok.name:
             raise ValueError(
@@ -174,7 +178,7 @@ class BlobStorageStructureSource(BaseModel):
             )
         if file_ok.time.astimezone(timezone.utc).isoformat(sep=" ") != source_time:
             raise ValueError(
-                f"The time in the source's name '{name}' must match to the time in its id '{id}'!"
+                f"The time of the source's name '{name}' must match to the time in its id '{id}'!"
             )
 
         return name
@@ -280,7 +284,7 @@ class BlobStorageStructureSink(BaseModel):
 
         if not id.endswith(IDENTIFIER_SEPARATOR + SINK_ID_ENDING):
             raise ValueError(
-                f"The the sink id '{id}' must end with '{IDENTIFIER_SEPARATOR+SINK_ID_ENDING}'!"
+                f"The sink id '{id}' must end with '{IDENTIFIER_SEPARATOR+SINK_ID_ENDING}'!"
             )
         return id
 
@@ -319,7 +323,9 @@ class BlobStorageStructureSink(BaseModel):
         )[0]
 
         if LEAF_NAME_SEPARATOR not in name:
-            raise ValueError()
+            raise ValueError(
+                f"The sink name '{name}' must contain the string '{LEAF_NAME_SEPARATOR}'!"
+            )
         thing_node_name, sink_name_end = name.split(LEAF_NAME_SEPARATOR)
         if thing_node_name != thing_node_name_from_id:
             raise ValueError(
