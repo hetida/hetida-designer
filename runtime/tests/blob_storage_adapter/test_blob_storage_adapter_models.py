@@ -15,6 +15,8 @@ from hetdesrun.adapters.blob_storage import (
 )
 from hetdesrun.adapters.blob_storage.exceptions import (
     BucketNameInvalidError,
+    HierarchyError,
+    MissingHierarchyError,
     ThingNodeInvalidError,
 )
 from hetdesrun.adapters.blob_storage.models import (
@@ -212,6 +214,21 @@ def test_blob_storage_class_structure_source():
 
     assert "The source's thing node id 'i-ii/B'" in str(exc_info.value)
     assert "does not match its id 'i-ii/A_2022Y01M02D14h23m18s'" in str(exc_info.value)
+
+    with pytest.raises(ValidationError) as exc_info:
+        # name invalid due to missing separator
+        BlobStorageStructureSource(
+            id="i-ii/A_2022Y01M02D14h23m18s",
+            thingNodeId="i-ii/A",
+            name="A 2022-01-02 14:23:18+00:00",
+            path="i-ii/A",
+            metadataKey="A - 2022-01-02 14:23:18+00:00",
+        )
+
+    assert (
+        "The source name 'A 2022-01-02 14:23:18+00:00' "
+        f"must contain the string '{LEAF_NAME_SEPARATOR}'!" in str(exc_info.value)
+    )
 
     with pytest.raises(ValidationError) as exc_info:
         # name does not match id due to thing node name
@@ -438,7 +455,7 @@ def test_blob_storage_class_structure_sink():
         )
 
     assert "The sink's metadataKey 'B - Next Object' must be" in str(exc_info.value)
-    assert "the same string as its name 'B - Next Object'!" in str(exc_info.value)
+    assert "the same string as its name 'A - Next Object'!" in str(exc_info.value)
 
 
 def test_blob_storage_class_category():
@@ -502,7 +519,38 @@ def test_blob_storage_class_category():
     assert sinks[1].name == "B - Next Object"
 
 
-def test_blob_storage_utils_find_duplicates():
+@pytest.mark.skip("ConstrainedStr does seem to not behave as expected")
+def test_blob_storage_category_create_structure_too_long_bucket_name():
+    category = Category(
+        **{
+            "name": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+            "description": "Super Category",
+            "substructure": [
+                {
+                    "name": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+                    "description": "Category",
+                    "substructure": [
+                        {"name": "C", "description": "Subcategory"},
+                    ],
+                },
+            ],
+        }
+    )
+
+    thing_nodes: List[StructureThingNode] = []
+    bucket_names: List[BucketName] = []
+    sinks: List[BlobStorageStructureSink] = []
+    with pytest.raises(ValidationError):
+        category.create_structure(
+            thing_nodes=thing_nodes,
+            bucket_names=bucket_names,
+            sinks=sinks,
+            object_key_depth=1,
+            parent_id=None,
+        )
+
+
+def test_blob_storage_models_find_duplicates():
     item_list = ["apple", "banana", "cherry", "apple", "banana"]
     duplicates = find_duplicates(item_list)
 
@@ -574,6 +622,19 @@ def test_blob_storage_class_adapter_hierarchy():
     assert len(bucket_names) == 3
     assert len(sinks) == 7
 
+    hierarchy_from_file = AdapterHierarchy.from_file()
+    thing_nodes_from_file = hierarchy_from_file.thing_nodes
+    bucket_names_from_file = hierarchy_from_file.bucket_names
+    sinks_from_file = hierarchy_from_file.sinks
+
+    assert len(thing_nodes_from_file) == 11
+    assert len(bucket_names_from_file) == 3
+    assert len(sinks_from_file) == 7
+    assert hierarchy_from_file == adapter_hierarchy
+
+    with pytest.raises(MissingHierarchyError):
+        AdapterHierarchy.from_file("demodata/not_there.json")
+
 
 @pytest.mark.skip("Error message not in log")
 def test_blob_storage_class_adapter_hierarchy_with_thing_node_invalid_error(caplog):
@@ -635,3 +696,67 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error(caplog):
             "ValidationError for transformation of "
             "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii-iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii to BucketName"
         ) in caplog.text
+
+
+def test_blob_storage_adapter_hierarchy_with_structure_invalid_error():
+    with pytest.raises(HierarchyError) as exc_info:
+        AdapterHierarchy(
+            object_key_depth=2,
+            structure=[
+                Category(
+                    **{
+                        "name": "I",
+                        "description": "Super Category",
+                        "substructure": [
+                            {
+                                "name": "i",
+                                "description": "Category",
+                            },
+                        ],
+                    }
+                )
+            ],
+        )
+
+    assert (
+        "Each branch of the structure must be deeper than the object key depth '2'!"
+        in str(exc_info.value)
+    )
+
+
+def test_blob_storage_adapter_hierarchy_with_duplicates():
+
+    adapter_hierarchy = AdapterHierarchy(
+        object_key_depth=1,
+        structure=[
+            Category(
+                **{
+                    "name": "I",
+                    "description": "Super Category",
+                    "substructure": [
+                        {
+                            "name": "i",
+                            "description": "Category",
+                        }
+                    ],
+                }
+            ),
+            Category(
+                **{
+                    "name": "i",
+                    "description": "Super Category",
+                    "substructure": [
+                        {
+                            "name": "I",
+                            "description": "Category",
+                        }
+                    ],
+                }
+            ),
+        ],
+    )
+    with pytest.raises(HierarchyError) as exc_info:
+        bucket_names = adapter_hierarchy.bucket_names
+    assert "The bucket names generated from the config file are not unique!" in str(
+        exc_info.value
+    )

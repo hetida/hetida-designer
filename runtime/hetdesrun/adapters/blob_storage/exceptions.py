@@ -2,7 +2,7 @@ class BlobAdapterException(Exception):
     pass
 
 
-class ConfigError(BlobAdapterException):
+class HierarchyError(BlobAdapterException):
     pass
 
 
@@ -10,15 +10,15 @@ class StructureError(BlobAdapterException):
     pass
 
 
-class MissingConfigError(ConfigError):
+class MissingHierarchyError(HierarchyError):
     pass
 
 
-class ThingNodeInvalidError(ConfigError):
+class ThingNodeInvalidError(HierarchyError):
     pass
 
 
-class BucketNameInvalidError(ConfigError):
+class BucketNameInvalidError(HierarchyError):
     pass
 
 

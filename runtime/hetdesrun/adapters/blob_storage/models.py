@@ -15,8 +15,8 @@ from hetdesrun.adapters.blob_storage import (
 )
 from hetdesrun.adapters.blob_storage.exceptions import (
     BucketNameInvalidError,
-    ConfigError,
-    MissingConfigError,
+    HierarchyError,
+    MissingHierarchyError,
 )
 
 
@@ -390,11 +390,6 @@ class BlobStorageStructureSink(BaseModel):
         )
 
     def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
-        if not OBJECT_KEY_DIR_SEPARATOR in self.thingNodeId:
-            raise ValueError(
-                f"thingNodeId {self.thingNodeId} not valid for a sink, "
-                f"because it contains no {OBJECT_KEY_DIR_SEPARATOR}!"
-            )
         bucket_name_string, object_key_name = self.thingNodeId.split(
             sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
         )
@@ -544,7 +539,7 @@ class AdapterHierarchy(BaseModel):
             depths.append(category.get_depth())
 
         if not min(depths) > object_key_depth:
-            raise ValueError(
+            raise HierarchyError(
                 "Each branch of the structure must be deeper than "
                 f"the object key depth '{object_key_depth}'!"
             )
@@ -575,7 +570,7 @@ class AdapterHierarchy(BaseModel):
                 "They contain the following duplicates: "
                 + ", ".join(duplicate for duplicate in find_duplicates(bucket_names))
             )
-            raise ConfigError(msg)
+            raise HierarchyError(msg)
         return bucket_names
 
     @cached_property
@@ -591,8 +586,8 @@ class AdapterHierarchy(BaseModel):
         try:
             return AdapterHierarchy.parse_file(path)
         except FileNotFoundError as error:
-            raise MissingConfigError(
-                f"Could not find json file at path {path}:\n{str(error)}"
+            raise MissingHierarchyError(
+                f"Could not find hierarchy json file at path {path}:\n{str(error)}"
             ) from error
 
 
