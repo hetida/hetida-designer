@@ -7,8 +7,8 @@ from hetdesrun.trafoutils.filter.params import FilterParams
 
 def order_for_importing(
     transformation_revisions: List[TransformationRevision],
-    raise_on_missing_dependency=False,
-):
+    raise_on_missing_dependency: bool = False,
+) -> List[TransformationRevision]:
     """Order an ensemble of trafo revs without filtering"""
     all_allow_filter_params = FilterParams()
     return filter_and_order_trafos(
