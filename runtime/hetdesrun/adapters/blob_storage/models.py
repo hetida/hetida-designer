@@ -36,7 +36,7 @@ class IdString(ConstrainedStr):
     min_length = 1
     regex = re.compile(
         (
-            r"^[a-zA-Z0-9"
+            r"^[a-zA-Z0-9:+\-"
             rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+$"
         )
     )
@@ -57,8 +57,9 @@ class ObjectKey(BaseModel):
     @classmethod
     def from_name(cls, name: IdString) -> "ObjectKey":
         now = datetime.now(timezone.utc).replace(microsecond=0)
+        print(name + IDENTIFIER_SEPARATOR + now.isoformat(timespec="seconds"))
         return ObjectKey(
-            string=name + IDENTIFIER_SEPARATOR + now.strftime("%YY%mM%dD%Hh%Mm%Ss"),
+            string=name + IDENTIFIER_SEPARATOR + now.isoformat(),
             name=name,
             time=now,
         )
@@ -75,7 +76,7 @@ class ObjectKey(BaseModel):
         return ObjectKey(
             string=string,
             name=name,
-            time=datetime.strptime(timestring, "%YY%mM%dD%Hh%Mm%Ss").replace(
+            time=datetime.fromisoformat(timestring).replace(
                 tzinfo=timezone.utc
             ),
         )

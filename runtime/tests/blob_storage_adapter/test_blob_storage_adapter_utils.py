@@ -34,12 +34,12 @@ def mocked_bucket_names() -> List[BucketName]:
 
 def mocked_get_oks_in_bucket(bucket_name: BucketName) -> List[IdString]:
     if bucket_name == "i":
-        return [IdString("A_2022Y01M02D14h23m18s"), IdString("A_2022Y01M02D14h57m31s")]
+        return [IdString("A_2022-01-02T14:23:18+00:00"), IdString("A_2022-01-02T14:57:31+00:00")]
     if bucket_name == "ii":
         return [
-            IdString("B_2022Y01M02D14h25m56s"),
-            IdString("D_2022Y03M08D17h23m18s"),
-            IdString("D_2022Y04M02D13h28m29s"),
+            IdString("B_2022-01-02T14:25:56+00:00"),
+            IdString("D_2022-03-08T17:23:18+00:00"),
+            IdString("D_2022-04-02T13:28:29+00:00"),
         ]
 
 
@@ -70,12 +70,12 @@ def test_blob_storage_utils_create_sources():
             ):
                 sources = create_sources()
                 assert len(sources) == 3
-                assert sources[0].id == "i/A_2022Y01M02D14h23m18s"
+                assert sources[0].id == "i/A_2022-01-02T14:23:18+00:00"
                 assert sources[0].thingNodeId == "i/A"
                 assert sources[0].name == "A - 2022-01-02 14:23:18+00:00"
-                assert sources[1].id == "i/A_2022Y01M02D14h57m31s"
+                assert sources[1].id == "i/A_2022-01-02T14:57:31+00:00"
                 assert sources[1].thingNodeId == "i/A"
                 assert sources[1].name == "A - 2022-01-02 14:57:31+00:00"
-                assert sources[2].id == "ii/B_2022Y01M02D14h25m56s"
+                assert sources[2].id == "ii/B_2022-01-02T14:25:56+00:00"
                 assert sources[2].thingNodeId == "ii/B"
                 assert sources[2].name == "B - 2022-01-02 14:25:56+00:00"

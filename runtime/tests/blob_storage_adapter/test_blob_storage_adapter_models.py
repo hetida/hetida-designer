@@ -85,7 +85,7 @@ def test_blob_storage_class_id_string():
 def test_blob_storage_class_object_key():
     with pytest.raises(ValueError) as exc_info:
         object_key = ObjectKey(
-            string="A_2022Y01M02D14h23m18s",
+            string="A_2022-01-02T14:23:18+00:00",
             name="A",
             time=datetime(
                 year=2022,
@@ -99,7 +99,7 @@ def test_blob_storage_class_object_key():
     assert "The ObjectKey attribute time must have timezone UTC!" in str(exc_info.value)
 
     object_key = ObjectKey(
-        string="A_2022Y01M02D14h23m18s",
+        string="A_2022-01-02T14:23:18+00:00",
         name="A",
         time=datetime(
             year=2022,
@@ -112,7 +112,7 @@ def test_blob_storage_class_object_key():
         ),
     )
 
-    assert object_key.string == "A_2022Y01M02D14h23m18s"
+    assert object_key.string == "A_2022-01-02T14:23:18+00:00"
     assert object_key.name == "A"
     assert object_key.time == datetime(
         year=2022, month=1, day=2, hour=14, minute=23, second=18, tzinfo=timezone.utc
@@ -126,7 +126,7 @@ def test_blob_storage_class_object_key():
     assert thing_node_id == "i-ii/A"
 
     with pytest.raises(ValueError) as exc_info:
-        ObjectKey.from_string("A2022Y01M02D14h23m18s")
+        ObjectKey.from_string("A2022-01-02T14:23:18+00:00")
     assert (
         f"not a valid ObjectKey string, because it contains no '{IDENTIFIER_SEPARATOR}'"
         in str(exc_info.value)
@@ -135,14 +135,14 @@ def test_blob_storage_class_object_key():
 
 def test_blob_storage_class_structure_source():
     source = BlobStorageStructureSource(
-        id="i-ii/A_2022Y01M02D14h23m18s",
+        id="i-ii/A_2022-01-02T14:23:18+00:00",
         thingNodeId="i-ii/A",
         name="A - 2022-01-02 14:23:18+00:00",
         path="i-ii/A",
         metadataKey="A - 2022-01-02 14:23:18+00:00",
     )
 
-    assert source.id == "i-ii/A_2022Y01M02D14h23m18s"
+    assert source.id == "i-ii/A_2022-01-02T14:23:18+00:00"
     assert source.thingNodeId == "i-ii/A"
     assert source.name == "A - 2022-01-02 14:23:18+00:00"
     assert source.path == "i-ii/A"
@@ -160,7 +160,7 @@ def test_blob_storage_class_structure_source():
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to no object key dir separator
         BlobStorageStructureSource(
-            id="A_2022Y01M02D14h23m18s",
+            id="A_2022-01-02T14:23:18+00:00",
             thingNodeId="A",
             name="A - 2022-01-02 14:23:18+00:00",
             path="A",
@@ -175,7 +175,7 @@ def test_blob_storage_class_structure_source():
     # with pytest.raises(ValidationError) as exc_info:
     #     # invalid id due to bucket name part invalid
     #     BlobStorageStructureSource(
-    #         id="I-ii/A_2022Y01M02D14h23m18s",
+    #         id="I-ii/A_2022-01-02T14:23:18+00:00",
     #         thingNodeId="i-ii/A",
     #         name="A - 2022-01-02 14:23:18+00:00",
     #         path="i-ii/A",
@@ -183,29 +183,29 @@ def test_blob_storage_class_structure_source():
     #     )
 
     # assert "The first part 'I-ii'" in str(exc_info.value)
-    # assert "of the source id 'i-ii/A2022Y01M02D14h23m18s'" in str(exc_info.value)
+    # assert "of the source id 'i-ii/A2022-01-02T14:23:18+00:00'" in str(exc_info.value)
     # assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
     # assert "must correspond to a bucket name!" in str(exc_info.value)
 
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to object key part invalid
         BlobStorageStructureSource(
-            id="i-ii/A2022Y01M02D14h23m18s",
+            id="i-ii/A2022-01-02T14:23:18+00:00",
             thingNodeId="i-ii/A",
             name="A - 2022-01-02 14:23:18+00:00",
             path="i-ii/A",
             metadataKey="A - 2022-01-02 14:23:18+00:00",
         )
 
-    assert "The second part 'A2022Y01M02D14h23m18s'" in str(exc_info.value)
-    assert "of the source id 'i-ii/A2022Y01M02D14h23m18s'" in str(exc_info.value)
+    assert "The second part 'A2022-01-02T14:23:18+00:00'" in str(exc_info.value)
+    assert "of the source id 'i-ii/A2022-01-02T14:23:18+00:00'" in str(exc_info.value)
     assert f"after the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
     assert "must correspond to an object key string!" in str(exc_info.value)
 
     with pytest.raises(ValidationError) as exc_info:
         # thingNodeId does not match id
         BlobStorageStructureSource(
-            id="i-ii/A_2022Y01M02D14h23m18s",
+            id="i-ii/A_2022-01-02T14:23:18+00:00",
             thingNodeId="i-ii/B",
             name="A - 2022-01-02 14:23:18+00:00",
             path="i-ii/A",
@@ -213,12 +213,12 @@ def test_blob_storage_class_structure_source():
         )
 
     assert "The source's thing node id 'i-ii/B'" in str(exc_info.value)
-    assert "does not match its id 'i-ii/A_2022Y01M02D14h23m18s'" in str(exc_info.value)
+    assert "does not match its id 'i-ii/A_2022-01-02T14:23:18+00:00'" in str(exc_info.value)
 
     with pytest.raises(ValidationError) as exc_info:
         # name invalid due to missing separator
         BlobStorageStructureSource(
-            id="i-ii/A_2022Y01M02D14h23m18s",
+            id="i-ii/A_2022-01-02T14:23:18+00:00",
             thingNodeId="i-ii/A",
             name="A 2022-01-02 14:23:18+00:00",
             path="i-ii/A",
@@ -233,7 +233,7 @@ def test_blob_storage_class_structure_source():
     with pytest.raises(ValidationError) as exc_info:
         # name does not match id due to thing node name
         BlobStorageStructureSource(
-            id="i-ii/A_2022Y01M02D14h23m18s",
+            id="i-ii/A_2022-01-02T14:23:18+00:00",
             thingNodeId="i-ii/A",
             name="B - 2022-01-02 14:23:18+00:00",
             path="i-ii/A",
@@ -248,7 +248,7 @@ def test_blob_storage_class_structure_source():
     with pytest.raises(ValidationError) as exc_info:
         # name does not match id due to timestamp
         BlobStorageStructureSource(
-            id="i-ii/A_2022Y01M02D14h23m18s",
+            id="i-ii/A_2022-01-02T14:23:18+00:00",
             thingNodeId="i-ii/A",
             name="A - 2023-01-02 14:23:18+00:00",
             path="i-ii/A",
@@ -258,14 +258,14 @@ def test_blob_storage_class_structure_source():
     assert "The time of the source's name 'A - 2023-01-02 14:23:18+00:00'" in str(
         exc_info.value
     )
-    assert "must match to the time in its id 'i-ii/A_2022Y01M02D14h23m18s'" in str(
+    assert "must match to the time in its id 'i-ii/A_2022-01-02T14:23:18+00:00'" in str(
         exc_info.value
     )
 
     with pytest.raises(ValidationError) as exc_info:
         # path does not match thingNodeId
         BlobStorageStructureSource(
-            id="i-ii/A_2022Y01M02D14h23m18s",
+            id="i-ii/A_2022-01-02T14:23:18+00:00",
             thingNodeId="i-ii/A",
             name="A - 2022-01-02 14:23:18+00:00",
             path="i-ii/B",
@@ -280,7 +280,7 @@ def test_blob_storage_class_structure_source():
     with pytest.raises(ValidationError) as exc_info:
         # metadataKey does not match name
         BlobStorageStructureSource(
-            id="i-ii/A_2022Y01M02D14h23m18s",
+            id="i-ii/A_2022-01-02T14:23:18+00:00",
             thingNodeId="i-ii/A",
             name="A - 2022-01-02 14:23:18+00:00",
             path="i-ii/A",

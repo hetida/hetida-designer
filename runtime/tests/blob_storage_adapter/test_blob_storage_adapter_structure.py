@@ -48,7 +48,7 @@ def test_blob_storage_get_thing_nodes_by_parent_id():
 def test_blob_storage_get_sources_by_parent_id():
     sources_with_parent_i_ii = get_sources_by_parent_id("i-ii/E")
     assert len(sources_with_parent_i_ii) == 1
-    assert sources_with_parent_i_ii[0].id == "i-ii/E_2022Y01M02D14h23m18s"
+    assert sources_with_parent_i_ii[0].id == "i-ii/E_2022-01-02T14:23:18+00:00"
 
     sources_with_parent_bla = get_sources_by_parent_id("bla")
     assert len(sources_with_parent_bla) == 0
@@ -69,15 +69,15 @@ def test_blob_storage_get_filtered_sources():
 
     sources_filtered_by_d = get_filtered_sources("A")
     assert len(sources_filtered_by_d) == 2
-    assert sources_filtered_by_d[0].id == "i-i/A_2022Y01M02D14h23m18s"
-    assert sources_filtered_by_d[1].id == "i-i/A_2022Y01M02D14h57m31s"
+    assert sources_filtered_by_d[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
+    assert sources_filtered_by_d[1].id == "i-i/A_2022-01-02T14:57:31+00:00"
 
     sources_filtered_by_date = get_filtered_sources("14")
     assert len(sources_filtered_by_date) == 4
-    assert sources_filtered_by_date[0].id == "i-i/A_2022Y01M02D14h23m18s"
-    assert sources_filtered_by_date[1].id == "i-i/A_2022Y01M02D14h57m31s"
-    assert sources_filtered_by_date[2].id == "i-i/B_2022Y01M02D14h25m56s"
-    assert sources_filtered_by_date[3].id == "i-ii/E_2022Y01M02D14h23m18s"
+    assert sources_filtered_by_date[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
+    assert sources_filtered_by_date[1].id == "i-i/A_2022-01-02T14:57:31+00:00"
+    assert sources_filtered_by_date[2].id == "i-i/B_2022-01-02T14:25:56+00:00"
+    assert sources_filtered_by_date[3].id == "i-ii/E_2022-01-02T14:23:18+00:00"
 
     sources_filtered_by_bla = get_filtered_sources("bla")
     assert len(sources_filtered_by_bla) == 0
@@ -122,7 +122,7 @@ def test_blob_storage_get_thing_node_by_id():
 
 
 def test_blob_storage_get_source_by_id():
-    source_by_id = get_source_by_id("i-i/A_2022Y01M02D14h57m31s")
+    source_by_id = get_source_by_id("i-i/A_2022-01-02T14:57:31+00:00")
     assert source_by_id.name == "A - 2022-01-02 14:57:31+00:00"
     assert source_by_id.thingNodeId == "i-i/A"
 
@@ -133,14 +133,14 @@ def test_blob_storage_get_source_by_id():
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=[
             BlobStorageStructureSource(
-                id="i-i/A_2022Y01M02D14h57m31s",
+                id="i-i/A_2022-01-02T14:57:31+00:00",
                 thingNodeId="i-i/A",
                 name="A - 2022-01-02 14:57:31+00:00",
                 path="i-i/A",
                 metadataKey="A - 2022-01-02 14:57:31+00:00",
             ),
             BlobStorageStructureSource(
-                id="i-i/A_2022Y01M02D14h57m31s",
+                id="i-i/A_2022-01-02T14:57:31+00:00",
                 thingNodeId="i-i/A",
                 name="A - 2022-01-02 14:57:31+00:00",
                 path="i-i/A",
@@ -149,7 +149,7 @@ def test_blob_storage_get_source_by_id():
         ],
     ):
         with pytest.raises(SourcesNotUnique):
-            get_source_by_id("i-i/A_2022Y01M02D14h57m31s")
+            get_source_by_id("i-i/A_2022-01-02T14:57:31+00:00")
 
 
 def test_blob_storage_get_sink_by_id():
@@ -188,7 +188,7 @@ def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
     source_by_tn_id_and_md_key = get_source_by_thing_node_id_and_metadata_key(
         thing_node_id="i-i/A", metadata_key="A - 2022-01-02 14:57:31+00:00"
     )
-    assert source_by_tn_id_and_md_key.id == "i-i/A_2022Y01M02D14h57m31s"
+    assert source_by_tn_id_and_md_key.id == "i-i/A_2022-01-02T14:57:31+00:00"
     assert source_by_tn_id_and_md_key.thingNodeId == "i-i/A"
     assert source_by_tn_id_and_md_key.name == "A - 2022-01-02 14:57:31+00:00"
     assert source_by_tn_id_and_md_key.path == "i-i/A"
@@ -202,14 +202,14 @@ def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=[
             BlobStorageStructureSource(
-                id="i-i/A_2022Y01M02D14h57m31s",
+                id="i-i/A_2022-01-02T14:57:31+00:00",
                 thingNodeId="i-i/A",
                 name="A - 2022-01-02 14:57:31+00:00",
                 path="i-i/A",
                 metadataKey="A - 2022-01-02 14:57:31+00:00",
             ),
             BlobStorageStructureSource(
-                id="i-i/A_2022Y01M02D14h57m31s",
+                id="i-i/A_2022-01-02T14:57:31+00:00",
                 thingNodeId="i-i/A",
                 name="A - 2022-01-02 14:57:31+00:00",
                 path="i-i/A",
