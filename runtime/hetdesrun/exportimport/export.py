@@ -47,7 +47,7 @@ def slugify(value: str, allow_unicode: bool = False) -> str:
 
 
 ##Base function to save transformation
-def save_transformation(tr: TransformationRevision, download_path: str) -> None:
+def save_transformation(tr: TransformationRevision, download_path: str) -> str:
     # Create directory on local system
     cat_dir = os.path.join(download_path, tr.type.lower() + "s", slugify(tr.category))
     Path(cat_dir).mkdir(parents=True, exist_ok=True)
@@ -74,6 +74,7 @@ def save_transformation(tr: TransformationRevision, download_path: str) -> None:
                 tr.type,
                 str(tr.id),
             )
+    return path
 
 
 ##Base function to get transformation via REST API from DB (old endpoints)

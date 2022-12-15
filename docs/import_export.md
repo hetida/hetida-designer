@@ -115,6 +115,22 @@ To ignore test wirings when importing, simply add a keyword parameter `strip_wir
 To ensure that only the latest revision of a revision group can be used, you can deprecate all other revisions of the same revision group during import by setting the parameter `deprecate_older_revisions=True` in the `import_transformations` function call.
 If the latest revision of a revision group is stored in the database, all imported transformation revisions of this group will be deprecated.
 
+## Generate file with paths to json files in import order
+
+When importing transformation revisions, the order is important to avoid problems caused by nested revisions that have not yet been imported.
+The `import_transformation` function takes care of this problem, but there may be reasons why you cannot use it.
+There is a service function that creates a file containing line by line the paths to all exported `.json` files in the order in which they should be imported.
+To create such a file, simply run the following command with the path to the directory where the `.json` files were exported, e.g. `exported_data"`, and the path where this file should be written, e.g. `json_import_order.txt"`.
+
+```shell
+docker run --rm \
+  --name htdruntime_import \
+  --entrypoint python \
+  hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import generate_import_order_file; generate_import_order_file("exported_data", "json_import_order.txt");'
+```
+
+In case this directory contains also component code as `.py` files that you want to import as `.json` files, set the option `transform_py_to_json` to `True` and the corresponding `.json` files will be generated and added to the list of paths in the generated newly file.
+
 ## Import new components and workflows added to the git repository
 
 If you (re-)start the backend container, you can use the [autodeployment feature](./base_component_deployment.md).
