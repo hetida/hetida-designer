@@ -234,7 +234,7 @@ def test_delete_transformation_revisions():
             assert args[0] == example_tr_released.id
 
 
-def test_update_or_create_transformation_revision_happy_pathexi(caplog):
+def test_update_or_create_transformation_revision_happy_path(caplog):
     with mock.patch(
         "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
         return_value=None,
@@ -266,7 +266,7 @@ def test_update_or_create_transformation_revision_happy_pathexi(caplog):
             _, args, _ = mocked_update_in_db.mock_calls[1]
             assert isinstance(args[0], TransformationRevision)
             assert isinstance(args[0].content, str)
-            assert "1.0.1" in "".join(args[0].content)
+            assert "1.0.1" not in "".join(args[0].content)
 
             update_or_create_transformation_revision(example_tr_draft)
             assert mocked_update_in_db.call_count == 2  # no third call
