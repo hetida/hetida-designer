@@ -87,7 +87,6 @@ async def test_resources_offered_from_blob_storage_webservice(
         assert len(roots) == 1
 
         root = roots[0]
-        print(root)
 
         all_tns = roots
         all_srcs = []
@@ -116,11 +115,9 @@ async def test_resources_offered_from_blob_storage_webservice(
         assert len(tn_attached_metadata_dict) == 0
 
         for src in all_srcs:
-            print(src)
             response_obj = (
                 await client.get(f'/adapters/blob/sources/{src["id"]}')
             ).json()
-            print(response_obj)
             for key in src.keys():
                 assert response_obj[key] == src[key]
 
@@ -129,7 +126,6 @@ async def test_resources_offered_from_blob_storage_webservice(
                 await client.get(f'/adapters/blob/sinks/{snk["id"]}')
             ).json()
             for key in snk.keys():
-                print(response_obj)
                 assert response_obj[key] == snk[key]
 
         for tn in all_tns:
