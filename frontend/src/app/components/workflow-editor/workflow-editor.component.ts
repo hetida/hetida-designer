@@ -319,22 +319,23 @@ export class WorkflowEditorComponent {
   /**
    * adds a new operator to the workflow,
    * since the flowchart library doesn't need all the data we handle this here and not on the create event
-   * @param event drop event, carrying the baseItem and flowchartComponent data
+   * @param event drop event, carrying the transformation and flowchartComponent data
    */
-  // TODO
-  // dropInterceptor(event: CustomEvent): void {
-  //   if (event.detail.baseItemJSON === '') {
-  //     return;
-  //   }
-  //   const baseItem = JSON.parse(event.detail.baseItemJSON) as BaseItem;
-  //   const newOperator = this._createNewOperator(
-  //     baseItem,
-  //     event.detail.svgX as number,
-  //     event.detail.svgY as number
-  //   );
-  //   this.currentWorkflow.content.operators.push(newOperator);
-  //   this.workflowService.updateWorkflow(this.currentWorkflow);
-  // }
+  dropInterceptor(event: CustomEvent): void {
+    if (event.detail.baseItemJSON === '') {
+      return;
+    }
+    const transformation = JSON.parse(
+      event.detail.baseItemJSON
+    ) as Transformation;
+    const newOperator = this._createNewOperator(
+      transformation,
+      event.detail.svgX as number,
+      event.detail.svgY as number
+    );
+    this.currentWorkflow.content.operators.push(newOperator);
+    this.baseItemService.updateTransformation(this.currentWorkflow).subscribe();
+  }
 
   /**
    * set selected element from workflow editor view to selection in sidebar
