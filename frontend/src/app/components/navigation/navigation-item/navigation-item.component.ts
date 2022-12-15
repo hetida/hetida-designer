@@ -39,7 +39,6 @@ export class NavigationItemComponent {
   }
 
   public dragComponent(event: DragEvent): void {
-    // TODO check drag and drop
     event.dataTransfer.effectAllowed = 'all';
     event.dataTransfer.dropEffect = 'none';
     event.dataTransfer.setData(
