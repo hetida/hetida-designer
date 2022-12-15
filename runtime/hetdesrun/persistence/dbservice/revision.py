@@ -195,7 +195,7 @@ def is_modifiable(
     return True, ""
 
 def contains_deprecated(transformation_id: UUID) -> bool:
-    logger.(
+    logger.debug(
         "check if transformation revision %s contains deprecated operators",
         str(transformation_id),
     )
