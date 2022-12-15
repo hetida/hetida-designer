@@ -8,7 +8,7 @@ from sqlalchemy import event
 from sqlalchemy.future.engine import Engine
 
 from hetdesrun.datatypes import DataType
-from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence import sessionmaker
 from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
@@ -180,11 +180,32 @@ def test_updating(clean_test_db_engine):
 
         tr_object.name = "Test Update"
 
-        update_or_create_single_transformation_revision(tr_object)
-
-        received_tr_object = read_single_transformation_revision(tr_uuid)
-
+        received_tr_object = update_or_create_single_transformation_revision(
+            tr_object, update_component_code=False
+        )
+        assert received_tr_object.content == "code"
         assert tr_object == received_tr_object
+
+        tr_object.io_interface = IOInterface(
+            inputs=[IO(name="input", data_type=DataType.Integer)]
+        )
+        tr_object.test_wiring = WorkflowWiring(
+            input_wirings=[
+                InputWiring(
+                    workflow_input_name="input",
+                    adapter_id="direct_provisioning",
+                    filters={"value": 5},
+                )
+            ]
+        )
+        received_tr_object = update_or_create_single_transformation_revision(tr_object)
+        assert "COMPONENT_INFO" in received_tr_object.content
+        assert len(received_tr_object.test_wiring.input_wirings) == 1
+
+        received_tr_object = update_or_create_single_transformation_revision(
+            tr_object, strip_wiring=True
+        )
+        assert len(received_tr_object.test_wiring.input_wirings) == 0
 
 
 def test_creating(clean_test_db_engine):

@@ -382,7 +382,7 @@ async def test_put_transformation_revision_from_released_component_dto(
         assert response.status_code == 201
         assert response.json()["state"] == "RELEASED"
         assert "released_timestamp" in response.json()["code"]
-        
+
 
 @pytest.mark.asyncio
 async def test_deprecate_transformation_revision_from_component_dto(
