@@ -277,7 +277,7 @@ def test_update_or_create_transformation_revision_happy_path(caplog):
             assert kwargs["strip_wiring"] == True
 
             update_or_create_transformation_revision(example_tr_draft)
-            assert mocked_update_in_db.call_count ==  3 # no fourth call
+            assert mocked_update_in_db.call_count == 3  # no fourth call
             assert mocked_update_in_backend.call_count == 1
             _, args, kwargs = mocked_update_in_backend.mock_calls[0]
             assert args[0] == posix_urljoin(
@@ -289,7 +289,12 @@ def test_update_or_create_transformation_revision_happy_path(caplog):
             assert kwargs["params"]["update_component_code"] == True
             assert kwargs["params"]["strip_wiring"] == False
 
-            update_or_create_transformation_revision(example_tr_draft, allow_overwrite_released=False, update_component_code=False, strip_wiring=True)
+            update_or_create_transformation_revision(
+                example_tr_draft,
+                allow_overwrite_released=False,
+                update_component_code=False,
+                strip_wiring=True,
+            )
             assert mocked_update_in_db.call_count == 3  # no fourth call
             assert mocked_update_in_backend.call_count == 2
             _, args, kwargs = mocked_update_in_backend.mock_calls[1]

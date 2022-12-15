@@ -273,7 +273,7 @@ def import_transformations(
                 directly_in_db=directly_into_db,
                 allow_overwrite_released=allow_overwrite_released,
                 update_component_code=update_component_code,
-                strip_wiring=strip_wirings
+                strip_wiring=strip_wirings,
             )
 
     logger.info("finished importing")
