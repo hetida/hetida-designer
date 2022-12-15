@@ -291,6 +291,7 @@ export class FlowchartConverterService {
     let foundConnector: Connector;
 
     if (searchInWorkflowIoInterface) {
+      // TODO search in workflow content io to get positions
       const ios = [
         ...workflowTransformation.io_interface.inputs,
         ...workflowTransformation.io_interface.outputs
