@@ -32,7 +32,6 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
@@ -252,9 +251,7 @@ async def update_transformation_revision(
     update_component_code: bool = Query(
         True, description="Only set to False for deployment"
     ),
-    strip_wiring: bool = Query(
-        False, description="Set to True to discard test wiring"
-    ),
+    strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
 ) -> TransformationRevision:
     """Update or store a transformation revision in the data base.
 
@@ -283,7 +280,7 @@ async def update_transformation_revision(
                 updated_transformation_revision,
                 allow_overwrite_released=allow_overwrite_released,
                 update_component_code=update_component_code,
-                strip_wiring=strip_wiring
+                strip_wiring=strip_wiring,
             )
         )
         logger.info("updated transformation revision %s", id)

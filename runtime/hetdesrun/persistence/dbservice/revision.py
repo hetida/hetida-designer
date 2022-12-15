@@ -7,7 +7,9 @@ from uuid import UUID
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
+from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
+from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence import Session, SQLAlchemySession
 from hetdesrun.persistence.dbmodels import FilterParams, TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
@@ -17,7 +19,6 @@ from hetdesrun.persistence.dbservice.nesting import (
     find_all_nestings,
     update_nesting,
 )
-from hetdesrun.component.code import update_code
 from hetdesrun.persistence.models.exceptions import (
     ModifyForbidden,
     StateConflict,
@@ -25,7 +26,6 @@ from hetdesrun.persistence.models.exceptions import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.utils import State, Type
 
 logger = logging.getLogger(__name__)
@@ -194,6 +194,7 @@ def is_modifiable(
 
     return True, ""
 
+
 def contains_deprecated(transformation_id: UUID) -> bool:
     logger.debug(
         "check if transformation revision %s contains deprecated operators",
@@ -225,15 +226,13 @@ def update_content(
         updated_transformation_revision.content = update_code(
             updated_transformation_revision
         )
-    else: 
+    else:
         assert isinstance(
             updated_transformation_revision.content, WorkflowContent
         )  # hint for mypy
 
         for operator in updated_transformation_revision.content.operators:
-            if (
-                operator.type == Type.WORKFLOW
-            ):
+            if operator.type == Type.WORKFLOW:
                 operator.state = (
                     State.DISABLED
                     if contains_deprecated(operator.transformation_id)
@@ -279,8 +278,6 @@ def if_applicable_release_or_deprecate(
     return updated_transformation_revision
 
 
-
-
 def update_or_create_single_transformation_revision(
     transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = False,
@@ -289,10 +286,9 @@ def update_or_create_single_transformation_revision(
 ) -> TransformationRevision:
     with Session() as session, session.begin():
 
-        if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
-            updated_transformation_revision = update_content(
-                existing_transformation_revision, updated_transformation_revision
-            )
+        if transformation_revision.type == Type.WORKFLOW or update_component_code:
+            transformation_revision = update_content(transformation_revision)
+
         if strip_wiring:
             transformation_revision.test_wiring = WorkflowWiring()
 
@@ -312,10 +308,10 @@ def update_or_create_single_transformation_revision(
             if modifiable is False:
                 raise ModifyForbidden(msg)
 
-            updated_transformation_revision = if_applicable_release_or_deprecate(
-                existing_transformation_revision, updated_transformation_revision
+            transformation_revision = if_applicable_release_or_deprecate(
+                existing_transformation_revision, transformation_revision
             )
-        
+
             update_tr(session, transformation_revision)
 
         if transformation_revision.state == State.DISABLED:

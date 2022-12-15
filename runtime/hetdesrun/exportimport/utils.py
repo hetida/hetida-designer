@@ -7,7 +7,6 @@ from uuid import UUID
 
 import requests
 
-from hetdesrun.component.code import update_code
 from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
@@ -107,7 +106,10 @@ def update_or_create_transformation_revision(
         )
         try:
             update_or_create_single_transformation_revision(
-                tr, allow_overwrite_released=allow_overwrite_released, update_component_code=update_component_code, strip_wiring=strip_wiring
+                tr,
+                allow_overwrite_released=allow_overwrite_released,
+                update_component_code=update_component_code,
+                strip_wiring=strip_wiring,
             )
         except DBNotFoundError as not_found_err:
             logger.error(
