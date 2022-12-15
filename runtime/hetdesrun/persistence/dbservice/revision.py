@@ -244,7 +244,6 @@ def update_content(
 def if_applicable_release_or_deprecate(
     existing_transformation_revision: Optional[TransformationRevision],
     updated_transformation_revision: TransformationRevision,
-    update_component_code: bool = True
 ) -> TransformationRevision:
     if existing_transformation_revision is not None:
         if (
@@ -276,8 +275,6 @@ def if_applicable_release_or_deprecate(
             updated_transformation_revision.content = (
                 existing_transformation_revision.content
             )
-        if update_component_code and updated_transformation_revision.type == Type.COMPONENT:
-            updated_transformation_revision.content = update_code(updated_transformation_revision)
     return updated_transformation_revision
 
 
