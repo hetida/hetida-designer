@@ -91,6 +91,7 @@ def update_or_create_transformation_revision(
     directly_in_db: bool = False,
     allow_overwrite_released: bool = True,
     update_component_code: bool = True,
+    strip_wiring: bool = False,
 ) -> None:
     if directly_in_db:
         logger.info(
@@ -104,12 +105,9 @@ def update_or_create_transformation_revision(
             tr.category,
             tr.name,
         )
-        if update_component_code and tr.type == Type.COMPONENT:
-            tr.content = update_code(tr)
-
         try:
             update_or_create_single_transformation_revision(
-                tr, allow_overwrite_released=allow_overwrite_released
+                tr, allow_overwrite_released=allow_overwrite_released, update_component_code=update_component_code, strip_wiring=strip_wiring
             )
         except DBNotFoundError as not_found_err:
             logger.error(

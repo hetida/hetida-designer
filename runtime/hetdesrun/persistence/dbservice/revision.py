@@ -17,6 +17,7 @@ from hetdesrun.persistence.dbservice.nesting import (
     find_all_nestings,
     update_nesting,
 )
+from hetdesrun.component.code import update_code
 from hetdesrun.persistence.models.exceptions import (
     ModifyForbidden,
     StateConflict,
@@ -24,6 +25,7 @@ from hetdesrun.persistence.models.exceptions import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.utils import State, Type
 
 logger = logging.getLogger(__name__)
@@ -192,12 +194,107 @@ def is_modifiable(
 
     return True, ""
 
+def contains_deprecated(transformation_id: UUID) -> bool:
+    logger.(
+        "check if transformation revision %s contains deprecated operators",
+        str(transformation_id),
+    )
+    transformation_revision = read_single_transformation_revision(transformation_id)
+
+    if transformation_revision.type is not Type.WORKFLOW:
+        return False
+
+    assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
+
+    is_disabled = []
+    for operator in transformation_revision.content.operators:
+        logger.info(
+            "operator with transformation id %s has status %s",
+            str(operator.transformation_id),
+            operator.state,
+        )
+        is_disabled.append(operator.state == State.DISABLED)
+
+    return any(is_disabled)
+
+
+def update_content(
+    updated_transformation_revision: TransformationRevision,
+) -> TransformationRevision:
+    if updated_transformation_revision.type == Type.COMPONENT:
+        updated_transformation_revision.content = update_code(
+            updated_transformation_revision
+        )
+    else: 
+        assert isinstance(
+            updated_transformation_revision.content, WorkflowContent
+        )  # hint for mypy
+
+        for operator in updated_transformation_revision.content.operators:
+            if (
+                operator.type == Type.WORKFLOW
+            ):
+                operator.state = (
+                    State.DISABLED
+                    if contains_deprecated(operator.transformation_id)
+                    else operator.state
+                )
+    return updated_transformation_revision
+
+
+def if_applicable_release_or_deprecate(
+    existing_transformation_revision: Optional[TransformationRevision],
+    updated_transformation_revision: TransformationRevision,
+) -> TransformationRevision:
+    if existing_transformation_revision is not None:
+        if (
+            existing_transformation_revision.state == State.DRAFT
+            and updated_transformation_revision.state == State.RELEASED
+        ):
+            logger.info(
+                "release transformation revision %s",
+                existing_transformation_revision.id,
+            )
+            updated_transformation_revision.release()
+            # prevent overwriting content during releasing
+            updated_transformation_revision.content = (
+                existing_transformation_revision.content
+            )
+        if (
+            existing_transformation_revision.state == State.RELEASED
+            and updated_transformation_revision.state == State.DISABLED
+        ):
+            logger.info(
+                "deprecate transformation revision %s",
+                existing_transformation_revision.id,
+            )
+            updated_transformation_revision = TransformationRevision(
+                **existing_transformation_revision.dict()
+            )
+            updated_transformation_revision.deprecate()
+            # prevent overwriting content during deprecating
+            updated_transformation_revision.content = (
+                existing_transformation_revision.content
+            )
+    return updated_transformation_revision
+
+
+
 
 def update_or_create_single_transformation_revision(
     transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = False,
+    update_component_code: bool = True,
+    strip_wiring: bool = False,
 ) -> TransformationRevision:
     with Session() as session, session.begin():
+
+        if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
+            updated_transformation_revision = update_content(
+                existing_transformation_revision, updated_transformation_revision
+            )
+        if strip_wiring:
+            transformation_revision.test_wiring = WorkflowWiring()
 
         try:
             existing_transformation_revision = select_tr_by_id(
@@ -215,6 +312,10 @@ def update_or_create_single_transformation_revision(
             if modifiable is False:
                 raise ModifyForbidden(msg)
 
+            updated_transformation_revision = if_applicable_release_or_deprecate(
+                existing_transformation_revision, updated_transformation_revision
+            )
+        
             update_tr(session, transformation_revision)
 
         if transformation_revision.state == State.DISABLED:
