@@ -289,9 +289,6 @@ def update_or_create_single_transformation_revision(
 ) -> TransformationRevision:
     with Session() as session, session.begin():
 
-        if transformation_revision.type == Type.WORKFLOW or update_component_code:
-            transformation_revision = update_content(transformation_revision)
-
         if strip_wiring:
             transformation_revision.test_wiring = WorkflowWiring()
 
@@ -300,6 +297,9 @@ def update_or_create_single_transformation_revision(
                 session, transformation_revision.id, log_error=False
             )
         except DBNotFoundError:
+            if transformation_revision.type == Type.WORKFLOW or update_component_code:
+                transformation_revision = update_content(transformation_revision)
+
             add_tr(session, transformation_revision)
         else:
             modifiable, msg = is_modifiable(
@@ -314,6 +314,9 @@ def update_or_create_single_transformation_revision(
             transformation_revision = if_applicable_release_or_deprecate(
                 existing_transformation_revision, transformation_revision
             )
+
+            if transformation_revision.type == Type.WORKFLOW or update_component_code:
+                transformation_revision = update_content(transformation_revision)
 
             update_tr(session, transformation_revision)
 
