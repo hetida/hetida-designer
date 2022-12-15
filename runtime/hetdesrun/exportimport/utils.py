@@ -156,6 +156,7 @@ def update_or_create_transformation_revision(
             params={
                 "allow_overwrite_released": allow_overwrite_released,
                 "update_component_code": update_component_code,
+                "strip_wiring": strip_wiring,
             },
             verify=get_config().hd_backend_verify_certs,
             json=json.loads(tr.json()),  # TODO: avoid double serialization.
