@@ -135,15 +135,21 @@ class WorkflowExecutionInput(BaseModel):
 
     # pylint: disable=no-self-argument
     @root_validator(skip_on_failure=True)
-    def check_wiring_complete(cls, values: dict) -> dict:  # type: ignore
+    def check_wiring_type_matches_and_complete(cls, values: dict) -> dict:
         """Every (non-constant) Workflow input/output must be wired
 
         Checks whether there is a wiring for every non-constant workflow input
         and for every workflow output.
         """
 
-        wiring: WorkflowWiring = values.get("workflow_wiring")  # type: ignore
-        workflow: WorkflowNode = values.get("workflow")  # type: ignore
+        try:
+            wiring = values["workflow_wiring"]
+            workflow = values["workflow"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if wiring is complete if "
+                "one of the attributes 'wiring' or 'workflow' is missing!"
+            ) from e
 
         # Check that every Workflow Input is wired:
         wired_input_names = set(
@@ -156,6 +162,18 @@ class WorkflowExecutionInput(BaseModel):
                 raise ValueError(
                     f"Wiring Incomplete: Workflow Input {wf_input.name} has no wiring!"
                 )
+            matched_input_wiring = [
+                input_wiring
+                for input_wiring in wiring.input_wirings
+                if input_wiring.name == wf_input.name
+            ][0]
+            if wf_input.type != matched_input_wiring.type:
+                raise ValueError(
+                    f"The type '{matched_input_wiring.type}' of "
+                    f"the input wiring '{matched_input_wiring.name}' "
+                    f"does not match the type '{wf_input.type}' "
+                    f"of the corresponding workflow input '{wf_input.name}'!"
+                )
 
         if len(wired_input_names) > len(non_constant_wf_inputs):
             raise ValueError("Too many input wirings provided!")
@@ -166,16 +184,31 @@ class WorkflowExecutionInput(BaseModel):
 
         for wf_output in workflow.outputs:
             if not wf_output.name in wired_output_names:
+                # Automatically add missing output wirings (make them direct provisioning outputs)
                 wiring.output_wirings.append(
                     OutputWiring(
                         workflow_output_name=wf_output.name,
                         adapter_id=1,
+                        type=wf_output.type,
                     )
                 )
-        # Automatically add missing wirings for outputs (make them direct provisioning outputs)
+
+            matched_output_wiring = [
+                output_wiring
+                for output_wiring in wiring.output_wirings
+                if output_wiring.name == wf_output.name
+            ][0]
+            if wf_output.type != matched_output_wiring.type:
+                raise ValueError(
+                    f"The type '{matched_output_wiring.type}' of "
+                    f"the input wiring '{matched_output_wiring.name}' "
+                    f"does not match the type '{wf_output.type}' "
+                    f"of the corresponding workflow input '{wf_output.name}'!"
+                )
 
         if len(wired_output_names) > len(workflow.outputs):
             raise ValueError("Too many output wirings provided!")
+
         return values
 
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types

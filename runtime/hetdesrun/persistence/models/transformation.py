@@ -65,12 +65,16 @@ class TransformationRevision(BaseModel):
     description: ValidStr = ValidStr("")
     category: NonEmptyValidStr = Field(
         "Other",
-        description='Category in which this is classified, i.e. the "drawer" in the User Interface.',
+        description=(
+            'Category in which this is classified, i.e. the "drawer" in the User Interface.'
+        ),
     )
     version_tag: ShortNonEmptyValidStr
     disabled_timestamp: Optional[datetime.datetime] = Field(
         None,
-        description="If the revision is DISABLED then this should be disable/deprecation timestamp.",
+        description=(
+            "If the revision is DISABLED then this should be disable/deprecation timestamp."
+        ),
         example=datetime.datetime.now(datetime.timezone.utc),
     )
     released_timestamp: Optional[datetime.datetime] = Field(
