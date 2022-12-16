@@ -182,14 +182,6 @@ class WiringFrontendDto(BaseModel):
             output_wirings=[ow.to_output_wiring() for ow in self.output_wirings],
         )
 
-    def to_workflow_wiring(self) -> WorkflowWiring:
-        return WorkflowWiring(
-            input_wirings=[wiring.to_input_wiring() for wiring in self.input_wirings],
-            output_wirings=[
-                wiring.to_output_wiring() for wiring in self.output_wirings
-            ],
-        )
-
     @classmethod
     def from_wiring(
         cls, wiring: WorkflowWiring, transformation_id: UUID

@@ -342,13 +342,13 @@ async def execute_workflow_revision(
     if job_id is None:
         exec_by_id = ExecByIdInput(
             id=id,
-            wiring=wiring_dto.to_workflow_wiring(),
+            wiring=wiring_dto.to_wiring(),
             run_pure_plot_operators=run_pure_plot_operators,
         )
     else:
         exec_by_id = ExecByIdInput(
             id=id,
-            wiring=wiring_dto.to_workflow_wiring(),
+            wiring=wiring_dto.to_wiring(),
             run_pure_plot_operators=run_pure_plot_operators,
             job_id=job_id,
         )
