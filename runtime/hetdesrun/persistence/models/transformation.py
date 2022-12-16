@@ -43,8 +43,14 @@ class TransformationRevision(BaseModel):
     together via the group id, and otherwise do not need to have anything in common, i.e. their
     name and their interface etc. can differ completely.
 
-    Revisions with state RELEASED are what makes execution reproducible - they cannot be edited any
-    more and only they can be instantiated as operators.
+    During the development of a transformation revision it has the state DRAFT and may go through
+    stages where it does not meet all requirements e.g. for execution. Therefore, some properties
+    are not validated for revisions in DRAFT state and in particular the test_wiring is not
+    validated for entities of this class, but instead in the context of execution.
+
+    Revisions with the state RELEASED are what makes the execution reproducible - they cannot be
+    edited anymore except for the two attributes test_wiring and documentation, and only they can
+    be instantiated as operators.
 
     Additionally RELEASED revisions cannot be deleted, but their state can be changed to
     DISABLED. DISABLED revisions cannot be instantiated as new operators anymore but existing
@@ -59,17 +65,17 @@ class TransformationRevision(BaseModel):
     description: ValidStr = ValidStr("")
     category: NonEmptyValidStr = Field(
         "Other",
-        description='Category in which this is classified, i.e. the "drawer" in the User Interface',
+        description='Category in which this is classified, i.e. the "drawer" in the User Interface.',
     )
     version_tag: ShortNonEmptyValidStr
     disabled_timestamp: Optional[datetime.datetime] = Field(
         None,
-        description="If the revision is DISABLED then this should be disable/deprecation timestamp",
+        description="If the revision is DISABLED then this should be disable/deprecation timestamp.",
         example=datetime.datetime.now(datetime.timezone.utc),
     )
     released_timestamp: Optional[datetime.datetime] = Field(
         None,
-        description="If the revision is RELEASED then this should be release timestamp",
+        description="If the revision is RELEASED then this should be release timestamp.",
         example=datetime.datetime.now(datetime.timezone.utc),
     )
     state: State = Field(
@@ -96,7 +102,7 @@ class TransformationRevision(BaseModel):
         ...,
         description=(
             "Code as string in case of type COMPONENT, "
-            "WorkflowContent in case of type WORKFLOW"
+            "WorkflowContent in case of type WORKFLOW."
         ),
     )
 
@@ -111,8 +117,9 @@ class TransformationRevision(BaseModel):
     test_wiring: WorkflowWiring = Field(
         ...,
         description=(
-            "The input and output wirings must match "
-            "the inputs and outputs of the io_interface"
+            "To enable execution the input and output wirings must match "
+            "the inputs and outputs of the io_interface, which is validated "
+            "in the scope of the execution."
         ),
     )
 
@@ -235,54 +242,6 @@ class TransformationRevision(BaseModel):
                 )
 
         return io_interface
-
-    @validator("test_wiring")
-    def test_wiring_fits_to_io_interface(
-        cls, test_wiring: WorkflowWiring, values: dict
-    ) -> WorkflowWiring:
-        try:
-            io_interface = values["io_interface"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot check if test_wiring fits to io_interface if the attribute "
-                "'io_interface' is missing!"
-            ) from e
-
-        if (
-            len(test_wiring.input_wirings) != len(io_interface.inputs)
-            and len(test_wiring.input_wirings) != 0
-        ):
-            raise ValueError(
-                "Number of transformation revision inputs does not match"
-                " number of inputs in test wiring!"
-            )
-        for input_wiring in test_wiring.input_wirings:
-            if input_wiring.workflow_input_name not in [
-                input.name for input in io_interface.inputs
-            ]:
-                raise ValueError(
-                    f"No input of the IO interface matches the "
-                    f"input wiring {input_wiring.workflow_input_name}!"
-                )
-
-        if (
-            len(test_wiring.output_wirings) != len(io_interface.outputs)
-            and len(test_wiring.output_wirings) != 0
-        ):
-            raise ValueError(
-                "Number of transformation revision outputs does not match"
-                " number of outputs in test wiring!"
-            )
-        for output_wiring in test_wiring.output_wirings:
-            if output_wiring.workflow_output_name not in [
-                output.name for output in io_interface.outputs
-            ]:
-                raise ValueError(
-                    f"No output of the IO interface matches the "
-                    f"output wiring {output_wiring.workflow_output_name}!"
-                )
-
-        return test_wiring
 
     def release(self) -> None:
         self.released_timestamp = datetime.datetime.now(datetime.timezone.utc)
