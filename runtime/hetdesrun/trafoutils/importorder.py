@@ -10,7 +10,7 @@ def order_for_importing(
     raise_on_missing_dependency: bool = False,
 ) -> List[TransformationRevision]:
     """Order an ensemble of trafo revs without filtering"""
-    all_allow_filter_params = FilterParams()
+    all_allow_filter_params = FilterParams(include_dependencies=False)
     return filter_and_order_trafos(
         transformation_revisions,
         all_allow_filter_params,

@@ -353,55 +353,65 @@ def test_multiple_select(clean_test_db_engine):
         assert len(results) == 2
 
         results = get_multiple_transformation_revisions(
-            FilterParams(state=State.RELEASED)
+            FilterParams(state=State.RELEASED, include_dependencies=False)
         )
         assert len(results) == 1
 
         results = get_multiple_transformation_revisions(
-            FilterParams(revision_group_id=tr_uuid_1)
+            FilterParams(revision_group_id=tr_uuid_1, include_dependencies=False)
         )
         assert len(results) == 2
 
         results = get_multiple_transformation_revisions(
-            FilterParams(type=Type.COMPONENT)
+            FilterParams(type=Type.COMPONENT, include_dependencies=False)
         )
         assert len(results) == 3
 
         results = get_multiple_transformation_revisions(
-            FilterParams(type=Type.WORKFLOW)
+            FilterParams(type=Type.WORKFLOW, include_dependencies=False)
         )
         assert len(results) == 0
 
         results = get_multiple_transformation_revisions(
-            FilterParams(category="Test category")
+            FilterParams(category="Test category", include_dependencies=False)
         )
-        assert len(results) == 2
-
-        results = get_multiple_transformation_revisions(FilterParams(names=["Test"]))
         assert len(results) == 2
 
         results = get_multiple_transformation_revisions(
-            FilterParams(ids=[tr_uuid_3, tr_uuid_2])
+            FilterParams(names=["Test"], include_dependencies=False)
         )
         assert len(results) == 2
 
-        results = get_multiple_transformation_revisions(FilterParams(ids=[]))
+        results = get_multiple_transformation_revisions(
+            FilterParams(ids=[tr_uuid_3, tr_uuid_2], include_dependencies=False)
+        )
+        assert len(results) == 2
+
+        results = get_multiple_transformation_revisions(
+            FilterParams(ids=[], include_dependencies=False)
+        )
         assert len(results) == 0
 
         results = get_multiple_transformation_revisions(
-            FilterParams(ids=[tr_uuid_3, tr_uuid_2], names=["Test"])
+            FilterParams(
+                ids=[tr_uuid_3, tr_uuid_2], names=["Test"], include_dependencies=False
+            )
         )
         assert len(results) == 1
 
         results = get_multiple_transformation_revisions(
-            FilterParams(category="Test category", state=State.RELEASED)
+            FilterParams(
+                category="Test category",
+                state=State.RELEASED,
+                include_dependencies=False,
+            )
         )
         assert len(results) == 1
 
         tr_object_3.deprecate()
         update_or_create_single_transformation_revision(tr_object_3)
         results = get_multiple_transformation_revisions(
-            FilterParams(include_deprecated=False)
+            FilterParams(include_deprecated=False, include_dependencies=False)
         )
         assert len(results) == 2
 
@@ -540,20 +550,28 @@ def test_multiple_select_unused(clean_test_db_engine):
         assert is_unused(tr_component_contained_not_only_in_deprecated.id) is False
 
         results = get_multiple_transformation_revisions(
-            FilterParams(ids=[tr_component_not_contained.id], unused=True)
-        )
-        assert len(results) == 1
-
-        results = get_multiple_transformation_revisions(
             FilterParams(
-                ids=[tr_component_contained_only_in_deprecated.id], unused=True
+                ids=[tr_component_not_contained.id],
+                unused=True,
+                include_dependencies=False,
             )
         )
         assert len(results) == 1
 
         results = get_multiple_transformation_revisions(
             FilterParams(
-                ids=[tr_component_contained_not_only_in_deprecated.id], unused=True
+                ids=[tr_component_contained_only_in_deprecated.id],
+                unused=True,
+                include_dependencies=False,
+            )
+        )
+        assert len(results) == 1
+
+        results = get_multiple_transformation_revisions(
+            FilterParams(
+                ids=[tr_component_contained_not_only_in_deprecated.id],
+                unused=True,
+                include_dependencies=False,
             )
         )
         assert len(results) == 0

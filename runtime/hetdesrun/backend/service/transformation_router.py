@@ -343,6 +343,53 @@ class TrafoUpdateProcessSummary(BaseModel):
     msg: str = Field("", description="details / error messages")
 
 
+class MultipleTrafosUpdateConfig(BaseModel):
+    """Config for updating multiple trafo revisions"""
+
+    allow_overwrite_released: bool = (
+        Field(
+            False,
+            description=(
+                "Warning: Setting this to True may destroy depending transformation revisions"
+                " and seriously limit reproducibility."
+            ),
+        ),
+    )
+    update_component_code: bool = (
+        Field(
+            True,
+            description=(
+                "Automatically updates component code to newest structure."
+                " This should be harmless for components created in hetida designer."
+            ),
+        ),
+    )
+    strip_wirings: bool = (
+        Field(
+            False,
+            description=(
+                "Whether test wirings should be removed before importing."
+                "This can be necessary if an adapter used in a test wiring is not "
+                "available on this system."
+            ),
+        ),
+    )
+    abort_on_error: bool = (
+        Field(
+            False,
+            description=(
+                "If updating/creating fails for some trafo revisions and this setting is true,"
+                " no attempt will be made to update/create the remaining trafo revs."
+                " Note that the order in which updating/creating happens may differ from"
+                " the ordering of the provided list since they are ordered by dependency"
+                " relation before trying to process them. So it may be difficult to determine."
+                " which trafos have been skipped / are missing and which have been successfully"
+                " processed. Note that already processed actions will not be reversed."
+            ),
+        ),
+    )
+
+
 @transformation_router.put(
     "",
     status_code=status.HTTP_207_MULTI_STATUS,
@@ -448,6 +495,13 @@ async def update_transformation_revisions(
         include_dependencies=include_dependencies,
     )
 
+    multi_import_config = MultipleTrafosUpdateConfig(
+        allow_overwrite_released=allow_overwrite_released,
+        update_component_code=update_component_code,
+        strip_wirings=strip_wirings,
+        abort_on_error=abort_on_error,
+    )
+
     trafos_to_process = filter_and_order_trafos(
         updated_transformation_revisions,
         filter_params,
@@ -476,15 +530,16 @@ async def update_transformation_revisions(
             transformation.version_tag,
             str(transformation.id),
         )
-        if strip_wirings:
+        if multi_import_config.strip_wirings:
             transformation.test_wiring = WorkflowWiring()
         try:
-            # TDOD: Which refactored function to call here?
+            # TODO: Which refactored function to call here?
+            # TODO: stripping wirings should happen in the actual function
             update_or_create_transformation_revision(
                 transformation,
-                directly_in_db=True,
-                allow_overwrite_released=allow_overwrite_released,
-                update_component_code=update_component_code,
+                strip_wiring=multi_import_config.strip_wirings,
+                allow_overwrite_released=multi_import_config.allow_overwrite_released,
+                update_component_code=multi_import_config.update_component_code,
             )
         except Exception as e:  # TODO: What exactly do we need to catch?
             success_per_trafo[transformation.id].status = UpdateProcessStatus.FAILED
@@ -497,7 +552,7 @@ async def update_transformation_revisions(
             logger.warning(msg)
             success_per_trafo[transformation.id].msg = msg
 
-            if abort_on_error:
+            if multi_import_config.abort_on_error:
                 abort_msg = (
                     "Aborting multiple update process due to error while updating trafo"
                     f" {transformation.name} with id {transformation.id}. Error was:\n{str(e)}"

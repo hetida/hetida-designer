@@ -416,7 +416,11 @@ def get_all_nested_transformation_revisions(
 
 def get_latest_revision_id(revision_group_id: UUID) -> UUID:
     revision_group_list = get_multiple_transformation_revisions(
-        FilterParams(state=State.RELEASED, revision_group_id=revision_group_id)
+        FilterParams(
+            state=State.RELEASED,
+            revision_group_id=revision_group_id,
+            include_dependencies=False,
+        )
     )
     if len(revision_group_list) == 0:
         msg = (

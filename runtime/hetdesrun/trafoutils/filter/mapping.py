@@ -116,12 +116,14 @@ def complete_trafo_filter_map(
     raise_on_missing_dependency: bool = False,
 ) -> Dict[UUID, bool]:
     filter_map = basic_trafo_filter_map(transformation_revisions, filter_params)
-    update_filter_for_dependencies(
-        filter_map,
-        ids_by_nesting_level,
-        {trafo.id: trafo for trafo in transformation_revisions},
-        raise_on_missing_dependency=raise_on_missing_dependency,
-    )
+
+    if filter_params.include_dependencies:
+        update_filter_for_dependencies(
+            filter_map,
+            ids_by_nesting_level,
+            {trafo.id: trafo for trafo in transformation_revisions},
+            raise_on_missing_dependency=raise_on_missing_dependency,
+        )
     # TODO: Should we also handle unused filter param?
     return filter_map
 

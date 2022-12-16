@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 def deprecate_all_but_latest_per_group(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(
-        params=FilterParams(state=State.RELEASED), directly_from_db=directly_in_db
+        params=FilterParams(state=State.RELEASED, include_dependencies=False),
+        directly_from_db=directly_in_db,
     )
 
     revision_group_ids: Set[UUID] = set()
@@ -32,7 +33,8 @@ def deprecate_all_but_latest_per_group(directly_in_db: bool = False) -> None:
 
 def delete_drafts(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(
-        params=FilterParams(state=State.DRAFT), directly_from_db=directly_in_db
+        params=FilterParams(state=State.DRAFT, include_dependencies=False),
+        directly_from_db=directly_in_db,
     )
 
     delete_transformation_revisions(tr_list, directly_in_db=directly_in_db)
@@ -40,7 +42,9 @@ def delete_drafts(directly_in_db: bool = False) -> None:
 
 def delete_unused_deprecated(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(
-        params=FilterParams(state=State.DISABLED, unused=True),
+        params=FilterParams(
+            state=State.DISABLED, include_dependencies=False, unused=True
+        ),
         directly_from_db=directly_in_db,
     )
 

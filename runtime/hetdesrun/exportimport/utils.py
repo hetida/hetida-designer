@@ -27,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_transformation_revisions(
-    params: FilterParams = FilterParams(), directly_from_db: bool = False
+    params: FilterParams = FilterParams(include_dependencies=False),
+    directly_from_db: bool = False,
 ) -> List[TransformationRevision]:
     logger.info(
         "Getting transformation revisions with " + repr(params) + " directly from db"
@@ -267,7 +268,11 @@ def deprecate_all_but_latest_in_group(
     )
 
     tr_list = get_transformation_revisions(
-        params=FilterParams(revision_group_id=revision_group_id, state=State.RELEASED),
+        params=FilterParams(
+            revision_group_id=revision_group_id,
+            state=State.RELEASED,
+            include_dependencies=False,
+        ),
         directly_from_db=directly_in_db,
     )
 

@@ -65,10 +65,7 @@ async def get_all_transformation_revisions(
     use GET /api/transformations/ instead
     """
 
-    params = FilterParams(
-        type=type,
-        state=state,
-    )
+    params = FilterParams(type=type, state=state, include_dependencies=False)
     logger.info("get all transformation revisions with %s", repr(params))
 
     try:

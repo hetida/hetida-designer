@@ -5,10 +5,10 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 from uuid import UUID, uuid4
 
-from pydantic import parse_file_as
+from pydantic import BaseModel, Field, parse_file_as
 
 from hetdesrun.component.load import (
     ComponentCodeImportError,
@@ -254,3 +254,87 @@ def load_trafos_from_trafo_list_json_file(
 
     trafo_revisions = parse_file_as(List[TransformationRevision], path)
     return trafo_revisions
+
+
+class ImportSource(BaseModel):
+    path: str
+    is_dir: bool
+    config_file: Optional[str]
+
+
+def get_import_sources(directory_path: str) -> Sequence[ImportSource]:
+    """Get all import sources inside a directory
+
+    Note: Does not parse/validate import sources.
+    """
+
+    import_sources = {}
+    for sub_element in os.listdir(directory_path):
+
+        sub_path = os.path.join(directory_path, sub_element)
+
+        if os.path.isdir(sub_path):
+
+            try:
+                existing_info = import_sources[sub_path]
+                existing_info["is_dir"] = True
+            except KeyError:
+                existing_info = {"is_dir": True, "config_file": None}
+
+            import_sources[sub_path] = existing_info
+
+        elif os.path.isfile(sub_path):
+
+            if sub_path.endswith(".config.json"):
+                original_path = sub_path.removesuffix(".config.json")
+                try:
+                    existing_info = import_sources[original_path]
+                    existing_info["config_file"] = sub_path
+                except KeyError:
+                    existing_info = {"is_dir": None, "config_file": sub_path}
+                import_sources[original_path] = existing_info
+
+            elif sub_path.endswith(".json"):
+
+                try:
+                    existing_info = import_sources[sub_path]
+                    existing_info["is_dir"] = False
+                except KeyError:
+                    existing_info = {"is_dir": False, "config_file": None}
+                import_sources[sub_path] = existing_info
+
+            else:
+                logger.warning(
+                    "Unknown file format in import directory %s: %s",
+                    directory_path,
+                    sub_path,
+                )
+
+    for target_path in import_sources:
+        if import_sources[target_path]["is_dir"] is None:
+            logger.warning(
+                "Found config file for target but no target: %s",
+                import_sources[target_path]["config_file"],
+            )
+        else:
+            yield ImportSource(
+                path=target_path,
+                is_dir=import_sources[target_path]["is_dir"],
+                config_file=import_sources[target_path]["config_file"],
+            )
+
+    return {
+        key: import_sources[key]
+        for key in import_sources
+        if import_sources[key]["is_dir"] is not None
+    }
+
+
+def load_import_source(import_source: ImportSource) -> List[TransformationRevision]:
+    if import_source.is_dir:
+        ...
+        return
+
+    # load from json file containing list of trafo revisions
+    ...
+    return

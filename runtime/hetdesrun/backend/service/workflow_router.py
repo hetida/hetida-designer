@@ -123,7 +123,7 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
     logger.info("get all workflows")
 
     transformation_revision_list = get_multiple_transformation_revisions(
-        FilterParams(type=Type.WORKFLOW)
+        FilterParams(type=Type.WORKFLOW, include_dependencies=False)
     )
 
     logger.info("got all workflows")
