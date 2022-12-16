@@ -24,7 +24,7 @@ async def test_wiring_with_generic_rest_input(
                 "ref_id": "thing_node_id",
                 "ref_id_type": "THINGNODE",
                 "ref_key": "number",
-                "type": "metadata(int)",
+                "type": "metadata(float)",
             }
         ]
 
@@ -33,7 +33,7 @@ async def test_wiring_with_generic_rest_input(
         resp_mock = mock.Mock()
         resp_mock.status_code = 200
         resp_mock.json = mock.Mock(
-            return_value={"key": "number", "value": 32, "dataType": "int"}
+            return_value={"key": "number", "value": 32, "dataType": "float"}
         )
         with mock.patch(
             "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_base_url",
