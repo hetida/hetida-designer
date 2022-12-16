@@ -165,12 +165,15 @@ class WorkflowExecutionInput(BaseModel):
             matched_input_wiring = [
                 input_wiring
                 for input_wiring in wiring.input_wirings
-                if input_wiring.name == wf_input.name
+                if input_wiring.workflow_input_name == wf_input.name
             ][0]
-            if wf_input.type != matched_input_wiring.type:
+            if (
+                matched_input_wiring.type is not None
+                and matched_input_wiring.type.value_datatype.name != wf_input.type
+            ):
                 raise ValueError(
-                    f"The type '{matched_input_wiring.type}' of "
-                    f"the input wiring '{matched_input_wiring.name}' "
+                    f"The type '{matched_input_wiring.type.value_datatype.name}' of "
+                    f"the input wiring '{matched_input_wiring.workflow_input_name}' "
                     f"does not match the type '{wf_input.type}' "
                     f"of the corresponding workflow input '{wf_input.name}'!"
                 )
@@ -189,19 +192,21 @@ class WorkflowExecutionInput(BaseModel):
                     OutputWiring(
                         workflow_output_name=wf_output.name,
                         adapter_id=1,
-                        type=wf_output.type,
                     )
                 )
 
             matched_output_wiring = [
                 output_wiring
                 for output_wiring in wiring.output_wirings
-                if output_wiring.name == wf_output.name
+                if output_wiring.workflow_output_name == wf_output.name
             ][0]
-            if wf_output.type != matched_output_wiring.type:
+            if (
+                matched_output_wiring.type is not None
+                and matched_output_wiring.type.value_datatype.name != wf_output.type
+            ):
                 raise ValueError(
-                    f"The type '{matched_output_wiring.type}' of "
-                    f"the input wiring '{matched_output_wiring.name}' "
+                    f"The type '{matched_output_wiring.type.value_datatype.name}' of "
+                    f"the input wiring '{matched_output_wiring.workflow_output_name}' "
                     f"does not match the type '{wf_output.type}' "
                     f"of the corresponding workflow input '{wf_output.name}'!"
                 )
