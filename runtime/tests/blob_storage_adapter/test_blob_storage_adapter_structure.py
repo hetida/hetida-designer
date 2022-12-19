@@ -1,3 +1,4 @@
+from typing import List
 from unittest import mock
 
 import pytest
@@ -13,6 +14,8 @@ from hetdesrun.adapters.blob_storage.exceptions import (
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
     BlobStorageStructureSource,
+    BucketName,
+    IdString,
     StructureThingNode,
 )
 from hetdesrun.adapters.blob_storage.structure import (
@@ -45,13 +48,63 @@ def test_blob_storage_get_thing_nodes_by_parent_id():
     assert len(thing_nodes_with_parent_bla) == 0
 
 
-def test_blob_storage_get_sources_by_parent_id():
-    sources_with_parent_i_ii = get_sources_by_parent_id("i-ii/E")
-    assert len(sources_with_parent_i_ii) == 1
-    assert sources_with_parent_i_ii[0].id == "i-ii/E_2022-01-02T14:23:18+00:00"
+source_list = [
+    BlobStorageStructureSource(
+        id="i-i/A_2022-01-02T14:23:18+00:00",
+        thingNodeId="i-i/A",
+        name="A - 2022-01-02 14:23:18+00:00",
+        path="i-i/A",
+        metadataKey="A - 2022-01-02 14:23:18+00:00",
+    ),
+    BlobStorageStructureSource(
+        id="i-i/A_2022-01-02T14:57:31+00:00",
+        thingNodeId="i-i/A",
+        name="A - 2022-01-02 14:57:31+00:00",
+        path="i-i/A",
+        metadataKey="A - 2022-01-02 14:57:31+00:00",
+    ),
+    BlobStorageStructureSource(
+        id="i-i/B_2022-01-02T14:25:56+00:00",
+        thingNodeId="i-i/B",
+        name="B - 2022-01-02 14:25:56+00:00",
+        path="i-i/B",
+        metadataKey="B - 2022-01-02 14:25:56+00:00",
+    ),
+    BlobStorageStructureSource(
+        id="i-i/D_2022-03-08T17:23:18+00:00",
+        thingNodeId="i-i/D",
+        name="D - 2022-03-08 17:23:18+00:00",
+        path="i-i/D",
+        metadataKey="D - 2022-03-08 17:23:18+00:00",
+    ),
+    BlobStorageStructureSource(
+        id="i-i/D_2022-04-02T13:28:29+00:00",
+        thingNodeId="i-i/D",
+        name="D - 2022-04-02 13:28:29+00:00",
+        path="i-i/D",
+        metadataKey="D - 2022-04-02 13:28:29+00:00",
+    ),
+    BlobStorageStructureSource(
+        id="i-ii/E_2022-01-02T14:23:18+00:00",
+        thingNodeId="i-ii/E",
+        name="E - 2022-01-02 14:23:18+00:00",
+        path="i-ii/E",
+        metadataKey="E - 2022-01-02 14:23:18+00:00",
+    ),
+]
 
-    sources_with_parent_bla = get_sources_by_parent_id("bla")
-    assert len(sources_with_parent_bla) == 0
+
+def test_blob_storage_get_sources_by_parent_id():
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        return_value=source_list,
+    ):
+        sources_with_parent_i_ii = get_sources_by_parent_id("i-ii/E")
+        assert len(sources_with_parent_i_ii) == 1
+        assert sources_with_parent_i_ii[0].id == "i-ii/E_2022-01-02T14:23:18+00:00"
+
+        sources_with_parent_bla = get_sources_by_parent_id("bla")
+        assert len(sources_with_parent_bla) == 0
 
 
 def test_blob_storage_get_sinks_by_parent_id():
@@ -64,23 +117,27 @@ def test_blob_storage_get_sinks_by_parent_id():
 
 
 def test_blob_storage_get_filtered_sources():
-    unfiltered_sources = get_filtered_sources(None)
-    assert len(unfiltered_sources) == 6
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        return_value=source_list,
+    ):
+        unfiltered_sources = get_filtered_sources(None)
+        assert len(unfiltered_sources) == 6
 
-    sources_filtered_by_d = get_filtered_sources("A")
-    assert len(sources_filtered_by_d) == 2
-    assert sources_filtered_by_d[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
-    assert sources_filtered_by_d[1].id == "i-i/A_2022-01-02T14:57:31+00:00"
+        sources_filtered_by_name = get_filtered_sources("A")
+        assert len(sources_filtered_by_name) == 2
+        assert sources_filtered_by_name[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
+        assert sources_filtered_by_name[1].id == "i-i/A_2022-01-02T14:57:31+00:00"
 
-    sources_filtered_by_date = get_filtered_sources("14")
-    assert len(sources_filtered_by_date) == 4
-    assert sources_filtered_by_date[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
-    assert sources_filtered_by_date[1].id == "i-i/A_2022-01-02T14:57:31+00:00"
-    assert sources_filtered_by_date[2].id == "i-i/B_2022-01-02T14:25:56+00:00"
-    assert sources_filtered_by_date[3].id == "i-ii/E_2022-01-02T14:23:18+00:00"
+        sources_filtered_by_date = get_filtered_sources("14")
+        assert len(sources_filtered_by_date) == 4
+        assert sources_filtered_by_date[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
+        assert sources_filtered_by_date[1].id == "i-i/A_2022-01-02T14:57:31+00:00"
+        assert sources_filtered_by_date[2].id == "i-i/B_2022-01-02T14:25:56+00:00"
+        assert sources_filtered_by_date[3].id == "i-ii/E_2022-01-02T14:23:18+00:00"
 
-    sources_filtered_by_bla = get_filtered_sources("bla")
-    assert len(sources_filtered_by_bla) == 0
+        sources_filtered_by_bla = get_filtered_sources("bla")
+        assert len(sources_filtered_by_bla) == 0
 
 
 def test_blob_storage_get_filtered_sinks():
@@ -122,12 +179,16 @@ def test_blob_storage_get_thing_node_by_id():
 
 
 def test_blob_storage_get_source_by_id():
-    source_by_id = get_source_by_id("i-i/A_2022-01-02T14:57:31+00:00")
-    assert source_by_id.name == "A - 2022-01-02 14:57:31+00:00"
-    assert source_by_id.thingNodeId == "i-i/A"
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        return_value=source_list,
+    ):
+        source_by_id = get_source_by_id("i-i/A_2022-01-02T14:57:31+00:00")
+        assert source_by_id.name == "A - 2022-01-02 14:57:31+00:00"
+        assert source_by_id.thingNodeId == "i-i/A"
 
-    with pytest.raises(SourceNotFound):
-        get_source_by_id("bla")
+        with pytest.raises(SourceNotFound):
+            get_source_by_id("bla")
 
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.create_sources",
@@ -185,19 +246,24 @@ def test_blob_storage_get_sink_by_id():
 
 
 def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
-    source_by_tn_id_and_md_key = get_source_by_thing_node_id_and_metadata_key(
-        thing_node_id="i-i/A", metadata_key="A - 2022-01-02 14:57:31+00:00"
-    )
-    assert source_by_tn_id_and_md_key.id == "i-i/A_2022-01-02T14:57:31+00:00"
-    assert source_by_tn_id_and_md_key.thingNodeId == "i-i/A"
-    assert source_by_tn_id_and_md_key.name == "A - 2022-01-02 14:57:31+00:00"
-    assert source_by_tn_id_and_md_key.path == "i-i/A"
-    assert source_by_tn_id_and_md_key.metadataKey == "A - 2022-01-02 14:57:31+00:00"
-
-    with pytest.raises(SourceNotFound):
-        get_source_by_thing_node_id_and_metadata_key(
-            thing_node_id="i-i/B", metadata_key="A - 2022-01-02 14:57:31+00:00"
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        return_value=source_list,
+    ):
+        source_by_tn_id_and_md_key = get_source_by_thing_node_id_and_metadata_key(
+            thing_node_id="i-i/A", metadata_key="A - 2022-01-02 14:57:31+00:00"
         )
+        assert source_by_tn_id_and_md_key.id == "i-i/A_2022-01-02T14:57:31+00:00"
+        assert source_by_tn_id_and_md_key.thingNodeId == "i-i/A"
+        assert source_by_tn_id_and_md_key.name == "A - 2022-01-02 14:57:31+00:00"
+        assert source_by_tn_id_and_md_key.path == "i-i/A"
+        assert source_by_tn_id_and_md_key.metadataKey == "A - 2022-01-02 14:57:31+00:00"
+
+        with pytest.raises(SourceNotFound):
+            get_source_by_thing_node_id_and_metadata_key(
+                thing_node_id="i-i/B", metadata_key="A - 2022-01-02 14:57:31+00:00"
+            )
+
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=[
