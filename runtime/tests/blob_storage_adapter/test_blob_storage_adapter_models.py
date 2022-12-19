@@ -135,17 +135,14 @@ def test_blob_storage_class_structure_thing_node():
         )
     assert "ensure this value has at most 63 characters" in str(exc_info.value)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as exc_info:
         # id does not consist of parentId and name combined with bucket name or object key separator
         StructureThingNode(id="i-ii/A", parentId="i-i", name="A", description="")
 
     assert "The id 'i-ii/A' of a thing node must consist of " in str(exc_info.value)
-    assert "its parent id 'None' connected by" in str(exc_info.value)
+    assert "its parent id 'i-i' connected by" in str(exc_info.value)
     assert f"one of the separators {BUCKET_NAME_DIR_SEPARATOR}" in str(exc_info.value)
-    assert "or {OBJECT_KEY_DIR_SEPARATOR} with its name" in str(exc_info.value)
-    assert "'IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII'!" in str(
-        exc_info.value
-    )
+    assert f"or {OBJECT_KEY_DIR_SEPARATOR} with its name 'A'!" in str(exc_info.value)
 
 
 def test_blob_storage_class_structure_source():
