@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict
 
 from hetdesrun.adapters.blob_storage.models import IdString
+from hetdesrun.adapters.blob_storage.service import get_resource
 from hetdesrun.adapters.blob_storage.structure import (
     get_sink_by_thing_node_id_and_metadata_key,
 )
@@ -31,6 +32,9 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
     )
 
     bucket_name, object_key = sink.to_bucket_name_and_object_key()
+    resource = get_resource()
+    bucket = resource.Bucket(bucket_name)
+    bucket.put_object(Key=object_key.string, Body=data)
     logger.info(
         "Write data %s for sink_id %s to storage into bucket %s as blob with key %s",
         str(data),

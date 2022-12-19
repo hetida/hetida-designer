@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict
 
 from hetdesrun.adapters.blob_storage.models import IdString
+from hetdesrun.adapters.blob_storage.service import get_resource
 from hetdesrun.adapters.blob_storage.structure import (
     get_source_by_thing_node_id_and_metadata_key,
 )
@@ -32,12 +33,17 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     source = get_source_by_thing_node_id_and_metadata_key(
         IdString(thing_node_id), metadata_key
     )
+
     logger.info("Get bucket name and object key from source with id %s", source.id)
     bucket_name, object_key = source.to_bucket_name_and_object_key()
+
     logger.info(
         "Load data for source id %s from storage in bucket %s under object key %s",
         source.id,
         bucket_name,
         object_key.string,
     )
-    return {source.id}
+    resource = get_resource()
+    blob = resource.Bucket(bucket_name).Object(object_key.string)
+    blob.get()
+    return blob
