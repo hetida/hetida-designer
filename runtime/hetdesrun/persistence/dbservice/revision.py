@@ -203,7 +203,9 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     transformation_revision = read_single_transformation_revision(transformation_id)
 
     if transformation_revision.type is not Type.WORKFLOW:
-        return False
+        msg = f"transformation revision {transformation_id} is not a workflow!"
+        logger.error(msg)
+        raise DBIntegrityError(msg)
 
     assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
 
@@ -221,18 +223,30 @@ def contains_deprecated(transformation_id: UUID) -> bool:
 
 def update_content(
     updated_transformation_revision: TransformationRevision,
+    existing_transformation_revision: Optional[TransformationRevision] = None,
 ) -> TransformationRevision:
     if updated_transformation_revision.type == Type.COMPONENT:
         updated_transformation_revision.content = update_code(
             updated_transformation_revision
         )
-    else:
+    elif existing_transformation_revision is not None:
+        assert isinstance(
+            existing_transformation_revision.content, WorkflowContent
+        )  # hint for mypy
+
+        existing_operator_ids: List[UUID] = []
+        for operator in existing_transformation_revision.content.operators:
+            existing_operator_ids.append(operator.id)
+
         assert isinstance(
             updated_transformation_revision.content, WorkflowContent
         )  # hint for mypy
 
         for operator in updated_transformation_revision.content.operators:
-            if operator.type == Type.WORKFLOW:
+            if (
+                operator.type == Type.WORKFLOW
+                and operator.id not in existing_operator_ids
+            ):
                 operator.state = (
                     State.DISABLED
                     if contains_deprecated(operator.transformation_id)
@@ -313,7 +327,9 @@ def update_or_create_single_transformation_revision(
             )
 
             if transformation_revision.type == Type.WORKFLOW or update_component_code:
-                transformation_revision = update_content(transformation_revision)
+                transformation_revision = update_content(
+                    transformation_revision, existing_transformation_revision
+                )
 
             update_tr(session, transformation_revision)
 
