@@ -97,7 +97,7 @@ class StructureThingNode(BaseModel):
 
     # pylint: disable=no-self-argument
     @validator("name")
-    def id_consists_of_parent_id_and_lowered_name(
+    def id_consists_of_parent_id_and_name(
         cls, name: ThingNodeName, values: dict
     ) -> ThingNodeName:
         try:
