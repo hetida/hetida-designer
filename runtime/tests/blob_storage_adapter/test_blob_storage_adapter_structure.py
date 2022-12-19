@@ -14,8 +14,8 @@ from hetdesrun.adapters.blob_storage.exceptions import (
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
     BlobStorageStructureSource,
-    BucketName,
     IdString,
+    StructureBucket,
     StructureThingNode,
 )
 from hetdesrun.adapters.blob_storage.structure import (

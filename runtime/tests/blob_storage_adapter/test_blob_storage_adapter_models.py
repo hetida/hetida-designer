@@ -18,37 +18,35 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     BucketNameInvalidError,
     HierarchyError,
     MissingHierarchyError,
-    ThingNodeInvalidError,
 )
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
-    BucketName,
     Category,
-    IdString,
     ObjectKey,
+    StructureBucket,
     StructureThingNode,
-    ThingNodeName,
     find_duplicates,
 )
 
 
-@pytest.mark.skip("ConstrainedStr does seem to not behave as expected")
-def test_blob_storage_class_bucket_name():
-    BucketName("i")
+def test_blob_storage_class_structure_bucket():
+    StructureBucket(name="iii")
 
     with pytest.raises(ValidationError):
         # shorter than min_length
-        BucketName("")
+        StructureBucket(name="ii")
 
     with pytest.raises(ValidationError):
         # violates regex
-        BucketName("I")
+        StructureBucket(name="III")
 
     with pytest.raises(ValidationError):
         # longer than max_length
-        BucketName("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
+        StructureBucket(
+            name="iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
+        )
 
 
 def test_blob_storage_class_object_key():
@@ -91,7 +89,7 @@ def test_blob_storage_class_object_key():
     object_key_from_string = ObjectKey.from_string(object_key_from_name.string)
     assert object_key_from_name == object_key_from_string
 
-    thing_node_id = object_key.to_thing_node_id(bucket_name="i-ii")
+    thing_node_id = object_key.to_thing_node_id(bucket=StructureBucket(name="i-ii"))
     assert thing_node_id == "i-ii/A"
 
     with pytest.raises(ValueError) as exc_info:
@@ -163,9 +161,11 @@ def test_blob_storage_class_structure_source():
     assert source.visible == True
     assert source.filters == {}
 
-    src_bucket_name, src_object_key = source.to_bucket_name_and_object_key()
-    src_from_bkt_and_ok = BlobStorageStructureSource.from_bucket_name_and_object_key(
-        bucket_name=src_bucket_name, object_key=src_object_key
+    src_bucket_name, src_object_key = source.to_structure_bucket_and_object_key()
+    src_from_bkt_and_ok = (
+        BlobStorageStructureSource.from_structure_bucket_and_object_key(
+            bucket=src_bucket_name, object_key=src_object_key
+        )
     )
     assert src_from_bkt_and_ok == source
 
@@ -184,20 +184,20 @@ def test_blob_storage_class_structure_source():
     )
 
     # TODO: make classes inheriting from ConstrainedStr raise errors!
-    # with pytest.raises(ValidationError) as exc_info:
-    #     # invalid id due to bucket name part invalid
-    #     BlobStorageStructureSource(
-    #         id="I-ii/A_2022-01-02T14:23:18+00:00",
-    #         thingNodeId="i-ii/A",
-    #         name="A - 2022-01-02 14:23:18+00:00",
-    #         path="i-ii/A",
-    #         metadataKey="A - 2022-01-02 14:23:18+00:00",
-    #     )
+    with pytest.raises(ValidationError) as exc_info:
+        # invalid id due to bucket name part invalid
+        BlobStorageStructureSource(
+            id="I-ii/A_2022-01-02T14:23:18+00:00",
+            thingNodeId="i-ii/A",
+            name="A - 2022-01-02 14:23:18+00:00",
+            path="i-ii/A",
+            metadataKey="A - 2022-01-02 14:23:18+00:00",
+        )
 
-    # assert "The first part 'I-ii'" in str(exc_info.value)
-    # assert "of the source id 'i-ii/A2022-01-02T14:23:18+00:00'" in str(exc_info.value)
-    # assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
-    # assert "must correspond to a bucket name!" in str(exc_info.value)
+    assert "The first part 'I-ii'" in str(exc_info.value)
+    assert "of the source id 'I-ii/A_2022-01-02T14:23:18+00:00'" in str(exc_info.value)
+    assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
+    assert "must correspond to a bucket name!" in str(exc_info.value)
 
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to object key part invalid
@@ -327,8 +327,8 @@ def test_blob_storage_class_structure_sink():
     assert sink.visible == True
     assert sink.filters == {}
 
-    snk_bucket_name, snk_object_key = sink.to_bucket_name_and_object_key()
-    assert snk_bucket_name == "i-ii"
+    snk_bucket, snk_object_key = sink.to_structure_bucket_and_object_key()
+    assert snk_bucket.name == "i-ii"
     assert snk_object_key.name == "A"
 
     sink_from_thing_node = BlobStorageStructureSink.from_thing_node(
@@ -356,21 +356,20 @@ def test_blob_storage_class_structure_sink():
         exc_info.value
     )
 
-    # TODO: make classes inheriting from ConstrainedStr raise errors!
-    # with pytest.raises(ValidationError) as exc_info:
-    #     # invalid id due to bucket name part invalid
-    #     BlobStorageStructureSink(
-    #         id="I-ii/A_next",
-    #         thingNodeId="i-ii/A",
-    #         name="A - Next Object",
-    #         path="i-ii/A",
-    #         metadataKey="A - Next Object",
-    #     )
+    with pytest.raises(ValidationError) as exc_info:
+        # invalid id due to bucket name part invalid
+        BlobStorageStructureSink(
+            id="I-ii/A_next",
+            thingNodeId="i-ii/A",
+            name="A - Next Object",
+            path="i-ii/A",
+            metadataKey="A - Next Object",
+        )
 
-    # assert "The first part 'I-ii'" in str(exc_info.value)
-    # assert "of the sink id 'i-ii/A_next'" in str(exc_info.value)
-    # assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
-    # assert "must correspond to a bucket name!" in str(exc_info.value)
+    assert "The first part 'I-ii'" in str(exc_info.value)
+    assert "of the sink id 'I-ii/A_next'" in str(exc_info.value)
+    assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
+    assert "must correspond to a bucket name!" in str(exc_info.value)
 
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to object key part invalid
@@ -503,11 +502,11 @@ def test_blob_storage_class_category():
     assert thing_node_from_category.description == "Category"
 
     thing_nodes: List[StructureThingNode] = []
-    bucket_names: List[BucketName] = []
+    bucket_names: List[StructureBucket] = []
     sinks: List[BlobStorageStructureSink] = []
     category.create_structure(
         thing_nodes=thing_nodes,
-        bucket_names=bucket_names,
+        buckets=bucket_names,
         sinks=sinks,
         object_key_depth=1,
         parent_id="i",
@@ -523,7 +522,7 @@ def test_blob_storage_class_category():
     assert thing_nodes[2].parentId == "i-i"
     assert thing_nodes[2].name == "B"
     assert len(bucket_names) == 1
-    assert bucket_names[0] == BucketName("i-i")
+    assert bucket_names[0] == StructureBucket(name="i-i")
     assert len(sinks) == 2
     assert sinks[0].id == "i-i/A_next"
     assert sinks[0].thingNodeId == "i-i/A"
@@ -533,7 +532,6 @@ def test_blob_storage_class_category():
     assert sinks[1].name == "B - Next Object"
 
 
-@pytest.mark.skip("ConstrainedStr does seem to not behave as expected")
 def test_blob_storage_category_create_structure_too_long_bucket_name():
     category = Category(
         **{
@@ -552,16 +550,22 @@ def test_blob_storage_category_create_structure_too_long_bucket_name():
     )
 
     thing_nodes: List[StructureThingNode] = []
-    bucket_names: List[BucketName] = []
+    bucket_names: List[StructureBucket] = []
     sinks: List[BlobStorageStructureSink] = []
-    with pytest.raises(ValidationError):
+    with pytest.raises(BucketNameInvalidError) as exc_info:
         category.create_structure(
             thing_nodes=thing_nodes,
-            bucket_names=bucket_names,
+            buckets=bucket_names,
             sinks=sinks,
             object_key_depth=1,
             parent_id=None,
         )
+
+    assert "Validation Error for transformation of" in str(exc_info.value)
+    assert "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii-iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" in str(
+        exc_info.value
+    )
+    assert "to BucketName" in str(exc_info.value)
 
 
 def test_blob_storage_models_find_duplicates():
@@ -629,7 +633,7 @@ def test_blob_storage_class_adapter_hierarchy():
     )
 
     thing_nodes = adapter_hierarchy.thing_nodes
-    bucket_names = adapter_hierarchy.bucket_names
+    bucket_names = adapter_hierarchy.structure_buckets
     sinks = adapter_hierarchy.sinks
 
     assert len(thing_nodes) == 11
@@ -638,7 +642,7 @@ def test_blob_storage_class_adapter_hierarchy():
 
     hierarchy_from_file = AdapterHierarchy.from_file()
     thing_nodes_from_file = hierarchy_from_file.thing_nodes
-    bucket_names_from_file = hierarchy_from_file.bucket_names
+    bucket_names_from_file = hierarchy_from_file.structure_buckets
     sinks_from_file = hierarchy_from_file.sinks
 
     assert len(thing_nodes_from_file) == 11
@@ -650,40 +654,8 @@ def test_blob_storage_class_adapter_hierarchy():
         AdapterHierarchy.from_file("demodata/not_there.json")
 
 
-@pytest.mark.skip("Error message not in log")
-def test_blob_storage_class_adapter_hierarchy_with_thing_node_invalid_error(caplog):
+def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error():
     object_key_depth = 1
-    structure = [
-        Category(
-            **{
-                "name": "I",
-                "description": "Super Category",
-                "substructure": [
-                    {
-                        "name": "i",
-                        "description": "Category",
-                        "substructure": [
-                            {"name": "C", "description": "Subcategory"},
-                        ],
-                    },
-                ],
-            }
-        )
-    ]
-    with caplog.at_level(logging.ERROR):
-        caplog.clear()
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.models.Category.to_thing_node",
-            side_effect=ThingNodeInvalidError,
-        ):
-            AdapterHierarchy(object_key_depth=object_key_depth, structure=structure)
-
-        assert "ValidationError for transformation of category " in caplog.text
-
-
-@pytest.mark.skip("ConstrainedStr does seem to not behave as expected")
-def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error(caplog):
-    object_key_depth = 2
     structure = [
         Category(
             **{
@@ -701,15 +673,21 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error(caplog):
             }
         )
     ]
-    with caplog.at_level(logging.INFO):
-        caplog.clear()
-        with pytest.raises(BucketNameInvalidError):
 
-            AdapterHierarchy(object_key_depth=object_key_depth, structure=structure)
-        assert (
-            "ValidationError for transformation of "
-            "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii-iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii to BucketName"
-        ) in caplog.text
+    adapter_hierarchy = AdapterHierarchy(
+        object_key_depth=object_key_depth, structure=structure
+    )
+
+    with pytest.raises(BucketNameInvalidError) as exc_info:
+        adapter_hierarchy.structure_buckets
+
+    assert "Validation Error for transformation of StructureThingNode " in str(
+        exc_info.value
+    )
+    assert "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii-iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" in str(
+        exc_info.value
+    )
+    assert "to BucketName" in str(exc_info.value)
 
 
 def test_blob_storage_adapter_hierarchy_with_structure_invalid_error():
@@ -745,7 +723,7 @@ def test_blob_storage_adapter_hierarchy_with_duplicates():
         structure=[
             Category(
                 **{
-                    "name": "I",
+                    "name": "III",
                     "description": "Super Category",
                     "substructure": [
                         {
@@ -757,7 +735,7 @@ def test_blob_storage_adapter_hierarchy_with_duplicates():
             ),
             Category(
                 **{
-                    "name": "i",
+                    "name": "iii",
                     "description": "Super Category",
                     "substructure": [
                         {
@@ -770,7 +748,7 @@ def test_blob_storage_adapter_hierarchy_with_duplicates():
         ],
     )
     with pytest.raises(HierarchyError) as exc_info:
-        bucket_names = adapter_hierarchy.bucket_names
+        adapter_hierarchy.structure_buckets
     assert "The bucket names generated from the config file are not unique!" in str(
         exc_info.value
     )

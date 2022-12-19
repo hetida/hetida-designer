@@ -31,14 +31,14 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
         IdString(thing_node_id), metadata_key
     )
 
-    bucket_name, object_key = sink.to_bucket_name_and_object_key()
+    structure_bucket, object_key = sink.to_structure_bucket_and_object_key()
     resource = get_resource()
-    bucket = resource.Bucket(bucket_name)
+    bucket = resource.Bucket(structure_bucket.name)
     bucket.put_object(Key=object_key.string, Body=data)
     logger.info(
         "Write data %s for sink_id %s to storage into bucket %s as blob with key %s",
         str(data),
         thing_node_id,
-        bucket_name,
+        structure_bucket.name,
         object_key.string,
     )

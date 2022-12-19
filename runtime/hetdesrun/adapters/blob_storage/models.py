@@ -29,7 +29,7 @@ class ThingNodeName(ConstrainedStr):
 class BucketName(ConstrainedStr):
     min_length = 3
     max_length = 63
-    regex = re.compile(r"^[a-z0-9]+$")
+    regex = re.compile(rf"^[a-z0-9{BUCKET_NAME_DIR_SEPARATOR}]+$")
 
 
 class IdString(ConstrainedStr):
@@ -40,6 +40,13 @@ class IdString(ConstrainedStr):
             rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+$"
         )
     )
+
+
+class StructureBucket(BaseModel):
+    name: BucketName
+
+    class Config:
+        frozen = True
 
 
 class ObjectKey(BaseModel):
@@ -57,7 +64,6 @@ class ObjectKey(BaseModel):
     @classmethod
     def from_name(cls, name: IdString) -> "ObjectKey":
         now = datetime.now(timezone.utc).replace(microsecond=0)
-        print(name + IDENTIFIER_SEPARATOR + now.isoformat(timespec="seconds"))
         return ObjectKey(
             string=name + IDENTIFIER_SEPARATOR + now.isoformat(),
             name=name,
@@ -79,8 +85,8 @@ class ObjectKey(BaseModel):
             time=datetime.fromisoformat(timestring).replace(tzinfo=timezone.utc),
         )
 
-    def to_thing_node_id(self, bucket_name: BucketName) -> IdString:
-        return IdString(bucket_name + OBJECT_KEY_DIR_SEPARATOR + self.name)
+    def to_thing_node_id(self, bucket: StructureBucket) -> IdString:
+        return IdString(bucket.name + OBJECT_KEY_DIR_SEPARATOR + self.name)
 
 
 class InfoResponse(BaseModel):
@@ -143,7 +149,7 @@ class BlobStorageStructureSource(BaseModel):
             )
         bucket_name, object_key_string = id.split(sep="/", maxsplit=1)
         try:
-            BucketName(bucket_name)
+            StructureBucket(name=bucket_name)
         except ValidationError as e:
             raise ValueError(
                 f"The first part '{bucket_name}' of the source id '{id}' "
@@ -247,28 +253,28 @@ class BlobStorageStructureSource(BaseModel):
         return metadataKey
 
     @classmethod
-    def from_bucket_name_and_object_key(
-        cls, bucket_name: BucketName, object_key: ObjectKey
+    def from_structure_bucket_and_object_key(
+        cls, bucket: StructureBucket, object_key: ObjectKey
     ) -> "BlobStorageStructureSource":
         name = (
             object_key.name
             + LEAF_NAME_SEPARATOR
             + object_key.time.astimezone(timezone.utc).isoformat(sep=" ")
         )
-        thing_node_id = object_key.to_thing_node_id(bucket_name)
+        thing_node_id = object_key.to_thing_node_id(bucket)
         return BlobStorageStructureSource(
-            id=bucket_name + OBJECT_KEY_DIR_SEPARATOR + object_key.string,
+            id=bucket.name + OBJECT_KEY_DIR_SEPARATOR + object_key.string,
             thingNodeId=thing_node_id,
             name=name,
             path=thing_node_id,
             metadataKey=name,
         )
 
-    def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
+    def to_structure_bucket_and_object_key(self) -> Tuple[StructureBucket, ObjectKey]:
         bucket_name_string, object_key_string = self.id.split(
             sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
         )
-        return BucketName(bucket_name_string), ObjectKey.from_string(
+        return StructureBucket(name=bucket_name_string), ObjectKey.from_string(
             IdString(object_key_string)
         )
 
@@ -297,13 +303,13 @@ class BlobStorageStructureSink(BaseModel):
             raise ValueError(
                 f"The sink id '{id}' must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'!"
             )
-        bucket_name = id.split(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[0]
+        bucket_name_string = id.split(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[0]
         try:
-            BucketName(bucket_name)
+            StructureBucket(name=bucket_name_string)
         except ValidationError as e:
             raise ValueError(
-                f"The first part '{bucket_name}' of the sink id '{id}' "
-                "before the first '{OBJECT_KEY_DIR_SEPARATOR}' must "
+                f"The first part '{bucket_name_string}' of the sink id '{id}' "
+                f"before the first '{OBJECT_KEY_DIR_SEPARATOR}' must "
                 "correspond to a bucket name!\nBut it does not:\n" + str(e)
             ) from e
 
@@ -414,11 +420,11 @@ class BlobStorageStructureSink(BaseModel):
             metadataKey=thing_node.name + LEAF_NAME_SEPARATOR + SINK_NAME_ENDING,
         )
 
-    def to_bucket_name_and_object_key(self) -> Tuple[BucketName, ObjectKey]:
+    def to_structure_bucket_and_object_key(self) -> Tuple[StructureBucket, ObjectKey]:
         bucket_name_string, object_key_name = self.thingNodeId.split(
             sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
         )
-        return BucketName(bucket_name_string), ObjectKey.from_name(
+        return StructureBucket(name=bucket_name_string), ObjectKey.from_name(
             IdString(object_key_name)
         )
 
@@ -472,7 +478,7 @@ class Category(BaseModel):
     def create_structure(
         self,
         thing_nodes: List[StructureThingNode],
-        bucket_names: List[BucketName],
+        buckets: List[StructureBucket],
         sinks: List[BlobStorageStructureSink],
         object_key_depth: int,
         parent_id: Optional[IdString],
@@ -487,17 +493,18 @@ class Category(BaseModel):
 
         if self.get_depth() == object_key_depth + 1:
             try:
-                bucket_names.append(BucketName(thing_node.id))
+                buckets.append(StructureBucket(name=thing_node.id))
             except ValidationError as error:
                 raise BucketNameInvalidError(
-                    f"Validation Error for transformation of {thing_node.id} to BucketName."
+                    f"Validation Error for transformation of StructureThingNode "
+                    f"{thing_node.id} to BucketName:\n{error}"
                 ) from error
 
         if self.substructure is not None and len(self.substructure) != 0:
             # pylint: disable=not-an-iterable
             for category in self.substructure:
                 category.create_structure(
-                    thing_nodes, bucket_names, sinks, object_key_depth, thing_node.id
+                    thing_nodes, buckets, sinks, object_key_depth, thing_node.id
                 )
         else:  # category.substructure is None or len(category.substructure) == 0
             sink = BlobStorageStructureSink.from_thing_node(thing_node)
@@ -518,9 +525,11 @@ def find_duplicates(item_list: List) -> List:
 @cache
 def create_blob_storage_adapter_structure_objects_from_hierarchy(
     object_key_depth: int, structure: Tuple[Category, ...]
-) -> Tuple[List[StructureThingNode], List[BucketName], List[BlobStorageStructureSink]]:
+) -> Tuple[
+    List[StructureThingNode], List[StructureBucket], List[BlobStorageStructureSink]
+]:
     thing_nodes: List[StructureThingNode] = []
-    bucket_names: List[BucketName] = []
+    bucket_names: List[StructureBucket] = []
     sinks: List[BlobStorageStructureSink] = []
     for category in structure:
         category.create_structure(
@@ -579,7 +588,7 @@ class AdapterHierarchy(BaseModel):
     def create_structure(
         self,
     ) -> Tuple[
-        List[StructureThingNode], List[BucketName], List[BlobStorageStructureSink]
+        List[StructureThingNode], List[StructureBucket], List[BlobStorageStructureSink]
     ]:
         return create_blob_storage_adapter_structure_objects_from_hierarchy(
             object_key_depth=self.object_key_depth, structure=self.structure
@@ -591,16 +600,16 @@ class AdapterHierarchy(BaseModel):
         return thing_nodes
 
     @cached_property
-    def bucket_names(self) -> List[BucketName]:
-        _, bucket_names, _ = self.create_structure()
-        if len(bucket_names) != len(set(bucket_names)):
+    def structure_buckets(self) -> List[StructureBucket]:
+        _, buckets, _ = self.create_structure()
+        if len(buckets) != len(set(buckets)):
             msg = (
                 "The bucket names generated from the config file are not unique!\n"
                 "They contain the following duplicates: "
-                + ", ".join(duplicate for duplicate in find_duplicates(bucket_names))
+                + ", ".join(duplicate.name for duplicate in find_duplicates(buckets))
             )
             raise HierarchyError(msg)
-        return bucket_names
+        return buckets
 
     @cached_property
     def sinks(self) -> List[BlobStorageStructureSink]:

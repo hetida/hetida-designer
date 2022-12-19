@@ -14,10 +14,6 @@ class MissingHierarchyError(HierarchyError):
     pass
 
 
-class ThingNodeInvalidError(HierarchyError):
-    pass
-
-
 class BucketNameInvalidError(HierarchyError):
     pass
 

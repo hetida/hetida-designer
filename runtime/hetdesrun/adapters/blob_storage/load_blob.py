@@ -35,15 +35,15 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     )
 
     logger.info("Get bucket name and object key from source with id %s", source.id)
-    bucket_name, object_key = source.to_bucket_name_and_object_key()
+    structure_bucket, object_key = source.to_structure_bucket_and_object_key()
 
     logger.info(
         "Load data for source id %s from storage in bucket %s under object key %s",
         source.id,
-        bucket_name,
+        structure_bucket.name,
         object_key.string,
     )
     resource = get_resource()
-    blob = resource.Bucket(bucket_name).Object(object_key.string)
+    blob = resource.Bucket(structure_bucket.name).Object(object_key.string)
     blob.get()
     return blob
