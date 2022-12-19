@@ -7,6 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from hetdesrun.adapters.blob_storage import (
+    BUCKET_NAME_DIR_SEPARATOR,
     IDENTIFIER_SEPARATOR,
     LEAF_NAME_SEPARATOR,
     OBJECT_KEY_DIR_SEPARATOR,
@@ -34,25 +35,6 @@ from hetdesrun.adapters.blob_storage.models import (
 
 
 @pytest.mark.skip("ConstrainedStr does seem to not behave as expected")
-def test_blob_storage_class_thing_node_name():
-    ThingNodeName("I")
-
-    with pytest.raises(ValidationError):
-        # shorter than min_length
-        ThingNodeName("")
-
-    with pytest.raises(ValidationError):
-        # violates regex
-        ThingNodeName("ä")
-
-    with pytest.raises(ValidationError):
-        # longer than max_length
-        ThingNodeName(
-            "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
-        )
-
-
-@pytest.mark.skip("ConstrainedStr does seem to not behave as expected")
 def test_blob_storage_class_bucket_name():
     BucketName("i")
 
@@ -67,19 +49,6 @@ def test_blob_storage_class_bucket_name():
     with pytest.raises(ValidationError):
         # longer than max_length
         BucketName("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
-
-
-@pytest.mark.skip("ConstrainedStr does seem to not behave as expected")
-def test_blob_storage_class_id_string():
-    IdString("i-ii/A_0123")
-
-    with pytest.raises(ValidationError):
-        # shorter than min_length
-        IdString("")
-
-    with pytest.raises(ValidationError):
-        # violates regex
-        IdString("~")
 
 
 def test_blob_storage_class_object_key():
@@ -130,6 +99,52 @@ def test_blob_storage_class_object_key():
     assert (
         f"not a valid ObjectKey string, because it contains no '{IDENTIFIER_SEPARATOR}'"
         in str(exc_info.value)
+    )
+
+
+def test_blob_storage_class_structure_thing_node():
+    StructureThingNode(id="i-ii", parentId="i", name="II", description="")
+    StructureThingNode(id="i-ii/A", parentId="i-ii", name="A", description="")
+
+    with pytest.raises(ValidationError) as exc_info:
+        # ThingNodeName shorter than min_length
+        StructureThingNode(id="i-ii/A", name="", description="")
+    assert "ensure this value has at least 1 characters" in str(exc_info.value)
+
+    with pytest.raises(ValidationError) as exc_info:
+        # IdString shorter than min_length
+        StructureThingNode(id="", name="A", description="")
+    assert "ensure this value has at least 1 characters" in str(exc_info.value)
+
+    with pytest.raises(ValidationError) as exc_info:
+        # ThingNodeName violates regex
+        StructureThingNode(id="i-ii/A", name="ä", description="")
+    assert 'string does not match regex "^[a-zA-Z0-9]+$"' in str(exc_info.value)
+
+    with pytest.raises(ValidationError) as exc_info:
+        # IdString violates regex
+        StructureThingNode(id="~", name="A", description="")
+    assert 'string does not match regex "^[a-zA-Z0-9:+\\-/_-]+$"' in str(exc_info.value)
+
+    with pytest.raises(ValidationError) as exc_info:
+        # ThingNodeName longer than max_length
+        StructureThingNode(
+            id="i-ii/A",
+            name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+            description="",
+        )
+    assert "ensure this value has at most 63 characters" in str(exc_info.value)
+
+    with pytest.raises(ValidationError):
+        # id does not consist of parentId and name combined with bucket name or object key separator
+        StructureThingNode(id="i-ii/A", parentId="i-i", name="A", description="")
+
+    assert "The id 'i-ii/A' of a thing node must consist of " in str(exc_info.value)
+    assert "its parent id 'None' connected by" in str(exc_info.value)
+    assert f"one of the separators {BUCKET_NAME_DIR_SEPARATOR}" in str(exc_info.value)
+    assert "or {OBJECT_KEY_DIR_SEPARATOR} with its name" in str(exc_info.value)
+    assert "'IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII'!" in str(
+        exc_info.value
     )
 
 
