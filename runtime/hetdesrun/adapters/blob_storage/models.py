@@ -13,6 +13,7 @@ from hetdesrun.adapters.blob_storage import (
     SINK_ID_ENDING,
     SINK_NAME_ENDING,
 )
+from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import (
     BucketNameInvalidError,
     HierarchyError,
@@ -619,7 +620,7 @@ class AdapterHierarchy(BaseModel):
     @classmethod
     def from_file(
         cls,
-        path: str = "demodata/blob_storage_adapter_hierarchy.json",
+        path: str = get_blob_adapter_config().adapter_hierarchy_location,
     ) -> "AdapterHierarchy":
         try:
             return AdapterHierarchy.parse_file(path)

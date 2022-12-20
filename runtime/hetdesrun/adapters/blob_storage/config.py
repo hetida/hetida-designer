@@ -4,6 +4,10 @@ from pydantic import BaseSettings, Field
 class BlobStorageAdapterConfig(BaseSettings):
     """Configuration for blob storage adapter"""
 
+    adapter_hierarchy_location: str = Field(
+        "/mount/blob_storage_adapter_hierarchy.json",
+        env="BLOB_STORAGE_HIERARCHY_LOCATION",
+    )
     client_id: str = Field("", env="BLOB_STORAGE_IDENTITY_OPENID_CLIENT_ID")
     client_secret: str = Field("", env="BLOB_STORAGE_IDENTITY_OPENID_CLIENT_SECRET")
     redirect_uri: str = Field("", env="BLOB_STORAGE_IDENTITY_OPENID_REDIRECT_URI")
