@@ -6,7 +6,6 @@ from uuid import uuid4
 
 import boto3
 import requests
-from botocore.client import Config
 from fastapi import FastAPI
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
@@ -47,7 +46,7 @@ def homepage() -> str:
     return text % make_authorization_url()
 
 
-@app.post("/oauth2/callback")
+@app.post("/oauth2_callback")
 def callback(error: Optional[str] = None, code: Optional[str] = None) -> str:
     if error is not None:
         logger.error("Error: %s", error)
@@ -81,14 +80,12 @@ def callback(error: Optional[str] = None, code: Optional[str] = None) -> str:
         DurationSeconds=3600,
     )
 
-    s3_resource = boto3.resource(
-        "s3",
-        endpoint_url=get_blob_adapter_config().endpoint_url,
-        aws_access_key_id=response["Credentials"]["AccessKeyId"],
-        aws_secret_access_key=response["Credentials"]["SecretAccessKey"],
-        aws_session_token=response["Credentials"]["SessionToken"],
-        config=Config(signature_version="s3v4"),
-        region_name=get_blob_adapter_config().region_name,
-    )
+    get_blob_adapter_config().aws_access_key_id = response["Credentials"]["AccessKeyId"]
+    get_blob_adapter_config().aws_secret_access_key = response["Credentials"][
+        "SecretAccessKey"
+    ]
+    get_blob_adapter_config().aws_session_token = response["Credentials"][
+        "SessionToken"
+    ]
 
     return "success"
