@@ -37,6 +37,7 @@ Further information about developing, deploying, connecting, using and running h
 - [Adapter Registration](./adapter_system/adapter_registration.md)
 - [Manual Input](./adapter_system/manual_input.md)
 - [Local File Adapter](./adapter_system/local_file_adapter.md)
+- [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md)
 - [Generic REST Adapters](./adapter_system/generic_rest_adapters/web_service_interface.md)
 - [General Custom Adapters](./adapter_system/general_custom_adapters/instructions.md)
 
