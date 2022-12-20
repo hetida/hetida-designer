@@ -32,7 +32,6 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
@@ -223,103 +222,6 @@ async def get_transformation_revision_by_id(
     return transformation_revision
 
 
-def contains_deprecated(transformation_id: UUID) -> bool:
-    logger.info(
-        "check if transformation revision %s contains deprecated operators",
-        str(transformation_id),
-    )
-    transformation_revision = read_single_transformation_revision(transformation_id)
-
-    if transformation_revision.type is not Type.WORKFLOW:
-        msg = f"transformation revision {id} is not a workflow!"
-        logger.error(msg)
-        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
-
-    assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
-
-    is_disabled = []
-    for operator in transformation_revision.content.operators:
-        logger.info(
-            "operator with transformation id %s has status %s",
-            str(operator.transformation_id),
-            operator.state,
-        )
-        is_disabled.append(operator.state == State.DISABLED)
-
-    return any(is_disabled)
-
-
-def update_content(
-    existing_transformation_revision: Optional[TransformationRevision],
-    updated_transformation_revision: TransformationRevision,
-) -> TransformationRevision:
-    if updated_transformation_revision.type == Type.COMPONENT:
-        updated_transformation_revision.content = update_code(
-            updated_transformation_revision
-        )
-    elif existing_transformation_revision is not None:
-        assert isinstance(
-            existing_transformation_revision.content, WorkflowContent
-        )  # hint for mypy
-
-        existing_operator_ids: List[UUID] = []
-        for operator in existing_transformation_revision.content.operators:
-            existing_operator_ids.append(operator.id)
-
-        assert isinstance(
-            updated_transformation_revision.content, WorkflowContent
-        )  # hint for mypy
-
-        for operator in updated_transformation_revision.content.operators:
-            if (
-                operator.type == Type.WORKFLOW
-                and operator.id not in existing_operator_ids
-            ):
-                operator.state = (
-                    State.DISABLED
-                    if contains_deprecated(operator.transformation_id)
-                    else operator.state
-                )
-    return updated_transformation_revision
-
-
-def if_applicable_release_or_deprecate(
-    existing_transformation_revision: Optional[TransformationRevision],
-    updated_transformation_revision: TransformationRevision,
-) -> TransformationRevision:
-    if existing_transformation_revision is not None:
-        if (
-            existing_transformation_revision.state == State.DRAFT
-            and updated_transformation_revision.state == State.RELEASED
-        ):
-            logger.info(
-                "release transformation revision %s",
-                existing_transformation_revision.id,
-            )
-            updated_transformation_revision.release()
-            # prevent overwriting content during releasing
-            updated_transformation_revision.content = (
-                existing_transformation_revision.content
-            )
-        if (
-            existing_transformation_revision.state == State.RELEASED
-            and updated_transformation_revision.state == State.DISABLED
-        ):
-            logger.info(
-                "deprecate transformation revision %s",
-                existing_transformation_revision.id,
-            )
-            updated_transformation_revision = TransformationRevision(
-                **existing_transformation_revision.dict()
-            )
-            updated_transformation_revision.deprecate()
-            # prevent overwriting content during deprecating
-            updated_transformation_revision.content = (
-                existing_transformation_revision.content
-            )
-    return updated_transformation_revision
-
-
 @transformation_router.put(
     "/{id}",
     response_model=TransformationRevision,
@@ -349,6 +251,7 @@ async def update_transformation_revision(
     update_component_code: bool = Query(
         True, description="Only set to False for deployment"
     ),
+    strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
 ) -> TransformationRevision:
     """Update or store a transformation revision in the data base.
 
@@ -371,32 +274,13 @@ async def update_transformation_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
-    existing_transformation_revision: Optional[TransformationRevision] = None
-
-    try:
-        existing_transformation_revision = read_single_transformation_revision(
-            id, log_error=False
-        )
-        logger.info("found transformation revision %s", id)
-    except DBNotFoundError:
-        # base/example workflow deployment needs to be able to put
-        # with an id and either create or update the transformation revision
-        pass
-
-    updated_transformation_revision = if_applicable_release_or_deprecate(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
-    if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
-        updated_transformation_revision = update_content(
-            existing_transformation_revision, updated_transformation_revision
-        )
-
     try:
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(
                 updated_transformation_revision,
                 allow_overwrite_released=allow_overwrite_released,
+                update_component_code=update_component_code,
+                strip_wiring=strip_wiring,
             )
         )
         logger.info("updated transformation revision %s", id)

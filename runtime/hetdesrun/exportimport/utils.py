@@ -7,7 +7,6 @@ from uuid import UUID
 
 import requests
 
-from hetdesrun.component.code import update_code
 from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
@@ -91,6 +90,7 @@ def update_or_create_transformation_revision(
     directly_in_db: bool = False,
     allow_overwrite_released: bool = True,
     update_component_code: bool = True,
+    strip_wiring: bool = False,
 ) -> None:
     if directly_in_db:
         logger.info(
@@ -104,12 +104,12 @@ def update_or_create_transformation_revision(
             tr.category,
             tr.name,
         )
-        if update_component_code and tr.type == Type.COMPONENT:
-            tr.content = update_code(tr)
-
         try:
             update_or_create_single_transformation_revision(
-                tr, allow_overwrite_released=allow_overwrite_released
+                tr,
+                allow_overwrite_released=allow_overwrite_released,
+                update_component_code=update_component_code,
+                strip_wiring=strip_wiring,
             )
         except DBNotFoundError as not_found_err:
             logger.error(
@@ -156,6 +156,7 @@ def update_or_create_transformation_revision(
             params={
                 "allow_overwrite_released": allow_overwrite_released,
                 "update_component_code": update_component_code,
+                "strip_wiring": strip_wiring,
             },
             verify=get_config().hd_backend_verify_certs,
             json=json.loads(tr.json()),  # TODO: avoid double serialization.

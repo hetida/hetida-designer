@@ -366,6 +366,25 @@ async def test_publish_transformation_revision_from_component_dto(
 
 
 @pytest.mark.asyncio
+async def test_put_transformation_revision_from_released_component_dto(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        async with async_test_client as ac:
+            response = await ac.put(
+                "/api/components/" + str(get_uuid_from_seed("component 1")),
+                json=dto_json_component_1_publish,
+            )
+
+        assert response.status_code == 201
+        assert response.json()["state"] == "RELEASED"
+        assert "released_timestamp" in response.json()["code"]
+
+
+@pytest.mark.asyncio
 async def test_deprecate_transformation_revision_from_component_dto(
     async_test_client, clean_test_db_engine
 ):

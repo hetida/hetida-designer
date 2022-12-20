@@ -11,8 +11,6 @@ from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
     handle_trafo_revision_execution_request,
-    if_applicable_release_or_deprecate,
-    update_content,
 )
 from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
@@ -248,14 +246,6 @@ async def update_workflow_revision(
         updated_transformation_revision.released_timestamp = (
             existing_transformation_revision.released_timestamp
         )
-
-    updated_transformation_revision = if_applicable_release_or_deprecate(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
-    updated_transformation_revision = update_content(
-        existing_transformation_revision, updated_transformation_revision
-    )
 
     try:
         persisted_transformation_revision = (
