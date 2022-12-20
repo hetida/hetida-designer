@@ -44,6 +44,7 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.mapping import filter_and_order_trafos
 from hetdesrun.trafoutils.filter.params import FilterParams
+from hetdesrun.trafoutils.io.load import MultipleTrafosUpdateConfig
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
@@ -341,53 +342,6 @@ class UpdateProcessStatus(str, Enum):
 class TrafoUpdateProcessSummary(BaseModel):
     status: UpdateProcessStatus
     msg: str = Field("", description="details / error messages")
-
-
-class MultipleTrafosUpdateConfig(BaseModel):
-    """Config for updating multiple trafo revisions"""
-
-    allow_overwrite_released: bool = (
-        Field(
-            False,
-            description=(
-                "Warning: Setting this to True may destroy depending transformation revisions"
-                " and seriously limit reproducibility."
-            ),
-        ),
-    )
-    update_component_code: bool = (
-        Field(
-            True,
-            description=(
-                "Automatically updates component code to newest structure."
-                " This should be harmless for components created in hetida designer."
-            ),
-        ),
-    )
-    strip_wirings: bool = (
-        Field(
-            False,
-            description=(
-                "Whether test wirings should be removed before importing."
-                "This can be necessary if an adapter used in a test wiring is not "
-                "available on this system."
-            ),
-        ),
-    )
-    abort_on_error: bool = (
-        Field(
-            False,
-            description=(
-                "If updating/creating fails for some trafo revisions and this setting is true,"
-                " no attempt will be made to update/create the remaining trafo revs."
-                " Note that the order in which updating/creating happens may differ from"
-                " the ordering of the provided list since they are ordered by dependency"
-                " relation before trying to process them. So it may be difficult to determine."
-                " which trafos have been skipped / are missing and which have been successfully"
-                " processed. Note that already processed actions will not be reversed."
-            ),
-        ),
-    )
 
 
 @transformation_router.put(

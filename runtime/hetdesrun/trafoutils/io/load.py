@@ -5,7 +5,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, parse_file_as
@@ -18,6 +18,7 @@ from hetdesrun.component.load import (
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import IO, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.save import save_transformation_into_directory
 from hetdesrun.utils import Type, get_uuid_from_seed
 
@@ -262,6 +263,58 @@ class ImportSource(BaseModel):
     config_file: Optional[str]
 
 
+class MultipleTrafosUpdateConfig(BaseModel):
+    """Config for updating multiple trafo revisions"""
+
+    allow_overwrite_released: bool = (
+        Field(
+            False,
+            description=(
+                "Warning: Setting this to True may destroy depending transformation revisions"
+                " and seriously limit reproducibility."
+            ),
+        ),
+    )
+    update_component_code: bool = (
+        Field(
+            True,
+            description=(
+                "Automatically updates component code to newest structure."
+                " This should be harmless for components created in hetida designer."
+            ),
+        ),
+    )
+    strip_wirings: bool = (
+        Field(
+            False,
+            description=(
+                "Whether test wirings should be removed before importing."
+                "This can be necessary if an adapter used in a test wiring is not "
+                "available on this system."
+            ),
+        ),
+    )
+    abort_on_error: bool = (
+        Field(
+            False,
+            description=(
+                "If updating/creating fails for some trafo revisions and this setting is true,"
+                " no attempt will be made to update/create the remaining trafo revs."
+                " Note that the order in which updating/creating happens may differ from"
+                " the ordering of the provided list since they are ordered by dependency"
+                " relation before trying to process them. So it may be difficult to determine."
+                " which trafos have been skipped / are missing and which have been successfully"
+                " processed. Note that already processed actions will not be reversed."
+            ),
+        ),
+    )
+
+
+class ImportSourceConfig(BaseModel):
+    filter_params: FilterParams
+    update_config: MultipleTrafosUpdateConfig
+
+
 def get_import_sources(directory_path: str) -> Sequence[ImportSource]:
     """Get all import sources inside a directory
 
@@ -330,11 +383,44 @@ def get_import_sources(directory_path: str) -> Sequence[ImportSource]:
     }
 
 
-def load_import_source(import_source: ImportSource) -> List[TransformationRevision]:
-    if import_source.is_dir:
-        ...
-        return
+class Importable(BaseModel):
+    transformation_revisions: List[TransformationRevision]
+    import_config: ImportSourceConfig
 
-    # load from json file containing list of trafo revisions
-    ...
-    return
+
+def load_import_source(
+    import_source: ImportSource,
+) -> Importable:
+
+    # Get import config
+    if import_source.config is None:
+        import_config = ImportSourceConfig(
+            filter_params=FilterParams(), update_config=MultipleTrafosUpdateConfig()
+        )
+    else:
+        import_config = ImportSourceConfig.parse_file(import_source.config)
+
+    # Load trafo revisions
+    if import_source.is_dir:
+        trafo_revisions, _ = load_transformation_revisions_from_directory(
+            import_source.path
+        )
+    else:
+        trafo_revisions = load_trafos_from_trafo_list_json_file(import_source.path)
+
+    return Importable(
+        transformation_revisions=trafo_revisions, import_config=import_config
+    )
+
+
+def load_import_sources(import_sources: Iterable[ImportSource]) -> List[Importable]:
+    return [
+        Importable(transformation_revisions=trafo_revs, import_config=import_config)
+        for trafov_rev, import_config in (
+            load_import_source(import_source) for import_source in import_sources
+        )
+    ]
+
+
+def load_import_sources_from_directory(directory_path: str) -> List[Importable]:
+    return load_import_sources(get_import_sources(directory_path=directory_path))
