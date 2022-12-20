@@ -9,30 +9,19 @@ import requests
 from botocore.client import Config
 from fastapi import FastAPI
 
-from hetdesrun.webservice.config import get_config
-from hetdesrun import VERSION
+from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 
 boto3.set_stream_logger("boto3.resources", logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-authorize_url = "http://localhost:8080/auth/realms/minio/protocol/openid-connect/auth"
-token_url = "http://localhost:8080/auth/realms/minio/protocol/openid-connect/token"
-
-# callback url specified when the application was defined
-callback_uri = "http://localhost:8000/oauth2/callback"
-
-# keycloak id and secret
-client_id = 'account'
-client_secret = 'daaa3008-80f0-40f7-80d7-e15167531ff0'
-
 sts_client = boto3.client(
     "sts",
-    region_name="eu-central-1",
+    region_name=get_blob_adapter_config().region_name,
     use_ssl=False,
-    endpoint_url="http://localhost:9000",
+    endpoint_url=get_blob_adapter_config().endpoint_url,
 )
 
-app = FastAPI(title="", description="",version=VERSION, root_path=get_config().swagger_prefix)
+app = FastAPI()
 
 
 def make_authorization_url() -> str:
@@ -41,14 +30,14 @@ def make_authorization_url() -> str:
 
     state = str(uuid4())
     params = {
-        "client_id": client_id,
+        "get_config().client_id": get_blob_adapter_config().client_id,
         "response_type": "code",
         "state": state,
-        "redirect_uri": callback_uri,
+        "redirect_uri": get_blob_adapter_config().redirect_uri,
         "scope": "openid",
     }
 
-    url = authorize_url + "?" + urllib.parse.urlencode(params)
+    url = get_blob_adapter_config().authorize_url + "?" + urllib.parse.urlencode(params)
     return url
 
 
@@ -67,18 +56,21 @@ def callback(error: Optional[str] = None, code: Optional[str] = None) -> str:
     data = {
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": callback_uri,
+        "redirect_uri": get_blob_adapter_config().redirect_uri,
     }
     access_token_response = requests.post(
-        token_url,
+        get_blob_adapter_config().token_url,
         data=data,
         verify=False,
         allow_redirects=False,
-        auth=(client_id, client_secret),
-        timeout=90
+        auth=(
+            get_blob_adapter_config().client_id,
+            get_blob_adapter_config().client_secret,
+        ),
+        timeout=90,
     )
 
-    # we can now use the id_token as much as we want to access protected resources.
+    # we can now use the access_token as much as we want to access protected resources.
     tokens = json.loads(access_token_response.text)
     access_token = tokens["asccess_token"]
 
@@ -91,12 +83,12 @@ def callback(error: Optional[str] = None, code: Optional[str] = None) -> str:
 
     s3_resource = boto3.resource(
         "s3",
-        endpoint_url="http://localhost:9000",
+        endpoint_url=get_blob_adapter_config().endpoint_url,
         aws_access_key_id=response["Credentials"]["AccessKeyId"],
         aws_secret_access_key=response["Credentials"]["SecretAccessKey"],
         aws_session_token=response["Credentials"]["SessionToken"],
         config=Config(signature_version="s3v4"),
-        region_name="eu-central-1",
+        region_name=get_blob_adapter_config().region_name,
     )
 
     return "success"
