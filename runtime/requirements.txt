@@ -59,13 +59,13 @@ attrs==22.1.0 \
     --hash=sha256:29adc2665447e5191d0e7c568fde78b21f9672d344281d0c6e1ab085429b22b6 \
     --hash=sha256:86efa402f67bf2df34f51a335487cf46b1ec130d02b8d39fd248abfd30da551c
     # via fiona
-boto3==1.26.32 \
-    --hash=sha256:672b97a634f3408d455bf94a6dfd59ef0c6150019885bc7107e465f062d58c26 \
-    --hash=sha256:e0d6215313b03f09a9a38eccc88c1d3ba9868bcaaeb8b20eeb6d88fc3018b94d
+boto3==1.26.33 \
+    --hash=sha256:6aa2cc82008f0ec0b9534bafb8355957397f0ea05954a67af93c0c27abee9bd7 \
+    --hash=sha256:722dccba749ee34ead7d8f52899ae270958959c509631338f2ca5e777fab3875
     # via -r requirements.in
-botocore==1.29.32 \
-    --hash=sha256:27bc3903f7f8c813efd1605ff13ffdfca2c37dc78cadfa488cfda78fca323deb \
-    --hash=sha256:b1a65edca151665a6844bf9f317440e31d8d5e4cbce3477f2661462e20c213b1
+botocore==1.29.33 \
+    --hash=sha256:22b6659d7c8002844db5bf8bda400d0219e8bde5722d810a47d93fea0daf3dfe \
+    --hash=sha256:303f8c3ba40b11563b0b6740af8c053d3ed187a4824e495a652ccdb593dd612e
     # via
     #   boto3
     #   s3transfer
@@ -653,6 +653,10 @@ mypy==0.991 \
     --hash=sha256:de32edc9b0a7e67c2775e574cb061a537660e51210fbf6006b0b36ea695ae9bb \
     --hash=sha256:e62ebaad93be3ad1a828a11e90f0e76f15449371ffeecca4a0a0b9adc99abcef
     # via sqlalchemy
+mypy-boto3-s3==1.26.0.post1 \
+    --hash=sha256:6d7079f8c739dc993cbedad0736299c413b297814b73795a3855a79169ecc938 \
+    --hash=sha256:7de2792ff0cc541b84cd46ff3a6aa2b6e5f267217f2203f27f6e4016bddc644d
+    # via -r requirements.in
 mypy-extensions==0.4.3 \
     --hash=sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d \
     --hash=sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8
@@ -1445,6 +1449,7 @@ typing-extensions==4.4.0 \
     --hash=sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e
     # via
     #   mypy
+    #   mypy-boto3-s3
     #   pydantic
     #   sqlalchemy2-stubs
 tzdata==2022.7 \

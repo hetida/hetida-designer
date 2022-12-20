@@ -36,13 +36,13 @@ black==22.12.0 \
     --hash=sha256:c116eed0efb9ff870ded8b62fe9f28dd61ef6e9ddd28d83d7d264a38417dcee2 \
     --hash=sha256:d30b212bffeb1e252b31dd269dfae69dd17e06d92b87ad26e23890f3efea366f
     # via -r requirements-dev.in
-boto3-stubs[essential]==1.26.32 \
-    --hash=sha256:bb411448a0e9b222b9c1858249a1f0e517decd699455dff832ef27abcb5a1d69 \
-    --hash=sha256:dc86bc55478649304b4714cd1e9a203fbda14d31e74c037be852dfc770e7439e
+boto3-stubs[essential]==1.26.33 \
+    --hash=sha256:71871d1f87897bb46cf4dcb4c4d8c4eb2b70e769904c29a638d2a2c308451f78 \
+    --hash=sha256:a9a0eede20f4e7b38e11ae9a10d95b49489190b1f49cdcb2a74ead26a17157a7
     # via -r requirements-dev.in
-botocore-stubs==1.29.32 \
-    --hash=sha256:64eccd9c6a4de8ef3c14a3ca48867cdf7b2badc86b43868c8be35d9caf798479 \
-    --hash=sha256:af70fca7dc256cb0ba95a90a50da96bc41137c28910398ed4472d4de47663b19
+botocore-stubs==1.29.33 \
+    --hash=sha256:07f4529f0475c7407e85f281bc72b38cd2471751de830831bc34ed1543733f39 \
+    --hash=sha256:927ad0405e45fd0b123abb3e41a6833cd895003a0691cb87e96e1e5e4211d89a
     # via boto3-stubs
 click==8.1.3 \
     --hash=sha256:7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e \
@@ -154,9 +154,9 @@ iniconfig==1.1.1 \
     --hash=sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3 \
     --hash=sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32
     # via pytest
-ipykernel==6.19.2 \
-    --hash=sha256:1374a55c57ca7a7286c3d8b15799cd76e1a2381b6b1fea99c494b955988926b6 \
-    --hash=sha256:1ab68d3d3654196266baa93990055413e167263ffbe4cfe834f871bcd3d3506d
+ipykernel==6.19.3 \
+    --hash=sha256:67daadf01c461d23aaefe2f5670779866b9bde7269b7a02ae4ef5b37e1adbf8f \
+    --hash=sha256:70953ffa209fefc7166d365d230b710d90cdc2d2ad56e535d4c775d46da07089
     # via -r requirements-dev.in
 ipython==8.7.0 \
     --hash=sha256:352042ddcb019f7c04e48171b4dd78e4c4bb67bf97030d170e154aac42b656d9 \
@@ -259,14 +259,16 @@ mypy-boto3-lambda==1.26.18 \
     --hash=sha256:8514bf21fe3158c3f555906c2575403b3bbbc3891b3cff5869ec75a7fa8477ce \
     --hash=sha256:ad36a98e4bd7c95eb6bf750bc63932367cbed8bbe79bca1fdb7e753e2a689a8b
     # via boto3-stubs
-mypy-boto3-rds==1.26.29 \
-    --hash=sha256:07da313f487a9d82b4096714d0c9cd4ea53c4f176b85b00b542075d6a0b68e2d \
-    --hash=sha256:f24b84f5675bcd66ad08095eab1d2722e41064c08ba261fe5e49d77faa93c8fe
+mypy-boto3-rds==1.26.33 \
+    --hash=sha256:26e2b7b98cef6749f5508e924f2df0d2405fdd69506cbec7489e18d432ffa55d \
+    --hash=sha256:636dcf6d5468192adcbf47c8627aebdc377ed2ca2cc289ba5cf8550f1006f60b
     # via boto3-stubs
 mypy-boto3-s3==1.26.0.post1 \
     --hash=sha256:6d7079f8c739dc993cbedad0736299c413b297814b73795a3855a79169ecc938 \
     --hash=sha256:7de2792ff0cc541b84cd46ff3a6aa2b6e5f267217f2203f27f6e4016bddc644d
-    # via boto3-stubs
+    # via
+    #   -c requirements.txt
+    #   boto3-stubs
 mypy-boto3-sqs==1.26.0.post1 \
     --hash=sha256:6caead4c906ac4956eebdfeeaa1e08f9df03929a0cefac06122ca88bd7766610 \
     --hash=sha256:72e5dcb12731d83f235f9cf282bf8d87d6757b5e0fda1068726772806ca6f0cc
