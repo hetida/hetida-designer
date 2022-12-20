@@ -53,13 +53,12 @@ def import_transformations(
         logger.info("importing level %i transformation revisions", level)
         for transformation_id in ids_by_nesting_level[level]:
             transformation = transformation_dict[transformation_id]
-            if strip_wirings:
-                transformation.test_wiring = WorkflowWiring()
             update_or_create_transformation_revision(
                 transformation,
                 directly_in_db=directly_into_db,
                 allow_overwrite_released=allow_overwrite_released,
                 update_component_code=update_component_code,
+                strip_wiring=strip_wirings,
             )
 
     logger.info("finished importing")

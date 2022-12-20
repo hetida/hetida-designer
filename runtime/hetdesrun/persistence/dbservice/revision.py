@@ -7,7 +7,9 @@ from uuid import UUID
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
+from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
+from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence import Session, SQLAlchemySession
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
@@ -194,17 +196,122 @@ def is_modifiable(
     return True, ""
 
 
+def contains_deprecated(transformation_id: UUID) -> bool:
+    logger.debug(
+        "check if transformation revision %s contains deprecated operators",
+        str(transformation_id),
+    )
+    transformation_revision = read_single_transformation_revision(transformation_id)
+
+    if transformation_revision.type is not Type.WORKFLOW:
+        msg = f"transformation revision {transformation_id} is not a workflow!"
+        logger.error(msg)
+        raise DBIntegrityError(msg)
+
+    assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
+
+    is_disabled = []
+    for operator in transformation_revision.content.operators:
+        logger.info(
+            "operator with transformation id %s has status %s",
+            str(operator.transformation_id),
+            operator.state,
+        )
+        is_disabled.append(operator.state == State.DISABLED)
+
+    return any(is_disabled)
+
+
+def update_content(
+    updated_transformation_revision: TransformationRevision,
+    existing_transformation_revision: Optional[TransformationRevision] = None,
+) -> TransformationRevision:
+    if updated_transformation_revision.type == Type.COMPONENT:
+        updated_transformation_revision.content = update_code(
+            updated_transformation_revision
+        )
+    elif existing_transformation_revision is not None:
+        assert isinstance(
+            existing_transformation_revision.content, WorkflowContent
+        )  # hint for mypy
+
+        existing_operator_ids: List[UUID] = []
+        for operator in existing_transformation_revision.content.operators:
+            existing_operator_ids.append(operator.id)
+
+        assert isinstance(
+            updated_transformation_revision.content, WorkflowContent
+        )  # hint for mypy
+
+        for operator in updated_transformation_revision.content.operators:
+            if (
+                operator.type == Type.WORKFLOW
+                and operator.id not in existing_operator_ids
+            ):
+                operator.state = (
+                    State.DISABLED
+                    if contains_deprecated(operator.transformation_id)
+                    else operator.state
+                )
+    return updated_transformation_revision
+
+
+def if_applicable_release_or_deprecate(
+    existing_transformation_revision: Optional[TransformationRevision],
+    updated_transformation_revision: TransformationRevision,
+) -> TransformationRevision:
+    if existing_transformation_revision is not None:
+        if (
+            existing_transformation_revision.state == State.DRAFT
+            and updated_transformation_revision.state == State.RELEASED
+        ):
+            logger.info(
+                "release transformation revision %s",
+                existing_transformation_revision.id,
+            )
+            updated_transformation_revision.release()
+            # prevent overwriting content during releasing
+            updated_transformation_revision.content = (
+                existing_transformation_revision.content
+            )
+        if (
+            existing_transformation_revision.state == State.RELEASED
+            and updated_transformation_revision.state == State.DISABLED
+        ):
+            logger.info(
+                "deprecate transformation revision %s",
+                existing_transformation_revision.id,
+            )
+            updated_transformation_revision = TransformationRevision(
+                **existing_transformation_revision.dict()
+            )
+            updated_transformation_revision.deprecate()
+            # prevent overwriting content during deprecating
+            updated_transformation_revision.content = (
+                existing_transformation_revision.content
+            )
+    return updated_transformation_revision
+
+
 def update_or_create_single_transformation_revision(
     transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = False,
+    update_component_code: bool = True,
+    strip_wiring: bool = False,
 ) -> TransformationRevision:
     with Session() as session, session.begin():
+
+        if strip_wiring:
+            transformation_revision.test_wiring = WorkflowWiring()
 
         try:
             existing_transformation_revision = select_tr_by_id(
                 session, transformation_revision.id, log_error=False
             )
         except DBNotFoundError:
+            if transformation_revision.type == Type.WORKFLOW or update_component_code:
+                transformation_revision = update_content(transformation_revision)
+
             add_tr(session, transformation_revision)
         else:
             modifiable, msg = is_modifiable(
@@ -215,6 +322,15 @@ def update_or_create_single_transformation_revision(
 
             if modifiable is False:
                 raise ModifyForbidden(msg)
+
+            transformation_revision = if_applicable_release_or_deprecate(
+                existing_transformation_revision, transformation_revision
+            )
+
+            if transformation_revision.type == Type.WORKFLOW or update_component_code:
+                transformation_revision = update_content(
+                    transformation_revision, existing_transformation_revision
+                )
 
             update_tr(session, transformation_revision)
 

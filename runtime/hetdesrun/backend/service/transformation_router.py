@@ -484,18 +484,19 @@ async def update_transformation_revisions(
             transformation.version_tag,
             str(transformation.id),
         )
-        if multi_import_config.strip_wirings:
-            transformation.test_wiring = WorkflowWiring()
         try:
-            # TODO: Which refactored function to call here?
-            # TODO: stripping wirings should happen in the actual function
-            update_or_create_transformation_revision(
+            update_or_create_single_transformation_revision(
                 transformation,
-                strip_wiring=multi_import_config.strip_wirings,
                 allow_overwrite_released=multi_import_config.allow_overwrite_released,
                 update_component_code=multi_import_config.update_component_code,
+                strip_wiring=multi_import_config.strip_wirings,
             )
-        except Exception as e:  # TODO: What exactly do we need to catch?
+
+        except (
+            DBIntegrityError,
+            DBNotFoundError,
+            ModelConstraintViolation,
+        ) as e:
             success_per_trafo[transformation.id].status = UpdateProcessStatus.FAILED
 
             msg = (
@@ -556,6 +557,7 @@ async def update_transformation_revision(
     update_component_code: bool = Query(
         True, description="Only set to False for deployment"
     ),
+    strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
 ) -> TransformationRevision:
     """Update or store a transformation revision in the database.
 
@@ -578,32 +580,13 @@ async def update_transformation_revision(
         logger.error(msg)
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
-    existing_transformation_revision: Optional[TransformationRevision] = None
-
-    try:
-        existing_transformation_revision = read_single_transformation_revision(
-            id, log_error=False
-        )
-        logger.info("found transformation revision %s", id)
-    except DBNotFoundError:
-        # base/example workflow deployment needs to be able to put
-        # with an id and either create or update the transformation revision
-        pass
-
-    updated_transformation_revision = if_applicable_release_or_deprecate(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
-    if updated_transformation_revision.type == Type.WORKFLOW or update_component_code:
-        updated_transformation_revision = update_content(
-            existing_transformation_revision, updated_transformation_revision
-        )
-
     try:
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(
                 updated_transformation_revision,
                 allow_overwrite_released=allow_overwrite_released,
+                update_component_code=update_component_code,
+                strip_wiring=strip_wiring,
             )
         )
         logger.info("updated transformation revision %s", id)
