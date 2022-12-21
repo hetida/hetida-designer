@@ -17,7 +17,7 @@ from hetdesrun.persistence.models.exceptions import ModifyForbidden
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.nestings import structure_ids_by_nesting_level
-from hetdesrun.utils import State, Type, get_backend_basic_auth
+from hetdesrun.utils import State, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config

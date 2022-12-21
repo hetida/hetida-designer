@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -15,7 +14,7 @@ from fastapi import (
     Response,
     status,
 )
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import HttpUrl
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -27,9 +26,12 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
+from hetdesrun.exportimport.importing import (
+    TrafoUpdateProcessSummary,
+    import_importable,
+)
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.run import PerformanceMeasuredStep
-from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -42,9 +44,12 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.trafoutils.filter.mapping import filter_and_order_trafos
 from hetdesrun.trafoutils.filter.params import FilterParams
-from hetdesrun.trafoutils.io.load import MultipleTrafosUpdateConfig
+from hetdesrun.trafoutils.io.load import (
+    Importable,
+    ImportSourceConfig,
+    MultipleTrafosUpdateConfig,
+)
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
@@ -261,89 +266,6 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     return any(is_disabled)
 
 
-def update_content(
-    existing_transformation_revision: Optional[TransformationRevision],
-    updated_transformation_revision: TransformationRevision,
-) -> TransformationRevision:
-    if updated_transformation_revision.type == Type.COMPONENT:
-        updated_transformation_revision.content = update_code(
-            updated_transformation_revision
-        )
-    elif existing_transformation_revision is not None:
-        assert isinstance(
-            existing_transformation_revision.content, WorkflowContent
-        )  # hint for mypy
-
-        existing_operator_ids: List[UUID] = []
-        for operator in existing_transformation_revision.content.operators:
-            existing_operator_ids.append(operator.id)
-
-        assert isinstance(
-            updated_transformation_revision.content, WorkflowContent
-        )  # hint for mypy
-
-        for operator in updated_transformation_revision.content.operators:
-            if (
-                operator.type == Type.WORKFLOW
-                and operator.id not in existing_operator_ids
-            ):
-                operator.state = (
-                    State.DISABLED
-                    if contains_deprecated(operator.transformation_id)
-                    else operator.state
-                )
-    return updated_transformation_revision
-
-
-def if_applicable_release_or_deprecate(
-    existing_transformation_revision: Optional[TransformationRevision],
-    updated_transformation_revision: TransformationRevision,
-) -> TransformationRevision:
-    if existing_transformation_revision is not None:
-        if (
-            existing_transformation_revision.state == State.DRAFT
-            and updated_transformation_revision.state == State.RELEASED
-        ):
-            logger.info(
-                "release transformation revision %s",
-                existing_transformation_revision.id,
-            )
-            updated_transformation_revision.release()
-            # prevent overwriting content during releasing
-            updated_transformation_revision.content = (
-                existing_transformation_revision.content
-            )
-        if (
-            existing_transformation_revision.state == State.RELEASED
-            and updated_transformation_revision.state == State.DISABLED
-        ):
-            logger.info(
-                "deprecate transformation revision %s",
-                existing_transformation_revision.id,
-            )
-            updated_transformation_revision = TransformationRevision(
-                **existing_transformation_revision.dict()
-            )
-            updated_transformation_revision.deprecate()
-            # prevent overwriting content during deprecating
-            updated_transformation_revision.content = (
-                existing_transformation_revision.content
-            )
-    return updated_transformation_revision
-
-
-class UpdateProcessStatus(str, Enum):
-    NOT_TRIED = "NOT_TRIED"
-    FAILED = "FAILED"
-    SUCCESS = "SUCCESS"
-    IGNORED = "IGNORED"
-
-
-class TrafoUpdateProcessSummary(BaseModel):
-    status: UpdateProcessStatus
-    msg: str = Field("", description="details / error messages")
-
-
 @transformation_router.put(
     "",
     status_code=status.HTTP_207_MULTI_STATUS,
@@ -456,75 +378,16 @@ async def update_transformation_revisions(
         abort_on_error=abort_on_error,
     )
 
-    trafos_to_process = filter_and_order_trafos(
-        updated_transformation_revisions,
-        filter_params,
-        raise_on_missing_dependency=False,
+    importable = Importable(
+        transformation_revisions=updated_transformation_revisions,
+        import_config=ImportSourceConfig(
+            filter_params=filter_params, update_config=multi_import_config
+        ),
     )
 
-    trafos_to_process_dict = {
-        trafo_rev.id: trafo_rev for trafo_rev in trafos_to_process
-    }
-
-    success_per_trafo = {
-        trafo_key: TrafoUpdateProcessSummary(
-            status=UpdateProcessStatus.NOT_TRIED, msg=""
-        )
-        if trafo_key in trafos_to_process_dict
-        else TrafoUpdateProcessSummary(
-            status=UpdateProcessStatus.IGNORED, msg="filtered out"
-        )
-        for trafo_key in [trafo.id for trafo in updated_transformation_revisions]
-    }
-
-    for transformation in trafos_to_process:
-        logger.debug(
-            "Importing transformation %s with tag %s with id %s",
-            transformation.name,
-            transformation.version_tag,
-            str(transformation.id),
-        )
-        try:
-            update_or_create_single_transformation_revision(
-                transformation,
-                allow_overwrite_released=multi_import_config.allow_overwrite_released,
-                update_component_code=multi_import_config.update_component_code,
-                strip_wiring=multi_import_config.strip_wirings,
-            )
-
-        except (
-            DBIntegrityError,
-            DBNotFoundError,
-            ModelConstraintViolation,
-        ) as e:
-            success_per_trafo[transformation.id].status = UpdateProcessStatus.FAILED
-
-            msg = (
-                f"Update of trafo {transformation.name} with tag {transformation.version_tag}"
-                f" with id {str(transformation.id)} as part of multiple update failed."
-                f" Error was: {str(e)}"
-            )
-            logger.warning(msg)
-            success_per_trafo[transformation.id].msg = msg
-
-            if multi_import_config.abort_on_error:
-                abort_msg = (
-                    "Aborting multiple update process due to error while updating trafo"
-                    f" {transformation.name} with id {transformation.id}. Error was:\n{str(e)}"
-                )
-                logger.error(abort_msg)
-                response.status_code = status.HTTP_207_MULTI_STATUS
-                return success_per_trafo
-        else:
-            logger.info(
-                "Successfully imported transformation revision %s with tag %s with id %s",
-                transformation.name,
-                transformation.version_tag,
-                str(transformation.id),
-            )
-            success_per_trafo[transformation.id].status = UpdateProcessStatus.SUCCESS
-
+    success_per_trafo = import_importable(importable)
     response.status_code = status.HTTP_207_MULTI_STATUS
+
     return success_per_trafo
 
 
