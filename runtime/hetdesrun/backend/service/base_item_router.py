@@ -6,10 +6,6 @@ from fastapi import HTTPException, Path, Query, status
 from pydantic import ValidationError
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
-from hetdesrun.backend.service.transformation_router import (
-    if_applicable_release_or_deprecate,
-    update_content,
-)
 from hetdesrun.component.code import update_code
 from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
@@ -261,14 +257,6 @@ async def update_transformation_revision(
         updated_transformation_revision.content = (
             existing_transformation_revision.content
         )
-
-    updated_transformation_revision = if_applicable_release_or_deprecate(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
-    updated_transformation_revision = update_content(
-        existing_transformation_revision, updated_transformation_revision
-    )
 
     try:
         persisted_transformation_revision = (
