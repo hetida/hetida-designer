@@ -132,6 +132,19 @@ def import_importable(
                 str(transformation.id),
             )
             success_per_trafo[transformation.id].status = UpdateProcessStatus.SUCCESS
+
+    if multi_import_config.deprecate_older_revisions:
+        revision_group_ids = set(
+            transformation.revision_group_id
+            for _, transformation in trafos_to_process_dict.items()
+        )
+        logger.info("deprecate all but latest revision of imported revision groups")
+        for revision_group_id in revision_group_ids:
+            logger.debug(
+                "deprecate older revisions of revision group id %s",
+                str(revision_group_id),
+            )
+            deprecate_all_but_latest_in_group(revision_group_id, directly_in_db=True)
     return success_per_trafo
 
 

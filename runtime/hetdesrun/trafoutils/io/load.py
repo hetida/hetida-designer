@@ -300,6 +300,17 @@ class MultipleTrafosUpdateConfig(BaseModel):
             " processed. Note that already processed actions will not be reversed."
         ),
     )
+    deprecate_older_revisions: bool = Field(
+        False,
+        description=(
+            "Whether older revisions in the same trafo revision group should be deprecated."
+            " If this is True, this is done for every revision group for which any trafo"
+            " rev passes the filters and even for those that are included as dependencies"
+            " via the include_dependencies property of the filter params!"
+            " Note that this might not be done if abort_on_error is True and there is"
+            " an error anywhere."
+        ),
+    )
 
 
 class ImportSourceConfig(BaseModel):

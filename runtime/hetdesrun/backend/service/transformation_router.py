@@ -346,6 +346,17 @@ async def update_transformation_revisions(
             " processed. Note that already processed actions will not be reversed."
         ),
     ),
+    deprecate_older_revisions: bool = Query(
+        False,
+        description=(
+            "Whether older revisions in the same trafo revision group should be deprecated."
+            " If this is True, this is done for every revision group for which any trafo"
+            " rev passes the filters and even for those that are included as dependencies"
+            " via the include_dependencies property of the filter params!"
+            " Note that this might not be done if abort_on_error is True and there is"
+            " an error anywhere."
+        ),
+    ),
 ) -> Dict[UUID, TrafoUpdateProcessSummary]:
     """Update/store multiple transformation revisions
 
@@ -376,6 +387,7 @@ async def update_transformation_revisions(
         update_component_code=update_component_code,
         strip_wirings=strip_wirings,
         abort_on_error=abort_on_error,
+        deprecate_older_revisions=deprecate_older_revisions,
     )
 
     importable = Importable(
