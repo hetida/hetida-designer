@@ -70,4 +70,15 @@ if [[ "$_is_backend_service" == $_true_equiv ]]; then
     else
         echo "SKIPPING TRANSFORMATION REVISION AUTO DEPLOYMENT"
     fi
+
+    if [[ -n "$HD_BACKEND_AUTOIMPORT_DIRECTORY" ]]; then
+        echo "Trying autoimport from $HD_BACKEND_AUTOIMPORT_DIRECTORY"
+        python -c 'from hetdesrun.exportimport.importing import import_importables; from hetdesrun.trafoutils.io.load import get_import_sources; print(import_importables(get_import_sources("'"$HD_BACKEND_AUTOIMPORT_DIRECTORY"'")))'
+        if [ "$?" -eq 0 ]; then
+            echo "Successfully triggered auto import process. See details above."
+        else
+            echo "Auto importing failed. See details above."
+        fi
+    fi
+
 fi

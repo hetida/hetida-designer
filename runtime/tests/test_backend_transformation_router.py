@@ -1964,3 +1964,28 @@ async def test_put_component_transformation_without_update_code(
         assert "COMPONENT_INFO" not in component_tr_in_db.content
         assert "register" in response.json()["content"]
         assert "register" in component_tr_in_db.content
+
+
+@pytest.mark.asyncio
+async def test_put_multiple_trafos(async_test_client, clean_test_db_engine):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        patched_session,
+    ):
+
+        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"
+        example_component_tr_json = load_json(path)
+
+        async with async_test_client as ac:
+            response = await ac.put(
+                "/api/transformations/",
+                params={"update_component_code": False},
+                json=[example_component_tr_json],
+            )
+
+            assert response.status_code == 207
+
+            success_info = response.json()
+            assert len(success_info) == 1
+            assert list(success_info.values())[0]["status"] == "SUCCESS"

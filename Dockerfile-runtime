@@ -27,6 +27,9 @@ RUN chmod +x /app/start.sh
 RUN mkdir -p /mnt/obj_repo
 RUN chmod -R a+rw /mnt/obj_repo
 
+RUN mkdir -p /mnt/autoimport
+RUN chmod -R a+rw /mnt/autoimport
+
 ##### Production stage
 # making prod stage available early allows to build it without building test stage
 # since test stage is only necessary on build system
