@@ -13,13 +13,16 @@ from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
+
 class StsAuthenticationError(Exception):
     """Errors around obtaining and refreshing credentials from STS"""
+
 
 class Credentials(BaseModel):
     access_key_id: str
     secret_access_key: str
     session_token: str
+
 
 def obtain_credentials_from_sts(access_token: str):
     sts_client = boto3.client(
@@ -46,10 +49,11 @@ def obtain_credentials_from_sts(access_token: str):
     credentials = Credentials(
         access_key_id=credentials_json["AccessKeyId"],
         secret_access_key=credentials_json["SecretAccessKey"],
-        session_token=credentials_json["SessionToken"]
+        session_token=credentials_json["SessionToken"],
     )
 
     return credentials
+
 
 class CredentialResponse(BaseModel):
     credentials: Credentials
@@ -66,9 +70,13 @@ class CredentialResponse(BaseModel):
 def credentials_still_valid_enough(credential_info: CredentialResponse) -> bool:
     now = datetime.now(timezone.utc)
 
-    time_since_issue_in_seconds = (now- credential_info.issue_timestamp).total_seconds()
+    time_since_issue_in_seconds = (
+        now - credential_info.issue_timestamp
+    ).total_seconds()
 
-    return time_since_issue_in_seconds <= credential_info.expiration_time_in_seconds *0.9
+    return (
+        time_since_issue_in_seconds <= credential_info.expiration_time_in_seconds * 0.9
+    )
 
 
 def obtain_or_refresh_credentials(
@@ -82,7 +90,7 @@ def obtain_or_refresh_credentials(
     try:
         return obtain_credentials_from_sts(access_token)
     except StsAuthenticationError as error:
-        logger.error("Obtaining new credentails failed:\n%s",str(error))
+        logger.error("Obtaining new credentails failed:\n%s", str(error))
         raise error
 
 
