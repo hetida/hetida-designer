@@ -91,7 +91,7 @@ def credentials_still_valid_enough(credential_info: CredentialInfo) -> bool:
     )
 
 
-def obtain_or_refresh_credentials(
+def obtain_or_refresh_credential_info(
     access_token: str, existing_credential_info: Optional[CredentialInfo] = None
 ) -> CredentialInfo:
     if existing_credential_info is not None:
@@ -115,7 +115,7 @@ class CredentialManager:
         self._credential_thread_lock = threading.Lock()
 
     def _obtain_or_refresh_credential_info(self) -> None:
-        credential_info = obtain_or_refresh_credentials(
+        credential_info = obtain_or_refresh_credential_info(
             self.access_token, self._current_credential_info
         )
         with self._credential_thread_lock:
