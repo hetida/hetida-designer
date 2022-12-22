@@ -12,10 +12,9 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     ThingNodesNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
+    AdapterHierarchy,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
-    IdString,
-    StructureBucket,
     StructureThingNode,
 )
 from hetdesrun.adapters.blob_storage.structure import (
@@ -33,19 +32,25 @@ from hetdesrun.adapters.blob_storage.structure import (
 
 
 def test_blob_storage_get_thing_nodes_by_parent_id():
-    thing_nodes_with_no_parents = get_thing_nodes_by_parent_id(None)
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy.from_file(
+            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+        ),
+    ):
+        thing_nodes_with_no_parents = get_thing_nodes_by_parent_id(None)
 
-    assert len(thing_nodes_with_no_parents) == 1
-    assert thing_nodes_with_no_parents[0].id == "i"
+        assert len(thing_nodes_with_no_parents) == 1
+        assert thing_nodes_with_no_parents[0].id == "i"
 
-    thing_nodes_with_parent_i = get_thing_nodes_by_parent_id("i")
-    assert len(thing_nodes_with_parent_i) == 3
-    assert thing_nodes_with_parent_i[0].id == "i-i"
-    assert thing_nodes_with_parent_i[1].id == "i-ii"
-    assert thing_nodes_with_parent_i[2].id == "i-iii"
+        thing_nodes_with_parent_i = get_thing_nodes_by_parent_id("i")
+        assert len(thing_nodes_with_parent_i) == 3
+        assert thing_nodes_with_parent_i[0].id == "i-i"
+        assert thing_nodes_with_parent_i[1].id == "i-ii"
+        assert thing_nodes_with_parent_i[2].id == "i-iii"
 
-    thing_nodes_with_parent_bla = get_thing_nodes_by_parent_id("bla")
-    assert len(thing_nodes_with_parent_bla) == 0
+        thing_nodes_with_parent_bla = get_thing_nodes_by_parent_id("bla")
+        assert len(thing_nodes_with_parent_bla) == 0
 
 
 source_list = [
@@ -108,12 +113,18 @@ def test_blob_storage_get_sources_by_parent_id():
 
 
 def test_blob_storage_get_sinks_by_parent_id():
-    sinks_with_parent_id_i_iii = get_sinks_by_parent_id("i-iii/F")
-    assert len(sinks_with_parent_id_i_iii) == 1
-    assert sinks_with_parent_id_i_iii[0].id == "i-iii/F_next"
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy.from_file(
+            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+        ),
+    ):
+        sinks_with_parent_id_i_iii = get_sinks_by_parent_id("i-iii/F")
+        assert len(sinks_with_parent_id_i_iii) == 1
+        assert sinks_with_parent_id_i_iii[0].id == "i-iii/F_next"
 
-    sinks_with_parent_bla = get_sinks_by_parent_id("bla")
-    assert len(sinks_with_parent_bla) == 0
+        sinks_with_parent_bla = get_sinks_by_parent_id("bla")
+        assert len(sinks_with_parent_bla) == 0
 
 
 def test_blob_storage_get_filtered_sources():
@@ -141,41 +152,53 @@ def test_blob_storage_get_filtered_sources():
 
 
 def test_blob_storage_get_filtered_sinks():
-    unfiltered_sinks = get_filtered_sinks(None)
-    assert len(unfiltered_sinks) == 7
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy.from_file(
+            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+        ),
+    ):
+        unfiltered_sinks = get_filtered_sinks(None)
+        assert len(unfiltered_sinks) == 7
 
-    sinks_filtered_by_c = get_filtered_sinks("C")
-    assert len(sinks_filtered_by_c) == 1
-    assert sinks_filtered_by_c[0].id == "i-i/C_next"
+        sinks_filtered_by_c = get_filtered_sinks("C")
+        assert len(sinks_filtered_by_c) == 1
+        assert sinks_filtered_by_c[0].id == "i-i/C_next"
 
-    sinks_filtered_by_bla = get_filtered_sinks("bla")
-    assert len(sinks_filtered_by_bla) == 0
+        sinks_filtered_by_bla = get_filtered_sinks("bla")
+        assert len(sinks_filtered_by_bla) == 0
 
 
 def test_blob_storage_get_thing_node_by_id():
-    thing_node = get_thing_node_by_id("i-ii")
-    assert thing_node.id == "i-ii"
-    assert thing_node.parentId == "i"
-    assert thing_node.name == "ii"
-    assert thing_node.description == "Category"
-
-    with pytest.raises(ThingNodeNotFound):
-        get_thing_node_by_id("bla")
-
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.thing_nodes",
-        new_callable=mock.PropertyMock,
-        return_value=[
-            StructureThingNode(
-                id="i-ii", parentId="i", name="ii", description="Category"
-            ),
-            StructureThingNode(
-                id="i-ii", parentId="i", name="ii", description="Kategory"
-            ),
-        ],
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy.from_file(
+            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+        ),
     ):
-        with pytest.raises(ThingNodesNotUnique):
-            get_thing_node_by_id("i-ii")
+        thing_node = get_thing_node_by_id("i-ii")
+        assert thing_node.id == "i-ii"
+        assert thing_node.parentId == "i"
+        assert thing_node.name == "ii"
+        assert thing_node.description == "Category"
+
+        with pytest.raises(ThingNodeNotFound):
+            get_thing_node_by_id("bla")
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.thing_nodes",
+            new_callable=mock.PropertyMock,
+            return_value=[
+                StructureThingNode(
+                    id="i-ii", parentId="i", name="ii", description="Category"
+                ),
+                StructureThingNode(
+                    id="i-ii", parentId="i", name="ii", description="Kategory"
+                ),
+            ],
+        ):
+            with pytest.raises(ThingNodesNotUnique):
+                get_thing_node_by_id("i-ii")
 
 
 def test_blob_storage_get_source_by_id():
@@ -214,35 +237,41 @@ def test_blob_storage_get_source_by_id():
 
 
 def test_blob_storage_get_sink_by_id():
-    sink_by_id = get_sink_by_id("i-i/A_next")
-    assert sink_by_id.name == "A - Next Object"
-    assert sink_by_id.thingNodeId == "i-i/A"
-
-    with pytest.raises(SinkNotFound):
-        get_sink_by_id("bla")
-
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
-        new_callable=mock.PropertyMock,
-        return_value=[
-            BlobStorageStructureSink(
-                id="i-i/A_next",
-                thingNodeId="i-i/A",
-                name="A - Next Object",
-                path="i-i/A",
-                metadataKey="A - Next Object",
-            ),
-            BlobStorageStructureSink(
-                id="i-i/A_next",
-                thingNodeId="i-i/A",
-                name="A - Next Object",
-                path="i-i/A",
-                metadataKey="A - Next Object",
-            ),
-        ],
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy.from_file(
+            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+        ),
     ):
-        with pytest.raises(SinksNotUnique):
-            get_sink_by_id("i-i/A_next")
+        sink_by_id = get_sink_by_id("i-i/A_next")
+        assert sink_by_id.name == "A - Next Object"
+        assert sink_by_id.thingNodeId == "i-i/A"
+
+        with pytest.raises(SinkNotFound):
+            get_sink_by_id("bla")
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
+            new_callable=mock.PropertyMock,
+            return_value=[
+                BlobStorageStructureSink(
+                    id="i-i/A_next",
+                    thingNodeId="i-i/A",
+                    name="A - Next Object",
+                    path="i-i/A",
+                    metadataKey="A - Next Object",
+                ),
+                BlobStorageStructureSink(
+                    id="i-i/A_next",
+                    thingNodeId="i-i/A",
+                    name="A - Next Object",
+                    path="i-i/A",
+                    metadataKey="A - Next Object",
+                ),
+            ],
+        ):
+            with pytest.raises(SinksNotUnique):
+                get_sink_by_id("i-i/A_next")
 
 
 def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
@@ -290,40 +319,46 @@ def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
 
 
 def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
-    sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
-        thing_node_id="i-i/A", metadata_key="A - Next Object"
-    )
-    assert sink_by_tn_id_and_md_key.id == "i-i/A_next"
-    assert sink_by_tn_id_and_md_key.thingNodeId == "i-i/A"
-    assert sink_by_tn_id_and_md_key.name == "A - Next Object"
-    assert sink_by_tn_id_and_md_key.path == "i-i/A"
-    assert sink_by_tn_id_and_md_key.metadataKey == "A - Next Object"
-
-    with pytest.raises(SinkNotFound):
-        get_sink_by_thing_node_id_and_metadata_key(
-            thing_node_id="i-i/B", metadata_key="A - Next Object"
-        )
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
-        new_callable=mock.PropertyMock,
-        return_value=[
-            BlobStorageStructureSink(
-                id="i-i/A_next",
-                thingNodeId="i-i/A",
-                name="A - Next Object",
-                path="i-i/A",
-                metadataKey="A - Next Object",
-            ),
-            BlobStorageStructureSink(
-                id="i-i/A_next",
-                thingNodeId="i-i/A",
-                name="A - Next Object",
-                path="i-i/A",
-                metadataKey="A - Next Object",
-            ),
-        ],
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy.from_file(
+            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+        ),
     ):
-        with pytest.raises(SinksNotUnique):
-            sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
-                thing_node_id="i-i/A", metadata_key="A - Next Object"
+        sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
+            thing_node_id="i-i/A", metadata_key="A - Next Object"
+        )
+        assert sink_by_tn_id_and_md_key.id == "i-i/A_next"
+        assert sink_by_tn_id_and_md_key.thingNodeId == "i-i/A"
+        assert sink_by_tn_id_and_md_key.name == "A - Next Object"
+        assert sink_by_tn_id_and_md_key.path == "i-i/A"
+        assert sink_by_tn_id_and_md_key.metadataKey == "A - Next Object"
+
+        with pytest.raises(SinkNotFound):
+            get_sink_by_thing_node_id_and_metadata_key(
+                thing_node_id="i-i/B", metadata_key="A - Next Object"
             )
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
+            new_callable=mock.PropertyMock,
+            return_value=[
+                BlobStorageStructureSink(
+                    id="i-i/A_next",
+                    thingNodeId="i-i/A",
+                    name="A - Next Object",
+                    path="i-i/A",
+                    metadataKey="A - Next Object",
+                ),
+                BlobStorageStructureSink(
+                    id="i-i/A_next",
+                    thingNodeId="i-i/A",
+                    name="A - Next Object",
+                    path="i-i/A",
+                    metadataKey="A - Next Object",
+                ),
+            ],
+        ):
+            with pytest.raises(SinksNotUnique):
+                sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
+                    thing_node_id="i-i/A", metadata_key="A - Next Object"
+                )

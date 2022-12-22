@@ -1,0 +1,59 @@
+{
+    "object_key_depth": 1,
+    "structure": [
+        {
+            "name": "I",
+            "description": "Super Category",
+            "substructure": [
+                {
+                    "name": "i",
+                    "description": "Category",
+                    "substructure": [
+                        {
+                            "name": "A",
+                            "description": "Subcategory",
+                            "substructure": []
+                        },
+                        {
+                            "name": "B",
+                            "description": "Subcategory",
+                            "substructure": null
+                        },
+                        {
+                            "name": "C",
+                            "description": "Subcategory"
+                        },
+                        {
+                            "name": "D",
+                            "description": "Subcategory"
+                        }
+                    ]
+                },
+                {
+                    "name": "ii",
+                    "description": "Category",
+                    "substructure": [
+                        {
+                            "name": "E",
+                            "description": "Subcategory"
+                        }
+                    ]
+                },
+                {
+                    "name": "iii",
+                    "description": "Category",
+                    "substructure": [
+                        {
+                            "name": "F",
+                            "description": "Subcategory"
+                        },
+                        {
+                            "name": "G",
+                            "description": "Subcategory"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

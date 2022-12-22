@@ -3,7 +3,10 @@ from unittest import mock
 import nest_asyncio
 import pytest
 
-from hetdesrun.adapters.blob_storage.models import BlobStorageStructureSource
+from hetdesrun.adapters.blob_storage.models import (
+    AdapterHierarchy,
+    BlobStorageStructureSource,
+)
 
 nest_asyncio.apply()
 
@@ -126,65 +129,71 @@ async def test_resources_offered_from_blob_storage_webservice(
     async_test_client,
 ):
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
-        return_value=source_list,
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy.from_file(
+            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+        ),
     ):
-        """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""
-        async with async_test_client as client:
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.structure.create_sources",
+            return_value=source_list,
+        ):
+            """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""
+            async with async_test_client as client:
 
-            response_obj = (await client.get("/adapters/blob/structure")).json()
+                response_obj = (await client.get("/adapters/blob/structure")).json()
 
-            assert len(response_obj["sources"]) == 0
-            assert len(response_obj["sinks"]) == 0
+                assert len(response_obj["sources"]) == 0
+                assert len(response_obj["sinks"]) == 0
 
-            roots = response_obj["thingNodes"]
-            assert len(roots) == 1
+                roots = response_obj["thingNodes"]
+                assert len(roots) == 1
 
-            root = roots[0]
+                root = roots[0]
 
-            all_tns = roots
-            all_srcs = []
-            all_snks = []
-            tn_attached_metadata_dict = {}
-            src_attached_metadata_dict = {}
-            snk_attached_metadata_dict = {}
+                all_tns = roots
+                all_srcs = []
+                all_snks = []
+                tn_attached_metadata_dict = {}
+                src_attached_metadata_dict = {}
+                snk_attached_metadata_dict = {}
 
-            await walk_thing_nodes(
-                root["id"],
-                tn_append_list=all_tns,
-                src_append_list=all_srcs,
-                snk_append_list=all_snks,
-                src_attached_metadata_dict=src_attached_metadata_dict,
-                snk_attached_metadata_dict=snk_attached_metadata_dict,
-                tn_attached_metadata_dict=tn_attached_metadata_dict,
-                open_async_test_client=client,
-            )
+                await walk_thing_nodes(
+                    root["id"],
+                    tn_append_list=all_tns,
+                    src_append_list=all_srcs,
+                    snk_append_list=all_snks,
+                    src_attached_metadata_dict=src_attached_metadata_dict,
+                    snk_attached_metadata_dict=snk_attached_metadata_dict,
+                    tn_attached_metadata_dict=tn_attached_metadata_dict,
+                    open_async_test_client=client,
+                )
 
-            assert len(all_tns) == 11
-            assert len(all_srcs) == 6
-            assert len(all_snks) == 7
+                assert len(all_tns) == 11
+                assert len(all_srcs) == 6
+                assert len(all_snks) == 7
 
-            assert len(src_attached_metadata_dict) == 0
-            assert len(snk_attached_metadata_dict) == 0
-            assert len(tn_attached_metadata_dict) == 0
+                assert len(src_attached_metadata_dict) == 0
+                assert len(snk_attached_metadata_dict) == 0
+                assert len(tn_attached_metadata_dict) == 0
 
-            for src in all_srcs:
-                response_obj = (
-                    await client.get(f'/adapters/blob/sources/{src["id"]}')
-                ).json()
-                for key in src.keys():
-                    assert response_obj[key] == src[key]
+                for src in all_srcs:
+                    response_obj = (
+                        await client.get(f'/adapters/blob/sources/{src["id"]}')
+                    ).json()
+                    for key in src.keys():
+                        assert response_obj[key] == src[key]
 
-            for snk in all_snks:
-                response_obj = (
-                    await client.get(f'/adapters/blob/sinks/{snk["id"]}')
-                ).json()
-                for key in snk.keys():
-                    assert response_obj[key] == snk[key]
+                for snk in all_snks:
+                    response_obj = (
+                        await client.get(f'/adapters/blob/sinks/{snk["id"]}')
+                    ).json()
+                    for key in snk.keys():
+                        assert response_obj[key] == snk[key]
 
-            for tn in all_tns:
-                response_obj = (
-                    await client.get(f'/adapters/blob/thingNodes/{tn["id"]}')
-                ).json()
-                for key in tn.keys():
-                    assert response_obj[key] == tn[key]
+                for tn in all_tns:
+                    response_obj = (
+                        await client.get(f'/adapters/blob/thingNodes/{tn["id"]}')
+                    ).json()
+                    for key in tn.keys():
+                        assert response_obj[key] == tn[key]

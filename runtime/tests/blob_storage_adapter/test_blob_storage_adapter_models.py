@@ -640,7 +640,9 @@ def test_blob_storage_class_adapter_hierarchy():
     assert len(bucket_names) == 3
     assert len(sinks) == 7
 
-    hierarchy_from_file = AdapterHierarchy.from_file()
+    hierarchy_from_file = AdapterHierarchy.from_file(
+        "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+    )
     thing_nodes_from_file = hierarchy_from_file.thing_nodes
     bucket_names_from_file = hierarchy_from_file.structure_buckets
     sinks_from_file = hierarchy_from_file.sinks
@@ -651,7 +653,15 @@ def test_blob_storage_class_adapter_hierarchy():
     assert hierarchy_from_file == adapter_hierarchy
 
     with pytest.raises(MissingHierarchyError):
-        AdapterHierarchy.from_file("demodata/not_there.json")
+        AdapterHierarchy.from_file("tests/data/blob_storage/not_there.json")
+
+
+def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path():
+    with pytest.raises(HierarchyError) as exc_info:
+        AdapterHierarchy(
+            structure=Category(name="I", description=""), object_key_depth=0
+        )
+    assert "must be a positive integer!" in str(exc_info.value)
 
 
 def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error():

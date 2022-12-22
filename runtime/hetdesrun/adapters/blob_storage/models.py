@@ -562,6 +562,15 @@ class AdapterHierarchy(BaseModel):
 
     # pylint: disable=no-self-argument
     @validator("object_key_depth")
+    def positive_object_key_depth(cls, object_key_depth: int) -> int:
+        if not object_key_depth > 0:
+            raise HierarchyError(
+                "The attribute object_key_depth must be a positive integer!"
+            )
+        return object_key_depth
+
+    # pylint: disable=no-self-argument
+    @validator("object_key_depth")
     def structure_deeper_than_object_key_depth(
         cls, object_key_depth: int, values: dict
     ) -> int:
