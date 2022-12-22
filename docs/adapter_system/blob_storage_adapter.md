@@ -37,10 +37,12 @@ The information required to access the blob storage is expected to be provided b
 * BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION
 * BLOB_STORAGE_ACCOUNT_ID
 * BLOB_STORAGE_RESOURCE_ID
+* BLOB_STORAGE_ACCESS_DURATION
 * BLOB_STORAGE_ENDPOINT_URL
 * BLOB_STORAGE_REGION_NAME
 
-The `REGION_NAME` should be one of the [AWS regional endpoint codes](https://docs.aws.amazon.com/de_de/general/latest/gr/rande.html#regional-endpoints).
+The `BLOB_STORAGE_REGION_NAME` should be one of the [AWS regional endpoint codes](https://docs.aws.amazon.com/de_de/general/latest/gr/rande.html#regional-endpoints).
+The `BLOB_STORAGE_ACCESS_DURATION` should provide the access duration of the storage in seconds.
 
 These can be provided in the docker compose file as following:
 
@@ -49,6 +51,8 @@ These can be provided in the docker compose file as following:
     ...
     environment:
       BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION:
+      ...
+      BLOB_STORAGE_ACCESS_DURATION: 3600
       BLOB_STORAGE_ENDPOINT_URL: http://localhost:9000
       BLOB_STORAGE_REGION_NAME: eu-central-1
       ...
