@@ -4,7 +4,7 @@ from typing import List
 import boto3
 from mypy_boto3_s3.service_resource import S3ServiceResource
 
-from hetdesrun.adapters.blob_storage.authenticaton import get_credentials
+from hetdesrun.adapters.blob_storage.authentication import get_credentials
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.models import BucketName, IdString
 
