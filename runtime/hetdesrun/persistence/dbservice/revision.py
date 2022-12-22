@@ -11,7 +11,7 @@ from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence import Session, SQLAlchemySession
-from hetdesrun.persistence.dbmodels import FilterParams, TransformationRevisionDBModel
+from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.nesting import (
     delete_own_nestings,
@@ -26,6 +26,7 @@ from hetdesrun.persistence.models.exceptions import (
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type
 
 logger = logging.getLogger(__name__)
@@ -531,7 +532,11 @@ def get_all_nested_transformation_revisions(
 
 def get_latest_revision_id(revision_group_id: UUID) -> UUID:
     revision_group_list = get_multiple_transformation_revisions(
-        FilterParams(state=State.RELEASED, revision_group_id=revision_group_id)
+        FilterParams(
+            state=State.RELEASED,
+            revision_group_id=revision_group_id,
+            include_dependencies=False,
+        )
     )
     if len(revision_group_list) == 0:
         msg = (

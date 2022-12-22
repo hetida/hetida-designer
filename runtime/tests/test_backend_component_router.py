@@ -8,7 +8,6 @@ import pytest
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.component.code import update_code
-from hetdesrun.exportimport.importing import load_json
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
@@ -16,6 +15,7 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 

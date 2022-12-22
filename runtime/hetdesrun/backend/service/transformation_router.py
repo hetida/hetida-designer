@@ -1,11 +1,19 @@
 import json
 import logging
 import os
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Path, Query, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    HTTPException,
+    Path,
+    Query,
+    Response,
+    status,
+)
 from pydantic import HttpUrl
 
 from hetdesrun.backend.execution import (
@@ -18,9 +26,12 @@ from hetdesrun.backend.execution import (
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.component.code import update_code
+from hetdesrun.exportimport.importing import (
+    TrafoUpdateProcessSummary,
+    import_importable,
+)
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.run import PerformanceMeasuredStep
-from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -32,6 +43,13 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.trafoutils.filter.params import FilterParams
+from hetdesrun.trafoutils.io.load import (
+    Importable,
+    ImportSourceConfig,
+    MultipleTrafosUpdateConfig,
+)
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
@@ -222,6 +240,169 @@ async def get_transformation_revision_by_id(
     return transformation_revision
 
 
+def contains_deprecated(transformation_id: UUID) -> bool:
+    logger.info(
+        "check if transformation revision %s contains deprecated operators",
+        str(transformation_id),
+    )
+    transformation_revision = read_single_transformation_revision(transformation_id)
+
+    if transformation_revision.type is not Type.WORKFLOW:
+        msg = f"transformation revision {id} is not a workflow!"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
+
+    assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
+
+    is_disabled = []
+    for operator in transformation_revision.content.operators:
+        logger.info(
+            "operator with transformation id %s has status %s",
+            str(operator.transformation_id),
+            operator.state,
+        )
+        is_disabled.append(operator.state == State.DISABLED)
+
+    return any(is_disabled)
+
+
+@transformation_router.put(
+    "",
+    status_code=status.HTTP_207_MULTI_STATUS,
+    summary="Update (import) a list of transformation revisions",
+    responses={
+        status.HTTP_207_MULTI_STATUS: {
+            "description": (
+                "Processed request to update multiple transformation revisions. "
+                "See response for details."
+            )
+        }
+    },
+)
+async def update_transformation_revisions(
+    updated_transformation_revisions: List[TransformationRevision],
+    response: Response,
+    type: Optional[Type] = Query(  # pylint: disable=redefined-builtin
+        None,
+        description="Filter for specified type",
+    ),
+    state: Optional[State] = Query(
+        None,
+        description="Filter for specified state",
+    ),
+    categories: Optional[List[ValidStr]] = Query(
+        None, description="Filter for categories", alias="category"
+    ),
+    category_prefix: Optional[str] = Query(
+        None,
+        description="Category prefix that must be matched exactly (case-sensitive).",
+    ),
+    revision_group_id: Optional[UUID] = Query(
+        None, description="Filter for specified revision group id"
+    ),
+    ids: Optional[List[UUID]] = Query(
+        None, description="Filter for specified list of ids", alias="id"
+    ),
+    names: Optional[List[NonEmptyValidStr]] = Query(
+        None, description=("Filter for specified list of names"), alias="name"
+    ),
+    include_deprecated: bool = Query(
+        True,
+        description=(
+            "Set to False to omit transformation revisions with state DISABLED "
+            "this will not affect included dependent transformation revisions"
+        ),
+    ),
+    include_dependencies: bool = Query(
+        True,
+        description=(
+            "Set to True to additionally import those transformation revisions "
+            "of the provided trafos that the selected/filtered ones depend on."
+        ),
+    ),
+    allow_overwrite_released: bool = Query(
+        False, description="Only set to True for deployment"
+    ),
+    update_component_code: bool = Query(
+        True, description="Only set to False for deployment"
+    ),
+    strip_wirings: bool = Query(
+        False,
+        description=(
+            "Whether test wirings should be removed before importing."
+            "This can be necessary if an adapter used in a test wiring is not "
+            "available on this system."
+        ),
+    ),
+    abort_on_error: bool = Query(
+        False,
+        description=(
+            "If updating/creating fails for some trafo revisions and this setting is true,"
+            " no attempt will be made to update/create the remaining trafo revs."
+            " Note that the order in which updating/creating happens may differ from"
+            " the ordering of the provided list since they are ordered by dependency"
+            " relation before trying to process them. So it may be difficult to determine."
+            " which trafos have been skipped / are missing and which have been successfully"
+            " processed. Note that already processed actions will not be reversed."
+        ),
+    ),
+    deprecate_older_revisions: bool = Query(
+        False,
+        description=(
+            "Whether older revisions in the same trafo revision group should be deprecated."
+            " If this is True, this is done for every revision group for which any trafo"
+            " rev passes the filters and even for those that are included as dependencies"
+            " via the include_dependencies property of the filter params!"
+            " Note that this might not be done if abort_on_error is True and there is"
+            " an error anywhere."
+        ),
+    ),
+) -> Dict[UUID, TrafoUpdateProcessSummary]:
+    """Update/store multiple transformation revisions
+
+    This updates or creates the given transformation revisions. Automatically
+    determines correct order (by dependency / nesting) so that depending trafo
+    revisions can be provided in arbitrary order to this endpoint.
+
+    Returns detailed info about success/failure for each transformation revision.
+
+    This endpoint can be used to import related sets of transformation revisions.
+    Such a set does not have to be closed under dependency relation, e.g. elements
+    of it can refer base components.
+    """
+    filter_params = FilterParams(
+        type=type,
+        state=state,
+        categories=categories,
+        category_prefix=category_prefix,
+        revision_group_id=revision_group_id,
+        ids=ids,
+        names=names,
+        include_deprecated=include_deprecated,
+        include_dependencies=include_dependencies,
+    )
+
+    multi_import_config = MultipleTrafosUpdateConfig(
+        allow_overwrite_released=allow_overwrite_released,
+        update_component_code=update_component_code,
+        strip_wirings=strip_wirings,
+        abort_on_error=abort_on_error,
+        deprecate_older_revisions=deprecate_older_revisions,
+    )
+
+    importable = Importable(
+        transformation_revisions=updated_transformation_revisions,
+        import_config=ImportSourceConfig(
+            filter_params=filter_params, update_config=multi_import_config
+        ),
+    )
+
+    success_per_trafo = import_importable(importable)
+    response.status_code = status.HTTP_207_MULTI_STATUS
+
+    return success_per_trafo
+
+
 @transformation_router.put(
     "/{id}",
     response_model=TransformationRevision,
@@ -253,7 +434,7 @@ async def update_transformation_revision(
     ),
     strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
 ) -> TransformationRevision:
-    """Update or store a transformation revision in the data base.
+    """Update or store a transformation revision in the database.
 
     If no DB entry with the provided id is found, it will be created.
 

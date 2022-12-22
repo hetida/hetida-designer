@@ -5,14 +5,20 @@ from unittest import mock
 
 from hetdesrun.exportimport.importing import (
     generate_import_order_file,
+    import_importable,
+    import_importables,
     import_transformations,
-    load_json,
-    transformation_revision_from_python_code,
     update_or_create_transformation_revision,
 )
 from hetdesrun.persistence import sessionmaker
 from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.io.load import (
+    get_import_sources,
+    load_import_source,
+    load_json,
+    transformation_revision_from_python_code,
+)
 
 
 def test_tr_from_code_for_component_without_register_decorator():
@@ -25,7 +31,7 @@ def test_tr_from_code_for_component_without_register_decorator():
     with open(path) as f:
         code = f.read()
 
-    tr_json = transformation_revision_from_python_code(code, path)
+    tr_json = transformation_revision_from_python_code(code)
 
     tr = TransformationRevision(**tr_json)
 
@@ -212,3 +218,38 @@ def test_generate_import_order_file_with_transform_py_to_json(tmp_path):
             )
         )
     ) in list_of_json_paths
+
+
+def test_import_importable():
+    import_sources = list(get_import_sources("./tests/data/import_sources_examples"))
+
+    dir_import_src = [imp_src for imp_src in import_sources if imp_src.is_dir][0]
+
+    importable = load_import_source(dir_import_src)
+
+    assert len(importable.transformation_revisions) > 0
+    with mock.patch(
+        "hetdesrun.exportimport.importing.update_or_create_single_transformation_revision",
+        return_value=None,
+    ) as mocked_update:
+        import_importable(importable)
+
+        mocked_update.assert_called_once()
+        mocked_update.assert_any_call(
+            mock.ANY,
+            allow_overwrite_released=False,
+            update_component_code=True,
+            strip_wiring=False,
+        )
+
+        # Changing an option
+        importable.import_config.update_config.allow_overwrite_released = True
+
+        import_importables([importable])
+
+        mocked_update.assert_any_call(
+            mock.ANY,
+            allow_overwrite_released=True,
+            update_component_code=True,
+            strip_wiring=False,
+        )

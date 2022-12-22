@@ -16,7 +16,6 @@ from hetdesrun.exportimport.purge import (
     deprecate_all_but_latest_per_group,
 )
 from hetdesrun.exportimport.utils import (
-    FilterParams,
     delete_transformation_revision,
     delete_transformation_revisions,
     deprecate_all_but_latest_in_group,
@@ -29,6 +28,7 @@ from hetdesrun.persistence.models.exceptions import ModifyForbidden
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.config import get_config
 
@@ -73,7 +73,7 @@ def test_get_transformation_revisions(caplog):
             "hetdesrun.exportimport.utils.requests.get", return_value=resp_mock
         ) as mocked_get_from_backend:
             returned_from_db_tr_list = get_transformation_revisions(
-                params=FilterParams(), directly_from_db=True
+                params=FilterParams(include_dependencies=False), directly_from_db=True
             )
             assert returned_from_db_tr_list == tr_list
             assert mocked_get_from_db.call_count == 1
@@ -93,6 +93,7 @@ def test_get_transformation_revisions(caplog):
                 revision_group_id=uuid4(),
                 ids=[uuid4(), uuid4()],
                 names=["ö(-.-)ö", ","],
+                include_dependencies=False,
             )
             returned_from_backend_tr_list = get_transformation_revisions(params)
             assert returned_from_backend_tr_list == tr_list

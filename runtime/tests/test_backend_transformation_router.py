@@ -10,10 +10,9 @@ from fastapi import HTTPException
 
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.component.code import update_code
-from hetdesrun.exportimport.importing import load_json
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence import get_db_engine, sessionmaker
-from hetdesrun.persistence.dbmodels import Base, FilterParams
+from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
@@ -21,6 +20,8 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.filter.params import FilterParams
+from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
@@ -1115,7 +1116,9 @@ async def test_delete_transformation_revision_with_component(
                 params={"ignore_state": True},
             )
             assert response.status_code == 204
-            tr_list = get_multiple_transformation_revisions(FilterParams())
+            tr_list = get_multiple_transformation_revisions(
+                FilterParams(include_dependencies=False)
+            )
             assert len(tr_list) == 1  # component 3 is still stored in db
 
             response = await ac.delete(
@@ -1124,7 +1127,9 @@ async def test_delete_transformation_revision_with_component(
                 )
             )
             assert response.status_code == 204
-            tr_list = get_multiple_transformation_revisions(FilterParams())
+            tr_list = get_multiple_transformation_revisions(
+                FilterParams(include_dependencies=False)
+            )
             assert len(tr_list) == 0
 
 
@@ -1959,3 +1964,28 @@ async def test_put_component_transformation_without_update_code(
         assert "COMPONENT_INFO" not in component_tr_in_db.content
         assert "register" in response.json()["content"]
         assert "register" in component_tr_in_db.content
+
+
+@pytest.mark.asyncio
+async def test_put_multiple_trafos(async_test_client, clean_test_db_engine):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        patched_session,
+    ):
+
+        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"
+        example_component_tr_json = load_json(path)
+
+        async with async_test_client as ac:
+            response = await ac.put(
+                "/api/transformations/",
+                params={"update_component_code": False},
+                json=[example_component_tr_json],
+            )
+
+            assert response.status_code == 207
+
+            success_info = response.json()
+            assert len(success_info) == 1
+            assert list(success_info.values())[0]["status"] == "SUCCESS"

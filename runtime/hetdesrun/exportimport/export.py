@@ -1,9 +1,4 @@
-import json
 import logging
-import os
-import re
-import unicodedata
-from pathlib import Path
 from posixpath import join as posix_urljoin
 from typing import Any, List, Optional, Union
 from uuid import UUID
@@ -13,9 +8,11 @@ from pydantic import ValidationError
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-from hetdesrun.exportimport.utils import FilterParams, get_transformation_revisions
+from hetdesrun.exportimport.utils import get_transformation_revisions
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.filter.params import FilterParams
+from hetdesrun.trafoutils.io.save import save_transformation_into_directory
 from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
@@ -23,66 +20,12 @@ from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
-
-def slugify(value: str, allow_unicode: bool = False) -> str:
-    """Sanitize string to make it usable as a file name
-
-    Taken from https://github.com/django/django/blob/master/django/utils/text.py
-    Convert to ASCII if 'allow_unicode' is False. Convert spaces or repeated
-    dashes to single dashes. Remove characters that aren't alphanumerics,
-    underscores, or hyphens. Convert to lowercase. Also strip leading and
-    trailing whitespace, dashes, and underscores.
-    """
-    value = str(value)
-    if allow_unicode:
-        value = unicodedata.normalize("NFKC", value)
-    else:
-        value = (
-            unicodedata.normalize("NFKD", value)
-            .encode("ascii", "ignore")
-            .decode("ascii")
-        )
-    value = re.sub(r"[^\w\s-]", "", value.lower())
-    return re.sub(r"[-\s]+", "-", value).strip("-_")
-
-
-##Base function to save transformation
-def save_transformation(tr: TransformationRevision, download_path: str) -> str:
-    # Create directory on local system
-    cat_dir = os.path.join(download_path, tr.type.lower() + "s", slugify(tr.category))
-    Path(cat_dir).mkdir(parents=True, exist_ok=True)
-    path = os.path.join(
-        cat_dir,
-        slugify(tr.name)
-        + "_"
-        + slugify(tr.version_tag)
-        + "_"
-        + str(tr.id).lower()
-        + ".json",
-    )
-
-    # Save the transformation revision
-    with open(path, "w", encoding="utf8") as f:
-        try:
-            json.dump(
-                json.loads(tr.json(exclude_none=True)), f, indent=2, sort_keys=True
-            )
-            logger.info("exported %s '%s' to %s", tr.type, tr.name, path)
-        except KeyError:
-            logger.error(
-                "Could not safe the %s with id %s on the local system.",
-                tr.type,
-                str(tr.id),
-            )
-    return path
-
-
-##Base function to get transformation via REST API from DB (old endpoints)
 # pylint: disable=redefined-builtin
 def get_transformation_from_java_backend(
     id: UUID, type: Type
 ) -> TransformationRevision:
-    """
+    """Get transformation via REST API from old backend (old endpoints)
+
     Loads a single transformation revision together with its documentation based on its id
     """
     try:
@@ -304,7 +247,9 @@ def export_transformations(
                     except ValidationError as e:
                         failed_exports.append((trafo_json, e))
                     else:
-                        save_transformation(transformation, download_path)
+                        save_transformation_into_directory(
+                            transformation, download_path
+                        )
         for export in failed_exports:
             trafo_json = export[0]
             error = export[1]
@@ -334,4 +279,4 @@ def export_transformations(
 
         # Export individual transformation
         for transformation in transformation_list:
-            save_transformation(transformation, download_path)
+            save_transformation_into_directory(transformation, download_path)

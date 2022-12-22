@@ -1,0 +1,8 @@
+{
+    "filter_params": {
+        "category_prefix": "Time"
+    },
+    "update_config": {
+        "allow_overwrite_released": true
+    }
+}
