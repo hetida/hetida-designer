@@ -4,6 +4,7 @@ from typing import List
 import boto3
 from mypy_boto3_s3.service_resource import S3ServiceResource
 
+from hetdesrun.adapters.blob_storage.authenticaton import get_credentials
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.models import BucketName, IdString
 
@@ -13,9 +14,9 @@ logger = getLogger(__name__)
 def get_session() -> boto3.Session:
     credentials = get_credentials()
     session = boto3.Session(
-        aws_access_key_id=credentials["AccessKeyId"],
-        aws_secret_access_key=credentials["SecretAccessKey"],
-        aws_session_token=credentials["SessionToken"],
+        aws_access_key_id=credentials.access_key_id,
+        aws_secret_access_key=credentials.secret_access_key,
+        aws_session_token=credentials.session_token,
         region_name=get_blob_adapter_config().region_name,
     )
     return session

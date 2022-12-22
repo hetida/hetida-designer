@@ -5,6 +5,7 @@ from functools import cache
 from typing import Dict, Optional
 
 import boto3
+from botocore.exceptions import ClientError
 from pydantic import BaseModel, Field
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
@@ -24,38 +25,7 @@ class Credentials(BaseModel):
     session_token: str
 
 
-def obtain_credentials_from_sts(access_token: str):
-    sts_client = boto3.client(
-        "sts",
-        region_name=get_blob_adapter_config().region_name,
-        use_ssl=False,
-        endpoint_url=get_blob_adapter_config().endpoint_url,
-    )
-
-    response = sts_client.assume_role_with_web_identity(
-        # Amazon Resource Name (ARN)
-        # arn:partition:service:region:account-id:(resource-type/)resource-id
-        RoleArn=(
-            f"arn:aws:iam::{get_blob_adapter_config().account_id}"
-            f":{get_blob_adapter_config().resource_id}"
-        ),
-        RoleSessionName="get-credentials",
-        WebIdentityToken=access_token,
-        DurationSeconds=get_blob_adapter_config().access_duration,
-    )
-
-    credentials_json = response["Credentials"]
-
-    credentials = Credentials(
-        access_key_id=credentials_json["AccessKeyId"],
-        secret_access_key=credentials_json["SecretAccessKey"],
-        session_token=credentials_json["SessionToken"],
-    )
-
-    return credentials
-
-
-class CredentialResponse(BaseModel):
+class CredentialInfo(BaseModel):
     credentials: Credentials
     issue_timestamp: datetime = Field(
         ...,
@@ -67,7 +37,49 @@ class CredentialResponse(BaseModel):
     expiration_time_in_seconds: int
 
 
-def credentials_still_valid_enough(credential_info: CredentialResponse) -> bool:
+def obtain_credential_info_from_sts(access_token: str) -> CredentialInfo:
+    now = datetime.now(timezone.utc)
+
+    sts_client = boto3.client(
+        "sts",
+        region_name=get_blob_adapter_config().region_name,
+        use_ssl=False,
+        endpoint_url=get_blob_adapter_config().endpoint_url,
+    )
+
+    try:
+        response = sts_client.assume_role_with_web_identity(
+            # Amazon Resource Name (ARN)
+            # arn:partition:service:region:account-id:(resource-type/)resource-id
+            RoleArn=(
+                f"arn:aws:iam::{get_blob_adapter_config().account_id}"
+                f":{get_blob_adapter_config().resource_id}"
+            ),
+            RoleSessionName="get-credentials",
+            WebIdentityToken=access_token,
+            DurationSeconds=get_blob_adapter_config().access_duration,
+        )
+    except ClientError as error:
+        msg = ""
+        logger.error(msg)
+        raise StsAuthenticationError(msg) from error
+
+    credentials_json = response["Credentials"]
+
+    credentials = Credentials(
+        access_key_id=credentials_json["AccessKeyId"],
+        secret_access_key=credentials_json["SecretAccessKey"],
+        session_token=credentials_json["SessionToken"],
+    )
+
+    return CredentialInfo(
+        issue_timestamp=now,
+        credentials=credentials,
+        expiration_time_in_seconds=get_blob_adapter_config().access_duration,
+    )
+
+
+def credentials_still_valid_enough(credential_info: CredentialInfo) -> bool:
     now = datetime.now(timezone.utc)
 
     time_since_issue_in_seconds = (
@@ -80,22 +92,22 @@ def credentials_still_valid_enough(credential_info: CredentialResponse) -> bool:
 
 
 def obtain_or_refresh_credentials(
-    access_token: str, existing_credential_info: Optional[CredentialResponse] = None
-) -> CredentialResponse:
+    access_token: str, existing_credential_info: Optional[CredentialInfo] = None
+) -> CredentialInfo:
     if existing_credential_info is not None:
         if credentials_still_valid_enough(existing_credential_info):
             return existing_credential_info
         logger.debug("Credentials will soon expire. Trying to get new credentials.")
 
     try:
-        return obtain_credentials_from_sts(access_token)
+        return obtain_credential_info_from_sts(access_token)
     except StsAuthenticationError as error:
         logger.error("Obtaining new credentails failed:\n%s", str(error))
         raise error
 
 
 class CredentialManager:
-    _current_credential_info: Optional[CredentialResponse]
+    _current_credential_info: Optional[CredentialInfo]
 
     def __init__(self, access_token: str):
         self.access_token = access_token
@@ -109,7 +121,7 @@ class CredentialManager:
         with self._credential_thread_lock:
             self._current_credential_info = credential_info
 
-    def get_credentials(self) -> str:
+    def get_credentials(self) -> Credentials:
         self._obtain_or_refresh_credential_info()
         assert self._current_credential_info is not None
         return self._current_credential_info.credentials
@@ -137,6 +149,8 @@ def create_or_get_named_credential_manager(
         )
 
     manager_dict[key] = CredentialManager(access_token=access_token)
+
+    return manager_dict[key]
 
 
 def get_access_token() -> str:
