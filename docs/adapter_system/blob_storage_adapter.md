@@ -34,12 +34,13 @@ Only those buckets and objects for which bucket name and object key match the hi
 
 The information required to access the blob storage is expected to be provided by the following environment variables:
 
+* BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION
+* BLOB_STORAGE_ACCOUNT_ID
+* BLOB_STORAGE_RESOURCE_ID
 * BLOB_STORAGE_ENDPOINT_URL
-* BLOB_STORAGE_IDENTITY_OPENID_REDIRECT_URI
-* BLOB_STORAGE_IDENTITY_OPENID_CLIENT_ID
-* BLOB_STORAGE_IDENTITY_OPENID_CLIENT_SECRET
-* BLOB_STORAGE_IDENTITY_AUTHORIZE_URL
-* BLOB_STORAGE_IDENTITY_TOKEN_URL
+* BLOB_STORAGE_REGION_NAME
+
+The `REGION_NAME` should be one of the [AWS regional endpoint codes](https://docs.aws.amazon.com/de_de/general/latest/gr/rande.html#regional-endpoints).
 
 These can be provided in the docker compose file as following:
 
@@ -47,8 +48,9 @@ These can be provided in the docker compose file as following:
   hetida-designer-runtime:
     ...
     environment:
+      BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION:
       BLOB_STORAGE_ENDPOINT_URL: http://localhost:9000
-      BLOB_STORAGE_IDENTITY_OPENID_REDIRECT_URI: http://localhost:8090/oauth_callback
+      BLOB_STORAGE_REGION_NAME: eu-central-1
       ...
 ```
 
