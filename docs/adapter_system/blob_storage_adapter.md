@@ -50,7 +50,7 @@ These can be provided in the docker compose file as following:
   hetida-designer-runtime:
     ...
     environment:
-      BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION:
+      BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION: /mount/blob_storage_adapter_hierarchy.json
       ...
       BLOB_STORAGE_ACCESS_DURATION: 3600
       BLOB_STORAGE_ENDPOINT_URL: http://localhost:9000
