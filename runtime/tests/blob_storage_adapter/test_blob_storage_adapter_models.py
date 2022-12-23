@@ -139,8 +139,8 @@ def test_blob_storage_class_structure_thing_node():
 
     assert "The id 'i-ii/A' of a thing node must consist of " in str(exc_info.value)
     assert "its parent id 'i-i' connected by" in str(exc_info.value)
-    assert f"one of the separators {BUCKET_NAME_DIR_SEPARATOR}" in str(exc_info.value)
-    assert f"or {OBJECT_KEY_DIR_SEPARATOR} with its name 'A'!" in str(exc_info.value)
+    assert f"one of the separators '{BUCKET_NAME_DIR_SEPARATOR}'" in str(exc_info.value)
+    assert f"or '{OBJECT_KEY_DIR_SEPARATOR}' with its name 'A'!" in str(exc_info.value)
 
 
 def test_blob_storage_class_structure_source():
@@ -475,6 +475,7 @@ def test_blob_storage_class_category():
     category = Category(
         name="I",
         description="Category",
+        end_of_bucket=True,
         substructure=[
             Category(name="A", description="Subcategory"),
             Category(name="B", description="Subcategory"),
@@ -508,8 +509,8 @@ def test_blob_storage_class_category():
         thing_nodes=thing_nodes,
         buckets=bucket_names,
         sinks=sinks,
-        object_key_depth=1,
         parent_id="i",
+        part_of_bucket_name=True,
     )
     assert len(thing_nodes) == 3
     assert thing_nodes[0].id == "i-i"
@@ -541,6 +542,7 @@ def test_blob_storage_category_create_structure_too_long_bucket_name():
                 {
                     "name": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
                     "description": "Category",
+                    "end_of_bucket": True,
                     "substructure": [
                         {"name": "C", "description": "Subcategory"},
                     ],
@@ -557,8 +559,8 @@ def test_blob_storage_category_create_structure_too_long_bucket_name():
             thing_nodes=thing_nodes,
             buckets=bucket_names,
             sinks=sinks,
-            object_key_depth=1,
             parent_id=None,
+            part_of_bucket_name=True,
         )
 
     assert "Validation Error for transformation of" in str(exc_info.value)
@@ -577,10 +579,9 @@ def test_blob_storage_models_find_duplicates():
     assert "banana" in duplicates
 
 
-def test_blob_storage_class_adapter_hierarchy():
+def test_blob_storage_class_adapter_hierarchy_happy_path():
     adapter_hierarchy = AdapterHierarchy(
         **{
-            "object_key_depth": 1,
             "structure": [
                 {
                     "name": "I",
@@ -589,6 +590,7 @@ def test_blob_storage_class_adapter_hierarchy():
                         {
                             "name": "i",
                             "description": "Category",
+                            "end_of_bucket": True,
                             "substructure": [
                                 {
                                     "name": "A",
@@ -607,6 +609,7 @@ def test_blob_storage_class_adapter_hierarchy():
                         {
                             "name": "ii",
                             "description": "Category",
+                            "end_of_bucket": True,
                             "substructure": [
                                 {"name": "E", "description": "Subcategory"}
                             ],
@@ -614,6 +617,7 @@ def test_blob_storage_class_adapter_hierarchy():
                         {
                             "name": "iii",
                             "description": "Category",
+                            "end_of_bucket": True,
                             "substructure": [
                                 {"name": "F", "description": "Subcategory"},
                                 {"name": "G", "description": "Subcategory"},
@@ -625,7 +629,6 @@ def test_blob_storage_class_adapter_hierarchy():
         }
     )
 
-    assert adapter_hierarchy.object_key_depth == 1
     assert adapter_hierarchy.structure[0].get_depth() == 3
     assert adapter_hierarchy.structure[0].substructure[0].get_depth() == 2
     assert (
@@ -647,26 +650,25 @@ def test_blob_storage_class_adapter_hierarchy():
     bucket_names_from_file = hierarchy_from_file.structure_buckets
     sinks_from_file = hierarchy_from_file.sinks
 
-    assert len(thing_nodes_from_file) == 11
-    assert len(bucket_names_from_file) == 3
-    assert len(sinks_from_file) == 7
-    assert hierarchy_from_file == adapter_hierarchy
+    assert len(thing_nodes_from_file) == 14
+    assert len(bucket_names_from_file) == 4
+    assert len(sinks_from_file) == 8
 
     with pytest.raises(MissingHierarchyError):
         AdapterHierarchy.from_file("tests/data/blob_storage/not_there.json")
 
 
 def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path():
+    adapter_hierarchy = AdapterHierarchy(
+        structure=(Category(name="I", description=""),)
+    )
     with pytest.raises(HierarchyError) as exc_info:
-        AdapterHierarchy(
-            structure=Category(name="I", description=""), object_key_depth=0
-        )
-    assert "must be a positive integer!" in str(exc_info.value)
+        adapter_hierarchy.thing_nodes
+    assert "Without an object key prefix no sinks or sources" in str(exc_info.value)
 
 
 def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error():
-    object_key_depth = 1
-    structure = [
+    structure = (
         Category(
             **{
                 "name": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
@@ -675,18 +677,17 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error():
                     {
                         "name": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
                         "description": "Category",
+                        "end_of_bucket": True,
                         "substructure": [
                             {"name": "C", "description": "Subcategory"},
                         ],
                     },
                 ],
             }
-        )
-    ]
-
-    adapter_hierarchy = AdapterHierarchy(
-        object_key_depth=object_key_depth, structure=structure
+        ),
     )
+
+    adapter_hierarchy = AdapterHierarchy(structure=structure)
 
     with pytest.raises(BucketNameInvalidError) as exc_info:
         adapter_hierarchy.structure_buckets
@@ -701,40 +702,38 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error():
 
 
 def test_blob_storage_adapter_hierarchy_with_structure_invalid_error():
-    with pytest.raises(HierarchyError) as exc_info:
-        AdapterHierarchy(
-            object_key_depth=2,
-            structure=[
-                Category(
-                    **{
-                        "name": "I",
-                        "description": "Super Category",
-                        "substructure": [
-                            {
-                                "name": "i",
-                                "description": "Category",
-                            },
-                        ],
-                    }
-                )
-            ],
+    adapter_hierarchy = AdapterHierarchy(
+        structure=(
+            Category(
+                **{
+                    "name": "I",
+                    "description": "Super Category",
+                    "substructure": [
+                        {
+                            "name": "i",
+                            "description": "Category",
+                        },
+                    ],
+                }
+            ),
         )
-
-    assert (
-        "Each branch of the structure must be deeper than the object key depth '2'!"
-        in str(exc_info.value)
     )
+
+    with pytest.raises(HierarchyError) as exc_info:
+        adapter_hierarchy.thing_nodes
+
+    assert "Without an object key prefix no sinks or sources" in str(exc_info.value)
 
 
 def test_blob_storage_adapter_hierarchy_with_duplicates():
 
     adapter_hierarchy = AdapterHierarchy(
-        object_key_depth=1,
         structure=[
             Category(
                 **{
                     "name": "III",
                     "description": "Super Category",
+                    "end_of_bucket": True,
                     "substructure": [
                         {
                             "name": "i",
@@ -747,6 +746,7 @@ def test_blob_storage_adapter_hierarchy_with_duplicates():
                 **{
                     "name": "iii",
                     "description": "Super Category",
+                    "end_of_bucket": True,
                     "substructure": [
                         {
                             "name": "I",

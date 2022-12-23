@@ -40,7 +40,7 @@ def test_blob_storage_get_thing_nodes_by_parent_id():
     ):
         thing_nodes_with_no_parents = get_thing_nodes_by_parent_id(None)
 
-        assert len(thing_nodes_with_no_parents) == 1
+        assert len(thing_nodes_with_no_parents) == 2
         assert thing_nodes_with_no_parents[0].id == "i"
 
         thing_nodes_with_parent_i = get_thing_nodes_by_parent_id("i")
@@ -159,10 +159,10 @@ def test_blob_storage_get_filtered_sinks():
         ),
     ):
         unfiltered_sinks = get_filtered_sinks(None)
-        assert len(unfiltered_sinks) == 7
+        assert len(unfiltered_sinks) == 8
 
         sinks_filtered_by_c = get_filtered_sinks("C")
-        assert len(sinks_filtered_by_c) == 1
+        assert len(sinks_filtered_by_c) == 2
         assert sinks_filtered_by_c[0].id == "i-i/C_next"
 
         sinks_filtered_by_bla = get_filtered_sinks("bla")

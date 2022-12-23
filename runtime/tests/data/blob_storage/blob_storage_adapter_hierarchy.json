@@ -1,5 +1,4 @@
 {
-    "object_key_depth": 1,
     "structure": [
         {
             "name": "I",
@@ -8,6 +7,7 @@
                 {
                     "name": "i",
                     "description": "Category",
+                    "end_of_bucket": true,
                     "substructure": [
                         {
                             "name": "A",
@@ -32,6 +32,7 @@
                 {
                     "name": "ii",
                     "description": "Category",
+                    "end_of_bucket": true,
                     "substructure": [
                         {
                             "name": "E",
@@ -42,6 +43,7 @@
                 {
                     "name": "iii",
                     "description": "Category",
+                    "end_of_bucket": true,
                     "substructure": [
                         {
                             "name": "F",
@@ -54,6 +56,24 @@
                     ]
                 }
             ]
+        },
+        {
+            "name": "III",
+            "description": "Category",
+            "end_of_bucket": true,
+            "substructure": [
+                {
+                    "name": "x",
+                    "description": "Subcategory",
+                    "substructure": [
+                        {
+                            "name": "C",
+                            "description": "Subcategory"
+                        }
+                    ]
+                }
+            ]
         }
+
     ]
 }

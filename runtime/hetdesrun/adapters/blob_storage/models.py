@@ -77,7 +77,7 @@ class ObjectKey(BaseModel):
             name, timestring = string.rsplit(IDENTIFIER_SEPARATOR, maxsplit=1)
         except ValueError as e:
             raise ValueError(
-                f"String {string} not a valid ObjectKey string, "
+                f"String '{string}' not a valid ObjectKey string, "
                 f"because it contains no '{IDENTIFIER_SEPARATOR}'!"
             ) from e
         return ObjectKey(
@@ -123,8 +123,8 @@ class StructureThingNode(BaseModel):
         ):
             raise ValueError(
                 f"The id '{id}' of a thing node must consist of its parent id '{parent_id}' "
-                f"connected by one of the separators {BUCKET_NAME_DIR_SEPARATOR} or "
-                f"{OBJECT_KEY_DIR_SEPARATOR} with its name '{name}'!"
+                f"connected by one of the separators '{BUCKET_NAME_DIR_SEPARATOR}' or "
+                f"'{OBJECT_KEY_DIR_SEPARATOR}' with its name '{name}'!"
             )
         return name
 
@@ -241,7 +241,7 @@ class BlobStorageStructureSource(BaseModel):
             name = values["name"]
         except KeyError as e:
             raise ValueError(
-                f"Cannot check if source's metadataKey {metadataKey} matches its name "
+                f"Cannot check if source's metadataKey '{metadataKey}' matches its name "
                 "if the attribute 'name' is missing!"
             ) from e
 
@@ -447,6 +447,7 @@ class Category(BaseModel):
     name: ThingNodeName
     description: str
     substructure: Optional[Tuple["Category", ...]] = None
+    end_of_bucket: Optional[bool] = None
 
     class Config:
         frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
@@ -481,31 +482,52 @@ class Category(BaseModel):
         thing_nodes: List[StructureThingNode],
         buckets: List[StructureBucket],
         sinks: List[BlobStorageStructureSink],
-        object_key_depth: int,
         parent_id: Optional[IdString],
+        part_of_bucket_name: bool,
     ) -> None:
+        if part_of_bucket_name is True and (
+            self.substructure is None or len(self.substructure) == 0
+        ):
+            raise HierarchyError(
+                f"Hierarchy Error identified at Category '{self.name}' which appears to be "
+                "part of a bucket name but does not contain a substructure! "
+                "Without an object key prefix no sinks or sources can be generated!"
+            )
+
         thing_node = self.to_thing_node(
             parent_id,
             separator=BUCKET_NAME_DIR_SEPARATOR
-            if self.get_depth() > object_key_depth
+            if part_of_bucket_name
             else OBJECT_KEY_DIR_SEPARATOR,
         )
         thing_nodes.append(thing_node)
 
-        if self.get_depth() == object_key_depth + 1:
+        if self.end_of_bucket is True:
+            if part_of_bucket_name is False:
+                raise HierarchyError(
+                    f"Hierarchy Error identified at Category '{self.name}'! "
+                    'It appears "end_of_bucket" has been true for a super category already, '
+                    "but then it should not be true again for any of its subcategories!"
+                )
             try:
                 buckets.append(StructureBucket(name=thing_node.id))
             except ValidationError as error:
                 raise BucketNameInvalidError(
                     f"Validation Error for transformation of StructureThingNode "
-                    f"{thing_node.id} to BucketName:\n{error}"
+                    f"{thing_node.id} to BucketName for category '{self.name}':\n{error}"
                 ) from error
 
         if self.substructure is not None and len(self.substructure) != 0:
             # pylint: disable=not-an-iterable
             for category in self.substructure:
                 category.create_structure(
-                    thing_nodes, buckets, sinks, object_key_depth, thing_node.id
+                    thing_nodes=thing_nodes,
+                    buckets=buckets,
+                    sinks=sinks,
+                    parent_id=thing_node.id,
+                    part_of_bucket_name=part_of_bucket_name
+                    if self.end_of_bucket in (None, False)
+                    else False,
                 )
         else:  # category.substructure is None or len(category.substructure) == 0
             sink = BlobStorageStructureSink.from_thing_node(thing_node)
@@ -525,7 +547,7 @@ def find_duplicates(item_list: List) -> List:
 
 @cache
 def create_blob_storage_adapter_structure_objects_from_hierarchy(
-    object_key_depth: int, structure: Tuple[Category, ...]
+    structure: Tuple[Category, ...]
 ) -> Tuple[
     List[StructureThingNode], List[StructureBucket], List[BlobStorageStructureSink]
 ]:
@@ -534,7 +556,7 @@ def create_blob_storage_adapter_structure_objects_from_hierarchy(
     sinks: List[BlobStorageStructureSink] = []
     for category in structure:
         category.create_structure(
-            thing_nodes, bucket_names, sinks, object_key_depth, parent_id=None
+            thing_nodes, bucket_names, sinks, parent_id=None, part_of_bucket_name=True
         )
     return thing_nodes, bucket_names, sinks
 
@@ -550,7 +572,6 @@ class AdapterHierarchy(BaseModel):
     """
 
     structure: Tuple[Category, ...]
-    object_key_depth: int
 
     class Config:
         arbitrary_types_allowed = True
@@ -560,48 +581,13 @@ class AdapterHierarchy(BaseModel):
         # https://github.com/pydantic/pydantic/issues/1241
         frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
 
-    # pylint: disable=no-self-argument
-    @validator("object_key_depth")
-    def positive_object_key_depth(cls, object_key_depth: int) -> int:
-        if not object_key_depth > 0:
-            raise HierarchyError(
-                "The attribute object_key_depth must be a positive integer!"
-            )
-        return object_key_depth
-
-    # pylint: disable=no-self-argument
-    @validator("object_key_depth")
-    def structure_deeper_than_object_key_depth(
-        cls, object_key_depth: int, values: dict
-    ) -> int:
-        try:
-            structure: List[Category] = values["structure"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot check if structure is deeper than the object key depth "
-                f"'{object_key_depth}' if the attribute 'structure' is missing!"
-            ) from e
-
-        depths: List[int] = []
-        for category in structure:
-            depths.append(category.get_depth())
-
-        if not min(depths) > object_key_depth:
-            raise HierarchyError(
-                "Each branch of the structure must be deeper than "
-                f"the object key depth '{object_key_depth}'!"
-            )
-
-        values["structure"] = structure
-        return object_key_depth
-
     def create_structure(
         self,
     ) -> Tuple[
         List[StructureThingNode], List[StructureBucket], List[BlobStorageStructureSink]
     ]:
         return create_blob_storage_adapter_structure_objects_from_hierarchy(
-            object_key_depth=self.object_key_depth, structure=self.structure
+            structure=self.structure
         )
 
     @cached_property
@@ -635,7 +621,7 @@ class AdapterHierarchy(BaseModel):
             return AdapterHierarchy.parse_file(path)
         except FileNotFoundError as error:
             raise MissingHierarchyError(
-                f"Could not find hierarchy json file at path {path}:\n{str(error)}"
+                f"Could not find hierarchy json file at path '{path}':\n{str(error)}"
             ) from error
 
 

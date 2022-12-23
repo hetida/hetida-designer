@@ -59,7 +59,6 @@ def test_blob_storage_utils_create_sources():
                     substructure=(Category(name="I", description=""),),
                 ),
             ),
-            object_key_depth=1,
         ),
     ):
         with mock.patch(

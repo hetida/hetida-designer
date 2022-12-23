@@ -1,3 +1,4 @@
+from copy import deepcopy
 from unittest import mock
 
 import nest_asyncio
@@ -29,6 +30,7 @@ async def walk_thing_nodes(
     tn_attached_metadata_dict,
     open_async_test_client,
 ):
+    print("walk_thing_nodes call with parent_id=" + parent_id)
     """Recursively walk thingnodes"""
     response_obj = (
         await open_async_test_client.get(
@@ -65,6 +67,7 @@ async def walk_thing_nodes(
         tn_attached_metadata_dict[(parent_id, metadatum["key"])] = metadatum
 
     for tn in response_obj["thingNodes"]:
+        print("add thingNode with id=" + tn["id"] + " and call walk_thing_nodes")
         tn_append_list.append(tn)
         await walk_thing_nodes(
             tn["id"],
@@ -147,31 +150,32 @@ async def test_resources_offered_from_blob_storage_webservice(
                 assert len(response_obj["sinks"]) == 0
 
                 roots = response_obj["thingNodes"]
-                assert len(roots) == 1
+                assert len(roots) == 2
 
-                root = roots[0]
-
-                all_tns = roots
+                all_tns = deepcopy(roots)
                 all_srcs = []
                 all_snks = []
                 tn_attached_metadata_dict = {}
                 src_attached_metadata_dict = {}
                 snk_attached_metadata_dict = {}
 
-                await walk_thing_nodes(
-                    root["id"],
-                    tn_append_list=all_tns,
-                    src_append_list=all_srcs,
-                    snk_append_list=all_snks,
-                    src_attached_metadata_dict=src_attached_metadata_dict,
-                    snk_attached_metadata_dict=snk_attached_metadata_dict,
-                    tn_attached_metadata_dict=tn_attached_metadata_dict,
-                    open_async_test_client=client,
-                )
-
-                assert len(all_tns) == 11
+                for root in roots:
+                    await walk_thing_nodes(
+                        root["id"],
+                        tn_append_list=all_tns,
+                        src_append_list=all_srcs,
+                        snk_append_list=all_snks,
+                        src_attached_metadata_dict=src_attached_metadata_dict,
+                        snk_attached_metadata_dict=snk_attached_metadata_dict,
+                        tn_attached_metadata_dict=tn_attached_metadata_dict,
+                        open_async_test_client=client,
+                    )
+                print("all_tns")
+                for tn in all_tns:
+                    print(tn["id"])
+                assert len(all_tns) == 14
                 assert len(all_srcs) == 6
-                assert len(all_snks) == 7
+                assert len(all_snks) == 8
 
                 assert len(src_attached_metadata_dict) == 0
                 assert len(snk_attached_metadata_dict) == 0
