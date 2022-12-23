@@ -84,131 +84,118 @@ def credential_info_overdue() -> CredentialInfo:
     )
 
 
-@pytest.fixture(scope="function")
-def mock_obtain_or_refresh_credential_info_works(result_credential_info):
-    def mocked_obtain_func(*args, **kwargs):
-        mocked_obtain_func.last_called_args = deepcopy(args)
-        mocked_obtain_func.last_called_kwargs = deepcopy(kwargs)
-        mocked_obtain_func.num_called += 1
-        return result_credential_info
-
-    mocked_obtain_func.num_called = 0
-
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
-        mocked_obtain_func,
-    ) as mocked_obtain_or_refresh_credential_info_works:
-        return mocked_obtain_or_refresh_credential_info_works
-
-
-@pytest.fixture(scope="function")
-def mock_obtain_or_refresh_credential_info_raises():
-    def mocked_obtain_func(*args, **kwargs):
-        mocked_obtain_func.last_called_args = deepcopy(args)
-        mocked_obtain_func.last_called_kwargs = deepcopy(kwargs)
-        mocked_obtain_func.num_called += 1
-        raise StsAuthenticationError
-
-    mocked_obtain_func.num_called = 0
-
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
-        mocked_obtain_func,
-    ) as _mocked_obtain_or_refresh_credential_info_raises:
-        return _mocked_obtain_or_refresh_credential_info_raises
-
-
 def test_blob_storage_authentication_obtain_or_refresh_credential_info_still_valid(
-    credential_info_longer_valid, mock_obtain_or_refresh_credential_info_works, access_token
+    credential_info_longer_valid, result_credential_info, access_token,
 ):
-    credential_info = obtain_or_refresh_credential_info(
-        access_token=access_token, existing_credential_info=credential_info_longer_valid
-    )
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        return_value = result_credential_info,
+    ) as mocked_obtain_credential_info_from_sts:
+        credential_info = obtain_or_refresh_credential_info(
+            access_token=access_token, existing_credential_info=credential_info_longer_valid
+        )
 
-    # original credential info should be returned, since it is still valid.
-    assert credential_info == credential_info_longer_valid
+        # original credential info should be returned, since it is still valid.
+        assert credential_info == credential_info_longer_valid
 
-    # not token obtain:
-    assert mock_obtain_or_refresh_credential_info_works.num_called == 0
+        # not token obtain:
+        assert mocked_obtain_credential_info_from_sts.call_count == 0
 
 
 def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_works(
-    mock_obtain_or_refresh_credential_info_works,
     access_token,
     result_credential_info,
 ):
-    credential_info = obtain_or_refresh_credential_info(
-        access_token=access_token, existing_credential_info=None
-    )
-
-    # original credential info should be returned, since it is still valid.
-    assert credential_info == result_credential_info
-
-    # not token obtain:
-    assert mock_obtain_or_refresh_credential_info_works.num_called == 1
-
-
-def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_works(
-    credential_info_overdue,
-    mock_obtain_or_refresh_credential_info_works,
-    access_token,
-    result_credential_info,
-):
-    credential_info = obtain_or_refresh_credential_info(
-        access_token=access_token, existing_credential_info=credential_info_overdue
-    )
-
-    # original credential info should be returned, since it is still valid.
-    assert credential_info == result_credential_info
-
-    # not token obtain:
-    assert mock_obtain_or_refresh_credential_info_works.num_called == 1
-
-
-def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_raises(
-    mock_obtain_or_refresh_credential_info_raises,
-    access_token,
-):
-    with pytest.raises(StsAuthenticationError):
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        return_value = result_credential_info,
+    ) as mocked_obtain_credential_info_from_sts:
         credential_info = obtain_or_refresh_credential_info(
             access_token=access_token, existing_credential_info=None
         )
 
-    # not token obtain:
-    assert mock_obtain_or_refresh_credential_info_works.num_called == 1
+        # original credential info should be returned, since it is still valid.
+        assert credential_info == result_credential_info
+
+        # not token obtain:
+        assert mocked_obtain_credential_info_from_sts.call_count == 1
 
 
-def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_raises(
+def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_works(
     credential_info_overdue,
-    mock_obtain_or_refresh_credential_info_raises,
     access_token,
+    result_credential_info,
 ):
-    with pytest.raises(StsAuthenticationError):
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        return_value = result_credential_info,
+    ) as mocked_obtain_credential_info_from_sts:
         credential_info = obtain_or_refresh_credential_info(
             access_token=access_token, existing_credential_info=credential_info_overdue
         )
 
-    # not token obtain:
-    assert mock_obtain_or_refresh_credential_info_works.num_called == 1
+        # original credential info should be returned, since it is still valid.
+        assert credential_info == result_credential_info
+
+        # not token obtain:
+        assert mocked_obtain_credential_info_from_sts.call_count == 1
+
+
+def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_raises(
+    access_token,
+):
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        side_effect = StsAuthenticationError,
+    ) as mocked_obtain_credential_info_from_sts_raises:
+        with pytest.raises(StsAuthenticationError):
+            obtain_or_refresh_credential_info(
+                access_token=access_token, existing_credential_info=None
+            )
+
+        # not token obtain:
+        assert mocked_obtain_credential_info_from_sts_raises.call_count == 1
+
+
+def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_raises(
+    credential_info_overdue,
+    access_token,
+):
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        side_effect = StsAuthenticationError,
+    ) as mocked_obtain_credential_info_from_sts_raises:
+        with pytest.raises(StsAuthenticationError):
+            credential_info = obtain_or_refresh_credential_info(
+                access_token=access_token, existing_credential_info=credential_info_overdue
+            )
+
+        # not token obtain:
+        assert mocked_obtain_credential_info_from_sts_raises.call_count == 1
 
 
 def test_blob_storage_adapter_create_or_get_named_credential_manager(
-    access_token, mock_obtain_or_refresh_credential_info_works
+    result_credential_info,
+    access_token
 ):
-    credential_manager = create_or_get_named_credential_manager(
-        key="key", access_token=access_token
-    )
-    credentials = credential_manager.get_credentials()
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        return_value = result_credential_info,
+    ):
+        credential_manager = create_or_get_named_credential_manager(
+            key="key", access_token=access_token
+        )
+        credentials = credential_manager.get_credentials()
 
-    assert credentials.access_key_id == "result_id"
-    assert credentials.secret_access_key == "result_key"
-    assert credentials.session_token == "result_token"
+        assert credentials.access_key_id == "result_id"
+        assert credentials.secret_access_key == "result_key"
+        assert credentials.session_token == "result_token"
 
-    # load cached works
+        # load cached works
 
-    credential_manager = create_or_get_named_credential_manager(
-        key="key", access_token=access_token
-    )
+        credential_manager = create_or_get_named_credential_manager(
+            key="key", access_token=access_token
+        )
 
 
 def test_blob_storage_adapter_get_access_token():
