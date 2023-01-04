@@ -20,8 +20,9 @@ After inserting the hetida designer backend API URL of your instance you can use
 
 ```shell
 docker run --rm \
-  -e "HETIDA_DESIGNER_BACKEND_API_URL=<...>" \
+  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_export \
+  --network hetida-designer-network \
   --entrypoint python \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import deprecate_all_but_latest_per_group; deprecate_all_but_latest_per_group();'
 ```
@@ -32,8 +33,9 @@ To delete all draft transformation revisions just execute the following command:
 
 ```shell
 docker run --rm \
-  -e "HETIDA_DESIGNER_BACKEND_API_URL=<...>" \
+  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_export \
+  --network hetida-designer-network \
   --entrypoint python \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import delete_drafts; delete_drafts();'
 ```
@@ -44,8 +46,9 @@ In this case "unused" deprecated transformation revisions are those that are eit
 
 ```shell
 docker run --rm \
-  -e "HETIDA_DESIGNER_BACKEND_API_URL=<...>" \
+  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_export \
+  --network hetida-designer-network \
   --entrypoint python \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import delete_unused_deprecated; delete_unused_deprecated();'
 ```
@@ -56,8 +59,9 @@ To delete all transformation revisions and deploy the versions of base component
 
 ```shell
 docker run --rm \
-  -e "HETIDA_DESIGNER_BACKEND_API_URL=<...>" \
+  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
   --name htdruntime_export \
+  --network hetida-designer-network \
   --entrypoint python \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.purge import delete_all_and_refill; delete_all_and_refill();'
 ```
