@@ -744,6 +744,7 @@ export class BaseItemActionService {
    * - there isn't a link from every input
    */
   private isWorkflowIncomplete(workflow: WorkflowTransformation): boolean {
+    // TODO Need to be rebuild.
     const workflowContent = workflow.content;
     // TODO rename
     // @ts-ignore
@@ -760,17 +761,23 @@ export class BaseItemActionService {
       );
     };
     return (
-      workflowContent.operators.length === 0
-      // TODO transformation.io_interface.inputs or transformation.content.inputs
-      // || workflow.inputs.some(
-      //   input =>
-      //     input.constant === false && checkName(input.name, input.id) === false
-      // ) ||
-      // workflow.outputs.some(
-      //   output =>
-      //     output.constant === false &&
-      //     checkName(output.name, output.id) === false
-      // )
+      workflowContent.operators.length === 0 ||
+      workflowContent.inputs.some(
+        input =>
+          workflowContent.constants.find(
+            constant =>
+              constant.connector_id === input.connector_id &&
+              constant.operator_id === input.operator_id
+          ) === undefined && checkName(input.name, input.id) === false
+      ) ||
+      workflowContent.outputs.some(
+        output =>
+          workflowContent.constants.find(
+            constant =>
+              constant.connector_id === output.connector_id &&
+              constant.operator_id === output.operator_id
+          ) === undefined && checkName(output.name, output.id) === false
+      )
     );
   }
 
@@ -823,12 +830,17 @@ export class BaseItemActionService {
         const dialogRef = this.dialog.open<
           WorkflowIODialogComponent,
           WorkflowIODialogData,
-          false | { constants: Constant[]; inputs: IOConnector[]; outputs: IOConnector[] }
+          | false
+          | {
+              constants: Constant[];
+              inputs: IOConnector[];
+              outputs: IOConnector[];
+            }
         >(WorkflowIODialogComponent, {
           width: '95%',
           minHeight: '200px',
           data: {
-            // TODO refactor all mutations in workflow dialog component and remove stringify .
+            // TODO refactor all mutations in workflow dialog component and remove stringify.
             workflowTransformation: JSON.parse(
               JSON.stringify(selectedTransformation)
             ),
@@ -871,7 +883,7 @@ export class BaseItemActionService {
               );
 
               const links: Link[] = [
-                ...innerLinks,
+                ...innerLinks
                 // ...this._createLinks(
                 //   inputIoConnectors,
                 //   outputIoConnectors,
@@ -891,7 +903,6 @@ export class BaseItemActionService {
                   constants
                 }
               };
-
               console.log(updatedWorkflowTransformation);
 
               // this.baseItemService
