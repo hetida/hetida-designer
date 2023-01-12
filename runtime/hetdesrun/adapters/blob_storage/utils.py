@@ -18,9 +18,13 @@ def create_sources() -> List[BlobStorageStructureSource]:
     for bucket in buckets:
         object_key_strings = get_object_key_strings_in_bucket(bucket.name)
         for object_key_string in object_key_strings:
-            object_key = ObjectKey.from_string(object_key_string)
+            try:
+                object_key = ObjectKey.from_string(object_key_string)
+            except ValueError:
+                # ignore objects with keys that do not match the expected name scheme
+                continue
 
-            # ignore objects that do not match the config hierarchy
+            # ignore objects that do not match the configured hierarchy
             thing_node_id = object_key.to_thing_node_id(bucket)
             if len([tn for tn in thing_nodes if tn.id == thing_node_id]) == 0:
                 continue
