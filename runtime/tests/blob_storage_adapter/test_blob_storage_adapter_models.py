@@ -1,7 +1,5 @@
-import logging
 from datetime import datetime, timezone
 from typing import List
-from unittest import mock
 
 import pytest
 from pydantic import ValidationError

@@ -1,8 +1,5 @@
-import logging
 from typing import List
 from unittest import mock
-
-import pytest
 
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
@@ -14,31 +11,12 @@ from hetdesrun.adapters.blob_storage.models import (
 from hetdesrun.adapters.blob_storage.utils import create_sources
 
 
-def mocked_adapter() -> List[StructureThingNode]:
-    return (
-        [
-            StructureThingNode(
-                id="i/A", parent_id="i", name="A", description="Category"
-            ),
-            StructureThingNode(
-                id="ii/B", parent_id="ii", name="B", description="Category"
-            ),
-            StructureThingNode(
-                id="ii/C", parent_id="ii", name="C", description="Category"
-            ),
-        ],
-    )
-
-
-def mocked_bucket_names() -> List[StructureBucket]:
-    return [StructureBucket("i"), StructureBucket("ii")]
-
-
 def mocked_get_oks_in_bucket(bucket_name: StructureBucket) -> List[IdString]:
     if bucket_name == "i-i":
         return [
             IdString("A_2022-01-02T14:23:18+00:00"),
             IdString("A_2022-01-02T14:57:31+00:00"),
+            IdString("A_test"),
         ]
     if bucket_name == "i-ii":
         return [

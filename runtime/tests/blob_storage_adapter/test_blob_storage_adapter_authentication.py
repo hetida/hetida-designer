@@ -11,11 +11,9 @@ from hetdesrun.adapters.blob_storage.authentication import (
     credentials_still_valid_enough,
     get_access_token,
     get_credentials,
-    obtain_credential_info_from_sts,
     obtain_or_refresh_credential_info,
 )
 from hetdesrun.webservice.auth_outgoing import (
-    AccessTokenManager,
     ClientCredentialsGrantCredentials,
     ServiceCredentials,
 )
