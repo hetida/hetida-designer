@@ -10,7 +10,7 @@ This section explains how to make blob storage available for the blob storage ad
 
 ### Mounting the adapter hierarchy configuration
 
-The blob storage adapter is built into the runtime and needs to know which hierarchy of sinks and sources it should offer in the adapter dialog. This is configured via a file named `blob_storage_adapter_hierarchy.json` which needs to be mounted into the runtime service, by adding the line in your docker compose file:
+The blob storage adapter is built into the runtime and needs to know which hierarchy of sinks and sources to offer in the adapter dialog. This is configured via a file named `blob_storage_adapter_hierarchy.json` which needs to be mounted into the runtime service by adding the line in your docker compose file:
 
 ```yaml
   hetida-designer-runtime:
@@ -22,13 +22,13 @@ The blob storage adapter is built into the runtime and needs to know which hiera
 
 You just need to replace the path `./runtime/demodata/blob_storage_adapter_hierarchy.json` with a path to the file on your machine.
 
-This file should contain a json with the two attributes `object_key_depth` and `structure`. The former being a positive integer saying how many hierarchy levels should be considered part of the object key. The latter contains a list of categories each with attributes `name`, `description`, and `substructure`, which can itself contain a list of nested categories or be omitted.
+This file should contain a json file with the attribute `structure`. The value of this attribute must contain a list of categories each with attributes `name`, `description`, and `substructure`. The latter must either itself contain a list of nested categories or be omitted. The nested categories correspond to a tree data structure. The optional boolean attribute `end_of_bucket` must be set to `True` for exactly one category for each branch of this tree, but not for the deepest category. The json file is read only once, thus when changes to the structure are made in the json file, the Docker container of the blob storage adapter must be restarted to implement these changes.
 
-The S3 data model is flat, it consists only of buckets in which objects can be stored. There is no hierarchy of subbuckets of subfolders. Thus, the hierarchy of the adapter is transferred to the bucket names and object keys by using delimiters. Hyphens `-` are used as delimiters in bucket names and slashes `/` are used as delimiters within object keys, mimicking the paths to files in nested folders. Some tools for S3 blob storages can infer hierarchy in the UI from object keys with such delimiters.
+The S3 data model is flat, consisting only of buckets in which objects can be stored. There is no hierarchy of sub-buckets of sub-folders. Therefore, the hierarchy of the adapter is transferred to the bucket names and object keys by using delimiters. Hyphens `-` are used as delimiters in bucket names and slashes `/` are used as delimiters within object keys to mimic the paths to files in nested folders. Some tools for S3 blob storages can infer hierarchy in the user interface from object keys with such delimiters.
 
-The names for the categories should only consist of upper- and lower-case alphanumeric characters with no spaces since they will be interpreted as parts of bucket names and object keys. Since bucket names may not contain capital letters the category names will be transformed in small letters when generating the corresponding bucket names. Keep in mind, that bucket names must consist of minimal 3 charcaters and maximal 63 characters when naming categories.
+The names for the categories should consist only of alphanumeric upper and lower case letters without spaces, because they are interpreted as parts of the bucket names and object keys. Since bucket names cannot contain uppercase letters, the category names are converted to lowercase when the corresponding bucket names are generated. When naming categories, note that bucket names must consist of a minimum of 3 and a maximum of 63 characters.
 
-Only those buckets and objects for which bucket name and object key match the hierarchy will be available in the adapter. A sink will be generated for each end node of the hierarchy to which then data can be send to be stored in the blob storage. Sending data twice via the same sink will not result in overwriting the content of an object, instead the timestamp (in isoformat to the second) will be added as a suffix to the object key with an underscore `_` as delimiter. Accordingly the keys of objects are expected to have such a suffix.
+Only those objects whose bucket name and object key match the hierarchy are available in the adapter. A sink is generated for each end node of the hierarchy, to which data can then be sent to be stored in the blob storage. Sending data twice over the same sink does not overwrite the contents of an object; instead, the timestamp (in second-by-second isoformat) is appended to the object key as a suffix, with an underscore `_` as a delimiter. Accordingly, object keys are expected to have such a suffix, otherwise no corresponding sink is added to the adapter.
 
 ### Configuring the runtime
 
