@@ -903,7 +903,7 @@ export class BaseItemActionService {
                   constants
                 }
               };
-              console.log(updatedWorkflowTransformation);
+              console.error(updatedWorkflowTransformation);
 
               // this.baseItemService
               //   .updateTransformation(updatedWorkflowTransformation)

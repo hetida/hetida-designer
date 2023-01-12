@@ -135,7 +135,7 @@ export class WorkflowIODialogComponent {
       .workflowTransformation;
     const inputData: WorkflowIODefinition[] = [];
     const outputData: WorkflowIODefinition[] = [];
-    console.log(workflowTransformation);
+
     for (const input of workflowTransformation.io_interface.inputs) {
       this.generateWorkflowIODefinition(
         input,
@@ -201,7 +201,6 @@ export class WorkflowIODialogComponent {
     workflowTransformation: WorkflowTransformation,
     dataArray: WorkflowIODefinition[]
   ): void {
-    console.log(workflowIO.name);
     const operator = workflowTransformation.content.operators.find(
       op => op.id === workflowIO.id
     );
@@ -345,7 +344,6 @@ export class WorkflowIODialogComponent {
 
   private updateWorkflowIO(data: WorkflowIODefinition): void {
     // TODO do not mutate the dialog data, take a copy from form control
-    console.log('update io: ' + data);
     const input:
       | IOConnector
       | undefined = this.data.workflowTransformation.content.inputs.find(
