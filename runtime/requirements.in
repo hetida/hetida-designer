@@ -41,3 +41,4 @@ kaleido
 numba!=0.56.2 # due to setuptools dependency resolution problems
 boto3
 mypy-boto3-s3
+moto
