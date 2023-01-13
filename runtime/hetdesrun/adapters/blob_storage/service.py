@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import List, Optional
+from typing import List
 
 import boto3
 from mypy_boto3_s3 import S3Client
@@ -39,7 +39,7 @@ def get_object_key_strings_in_bucket(bucket_name: BucketName) -> List[IdString]:
     try:
         s3_response = s3_client.list_objects_v2(Bucket=bucket_name)
     except s3_client.exceptions.NoSuchBucket as error:
-        raise BucketNotFound(f"The bucket '{bucket_name}' does not exist!")
+        raise BucketNotFound(f"The bucket '{bucket_name}' does not exist!") from error
     object_key_strings = [
         IdString(obj_summary["Key"]) for obj_summary in s3_response["Contents"]
     ]
