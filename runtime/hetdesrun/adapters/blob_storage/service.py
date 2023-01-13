@@ -40,6 +40,10 @@ def get_object_key_strings_in_bucket(bucket_name: BucketName) -> List[IdString]:
         s3_response = s3_client.list_objects_v2(Bucket=bucket_name)
     except s3_client.exceptions.NoSuchBucket as error:
         raise BucketNotFound(f"The bucket '{bucket_name}' does not exist!") from error
+
+    if s3_response["KeyCount"] == 0:
+        return []
+
     object_key_strings = [
         IdString(obj_summary["Key"]) for obj_summary in s3_response["Contents"]
     ]
