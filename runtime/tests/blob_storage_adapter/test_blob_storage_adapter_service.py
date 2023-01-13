@@ -5,9 +5,10 @@ import pytest
 from moto import mock_s3
 
 from hetdesrun.adapters.blob_storage.authentication import Credentials
+from hetdesrun.adapters.blob_storage.exceptions import BucketNotFound, InvalidS3Endpoint
 from hetdesrun.adapters.blob_storage.service import (
     get_object_key_strings_in_bucket,
-    get_s3_resource,
+    get_s3_client,
     get_session,
 )
 
@@ -41,19 +42,35 @@ def test_blob_storage_service_get_s3_resource():
                 region_name="eu-central-1",
             ),
         ):
-            get_s3_resource()
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
+                return_value=mock.Mock(endpoint_url="invalid_endpoint_url"),
+            ):
+                with pytest.raises(InvalidS3Endpoint) as exc_info:
+                    get_s3_client()
+                assert (
+                    "The string 'invalid_endpoint_url' is no valid endpoint url!"
+                    in str(exc_info.value)
+                )
+
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
+                return_value=mock.Mock(endpoint_url="http://localhost:9000"),
+            ):
+                get_s3_client()
 
 
 def test_blob_storage_service_get_object_key_strings_in_bucket():
     with mock_s3():
         with mock.patch(
-            "hetdesrun.adapters.blob_storage.service.get_s3_resource",
+            "hetdesrun.adapters.blob_storage.service.get_s3_client",
             return_value=boto3.Session(
                 aws_access_key_id="some_key_id",
                 aws_secret_access_key="some_key",
                 aws_session_token="some_token",
                 region_name="eu-central-1",
-            ).resource("s3"),
+            ).client("s3"),
         ):
-            oks = get_object_key_strings_in_bucket("bucket_name")
-            assert oks == []
+            with pytest.raises(BucketNotFound) as exc_info:
+                get_object_key_strings_in_bucket("bucket_name")
+            assert "The bucket 'bucket_name' does not exist!" in str(exc_info.value)

@@ -40,3 +40,15 @@ class ThingNodeNotFound(StructureError):
 
 class ThingNodesNotUnique(StructureError):
     pass
+
+
+class S3Error(BlobAdapterException):
+    pass
+
+
+class InvalidS3Endpoint(S3Error):
+    pass
+
+
+class BucketNotFound(S3Error):
+    pass
