@@ -4,7 +4,6 @@ from uuid import uuid4
 
 import pytest
 
-from hetdesrun.exportimport.importing import load_json
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import (
     ComponentInput,
@@ -19,6 +18,7 @@ from hetdesrun.models.run import (
 )
 from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowInput, WorkflowNode, WorkflowOutput
+from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import get_uuid_from_seed
 
 

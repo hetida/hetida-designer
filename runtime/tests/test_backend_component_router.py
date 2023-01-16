@@ -8,7 +8,6 @@ import pytest
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.component.code import update_code
-from hetdesrun.exportimport.importing import load_json
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
@@ -16,6 +15,7 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
@@ -354,6 +354,25 @@ async def test_publish_transformation_revision_from_component_dto(
             ).to_transformation_revision()
         )
 
+        async with async_test_client as ac:
+            response = await ac.put(
+                "/api/components/" + str(get_uuid_from_seed("component 1")),
+                json=dto_json_component_1_publish,
+            )
+
+        assert response.status_code == 201
+        assert response.json()["state"] == "RELEASED"
+        assert "released_timestamp" in response.json()["code"]
+
+
+@pytest.mark.asyncio
+async def test_put_transformation_revision_from_released_component_dto(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
         async with async_test_client as ac:
             response = await ac.put(
                 "/api/components/" + str(get_uuid_from_seed("component 1")),

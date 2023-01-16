@@ -7,8 +7,6 @@ from uuid import UUID
 
 import requests
 
-from hetdesrun.component.code import update_code
-from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -17,8 +15,9 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModifyForbidden
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.utils import State, Type, get_backend_basic_auth
+from hetdesrun.trafoutils.filter.params import FilterParams
+from hetdesrun.trafoutils.nestings import structure_ids_by_nesting_level
+from hetdesrun.utils import State, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
@@ -27,7 +26,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_transformation_revisions(
-    params: FilterParams = FilterParams(), directly_from_db: bool = False
+    params: FilterParams = FilterParams(include_dependencies=False),
+    directly_from_db: bool = False,
 ) -> List[TransformationRevision]:
     logger.info(
         "Getting transformation revisions with " + repr(params) + " directly from db"
@@ -91,6 +91,7 @@ def update_or_create_transformation_revision(
     directly_in_db: bool = False,
     allow_overwrite_released: bool = True,
     update_component_code: bool = True,
+    strip_wiring: bool = False,
 ) -> None:
     if directly_in_db:
         logger.info(
@@ -104,12 +105,12 @@ def update_or_create_transformation_revision(
             tr.category,
             tr.name,
         )
-        if update_component_code and tr.type == Type.COMPONENT:
-            tr.content = update_code(tr)
-
         try:
             update_or_create_single_transformation_revision(
-                tr, allow_overwrite_released=allow_overwrite_released
+                tr,
+                allow_overwrite_released=allow_overwrite_released,
+                update_component_code=update_component_code,
+                strip_wiring=strip_wiring,
             )
         except DBNotFoundError as not_found_err:
             logger.error(
@@ -156,6 +157,7 @@ def update_or_create_transformation_revision(
             params={
                 "allow_overwrite_released": allow_overwrite_released,
                 "update_component_code": update_component_code,
+                "strip_wiring": strip_wiring,
             },
             verify=get_config().hd_backend_verify_certs,
             json=json.loads(tr.json()),  # TODO: avoid double serialization.
@@ -240,51 +242,6 @@ def delete_transformation_revision(
             logger.error(msg)
 
 
-def structure_ids_by_nesting_level(
-    transformation_dict: Dict[UUID, TransformationRevision]
-) -> Dict[int, List[UUID]]:
-    def nesting_level(
-        transformation_id: UUID,
-        level: int = 0,
-    ) -> int:
-        transformation = transformation_dict[transformation_id]
-
-        if transformation.type == Type.COMPONENT:
-            return level
-
-        level = level + 1
-        nextlevel = level
-        assert isinstance(transformation.content, WorkflowContent)
-        for operator in transformation.content.operators:
-            if operator.type == Type.WORKFLOW:
-                logger.info(
-                    "transformation %s contains workflow %s at nesting level %i",
-                    str(transformation_id),
-                    operator.transformation_id,
-                    level,
-                )
-                nextlevel = max(
-                    nextlevel, nesting_level(operator.transformation_id, level=level)
-                )
-
-        return nextlevel
-
-    ids_by_nesting_level: Dict[int, List[UUID]] = {}
-    for tr_id, tr in transformation_dict.items():
-        level = nesting_level(tr_id)
-        if level not in ids_by_nesting_level:
-            ids_by_nesting_level[level] = []
-        ids_by_nesting_level[level].append(tr_id)
-        logger.info(
-            "%s %s has nesting level %i",
-            tr.type.value,
-            str(tr_id),
-            level,
-        )
-
-    return ids_by_nesting_level
-
-
 def delete_transformation_revisions(
     tr_list: List[TransformationRevision], directly_in_db: bool = False
 ) -> None:
@@ -312,7 +269,11 @@ def deprecate_all_but_latest_in_group(
     )
 
     tr_list = get_transformation_revisions(
-        params=FilterParams(revision_group_id=revision_group_id, state=State.RELEASED),
+        params=FilterParams(
+            revision_group_id=revision_group_id,
+            state=State.RELEASED,
+            include_dependencies=False,
+        ),
         directly_from_db=directly_in_db,
     )
 

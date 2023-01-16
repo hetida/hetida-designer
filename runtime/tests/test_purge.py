@@ -16,7 +16,6 @@ from hetdesrun.exportimport.purge import (
     deprecate_all_but_latest_per_group,
 )
 from hetdesrun.exportimport.utils import (
-    FilterParams,
     delete_transformation_revision,
     delete_transformation_revisions,
     deprecate_all_but_latest_in_group,
@@ -29,6 +28,7 @@ from hetdesrun.persistence.models.exceptions import ModifyForbidden
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.config import get_config
 
@@ -73,7 +73,7 @@ def test_get_transformation_revisions(caplog):
             "hetdesrun.exportimport.utils.requests.get", return_value=resp_mock
         ) as mocked_get_from_backend:
             returned_from_db_tr_list = get_transformation_revisions(
-                params=FilterParams(), directly_from_db=True
+                params=FilterParams(include_dependencies=False), directly_from_db=True
             )
             assert returned_from_db_tr_list == tr_list
             assert mocked_get_from_db.call_count == 1
@@ -93,6 +93,7 @@ def test_get_transformation_revisions(caplog):
                 revision_group_id=uuid4(),
                 ids=[uuid4(), uuid4()],
                 names=["ö(-.-)ö", ","],
+                include_dependencies=False,
             )
             returned_from_backend_tr_list = get_transformation_revisions(params)
             assert returned_from_backend_tr_list == tr_list
@@ -234,7 +235,7 @@ def test_delete_transformation_revisions():
             assert args[0] == example_tr_released.id
 
 
-def test_update_or_create_transformation_revision_happy_pathexi(caplog):
+def test_update_or_create_transformation_revision_happy_path(caplog):
     with mock.patch(
         "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
         return_value=None,
@@ -253,23 +254,31 @@ def test_update_or_create_transformation_revision_happy_pathexi(caplog):
             )
             assert mocked_update_in_db.call_count == 1
             assert mocked_update_in_backend.call_count == 0
-            _, args, _ = mocked_update_in_db.mock_calls[0]
-            assert isinstance(args[0], TransformationRevision)
-            assert isinstance(args[0].content, str)
-            assert "1.0.1" not in "".join(args[0].content)
+            _, args, kwargs = mocked_update_in_db.mock_calls[0]
+            assert args[0] == tr_with_updated_tag
+            assert kwargs["update_component_code"] == False
 
             update_or_create_transformation_revision(
                 tr_with_updated_tag, directly_in_db=True
             )
             assert mocked_update_in_db.call_count == 2
             assert mocked_update_in_backend.call_count == 0
-            _, args, _ = mocked_update_in_db.mock_calls[1]
-            assert isinstance(args[0], TransformationRevision)
-            assert isinstance(args[0].content, str)
-            assert "1.0.1" in "".join(args[0].content)
+            _, args, kwargs = mocked_update_in_db.mock_calls[1]
+            assert args[0] == tr_with_updated_tag
+            assert kwargs["update_component_code"] == True
+            assert kwargs["strip_wiring"] == False
+
+            update_or_create_transformation_revision(
+                tr_with_updated_tag, directly_in_db=True, strip_wiring=True
+            )
+            assert mocked_update_in_db.call_count == 3
+            assert mocked_update_in_backend.call_count == 0
+            _, args, kwargs = mocked_update_in_db.mock_calls[2]
+            assert args[0] == tr_with_updated_tag
+            assert kwargs["strip_wiring"] == True
 
             update_or_create_transformation_revision(example_tr_draft)
-            assert mocked_update_in_db.call_count == 2  # no third call
+            assert mocked_update_in_db.call_count == 3  # no fourth call
             assert mocked_update_in_backend.call_count == 1
             _, args, kwargs = mocked_update_in_backend.mock_calls[0]
             assert args[0] == posix_urljoin(
@@ -279,6 +288,25 @@ def test_update_or_create_transformation_revision_happy_pathexi(caplog):
             )
             assert kwargs["params"]["allow_overwrite_released"] == True
             assert kwargs["params"]["update_component_code"] == True
+            assert kwargs["params"]["strip_wiring"] == False
+
+            update_or_create_transformation_revision(
+                example_tr_draft,
+                allow_overwrite_released=False,
+                update_component_code=False,
+                strip_wiring=True,
+            )
+            assert mocked_update_in_db.call_count == 3  # no fourth call
+            assert mocked_update_in_backend.call_count == 2
+            _, args, kwargs = mocked_update_in_backend.mock_calls[1]
+            assert args[0] == posix_urljoin(
+                get_config().hd_backend_api_url,
+                "transformations",
+                str(example_tr_draft.id),
+            )
+            assert kwargs["params"]["allow_overwrite_released"] == False
+            assert kwargs["params"]["update_component_code"] == False
+            assert kwargs["params"]["strip_wiring"] == True
 
 
 def test_update_or_create_transformation_revision_rest_api_error(caplog):

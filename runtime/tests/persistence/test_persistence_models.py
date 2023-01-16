@@ -7,11 +7,11 @@ from pydantic import ValidationError
 
 from hetdesrun.backend.execution import nested_nodes
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
-from hetdesrun.exportimport.importing import load_json
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 tr_json_valid_released_example = load_json(

@@ -11,10 +11,7 @@ from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
     handle_trafo_revision_execution_request,
-    if_applicable_release_or_deprecate,
-    update_content,
 )
-from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -25,6 +22,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -123,7 +121,7 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
     logger.info("get all workflows")
 
     transformation_revision_list = get_multiple_transformation_revisions(
-        FilterParams(type=Type.WORKFLOW)
+        FilterParams(type=Type.WORKFLOW, include_dependencies=False)
     )
 
     logger.info("got all workflows")
@@ -248,14 +246,6 @@ async def update_workflow_revision(
         updated_transformation_revision.released_timestamp = (
             existing_transformation_revision.released_timestamp
         )
-
-    updated_transformation_revision = if_applicable_release_or_deprecate(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
-    updated_transformation_revision = update_content(
-        existing_transformation_revision, updated_transformation_revision
-    )
 
     try:
         persisted_transformation_revision = (

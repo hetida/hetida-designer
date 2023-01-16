@@ -6,12 +6,7 @@ from fastapi import HTTPException, Path, Query, status
 from pydantic import ValidationError
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
-from hetdesrun.backend.service.transformation_router import (
-    if_applicable_release_or_deprecate,
-    update_content,
-)
 from hetdesrun.component.code import update_code
-from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
@@ -21,6 +16,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -65,10 +61,7 @@ async def get_all_transformation_revisions(
     use GET /api/transformations/ instead
     """
 
-    params = FilterParams(
-        type=type,
-        state=state,
-    )
+    params = FilterParams(type=type, state=state, include_dependencies=False)
     logger.info("get all transformation revisions with %s", repr(params))
 
     try:
@@ -261,14 +254,6 @@ async def update_transformation_revision(
         updated_transformation_revision.content = (
             existing_transformation_revision.content
         )
-
-    updated_transformation_revision = if_applicable_release_or_deprecate(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
-    updated_transformation_revision = update_content(
-        existing_transformation_revision, updated_transformation_revision
-    )
 
     try:
         persisted_transformation_revision = (
