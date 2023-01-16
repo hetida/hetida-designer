@@ -11,8 +11,6 @@ from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.service.transformation_router import (
     handle_trafo_revision_execution_request,
-    if_applicable_release_or_deprecate,
-    update_content,
 )
 from hetdesrun.component.code import update_code
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
@@ -214,14 +212,6 @@ async def update_component_revision(
             existing_transformation_revision.released_timestamp
         )
 
-    updated_transformation_revision = if_applicable_release_or_deprecate(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
-    updated_transformation_revision = update_content(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
     try:
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(
@@ -284,8 +274,6 @@ async def delete_component_revision(
 @component_router.post(
     "/{id}/execute",
     response_model=ExecutionResponseFrontendDto,
-    response_model_exclude_none=True,  # needed because:
-    # frontend handles attributes with value null in a different way than missing attributes
     summary="Executes a new component.",
     status_code=status.HTTP_200_OK,
     responses={

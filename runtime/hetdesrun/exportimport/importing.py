@@ -1,220 +1,158 @@
-import importlib
-import json
 import logging
 import os
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
-from uuid import UUID, uuid4
+from enum import Enum
+from typing import Dict, Iterable, List, Optional
+from uuid import UUID
 
-from hetdesrun.component.load import (
-    ComponentCodeImportError,
-    import_func_from_code,
-    module_path_from_code,
-)
+from pydantic import BaseModel, Field
+
 from hetdesrun.exportimport.utils import (
     deprecate_all_but_latest_in_group,
-    structure_ids_by_nesting_level,
     update_or_create_transformation_revision,
 )
-from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.models.io import IO, IOInterface
-from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.utils import Type, get_uuid_from_seed
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
+from hetdesrun.persistence.dbservice.revision import (
+    update_or_create_single_transformation_revision,
+)
+from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
+from hetdesrun.trafoutils.filter.mapping import filter_and_order_trafos
+from hetdesrun.trafoutils.io.load import (
+    Importable,
+    load_transformation_revisions_from_directory,
+)
+from hetdesrun.trafoutils.nestings import structure_ids_by_nesting_level
 
 logger = logging.getLogger(__name__)
 
 
-def load_json(path: str) -> Any:
-    try:
-        with open(path, encoding="utf-8") as f:
-            workflow_json = json.load(f)
-    except FileNotFoundError:
-        logger.error("Could not find json file at path %s", path)
-        workflow_json = None
-    return workflow_json
+class UpdateProcessStatus(str, Enum):
+    NOT_TRIED = "NOT_TRIED"
+    FAILED = "FAILED"
+    SUCCESS = "SUCCESS"
+    IGNORED = "IGNORED"
 
 
-def load_python_file(path: str) -> Optional[str]:
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            python_file = f.read()
-    except FileNotFoundError:
-        logger.error("Could not find python file at path %s", path)
-        python_file = None
-    return python_file
+class TrafoUpdateProcessSummary(BaseModel):
+    status: UpdateProcessStatus
+    msg: str = Field("", description="details / error messages")
+    name: Optional[str]
+    version_tag: Optional[str]
 
 
-def transformation_revision_from_python_code(code: str, path: str) -> Any:
-    """Get the TransformationRevision as a json file from just the Python code of some component
-    This uses information from the register decorator and docstrings.
-    Note: This needs to import the code module, which may have arbitrary side effects and security
-    implications.
+def import_importable(
+    importable: Importable,
+    raise_on_missing_dependency: bool = False,
+) -> Dict[UUID, TrafoUpdateProcessSummary]:
+    """Imports trafo revs from a single importable into the database
+
+    An importable contains transformation revisions (for example loaded from
+    a directory on disk or a json file containing a list of trafo revs).
+
+    Additionally it contains
+    * filter params: filter during import, i.e. only import a subset
+    * update config: configuration for the db updating process
+
+    This function catches typical exceptions during import and instead provides
+    a detailed processing status result for each transformation by id.
     """
 
-    try:
-        main_func = import_func_from_code(code, "main")
-    except ComponentCodeImportError as e:
-        logging.error(
-            "Could not load function from %s\n"
-            "due to error during import of component code:\n%s",
-            path,
-            str(e),
-        )
+    trafo_revs = importable.transformation_revisions
+    filter_params = importable.import_config.filter_params
+    multi_import_config = importable.import_config.update_config
 
-    module_path = module_path_from_code(code)
-    mod = importlib.import_module(module_path)
-
-    mod_docstring = mod.__doc__ or ""
-    mod_docstring_lines = mod_docstring.splitlines()
-
-    if hasattr(main_func, "registered_metadata"):
-        logger.info("Get component info from registered metadata")
-        component_name = main_func.registered_metadata["name"] or (  # type: ignore
-            "Unnamed Component"
-        )
-
-        component_description = main_func.registered_metadata["description"] or (  # type: ignore
-            "No description provided"
-        )
-
-        component_category = main_func.registered_metadata["category"] or (  # type: ignore
-            "Other"
-        )
-
-        component_id = main_func.registered_metadata["id"] or (uuid4())  # type: ignore
-
-        component_group_id = main_func.registered_metadata["revision_group_id"] or (  # type: ignore
-            uuid4()
-        )
-
-        component_tag = main_func.registered_metadata["version_tag"] or ("1.0.0")  # type: ignore
-
-        component_inputs = main_func.registered_metadata["inputs"]  # type: ignore
-
-        component_outputs = main_func.registered_metadata["outputs"]  # type: ignore
-
-        component_state = main_func.registered_metadata["state"] or "RELEASED"  # type: ignore
-
-        component_released_timestamp = main_func.registered_metadata[  # type: ignore
-            "released_timestamp"
-        ] or (
-            datetime.now(timezone.utc).isoformat()
-            if component_state == "RELEASED"
-            else None
-        )
-
-        component_disabled_timestamp = main_func.registered_metadata[  # type: ignore
-            "disabled_timestamp"
-        ] or (
-            datetime.now(timezone.utc).isoformat()
-            if component_state == "DISABLED"
-            else None
-        )
-
-    elif hasattr(mod, "COMPONENT_INFO"):
-        logger.info("Get component info from dictionary in code")
-        info_dict = mod.COMPONENT_INFO
-        component_inputs = info_dict.get("inputs", {})
-        component_outputs = info_dict.get("outputs", {})
-        component_name = info_dict.get("name", "Unnamed Component")
-        component_description = info_dict.get("description", "No description provided")
-        component_category = info_dict.get("category", "Other")
-        component_tag = info_dict.get("version_tag", "1.0.0")
-        component_id = info_dict.get("id", uuid4())
-        component_group_id = info_dict.get("revision_group_id", uuid4())
-        component_state = info_dict.get("state", "RELEASED")
-        component_released_timestamp = info_dict.get(
-            "released_timestamp",
-            datetime.now(timezone.utc).isoformat()
-            if component_state == "RELEASED"
-            else None,
-        )
-        component_disabled_timestamp = info_dict.get(
-            "released_timestamp",
-            datetime.now(timezone.utc).isoformat()
-            if component_state == "DISABLED"
-            else None,
-        )
-    else:
-        raise ComponentCodeImportError
-
-    component_documentation = "\n".join(mod_docstring_lines[2:])
-
-    transformation_revision = TransformationRevision(
-        id=component_id,
-        revision_group_id=component_group_id,
-        name=component_name,
-        description=component_description,
-        category=component_category,
-        version_tag=component_tag,
-        type=Type.COMPONENT,
-        state=component_state,
-        released_timestamp=component_released_timestamp,
-        disabled_timestamp=component_disabled_timestamp,
-        documentation=component_documentation,
-        io_interface=IOInterface(
-            inputs=[
-                IO(
-                    id=get_uuid_from_seed("component_input_" + input_name),
-                    name=input_name,
-                    data_type=input_data_type,
-                )
-                for input_name, input_data_type in component_inputs.items()
-            ],
-            outputs=[
-                IO(
-                    id=get_uuid_from_seed("component_output_" + output_name),
-                    name=output_name,
-                    data_type=output_data_type,
-                )
-                for output_name, output_data_type in component_outputs.items()
-            ],
-        ),
-        content=code,
-        test_wiring=WorkflowWiring(),
+    trafos_to_process = filter_and_order_trafos(
+        trafo_revs,
+        filter_params,
+        raise_on_missing_dependency=raise_on_missing_dependency,
     )
 
-    tr_json = json.loads(transformation_revision.json())
+    trafos_to_process_dict = {
+        trafo_rev.id: trafo_rev for trafo_rev in trafos_to_process
+    }
 
-    return tr_json
+    success_per_trafo = {
+        trafo.id: TrafoUpdateProcessSummary(
+            status=UpdateProcessStatus.NOT_TRIED,
+            msg="",
+            name=trafo.name,
+            version_tag=trafo.version_tag,
+        )
+        if trafo.id in trafos_to_process_dict
+        else TrafoUpdateProcessSummary(
+            status=UpdateProcessStatus.IGNORED,
+            msg="filtered out",
+            name=trafo.name,
+            version_tag=trafo.version_tag,
+        )
+        for trafo in trafo_revs
+    }
 
+    for transformation in trafos_to_process:
+        logger.debug(
+            "Importing transformation %s with tag %s with id %s",
+            transformation.name,
+            transformation.version_tag,
+            str(transformation.id),
+        )
+        try:
+            update_or_create_single_transformation_revision(
+                transformation,
+                allow_overwrite_released=multi_import_config.allow_overwrite_released,
+                update_component_code=multi_import_config.update_component_code,
+                strip_wiring=multi_import_config.strip_wirings,
+            )
 
-def get_transformation_revisions_from_path(
-    download_path: str,
-) -> Dict[UUID, TransformationRevision]:
-    transformation_dict = {}
+        except (
+            DBIntegrityError,
+            DBNotFoundError,
+            ModelConstraintViolation,
+        ) as e:
+            success_per_trafo[transformation.id].status = UpdateProcessStatus.FAILED
 
-    for root, _, files in os.walk(download_path):
-        for file in files:
-            path = os.path.join(root, file)
-            ext = os.path.splitext(path)[1]
-            if ext not in (".py", ".json"):
-                logger.warning(
-                    "Invalid file extension '%s' to load transformation revision from: %s",
-                    ext,
-                    path,
+            msg = (
+                f"Update of trafo {transformation.name} with tag {transformation.version_tag}"
+                f" with id {str(transformation.id)} as part of multiple update failed."
+                f" Error was: {str(e)}"
+            )
+            logger.warning(msg)
+            success_per_trafo[transformation.id].msg = msg
+
+            if multi_import_config.abort_on_error:
+                abort_msg = (
+                    "Aborting multiple update process due to error while updating trafo"
+                    f" {transformation.name} with id {transformation.id}. Error was:\n{str(e)}"
                 )
-                continue
-            if ext == ".py":
-                logger.info("Loading transformation from python file %s", path)
-                python_file = load_python_file(path)
-                if python_file is not None:
-                    transformation_json = transformation_revision_from_python_code(
-                        python_file, path
-                    )
-            if ext == ".json":
-                logger.info("Loading transformation from json file %s", path)
-                transformation_json = load_json(path)
-            try:
-                transformation = TransformationRevision(**transformation_json)
-            except ValueError as err:
-                logger.error(
-                    "ValueError for json from path %s:\n%s", download_path, str(err)
-                )
-            else:
-                transformation_dict[transformation.id] = transformation
+                logger.error(abort_msg)
+                return success_per_trafo
+        else:
+            logger.info(
+                "Successfully imported transformation revision %s with tag %s with id %s",
+                transformation.name,
+                transformation.version_tag,
+                str(transformation.id),
+            )
+            success_per_trafo[transformation.id].status = UpdateProcessStatus.SUCCESS
 
-    return transformation_dict
+    if multi_import_config.deprecate_older_revisions:
+        revision_group_ids = set(
+            transformation.revision_group_id
+            for _, transformation in trafos_to_process_dict.items()
+        )
+        logger.info("deprecate all but latest revision of imported revision groups")
+        for revision_group_id in revision_group_ids:
+            logger.debug(
+                "deprecate older revisions of revision group id %s",
+                str(revision_group_id),
+            )
+            deprecate_all_but_latest_in_group(revision_group_id, directly_in_db=True)
+    return success_per_trafo
+
+
+def import_importables(
+    importables: Iterable[Importable],
+) -> List[Dict[UUID, TrafoUpdateProcessSummary]]:
+    """Import all trafo rev sets from multiple importables"""
+    return [import_importable(importable) for importable in importables]
 
 
 def import_transformations(
@@ -240,17 +178,17 @@ def import_transformations(
         revisions with state "RELEASED" or "DISABLED"
     - update_component_code: Set to false if you want to keep the component code
         unchanged
-    - deprecate_older_versions: Set to true to deprecate all but the latest revision
+    - deprecate_older_revisions: Set to true to deprecate all but the latest revision
         for all revision groups imported. This might result in all imported revisions to
         be deprecated if these are older than the latest revision in the database.
 
     WARNING: Overwrites possibly existing transformation revisions!
 
     Usage:
-        import_transformations("./transformations/components")
+        import_transformations("./transformations")
     """
 
-    transformation_dict = get_transformation_revisions_from_path(download_path)
+    transformation_dict, _ = load_transformation_revisions_from_directory(download_path)
 
     ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
 
@@ -258,13 +196,12 @@ def import_transformations(
         logger.info("importing level %i transformation revisions", level)
         for transformation_id in ids_by_nesting_level[level]:
             transformation = transformation_dict[transformation_id]
-            if strip_wirings:
-                transformation.test_wiring = WorkflowWiring()
             update_or_create_transformation_revision(
                 transformation,
                 directly_in_db=directly_into_db,
                 allow_overwrite_released=allow_overwrite_released,
                 update_component_code=update_component_code,
+                strip_wiring=strip_wirings,
             )
 
     logger.info("finished importing")
@@ -279,3 +216,37 @@ def import_transformations(
             deprecate_all_but_latest_in_group(
                 revision_group_id, directly_in_db=directly_into_db
             )
+
+
+def generate_import_order_file(
+    download_path: str, destination: str, transform_py_to_json: bool = False
+) -> None:
+    """Generate a file with paths sorted in import order.
+
+    Generate a file the paths to all json files in download_path in the order in which they should
+    be imported in order to avoid issues due to not yet imported nested revisions.
+
+    To make sure, that all required nested revisions are actually included in those json files it is
+    strongly recommended to use the root path of files generated by an export call. Presence of
+    required files can only be assured during export. Use the filter features of the export function
+    such as 'type', 'categories', 'ids', 'names' and so on instead of subfolders for the import or
+    even removing paths from the generated file.
+
+    Set the parameter transform_py_to_json to True, to generate .json files based on the .py files
+    for components (if creating TransformationRevisions out of them works) and include their paths
+    in the generated file.
+    """
+    transformation_dict, path_dict = load_transformation_revisions_from_directory(
+        download_path, transform_py_to_json
+    )
+
+    ids_by_nesting_level = structure_ids_by_nesting_level(transformation_dict)
+
+    with open(os.path.join(destination), "w", encoding="utf8") as file:
+        for level in sorted(ids_by_nesting_level):
+            logger.info("importing level %i transformation revisions", level)
+            for transformation_id in ids_by_nesting_level[level]:
+                # pylint: disable=consider-iterating-dictionary
+                if transformation_id in path_dict.keys():
+                    file.write(path_dict[transformation_id])
+                    file.write("\n")

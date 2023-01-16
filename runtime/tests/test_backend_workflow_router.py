@@ -10,7 +10,7 @@ from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.component.code import update_code
-from hetdesrun.exportimport.importing import load_json
+from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
@@ -21,6 +21,7 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.models.io import Connector
 from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
@@ -696,6 +697,7 @@ async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_en
             async with async_test_client as ac:
 
                 json_files = [
+                    "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
                     "./transformations/components/connectors/pass-through-integer_100_57eea09f-d28e-89af-4e81-2027697a3f0f.json",
                     "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
                     "./transformations/components/connectors/pass-through-string_100_2b1b474f-ddf5-1f4d-fec4-17ef9122112b.json",
@@ -706,7 +708,6 @@ async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_en
                     "./transformations/components/basic/greater-or-equal_100_f759e4c0-1468-0f2e-9740-41302b860193.json",
                     "./transformations/components/basic/last-datetime-index_100_c8e3bc64-b214-6486-31db-92a8888d8991.json",
                     "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.json",
-                    "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
                     "./transformations/components/visualization/single-timeseries-plot_100_8fba9b51-a0f1-6c6c-a6d4-e224103b819c.json",
                     "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json",
                     "./transformations/workflows/examples/univariate-linear-rul-regression-example_100_806df1b9-2fc8-4463-943f-3d258c569663.json",
@@ -739,3 +740,80 @@ async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_en
 
                 assert response.status_code == 200
                 assert "output_types_by_output_name" in response.json()
+
+
+@pytest.mark.asyncio
+async def test_execute_for_full_workflow_dto_with_nan(
+    async_test_client, clean_test_db_engine
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        patched_session,
+    ):
+        async with async_test_client as ac:
+
+            json_files = [
+                "./transformations/components/arithmetic/consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json",
+                "./transformations/components/basic/filter_100_18260aab-bdd6-af5c-cac1-7bafde85188f.json",
+                "./transformations/components/basic/greater-or-equal_100_f759e4c0-1468-0f2e-9740-41302b860193.json",
+                "./transformations/components/basic/last-datetime-index_100_c8e3bc64-b214-6486-31db-92a8888d8991.json",
+                "./transformations/components/basic/restrict-to-time-interval_100_bf469c0a-d17c-ca6f-59ac-9838b2ff67ac.json",
+                "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
+                "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
+                "./transformations/workflows/examples/data-from-last-positive-step_100_2cbb87e7-ea99-4404-abe1-be550f22763f.json",
+            ]
+
+            for file in json_files:
+                tr_json = load_json(file)
+
+                response = await ac.put(
+                    posix_urljoin(
+                        get_config().hd_backend_api_url,
+                        "transformations",
+                        tr_json["id"],
+                    ),
+                    params={"allow_overwrite_released": True},
+                    json=tr_json,
+                )
+
+            workflow_id = UUID("2cbb87e7-ea99-4404-abe1-be550f22763f")
+            wiring_dto = WiringFrontendDto.from_wiring(
+                WorkflowWiring(
+                    input_wirings=[
+                        InputWiring(
+                            adapter_id="direct_provisioning",
+                            workflow_input_name="inp_series",
+                            filters={
+                                "value": '{"2020-05-01T00:00:00.000Z": 1.2, "2020-05-01T01:00:00.000Z": 3.14, "2020-05-01T02:00:00.000Z": 5, "2020-05-01T03:00:00.000Z": null}'
+                            },
+                        ),
+                        InputWiring(
+                            adapter_id="direct_provisioning",
+                            workflow_input_name="positive_step_size",
+                            filters={"value": 0.2},
+                        ),
+                    ],
+                    output_wirings=[],
+                ),
+                workflow_id,
+            )
+
+            response = await ac.post(
+                "/api/workflows/" + str(workflow_id) + "/execute",
+                json=json.loads(wiring_dto.json(by_alias=True)),
+            )
+
+            assert response.status_code == 200
+            assert "output_results_by_output_name" in response.json()
+            output_results_by_output_name = response.json()[
+                "output_results_by_output_name"
+            ]
+            assert "series_from_last_step" in output_results_by_output_name
+            assert len(output_results_by_output_name["series_from_last_step"]) == 2
+            assert (
+                output_results_by_output_name["series_from_last_step"][
+                    "2020-05-01T03:00:00.000Z"
+                ]
+                == None
+            )

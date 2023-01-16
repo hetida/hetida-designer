@@ -40,28 +40,15 @@ class ServiceAuthenticationError(Exception):
     """Errors around obtaining and refreshing access tokens from auth provider"""
 
 
-class GrantCredentials(BaseModel):
-    """Base class for grant credentials
-
-    Different auth credential compositions, dependeing on the actual auth flow,
-    are implemented via subclassing this class.
-    """
-
-    grant_type: Literal["password", "client_credentials"]
-    client_id: str
-
-    class Config:
-        frozen = True
-
-
-class PasswordGrantCredentials(GrantCredentials):
+class PasswordGrantCredentials(BaseModel):
     grant_type: Literal["password"] = "password"
     username: str
     password: str
+    client_id: str
     client_secret: Optional[str] = None
 
 
-class ClientCredentialsGrantCredentials(GrantCredentials):
+class ClientCredentialsGrantCredentials(BaseModel):
     grant_type: Literal["client_credentials"] = "client_credentials"
     client_id: str
     client_secret: str
@@ -73,7 +60,9 @@ class ServiceCredentials(BaseModel):
     realm: str
     auth_url: str
     audience: Optional[str] = Field("account")
-    grant_credentials: GrantCredentials
+    grant_credentials: Union[
+        PasswordGrantCredentials, ClientCredentialsGrantCredentials
+    ]
     post_client_kwargs: Dict[str, Any] = Field(
         {},
         description=(

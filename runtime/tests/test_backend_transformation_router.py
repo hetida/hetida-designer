@@ -10,9 +10,9 @@ from fastapi import HTTPException
 
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.component.code import update_code
-from hetdesrun.exportimport.importing import load_json
+from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence import get_db_engine, sessionmaker
-from hetdesrun.persistence.dbmodels import Base, FilterParams
+from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
@@ -20,6 +20,8 @@ from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.filter.params import FilterParams
+from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
@@ -1114,7 +1116,9 @@ async def test_delete_transformation_revision_with_component(
                 params={"ignore_state": True},
             )
             assert response.status_code == 204
-            tr_list = get_multiple_transformation_revisions(FilterParams())
+            tr_list = get_multiple_transformation_revisions(
+                FilterParams(include_dependencies=False)
+            )
             assert len(tr_list) == 1  # component 3 is still stored in db
 
             response = await ac.delete(
@@ -1123,7 +1127,9 @@ async def test_delete_transformation_revision_with_component(
                 )
             )
             assert response.status_code == 204
-            tr_list = get_multiple_transformation_revisions(FilterParams())
+            tr_list = get_multiple_transformation_revisions(
+                FilterParams(include_dependencies=False)
+            )
             assert len(tr_list) == 0
 
 
@@ -1733,6 +1739,132 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
 
 
 @pytest.mark.asyncio
+async def test_execute_for_transformation_revision_with_nan_and_nat_input(
+    async_test_client, clean_test_db_engine
+):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        patched_session,
+    ):
+        async with async_test_client as ac:
+
+            json_files = [
+                "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+                "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
+            ]
+
+            for file in json_files:
+                tr_json = load_json(file)
+
+                response_nan = await ac.put(
+                    posix_urljoin(
+                        get_config().hd_backend_api_url,
+                        "transformations",
+                        tr_json["id"],
+                    ),
+                    params={"allow_overwrite_released": True},
+                    json=tr_json,
+                )
+
+            tr_id_any = UUID("1946d5f8-44a8-724c-176f-16f3e49963af")
+            tr_id_series = UUID("bfa27afc-dea8-b8aa-4b15-94402f0739b6")
+            wiring_nan = WorkflowWiring(
+                input_wirings=[
+                    InputWiring(
+                        adapter_id="direct_provisioning",
+                        workflow_input_name="input",
+                        filters={"value": '{"0":1.2,"1":null, "2":5}'},
+                    ),
+                ],
+                output_wirings=[],
+            )
+            wiring_nat = WorkflowWiring(
+                input_wirings=[
+                    InputWiring(
+                        adapter_id="direct_provisioning",
+                        workflow_input_name="input",
+                        filters={
+                            "value": '{"2020-05-01T00:00:00.000Z": "2020-05-01T01:00:00.000Z", "2020-05-01T02:00:00.000Z": null}'
+                        },
+                    ),
+                ],
+                output_wirings=[],
+            )
+            exec_by_id_input_nan = ExecByIdInput(id=tr_id_any, wiring=wiring_nan)
+            exec_by_id_input_nat = ExecByIdInput(id=tr_id_series, wiring=wiring_nat)
+            response_nan = await ac.post(
+                "/api/transformations/execute",
+                json=json.loads(exec_by_id_input_nan.json()),
+            )
+
+            assert response_nan.status_code == 200
+            assert "output_results_by_output_name" in response_nan.json()
+            output_results_by_output_name = response_nan.json()[
+                "output_results_by_output_name"
+            ]
+            assert "output" in output_results_by_output_name
+            assert len(output_results_by_output_name["output"]) == 3
+            assert output_results_by_output_name["output"]["1"] == None
+
+            response_nat = await ac.post(
+                "/api/transformations/execute",
+                json=json.loads(exec_by_id_input_nat.json()),
+            )
+
+            assert response_nat.status_code == 200
+            assert "output_results_by_output_name" in response_nat.json()
+            output_results_by_output_name = response_nat.json()[
+                "output_results_by_output_name"
+            ]
+            assert "output" in output_results_by_output_name
+            assert len(output_results_by_output_name["output"]) == 2
+            assert (
+                output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
+                == None
+            )
+
+            tr_group_id_any = UUID("1946d5f8-44a8-724c-176f-16f3e49963af")
+            tr_group_id_series = UUID("bfa27afc-dea8-b8aa-4b15-94402f0739b6")
+            exec_latest_by_group_id_input_nan = ExecLatestByGroupIdInput(
+                revision_group_id=tr_group_id_any, wiring=wiring_nan
+            )
+            exec_latest_by_group_id_input_nat = ExecLatestByGroupIdInput(
+                revision_group_id=tr_group_id_series, wiring=wiring_nat
+            )
+            response_latest_nan = await ac.post(
+                "/api/transformations/execute-latest",
+                json=json.loads(exec_latest_by_group_id_input_nan.json()),
+            )
+
+            assert response_latest_nan.status_code == 200
+            assert "output_results_by_output_name" in response_latest_nan.json()
+            output_results_by_output_name = response_latest_nan.json()[
+                "output_results_by_output_name"
+            ]
+            assert "output" in output_results_by_output_name
+            assert len(output_results_by_output_name["output"]) == 3
+            assert output_results_by_output_name["output"]["1"] == None
+
+            response_latest_nat = await ac.post(
+                "/api/transformations/execute-latest",
+                json=json.loads(exec_latest_by_group_id_input_nat.json()),
+            )
+
+            assert response_latest_nat.status_code == 200
+            assert "output_results_by_output_name" in response_latest_nat.json()
+            output_results_by_output_name = response_latest_nat.json()[
+                "output_results_by_output_name"
+            ]
+            assert "output" in output_results_by_output_name
+            assert len(output_results_by_output_name["output"]) == 2
+            assert (
+                output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
+                == None
+            )
+
+
+@pytest.mark.asyncio
 async def test_put_workflow_transformation(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
     with mock.patch(
@@ -1832,3 +1964,28 @@ async def test_put_component_transformation_without_update_code(
         assert "COMPONENT_INFO" not in component_tr_in_db.content
         assert "register" in response.json()["content"]
         assert "register" in component_tr_in_db.content
+
+
+@pytest.mark.asyncio
+async def test_put_multiple_trafos(async_test_client, clean_test_db_engine):
+    patched_session = sessionmaker(clean_test_db_engine)
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        patched_session,
+    ):
+
+        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"
+        example_component_tr_json = load_json(path)
+
+        async with async_test_client as ac:
+            response = await ac.put(
+                "/api/transformations/",
+                params={"update_component_code": False},
+                json=[example_component_tr_json],
+            )
+
+            assert response.status_code == 207
+
+            success_info = response.json()
+            assert len(success_info) == 1
+            assert list(success_info.values())[0]["status"] == "SUCCESS"

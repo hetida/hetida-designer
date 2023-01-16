@@ -1,4 +1,15 @@
+## 0.8.5
+* fix NaN value serialization (should now be serialized to null json values)
+* fix broken pure plot execution config
+* more bug fixes
+* improvements for example workflows
+## 0.8.4
+* fix outgoing auth config parsing
+## 0.8.3
+* some new timeseries related base components and example workflows
+* improved export / import supporting clean-up operations and filters
 * more flexible authentication for outgoing requests
+* bug fixes
 ## 0.8.2
 * add some time measurement to successful execution output
 * update base images
