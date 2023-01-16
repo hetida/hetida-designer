@@ -70,7 +70,6 @@ def test_blob_storage_service_get_object_key_strings_in_bucket():
         client_mock.create_bucket(
             Bucket="bucket-with-objects-name",
             CreateBucketConfiguration={"LocationConstraint": "eu-central-1"},
-        
         )
         client_mock.put_object(Bucket="bucket-with-objects-name", Key="key")
         with mock.patch(
@@ -83,8 +82,12 @@ def test_blob_storage_service_get_object_key_strings_in_bucket():
                 exc_info.value
             )
 
-            empty_object_key_string_list = get_object_key_strings_in_bucket("bucket-without-objects-name")
+            empty_object_key_string_list = get_object_key_strings_in_bucket(
+                "bucket-without-objects-name"
+            )
             assert empty_object_key_string_list == []
 
-            object_key_string_list = get_object_key_strings_in_bucket("bucket-with-objects-name")
+            object_key_string_list = get_object_key_strings_in_bucket(
+                "bucket-with-objects-name"
+            )
             assert object_key_string_list == ["key"]

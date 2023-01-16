@@ -11,6 +11,23 @@ from hetdesrun.models.data_selection import FilteredSink
 logger = logging.getLogger(__name__)
 
 
+def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> None:
+    sink = get_sink_by_thing_node_id_and_metadata_key(
+        IdString(thing_node_id), metadata_key
+    )
+
+    structure_bucket, object_key = sink.to_structure_bucket_and_object_key()
+    get_s3_client().put_object(
+        Bucket=structure_bucket.name, Key=object_key.string, Body=data
+    )
+    logger.info(
+        "Write data for sink '%s' to storage into bucket '%s' as blob with key '%s'",
+        sink.id,
+        structure_bucket.name,
+        object_key.string,
+    )
+
+
 async def send_data(
     wf_output_name_to_filtered_sink_mapping_dict: Dict[str, FilteredSink],
     wf_output_name_to_value_mapping_dict: Dict[str, Any],
@@ -24,21 +41,3 @@ async def send_data(
             blob = wf_output_name_to_value_mapping_dict[wf_output_name]
             write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key)
     return {}
-
-
-def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> None:
-    sink = get_sink_by_thing_node_id_and_metadata_key(
-        IdString(thing_node_id), metadata_key
-    )
-
-    structure_bucket, object_key = sink.to_structure_bucket_and_object_key()
-    get_s3_client().put_object(
-        Bucket=structure_bucket.name, Key=object_key.string, Body=data
-    )
-    logger.info(
-        "Write data %s for sink_id %s to storage into bucket %s as blob with key %s",
-        str(data),
-        thing_node_id,
-        structure_bucket.name,
-        object_key.string,
-    )
