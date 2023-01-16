@@ -33,7 +33,7 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     response = get_s3_client().get_object(
         Bucket=structure_bucket.name, Key=object_key.string
     )
-    return response["Body"]
+    return response["Body"].read()
 
 
 async def load_data(
