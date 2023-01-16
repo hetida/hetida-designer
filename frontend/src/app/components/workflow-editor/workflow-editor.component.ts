@@ -345,7 +345,6 @@ export class WorkflowEditorComponent {
       this.currentWorkflow.content.outputs.push(newOutput);
     });
 
-    console.log(this.currentWorkflow);
     this.baseItemService.updateTransformation(this.currentWorkflow).subscribe();
   }
 
