@@ -7,7 +7,8 @@ import pytest
 from moto import mock_s3
 
 from hetdesrun.adapters.blob_storage.models import BlobStorageStructureSink
-from hetdesrun.adapters.blob_storage.write_blob import write_blob_to_storage
+from hetdesrun.adapters.blob_storage.write_blob import send_data, write_blob_to_storage
+from hetdesrun.models.data_selection import FilteredSink
 
 
 def test_blob_storage_write_blob_to_storage(caplog):
@@ -50,3 +51,28 @@ def test_blob_storage_write_blob_to_storage(caplog):
                         Bucket=bucket_name, Key=object_key
                     )
                     assert struct.unpack(">i", object_response["Body"].read()) == (42,)
+
+
+@pytest.mark.asyncio
+async def test_blob_storage_send_data():
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.write_blob.write_blob_to_storage"
+    ) as mocked_write_blob_to_storage:
+        data = struct.pack(">i", 42)
+        filtered_sink = FilteredSink(
+            ref_id="i-ii/A",
+            ref_id_type="SINK",
+            ref_key="A - Next Object",
+            type="Any",
+        )
+        await send_data(
+            wf_output_name_to_filtered_sink_mapping_dict={"output_name": filtered_sink},
+            wf_output_name_to_value_mapping_dict={"output_name": data},
+            adapter_key="blob-storage-adapter"
+        )
+        assert mocked_write_blob_to_storage.call_count == 1
+        _, args, _ = mocked_write_blob_to_storage.mock_calls[0]
+        assert len(args) == 3
+        assert args[0] == data
+        assert args[1] == filtered_sink.ref_id
+        assert args[2] == filtered_sink.ref_key
