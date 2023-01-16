@@ -317,7 +317,7 @@ export class WorkflowEditorComponent {
   }
 
   /**
-   * adds a new operator to the workflow,
+   * adds a new operator and ioConnectors to the workflow,
    * since the flowchart library doesn't need all the data we handle this here and not on the create event
    * @param event drop event, carrying the transformation and flowchartComponent data
    */
@@ -328,12 +328,24 @@ export class WorkflowEditorComponent {
     const transformation = JSON.parse(
       event.detail.baseItemJSON
     ) as Transformation;
+
     const newOperator = this._createNewOperator(
       transformation,
       event.detail.svgX as number,
       event.detail.svgY as number
     );
     this.currentWorkflow.content.operators.push(newOperator);
+
+    newOperator.inputs.forEach(operatorInput => {
+      const newInput = this._createWorkflowContentIO(newOperator, operatorInput);
+      this.currentWorkflow.content.inputs.push(newInput);
+    });
+    newOperator.outputs.forEach(operatorOutput => {
+      const newOutput = this._createWorkflowContentIO(newOperator, operatorOutput);
+      this.currentWorkflow.content.outputs.push(newOutput);
+    });
+
+    console.log(this.currentWorkflow);
     this.baseItemService.updateTransformation(this.currentWorkflow).subscribe();
   }
 
@@ -490,7 +502,32 @@ export class WorkflowEditorComponent {
       if (data === undefined) {
         return;
       }
+      const copyOfCurrentWorkflow = this.currentWorkflow;
+      const oldName = operator.name;
+
+      // rename content operator
       operator.name = data;
+      // rename content inputs
+      copyOfCurrentWorkflow.content.inputs.forEach(input => {
+        if (input.operator_name === oldName) {
+          input.operator_name = data;
+        }
+      });
+      // rename content outputs
+      copyOfCurrentWorkflow.content.outputs.forEach(output => {
+        if (output.operator_name === oldName) {
+          output.operator_name = data;
+        }
+      });
+      // rename content constants
+      copyOfCurrentWorkflow.content.constants.forEach(constant => {
+        if (constant.operator_name === oldName) {
+          constant.operator_name = data;
+        }
+      });
+
+      this.currentWorkflow = copyOfCurrentWorkflow;
+
       this.baseItemService
         .updateTransformation(this.currentWorkflow)
         .subscribe();
@@ -515,6 +552,16 @@ export class WorkflowEditorComponent {
           currentOperator.position.y + 100
         );
         this.currentWorkflow.content.operators.push(copyOperator);
+
+        copyOperator.inputs.forEach(operatorInput => {
+          const newInput = this._createWorkflowContentIO(copyOperator, operatorInput);
+          this.currentWorkflow.content.inputs.push(newInput);
+        });
+        copyOperator.outputs.forEach(operatorOutput => {
+          const newOutput = this._createWorkflowContentIO(copyOperator, operatorOutput);
+          this.currentWorkflow.content.outputs.push(newOutput);
+        });
+
         this.baseItemService
           .updateTransformation(this.currentWorkflow)
           .subscribe();
@@ -618,5 +665,24 @@ export class WorkflowEditorComponent {
       operator.position.y = newPosY;
       this.hasChanges = true;
     }
+  }
+
+   /**
+   * creates a new workflow ioConnector based on the new operator and it's connector
+   * @param operator operator definition
+   * @param connector connector, io definition of the operator
+   */
+  private _createWorkflowContentIO(operator: Operator, connector: Connector): IOConnector {
+    const ioConnector: IOConnector = {
+      id: '',
+      name: '',
+      data_type: connector.data_type,
+      operator_id: operator.id,
+      connector_id: connector.id,
+      operator_name: operator.name,
+      connector_name: connector.name,
+      position: connector.position
+    }
+    return ioConnector;
   }
 }
