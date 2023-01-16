@@ -337,11 +337,17 @@ export class WorkflowEditorComponent {
     this.currentWorkflow.content.operators.push(newOperator);
 
     newOperator.inputs.forEach(operatorInput => {
-      const newInput = this._createWorkflowContentIO(newOperator, operatorInput);
+      const newInput = this._createWorkflowContentIO(
+        newOperator,
+        operatorInput
+      );
       this.currentWorkflow.content.inputs.push(newInput);
     });
     newOperator.outputs.forEach(operatorOutput => {
-      const newOutput = this._createWorkflowContentIO(newOperator, operatorOutput);
+      const newOutput = this._createWorkflowContentIO(
+        newOperator,
+        operatorOutput
+      );
       this.currentWorkflow.content.outputs.push(newOutput);
     });
 
@@ -553,11 +559,17 @@ export class WorkflowEditorComponent {
         this.currentWorkflow.content.operators.push(copyOperator);
 
         copyOperator.inputs.forEach(operatorInput => {
-          const newInput = this._createWorkflowContentIO(copyOperator, operatorInput);
+          const newInput = this._createWorkflowContentIO(
+            copyOperator,
+            operatorInput
+          );
           this.currentWorkflow.content.inputs.push(newInput);
         });
         copyOperator.outputs.forEach(operatorOutput => {
-          const newOutput = this._createWorkflowContentIO(copyOperator, operatorOutput);
+          const newOutput = this._createWorkflowContentIO(
+            copyOperator,
+            operatorOutput
+          );
           this.currentWorkflow.content.outputs.push(newOutput);
         });
 
@@ -666,12 +678,15 @@ export class WorkflowEditorComponent {
     }
   }
 
-   /**
+  /**
    * creates a new workflow ioConnector based on the new operator and it's connector
    * @param operator operator definition
    * @param connector connector, io definition of the operator
    */
-  private _createWorkflowContentIO(operator: Operator, connector: Connector): IOConnector {
+  private _createWorkflowContentIO(
+    operator: Operator,
+    connector: Connector
+  ): IOConnector {
     const ioConnector: IOConnector = {
       id: '',
       name: '',
@@ -681,7 +696,7 @@ export class WorkflowEditorComponent {
       operator_name: operator.name,
       connector_name: connector.name,
       position: connector.position
-    }
+    };
     return ioConnector;
   }
 }
