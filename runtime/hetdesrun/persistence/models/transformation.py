@@ -126,6 +126,7 @@ class TransformationRevision(BaseModel):
     # pylint: disable=no-self-argument
     @validator("disabled_timestamp")
     def disabled_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
+        """Transform disabled timestamp to UTC timestamp"""
         if v is None:
             return v
         return transform_to_utc_datetime(v)
@@ -133,6 +134,7 @@ class TransformationRevision(BaseModel):
     # pylint: disable=no-self-argument
     @validator("released_timestamp")
     def released_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
+        """Transform released timestamp to UTC timestamp"""
         if v is None:
             return v
         return transform_to_utc_datetime(v)
@@ -142,6 +144,7 @@ class TransformationRevision(BaseModel):
     def disabled_timestamp_requires_released_timestamp(
         cls, v: datetime.datetime, values: dict
     ) -> datetime.datetime:
+        """Generate released timestamp to disabled timestamp if unset"""
         if (
             "disabled_timestamp" in values
             and values["disabled_timestamp"] is not None
@@ -185,7 +188,7 @@ class TransformationRevision(BaseModel):
     def io_interface_fits_to_content(
         cls, io_interface: IOInterface, values: dict
     ) -> IOInterface:
-
+        """Adjust io_interface to content.inputs and content.outputs"""
         if values["type"] is not Type.WORKFLOW:
             return io_interface
 

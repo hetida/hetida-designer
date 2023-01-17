@@ -133,6 +133,7 @@ class WorkflowContent(BaseModel):
     # pylint: disable=no-self-argument
     @validator("operators", each_item=False)
     def operator_names_unique(cls, operators: List[Operator]) -> List[Operator]:
+        """Numerate operator names to make them unique"""
         operator_groups: dict[str, List[Operator]] = {}
 
         for operator in operators:
@@ -157,7 +158,7 @@ class WorkflowContent(BaseModel):
     # pylint: disable=no-self-argument
     @validator("links", each_item=False)
     def reduce_to_valid_links(cls, links: List[Link], values: dict) -> List[Link]:
-
+        """Remove inner links with non-matching types"""
         try:
             operators = values["operators"]
         except KeyError as e:
@@ -249,7 +250,7 @@ class WorkflowContent(BaseModel):
     def determine_inputs_from_operators_and_links(
         cls, inputs: List[IOConnector], values: dict
     ) -> List[IOConnector]:
-
+        """Generate inputs based on operators and links"""
         try:
             operators = values["operators"]
             links = values["links"]
@@ -287,7 +288,7 @@ class WorkflowContent(BaseModel):
     def determine_outputs_from_operators_and_links(
         cls, outputs: List[IOConnector], values: dict
     ) -> List[IOConnector]:
-
+        """Generate outputs based on operators and links"""
         try:
             operators = values["operators"]
             links = values["links"]
@@ -338,7 +339,7 @@ class WorkflowContent(BaseModel):
 
     @root_validator()
     def clean_up_io_links(cls, values: dict) -> dict:
-
+        """Adjust outer links so that data types match"""
         try:
             operators = values["operators"]
             links = values["links"]
