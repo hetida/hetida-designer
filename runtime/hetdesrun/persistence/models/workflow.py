@@ -110,7 +110,7 @@ class WorkflowContent(BaseModel):
         [],
         description=(
             "Workflow inputs are determined by operator inputs, "
-            "which are not connected to links. "
+            "which are not connected to other operators via links. "
             "If input names are set they must be unique."
         ),
     )
@@ -118,7 +118,7 @@ class WorkflowContent(BaseModel):
         [],
         description=(
             "Workflow outputs are determined by operator outputs, "
-            "which are not connected to links. "
+            "which are not connected to other operators via links. "
             "If output names are set they must be unique."
         ),
     )
