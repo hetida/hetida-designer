@@ -63,7 +63,9 @@ export class FlowchartConverterService {
     workflow: WorkflowTransformation
   ): FlowchartConfiguration {
     // don't show workflow io without a name
-    const workflowClean = { ...workflow };
+    const workflowClean = JSON.parse(
+      JSON.stringify(workflow)
+    ) as WorkflowTransformation;
     workflowClean.content.inputs = workflowClean.content.inputs.filter(
       io => io.name !== '' && io.name !== null && io.name !== undefined
     );

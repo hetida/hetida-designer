@@ -201,6 +201,7 @@ export class WorkflowIODialogComponent {
     workflowTransformation: WorkflowTransformation,
     dataArray: WorkflowIODefinition[]
   ): void {
+    // FIXME
     const operator = workflowTransformation.content.operators.find(
       op => op.id === workflowIO.id
     );

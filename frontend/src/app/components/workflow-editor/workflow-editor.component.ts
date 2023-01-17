@@ -196,6 +196,10 @@ export class WorkflowEditorComponent {
       this.currentWorkflow.content.links,
       removedElement.id
     );
+    this.currentWorkflow.content.constants = this._removeById(
+      this.currentWorkflow.content.constants,
+      removedElement.id
+    );
     this.hasChanges = true;
   }
 
@@ -271,8 +275,6 @@ export class WorkflowEditorComponent {
       element,
       true
     );
-    // TODO
-    // Draw a link from workflow-output to operator-output and check if the workflow-output is set in linkTargetIds.
     const linkTargetIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
       element,
       false
@@ -336,20 +338,16 @@ export class WorkflowEditorComponent {
     );
     this.currentWorkflow.content.operators.push(newOperator);
 
-    newOperator.inputs.forEach(operatorInput => {
-      const newInput = this._createWorkflowContentIO(
-        newOperator,
-        operatorInput
-      );
-      this.currentWorkflow.content.inputs.push(newInput);
-    });
-    newOperator.outputs.forEach(operatorOutput => {
-      const newOutput = this._createWorkflowContentIO(
-        newOperator,
-        operatorOutput
-      );
-      this.currentWorkflow.content.outputs.push(newOutput);
-    });
+    // TODO do we have to modify inputs and outputs?
+    // const inputs = newOperator.inputs.map(operatorInput =>
+    //   this._createWorkflowContentIO(newOperator, operatorInput)
+    // );
+    // this.currentWorkflow.content.inputs.push(...inputs);
+    //
+    // const outputs = newOperator.outputs.map(operatorOutput =>
+    //   this._createWorkflowContentIO(newOperator, operatorOutput)
+    // );
+    // this.currentWorkflow.content.outputs.push(...outputs);
 
     this.baseItemService.updateTransformation(this.currentWorkflow).subscribe();
   }
@@ -420,7 +418,7 @@ export class WorkflowEditorComponent {
       .select(selectAllTransformations)
       .pipe(first())
       .subscribe(transformations => {
-        const available = transformations.filter(
+        const revisions = transformations.filter(
           transformation =>
             transformation.revision_group_id ===
               currentOperator.revision_group_id &&
@@ -428,12 +426,12 @@ export class WorkflowEditorComponent {
             transformation.state === RevisionState.RELEASED
         );
 
-        if (available.length === 0) {
+        if (revisions.length === 0) {
           this.notificationService.info(
             `This ${currentOperator.type.toLowerCase()} has no other revision.`
           );
         } else {
-          this._openRevisionChangeDialog(available, currentOperator);
+          this._openRevisionChangeDialog(revisions, currentOperator);
         }
       });
   }
@@ -503,40 +501,27 @@ export class WorkflowEditorComponent {
       }
     });
 
-    dialogRef.afterClosed().subscribe(data => {
-      if (data === undefined) {
+    dialogRef.afterClosed().subscribe(newName => {
+      if (newName === undefined) {
         return;
       }
-      const copyOfCurrentWorkflow = this.currentWorkflow;
-      const oldName = operator.name;
+      operator.name = newName;
 
-      // rename content operator
-      operator.name = data;
-      // rename content inputs
-      copyOfCurrentWorkflow.content.inputs.forEach(input => {
-        if (input.operator_name === oldName) {
-          input.operator_name = data;
-        }
-      });
-      // rename content outputs
-      copyOfCurrentWorkflow.content.outputs.forEach(output => {
-        if (output.operator_name === oldName) {
-          output.operator_name = data;
-        }
-      });
-      // rename content constants
-      copyOfCurrentWorkflow.content.constants.forEach(constant => {
-        if (constant.operator_name === oldName) {
-          constant.operator_name = data;
-        }
-      });
-
-      this.currentWorkflow = copyOfCurrentWorkflow;
+      // TODO do we have to modify inputs, outputs and constants?
+      // const oldName = operator.name;
+      // [
+      //   ...this.currentWorkflow.content.inputs,
+      //   ...this.currentWorkflow.content.outputs,
+      //   ...this.currentWorkflow.content.constants
+      // ].forEach(element => {
+      //   if (element.operator_name === oldName) {
+      //     element.operator_name = newName;
+      //   }
+      // });
 
       this.baseItemService
         .updateTransformation(this.currentWorkflow)
         .subscribe();
-      this._convertWorkflowToFlowchart(this.currentWorkflow);
     });
   }
 
@@ -558,20 +543,16 @@ export class WorkflowEditorComponent {
         );
         this.currentWorkflow.content.operators.push(copyOperator);
 
-        copyOperator.inputs.forEach(operatorInput => {
-          const newInput = this._createWorkflowContentIO(
-            copyOperator,
-            operatorInput
-          );
-          this.currentWorkflow.content.inputs.push(newInput);
-        });
-        copyOperator.outputs.forEach(operatorOutput => {
-          const newOutput = this._createWorkflowContentIO(
-            copyOperator,
-            operatorOutput
-          );
-          this.currentWorkflow.content.outputs.push(newOutput);
-        });
+        // TODO do we have to modify inputs and outputs?
+        // const inputs = copyOperator.inputs.map(operatorInput =>
+        //   this._createWorkflowContentIO(copyOperator, operatorInput)
+        // );
+        // this.currentWorkflow.content.inputs.push(...inputs);
+        //
+        // const outputs = copyOperator.outputs.map(operatorOutput =>
+        //   this._createWorkflowContentIO(copyOperator, operatorOutput)
+        // );
+        // this.currentWorkflow.content.outputs.push(...outputs);
 
         this.baseItemService
           .updateTransformation(this.currentWorkflow)
@@ -683,20 +664,20 @@ export class WorkflowEditorComponent {
    * @param operator operator definition
    * @param connector connector, io definition of the operator
    */
-  private _createWorkflowContentIO(
-    operator: Operator,
-    connector: Connector
-  ): IOConnector {
-    const ioConnector: IOConnector = {
-      id: '',
-      name: '',
-      data_type: connector.data_type,
-      operator_id: operator.id,
-      connector_id: connector.id,
-      operator_name: operator.name,
-      connector_name: connector.name,
-      position: connector.position
-    };
-    return ioConnector;
-  }
+  // private _createWorkflowContentIO(
+  //   operator: Operator,
+  //   connector: Connector
+  // ): IOConnector {
+  //   const ioConnector: IOConnector = {
+  //     id: uuid().toString(),
+  //     name: null,
+  //     data_type: connector.data_type,
+  //     operator_id: operator.id,
+  //     connector_id: connector.id,
+  //     operator_name: operator.name,
+  //     connector_name: connector.name,
+  //     position: connector.position
+  //   };
+  //   return ioConnector;
+  // }
 }
