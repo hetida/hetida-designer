@@ -277,7 +277,169 @@ tr_json_workflow_1 = {
     },
 }
 
-tr_json_workflow_2 = {
+tr_json_workflow_2_no_operator = {
+    "id": str(get_uuid_from_seed("workflow 2")),
+    "revision_group_id": str(get_uuid_from_seed("group of workflow 2")),
+    "name": "workflow 2",
+    "description": "description of workflow 2",
+    "category": "category",
+    "documentation": "documentation",
+    "type": "WORKFLOW",
+    "state": "DRAFT",
+    "version_tag": "1.0.0",
+    "io_interface": {
+        "inputs": [],
+        "outputs": [],
+    },
+    "content": {
+        "constants": [],
+        "inputs": [],
+        "outputs": [],
+        "operators": [],
+        "links": [],
+    },
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+    },
+}
+tr_json_workflow_2_added_operator = {
+    "id": str(get_uuid_from_seed("workflow 2")),
+    "revision_group_id": str(get_uuid_from_seed("group of workflow 2")),
+    "name": "workflow 2",
+    "description": "description of workflow 2",
+    "category": "category",
+    "documentation": "documentation",
+    "type": "WORKFLOW",
+    "state": "DRAFT",
+    "version_tag": "1.0.0",
+    "io_interface": {
+        "inputs": [],
+        "outputs": [],
+    },
+    "content": {
+        "constants": [],
+        "inputs": [],
+        "outputs": [],
+        "operators": [
+            {
+                "id": str(get_uuid_from_seed("operator")),
+                "revision_group_id": str(get_uuid_from_seed("group of component 1")),
+                "name": "operator",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": str(get_uuid_from_seed("component 1")),
+                "inputs": [
+                    {
+                        "id": str(get_uuid_from_seed("operator input")),
+                        "name": "operator_input",
+                        "data_type": "INT",
+                        "position": {"x": 0, "y": 0},
+                    },
+                ],
+                "outputs": [
+                    {
+                        "id": str(get_uuid_from_seed("operator output")),
+                        "name": "operator_output",
+                        "data_type": "INT",
+                        "position": {"x": 0, "y": 0},
+                    },
+                ],
+                "position": {"x": 0, "y": 0},
+            }
+        ],
+        "links": [],
+    },
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+    },
+}
+tr_json_workflow_2_added_io_for_operator = {
+    "id": str(get_uuid_from_seed("workflow 2")),
+    "revision_group_id": str(get_uuid_from_seed("group of workflow 2")),
+    "name": "workflow 2",
+    "description": "description of workflow 2",
+    "category": "category",
+    "documentation": "documentation",
+    "type": "WORKFLOW",
+    "state": "DRAFT",
+    "version_tag": "1.0.0",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": str(get_uuid_from_seed("input")),
+                "data_type": "INT",
+            }
+        ],
+        "outputs": [
+            {
+                "id": str(get_uuid_from_seed("output")),
+                "data_type": "INT",
+            }
+        ],
+    },
+    "content": {
+        "constants": [],
+        "inputs": [
+            {
+                "id": str(get_uuid_from_seed("input")),
+                "data_type": "INT",
+                "operator_id": str(get_uuid_from_seed("operator")),
+                "connector_id": str(get_uuid_from_seed("operator input")),
+                "operator_name": "operator",
+                "connector_name": "operator_input",
+                "position": {"x": 0, "y": 0},
+            }
+        ],
+        "outputs": [
+            {
+                "id": str(get_uuid_from_seed("output")),
+                "data_type": "INT",
+                "operator_id": str(get_uuid_from_seed("operator")),
+                "connector_id": str(get_uuid_from_seed("operator output")),
+                "operator_name": "operator",
+                "connector_name": "operator_output",
+                "position": {"x": 0, "y": 0},
+            }
+        ],
+        "operators": [
+            {
+                "id": str(get_uuid_from_seed("operator")),
+                "revision_group_id": str(get_uuid_from_seed("group of component 1")),
+                "name": "operator",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "1.0.0",
+                "transformation_id": str(get_uuid_from_seed("component 1")),
+                "inputs": [
+                    {
+                        "id": str(get_uuid_from_seed("operator input")),
+                        "name": "operator_input",
+                        "data_type": "INT",
+                        "position": {"x": 0, "y": 0},
+                    },
+                ],
+                "outputs": [
+                    {
+                        "id": str(get_uuid_from_seed("operator output")),
+                        "name": "operator_output",
+                        "data_type": "INT",
+                        "position": {"x": 0, "y": 0},
+                    },
+                ],
+                "position": {"x": 0, "y": 0},
+            }
+        ],
+        "links": [],
+    },
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+    },
+}
+tr_json_workflow_2_with_named_io_for_operator = {
     "id": str(get_uuid_from_seed("workflow 2")),
     "revision_group_id": str(get_uuid_from_seed("group of workflow 2")),
     "name": "workflow 2",
@@ -418,7 +580,7 @@ tr_json_workflow_2 = {
         ],
     },
 }
-tr_json_workflow_2_update = deepcopy(tr_json_workflow_2)
+tr_json_workflow_2_update = deepcopy(tr_json_workflow_2_with_named_io_for_operator)
 tr_json_workflow_2_update["name"] = "new name"
 
 
@@ -440,7 +602,7 @@ async def test_get_all_transformation_revisions_with_valid_db_entries(
             TransformationRevision(**tr_json_workflow_1)
         )
         store_single_transformation_revision(
-            TransformationRevision(**tr_json_workflow_2)
+            TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
         )
         async with async_test_client as ac:
             response = await ac.get("/api/transformations/")
@@ -449,7 +611,7 @@ async def test_get_all_transformation_revisions_with_valid_db_entries(
         assert response.json()[0] == tr_json_component_1
         assert response.json()[1] == tr_json_component_2
         assert response.json()[2] == tr_json_workflow_1
-        assert response.json()[3] == tr_json_workflow_2
+        assert response.json()[3] == tr_json_workflow_2_with_named_io_for_operator
 
 
 @pytest.mark.asyncio
@@ -483,7 +645,9 @@ async def test_get_all_transformation_revisions_with_specified_state(
         store_single_transformation_revision(
             TransformationRevision(**tr_json_workflow_1)  # DRAFT
         )
-        tr_workflow_2 = TransformationRevision(**tr_json_workflow_2)
+        tr_workflow_2 = TransformationRevision(
+            **tr_json_workflow_2_with_named_io_for_operator
+        )
         tr_workflow_2.deprecate()
         store_single_transformation_revision(tr_workflow_2)  # DISABLED
         async with async_test_client as ac:
@@ -509,7 +673,10 @@ async def test_get_all_transformation_revisions_with_specified_state(
         assert response_released.json()[0] == tr_json_component_2
         assert response_disabled.status_code == 200
         assert len(response_disabled.json()) == 1
-        assert response_disabled.json()[0]["id"] == tr_json_workflow_2["id"]
+        assert (
+            response_disabled.json()[0]["id"]
+            == tr_json_workflow_2_with_named_io_for_operator["id"]
+        )
         assert response_disabled.json()[0]["state"] == "DISABLED"
         assert response_foo.status_code == 422
         assert (
@@ -535,7 +702,9 @@ async def test_get_all_transformation_revisions_with_specified_type(
             TransformationRevision(**tr_json_workflow_1)  # DRAFT
         )
         store_single_transformation_revision(
-            TransformationRevision(**tr_json_workflow_2)  # DRAFT
+            TransformationRevision(
+                **tr_json_workflow_2_with_named_io_for_operator
+            )  # DRAFT
         )
 
         async with async_test_client as ac:
@@ -554,7 +723,9 @@ async def test_get_all_transformation_revisions_with_specified_type(
         assert response_workflow.status_code == 200
         assert len(response_workflow.json()) == 2
         assert response_workflow.json()[0] == tr_json_workflow_1
-        assert response_workflow.json()[1] == tr_json_workflow_2
+        assert (
+            response_workflow.json()[1] == tr_json_workflow_2_with_named_io_for_operator
+        )
         assert response_foo.status_code == 422
         assert (
             "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
@@ -579,7 +750,9 @@ async def test_get_all_transformation_revisions_with_specified_category(
             TransformationRevision(**tr_json_workflow_1)  # category
         )
         store_single_transformation_revision(
-            TransformationRevision(**tr_json_workflow_2)  # category
+            TransformationRevision(
+                **tr_json_workflow_2_with_named_io_for_operator
+            )  # category
         )
 
         url = "/api/transformations/"
@@ -592,7 +765,9 @@ async def test_get_all_transformation_revisions_with_specified_category(
         assert len(response_category.json()) == 3
         assert response_category.json()[0] == tr_json_component_1
         assert response_category.json()[1] == tr_json_workflow_1
-        assert response_category.json()[2] == tr_json_workflow_2
+        assert (
+            response_category.json()[2] == tr_json_workflow_2_with_named_io_for_operator
+        )
         assert response_aepfel.status_code == 200
         assert len(response_aepfel.json()) == 1
         assert response_aepfel.json()[0] == tr_json_component_3
@@ -729,7 +904,9 @@ async def test_get_all_transformation_revisions_without_including_deprecated(
         store_single_transformation_revision(
             TransformationRevision(**tr_json_workflow_1)  # DRAFT
         )
-        tr_workflow_2 = TransformationRevision(**tr_json_workflow_2)
+        tr_workflow_2 = TransformationRevision(
+            **tr_json_workflow_2_with_named_io_for_operator
+        )
         tr_workflow_2.deprecate()
         store_single_transformation_revision(tr_workflow_2)  # DISABLED
         url = "/api/transformations/"
@@ -750,7 +927,10 @@ async def test_get_all_transformation_revisions_without_including_deprecated(
         assert response_with_deprecated.json()[0] == tr_json_component_1
         assert response_with_deprecated.json()[1] == tr_json_component_2
         assert response_with_deprecated.json()[2] == tr_json_workflow_1
-        assert response_with_deprecated.json()[3]["id"] == tr_json_workflow_2["id"]
+        assert (
+            response_with_deprecated.json()[3]["id"]
+            == tr_json_workflow_2_with_named_io_for_operator["id"]
+        )
 
 
 @pytest.mark.asyncio
@@ -765,7 +945,7 @@ async def test_get_all_transformation_revisions_including_dependencies(
         tr_component_1.deprecate()
         store_single_transformation_revision(tr_component_1)
         store_single_transformation_revision(
-            TransformationRevision(**tr_json_workflow_2)
+            TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
         )
         url = "/api/transformations/"
         async with async_test_client as ac:
@@ -814,7 +994,9 @@ async def test_get_all_transformation_revisions_with_combined_filters(
             TransformationRevision(**tr_json_workflow_1)  # DRAFT
         )
         store_single_transformation_revision(
-            TransformationRevision(**tr_json_workflow_2)  # DRAFT
+            TransformationRevision(
+                **tr_json_workflow_2_with_named_io_for_operator
+            )  # DRAFT
         )
 
         url = "/api/transformations/"
@@ -833,7 +1015,10 @@ async def test_get_all_transformation_revisions_with_combined_filters(
         assert response_draft_workflow.status_code == 200
         assert len(response_draft_workflow.json()) == 2
         assert response_draft_workflow.json()[0] == tr_json_workflow_1
-        assert response_draft_workflow.json()[1] == tr_json_workflow_2
+        assert (
+            response_draft_workflow.json()[1]
+            == tr_json_workflow_2_with_named_io_for_operator
+        )
 
 
 @pytest.mark.asyncio
@@ -931,10 +1116,16 @@ async def test_create_transformation_revision_with_workflow(
         )
 
         async with async_test_client as ac:
-            response = await ac.post("/api/transformations/", json=tr_json_workflow_2)
+            response = await ac.post(
+                "/api/transformations/",
+                json=tr_json_workflow_2_with_named_io_for_operator,
+            )
 
         assert response.status_code == 201
-        assert response.json()["name"] == tr_json_workflow_2["name"]
+        assert (
+            response.json()["name"]
+            == tr_json_workflow_2_with_named_io_for_operator["name"]
+        )
 
 
 @pytest.mark.asyncio
@@ -949,7 +1140,7 @@ async def test_update_transformation_revision_with_workflow(
             TransformationRevision(**tr_json_component_1)
         )
         store_single_transformation_revision(
-            TransformationRevision(**tr_json_workflow_2)
+            TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
         )
 
         async with async_test_client as ac:
@@ -981,7 +1172,7 @@ async def test_update_transformation_revision_with_invalid_name_workflow(
             TransformationRevision(**tr_json_component_1)
         )
         store_single_transformation_revision(
-            TransformationRevision(**tr_json_workflow_2)
+            TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
         )
 
         tr_json_workflow_2_update_invalid_name = deepcopy(tr_json_workflow_2_update)
@@ -1077,6 +1268,68 @@ async def test_update_transformation_revision_with_released_component_and_allow_
         assert response.status_code == 201
         assert response.json()["name"] == "new name"
         assert response.json()["category"] == "Test"
+
+
+@pytest.mark.asyncio
+async def test_update_transformation_revision_by_adding_operator_to_workflow_followed_by_get(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_2_no_operator)
+        )
+
+        async with async_test_client as ac:
+            put_response = await ac.put(
+                posix_urljoin(
+                    "/api/transformations/", str(get_uuid_from_seed("workflow 2"))
+                ),
+                json=tr_json_workflow_2_added_operator,
+            )
+            get_response = await ac.get(
+                posix_urljoin(
+                    "/api/transformations/", str(get_uuid_from_seed("workflow 2"))
+                ),
+            )
+
+        assert put_response.status_code == 201
+
+        put_response_json_without_io_ids = deepcopy(put_response.json())
+        del put_response_json_without_io_ids["io_interface"]["inputs"][0]["id"]
+        del put_response_json_without_io_ids["io_interface"]["outputs"][0]["id"]
+        del put_response_json_without_io_ids["content"]["inputs"][0]["id"]
+        del put_response_json_without_io_ids["content"]["outputs"][0]["id"]
+
+        expected_put_response_json_without_io_ids = deepcopy(
+            tr_json_workflow_2_added_io_for_operator
+        )
+        del expected_put_response_json_without_io_ids["io_interface"]["inputs"][0]["id"]
+        del expected_put_response_json_without_io_ids["io_interface"]["outputs"][0][
+            "id"
+        ]
+        del expected_put_response_json_without_io_ids["content"]["inputs"][0]["id"]
+        del expected_put_response_json_without_io_ids["content"]["outputs"][0]["id"]
+
+        assert (
+            put_response_json_without_io_ids
+            == expected_put_response_json_without_io_ids
+        )
+
+        assert get_response.status_code == 200
+
+        get_response_json_without_io_ids = deepcopy(put_response.json())
+        del get_response_json_without_io_ids["io_interface"]["inputs"][0]["id"]
+        del get_response_json_without_io_ids["io_interface"]["outputs"][0]["id"]
+        del get_response_json_without_io_ids["content"]["inputs"][0]["id"]
+        del get_response_json_without_io_ids["content"]["outputs"][0]["id"]
+
+        assert get_response_json_without_io_ids == put_response_json_without_io_ids
 
 
 @pytest.mark.asyncio
