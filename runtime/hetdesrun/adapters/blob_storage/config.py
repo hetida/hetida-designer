@@ -6,7 +6,7 @@ class BlobStorageAdapterConfig(BaseSettings):
 
     adapter_hierarchy_location: str = Field(
         "/mount/blob_storage_adapter_hierarchy.json",
-        env="BLOB_STORAGE_HIERARCHY_LOCATION",
+        env="BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION",
     )
     account_id: str = Field("", env="BLOB_STORAGE_ACCOUNT_ID")
     resource_id: str = Field("", env="BLOB_STORAGE_RESOURCE_ID")
