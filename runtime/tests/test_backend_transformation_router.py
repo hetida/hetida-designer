@@ -1323,13 +1323,7 @@ async def test_update_transformation_revision_by_adding_operator_to_workflow_fol
 
         assert get_response.status_code == 200
 
-        get_response_json_without_io_ids = deepcopy(put_response.json())
-        del get_response_json_without_io_ids["io_interface"]["inputs"][0]["id"]
-        del get_response_json_without_io_ids["io_interface"]["outputs"][0]["id"]
-        del get_response_json_without_io_ids["content"]["inputs"][0]["id"]
-        del get_response_json_without_io_ids["content"]["outputs"][0]["id"]
-
-        assert get_response_json_without_io_ids == put_response_json_without_io_ids
+        get_response.json() == put_response.json()
 
 
 @pytest.mark.asyncio
