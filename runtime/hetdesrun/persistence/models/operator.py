@@ -32,10 +32,24 @@ class Operator(BaseModel):
     # pylint: disable=no-self-argument
     @root_validator()
     def is_not_draft(cls, values: dict) -> dict:
-        if values["state"] == State.DRAFT:
+        try:
+            state = values["state"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot validate that operator is not DRAFT if the attribute 'state' is missing!"
+            ) from e
+        if state == State.DRAFT:
+            try:
+                operator_id = values["id"]
+                type = values["type"]  # pylint: disable=redefined-builtin
+            except KeyError as e:
+                raise ValueError(
+                    "Cannot provide information for which operator validation has failed "
+                    "if any of the attributes 'id', 'type' is missing!"
+                ) from e
             raise ValueError(
                 f"Only released components/workflows can be dragged into a workflow! "
-                f'Operator with id {values["id"]} of type {values["type"]}'
-                f' has state {values["state"]} '
+                f"Operator with id {operator_id} of type {type}"
+                f" has state {state} "
             )
         return values

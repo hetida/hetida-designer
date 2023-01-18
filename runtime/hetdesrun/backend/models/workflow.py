@@ -320,13 +320,14 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         try:
             operators = values["operators"]
+            workflow_id = values["id"]
         except KeyError as e:
             raise ValueError(
-                "Cannot reduce to valid links if attribute 'operators' is missing"
+                "Cannot reduce to valid links if any of the attributes "
+                "'operators', 'id' is missing!"
             ) from e
 
         updated_links: List[WorkflowLinkFrontendDto] = []
-        workflow_id: UUID = values["id"]
 
         for link in links:
             if workflow_id in (link.from_operator, link.to_operator):
@@ -353,6 +354,13 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def links_acyclic_directed_graph(
         cls, links: List[WorkflowLinkFrontendDto], values: dict
     ) -> List[WorkflowLinkFrontendDto]:
+
+        try:
+            workflow_id = values["id"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if links are acyclic if the attribute 'id' is missing!"
+            ) from e
 
         indegrees: Dict[UUID, int] = {}
         edges: List[Tuple[UUID, UUID]] = []
@@ -386,9 +394,9 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         for link in links:
             from_operator = link.from_operator
             to_operator = link.to_operator
-            if from_operator == values["id"]:
+            if from_operator == workflow_id:
                 from_operator = link.from_connector
-            if to_operator == values["id"]:
+            if to_operator == workflow_id:
                 to_operator = link.to_connector
             add_edge((from_operator, to_operator))
 
@@ -409,15 +417,12 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         try:
             operators = values["operators"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot determine inputs if attribute 'operators' is missing"
-            ) from e
-        try:
             links = values["links"]
+            workflow_id = values["id"]
         except KeyError as e:
             raise ValueError(
-                "Cannot determine inputs if attribute 'links' is missing"
+                "Cannot determine inputs if any of the attributes "
+                "'operators', 'links', 'id' is missing!"
             ) from e
 
         updated_inputs: List[WorkflowIoFrontendDto] = []
@@ -425,7 +430,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         for operator in operators:
             for connector in operator.inputs:
                 if not is_link_end(
-                    operator.id, connector.id, links, values["id"]
+                    operator.id, connector.id, links, workflow_id
                 ) or is_connected_to_input(operator.id, connector.id, inputs):
                     updated_inputs.append(
                         get_or_create_input(
@@ -443,15 +448,12 @@ class WorkflowRevisionFrontendDto(BasicInformation):
 
         try:
             operators = values["operators"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot determine outputs if attribute 'operators' is missing"
-            ) from e
-        try:
             links = values["links"]
+            workflow_id = values["id"]
         except KeyError as e:
             raise ValueError(
-                "Cannot determine outputs if attribute 'links' is missing"
+                "Cannot determine outputs if any of the attributes "
+                "'operators', 'links', 'id' is missing!"
             ) from e
 
         updated_outputs: List[WorkflowIoFrontendDto] = []
@@ -459,7 +461,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         for operator in operators:
             for connector in operator.outputs:
                 if not is_link_start(
-                    operator.id, connector.id, links, values["id"]
+                    operator.id, connector.id, links, workflow_id
                 ) or is_connected_to_output(operator.id, connector.id, outputs):
                     updated_outputs.append(
                         get_or_create_output(
@@ -511,38 +513,23 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def clean_up_io_links(cls, values: dict) -> dict:
         try:
             operators = values["operators"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot clean up io links if attribute 'operators' is missing"
-            ) from e
-        try:
             links = values["links"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot clean up io links if attribute 'links' is missing"
-            ) from e
-        try:
             inputs = values["inputs"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot clean up io links if attribute 'input' is missing"
-            ) from e
-        try:
             outputs = values["outputs"]
+            workflow_id = values["id"]
         except KeyError as e:
             raise ValueError(
-                "Cannot clean up io links if attribute 'outputs' is missing"
+                "Cannot clean up io links if any of the attributes "
+                "'operators', 'links', 'input', 'outputs', 'id' is missing!"
             ) from e
 
         updated_links: List[WorkflowLinkFrontendDto] = []
 
         for link in links:
-            if not (
-                link.from_operator == values["id"] or link.to_operator == values["id"]
-            ):
+            if not workflow_id in (link.from_operator, link.to_operator):
                 # link has been checked in the reduce_to_valid_links validator already
                 updated_links.append(link)
-            elif link.from_operator == values["id"]:
+            elif link.from_operator == workflow_id:
                 link_start_type = get_link_start_type_from_input(link, inputs)
                 link_end_type = get_link_end_type_from_operator(link, operators)
                 io_name = get_input_name_from_link(link, inputs)
@@ -556,7 +543,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                     and not (io_name is None or io_name == "")
                 ):
                     updated_links.append(link)
-            else:  # link.to_operator == values["id"]:
+            else:  # link.to_operator == workflow_id:
                 link_start_type = get_link_start_type_from_operator(link, operators)
                 link_end_type = get_link_end_type_from_output(link, outputs)
                 io_name = get_output_name_from_link(link, outputs)

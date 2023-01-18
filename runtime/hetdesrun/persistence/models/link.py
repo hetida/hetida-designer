@@ -40,15 +40,11 @@ class Link(BaseModel):
     def types_match(cls, values: dict) -> dict:
         try:
             start = values["start"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot validate that types of link ends match if attribute 'start' is missing"
-            ) from e
-        try:
             end = values["end"]
         except KeyError as e:
             raise ValueError(
-                "Cannot validate that data types of link ends match if attribute 'end' is missing"
+                "Cannot validate that types of link ends match if any of the attributes "
+                "'start', 'end' is missing!"
             ) from e
         if not (
             start.connector.data_type == end.connector.data_type
@@ -61,7 +57,15 @@ class Link(BaseModel):
     # pylint: disable=no-self-argument
     @root_validator()
     def no_self_reference(cls, values: dict) -> dict:
-        if values["start"].operator == values["end"].operator:
+        try:
+            start = values["start"]
+            end = values["end"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot validate that link is no self reference if any of the attributes "
+                "'start', 'end' is missing!"
+            ) from e
+        if start.operator == end.operator:
             raise ValueError(
                 "Start and end of a connection must differ from each other."
             )

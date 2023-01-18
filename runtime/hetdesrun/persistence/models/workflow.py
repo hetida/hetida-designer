@@ -162,7 +162,7 @@ class WorkflowContent(BaseModel):
             operators = values["operators"]
         except KeyError as e:
             raise ValueError(
-                "Cannot reduce to valid links if attribute 'operators' is missing"
+                "Cannot reduce to valid links if attribute 'operators' is missing!"
             ) from e
 
         updated_links: List[Link] = []
@@ -255,7 +255,7 @@ class WorkflowContent(BaseModel):
             links = values["links"]
         except KeyError as e:
             raise ValueError(
-                "Cannot determine inputs if any of the attributes 'operators', 'links' is missing"
+                "Cannot determine inputs if any of the attributes 'operators', 'links' is missing!"
             ) from e
 
         updated_inputs = []
@@ -293,7 +293,7 @@ class WorkflowContent(BaseModel):
             links = values["links"]
         except KeyError as e:
             raise ValueError(
-                "Cannot determine outputs if any of the attributes 'operators', 'links' is missing"
+                "Cannot determine outputs if any of the attributes 'operators', 'links' is missing!"
             ) from e
 
         updated_outputs = []
@@ -348,7 +348,7 @@ class WorkflowContent(BaseModel):
         except KeyError as e:
             raise ValueError(
                 "Cannot clean up io links if any of the attributes "
-                "'operators', 'links', 'constants', 'inputs' and 'outputs' is missing"
+                "'operators', 'links', 'constants', 'inputs' and 'outputs' is missing!"
             ) from e
 
         updated_links: List[Link] = []

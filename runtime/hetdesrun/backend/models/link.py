@@ -30,7 +30,15 @@ class WorkflowLinkFrontendDto(BaseModel):
     @root_validator()
     # pylint: disable=no-self-argument
     def no_self_reference(cls, values: dict) -> dict:
-        if values["to_operator"] == values["from_operator"]:
+        try:
+            to_operator = values["to_operator"]
+            from_operator = values["from_operator"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check link for self reference if any of the attributes "
+                "'to_operators', 'from_operator' is missing!"
+            ) from e
+        if to_operator == from_operator:
             raise ValueError(
                 "Start and end of a connection must differ from each other."
             )
