@@ -4,9 +4,9 @@ import pytest
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     SinkNotFound,
-    SinksNotUnique,
+    SinkNotUnique,
     SourceNotFound,
-    SourcesNotUnique,
+    SourceNotUnique,
     ThingNodeNotFound,
     ThingNodesNotUnique,
 )
@@ -231,7 +231,7 @@ def test_blob_storage_get_source_by_id():
             ),
         ],
     ):
-        with pytest.raises(SourcesNotUnique):
+        with pytest.raises(SourceNotUnique):
             get_source_by_id("i-i/A_2022-01-02T14:57:31+00:00")
 
 
@@ -269,7 +269,7 @@ def test_blob_storage_get_sink_by_id():
                 ),
             ],
         ):
-            with pytest.raises(SinksNotUnique):
+            with pytest.raises(SinkNotUnique):
                 get_sink_by_id("i-i/A_next")
 
 
@@ -311,7 +311,7 @@ def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
             ),
         ],
     ):
-        with pytest.raises(SourcesNotUnique):
+        with pytest.raises(SourceNotUnique):
             source_by_tn_id_and_md_key = get_source_by_thing_node_id_and_metadata_key(
                 thing_node_id="i-i/A", metadata_key="A - 2022-01-02 14:57:31+00:00"
             )
@@ -357,7 +357,7 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
                 ),
             ],
         ):
-            with pytest.raises(SinksNotUnique):
+            with pytest.raises(SinkNotUnique):
                 sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
                     thing_node_id="i-i/A", metadata_key="A - Next Object"
                 )

@@ -22,7 +22,7 @@ class SourceNotFound(StructureError):
     pass
 
 
-class SourcesNotUnique(StructureError):
+class SourceNotUnique(StructureError):
     pass
 
 
@@ -30,7 +30,7 @@ class SinkNotFound(StructureError):
     pass
 
 
-class SinksNotUnique(StructureError):
+class SinkNotUnique(StructureError):
     pass
 
 
@@ -39,6 +39,10 @@ class ThingNodeNotFound(StructureError):
 
 
 class ThingNodesNotUnique(StructureError):
+    pass
+
+
+class NoCredentialsFound(BlobAdapterException):
     pass
 
 

@@ -9,6 +9,7 @@ from botocore.exceptions import ClientError
 from pydantic import BaseModel, Field
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
+from hetdesrun.adapters.blob_storage.exceptions import NoCredentialsFound
 from hetdesrun.webservice.auth_outgoing import create_or_get_named_access_token_manager
 from hetdesrun.webservice.config import get_config
 
@@ -60,6 +61,7 @@ def obtain_credential_info_from_sts(access_token: str) -> CredentialInfo:
             DurationSeconds=get_blob_adapter_config().access_duration,
         )
     except ClientError as error:
+        # TODO: define message for ClientError in obtain_credential_info_from_sts
         msg = ""
         logger.error(msg)
         raise StsAuthenticationError(msg) from error
@@ -155,7 +157,8 @@ def create_or_get_named_credential_manager(
 
 def get_access_token() -> str:
     service_credentials = get_config().external_auth_client_credentials
-    assert service_credentials is not None  # for mypy
+    if service_credentials is not None:
+        raise NoCredentialsFound("HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS not set!")
     access_token_manager = create_or_get_named_access_token_manager(
         "blob_adapter_auth", service_credentials
     )

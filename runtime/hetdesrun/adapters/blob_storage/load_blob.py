@@ -1,6 +1,9 @@
 import logging
 from typing import Any, Dict
 
+from botocore.exceptions import ClientError
+
+from hetdesrun.adapters.blob_storage.exceptions import SourceNotFound, SourceNotUnique
 from hetdesrun.adapters.blob_storage.models import IdString
 from hetdesrun.adapters.blob_storage.service import get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
@@ -17,9 +20,16 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         thing_node_id,
         metadata_key,
     )
-    source = get_source_by_thing_node_id_and_metadata_key(
-        IdString(thing_node_id), metadata_key
-    )
+    try:
+        source = get_source_by_thing_node_id_and_metadata_key(
+            IdString(thing_node_id), metadata_key
+        )
+    except SourceNotFound as error:
+        # TODO: define behavior for SourceNotFound in load_blob_from_storage
+        raise error
+    except SourceNotUnique as error:
+        # TODO: define behavior for SourceNotFound in load_blob_from_storage
+        raise error
 
     logger.info("Get bucket name and object key from source with id %s", source.id)
     structure_bucket, object_key = source.to_structure_bucket_and_object_key()
@@ -30,9 +40,13 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         structure_bucket.name,
         object_key.string,
     )
-    response = get_s3_client().get_object(
-        Bucket=structure_bucket.name, Key=object_key.string
-    )
+    try:
+        response = get_s3_client().get_object(
+            Bucket=structure_bucket.name, Key=object_key.string
+        )
+    except ClientError as error:
+        # TODO: define behavior for ClientError in load_blob_from_storage
+        raise error
     return response["Body"].read()
 
 

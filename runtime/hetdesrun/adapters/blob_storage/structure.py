@@ -3,9 +3,9 @@ from typing import List, Optional
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     SinkNotFound,
-    SinksNotUnique,
+    SinkNotUnique,
     SourceNotFound,
-    SourcesNotUnique,
+    SourceNotUnique,
     ThingNodeNotFound,
     ThingNodesNotUnique,
 )
@@ -85,7 +85,7 @@ def get_source_by_id(source_id: IdString) -> BlobStorageStructureSource:
     if len(src_list) > 1:
         msg = f"Found more than one source with id {source_id}:\n{str(src_list)}"
         logger.error(msg)
-        raise SourcesNotUnique(msg)
+        raise SourceNotUnique(msg)
     return src_list[0]
 
 
@@ -98,7 +98,7 @@ def get_sink_by_id(sink_id: IdString) -> BlobStorageStructureSink:
     if len(snk_list) > 1:
         msg = f"Found more than one sink with id {sink_id}:\n{str(snk_list)}"
         logger.error(msg)
-        raise SinksNotUnique(msg)
+        raise SinkNotUnique(msg)
     return snk_list[0]
 
 
@@ -123,7 +123,7 @@ def get_source_by_thing_node_id_and_metadata_key(
             f"and metadata key {metadata_key}:\n{str(src_list)}"
         )
         logger.error(msg)
-        raise SourcesNotUnique(msg)
+        raise SourceNotUnique(msg)
     return src_list[0]
 
 
@@ -148,5 +148,5 @@ def get_sink_by_thing_node_id_and_metadata_key(
             f"and metadata key {metadata_key}:\n{str(snk_list)}"
         )
         logger.error(msg)
-        raise SinksNotUnique(msg)
+        raise SinkNotUnique(msg)
     return snk_list[0]

@@ -15,9 +15,9 @@ from fastapi import HTTPException, Query, status
 from hetdesrun.adapters.blob_storage import VERSION
 from hetdesrun.adapters.blob_storage.exceptions import (
     SinkNotFound,
-    SinksNotUnique,
+    SinkNotUnique,
     SourceNotFound,
-    SourcesNotUnique,
+    SourceNotUnique,
     ThingNodeNotFound,
     ThingNodesNotUnique,
 )
@@ -137,7 +137,7 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Could not find Source with id " + sourceId,
         ) from not_found_error
-    except SourcesNotUnique as not_unique_error:
+    except SourceNotUnique as not_unique_error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Sink with id " + sourceId + " not unique!",
@@ -175,7 +175,7 @@ async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Could not find Sink with id " + sinkId,
         ) from not_found_error
-    except SinksNotUnique as not_unique_error:
+    except SinkNotUnique as not_unique_error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Sink with id " + sinkId + " not unique!",

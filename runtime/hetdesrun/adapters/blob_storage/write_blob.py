@@ -1,6 +1,9 @@
 import logging
 from typing import Any, Dict
 
+from botocore.exceptions import ClientError
+
+from hetdesrun.adapters.blob_storage.exceptions import SinkNotFound, SinkNotUnique
 from hetdesrun.adapters.blob_storage.models import IdString
 from hetdesrun.adapters.blob_storage.service import get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
@@ -12,14 +15,25 @@ logger = logging.getLogger(__name__)
 
 
 def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> None:
-    sink = get_sink_by_thing_node_id_and_metadata_key(
-        IdString(thing_node_id), metadata_key
-    )
+    try:
+        sink = get_sink_by_thing_node_id_and_metadata_key(
+            IdString(thing_node_id), metadata_key
+        )
+    except SinkNotFound as error:
+        # TODO: define behavior for SinkNotFound in write_blob_to_storage
+        raise error
+    except SinkNotUnique as error:
+        # TODO: define behavior for SinkNotFound in write_blob_to_storage
+        raise error
 
     structure_bucket, object_key = sink.to_structure_bucket_and_object_key()
-    get_s3_client().put_object(
-        Bucket=structure_bucket.name, Key=object_key.string, Body=data
-    )
+    try:
+        get_s3_client().put_object(
+            Bucket=structure_bucket.name, Key=object_key.string, Body=data
+        )
+    except ClientError as error:
+        # TODO: define behavior for ClientError in load_blob_from_storage
+        raise error
     logger.info(
         "Write data for sink '%s' to storage into bucket '%s' as blob with key '%s'",
         sink.id,
