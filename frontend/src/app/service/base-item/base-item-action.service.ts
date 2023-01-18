@@ -388,11 +388,11 @@ export class BaseItemActionService {
   }
 
   public configureIO(transformation: Transformation) {
-    // TODO refactor
     if (
       isWorkflowTransformation(transformation) &&
-      transformation.io_interface.inputs.length === 0 &&
-      transformation.io_interface.outputs.length === 0
+      transformation.content.inputs.length === 0 &&
+      transformation.content.outputs.length === 0 &&
+      transformation.content.constants.length === 0
     ) {
       return;
     }
@@ -832,9 +832,9 @@ export class BaseItemActionService {
           WorkflowIODialogData,
           | false
           | {
-              constants: Constant[];
               inputs: IOConnector[];
               outputs: IOConnector[];
+              constants: Constant[];
             }
         >(WorkflowIODialogComponent, {
           width: '95%',

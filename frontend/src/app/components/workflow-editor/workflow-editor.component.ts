@@ -337,18 +337,6 @@ export class WorkflowEditorComponent {
       event.detail.svgY as number
     );
     this.currentWorkflow.content.operators.push(newOperator);
-
-    // TODO do we have to modify inputs and outputs?
-    // const inputs = newOperator.inputs.map(operatorInput =>
-    //   this._createWorkflowContentIO(newOperator, operatorInput)
-    // );
-    // this.currentWorkflow.content.inputs.push(...inputs);
-    //
-    // const outputs = newOperator.outputs.map(operatorOutput =>
-    //   this._createWorkflowContentIO(newOperator, operatorOutput)
-    // );
-    // this.currentWorkflow.content.outputs.push(...outputs);
-
     this.baseItemService.updateTransformation(this.currentWorkflow).subscribe();
   }
 
@@ -506,19 +494,6 @@ export class WorkflowEditorComponent {
         return;
       }
       operator.name = newName;
-
-      // TODO do we have to modify inputs, outputs and constants?
-      // const oldName = operator.name;
-      // [
-      //   ...this.currentWorkflow.content.inputs,
-      //   ...this.currentWorkflow.content.outputs,
-      //   ...this.currentWorkflow.content.constants
-      // ].forEach(element => {
-      //   if (element.operator_name === oldName) {
-      //     element.operator_name = newName;
-      //   }
-      // });
-
       this.baseItemService
         .updateTransformation(this.currentWorkflow)
         .subscribe();
@@ -542,18 +517,6 @@ export class WorkflowEditorComponent {
           currentOperator.position.y + 100
         );
         this.currentWorkflow.content.operators.push(copyOperator);
-
-        // TODO do we have to modify inputs and outputs?
-        // const inputs = copyOperator.inputs.map(operatorInput =>
-        //   this._createWorkflowContentIO(copyOperator, operatorInput)
-        // );
-        // this.currentWorkflow.content.inputs.push(...inputs);
-        //
-        // const outputs = copyOperator.outputs.map(operatorOutput =>
-        //   this._createWorkflowContentIO(copyOperator, operatorOutput)
-        // );
-        // this.currentWorkflow.content.outputs.push(...outputs);
-
         this.baseItemService
           .updateTransformation(this.currentWorkflow)
           .subscribe();
@@ -658,26 +621,4 @@ export class WorkflowEditorComponent {
       this.hasChanges = true;
     }
   }
-
-  /**
-   * creates a new workflow ioConnector based on the new operator and it's connector
-   * @param operator operator definition
-   * @param connector connector, io definition of the operator
-   */
-  // private _createWorkflowContentIO(
-  //   operator: Operator,
-  //   connector: Connector
-  // ): IOConnector {
-  //   const ioConnector: IOConnector = {
-  //     id: uuid().toString(),
-  //     name: null,
-  //     data_type: connector.data_type,
-  //     operator_id: operator.id,
-  //     connector_id: connector.id,
-  //     operator_name: operator.name,
-  //     connector_name: connector.name,
-  //     position: connector.position
-  //   };
-  //   return ioConnector;
-  // }
 }
