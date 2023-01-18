@@ -67,11 +67,12 @@ export class WorkflowIODefinition {
     this.operator = operator.name;
     this.connector = connector.name;
     this.type = workflowIO.data_type;
-    this.isConstant = constant.value !== undefined ? true : false;
     this.name = workflowIO.name;
-    if (constant === undefined || constant.value === undefined) {
+    if (constant === undefined) {
+      this.isConstant = false;
       this.constant = '';
     } else {
+      this.isConstant = true;
       this.constant = constant.value;
     }
     this.id = workflowIO.id;
@@ -136,7 +137,7 @@ export class WorkflowIODialogComponent {
     const inputData: WorkflowIODefinition[] = [];
     const outputData: WorkflowIODefinition[] = [];
 
-    for (const input of workflowTransformation.io_interface.inputs) {
+    for (const input of workflowTransformation.content.inputs) {
       this.generateWorkflowIODefinition(
         input,
         workflowTransformation,
@@ -144,7 +145,7 @@ export class WorkflowIODialogComponent {
       );
     }
 
-    for (const output of workflowTransformation.io_interface.outputs) {
+    for (const output of workflowTransformation.content.outputs) {
       this.generateWorkflowIODefinition(
         output,
         workflowTransformation,
@@ -197,34 +198,39 @@ export class WorkflowIODialogComponent {
   }
 
   private generateWorkflowIODefinition(
-    workflowIO: IO,
+    workflowContendIO: IOConnector,
     workflowTransformation: WorkflowTransformation,
     dataArray: WorkflowIODefinition[]
   ): void {
-    // FIXME
     const operator = workflowTransformation.content.operators.find(
-      op => op.id === workflowIO.id
+      op => op.id === workflowContendIO.operator_id
     );
     if (operator === undefined) {
-      throw new Error(`Could not find operator with id '${workflowIO.id}'`);
+      throw new Error(`Could not find operator with id '${workflowContendIO.operator_id}'`);
     }
 
-    let connector = operator.inputs.find(io => io.id === workflowIO.id);
+    let connector = operator.inputs.find(
+      io => io.id === workflowContendIO.connector_id
+    );
     if (connector === undefined) {
-      connector = operator.outputs.find(io => io.id === workflowIO.id);
+      connector = operator.outputs.find(
+        io => io.id === workflowContendIO.connector_id
+      );
     }
     if (connector === undefined) {
-      throw new Error(`Could not find connector with id '${workflowIO.id}'`);
+      throw new Error(
+        `Could not find connector with id '${workflowContendIO.connector_id}'`
+      );
     }
 
     const constant = workflowTransformation.content.constants.find(
       cons =>
-        cons.operator_id === workflowIO.id &&
-        cons.connector_id === workflowIO.id
+        cons.operator_id === workflowContendIO.operator_id &&
+        cons.connector_id === workflowContendIO.connector_id
     );
 
     const data = new WorkflowIODefinition(
-      workflowIO,
+      workflowContendIO,
       operator,
       connector,
       constant
