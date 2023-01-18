@@ -206,7 +206,9 @@ export class WorkflowIODialogComponent {
       op => op.id === workflowContendIO.operator_id
     );
     if (operator === undefined) {
-      throw new Error(`Could not find operator with id '${workflowContendIO.operator_id}'`);
+      throw new Error(
+        `Could not find operator with id '${workflowContendIO.operator_id}'`
+      );
     }
 
     let connector = operator.inputs.find(
