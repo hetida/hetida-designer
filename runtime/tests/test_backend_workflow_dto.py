@@ -845,6 +845,7 @@ valid_workflow_example_iso_forest: dict = {
 
 valid_input_with_name: dict = valid_workflow_example_iso_forest["inputs"][0]
 valid_input_without_name: dict = valid_workflow_example_iso_forest["inputs"][8]
+valid_output_with_name: dict = valid_workflow_example_iso_forest["outputs"][0]
 
 
 def test_io_validator_name_valid_python_identifier_accepts_valid_io():
@@ -1162,7 +1163,7 @@ def test_from_operator():
     assert operator_dto.pos_y == valid_operator["posY"]
 
 
-def test_io_to_io_connector():
+def test_io_to_io_connector_for_input():
     operators = [
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
@@ -1180,6 +1181,26 @@ def test_io_to_io_connector():
     assert connector.data_type == valid_input_with_name["type"]
     assert connector.position.x == valid_input_with_name["posX"]
     assert connector.position.y == valid_input_with_name["posY"]
+
+
+def test_io_to_io_connector_for_output():
+    operators = [
+        WorkflowOperatorFrontendDto(**operator).to_operator()
+        for operator in valid_workflow_example_iso_forest["operators"]
+    ]
+    connector = WorkflowIoFrontendDto(**valid_output_with_name).to_io_connector(
+        *get_operator_and_connector_name(
+            valid_output_with_name["operator"],
+            valid_output_with_name["connector"],
+            operators,
+        )
+    )
+
+    assert str(connector.id) == valid_output_with_name["id"]
+    assert connector.name == valid_output_with_name["name"]
+    assert connector.data_type == valid_output_with_name["type"]
+    assert connector.position.x == valid_output_with_name["posX"]
+    assert connector.position.y == valid_output_with_name["posY"]
 
 
 def test_to_constant():
