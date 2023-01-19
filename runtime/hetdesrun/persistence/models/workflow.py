@@ -134,7 +134,6 @@ class WorkflowContent(BaseModel):
     @validator("operators", each_item=False)
     def operator_names_unique(cls, operators: List[Operator]) -> List[Operator]:
         operator_groups: dict[str, List[Operator]] = {}
-
         for operator in operators:
             operator_name_seed = re.sub(r" \([0-9]+\)$", "", operator.name)
             if operator_name_seed not in operator_groups:
@@ -316,6 +315,7 @@ class WorkflowContent(BaseModel):
                         link.end.connector.id, outputs
                     )
                     if output_connector is not None:
+                        output_connector.connector_name = connector.name
                         updated_outputs.append(output_connector)
 
         return updated_outputs
