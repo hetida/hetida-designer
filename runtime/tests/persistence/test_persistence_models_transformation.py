@@ -18,42 +18,39 @@ tr_json_valid_released_example = load_json(
     "./transformations/workflows/examples/iso-forest-example_100_67c14cf2-cd4e-410e-9aca-6664273ccc3f.json"
 )
 
-valid_component_dto_dict = {
+valid_component_tr_dict = {
     "category": "Arithmetic",
-    "code": "",
+    "content": "",
     "description": "Calculates the modulo to some given b",
-    "groupId": "ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",
+    "revision_group_id": "ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",
     "id": "ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",
-    "inputs": [
-        {
-            "id": "1aa579e3-e568-326c-0768-72c725844828",
-            "name": "a",
-            "posX": 0,
-            "posY": 0,
-            "type": "ANY",
-        },
-        {
-            "id": "6198074e-18fa-0ba1-13a7-8d77b7f2c8f3",
-            "name": "b",
-            "posX": 0,
-            "posY": 0,
-            "type": "INT",
-        },
-    ],
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "1aa579e3-e568-326c-0768-72c725844828",
+                "name": "a",
+                "data_type": "ANY",
+            },
+            {
+                "id": "6198074e-18fa-0ba1-13a7-8d77b7f2c8f3",
+                "name": "b",
+                "data_type": "INT",
+            },
+        ],
+        "outputs": [
+            {
+                "id": "f309d0e5-6f20-2edb-c7be-13f84882af93",
+                "name": "modulo",
+                "data_type": "ANY",
+            }
+        ],
+    },
     "name": "Modulo",
-    "outputs": [
-        {
-            "id": "f309d0e5-6f20-2edb-c7be-13f84882af93",
-            "name": "modulo",
-            "posX": 0,
-            "posY": 0,
-            "type": "ANY",
-        }
-    ],
+    "released_timestamp": "2022-02-09T17:33:29.361040+00:00",
     "state": "RELEASED",
-    "tag": "1.0.0",
+    "version_tag": "1.0.0",
     "type": "COMPONENT",
-    "wirings": [],
+    "test_wiring": {"input_wirings": [], "output_wirings": []},
 }
 
 
@@ -270,24 +267,23 @@ def test_tr_validator_disabled_requires_released_timestamp():
 
 
 def test_wrap_component_in_tr_workflow():
-    component_dto = ComponentRevisionFrontendDto(**valid_component_dto_dict)
-    tr_component = component_dto.to_transformation_revision()
+    tr_component = TransformationRevision(**valid_component_tr_dict)
 
     tr_workflow = tr_component.wrap_component_in_tr_workflow()
 
     assert "Wrapper Workflow" == tr_workflow.name
-    assert valid_component_dto_dict["category"] == tr_workflow.category
-    assert valid_component_dto_dict["tag"] == tr_workflow.version_tag
-    assert valid_component_dto_dict["state"] == tr_workflow.state
+    assert valid_component_tr_dict["category"] == tr_workflow.category
+    assert valid_component_tr_dict["version_tag"] == tr_workflow.version_tag
+    assert valid_component_tr_dict["state"] == tr_workflow.state
     assert Type.WORKFLOW == tr_workflow.type
     assert 1 == len(tr_workflow.content.operators)
-    assert valid_component_dto_dict["id"] == str(
+    assert valid_component_tr_dict["id"] == str(
         tr_workflow.content.operators[0].transformation_id
     )
-    assert len(valid_component_dto_dict["inputs"]) == len(
+    assert len(valid_component_tr_dict["io_interface"]["inputs"]) == len(
         tr_workflow.content.operators[0].inputs
     )
-    assert len(valid_component_dto_dict["outputs"]) == len(
+    assert len(valid_component_tr_dict["io_interface"]["outputs"]) == len(
         tr_workflow.content.operators[0].outputs
     )
     assert len(tr_component.io_interface.inputs) == len(tr_workflow.content.inputs)
@@ -300,8 +296,7 @@ def test_wrap_component_in_tr_workflow():
 
 
 def test_to_workflow_node():
-    component_dto = ComponentRevisionFrontendDto(**valid_component_dto_dict)
-    tr_component = component_dto.to_transformation_revision()
+    tr_component = TransformationRevision(**valid_component_tr_dict)
     tr_workflow = tr_component.wrap_component_in_tr_workflow()
     nested_transformations = {tr_workflow.content.operators[0].id: tr_component}
 
@@ -309,8 +304,8 @@ def test_to_workflow_node():
         uuid4(), nested_nodes(tr_workflow, nested_transformations)
     )
 
-    assert len(workflow_node.inputs) == len(valid_component_dto_dict["inputs"])
-    assert len(workflow_node.outputs) == len(valid_component_dto_dict["outputs"])
+    assert len(workflow_node.inputs) == len(valid_component_tr_dict["inputs"])
+    assert len(workflow_node.outputs) == len(valid_component_tr_dict["outputs"])
     assert len(workflow_node.sub_nodes) == 1
     assert len(workflow_node.connections) == 0
     assert workflow_node.name == "Wrapper Workflow"
