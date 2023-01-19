@@ -22,7 +22,14 @@ class WorkflowOperatorFrontendDto(BasicInformation):
     @root_validator()
     # pylint: disable=no-self-argument
     def is_not_draft(cls, values: dict) -> dict:
-        if values["state"] == State.DRAFT:
+        try:
+            state = values["state"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if operator has state DRAFT if the attribute "
+                "'state' is missing!"
+            ) from e
+        if state == State.DRAFT:
             raise ValueError(
                 f"Only released components/workflows can be dragged into a workflow! "
                 f'Operator with id {values["id"]} of type {values["type"]}'
