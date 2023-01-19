@@ -304,8 +304,12 @@ def test_to_workflow_node():
         uuid4(), nested_nodes(tr_workflow, nested_transformations)
     )
 
-    assert len(workflow_node.inputs) == len(valid_component_tr_dict["inputs"])
-    assert len(workflow_node.outputs) == len(valid_component_tr_dict["outputs"])
+    assert len(workflow_node.inputs) == len(
+        valid_component_tr_dict["io_interface"]["inputs"]
+    )
+    assert len(workflow_node.outputs) == len(
+        valid_component_tr_dict["io_interface"]["outputs"]
+    )
     assert len(workflow_node.sub_nodes) == 1
     assert len(workflow_node.connections) == 0
     assert workflow_node.name == "Wrapper Workflow"
