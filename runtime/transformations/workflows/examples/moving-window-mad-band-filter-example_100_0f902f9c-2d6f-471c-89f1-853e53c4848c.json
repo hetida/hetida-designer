@@ -881,7 +881,7 @@
     "outputs": [
       {
         "connector_id": "4309e6d9-dc4d-781c-4ef4-e2d8fa1d195c",
-        "connector_name": "connector_name",
+        "connector_name": "filtered",
         "data_type": "ANY",
         "id": "e10bc7d3-bb16-4917-ade7-2a0f75847565",
         "name": "filtered",
@@ -894,7 +894,7 @@
       },
       {
         "connector_id": "a36ab320-ae3d-48f0-b57c-5e541e987615",
-        "connector_name": "connector_name",
+        "connector_name": "band_filter_plot",
         "data_type": "PLOTLYJSON",
         "id": "e042973f-627e-4d6c-9763-753dc7ff89fd",
         "name": "band_filter_plot",

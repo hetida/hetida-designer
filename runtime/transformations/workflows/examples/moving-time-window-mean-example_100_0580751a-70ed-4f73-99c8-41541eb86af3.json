@@ -986,7 +986,7 @@
     "outputs": [
       {
         "connector_id": "5c3b2c95-872a-4d08-91ff-a847532af488",
-        "connector_name": "connector_name",
+        "connector_name": "plot",
         "data_type": "PLOTLYJSON",
         "id": "6c856da8-a189-4766-9ca6-c4d4269678e3",
         "name": "plot",
@@ -999,7 +999,7 @@
       },
       {
         "connector_id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
-        "connector_name": "connector_name",
+        "connector_name": "output",
         "data_type": "SERIES",
         "id": "9f13ad4b-2e8e-4e95-a9d5-2a1676375fbc",
         "name": "window_means",
