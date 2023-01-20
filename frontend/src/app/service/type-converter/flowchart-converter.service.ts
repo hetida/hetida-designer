@@ -63,7 +63,9 @@ export class FlowchartConverterService {
     workflow: WorkflowTransformation
   ): FlowchartConfiguration {
     // don't show workflow io without a name
-    const workflowClean = { ...workflow };
+    const workflowClean = JSON.parse(
+      JSON.stringify(workflow)
+    ) as WorkflowTransformation;
     workflowClean.content.inputs = workflowClean.content.inputs.filter(
       io => io.name !== '' && io.name !== null && io.name !== undefined
     );
@@ -291,6 +293,7 @@ export class FlowchartConverterService {
     let foundConnector: Connector;
 
     if (searchInWorkflowIoInterface) {
+      // TODO search in workflow content io to get positions
       const ios = [
         ...workflowTransformation.io_interface.inputs,
         ...workflowTransformation.io_interface.outputs

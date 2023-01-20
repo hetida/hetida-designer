@@ -196,6 +196,10 @@ export class WorkflowEditorComponent {
       this.currentWorkflow.content.links,
       removedElement.id
     );
+    this.currentWorkflow.content.constants = this._removeById(
+      this.currentWorkflow.content.constants,
+      removedElement.id
+    );
     this.hasChanges = true;
   }
 
@@ -271,8 +275,6 @@ export class WorkflowEditorComponent {
       element,
       true
     );
-    // TODO
-    // Draw a link from workflow-output to operator-output and check if the workflow-output is set in linkTargetIds.
     const linkTargetIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
       element,
       false
@@ -317,7 +319,7 @@ export class WorkflowEditorComponent {
   }
 
   /**
-   * adds a new operator to the workflow,
+   * adds a new operator and ioConnectors to the workflow,
    * since the flowchart library doesn't need all the data we handle this here and not on the create event
    * @param event drop event, carrying the transformation and flowchartComponent data
    */
@@ -328,6 +330,7 @@ export class WorkflowEditorComponent {
     const transformation = JSON.parse(
       event.detail.baseItemJSON
     ) as Transformation;
+
     const newOperator = this._createNewOperator(
       transformation,
       event.detail.svgX as number,
@@ -403,7 +406,7 @@ export class WorkflowEditorComponent {
       .select(selectAllTransformations)
       .pipe(first())
       .subscribe(transformations => {
-        const available = transformations.filter(
+        const revisions = transformations.filter(
           transformation =>
             transformation.revision_group_id ===
               currentOperator.revision_group_id &&
@@ -411,12 +414,12 @@ export class WorkflowEditorComponent {
             transformation.state === RevisionState.RELEASED
         );
 
-        if (available.length === 0) {
+        if (revisions.length === 0) {
           this.notificationService.info(
             `This ${currentOperator.type.toLowerCase()} has no other revision.`
           );
         } else {
-          this._openRevisionChangeDialog(available, currentOperator);
+          this._openRevisionChangeDialog(revisions, currentOperator);
         }
       });
   }
@@ -486,15 +489,14 @@ export class WorkflowEditorComponent {
       }
     });
 
-    dialogRef.afterClosed().subscribe(data => {
-      if (data === undefined) {
+    dialogRef.afterClosed().subscribe(newName => {
+      if (newName === undefined) {
         return;
       }
-      operator.name = data;
+      operator.name = newName;
       this.baseItemService
         .updateTransformation(this.currentWorkflow)
         .subscribe();
-      this._convertWorkflowToFlowchart(this.currentWorkflow);
     });
   }
 

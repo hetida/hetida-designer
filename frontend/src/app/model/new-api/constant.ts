@@ -2,7 +2,7 @@ import { IOType } from 'hetida-flowchart';
 import { Position } from './position';
 
 export interface Constant {
-  id?: string;
+  id: string;
   name?: string;
   data_type: IOType;
   operator_id: string;

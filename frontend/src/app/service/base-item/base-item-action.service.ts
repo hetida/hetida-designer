@@ -27,12 +27,11 @@ import { RevisionState } from 'src/app/enums/revision-state';
 import { AbstractBaseItem, BaseItem } from 'src/app/model/base-item';
 import { WorkflowBaseItem } from 'src/app/model/workflow-base-item';
 import { WorkflowLink } from 'src/app/model/workflow-link';
-import { Utils } from 'src/app/utils/utils';
+// import { Utils } from 'src/app/utils/utils';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import * as uuid from 'uuid';
 import { BaseItemDialogData } from '../../model/base-item-dialog-data';
-import { IOItem } from '../../model/io-item';
 import { WiringHttpService } from '../http-service/wiring-http.service';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
@@ -49,6 +48,11 @@ import { Store } from '@ngrx/store';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
+import { IOConnector } from 'src/app/model/new-api/io-connector';
+import { Link } from 'src/app/model/new-api/link';
+// import { Connector } from 'src/app/model/new-api/connector';
+import { Constant } from 'src/app/model/new-api/constant';
+import { Utils } from '../../utils/utils';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -385,11 +389,11 @@ export class BaseItemActionService {
   }
 
   public configureIO(transformation: Transformation) {
-    // TODO refactor
     if (
       isWorkflowTransformation(transformation) &&
-      transformation.io_interface.inputs.length === 0 &&
-      transformation.io_interface.outputs.length === 0
+      transformation.content.inputs.length === 0 &&
+      transformation.content.outputs.length === 0 &&
+      transformation.content.constants.length === 0
     ) {
       return;
     }
@@ -397,8 +401,7 @@ export class BaseItemActionService {
     if (isComponentTransformation(transformation)) {
       this.configureComponentIO(transformation);
     } else {
-      // @ts-ignore
-      this.configureWorkflowIO(transformation as AbstractBaseItem);
+      this.configureWorkflowIO(transformation);
     }
   }
 
@@ -742,6 +745,7 @@ export class BaseItemActionService {
    * - there isn't a link from every input
    */
   private isWorkflowIncomplete(workflow: WorkflowTransformation): boolean {
+    // TODO Need to be rebuild.
     const workflowContent = workflow.content;
     // TODO rename
     // @ts-ignore
@@ -758,17 +762,23 @@ export class BaseItemActionService {
       );
     };
     return (
-      workflowContent.operators.length === 0
-      // TODO transformation.io_interface.inputs or transformation.content.inputs
-      // || workflow.inputs.some(
-      //   input =>
-      //     input.constant === false && checkName(input.name, input.id) === false
-      // ) ||
-      // workflow.outputs.some(
-      //   output =>
-      //     output.constant === false &&
-      //     checkName(output.name, output.id) === false
-      // )
+      workflowContent.operators.length === 0 ||
+      workflowContent.inputs.some(
+        input =>
+          workflowContent.constants.find(
+            constant =>
+              constant.connector_id === input.connector_id &&
+              constant.operator_id === input.operator_id
+          ) === undefined && checkName(input.name, input.id) === false
+      ) ||
+      workflowContent.outputs.some(
+        output =>
+          workflowContent.constants.find(
+            constant =>
+              constant.connector_id === output.connector_id &&
+              constant.operator_id === output.operator_id
+          ) === undefined && checkName(output.name, output.id) === false
+      )
     );
   }
 
@@ -809,26 +819,33 @@ export class BaseItemActionService {
       .subscribe();
   }
 
-  private configureWorkflowIO(abstractBaseItem: AbstractBaseItem) {
-    this.workflowService
-      .getWorkflow(abstractBaseItem.id)
+  private configureWorkflowIO(workflowTransformation: WorkflowTransformation) {
+    this.transformationStore
+      .select(selectTransformationById(workflowTransformation.id))
       .pipe(first())
-      .subscribe(workflowBaseItem => {
-        if (workflowBaseItem === undefined) {
+      .subscribe(selectedTransformation => {
+        if (selectedTransformation === undefined) {
           return;
         }
 
         const dialogRef = this.dialog.open<
           WorkflowIODialogComponent,
           WorkflowIODialogData,
-          false | { inputs: IOItem[]; outputs: IOItem[] }
+          | false
+          | {
+              inputs: IOConnector[];
+              outputs: IOConnector[];
+              constants: Constant[];
+            }
         >(WorkflowIODialogComponent, {
           width: '95%',
           minHeight: '200px',
           data: {
-            // TODO refactor all mutations in workflow dialog component and remove stringify .
-            workflow: JSON.parse(JSON.stringify(workflowBaseItem)),
-            editMode: workflowBaseItem.state !== RevisionState.RELEASED,
+            // TODO refactor all mutations in workflow dialog component and remove stringify.
+            workflowTransformation: JSON.parse(
+              JSON.stringify(selectedTransformation)
+            ),
+            editMode: selectedTransformation.state !== RevisionState.RELEASED,
             actionOk: 'Save',
             actionCancel: 'Cancel'
           }
@@ -839,78 +856,96 @@ export class BaseItemActionService {
           .pipe(first())
           .subscribe(result => {
             if (result) {
-              const ioItemIds = [...result.inputs, ...result.outputs].map(
-                ioItem => `${ioItem.operator}_${ioItem.connector}`
-              );
-
-              const innerLinks = workflowBaseItem.links.filter(link => {
-                const fromIoItemId = `${link.fromOperator}_${link.fromConnector}`;
-                const toIoItemId = `${link.toOperator}_${link.toConnector}`;
-                const isOuterLink =
-                  ioItemIds.includes(fromIoItemId) ||
-                  ioItemIds.includes(toIoItemId);
-                return !isOuterLink;
-              });
-
-              const inputIoItems = this._updateIoItemPositions(
+              const inputIoConnectors: IOConnector[] = this._updateIoItemPositions(
                 result.inputs,
                 true,
-                workflowBaseItem
+                workflowTransformation
               );
-              const outputIoItems = this._updateIoItemPositions(
+              const outputIoConnectors: IOConnector[] = this._updateIoItemPositions(
                 result.outputs,
                 false,
-                workflowBaseItem
+                workflowTransformation
               );
-              const links = [
+
+              const ioConnectorIds = [...result.inputs, ...result.outputs].map(
+                ioConnector =>
+                  `${ioConnector.operator_id}_${ioConnector.connector_id}`
+              );
+
+              const innerLinks: Link[] = workflowTransformation.content.links.filter(
+                link => {
+                  let isOuterLink: boolean;
+                  if (
+                    Utils.isNullOrUndefined(link.start.operator) ||
+                    Utils.isNullOrUndefined(link.end.operator)
+                  ) {
+                    isOuterLink = true;
+                  } else {
+                    const fromIoConnectorId = `${link.start.operator}_${link.start.connector.id}`;
+                    const toIoConnectorId = `${link.end.operator}_${link.end.connector.id}`;
+                    isOuterLink =
+                      ioConnectorIds.includes(fromIoConnectorId) ||
+                      ioConnectorIds.includes(toIoConnectorId);
+                  }
+                  return !isOuterLink;
+                }
+              );
+
+              const links: Link[] = [
                 ...innerLinks,
                 ...this._createLinks(
-                  inputIoItems,
-                  outputIoItems,
-                  workflowBaseItem
+                  inputIoConnectors,
+                  outputIoConnectors,
+                  result.constants
                 )
               ];
 
-              const updatedWorkflow = {
-                ...workflowBaseItem,
-                inputs: inputIoItems,
-                outputs: outputIoItems,
-                links
+              const updatedWorkflowTransformation: WorkflowTransformation = {
+                ...workflowTransformation,
+                content: {
+                  ...workflowTransformation.content,
+                  links,
+                  inputs: inputIoConnectors,
+                  outputs: outputIoConnectors,
+                  constants: result.constants
+                }
               };
 
-              this.workflowService.updateWorkflow(updatedWorkflow);
+              this.baseItemService
+                .updateTransformation(updatedWorkflowTransformation)
+                .subscribe();
             }
           });
       });
   }
 
   private _updateIoItemPositions(
-    ioItems: IOItem[],
+    ioConnectors: IOConnector[],
     isInput: boolean,
-    workflowBaseItem: WorkflowBaseItem
-  ): IOItem[] {
-    return ioItems.map(ioItem =>
-      this._updateIoItemPosition(ioItem, isInput, workflowBaseItem)
+    workflowTransformation: WorkflowTransformation
+  ): IOConnector[] {
+    return ioConnectors.map(ioConnector =>
+      this._updateIoItemPosition(ioConnector, isInput, workflowTransformation)
     );
   }
 
   private _updateIoItemPosition(
-    ioItem: IOItem,
+    ioConnector: IOConnector,
     isInput: boolean,
-    workflowBaseItem: WorkflowBaseItem
-  ): IOItem {
-    const operator = workflowBaseItem.operators.find(
-      op => op.id === ioItem.operator
+    workflowTransformation: WorkflowTransformation
+  ): IOConnector {
+    const operator = workflowTransformation.content.operators.find(
+      op => op.id === ioConnector.operator_id
     );
     if (operator === undefined) {
       throw new Error('Operator not found!');
     }
     let connectorIndex = operator.inputs.findIndex(
-      cio => cio.id === ioItem.connector
+      cio => cio.id === ioConnector.connector_id
     );
     if (connectorIndex === -1) {
       connectorIndex = operator.outputs.findIndex(
-        cio => cio.id === ioItem.connector
+        cio => cio.id === ioConnector.connector_id
       );
       if (connectorIndex === -1) {
         throw new Error('Connector not found!');
@@ -918,55 +953,89 @@ export class BaseItemActionService {
     }
 
     return {
-      ...ioItem,
-      posX: operator.posX + (isInput ? -250 : 450),
-      posY: operator.posY + 60 + connectorIndex * 30
+      ...ioConnector,
+      position: {
+        x: operator.position.x + (isInput ? -250 : 450),
+        y: operator.position.y + 60 + connectorIndex * 30
+      }
     };
   }
 
   private _createLinks(
-    inputItems: IOItem[],
-    outputItems: IOItem[],
-    workflowBaseItem: WorkflowBaseItem
-  ): WorkflowLink[] {
-    const isConnectedIoItem = (ioItem: IOItem) =>
-      !Utils.string.isEmptyOrUndefined(ioItem.name) || ioItem.constant === true;
+    inputIoConnectors: IOConnector[],
+    outputIoConnectors: IOConnector[],
+    constants: Constant[]
+  ): Link[] {
+    const isConnectedIoConnector = (ioConnector: IOConnector) =>
+      !Utils.string.isEmptyOrUndefined(ioConnector.name);
 
-    const inputLinks = inputItems
-      .filter(isConnectedIoItem)
-      .map(ioItem => this._createInputLink(ioItem, workflowBaseItem));
+    const inputLinks = inputIoConnectors
+      .filter(isConnectedIoConnector)
+      .map(ioItem => this._createInputLink(ioItem));
 
-    const outputLinks = outputItems
-      .filter(isConnectedIoItem)
-      .map(ioItem => this._createOutputLink(ioItem, workflowBaseItem));
+    const outputLinks = outputIoConnectors
+      .filter(isConnectedIoConnector)
+      .map(ioItem => this._createOutputLink(ioItem));
 
-    return [...inputLinks, ...outputLinks];
+    const constantLinks = constants.map(constant =>
+      this._createInputLink(constant)
+    );
+
+    return [...inputLinks, ...outputLinks, ...constantLinks];
   }
 
-  private _createInputLink(
-    io: IOItem,
-    workflowBaseItem: WorkflowBaseItem
-  ): WorkflowLink {
+  private _createInputLink(io: IOConnector | Constant): Link {
     return {
+      // TODO is this okay for constant links? because currently in constant links link.id === start.connector.id
       id: uuid().toString(),
-      fromOperator: workflowBaseItem.id,
-      fromConnector: io.id,
-      toOperator: io.operator,
-      toConnector: io.connector,
+      start: {
+        connector: {
+          id: io.id,
+          name: io.name,
+          data_type: io.data_type,
+          position: io.position
+        }
+      },
+      end: {
+        operator: io.operator_id,
+        connector: {
+          id: io.connector_id,
+          name: io.connector_name,
+          data_type: io.data_type,
+          position: {
+            x: 0,
+            y: 0
+          }
+        }
+      },
       path: []
     };
   }
 
-  private _createOutputLink(
-    io: IOItem,
-    workflowBaseItem: WorkflowBaseItem
-  ): WorkflowLink {
+  private _createOutputLink(io: IOConnector): Link {
     return {
       id: uuid().toString(),
-      toOperator: workflowBaseItem.id,
-      toConnector: io.id,
-      fromOperator: io.operator,
-      fromConnector: io.connector,
+      start: {
+        operator: io.operator_id,
+        connector: {
+          id: io.connector_id,
+          // TODO backend sets wrong connector name "connector_name" in workflowContent.outputs
+          name: io.connector_name,
+          data_type: io.data_type,
+          position: {
+            x: 0,
+            y: 0
+          }
+        }
+      },
+      end: {
+        connector: {
+          id: io.id,
+          name: io.name,
+          data_type: io.data_type,
+          position: io.position
+        }
+      },
       path: []
     };
   }
