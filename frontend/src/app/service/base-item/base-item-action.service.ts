@@ -910,11 +910,10 @@ export class BaseItemActionService {
                   constants: result.constants
                 }
               };
-              console.log('end result', updatedWorkflowTransformation);
 
-              // this.baseItemService
-              //   .updateTransformation(updatedWorkflowTransformation)
-              //   .subscribe();
+              this.baseItemService
+                .updateTransformation(updatedWorkflowTransformation)
+                .subscribe();
             }
           });
       });
