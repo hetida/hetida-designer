@@ -389,7 +389,6 @@ export class WorkflowIODialogComponent {
       const newInput: IOConnector = {
         ...foundConstant,
         name: data.name,
-        // TODO is this correct?
         position: {
           x: 0,
           y: 0
