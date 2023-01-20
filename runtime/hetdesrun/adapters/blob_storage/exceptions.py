@@ -56,3 +56,7 @@ class InvalidS3Endpoint(S3Error):
 
 class BucketNotFound(S3Error):
     pass
+
+
+class ObjectNotFound(S3Error):
+    pass
