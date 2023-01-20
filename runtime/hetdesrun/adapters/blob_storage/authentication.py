@@ -61,8 +61,7 @@ def obtain_credential_info_from_sts(access_token: str) -> CredentialInfo:
             DurationSeconds=get_blob_adapter_config().access_duration,
         )
     except ClientError as error:
-        # TODO: define message for ClientError in obtain_credential_info_from_sts
-        msg = ""
+        msg = f"A client error occured when trying to assume role with web identity:\n{error}"
         logger.error(msg)
         raise StsAuthenticationError(msg) from error
 
