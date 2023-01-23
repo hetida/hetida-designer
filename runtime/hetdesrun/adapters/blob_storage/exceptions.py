@@ -60,3 +60,11 @@ class BucketNotFound(S3Error):
 
 class ObjectNotFound(S3Error):
     pass
+
+
+class ObjectExists(S3Error):
+    pass
+
+
+class UnexpectedClientError(S3Error):
+    pass
