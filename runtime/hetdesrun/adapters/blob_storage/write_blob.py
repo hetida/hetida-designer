@@ -53,7 +53,7 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
         ) from error
     except ClientError as error:
         error_code = error.response["Error"]["Code"]
-        if error_code !="404":
+        if error_code != "404":
             msg = (
                 "Unexpected ClientError occured for head_object call with bucket "
                 f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
@@ -65,7 +65,7 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
         s3_client.put_object(
             Bucket=structure_bucket.name, Key=object_key.string, Body=data
         )
-        
+
     else:
         msg = (
             f"The bucket '{structure_bucket.name}' already contains an object "
