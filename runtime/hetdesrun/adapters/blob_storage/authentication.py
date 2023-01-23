@@ -156,7 +156,7 @@ def create_or_get_named_credential_manager(
 
 def get_access_token() -> str:
     service_credentials = get_config().external_auth_client_credentials
-    if service_credentials is not None:
+    if service_credentials is None:
         raise NoCredentialsFound("HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS not set!")
     access_token_manager = create_or_get_named_access_token_manager(
         "blob_adapter_auth", service_credentials
