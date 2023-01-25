@@ -43,30 +43,6 @@ def get_link_end_connector_from_operator(
     return None
 
 
-def get_link_by_output_connector(
-    operator_id: Optional[UUID], connector_id: UUID, links: List[Link]
-) -> Optional[Link]:
-
-    for link in links:
-        if (
-            link.start.operator == operator_id
-            and link.start.connector.id == connector_id
-        ):
-            return link
-
-    return None
-
-
-def get_link_by_input_connector(
-    operator_id: Optional[UUID], connector_id: UUID, links: List[Link]
-) -> Optional[Link]:
-    for link in links:
-        if link.end.operator == operator_id and link.end.connector.id == connector_id:
-            return link
-
-    return None
-
-
 def get_input_by_link_start(
     link_start_connector_id: UUID,
     inputs: List[IOConnector],
@@ -261,10 +237,11 @@ class WorkflowContent(BaseModel):
 
         updated_inputs = []
 
+        links_by_end = {(link.end.operator, link.end.connector.id): link for link in links}
+
         for operator in operators:
             for connector in operator.inputs:
-                link = get_link_by_input_connector(operator.id, connector.id, links)
-                if link is None:
+                if (operator.id, connector.id) not in links_by_end:
                     updated_inputs.append(
                         IOConnector(
                             data_type=connector.data_type,
@@ -275,6 +252,7 @@ class WorkflowContent(BaseModel):
                         )
                     )
                 else:
+                    link = links_by_end[(operator.id, connector.id)]
                     input_connector = get_input_by_link_start(
                         link.start.connector.id, inputs
                     )
@@ -299,10 +277,11 @@ class WorkflowContent(BaseModel):
 
         updated_outputs = []
 
+        links_by_start = {(link.start.operator, link.start.connector.id): link for link in links}
+
         for operator in operators:
             for connector in operator.outputs:
-                link = get_link_by_output_connector(operator.id, connector.id, links)
-                if link is None:
+                if (operator.id, connector.id) not in links_by_start:
                     updated_outputs.append(
                         IOConnector(
                             data_type=connector.data_type,
@@ -313,6 +292,7 @@ class WorkflowContent(BaseModel):
                         )
                     )
                 else:
+                    link = links_by_start[(operator.id, connector.id)]
                     output_connector = get_output_by_link_end(
                         link.end.connector.id, outputs
                     )
@@ -424,44 +404,42 @@ class WorkflowContent(BaseModel):
     ) -> WorkflowNode:
 
         inputs = []
-        # TODO: Simplify code and increase efficiency by adjusting to_workflow_input
-        # to use operator_id and connector_name attributes!
+        links_by_start = {(link.start.operator, link.start.connector.id): link for link in self.links}
         for input_connector in self.inputs:
-            link = get_link_by_output_connector(None, input_connector.id, self.links)
-            if link is not None and link.end.connector.name is not None:
-                assert link.end.operator is not None
-                # input must be connected to some operator
-                inputs.append(
-                    input_connector.to_workflow_input(
-                        link.end.operator, link.end.connector.name
+            if (None, input_connector.id) in links_by_start:
+                link = links_by_start[(None, input_connector.id)]
+                if link.end.connector.name is not None:
+                    assert link.end.operator is not None
+                    # input must be connected to some operator
+                    inputs.append(
+                        input_connector.to_workflow_input(
+                            link.end.operator, link.end.connector.name
+                        )
                     )
-                )
-        # TODO: Simplify code and increase efficiency by adjusting to_workflow_input
-        # to use operator_id and connector_name attributes!
         for constant in self.constants:
-            cn_constant = constant.to_connector()
-            link = get_link_by_output_connector(None, cn_constant.id, self.links)
-            if link is not None and link.end.connector.name is not None:
-                assert link.end.operator is not None
-                # constant must be connected to some operator
-                inputs.append(
-                    constant.to_workflow_input(
-                        link.end.operator, link.end.connector.name
+            if (None, constant.id) in links_by_start:
+                link = links_by_start[(None, constant.id)]
+                if link.end.connector.name is not None:
+                    assert link.end.operator is not None
+                    # constant must be connected to some operator
+                    inputs.append(
+                        constant.to_workflow_input(
+                            link.end.operator, link.end.connector.name
+                        )
                     )
-                )
-        # TODO: Simplify code and increase efficiency by adjusting to_workflow_output
-        # to use operator_id and connector_name attributes!
         outputs = []
+        links_by_end = {(link.end.operator, link.end.connector.id): link for link in self.links}
         for output_connector in self.outputs:
-            link = get_link_by_input_connector(None, output_connector.id, self.links)
-            if link is not None and link.start.connector.name is not None:
-                assert link.start.operator is not None
-                # output must be connected to some operator
-                outputs.append(
-                    output_connector.to_workflow_output(
-                        link.start.operator, link.start.connector.name
+            if (None, output_connector.id) in links_by_end:
+                link = links_by_end[(None, output_connector.id)]
+                if link.start.connector.name is not None:
+                    assert link.start.operator is not None
+                    # output must be connected to some operator
+                    outputs.append(
+                        output_connector.to_workflow_output(
+                            link.start.operator, link.start.connector.name
+                        )
                     )
-                )
 
         return WorkflowNode(
             id=str(operator_id),
