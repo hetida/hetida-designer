@@ -4,7 +4,6 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   ConfirmClickEvent,
   ExecutionDialogData,
-  TestWiring,
   WiringDialogComponent
 } from 'hd-wiring';
 import { Observable, of } from 'rxjs';
@@ -25,17 +24,13 @@ import {
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { AbstractBaseItem, BaseItem } from 'src/app/model/base-item';
-import { WorkflowBaseItem } from 'src/app/model/workflow-base-item';
-import { WorkflowLink } from 'src/app/model/workflow-link';
-// import { Utils } from 'src/app/utils/utils';
+import { Utils } from 'src/app/utils/utils';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import * as uuid from 'uuid';
 import { BaseItemDialogData } from '../../model/base-item-dialog-data';
-import { WiringHttpService } from '../http-service/wiring-http.service';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
-import { WorkflowEditorService } from '../workflow-editor/workflow-editor.service';
 import { BaseItemService } from './base-item.service';
 import {
   ComponentTransformation,
@@ -50,9 +45,8 @@ import { selectTransformationById } from 'src/app/store/transformation/transform
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
 import { IOConnector } from 'src/app/model/new-api/io-connector';
 import { Link } from 'src/app/model/new-api/link';
-// import { Connector } from 'src/app/model/new-api/connector';
 import { Constant } from 'src/app/model/new-api/constant';
-import { Utils } from '../../utils/utils';
+import { TransformationHttpService } from '../http-service/transformation-http.service';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -64,11 +58,10 @@ export class BaseItemActionService {
   constructor(
     private readonly dialog: MatDialog,
     private readonly transformationStore: Store<TransformationState>,
+    private readonly transformationHttpService: TransformationHttpService,
     private readonly baseItemService: BaseItemService,
-    private readonly workflowService: WorkflowEditorService,
     private readonly tabItemService: TabItemService,
-    private readonly notificationService: NotificationService,
-    private readonly wiringService: WiringHttpService
+    private readonly notificationService: NotificationService
   ) {}
 
   public async execute(transformation: Transformation) {
@@ -89,7 +82,9 @@ export class BaseItemActionService {
       title = 'Execute Unknown';
     }
 
-    const adapterList = await this.wiringService.getAdapterList().toPromise();
+    const adapterList = await this.transformationHttpService
+      .getAdapterList()
+      .toPromise();
 
     const dialogRef = this.dialog.open<
       WiringDialogComponent,
@@ -166,9 +161,6 @@ export class BaseItemActionService {
         actionCancel: 'Cancel',
         deleteButtonText: 'Delete Draft',
         showDeleteButton: transformation.state === RevisionState.DRAFT,
-        // TODO
-        // @ts-ignore
-        abstractBaseItem: { ...(transformation as AbstractBaseItem) },
         transformation,
         disabledState: {
           name: isReleased,
@@ -242,8 +234,6 @@ export class BaseItemActionService {
         content: `This ${copyOfBaseItem.type.toLowerCase()} is already released. Do you want to create a new revision?`,
         actionOk: 'Create new revision',
         actionCancel: 'Cancel',
-        // @ts-ignore
-        abstractBaseItem: copyOfBaseItem as BaseItem,
         transformation: copyOfBaseItem,
         disabledState: {
           name: true,
@@ -338,19 +328,17 @@ export class BaseItemActionService {
   public async copy(transformation: Transformation) {
     const newId = uuid().toString();
     const groupId = uuid().toString();
-    let copyOfBaseItem: Transformation;
+    let copyOfTransformation: Transformation;
+
     if (transformation.type === BaseItemType.WORKFLOW) {
-      // @ts-ignore
-      copyOfBaseItem = (await this.copyWorkflow(
+      copyOfTransformation = (await this.copyWorkflow(
         newId,
         groupId,
         'Copy',
-        // TODO
-        // @ts-ignore
-        transformation as Transformation
+        transformation as WorkflowTransformation
       )) as Transformation;
     } else {
-      copyOfBaseItem = this.copyComponent(
+      copyOfTransformation = this.copyComponent(
         newId,
         groupId,
         'Copy',
@@ -358,10 +346,9 @@ export class BaseItemActionService {
       );
     }
 
-    let type = copyOfBaseItem.type.toLowerCase();
+    let type = copyOfTransformation.type.toLowerCase();
     type = `${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
-    // @ts-ignore
     const dialogRef = this.dialog.open<
       CopyBaseItemDialogComponent,
       Omit<BaseItemDialogData, 'content'>,
@@ -369,11 +356,10 @@ export class BaseItemActionService {
     >(CopyBaseItemDialogComponent, {
       width: '640px',
       data: {
-        title: `Copy ${type} ${copyOfBaseItem.name} ${copyOfBaseItem.version_tag}`,
+        title: `Copy ${type} ${copyOfTransformation.name} ${copyOfTransformation.version_tag}`,
         actionOk: `Copy ${type}`,
         actionCancel: 'Cancel',
-        abstractBaseItem: copyOfBaseItem as Transformation,
-        transformation: copyOfBaseItem,
+        transformation: copyOfTransformation,
         disabledState: {
           name: false,
           category: false,
@@ -416,14 +402,14 @@ export class BaseItemActionService {
     const dialogRef = this.dialog.open<
       CopyBaseItemDialogComponent,
       Omit<BaseItemDialogData, 'content'>,
-      BaseItem | undefined
+      Transformation | undefined
     >(CopyBaseItemDialogComponent, {
       width: '640px',
       data: {
         title: 'Create new workflow',
         actionOk: 'Create Workflow',
         actionCancel: 'Cancel',
-        abstractBaseItem: this.baseItemService.createWorkflow(),
+        transformation: this.baseItemService.getDefaultComponentTransformation(), // TODO Workflow
         disabledState: {
           name: false,
           category: false,
@@ -456,9 +442,6 @@ export class BaseItemActionService {
         title: 'Create new component',
         actionOk: 'Create Component',
         actionCancel: 'Cancel',
-        // TODO
-        // @ts-ignore
-        abstractBaseItem: this.baseItemService.getDefaultComponentTransformation() as AbstractBaseItem,
         transformation: this.baseItemService.getDefaultComponentTransformation(),
         disabledState: {
           name: false,
@@ -534,165 +517,183 @@ export class BaseItemActionService {
     newId: string,
     groupId: string,
     suffix: string,
-    abstractBaseItem: AbstractBaseItem
-  ): Promise<WorkflowBaseItem> {
-    const workflow = await this.workflowService
-      .getWorkflow(abstractBaseItem.id)
-      .pipe(first(workflowBaseItem => workflowBaseItem !== undefined))
-      .toPromise();
+    workflowTransformation: WorkflowTransformation
+  ): Promise<WorkflowTransformation> {
+    const selectedTransformation = (await this.transformationStore
+      .select(selectTransformationById(workflowTransformation.id))
+      .pipe(first())
+      .toPromise()) as WorkflowTransformation;
 
-    const wirings: TestWiring[] = [];
-    const links: WorkflowLink[] = [];
+    if (selectedTransformation === undefined) {
+      return undefined;
+    }
+
     // give new ids to everything
     const copy = {
-      ...workflow,
+      ...selectedTransformation,
       id: newId,
-      groupId,
+      revision_group_id: groupId,
+      version_tag: `${selectedTransformation.version_tag} ${suffix}`,
       state: RevisionState.DRAFT,
-      tag: `${workflow.tag} ${suffix}`,
-      inputs: workflow.inputs.map(input => ({
-        ...input,
-        id: uuid().toString(),
-        oldId: input.id,
-        operator: undefined
-      })),
-      outputs: workflow.outputs.map(output => ({
-        ...output,
-        id: uuid().toString(),
-        oldId: output.id,
-        operator: undefined
-      })),
-      operators: workflow.operators.map(operator => ({
-        ...operator,
-        id: uuid().toString(),
-        oldId: operator.id
-      })),
-      links,
-      wirings
+      content: {
+        operators: selectedTransformation.content.operators.map(operator => ({
+          ...operator,
+          id: uuid().toString(),
+          oldId: operator.id
+        })),
+        links: selectedTransformation.content.links,
+        inputs: selectedTransformation.content.inputs.map(input => ({
+          ...input,
+          id: uuid().toString(),
+          oldId: input.id,
+          operator: undefined
+        })),
+        outputs: selectedTransformation.content.outputs.map(output => ({
+          ...output,
+          id: uuid().toString(),
+          oldId: output.id,
+          operator: undefined
+        })),
+        constants: selectedTransformation.content.constants
+      },
+      io_interface: {
+        inputs: selectedTransformation.io_interface.inputs.map(input => ({
+          ...input,
+          id: uuid().toString()
+        })),
+        outputs: selectedTransformation.io_interface.outputs.map(output => ({
+          ...output,
+          id: uuid().toString()
+        }))
+      }
+      // test_wiring: {
+      //   input_wirings: [],
+      //   output_wirings: []
+      // }
     };
 
     // Re-assign the links.
-    for (const link of workflow.links) {
-      let newFromOperatorId: string;
-      let newToOperatorId: string;
-      let newFromConnectorId: string;
-      let newToConnectorId: string;
-      if (link.fromOperator === workflow.id) {
-        newFromOperatorId = newId;
-        const fromConnector = copy.inputs.find(
-          input => input.oldId === link.fromConnector
-        );
-        if (fromConnector === undefined) {
-          throw new Error(`no workflow input with id ${link.fromConnector}`);
-        }
-        newFromConnectorId = fromConnector.id;
-      } else {
-        const fromOperator = copy.operators.find(
-          operator => operator.oldId === link.fromOperator
-        );
-        if (fromOperator === undefined) {
-          throw new Error(`no operator with id ${link.fromOperator}`);
-        }
-        newFromOperatorId = fromOperator.id;
-        const fromConnector = fromOperator.outputs.find(
-          output => output.id === link.fromConnector
-        );
-        if (fromConnector === undefined) {
-          throw new Error(`no workflow output with id ${link.fromConnector}`);
-        }
-        newFromConnectorId = fromConnector.id;
-      }
+    // for (const link of workflow.links) {
+    //   let newFromOperatorId: string;
+    //   let newToOperatorId: string;
+    //   let newFromConnectorId: string;
+    //   let newToConnectorId: string;
+    //   if (link.fromOperator === workflow.id) {
+    //     newFromOperatorId = newId;
+    //     const fromConnector = copy.inputs.find(
+    //       input => input.oldId === link.fromConnector
+    //     );
+    //     if (fromConnector === undefined) {
+    //       throw new Error(`no workflow input with id ${link.fromConnector}`);
+    //     }
+    //     newFromConnectorId = fromConnector.id;
+    //   } else {
+    //     const fromOperator = copy.operators.find(
+    //       operator => operator.oldId === link.fromOperator
+    //     );
+    //     if (fromOperator === undefined) {
+    //       throw new Error(`no operator with id ${link.fromOperator}`);
+    //     }
+    //     newFromOperatorId = fromOperator.id;
+    //     const fromConnector = fromOperator.outputs.find(
+    //       output => output.id === link.fromConnector
+    //     );
+    //     if (fromConnector === undefined) {
+    //       throw new Error(`no workflow output with id ${link.fromConnector}`);
+    //     }
+    //     newFromConnectorId = fromConnector.id;
+    //   }
 
-      if (link.toOperator === workflow.id) {
-        newToOperatorId = newId;
-        const toConnector = copy.outputs.find(
-          output => output.oldId === link.toConnector
-        );
-        if (toConnector === undefined) {
-          throw new Error(`no workflow output with id ${link.toConnector}`);
-        }
-        newToConnectorId = toConnector.id;
-      } else {
-        const toOperator = copy.operators.find(
-          operator => operator.oldId === link.toOperator
-        );
-        if (toOperator === undefined) {
-          throw new Error(`no input with id ${link.toOperator}`);
-        }
-        newToOperatorId = toOperator.id;
-        const toConnector = toOperator.inputs.find(
-          input => input.id === link.toConnector
-        );
-        if (toConnector === undefined) {
-          throw new Error(`no workflow input with id ${link.toConnector}`);
-        }
-        newToConnectorId = toConnector.id;
-      }
+    //   if (link.toOperator === workflow.id) {
+    //     newToOperatorId = newId;
+    //     const toConnector = copy.outputs.find(
+    //       output => output.oldId === link.toConnector
+    //     );
+    //     if (toConnector === undefined) {
+    //       throw new Error(`no workflow output with id ${link.toConnector}`);
+    //     }
+    //     newToConnectorId = toConnector.id;
+    //   } else {
+    //     const toOperator = copy.operators.find(
+    //       operator => operator.oldId === link.toOperator
+    //     );
+    //     if (toOperator === undefined) {
+    //       throw new Error(`no input with id ${link.toOperator}`);
+    //     }
+    //     newToOperatorId = toOperator.id;
+    //     const toConnector = toOperator.inputs.find(
+    //       input => input.id === link.toConnector
+    //     );
+    //     if (toConnector === undefined) {
+    //       throw new Error(`no workflow input with id ${link.toConnector}`);
+    //     }
+    //     newToConnectorId = toConnector.id;
+    //   }
 
-      // Create the link between workflow and operators.
-      const newLink = {
-        id: uuid().toString(),
-        fromOperator: newFromOperatorId,
-        fromConnector: newFromConnectorId,
-        toOperator: newToOperatorId,
-        toConnector: newToConnectorId,
-        path: [...link.path]
-      };
+    //   // Create the link between workflow and operators.
+    //   const newLink = {
+    //     id: uuid().toString(),
+    //     fromOperator: newFromOperatorId,
+    //     fromConnector: newFromConnectorId,
+    //     toOperator: newToOperatorId,
+    //     toConnector: newToConnectorId,
+    //     path: [...link.path]
+    //   };
 
-      // Set link target on the workflow io.
-      const workflowInputFrom = copy.inputs.find(
-        input => input.id === newFromConnectorId
-      );
-      if (workflowInputFrom !== undefined) {
-        workflowInputFrom.connector = newToConnectorId;
-        workflowInputFrom.operator = newToOperatorId;
-      }
-      const workflowOutputTo = copy.outputs.find(
-        output => output.id === newToConnectorId
-      );
-      if (workflowOutputTo !== undefined) {
-        workflowOutputTo.connector = newFromConnectorId;
-        workflowOutputTo.operator = newFromOperatorId;
-      }
-      copy.links.push(newLink);
-    }
+    //   // Set link target on the workflow io.
+    //   const workflowInputFrom = copy.inputs.find(
+    //     input => input.id === newFromConnectorId
+    //   );
+    //   if (workflowInputFrom !== undefined) {
+    //     workflowInputFrom.connector = newToConnectorId;
+    //     workflowInputFrom.operator = newToOperatorId;
+    //   }
+    //   const workflowOutputTo = copy.outputs.find(
+    //     output => output.id === newToConnectorId
+    //   );
+    //   if (workflowOutputTo !== undefined) {
+    //     workflowOutputTo.connector = newFromConnectorId;
+    //     workflowOutputTo.operator = newFromOperatorId;
+    //   }
+    //   copy.links.push(newLink);
+    // }
 
-    // Copy constants (no link).
-    for (const input of workflow.inputs) {
-      if (input.constant === false) {
-        continue;
-      }
-      const operator = copy.operators.find(
-        operatorCandidate => operatorCandidate.oldId === input.operator
-      );
-      if (operator === undefined) {
-        throw new Error(`No operator for id ${input.operator}`);
-      }
-      const opInput = operator.inputs.find(
-        operatorInput => operatorInput.id === input.connector
-      );
-      if (opInput === undefined) {
-        throw new Error(`No input for id ${input.connector}`);
-      }
-      const copyInput = copy.inputs.find(
-        copyWorkflowInput => copyWorkflowInput.oldId === input.id
-      );
-      if (copyInput === undefined) {
-        throw new Error(`No workflow input for id ${input.id}`);
-      }
-      copyInput.connector = opInput.id;
-      copyInput.operator = operator.id;
-    }
+    // // Copy constants (no link).
+    // for (const input of workflow.inputs) {
+    //   if (input.constant === false) {
+    //     continue;
+    //   }
+    //   const operator = copy.operators.find(
+    //     operatorCandidate => operatorCandidate.oldId === input.operator
+    //   );
+    //   if (operator === undefined) {
+    //     throw new Error(`No operator for id ${input.operator}`);
+    //   }
+    //   const opInput = operator.inputs.find(
+    //     operatorInput => operatorInput.id === input.connector
+    //   );
+    //   if (opInput === undefined) {
+    //     throw new Error(`No input for id ${input.connector}`);
+    //   }
+    //   const copyInput = copy.inputs.find(
+    //     copyWorkflowInput => copyWorkflowInput.oldId === input.id
+    //   );
+    //   if (copyInput === undefined) {
+    //     throw new Error(`No workflow input for id ${input.id}`);
+    //   }
+    //   copyInput.connector = opInput.id;
+    //   copyInput.operator = operator.id;
+    // }
 
-    // Remove all io we don't know the connections for.
-    copy.inputs = copy.inputs.filter(
-      input => input.connector !== undefined && input.operator !== undefined
-    );
-    copy.outputs = copy.outputs.filter(
-      output => output.connector !== undefined && output.operator !== undefined
-    );
+    // // Remove all io we don't know the connections for.
+    // copy.inputs = copy.inputs.filter(
+    //   input => input.connector !== undefined && input.operator !== undefined
+    // );
+    // copy.outputs = copy.outputs.filter(
+    //   output => output.connector !== undefined && output.operator !== undefined
+    // );
 
-    return copy;
+    // return copy;
   }
 
   // TODO unit test

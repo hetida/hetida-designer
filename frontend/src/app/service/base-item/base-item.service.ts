@@ -30,6 +30,7 @@ import {
   setExecutionRunning
 } from 'src/app/store/execution-protocol/execution-protocol.actions';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
+import { Utils } from 'src/app/utils/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -156,17 +157,20 @@ export class BaseItemService {
     transformation: Transformation
   ): Observable<Transformation> {
     // TODO copy, do not change param attribute
-    transformation.state = RevisionState.RELEASED;
-    transformation.released_timestamp = new Date().toISOString();
-    return this.updateTransformation(transformation);
+    const copyOfTransformation = Utils.deepCopy(transformation);
+    copyOfTransformation.state = RevisionState.RELEASED;
+    copyOfTransformation.released_timestamp = new Date().toISOString();
+    return this.updateTransformation(copyOfTransformation);
   }
 
   disableTransformation(
     transformation: Transformation
   ): Observable<Transformation> {
-    transformation.state = RevisionState.DISABLED;
-    transformation.disabled_timestamp = new Date().toISOString();
-    return this.updateTransformation(transformation);
+    // TODO copy, do not change param attribute
+    const copyOfTransformation = Utils.deepCopy(transformation);
+    copyOfTransformation.state = RevisionState.DISABLED;
+    copyOfTransformation.disabled_timestamp = new Date().toISOString();
+    return this.updateTransformation(copyOfTransformation);
   }
 
   testTransformation(

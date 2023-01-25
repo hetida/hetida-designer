@@ -1,43 +1,62 @@
 import { FormControl } from '@angular/forms';
 import { BaseItemType } from '../enums/base-item-type';
 import { RevisionState } from '../enums/revision-state';
-import { AbstractBaseItem } from '../model/base-item';
+import { Transformation } from '../model/new-api/transformation';
+
 import { UniqueRevisionTagValidator } from './unique-revision-tag-validator';
 
 describe('UniqueRevisionTagValidator', () => {
-  const baseItems: Array<AbstractBaseItem> = [
+  const transformations: Array<Transformation> = [
     {
-      id: 'abc',
-      type: BaseItemType.COMPONENT,
-      groupId: 'mygroup',
-      name: 'Test Component',
-      description: '',
-      category: 'test',
-      tag: '0.1.0',
+      id: 'mockId',
+      revision_group_id: 'mockGroupId',
+      name: 'mock transformation',
+      description: 'mock description',
+      category: 'DRAFT',
+      version_tag: '0.1.0',
+      released_timestamp: new Date().toISOString(),
+      disabled_timestamp: new Date().toISOString(),
       state: RevisionState.DRAFT,
-      inputs: [],
-      outputs: [],
-      wirings: []
+      type: BaseItemType.COMPONENT,
+      documentation: null,
+      content: 'python code',
+      io_interface: {
+        inputs: [],
+        outputs: []
+      },
+      test_wiring: {
+        input_wirings: [],
+        output_wirings: []
+      }
     },
     {
-      id: 'abc',
-      type: BaseItemType.WORKFLOW,
-      groupId: 'mygroup',
-      name: 'Test Workflow',
-      description: '',
-      category: 'test',
-      tag: '1.0.0',
+      id: 'mockId',
+      revision_group_id: 'mockGroupId',
+      name: 'mock transformation',
+      description: 'mock description',
+      category: 'DRAFT',
+      version_tag: '1.0.0',
+      released_timestamp: new Date().toISOString(),
+      disabled_timestamp: new Date().toISOString(),
       state: RevisionState.DRAFT,
-      inputs: [],
-      outputs: [],
-      wirings: []
+      type: BaseItemType.COMPONENT,
+      documentation: null,
+      content: 'python code',
+      io_interface: {
+        inputs: [],
+        outputs: []
+      },
+      test_wiring: {
+        input_wirings: [],
+        output_wirings: []
+      }
     }
   ];
 
   it('UniqueRevisionTagValidator should return valid for unnused revision tags', () => {
     const formControl = new FormControl(
       '1.0.1',
-      UniqueRevisionTagValidator(baseItems)
+      UniqueRevisionTagValidator(transformations)
     );
     expect(formControl.valid).toBe(true);
   });
@@ -45,7 +64,7 @@ describe('UniqueRevisionTagValidator', () => {
   xit('UniqueRevisionTagValidator should return invalid for duplicate revision tags', () => {
     const formControl = new FormControl(
       '1.0.0',
-      UniqueRevisionTagValidator(baseItems)
+      UniqueRevisionTagValidator(transformations)
     );
     expect(formControl.valid).toBe(false);
   });

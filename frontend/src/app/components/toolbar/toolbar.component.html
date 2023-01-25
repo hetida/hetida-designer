@@ -10,8 +10,10 @@
     <mat-icon
       class="clickable unselectable"
       title="Configure I/O"
-      [ngClass]="{ disabled: baseItemHasEmptyInputsAndOutputs && isWorkflow }"
       (click)="configureIO()"
+      [ngClass]="{
+        disabled: transformationHasEmptyInputsAndOutputs && isWorkflow
+      }"
       >settings_input_component
     </mat-icon>
     <mat-icon

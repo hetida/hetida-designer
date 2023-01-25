@@ -5,9 +5,8 @@ import { of, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { BaseItem } from 'src/app/model/base-item';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
-import { IAppState } from 'src/app/store/app.state';
+import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { Transformation } from '../../model/new-api/transformation';
 import { selectTransformationById } from '../../store/transformation/transformation.selectors';
 
@@ -18,15 +17,12 @@ import { selectTransformationById } from '../../store/transformation/transformat
 })
 export class ToolbarComponent implements OnInit {
   constructor(
-    private readonly store: Store<IAppState>,
+    private readonly transformationStore: Store<TransformationState>,
     private readonly flowchartService: NgHetidaFlowchartService,
     private readonly baseItemAction: BaseItemActionService
   ) {}
 
   @Input() transformationId: string;
-
-  // TODO remove
-  baseItem: BaseItem;
 
   transformation: Transformation | undefined;
 
@@ -34,11 +30,10 @@ export class ToolbarComponent implements OnInit {
     return this.transformation.type === BaseItemType.WORKFLOW;
   }
 
-  get baseItemHasEmptyInputsAndOutputs(): boolean {
-    return false;
-    // TODO
+  get transformationHasEmptyInputsAndOutputs(): boolean {
     return (
-      this.baseItem.inputs.length === 0 && this.baseItem.outputs.length === 0
+      this.transformation.io_interface.inputs.length === 0 &&
+      this.transformation.io_interface.outputs.length === 0
     );
   }
 
@@ -54,7 +49,7 @@ export class ToolbarComponent implements OnInit {
       .subscribe(isIncomplete => {
         this.incompleteFlag = isIncomplete;
       });
-    this.store
+    this.transformationStore
       .select(selectTransformationById(this.transformationId))
       .subscribe(transformation => {
         this.transformation = transformation;
@@ -77,7 +72,6 @@ export class ToolbarComponent implements OnInit {
     this.baseItemAction.showDocumentation(this.transformation.id);
   }
 
-  // TODO check for workflows
   async execute() {
     await this.baseItemAction.execute(this.transformation);
   }
@@ -94,7 +88,6 @@ export class ToolbarComponent implements OnInit {
     this.baseItemAction.publish(this.transformation);
   }
 
-  // TODO check for workflows
   configureIO() {
     this.baseItemAction.configureIO(this.transformation);
     this.incompleteFlag = this.baseItemAction.isIncomplete(this.transformation);
@@ -107,7 +100,6 @@ export class ToolbarComponent implements OnInit {
     return 'Deprecate';
   }
 
-  // TODO check for workflows
   deprecate(): void {
     this.baseItemAction.deprecate(this.transformation);
   }
