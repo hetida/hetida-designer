@@ -7,7 +7,10 @@ import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
-import { Transformation } from '../../model/new-api/transformation';
+import {
+  isWorkflowTransformation,
+  Transformation
+} from '../../model/new-api/transformation';
 import { selectTransformationById } from '../../store/transformation/transformation.selectors';
 
 @Component({
@@ -30,10 +33,12 @@ export class ToolbarComponent implements OnInit {
     return this.transformation.type === BaseItemType.WORKFLOW;
   }
 
-  get transformationHasEmptyInputsAndOutputs(): boolean {
+  get isWorkflowWithoutIo(): boolean {
     return (
-      this.transformation.io_interface.inputs.length === 0 &&
-      this.transformation.io_interface.outputs.length === 0
+      isWorkflowTransformation(this.transformation) &&
+      this.transformation.content.inputs.length === 0 &&
+      this.transformation.content.outputs.length === 0 &&
+      this.transformation.content.constants.length === 0
     );
   }
 
@@ -83,7 +88,7 @@ export class ToolbarComponent implements OnInit {
     return 'Already published';
   }
 
-  // TODO check for workflows
+  // TODO check for workflows, depends on isWorkflowIncomplete
   async publish(): Promise<void> {
     this.baseItemAction.publish(this.transformation);
   }

@@ -24,7 +24,6 @@ import {
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { AbstractBaseItem, BaseItem } from 'src/app/model/base-item';
-import { Utils } from 'src/app/utils/utils';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import * as uuid from 'uuid';
@@ -47,6 +46,7 @@ import { IOConnector } from 'src/app/model/new-api/io-connector';
 import { Link } from 'src/app/model/new-api/link';
 import { Constant } from 'src/app/model/new-api/constant';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
+import { Utils } from '../../utils/utils';
 
 /**
  * Actions like opening copy dialog, or other actions are collected here
@@ -693,7 +693,7 @@ export class BaseItemActionService {
     //   output => output.connector !== undefined && output.operator !== undefined
     // );
 
-    // return copy;
+    return copy;
   }
 
   // TODO unit test

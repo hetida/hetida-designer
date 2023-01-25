@@ -197,6 +197,7 @@ export class WorkflowEditorComponent {
       this.currentWorkflow.content.links,
       removedElement.id
     );
+    // TODO does not work; when operator is removed, constants are still there
     this.currentWorkflow.content.constants = this._removeById(
       this.currentWorkflow.content.constants,
       removedElement.id

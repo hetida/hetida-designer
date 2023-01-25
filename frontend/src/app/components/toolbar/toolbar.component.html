@@ -12,7 +12,7 @@
       title="Configure I/O"
       (click)="configureIO()"
       [ngClass]="{
-        disabled: transformationHasEmptyInputsAndOutputs && isWorkflow
+        disabled: isWorkflowWithoutIo
       }"
       >settings_input_component
     </mat-icon>
