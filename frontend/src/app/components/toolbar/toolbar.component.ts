@@ -89,7 +89,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   // TODO check for workflows, depends on isWorkflowIncomplete
-  async publish(): Promise<void> {
+  publish(): void {
     this.baseItemAction.publish(this.transformation);
   }
 
@@ -110,8 +110,8 @@ export class ToolbarComponent implements OnInit {
   }
 
   // TODO check for workflows
-  async copy() {
-    await this.baseItemAction.copy(this.transformation);
+  copy() {
+    this.baseItemAction.copy(this.transformation);
   }
 
   get newRevisionTooltip(): string {
@@ -122,8 +122,8 @@ export class ToolbarComponent implements OnInit {
   }
 
   // TODO check for workflows
-  async newRevision() {
-    await this.baseItemAction.newRevision(this.transformation);
+  newRevision() {
+    this.baseItemAction.newRevision(this.transformation);
   }
 
   isReleased() {
