@@ -63,7 +63,10 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
 
         # only write if the object does not yet exist
         s3_client.put_object(
-            Bucket=structure_bucket.name, Key=object_key.string, Body=data, ChecksumAlgorithm='sha1'
+            Bucket=structure_bucket.name,
+            Key=object_key.string,
+            Body=data,
+            ChecksumAlgorithm="sha1",
         )
 
     else:

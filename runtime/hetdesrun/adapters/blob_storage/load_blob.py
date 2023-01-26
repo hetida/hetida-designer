@@ -48,7 +48,7 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         raise error
     try:
         response = s3_client.get_object(
-            Bucket=structure_bucket.name, Key=object_key.string, ChecksumMode='ENABLED'
+            Bucket=structure_bucket.name, Key=object_key.string, ChecksumMode="ENABLED"
         )
     except s3_client.exceptions.NoSuchBucket as error:
         raise BucketNotFound(

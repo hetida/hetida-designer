@@ -175,7 +175,7 @@ async def get_sinks_metadata(
     dependencies=get_auth_deps(),
 )
 async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
-    logger.info("GET sink with id %s",sinkId)
+    logger.info("GET sink with id %s", sinkId)
     try:
         sink = get_sink_by_id(sinkId)
     except SinkNotFound as not_found_error:
