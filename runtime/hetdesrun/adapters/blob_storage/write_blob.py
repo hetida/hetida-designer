@@ -59,7 +59,7 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
                 f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
             )
             logger.error(msg)
-            raise UnexpectedClientError(msg)
+            raise UnexpectedClientError(msg) from error
 
         # only write if the object does not yet exist
         s3_client.put_object(
