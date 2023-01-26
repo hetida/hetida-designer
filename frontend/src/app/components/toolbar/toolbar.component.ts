@@ -109,7 +109,6 @@ export class ToolbarComponent implements OnInit {
     this.baseItemAction.deprecate(this.transformation);
   }
 
-  // TODO check for workflows
   copy() {
     this.baseItemAction.copy(this.transformation);
   }

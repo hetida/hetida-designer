@@ -196,29 +196,18 @@ export class BaseItemActionService {
   }
 
   // TODO unit test
-  // group id has to be the same
   public newRevision(transformation: Transformation): void {
     if (!this.isReleased(transformation)) {
       return;
     }
     const newId = uuid().toString();
     const groupId = transformation.revision_group_id;
-    let copyOfTransformation: Transformation;
-    if (transformation.type === BaseItemType.WORKFLOW) {
-      copyOfTransformation = this.copyWorkflow(
-        newId,
-        groupId,
-        'Draft',
-        transformation
-      );
-    } else {
-      copyOfTransformation = this.copyComponent(
-        newId,
-        groupId,
-        'Draft',
-        transformation
-      );
-    }
+    const copyOfTransformation: Transformation = this.copyTransformation(
+      newId,
+      groupId,
+      'Draft',
+      transformation
+    );
     const dialogRef = this.dialog.open<
       CopyBaseItemDialogComponent,
       BaseItemDialogData,
@@ -320,27 +309,15 @@ export class BaseItemActionService {
   }
 
   // TODO unit test
-  // has to have a new group id
   public copy(transformation: Transformation): void {
     const newId = uuid().toString();
     const groupId = uuid().toString();
-    let copyOfTransformation: Transformation;
-
-    if (transformation.type === BaseItemType.WORKFLOW) {
-      copyOfTransformation = this.copyWorkflow(
-        newId,
-        groupId,
-        'Copy',
-        transformation
-      );
-    } else {
-      copyOfTransformation = this.copyComponent(
-        newId,
-        groupId,
-        'Copy',
-        transformation
-      );
-    }
+    const copyOfTransformation: Transformation = this.copyTransformation(
+      newId,
+      groupId,
+      'Copy',
+      transformation
+    );
 
     let type = copyOfTransformation.type.toLowerCase();
     type = `${type.charAt(0).toUpperCase() + type.slice(1)}`;
@@ -509,150 +486,25 @@ export class BaseItemActionService {
   }
 
   // TODO unit test
-  private copyWorkflow(
+  private copyTransformation(
     newId: string,
     groupId: string,
     suffix: string,
-    workflowTransformation: WorkflowTransformation
-  ): WorkflowTransformation {
-    // give new ids to everything
-    const copy: WorkflowTransformation = {
-      ...workflowTransformation,
+    transformation: Transformation
+  ): Transformation {
+    const copy: Transformation = {
+      ...transformation,
       id: newId,
       revision_group_id: groupId,
-      version_tag: `${workflowTransformation.version_tag} ${suffix}`,
+      version_tag: `${transformation.version_tag} ${suffix}`,
       state: RevisionState.DRAFT,
-      content: {
-        // TODO maybe we need to assign new ids
-        operators: workflowTransformation.content.operators,
-        // TODO links
-        links: [],
-        // links: workflowTransformation.content.links,
-        inputs: workflowTransformation.content.inputs.map(input => ({
-          ...input,
-          id: uuid().toString(),
-          oldId: input.id
-          // TODO assign new operator id if necessary
-        })),
-        outputs: workflowTransformation.content.outputs.map(output => ({
-          ...output,
-          id: uuid().toString(),
-          oldId: output.id
-        })),
-        constants: workflowTransformation.content.constants.map(constant => ({
-          ...constant,
-          id: uuid.toString(),
-          oldId: constant.id
-        }))
-      },
+      // io_interface is generated in the backend, so we just send empty arrays
       io_interface: {
         inputs: [],
         outputs: []
       }
     };
-
-    // Re-assign the links.
-    // for (const link of workflow.links) {
-    //   let newFromOperatorId: string;
-    //   let newToOperatorId: string;
-    //   let newFromConnectorId: string;
-    //   let newToConnectorId: string;
-    //   if (link.fromOperator === workflow.id) {
-    //     newFromOperatorId = newId;
-    //     const fromConnector = copy.inputs.find(
-    //       input => input.oldId === link.fromConnector
-    //     );
-    //     if (fromConnector === undefined) {
-    //       throw new Error(`no workflow input with id ${link.fromConnector}`);
-    //     }
-    //     newFromConnectorId = fromConnector.id;
-    //   } else {
-    //     const fromOperator = copy.operators.find(
-    //       operator => operator.oldId === link.fromOperator
-    //     );
-    //     if (fromOperator === undefined) {
-    //       throw new Error(`no operator with id ${link.fromOperator}`);
-    //     }
-    //     newFromOperatorId = fromOperator.id;
-    //     const fromConnector = fromOperator.outputs.find(
-    //       output => output.id === link.fromConnector
-    //     );
-    //     if (fromConnector === undefined) {
-    //       throw new Error(`no workflow output with id ${link.fromConnector}`);
-    //     }
-    //     newFromConnectorId = fromConnector.id;
-    //   }
-
-    //   if (link.toOperator === workflow.id) {
-    //     newToOperatorId = newId;
-    //     const toConnector = copy.outputs.find(
-    //       output => output.oldId === link.toConnector
-    //     );
-    //     if (toConnector === undefined) {
-    //       throw new Error(`no workflow output with id ${link.toConnector}`);
-    //     }
-    //     newToConnectorId = toConnector.id;
-    //   } else {
-    //     const toOperator = copy.operators.find(
-    //       operator => operator.oldId === link.toOperator
-    //     );
-    //     if (toOperator === undefined) {
-    //       throw new Error(`no input with id ${link.toOperator}`);
-    //     }
-    //     newToOperatorId = toOperator.id;
-    //     const toConnector = toOperator.inputs.find(
-    //       input => input.id === link.toConnector
-    //     );
-    //     if (toConnector === undefined) {
-    //       throw new Error(`no workflow input with id ${link.toConnector}`);
-    //     }
-    //     newToConnectorId = toConnector.id;
-    //   }
-
-    //   // Create the link between workflow and operators.
-    //   const newLink = {
-    //     id: uuid().toString(),
-    //     fromOperator: newFromOperatorId,
-    //     fromConnector: newFromConnectorId,
-    //     toOperator: newToOperatorId,
-    //     toConnector: newToConnectorId,
-    //     path: [...link.path]
-    //   };
-    //   copy.links.push(newLink);
-    // }
-
     return copy;
-  }
-
-  // TODO unit test
-  // state has to be draft
-  private copyComponent(
-    newId: string,
-    groupId: string,
-    suffix: string,
-    componentTransformation: ComponentTransformation
-  ): Transformation {
-    return {
-      ...componentTransformation,
-      id: newId,
-      revision_group_id: groupId,
-      state: RevisionState.DRAFT,
-      version_tag: `${componentTransformation.version_tag} ${suffix}`,
-      io_interface: {
-        inputs: componentTransformation.io_interface.inputs.map(input => ({
-          ...input,
-          id: uuid().toString()
-        })),
-        outputs: componentTransformation.io_interface.outputs.map(output => ({
-          ...output,
-          id: uuid().toString()
-        }))
-      },
-      test_wiring: {
-        input_wirings: [],
-        output_wirings: []
-      }
-    };
   }
 
   private saveAndNavigate(transformation: Transformation | undefined): void {
