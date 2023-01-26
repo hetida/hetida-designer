@@ -20,6 +20,7 @@ def get_session() -> boto3.Session:
         aws_session_token=credentials.session_token,
         region_name=get_blob_adapter_config().region_name,
     )
+    logger.info("Started a new S3 session")
     return session
 
 
@@ -28,9 +29,9 @@ def get_s3_client() -> S3Client:
     try:
         client = get_session().client("s3", endpoint_url=endpoint_url)
     except ValueError as error:
-        raise InvalidS3Endpoint(
-            f"The string '{endpoint_url}' is no valid endpoint url!"
-        ) from error
+        msg = f"The string '{endpoint_url}' is no valid endpoint url!"
+        logger.error(msg)
+        raise InvalidS3Endpoint(msg) from error
     return client
 
 
@@ -39,7 +40,9 @@ def get_object_key_strings_in_bucket(bucket_name: BucketName) -> List[IdString]:
     try:
         s3_response = s3_client.list_objects_v2(Bucket=bucket_name)
     except s3_client.exceptions.NoSuchBucket as error:
-        raise BucketNotFound(f"The bucket '{bucket_name}' does not exist!") from error
+        msg = f"The bucket '{bucket_name}' does not exist!"
+        logger.error(msg)
+        raise BucketNotFound(msg) from error
 
     if s3_response["KeyCount"] == 0:
         return []
