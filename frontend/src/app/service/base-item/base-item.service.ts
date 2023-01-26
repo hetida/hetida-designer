@@ -12,7 +12,8 @@ import { getBaseItems } from '../../store/base-item/base-item.actions';
 import { BaseItemHttpService } from '../http-service/base-item-http.service';
 import {
   ComponentTransformation,
-  Transformation
+  Transformation,
+  WorkflowTransformation
 } from '../../model/new-api/transformation';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
 import {
@@ -129,6 +130,34 @@ export class BaseItemService {
     };
   }
 
+  getDefaultWorkflowTransformation(): WorkflowTransformation {
+    return {
+      id: uuid().toString(),
+      revision_group_id: uuid().toString(),
+      name: 'New Workflow',
+      category: 'Draft',
+      type: BaseItemType.WORKFLOW,
+      version_tag: '1.0.0',
+      state: RevisionState.DRAFT,
+      description: 'New created workflow',
+      io_interface: {
+        inputs: [],
+        outputs: []
+      },
+      test_wiring: {
+        input_wirings: [],
+        output_wirings: []
+      },
+      content: {
+        operators: [],
+        links: [],
+        inputs: [],
+        outputs: [],
+        constants: []
+      }
+    };
+  }
+
   fetchAllTransformations(): void {
     // TODO remove once everything is migrated to transformations
     this.baseItemHttpService.fetchBaseItems().subscribe(result => {
@@ -156,7 +185,6 @@ export class BaseItemService {
   releaseTransformation(
     transformation: Transformation
   ): Observable<Transformation> {
-    // TODO copy, do not change param attribute
     const copyOfTransformation = Utils.deepCopy(transformation);
     copyOfTransformation.state = RevisionState.RELEASED;
     copyOfTransformation.released_timestamp = new Date().toISOString();
@@ -166,7 +194,6 @@ export class BaseItemService {
   disableTransformation(
     transformation: Transformation
   ): Observable<Transformation> {
-    // TODO copy, do not change param attribute
     const copyOfTransformation = Utils.deepCopy(transformation);
     copyOfTransformation.state = RevisionState.DISABLED;
     copyOfTransformation.disabled_timestamp = new Date().toISOString();

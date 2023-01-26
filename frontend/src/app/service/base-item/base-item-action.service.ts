@@ -382,7 +382,7 @@ export class BaseItemActionService {
         title: 'Create new workflow',
         actionOk: 'Create Workflow',
         actionCancel: 'Cancel',
-        transformation: this.baseItemService.getDefaultComponentTransformation(), // TODO Workflow
+        transformation: this.baseItemService.getDefaultWorkflowTransformation(),
         disabledState: {
           name: false,
           category: false,
@@ -392,15 +392,11 @@ export class BaseItemActionService {
       }
     });
 
-    dialogRef.afterClosed().subscribe(baseItem => {
-      if (baseItem === undefined) {
+    dialogRef.afterClosed().subscribe(transformation => {
+      if (transformation === undefined) {
         return;
       }
-      this.tabItemService.createTransformationAndOpenInNewTab(
-        // TODO
-        // @ts-ignore
-        baseItem as Transformation
-      );
+      this.tabItemService.createTransformationAndOpenInNewTab(transformation);
     });
   }
 
