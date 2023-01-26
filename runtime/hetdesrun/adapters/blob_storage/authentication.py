@@ -141,13 +141,15 @@ def create_or_get_named_credential_manager(
     if key in manager_dict:
         return manager_dict[key]
 
-    logger.debug("Creating new credential manager for key %s", key)
+    logger.info("Creating new credential manager for key %s", key)
 
     if access_token is None:
-        raise ValueError(
+        msg = (
             "Access token has to be specified at least the first time"
             " the credential manager is requested!"
         )
+        logger.error(msg)
+        raise ValueError(msg)
 
     manager_dict[key] = CredentialManager(access_token=access_token)
 
@@ -161,7 +163,9 @@ def get_access_token() -> str:
     access_token_manager = create_or_get_named_access_token_manager(
         "blob_adapter_auth", service_credentials
     )
+    logger.info("Access token manager created")
     access_token = access_token_manager.sync_get_access_token()
+    logger.info("Access token manager received access token")
     return access_token
 
 
@@ -170,4 +174,5 @@ def get_credentials() -> Credentials:
         "blob_adapter_cred", get_access_token()
     )
     credentials = credential_manager.get_credentials()
+    logger.info("Got credentials from credential manager")
     return credentials
