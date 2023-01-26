@@ -4,6 +4,14 @@ from unittest import mock
 import nest_asyncio
 import pytest
 
+from hetdesrun.adapters.blob_storage.exceptions import (
+    SinkNotFound,
+    SinkNotUnique,
+    SourceNotFound,
+    SourceNotUnique,
+    ThingNodeNotFound,
+    ThingNodeNotUnique,
+)
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSource,
@@ -201,3 +209,98 @@ async def test_resources_offered_from_blob_storage_webservice(
                     ).json()
                     for key in tn.keys():
                         assert response_obj[key] == tn[key]
+
+
+@pytest.mark.asyncio
+async def test_blob_adapter_webservice_filtered(async_test_client):
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy.from_file(
+            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+        ),
+    ):
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.structure.create_sources",
+            return_value=source_list,
+        ):
+            async with async_test_client as client:
+                sink_response = await client.get(
+                    "/adapters/blob/sinks", params={"filter": "ii"}
+                )
+                source_response = await client.get(
+                    "/adapters/blob/sources", params={"filter": "_2022-01-02T"}
+                )
+
+            assert sink_response.json()["resultCount"] == 4
+            assert sink_response.json()["sinks"][0]["id"] == "i-ii/E_next"
+            assert sink_response.json()["sinks"][1]["id"] == "i-iii/F_next"
+            assert sink_response.json()["sinks"][2]["id"] == "i-iii/G_next"
+            assert sink_response.json()["sinks"][3]["id"] == "iii/x/C_next"
+
+            assert source_response.json()["resultCount"] == 4
+            assert source_response.json()["sources"][:3] == source_list[:3]
+            assert source_response.json()["sources"][3] == source_list[5]
+
+
+@pytest.mark.asyncio
+async def test_blob_adapter_webservice_exceptions(async_test_client):
+    async with async_test_client as client:
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
+            side_effect=SourceNotFound,
+        ):
+            no_source_response = await client.get(
+                f"/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
+            )
+
+        assert no_source_response.status_code == 404
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
+            side_effect=SourceNotUnique,
+        ):
+            many_sources_response = await client.get(
+                f"/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
+            )
+
+        assert many_sources_response.status_code == 500
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
+            side_effect=SinkNotFound,
+        ):
+            no_sink_response = await client.get(
+                f"/adapters/blob/sinks/i-i/A_next"
+            )
+
+        assert no_sink_response.status_code == 404
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
+            side_effect=SinkNotUnique,
+        ):
+            many_sinks_response = await client.get(
+                f"/adapters/blob/sinks/i-i/A_next"
+            )
+
+        assert many_sinks_response.status_code == 500
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",
+            side_effect=ThingNodeNotFound,
+        ):
+            no_thing_node_response = await client.get(
+                f"/adapters/blob/thingNodes/i-i/A"
+            )
+
+        assert no_thing_node_response.status_code == 404
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",
+            side_effect=ThingNodeNotUnique,
+        ):
+            many_thing_nodes_response = await client.get(
+                f"/adapters/blob/thingNodes/i-i/A"
+            )
+
+        assert many_thing_nodes_response.status_code == 500

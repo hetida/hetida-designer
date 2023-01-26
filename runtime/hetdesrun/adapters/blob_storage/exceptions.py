@@ -38,7 +38,7 @@ class ThingNodeNotFound(StructureError):
     pass
 
 
-class ThingNodesNotUnique(StructureError):
+class ThingNodeNotUnique(StructureError):
     pass
 
 

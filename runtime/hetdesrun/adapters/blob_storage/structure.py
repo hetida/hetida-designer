@@ -7,7 +7,7 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     SourceNotFound,
     SourceNotUnique,
     ThingNodeNotFound,
-    ThingNodesNotUnique,
+    ThingNodeNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
@@ -72,7 +72,7 @@ def get_thing_node_by_id(thing_node_id: IdString) -> StructureThingNode:
     if len(tn_list) > 1:
         msg = f"Found more than one thing node with id {thing_node_id}:\n{str(tn_list)}"
         logger.error(msg)
-        raise ThingNodesNotUnique(msg)
+        raise ThingNodeNotUnique(msg)
     return tn_list[0]
 
 

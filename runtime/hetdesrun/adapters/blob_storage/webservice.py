@@ -19,7 +19,7 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     SourceNotFound,
     SourceNotUnique,
     ThingNodeNotFound,
-    ThingNodesNotUnique,
+    ThingNodeNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
@@ -230,8 +230,8 @@ async def get_single_thingNode(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=msg,
         ) from not_found_error
-    except ThingNodesNotUnique as not_unique_error:
-        msg = f"ThingNode with id " + thingNodeId + " not unique!"
+    except ThingNodeNotUnique as not_unique_error:
+        msg = f"ThingNode with id {thingNodeId} not unique!"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

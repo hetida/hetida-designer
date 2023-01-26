@@ -8,7 +8,7 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     SourceNotFound,
     SourceNotUnique,
     ThingNodeNotFound,
-    ThingNodesNotUnique,
+    ThingNodeNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
@@ -196,7 +196,7 @@ def test_blob_storage_get_thing_node_by_id():
                 ),
             ],
         ):
-            with pytest.raises(ThingNodesNotUnique):
+            with pytest.raises(ThingNodeNotUnique):
                 get_thing_node_by_id("i-ii")
 
 
