@@ -1,4 +1,4 @@
-"""Web service endpoints for frontend for the blob storate adapter
+"""Web service endpoints for frontend for the blob storage adapter
 
 Note that the blob storage adapter is not a generic rest adapter, so these webendpoints
 have the sole purpose to tell the frontend which data sources and sinks are available and
@@ -7,7 +7,7 @@ can be wired.
 Actual data ingestion/egestion happens in the corresponding Runtime-Python-Plugin of this adapter.
 """
 
-
+import logging
 from typing import List, Optional
 
 from fastapi import HTTPException, Query, status
@@ -44,6 +44,9 @@ from hetdesrun.adapters.blob_storage.structure import (
 from hetdesrun.webservice.auth_dependency import get_auth_deps
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
+logger = logging.getLogger(__name__)
+
+
 # Note: As CORS middleware the router employs the main FastAPI app's one
 blob_storage_adapter_router = HandleTrailingSlashAPIRouter(
     prefix="/adapters/blob", tags=["blob storage adapter"]
@@ -69,6 +72,7 @@ async def get_info_endpoint() -> InfoResponse:
 async def get_structure_endpoint(
     parentId: Optional[IdString] = None,
 ) -> StructureResponse:
+    logger.info("GET structure for parentId '%s'", parentId)
     return StructureResponse(
         id="blob-storage-adapter",
         name="Blob Storage Adapter",
@@ -86,6 +90,7 @@ async def get_structure_endpoint(
 async def get_sources_endpoint(
     filter_str: Optional[str] = Query(None, alias="filter")
 ) -> MultipleSourcesResponse:
+    logger.info("GET sources for filter string '%s'", filter_str)
     found_sources = get_filtered_sources(filter_str=filter_str)
     return MultipleSourcesResponse(
         resultCount=len(found_sources),
@@ -101,6 +106,7 @@ async def get_sources_endpoint(
 async def get_sinks_endpoint(
     filter_str: Optional[str] = Query(None, alias="filter")
 ) -> MultipleSinksResponse:
+    logger.info("GET sinks for filter string '%s'", filter_str)
     found_sinks = get_filtered_sinks(filter_str=filter_str)
     return MultipleSinksResponse(
         resultCount=len(found_sinks),
@@ -130,6 +136,7 @@ async def get_sources_metadata(
     dependencies=get_auth_deps(),
 )
 async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
+    logger.info("GET source with id '%s'", sourceId)
     try:
         source = get_source_by_id(sourceId)
     except SourceNotFound as not_found_error:
@@ -168,17 +175,22 @@ async def get_sinks_metadata(
     dependencies=get_auth_deps(),
 )
 async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
+    logger.info("GET sink with id %s",sinkId)
     try:
         sink = get_sink_by_id(sinkId)
     except SinkNotFound as not_found_error:
+        msg = f"Could not find Sink with id {sinkId}"
+        logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Could not find Sink with id " + sinkId,
+            detail=msg,
         ) from not_found_error
     except SinkNotUnique as not_unique_error:
+        msg = f"Sink with id {sinkId} not unique!"
+        logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Sink with id " + sinkId + " not unique!",
+            detail=msg,
         ) from not_unique_error
 
     return sink
@@ -208,17 +220,22 @@ async def get_thing_nodes_metadata(
 async def get_single_thingNode(
     thingNodeId: IdString,
 ) -> StructureThingNode:
+    logger.info("GET thing node with id %s", thingNodeId)
     try:
         thing_node = get_thing_node_by_id(thingNodeId)
     except ThingNodeNotFound as not_found_error:
+        msg = f"Could not find ThingNode with id {thingNodeId}"
+        logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Could not find ThingNode with id " + thingNodeId,
+            detail=msg,
         ) from not_found_error
     except ThingNodesNotUnique as not_unique_error:
+        msg = f"ThingNode with id " + thingNodeId + " not unique!"
+        logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="ThingNode with id " + thingNodeId + " not unique!",
+            detail=msg,
         ) from not_unique_error
 
     return thing_node
