@@ -11,7 +11,7 @@ import { AllowedCharsValidator } from 'src/app/validation/allowed-chars-validato
 import { selectAllTransformations } from '../../store/transformation/transformation.selectors';
 import { Transformation } from '../../model/new-api/transformation';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
-import { UniqueRevisionTagValidator } from 'src/app/validation/unique-revision-tag-validator';
+import { UniqueVersionTagValidator } from 'src/app/validation/unique-version-tag-validator';
 
 @Component({
   selector: 'hd-copy-base-item-dialog',
@@ -148,7 +148,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(20),
-              UniqueRevisionTagValidator(transformations),
+              UniqueVersionTagValidator(transformations),
               NotOnlyWhitespacesValidator(),
               AllowedCharsValidator()
             ]

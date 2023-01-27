@@ -197,7 +197,6 @@ export class WorkflowEditorComponent {
       this.currentWorkflow.content.links,
       removedElement.id
     );
-
     this.currentWorkflow.content.constants = this.currentWorkflow.content.constants.filter(
       constant => constant.operator_id !== removedElement.id
     );
