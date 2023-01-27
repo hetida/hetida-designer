@@ -42,7 +42,7 @@ class ThingNodeNotUnique(StructureError):
     pass
 
 
-class NoCredentialsFound(BlobAdapterException):
+class NoAccessTokenAvailable(BlobAdapterException):
     pass
 
 
