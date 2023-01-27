@@ -5,13 +5,16 @@ from functools import cache
 from typing import Dict, Optional
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, EndpointConnectionError
 from pydantic import BaseModel, Field
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
-from hetdesrun.adapters.blob_storage.exceptions import NoCredentialsFound
+from hetdesrun.adapters.blob_storage.exceptions import NoAccessTokenAvailable
+from hetdesrun.webservice.auth_dependency import (
+    forward_request_token_or_get_fixed_token_auth_headers,
+)
 from hetdesrun.webservice.auth_outgoing import create_or_get_named_access_token_manager
-from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.config import ExternalAuthMode, get_config
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +63,8 @@ def obtain_credential_info_from_sts(access_token: str) -> CredentialInfo:
             WebIdentityToken=access_token,
             DurationSeconds=get_blob_adapter_config().access_duration,
         )
-    except ClientError as error:
-        msg = f"A client error occured when trying to assume role with web identity:\n{error}"
+    except (ClientError, EndpointConnectionError) as error:
+        msg = f"An error occured when trying to assume role with web identity:\n{error}"
         logger.error(msg)
         raise StsAuthenticationError(msg) from error
 
@@ -157,16 +160,33 @@ def create_or_get_named_credential_manager(
 
 
 def get_access_token() -> str:
-    service_credentials = get_config().external_auth_client_credentials
-    if service_credentials is None:
-        raise NoCredentialsFound("HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS not set!")
-    access_token_manager = create_or_get_named_access_token_manager(
-        "blob_adapter_auth", service_credentials
+    external_mode = get_config().external_auth_mode
+    if external_mode == ExternalAuthMode.OFF:
+        msg = (
+            "Config option external_auth_mode is set to 'OFF' "
+            "thus no access token is available!"
+        )
+        logger.error(msg)
+        raise NoAccessTokenAvailable(msg)
+    if external_mode == ExternalAuthMode.FORWARD_OR_FIXED:
+        token_header = forward_request_token_or_get_fixed_token_auth_headers()
+        access_token = token_header["Authorization"].split("Bearer ")[-1]
+        return access_token
+    if external_mode == ExternalAuthMode.CLIENT:
+        service_credentials = get_config().external_auth_client_credentials
+        assert service_credentials is not None  # for mypy
+        access_token_manager = create_or_get_named_access_token_manager(
+            "outgoing_external_auth", service_credentials
+        )
+        access_token = access_token_manager.sync_get_access_token()
+        return access_token
+
+    msg = (
+        f"Unknown config option for external_auth_mode '{external_mode}' "
+        "thus no access token is available!"
     )
-    logger.info("Access token manager created")
-    access_token = access_token_manager.sync_get_access_token()
-    logger.info("Access token manager received access token")
-    return access_token
+    logger.error(msg)
+    raise NoAccessTokenAvailable(msg)
 
 
 def get_credentials() -> Credentials:
