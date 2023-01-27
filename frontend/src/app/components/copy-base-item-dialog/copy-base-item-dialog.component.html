@@ -8,12 +8,12 @@
 <div mat-dialog-content>
   <form *ngIf="infoForm" [formGroup]="infoForm" autocomplete="off" novalidate>
     <mat-form-field>
-      <mat-label>{{ data.abstractBaseItem.type | titlecase }} name</mat-label>
+      <mat-label>{{ data.transformation.type | titlecase }} name</mat-label>
       <input
         formControlName="name"
         id="name"
         matInput
-        placeholder="{{ data.abstractBaseItem.type | titlecase }} name"
+        placeholder="{{ data.transformation.type | titlecase }} name"
         type="text"
       />
       <mat-hint align="end">Max. 60 characters.</mat-hint>
@@ -68,14 +68,14 @@
   </form>
   <div>
     <small style="font-size: 0.8em; color: gray"
-      >{{ data.abstractBaseItem.type | titlecase }} revision ID:
-      {{ data.abstractBaseItem.id }}</small
+      >{{ data.transformation.type | titlecase }} revision ID:
+      {{ data.transformation.id }}</small
     >
   </div>
   <div>
     <small style="font-size: 0.8em; color: gray"
-      >{{ data.abstractBaseItem.type | titlecase }} revision group ID:
-      {{ data.abstractBaseItem.groupId }}</small
+      >{{ data.transformation.type | titlecase }} revision group ID:
+      {{ data.transformation.revision_group_id }}</small
     >
   </div>
 </div>

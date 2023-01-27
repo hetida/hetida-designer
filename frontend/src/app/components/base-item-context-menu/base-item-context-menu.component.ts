@@ -37,6 +37,7 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
     );
     this._isNotPublished = transformation.state === RevisionState.DRAFT;
     // TODO is this the same as isIncomplete?
+    // TODO if workflow, constants have to be empty, too
     this.baseItemHasEmptyInputsAndOutputs =
       transformation.io_interface.inputs.length === 0 &&
       transformation.io_interface.outputs.length === 0;
@@ -85,9 +86,9 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
     this.baseItemActionsService.showDocumentation(this.transformation.id);
   }
 
-  async copyItem() {
+  copyItem() {
     // TODO check for workflows
-    await this.baseItemActionsService.copy(this.transformation);
+    this.baseItemActionsService.copy(this.transformation);
   }
 
   publish() {

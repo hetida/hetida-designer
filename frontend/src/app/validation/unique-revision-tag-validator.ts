@@ -1,13 +1,14 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { AbstractBaseItem } from '../model/base-item';
+import { Transformation } from '../model/new-api/transformation';
 
 export function UniqueRevisionTagValidator(
-  revisionItems: AbstractBaseItem[]
+  revisionItems: Transformation[]
 ): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     if (
-      revisionItems.filter(item => item.tag.trim() === control.value.trim())
-        .length > 1
+      revisionItems.filter(
+        item => item.version_tag.trim() === control.value.trim()
+      ).length > 1
     ) {
       return { revisionTag: { valid: false } };
     }

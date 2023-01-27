@@ -40,6 +40,7 @@ import {
 } from 'src/app/store/transformation/transformation.selectors';
 import { BaseItemService } from 'src/app/service/base-item/base-item.service';
 import { Connector } from 'src/app/model/new-api/connector';
+import { Utils } from 'src/app/utils/utils';
 
 interface IdentifiableEntity {
   id: string;
@@ -196,6 +197,7 @@ export class WorkflowEditorComponent {
       this.currentWorkflow.content.links,
       removedElement.id
     );
+    // TODO does not work; when operator is removed, constants are still there
     this.currentWorkflow.content.constants = this._removeById(
       this.currentWorkflow.content.constants,
       removedElement.id
@@ -448,9 +450,7 @@ export class WorkflowEditorComponent {
         operator.position.y
       );
 
-      const copyOfCurrentWorkflow = JSON.parse(
-        JSON.stringify(this.currentWorkflow)
-      ) as WorkflowTransformation;
+      const copyOfCurrentWorkflow = Utils.deepCopy(this.currentWorkflow);
 
       // update workflow
       copyOfCurrentWorkflow.content.operators = this._removeById(

@@ -5,12 +5,13 @@ import { select, Store } from '@ngrx/store';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { first, map, startWith } from 'rxjs/operators';
 import { BaseItemDialogData } from 'src/app/model/base-item-dialog-data';
-import { IAppState } from 'src/app/store/app.state';
 import { Utils } from 'src/app/utils/utils';
 import { NotOnlyWhitespacesValidator } from 'src/app/validation/not-only-whitespaces-validator';
 import { AllowedCharsValidator } from 'src/app/validation/allowed-chars-validator';
 import { selectAllTransformations } from '../../store/transformation/transformation.selectors';
 import { Transformation } from '../../model/new-api/transformation';
+import { TransformationState } from 'src/app/store/transformation/transformation.state';
+import { UniqueRevisionTagValidator } from 'src/app/validation/unique-revision-tag-validator';
 
 @Component({
   selector: 'hd-copy-base-item-dialog',
@@ -22,7 +23,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
     public dialogRef: MatDialogRef<CopyBaseItemDialogComponent>,
     // TODO fix by reference value changes?
     @Inject(MAT_DIALOG_DATA) public data: Omit<BaseItemDialogData, 'content'>,
-    private readonly store: Store<IAppState>
+    private readonly transformationStore: Store<TransformationState>
   ) {}
 
   /**
@@ -39,21 +40,23 @@ export class CopyBaseItemDialogComponent implements OnInit {
 
   ngOnInit(): void {
     this.createFormGroup();
-    this.store.select(selectAllTransformations).subscribe(transformations => {
-      this.categories$.next(
-        Array.from(
-          new Set(
-            transformations
-              .filter(
-                transformation =>
-                  transformation.type === this.data.transformation.type
-              )
-              .map(transformation => transformation.category)
-              .sort(Utils.string.compare)
+    this.transformationStore
+      .select(selectAllTransformations)
+      .subscribe(transformations => {
+        this.categories$.next(
+          Array.from(
+            new Set(
+              transformations
+                .filter(
+                  transformation =>
+                    transformation.type === this.data.transformation.type
+                )
+                .map(transformation => transformation.category)
+                .sort(Utils.string.compare)
+            )
           )
-        )
-      );
-    });
+        );
+      });
   }
 
   public onCancel(): void {
@@ -79,10 +82,10 @@ export class CopyBaseItemDialogComponent implements OnInit {
   }
 
   /**
-   * Creates FormGroup for editing of baseItems
+   * Creates FormGroup for editing of transformation
    */
   private createFormGroup() {
-    this.store
+    this.transformationStore
       .pipe(
         select(selectAllTransformations),
         first(),
@@ -145,8 +148,7 @@ export class CopyBaseItemDialogComponent implements OnInit {
             [
               Validators.required,
               Validators.maxLength(20),
-              // TODO
-              // UniqueRevisionTagValidator(transformations),
+              UniqueRevisionTagValidator(transformations),
               NotOnlyWhitespacesValidator(),
               AllowedCharsValidator()
             ]
