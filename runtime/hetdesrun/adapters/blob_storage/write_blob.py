@@ -66,7 +66,7 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
             Bucket=structure_bucket.name,
             Key=object_key.string,
             Body=data,
-            ChecksumAlgorithm="sha1",
+            ChecksumAlgorithm="SHA1",
         )
 
     else:

@@ -269,9 +269,7 @@ async def test_blob_adapter_webservice_exceptions(async_test_client):
             "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
             side_effect=SinkNotFound,
         ):
-            no_sink_response = await client.get(
-                f"/adapters/blob/sinks/i-i/A_next"
-            )
+            no_sink_response = await client.get(f"/adapters/blob/sinks/i-i/A_next")
 
         assert no_sink_response.status_code == 404
 
@@ -279,9 +277,7 @@ async def test_blob_adapter_webservice_exceptions(async_test_client):
             "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
             side_effect=SinkNotUnique,
         ):
-            many_sinks_response = await client.get(
-                f"/adapters/blob/sinks/i-i/A_next"
-            )
+            many_sinks_response = await client.get(f"/adapters/blob/sinks/i-i/A_next")
 
         assert many_sinks_response.status_code == 500
 
