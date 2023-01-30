@@ -35,8 +35,6 @@ Only those objects whose bucket name and object key match the hierarchy are avai
 The information required to access the blob storage is expected to be provided by the following environment variables:
 
 * BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION
-* BLOB_STORAGE_ACCOUNT_ID
-* BLOB_STORAGE_RESOURCE_ID
 * BLOB_STORAGE_ACCESS_DURATION
 * BLOB_STORAGE_ENDPOINT_URL
 * BLOB_STORAGE_REGION_NAME
@@ -50,10 +48,9 @@ These can be provided in the docker compose file as following:
   hetida-designer-runtime:
     ...
     environment:
-      BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION: /mount/blob_storage_adapter_hierarchy.json
-      ...
+      BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION: /mnt/blob_storage_adapter_hierarchy.json
       BLOB_STORAGE_ACCESS_DURATION: 3600
-      BLOB_STORAGE_ENDPOINT_URL: http://localhost:9000
+      BLOB_STORAGE_ENDPOINT_URL: http://minio:9000
       BLOB_STORAGE_REGION_NAME: eu-central-1
       ...
 ```
