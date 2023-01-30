@@ -4,16 +4,11 @@ from datetime import datetime, timezone
 from functools import cache
 from typing import Dict, Optional
 
-import boto3
-from botocore.exceptions import ClientError, EndpointConnectionError
-from mypy_boto3_s3 import S3Client
+import requests
 from pydantic import BaseModel, Field
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
-from hetdesrun.adapters.blob_storage.exceptions import (
-    InvalidEndpoint,
-    NoAccessTokenAvailable,
-)
+from hetdesrun.adapters.blob_storage.exceptions import NoAccessTokenAvailable
 from hetdesrun.webservice.auth_dependency import (
     forward_request_token_or_get_fixed_token_auth_headers,
 )
@@ -45,49 +40,51 @@ class CredentialInfo(BaseModel):
     expiration_time_in_seconds: int
 
 
-def get_sts_client() -> S3Client:
-    endpoint_url = get_blob_adapter_config().endpoint_url
-    try:
-        sts_client = boto3.client(
-            "sts",
-            region_name=get_blob_adapter_config().region_name,
-            use_ssl=False,
-            endpoint_url=get_blob_adapter_config().endpoint_url,
-        )
-    except ValueError as error:
-        msg = f"The string '{endpoint_url}' is no valid endpoint url!"
-        logger.error(msg)
-        raise InvalidEndpoint(msg) from error
-    return sts_client
-
-
-def obtain_credential_info_from_sts(access_token: str) -> CredentialInfo:
+def obtain_credential_info_from_rest_api(access_token: str) -> CredentialInfo:
     now = datetime.now(timezone.utc)
-
-    sts_client = get_sts_client()
-    try:
-        response = sts_client.assume_role_with_web_identity(
-            # Amazon Resource Name (ARN)
-            # arn:partition:service:region:account-id:(resource-type/)resource-id
-            RoleArn=(
-                f"arn:aws:iam::{get_blob_adapter_config().account_id}"
-                f":{get_blob_adapter_config().resource_id}"
-            ),
-            RoleSessionName="get-credentials",
-            WebIdentityToken=access_token,
-            DurationSeconds=get_blob_adapter_config().access_duration,
+    response = requests.post(
+        url=get_blob_adapter_config().endpoint_url,
+        params={
+            "Action": "AssumeRoleWithWebIdentity",
+            "DurationSeconds": str(get_blob_adapter_config().access_duration),
+            "WebIdentityToken": access_token,
+            "Version": "2011-06-15",
+        },
+        verify=get_config().hd_adapters_verify_certs,
+        auth=None,
+        timeout=get_config().external_request_timeout,
+    )
+    if response.status_code >= 300:
+        msg = (
+            f"BLOB storage credential request returned with status code {response.status_code} "
+            f"and response text:\n{response.text}\n"
+            f"When calling URL:\n{get_blob_adapter_config().endpoint_url}\n"
+            f"with access token:\n{access_token}"
         )
-    except (ClientError, EndpointConnectionError) as error:
-        msg = f"An error occured when trying to assume role with web identity:\n{error}"
         logger.error(msg)
-        raise StsAuthenticationError(msg) from error
+        raise StsAuthenticationError(msg)
 
-    credentials_json = response["Credentials"]
+    try:
+        response_json = response.json()
+    except requests.exceptions.JSONDecodeError as error:
+        logger.error(
+            "Error decoding response as json:\n%s\nResponse text was:\n%s",
+            error,
+            response.text,
+        )
+        raise error
+
+    credentials_json = response_json["AssumeRoleWithWebIdentityResult"]["Credentials"]
 
     credentials = Credentials(
         access_key_id=credentials_json["AccessKeyId"],
         secret_access_key=credentials_json["SecretAccessKey"],
         session_token=credentials_json["SessionToken"],
+    )
+    logger.info(
+        "Received credentials with expiration %s requested %s",
+        credentials_json["Expiration"],
+        now.isoformat(),
     )
 
     return CredentialInfo(
@@ -118,7 +115,7 @@ def obtain_or_refresh_credential_info(
         logger.debug("Credentials will soon expire. Trying to get new credentials.")
 
     try:
-        return obtain_credential_info_from_sts(access_token)
+        return obtain_credential_info_from_rest_api(access_token)
     except StsAuthenticationError as error:
         logger.error("Obtaining new credentails failed:\n%s", str(error))
         raise error
