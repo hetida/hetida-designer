@@ -6,7 +6,7 @@ import pytest
 from hetdesrun.adapters.blob_storage.authentication import (
     CredentialInfo,
     Credentials,
-    StsAuthenticationError,
+    StorageAuthenticationError,
     create_or_get_named_credential_manager,
     credentials_still_valid_enough,
     get_access_token,
@@ -155,9 +155,9 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_raise
 ):
     with mock.patch(
         "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
-        side_effect=StsAuthenticationError,
+        side_effect=StorageAuthenticationError,
     ) as mocked_obtain_credential_info_from_rest_api_raises:
-        with pytest.raises(StsAuthenticationError):
+        with pytest.raises(StorageAuthenticationError):
             obtain_or_refresh_credential_info(
                 access_token=access_token, existing_credential_info=None
             )
@@ -172,9 +172,9 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_r
 ):
     with mock.patch(
         "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
-        side_effect=StsAuthenticationError,
+        side_effect=StorageAuthenticationError,
     ) as mocked_obtain_credential_info_from_rest_api_raises:
-        with pytest.raises(StsAuthenticationError):
+        with pytest.raises(StorageAuthenticationError):
             credential_info = obtain_or_refresh_credential_info(
                 access_token=access_token,
                 existing_credential_info=credential_info_overdue,

@@ -18,8 +18,8 @@ from hetdesrun.webservice.config import ExternalAuthMode, get_config
 logger = logging.getLogger(__name__)
 
 
-class StsAuthenticationError(Exception):
-    """Errors around obtaining and refreshing credentials from STS"""
+class StorageAuthenticationError(Exception):
+    """Errors around obtaining and refreshing credentials from Storage"""
 
 
 class Credentials(BaseModel):
@@ -62,7 +62,7 @@ def obtain_credential_info_from_rest_api(access_token: str) -> CredentialInfo:
             f"with access token:\n{access_token}"
         )
         logger.error(msg)
-        raise StsAuthenticationError(msg)
+        raise StorageAuthenticationError(msg)
 
     try:
         response_json = response.json()
@@ -116,7 +116,7 @@ def obtain_or_refresh_credential_info(
 
     try:
         return obtain_credential_info_from_rest_api(access_token)
-    except StsAuthenticationError as error:
+    except StorageAuthenticationError as error:
         logger.error("Obtaining new credentails failed:\n%s", str(error))
         raise error
 
