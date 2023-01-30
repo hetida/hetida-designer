@@ -5,7 +5,7 @@ import pytest
 from moto import mock_s3
 
 from hetdesrun.adapters.blob_storage.authentication import Credentials
-from hetdesrun.adapters.blob_storage.exceptions import BucketNotFound, InvalidS3Endpoint
+from hetdesrun.adapters.blob_storage.exceptions import BucketNotFound, InvalidEndpoint
 from hetdesrun.adapters.blob_storage.service import (
     get_object_key_strings_in_bucket,
     get_s3_client,
@@ -31,7 +31,7 @@ def test_blob_storage_service_get_session():
             assert session.region_name == "eu-central-1"
 
 
-def test_blob_storage_service_get_s3_resource():
+def test_blob_storage_service_get_s3_client():
     with mock_s3():
         with mock.patch(
             "hetdesrun.adapters.blob_storage.service.get_session",
@@ -46,7 +46,7 @@ def test_blob_storage_service_get_s3_resource():
                 "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
                 return_value=mock.Mock(endpoint_url="invalid_endpoint_url"),
             ):
-                with pytest.raises(InvalidS3Endpoint) as exc_info:
+                with pytest.raises(InvalidEndpoint) as exc_info:
                     get_s3_client()
                 assert (
                     "The string 'invalid_endpoint_url' is no valid endpoint url!"

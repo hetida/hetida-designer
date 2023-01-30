@@ -6,10 +6,14 @@ from typing import Dict, Optional
 
 import boto3
 from botocore.exceptions import ClientError, EndpointConnectionError
+from mypy_boto3_s3 import S3Client
 from pydantic import BaseModel, Field
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
-from hetdesrun.adapters.blob_storage.exceptions import NoAccessTokenAvailable
+from hetdesrun.adapters.blob_storage.exceptions import (
+    InvalidEndpoint,
+    NoAccessTokenAvailable,
+)
 from hetdesrun.webservice.auth_dependency import (
     forward_request_token_or_get_fixed_token_auth_headers,
 )
@@ -41,16 +45,26 @@ class CredentialInfo(BaseModel):
     expiration_time_in_seconds: int
 
 
+def get_sts_client() -> S3Client:
+    endpoint_url = get_blob_adapter_config().endpoint_url
+    try:
+        sts_client = boto3.client(
+            "sts",
+            region_name=get_blob_adapter_config().region_name,
+            use_ssl=False,
+            endpoint_url=get_blob_adapter_config().endpoint_url,
+        )
+    except ValueError as error:
+        msg = f"The string '{endpoint_url}' is no valid endpoint url!"
+        logger.error(msg)
+        raise InvalidEndpoint(msg) from error
+    return sts_client
+
+
 def obtain_credential_info_from_sts(access_token: str) -> CredentialInfo:
     now = datetime.now(timezone.utc)
 
-    sts_client = boto3.client(
-        "sts",
-        region_name=get_blob_adapter_config().region_name,
-        use_ssl=False,
-        endpoint_url=get_blob_adapter_config().endpoint_url,
-    )
-
+    sts_client = get_sts_client()
     try:
         response = sts_client.assume_role_with_web_identity(
             # Amazon Resource Name (ARN)

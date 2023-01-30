@@ -3,7 +3,7 @@ from typing import Any, Dict
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     BucketNotFound,
-    InvalidS3Endpoint,
+    InvalidEndpoint,
     ObjectNotFound,
     SourceNotFound,
     SourceNotUnique,
@@ -44,7 +44,7 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     )
     try:
         s3_client = get_s3_client()
-    except InvalidS3Endpoint as error:
+    except InvalidEndpoint as error:
         raise error
     try:
         response = s3_client.get_object(
@@ -81,7 +81,7 @@ async def load_data(
     except (
         SourceNotFound,
         SourceNotUnique,
-        InvalidS3Endpoint,
+        InvalidEndpoint,
         BucketNotFound,
         ObjectNotFound,
     ) as error:

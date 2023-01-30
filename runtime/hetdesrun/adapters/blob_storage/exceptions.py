@@ -50,7 +50,7 @@ class S3Error(BlobAdapterException):
     pass
 
 
-class InvalidS3Endpoint(S3Error):
+class InvalidEndpoint(S3Error):
     pass
 
 

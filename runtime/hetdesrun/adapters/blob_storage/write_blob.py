@@ -5,7 +5,7 @@ from botocore.exceptions import ClientError
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     BucketNotFound,
-    InvalidS3Endpoint,
+    InvalidEndpoint,
     ObjectExists,
     SinkNotFound,
     SinkNotUnique,
@@ -42,7 +42,7 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
     )
     try:
         s3_client = get_s3_client()
-    except InvalidS3Endpoint as error:
+    except InvalidEndpoint as error:
         raise error
     try:
         # head_object is as get_object but without the body
@@ -94,7 +94,7 @@ async def send_data(
     except (
         SinkNotFound,
         SinkNotUnique,
-        InvalidS3Endpoint,
+        InvalidEndpoint,
         BucketNotFound,
         UnexpectedClientError,
     ) as error:

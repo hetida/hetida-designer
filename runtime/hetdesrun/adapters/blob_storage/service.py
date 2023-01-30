@@ -6,7 +6,7 @@ from mypy_boto3_s3 import S3Client
 
 from hetdesrun.adapters.blob_storage.authentication import get_credentials
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
-from hetdesrun.adapters.blob_storage.exceptions import BucketNotFound, InvalidS3Endpoint
+from hetdesrun.adapters.blob_storage.exceptions import BucketNotFound, InvalidEndpoint
 from hetdesrun.adapters.blob_storage.models import BucketName, IdString
 
 logger = getLogger(__name__)
@@ -31,7 +31,7 @@ def get_s3_client() -> S3Client:
     except ValueError as error:
         msg = f"The string '{endpoint_url}' is no valid endpoint url!"
         logger.error(msg)
-        raise InvalidS3Endpoint(msg) from error
+        raise InvalidEndpoint(msg) from error
     return client
 
 
