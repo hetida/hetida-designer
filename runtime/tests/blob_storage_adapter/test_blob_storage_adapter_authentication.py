@@ -13,14 +13,15 @@ from hetdesrun.adapters.blob_storage.authentication import (
     get_credentials,
     obtain_or_refresh_credential_info,
 )
+from hetdesrun.adapters.blob_storage.exceptions import NoAccessTokenAvailable
 from hetdesrun.webservice.auth_outgoing import (
     ClientCredentialsGrantCredentials,
     ServiceCredentials,
 )
-from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.config import ExternalAuthMode
 
 
-def test_blob_storage_authentication_obtain_credential_info_from_sts():
+def test_blob_storage_authentication_obtain_credential_info_from_rest_api():
     pass
 
 
@@ -95,9 +96,9 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_still_val
     access_token,
 ):
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
         return_value=result_credential_info,
-    ) as mocked_obtain_credential_info_from_sts:
+    ) as mocked_obtain_credential_info_from_rest_api:
         credential_info = obtain_or_refresh_credential_info(
             access_token=access_token,
             existing_credential_info=credential_info_longer_valid,
@@ -107,7 +108,7 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_still_val
         assert credential_info == credential_info_longer_valid
 
         # not token obtain:
-        assert mocked_obtain_credential_info_from_sts.call_count == 0
+        assert mocked_obtain_credential_info_from_rest_api.call_count == 0
 
 
 def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_works(
@@ -115,9 +116,9 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_works
     result_credential_info,
 ):
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
         return_value=result_credential_info,
-    ) as mocked_obtain_credential_info_from_sts:
+    ) as mocked_obtain_credential_info_from_rest_api:
         credential_info = obtain_or_refresh_credential_info(
             access_token=access_token, existing_credential_info=None
         )
@@ -126,7 +127,7 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_works
         assert credential_info == result_credential_info
 
         # not token obtain:
-        assert mocked_obtain_credential_info_from_sts.call_count == 1
+        assert mocked_obtain_credential_info_from_rest_api.call_count == 1
 
 
 def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_works(
@@ -135,9 +136,9 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_w
     result_credential_info,
 ):
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
         return_value=result_credential_info,
-    ) as mocked_obtain_credential_info_from_sts:
+    ) as mocked_obtain_credential_info_from_rest_api:
         credential_info = obtain_or_refresh_credential_info(
             access_token=access_token, existing_credential_info=credential_info_overdue
         )
@@ -146,23 +147,23 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_w
         assert credential_info == result_credential_info
 
         # not token obtain:
-        assert mocked_obtain_credential_info_from_sts.call_count == 1
+        assert mocked_obtain_credential_info_from_rest_api.call_count == 1
 
 
 def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_raises(
     access_token,
 ):
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
         side_effect=StsAuthenticationError,
-    ) as mocked_obtain_credential_info_from_sts_raises:
+    ) as mocked_obtain_credential_info_from_rest_api_raises:
         with pytest.raises(StsAuthenticationError):
             obtain_or_refresh_credential_info(
                 access_token=access_token, existing_credential_info=None
             )
 
         # not token obtain:
-        assert mocked_obtain_credential_info_from_sts_raises.call_count == 1
+        assert mocked_obtain_credential_info_from_rest_api_raises.call_count == 1
 
 
 def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_raises(
@@ -170,9 +171,9 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_r
     access_token,
 ):
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
         side_effect=StsAuthenticationError,
-    ) as mocked_obtain_credential_info_from_sts_raises:
+    ) as mocked_obtain_credential_info_from_rest_api_raises:
         with pytest.raises(StsAuthenticationError):
             credential_info = obtain_or_refresh_credential_info(
                 access_token=access_token,
@@ -180,14 +181,14 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_r
             )
 
         # not token obtain:
-        assert mocked_obtain_credential_info_from_sts_raises.call_count == 1
+        assert mocked_obtain_credential_info_from_rest_api_raises.call_count == 1
 
 
 def test_blob_storage_adapter_create_or_get_named_credential_manager(
     result_credential_info, access_token
 ):
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_sts",
+        "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
         return_value=result_credential_info,
     ):
         credential_manager = create_or_get_named_credential_manager(
@@ -218,15 +219,52 @@ def service_credentials():
     )
 
 
-def test_blob_storage_adapter_get_access_token(access_token, service_credentials):
-    get_config().external_auth_client_credentials = service_credentials
-    token_manager_mock = mock.Mock()
-    token_manager_mock.sync_get_access_token = mock.MagicMock(return_value=access_token)
+def test_blob_storage_adapter_get_access_token(access_token):
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.create_or_get_named_access_token_manager",
-        return_value=token_manager_mock,
+        "hetdesrun.adapters.blob_storage.authentication.get_config",
+        return_value=mock.Mock(external_auth_mode=ExternalAuthMode.OFF),
     ):
-        assert get_access_token() == access_token
+        with pytest.raises(NoAccessTokenAvailable) as exc_info:
+            get_access_token()
+        assert (
+            "Config option external_auth_mode is set to 'OFF' "
+            "thus no access token is available!"
+        ) in str(exc_info.value)
+
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.get_config",
+        return_value=mock.Mock(external_auth_mode=ExternalAuthMode.FORWARD_OR_FIXED),
+    ):
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.authentication.forward_request_token_or_get_fixed_token_auth_headers",
+            return_value={"Authorization": "Bearer " + access_token},
+        ):
+            assert get_access_token() == access_token
+
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.get_config",
+        return_value=mock.Mock(external_auth_mode=ExternalAuthMode.CLIENT),
+    ):
+        token_manager_mock = mock.Mock()
+        token_manager_mock.sync_get_access_token = mock.MagicMock(
+            return_value=access_token
+        )
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.authentication.create_or_get_named_access_token_manager",
+            return_value=token_manager_mock,
+        ):
+            assert get_access_token() == access_token
+
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.get_config",
+        return_value=mock.Mock(external_auth_mode=""),
+    ):
+        with pytest.raises(NoAccessTokenAvailable) as exc_info:
+            get_access_token()
+        assert (
+            "Unknown config option for external_auth_mode '' "
+            "thus no access token is available!"
+        ) in str(exc_info.value)
 
 
 def test_blob_storage_adapter_get_credentials(credentials, access_token):
