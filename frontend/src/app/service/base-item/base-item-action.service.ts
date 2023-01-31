@@ -466,12 +466,21 @@ export class BaseItemActionService {
     if (isWorkflowTransformation(transformation)) {
       isIncomplete = this.isWorkflowIncomplete(transformation);
     } else if (isComponentTransformation(transformation)) {
-      // TODO extract and test method
       isIncomplete =
         transformation.io_interface.inputs.length === 0 &&
         transformation.io_interface.outputs.length === 0;
     }
     return isIncomplete;
+  }
+
+  public isWorkflowWithoutIo(
+    workflowTransformation: WorkflowTransformation | undefined
+  ): boolean {
+    const isWorkflowWithoutIo =
+      workflowTransformation.content.inputs.length === 0 &&
+      workflowTransformation.content.outputs.length === 0 &&
+      workflowTransformation.content.constants.length === 0;
+    return isWorkflowWithoutIo;
   }
 
   public doDeleteTransformation(

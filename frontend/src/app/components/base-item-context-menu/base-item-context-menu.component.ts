@@ -12,7 +12,10 @@ import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
-import { Transformation } from '../../model/new-api/transformation';
+import {
+  isWorkflowTransformation,
+  Transformation
+} from '../../model/new-api/transformation';
 
 @Component({
   selector: 'hd-base-item-context-menu',
@@ -24,23 +27,22 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   @ViewChild(MatMenuTrigger) readonly _trigger: MatMenuTrigger;
   @ViewChild(MatMenu) readonly _menu: MatMenu;
   @ViewChild('invisibleTrigger') _elementRef: ElementRef;
-  _isIncomplete: boolean;
-  _isNotPublished: boolean;
-  baseItemHasEmptyInputsAndOutputs: boolean;
+  isIncomplete: boolean;
+  isNotPublished: boolean;
+  isWorkflowWithoutIo: boolean;
 
   _transformation: Transformation;
   @Input()
   set transformation(transformation: Transformation) {
-    // TODO should configure io be enabled even if base item has empty inputs and outputs?
-    this._isIncomplete = this.baseItemActionsService.isIncomplete(
+    // show or hide execute button
+    this.isIncomplete = this.baseItemActionsService.isIncomplete(
       transformation
     );
-    this._isNotPublished = transformation.state === RevisionState.DRAFT;
-    // TODO is this the same as isIncomplete?
-    // TODO if workflow, constants have to be empty, too
-    this.baseItemHasEmptyInputsAndOutputs =
-      transformation.io_interface.inputs.length === 0 &&
-      transformation.io_interface.outputs.length === 0;
+    this.isNotPublished = transformation.state === RevisionState.DRAFT;
+    // show or hide configureIO button in workflows
+    this.isWorkflowWithoutIo =
+      isWorkflowTransformation(transformation) &&
+      this.baseItemActionsService.isWorkflowWithoutIo(transformation);
     this._transformation = transformation;
   }
 
