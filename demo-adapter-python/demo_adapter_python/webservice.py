@@ -237,7 +237,9 @@ async def get_metadata_source_by_key(sourceId: str, key: str) -> Metadatum:
     )
 
 
-@demo_adapter_main_router.post("/sources/{sourceId}/metadata/{key}", status_code=200)
+@demo_adapter_main_router.post(
+    "/sources/{sourceId}/metadata/{key}", status_code=200, response_model=None
+)
 async def post_metadata_source_by_key(
     sourceId: str, key: str, metadatum: PostMetadatum
 ) -> dict | HTTPException:
@@ -336,7 +338,9 @@ async def get_metadata_sink_by_key(sinkId: str, key: str) -> Metadatum:
     )
 
 
-@demo_adapter_main_router.post("/sinks/{sinkId}/metadata/{key}", status_code=200)
+@demo_adapter_main_router.post(
+    "/sinks/{sinkId}/metadata/{key}", status_code=200, response_model=None
+)
 async def post_metadata_sink_by_key(
     sinkId: str, key: str, metadatum: PostMetadatum
 ) -> dict | HTTPException:
@@ -473,7 +477,7 @@ async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> Metadatum
 
 
 @demo_adapter_main_router.post(
-    "/thingNodes/{thingNodeId}/metadata/{key}", status_code=200
+    "/thingNodes/{thingNodeId}/metadata/{key}", status_code=200, response_model=None
 )
 async def post_metadata_thingNode_by_key(
     thingNodeId: str, key: str, metadatum: PostMetadatum
@@ -645,10 +649,10 @@ async def post_timeseries(
     raise HTTPException(404, f"No writable timeseries with id {ts_id}")
 
 
-@demo_adapter_main_router.get("/dataframe")
+@demo_adapter_main_router.get("/dataframe", response_model=None)
 async def dataframe(
     df_id: str = Query(..., alias="id"),
-) -> HTTPException | StreamingResponse:
+) -> StreamingResponse | HTTPException:
 
     if df_id.endswith("plantA.maintenance_events"):
         df = pd.DataFrame(
