@@ -73,7 +73,6 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   editItem() {
-    // TODO check for workflows
     this.baseItemActionsService.editDetails(this.transformation);
   }
 
@@ -85,36 +84,32 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   editDocumentation() {
+    // TODO if a transformation is set to released,
+    // it can't be updated by a new documentation and will throw a error 403 (Forbidden)
     this.baseItemActionsService.showDocumentation(this.transformation.id);
   }
 
   copyItem() {
-    // TODO check for workflows
     this.baseItemActionsService.copy(this.transformation);
   }
 
   publish() {
-    // TODO check for workflows
     this.baseItemActionsService.publish(this.transformation);
   }
 
   delete() {
-    // TODO check for workflows
     this.baseItemActionsService.delete(this.transformation).subscribe();
   }
 
   async execute() {
-    // TODO check for workflows
     await this.baseItemActionsService.execute(this.transformation);
   }
 
   configureIO() {
-    // TODO check for workflows
     this.baseItemActionsService.configureIO(this.transformation);
   }
 
   deprecate() {
-    // TODO check for workflows
     this.baseItemActionsService.deprecate(this.transformation);
   }
 }
