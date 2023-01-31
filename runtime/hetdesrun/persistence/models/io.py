@@ -17,7 +17,6 @@ class IO(BaseModel):
     )
     data_type: DataType
 
-    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         if name is None or name == "":
@@ -40,7 +39,6 @@ class IOInterface(BaseModel):
     inputs: list[IO] = []
     outputs: list[IO] = []
 
-    # pylint: disable=no-self-argument
     @validator("inputs", "outputs", each_item=False)
     def io_names_unique(cls, ios: list[IO]) -> list[IO]:
         ios_with_name = [io for io in ios if not (io.name is None or io.name == "")]
@@ -147,7 +145,6 @@ class Constant(IOConnector):
     # the runtime will take care of the correct data type before execution
     value: str
 
-    # pylint: disable=no-self-argument
     @root_validator()
     def name_none(cls, values: dict) -> dict:
         if not ("name" not in values or values["name"] is None or values["name"] == ""):

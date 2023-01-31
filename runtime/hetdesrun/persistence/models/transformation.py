@@ -127,28 +127,24 @@ class TransformationRevision(BaseModel):
         ),
     )
 
-    # pylint: disable=no-self-argument
     @validator("version_tag")
     def version_tag_not_latest(cls, v: str) -> str:
         if v.lower() == "latest":
             raise ValueError('version_tag is not allowed to be "latest"')
         return v
 
-    # pylint: disable=no-self-argument
     @validator("disabled_timestamp")
     def disabled_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
         if v is None:
             return v
         return transform_to_utc_datetime(v)
 
-    # pylint: disable=no-self-argument
     @validator("released_timestamp")
     def released_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
         if v is None:
             return v
         return transform_to_utc_datetime(v)
 
-    # pylint: disable=no-self-argument
     @validator("released_timestamp", always=True)
     def disabled_timestamp_requires_released_timestamp(
         cls, v: datetime.datetime, values: dict
@@ -161,7 +157,6 @@ class TransformationRevision(BaseModel):
             return values["disabled_timestamp"]
         return v
 
-    # pylint: disable=no-self-argument
     @validator("state")
     def timestamps_set_if_released_or_disabled(cls, v: State, values: dict) -> State:
         if v is State.RELEASED and (
@@ -174,13 +169,12 @@ class TransformationRevision(BaseModel):
             raise ValueError("disabled_timestamp must be set if state is DISABLED")
         return v
 
-    # pylint: disable=no-self-argument
     @validator("content")
     def content_type_correct(
         cls, v: str | WorkflowContent, values: dict
     ) -> str | WorkflowContent:
         try:
-            type_ = values["type"]  # pylint: disable=redefined-builtin
+            type_ = values["type"]
         except KeyError as e:
             raise ValueError(
                 "Cannot check if the content type is correct if the attribute 'type' is missing!"
@@ -198,13 +192,12 @@ class TransformationRevision(BaseModel):
             )
         return v
 
-    # pylint: disable=no-self-argument
     @validator("io_interface")
     def io_interface_fits_to_content(
         cls, io_interface: IOInterface, values: dict
     ) -> IOInterface:
         try:
-            type_ = values["type"]  # pylint: disable=redefined-builtin
+            type_ = values["type"]
             workflow_content = values["content"]
         except KeyError as e:
             raise ValueError(
@@ -224,7 +217,6 @@ class TransformationRevision(BaseModel):
 
         return io_interface
 
-    # pylint: disable=no-self-argument
     @validator("io_interface")
     def io_interface_no_names_empty(
         cls, io_interface: IOInterface, values: dict

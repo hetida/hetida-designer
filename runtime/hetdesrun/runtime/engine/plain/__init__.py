@@ -1,9 +1,7 @@
 import logging
 from typing import Any
 
-from hetdesrun.runtime import (
-    runtime_execution_logger,
-)
+from hetdesrun.runtime import runtime_execution_logger
 from hetdesrun.runtime.engine.plain.workflow import Workflow
 from hetdesrun.runtime.logging import execution_context_filter
 

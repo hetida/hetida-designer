@@ -182,7 +182,6 @@ def update_code(
 
     # we now are quite sure that we find a complete existing function definition
 
-    # pylint: disable=unused-variable
     old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****", 1)
 
     old_func_def_lines = old_func_def.split("\n")

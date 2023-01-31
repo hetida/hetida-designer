@@ -46,7 +46,7 @@ base_item_router = HandleTrailingSlashAPIRouter(
 )
 async def get_all_transformation_revisions(
     type: Type  # noqa: A002
-    | None = Query(  # pylint: disable=redefined-builtin
+    | None = Query(
         None,
         description="Set to get only transformation revisions in the specified type",
     ),
@@ -92,7 +92,6 @@ async def get_all_transformation_revisions(
     deprecated=True,
 )
 async def get_transformation_revision_by_id(
-    # pylint: disable=redefined-builtin
     id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -197,7 +196,6 @@ async def create_transformation_revision(
     deprecated=True,
 )
 async def update_transformation_revision(
-    # pylint: disable=redefined-builtin
     id: UUID,  # noqa: A002
     updated_transformation_revision_dto: TransformationRevisionFrontendDto,
 ) -> TransformationRevisionFrontendDto:

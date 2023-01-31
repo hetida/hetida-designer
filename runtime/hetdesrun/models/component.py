@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field, validator
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.base import AbstractNode
@@ -32,7 +32,6 @@ class ComponentInput(UnnamedInput):
 
     name: str = Field(..., example="x", description="must be a valid Python identifier")
 
-    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         return valid_python_identifier(cls, name)
@@ -49,7 +48,6 @@ class ComponentOutput(BaseModel):
         example=DataType.Integer,
     )
 
-    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         return valid_python_identifier(cls, name)
@@ -79,17 +77,14 @@ class ComponentRevision(BaseModel):
     inputs: list[ComponentInput]
     outputs: list[ComponentOutput]
 
-    # pylint: disable=no-self-argument
     @validator("function_name")
     def function_name_valid_python_identifier(cls, function_name: str) -> str:
         return valid_python_identifier(cls, function_name)
 
-    # pylint: disable=no-self-argument
     @validator("inputs", each_item=False)
     def input_names_unique(cls, inputs: list[ComponentInput]) -> list[ComponentInput]:
         return names_unique(cls, inputs)
 
-    # pylint: disable=no-self-argument
     @validator("outputs", each_item=False)
     def output_names_unique(
         cls, outputs: list[ComponentOutput]

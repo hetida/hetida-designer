@@ -10,9 +10,7 @@ from hetdesrun.models.data_selection import FilteredSink
 
 
 def send_directly_provisioned_data(
-    wf_output_name_to_filtered_sink_mapping_dict: dict[
-        str, FilteredSink
-    ],  # pylint: disable=unused-argument
+    wf_output_name_to_filtered_sink_mapping_dict: dict[str, FilteredSink],
     wf_output_name_to_value_mapping_dict: dict[str, Any],
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:

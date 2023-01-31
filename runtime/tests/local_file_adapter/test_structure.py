@@ -75,7 +75,7 @@ async def walk_thing_nodes(
     "ignore:an integer is required*"
 )  # pandas to_json currently throws a deprecation warning
 async def test_resources_offered_from_structure_hierarchy(async_test_client):
-    """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""
+    """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""  # noqa: E501
     async with async_test_client as client:
 
         response_obj = (await client.get("/adapters/localfile/structure")).json()
@@ -245,7 +245,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                 assert resp.status_code == 200
 
             if snk["type"].startswith("dataframe"):
-                with mock.patch(
+                with mock.patch( # noqa: SIM117
                     "hetdesrun.adapters.local_file.write_file.pd.DataFrame.to_csv"
                 ) as to_csv_mock:
                     with mock.patch(

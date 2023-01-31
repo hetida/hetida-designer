@@ -1,6 +1,6 @@
 from typing import Any, Callable
 
-from pydantic import BaseModel, validator  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, validator
 
 
 class FileSupportHandler(BaseModel):
@@ -9,7 +9,7 @@ class FileSupportHandler(BaseModel):
     write_handler_func: Callable | None = None
 
     @validator("write_handler_func", always=True)
-    def at_least_one_handler_func(  # pylint: disable=no-self-argument
+    def at_least_one_handler_func(
         cls, v: Any, values: dict[str, Any]
     ) -> Callable | None:
         if (values["read_handler_func"] is None) and (

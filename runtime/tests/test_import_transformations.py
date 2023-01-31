@@ -68,7 +68,7 @@ def test_component_import_via_rest_api(caplog):
     response_mock = mock.Mock()
     response_mock.status_code = 200
 
-    with caplog.at_level(logging.DEBUG):
+    with caplog.at_level(logging.DEBUG):  # noqa: SIM117
 
         with mock.patch(
             "hetdesrun.utils.requests.put", return_value=response_mock
@@ -84,7 +84,7 @@ def test_component_import_via_rest_api(caplog):
     # Test logging when posting does not work
     response_mock.status_code = 400
 
-    with caplog.at_level(logging.INFO):
+    with caplog.at_level(logging.INFO):  # noqa: SIM117
         with mock.patch(
             "hetdesrun.utils.requests.put", return_value=response_mock
         ) as patched_put:
@@ -116,7 +116,7 @@ def test_workflow_import_via_rest_api(caplog):
 
 def test_component_import_directly_into_db(caplog, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -127,7 +127,7 @@ def test_component_import_directly_into_db(caplog, clean_test_db_engine):
             response_mock = mock.Mock()
             response_mock.status_code = 200
 
-            with caplog.at_level(logging.DEBUG):
+            with caplog.at_level(logging.DEBUG):  # noqa: SIM117
 
                 with mock.patch(
                     "hetdesrun.utils.requests.put", return_value=response_mock
@@ -147,8 +147,9 @@ def test_import_with_deprecate_older_versions():
     response_mock = mock.Mock()
     response_mock.status_code = 201
 
-    with mock.patch("hetdesrun.utils.requests.put", return_value=response_mock):
-
+    with mock.patch(  # noqa: SIM117
+        "hetdesrun.utils.requests.put", return_value=response_mock
+    ):
         with mock.patch(
             "hetdesrun.exportimport.importing.deprecate_all_but_latest_in_group",
             return_value=None,
@@ -168,7 +169,7 @@ def test_generate_import_order_file_without_transform_py_to_json(tmp_path):
     response_mock = mock.Mock()
     response_mock.status_code = 201
 
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.utils.requests.put", return_value=response_mock
     ) as rest_api_mock:
 
@@ -184,7 +185,7 @@ def test_generate_import_order_file_without_transform_py_to_json(tmp_path):
 
             assert os.path.exists(str(json_import_order))
             list_of_json_paths = []
-            with open(json_import_order, "r", encoding="utf8") as file:
+            with open(json_import_order, "r", encoding="utf8") as file:  # noqa: UP015
                 for line in file:
                     path = line[:-1]  # remove line break
                     list_of_json_paths.append(path)
@@ -205,7 +206,7 @@ def test_generate_import_order_file_with_transform_py_to_json(tmp_path):
 
     assert os.path.exists(str(json_import_order))
     list_of_json_paths = []
-    with open(json_import_order, "r", encoding="utf8") as file:
+    with open(json_import_order, "r", encoding="utf8") as file: # noqa: UP015
         for line in file:
             path = line[:-1]  # remove line break
             list_of_json_paths.append(path)

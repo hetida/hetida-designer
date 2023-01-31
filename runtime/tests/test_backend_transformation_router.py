@@ -26,7 +26,7 @@ from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def clean_test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
@@ -64,7 +64,7 @@ tr_json_component_1 = {
             }
         ],
     },
-    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',
+    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',  # noqa: E501
     "test_wiring": {
         "input_wirings": [
             {
@@ -107,7 +107,7 @@ tr_json_component_1_new_revision = {
             }
         ],
     },
-    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',
+    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',  # noqa: E501
     "test_wiring": {
         "input_wirings": [
             {
@@ -198,8 +198,8 @@ tr_json_component_3 = {
     "version_tag": "1.0.1",
     "state": "DRAFT",
     "type": "COMPONENT",
-    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
-    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',
+    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",  # noqa: E501
+    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',  # noqa: E501
     "io_interface": {
         "inputs": [
             {
@@ -229,8 +229,8 @@ tr_json_component_3_publish = {
     "state": "RELEASED",
     "released_timestamp": "2019-12-01T12:00:00+00:00",
     "type": "COMPONENT",
-    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
-    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',
+    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",  # noqa: E501
+    "content": '# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    "inputs": {\n        "new_input_1": "STRING",\n    },\n    "outputs": {\n        "new_output_1": "BOOLEAN",\n    },\n    "name": "Test1",\n    "category": "Äpfel",\n    "description": "New created component test",\n    "version_tag": "1.0.1",\n    "id": "977cbb10-ca82-4893-b062-6036f918344d",\n    "revision_group_id": "a7128772-9729-4519-bc55-540327641a0c",\n    "state": "DRAFT",\n}\n\n\ndef main(*, new_input_1):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    print "test"\n    pass',  # noqa: E501
     "io_interface": {
         "inputs": [
             {
@@ -1323,7 +1323,15 @@ async def test_update_transformation_revision_by_adding_operator_to_workflow_fol
 
         assert get_response.status_code == 200
 
-        get_response.json() == put_response.json()
+        get_response_json_without_io_ids = deepcopy(get_response.json())
+
+        # do not compare ids of generated inputs / outputs!
+        del get_response_json_without_io_ids["io_interface"]["inputs"][0]["id"]
+        del get_response_json_without_io_ids["io_interface"]["outputs"][0]["id"]
+        del get_response_json_without_io_ids["content"]["inputs"][0]["id"]
+        del get_response_json_without_io_ids["content"]["outputs"][0]["id"]
+        assert get_response_json_without_io_ids == put_response_json_without_io_ids
+        
 
 
 @pytest.mark.asyncio
@@ -1437,7 +1445,7 @@ async def test_execute_for_transformation_revision(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1480,7 +1488,7 @@ async def test_execute_for_transformation_revision_without_job_id(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1521,7 +1529,7 @@ async def test_execute_for_separate_runtime_container(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1583,7 +1591,7 @@ async def test_execute_asynchron_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1640,7 +1648,7 @@ async def test_execute_async_for_transformation_revision_with_exception(
     async_test_client, clean_test_db_engine, caplog
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1679,7 +1687,7 @@ async def test_execute_async_for_transformation_revision_with_exception(
                         "handle_trafo_revision_execution_request",
                         side_effect=Exception,
                     ):
-                        with pytest.raises(Exception):
+                        with pytest.raises(Exception): # noqa: PT011
                             await ac.post(
                                 "/api/transformations/execute-async",
                                 json=json.loads(exec_by_id_input.json()),
@@ -1696,7 +1704,7 @@ async def test_execute_latest_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1746,7 +1754,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1780,7 +1788,7 @@ async def test_execute_latest_async_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1844,7 +1852,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
     async_test_client, clean_test_db_engine, caplog
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1883,7 +1891,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
                         "handle_latest_trafo_revision_execution_request",
                         side_effect=Exception,
                     ):
-                        with pytest.raises(Exception):
+                        with pytest.raises(Exception):  # noqa: PT011
                             await ac.post(
                                 "/api/transformations/execute-latest-async",
                                 json=json.loads(exec_latest_by_group_id_input.json()),
@@ -1898,7 +1906,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
 @pytest.mark.asyncio
 async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -2032,7 +2040,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
                         adapter_id="direct_provisioning",
                         workflow_input_name="input",
                         filters={
-                            "value": '{"2020-05-01T00:00:00.000Z": "2020-05-01T01:00:00.000Z", "2020-05-01T02:00:00.000Z": null}'
+                            "value": '{"2020-05-01T00:00:00.000Z": "2020-05-01T01:00:00.000Z", "2020-05-01T02:00:00.000Z": null}'  # noqa: E501
                         },
                     ),
                 ],
@@ -2052,7 +2060,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
             ]
             assert "output" in output_results_by_output_name
             assert len(output_results_by_output_name["output"]) == 3
-            assert output_results_by_output_name["output"]["1"] == None
+            assert output_results_by_output_name["output"]["1"] == None  # noqa: E711
 
             response_nat = await ac.post(
                 "/api/transformations/execute",
@@ -2068,7 +2076,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
             assert len(output_results_by_output_name["output"]) == 2
             assert (
                 output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
-                == None
+                == None  # noqa: E711
             )
 
             tr_group_id_any = UUID("1946d5f8-44a8-724c-176f-16f3e49963af")
@@ -2091,7 +2099,7 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
             ]
             assert "output" in output_results_by_output_name
             assert len(output_results_by_output_name["output"]) == 3
-            assert output_results_by_output_name["output"]["1"] == None
+            assert output_results_by_output_name["output"]["1"] == None  # noqa: E711
 
             response_latest_nat = await ac.post(
                 "/api/transformations/execute-latest",
@@ -2107,14 +2115,14 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
             assert len(output_results_by_output_name["output"]) == 2
             assert (
                 output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
-                == None
+                == None # noqa: E711
             )
 
 
 @pytest.mark.asyncio
 async def test_put_workflow_transformation(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -2161,7 +2169,7 @@ async def test_put_component_transformation_with_update_code(
         patched_session,
     ):
 
-        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"
+        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"  # noqa: E501
         example_component_tr_json = load_json(path)
 
         async with async_test_client as ac:
@@ -2192,7 +2200,7 @@ async def test_put_component_transformation_without_update_code(
         patched_session,
     ):
 
-        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"
+        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"  # noqa: E501
         example_component_tr_json = load_json(path)
 
         async with async_test_client as ac:
@@ -2221,7 +2229,7 @@ async def test_put_multiple_trafos(async_test_client, clean_test_db_engine):
         patched_session,
     ):
 
-        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"
+        path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"  # noqa: E501
         example_component_tr_json = load_json(path)
 
         async with async_test_client as ac:

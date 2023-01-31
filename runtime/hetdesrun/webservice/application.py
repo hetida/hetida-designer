@@ -58,9 +58,7 @@ class AdditionalLoggingRoute(APIRoute):
                 body = await request.body()
                 detail = {"errors": exc.errors(), "body": body.decode()}
                 logger.info("Request Validation Error: %s", str(exc))
-                raise HTTPException(  # pylint: disable=raise-missing-from
-                    status_code=422, detail=detail
-                ) from exc
+                raise HTTPException(status_code=422, detail=detail) from exc
 
         return custom_route_handler
 
@@ -85,7 +83,7 @@ def app_desc_part() -> str:
 
 
 def init_app() -> FastAPI:
-    import sys  # pylint: disable=import-outside-toplevel
+    import sys
 
     # reimporting runtime_router and local_file router since they have
     # endpoint-individual auth settings and therefore load config during
@@ -95,16 +93,14 @@ def init_app() -> FastAPI:
     except KeyError:
         pass
 
-    from hetdesrun.service.runtime_router import (  # pylint: disable=import-outside-toplevel
-        runtime_router,
-    )
+    from hetdesrun.service.runtime_router import runtime_router
 
     try:  # noqa: SIM105
         del sys.modules["hetdesrun.adapters.local_file.webservice"]
     except KeyError:
         pass
 
-    from hetdesrun.adapters.local_file.webservice import (  # pylint: disable=import-outside-toplevel # noqa: E501
+    from hetdesrun.adapters.local_file.webservice import (  # noqa: E501
         local_file_adapter_router,
     )
 

@@ -155,9 +155,7 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
         payload: dict = bearer_verifier.verify_token(token)
         logger.debug("Bearer token payload => %s", payload)
     except AuthentificationError as e:
-        raise HTTPException(  # pylint: disable=raise-missing-from
-            status_code=401, detail=str(e)
-        ) from None
+        raise HTTPException(status_code=401, detail=str(e)) from None
     # Check role
     try:
         if get_config().auth_allowed_role is not None and (
@@ -170,7 +168,7 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
             )
     except KeyError:
         logger.info("Unauthorized: No role information in token")
-        raise HTTPException(  # pylint: disable=raise-missing-from
+        raise HTTPException(
             status_code=HTTP_403_FORBIDDEN, detail="No role information in token"
         ) from None
 

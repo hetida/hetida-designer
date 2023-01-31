@@ -129,7 +129,6 @@ class WorkflowContent(BaseModel):
         ),
     )
 
-    # pylint: disable=no-self-argument
     @validator("operators", each_item=False)
     def operator_names_unique(cls, operators: list[Operator]) -> list[Operator]:
         operator_groups: dict[str, list[Operator]] = {}
@@ -153,7 +152,6 @@ class WorkflowContent(BaseModel):
 
         return operators
 
-    # pylint: disable=no-self-argument
     @validator("links", each_item=False)
     def reduce_to_valid_links(cls, links: list[Link], values: dict) -> list[Link]:
 
@@ -192,7 +190,6 @@ class WorkflowContent(BaseModel):
 
         return updated_links
 
-    # pylint: disable=no-self-argument
     @validator("links", each_item=False)
     def links_acyclic_directed_graph(cls, links: list[Link]) -> list[Link]:
 
@@ -243,7 +240,6 @@ class WorkflowContent(BaseModel):
 
         return links
 
-    # pylint: disable=no-self-argument
     @validator("inputs", each_item=False)
     def determine_inputs_from_operators_and_links(
         cls, inputs: list[IOConnector], values: dict
@@ -281,7 +277,6 @@ class WorkflowContent(BaseModel):
 
         return updated_inputs
 
-    # pylint: disable=no-self-argument
     @validator("outputs", each_item=False)
     def determine_outputs_from_operators_and_links(
         cls, outputs: list[IOConnector], values: dict
@@ -319,7 +314,6 @@ class WorkflowContent(BaseModel):
 
         return updated_outputs
 
-    # pylint: disable=no-self-argument
     @validator("inputs", "outputs", each_item=False)
     def connector_names_empty_or_unique(
         cls, io_connectors: list[IOConnector]

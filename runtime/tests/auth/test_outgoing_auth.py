@@ -20,7 +20,7 @@ from hetdesrun.webservice.auth_outgoing import (
 )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def http_error_token_request():
     async def mocked_post_to_auth_provider(*args, **kwargs):
         mocked_post_to_auth_provider.last_called_args = deepcopy(args)
@@ -34,7 +34,7 @@ def http_error_token_request():
         yield test_mocked_post_to_auth_provider
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def json_parsing_error_token_request():
     mocked_resp = mock.Mock
     mocked_resp.json = mock.Mock(
@@ -54,7 +54,7 @@ def json_parsing_error_token_request():
         yield test_mocked_post_to_auth_provider
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def invalid_token_response_mocked_token_request(valid_token_response):
     mocked_resp = mock.Mock
     mocked_resp.json = mock.Mock(return_value={"a": 42})
@@ -228,7 +228,7 @@ async def test_outgoing_auth_token_refreshing(
     ).total_seconds() < 30
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def service_credentials():
     return ServiceCredentials(
         realm="my-realm",
@@ -240,7 +240,7 @@ def service_credentials():
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def result_token_info() -> TokenResponse:
     return TokenResponse(
         access_token="result_access_token",
@@ -255,7 +255,7 @@ def result_token_info() -> TokenResponse:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def token_info_both_longer_valid() -> TokenResponse:
     return TokenResponse(
         access_token="some_access_token",
@@ -270,7 +270,7 @@ def token_info_both_longer_valid() -> TokenResponse:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def token_info_access_overdue_refresh_valid() -> TokenResponse:
     return TokenResponse(
         access_token="some_access_token",
@@ -285,7 +285,7 @@ def token_info_access_overdue_refresh_valid() -> TokenResponse:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def token_info_access_valid_refresh_overdue() -> TokenResponse:
     return TokenResponse(
         access_token="some_access_token",
@@ -300,7 +300,7 @@ def token_info_access_valid_refresh_overdue() -> TokenResponse:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def token_info_both_overdue() -> TokenResponse:
     return TokenResponse(
         access_token="some_access_token",
@@ -315,7 +315,7 @@ def token_info_both_overdue() -> TokenResponse:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def obtain_token_works(result_token_info):
     async def mocked_obtain_func(*args, **kwargs):
         mocked_obtain_func.last_called_args = deepcopy(args)
@@ -331,7 +331,7 @@ def obtain_token_works(result_token_info):
         yield mocked
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def obtain_token_raises():
     async def mocked_obtain_func(*args, **kwargs):
         mocked_obtain_func.last_called_args = deepcopy(args)
@@ -348,7 +348,7 @@ def obtain_token_raises():
         yield _mocked_obtain_token_function_raises
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def refresh_token_works(result_token_info):
     async def mocked_obtain_func(*args, **kwargs):
         mocked_obtain_func.last_called_args = deepcopy(args)
@@ -364,7 +364,7 @@ def refresh_token_works(result_token_info):
         yield mocked
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def refresh_token_raises():
     async def mocked_obtain_func(*args, **kwargs):
         mocked_obtain_func.last_called_args = deepcopy(args)

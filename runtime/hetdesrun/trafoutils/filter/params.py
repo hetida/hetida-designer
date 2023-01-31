@@ -7,7 +7,7 @@ from hetdesrun.utils import State, Type
 
 
 class FilterParams(BaseModel):
-    # pylint: disable=too-many-instance-attributes
+
     type: Type | None = Field(  # noqa: A003
         None, description="Filter for specified type"
     )

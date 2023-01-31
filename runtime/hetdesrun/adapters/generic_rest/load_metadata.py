@@ -5,7 +5,7 @@ from posixpath import join as posix_urljoin
 from typing import Any
 
 import httpx
-from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, ValidationError
 
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,

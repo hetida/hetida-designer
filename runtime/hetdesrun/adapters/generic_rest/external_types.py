@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Any
 
 import pandas as pd
-from pydantic import create_model  # pylint: disable=no-name-in-module
+from pydantic import create_model
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class ValueDataType(str, Enum):
         for other_value in values[3:]:
             # register other values in order to allow initializations ValueDataType("integer")
             # and ValueDataType("str") to work. This uses an internal attribute of Enum!
-            # pylint: disable=no-member
+
             cls._value2member_map_[other_value] = obj  # type: ignore
 
         obj._all_values = (  # type: ignore # pylint: disable=no-member
@@ -64,9 +64,8 @@ class ValueDataType(str, Enum):
         return obj  # type:ignore
 
     def __repr__(self) -> str:
-        return "<{}.{}: {}>".format(  # pylint: disable=consider-using-f-string
+        return "<{}.{}: {}>".format(
             self.__class__.__name__,
-            # pylint: disable=no-member
             self._name_,
             ", ".join([repr(v) for v in self._all_values]),  # type: ignore
         )
@@ -150,16 +149,16 @@ class ExternalType(str, Enum):
         cls.store_general_type(obj)
 
         for other_value in values[1:]:
-            # pylint: disable=no-member
+
             cls._value2member_map_[other_value] = obj  # type: ignore
         obj._all_values = values  # type: ignore
         return obj  # type: ignore
 
     def __repr__(self) -> str:
-        # pylint: disable=no-member
-        return "<{}.{}: {}>".format(  # pylint: disable=consider-using-f-string
+
+        return "<{}.{}: {}>".format(
             self.__class__.__name__,
-            self._name_,  # pylint: disable=no-member
+            self._name_,
             ", ".join([repr(v) for v in self._all_values]),  # type: ignore
         )
 
@@ -171,7 +170,6 @@ class ExternalType(str, Enum):
         Will be set to None if value_datatype can be determined.
         """
 
-        # pylint: disable=protected-access
         if member._value_.endswith("(string)"):
             member.value_datatype = ValueDataType.STRING
         elif member._value_.endswith("(float)"):

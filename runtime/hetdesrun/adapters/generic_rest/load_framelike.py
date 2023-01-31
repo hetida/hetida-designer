@@ -80,7 +80,6 @@ async def load_framelike_data(
 ) -> pd.DataFrame:
     """Load framelike data from REST endpoint"""
 
-    # pylint: disable=too-many-statements
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
     valid, msg = are_valid_sources(filtered_sources)
@@ -166,8 +165,8 @@ async def load_framelike_data(
                     " at %s. DataFrame shape is %s with columns %s"
                 ),
                 end_time.isoformat(),
-                str(df.shape),  # pylint: disable=no-member
-                str(df.columns),  # pylint: disable=no-member
+                str(df.shape),
+                str(df.columns),
             )
             logger.info(
                 (
@@ -183,7 +182,6 @@ async def load_framelike_data(
                 data_attributes = resp.headers["Data-Attributes"]
                 df.attrs = decode_attributes(data_attributes)
 
-            # pylint: disable=no-member
             logger.debug(
                 "Received dataframe of form %s:\n%s",
                 str(df.shape) if len(df) > 0 else "EMPTY RESULT",
@@ -206,7 +204,6 @@ async def load_framelike_data(
         # must be dataframe:
         return df_empty({}, attrs=df.attrs)
 
-    # pylint: disable=no-member
     if "timestamp" in df.columns and endpoint == "dataframe":
         try:
             parsed_timestamps = pd.to_datetime(df["timestamp"])
@@ -218,7 +215,7 @@ async def load_framelike_data(
                 str(e),
             )
         else:
-            # pylint: disable=no-member
+
             df.index = parsed_timestamps
             df = df.sort_index()
 

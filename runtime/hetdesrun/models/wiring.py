@@ -1,10 +1,4 @@
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    Field,
-    StrictInt,
-    StrictStr,
-    validator,
-)
+from pydantic import BaseModel, Field, StrictInt, StrictStr, validator
 
 from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
@@ -42,22 +36,19 @@ class OutputWiring(BaseModel):
         + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),  # type: ignore
     )
 
-    # pylint: disable=no-self-argument
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
-        # pylint: disable=consider-iterating-dictionary
+
         if not EXPORT_MODE and (not v in SINK_ADAPTERS and not isinstance(v, str)):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
             )
         return v
 
-    # pylint: disable=no-self-argument
     @validator("workflow_output_name")
     def name_valid_python_identifier(cls, workflow_output_name: str) -> str:
         return valid_python_identifier(cls, workflow_output_name)
 
-    # pylint: disable=no-self-argument
     @validator("type")
     def metadata_type_includes_additional_fields(
         cls, v: ExternalType | None, values: dict
@@ -101,22 +92,19 @@ class InputWiring(BaseModel):
     )
     filters: dict = {}
 
-    # pylint: disable=no-self-argument
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
-        # pylint: disable=consider-iterating-dictionary
+
         if not EXPORT_MODE and (not v in SOURCE_ADAPTERS and not isinstance(v, str)):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."
             )
         return v
 
-    # pylint: disable=no-self-argument
     @validator("workflow_input_name")
     def name_valid_python_identifier(cls, workflow_input_name: str) -> str:
         return valid_python_identifier(cls, workflow_input_name)
 
-    # pylint: disable=no-self-argument
     @validator("type")
     def metadata_type_includes_additional_fields(
         cls, v: ExternalType | None, values: dict
@@ -137,7 +125,6 @@ class WorkflowWiring(BaseModel):
     input_wirings: list[InputWiring] = []
     output_wirings: list[OutputWiring] = []
 
-    # pylint: disable=no-self-argument
     @validator("input_wirings", each_item=False)
     def input_names_unique(cls, input_wirings: list[InputWiring]) -> list[InputWiring]:
         if len({iw.workflow_input_name for iw in input_wirings}) == len(input_wirings):
@@ -147,7 +134,6 @@ class WorkflowWiring(BaseModel):
             "Duplicates in workflow input names occuring in the input wirings not allowed."
         )
 
-    # pylint: disable=no-self-argument
     @validator("output_wirings", each_item=False)
     def output_names_unique(
         cls, output_wirings: list[OutputWiring]

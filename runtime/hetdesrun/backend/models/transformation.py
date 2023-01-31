@@ -19,7 +19,6 @@ class TransformationRevisionFrontendDto(BasicInformation):
     outputs: list[ConnectorFrontendDto] = []
     wirings: list[WiringFrontendDto] = []
 
-    # pylint: disable=no-self-argument
     @validator("inputs", "outputs", each_item=False)
     def input_names_none_or_unique(
         cls, ios: list[ConnectorFrontendDto]

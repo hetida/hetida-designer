@@ -50,7 +50,7 @@ async def test_computation_nodes_wrong_inputs():
     )
 
     with pytest.raises(MissingOutputException):
-        res = await target_node.result
+        _res = await target_node.result
 
 
 @pytest.mark.asyncio
@@ -71,7 +71,7 @@ async def test_computation_wrong_input_source():
     )
 
     with pytest.raises(MissingInputSource):
-        res = await target_node.result
+        _res = await target_node.result
 
 
 @pytest.mark.asyncio
@@ -93,7 +93,7 @@ async def test_computation_cycle_detection():
     source_node.add_inputs({"some_input": (target_node, "sum")})
 
     with pytest.raises(CircularDependency):
-        res = await target_node.result
+        _res = await target_node.result
 
 
 @pytest.mark.asyncio
@@ -121,7 +121,7 @@ async def test_computation_nodes_user_raised_runtime_error_and_logging(caplog):
     with caplog.at_level(logging.INFO):
         caplog.clear()
         with pytest.raises(RuntimeExecutionError):
-            res = await target_node.result
+            _res = await target_node.result
 
         assert "User raised" in caplog.text
 

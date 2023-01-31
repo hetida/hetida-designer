@@ -6,12 +6,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
-from pydantic import (
-    BaseModel,
-    Field,  # pylint: disable=no-name-in-module
-    root_validator,
-    validator,
-)
+from pydantic import BaseModel, Field, root_validator, validator
 
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
 from hetdesrun.models.base import Result
@@ -39,14 +34,12 @@ class PerformanceMeasuredStep(BaseModel):
         new_step.begin()
         return new_step
 
-    # pylint: disable=no-self-argument
     @validator("start")
     def start_utc_datetime(cls, start):  # type: ignore
         if not check_explicit_utc(start):
             return ValueError("start datetime for measurement must be explicit utc")
         return start
 
-    # pylint: disable=no-self-argument
     @validator("end")
     def end_utc_datetime(cls, end):  # type: ignore
         if not check_explicit_utc(end):
@@ -121,7 +114,6 @@ class WorkflowExecutionInput(BaseModel):
 
     job_id: UUID = Field(default_factory=uuid4)
 
-    # pylint: disable=no-self-argument
     @validator("components")
     def components_unique(
         cls, components: list[ComponentRevision]
@@ -130,14 +122,12 @@ class WorkflowExecutionInput(BaseModel):
             raise ValueError("Components not unique!")
         return components
 
-    # pylint: disable=no-self-argument
     @validator("code_modules")
     def code_modules_unique(cls, code_modules: list[CodeModule]) -> list[CodeModule]:
         if len({c.uuid for c in code_modules}) != len(code_modules):
             raise ValueError("Code Modules not unique!")
         return code_modules
 
-    # pylint: disable=no-self-argument
     @root_validator(skip_on_failure=True)
     def wiring_complete_and_types_match(cls, values: dict) -> dict:
         """Every (non-constant) Workflow input/output must be wired

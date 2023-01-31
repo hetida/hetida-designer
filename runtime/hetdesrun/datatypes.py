@@ -9,11 +9,7 @@ import numpy as np
 import pandas as pd
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseConfig,
-    BaseModel,
-    create_model,
-)
+from pydantic import BaseConfig, BaseModel, create_model
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +59,12 @@ class PydanticPandasSeries:
             try:
                 return pd.read_json(v, typ="series", convert_dates=False)
 
-            except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
+            except Exception as e:  # noqa: BLE001
                 raise ValueError(
                     "Could not parse provided input as Pandas Series even with convert_dates=False"
                 ) from e
 
-        except Exception:  # pylint: disable=broad-except  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             try:
                 return pd.read_json(json.dumps(v), typ="series")
 
@@ -83,7 +79,7 @@ class PydanticPandasSeries:
                         " convert_dates=False"
                     ) from read_json_with_type_error_exception
 
-            except Exception as read_json_exception:  # pylint: disable=broad-except  # noqa: BLE001
+            except Exception as read_json_exception:  # noqa: BLE001
                 raise ValueError(
                     "Could not parse provided input as Pandas Series"
                 ) from read_json_exception
@@ -108,7 +104,7 @@ class PydanticPandasDataFrame:
             return v
         try:
             return pd.read_json(v, typ="frame")
-        # pylint: disable=broad-except
+
         except Exception:  # noqa: BLE001
             try:
                 return pd.read_json(json.dumps(v), typ="frame")
@@ -203,9 +199,7 @@ class AdvancedTypesOutputSerializationConfig(BaseConfig):
         PydanticPandasDataFrame: lambda v: v.to_dict(),
         np.ndarray: lambda v: v.tolist(),
         datetime.datetime: lambda v: v.isoformat(),
-        UUID: lambda v: str(  # pylint: disable=unnecessary-lambda
-            v
-        ),  # alternatively: v.hex
+        UUID: lambda v: str(v),  # alternatively: v.hex
         Figure: lambda v: json.loads(
             json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)
         ),

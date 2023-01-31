@@ -5,7 +5,7 @@ import threading
 
 import httpx
 from jose import JOSEError, jwt
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ class BearerVerifier:
         self._public_key_lock = threading.Lock()
 
     @classmethod
-    def from_verifier_options(  # pylint: disable=dangerous-default-value,too-many-arguments
+    def from_verifier_options(
         cls,
         auth_url: str,
         audience: str = "account",
@@ -143,7 +143,7 @@ class BearerVerifier:
                 "Request failed: %s",
                 str(e),
             )
-            raise AuthentificationError(  # pylint: disable=raise-missing-from
+            raise AuthentificationError(
                 "Error trying to get public key from auth service. Request failed."
             ) from None
 
@@ -155,7 +155,7 @@ class BearerVerifier:
                 "Failed to decode json: %s",
                 str(e),
             )
-            raise AuthentificationError(  # pylint: disable=raise-missing-from
+            raise AuthentificationError(
                 "Error trying to get public key from auth service. Failed to decode json."
             ) from None
 

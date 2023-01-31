@@ -31,7 +31,7 @@ from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 
 @event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) -> None:  # type: ignore
+def set_sqlite_pragma(dbapi_connection: SQLite3Connection, connection_record) -> None:  # type: ignore  # noqa: E501
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
@@ -239,7 +239,7 @@ def test_creating(clean_test_db_engine):
 
 def test_deleting(clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.persistence.dbservice.revision.Session",
         patched_session,
     ):

@@ -27,7 +27,7 @@ async def test_base_url_fetching_internally():
         )
     ]
 
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.adapters.generic_rest.baseurl.get_all_adapters",
         return_value=get_all_adapters_response_mock,
     ):
@@ -55,7 +55,7 @@ async def test_base_url_fetching():
             }
         ]
     )
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.adapters.generic_rest.baseurl.httpx.AsyncClient.get",
         return_value=response_mock,
     ):
@@ -69,7 +69,7 @@ async def test_base_url_fetching():
             )
 
     response_mock.status_code = 400
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.adapters.generic_rest.baseurl.httpx.AsyncClient.get",
         return_value=response_mock,
     ):
@@ -101,7 +101,7 @@ async def test_adapter_key_not_found():
     response_mock = mock.Mock()
     response_mock.status_code = 200
     response_mock.json = mock.Mock(return_value=[])
-    with mock.patch(
+    with mock.patch( # noqa: SIM117
         "hetdesrun.adapters.generic_rest.baseurl.httpx.AsyncClient.get",
         return_value=response_mock,
     ):

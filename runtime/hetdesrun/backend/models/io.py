@@ -27,9 +27,7 @@ class WorkflowIoFrontendDto(BaseModel):
     constant: bool = False
 
     @validator("name")
-    def name_valid_python_identifier(  # pylint: disable=no-self-argument
-        cls, name: str | None
-    ) -> str | None:
+    def name_valid_python_identifier(cls, name: str | None) -> str | None:
         if name is None or name == "":
             return name
         return valid_python_identifier(cls, name)
@@ -55,7 +53,6 @@ class WorkflowIoFrontendDto(BaseModel):
             operator_name=operator_name,
             connector_name=connector_name,
             position=Position(x=self.pos_x, y=self.pos_y),
-            # pylint: disable=unsubscriptable-object
             value=self.constant_value["value"]
             if isinstance(self.constant_value, dict) and "value" in self.constant_value
             else None,
@@ -110,7 +107,6 @@ class ConnectorFrontendDto(BaseModel):
     pos_y: int = 0
     type: DataType  # noqa: A003
 
-    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         if name is None or name == "":

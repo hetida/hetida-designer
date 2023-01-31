@@ -12,13 +12,7 @@ on registering your own data adapters.
 
 import asyncio
 import logging
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    TypedDict,
-    Union,
-)
+from typing import Any, Awaitable, Callable, TypedDict, Union
 
 from hetdesrun.adapters.exceptions import (  # noqa: F401
     AdapterClientWiringInvalidError,
@@ -219,7 +213,7 @@ def get_source_adapter(adapter_key: int | str) -> SourceAdapter:
     except KeyError:
         if isinstance(adapter_key, str):
             return GENERIC_REST_SOURCE_ADAPTER
-        raise AdapterUnknownError(  # pylint: disable=raise-missing-from
+        raise AdapterUnknownError(
             f"No client source adapter with id {str(adapter_key)} registered in runtime!"
         ) from None
 
@@ -230,7 +224,7 @@ def get_sink_adapter(adapter_key: int | str) -> SinkAdapter:
     except KeyError:
         if isinstance(adapter_key, str):
             return GENERIC_REST_SINK_ADAPTER
-        raise AdapterUnknownError(  # pylint: disable=raise-missing-from
+        raise AdapterUnknownError(
             f"No client sink adapter with id {str(adapter_key)} registered in runtime!"
         ) from None
 

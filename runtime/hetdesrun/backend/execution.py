@@ -6,11 +6,7 @@ from posixpath import join as posix_urljoin
 from uuid import UUID, uuid4
 
 import httpx
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    Field,
-    ValidationError,
-)
+from pydantic import BaseModel, Field, ValidationError
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.component import ComponentNode
@@ -82,7 +78,6 @@ class ExecLatestByGroupIdInput(BaseModel):
         description="Optional job id, that can be used to track an execution job.",
     )
 
-    # pylint: disable=redefined-builtin
     def to_exec_by_id(self, id: UUID) -> ExecByIdInput:  # noqa: A002
         return ExecByIdInput(
             id=id,

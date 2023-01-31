@@ -1,5 +1,4 @@
 from hetdesrun.trafoutils.importorder import (
-    filter_and_order_trafos,
     order_for_importing,
 )
 from hetdesrun.utils import Type

@@ -5,7 +5,7 @@ import threading
 from posixpath import join as posix_urljoin
 
 import httpx
-from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, ValidationError
 
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
@@ -24,7 +24,7 @@ generic_rest_adapter_urls_lock = threading.Lock()
 # inititalize cache for adapter urls as global singleton
 try:
     with generic_rest_adapter_urls_lock:
-        generic_rest_adapter_urls  # pylint: disable=pointless-statement,used-before-assignment
+        generic_rest_adapter_urls
 except NameError:
     with generic_rest_adapter_urls_lock:
         generic_rest_adapter_urls: dict[str, str] = {}

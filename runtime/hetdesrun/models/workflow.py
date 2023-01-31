@@ -1,6 +1,6 @@
 from typing import Any, Union
 
-from pydantic import BaseModel, Field, validator  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field, validator
 
 from hetdesrun.models.base import AbstractNode
 from hetdesrun.models.component import ComponentNode, ComponentOutput, UnnamedInput
@@ -28,14 +28,12 @@ class WorkflowInput(UnnamedInput):
     )
     name_in_subnode: str
 
-    # pylint: disable=no-self-argument
     @validator("name", always=True)
     def name_valid_python_identifier(cls, name: str | None) -> str | None:
         if name is None:
             return name
         return valid_python_identifier(cls, name)
 
-    # pylint: disable=no-self-argument,unused-argument
     @validator("constant", always=True)
     def name_or_constant_data_provided(  # type: ignore
         cls, v, values, **kwargs  # noqa: ARG002

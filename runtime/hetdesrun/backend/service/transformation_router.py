@@ -129,7 +129,7 @@ async def create_transformation_revision(
 )
 async def get_all_transformation_revisions(
     type: Type  # noqa: A002
-    | None = Query(  # pylint: disable=redefined-builtin
+    | None = Query(
         None,
         description="Filter for specified type",
     ),
@@ -224,7 +224,6 @@ async def get_all_transformation_revisions(
     },
 )
 async def get_transformation_revision_by_id(
-    # pylint: disable=redefined-builtin
     id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -289,7 +288,7 @@ async def update_transformation_revisions(
     updated_transformation_revisions: list[TransformationRevision],
     response: Response,
     type: Type  # noqa: A002
-    | None = Query(  # pylint: disable=redefined-builtin
+    | None = Query(
         None,
         description="Filter for specified type",
     ),
@@ -430,7 +429,6 @@ async def update_transformation_revisions(
     },
 )
 async def update_transformation_revision(
-    # pylint: disable=redefined-builtin
     id: UUID,  # noqa: A002
     updated_transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = Query(
@@ -505,7 +503,6 @@ async def update_transformation_revision(
     },
 )
 async def delete_transformation_revision(
-    # pylint: disable=redefined-builtin
     id: UUID,  # noqa: A002
     ignore_state: bool = Query(
         False,
@@ -573,7 +570,6 @@ async def handle_trafo_revision_execution_request(
     },
 )
 async def execute_transformation_revision_endpoint(
-    # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision.
@@ -696,7 +692,7 @@ async def handle_latest_trafo_revision_execution_request(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
 ) -> ExecutionResponseFrontendDto:
     try:
-        # pylint: disable=redefined-builtin
+
         id_ = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e

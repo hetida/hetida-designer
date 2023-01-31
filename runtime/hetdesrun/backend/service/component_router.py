@@ -109,7 +109,6 @@ async def create_component_revision(
     deprecated=True,
 )
 async def get_component_revision_by_id(
-    # pylint: disable=redefined-builtin
     id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -155,7 +154,6 @@ async def get_component_revision_by_id(
     deprecated=True,
 )
 async def update_component_revision(
-    # pylint: disable=redefined-builtin
     id: UUID,  # noqa: A002
     updated_component_dto: ComponentRevisionFrontendDto,
 ) -> ComponentRevisionFrontendDto:
@@ -246,7 +244,6 @@ async def update_component_revision(
     deprecated=True,
 )
 async def delete_component_revision(
-    # pylint: disable=redefined-builtin
     id: UUID,  # noqa: A002
 ) -> None:
     """Delete a transformation revision of type component from the data base.
@@ -281,7 +278,6 @@ async def delete_component_revision(
     deprecated=True,
 )
 async def execute_component_revision(
-    # pylint: disable=redefined-builtin
     id: UUID,  # noqa: A002
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
@@ -325,7 +321,6 @@ async def execute_component_revision(
     deprecated=True,
 )
 async def bind_wiring_to_component_revision(
-    # pylint: disable=redefined-builtin
     id: UUID,  # noqa: A002
     wiring_dto: WiringFrontendDto,
 ) -> ComponentRevisionFrontendDto:

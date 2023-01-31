@@ -34,7 +34,6 @@ class Link(BaseModel):
     end: Vertex
     path: list[Position] = []
 
-    # pylint: disable=no-self-argument
     @root_validator()
     def types_match(cls, values: dict) -> dict:
         try:
@@ -53,7 +52,6 @@ class Link(BaseModel):
             raise ValueError("data types of both link ends must be the same!")
         return values
 
-    # pylint: disable=no-self-argument
     @root_validator()
     def no_self_reference(cls, values: dict) -> dict:
         try:

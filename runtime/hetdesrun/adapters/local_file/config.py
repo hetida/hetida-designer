@@ -1,6 +1,6 @@
 import os
 
-from pydantic import BaseSettings, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseSettings, Field
 
 
 class LocalFileAdapterConfig(BaseSettings):

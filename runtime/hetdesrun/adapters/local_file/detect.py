@@ -2,11 +2,7 @@ import json
 import logging
 import os
 
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    Field,
-    ValidationError,
-)
+from pydantic import BaseModel, Field, ValidationError
 
 from hetdesrun.adapters.local_file.extensions import (
     FileSupportHandler,

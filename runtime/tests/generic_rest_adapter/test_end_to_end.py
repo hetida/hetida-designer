@@ -35,7 +35,7 @@ async def test_wiring_with_generic_rest_input(
         resp_mock.json = mock.Mock(
             return_value={"key": "number", "value": 32, "dataType": "float"}
         )
-        with mock.patch(
+        with mock.patch( # noqa: SIM117
             "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_base_url",
             return_value="https://hetida.de",
         ):

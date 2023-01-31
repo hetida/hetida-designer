@@ -1,10 +1,5 @@
 from inspect import Parameter, signature
-from typing import (
-    Any,
-    Callable,
-    Coroutine,
-    Protocol,
-)
+from typing import Any, Callable, Coroutine, Protocol
 
 from cached_property import cached_property  # async compatible variant
 from pydantic import ValidationError
@@ -47,7 +42,7 @@ class Node(Protocol):
         ...
 
 
-class ComputationNode:  # pylint: disable=too-many-instance-attributes
+class ComputationNode:
     """Represents a function computation with multiple outputs together with input information
 
     Inputs and outputs are not made explicit here and the information where the inputs
@@ -158,7 +153,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         for (input_name, (another_node, output_name)) in self.inputs.items():
 
             # Cycle detection logic
-            if another_node._in_computation:  # pylint: disable=protected-access
+            if another_node._in_computation:
                 msg = (
                     f"Circular Dependency detected whith input '{input_name}' pointing to "
                     f"output '{output_name}' of operator {another_node.operator_hierarchical_id}"
@@ -238,7 +233,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         return await self._compute_result()
 
 
-class Workflow:  # pylint: disable=too-many-instance-attributes
+class Workflow:
     """Grouping computation nodes and other workflows and handling common input/output interface
 
     This class does not ensure that the interface actually handles all lose ends.

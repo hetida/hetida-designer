@@ -486,9 +486,7 @@ def get_multiple_transformation_revisions(
         for tr in tr_list:
             if tr.type == Type.WORKFLOW:
                 nested_tr_dict = get_all_nested_transformation_revisions(tr)
-                for (
-                    nested_tr_id
-                ) in nested_tr_dict:  # pylint: disable=consider-using-dict-items
+                for nested_tr_id in nested_tr_dict:
                     if nested_tr_id not in tr_ids:
                         tr_list.append(nested_tr_dict[nested_tr_id])
 

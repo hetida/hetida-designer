@@ -32,7 +32,7 @@ token_response_stub = {
 }
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def valid_token_response(valid_access_token):
     token_response_dict = deepcopy(token_response_stub)
     token_response_dict["access_token"] = valid_access_token
@@ -41,7 +41,7 @@ def valid_token_response(valid_access_token):
     return token_response_dict
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def mocked_token_request(valid_token_response):
     mocked_resp = mock.Mock
     mocked_resp.json = mock.Mock(return_value=valid_token_response)
@@ -60,7 +60,7 @@ def mocked_token_request(valid_token_response):
         yield test_mocked_post_to_auth_provider
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def outgoing_auth_internal_mode_off():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.internal_auth_mode",
@@ -69,7 +69,7 @@ def outgoing_auth_internal_mode_off():
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def outgoing_auth_external_mode_off():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.external_auth_mode",
@@ -78,7 +78,7 @@ def outgoing_auth_external_mode_off():
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def outgoing_auth_internal_mode_forward_or_fixed():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.internal_auth_mode",
@@ -87,7 +87,7 @@ def outgoing_auth_internal_mode_forward_or_fixed():
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def outgoing_auth_external_mode_forward_or_fixed():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.external_auth_mode",
@@ -96,7 +96,7 @@ def outgoing_auth_external_mode_forward_or_fixed():
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def outgoing_auth_internal_mode_client():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.internal_auth_mode",
@@ -105,7 +105,7 @@ def outgoing_auth_internal_mode_client():
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def outgoing_auth_external_mode_client():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.external_auth_mode",
@@ -114,7 +114,7 @@ def outgoing_auth_external_mode_client():
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def auth_bearer_token_for_outgoing_requests_is_set():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.auth_bearer_token_for_outgoing_requests",
@@ -123,7 +123,7 @@ def auth_bearer_token_for_outgoing_requests_is_set():
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def auth_bearer_token_for_outgoing_requests_not_set():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.auth_bearer_token_for_outgoing_requests",
@@ -132,7 +132,7 @@ def auth_bearer_token_for_outgoing_requests_not_set():
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def outgoing_auth_external_mode_off():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.external_auth_mode",
@@ -141,7 +141,7 @@ def outgoing_auth_external_mode_off():
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def set_request_auth_context():
     with mock.patch(
         "hetdesrun.webservice.auth_dependency.get_request_auth_context",
@@ -150,7 +150,7 @@ def set_request_auth_context():
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def unset_request_auth_context():
     with mock.patch(
         "hetdesrun.webservice.auth_dependency.get_request_auth_context",
@@ -171,7 +171,7 @@ def service_client_credentials():
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def set_external_client_creds(service_client_credentials):
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.external_auth_client_credentials",
@@ -180,7 +180,7 @@ def set_external_client_creds(service_client_credentials):
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def set_internal_client_creds(service_client_credentials):
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.internal_auth_client_credentials",
@@ -226,22 +226,22 @@ def wrong_key_pair():
     return gen_jose_rs256_key_pair()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def valid_access_token(key_pair):
     return generate_token(algorithm="RS256", key=key_pair[0])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def second_valid_access_token(key_pair):
     return generate_token(payload={"sub": "second"}, algorithm="RS256", key=key_pair[0])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def wrong_key_access_token(wrong_key_pair):
     return generate_token(algorithm="RS256", key=wrong_key_pair[0])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def mocked_clean_test_db_session(clean_test_db_engine):
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
@@ -268,7 +268,7 @@ def mocked_pre_loaded_wrong_public_key(wrong_key_pair):
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def mocked_public_key_fetching(key_pair):
     def _mocked_obtain_public_key(self, force: bool = False):
         if self._public_key_data is not None and not force:

@@ -54,7 +54,7 @@ lint() {
 }
 
 imsort() {
-    isort demo_adapter_python tests "${@}"
+    ruff --select I demo_adapter_python tests --fix "${@}"
 }
 
 typecheck() {

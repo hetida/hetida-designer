@@ -188,7 +188,7 @@ def get_valid_top_dir(path: str) -> str | None:
 
 
 def get_local_file_by_id(
-    id: str,  # pylint: disable=redefined-builtin # noqa: A002
+    id: str,  # noqa: A002
 ) -> LocalFile | None:
     """Get a specific file by id
 

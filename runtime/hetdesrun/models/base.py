@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field
 
 
 class Result(str, Enum):

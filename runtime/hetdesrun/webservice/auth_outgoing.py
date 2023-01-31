@@ -16,11 +16,7 @@ from posixpath import join as posix_urljoin
 from typing import Any, Literal
 
 from httpx import AsyncClient, HTTPError, Response
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    Field,
-    ValidationError,
-)
+from pydantic import BaseModel, Field, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -96,10 +92,9 @@ class TokenType(str, Enum):
         for other_value in values[2:]:
             # register other values in order to allow initializations TokenType("Bearer")
             # and TokenType("BEARER") to work. This uses an internal attribute of Enum!
-            # pylint: disable=no-member
+
             cls._value2member_map_[other_value] = obj  # type: ignore
 
-        # pylint: disable=no-member
         obj._all_values = (values[0],) + values[1:]  # type: ignore
         return obj  # type:ignore
 

@@ -23,7 +23,7 @@ from hetdesrun.webservice.config import get_config
 logger = logging.getLogger(__name__)
 
 
-class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
+class KafkaWorkerContext:
     """Bundles the per webservice-worker-process Kafka consumer and producer instances
 
     This class handles the typical scenario where a consumer consumes messages from
@@ -223,7 +223,7 @@ async def consume_execution_trigger_message(
             )
             logger.debug("Kafka consumer execution result: \n%s", str(exec_result))
             await producer_send_result_msg(kafka_ctx, exec_result)
-        except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             kafka_ctx.last_unhandled_exception = e
             logger.error(
                 "Unexpected Error during Kafka execution: %s. Aborting.", str(e)

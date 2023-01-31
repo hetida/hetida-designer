@@ -20,7 +20,6 @@ class IoWiringFrontendDto(BaseModel):
     ref_key: str | None = None
     type: ExternalType | None = None  # noqa: A003
 
-    # pylint: disable=no-self-argument
     @validator("type")
     def metadata_type_includes_additional_fields(
         cls, v: ExternalType | None, values: dict
@@ -52,12 +51,10 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
     workflow_output_name: str
     adapter_id: StrictInt | StrictStr
 
-    # pylint: disable=no-self-argument
     @validator("workflow_output_name")
     def name_valid_python_identifier(cls, workflow_output_name: str) -> str:
         return valid_python_identifier(cls, workflow_output_name)
 
-    # pylint: disable=no-self-argument
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
         if not EXPORT_MODE and (not v in SINK_ADAPTERS and not isinstance(v, str)):
@@ -99,12 +96,10 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
     filters: dict = {}
     value: str | None = None
 
-    # pylint: disable=no-self-argument
     @validator("workflow_input_name")
     def name_valid_python_identifier(cls, workflow_input_name: str) -> str:
         return valid_python_identifier(cls, workflow_input_name)
 
-    # pylint: disable=no-self-argument
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
         if not EXPORT_MODE and (not v in SOURCE_ADAPTERS and not isinstance(v, str)):
@@ -146,7 +141,6 @@ class WiringFrontendDto(BaseModel):
     input_wirings: list[InputWiringFrontendDto]
     output_wirings: list[OutputWiringFrontendDto]
 
-    # pylint: disable=no-self-argument
     @validator("input_wirings", each_item=False)
     def input_names_unique(
         cls, input_wirings: list[InputWiringFrontendDto]
@@ -158,7 +152,6 @@ class WiringFrontendDto(BaseModel):
             "Duplicates in workflow input names occuring in the input wirings not allowed."
         )
 
-    # pylint: disable=no-self-argument
     @validator("output_wirings", each_item=False)
     def output_names_unique(
         cls, output_wirings: list[OutputWiringFrontendDto]

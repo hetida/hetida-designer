@@ -28,7 +28,6 @@ class Operator(BaseModel):
     outputs: list[Connector]
     position: Position
 
-    # pylint: disable=no-self-argument
     @root_validator()
     def is_not_draft(cls, values: dict) -> dict:
         try:
@@ -40,7 +39,7 @@ class Operator(BaseModel):
         if state == State.DRAFT:
             try:
                 operator_id = values["id"]
-                type_ = values["type"]  # pylint: disable=redefined-builtin
+                type_ = values["type"]
             except KeyError as e:
                 raise ValueError(
                     "Cannot provide information for which operator validation has failed "
