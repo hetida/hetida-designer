@@ -85,7 +85,9 @@ cffi==1.15.1 \
 click==8.1.3 \
     --hash=sha256:7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e \
     --hash=sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48
-    # via uvicorn
+    # via
+    #   -c requirements-base.txt
+    #   uvicorn
 cryptography==38.0.3 \
     --hash=sha256:068147f32fa662c81aebab95c74679b401b12b57494872886eb5c1139250ec5d \
     --hash=sha256:06fc3cc7b6f6cca87bd56ec80a580c88f1da5306f505876a71c8cfa7050257dd \
@@ -386,4 +388,6 @@ uvloop==0.17.0 \
 setuptools==65.5.1 \
     --hash=sha256:d0b9a8433464d5800cbe05094acf5c6d52a91bfac9b52bcfc4d41382be5d5d31 \
     --hash=sha256:e197a19aa8ec9722928f2206f8de752def0e4c9fc6953527360d1c36d94ddb2f
-    # via gunicorn
+    # via
+    #   -c requirements-base.txt
+    #   gunicorn

@@ -2,7 +2,6 @@
 -c requirements-base.txt
 pytest
 coverage
-pylint
 pytest-cov
 black
 pytest-asyncio
