@@ -1,7 +1,5 @@
 from typing import Any
 
-# pylint: disable=duplicate-code
-
 thing_node_json_objects: list[dict[str, Any]] = [
     {
         "id": "root",

@@ -1,7 +1,7 @@
 import os
 from enum import Enum
 
-from pydantic import BaseSettings, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseSettings, Field
 
 
 class LogLevel(str, Enum):

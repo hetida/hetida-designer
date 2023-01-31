@@ -91,9 +91,7 @@ class AdditionalLoggingRoute(APIRoute):
                 body = await request.body()
                 detail = {"errors": exc.errors(), "body": body.decode()}
                 logger.info("Request Validation Error: %s", str(exc))
-                raise HTTPException(  # pylint: disable=raise-missing-from
-                    status_code=422, detail=detail
-                ) from exc
+                raise HTTPException(status_code=422, detail=detail) from exc
 
         return custom_route_handler
 
@@ -198,7 +196,6 @@ async def get_all_metadata_source(sourceId: str) -> list[Metadatum]:
     "/sources/{sourceId}/metadata/{key}", response_model=Metadatum
 )
 async def get_metadata_source_by_key(sourceId: str, key: str) -> Metadatum:
-    # pylint: disable=too-many-return-statements,too-many-branches
     key = unquote(key)
     if sourceId.endswith("temp") and "plantA" in sourceId:
         if key == "Max Value":
@@ -425,7 +422,6 @@ def calculate_age(born: datetime.date) -> int:
     "/thingNodes/{thingNodeId}/metadata/{key}", response_model=Metadatum
 )
 async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> Metadatum:
-    # pylint: disable=too-many-return-statements
     key = unquote(key)
     if thingNodeId == "root.plantA":
         if key == "Temperature Unit":
@@ -506,7 +502,7 @@ async def post_metadata_thingNode_by_key(
 @demo_adapter_main_router.get("/thingNodes/{id}", response_model=StructureThingNode)
 async def thing_node(
     id: str,  # noqa: A002
-) -> StructureThingNode:  # pylint: disable=redefined-builtin
+) -> StructureThingNode:
     """Get a single sink by id"""
     requested_thing_nodes = [
         tn for tn in get_thing_nodes(include_sub_objects=True) if tn["id"] == id

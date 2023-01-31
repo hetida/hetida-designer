@@ -2,8 +2,6 @@ from typing import Any
 
 from demo_adapter_python.external_types import ExternalType
 
-# pylint: disable=duplicate-code
-
 sources_json_objects: list[dict[str, Any]] = [
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantA.plant_temperature_unit",
