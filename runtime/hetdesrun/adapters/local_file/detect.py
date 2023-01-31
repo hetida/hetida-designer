@@ -86,7 +86,7 @@ def local_file_from_path(
 
     if file_path.endswith(".settings.json"):  # only config file present
 
-        data_file_path = file_path.rstrip(".settings.json")
+        data_file_path = file_path.removesuffix(".settings.json")
 
         # only infer from settings file if no data file is present:
         if (

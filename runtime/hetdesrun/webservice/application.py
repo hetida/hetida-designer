@@ -61,7 +61,7 @@ class AdditionalLoggingRoute(APIRoute):
                 logger.info("Request Validation Error: %s", str(exc))
                 raise HTTPException(  # pylint: disable=raise-missing-from
                     status_code=422, detail=detail
-                )
+                ) from exc
 
         return custom_route_handler
 
@@ -105,7 +105,7 @@ def init_app() -> FastAPI:
     except KeyError:
         pass
 
-    from hetdesrun.adapters.local_file.webservice import (  # pylint: disable=import-outside-toplevel
+    from hetdesrun.adapters.local_file.webservice import (  # pylint: disable=import-outside-toplevel # noqa: E501
         local_file_adapter_router,
     )
 

@@ -1,0 +1,15 @@
+[tool.ruff]
+
+# allow longer lines than the default (88, same as black)
+line-length = 100
+
+# Assume python310
+target-version = "py310"
+
+select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP"]
+
+# Ignore "not in" (E713)
+ignore = ["E713", "E714",  "B008", "PLR2004"]
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"

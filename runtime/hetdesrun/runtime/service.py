@@ -135,7 +135,7 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
         # to a final output. This is necessary for example for the Store Model component.
         for computation_node in all_nodes:
             # pylint: disable=unused-variable
-            res = (
+            _res = (
                 await computation_node.result
                 if not (
                     computation_node.has_only_plot_outputs is True

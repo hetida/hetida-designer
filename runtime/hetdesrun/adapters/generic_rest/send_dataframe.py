@@ -61,7 +61,7 @@ async def post_dataframes(
         await asyncio.gather(
             *(
                 post_dataframe(df, ref_id, adapter_key=adapter_key, client=client)
-                for df, ref_id in zip(dfs, ref_ids)
+                for df, ref_id in zip(dfs, ref_ids, strict=True)
             )
         )
 

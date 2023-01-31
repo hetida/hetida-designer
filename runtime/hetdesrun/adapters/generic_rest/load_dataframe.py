@@ -27,4 +27,4 @@ async def load_dataframes_from_adapter(
             for filtered_source in data_to_load.values()
         ]
     )
-    return dict(zip(data_to_load.keys(), loaded_frames))
+    return dict(zip(data_to_load.keys(), loaded_frames, strict=True))

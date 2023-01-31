@@ -146,7 +146,7 @@ class BearerVerifier:
             )
             raise AuthentificationError(  # pylint: disable=raise-missing-from
                 "Error trying to get public key from auth service. Request failed."
-            )
+            ) from None
 
         try:
             key_data = resp.json()
@@ -158,7 +158,7 @@ class BearerVerifier:
             )
             raise AuthentificationError(  # pylint: disable=raise-missing-from
                 "Error trying to get public key from auth service. Failed to decode json."
-            )
+            ) from None
 
         with self._public_key_lock:
             self._public_key_data = key_data

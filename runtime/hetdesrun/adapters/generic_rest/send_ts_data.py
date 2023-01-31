@@ -122,7 +122,7 @@ async def post_multiple_timeseries(
                     series, ref_id, sink_type, adapter_key=adapter_key, client=client
                 )
                 for series, ref_id, sink_type in zip(
-                    timeseries_list, ref_ids, sink_types
+                    timeseries_list, ref_ids, sink_types, strict=True
                 )
             )
         )

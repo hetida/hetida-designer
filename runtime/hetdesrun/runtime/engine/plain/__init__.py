@@ -1,13 +1,9 @@
-import asyncio
 import logging
-from typing import Any, Callable, Dict, Union
+from typing import Any, Dict
 
 from hetdesrun.runtime import (
-    MissingOutputDataError,
-    RuntimeExecutionError,
     runtime_execution_logger,
 )
-from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
 from hetdesrun.runtime.engine.plain.workflow import Workflow
 from hetdesrun.runtime.logging import execution_context_filter
 

@@ -6,7 +6,7 @@ gunicorn
 httpx
 httptools
 psycopg2
-sqlalchemy[mypy]
+sqlalchemy[mypy]<2
 SQLAlchemy-Utils
 aiokafka
 alembic

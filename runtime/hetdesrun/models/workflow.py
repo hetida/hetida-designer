@@ -58,10 +58,8 @@ class WorkflowOutput(ComponentOutput):
 
 class WorkflowConnection(BaseModel):
     input_in_workflow_id: str
-    # input_id: UUID
     input_name: str
     output_in_workflow_id: str
-    # output_id: UUID
     output_name: str
 
 

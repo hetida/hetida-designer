@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Any, List, Optional, Tuple
 from uuid import UUID
 
-import requests  # pylint: disable=unused-import
+import requests  # noqa: F401
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
 from pydantic import BaseModel  # pylint: disable=no-name-in-module

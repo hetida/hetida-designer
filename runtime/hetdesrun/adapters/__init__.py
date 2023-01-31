@@ -17,8 +17,6 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
-    List,
-    NewType,
     Optional,
     Tuple,
     Type,
@@ -26,7 +24,13 @@ from typing import (
     Union,
 )
 
-from hetdesrun.adapters.exceptions import *
+from hetdesrun.adapters.exceptions import (  # noqa: F401
+    AdapterClientWiringInvalidError,
+    AdapterConnectionError,
+    AdapterHandlingException,
+    AdapterOutputDataError,
+    AdapterUnknownError,
+)
 from hetdesrun.adapters.generic_rest import load_data as generic_rest_adapter_load_func
 from hetdesrun.adapters.generic_rest import send_data as generic_rest_adapter_send_func
 from hetdesrun.adapters.local_file import load_data as local_file_load_data
@@ -221,7 +225,7 @@ def get_source_adapter(adapter_key: Union[int, str]) -> SourceAdapter:
             return GENERIC_REST_SOURCE_ADAPTER
         raise AdapterUnknownError(  # pylint: disable=raise-missing-from
             f"No client source adapter with id {str(adapter_key)} registered in runtime!"
-        )
+        ) from None
 
 
 def get_sink_adapter(adapter_key: Union[int, str]) -> SinkAdapter:
@@ -232,7 +236,7 @@ def get_sink_adapter(adapter_key: Union[int, str]) -> SinkAdapter:
             return GENERIC_REST_SINK_ADAPTER
         raise AdapterUnknownError(  # pylint: disable=raise-missing-from
             f"No client sink adapter with id {str(adapter_key)} registered in runtime!"
-        )
+        ) from None
 
 
 async def load_data_from_adapter(

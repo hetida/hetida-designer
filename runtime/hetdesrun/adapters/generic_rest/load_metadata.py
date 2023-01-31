@@ -138,4 +138,4 @@ async def load_multiple_metadata(
                 for filtered_source in data_to_load.values()
             )
         )
-    return dict(zip(data_to_load.keys(), loaded_metadata))
+    return dict(zip(data_to_load.keys(), loaded_metadata, strict=True))

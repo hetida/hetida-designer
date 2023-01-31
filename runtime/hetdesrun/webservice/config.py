@@ -158,7 +158,7 @@ class RuntimeConfig(BaseSettings):
     )
 
     auth_public_key_url: str = Field(
-        "http://hetida-designer-keycloak:8080/auth/realms/hetida-designer/protocol/openid-connect/certs",  # pylint: disable=line-too-long
+        "http://hetida-designer-keycloak:8080/auth/realms/hetida-designer/protocol/openid-connect/certs",  # noqa: E501
         description="URL to endpoint providing public keys for verifying bearer token signature",
         env="HD_AUTH_PUBLIC_KEY_URL",
     )

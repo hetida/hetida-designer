@@ -6,8 +6,12 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from pydantic import Field  # pylint: disable=no-name-in-module
-from pydantic import BaseModel, root_validator, validator
+from pydantic import (
+    BaseModel,
+    Field,  # pylint: disable=no-name-in-module
+    root_validator,
+    validator,
+)
 
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
 from hetdesrun.models.base import Result

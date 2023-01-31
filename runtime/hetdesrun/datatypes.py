@@ -230,7 +230,7 @@ def parse_via_pydantic(
 
     May raise the typical exceptions of pydantic parsing.
     """
-    type_dict: Dict[str, Tuple[Type, "ellipsis"]] = {
+    type_dict: Dict[str, Tuple[Type, "ellipsis"]] = {  # noqa: F821
         entry["name"]: (
             type_map[entry["type"]]
             if type_map is not None

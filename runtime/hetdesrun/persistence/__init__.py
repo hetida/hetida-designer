@@ -9,7 +9,7 @@ from pydantic import SecretStr
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.future.engine import Engine
-from sqlalchemy.orm import Session as SQLAlchemySession
+from sqlalchemy.orm import Session as SQLAlchemySession  # noqa: F401
 from sqlalchemy.orm import sessionmaker
 
 from hetdesrun.webservice.config import get_config

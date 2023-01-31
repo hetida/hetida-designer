@@ -4,12 +4,9 @@ This implements source and sink runtime adapter client for the generic rest adap
 """
 
 import asyncio
-from collections import defaultdict
-from enum import Enum
-from typing import Any, Dict, List, Mapping, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, List, Mapping, Tuple, TypeVar, Union
 
 import pandas as pd
-from pydantic import ValidationError
 
 from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
@@ -25,7 +22,6 @@ from hetdesrun.adapters.generic_rest.send_metadata import (
 from hetdesrun.adapters.generic_rest.send_ts_data import (
     send_multiple_timeseries_to_adapter,
 )
-from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 
@@ -127,7 +123,9 @@ async def load_data(
     series_data_to_load: Dict[str, FilteredSource] = {}
     dataframe_data_to_load: Dict[str, FilteredSource] = {}
 
-    for (wf_input_name, parsed_source_type) in zip(wf_input_names, parsed_source_types):
+    for (wf_input_name, parsed_source_type) in zip(
+        wf_input_names, parsed_source_types, strict=True
+    ):
 
         entry = wf_input_name_to_filtered_source_mapping_dict[wf_input_name]
         entry.type = parsed_source_type
@@ -175,7 +173,9 @@ async def send_data(
     dataframe_data_to_send: Dict[str, pd.DataFrame] = {}
     dataframe_filtered_sinks: Dict[str, FilteredSink] = {}
 
-    for (wf_output_name, parsed_sink_type) in zip(wf_output_names, parsed_sink_types):
+    for (wf_output_name, parsed_sink_type) in zip(
+        wf_output_names, parsed_sink_types, strict=True
+    ):
 
         entry = wf_output_name_to_filtered_sink_mapping_dict[wf_output_name]
         entry.type = parsed_sink_type
