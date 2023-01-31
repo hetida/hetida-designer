@@ -1,5 +1,4 @@
 import logging
-from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, Path, Query, status
@@ -37,7 +36,7 @@ base_item_router = HandleTrailingSlashAPIRouter(
 
 @base_item_router.get(
     "",
-    response_model=List[TransformationRevisionFrontendDto],
+    response_model=list[TransformationRevisionFrontendDto],
     response_model_exclude_unset=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Returns combined list of all base items (components and workflows)",
@@ -46,15 +45,17 @@ base_item_router = HandleTrailingSlashAPIRouter(
     deprecated=True,
 )
 async def get_all_transformation_revisions(
-    type: Optional[Type] = Query(  # pylint: disable=redefined-builtin
+    type: Type  # noqa: A002
+    | None = Query(  # pylint: disable=redefined-builtin
         None,
         description="Set to get only transformation revisions in the specified type",
     ),
-    state: Optional[State] = Query(
+    state: State
+    | None = Query(
         None,
         description="Set to get only transformation revisions in the specified state",
     ),
-) -> List[TransformationRevisionFrontendDto]:
+) -> list[TransformationRevisionFrontendDto]:
     """Get all transformation revisions without their content from the data base.
 
     This endpoint is deprecated and will be removed soon,
@@ -92,7 +93,7 @@ async def get_all_transformation_revisions(
 )
 async def get_transformation_revision_by_id(
     # pylint: disable=redefined-builtin
-    id: UUID = Path(
+    id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
     ),
@@ -197,7 +198,7 @@ async def create_transformation_revision(
 )
 async def update_transformation_revision(
     # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     updated_transformation_revision_dto: TransformationRevisionFrontendDto,
 ) -> TransformationRevisionFrontendDto:
     """Update or store a transformation revision except for its content in the data base.
@@ -229,7 +230,7 @@ async def update_transformation_revision(
         logger.error("The following validation error occured:\n%s", str(e))
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
-    existing_transformation_revision: Optional[TransformationRevision] = None
+    existing_transformation_revision: TransformationRevision | None = None
 
     try:
         existing_transformation_revision = read_single_transformation_revision(

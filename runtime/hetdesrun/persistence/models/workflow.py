@@ -1,5 +1,4 @@
 import re
-from typing import Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
 # pylint: disable=no-name-in-module
@@ -14,10 +13,10 @@ from hetdesrun.persistence.models.operator import NonEmptyValidStr, Operator
 
 
 def get_link_start_connector_from_operator(
-    link_start_operator_id: Optional[UUID],
+    link_start_operator_id: UUID | None,
     link_start_connector_id: UUID,
-    operators: List[Operator],
-) -> Optional[Connector]:
+    operators: list[Operator],
+) -> Connector | None:
 
     for operator in operators:
         if operator.id == link_start_operator_id:
@@ -29,10 +28,10 @@ def get_link_start_connector_from_operator(
 
 
 def get_link_end_connector_from_operator(
-    link_end_operator_id: Optional[UUID],
+    link_end_operator_id: UUID | None,
     link_end_connector_id: UUID,
-    operators: List[Operator],
-) -> Optional[Connector]:
+    operators: list[Operator],
+) -> Connector | None:
 
     for operator in operators:
         if operator.id == link_end_operator_id:
@@ -44,8 +43,8 @@ def get_link_end_connector_from_operator(
 
 
 def get_link_by_output_connector(
-    operator_id: Optional[UUID], connector_id: UUID, links: List[Link]
-) -> Optional[Link]:
+    operator_id: UUID | None, connector_id: UUID, links: list[Link]
+) -> Link | None:
 
     for link in links:
         if (
@@ -58,8 +57,8 @@ def get_link_by_output_connector(
 
 
 def get_link_by_input_connector(
-    operator_id: Optional[UUID], connector_id: UUID, links: List[Link]
-) -> Optional[Link]:
+    operator_id: UUID | None, connector_id: UUID, links: list[Link]
+) -> Link | None:
     for link in links:
         if link.end.operator == operator_id and link.end.connector.id == connector_id:
             return link
@@ -69,8 +68,8 @@ def get_link_by_input_connector(
 
 def get_input_by_link_start(
     link_start_connector_id: UUID,
-    inputs: List[IOConnector],
-) -> Optional[IOConnector]:
+    inputs: list[IOConnector],
+) -> IOConnector | None:
 
     for input_connector in inputs:
         if input_connector.id == link_start_connector_id:
@@ -81,8 +80,8 @@ def get_input_by_link_start(
 
 def get_constant_by_link_start(
     link_start_connector_id: UUID,
-    constants: List[Constant],
-) -> Optional[Constant]:
+    constants: list[Constant],
+) -> Constant | None:
 
     for constant in constants:
         if constant.id == link_start_connector_id:
@@ -93,8 +92,8 @@ def get_constant_by_link_start(
 
 def get_output_by_link_end(
     link_end_connector_id: UUID,
-    outputs: List[IOConnector],
-) -> Optional[IOConnector]:
+    outputs: list[IOConnector],
+) -> IOConnector | None:
 
     for output_connector in outputs:
         if output_connector.id == link_end_connector_id:
@@ -104,9 +103,9 @@ def get_output_by_link_end(
 
 
 class WorkflowContent(BaseModel):
-    operators: List[Operator] = []
-    links: List[Link] = Field([], description="Links may not form loops.")
-    inputs: List[IOConnector] = Field(
+    operators: list[Operator] = []
+    links: list[Link] = Field([], description="Links may not form loops.")
+    inputs: list[IOConnector] = Field(
         [],
         description=(
             "Workflow inputs are determined by operator inputs, "
@@ -114,7 +113,7 @@ class WorkflowContent(BaseModel):
             "If input names are set they must be unique."
         ),
     )
-    outputs: List[IOConnector] = Field(
+    outputs: list[IOConnector] = Field(
         [],
         description=(
             "Workflow outputs are determined by operator outputs, "
@@ -122,7 +121,7 @@ class WorkflowContent(BaseModel):
             "If output names are set they must be unique."
         ),
     )
-    constants: List[Constant] = Field(
+    constants: list[Constant] = Field(
         [],
         description=(
             "Constant input values for the workflow are created "
@@ -132,8 +131,8 @@ class WorkflowContent(BaseModel):
 
     # pylint: disable=no-self-argument
     @validator("operators", each_item=False)
-    def operator_names_unique(cls, operators: List[Operator]) -> List[Operator]:
-        operator_groups: dict[str, List[Operator]] = {}
+    def operator_names_unique(cls, operators: list[Operator]) -> list[Operator]:
+        operator_groups: dict[str, list[Operator]] = {}
 
         for operator in operators:
             operator_name_seed = re.sub(r" \([0-9]+\)$", "", operator.name)
@@ -156,7 +155,7 @@ class WorkflowContent(BaseModel):
 
     # pylint: disable=no-self-argument
     @validator("links", each_item=False)
-    def reduce_to_valid_links(cls, links: List[Link], values: dict) -> List[Link]:
+    def reduce_to_valid_links(cls, links: list[Link], values: dict) -> list[Link]:
 
         try:
             operators = values["operators"]
@@ -165,7 +164,7 @@ class WorkflowContent(BaseModel):
                 "Cannot reduce to valid links if attribute 'operators' is missing!"
             ) from e
 
-        updated_links: List[Link] = []
+        updated_links: list[Link] = []
 
         for link in links:
             if link.start.operator is None or link.end.operator is None:
@@ -195,12 +194,12 @@ class WorkflowContent(BaseModel):
 
     # pylint: disable=no-self-argument
     @validator("links", each_item=False)
-    def links_acyclic_directed_graph(cls, links: List[Link]) -> List[Link]:
+    def links_acyclic_directed_graph(cls, links: list[Link]) -> list[Link]:
 
-        indegrees: Dict[UUID, int] = {}
-        edges: List[Tuple[UUID, UUID]] = []
+        indegrees: dict[UUID, int] = {}
+        edges: list[tuple[UUID, UUID]] = []
 
-        def add_edge(edge: Tuple[UUID, UUID]) -> None:
+        def add_edge(edge: tuple[UUID, UUID]) -> None:
             edges.append(edge)
             start_vertex = edge[0]
             end_vertex = edge[1]
@@ -212,7 +211,7 @@ class WorkflowContent(BaseModel):
                 indegrees[end_vertex] = indegrees[end_vertex] + 1
 
         def remove_outgoing_edges(start_vertex: UUID) -> None:
-            remove_edges: List[Tuple[UUID, UUID]] = []
+            remove_edges: list[tuple[UUID, UUID]] = []
             for edge in edges:
                 if edge[0] == start_vertex:
                     if indegrees[edge[1]] > 0:
@@ -223,7 +222,7 @@ class WorkflowContent(BaseModel):
             for edge in remove_edges:
                 edges.remove(edge)
 
-        def vertices_with_indegree_zero() -> List[UUID]:
+        def vertices_with_indegree_zero() -> list[UUID]:
             return [vertex for vertex, indegree in indegrees.items() if indegree == 0]
 
         for link in links:
@@ -247,8 +246,8 @@ class WorkflowContent(BaseModel):
     # pylint: disable=no-self-argument
     @validator("inputs", each_item=False)
     def determine_inputs_from_operators_and_links(
-        cls, inputs: List[IOConnector], values: dict
-    ) -> List[IOConnector]:
+        cls, inputs: list[IOConnector], values: dict
+    ) -> list[IOConnector]:
 
         try:
             operators = values["operators"]
@@ -285,8 +284,8 @@ class WorkflowContent(BaseModel):
     # pylint: disable=no-self-argument
     @validator("outputs", each_item=False)
     def determine_outputs_from_operators_and_links(
-        cls, outputs: List[IOConnector], values: dict
-    ) -> List[IOConnector]:
+        cls, outputs: list[IOConnector], values: dict
+    ) -> list[IOConnector]:
 
         try:
             operators = values["operators"]
@@ -323,8 +322,8 @@ class WorkflowContent(BaseModel):
     # pylint: disable=no-self-argument
     @validator("inputs", "outputs", each_item=False)
     def connector_names_empty_or_unique(
-        cls, io_connectors: List[IOConnector]
-    ) -> List[IOConnector]:
+        cls, io_connectors: list[IOConnector]
+    ) -> list[IOConnector]:
 
         io_connectors_with_nonempty_name = [
             io_connector
@@ -351,7 +350,7 @@ class WorkflowContent(BaseModel):
                 "'operators', 'links', 'constants', 'inputs' and 'outputs' is missing!"
             ) from e
 
-        updated_links: List[Link] = []
+        updated_links: list[Link] = []
 
         for link in links:
             if not (link.start.operator is None or link.end.operator is None):
@@ -417,17 +416,17 @@ class WorkflowContent(BaseModel):
         transformation_id: UUID,
         transformation_name: str,
         transformation_tag: str,
-        operator_id: Optional[UUID],
-        operator_name: Optional[str],
-        sub_nodes: List[Union[WorkflowNode, ComponentNode]],
+        operator_id: UUID | None,
+        operator_name: str | None,
+        sub_nodes: list[WorkflowNode | ComponentNode],
     ) -> WorkflowNode:
 
         inputs = []
         for input_connector in self.inputs:
             link = get_link_by_output_connector(None, input_connector.id, self.links)
             if link is not None and link.end.connector.name is not None:
-                assert link.end.operator is not None
-                # input must be connected to some operator
+                if link.end.operator is None:
+                    raise ValueError("input must be connected to some operator")
                 inputs.append(
                     input_connector.to_workflow_input(
                         link.end.operator, link.end.connector.name
@@ -437,8 +436,8 @@ class WorkflowContent(BaseModel):
             cn_constant = constant.to_connector()
             link = get_link_by_output_connector(None, cn_constant.id, self.links)
             if link is not None and link.end.connector.name is not None:
-                assert link.end.operator is not None
-                # constant must be connected to some operator
+                if link.end.operator is None:
+                    raise ValueError("constant must be connected to some operator!")
                 inputs.append(
                     constant.to_workflow_input(
                         link.end.operator, link.end.connector.name
@@ -449,8 +448,8 @@ class WorkflowContent(BaseModel):
         for output_connector in self.outputs:
             link = get_link_by_input_connector(None, output_connector.id, self.links)
             if link is not None and link.start.connector.name is not None:
-                assert link.start.operator is not None
-                # output must be connected to some operator
+                if link.start.operator is None:
+                    raise ValueError("output must be connected to some operator")
                 outputs.append(
                     output_connector.to_workflow_output(
                         link.start.operator, link.start.connector.name

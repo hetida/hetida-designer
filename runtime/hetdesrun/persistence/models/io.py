@@ -1,4 +1,3 @@
-from typing import List, Optional
 from uuid import UUID, uuid4
 
 # pylint: disable=no-name-in-module
@@ -11,8 +10,8 @@ from hetdesrun.models.workflow import WorkflowInput, WorkflowOutput
 
 
 class IO(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
-    name: Optional[str] = Field(
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
+    name: str | None = Field(
         None,
         description="Must be a valid python identifier because it will be used for computation",
     )
@@ -38,12 +37,12 @@ class IOInterface(BaseModel):
     Note: The names in the list of inputs and outputs must be unique, respectively.
     """
 
-    inputs: List[IO] = []
-    outputs: List[IO] = []
+    inputs: list[IO] = []
+    outputs: list[IO] = []
 
     # pylint: disable=no-self-argument
     @validator("inputs", "outputs", each_item=False)
-    def io_names_unique(cls, ios: List[IO]) -> List[IO]:
+    def io_names_unique(cls, ios: list[IO]) -> list[IO]:
         ios_with_name = [io for io in ios if not (io.name is None or io.name == "")]
 
         names_unique(cls, ios_with_name)

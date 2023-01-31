@@ -13,7 +13,7 @@ import threading
 from enum import Enum
 from functools import cache
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, Literal, Optional, Type, Union
+from typing import Any, Literal
 
 from httpx import AsyncClient, HTTPError, Response
 from pydantic import (  # pylint: disable=no-name-in-module
@@ -25,7 +25,7 @@ from pydantic import (  # pylint: disable=no-name-in-module
 logger = logging.getLogger(__name__)
 
 
-def json_serialize_dt(obj: Union[datetime.datetime, datetime.date]) -> str:
+def json_serialize_dt(obj: datetime.datetime | datetime.date) -> str:
     """JSON serializer including datetime objects
 
     usage: json.dumps(my_object, default=json_serialize_dt)
@@ -45,7 +45,7 @@ class PasswordGrantCredentials(BaseModel):
     username: str
     password: str
     client_id: str
-    client_secret: Optional[str] = None
+    client_secret: str | None = None
 
 
 class ClientCredentialsGrantCredentials(BaseModel):
@@ -59,11 +59,9 @@ class ServiceCredentials(BaseModel):
 
     realm: str
     auth_url: str
-    audience: Optional[str] = Field("account")
-    grant_credentials: Union[
-        PasswordGrantCredentials, ClientCredentialsGrantCredentials
-    ]
-    post_client_kwargs: Dict[str, Any] = Field(
+    audience: str | None = Field("account")
+    grant_credentials: PasswordGrantCredentials | ClientCredentialsGrantCredentials
+    post_client_kwargs: dict[str, Any] = Field(
         {},
         description=(
             "Additional keyword arguments for httpx AsyncClient against auth provider."
@@ -71,7 +69,7 @@ class ServiceCredentials(BaseModel):
         ),
         example={"verify": False},
     )
-    post_kwargs: Dict[str, Any] = Field(
+    post_kwargs: dict[str, Any] = Field(
         {},
         description=(
             "Additional keyword arguments for httpx post requests against auth provider."
@@ -92,7 +90,7 @@ class TokenType(str, Enum):
         # first value is canonical value (e.g. what you get when calling TokenType.bearer.value)
         obj._value_ = values[0]
 
-        cls.parse_type: Type  # for mypy
+        cls.parse_type: type  # for mypy
         obj.parse_type = values[1]  # set parse_type to second tuple entry
 
         for other_value in values[2:]:
@@ -108,9 +106,9 @@ class TokenType(str, Enum):
 
 class TokenResponse(BaseModel):
     access_token: str
-    refresh_token: Optional[
-        str
-    ] = None  # client credential grants don't provide refreh token
+    refresh_token: str | None = (
+        None  # client credential grants don't provide refreh token
+    )
     expires_in: int
     refresh_expires_in: int = 0
     token_type: TokenType
@@ -134,9 +132,9 @@ class TokenResponse(BaseModel):
         allow_population_by_field_name = True
 
 
-def json_parse_token_response(resp: Response) -> Dict[str, Any]:
+def json_parse_token_response(resp: Response) -> dict[str, Any]:
     try:
-        resp_dict: Dict[str, Any] = resp.json()
+        resp_dict: dict[str, Any] = resp.json()
         return resp_dict
     except json.JSONDecodeError as e:
         msg = "Error trying to json-parse token response from auth provider"
@@ -152,9 +150,9 @@ def json_parse_token_response(resp: Response) -> Dict[str, Any]:
 
 async def post_to_auth_provider(
     url: str,
-    data: Dict[str, Any],
-    async_client_kwargs: Dict[str, Any],
-    post_kwargs: Dict[str, Any],
+    data: dict[str, Any],
+    async_client_kwargs: dict[str, Any],
+    post_kwargs: dict[str, Any],
 ) -> Response:
     async with AsyncClient(**(async_client_kwargs)) as client:
         resp = await client.post(
@@ -190,7 +188,7 @@ async def obtain_token_from_auth_provider(
             post_kwargs=service_user_credentials.post_kwargs,
         )
     except HTTPError as e:
-        msg = f"Error trying to get token from auth provider at" f" {url}."
+        msg = f"Error trying to get token from auth provider at {url}."
         logger.error(msg)
         raise ServiceAuthenticationError(msg + " Http error was:\n" + str(e)) from e
 
@@ -239,7 +237,7 @@ async def refresh_token_from_auth_provider(
             post_kwargs=service_user_credentials.post_kwargs,
         )
     except HTTPError as e:
-        msg = f"Error trying to refresh token from auth provider at" f" {url}."
+        msg = f"Error trying to refresh token from auth provider at {url}."
         logger.error(msg)
         raise ServiceAuthenticationError(msg + " Http error was:\n" + str(e)) from e
 
@@ -286,7 +284,7 @@ def should_try_refresh(token_info: TokenResponse) -> bool:
 
 async def obtain_or_refresh_token(
     service_user_credentials: ServiceCredentials,
-    existing_token_info: Optional[TokenResponse] = None,
+    existing_token_info: TokenResponse | None = None,
 ) -> TokenResponse:
     """Logic for actually doing token obtaining and refreshs
 
@@ -307,7 +305,9 @@ async def obtain_or_refresh_token(
 
         logger.debug("Access token not fresh enough. Trying to update.")
         if should_try_refresh(existing_token_info):
-            assert existing_token_info.refresh_token is not None  # for mypy
+            assert (  # noqa: S101
+                existing_token_info.refresh_token is not None
+            )  # for mypy
             logger.debug(
                 "Refresh token fresh enough. Trying to update from refresh token"
             )
@@ -358,7 +358,7 @@ class AccessTokenManager:
     Note: Does not manage tokens across processes in a multiprocessing setup.
     """
 
-    _current_token_info: Optional[TokenResponse]
+    _current_token_info: TokenResponse | None
 
     def __init__(self, creds: ServiceCredentials):
         self.creds = creds
@@ -375,7 +375,7 @@ class AccessTokenManager:
         """Provides a valid access token"""
         async with self._token_async_lock:
             await self._obtain_or_refresh_token_info()
-        assert self._current_token_info is not None  # for mypy
+        assert self._current_token_info is not None  # for mypy # noqa: S101
         return self._current_token_info.access_token
 
     def sync_get_access_token(self) -> str:
@@ -392,12 +392,12 @@ class AccessTokenManager:
 
 
 @cache
-def global_access_token_manager_dict() -> Dict[str, AccessTokenManager]:
+def global_access_token_manager_dict() -> dict[str, AccessTokenManager]:
     return {}
 
 
 def create_or_get_named_access_token_manager(
-    key: str, creds: Optional[ServiceCredentials] = None
+    key: str, creds: ServiceCredentials | None = None
 ) -> AccessTokenManager:
     """Create/get global access token manager
 
@@ -416,10 +416,8 @@ def create_or_get_named_access_token_manager(
     logger.debug("Creating new access token manager for key %s", key)
     if creds is None:
         raise ValueError(
-            (
-                "Credentials have to be specified at least the first time the"
-                " access token manager is requested"
-            )
+            "Credentials have to be specified at least the first time the"
+            " access token manager is requested"
         )
 
     manager_dict[key] = AccessTokenManager(creds=creds)

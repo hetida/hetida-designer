@@ -5,7 +5,6 @@ to provide a very elementary support system to the designer code editor.
 """
 
 from keyword import iskeyword
-from typing import List
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
@@ -53,9 +52,7 @@ def generate_function_header(
         if len(component.io_interface.inputs) == 0
         else "*, "
         + ", ".join(
-            input.name
-            for input in component.io_interface.inputs
-            if input.name is not None
+            inp.name for inp in component.io_interface.inputs if inp.name is not None
         )
     )
 
@@ -66,9 +63,9 @@ def generate_function_header(
         + ("\n    " if len(component.io_interface.inputs) != 0 else "")
         + "".join(
             [
-                '    "' + input.name + '": "' + input.data_type.value + '",\n    '
-                for input in component.io_interface.inputs
-                if input.name is not None
+                '    "' + inp.name + '": "' + inp.data_type.value + '",\n    '
+                for inp in component.io_interface.inputs
+                if inp.name is not None
             ]
         )
         + "}"
@@ -90,17 +87,20 @@ def generate_function_header(
     timestamp_str = ""
 
     if component.state == State.RELEASED:
-        assert component.released_timestamp is not None
-        timestamp_str = "\n    " + '"released_timestamp": "'
+        if component.released_timestamp is None:
+            raise TypeError("released timestamp must be set for a released component")
+        timestamp_str = "\n    " + '"released_timestamp": "'  # noqa: ISC003
         timestamp_str = timestamp_str + component.released_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
 
     if component.state == State.DISABLED:
-        assert component.released_timestamp is not None
-        timestamp_str = "\n    " + '"released_timestamp": "'
+        if component.released_timestamp is None:
+            raise TypeError("released timestamp must be set for a disabled component")
+        timestamp_str = "\n    " + '"released_timestamp": "'  # noqa: ISC003
         timestamp_str = timestamp_str + component.released_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
-        assert component.disabled_timestamp is not None
+        if component.disabled_timestamp is None:
+            raise TypeError("disabled timestamp must be set for a disabled component")
         timestamp_str = timestamp_str + "\n    " + '"disabled_timestamp": "'
         timestamp_str = timestamp_str + component.disabled_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
@@ -153,7 +153,9 @@ def update_code(
             f"will not update code of transformation revision {tr.id}"
             f"since its type is not COMPONENT"
         )
-    assert isinstance(tr.content, str)
+
+    if not isinstance(tr.content, str):
+        raise TypeError("Trafo content must be a code string for updating code.")
     existing_code = tr.content
 
     if existing_code == "":
@@ -194,5 +196,5 @@ def update_code(
     return start + new_function_header + end
 
 
-def check_parameter_names(names: List[str]) -> bool:
-    return all((name.isidentifier() and not iskeyword(name) for name in names))
+def check_parameter_names(names: list[str]) -> bool:
+    return all(name.isidentifier() and not iskeyword(name) for name in names)

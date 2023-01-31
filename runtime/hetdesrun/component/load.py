@@ -3,7 +3,7 @@ import importlib
 import logging
 import sys
 from types import ModuleType
-from typing import Callable, Coroutine, Union
+from typing import Callable, Coroutine
 
 
 class ComponentCodeImportError(Exception):
@@ -37,7 +37,7 @@ def import_func_from_code(
     func_name: str,
     raise_if_not_found: bool = False,
     register_module: bool = True,
-) -> Union[Callable, Coroutine]:
+) -> Callable | Coroutine:
     """Lazily loads a function from the given code and registers the imported module
 
     The module is only created and registered if direct import does not work. I.e. if the module
@@ -51,7 +51,7 @@ def import_func_from_code(
 
     try:
         mod = importlib.import_module(module_path)
-        func: Union[Callable, Coroutine] = getattr(mod, func_name)
+        func: Callable | Coroutine = getattr(mod, func_name)
         return func
     except ImportError as e:
         if raise_if_not_found:
@@ -71,7 +71,7 @@ def import_func_from_code(
             ] = mod  # now reachable under the constructed module_path
         try:
             # actually import the module;
-            exec(code, mod.__dict__)  # pylint: disable=exec-used
+            exec(code, mod.__dict__)  # pylint: disable=exec-used # noqa: S102
         except SyntaxError as exec_syntax_exception:
             logger.info(
                 "Syntax Error during importing function %s",
@@ -81,7 +81,7 @@ def import_func_from_code(
                 "Could not import code due to Syntax Errors"
             ) from exec_syntax_exception
 
-        except Exception as exec_exception:
+        except Exception as exec_exception:  # noqa: BLE001
             logger.info(
                 "Exception during importing function %s: %s",
                 func_name,

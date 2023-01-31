@@ -1,5 +1,4 @@
 import asyncio
-from typing import Dict
 
 import pandas as pd
 
@@ -19,8 +18,8 @@ async def load_single_dataframe_from_adapter(
 
 
 async def load_dataframes_from_adapter(
-    data_to_load: Dict[str, FilteredSource], adapter_key: str
-) -> Dict[str, pd.DataFrame]:
+    data_to_load: dict[str, FilteredSource], adapter_key: str
+) -> dict[str, pd.DataFrame]:
     loaded_frames = await asyncio.gather(
         *[
             load_single_dataframe_from_adapter(filtered_source, adapter_key)

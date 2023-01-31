@@ -3,7 +3,7 @@
 
 import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import (
@@ -29,9 +29,9 @@ class ExecutionEngine(Enum):
 
 class PerformanceMeasuredStep(BaseModel):
     name: str
-    start: Optional[datetime.datetime] = None
-    end: Optional[datetime.datetime] = None
-    duration: Optional[datetime.timedelta] = None
+    start: datetime.datetime | None = None
+    end: datetime.datetime | None = None
+    duration: datetime.timedelta | None = None
 
     @classmethod
     def create_and_begin(cls, name: str) -> "PerformanceMeasuredStep":
@@ -67,19 +67,19 @@ class PerformanceMeasuredStep(BaseModel):
 
 
 class AllMeasuredSteps(BaseModel):
-    internal_full: Optional[PerformanceMeasuredStep] = None
-    prepare_execution_input: Optional[PerformanceMeasuredStep] = None
-    run_execution_input: Optional[PerformanceMeasuredStep] = None
-    runtime_service_handling: Optional[PerformanceMeasuredStep] = None
-    pure_execution: Optional[PerformanceMeasuredStep] = None
-    load_data: Optional[PerformanceMeasuredStep] = None
-    send_data: Optional[PerformanceMeasuredStep] = None
+    internal_full: PerformanceMeasuredStep | None = None
+    prepare_execution_input: PerformanceMeasuredStep | None = None
+    run_execution_input: PerformanceMeasuredStep | None = None
+    runtime_service_handling: PerformanceMeasuredStep | None = None
+    pure_execution: PerformanceMeasuredStep | None = None
+    load_data: PerformanceMeasuredStep | None = None
+    send_data: PerformanceMeasuredStep | None = None
 
 
 class ConfigurationInput(BaseModel):
     """Options changing how a workflow will be executed"""
 
-    name: Optional[str] = None
+    name: str | None = None
     engine: ExecutionEngine = Field(
         ExecutionEngine.Plain,
         description="one of "
@@ -98,10 +98,10 @@ class ConfigurationInput(BaseModel):
 
 
 class WorkflowExecutionInput(BaseModel):
-    code_modules: List[CodeModule] = Field(
+    code_modules: list[CodeModule] = Field(
         ..., description="The code modules which are used/referenced by the components."
     )
-    components: List[ComponentRevision] = Field(
+    components: list[ComponentRevision] = Field(
         ...,
         title="Used components",
         description="List of References to all used elementary components",
@@ -124,16 +124,16 @@ class WorkflowExecutionInput(BaseModel):
     # pylint: disable=no-self-argument
     @validator("components")
     def components_unique(
-        cls, components: List[ComponentRevision]
-    ) -> List[ComponentRevision]:
-        if len(set(c.uuid for c in components)) != len(components):
+        cls, components: list[ComponentRevision]
+    ) -> list[ComponentRevision]:
+        if len({c.uuid for c in components}) != len(components):
             raise ValueError("Components not unique!")
         return components
 
     # pylint: disable=no-self-argument
     @validator("code_modules")
-    def code_modules_unique(cls, code_modules: List[CodeModule]) -> List[CodeModule]:
-        if len(set(c.uuid for c in code_modules)) != len(code_modules):
+    def code_modules_unique(cls, code_modules: list[CodeModule]) -> list[CodeModule]:
+        if len({c.uuid for c in code_modules}) != len(code_modules):
             raise ValueError("Code Modules not unique!")
         return code_modules
 
@@ -156,9 +156,9 @@ class WorkflowExecutionInput(BaseModel):
             ) from e
 
         # Check that every Workflow Input is wired:
-        wired_input_names = set(
-            (inp_wiring.workflow_input_name for inp_wiring in wiring.input_wirings)
-        )
+        wired_input_names = {
+            inp_wiring.workflow_input_name for inp_wiring in wiring.input_wirings
+        }
 
         non_constant_wf_inputs = [wfi for wfi in workflow.inputs if not wfi.constant]
         for wf_input in non_constant_wf_inputs:
@@ -185,9 +185,9 @@ class WorkflowExecutionInput(BaseModel):
         if len(wired_input_names) > len(non_constant_wf_inputs):
             raise ValueError("Too many input wirings provided!")
 
-        wired_output_names = set(
-            (outp_wiring.workflow_output_name for outp_wiring in wiring.output_wirings)
-        )
+        wired_output_names = {
+            outp_wiring.workflow_output_name for outp_wiring in wiring.output_wirings
+        }
 
         for wf_output in workflow.outputs:
             if not wf_output.name in wired_output_names:
@@ -230,11 +230,11 @@ class WorkflowExecutionResult(BaseModel):
         example=Result.OK,
     )
 
-    output_results_by_output_name: Dict[str, Any] = Field(
+    output_results_by_output_name: dict[str, Any] = Field(
         ...,
         description="Results at the workflow outputs as a dictionary by name of workflow output",
     )
-    node_results: Optional[str] = Field(
+    node_results: str | None = Field(
         None,
         description=(
             "Individual results of all executed nodes as concatenated str."
@@ -243,8 +243,8 @@ class WorkflowExecutionResult(BaseModel):
             " set to true."
         ),
     )
-    error: Optional[str] = Field(None, description="error string")
-    traceback: Optional[str] = Field(None, description="traceback")
+    error: str | None = Field(None, description="error string")
+    traceback: str | None = Field(None, description="traceback")
     job_id: UUID
 
     measured_steps: AllMeasuredSteps = AllMeasuredSteps()

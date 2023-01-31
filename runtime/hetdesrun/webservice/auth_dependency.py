@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Any, Dict, List
+from typing import Any
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBasicCredentials, HTTPBearer
@@ -25,7 +25,7 @@ def get_request_auth_context() -> dict:
     return _REQUEST_AUTH_CONTEXT.get({})
 
 
-def forward_request_token_or_get_fixed_token_auth_headers() -> Dict[str, str]:
+def forward_request_token_or_get_fixed_token_auth_headers() -> dict[str, str]:
     """Handles the FORWARD_OR_FIXED outgoing auth modes
 
     If a bearer token was provided with a currently handled ingoing request,
@@ -44,18 +44,14 @@ def forward_request_token_or_get_fixed_token_auth_headers() -> Dict[str, str]:
         possible_fixed_token = get_config().auth_bearer_token_for_outgoing_requests
         if possible_fixed_token is not None:
             logger.debug(
-                (
-                    "No stored auth token, but explicit token for outgoing requests is present."
-                    " Using the explicitely configured token for outgoing requests with schema"
-                    " Bearer."
-                )
+                "No stored auth token, but explicit token for outgoing requests is present."
+                " Using the explicitely configured token for outgoing requests with schema"
+                " Bearer."
             )
             return {"Authorization": "Bearer " + possible_fixed_token}
         logger.debug(
-            (
-                "No stored auth token and no explititely fixed configured token."
-                " Not setting auth header"
-            )
+            "No stored auth token and no explititely fixed configured token."
+            " Not setting auth header"
         )
         return {}
     logger.debug(
@@ -64,7 +60,7 @@ def forward_request_token_or_get_fixed_token_auth_headers() -> Dict[str, str]:
     return {"Authorization": "Bearer " + token}
 
 
-async def get_auth_headers(external: bool = False) -> Dict[str, str]:
+async def get_auth_headers(external: bool = False) -> dict[str, str]:
     """Auth header dict depending on outgoing request being external/internal
 
     Obtains auth headers for making an outgoing web request depending on
@@ -92,7 +88,7 @@ async def get_auth_headers(external: bool = False) -> Dict[str, str]:
             return forward_request_token_or_get_fixed_token_auth_headers()
         if external_mode == ExternalAuthMode.CLIENT:
             service_credentials = get_config().external_auth_client_credentials
-            assert service_credentials is not None  # for mypy
+            assert service_credentials is not None  # for mypy # noqa: S101
             access_token_manager = create_or_get_named_access_token_manager(
                 "outgoing_external_auth", service_credentials
             )
@@ -112,7 +108,7 @@ async def get_auth_headers(external: bool = False) -> Dict[str, str]:
         return forward_request_token_or_get_fixed_token_auth_headers()
     if internal_mode == InternalAuthMode.CLIENT:
         service_credentials = get_config().internal_auth_client_credentials
-        assert service_credentials is not None  # for mypy
+        assert service_credentials is not None  # for mypy # noqa: S101
         access_token_manager = create_or_get_named_access_token_manager(
             "outgoing_internal_auth", service_credentials
         )
@@ -124,7 +120,7 @@ async def get_auth_headers(external: bool = False) -> Dict[str, str]:
     raise ValueError(msg)
 
 
-def sync_wrapped_get_auth_headers(external: bool = False) -> Dict[str, str]:
+def sync_wrapped_get_auth_headers(external: bool = False) -> dict[str, str]:
     return asyncio.run(get_auth_headers(external=external))
 
 
@@ -147,7 +143,7 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
             detail="Could not obtain credentials from request",
         )
 
-    if not credentials.scheme == "Bearer":  # type: ignore
+    if credentials.scheme != "Bearer":  # type: ignore
         logger.info("Unauthorized: No Bearer Schema")
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN, detail="Wrong authentication method"
@@ -184,6 +180,6 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
     logger.debug("Auth token check successful.")
 
 
-def get_auth_deps() -> List[Any]:
+def get_auth_deps() -> list[Any]:
     """Return the authentication dependencies based on the application settings."""
     return [Depends(has_access)] if get_config().auth else []

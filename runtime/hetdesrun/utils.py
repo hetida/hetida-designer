@@ -5,7 +5,7 @@ import json
 import logging
 import random
 from enum import Enum
-from typing import Any, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
 import requests  # noqa: F401
@@ -30,7 +30,7 @@ def check_explicit_utc(dt: datetime.datetime) -> bool:
     return check_aware(dt) and dt.utcoffset().total_seconds() == 0  # type: ignore
 
 
-def get_backend_basic_auth() -> Tuple[Optional[str], Optional[str]]:
+def get_backend_basic_auth() -> tuple[str | None, str | None]:
     return (
         get_config().hd_backend_basic_auth_user,
         get_config().hd_backend_basic_auth_password,
@@ -51,8 +51,8 @@ def get_uuid_from_seed(seed_str: str) -> UUID:
 
 
 def load_data(
-    json_file: str, md_file: str, code_file: Optional[str] = None
-) -> Tuple[Optional[dict], Optional[str], Optional[str]]:
+    json_file: str, md_file: str, code_file: str | None = None
+) -> tuple[dict | None, str | None, str | None]:
     """Loads structured and unstructured component / workflow data from files
 
     Helper function to load a bunch of data from
@@ -70,15 +70,15 @@ def load_data(
         from json file as first entry, documentation as second entry and if code_file
         is not None the code as third entry. If some part of loading failes, None is returned
     """
-    with open(json_file, "r", encoding="utf8") as f:
+    with open(json_file, encoding="utf8") as f:
         try:
             info = json.load(f)
         except json.JSONDecodeError:
             logger.error("Could not decode %s", json_file)
             info = None
-    doc: Optional[str]
+    doc: str | None
     try:
-        with open(md_file, "r", encoding="utf8") as f:
+        with open(md_file, encoding="utf8") as f:
             doc = f.read()
     except FileNotFoundError:
         logger.error("Could not find documentation markdonw file %s", md_file)
@@ -87,9 +87,9 @@ def load_data(
     if code_file is None:
         return info, doc, None
 
-    code: Optional[str]
+    code: str | None
     try:
-        with open(code_file, "r", encoding="utf8") as f:
+        with open(code_file, encoding="utf8") as f:
             code = f.read()
     except FileNotFoundError:
         logger.error("Could not find code file %s", code_file)
@@ -112,11 +112,11 @@ class Type(str, Enum):
 
 
 class IODTO(BaseModel):
-    id: UUID
+    id: UUID  # noqa: A003
     name: str
     posX: int = 0
     posY: int = 0
-    type: DataType
+    type: DataType  # noqa: A003
 
 
 class ComponentDTO(BaseModel):
@@ -127,13 +127,13 @@ class ComponentDTO(BaseModel):
     code: str
     description: str
     groupId: UUID
-    id: UUID
-    inputs: List[IODTO]
-    outputs: List[IODTO]
+    id: UUID  # noqa: A003
+    inputs: list[IODTO]
+    outputs: list[IODTO]
     state: State = State.RELEASED
     tag: str
     testInput: dict = {}
-    type: Type = Type.COMPONENT
+    type: Type = Type.COMPONENT  # noqa: A003
 
 
 def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:

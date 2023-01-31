@@ -1,7 +1,7 @@
 import json
 import logging
 from functools import cache
-from typing import Any, Optional, Union
+from typing import Any
 from uuid import UUID
 
 # pylint: disable=no-name-in-module
@@ -28,13 +28,12 @@ def dumps(d: Any) -> str:
 
 
 @cache
-def get_db_engine(
-    override_db_url: Optional[Union[SecretStr, str, URL]] = None
-) -> Engine:
+def get_db_engine(override_db_url: SecretStr | str | URL | None = None) -> Engine:
 
-    assert get_config().sqlalchemy_connection_string is not None
+    if get_config().sqlalchemy_connection_string is None:
+        raise TypeError("No sqlalchemy connection string configured/inferred!")
 
-    db_url_to_use: Union[SecretStr, str, URL]
+    db_url_to_use: SecretStr | str | URL
     if override_db_url is None:
         db_url_to_use = get_config().sqlalchemy_connection_string  # type: ignore
     else:

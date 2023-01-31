@@ -3,7 +3,6 @@
 import logging
 import threading
 from posixpath import join as posix_urljoin
-from typing import Dict, List
 
 import httpx
 from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
@@ -28,25 +27,25 @@ try:
         generic_rest_adapter_urls  # pylint: disable=pointless-statement,used-before-assignment
 except NameError:
     with generic_rest_adapter_urls_lock:
-        generic_rest_adapter_urls: Dict[str, str] = {}
+        generic_rest_adapter_urls: dict[str, str] = {}
 
 
 class BackendRegisteredGenericRestAdapter(BaseModel):
-    id: str
+    id: str  # noqa: A003
     name: str
     url: str
     internalUrl: str
 
 
 class AdapterFrontendDtoRegisteredGenericRestAdapters(BaseModel):
-    __root__: List[AdapterFrontendDto]
+    __root__: list[AdapterFrontendDto]
 
 
 class BackendRegisteredGenericRestAdapters(BaseModel):
-    __root__: List[BackendRegisteredGenericRestAdapter]
+    __root__: list[BackendRegisteredGenericRestAdapter]
 
 
-async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestAdapter]:
+async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestAdapter]:
     """Loads generic REST adapter infos from the corresponding designer backend endpoint"""
     try:
         headers = await get_generic_rest_adapter_auth_headers(external=False)
@@ -66,7 +65,7 @@ async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestA
         adapter_list = await get_all_adapters()
 
         try:
-            loaded_generic_rest_adapters: List[BackendRegisteredGenericRestAdapter] = [
+            loaded_generic_rest_adapters: list[BackendRegisteredGenericRestAdapter] = [
                 BackendRegisteredGenericRestAdapter(
                     id=adapter_dto.id,
                     name=adapter_dto.name,

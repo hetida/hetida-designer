@@ -9,7 +9,7 @@ import datetime
 import json
 import logging
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
+from typing import Any, Literal
 
 import pandas as pd
 import requests
@@ -29,16 +29,16 @@ logger = logging.getLogger(__name__)
 
 
 def create_empty_ts_df(
-    data_type: ExternalType, attrs: Optional[Any] = None
+    data_type: ExternalType, attrs: Any | None = None
 ) -> pd.DataFrame:
     """Create empty timeseries dataframe with explicit dtypes"""
-    dtype_dict: Dict[str, Union[Type, str]] = {
+    dtype_dict: dict[str, type | str] = {
         "timeseriesId": str,
         "timestamp": "datetime64[ns, UTC]",
     }
 
     value_datatype = data_type.value_datatype
-    assert value_datatype is not None  # for mypy
+    assert value_datatype is not None  # for mypy   # noqa: S101
     dtype_dict["value"] = value_datatype.pandas_value_type
 
     if attrs is None:
@@ -56,7 +56,7 @@ def decode_attributes(data_attributes: str) -> Any:
     return df_attrs
 
 
-def are_valid_sources(filtered_sources: List[FilteredSource]) -> Tuple[bool, str]:
+def are_valid_sources(filtered_sources: list[FilteredSource]) -> tuple[bool, str]:
     if len({fs.type for fs in filtered_sources}) > 1:
         return False, "Got more than one datatype in same grouped data"
 
@@ -71,9 +71,9 @@ def are_valid_sources(filtered_sources: List[FilteredSource]) -> Tuple[bool, str
 
 
 async def load_framelike_data(
-    filtered_sources: List[FilteredSource],
-    additional_params: List[
-        Tuple[str, str]
+    filtered_sources: list[FilteredSource],
+    additional_params: list[
+        tuple[str, str]
     ],  # for timeseries: [("from", from_timestamp), ("to", to_timestamp)]
     adapter_key: str,
     endpoint: Literal["timeseries", "dataframe"],  # "timeseries" or "dataframe"

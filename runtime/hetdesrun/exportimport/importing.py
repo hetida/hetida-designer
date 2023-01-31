@@ -1,7 +1,7 @@
 import logging
 import os
 from enum import Enum
-from typing import Dict, Iterable, List, Optional
+from typing import Iterable
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -35,14 +35,14 @@ class UpdateProcessStatus(str, Enum):
 class TrafoUpdateProcessSummary(BaseModel):
     status: UpdateProcessStatus
     msg: str = Field("", description="details / error messages")
-    name: Optional[str]
-    version_tag: Optional[str]
+    name: str | None
+    version_tag: str | None
 
 
 def import_importable(
     importable: Importable,
     raise_on_missing_dependency: bool = False,
-) -> Dict[UUID, TrafoUpdateProcessSummary]:
+) -> dict[UUID, TrafoUpdateProcessSummary]:
     """Imports trafo revs from a single importable into the database
 
     An importable contains transformation revisions (for example loaded from
@@ -134,10 +134,10 @@ def import_importable(
             success_per_trafo[transformation.id].status = UpdateProcessStatus.SUCCESS
 
     if multi_import_config.deprecate_older_revisions:
-        revision_group_ids = set(
+        revision_group_ids = {
             transformation.revision_group_id
             for _, transformation in trafos_to_process_dict.items()
-        )
+        }
         logger.info("deprecate all but latest revision of imported revision groups")
         for revision_group_id in revision_group_ids:
             logger.debug(
@@ -150,7 +150,7 @@ def import_importable(
 
 def import_importables(
     importables: Iterable[Importable],
-) -> List[Dict[UUID, TrafoUpdateProcessSummary]]:
+) -> list[dict[UUID, TrafoUpdateProcessSummary]]:
     """Import all trafo rev sets from multiple importables"""
     return [import_importable(importable) for importable in importables]
 
@@ -207,10 +207,10 @@ def import_transformations(
     logger.info("finished importing")
 
     if deprecate_older_revisions:
-        revision_group_ids = set(
+        revision_group_ids = {
             transformation.revision_group_id
             for _, transformation in transformation_dict.items()
-        )
+        }
         logger.info("deprecate all but latest revision of imported revision groups")
         for revision_group_id in revision_group_ids:
             deprecate_all_but_latest_in_group(
@@ -247,6 +247,6 @@ def generate_import_order_file(
             logger.info("importing level %i transformation revisions", level)
             for transformation_id in ids_by_nesting_level[level]:
                 # pylint: disable=consider-iterating-dictionary
-                if transformation_id in path_dict.keys():
+                if transformation_id in path_dict:
                     file.write(path_dict[transformation_id])
                     file.write("\n")

@@ -16,10 +16,6 @@ from typing import (
     Any,
     Awaitable,
     Callable,
-    Dict,
-    Optional,
-    Tuple,
-    Type,
     TypedDict,
     Union,
 )
@@ -40,18 +36,18 @@ from hetdesrun.adapters.source.direct_provisioning import load_directly_provisio
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 ConnectionErrorTuple = Union[
-    Tuple[Type[AdapterConnectionError]],
-    Tuple[Type[AdapterConnectionError], Type[Exception]],
+    tuple[type[AdapterConnectionError]],
+    tuple[type[AdapterConnectionError], type[Exception]],
 ]
 
 OutputDataErrorTuple = Union[
-    Tuple[Type[AdapterOutputDataError]],
-    Tuple[Type[AdapterOutputDataError], Type[Exception]],
+    tuple[type[AdapterOutputDataError]],
+    tuple[type[AdapterOutputDataError], type[Exception]],
 ]
 
 ClientWiringInvalidErrorTuple = Union[
-    Tuple[Type[AdapterClientWiringInvalidError]],
-    Tuple[Type[AdapterClientWiringInvalidError], Type[Exception]],
+    tuple[type[AdapterClientWiringInvalidError]],
+    tuple[type[AdapterClientWiringInvalidError], type[Exception]],
 ]
 
 logger = logging.getLogger(__name__)
@@ -71,16 +67,16 @@ class SinkAdapter(TypedDict):
     client_wiring_invalid_error_classes: ClientWiringInvalidErrorTuple
 
 
-SOURCE_ADAPTERS: Dict[Union[int, str], SourceAdapter] = {}
+SOURCE_ADAPTERS: dict[int | str, SourceAdapter] = {}
 
-SINK_ADAPTERS: Dict[Union[int, str], SinkAdapter] = {}
+SINK_ADAPTERS: dict[int | str, SinkAdapter] = {}
 
 
 def prepare_exc_classes(
-    connection_custom_error: Optional[Type[Exception]] = None,
-    output_data_custom_error: Optional[Type[Exception]] = None,
-    client_wiring_invalid_error_class: Optional[Type[Exception]] = None,
-) -> Tuple[ConnectionErrorTuple, OutputDataErrorTuple, ClientWiringInvalidErrorTuple,]:
+    connection_custom_error: type[Exception] | None = None,
+    output_data_custom_error: type[Exception] | None = None,
+    client_wiring_invalid_error_class: type[Exception] | None = None,
+) -> tuple[ConnectionErrorTuple, OutputDataErrorTuple, ClientWiringInvalidErrorTuple]:
     """Gather existing and custom exception classes for simultaneous handling
 
     This meachanism allows client adapter implementations to send specific
@@ -138,14 +134,14 @@ GENERIC_REST_SINK_ADAPTER: SinkAdapter = SinkAdapter(
 
 
 def register_source_adapter(
-    adapter_key: Union[int, str],
+    adapter_key: int | str,
     load_func: Callable[
-        [Dict[str, FilteredSource], str],
-        Union[Dict[str, Any], Awaitable[Dict[str, Any]]],
+        [dict[str, FilteredSource], str],
+        dict[str, Any] | Awaitable[dict[str, Any]],
     ],
-    connection_error_class: Optional[Type[Exception]] = None,
-    output_data_error_class: Optional[Type[Exception]] = None,
-    client_wiring_invalid_error_class: Optional[Type[Exception]] = None,
+    connection_error_class: type[Exception] | None = None,
+    output_data_error_class: type[Exception] | None = None,
+    client_wiring_invalid_error_class: type[Exception] | None = None,
 ) -> None:
 
     connection_errors, output_data_errors, invalid_wiring_errors = prepare_exc_classes(
@@ -162,14 +158,14 @@ def register_source_adapter(
 
 
 def register_sink_adapter(
-    adapter_key: Union[int, str],
+    adapter_key: int | str,
     send_func: Callable[
-        [Dict[str, FilteredSink], Dict[str, Any], str],
-        Union[Dict[str, Any], Awaitable[Dict[str, Any]]],
+        [dict[str, FilteredSink], dict[str, Any], str],
+        dict[str, Any] | Awaitable[dict[str, Any]],
     ],
-    connection_error_class: Optional[Type[Exception]] = None,
-    output_data_error_class: Optional[Type[Exception]] = None,
-    client_wiring_invalid_error_class: Optional[Type[Exception]] = None,
+    connection_error_class: type[Exception] | None = None,
+    output_data_error_class: type[Exception] | None = None,
+    client_wiring_invalid_error_class: type[Exception] | None = None,
 ) -> None:
 
     connection_errors, output_data_errors, invalid_wiring_errors = prepare_exc_classes(
@@ -217,7 +213,7 @@ register_source_adapter(
 register_sink_adapter(adapter_key="local-file-adapter", send_func=local_file_send_data)
 
 
-def get_source_adapter(adapter_key: Union[int, str]) -> SourceAdapter:
+def get_source_adapter(adapter_key: int | str) -> SourceAdapter:
     try:
         return SOURCE_ADAPTERS[adapter_key]
     except KeyError:
@@ -228,7 +224,7 @@ def get_source_adapter(adapter_key: Union[int, str]) -> SourceAdapter:
         ) from None
 
 
-def get_sink_adapter(adapter_key: Union[int, str]) -> SinkAdapter:
+def get_sink_adapter(adapter_key: int | str) -> SinkAdapter:
     try:
         return SINK_ADAPTERS[adapter_key]
     except KeyError:
@@ -240,9 +236,9 @@ def get_sink_adapter(adapter_key: Union[int, str]) -> SinkAdapter:
 
 
 async def load_data_from_adapter(
-    adapter_key: Union[str, int],
-    wf_input_name_to_filtered_source_mapping_dict: Dict[str, FilteredSource],
-) -> Dict[str, Any]:
+    adapter_key: str | int,
+    wf_input_name_to_filtered_source_mapping_dict: dict[str, FilteredSource],
+) -> dict[str, Any]:
     """Generic data loading from adapter
 
     Returns a dictionary with workflow input names as keys and the corresponding loaded data
@@ -255,7 +251,7 @@ async def load_data_from_adapter(
     adapter_func = adapter["load_sources_func"]
 
     try:
-        loaded_data: Dict[str, Any]
+        loaded_data: dict[str, Any]
         if asyncio.iscoroutinefunction(adapter_func):
             loaded_data = await adapter_func(
                 wf_input_name_to_filtered_source_mapping_dict,
@@ -283,10 +279,10 @@ async def load_data_from_adapter(
 
 
 async def send_data_with_adapter(
-    adapter_key: Union[int, str],
+    adapter_key: int | str,
     wf_output_name_to_filtered_sink_mapping_dict: dict,
     result_data: dict,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Generic data emitting using adapter
 
     If adapter_key is a String and there is no registered adapter with this key it
@@ -297,7 +293,7 @@ async def send_data_with_adapter(
     adapter_func = adapter["send_sinks_func"]
 
     try:
-        data_not_sent: Optional[Dict[str, Any]] = {}
+        data_not_sent: dict[str, Any] | None = {}
         if asyncio.iscoroutinefunction(adapter_func):
             data_not_sent = await adapter_func(
                 wf_output_name_to_filtered_sink_mapping_dict,

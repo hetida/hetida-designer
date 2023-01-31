@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from fastapi import HTTPException, status
 
@@ -27,17 +26,17 @@ adapter_router = HandleTrailingSlashAPIRouter(
 
 @adapter_router.get(
     "",
-    response_model=List[AdapterFrontendDto],
+    response_model=list[AdapterFrontendDto],
     summary="Returns all adapters",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {"description": "Successfully got list of adapters"}
     },
 )
-async def get_all_adapters() -> List[AdapterFrontendDto]:
+async def get_all_adapters() -> list[AdapterFrontendDto]:
     """Get all adapters."""
     logger.info("get adapters")
-    adapter_list: List[AdapterFrontendDto] = []
+    adapter_list: list[AdapterFrontendDto] = []
 
     if adapters is None:
         return adapter_list

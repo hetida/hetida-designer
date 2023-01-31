@@ -1,5 +1,4 @@
 import logging
-from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, Path, status
@@ -101,7 +100,7 @@ async def create_workflow_revision(
 
 @workflow_router.get(
     "",
-    response_model=List[WorkflowRevisionFrontendDto],
+    response_model=list[WorkflowRevisionFrontendDto],
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Returns a list of all workflows",
@@ -111,7 +110,7 @@ async def create_workflow_revision(
     },
     deprecated=True,
 )
-async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
+async def get_all_workflow_revisions() -> list[WorkflowRevisionFrontendDto]:
     """Get all transformation revisions of type workflow from the data base.
 
     This endpoint is deprecated and will be removed soon,
@@ -146,7 +145,7 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
 )
 async def get_workflow_revision_by_id(
     # pylint: disable=redefined-builtin
-    id: UUID = Path(
+    id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
     ),
@@ -192,7 +191,7 @@ async def get_workflow_revision_by_id(
 )
 async def update_workflow_revision(
     # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     updated_workflow_dto: WorkflowRevisionFrontendDto,
 ) -> WorkflowRevisionFrontendDto:
     """Update or store a transformation revision of type workflow in the data base.
@@ -224,7 +223,7 @@ async def update_workflow_revision(
         logger.error("The following validation error occured:\n%s", str(e))
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
-    existing_transformation_revision: Optional[TransformationRevision] = None
+    existing_transformation_revision: TransformationRevision | None = None
 
     try:
         existing_transformation_revision = read_single_transformation_revision(
@@ -283,7 +282,7 @@ async def update_workflow_revision(
 )
 async def delete_workflow_revision(
     # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
 ) -> None:
     """Delete a transformation revision of type workflow from the data base.
 
@@ -319,10 +318,10 @@ async def delete_workflow_revision(
 )
 async def execute_workflow_revision(
     # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
-    job_id: Optional[UUID] = None,
+    job_id: UUID | None = None,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision of type workflow.
 
@@ -362,7 +361,7 @@ async def execute_workflow_revision(
 )
 async def bind_wiring_to_workflow_revision(
     # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     wiring_dto: WiringFrontendDto,
 ) -> WorkflowRevisionFrontendDto:
     """Store or update the test wiring of a transformation revision of type workflow.

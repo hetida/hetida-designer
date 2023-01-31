@@ -7,7 +7,7 @@ The generic rest adapter "types" differ from the types used in the designer.
 import json
 import logging
 from enum import Enum
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any
 
 import pandas as pd
 from pydantic import create_model  # pylint: disable=no-name-in-module
@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 def df_empty(
-    col_to_dtype_map: Dict[str, Union[Type, str]],
-    index: Optional[pd.Index] = None,
-    attrs: Optional[Any] = None,
+    col_to_dtype_map: dict[str, type | str],
+    index: pd.Index | None = None,
+    attrs: Any | None = None,
 ) -> pd.DataFrame:
     """Create empty Pandas DataFrame with columns of given dtypes"""
     df = pd.DataFrame(index=index)
@@ -46,10 +46,10 @@ class ValueDataType(str, Enum):
         # first value is canonical value (e.g. what you get when calling ValueDataType.INT.value)
         obj._value_ = values[0]
 
-        cls.parse_type: Type  # for mypy
+        cls.parse_type: type  # for mypy
         obj.parse_type = values[1]  # set parse_type to second tuple entry
 
-        cls.pandas_value_type: Type  # for mypy
+        cls.pandas_value_type: type  # for mypy
         obj.pandas_value_type = values[2]
 
         for other_value in values[3:]:
@@ -64,7 +64,7 @@ class ValueDataType(str, Enum):
         return obj  # type:ignore
 
     def __repr__(self) -> str:
-        return "<%s.%s: %s>" % (  # pylint: disable=consider-using-f-string
+        return "<{}.{}: {}>".format(  # pylint: disable=consider-using-f-string
             self.__class__.__name__,
             # pylint: disable=no-member
             self._name_,
@@ -144,7 +144,7 @@ class ExternalType(str, Enum):
         obj._value_ = values[0]
 
         cls.general_type: GeneralType  # for mypy
-        cls.value_datatype: Optional[ValueDataType]  # for mypy
+        cls.value_datatype: ValueDataType | None  # for mypy
 
         cls.store_value_datatypes(obj)
         cls.store_general_type(obj)
@@ -157,7 +157,7 @@ class ExternalType(str, Enum):
 
     def __repr__(self) -> str:
         # pylint: disable=no-member
-        return "<%s.%s: %s>" % (  # pylint: disable=consider-using-f-string
+        return "<{}.{}: {}>".format(  # pylint: disable=consider-using-f-string
             self.__class__.__name__,
             self._name_,  # pylint: disable=no-member
             ", ".join([repr(v) for v in self._all_values]),  # type: ignore

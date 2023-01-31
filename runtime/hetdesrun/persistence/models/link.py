@@ -1,4 +1,3 @@
-from typing import List, Optional
 from uuid import UUID, uuid4
 
 # pylint: disable=no-name-in-module
@@ -12,7 +11,7 @@ from hetdesrun.persistence.models.io import Connector, Position
 class Vertex(BaseModel):
     """Represents start or end point of a link."""
 
-    operator: Optional[UUID]
+    operator: UUID | None
     connector: Connector = Field(
         ...,
         description=(
@@ -30,10 +29,10 @@ class Link(BaseModel):
     A link cannot start and end at the same connector.
     """
 
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
     start: Vertex
     end: Vertex
-    path: List[Position] = []
+    path: list[Position] = []
 
     # pylint: disable=no-self-argument
     @root_validator()

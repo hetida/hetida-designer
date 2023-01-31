@@ -5,7 +5,7 @@ from hetdesrun.backend.service.utils import to_camel
 
 
 class AdapterFrontendDto(BaseModel):
-    id: str
+    id: str  # noqa: A003
     name: str
     url: str
     internal_url: str

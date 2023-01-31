@@ -38,7 +38,7 @@ documentation_router = HandleTrailingSlashAPIRouter(
 )
 async def get_component_revision_by_id(
     # pylint: disable=redefined-builtin
-    id: UUID = Path(
+    id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
     ),
@@ -79,7 +79,7 @@ async def get_component_revision_by_id(
 )
 async def update_documentation(
     # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     documentation_dto: DocumentationFrontendDto,
 ) -> DocumentationFrontendDto:
     """Update or store the documentation of a transformation revision in the data base.
@@ -136,7 +136,7 @@ async def update_documentation(
 )
 async def delete_documentation(
     # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
 ) -> None:
     """Change the documentation of a transformation revision in the data base to "".
 

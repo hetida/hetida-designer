@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 import logging
 from typing import Callable
@@ -91,7 +90,7 @@ def init_app() -> FastAPI:
     # reimporting runtime_router and local_file router since they have
     # endpoint-individual auth settings and therefore load config during
     # module import. This enables (unit) testing with different configurations.
-    try:
+    try:  # noqa: SIM105
         del sys.modules["hetdesrun.service.runtime_router"]
     except KeyError:
         pass
@@ -100,7 +99,7 @@ def init_app() -> FastAPI:
         runtime_router,
     )
 
-    try:
+    try:  # noqa: SIM105
         del sys.modules["hetdesrun.adapters.local_file.webservice"]
     except KeyError:
         pass

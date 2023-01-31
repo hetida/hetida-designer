@@ -1,5 +1,4 @@
 import traceback
-from typing import Optional
 
 from fastapi.encoders import jsonable_encoder
 
@@ -197,7 +196,7 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
             else (all_results_str[:50] + " ... " + all_results_str[-50:]),
         )
 
-        node_results: Optional[str] = all_results_str
+        node_results: str | None = all_results_str
     else:
         node_results = None
 
@@ -248,7 +247,7 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
     # (because user can produce arbitrary non-serializable objects)
     try:
         jsonable_encoder(wf_exec_result)
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
         runtime_logger.info(
             "Exception during workflow execution response serialisation: %s",
             str(e),

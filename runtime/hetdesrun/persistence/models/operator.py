@@ -1,4 +1,3 @@
-from typing import List
 from uuid import UUID, uuid4
 
 # pylint: disable=no-name-in-module
@@ -18,15 +17,15 @@ class Operator(BaseModel):
     Note: Only released transformation revisions can be used as operators in a workflow.
     """
 
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
     revision_group_id: UUID = Field(default_factory=uuid4)
     name: NonEmptyValidStr
-    type: Type
+    type: Type  # noqa: A003
     state: State
     version_tag: ShortNonEmptyValidStr
     transformation_id: UUID
-    inputs: List[Connector]
-    outputs: List[Connector]
+    inputs: list[Connector]
+    outputs: list[Connector]
     position: Position
 
     # pylint: disable=no-self-argument
@@ -41,7 +40,7 @@ class Operator(BaseModel):
         if state == State.DRAFT:
             try:
                 operator_id = values["id"]
-                type = values["type"]  # pylint: disable=redefined-builtin
+                type_ = values["type"]  # pylint: disable=redefined-builtin
             except KeyError as e:
                 raise ValueError(
                     "Cannot provide information for which operator validation has failed "
@@ -49,7 +48,7 @@ class Operator(BaseModel):
                 ) from e
             raise ValueError(
                 f"Only released components/workflows can be dragged into a workflow! "
-                f"Operator with id {operator_id} of type {type}"
+                f"Operator with id {operator_id} of type {type_}"
                 f" has state {state} "
             )
         return values

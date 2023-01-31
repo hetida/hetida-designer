@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import List
+from datetime import datetime, timezone
 
 # pylint: disable=no-name-in-module
 from pydantic import validator
@@ -16,15 +15,15 @@ from hetdesrun.utils import State, Type
 
 
 class TransformationRevisionFrontendDto(BasicInformation):
-    inputs: List[ConnectorFrontendDto] = []
-    outputs: List[ConnectorFrontendDto] = []
-    wirings: List[WiringFrontendDto] = []
+    inputs: list[ConnectorFrontendDto] = []
+    outputs: list[ConnectorFrontendDto] = []
+    wirings: list[WiringFrontendDto] = []
 
     # pylint: disable=no-self-argument
     @validator("inputs", "outputs", each_item=False)
     def input_names_none_or_unique(
-        cls, ios: List[ConnectorFrontendDto]
-    ) -> List[ConnectorFrontendDto]:
+        cls, ios: list[ConnectorFrontendDto]
+    ) -> list[ConnectorFrontendDto]:
         ios_with_name = [io for io in ios if io.name is not None]
 
         names_unique(cls, ios_with_name)
@@ -41,13 +40,17 @@ class TransformationRevisionFrontendDto(BasicInformation):
             description=self.description,
             category=self.category,
             version_tag=self.tag,
-            released_timestamp=datetime.now() if self.state == State.RELEASED else None,
-            disabled_timestamp=datetime.now() if self.state == State.DISABLED else None,
+            released_timestamp=datetime.now(tz=timezone.utc)
+            if self.state == State.RELEASED
+            else None,
+            disabled_timestamp=datetime.now(tz=timezone.utc)
+            if self.state == State.DISABLED
+            else None,
             state=self.state,
             type=self.type,
             documentation=documentation,
             io_interface=IOInterface(
-                inputs=[input.to_io() for input in self.inputs],
+                inputs=[inp.to_io() for inp in self.inputs],
                 outputs=[output.to_io() for output in self.outputs],
             ),
             content="" if self.type == Type.COMPONENT else WorkflowContent(),

@@ -1,5 +1,4 @@
 import asyncio
-from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -11,15 +10,13 @@ from hetdesrun.models.data_selection import FilteredSink
 from hetdesrun.webservice.config import get_config
 
 
-def dataframe_to_list_of_dicts(df: pd.DataFrame) -> List[Dict]:
+def dataframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
     if len(df) == 0:
         return []
     if not isinstance(df, pd.DataFrame):
         raise AdapterOutputDataError(
-            (
-                "Did not receive Pandas DataFrame as expected from workflow output."
-                f" Got {str(type(df))} instead."
-            )
+            "Did not receive Pandas DataFrame as expected from workflow output."
+            f" Got {str(type(df))} instead."
         )
 
     datetime_column_names = []
@@ -52,7 +49,7 @@ async def post_dataframe(
 
 
 async def post_dataframes(
-    dfs: List[pd.DataFrame], ref_ids: List[str], adapter_key: str
+    dfs: list[pd.DataFrame], ref_ids: list[str], adapter_key: str
 ) -> None:
     async with AsyncClient(
         verify=get_config().hd_adapters_verify_certs,
@@ -67,13 +64,13 @@ async def post_dataframes(
 
 
 async def send_dataframes_to_adapter(
-    filtered_sinks: Dict[str, FilteredSink],
-    data_to_send: Dict[str, pd.DataFrame],
+    filtered_sinks: dict[str, FilteredSink],
+    data_to_send: dict[str, pd.DataFrame],
     adapter_key: str,
 ) -> None:
 
     keys = filtered_sinks.keys()
-    ref_ids: List[str] = [str(filtered_sinks[key].ref_id) for key in keys]
+    ref_ids: list[str] = [str(filtered_sinks[key].ref_id) for key in keys]
     dfs = [data_to_send[key] for key in keys]
 
     await post_dataframes(dfs, ref_ids=ref_ids, adapter_key=adapter_key)

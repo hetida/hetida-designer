@@ -8,7 +8,7 @@ import datetime
 import json
 import logging
 from posixpath import join as posix_urljoin
-from typing import Any, List, Literal, Optional
+from typing import Any, Literal
 
 import httpx
 from httpx import AsyncClient
@@ -32,8 +32,8 @@ def encode_attributes(df_attrs: Any) -> str:
 
 
 async def post_framelike_records(
-    list_of_records: List[dict],
-    attributes: Optional[Any],
+    list_of_records: list[dict],
+    attributes: Any | None,
     ref_id: str,
     adapter_key: str,
     endpoint: Literal["timeseries", "dataframe"],

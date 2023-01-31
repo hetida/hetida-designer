@@ -1,5 +1,4 @@
 import os
-from typing import Set
 
 from pydantic import BaseSettings, Field  # pylint: disable=no-name-in-module
 
@@ -7,7 +6,7 @@ from pydantic import BaseSettings, Field  # pylint: disable=no-name-in-module
 class LocalFileAdapterConfig(BaseSettings):
     """Configuration for local file adapter"""
 
-    local_dirs: Set[str] = Field(
+    local_dirs: set[str] = Field(
         {"tests/data/local_files"},
         description=(
             "Root directory paths provided as JSON-List of Strings."

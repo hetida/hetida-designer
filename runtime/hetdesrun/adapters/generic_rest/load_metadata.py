@@ -2,7 +2,7 @@ import asyncio
 import logging
 import urllib
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
 from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class Metadatum(BaseModel):
     key: str
     value: Any
-    dataType: Optional[ValueDataType] = None
+    dataType: ValueDataType | None = None
 
 
 async def load_single_metadatum_from_adapter(
@@ -90,7 +90,7 @@ async def load_single_metadatum_from_adapter(
         raise AdapterConnectionError(msg)
 
     value_datatype = ExternalType(filtered_source.type).value_datatype
-    assert value_datatype is not None  # for mypy
+    assert value_datatype is not None  # for mypy   # noqa: S101
 
     if metadatum.dataType is not None and metadatum.dataType != value_datatype:
         msg = (
@@ -115,8 +115,8 @@ async def load_single_metadatum_from_adapter(
 
 
 async def load_multiple_metadata(
-    data_to_load: Dict[str, FilteredSource], adapter_key: str
-) -> Dict[str, Any]:
+    data_to_load: dict[str, FilteredSource], adapter_key: str
+) -> dict[str, Any]:
     try:
         headers = await get_generic_rest_adapter_auth_headers(external=True)
     except ServiceAuthenticationError as e:

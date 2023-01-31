@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 from enum import Enum
-from typing import Any, Dict, Generator, List, Optional, Tuple, Type, TypedDict, Union
+from typing import Any, Generator, TypedDict
 from uuid import UUID
 
 import numpy as np
@@ -53,7 +53,7 @@ class PydanticPandasSeries:
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: Union[pd.Series, str, dict, list]) -> pd.Series:
+    def validate(cls, v: pd.Series | str | dict | list) -> pd.Series:
         if isinstance(v, pd.Series):
             return v
         try:
@@ -63,12 +63,12 @@ class PydanticPandasSeries:
             try:
                 return pd.read_json(v, typ="series", convert_dates=False)
 
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
                 raise ValueError(
                     "Could not parse provided input as Pandas Series even with convert_dates=False"
                 ) from e
 
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except  # noqa: BLE001
             try:
                 return pd.read_json(json.dumps(v), typ="series")
 
@@ -77,13 +77,13 @@ class PydanticPandasSeries:
                     return pd.read_json(
                         json.dumps(v), typ="series", convert_dates=False
                     )
-                except Exception as read_json_with_type_error_exception:
+                except Exception as read_json_with_type_error_exception:  # noqa: BLE001
                     raise ValueError(
                         "Could not parse provided input as Pandas Series even with"
                         " convert_dates=False"
                     ) from read_json_with_type_error_exception
 
-            except Exception as read_json_exception:  # pylint: disable=broad-except
+            except Exception as read_json_exception:  # pylint: disable=broad-except  # noqa: BLE001
                 raise ValueError(
                     "Could not parse provided input as Pandas Series"
                 ) from read_json_exception
@@ -103,16 +103,16 @@ class PydanticPandasDataFrame:
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: Union[pd.DataFrame, str, dict, list]) -> pd.DataFrame:
+    def validate(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
         if isinstance(v, pd.DataFrame):
             return v
         try:
             return pd.read_json(v, typ="frame")
         # pylint: disable=broad-except
-        except Exception:
+        except Exception:  # noqa: BLE001
             try:
                 return pd.read_json(json.dumps(v), typ="frame")
-            except Exception as read_json_exception:
+            except Exception as read_json_exception:  # noqa: BLE001
                 raise ValueError(
                     "Could not parse provided input as Pandas DataFrame"
                 ) from read_json_exception
@@ -175,7 +175,7 @@ class ParsedAny:
         return v
 
 
-data_type_map: Dict[DataType, Type] = {
+data_type_map: dict[DataType, type] = {
     DataType.Integer: int,
     DataType.Float: float,
     DataType.String: str,
@@ -214,13 +214,13 @@ class AdvancedTypesOutputSerializationConfig(BaseConfig):
 
 class NamedDataTypedValue(TypedDict):
     name: str
-    type: DataType
+    type: DataType  # noqa: A003
     value: Any
 
 
 def parse_via_pydantic(
-    entries: List[NamedDataTypedValue],
-    type_map: Optional[Dict[DataType, Type]] = None,
+    entries: list[NamedDataTypedValue],
+    type_map: dict[DataType, type] | None = None,
 ) -> BaseModel:
     """Parse data dynamically into a pydantic object
 
@@ -230,7 +230,7 @@ def parse_via_pydantic(
 
     May raise the typical exceptions of pydantic parsing.
     """
-    type_dict: Dict[str, Tuple[Type, "ellipsis"]] = {  # noqa: F821
+    type_dict: dict[str, tuple[type, "ellipsis"]] = {  # noqa: F821
         entry["name"]: (
             type_map[entry["type"]]
             if type_map is not None
@@ -245,7 +245,7 @@ def parse_via_pydantic(
     return DynamicModel(**{entry["name"]: entry["value"] for entry in entries})  # type: ignore
 
 
-def parse_dynamically_from_datatypes(entries: List[NamedDataTypedValue]) -> BaseModel:
+def parse_dynamically_from_datatypes(entries: list[NamedDataTypedValue]) -> BaseModel:
     return parse_via_pydantic(entries, type_map=data_type_map)
 
 

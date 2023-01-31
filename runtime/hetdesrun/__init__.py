@@ -9,7 +9,7 @@ from hetdesrun.webservice.config import get_config
 migrations_invoked_from_py = False
 
 try:
-    with open("VERSION", "r", encoding="utf8") as version_file:
+    with open("VERSION", encoding="utf8") as version_file:
         VERSION = version_file.read().strip()
 except FileNotFoundError:
     VERSION = "dev snapshot"

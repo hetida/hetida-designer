@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal
 
 from hetdesrun.backend.models.io import ConnectorFrontendDto
@@ -11,7 +11,7 @@ from hetdesrun.utils import State, Type
 
 
 class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
-    type: Literal[Type.COMPONENT]
+    type: Literal[Type.COMPONENT]  # noqa: A003
     code: str
 
     class Config:
@@ -27,13 +27,17 @@ class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
             description=self.description,
             category=self.category,
             version_tag=self.tag,
-            released_timestamp=datetime.now() if self.state == State.RELEASED else None,
-            disabled_timestamp=datetime.now() if self.state == State.DISABLED else None,
+            released_timestamp=datetime.now(tz=timezone.utc)
+            if self.state == State.RELEASED
+            else None,
+            disabled_timestamp=datetime.now(tz=timezone.utc)
+            if self.state == State.DISABLED
+            else None,
             state=self.state,
             type=self.type,
             documentation=documentation,
             io_interface=IOInterface(
-                inputs=[input.to_io() for input in self.inputs],
+                inputs=[inp.to_io() for inp in self.inputs],
                 outputs=[output.to_io() for output in self.outputs],
             ),
             content=self.code,
@@ -46,7 +50,9 @@ class ComponentRevisionFrontendDto(TransformationRevisionFrontendDto):
     def from_transformation_revision(
         cls, transformation_revision: TransformationRevision
     ) -> "ComponentRevisionFrontendDto":
-        assert isinstance(transformation_revision.content, str)  # hint for mypy
+        assert isinstance(  # noqa: S101
+            transformation_revision.content, str
+        )  # hint for mypy
         return ComponentRevisionFrontendDto(
             id=transformation_revision.id,
             groupId=transformation_revision.revision_group_id,

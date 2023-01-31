@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from functools import cache
-from typing import Callable, Optional
+from typing import Callable
 from uuid import uuid4
 
 import aiokafka
@@ -78,7 +78,7 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
         self.consumer_topic = consumer_topic
         self.consumer_options = consumer_options
         self.msg_handling_coroutine = msg_handling_coroutine
-        self.last_unhandled_exception: Optional[Exception] = None
+        self.last_unhandled_exception: Exception | None = None
 
         self.producer_topic = producer_topic
         self.producer_options = producer_options
@@ -116,7 +116,8 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
         await self._start_consumer()
 
     async def _stop_consumer(self) -> None:
-        assert self.consumer_task is not None
+        if self.consumer_task is None:
+            raise ValueError("No consumer_task active. Cannot stop non-existing task!")
         self.consumer_task.cancel()
         await self.consumer.stop()
 
@@ -222,7 +223,7 @@ async def consume_execution_trigger_message(
             )
             logger.debug("Kafka consumer execution result: \n%s", str(exec_result))
             await producer_send_result_msg(kafka_ctx, exec_result)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
             kafka_ctx.last_unhandled_exception = e
             logger.error(
                 "Unexpected Error during Kafka execution: %s. Aborting.", str(e)
