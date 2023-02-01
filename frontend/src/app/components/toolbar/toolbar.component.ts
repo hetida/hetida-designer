@@ -86,7 +86,6 @@ export class ToolbarComponent implements OnInit {
     return 'Already published';
   }
 
-  // TODO check for workflows, depends on isWorkflowIncomplete
   publish(): void {
     this.baseItemAction.publish(this.transformation);
   }

@@ -774,7 +774,6 @@ export class BaseItemActionService {
 
   private _createInputLink(io: IOConnector | Constant): Link {
     return {
-      // TODO is this okay for constant links? because currently in constant links link.id === start.connector.id
       id: uuid().toString(),
       start: {
         connector: {
@@ -807,7 +806,6 @@ export class BaseItemActionService {
         operator: io.operator_id,
         connector: {
           id: io.connector_id,
-          // TODO backend sets wrong connector name "connector_name" in workflowContent.outputs
           name: io.connector_name,
           data_type: io.data_type,
           position: {

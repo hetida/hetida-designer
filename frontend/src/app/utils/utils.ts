@@ -51,6 +51,7 @@ export class Utils {
   }
 
   static deepCopy<T>(source: T): T {
+    // TODO replace with structuredClone once there is better support
     return JSON.parse(JSON.stringify(source)) as typeof source;
   }
 }
