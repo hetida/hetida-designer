@@ -1,5 +1,6 @@
 import logging
 import threading
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from functools import cache
 from typing import Dict, Optional
@@ -40,6 +41,64 @@ class CredentialInfo(BaseModel):
     expiration_time_in_seconds: int
 
 
+def parse_credential_info_from_xml_string(
+    xml_string: str, now: datetime
+) -> CredentialInfo:
+    namespace = {"aws": "https://sts.amazonaws.com/doc/2011-06-15/"}
+    try:
+        xml_response = ET.fromstring(xml_string)
+    except ET.ParseError as error:
+        msg = f"Cannot parse authentication request response as XML:\n{error}"
+        logger.error(msg)
+        raise StorageAuthenticationError(msg)
+    if not xml_response.tag.endswith("AssumeRoleWithWebIdentityResponse"):
+        msg = "The authentication request does not have the expected structure"
+        if xml_response.tag == "Error":
+            error_code = xml_response.find("Code")
+            error_message = xml_response.find("Message")
+            if (
+                error_code is not None
+                and error_code.text is not None
+                and error_message is not None
+                and error_message.text is not None
+            ):
+                msg = msg + f":\nCode: {error_code.text}\nMessage: {error_message.text}"
+        logger.error(msg)
+        raise StorageAuthenticationError(msg)
+    path = "./aws:AssumeRoleWithWebIdentityResult/aws:Credentials/aws:"
+    xml_access_key = xml_response.find(path + "AccessKeyId", namespace)
+    xml_secret_access_key = xml_response.find(path + "SecretAccessKey", namespace)
+    xml_session_token = xml_response.find(path + "SessionToken", namespace)
+    xml_expiration = xml_response.find(path + "Expiration", namespace)
+    if (
+        xml_access_key is None
+        or xml_secret_access_key is None
+        or xml_session_token is None
+        or xml_expiration is None
+    ):
+        msg = (
+            "Could not find at least one of the required Credentials "
+            f"in the response text:\n{xml_string}"
+        )
+        logger.error(msg)
+        raise StorageAuthenticationError(msg)
+
+    credentials = Credentials(
+        access_key_id=xml_access_key.text,
+        secret_access_key=xml_secret_access_key.text,
+        session_token=xml_session_token.text,
+    )
+    assert xml_expiration.text is not None  # hint for mypy
+    expiration_time = datetime.fromisoformat(xml_expiration.text.replace("Z", "+00:00"))
+    expiration_time_in_seconds = (expiration_time - now).total_seconds()
+
+    return CredentialInfo(
+        issue_timestamp=now,
+        credentials=credentials,
+        expiration_time_in_seconds=expiration_time_in_seconds,
+    )
+
+
 def obtain_credential_info_from_rest_api(access_token: str) -> CredentialInfo:
     now = datetime.now(timezone.utc)
     response = requests.post(
@@ -59,39 +118,21 @@ def obtain_credential_info_from_rest_api(access_token: str) -> CredentialInfo:
             f"BLOB storage credential request returned with status code {response.status_code} "
             f"and response text:\n{response.text}\n"
             f"When calling URL:\n{get_blob_adapter_config().endpoint_url}\n"
-            f"with access token:\n{access_token}"
+            f"with access token:\n{access_token}"  # TODO: remove access token logging
         )
         logger.error(msg)
         raise StorageAuthenticationError(msg)
 
     try:
-        response_json = response.json()
-    except requests.exceptions.JSONDecodeError as error:
-        logger.error(
-            "Error decoding response as json:\n%s\nResponse text was:\n%s",
-            error,
-            response.text,
+        credential_info = parse_credential_info_from_xml_string(response.text, now)
+    except StorageAuthenticationError as error:
+        msg = (
+            f"Unexpected response to BLOB storage credential request:\n{response.text}"
         )
+        logger.error(msg)
         raise error
 
-    credentials_json = response_json["AssumeRoleWithWebIdentityResult"]["Credentials"]
-
-    credentials = Credentials(
-        access_key_id=credentials_json["AccessKeyId"],
-        secret_access_key=credentials_json["SecretAccessKey"],
-        session_token=credentials_json["SessionToken"],
-    )
-    logger.info(
-        "Received credentials with expiration %s requested %s",
-        credentials_json["Expiration"],
-        now.isoformat(),
-    )
-
-    return CredentialInfo(
-        issue_timestamp=now,
-        credentials=credentials,
-        expiration_time_in_seconds=get_blob_adapter_config().access_duration,
-    )
+    return credential_info
 
 
 def credentials_still_valid_enough(credential_info: CredentialInfo) -> bool:
