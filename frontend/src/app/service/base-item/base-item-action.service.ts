@@ -517,7 +517,7 @@ export class BaseItemActionService {
     this.tabItemService.createTransformationAndOpenInNewTab(transformation);
   }
 
-  // TODO refactor / unit test
+  // TODO unit test
   /**
    * checks if the workflow is in an incomplete state
    * - has no operators
@@ -529,11 +529,8 @@ export class BaseItemActionService {
    * - there isn't a link from every input
    */
   private isWorkflowIncomplete(workflow: WorkflowTransformation): boolean {
-    // TODO Need to be rebuild.
     const workflowContent = workflow.content;
-    // TODO rename
-    // @ts-ignore
-    const checkName = (name: string, id: string) => {
+    const hasValidNameAndLink = (name: string, id: string) => {
       const formControl = new FormControl(name, [
         PythonIdentifierValidator(false),
         PythonKeywordBlacklistValidator()
@@ -547,22 +544,29 @@ export class BaseItemActionService {
     };
     return (
       workflowContent.operators.length === 0 ||
-      workflowContent.inputs.some(
-        input =>
+      workflowContent.inputs.some(input => {
+        const isNotAConstant =
           workflowContent.constants.find(
             constant =>
               constant.connector_id === input.connector_id &&
               constant.operator_id === input.operator_id
-          ) === undefined && checkName(input.name, input.id) === false
-      ) ||
-      workflowContent.outputs.some(
-        output =>
+          ) === undefined;
+        return (
+          isNotAConstant && hasValidNameAndLink(input.name, input.id) === false
+        );
+      }) ||
+      workflowContent.outputs.some(output => {
+        const isNotAConstant =
           workflowContent.constants.find(
             constant =>
               constant.connector_id === output.connector_id &&
               constant.operator_id === output.operator_id
-          ) === undefined && checkName(output.name, output.id) === false
-      )
+          ) === undefined;
+        return (
+          isNotAConstant &&
+          hasValidNameAndLink(output.name, output.id) === false
+        );
+      })
     );
   }
 
