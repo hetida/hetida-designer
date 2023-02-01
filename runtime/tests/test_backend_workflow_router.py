@@ -813,5 +813,5 @@ async def test_execute_for_full_workflow_dto_with_nan(
                 output_results_by_output_name["series_from_last_step"][
                     "2020-05-01T03:00:00.000Z"
                 ]
-                == None # noqa: E711
+                == None  # noqa: E711
             )

@@ -1,6 +1,5 @@
 import datetime
 from copy import deepcopy
-from typing import List, Optional, Union
 from unittest import mock
 from uuid import uuid4
 
@@ -133,15 +132,6 @@ def auth_bearer_token_for_outgoing_requests_not_set():
 
 
 @pytest.fixture()
-def outgoing_auth_external_mode_off():
-    with mock.patch(
-        "hetdesrun.webservice.config.runtime_config.external_auth_mode",
-        ExternalAuthMode.OFF,
-    ) as _fixture:
-        yield _fixture
-
-
-@pytest.fixture()
 def set_request_auth_context():
     with mock.patch(
         "hetdesrun.webservice.auth_dependency.get_request_auth_context",
@@ -164,7 +154,7 @@ def service_client_credentials():
     return ServiceCredentials(
         realm="my-realm",
         grant_credentials=ClientCredentialsGrantCredentials(
-            client_id="my-client", client_secret="my-client-secret"
+            client_id="my-client", client_secret="my-client-secret"  # noqa: S106
         ),
         auth_url="https://test.com/auth",
         post_client_kwargs={"verify": False},
@@ -199,7 +189,7 @@ def activate_auth():
 
 @pytest.fixture(scope="package")
 def app_with_auth(activate_auth):
-    yield init_app()
+    return init_app()
 
 
 @pytest.fixture
@@ -292,10 +282,10 @@ def datetime_to_unix_seconds(dt):
 
 def generate_token(
     payload=None,
-    exp_dt: Optional[datetime.datetime] = None,
+    exp_dt: datetime.datetime | None = None,
     algorithm="HS256",
     key="secret",
-    audience: Optional[Union[str, List[str]]] = None,
+    audience: str | list[str] | None = None,
     expired_by_default=False,
 ):
     """Generate jwt tokens combining some defaults with a (partly) payload.
@@ -321,9 +311,11 @@ def generate_token(
     generated_payload = {
         "iss": "Example Issuer",  # issuer
         "sub": "test_case",  # subject: for whom is the claim
-        "iat": str(datetime_to_unix_seconds(datetime.datetime.now())),  # issued at
+        "iat": str(
+            datetime_to_unix_seconds(datetime.datetime.now())  # noqa: DTZ005
+        ),  # issued at
         "nbf": str(
-            datetime_to_unix_seconds(datetime.datetime.now()) - 30
+            datetime_to_unix_seconds(datetime.datetime.now()) - 30  # noqa: DTZ005
         ),  # not before
         # "aud": ["account"], # audience (target domain)
         "jti": str(uuid4()),  # jwt ID (token identifier making replication improssible)
@@ -332,7 +324,8 @@ def generate_token(
         else (
             str(
                 datetime_to_unix_seconds(
-                    datetime.datetime.now() + datetime.timedelta(seconds=300)
+                    datetime.datetime.now()  # noqa: DTZ005
+                    + datetime.timedelta(seconds=300)
                 )
                 - 600 * expired_by_default
             )

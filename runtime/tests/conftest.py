@@ -32,7 +32,7 @@ def deactivate_auth():
 
 @pytest.fixture(scope="session")
 def app_without_auth(deactivate_auth):
-    yield init_app()
+    return init_app()
 
 
 def pytest_addoption(parser):

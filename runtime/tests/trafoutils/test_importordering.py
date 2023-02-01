@@ -1,6 +1,4 @@
-from hetdesrun.trafoutils.importorder import (
-    order_for_importing,
-)
+from hetdesrun.trafoutils.importorder import order_for_importing
 from hetdesrun.utils import Type
 
 

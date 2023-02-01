@@ -62,9 +62,8 @@ typecheck() {
 }
 
 format() {
-    black hetdesrun tests "${@}" && echo "--> Black run."
-    isort hetdesrun tests "${@}" && echo "--> Isort run."
     ruff --select I hetdesrun tests --fix "${@}" && echo "--> Ruff import sorting run."
+    black hetdesrun tests "${@}" && echo "--> Black run."
 }
 
 check() {

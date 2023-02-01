@@ -60,7 +60,7 @@ def workflow_creator(identifier: str) -> TransformationRevision:
 # @pytest.mark.skip
 def test_update_or_create_nesting(clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):

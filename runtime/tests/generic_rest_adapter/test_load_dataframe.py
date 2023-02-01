@@ -9,7 +9,7 @@ from hetdesrun.adapters.generic_rest.send_framelike import encode_attributes
 from hetdesrun.models.data_selection import FilteredSource
 
 
-async def mock_load_generic_rest_dataframe_data(*args, **kwargs):
+async def mock_load_generic_rest_dataframe_data(*args, **kwargs):  # noqa:
     return pd.DataFrame(
         {
             "a": [1.0, 2.0, 3.4, 5.8],
@@ -48,7 +48,7 @@ async def test_end_to_end_load_only_dataframe_data():
         assert loaded_data["inp_2"].shape == (4, 2)
 
 
-async def mock_load_generic_rest_dataframe_with_timestamp_col(*args, **kwargs):
+async def mock_load_generic_rest_dataframe_with_timestamp_col(*args, **kwargs):  # noqa:
     return pd.DataFrame(
         {
             "a": [1.0, 2.0, 3.4, 5.8],
@@ -72,7 +72,7 @@ async def test_end_to_end_load_dataframe_data_with_timestamp_column():
         {"timestamp": "2020-03-11T15:45:18.194000000Z", "a": 15.89922333}
         """
     resp_mock.headers = {}
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.load_framelike.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):
@@ -105,7 +105,7 @@ async def test_end_to_end_load_dataframe_data_with_attrs():
         {"timestamp": "2020-03-11T14:45:18.194000000Z", "a": 41.7}
         {"timestamp": "2020-03-11T15:45:18.194000000Z", "a": 15.89922333}
         """
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.load_framelike.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):

@@ -81,7 +81,7 @@ def test_parsing_of_null_values():
     test_obj = ExampleObj(s="[null, 1.2, null]")
 
     assert is_float_dtype(test_obj.s.dtype)
-    assert np.isnan(test_obj.s.iloc[0]) 
+    assert np.isnan(test_obj.s.iloc[0])
     assert np.isnan(test_obj.s.iloc[2])
 
 
@@ -89,7 +89,7 @@ def test_null_in_integers_parses_as_floats():
     test_obj = ExampleObj(s="[null, 1, null]")
 
     assert is_float_dtype(test_obj.s.dtype)
-    assert np.isnan(test_obj.s.iloc[0]) 
+    assert np.isnan(test_obj.s.iloc[0])
     assert np.isnan(test_obj.s.iloc[2])
 
 
@@ -97,7 +97,7 @@ def test_null_in_bool_parses_as_floats():
     test_obj = ExampleObj(s="[null, true, null]")
 
     assert is_float_dtype(test_obj.s.dtype)
-    assert np.isnan(test_obj.s.iloc[0]) 
+    assert np.isnan(test_obj.s.iloc[0])
     assert np.isnan(test_obj.s.iloc[2])
 
 
@@ -105,7 +105,7 @@ def test_null_in_timestamps_parses_as_datetimes():
     test_obj = ExampleObj(s='[null, "2020-02-03T14:55:12", null]')
 
     assert is_datetime64_any_dtype(test_obj.s.dtype)
-    assert pd.isna(test_obj.s.iloc[0]) 
+    assert pd.isna(test_obj.s.iloc[0])
     assert pd.isna(test_obj.s.iloc[2])
 
 

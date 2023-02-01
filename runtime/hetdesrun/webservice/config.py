@@ -223,7 +223,9 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_INTERNAL_AUTH_MODE",
     )
-    internal_auth_client_credentials: Json[ServiceCredentials] | None = Field(
+    internal_auth_client_credentials: ServiceCredentials | Json[
+        ServiceCredentials
+    ] | None = Field(
         None,
         description=(
             "Client credentials as json encoded string."
@@ -248,7 +250,9 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_EXTERNAL_AUTH_MODE",
     )
-    external_auth_client_credentials: Json[ServiceCredentials] | None = Field(
+    external_auth_client_credentials: ServiceCredentials | Json[
+        ServiceCredentials
+    ] | None = Field(
         None,
         description="Client credentials as json encoded string.",
         example=(

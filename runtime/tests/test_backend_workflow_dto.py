@@ -857,7 +857,7 @@ def test_io_validator_name_valid_python_identifier_identifies_keyword_name():
     input_with_keyword_name["name"] = "pass"
     print(input_with_keyword_name["name"])
 
-    with pytest.raises(ValueError) as exc: # noqa: PT011
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowIoFrontendDto(**input_with_keyword_name)
 
     assert "not a valid Python identifier" in str(exc.value)
@@ -892,7 +892,7 @@ def test_operator_validator_is_released_identifies_state_other_than_released():
     operator_with_invalid_state = deepcopy(valid_operator)
     operator_with_invalid_state["state"] = "DRAFT"
 
-    with pytest.raises(ValueError) as exc: # noqa: PT011
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowOperatorFrontendDto(**operator_with_invalid_state)
 
     assert "released" in str(exc.value)
@@ -910,7 +910,7 @@ def test_link_validator_no_self_reference_identifies_self_reference():
     print(link_with_self_reference.keys())
     link_with_self_reference["toOperator"] = link_with_self_reference["fromOperator"]
 
-    with pytest.raises(ValueError) as exc: # noqa: PT011
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowLinkFrontendDto(**link_with_self_reference)
 
     assert "must differ" in str(exc.value)
@@ -928,7 +928,7 @@ def test_parent_validator_tag_not_latest_identifies_tag_latest():
     workflow_tagged_latest = deepcopy(valid_workflow_example_iso_forest)
     workflow_tagged_latest["tag"] = "latest"
 
-    with pytest.raises(ValueError) as exc: # noqa: PT011
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowRevisionFrontendDto(**workflow_tagged_latest)
 
     assert "internal use only" in str(exc.value)
@@ -953,7 +953,7 @@ def test_workflow_validator_input_names_none_or_unique_identifies_double_name():
         "name"
     ] = workflow_with_double_input_name["inputs"][0]["name"]
 
-    with pytest.raises(ValueError) as exc: # noqa: PT011
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowRevisionFrontendDto(**workflow_with_double_input_name)
 
     assert "duplicates" in str(exc.value)
@@ -1027,14 +1027,14 @@ def test_workflow_validator_links_acyclic_directed_graph_identifies_cyclic_links
         "toConnector"
     ] = valid_workflow_example_iso_forest["links"][11]["toConnector"]
 
-    with pytest.raises(ValueError) as exc: # noqa: PT011
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowRevisionFrontendDto(**workflow_with_cyclic_links)
 
     assert "may not form any loop" in str(exc.value)
 
 
 def test_to_link():
-    from_connector = ConnectorFrontendDto( # noqa: PIE804
+    from_connector = ConnectorFrontendDto(  # noqa: PIE804
         **{
             "id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
             "type": "SERIES",
@@ -1043,7 +1043,7 @@ def test_to_link():
             "posX": 0,
         }
     )
-    to_connector = ConnectorFrontendDto( # noqa: PIE804
+    to_connector = ConnectorFrontendDto(  # noqa: PIE804
         **{
             "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
             "type": "ANY",
@@ -1064,7 +1064,7 @@ def test_to_link():
 
 
 def test_from_link():
-    from_connector = ConnectorFrontendDto( # noqa: PIE804
+    from_connector = ConnectorFrontendDto(  # noqa: PIE804
         **{
             "id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
             "type": "SERIES",
@@ -1073,7 +1073,7 @@ def test_from_link():
             "posX": 0,
         }
     )
-    to_connector = ConnectorFrontendDto( # noqa: PIE804
+    to_connector = ConnectorFrontendDto(  # noqa: PIE804
         **{
             "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
             "type": "ANY",
@@ -1724,6 +1724,6 @@ def test_workflow_dto_from_transformation_revision_and_back_matches_with_ambiguo
     for op, op_returned in zip(
         transformation_revision.content.operators,
         returned_transformation_revision.content.operators,
-        strict=True
+        strict=True,
     ):
         assert op == op_returned

@@ -206,7 +206,7 @@ def test_generate_import_order_file_with_transform_py_to_json(tmp_path):
 
     assert os.path.exists(str(json_import_order))
     list_of_json_paths = []
-    with open(json_import_order, "r", encoding="utf8") as file: # noqa: UP015
+    with open(json_import_order, "r", encoding="utf8") as file:  # noqa: UP015
         for line in file:
             path = line[:-1]  # remove line break
             list_of_json_paths.append(path)

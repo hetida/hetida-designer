@@ -85,7 +85,7 @@ for file_path in json_files:
     bi_list.append(bi_json)
 
 
-def java_backend_mock(url, *args, **kwargs): # noqa: ARG001
+def java_backend_mock(url, *args, **kwargs):  # noqa:
     call_infos_from_url = url.rsplit("/", 3)
     bi_id = call_infos_from_url[-1]
     endpoint = call_infos_from_url[-2]
@@ -134,7 +134,7 @@ def test_get_transformation_from_java_backend():
         assert tr_json_from_backend == tr_json_from_dict
 
 
-def mock_get_trafo_from_java_backend(id, type): # noqa: A002,ARG001
+def mock_get_trafo_from_java_backend(id, type):  # noqa: A002,
     return TransformationRevision(**tr_json_dict[str(id)])
 
 

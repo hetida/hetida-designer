@@ -79,7 +79,7 @@ def test_transformation_validator_output_names_unique_identifies_double_name():
         "name"
     ] = transformation_with_double_output_name["outputs"][0]["name"]
 
-    with pytest.raises(ValueError) as exc: # noqa: PT011
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         TransformationRevisionFrontendDto(**transformation_with_double_output_name)
 
     assert "duplicates" in str(exc.value)

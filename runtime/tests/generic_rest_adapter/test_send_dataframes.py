@@ -16,7 +16,7 @@ async def test_end_to_end_send_only_dataframe_data():
     response.status_code = 200
     post_mock = mock.AsyncMock(return_value=response)
 
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.send_framelike.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):

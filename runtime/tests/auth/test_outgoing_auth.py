@@ -55,7 +55,7 @@ def json_parsing_error_token_request():
 
 
 @pytest.fixture()
-def invalid_token_response_mocked_token_request(valid_token_response):
+def invalid_token_response_mocked_token_request(valid_token_response):  # noqa:
     mocked_resp = mock.Mock
     mocked_resp.json = mock.Mock(return_value={"a": 42})
 
@@ -107,9 +107,11 @@ async def test_outgoing_auth_token_fetching_with_password_grant(mocked_token_req
 
 
 @pytest.mark.asyncio
-async def test_http_error_on_outgoing_auth_token_fetching(http_error_token_request):
+async def test_http_error_on_outgoing_auth_token_fetching(
+    http_error_token_request,  # noqa:
+):
     with pytest.raises(ServiceAuthenticationError, match=r".*test error.*"):
-        token_response = await obtain_token_from_auth_provider(
+        _token_response = await obtain_token_from_auth_provider(
             ServiceCredentials(
                 realm="my-realm",
                 grant_credentials=PasswordGrantCredentials(
@@ -123,10 +125,10 @@ async def test_http_error_on_outgoing_auth_token_fetching(http_error_token_reque
 
 @pytest.mark.asyncio
 async def test_json_parsing_error_on_outgoing_auth_token_fetching(
-    json_parsing_error_token_request,
+    json_parsing_error_token_request,  # noqa:
 ):
     with pytest.raises(ServiceAuthenticationError, match=r".*json parsing error.*"):
-        token_response = await obtain_token_from_auth_provider(
+        _token_response = await obtain_token_from_auth_provider(
             ServiceCredentials(
                 realm="my-realm",
                 grant_credentials=PasswordGrantCredentials(
@@ -140,10 +142,10 @@ async def test_json_parsing_error_on_outgoing_auth_token_fetching(
 
 @pytest.mark.asyncio
 async def test_invalid_token_response_outgoing_auth_token_fetching(
-    invalid_token_response_mocked_token_request,
+    invalid_token_response_mocked_token_request,  # noqa:
 ):
     with pytest.raises(ServiceAuthenticationError, match=r".*validation error.*"):
-        token_response = await obtain_token_from_auth_provider(
+        _token_response = await obtain_token_from_auth_provider(
             ServiceCredentials(
                 realm="my-realm",
                 grant_credentials=PasswordGrantCredentials(
@@ -488,8 +490,8 @@ async def test_obtain_refresh_logic_new_token_obtain_fails(
     refresh_token_works,
     service_credentials,
 ):
-    with pytest.raises(ServiceAuthenticationError) as exc:
-        token_info = await obtain_or_refresh_token(
+    with pytest.raises(ServiceAuthenticationError) as _exc:
+        _token_info = await obtain_or_refresh_token(
             service_user_credentials=service_credentials,
             existing_token_info=None,
         )
@@ -520,11 +522,11 @@ async def test_obtain_refresh_logic_refresh_raises_obtain_works(
     assert refresh_token_raises.num_called == 1
 
     assert len(obtain_token_works.last_called_args) == 1
-    obtain_token_works.last_called_args[0] == service_credentials
+    assert obtain_token_works.last_called_args[0] == service_credentials
 
 
 def test_get_access_token_manager(
-    service_credentials, obtain_token_works, result_token_info
+    service_credentials, obtain_token_works, result_token_info  # noqa:
 ):
 
     test_uuid_key = "test_" + str(uuid4())
@@ -534,7 +536,7 @@ def test_get_access_token_manager(
 
     access_token_str = token_mgr.sync_get_access_token()
 
-    assert access_token_str == "result_access_token"
+    assert access_token_str == "result_access_token"  # noqa: S105
 
     # load cached works
     token_mgr = create_or_get_named_access_token_manager(

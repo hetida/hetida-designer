@@ -25,8 +25,8 @@ def test_function_header_no_params():
     )
     func_header = generate_function_header(component)
     assert "main()" in func_header
-    assert '"inputs": {' + "}" in func_header # noqa: ISC003
-    assert '"outputs": {' + "}" in func_header # noqa: ISC003
+    assert '"inputs": {' + "}" in func_header  # noqa: ISC003
+    assert '"outputs": {' + "}" in func_header  # noqa: ISC003
     assert '"id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565"' in func_header
 
 

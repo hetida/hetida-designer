@@ -68,7 +68,7 @@ def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> list[dict
                     lambda x: x.strftime(
                         "%Y-%m-%dT%H:%M:%S.%f"
                     )  # Generic Rest datetime format is yyyy-MM-ddTHH:mm:ss.SSSSSSSSSX
-                    + "{:03d}".format(x.nanosecond)
+                    + "{:03d}".format(x.nanosecond) # noqa: UP032
                     + "Z"  # we guaranteed UTC time zone some lines above!
                 ),
             }

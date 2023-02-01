@@ -62,8 +62,8 @@ typecheck() {
 }
 
 format() {
-    black demo_adapter_python tests "${@}" && echo "--> Black run."
     ruff --select I demo_adapter_python tests --fix "${@}" && echo "--> Ruff import sorting run."
+    black demo_adapter_python tests "${@}" && echo "--> Black run."
 }
 
 check() {

@@ -1331,7 +1331,6 @@ async def test_update_transformation_revision_by_adding_operator_to_workflow_fol
         del get_response_json_without_io_ids["content"]["inputs"][0]["id"]
         del get_response_json_without_io_ids["content"]["outputs"][0]["id"]
         assert get_response_json_without_io_ids == put_response_json_without_io_ids
-        
 
 
 @pytest.mark.asyncio
@@ -1445,7 +1444,7 @@ async def test_execute_for_transformation_revision(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1488,7 +1487,7 @@ async def test_execute_for_transformation_revision_without_job_id(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1529,7 +1528,7 @@ async def test_execute_for_separate_runtime_container(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1591,7 +1590,7 @@ async def test_execute_asynchron_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1648,7 +1647,7 @@ async def test_execute_async_for_transformation_revision_with_exception(
     async_test_client, clean_test_db_engine, caplog
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1687,7 +1686,7 @@ async def test_execute_async_for_transformation_revision_with_exception(
                         "handle_trafo_revision_execution_request",
                         side_effect=Exception,
                     ):
-                        with pytest.raises(Exception): # noqa: PT011
+                        with pytest.raises(Exception):  # noqa: PT011
                             await ac.post(
                                 "/api/transformations/execute-async",
                                 json=json.loads(exec_by_id_input.json()),
@@ -1704,7 +1703,7 @@ async def test_execute_latest_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1754,7 +1753,7 @@ async def test_execute_latest_for_transformation_revision_no_revision_in_db(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1788,7 +1787,7 @@ async def test_execute_latest_async_for_transformation_revision_works(
     async_test_client, clean_test_db_engine
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1852,7 +1851,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
     async_test_client, clean_test_db_engine, caplog
 ):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -1906,7 +1905,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
 @pytest.mark.asyncio
 async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -2115,14 +2114,14 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
             assert len(output_results_by_output_name["output"]) == 2
             assert (
                 output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
-                == None # noqa: E711
+                == None  # noqa: E711
             )
 
 
 @pytest.mark.asyncio
 async def test_put_workflow_transformation(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch( # noqa: SIM117
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
