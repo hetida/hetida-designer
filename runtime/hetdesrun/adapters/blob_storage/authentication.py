@@ -126,9 +126,7 @@ def obtain_credential_info_from_rest_api(access_token: str) -> CredentialInfo:
     try:
         credential_info = parse_credential_info_from_xml_string(response.text, now)
     except StorageAuthenticationError as error:
-        msg = (
-            f"Unexpected response to BLOB storage credential request:\n{response.text}"
-        )
+        msg = f"Error parsing response from storage credential request as XML:\n{response.text}"
         logger.error(msg)
         raise error
 

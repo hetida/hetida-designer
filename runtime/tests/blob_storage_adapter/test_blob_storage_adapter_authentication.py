@@ -23,11 +23,7 @@ from hetdesrun.webservice.auth_outgoing import (
 from hetdesrun.webservice.config import ExternalAuthMode
 
 
-def test_blob_storage_authentication_obtain_credential_info_from_rest_api():
-    pass
-
-
-def test_blob_storage_authenticationparse_credential_info_from_xml_string():
+def test_blob_storage_authentication_parse_credential_info_from_xml_string():
     now = datetime.fromisoformat("2023-01-31T11:08:05+00:00")
     xml_response_text = """
     <AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
@@ -119,6 +115,48 @@ def credentials() -> Credentials:
         secret_access_key="some_key",
         session_token="some_token",
     )
+
+
+def test_blob_storage_authentication_obtain_credential_info_from_rest_api(credentials):
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.requests.post",
+        return_value=mock.Mock(status_code=201, text="text"),
+    ):
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.authentication.parse_credential_info_from_xml_string",
+            return_value=CredentialInfo(
+                credentials=credentials,
+                issue_timestamp=datetime.fromisoformat("2023-01-31T11:08:05+00:00"),
+                expiration_time_in_seconds=3600,
+            ),
+        ):
+            credential_info = obtain_credential_info_from_rest_api("access_token")
+            assert credential_info.credentials == credentials
+            assert (
+                credential_info.issue_timestamp.isoformat() == "2023-01-31T11:08:05+00:00"
+            )
+            assert credential_info.expiration_time_in_seconds == 3600
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.authentication.parse_credential_info_from_xml_string",
+            side_effect=StorageAuthenticationError("error message"),
+        ):
+            with pytest.raises(StorageAuthenticationError) as exc_info:
+                obtain_credential_info_from_rest_api("access_token")
+
+            assert "error message" == str(exc_info.value)
+
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.requests.post",
+        return_value=mock.Mock(status_code=333, text="error"),
+    ):
+        with pytest.raises(StorageAuthenticationError) as exc_info:
+            obtain_credential_info_from_rest_api("access_token")
+
+        assert "BLOB storage credential request returned with status code 333" in str(
+            exc_info.value
+        )
+        assert "and response text:\nerror\n" in str(exc_info.value)
 
 
 def test_blob_storage_authentication_credentials_still_valid_enough(credentials):
