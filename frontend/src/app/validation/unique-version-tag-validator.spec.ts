@@ -2,10 +2,9 @@ import { FormControl } from '@angular/forms';
 import { BaseItemType } from '../enums/base-item-type';
 import { RevisionState } from '../enums/revision-state';
 import { Transformation } from '../model/new-api/transformation';
+import { UniqueVersionTagValidator } from './unique-version-tag-validator';
 
-import { UniqueRevisionTagValidator } from './unique-revision-tag-validator';
-
-describe('UniqueRevisionTagValidator', () => {
+describe('UniqueVersionTagValidator', () => {
   const transformations: Array<Transformation> = [
     {
       id: 'mockId',
@@ -53,18 +52,18 @@ describe('UniqueRevisionTagValidator', () => {
     }
   ];
 
-  it('UniqueRevisionTagValidator should return valid for unnused revision tags', () => {
+  it('UniqueVersionTagValidator should return valid for unnused version tags', () => {
     const formControl = new FormControl(
       '1.0.1',
-      UniqueRevisionTagValidator(transformations)
+      UniqueVersionTagValidator(transformations)
     );
     expect(formControl.valid).toBe(true);
   });
 
-  xit('UniqueRevisionTagValidator should return invalid for duplicate revision tags', () => {
+  xit('UniqueVersionTagValidator should return invalid for duplicate version tags', () => {
     const formControl = new FormControl(
       '1.0.0',
-      UniqueRevisionTagValidator(transformations)
+      UniqueVersionTagValidator(transformations)
     );
     expect(formControl.valid).toBe(false);
   });

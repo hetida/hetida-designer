@@ -126,8 +126,6 @@ export class BaseItemActionService {
             )
         ),
         switchMap(({ selectedTransformation, test_wiring }) =>
-          // TODO if a transformation is set to released,
-          // it can't be updated by a new test_wiring and will throw a error 403 (Forbidden)
           this.baseItemService.updateTransformation({
             ...selectedTransformation,
             test_wiring
@@ -466,12 +464,21 @@ export class BaseItemActionService {
     if (isWorkflowTransformation(transformation)) {
       isIncomplete = this.isWorkflowIncomplete(transformation);
     } else if (isComponentTransformation(transformation)) {
-      // TODO extract and test method
       isIncomplete =
         transformation.io_interface.inputs.length === 0 &&
         transformation.io_interface.outputs.length === 0;
     }
     return isIncomplete;
+  }
+
+  public isWorkflowWithoutIo(
+    workflowTransformation: WorkflowTransformation | undefined
+  ): boolean {
+    const isWorkflowWithoutIo =
+      workflowTransformation.content.inputs.length === 0 &&
+      workflowTransformation.content.outputs.length === 0 &&
+      workflowTransformation.content.constants.length === 0;
+    return isWorkflowWithoutIo;
   }
 
   public doDeleteTransformation(
@@ -510,7 +517,7 @@ export class BaseItemActionService {
     this.tabItemService.createTransformationAndOpenInNewTab(transformation);
   }
 
-  // TODO refactor / unit test
+  // TODO unit test
   /**
    * checks if the workflow is in an incomplete state
    * - has no operators
@@ -522,11 +529,8 @@ export class BaseItemActionService {
    * - there isn't a link from every input
    */
   private isWorkflowIncomplete(workflow: WorkflowTransformation): boolean {
-    // TODO Need to be rebuild.
     const workflowContent = workflow.content;
-    // TODO rename
-    // @ts-ignore
-    const checkName = (name: string, id: string) => {
+    const hasValidNameAndLink = (name: string, id: string) => {
       const formControl = new FormControl(name, [
         PythonIdentifierValidator(false),
         PythonKeywordBlacklistValidator()
@@ -540,22 +544,29 @@ export class BaseItemActionService {
     };
     return (
       workflowContent.operators.length === 0 ||
-      workflowContent.inputs.some(
-        input =>
+      workflowContent.inputs.some(input => {
+        const isNotAConstant =
           workflowContent.constants.find(
             constant =>
               constant.connector_id === input.connector_id &&
               constant.operator_id === input.operator_id
-          ) === undefined && checkName(input.name, input.id) === false
-      ) ||
-      workflowContent.outputs.some(
-        output =>
+          ) === undefined;
+        return (
+          isNotAConstant && hasValidNameAndLink(input.name, input.id) === false
+        );
+      }) ||
+      workflowContent.outputs.some(output => {
+        const isNotAConstant =
           workflowContent.constants.find(
             constant =>
               constant.connector_id === output.connector_id &&
               constant.operator_id === output.operator_id
-          ) === undefined && checkName(output.name, output.id) === false
-      )
+          ) === undefined;
+        return (
+          isNotAConstant &&
+          hasValidNameAndLink(output.name, output.id) === false
+        );
+      })
     );
   }
 
@@ -763,7 +774,6 @@ export class BaseItemActionService {
 
   private _createInputLink(io: IOConnector | Constant): Link {
     return {
-      // TODO is this okay for constant links? because currently in constant links link.id === start.connector.id
       id: uuid().toString(),
       start: {
         connector: {
@@ -796,7 +806,6 @@ export class BaseItemActionService {
         operator: io.operator_id,
         connector: {
           id: io.connector_id,
-          // TODO backend sets wrong connector name "connector_name" in workflowContent.outputs
           name: io.connector_name,
           data_type: io.data_type,
           position: {

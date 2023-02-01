@@ -1,7 +1,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { Transformation } from '../model/new-api/transformation';
 
-export function UniqueRevisionTagValidator(
+export function UniqueVersionTagValidator(
   revisionItems: Transformation[]
 ): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {

@@ -3,7 +3,6 @@ import { BaseItemType } from 'src/app/enums/base-item-type';
 import { WorkflowContent } from './workflow-content';
 import { IoInterface, TestWiring } from 'hd-wiring';
 
-// TODO move elsewhere?
 export function isComponentTransformation(
   transformation: Transformation | null | undefined
 ): transformation is ComponentTransformation {

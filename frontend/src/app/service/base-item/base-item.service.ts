@@ -115,7 +115,7 @@ export class BaseItemService {
       name: 'New component',
       category: 'Draft',
       type: BaseItemType.COMPONENT,
-      version_tag: '1.0.0',
+      version_tag: '0.1.0',
       state: RevisionState.DRAFT,
       description: 'New created component',
       io_interface: {
@@ -137,7 +137,7 @@ export class BaseItemService {
       name: 'New Workflow',
       category: 'Draft',
       type: BaseItemType.WORKFLOW,
-      version_tag: '1.0.0',
+      version_tag: '0.1.0',
       state: RevisionState.DRAFT,
       description: 'New created workflow',
       io_interface: {

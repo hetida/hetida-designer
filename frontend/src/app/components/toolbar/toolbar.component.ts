@@ -36,9 +36,7 @@ export class ToolbarComponent implements OnInit {
   get isWorkflowWithoutIo(): boolean {
     return (
       isWorkflowTransformation(this.transformation) &&
-      this.transformation.content.inputs.length === 0 &&
-      this.transformation.content.outputs.length === 0 &&
-      this.transformation.content.constants.length === 0
+      this.baseItemAction.isWorkflowWithoutIo(this.transformation)
     );
   }
 
@@ -88,7 +86,6 @@ export class ToolbarComponent implements OnInit {
     return 'Already published';
   }
 
-  // TODO check for workflows, depends on isWorkflowIncomplete
   publish(): void {
     this.baseItemAction.publish(this.transformation);
   }
@@ -120,7 +117,6 @@ export class ToolbarComponent implements OnInit {
     return 'New revision';
   }
 
-  // TODO check for workflows
   newRevision() {
     this.baseItemAction.newRevision(this.transformation);
   }

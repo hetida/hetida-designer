@@ -156,7 +156,6 @@ export class PopoverBaseItemComponent implements OnInit {
 
   private _createPreview(transformation: Transformation): void {
     this.componentPreview = this.flowchartConverter.convertComponentToFlowchart(
-      // TODO check for workflows
       transformation
     );
   }

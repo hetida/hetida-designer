@@ -17,11 +17,7 @@
     <button mat-menu-item (click)="editDocumentation()">
       Edit documentation...
     </button>
-    <button
-      mat-menu-item
-      *ngIf="!baseItemHasEmptyInputsAndOutputs"
-      (click)="configureIO()"
-    >
+    <button mat-menu-item *ngIf="!_isWorkflowWithoutIo" (click)="configureIO()">
       Configure IO...
     </button>
     <button mat-menu-item *ngIf="!_isIncomplete" (click)="execute()">
