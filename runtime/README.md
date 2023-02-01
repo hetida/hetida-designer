@@ -11,7 +11,7 @@ Both are written in Python and their code resides in the runtime subdirectory.
 ## Development Setup
 Make sure Python 3.10 is installed and available on your path. You may need additional packages like a C compiler (e.g. gcc) depending on your OS's availability of precompiled packages for numerical libraries like **numpy** or **scipy**. 
 
-We recommend Linux as operating system for development. In particular we point out that locked dependency files in this repository are created only for Linux environments with CPython.
+We heavily recommend Linux as operating system for development. In particular we point out that locked dependency files in this repository are created only for Linux environments with CPython which corresponds to the targeted Docker image environment.
 
 1. Navigate to the `runtime` folder.
 2. Create, sync and activate virtual environmnet: `./pipt shell`
@@ -66,6 +66,7 @@ After that
 ```
 will automatically sync and activate your environment.
 
+## QA
 ### <a name="runtime-tests"></a> Tests
 With activated virtual environment, run
 ```
@@ -73,17 +74,19 @@ python -m pytest --cov=hetdesrun tests
 ```
 from the runtime directory to obtain unit test results including coverage report.
 
-### Code Quality Check
-Pylint can be used to check static code quality during development:
+### Code Quality Check / Linting
+Ruff can be used to check static code quality during development:
 ```
-pylint hetdesrun
+ruff hetdesrun tests
 ```
-Used pylint rules are controlled through the `pylintrc` file in the runtime directory of the repository.
+Used rules are controlled through the `pyproject.toml` file in the runtime directory of the repository.
 
-It is recommended to set up your editor/IDE to use pylint with this `pylintrc`.
+It is recommended to set up your editor/IDE to use ruff from the virtual environment with this `pyproject.toml`.
 
 ### Code formatting
-As code formatter, [black](https://github.com/ambv/black) is used. It is recommended to configure your IDE to automatically format Python code with black during save. Currently black formatting is not enforced as part of the build process.
+As code formatter, [black](https://github.com/ambv/black) is used in combination with ruff for import sorting. It is recommended to configure your IDE to automatically format Python code with black during save and sort imports using ruff. See the `format` subcommand in the `run`
+script.
+
 
 ### Type Hints
 Runtime/Backend code is currently mostly type hinted. You may use [mypy](http://mypy-lang.org/) for static type checking via
@@ -93,3 +96,11 @@ python3 -m mypy hetdesrun
 The Mypy configuration can be found in `mypy.ini` file in /runtime directory.
 
 We recommend to set up your IDE to use mypy with this mypy configuration file.
+
+### Run script
+The runtime directory contains a `run` bash script with multiple subcommands which may faciliate using the qa tools mentioned above. Run `./run usage` for further information.
+
+In particular the `./run check` command runs several checks exiting with non-zero status if one of them fails.
+
+### Quality Gates: Github actions
+Some of the qa tools mentioned above are run as part of github actions to ensure code quality.

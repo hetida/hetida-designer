@@ -13,6 +13,7 @@ __pycache__
 .pytest_cache
 .mypy_cache
 .s.PGSQL*
+.ruff_cache
 runtime/**/lab
 runtime/**/venv
 runtime/**/nix_venv_*

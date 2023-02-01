@@ -21,7 +21,8 @@
         ".tmp": true,
         "**/.mypy_cache": true,
         "**/.pytest_cache": true,
-        "**/.coverage": true
+        "**/.coverage": true,
+        "**/.ruff_cache": true
     },
     "files.exclude": {
         "**/__pycache__": true,
@@ -32,27 +33,24 @@
         ".tmp": true,
         "**/.mypy_cache": true,
         "**/.pytest_cache": true,
-        "**/.coverage": true
+        "**/.coverage": true,
+        "**/.ruff_cache": true
     },
-    "python.formatting.provider": "black",
-    "python.linting.pylintArgs": [
-        "--rcfile=.pylintrc"
-    ],
     "mypy.configFile": "./runtime/mypy.ini",
     "python.linting.mypyPath": "./runtime/venv/bin/mypy",
     "python.linting.mypyEnabled": true,
     "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
     "editor.formatOnSave": true,
-    "isort.args": [
-        "--profile",
-        "black",
-        "-p",
-        "hetdesrun"
-    ],
     "[python]": {
+        "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-            "source.organizeImports": true
+            "source.organizeImports.ruff": true,
         }
-    }
+    },
+    "python.formatting.provider": "black",
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.args": [
+        "--config=runtime/pyproject.toml"
+    ],
+    "python.defaultInterpreterPath": "~/.pipt/venvs/hd-runtime-venv/bin/python"
 }
