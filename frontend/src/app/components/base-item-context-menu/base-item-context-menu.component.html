@@ -7,26 +7,26 @@
     </button>
     <mat-divider></mat-divider>
     <button mat-menu-item (click)="copyItem()">Copy...</button>
-    <button mat-menu-item *ngIf="isNotPublished" (click)="publish()">
+    <button mat-menu-item *ngIf="_isNotPublished" (click)="publish()">
       Publish...
     </button>
-    <button mat-menu-item *ngIf="isNotPublished" (click)="delete()">
+    <button mat-menu-item *ngIf="_isNotPublished" (click)="delete()">
       Delete...
     </button>
     <mat-divider></mat-divider>
     <button mat-menu-item (click)="editDocumentation()">
       Edit documentation...
     </button>
-    <button mat-menu-item *ngIf="!isWorkflowWithoutIo" (click)="configureIO()">
+    <button mat-menu-item *ngIf="!_isWorkflowWithoutIo" (click)="configureIO()">
       Configure IO...
     </button>
-    <button mat-menu-item *ngIf="!isIncomplete" (click)="execute()">
+    <button mat-menu-item *ngIf="!_isIncomplete" (click)="execute()">
       Execute...
     </button>
     <mat-divider></mat-divider>
     <button mat-menu-item (click)="editItem()">Properties...</button>
     <mat-divider></mat-divider>
-    <button mat-menu-item *ngIf="!isNotPublished" (click)="deprecate()">
+    <button mat-menu-item *ngIf="!_isNotPublished" (click)="deprecate()">
       Deprecate...
     </button>
   </mat-menu>

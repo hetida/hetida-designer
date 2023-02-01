@@ -126,8 +126,6 @@ export class BaseItemActionService {
             )
         ),
         switchMap(({ selectedTransformation, test_wiring }) =>
-          // TODO if a transformation is set to released,
-          // it can't be updated by a new test_wiring and will throw a error 403 (Forbidden)
           this.baseItemService.updateTransformation({
             ...selectedTransformation,
             test_wiring

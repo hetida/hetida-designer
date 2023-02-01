@@ -27,20 +27,20 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   @ViewChild(MatMenuTrigger) readonly _trigger: MatMenuTrigger;
   @ViewChild(MatMenu) readonly _menu: MatMenu;
   @ViewChild('invisibleTrigger') _elementRef: ElementRef;
-  isIncomplete: boolean;
-  isNotPublished: boolean;
-  isWorkflowWithoutIo: boolean;
+  _isIncomplete: boolean;
+  _isNotPublished: boolean;
+  _isWorkflowWithoutIo: boolean;
 
   _transformation: Transformation;
   @Input()
   set transformation(transformation: Transformation) {
     // show or hide execute button
-    this.isIncomplete = this.baseItemActionsService.isIncomplete(
+    this._isIncomplete = this.baseItemActionsService.isIncomplete(
       transformation
     );
-    this.isNotPublished = transformation.state === RevisionState.DRAFT;
+    this._isNotPublished = transformation.state === RevisionState.DRAFT;
     // show or hide configureIO button in workflows
-    this.isWorkflowWithoutIo =
+    this._isWorkflowWithoutIo =
       isWorkflowTransformation(transformation) &&
       this.baseItemActionsService.isWorkflowWithoutIo(transformation);
     this._transformation = transformation;
@@ -84,8 +84,6 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   editDocumentation() {
-    // TODO if a transformation is set to released,
-    // it can't be updated by a new documentation and will throw a error 403 (Forbidden)
     this.baseItemActionsService.showDocumentation(this.transformation.id);
   }
 

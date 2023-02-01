@@ -73,6 +73,6 @@ describe('BaseItemContextMenuComponent', () => {
   });
 
   it('should be not published', () => {
-    expect(component.isNotPublished).toBe(true);
+    expect(component._isNotPublished).toBe(true);
   });
 });
