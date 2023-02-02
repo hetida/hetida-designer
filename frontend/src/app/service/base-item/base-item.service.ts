@@ -5,11 +5,7 @@ import { finalize, first, switchMap, switchMapTo, tap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { BaseItemType } from '../../enums/base-item-type';
 import { RevisionState } from '../../enums/revision-state';
-import { ComponentBaseItem } from '../../model/component-base-item';
-import { WorkflowBaseItem } from '../../model/workflow-base-item';
 import { IAppState } from '../../store/app.state';
-import { getBaseItems } from '../../store/base-item/base-item.actions';
-import { BaseItemHttpService } from '../http-service/base-item-http.service';
 import {
   ComponentTransformation,
   Transformation,
@@ -41,7 +37,6 @@ export class BaseItemService {
     private readonly transformationHttpService: TransformationHttpService,
     private readonly transformationStore: Store<TransformationState>,
     private readonly localStorageService: LocalStorageService,
-    private readonly baseItemHttpService: BaseItemHttpService,
     private readonly store: Store<IAppState>
   ) {}
 
@@ -69,43 +64,6 @@ export class BaseItemService {
           );
         })
       );
-  }
-
-  createWorkflow(): WorkflowBaseItem {
-    const workflowId = uuid().toString();
-    return {
-      id: workflowId,
-      groupId: uuid().toString(),
-      name: 'New workflow',
-      category: 'Draft',
-      type: BaseItemType.WORKFLOW,
-      tag: '1.0.0',
-      state: RevisionState.DRAFT,
-      description: 'New created workflow',
-      inputs: [],
-      outputs: [],
-      wirings: [],
-      links: [],
-      operators: []
-    };
-  }
-
-  createComponent(): ComponentBaseItem {
-    const componentId = uuid().toString();
-    return {
-      id: componentId,
-      groupId: uuid().toString(),
-      name: 'New component',
-      category: 'Draft',
-      type: BaseItemType.COMPONENT,
-      tag: '1.0.0',
-      state: RevisionState.DRAFT,
-      description: 'New created component',
-      inputs: [],
-      outputs: [],
-      wirings: [],
-      code: ''
-    };
   }
 
   getDefaultComponentTransformation(): ComponentTransformation {
@@ -159,10 +117,6 @@ export class BaseItemService {
   }
 
   fetchAllTransformations(): void {
-    // TODO remove once everything is migrated to transformations
-    this.baseItemHttpService.fetchBaseItems().subscribe(result => {
-      this.store.dispatch(getBaseItems(result));
-    });
     this.transformationHttpService
       .fetchTransformations()
       .subscribe(transformations => {
