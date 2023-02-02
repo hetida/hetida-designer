@@ -302,7 +302,6 @@ async def delete_workflow_revision(
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
-# pylint: disable=redefined-builtin
 @workflow_router.post(
     "/{id}/execute",
     response_model=ExecutionResponseFrontendDto,

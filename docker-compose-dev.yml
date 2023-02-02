@@ -44,6 +44,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-runtime
+
     #image: hetida/designer-runtime
     volumes:
       - designer_obj_repo:/mnt/obj_repo
@@ -84,7 +85,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-demo-adapter-python
-      # target: test
     image: hetida/designer-demo-adapter-python
     ports:
       - 8092:8092

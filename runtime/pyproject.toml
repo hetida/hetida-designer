@@ -31,3 +31,9 @@ src = [".", "runtime", "demo-adapter-python"]
 "**/tests/test_backend_kafka_consumer.py" = ["E501"]
 "**/tests/**/test_load_ts_data.py" = ["E501"]
 "**tests/auth/test_outgoing_auth.py" = ["S106"]
+
+
+[tool.ruff.isort]
+# explicitely add known first party names for import sorting
+# (somehow duplicating the src setting above??)
+known-first-party = ["hetdesrun", "demo_adapter_python"]

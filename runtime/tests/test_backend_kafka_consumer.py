@@ -174,7 +174,7 @@ async def mock_failed_execute_transformation_revision(*args, **kwargs):
 
 
 async def mock_failed_execute_transformation_revision_with_arbitrary_exc(
-    *args, **kwargs  # noqa:
+    *args, **kwargs
 ):
     raise Exception("Something went horribly wrong")
 

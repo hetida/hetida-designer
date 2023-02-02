@@ -4,7 +4,6 @@ from functools import cache
 from typing import Any
 from uuid import UUID
 
-# pylint: disable=no-name-in-module
 from pydantic import SecretStr
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL

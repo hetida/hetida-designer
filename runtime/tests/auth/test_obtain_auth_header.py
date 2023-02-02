@@ -95,9 +95,9 @@ async def test_auth_external_client_mode(
 
 @pytest.mark.asyncio
 async def test_authinternal_client_mode(
-    outgoing_auth_internal_mode_client,  # noqa:
-    set_internal_client_creds,  # noqa:
-    mocked_token_request,  # noqa:
+    outgoing_auth_internal_mode_client,
+    set_internal_client_creds,
+    mocked_token_request,
 ):
     auth_header_dict = await get_auth_headers(external=False)
     assert len(auth_header_dict) == 1

@@ -72,7 +72,8 @@ check() {
     echo "--> Running black in check mode" && black demo_adapter_python tests --check &&
         echo "--> Running tests" && python -m pytest --cov=demo_adapter_python --cov-report=term-missing tests &&
         echo "--> Running mypy" && mypy demo_adapter_python tests &&
-        echo "--> Running ruff" && ruff demo_adapter_python tests
+        echo "--> Running ruff" && ruff demo_adapter_python tests &&
+        echo "CHECKS EXECUTION RESULTS: All checks were successful!"
 }
 
 #----- Execution -----#

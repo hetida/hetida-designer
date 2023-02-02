@@ -85,7 +85,7 @@ for file_path in json_files:
     bi_list.append(bi_json)
 
 
-def java_backend_mock(url, *args, **kwargs):  # noqa:
+def java_backend_mock(url, *args, **kwargs):
     call_infos_from_url = url.rsplit("/", 3)
     bi_id = call_infos_from_url[-1]
     endpoint = call_infos_from_url[-2]

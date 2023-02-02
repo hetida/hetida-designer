@@ -21,6 +21,12 @@ Now a development web server using a sqlite in-memory db can be started via
 python main.py
 ```
 
+Run
+```
+HD_USE_AUTH=false python main.py
+```
+to start it with auth deactivated.
+
 If you want to develop against the postgres db running in the docker-compose dev environment the command is
 ```
 HD_DATABASE_URL="postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@localhost:5430/hetida_designer_db" python main.py

@@ -211,7 +211,7 @@ async def test_load_metadata_any_from_string_response():
 
 
 async def mock_load_multiple_metadata(
-    data_to_load: dict[str, FilteredSource], adapter_key: str  # noqa:
+    data_to_load: dict[str, FilteredSource], adapter_key: str
 ) -> dict[str, Any]:
     return {"wf_inp_1": 42, "wf_inp_2": "some description"}
 

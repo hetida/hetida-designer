@@ -100,7 +100,7 @@ def init_app() -> FastAPI:
     except KeyError:
         pass
 
-    from hetdesrun.adapters.local_file.webservice import (  # noqa: E501
+    from hetdesrun.adapters.local_file.webservice import (
         local_file_adapter_router,
     )
 

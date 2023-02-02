@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-# pylint: disable=no-name-in-module
 from pydantic import validator
 
 from hetdesrun.backend.models.info import BasicInformation

@@ -1,6 +1,5 @@
 from uuid import UUID, uuid4
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, root_validator, validator
 
 from hetdesrun.datatypes import DataType

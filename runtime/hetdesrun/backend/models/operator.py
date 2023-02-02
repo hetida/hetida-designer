@@ -1,6 +1,5 @@
 from uuid import UUID
 
-# pylint: disable=no-name-in-module
 from pydantic import Field, root_validator
 
 from hetdesrun.backend.models.info import BasicInformation

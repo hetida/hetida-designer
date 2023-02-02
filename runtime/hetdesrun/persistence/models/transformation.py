@@ -2,7 +2,6 @@ import datetime
 from typing import cast
 from uuid import UUID, uuid4
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, ValidationError, validator
 
 from hetdesrun.models.code import (

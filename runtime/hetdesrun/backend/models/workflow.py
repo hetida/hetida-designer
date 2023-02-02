@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from typing import Literal
 from uuid import UUID
 
-# pylint: disable=no-name-in-module
 from pydantic import root_validator, validator
 
 from hetdesrun.backend.models.info import BasicInformation

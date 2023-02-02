@@ -62,7 +62,6 @@ def store_single_transformation_revision(
             )
 
 
-# pylint: disable=redefined-builtin
 def select_tr_by_id(
     session: SQLAlchemySession, id: UUID, log_error: bool = True  # noqa: A002
 ) -> TransformationRevision:
@@ -82,7 +81,6 @@ def select_tr_by_id(
     return TransformationRevision.from_orm_model(result)
 
 
-# pylint: disable=redefined-builtin
 def read_single_transformation_revision(
     id: UUID, log_error: bool = True  # noqa: A002
 ) -> TransformationRevision:
@@ -365,7 +363,6 @@ def delete_tr(session: SQLAlchemySession, tr_id: UUID) -> None:
         raise DBIntegrityError(msg) from e
 
 
-# pylint: disable=redefined-builtin
 def delete_single_transformation_revision(
     id: UUID, type: Type | None = None, ignore_state: bool = False  # noqa: A002
 ) -> None:

@@ -1,4 +1,3 @@
-# pylint: disable=no-name-in-module
 from pydantic import BaseModel
 
 from hetdesrun.backend.service.utils import to_camel

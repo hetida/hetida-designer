@@ -72,7 +72,8 @@ check() {
     echo "--> Running black in check mode" && black hetdesrun tests --check &&
         echo "--> Running tests" && python -m pytest --cov=hetdesrun --cov-report=term-missing tests &&
         echo "--> Running mypy" && mypy hetdesrun &&
-        echo "--> Running ruff" && ruff hetdesrun tests
+        echo "--> Running ruff" && ruff hetdesrun tests &&
+        echo "CHECKS EXECUTION RESULTS: All checks were successful!"
 }
 
 #----- Execution -----#

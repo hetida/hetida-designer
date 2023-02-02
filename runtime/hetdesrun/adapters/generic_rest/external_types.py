@@ -58,9 +58,7 @@ class ValueDataType(str, Enum):
 
             cls._value2member_map_[other_value] = obj  # type: ignore
 
-        obj._all_values = (  # type: ignore # pylint: disable=no-member
-            values[0],
-        ) + values[2:]
+        obj._all_values = (values[0],) + values[2:]  # type: ignore
         return obj  # type:ignore
 
     def __repr__(self) -> str:

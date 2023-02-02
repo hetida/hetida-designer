@@ -90,7 +90,7 @@ async def test_load_ts_adapter_request():
             assert df.shape == (0, 3)
 
 
-async def mock_load_generic_rest_ts_data(*args, **kwargs):  # noqa:
+async def mock_load_generic_rest_ts_data(*args, **kwargs):
     data_df = pd.DataFrame(
         {
             "timestamp": pd.to_datetime(

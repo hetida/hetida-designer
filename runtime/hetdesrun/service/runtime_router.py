@@ -17,7 +17,6 @@ runtime_router = HandleTrailingSlashAPIRouter(tags=["runtime"])
     response_model=WorkflowExecutionResult,
     dependencies=get_auth_deps(),
 )
-# pylint: disable=R0911
 async def runtime_endpoint(
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:

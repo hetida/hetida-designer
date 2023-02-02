@@ -20,7 +20,7 @@ from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=redefined-builtin
+
 def get_transformation_from_java_backend(
     id: UUID, type: Type  # noqa: A002
 ) -> TransformationRevision:
@@ -132,7 +132,6 @@ def criterion_unset_or_matches_value(criterion: Any | None, actual_value: Any) -
 
 
 ##Export transformations based on type, id, name and category if provided
-# pylint: disable=redefined-builtin
 def export_transformations(
     download_path: str,
     type: Type | None = None,  # noqa: A002

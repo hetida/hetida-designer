@@ -55,7 +55,7 @@ def json_parsing_error_token_request():
 
 
 @pytest.fixture()
-def invalid_token_response_mocked_token_request(valid_token_response):  # noqa:
+def invalid_token_response_mocked_token_request(valid_token_response):
     mocked_resp = mock.Mock
     mocked_resp.json = mock.Mock(return_value={"a": 42})
 
@@ -108,7 +108,7 @@ async def test_outgoing_auth_token_fetching_with_password_grant(mocked_token_req
 
 @pytest.mark.asyncio
 async def test_http_error_on_outgoing_auth_token_fetching(
-    http_error_token_request,  # noqa:
+    http_error_token_request,
 ):
     with pytest.raises(ServiceAuthenticationError, match=r".*test error.*"):
         _token_response = await obtain_token_from_auth_provider(
@@ -125,7 +125,7 @@ async def test_http_error_on_outgoing_auth_token_fetching(
 
 @pytest.mark.asyncio
 async def test_json_parsing_error_on_outgoing_auth_token_fetching(
-    json_parsing_error_token_request,  # noqa:
+    json_parsing_error_token_request,
 ):
     with pytest.raises(ServiceAuthenticationError, match=r".*json parsing error.*"):
         _token_response = await obtain_token_from_auth_provider(
@@ -142,7 +142,7 @@ async def test_json_parsing_error_on_outgoing_auth_token_fetching(
 
 @pytest.mark.asyncio
 async def test_invalid_token_response_outgoing_auth_token_fetching(
-    invalid_token_response_mocked_token_request,  # noqa:
+    invalid_token_response_mocked_token_request,
 ):
     with pytest.raises(ServiceAuthenticationError, match=r".*validation error.*"):
         _token_response = await obtain_token_from_auth_provider(
@@ -526,7 +526,7 @@ async def test_obtain_refresh_logic_refresh_raises_obtain_works(
 
 
 def test_get_access_token_manager(
-    service_credentials, obtain_token_works, result_token_info  # noqa:
+    service_credentials, obtain_token_works, result_token_info
 ):
 
     test_uuid_key = "test_" + str(uuid4())

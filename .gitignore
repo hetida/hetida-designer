@@ -17,7 +17,7 @@ __pycache__
 runtime/**/lab
 runtime/**/venv
 runtime/**/nix_venv_*
-runtime/pylint_report.txt
+runtime/ruff_report.xml
 runtime/test_results.xml
 runtime/.coverage*
 runtime/.coverage.xml
@@ -26,7 +26,7 @@ runtime/settings/*
 demo-adapter-python/**/lab
 demo-adapter-python/**/venv
 demo-adapter-python/**/nix_venv_*
-demo-adapter-python/pylint_report.txt
+demo-adapter-python/ruff_report.xml
 demo-adapter-python/test_results.xml
 demo-adapter-python/.coverage*
 demo-adapter-python/.coverage.xml

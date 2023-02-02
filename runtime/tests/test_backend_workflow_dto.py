@@ -14,8 +14,6 @@ from hetdesrun.backend.models.workflow import (
     position_from_input_connector_id,
 )
 
-# pylint: disable=too-many-lines
-
 valid_workflow_example_iso_forest: dict = {
     "id": "67c14cf2-cd4e-410e-9aca-6664273ccc3f",
     "groupId": "b123bfb6-f8ee-422f-bbf8-01668a471e88",

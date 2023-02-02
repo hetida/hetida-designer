@@ -12,7 +12,6 @@ class ComponentEntryPointRegistrationError(ComponentCodeImportError):
     pass
 
 
-# pylint: disable=redefined-builtin
 def register(
     *,
     inputs: dict[str, DataType],

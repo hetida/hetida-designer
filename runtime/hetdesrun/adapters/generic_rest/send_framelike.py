@@ -31,7 +31,7 @@ def encode_attributes(df_attrs: Any) -> str:
     return base64_str
 
 
-async def post_framelike_records(  # noqa: PLR0913
+async def post_framelike_records(
     list_of_records: list[dict],
     attributes: Any | None,
     ref_id: str,

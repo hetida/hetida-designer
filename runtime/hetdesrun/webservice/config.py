@@ -2,7 +2,6 @@ import datetime
 import os
 from enum import Enum
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
