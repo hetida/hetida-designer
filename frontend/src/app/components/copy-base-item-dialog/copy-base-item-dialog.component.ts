@@ -9,7 +9,7 @@ import { Utils } from 'src/app/utils/utils';
 import { NotOnlyWhitespacesValidator } from 'src/app/validation/not-only-whitespaces-validator';
 import { AllowedCharsValidator } from 'src/app/validation/allowed-chars-validator';
 import { selectAllTransformations } from '../../store/transformation/transformation.selectors';
-import { Transformation } from '../../model/new-api/transformation';
+import { Transformation } from '../../model/transformation';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { UniqueVersionTagValidator } from 'src/app/validation/unique-version-tag-validator';
 

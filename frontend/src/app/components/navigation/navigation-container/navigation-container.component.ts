@@ -10,7 +10,7 @@ import { AuthService } from '../../../auth/auth.service';
 import { BaseItemService } from '../../../service/base-item/base-item.service';
 import { TransformationState } from '../../../store/transformation/transformation.state';
 import { selectTransformationsByCategoryAndName } from '../../../store/transformation/transformation.selectors';
-import { Transformation } from 'src/app/model/new-api/transformation';
+import { Transformation } from 'src/app/model/transformation';
 import { KeyValue } from '@angular/common';
 import { Utils } from '../../../utils/utils';
 

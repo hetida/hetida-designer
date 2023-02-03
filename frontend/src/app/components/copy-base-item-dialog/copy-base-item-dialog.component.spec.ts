@@ -7,7 +7,7 @@ import { ErrorVisualDirective } from 'src/app/directives/error-visual.directive'
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { CopyBaseItemDialogComponent } from './copy-base-item-dialog.component';
-import { Transformation } from '../../model/new-api/transformation';
+import { Transformation } from '../../model/transformation';
 
 // TODO fix test
 describe('CopyBaseItemDialogComponent', () => {

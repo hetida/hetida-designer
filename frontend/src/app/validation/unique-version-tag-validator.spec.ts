@@ -1,7 +1,7 @@
 import { FormControl } from '@angular/forms';
 import { BaseItemType } from '../enums/base-item-type';
 import { RevisionState } from '../enums/revision-state';
-import { Transformation } from '../model/new-api/transformation';
+import { Transformation } from '../model/transformation';
 import { UniqueVersionTagValidator } from './unique-version-tag-validator';
 
 describe('UniqueVersionTagValidator', () => {

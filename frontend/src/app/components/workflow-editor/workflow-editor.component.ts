@@ -29,17 +29,17 @@ import {
 import {
   Transformation,
   WorkflowTransformation
-} from '../../model/new-api/transformation';
-import { Link } from 'src/app/model/new-api/link';
-import { Operator } from 'src/app/model/new-api/operator';
-import { IOConnector } from 'src/app/model/new-api/io-connector';
+} from '../../model/transformation';
+import { Link } from 'src/app/model/link';
+import { Operator } from 'src/app/model/operator';
+import { IOConnector } from 'src/app/model/io-connector';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import {
   selectAllTransformations,
   selectTransformationById
 } from 'src/app/store/transformation/transformation.selectors';
 import { BaseItemService } from 'src/app/service/base-item/base-item.service';
-import { Connector } from 'src/app/model/new-api/connector';
+import { Connector } from 'src/app/model/connector';
 import { Utils } from 'src/app/utils/utils';
 
 interface IdentifiableEntity {

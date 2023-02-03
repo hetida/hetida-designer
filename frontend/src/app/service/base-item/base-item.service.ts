@@ -10,7 +10,7 @@ import {
   ComponentTransformation,
   Transformation,
   WorkflowTransformation
-} from '../../model/new-api/transformation';
+} from '../../model/transformation';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
 import {
   addTransformation,
@@ -18,7 +18,6 @@ import {
   setAllTransformations,
   updateTransformation
 } from '../../store/transformation/transformation.actions';
-import { TransformationState } from '../../store/transformation/transformation.state';
 import { LocalStorageService } from '../local-storage/local-storage.service';
 import { TestWiring } from 'hd-wiring';
 import {
@@ -35,7 +34,6 @@ import { Utils } from 'src/app/utils/utils';
 export class BaseItemService {
   constructor(
     private readonly transformationHttpService: TransformationHttpService,
-    private readonly transformationStore: Store<TransformationState>,
     private readonly localStorageService: LocalStorageService,
     private readonly store: Store<IAppState>
   ) {}
@@ -59,9 +57,7 @@ export class BaseItemService {
       .updateTransformation(transformation)
       .pipe(
         tap(updatedTransformation => {
-          this.transformationStore.dispatch(
-            updateTransformation(updatedTransformation)
-          );
+          this.store.dispatch(updateTransformation(updatedTransformation));
         })
       );
   }
@@ -120,9 +116,7 @@ export class BaseItemService {
     this.transformationHttpService
       .fetchTransformations()
       .subscribe(transformations => {
-        this.transformationStore.dispatch(
-          setAllTransformations(transformations)
-        );
+        this.store.dispatch(setAllTransformations(transformations));
       });
   }
 

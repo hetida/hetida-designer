@@ -17,7 +17,7 @@ import { PopoverService } from 'src/app/service/popover/popover.service';
 import { FlowchartConverterService } from 'src/app/service/type-converter/flowchart-converter.service';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
-import { Transformation } from '../../model/new-api/transformation';
+import { Transformation } from '../../model/transformation';
 import { selectTransformationById } from '../../store/transformation/transformation.selectors';
 
 @Component({

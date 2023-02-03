@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Operator } from 'src/app/model/new-api/operator';
+import { Operator } from 'src/app/model/operator';
 
 export interface RenameOperatorDialogData {
   operator: Operator;

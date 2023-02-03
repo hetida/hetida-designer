@@ -10,7 +10,7 @@ import { AuthService } from '../../../auth/auth.service';
 import { NavigationCategoryComponent } from '../navigation-category/navigation-category.component';
 import { NavigationItemComponent } from '../navigation-item/navigation-item.component';
 import { NavigationContainerComponent } from './navigation-container.component';
-import { Transformation } from '../../../model/new-api/transformation';
+import { Transformation } from '../../../model/transformation';
 
 // TODO fix test
 describe('NavigationContainerComponent', () => {

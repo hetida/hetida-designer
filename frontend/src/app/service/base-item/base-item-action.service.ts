@@ -36,14 +36,14 @@ import {
   isWorkflowTransformation,
   Transformation,
   WorkflowTransformation
-} from '../../model/new-api/transformation';
+} from '../../model/transformation';
 import { Store } from '@ngrx/store';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
-import { IOConnector } from 'src/app/model/new-api/io-connector';
-import { Link } from 'src/app/model/new-api/link';
-import { Constant } from 'src/app/model/new-api/constant';
+import { IOConnector } from 'src/app/model/io-connector';
+import { Link } from 'src/app/model/link';
+import { Constant } from 'src/app/model/constant';
 import { TransformationHttpService } from '../http-service/transformation-http.service';
 import { Utils } from '../../utils/utils';
 

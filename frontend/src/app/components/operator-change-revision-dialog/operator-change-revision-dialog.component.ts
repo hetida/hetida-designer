@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Transformation } from 'src/app/model/new-api/transformation';
+import { Transformation } from 'src/app/model/transformation';
 
 export interface OperatorChangeRevisionDialogData {
   revisions: Transformation[];

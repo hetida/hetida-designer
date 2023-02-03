@@ -4,7 +4,7 @@ import { PopoverService } from 'src/app/service/popover/popover.service';
 import { selectActiveTabItem } from 'src/app/store/tab-item/tab-item.selectors';
 import { Utils } from 'src/app/utils/utils';
 import { IAppState } from '../../../store/app.state';
-import { Transformation } from '../../../model/new-api/transformation';
+import { Transformation } from '../../../model/transformation';
 
 @Component({
   selector: 'hd-navigation-category',

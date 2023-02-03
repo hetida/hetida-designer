@@ -33,11 +33,11 @@ import {
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import { UniqueValueValidator } from 'src/app/validation/unique-value-validator';
-import { WorkflowTransformation } from '../../model/new-api/transformation';
-import { Operator } from 'src/app/model/new-api/operator';
-import { Connector } from 'src/app/model/new-api/connector';
-import { Constant } from 'src/app/model/new-api/constant';
-import { IOConnector } from 'src/app/model/new-api/io-connector';
+import { WorkflowTransformation } from '../../model/transformation';
+import { Operator } from 'src/app/model/operator';
+import { Connector } from 'src/app/model/connector';
+import { Constant } from 'src/app/model/constant';
+import { IOConnector } from 'src/app/model/io-connector';
 
 export interface WorkflowIODialogData {
   workflowTransformation: WorkflowTransformation;

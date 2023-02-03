@@ -15,7 +15,7 @@ import { TabItemService } from '../../service/tab-item/tab-item.service';
 import {
   isWorkflowTransformation,
   Transformation
-} from '../../model/new-api/transformation';
+} from '../../model/transformation';
 
 @Component({
   selector: 'hd-base-item-context-menu',

@@ -1,6 +1,6 @@
 import { createAction } from '@ngrx/store';
 import { ExecutionResponse } from '../../components/protocol-viewer/protocol-viewer.component';
-import { Transformation } from '../../model/new-api/transformation';
+import { Transformation } from '../../model/transformation';
 
 export const setExecutionProtocol = createAction(
   '[ExecutionProtocol] Set ExecutionProtocol',
