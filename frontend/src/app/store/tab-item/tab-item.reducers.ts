@@ -1,7 +1,6 @@
 import { createReducer, on } from '@ngrx/store';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { TabItem } from '../../model/tab-item';
-import { putBaseItem, removeBaseItem } from '../base-item/base-item.actions';
 import {
   addTabItem,
   removeTabItem,
@@ -96,20 +95,6 @@ export const tabItemReducers = createReducer(
         updatedState,
         tabItemIdToRemove
       );
-    }
-  ),
-  on(putBaseItem, (state, action) => {
-    if (action.payload.state === RevisionState.DISABLED) {
-      const baseItemIdToRemove = action.payload.id;
-      return closeAllTransformationRelatedTabs(baseItemIdToRemove, state);
-    }
-    return state;
-  }),
-  on(
-    removeBaseItem,
-    (state, action): ITabItemState => {
-      const baseItemIdToRemove = action.payload;
-      return closeAllTransformationRelatedTabs(baseItemIdToRemove, state);
     }
   ),
   on(updateTransformation, (state, action) => {

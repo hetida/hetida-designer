@@ -4,7 +4,7 @@ import { debounceTime, switchMap, takeUntil } from 'rxjs/operators';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ThemeService } from 'src/app/service/theme/theme.service';
 import { environment } from '../../../environments/environment';
-import { ComponentTransformation } from '../../model/new-api/transformation';
+import { ComponentTransformation } from '../../model/transformation';
 import { BaseItemService } from '../../service/base-item/base-item.service';
 
 @Component({

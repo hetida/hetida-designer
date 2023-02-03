@@ -1,6 +1,6 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { BaseItemType } from 'src/app/enums/base-item-type';
-import { Transformation } from 'src/app/model/new-api/transformation';
+import { Transformation } from 'src/app/model/transformation';
 import { Utils } from 'src/app/utils/utils';
 import { RevisionState } from '../../enums/revision-state';
 import {

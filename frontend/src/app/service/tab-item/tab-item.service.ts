@@ -8,7 +8,7 @@ import {
   unsetActiveTabItem
 } from '../../store/tab-item/tab-item.actions';
 import { LocalStorageService } from '../local-storage/local-storage.service';
-import { Transformation } from '../../model/new-api/transformation';
+import { Transformation } from '../../model/transformation';
 
 @Injectable({
   providedIn: 'root'

@@ -7,7 +7,7 @@ import { ContextMenuService } from 'src/app/service/context-menu/context-menu.se
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { TabItemService } from '../../../service/tab-item/tab-item.service';
 import { BaseItemContextMenuComponent } from '../../base-item-context-menu/base-item-context-menu.component';
-import { Transformation } from '../../../model/new-api/transformation';
+import { Transformation } from '../../../model/transformation';
 
 @Component({
   selector: 'hd-navigation-item',

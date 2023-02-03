@@ -1,5 +1,5 @@
 import { createAction } from '@ngrx/store';
-import { Transformation } from '../../model/new-api/transformation';
+import { Transformation } from '../../model/transformation';
 
 export const setAllTransformations = createAction(
   '[Transformation] Set All',

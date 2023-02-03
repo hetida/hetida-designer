@@ -7,15 +7,15 @@ import {
   IOType
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { Connector } from 'src/app/model/new-api/connector';
-import { Position } from 'src/app/model/new-api/position';
+import { Connector } from 'src/app/model/connector';
+import { Position } from 'src/app/model/position';
 import { v4 as UUID } from 'uuid';
 import {
   Transformation,
   WorkflowTransformation
-} from '../../model/new-api/transformation';
-import { Operator } from 'src/app/model/new-api/operator';
-import { Constant } from 'src/app/model/new-api/constant';
+} from '../../model/transformation';
+import { Operator } from 'src/app/model/operator';
+import { Constant } from 'src/app/model/constant';
 import { VertexIds } from 'src/app/components/workflow-editor/workflow-editor.component';
 
 @Injectable({

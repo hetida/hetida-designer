@@ -12,13 +12,12 @@ import {
   popoverWidth
 } from 'src/app/constants/popover-sizes';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { AbstractBaseItem } from 'src/app/model/base-item';
 import { ShowPopover } from 'src/app/model/show-popover';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { FlowchartConverterService } from 'src/app/service/type-converter/flowchart-converter.service';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
-import { Transformation } from '../../model/new-api/transformation';
+import { Transformation } from '../../model/transformation';
 import { selectTransformationById } from '../../store/transformation/transformation.selectors';
 
 @Component({
@@ -97,8 +96,6 @@ export class PopoverBaseItemComponent implements OnInit {
     this.svgConfiguration.showContextMenu = false;
   }
 
-  abstractBaseItem: AbstractBaseItem | undefined;
-
   transformation: Transformation | undefined;
 
   /**
@@ -165,7 +162,7 @@ export class PopoverBaseItemComponent implements OnInit {
     event.dataTransfer.dropEffect = 'none';
     event.dataTransfer.setData(
       'hetida/baseItem',
-      JSON.stringify(this.abstractBaseItem)
+      JSON.stringify(this.transformation)
     );
   }
 }

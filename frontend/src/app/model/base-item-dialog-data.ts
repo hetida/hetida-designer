@@ -1,4 +1,4 @@
-import { Transformation } from './new-api/transformation';
+import { Transformation } from './transformation';
 
 export interface BaseItemDialogData {
   title: string;

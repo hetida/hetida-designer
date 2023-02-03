@@ -6,7 +6,7 @@ import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { Transformation } from 'src/app/model/new-api/transformation';
+import { Transformation } from 'src/app/model/transformation';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { LocalStorageService } from 'src/app/service/local-storage/local-storage.service';

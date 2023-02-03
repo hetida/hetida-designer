@@ -18,7 +18,7 @@ import {
   selectOrderedTabItemsWithBaseItem,
   TabItemWithBaseItem
 } from '../../store/tab-item/tab-item.selectors';
-import { isComponentTransformation } from '../../model/new-api/transformation';
+import { isComponentTransformation } from '../../model/transformation';
 
 const HOME_TAB = 0;
 

@@ -12,7 +12,7 @@ import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import { UniqueValueValidator } from 'src/app/validation/unique-value-validator';
 import { v4 as UUID } from 'uuid';
-import { ComponentTransformation } from '../../model/new-api/transformation';
+import { ComponentTransformation } from '../../model/transformation';
 import { IO } from 'hd-wiring';
 
 export interface ComponentIoDialogData {

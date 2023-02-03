@@ -3,7 +3,7 @@ import { IAppState } from '../app.state';
 import { ITabItemState, tabItemEntityAdapter } from './tab-item.state';
 import { TabItem } from '../../model/tab-item';
 import { selectHashedTransformationLookupById } from '../transformation/transformation.selectors';
-import { Transformation } from '../../model/new-api/transformation';
+import { Transformation } from '../../model/transformation';
 
 export type TabItemWithBaseItem = Omit<TabItem, 'transformationId'> & {
   baseItem: Transformation;

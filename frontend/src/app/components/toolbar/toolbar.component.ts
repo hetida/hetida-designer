@@ -10,7 +10,7 @@ import { TransformationState } from 'src/app/store/transformation/transformation
 import {
   isWorkflowTransformation,
   Transformation
-} from '../../model/new-api/transformation';
+} from '../../model/transformation';
 import { selectTransformationById } from '../../store/transformation/transformation.selectors';
 
 @Component({

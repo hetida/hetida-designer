@@ -6,7 +6,7 @@ import {
 } from './transformation.selectors';
 import { BaseItemType } from '../../enums/base-item-type';
 import { EntityState } from '@ngrx/entity';
-import { Transformation } from '../../model/new-api/transformation';
+import { Transformation } from '../../model/transformation';
 import { RevisionState } from '../../enums/revision-state';
 
 describe('Transformation selectors', () => {
