@@ -196,12 +196,12 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
     except StructureObjectNotFound as not_found_error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Could not find source with id " + sourceId,
+            detail=f"Could not find source with id '{sourceId}'",
         ) from not_found_error
     except StructureObjectNotUnique as not_unique_error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Source with id " + sourceId + " not unique!",
+            detail=f"Source with id '{sourceId}' not unique",
         ) from not_unique_error
     except MissingHierarchyError as error:
         msg = (
@@ -254,14 +254,14 @@ async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
     try:
         sink = get_sink_by_id(sinkId)
     except StructureObjectNotFound as not_found_error:
-        msg = f"Could not find sink with id {sinkId}"
+        msg = f"Could not find sink with id '{sinkId}'"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=msg,
         ) from not_found_error
     except StructureObjectNotUnique as not_unique_error:
-        msg = f"Sink with id {sinkId} not unique!"
+        msg = f"Sink with id '{sinkId}' not unique!"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -306,14 +306,14 @@ async def get_single_thingNode(
     try:
         thing_node = get_thing_node_by_id(thingNodeId)
     except StructureObjectNotFound as not_found_error:
-        msg = f"Could not find thing node with id {thingNodeId}"
+        msg = f"Could not find thing node with id '{thingNodeId}'"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=msg,
         ) from not_found_error
     except StructureObjectNotUnique as not_unique_error:
-        msg = f"Thing node with id {thingNodeId} not unique!"
+        msg = f"Thing node with id '{thingNodeId}' not unique!"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

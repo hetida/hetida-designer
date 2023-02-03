@@ -5,6 +5,8 @@ import nest_asyncio
 import pytest
 
 from hetdesrun.adapters.blob_storage.exceptions import (
+    MissingHierarchyError,
+    InvalidEndpointError,
     StructureObjectNotFound,
     StructureObjectNotUnique,
 )
@@ -12,6 +14,7 @@ from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSource,
 )
+from hetdesrun.adapters.exceptions import AdapterConnectionError
 
 nest_asyncio.apply()
 
@@ -242,57 +245,220 @@ async def test_blob_adapter_webservice_filtered(async_test_client):
 async def test_blob_adapter_webservice_exceptions(async_test_client):
     async with async_test_client as client:
         with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_thing_nodes_by_parent_id",
+            side_effect = MissingHierarchyError
+        ):
+            missing_hierarchy_get_structure_response = await client.get(
+                "/adapters/blob/structure"
+            )
+
+            assert missing_hierarchy_get_structure_response.status_code == 500
+            assert "Could not get structure" in missing_hierarchy_get_structure_response.json()["detail"]
+            assert "hierarchy json is missing" in missing_hierarchy_get_structure_response.json()["detail"]
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_thing_nodes_by_parent_id",
+            return_value = []
+        ):
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.webservice.get_sinks_by_parent_id",
+                return_value = []
+            ):
+                with mock.patch(
+                    "hetdesrun.adapters.blob_storage.webservice.get_sources_by_parent_id",
+                    side_effect = InvalidEndpointError
+                ):
+                    invalid_endpoint_get_structure_response = await client.get(
+                        "/adapters/blob/structure"
+                    )
+
+                    assert invalid_endpoint_get_structure_response.status_code == 500
+                    assert "Could not get structure" in missing_hierarchy_get_structure_response.json()["detail"]
+                    assert "endpoint url is invalid" in invalid_endpoint_get_structure_response.json()["detail"]
+
+                with mock.patch(
+                    "hetdesrun.adapters.blob_storage.webservice.get_sources_by_parent_id",
+                    side_effect = AdapterConnectionError
+                ):
+                    invalid_endpoint_get_structure_response = await client.get(
+                        "/adapters/blob/structure"
+                    )
+
+                    assert invalid_endpoint_get_structure_response.status_code == 500
+                    assert "Could not get structure" in missing_hierarchy_get_structure_response.json()["detail"]
+                    assert "problems connecting" in invalid_endpoint_get_structure_response.json()["detail"]
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_filtered_sources",
+            side_effect = MissingHierarchyError
+        ):
+            missing_hierarchy_get_sources_response = await client.get(
+                "/adapters/blob/sources"
+            )
+
+            assert missing_hierarchy_get_sources_response.status_code == 500
+            assert "Could not get sources" in missing_hierarchy_get_sources_response.json()["detail"]
+            assert "hierarchy json is missing" in missing_hierarchy_get_sources_response.json()["detail"]
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_filtered_sources",
+            side_effect = InvalidEndpointError
+        ):
+            invalid_endpoint_get_sources_response = await client.get(
+                "/adapters/blob/sources"
+            )
+
+            assert invalid_endpoint_get_sources_response.status_code == 500
+            assert "Could not get sources" in invalid_endpoint_get_sources_response.json()["detail"]
+            assert "endpoint url is invalid" in invalid_endpoint_get_sources_response.json()["detail"]
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_filtered_sources",
+            side_effect = AdapterConnectionError
+        ):
+            connection_error_get_sources_response = await client.get(
+                "/adapters/blob/sources"
+            )
+
+            assert connection_error_get_sources_response.status_code == 500
+            assert "Could not get sources" in connection_error_get_sources_response.json()["detail"]
+            assert "problems connecting" in connection_error_get_sources_response.json()["detail"]
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_filtered_sinks",
+            side_effect = MissingHierarchyError
+        ):
+            missing_hierarchy_get_sinks_response = await client.get(
+                "/adapters/blob/sinks"
+            )
+
+            assert missing_hierarchy_get_sinks_response.status_code == 500
+            assert "Could not get sinks" in missing_hierarchy_get_sinks_response.json()["detail"]
+            assert "hierarchy json is missing" in missing_hierarchy_get_sinks_response.json()["detail"]
+
+        with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
             side_effect=StructureObjectNotFound,
         ):
             no_source_response = await client.get(
-                f"/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
+                "/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
             )
 
-        assert no_source_response.status_code == 404
+            assert no_source_response.status_code == 404
+            assert "Could not find source"  in no_source_response.json()["detail"]
+            assert "with id 'i-i/A_2022-01-02T14:23:18+00:00'" in no_source_response.json()["detail"]
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
             side_effect=StructureObjectNotUnique,
         ):
             many_sources_response = await client.get(
-                f"/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
+                "/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
             )
 
-        assert many_sources_response.status_code == 500
+            assert many_sources_response.status_code == 500
+            assert "with id 'i-i/A_2022-01-02T14:23:18+00:00'" in many_sources_response.json()["detail"]
+            assert "not unique" in many_sources_response.json()["detail"]
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
+            side_effect=MissingHierarchyError,
+        ):
+            missing_hierarchy_sources_response = await client.get(
+                "/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
+            )
+
+            assert missing_hierarchy_sources_response.status_code == 500
+            assert "with id 'i-i/A_2022-01-02T14:23:18+00:00'" in missing_hierarchy_sources_response.json()["detail"]
+            assert "hierarchy json is missing" in missing_hierarchy_sources_response.json()["detail"]
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
+            side_effect=InvalidEndpointError,
+        ):
+            invalid_endpoint_sources_response = await client.get(
+                "/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
+            )
+
+            assert invalid_endpoint_sources_response.status_code == 500
+            assert "with id 'i-i/A_2022-01-02T14:23:18+00:00'" in invalid_endpoint_sources_response.json()["detail"]
+            assert "endpoint url is invalid" in invalid_endpoint_sources_response.json()["detail"]
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
+            side_effect=AdapterConnectionError,
+        ):
+            connection_error_sources_response = await client.get(
+                "/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
+            )
+
+            assert connection_error_sources_response.status_code == 500
+            assert "with id 'i-i/A_2022-01-02T14:23:18+00:00'" in connection_error_sources_response.json()["detail"]
+            assert "problems connecting" in connection_error_sources_response.json()["detail"]
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
             side_effect=StructureObjectNotFound,
         ):
-            no_sink_response = await client.get(f"/adapters/blob/sinks/i-i/A_next")
+            no_sink_response = await client.get("/adapters/blob/sinks/i-i/A_next")
 
-        assert no_sink_response.status_code == 404
+            assert no_sink_response.status_code == 404
+            assert "Could not find sink"  in no_sink_response.json()["detail"]
+            assert "with id 'i-i/A_next'" in no_sink_response.json()["detail"]
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
             side_effect=StructureObjectNotUnique,
         ):
-            many_sinks_response = await client.get(f"/adapters/blob/sinks/i-i/A_next")
+            many_sinks_response = await client.get("/adapters/blob/sinks/i-i/A_next")
 
-        assert many_sinks_response.status_code == 500
+            assert many_sinks_response.status_code == 500
+            assert "with id 'i-i/A_next'" in many_sinks_response.json()["detail"]
+            assert "not unique" in many_sinks_response.json()["detail"]
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
+            side_effect=MissingHierarchyError,
+        ):
+            missing_hierarchy_sinks_response = await client.get(
+                "/adapters/blob/sinks/i-i/A_next"
+            )
+
+            assert missing_hierarchy_sinks_response.status_code == 500
+            assert "with id 'i-i/A_next'" in missing_hierarchy_sinks_response.json()["detail"]
+            assert "hierarchy json is missing" in missing_hierarchy_sinks_response.json()["detail"]
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",
             side_effect=StructureObjectNotFound,
         ):
             no_thing_node_response = await client.get(
-                f"/adapters/blob/thingNodes/i-i/A"
+                "/adapters/blob/thingNodes/i-i/A"
             )
 
-        assert no_thing_node_response.status_code == 404
+            assert no_thing_node_response.status_code == 404
+            assert "Could not find thing node" in no_thing_node_response.json()["detail"]
+            assert "with id 'i-i/A'" in no_thing_node_response.json()["detail"]
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",
             side_effect=StructureObjectNotUnique,
         ):
             many_thing_nodes_response = await client.get(
-                f"/adapters/blob/thingNodes/i-i/A"
+                "/adapters/blob/thingNodes/i-i/A"
             )
 
-        assert many_thing_nodes_response.status_code == 500
+            assert many_thing_nodes_response.status_code == 500
+            assert "with id 'i-i/A'" in many_thing_nodes_response.json()["detail"]
+            assert "not unique" in many_thing_nodes_response.json()["detail"]
+
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",
+            side_effect=MissingHierarchyError,
+        ):
+            missing_hierarchy_thing_nodes_response = await client.get(
+                "/adapters/blob/thingNodes/i-i/A_next"
+            )
+
+            assert missing_hierarchy_thing_nodes_response.status_code == 500
+            assert "with id 'i-i/A_next'" in missing_hierarchy_thing_nodes_response.json()["detail"]
+            assert "hierarchy json is missing" in missing_hierarchy_thing_nodes_response.json()["detail"]
