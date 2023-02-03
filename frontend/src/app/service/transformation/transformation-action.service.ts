@@ -29,7 +29,7 @@ import * as uuid from 'uuid';
 import { BaseItemDialogData } from '../../model/base-item-dialog-data';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
-import { BaseItemService } from './base-item.service';
+import { TransformationService } from './transformation.service';
 import {
   ComponentTransformation,
   isComponentTransformation,
@@ -53,12 +53,12 @@ import { Utils } from '../../utils/utils';
 @Injectable({
   providedIn: 'root'
 })
-export class BaseItemActionService {
+export class TransformationActionService {
   constructor(
     private readonly dialog: MatDialog,
     private readonly transformationStore: Store<TransformationState>,
     private readonly transformationHttpService: TransformationHttpService,
-    private readonly baseItemService: BaseItemService,
+    private readonly transformationService: TransformationService,
     private readonly tabItemService: TabItemService,
     private readonly notificationService: NotificationService
   ) {}
@@ -100,7 +100,7 @@ export class BaseItemActionService {
     const transformationExecution$ = (
       executeTestClickEvent: ConfirmClickEvent
     ): Observable<ExecutionResponse> => {
-      return this.baseItemService.testTransformation(
+      return this.transformationService.testTransformation(
         executeTestClickEvent.id,
         executeTestClickEvent.test_wiring
       );
@@ -125,7 +125,7 @@ export class BaseItemActionService {
             )
         ),
         switchMap(({ selectedTransformation, test_wiring }) =>
-          this.baseItemService.updateTransformation({
+          this.transformationService.updateTransformation({
             ...selectedTransformation,
             test_wiring
           })
@@ -182,7 +182,7 @@ export class BaseItemActionService {
       .pipe(
         switchMap((transformationToUpdate: Transformation | undefined) => {
           if (transformationToUpdate) {
-            return this.baseItemService.updateTransformation(
+            return this.transformationService.updateTransformation(
               transformationToUpdate
             );
           }
@@ -296,7 +296,9 @@ export class BaseItemActionService {
         .pipe(
           switchMap(isConfirmed => {
             if (isConfirmed) {
-              return this.baseItemService.releaseTransformation(transformation);
+              return this.transformationService.releaseTransformation(
+                transformation
+              );
             }
             return of(null);
           })
@@ -379,7 +381,7 @@ export class BaseItemActionService {
         title: 'Create new workflow',
         actionOk: 'Create Workflow',
         actionCancel: 'Cancel',
-        transformation: this.baseItemService.getDefaultWorkflowTransformation(),
+        transformation: this.transformationService.getDefaultWorkflowTransformation(),
         disabledState: {
           name: false,
           category: false,
@@ -408,7 +410,7 @@ export class BaseItemActionService {
         title: 'Create new component',
         actionOk: 'Create Component',
         actionCancel: 'Cancel',
-        transformation: this.baseItemService.getDefaultComponentTransformation(),
+        transformation: this.transformationService.getDefaultComponentTransformation(),
         disabledState: {
           name: false,
           category: false,
@@ -450,7 +452,9 @@ export class BaseItemActionService {
       .pipe(
         switchMap(isConfirmed => {
           if (isConfirmed) {
-            return this.baseItemService.disableTransformation(transformation);
+            return this.transformationService.disableTransformation(
+              transformation
+            );
           }
           return of(null);
         })
@@ -484,7 +488,7 @@ export class BaseItemActionService {
     transformation: Transformation
   ): Observable<void> {
     this.tabItemService.deselectActiveTabItem();
-    return this.baseItemService.deleteTransformation(transformation.id);
+    return this.transformationService.deleteTransformation(transformation.id);
   }
 
   // TODO unit test
@@ -596,7 +600,7 @@ export class BaseItemActionService {
       .pipe(
         switchMap(updatedComponentTransformation => {
           if (updatedComponentTransformation) {
-            return this.baseItemService.updateTransformation(
+            return this.transformationService.updateTransformation(
               updatedComponentTransformation
             );
           }
@@ -698,7 +702,7 @@ export class BaseItemActionService {
                 }
               };
 
-              this.baseItemService
+              this.transformationService
                 .updateTransformation(updatedWorkflowTransformation)
                 .subscribe();
             }

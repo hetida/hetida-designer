@@ -31,7 +31,7 @@ import { Utils } from 'src/app/utils/utils';
 @Injectable({
   providedIn: 'root'
 })
-export class BaseItemService {
+export class TransformationService {
   constructor(
     private readonly transformationHttpService: TransformationHttpService,
     private readonly localStorageService: LocalStorageService,

@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Transformation } from 'src/app/model/transformation';
-import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
+import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { LocalStorageService } from 'src/app/service/local-storage/local-storage.service';
 import { selectHashedTransformationLookupById } from 'src/app/store/transformation/transformation.selectors';
@@ -25,7 +25,7 @@ export class HomeComponent implements OnInit {
   constructor(
     private readonly localStorageService: LocalStorageService,
     private readonly transformationStore: Store<TransformationState>,
-    private readonly baseItemActionService: BaseItemActionService,
+    private readonly transformationActionService: TransformationActionService,
     private readonly tabItemService: TabItemService,
     private readonly contextMenuService: ContextMenuService,
     private readonly httpClient: HttpClient
@@ -100,10 +100,10 @@ export class HomeComponent implements OnInit {
   }
 
   newWorkflow(): void {
-    this.baseItemActionService.newWorkflow();
+    this.transformationActionService.newWorkflow();
   }
 
   newComponent(): void {
-    this.baseItemActionService.newComponent();
+    this.transformationActionService.newComponent();
   }
 }

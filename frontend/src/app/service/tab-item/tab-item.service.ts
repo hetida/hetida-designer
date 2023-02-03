@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BaseItemService } from '../base-item/base-item.service';
+import { TransformationService } from '../transformation/transformation.service';
 import { TabItem, TabItemType } from '../../model/tab-item';
 import { Store } from '@ngrx/store';
 import { IAppState } from '../../store/app.state';
@@ -16,7 +16,7 @@ import { Transformation } from '../../model/transformation';
 export class TabItemService {
   constructor(
     private readonly store: Store<IAppState>,
-    private readonly baseItemService: BaseItemService,
+    private readonly transformationService: TransformationService,
     private readonly localStorageService: LocalStorageService
   ) {}
 
@@ -43,7 +43,7 @@ export class TabItemService {
   }
 
   createTransformationAndOpenInNewTab(transformation: Transformation): void {
-    this.baseItemService.createTransformation(transformation).subscribe({
+    this.transformationService.createTransformation(transformation).subscribe({
       complete: () => {
         this.addTransformationTab(transformation.id);
       }

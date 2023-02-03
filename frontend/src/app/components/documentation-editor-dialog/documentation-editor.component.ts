@@ -10,7 +10,7 @@ import {
 import { SafeHtml } from '@angular/platform-browser';
 import { Store } from '@ngrx/store';
 import { first, switchMap } from 'rxjs/operators';
-import { BaseItemService } from 'src/app/service/base-item/base-item.service';
+import { TransformationService } from 'src/app/service/transformation/transformation.service';
 import { selectTransformationById } from 'src/app/store/transformation/transformation.selectors';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { Utils } from 'src/app/utils/utils';
@@ -43,7 +43,7 @@ export class DocumentationEditorComponent implements OnInit {
 
   constructor(
     private readonly transformationStore: Store<TransformationState>,
-    private readonly baseItemService: BaseItemService,
+    private readonly transformationService: TransformationService,
     private readonly markdownService: MarkdownService,
     private readonly changeDetection: ChangeDetectorRef
   ) {}
@@ -81,7 +81,7 @@ export class DocumentationEditorComponent implements OnInit {
       .pipe(
         first(),
         switchMap(transformation =>
-          this.baseItemService.updateTransformation({
+          this.transformationService.updateTransformation({
             ...transformation,
             documentation: this.markdown
           })

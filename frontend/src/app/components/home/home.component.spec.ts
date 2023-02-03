@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
 import { BasicTestModule } from 'src/app/basic-test.module';
-import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
+import { BaseItemActionService } from 'src/app/service/transformation/transformation-action.service';
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { HomeComponent } from './home.component';
 

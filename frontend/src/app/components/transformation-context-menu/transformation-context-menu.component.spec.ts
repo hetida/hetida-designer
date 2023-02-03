@@ -3,7 +3,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { MaterialModule } from 'src/app/material.module';
-import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
+import { BaseItemActionService } from 'src/app/service/transformation/transformation-action.service';
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { TransformationContextMenuComponent } from './transformation-context-menu.component';
 
