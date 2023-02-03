@@ -408,7 +408,10 @@ def gen_jose_rs256_key_pair():
     """
 
     key = rsa.generate_private_key(
-        backend=crypto_default_backend(), public_exponent=65537, key_size=4096
+        # reduced keysize from 4096 for increasing test speed
+        backend=crypto_default_backend(),
+        public_exponent=65537,
+        key_size=1024,
     )
 
     private_key = key.private_bytes(
