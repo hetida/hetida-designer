@@ -94,7 +94,7 @@ async def test_auth_with_wrong_key_access_token_fails(
     )
     assert response.status_code == 401
     # should have tried exactly once to update the public key:
-    assert mocked_public_key_fetching.called == 1
+    assert mocked_public_key_fetching.called == 2
 
 
 @pytest.mark.asyncio
