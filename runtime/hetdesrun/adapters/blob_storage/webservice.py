@@ -84,7 +84,7 @@ async def get_structure_endpoint(
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
     except InvalidEndpointError as error:
         msg = (
             f"Could not get structure for parentId '{parentId}' "
@@ -93,7 +93,7 @@ async def get_structure_endpoint(
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
     except AdapterConnectionError as error:
         msg = (
             f"Could not get structure for parentId '{parentId}' "
@@ -102,7 +102,7 @@ async def get_structure_endpoint(
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
     return StructureResponse(
         id="blob-storage-adapter",
         name="Blob Storage Adapter",
@@ -130,7 +130,7 @@ async def get_sources_endpoint(
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
     except InvalidEndpointError as error:
         msg = (
             f"Could not get sources "
@@ -139,7 +139,7 @@ async def get_sources_endpoint(
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
     except AdapterConnectionError as error:
         msg = (
             f"Could not get sources "
@@ -148,7 +148,7 @@ async def get_sources_endpoint(
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
     return MultipleSourcesResponse(
         resultCount=len(found_sources),
         sources=found_sources,
@@ -171,7 +171,7 @@ async def get_sinks_endpoint(
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
     return MultipleSinksResponse(
         resultCount=len(found_sinks),
         sinks=found_sinks,
@@ -221,7 +221,7 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
     except InvalidEndpointError as error:
         msg = (
             f"Could not get source with id '{sourceId}' "
@@ -230,7 +230,7 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
     except AdapterConnectionError as error:
         msg = (
             f"Could not get source with id '{sourceId}' "
@@ -239,7 +239,7 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
 
     return source
 
@@ -291,7 +291,7 @@ async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
 
     return sink
 
@@ -345,6 +345,6 @@ async def get_single_thingNode(
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-        )
+        ) from error
 
     return thing_node
