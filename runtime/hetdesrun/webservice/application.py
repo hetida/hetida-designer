@@ -109,11 +109,6 @@ def init_app() -> FastAPI:
         local_file_adapter_router,
     )
 
-    try:
-        del sys.modules["hetdesrun.adapters.blob_storage.webservice"]
-    except KeyError:
-        pass
-
     from hetdesrun.adapters.blob_storage.webservice import (  # pylint: disable=import-outside-toplevel
         blob_storage_adapter_router,
     )
