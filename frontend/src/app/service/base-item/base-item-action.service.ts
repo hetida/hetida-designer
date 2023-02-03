@@ -23,7 +23,6 @@ import {
 } from 'src/app/components/workflow-io-dialog/workflow-io-dialog.component';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { AbstractBaseItem } from 'src/app/model/base-item';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import * as uuid from 'uuid';
@@ -265,7 +264,7 @@ export class BaseItemActionService {
     );
   }
 
-  public isReleased(transformation: AbstractBaseItem | Transformation) {
+  public isReleased(transformation: Transformation) {
     return transformation.state === RevisionState.RELEASED;
   }
 

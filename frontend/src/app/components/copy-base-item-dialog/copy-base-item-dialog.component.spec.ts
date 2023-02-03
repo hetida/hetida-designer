@@ -6,15 +6,15 @@ import { BasicTestModule } from 'src/app/basic-test.module';
 import { ErrorVisualDirective } from 'src/app/directives/error-visual.directive';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { AbstractBaseItem } from 'src/app/model/base-item';
-import { selectAbstractBaseItems } from 'src/app/store/base-item/base-item.selectors';
 import { CopyBaseItemDialogComponent } from './copy-base-item-dialog.component';
+import { Transformation } from '../../model/new-api/transformation';
 
+// TODO fix test
 describe('CopyBaseItemDialogComponent', () => {
   let component: CopyBaseItemDialogComponent;
   let fixture: ComponentFixture<CopyBaseItemDialogComponent>;
 
-  const mockAbstractBaseItem: AbstractBaseItem = {
+  const mockAbstractBaseItem: Transformation = {
     id: 'MockId1',
     name: 'Mock',
     tag: 'Mock',
@@ -71,7 +71,7 @@ describe('CopyBaseItemDialogComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(CopyBaseItemDialogComponent);
     const mockStore = TestBed.inject(MockStore);
-    mockStore.overrideSelector(selectAbstractBaseItems, [mockAbstractBaseItem]);
+    // mockStore.overrideSelector(selectAbstractBaseItems, [mockAbstractBaseItem]);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
