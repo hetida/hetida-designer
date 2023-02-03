@@ -14,7 +14,9 @@ export function isComponentTransformation(
 export function isWorkflowTransformation(
   transformation: Transformation | null | undefined
 ): transformation is WorkflowTransformation {
-  return transformation ? transformation.type === TransformationType.WORKFLOW : false;
+  return transformation
+    ? transformation.type === TransformationType.WORKFLOW
+    : false;
 }
 
 export type Transformation = ComponentTransformation | WorkflowTransformation;
