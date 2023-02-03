@@ -12,11 +12,7 @@ from hetdesrun.adapters.blob_storage import (
     SINK_ID_ENDING,
     SINK_NAME_ENDING,
 )
-from hetdesrun.adapters.blob_storage.exceptions import (
-    BucketNameInvalidError,
-    HierarchyError,
-    MissingHierarchyError,
-)
+from hetdesrun.adapters.blob_storage.exceptions import MissingHierarchyError
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSink,
@@ -552,7 +548,7 @@ def test_blob_storage_category_create_structure_too_long_bucket_name():
     thing_nodes: List[StructureThingNode] = []
     bucket_names: List[StructureBucket] = []
     sinks: List[BlobStorageStructureSink] = []
-    with pytest.raises(BucketNameInvalidError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         category.create_structure(
             thing_nodes=thing_nodes,
             buckets=bucket_names,
@@ -660,7 +656,7 @@ def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path(
     adapter_hierarchy = AdapterHierarchy(
         structure=(Category(name="I", description=""),)
     )
-    with pytest.raises(HierarchyError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         adapter_hierarchy.thing_nodes
     assert "Without an object key prefix no sinks or sources" in str(exc_info.value)
 
@@ -687,7 +683,7 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error():
 
     adapter_hierarchy = AdapterHierarchy(structure=structure)
 
-    with pytest.raises(BucketNameInvalidError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         adapter_hierarchy.structure_buckets
 
     assert "Validation Error for transformation of StructureThingNode " in str(
@@ -717,7 +713,7 @@ def test_blob_storage_adapter_hierarchy_with_structure_invalid_error():
         )
     )
 
-    with pytest.raises(HierarchyError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         adapter_hierarchy.thing_nodes
 
     assert "Without an object key prefix no sinks or sources" in str(exc_info.value)
@@ -755,7 +751,7 @@ def test_blob_storage_adapter_hierarchy_with_duplicates():
             ),
         ],
     )
-    with pytest.raises(HierarchyError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         adapter_hierarchy.structure_buckets
     assert "The bucket names generated from the config file are not unique!" in str(
         exc_info.value

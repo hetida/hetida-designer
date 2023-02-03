@@ -2,12 +2,10 @@ from logging import getLogger
 from typing import List, Optional
 
 from hetdesrun.adapters.blob_storage.exceptions import (
-    SinkNotFound,
-    SinkNotUnique,
-    SourceNotFound,
-    SourceNotUnique,
-    ThingNodeNotFound,
-    ThingNodeNotUnique,
+    InvalidEndpointError,
+    MissingHierarchyError,
+    StructureObjectNotFound,
+    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
@@ -17,6 +15,7 @@ from hetdesrun.adapters.blob_storage.models import (
     get_adapter_structure,
 )
 from hetdesrun.adapters.blob_storage.utils import create_sources
+from hetdesrun.adapters.exceptions import AdapterConnectionError
 
 logger = getLogger(__name__)
 
@@ -24,9 +23,12 @@ logger = getLogger(__name__)
 def get_thing_nodes_by_parent_id(
     parent_id: Optional[IdString],
 ) -> List[StructureThingNode]:
-    return [
-        tn for tn in get_adapter_structure().thing_nodes if tn.parentId == parent_id
-    ]
+    try:
+        tn_list = get_adapter_structure().thing_nodes
+    except MissingHierarchyError as error:
+        raise error
+
+    return [tn for tn in tn_list if tn.parentId == parent_id]
 
 
 def get_sources_by_parent_id(
@@ -34,7 +36,17 @@ def get_sources_by_parent_id(
 ) -> List[BlobStorageStructureSource]:
     if parent_id is None:
         return []
-    return [src for src in create_sources() if src.thingNodeId == parent_id]
+
+    try:
+        src_list = create_sources()
+    except (
+        MissingHierarchyError,
+        InvalidEndpointError,
+        AdapterConnectionError,
+    ) as error:
+        raise error
+
+    return [src for src in src_list if src.thingNodeId == parent_id]
 
 
 def get_sinks_by_parent_id(
@@ -42,16 +54,29 @@ def get_sinks_by_parent_id(
 ) -> List[BlobStorageStructureSink]:
     if parent_id is None:
         return []
-    return [
-        snk for snk in get_adapter_structure().sinks if snk.thingNodeId == parent_id
-    ]
+
+    try:
+        snk_list = get_adapter_structure().sinks
+    except MissingHierarchyError as error:
+        raise error
+
+    return [snk for snk in snk_list if snk.thingNodeId == parent_id]
 
 
 def get_filtered_sources(filter_str: Optional[str]) -> List[BlobStorageStructureSource]:
     if filter_str is None:
         filter_str = ""
 
-    return [src for src in create_sources() if filter_str in src.id]
+    try:
+        src_list = create_sources()
+    except (
+        MissingHierarchyError,
+        InvalidEndpointError,
+        AdapterConnectionError,
+    ) as error:
+        raise error
+
+    return [src for src in src_list if filter_str in src.id]
 
 
 def get_filtered_sinks(filter_str: Optional[str]) -> List[BlobStorageStructureSink]:
@@ -62,91 +87,125 @@ def get_filtered_sinks(filter_str: Optional[str]) -> List[BlobStorageStructureSi
 
 
 def get_thing_node_by_id(thing_node_id: IdString) -> StructureThingNode:
-    tn_list = [
-        tn for tn in get_adapter_structure().thing_nodes if tn.id == thing_node_id
-    ]
-    if len(tn_list) == 0:
+    try:
+        tn_list = get_adapter_structure().thing_nodes
+    except MissingHierarchyError as error:
+        raise error
+
+    filtered_tn_list = [tn for tn in tn_list if tn.id == thing_node_id]
+    if len(filtered_tn_list) == 0:
         msg = f"Found no thing node with id {thing_node_id}!"
         logger.error(msg)
-        raise ThingNodeNotFound(msg)
-    if len(tn_list) > 1:
-        msg = f"Found more than one thing node with id {thing_node_id}:\n{str(tn_list)}"
+        raise StructureObjectNotFound(msg)
+    if len(filtered_tn_list) > 1:
+        msg = f"Found more than one thing node with id {thing_node_id}:\n{str(filtered_tn_list)}"
         logger.error(msg)
-        raise ThingNodeNotUnique(msg)
-    return tn_list[0]
+        raise StructureObjectNotUnique(msg)
+    return filtered_tn_list[0]
 
 
 def get_source_by_id(source_id: IdString) -> BlobStorageStructureSource:
-    src_list = [src for src in create_sources() if src.id == source_id]
-    if len(src_list) == 0:
+    try:
+        src_list = create_sources()
+    except (
+        MissingHierarchyError,
+        InvalidEndpointError,
+        AdapterConnectionError,
+    ) as error:
+        raise error
+
+    filtered_src_list = [src for src in src_list if src.id == source_id]
+    if len(filtered_src_list) == 0:
         msg = f"Found no source with id {source_id}!"
         logger.error(msg)
-        raise SourceNotFound(msg)
-    if len(src_list) > 1:
-        msg = f"Found more than one source with id {source_id}:\n{str(src_list)}"
+        raise StructureObjectNotFound(msg)
+    if len(filtered_src_list) > 1:
+        msg = (
+            f"Found more than one source with id {source_id}:\n{str(filtered_src_list)}"
+        )
         logger.error(msg)
-        raise SourceNotUnique(msg)
-    return src_list[0]
+        raise StructureObjectNotUnique(msg)
+    return filtered_src_list[0]
 
 
 def get_sink_by_id(sink_id: IdString) -> BlobStorageStructureSink:
-    snk_list = [snk for snk in get_adapter_structure().sinks if snk.id == sink_id]
-    if len(snk_list) == 0:
+    try:
+        snk_list = get_adapter_structure().sinks
+    except MissingHierarchyError as error:
+        raise error
+
+    filtered_snk_list = [snk for snk in snk_list if snk.id == sink_id]
+    if len(filtered_snk_list) == 0:
         msg = f"Found no sink with id {sink_id}!"
         logger.error(msg)
-        raise SinkNotFound(msg)
-    if len(snk_list) > 1:
-        msg = f"Found more than one sink with id {sink_id}:\n{str(snk_list)}"
+        raise StructureObjectNotFound(msg)
+    if len(filtered_snk_list) > 1:
+        msg = f"Found more than one sink with id {sink_id}:\n{str(filtered_snk_list)}"
         logger.error(msg)
-        raise SinkNotUnique(msg)
-    return snk_list[0]
+        raise StructureObjectNotUnique(msg)
+    return filtered_snk_list[0]
 
 
 def get_source_by_thing_node_id_and_metadata_key(
     thing_node_id: IdString, metadata_key: str
 ) -> BlobStorageStructureSource:
-    src_list = [
-        src
-        for src in create_sources()
-        if src.thingNodeId == thing_node_id and src.metadataKey == metadata_key
-    ]
-    if len(src_list) == 0:
+    filtered_src_list = []
+
+    try:
+        src_list = create_sources()
+    except (
+        MissingHierarchyError,
+        InvalidEndpointError,
+        AdapterConnectionError,
+    ) as error:
+        raise error
+
+    for src in src_list:
+        if src.thingNodeId == thing_node_id and src.metadataKey == metadata_key:
+            filtered_src_list.append(src)
+
+    if len(filtered_src_list) == 0:
         msg = (
             f"Found no source with thing node id '{thing_node_id}' "
             f"and metadata key '{metadata_key}'!"
         )
         logger.error(msg)
-        raise SourceNotFound(msg)
-    if len(src_list) > 1:
+        raise StructureObjectNotFound(msg)
+    if len(filtered_src_list) > 1:
         msg = (
             f"Found more than one source with thing node id '{thing_node_id}' "
-            f"and metadata key '{metadata_key}':\n{str(src_list)}"
+            f"and metadata key '{metadata_key}':\n{str(filtered_src_list)}"
         )
         logger.error(msg)
-        raise SourceNotUnique(msg)
-    return src_list[0]
+        raise StructureObjectNotUnique(msg)
+    return filtered_src_list[0]
 
 
 def get_sink_by_thing_node_id_and_metadata_key(
     thing_node_id: IdString, metadata_key: str
 ) -> BlobStorageStructureSink:
-    snk_list = [
+    try:
+        snk_list = get_adapter_structure().sinks
+    except MissingHierarchyError as error:
+        raise error
+
+    filtered_snk_list = [
         snk
-        for snk in get_adapter_structure().sinks
+        for snk in snk_list
         if snk.thingNodeId == thing_node_id and snk.metadataKey == metadata_key
     ]
-    if len(snk_list) == 0:
+    if len(filtered_snk_list) == 0:
         msg = (
             f"Found no source with thing node id {thing_node_id} "
             f"and metadata key {metadata_key}!"
         )
         logger.error(msg)
-        raise SinkNotFound(msg)
-    if len(snk_list) > 1:
+        raise StructureObjectNotFound(msg)
+    if len(filtered_snk_list) > 1:
         msg = (
             f"Found more than one source with thing node id {thing_node_id} "
-            f"and metadata key {metadata_key}:\n{str(snk_list)}"
+            f"and metadata key {metadata_key}:\n{str(filtered_snk_list)}"
         )
         logger.error(msg)
-        raise SinkNotUnique(msg)
-    return snk_list[0]
+        raise StructureObjectNotUnique(msg)
+    return filtered_snk_list[0]

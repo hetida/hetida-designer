@@ -3,12 +3,8 @@ from unittest import mock
 import pytest
 
 from hetdesrun.adapters.blob_storage.exceptions import (
-    SinkNotFound,
-    SinkNotUnique,
-    SourceNotFound,
-    SourceNotUnique,
-    ThingNodeNotFound,
-    ThingNodeNotUnique,
+    StructureObjectNotFound,
+    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
@@ -181,7 +177,7 @@ def test_blob_storage_get_thing_node_by_id():
         assert thing_node.name == "ii"
         assert thing_node.description == "Category"
 
-        with pytest.raises(ThingNodeNotFound):
+        with pytest.raises(StructureObjectNotFound):
             get_thing_node_by_id("bla")
 
         with mock.patch(
@@ -196,7 +192,7 @@ def test_blob_storage_get_thing_node_by_id():
                 ),
             ],
         ):
-            with pytest.raises(ThingNodeNotUnique):
+            with pytest.raises(StructureObjectNotUnique):
                 get_thing_node_by_id("i-ii")
 
 
@@ -209,7 +205,7 @@ def test_blob_storage_get_source_by_id():
         assert source_by_id.name == "A - 2022-01-02 14:57:31+00:00"
         assert source_by_id.thingNodeId == "i-i/A"
 
-        with pytest.raises(SourceNotFound):
+        with pytest.raises(StructureObjectNotFound):
             get_source_by_id("bla")
 
     with mock.patch(
@@ -231,7 +227,7 @@ def test_blob_storage_get_source_by_id():
             ),
         ],
     ):
-        with pytest.raises(SourceNotUnique):
+        with pytest.raises(StructureObjectNotUnique):
             get_source_by_id("i-i/A_2022-01-02T14:57:31+00:00")
 
 
@@ -246,7 +242,7 @@ def test_blob_storage_get_sink_by_id():
         assert sink_by_id.name == "A - Next Object"
         assert sink_by_id.thingNodeId == "i-i/A"
 
-        with pytest.raises(SinkNotFound):
+        with pytest.raises(StructureObjectNotFound):
             get_sink_by_id("bla")
 
         with mock.patch(
@@ -269,7 +265,7 @@ def test_blob_storage_get_sink_by_id():
                 ),
             ],
         ):
-            with pytest.raises(SinkNotUnique):
+            with pytest.raises(StructureObjectNotUnique):
                 get_sink_by_id("i-i/A_next")
 
 
@@ -287,7 +283,7 @@ def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
         assert source_by_tn_id_and_md_key.path == "i-i/A"
         assert source_by_tn_id_and_md_key.metadataKey == "A - 2022-01-02 14:57:31+00:00"
 
-        with pytest.raises(SourceNotFound):
+        with pytest.raises(StructureObjectNotFound):
             get_source_by_thing_node_id_and_metadata_key(
                 thing_node_id="i-i/B", metadata_key="A - 2022-01-02 14:57:31+00:00"
             )
@@ -311,7 +307,7 @@ def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
             ),
         ],
     ):
-        with pytest.raises(SourceNotUnique):
+        with pytest.raises(StructureObjectNotUnique):
             source_by_tn_id_and_md_key = get_source_by_thing_node_id_and_metadata_key(
                 thing_node_id="i-i/A", metadata_key="A - 2022-01-02 14:57:31+00:00"
             )
@@ -333,7 +329,7 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
         assert sink_by_tn_id_and_md_key.path == "i-i/A"
         assert sink_by_tn_id_and_md_key.metadataKey == "A - Next Object"
 
-        with pytest.raises(SinkNotFound):
+        with pytest.raises(StructureObjectNotFound):
             get_sink_by_thing_node_id_and_metadata_key(
                 thing_node_id="i-i/B", metadata_key="A - Next Object"
             )
@@ -357,7 +353,7 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
                 ),
             ],
         ):
-            with pytest.raises(SinkNotUnique):
+            with pytest.raises(StructureObjectNotUnique):
                 sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
                     thing_node_id="i-i/A", metadata_key="A - Next Object"
                 )

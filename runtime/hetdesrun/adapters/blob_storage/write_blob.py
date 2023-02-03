@@ -4,17 +4,20 @@ from typing import Any, Dict
 from botocore.exceptions import ClientError
 
 from hetdesrun.adapters.blob_storage.exceptions import (
-    BucketNotFound,
-    InvalidEndpoint,
-    ObjectExists,
-    SinkNotFound,
-    SinkNotUnique,
-    UnexpectedClientError,
+    MissingHierarchyError,
+    StorageAuthenticationError,
+    StructureObjectNotFound,
+    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import IdString
 from hetdesrun.adapters.blob_storage.service import get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
     get_sink_by_thing_node_id_and_metadata_key,
+)
+from hetdesrun.adapters.exceptions import (
+    AdapterClientWiringInvalidError,
+    AdapterConnectionError,
+    AdapterHandlingException,
 )
 from hetdesrun.models.data_selection import FilteredSink
 
@@ -26,9 +29,11 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
         sink = get_sink_by_thing_node_id_and_metadata_key(
             IdString(thing_node_id), metadata_key
         )
-    except SinkNotFound as error:
-        raise error
-    except SinkNotUnique as error:
+    except (
+        StructureObjectNotFound,
+        StructureObjectNotUnique,
+        MissingHierarchyError,
+    ) as error:
         raise error
 
     logger.info("Get bucket name and object key from sink with id %s", sink.id)
@@ -42,13 +47,13 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
     )
     try:
         s3_client = get_s3_client()
-    except InvalidEndpoint as error:
+    except (AdapterConnectionError, StorageAuthenticationError) as error:
         raise error
     try:
         # head_object is as get_object but without the body
         s3_client.head_object(Bucket=structure_bucket.name, Key=object_key.string)
     except s3_client.exceptions.NoSuchBucket as error:
-        raise BucketNotFound(
+        raise AdapterConnectionError(
             f"The bucket '{structure_bucket.name}' does not exist!"
         ) from error
     except ClientError as error:
@@ -59,7 +64,7 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
                 f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
             )
             logger.error(msg)
-            raise UnexpectedClientError(msg) from error
+            raise AdapterConnectionError(msg) from error
 
         # only write if the object does not yet exist
         s3_client.put_object(
@@ -75,7 +80,7 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
             f"with the key '{object_key.string}', write request will not be executed!"
         )
         logger.error(msg)
-        raise ObjectExists(msg)
+        raise AdapterConnectionError(msg)
 
 
 async def send_data(
@@ -83,20 +88,19 @@ async def send_data(
     wf_output_name_to_value_mapping_dict: Dict[str, Any],
     adapter_key: str,  # pylint: disable=unused-argument
 ) -> Dict[str, Any]:
-    try:
-        for (
-            wf_output_name,
-            filtered_sink,
-        ) in wf_output_name_to_filtered_sink_mapping_dict.items():
-            if filtered_sink.ref_id is not None and filtered_sink.ref_key is not None:
-                blob = wf_output_name_to_value_mapping_dict[wf_output_name]
-                write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key)
-    except (
-        SinkNotFound,
-        SinkNotUnique,
-        InvalidEndpoint,
-        BucketNotFound,
-        UnexpectedClientError,
-    ) as error:
-        raise error
+    for (
+        wf_output_name,
+        filtered_sink,
+    ) in wf_output_name_to_filtered_sink_mapping_dict.items():
+
+        if filtered_sink.ref_id is None or filtered_sink.ref_key is None:
+            msg = ""
+            logger.error(msg)
+            raise AdapterClientWiringInvalidError(msg)
+
+        blob = wf_output_name_to_value_mapping_dict[wf_output_name]
+        try:
+            write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key)
+        except (AdapterHandlingException, AdapterConnectionError) as error:
+            raise error
     return {}

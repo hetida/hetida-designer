@@ -15,7 +15,7 @@ from hetdesrun.adapters.blob_storage.authentication import (
     obtain_or_refresh_credential_info,
     parse_credential_info_from_xml_string,
 )
-from hetdesrun.adapters.blob_storage.exceptions import NoAccessTokenAvailable
+from hetdesrun.adapters.blob_storage.exceptions import StorageAuthenticationError
 from hetdesrun.webservice.auth_outgoing import (
     ClientCredentialsGrantCredentials,
     ServiceCredentials,
@@ -133,7 +133,8 @@ def test_blob_storage_authentication_obtain_credential_info_from_rest_api(creden
             credential_info = obtain_credential_info_from_rest_api("access_token")
             assert credential_info.credentials == credentials
             assert (
-                credential_info.issue_timestamp.isoformat() == "2023-01-31T11:08:05+00:00"
+                credential_info.issue_timestamp.isoformat()
+                == "2023-01-31T11:08:05+00:00"
             )
             assert credential_info.expiration_time_in_seconds == 3600
 
@@ -349,7 +350,7 @@ def test_blob_storage_adapter_get_access_token(access_token):
         "hetdesrun.adapters.blob_storage.authentication.get_config",
         return_value=mock.Mock(external_auth_mode=ExternalAuthMode.OFF),
     ):
-        with pytest.raises(NoAccessTokenAvailable) as exc_info:
+        with pytest.raises(StorageAuthenticationError) as exc_info:
             get_access_token()
         assert (
             "Config option external_auth_mode is set to 'OFF' "
@@ -384,7 +385,7 @@ def test_blob_storage_adapter_get_access_token(access_token):
         "hetdesrun.adapters.blob_storage.authentication.get_config",
         return_value=mock.Mock(external_auth_mode=""),
     ):
-        with pytest.raises(NoAccessTokenAvailable) as exc_info:
+        with pytest.raises(StorageAuthenticationError) as exc_info:
             get_access_token()
         assert (
             "Unknown config option for external_auth_mode '' "

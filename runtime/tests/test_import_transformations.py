@@ -188,7 +188,7 @@ def test_generate_import_order_file_without_transform_py_to_json(tmp_path):
                 for line in file:
                     path = line[:-1]  # remove line break
                     list_of_json_paths.append(path)
-            assert len(list_of_json_paths) > 100 # we have more than 100 json files
+            assert len(list_of_json_paths) > 100  # we have more than 100 json files
             assert all(
                 os.path.splitext(path)[1] == ".json" for path in list_of_json_paths
             )
@@ -209,7 +209,7 @@ def test_generate_import_order_file_with_transform_py_to_json(tmp_path):
         for line in file:
             path = line[:-1]  # remove line break
             list_of_json_paths.append(path)
-    assert len(list_of_json_paths) > 100 # we have more than 100 json files
+    assert len(list_of_json_paths) > 100  # we have more than 100 json files
     assert (
         str(
             download_path.joinpath(

@@ -5,7 +5,8 @@ import pytest
 from moto import mock_s3
 
 from hetdesrun.adapters.blob_storage.authentication import Credentials
-from hetdesrun.adapters.blob_storage.exceptions import BucketNotFound, InvalidEndpoint
+from hetdesrun.adapters.blob_storage.exceptions import InvalidEndpointError
+from hetdesrun.adapters.exceptions import AdapterConnectionError
 from hetdesrun.adapters.blob_storage.service import (
     get_object_key_strings_in_bucket,
     get_s3_client,
@@ -46,7 +47,7 @@ def test_blob_storage_service_get_s3_client():
                 "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
                 return_value=mock.Mock(endpoint_url="invalid_endpoint_url"),
             ):
-                with pytest.raises(InvalidEndpoint) as exc_info:
+                with pytest.raises(InvalidEndpointError) as exc_info:
                     get_s3_client()
                 assert (
                     "The string 'invalid_endpoint_url' is no valid endpoint url!"
@@ -76,7 +77,7 @@ def test_blob_storage_service_get_object_key_strings_in_bucket():
             "hetdesrun.adapters.blob_storage.service.get_s3_client",
             return_value=client_mock,
         ):
-            with pytest.raises(BucketNotFound) as exc_info:
+            with pytest.raises(AdapterConnectionError) as exc_info:
                 get_object_key_strings_in_bucket("non_existent_bucket_name")
             assert "The bucket 'non_existent_bucket_name' does not exist!" in str(
                 exc_info.value

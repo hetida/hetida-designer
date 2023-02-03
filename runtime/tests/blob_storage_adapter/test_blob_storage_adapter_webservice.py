@@ -5,12 +5,8 @@ import nest_asyncio
 import pytest
 
 from hetdesrun.adapters.blob_storage.exceptions import (
-    SinkNotFound,
-    SinkNotUnique,
-    SourceNotFound,
-    SourceNotUnique,
-    ThingNodeNotFound,
-    ThingNodeNotUnique,
+    StructureObjectNotFound,
+    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
@@ -247,7 +243,7 @@ async def test_blob_adapter_webservice_exceptions(async_test_client):
     async with async_test_client as client:
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
-            side_effect=SourceNotFound,
+            side_effect=StructureObjectNotFound,
         ):
             no_source_response = await client.get(
                 f"/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
@@ -257,7 +253,7 @@ async def test_blob_adapter_webservice_exceptions(async_test_client):
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
-            side_effect=SourceNotUnique,
+            side_effect=StructureObjectNotUnique,
         ):
             many_sources_response = await client.get(
                 f"/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
@@ -267,7 +263,7 @@ async def test_blob_adapter_webservice_exceptions(async_test_client):
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
-            side_effect=SinkNotFound,
+            side_effect=StructureObjectNotFound,
         ):
             no_sink_response = await client.get(f"/adapters/blob/sinks/i-i/A_next")
 
@@ -275,7 +271,7 @@ async def test_blob_adapter_webservice_exceptions(async_test_client):
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
-            side_effect=SinkNotUnique,
+            side_effect=StructureObjectNotUnique,
         ):
             many_sinks_response = await client.get(f"/adapters/blob/sinks/i-i/A_next")
 
@@ -283,7 +279,7 @@ async def test_blob_adapter_webservice_exceptions(async_test_client):
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",
-            side_effect=ThingNodeNotFound,
+            side_effect=StructureObjectNotFound,
         ):
             no_thing_node_response = await client.get(
                 f"/adapters/blob/thingNodes/i-i/A"
@@ -293,7 +289,7 @@ async def test_blob_adapter_webservice_exceptions(async_test_client):
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",
-            side_effect=ThingNodeNotUnique,
+            side_effect=StructureObjectNotUnique,
         ):
             many_thing_nodes_response = await client.get(
                 f"/adapters/blob/thingNodes/i-i/A"

@@ -7,10 +7,9 @@ import pytest
 from moto import mock_s3
 
 from hetdesrun.adapters.blob_storage.exceptions import (
-    BucketNotFound,
-    ObjectExists,
-    SinkNotFound,
-    SinkNotUnique,
+    AdapterConnectionError,
+    StructureObjectNotFound,
+    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
@@ -66,9 +65,9 @@ def test_blob_storage_write_blob_to_storage_works(caplog):
 def test_blob_storage_write_blob_to_storage_with_non_existing_sink():
     with mock.patch(
         "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-        side_effect=SinkNotFound("SinkNotFound message"),
+        side_effect=StructureObjectNotFound("SinkNotFound message"),
     ):
-        with pytest.raises(SinkNotFound) as exc_info:
+        with pytest.raises(StructureObjectNotFound) as exc_info:
             write_blob_to_storage(
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
@@ -80,9 +79,9 @@ def test_blob_storage_write_blob_to_storage_with_non_existing_sink():
 def test_blob_storage_write_blob_to_storage_with_multiple_existing_sinks():
     with mock.patch(
         "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-        side_effect=SinkNotUnique("SinkNotUnique message"),
+        side_effect=StructureObjectNotUnique("SinkNotUnique message"),
     ):
-        with pytest.raises(SinkNotUnique) as exc_info:
+        with pytest.raises(StructureObjectNotUnique) as exc_info:
             write_blob_to_storage(
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
@@ -108,7 +107,7 @@ def test_blob_storage_write_blob_to_storage_with_non_existing_bucket():
                     metadataKey="A - Next Object",
                 ),
             ):
-                with pytest.raises(BucketNotFound) as exc_info:
+                with pytest.raises(AdapterConnectionError) as exc_info:
                     write_blob_to_storage(
                         data=struct.pack(">i", 42),
                         thing_node_id="i-ii/A",
@@ -149,7 +148,7 @@ def test_blob_storage_write_blob_to_storage_with_existing_object():
                 "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
                 return_value=mocked_sink,
             ):
-                with pytest.raises(ObjectExists):
+                with pytest.raises(AdapterConnectionError):
                     write_blob_to_storage(
                         data=struct.pack(">i", 42),
                         thing_node_id="i-ii/A",
@@ -186,7 +185,7 @@ async def test_blob_storage_send_data_works():
 async def test_blob_storage_send_data_with_error():
     with mock.patch(
         "hetdesrun.adapters.blob_storage.write_blob.write_blob_to_storage",
-        side_effect=ObjectExists("Error message"),
+        side_effect=AdapterConnectionError("Error message"),
     ):
         data = struct.pack(">i", 42)
         filtered_sink = FilteredSink(
@@ -195,7 +194,7 @@ async def test_blob_storage_send_data_with_error():
             ref_key="A - Next Object",
             type="Any",
         )
-        with pytest.raises(ObjectExists) as exc_info:
+        with pytest.raises(AdapterConnectionError) as exc_info:
             await send_data(
                 wf_output_name_to_filtered_sink_mapping_dict={
                     "output_name": filtered_sink

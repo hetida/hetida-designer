@@ -1,70 +1,26 @@
-class BlobAdapterException(Exception):
+from hetdesrun.adapters.exceptions import (
+    AdapterConnectionError,
+    AdapterHandlingException,
+)
+
+
+# rather AdapterConfigurationError -> in mounted hierarchy json or its path
+class MissingHierarchyError(AdapterHandlingException):
     pass
 
 
-class HierarchyError(BlobAdapterException):
+# rather AdapterConfigurationError -> in docker compose yml
+class InvalidEndpointError(AdapterHandlingException):
     pass
 
 
-class StructureError(BlobAdapterException):
+class StorageAuthenticationError(AdapterConnectionError):
+    """Errors around obtaining and refreshing credentials from Storage"""
+
+
+class StructureObjectNotFound(AdapterHandlingException):
     pass
 
 
-class MissingHierarchyError(HierarchyError):
-    pass
-
-
-class BucketNameInvalidError(HierarchyError):
-    pass
-
-
-class SourceNotFound(StructureError):
-    pass
-
-
-class SourceNotUnique(StructureError):
-    pass
-
-
-class SinkNotFound(StructureError):
-    pass
-
-
-class SinkNotUnique(StructureError):
-    pass
-
-
-class ThingNodeNotFound(StructureError):
-    pass
-
-
-class ThingNodeNotUnique(StructureError):
-    pass
-
-
-class NoAccessTokenAvailable(BlobAdapterException):
-    pass
-
-
-class S3Error(BlobAdapterException):
-    pass
-
-
-class InvalidEndpoint(S3Error):
-    pass
-
-
-class BucketNotFound(S3Error):
-    pass
-
-
-class ObjectNotFound(S3Error):
-    pass
-
-
-class ObjectExists(S3Error):
-    pass
-
-
-class UnexpectedClientError(S3Error):
+class StructureObjectNotUnique(AdapterHandlingException):
     pass

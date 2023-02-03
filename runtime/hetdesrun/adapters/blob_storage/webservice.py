@@ -14,12 +14,10 @@ from fastapi import HTTPException, Query, status
 
 from hetdesrun.adapters.blob_storage import VERSION
 from hetdesrun.adapters.blob_storage.exceptions import (
-    SinkNotFound,
-    SinkNotUnique,
-    SourceNotFound,
-    SourceNotUnique,
-    ThingNodeNotFound,
-    ThingNodeNotUnique,
+    MissingHierarchyError,
+    InvalidEndpointError,
+    StructureObjectNotFound,
+    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
@@ -41,6 +39,7 @@ from hetdesrun.adapters.blob_storage.structure import (
     get_thing_node_by_id,
     get_thing_nodes_by_parent_id,
 )
+from hetdesrun.adapters.exceptions import AdapterConnectionError
 from hetdesrun.webservice.auth_dependency import get_auth_deps
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -73,12 +72,37 @@ async def get_structure_endpoint(
     parentId: Optional[IdString] = None,
 ) -> StructureResponse:
     logger.info("GET structure for parentId '%s'", parentId)
+    try:
+        filtered_tn_list = get_thing_nodes_by_parent_id(parentId)
+        filtered_src_list = get_sources_by_parent_id(parentId)
+        filtered_snk_list = get_sinks_by_parent_id(parentId)
+    except MissingHierarchyError as error:
+        msg = (
+            f"Could not get structure for parentId '{parentId}' "
+            f"because the hierarchy json is missing:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+    except InvalidEndpointError as error:
+        msg = (
+            f"Could not get structure for parentId '{parentId}' "
+            f"because the provided BLOB storage endpoint url is invalid:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+    except AdapterConnectionError as error:
+        msg = (
+            f"Could not get structure for parentId '{parentId}' "
+            f"because there have been problems connecting to the BLOB storage:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
     return StructureResponse(
         id="blob-storage-adapter",
         name="Blob Storage Adapter",
-        thingNodes=get_thing_nodes_by_parent_id(parentId),
-        sources=get_sources_by_parent_id(parentId),
-        sinks=get_sinks_by_parent_id(parentId),
+        thingNodes=filtered_tn_list,
+        sources=filtered_src_list,
+        sinks=filtered_snk_list,
     )
 
 
@@ -91,7 +115,29 @@ async def get_sources_endpoint(
     filter_str: Optional[str] = Query(None, alias="filter")
 ) -> MultipleSourcesResponse:
     logger.info("GET sources for filter string '%s'", filter_str)
-    found_sources = get_filtered_sources(filter_str=filter_str)
+    try:
+        found_sources = get_filtered_sources(filter_str=filter_str)
+    except MissingHierarchyError as error:
+        msg = (
+            f"Could not get sources "
+            f"because the hierarchy json is missing:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+    except InvalidEndpointError as error:
+        msg = (
+            f"Could not get sources "
+            f"because the provided BLOB storage endpoint url is invalid:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+    except AdapterConnectionError as error:
+        msg = (
+            f"Could not get sources "
+            f"because there have been problems connecting to the BLOB storage:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
     return MultipleSourcesResponse(
         resultCount=len(found_sources),
         sources=found_sources,
@@ -107,7 +153,15 @@ async def get_sinks_endpoint(
     filter_str: Optional[str] = Query(None, alias="filter")
 ) -> MultipleSinksResponse:
     logger.info("GET sinks for filter string '%s'", filter_str)
-    found_sinks = get_filtered_sinks(filter_str=filter_str)
+    try:
+        found_sinks = get_filtered_sinks(filter_str=filter_str)
+    except MissingHierarchyError as error:
+        msg = (
+            f"Could not get sinks "
+            f"because the hierarchy json is missing:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
     return MultipleSinksResponse(
         resultCount=len(found_sinks),
         sinks=found_sinks,
@@ -139,17 +193,38 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
     logger.info("GET source with id '%s'", sourceId)
     try:
         source = get_source_by_id(sourceId)
-    except SourceNotFound as not_found_error:
+    except StructureObjectNotFound as not_found_error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Could not find Source with id " + sourceId,
+            detail="Could not find source with id " + sourceId,
         ) from not_found_error
-    except SourceNotUnique as not_unique_error:
+    except StructureObjectNotUnique as not_unique_error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Sink with id " + sourceId + " not unique!",
+            detail="Source with id " + sourceId + " not unique!",
         ) from not_unique_error
-
+    except MissingHierarchyError as error:
+        msg = (
+            f"Could not get source with id '{sourceId}' "
+            f"because the hierarchy json is missing:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+    except InvalidEndpointError as error:
+        msg = (
+            f"Could not get source with id '{sourceId}' "
+            f"because the provided BLOB storage endpoint url is invalid:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+    except AdapterConnectionError as error:
+        msg = (
+            f"Could not get source with id '{sourceId}' "
+            f"because there have been problems connecting to the BLOB storage:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+    
     return source
 
 
@@ -178,20 +253,27 @@ async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
     logger.info("GET sink with id %s", sinkId)
     try:
         sink = get_sink_by_id(sinkId)
-    except SinkNotFound as not_found_error:
-        msg = f"Could not find Sink with id {sinkId}"
+    except StructureObjectNotFound as not_found_error:
+        msg = f"Could not find sink with id {sinkId}"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=msg,
         ) from not_found_error
-    except SinkNotUnique as not_unique_error:
+    except StructureObjectNotUnique as not_unique_error:
         msg = f"Sink with id {sinkId} not unique!"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=msg,
         ) from not_unique_error
+    except MissingHierarchyError as error:
+        msg = (
+            f"Could not get sink with id '{sinkId}' "
+            f"because the hierarchy json is missing:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
 
     return sink
 
@@ -223,19 +305,27 @@ async def get_single_thingNode(
     logger.info("GET thing node with id %s", thingNodeId)
     try:
         thing_node = get_thing_node_by_id(thingNodeId)
-    except ThingNodeNotFound as not_found_error:
-        msg = f"Could not find ThingNode with id {thingNodeId}"
+    except StructureObjectNotFound as not_found_error:
+        msg = f"Could not find thing node with id {thingNodeId}"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=msg,
         ) from not_found_error
-    except ThingNodeNotUnique as not_unique_error:
-        msg = f"ThingNode with id {thingNodeId} not unique!"
+    except StructureObjectNotUnique as not_unique_error:
+        msg = f"Thing node with id {thingNodeId} not unique!"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=msg,
         ) from not_unique_error
+    except MissingHierarchyError as error:
+        msg = (
+            f"Could not get thing node with id '{thingNodeId}' "
+            f"because the hierarchy json is missing:\n{error}"
+        )
+        logger.error(msg)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+    
 
     return thing_node

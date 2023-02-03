@@ -14,11 +14,7 @@ from hetdesrun.adapters.blob_storage import (
     SINK_NAME_ENDING,
 )
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
-from hetdesrun.adapters.blob_storage.exceptions import (
-    BucketNameInvalidError,
-    HierarchyError,
-    MissingHierarchyError,
-)
+from hetdesrun.adapters.blob_storage.exceptions import MissingHierarchyError
 
 
 class ThingNodeName(ConstrainedStr):
@@ -488,7 +484,7 @@ class Category(BaseModel):
         if part_of_bucket_name is True and (
             self.substructure is None or len(self.substructure) == 0
         ):
-            raise HierarchyError(
+            raise ValueError(
                 f"Hierarchy Error identified at Category '{self.name}' which appears to be "
                 "part of a bucket name but does not contain a substructure! "
                 "Without an object key prefix no sinks or sources can be generated!"
@@ -504,18 +500,20 @@ class Category(BaseModel):
 
         if self.end_of_bucket is True:
             if part_of_bucket_name is False:
-                raise HierarchyError(
+                raise ValueError(
                     f"Hierarchy Error identified at Category '{self.name}'! "
                     'It appears "end_of_bucket" has been true for a super category already, '
                     "but then it should not be true again for any of its subcategories!"
                 )
             try:
-                buckets.append(StructureBucket(name=thing_node.id))
+                bucket = StructureBucket(name=thing_node.id)
             except ValidationError as error:
-                raise BucketNameInvalidError(
+                raise ValueError(
                     f"Validation Error for transformation of StructureThingNode "
                     f"{thing_node.id} to BucketName for category '{self.name}':\n{error}"
                 ) from error
+            else:
+                buckets.append(bucket)
 
         if self.substructure is not None and len(self.substructure) != 0:
             # pylint: disable=not-an-iterable
@@ -604,7 +602,7 @@ class AdapterHierarchy(BaseModel):
                 "They contain the following duplicates: "
                 + ", ".join(duplicate.name for duplicate in find_duplicates(buckets))
             )
-            raise HierarchyError(msg)
+            raise ValueError(msg)
         return buckets
 
     @cached_property
@@ -627,4 +625,7 @@ class AdapterHierarchy(BaseModel):
 
 @cache
 def get_adapter_structure() -> AdapterHierarchy:
-    return AdapterHierarchy.from_file()
+    try:
+        return AdapterHierarchy.from_file()
+    except MissingHierarchyError as error:
+        raise error

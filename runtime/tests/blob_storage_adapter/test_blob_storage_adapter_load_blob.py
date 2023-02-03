@@ -7,10 +7,9 @@ import pytest
 from moto import mock_s3
 
 from hetdesrun.adapters.blob_storage.exceptions import (
-    BucketNotFound,
-    ObjectNotFound,
-    SourceNotFound,
-    SourceNotUnique,
+    AdapterConnectionError,
+    StructureObjectNotFound,
+    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.load_blob import load_blob_from_storage, load_data
 from hetdesrun.adapters.blob_storage.models import BlobStorageStructureSource
@@ -71,9 +70,9 @@ def test_blob_storage_load_blob_from_storage_with_non_existing_source():
         ):
             with mock.patch(
                 "hetdesrun.adapters.blob_storage.load_blob.get_source_by_thing_node_id_and_metadata_key",
-                side_effect=SourceNotFound("SourceNotFound message"),
+                side_effect=StructureObjectNotFound("SourceNotFound message"),
             ):
-                with pytest.raises(SourceNotFound) as exc_info:
+                with pytest.raises(StructureObjectNotFound) as exc_info:
                     load_blob_from_storage(
                         thing_node_id="i-ii/A",
                         metadata_key="A - Next Object",
@@ -98,9 +97,9 @@ def test_blob_storage_load_blob_from_storage_with_multiple_existing_sources():
         ):
             with mock.patch(
                 "hetdesrun.adapters.blob_storage.load_blob.get_source_by_thing_node_id_and_metadata_key",
-                side_effect=SourceNotUnique("SourceNotUnique message"),
+                side_effect=StructureObjectNotUnique("SourceNotUnique message"),
             ):
-                with pytest.raises(SourceNotUnique) as exc_info:
+                with pytest.raises(StructureObjectNotUnique) as exc_info:
                     load_blob_from_storage(
                         thing_node_id="i-ii/A",
                         metadata_key="A - Next Object",
@@ -126,7 +125,7 @@ def test_blob_storage_load_blob_from_storage_with_non_existing_bucket():
                     metadataKey="A - 2022-01-02 14:23:18+00:00",
                 ),
             ):
-                with pytest.raises(BucketNotFound) as exc_info:
+                with pytest.raises(AdapterConnectionError) as exc_info:
                     load_blob_from_storage(
                         thing_node_id="i-ii/A",
                         metadata_key="A - Next Object",
@@ -153,7 +152,7 @@ def test_blob_storage_load_blob_from_storage_with_non_existing_object():
                     metadataKey="A - 2022-01-02 14:23:18+00:00",
                 ),
             ):
-                with pytest.raises(ObjectNotFound) as exc_info:
+                with pytest.raises(AdapterConnectionError) as exc_info:
                     load_blob_from_storage(
                         thing_node_id="i-ii/A",
                         metadata_key="A - Next Object",
@@ -195,7 +194,7 @@ async def test_blob_storage_load_data_works():
 async def test_blob_storage_load_data_with_error():
     with mock.patch(
         "hetdesrun.adapters.blob_storage.load_blob.load_blob_from_storage",
-        side_effect=ObjectNotFound("Error message"),
+        side_effect=AdapterConnectionError("Error message"),
     ):
         filtered_source = FilteredSource(
             ref_id="i-ii/A",
@@ -203,7 +202,7 @@ async def test_blob_storage_load_data_with_error():
             ref_key="A - Next Object",
             type="Any",
         )
-        with pytest.raises(ObjectNotFound) as exc_info:
+        with pytest.raises(AdapterConnectionError) as exc_info:
             await load_data(
                 wf_input_name_to_filtered_source_mapping_dict={
                     "input_name": filtered_source

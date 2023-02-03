@@ -9,7 +9,7 @@ import requests
 from pydantic import BaseModel, Field
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
-from hetdesrun.adapters.blob_storage.exceptions import NoAccessTokenAvailable
+from hetdesrun.adapters.blob_storage.exceptions import StorageAuthenticationError
 from hetdesrun.webservice.auth_dependency import (
     forward_request_token_or_get_fixed_token_auth_headers,
 )
@@ -17,10 +17,6 @@ from hetdesrun.webservice.auth_outgoing import create_or_get_named_access_token_
 from hetdesrun.webservice.config import ExternalAuthMode, get_config
 
 logger = logging.getLogger(__name__)
-
-
-class StorageAuthenticationError(Exception):
-    """Errors around obtaining and refreshing credentials from Storage"""
 
 
 class Credentials(BaseModel):
@@ -50,7 +46,7 @@ def parse_credential_info_from_xml_string(
     except ET.ParseError as error:
         msg = f"Cannot parse authentication request response as XML:\n{error}"
         logger.error(msg)
-        raise StorageAuthenticationError(msg)
+        raise StorageAuthenticationError(msg) from error
     if not xml_response.tag.endswith("AssumeRoleWithWebIdentityResponse"):
         msg = "The authentication request does not have the expected structure"
         if xml_response.tag == "Error":
@@ -217,7 +213,7 @@ def get_access_token() -> str:
             "thus no access token is available!"
         )
         logger.error(msg)
-        raise NoAccessTokenAvailable(msg)
+        raise StorageAuthenticationError(msg)
     if external_mode == ExternalAuthMode.FORWARD_OR_FIXED:
         token_header = forward_request_token_or_get_fixed_token_auth_headers()
         access_token = token_header["Authorization"].split("Bearer ")[-1]
@@ -236,12 +232,17 @@ def get_access_token() -> str:
         "thus no access token is available!"
     )
     logger.error(msg)
-    raise NoAccessTokenAvailable(msg)
+    raise StorageAuthenticationError(msg)
 
 
 def get_credentials() -> Credentials:
+    try:
+        access_token = get_access_token()
+    except StorageAuthenticationError as error:
+        raise error
+
     credential_manager = create_or_get_named_credential_manager(
-        "blob_adapter_cred", get_access_token()
+        "blob_adapter_cred", access_token
     )
     credentials = credential_manager.get_credentials()
     logger.info("Got credentials from credential manager")
