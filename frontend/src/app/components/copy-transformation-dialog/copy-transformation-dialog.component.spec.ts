@@ -6,13 +6,13 @@ import { BasicTestModule } from 'src/app/basic-test.module';
 import { ErrorVisualDirective } from 'src/app/directives/error-visual.directive';
 import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { CopyBaseItemDialogComponent } from './copy-base-item-dialog.component';
+import { CopyTransformationDialogComponent } from './copy-transformation-dialog.component';
 import { Transformation } from '../../model/transformation';
 
 // TODO fix test
 describe('CopyBaseItemDialogComponent', () => {
-  let component: CopyBaseItemDialogComponent;
-  let fixture: ComponentFixture<CopyBaseItemDialogComponent>;
+  let component: CopyTransformationDialogComponent;
+  let fixture: ComponentFixture<CopyTransformationDialogComponent>;
 
   const mockAbstractBaseItem: Transformation = {
     id: 'MockId1',
@@ -32,7 +32,7 @@ describe('CopyBaseItemDialogComponent', () => {
     waitForAsync(() => {
       TestBed.configureTestingModule({
         imports: [BasicTestModule, FormsModule, ReactiveFormsModule],
-        declarations: [CopyBaseItemDialogComponent, ErrorVisualDirective],
+        declarations: [CopyTransformationDialogComponent, ErrorVisualDirective],
         providers: [
           provideMockStore({}),
           {
@@ -69,7 +69,7 @@ describe('CopyBaseItemDialogComponent', () => {
   );
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(CopyBaseItemDialogComponent);
+    fixture = TestBed.createComponent(CopyTransformationDialogComponent);
     const mockStore = TestBed.inject(MockStore);
     // mockStore.overrideSelector(selectAbstractBaseItems, [mockAbstractBaseItem]);
     component = fixture.componentInstance;

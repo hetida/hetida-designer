@@ -14,13 +14,13 @@ import { TransformationState } from 'src/app/store/transformation/transformation
 import { UniqueVersionTagValidator } from 'src/app/validation/unique-version-tag-validator';
 
 @Component({
-  selector: 'hd-copy-base-item-dialog',
-  templateUrl: './copy-base-item-dialog.component.html',
-  styleUrls: ['./copy-base-item-dialog.component.scss']
+  selector: 'hd-copy-transformation-dialog',
+  templateUrl: './copy-transformation-dialog.component.html',
+  styleUrls: ['./copy-transformation-dialog.component.scss']
 })
-export class CopyBaseItemDialogComponent implements OnInit {
+export class CopyTransformationDialogComponent implements OnInit {
   constructor(
-    public dialogRef: MatDialogRef<CopyBaseItemDialogComponent>,
+    public dialogRef: MatDialogRef<CopyTransformationDialogComponent>,
     // TODO fix by reference value changes?
     @Inject(MAT_DIALOG_DATA) public data: Omit<BaseItemDialogData, 'content'>,
     private readonly transformationStore: Store<TransformationState>

@@ -16,7 +16,7 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData
 } from 'src/app/components/confirmation-dialog/confirm-dialog.component';
-import { CopyBaseItemDialogComponent } from 'src/app/components/copy-base-item-dialog/copy-base-item-dialog.component';
+import { CopyTransformationDialogComponent } from 'src/app/components/copy-transformation-dialog/copy-transformation-dialog.component';
 import {
   WorkflowIODialogComponent,
   WorkflowIODialogData
@@ -144,10 +144,10 @@ export class BaseItemActionService {
   public editDetails(transformation: Transformation): void {
     const isReleased = this.isReleased(transformation);
     const dialogRef = this.dialog.open<
-      CopyBaseItemDialogComponent,
+      CopyTransformationDialogComponent,
       BaseItemDialogData,
       Transformation | undefined
-    >(CopyBaseItemDialogComponent, {
+    >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
         title: `Edit ${transformation.type.toLowerCase()} ${
@@ -206,10 +206,10 @@ export class BaseItemActionService {
       transformation
     );
     const dialogRef = this.dialog.open<
-      CopyBaseItemDialogComponent,
+      CopyTransformationDialogComponent,
       BaseItemDialogData,
       Transformation | undefined
-    >(CopyBaseItemDialogComponent, {
+    >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
         title: 'Create new revision?',
@@ -320,10 +320,10 @@ export class BaseItemActionService {
     type = `${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
     const dialogRef = this.dialog.open<
-      CopyBaseItemDialogComponent,
+      CopyTransformationDialogComponent,
       Omit<BaseItemDialogData, 'content'>,
       Transformation | undefined
-    >(CopyBaseItemDialogComponent, {
+    >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
         title: `Copy ${type} ${copyOfTransformation.name} ${copyOfTransformation.version_tag}`,
@@ -370,10 +370,10 @@ export class BaseItemActionService {
 
   public newWorkflow(): void {
     const dialogRef = this.dialog.open<
-      CopyBaseItemDialogComponent,
+      CopyTransformationDialogComponent,
       Omit<BaseItemDialogData, 'content'>,
       Transformation | undefined
-    >(CopyBaseItemDialogComponent, {
+    >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
         title: 'Create new workflow',
@@ -399,10 +399,10 @@ export class BaseItemActionService {
 
   public newComponent(): void {
     const dialogRef = this.dialog.open<
-      CopyBaseItemDialogComponent,
+      CopyTransformationDialogComponent,
       Omit<BaseItemDialogData, 'content'>,
       Transformation | undefined
-    >(CopyBaseItemDialogComponent, {
+    >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
         title: 'Create new component',

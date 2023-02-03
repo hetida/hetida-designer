@@ -45,7 +45,7 @@ import { ComponentEditorComponent } from './components/component-editor/componen
 import { ComponentIODialogComponent } from './components/component-io-dialog/component-io-dialog.component';
 import { ConfirmDialogComponent } from './components/confirmation-dialog/confirm-dialog.component';
 import { ContentViewComponent } from './components/content-view/content-view.component';
-import { CopyBaseItemDialogComponent } from './components/copy-base-item-dialog/copy-base-item-dialog.component';
+import { CopyTransformationDialogComponent } from './components/copy-transformation-dialog/copy-transformation-dialog.component';
 import { DocumentationEditorComponent } from './components/documentation-editor-dialog/documentation-editor.component';
 import { HomeComponent } from './components/home/home.component';
 import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
@@ -116,7 +116,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     ToolbarComponent,
     PopoverBaseItemComponent,
     NavigationItemComponent,
-    CopyBaseItemDialogComponent,
+    CopyTransformationDialogComponent,
     RenameOperatorDialogComponent,
     ErrorVisualDirective,
     TransformationContextMenuComponent
