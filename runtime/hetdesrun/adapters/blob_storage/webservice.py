@@ -14,8 +14,8 @@ from fastapi import HTTPException, Query, status
 
 from hetdesrun.adapters.blob_storage import VERSION
 from hetdesrun.adapters.blob_storage.exceptions import (
-    MissingHierarchyError,
     InvalidEndpointError,
+    MissingHierarchyError,
     StructureObjectNotFound,
     StructureObjectNotUnique,
 )
@@ -82,21 +82,27 @@ async def get_structure_endpoint(
             f"because the hierarchy json is missing:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
     except InvalidEndpointError as error:
         msg = (
             f"Could not get structure for parentId '{parentId}' "
             f"because the provided BLOB storage endpoint url is invalid:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
     except AdapterConnectionError as error:
         msg = (
             f"Could not get structure for parentId '{parentId}' "
             f"because there have been problems connecting to the BLOB storage:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
     return StructureResponse(
         id="blob-storage-adapter",
         name="Blob Storage Adapter",
@@ -119,25 +125,30 @@ async def get_sources_endpoint(
         found_sources = get_filtered_sources(filter_str=filter_str)
     except MissingHierarchyError as error:
         msg = (
-            f"Could not get sources "
-            f"because the hierarchy json is missing:\n{error}"
+            f"Could not get sources " f"because the hierarchy json is missing:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
     except InvalidEndpointError as error:
         msg = (
             f"Could not get sources "
             f"because the provided BLOB storage endpoint url is invalid:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
     except AdapterConnectionError as error:
         msg = (
             f"Could not get sources "
             f"because there have been problems connecting to the BLOB storage:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
     return MultipleSourcesResponse(
         resultCount=len(found_sources),
         sources=found_sources,
@@ -156,12 +167,11 @@ async def get_sinks_endpoint(
     try:
         found_sinks = get_filtered_sinks(filter_str=filter_str)
     except MissingHierarchyError as error:
-        msg = (
-            f"Could not get sinks "
-            f"because the hierarchy json is missing:\n{error}"
-        )
+        msg = f"Could not get sinks " f"because the hierarchy json is missing:\n{error}"
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
     return MultipleSinksResponse(
         resultCount=len(found_sinks),
         sinks=found_sinks,
@@ -209,22 +219,28 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
             f"because the hierarchy json is missing:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
     except InvalidEndpointError as error:
         msg = (
             f"Could not get source with id '{sourceId}' "
             f"because the provided BLOB storage endpoint url is invalid:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
     except AdapterConnectionError as error:
         msg = (
             f"Could not get source with id '{sourceId}' "
             f"because there have been problems connecting to the BLOB storage:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
-    
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
+
     return source
 
 
@@ -273,7 +289,9 @@ async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
             f"because the hierarchy json is missing:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
 
     return sink
 
@@ -325,7 +343,8 @@ async def get_single_thingNode(
             f"because the hierarchy json is missing:\n{error}"
         )
         logger.error(msg)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=msg)
-    
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+        )
 
     return thing_node

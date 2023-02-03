@@ -6,12 +6,12 @@ from moto import mock_s3
 
 from hetdesrun.adapters.blob_storage.authentication import Credentials
 from hetdesrun.adapters.blob_storage.exceptions import InvalidEndpointError
-from hetdesrun.adapters.exceptions import AdapterConnectionError
 from hetdesrun.adapters.blob_storage.service import (
     get_object_key_strings_in_bucket,
     get_s3_client,
     get_session,
 )
+from hetdesrun.adapters.exceptions import AdapterConnectionError
 
 
 def test_blob_storage_service_get_session():

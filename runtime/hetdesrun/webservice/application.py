@@ -105,12 +105,11 @@ def init_app() -> FastAPI:
     except KeyError:
         pass
 
-    from hetdesrun.adapters.local_file.webservice import (  # pylint: disable=import-outside-toplevel
-        local_file_adapter_router,
-    )
-
     from hetdesrun.adapters.blob_storage.webservice import (  # pylint: disable=import-outside-toplevel
         blob_storage_adapter_router,
+    )
+    from hetdesrun.adapters.local_file.webservice import (  # pylint: disable=import-outside-toplevel
+        local_file_adapter_router,
     )
 
     app = FastAPI(
