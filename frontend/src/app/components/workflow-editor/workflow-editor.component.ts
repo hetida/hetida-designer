@@ -17,7 +17,7 @@ import { v4 as UUID } from 'uuid';
 import { popoverMinHeight, popoverWidth } from '../../constants/popover-sizes';
 import { NotificationService } from '../../service/notifications/notification.service';
 import { FlowchartConverterService } from '../../service/type-converter/flowchart-converter.service';
-import { BaseItemContextMenuComponent } from '../base-item-context-menu/base-item-context-menu.component';
+import { TransformationContextMenuComponent } from '../transformation-context-menu/transformation-context-menu.component';
 import {
   OperatorChangeRevisionDialogComponent,
   OperatorChangeRevisionDialogData
@@ -82,7 +82,9 @@ export class WorkflowEditorComponent {
   }
 
   openContextMenu(mouseEvent: CustomEvent): void {
-    const componentPortal = new ComponentPortal(BaseItemContextMenuComponent);
+    const componentPortal = new ComponentPortal(
+      TransformationContextMenuComponent
+    );
     const position = {
       y: mouseEvent.detail.mousePosition[1],
       x: mouseEvent.detail.mousePosition[0]

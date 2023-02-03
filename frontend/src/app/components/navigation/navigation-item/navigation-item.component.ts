@@ -6,8 +6,8 @@ import { RevisionState } from 'src/app/enums/revision-state';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { TabItemService } from '../../../service/tab-item/tab-item.service';
-import { BaseItemContextMenuComponent } from '../../base-item-context-menu/base-item-context-menu.component';
-import { Transformation } from '../../../model/transformation';
+import { TransformationContextMenuComponent } from '../../transformation-context-menu/transformation-context-menu.component';
+import { Transformation } from '../../../model/new-api/transformation';
 
 @Component({
   selector: 'hd-navigation-item',
@@ -49,7 +49,7 @@ export class NavigationItemComponent {
 
   public openContextMenu(mouseEvent: MouseEvent): void {
     const { componentPortalRef } = this.contextMenuService.openContextMenu(
-      new ComponentPortal(BaseItemContextMenuComponent),
+      new ComponentPortal(TransformationContextMenuComponent),
       {
         x: mouseEvent.clientX,
         y: mouseEvent.clientY

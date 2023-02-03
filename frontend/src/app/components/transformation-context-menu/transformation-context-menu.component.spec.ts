@@ -5,11 +5,11 @@ import { RevisionState } from 'src/app/enums/revision-state';
 import { MaterialModule } from 'src/app/material.module';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
-import { BaseItemContextMenuComponent } from './base-item-context-menu.component';
+import { TransformationContextMenuComponent } from './transformation-context-menu.component';
 
-describe('BaseItemContextMenuComponent', () => {
-  let component: BaseItemContextMenuComponent;
-  let fixture: ComponentFixture<BaseItemContextMenuComponent>;
+describe('TransformationContextMenuComponent', () => {
+  let component: TransformationContextMenuComponent;
+  let fixture: ComponentFixture<TransformationContextMenuComponent>;
 
   beforeEach(
     waitForAsync(() => {
@@ -25,7 +25,7 @@ describe('BaseItemContextMenuComponent', () => {
 
       TestBed.configureTestingModule({
         imports: [MaterialModule, NoopAnimationsModule],
-        declarations: [BaseItemContextMenuComponent],
+        declarations: [TransformationContextMenuComponent],
         providers: [
           {
             provide: BaseItemActionService,
@@ -41,7 +41,7 @@ describe('BaseItemContextMenuComponent', () => {
   );
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(BaseItemContextMenuComponent);
+    fixture = TestBed.createComponent(TransformationContextMenuComponent);
     component = fixture.componentInstance;
     component.transformation = {
       id: 'mockId0',

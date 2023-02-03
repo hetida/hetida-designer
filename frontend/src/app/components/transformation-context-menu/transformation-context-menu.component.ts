@@ -18,12 +18,13 @@ import {
 } from '../../model/transformation';
 
 @Component({
-  selector: 'hd-base-item-context-menu',
-  templateUrl: './base-item-context-menu.component.html',
-  styleUrls: ['./base-item-context-menu.component.scss'],
+  selector: 'hd-transformation-context-menu',
+  templateUrl: './transformation-context-menu.component.html',
+  styleUrls: ['./transformation-context-menu.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
+export class TransformationContextMenuComponent
+  implements AfterViewInit, OnDestroy {
   @ViewChild(MatMenuTrigger) readonly _trigger: MatMenuTrigger;
   @ViewChild(MatMenu) readonly _menu: MatMenu;
   @ViewChild('invisibleTrigger') _elementRef: ElementRef;

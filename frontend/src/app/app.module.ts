@@ -40,7 +40,7 @@ import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
 import { AuthGuard } from './auth/auth.guard';
 import { AuthInterceptor } from './auth/auth.interceptor';
-import { BaseItemContextMenuComponent } from './components/base-item-context-menu/base-item-context-menu.component';
+import { TransformationContextMenuComponent } from './components/transformation-context-menu/transformation-context-menu.component';
 import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
 import { ComponentIODialogComponent } from './components/component-io-dialog/component-io-dialog.component';
 import { ConfirmDialogComponent } from './components/confirmation-dialog/confirm-dialog.component';
@@ -119,7 +119,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     CopyBaseItemDialogComponent,
     RenameOperatorDialogComponent,
     ErrorVisualDirective,
-    BaseItemContextMenuComponent
+    TransformationContextMenuComponent
   ],
 
   imports: [

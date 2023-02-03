@@ -14,7 +14,7 @@ import { selectHashedTransformationLookupById } from 'src/app/store/transformati
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { Utils } from 'src/app/utils/utils';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
-import { BaseItemContextMenuComponent } from '../base-item-context-menu/base-item-context-menu.component';
+import { TransformationContextMenuComponent } from '../transformation-context-menu/transformation-context-menu.component';
 
 @Component({
   selector: 'hd-home',
@@ -84,13 +84,12 @@ export class HomeComponent implements OnInit {
     this.tabItemService.addTransformationTab(selectedItem.id);
   }
 
-  // TODO Change BaseItemContextMenuComponent to TransformationContextMenuComponent
   openTransformationContextMenu(
     selectedItem: Transformation,
     mouseEvent: MouseEvent
   ) {
     const { componentPortalRef } = this.contextMenuService.openContextMenu(
-      new ComponentPortal(BaseItemContextMenuComponent),
+      new ComponentPortal(TransformationContextMenuComponent),
       {
         x: mouseEvent.clientX,
         y: mouseEvent.clientY
