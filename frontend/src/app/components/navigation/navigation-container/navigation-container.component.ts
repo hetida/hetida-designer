@@ -3,7 +3,7 @@ import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { combineLatest, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { AuthService } from '../../../auth/auth.service';
@@ -29,7 +29,7 @@ export class NavigationContainerComponent implements OnInit {
   ) {}
 
   readonly searchFilter = new FormControl('');
-  readonly typeFilter = new FormControl(BaseItemType.WORKFLOW);
+  readonly typeFilter = new FormControl(TransformationType.WORKFLOW);
 
   transformationsByCategory: { [category: string]: Transformation[] };
 
@@ -37,7 +37,7 @@ export class NavigationContainerComponent implements OnInit {
     return (this.typeFilter.value as string) === type;
   }
 
-  get filterChanges(): Observable<BaseItemType> {
+  get filterChanges(): Observable<TransformationType> {
     return this.typeFilter.valueChanges;
   }
 

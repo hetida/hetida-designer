@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { MaterialModule } from 'src/app/material.module';
 import { BaseItemActionService } from 'src/app/service/transformation/transformation-action.service';
@@ -53,7 +53,7 @@ describe('TransformationContextMenuComponent', () => {
       released_timestamp: new Date().toISOString(),
       disabled_timestamp: new Date().toISOString(),
       state: RevisionState.DRAFT,
-      type: BaseItemType.COMPONENT,
+      type: TransformationType.COMPONENT,
       documentation: null,
       content: 'python code',
       io_interface: {

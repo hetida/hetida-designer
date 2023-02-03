@@ -1,5 +1,5 @@
 import { FormControl } from '@angular/forms';
-import { BaseItemType } from '../enums/base-item-type';
+import { TransformationType } from '../enums/transformation-type';
 import { RevisionState } from '../enums/revision-state';
 import { Transformation } from '../model/transformation';
 import { UniqueVersionTagValidator } from './unique-version-tag-validator';
@@ -16,7 +16,7 @@ describe('UniqueVersionTagValidator', () => {
       released_timestamp: new Date().toISOString(),
       disabled_timestamp: new Date().toISOString(),
       state: RevisionState.DRAFT,
-      type: BaseItemType.COMPONENT,
+      type: TransformationType.COMPONENT,
       documentation: null,
       content: 'python code',
       io_interface: {
@@ -38,7 +38,7 @@ describe('UniqueVersionTagValidator', () => {
       released_timestamp: new Date().toISOString(),
       disabled_timestamp: new Date().toISOString(),
       state: RevisionState.DRAFT,
-      type: BaseItemType.COMPONENT,
+      type: TransformationType.COMPONENT,
       documentation: null,
       content: 'python code',
       io_interface: {

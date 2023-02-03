@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { BasicTestModule } from 'src/app/basic-test.module';
 import { ErrorVisualDirective } from 'src/app/directives/error-visual.directive';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { CopyTransformationDialogComponent } from './copy-transformation-dialog.component';
 import { Transformation } from '../../model/transformation';
@@ -20,7 +20,7 @@ describe('CopyBaseItemDialogComponent', () => {
     tag: 'Mock',
     inputs: [],
     outputs: [],
-    type: BaseItemType.COMPONENT,
+    type: TransformationType.COMPONENT,
     category: 'Mock Category',
     description: 'Mock Descr',
     groupId: 'g123',
@@ -51,7 +51,7 @@ describe('CopyBaseItemDialogComponent', () => {
                 inputs: [],
                 outputs: [],
                 links: [],
-                type: BaseItemType.COMPONENT,
+                type: TransformationType.COMPONENT,
                 groupId: 'g123'
               },
               disabledState: {

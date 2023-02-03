@@ -1,13 +1,13 @@
 import { ComponentPortal } from '@angular/cdk/portal';
 import { Component, Input } from '@angular/core';
 import { navigationWidth } from 'src/app/constants/popover-sizes';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { TabItemService } from '../../../service/tab-item/tab-item.service';
 import { TransformationContextMenuComponent } from '../../transformation-context-menu/transformation-context-menu.component';
-import { Transformation } from '../../../model/new-api/transformation';
+import { Transformation } from '../../../model/transformation';
 
 @Component({
   selector: 'hd-navigation-item',
@@ -60,11 +60,11 @@ export class NavigationItemComponent {
 
   public get svgIcon(): string {
     if (this.transformation.state === RevisionState.RELEASED) {
-      return this.transformation.type === BaseItemType.WORKFLOW
+      return this.transformation.type === TransformationType.WORKFLOW
         ? 'icon-published-workflow'
         : 'icon-published-component';
     }
-    return this.transformation.type === BaseItemType.WORKFLOW
+    return this.transformation.type === TransformationType.WORKFLOW
       ? 'icon-workflow'
       : 'icon-component';
   }

@@ -3,7 +3,7 @@ import { Store } from '@ngrx/store';
 import { NgHetidaFlowchartService } from 'ng-hetida-flowchart';
 import { of, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
@@ -30,7 +30,7 @@ export class ToolbarComponent implements OnInit {
   transformation: Transformation | undefined;
 
   get isWorkflow(): boolean {
-    return this.transformation.type === BaseItemType.WORKFLOW;
+    return this.transformation.type === TransformationType.WORKFLOW;
   }
 
   get isWorkflowWithoutIo(): boolean {

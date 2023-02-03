@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
 import { BasicTestModule } from 'src/app/basic-test.module';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { BaseItemService } from 'src/app/service/transformation/transformation.service';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
@@ -57,7 +57,7 @@ describe('NavigationItemComponent', () => {
       released_timestamp: new Date().toISOString(),
       disabled_timestamp: new Date().toISOString(),
       state: RevisionState.DRAFT,
-      type: BaseItemType.COMPONENT,
+      type: TransformationType.COMPONENT,
       documentation: null,
       content: 'python code',
       io_interface: {

@@ -1,4 +1,4 @@
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Connector } from './connector';
 import { Position } from './position';
@@ -18,7 +18,7 @@ export interface Operator {
   /**
    * Type of operator (COMPONENT or WORKFLOW)
    */
-  type: BaseItemType;
+  type: TransformationType;
 
   /**
    * State of operator (DRAFT, RELEASED, DISABLED)

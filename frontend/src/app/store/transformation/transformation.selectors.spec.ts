@@ -4,7 +4,7 @@ import {
   selectTransformationById,
   selectTransformationsByCategoryAndName
 } from './transformation.selectors';
-import { BaseItemType } from '../../enums/base-item-type';
+import { TransformationType } from '../../enums/transformation-type';
 import { EntityState } from '@ngrx/entity';
 import { Transformation } from '../../model/transformation';
 import { RevisionState } from '../../enums/revision-state';
@@ -24,7 +24,7 @@ describe('Transformation selectors', () => {
           released_timestamp: new Date().toISOString(),
           disabled_timestamp: new Date().toISOString(),
           state: RevisionState.DRAFT,
-          type: BaseItemType.COMPONENT,
+          type: TransformationType.COMPONENT,
           documentation: null,
           content: 'python code',
           io_interface: {
@@ -46,7 +46,7 @@ describe('Transformation selectors', () => {
           released_timestamp: new Date().toISOString(),
           disabled_timestamp: new Date().toISOString(),
           state: RevisionState.RELEASED,
-          type: BaseItemType.COMPONENT,
+          type: TransformationType.COMPONENT,
           documentation: null,
           content: 'python code',
           io_interface: {
@@ -68,7 +68,7 @@ describe('Transformation selectors', () => {
           released_timestamp: new Date().toISOString(),
           disabled_timestamp: new Date().toISOString(),
           state: RevisionState.RELEASED,
-          type: BaseItemType.COMPONENT,
+          type: TransformationType.COMPONENT,
           documentation: null,
           content: 'python code',
           io_interface: {
@@ -90,7 +90,7 @@ describe('Transformation selectors', () => {
           released_timestamp: new Date().toISOString(),
           disabled_timestamp: new Date().toISOString(),
           state: RevisionState.RELEASED,
-          type: BaseItemType.WORKFLOW,
+          type: TransformationType.WORKFLOW,
           documentation: null,
           content: {
             operators: [],
@@ -118,7 +118,7 @@ describe('Transformation selectors', () => {
           released_timestamp: new Date().toISOString(),
           disabled_timestamp: new Date().toISOString(),
           state: RevisionState.RELEASED,
-          type: BaseItemType.WORKFLOW,
+          type: TransformationType.WORKFLOW,
           documentation: null,
           content: {
             operators: [],
@@ -146,7 +146,7 @@ describe('Transformation selectors', () => {
           released_timestamp: new Date().toISOString(),
           disabled_timestamp: new Date().toISOString(),
           state: RevisionState.DISABLED,
-          type: BaseItemType.WORKFLOW,
+          type: TransformationType.WORKFLOW,
           documentation: null,
           content: {
             operators: [],
@@ -174,7 +174,7 @@ describe('Transformation selectors', () => {
 
     // Act
     const filteredTransformations = selectTransformationsByCategoryAndName(
-      BaseItemType.COMPONENT,
+      TransformationType.COMPONENT,
       null
     ).projector(mockEntityState);
 
@@ -189,7 +189,7 @@ describe('Transformation selectors', () => {
 
     // Act
     const filteredTransformations = selectTransformationsByCategoryAndName(
-      BaseItemType.WORKFLOW,
+      TransformationType.WORKFLOW,
       null
     ).projector(mockEntityState);
 
@@ -204,7 +204,7 @@ describe('Transformation selectors', () => {
 
     // Act
     const filteredTransformations = selectTransformationsByCategoryAndName(
-      BaseItemType.COMPONENT,
+      TransformationType.COMPONENT,
       name
     ).projector(mockEntityState);
 
@@ -219,7 +219,7 @@ describe('Transformation selectors', () => {
 
     // Act
     const filteredTransformations = selectTransformationsByCategoryAndName(
-      BaseItemType.WORKFLOW,
+      TransformationType.WORKFLOW,
       name
     ).projector(mockEntityState);
 
@@ -234,7 +234,7 @@ describe('Transformation selectors', () => {
 
     // Act
     const filteredTransformations = selectTransformationsByCategoryAndName(
-      BaseItemType.WORKFLOW,
+      TransformationType.WORKFLOW,
       name
     ).projector(mockEntityState);
 

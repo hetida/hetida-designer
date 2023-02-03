@@ -4,7 +4,7 @@ import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Transformation } from 'src/app/model/transformation';
 import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
@@ -64,7 +64,7 @@ export class HomeComponent implements OnInit {
     return this.lastOpened.pipe(
       map(transformations => {
         return transformations.filter(
-          transformation => transformation.type === BaseItemType.WORKFLOW
+          transformation => transformation.type === TransformationType.WORKFLOW
         );
       })
     );
@@ -74,7 +74,7 @@ export class HomeComponent implements OnInit {
     return this.lastOpened.pipe(
       map(transformations => {
         return transformations.filter(
-          transformation => transformation.type === BaseItemType.COMPONENT
+          transformation => transformation.type === TransformationType.COMPONENT
         );
       })
     );

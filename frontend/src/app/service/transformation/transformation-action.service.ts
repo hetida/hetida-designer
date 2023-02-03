@@ -21,7 +21,7 @@ import {
   WorkflowIODialogComponent,
   WorkflowIODialogData
 } from 'src/app/components/workflow-io-dialog/workflow-io-dialog.component';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
@@ -70,9 +70,9 @@ export class TransformationActionService {
 
     let title: string;
 
-    if (transformation.type === BaseItemType.COMPONENT) {
+    if (transformation.type === TransformationType.COMPONENT) {
       title = 'Execute Component';
-    } else if (transformation.type === BaseItemType.WORKFLOW) {
+    } else if (transformation.type === TransformationType.WORKFLOW) {
       title = 'Execute Workflow';
     } else {
       console.warn(

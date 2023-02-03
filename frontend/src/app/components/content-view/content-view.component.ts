@@ -10,7 +10,7 @@ import {
   setActiveTabItem,
   unsetActiveTabItem
 } from 'src/app/store/tab-item/tab-item.actions';
-import { BaseItemType } from '../../enums/base-item-type';
+import { TransformationType } from '../../enums/transformation-type';
 import { TabItem, TabItemType } from '../../model/tab-item';
 import { IAppState } from '../../store/app.state';
 import {
@@ -49,7 +49,7 @@ export const selectContentViewStoreState = createSelector(
 })
 export class ContentViewComponent implements OnInit, OnDestroy {
   // Constants
-  readonly _ItemType = BaseItemType;
+  readonly _ItemType = TransformationType;
 
   // Component State
   _selectedTabIndex = 0;

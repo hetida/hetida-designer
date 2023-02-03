@@ -1,5 +1,5 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { Transformation } from 'src/app/model/transformation';
 import { Utils } from 'src/app/utils/utils';
 import { RevisionState } from '../../enums/revision-state';
@@ -55,7 +55,7 @@ function filterByName(transformation: Transformation, name: string) {
  * Returns a key value object with the categories as keys and the corresponding transformations as values.
  */
 export const selectTransformationsByCategoryAndName = (
-  transformationType: BaseItemType,
+  transformationType: TransformationType,
   name?: string
 ) => {
   return createSelector(

@@ -3,7 +3,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { ErrorVisualDirective } from 'src/app/directives/error-visual.directive';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { MaterialModule } from 'src/app/material.module';
 import { WorkflowIODialogComponent } from './workflow-io-dialog.component';
@@ -37,7 +37,7 @@ describe('WorkflowIODialogComponent', () => {
                 released_timestamp: new Date().toISOString(),
                 disabled_timestamp: new Date().toISOString(),
                 state: RevisionState.DRAFT,
-                type: BaseItemType.WORKFLOW,
+                type: TransformationType.WORKFLOW,
                 documentation: null,
                 content: {
                   operators: [],

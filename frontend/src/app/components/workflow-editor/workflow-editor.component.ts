@@ -9,7 +9,7 @@ import {
 } from 'hetida-flowchart';
 import { timer } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
@@ -535,8 +535,8 @@ export class WorkflowEditorComponent {
     );
     if (
       currentOperator === undefined ||
-      (currentOperator.type !== BaseItemType.WORKFLOW &&
-        currentOperator.type !== BaseItemType.COMPONENT)
+      (currentOperator.type !== TransformationType.WORKFLOW &&
+        currentOperator.type !== TransformationType.COMPONENT)
     ) {
       throw new Error('Invalid operator');
     }
