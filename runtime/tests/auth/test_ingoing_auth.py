@@ -85,10 +85,10 @@ async def test_auth_with_wrong_key_access_token_fails(
     open_async_test_client_with_auth,
     mocked_clean_test_db_session,
     wrong_key_access_token,
+    mocked_pre_loaded_public_key,
     mocked_public_key_fetching,
 ):
     client = open_async_test_client_with_auth
-
     # request with correct access token succeeds
     response = await client.get(
         "/api/transformations/",
@@ -136,7 +136,6 @@ async def test_auth_wrong_public_key_fails(
     mocked_pre_loaded_wrong_public_key,
 ):
     client = open_async_test_client_with_auth
-
     response = await client.get(
         "/api/transformations/",
         headers={"Authorization": "Bearer " + valid_access_token},

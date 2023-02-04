@@ -42,7 +42,7 @@ async def test_base_url_fetching_internally():
 
 
 @pytest.mark.asyncio
-async def test_base_url_fetching():
+async def test_base_url_fetching_externally():
     response_mock = mock.Mock()
     response_mock.status_code = 200
     response_mock.json = mock.Mock(
@@ -50,7 +50,7 @@ async def test_base_url_fetching():
             {
                 "id": "test_adapter_key",
                 "url": "http://hetida.de",
-                "internal_url": "http://hetida.de",
+                "internalUrl": "http://hetida.de",
                 "name": "test",
             }
         ]
@@ -87,7 +87,7 @@ async def test_base_url_fetching():
                     {
                         "key": "test_adapter_key",
                         "url": "http://hetida.de",
-                        "internal_url": "http://hetida.de",
+                        "internalUrl": "http://hetida.de",
                         "name": "test",
                     }
                 ]
