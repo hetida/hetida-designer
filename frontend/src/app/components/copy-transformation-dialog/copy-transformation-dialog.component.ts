@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { select, Store } from '@ngrx/store';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { first, map, startWith } from 'rxjs/operators';
-import { BaseItemDialogData } from 'src/app/model/base-item-dialog-data';
+import { TransformationDialogData } from 'src/app/model/transformation-dialog-data';
 import { Utils } from 'src/app/utils/utils';
 import { NotOnlyWhitespacesValidator } from 'src/app/validation/not-only-whitespaces-validator';
 import { AllowedCharsValidator } from 'src/app/validation/allowed-chars-validator';
@@ -22,7 +22,7 @@ export class CopyTransformationDialogComponent implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<CopyTransformationDialogComponent>,
     // TODO fix by reference value changes?
-    @Inject(MAT_DIALOG_DATA) public data: Omit<BaseItemDialogData, 'content'>,
+    @Inject(MAT_DIALOG_DATA) public data: Omit<TransformationDialogData, 'content'>,
     private readonly transformationStore: Store<TransformationState>
   ) {}
 

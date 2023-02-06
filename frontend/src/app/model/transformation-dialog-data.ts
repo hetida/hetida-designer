@@ -1,6 +1,6 @@
 import { Transformation } from './transformation';
 
-export interface BaseItemDialogData {
+export interface TransformationDialogData {
   title: string;
   content: string;
   actionOk: string;

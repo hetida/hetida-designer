@@ -26,7 +26,7 @@ import { RevisionState } from 'src/app/enums/revision-state';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import * as uuid from 'uuid';
-import { BaseItemDialogData } from '../../model/base-item-dialog-data';
+import { TransformationDialogData } from '../../model/transformation-dialog-data';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
 import { TransformationService } from './transformation.service';
@@ -145,7 +145,7 @@ export class TransformationActionService {
     const isReleased = this.isReleased(transformation);
     const dialogRef = this.dialog.open<
       CopyTransformationDialogComponent,
-      BaseItemDialogData,
+      TransformationDialogData,
       Transformation | undefined
     >(CopyTransformationDialogComponent, {
       width: '640px',
@@ -207,7 +207,7 @@ export class TransformationActionService {
     );
     const dialogRef = this.dialog.open<
       CopyTransformationDialogComponent,
-      BaseItemDialogData,
+      TransformationDialogData,
       Transformation | undefined
     >(CopyTransformationDialogComponent, {
       width: '640px',
@@ -323,7 +323,7 @@ export class TransformationActionService {
 
     const dialogRef = this.dialog.open<
       CopyTransformationDialogComponent,
-      Omit<BaseItemDialogData, 'content'>,
+      Omit<TransformationDialogData, 'content'>,
       Transformation | undefined
     >(CopyTransformationDialogComponent, {
       width: '640px',
@@ -373,7 +373,7 @@ export class TransformationActionService {
   public newWorkflow(): void {
     const dialogRef = this.dialog.open<
       CopyTransformationDialogComponent,
-      Omit<BaseItemDialogData, 'content'>,
+      Omit<TransformationDialogData, 'content'>,
       Transformation | undefined
     >(CopyTransformationDialogComponent, {
       width: '640px',
@@ -402,7 +402,7 @@ export class TransformationActionService {
   public newComponent(): void {
     const dialogRef = this.dialog.open<
       CopyTransformationDialogComponent,
-      Omit<BaseItemDialogData, 'content'>,
+      Omit<TransformationDialogData, 'content'>,
       Transformation | undefined
     >(CopyTransformationDialogComponent, {
       width: '640px',
