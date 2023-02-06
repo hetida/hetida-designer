@@ -52,7 +52,7 @@ import { NavigationCategoryComponent } from './components/navigation/navigation-
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
 import { OperatorChangeRevisionDialogComponent } from './components/operator-change-revision-dialog/operator-change-revision-dialog.component';
-import { PopoverBaseItemComponent } from './components/popover-base-item/popover-base-item.component';
+import { PopoverTransformationComponent } from './components/popover-transformation/popover-transformation.component';
 import { ProtocolViewerComponent } from './components/protocol-viewer/protocol-viewer.component';
 import { RenameOperatorDialogComponent } from './components/rename-operator-dialog/rename-operator-dialog.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -114,7 +114,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     OperatorChangeRevisionDialogComponent,
     ProtocolViewerComponent,
     ToolbarComponent,
-    PopoverBaseItemComponent,
+    PopoverTransformationComponent,
     NavigationItemComponent,
     CopyTransformationDialogComponent,
     RenameOperatorDialogComponent,

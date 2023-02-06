@@ -21,11 +21,11 @@ import { Transformation } from '../../model/transformation';
 import { selectTransformationById } from '../../store/transformation/transformation.selectors';
 
 @Component({
-  selector: 'hd-popover-base-item',
-  templateUrl: './popover-base-item.component.html',
-  styleUrls: ['./popover-base-item.component.scss']
+  selector: 'hd-popover-transformation',
+  templateUrl: './popover-transformation.component.html',
+  styleUrls: ['./popover-transformation.component.scss']
 })
-export class PopoverBaseItemComponent implements OnInit {
+export class PopoverTransformationComponent implements OnInit {
   @HostBinding('style.top')
   get topPos(): string {
     if (this.showPopoverData === null) {
