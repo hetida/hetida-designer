@@ -5,8 +5,8 @@ import { TabItem } from '../../model/tab-item';
 import { selectHashedTransformationLookupById } from '../transformation/transformation.selectors';
 import { Transformation } from '../../model/transformation';
 
-export type TabItemWithBaseItem = Omit<TabItem, 'transformationId'> & {
-  baseItem: Transformation;
+export type TabItemWithTransformation = Omit<TabItem, 'transformationId'> & {
+  Transformation: Transformation;
 };
 
 const { selectEntities, selectAll } = tabItemEntityAdapter.getSelectors();
@@ -20,7 +20,7 @@ export const selectOrderedTabItems = createSelector(
   (tabItemState): TabItem[] => selectAll(tabItemState)
 );
 
-export const selectOrderedTabItemsWithBaseItem = createSelector(
+export const selectOrderedTabItemsWithTransformation = createSelector(
   selectOrderedTabItems,
   selectHashedTransformationLookupById,
   (
@@ -28,7 +28,7 @@ export const selectOrderedTabItemsWithBaseItem = createSelector(
     transformations: Record<string, Transformation>
   ) =>
     orderedTabItems.map(
-      (tabItem): TabItemWithBaseItem => {
+      (tabItem): TabItemWithTransformation => {
         const transformation = transformations[tabItem.transformationId];
         if (!transformation) {
           throw Error(
@@ -37,7 +37,7 @@ export const selectOrderedTabItemsWithBaseItem = createSelector(
         }
         return {
           ...tabItem,
-          baseItem: transformation
+          Transformation: transformation
         };
       }
     )
