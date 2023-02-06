@@ -114,7 +114,6 @@ def obtain_credential_info_from_rest_api(access_token: str) -> CredentialInfo:
             f"BLOB storage credential request returned with status code {response.status_code} "
             f"and response text:\n{response.text}\n"
             f"When calling URL:\n{get_blob_adapter_config().endpoint_url}\n"
-            f"with access token:\n{access_token}"  # TODO: remove access token logging
         )
         logger.error(msg)
         raise StorageAuthenticationError(msg)
