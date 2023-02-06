@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict
 
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ParamValidationError
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     MissingHierarchyError,
@@ -33,8 +33,8 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
         StructureObjectNotFound,
         StructureObjectNotUnique,
         MissingHierarchyError,
-    ) as error:
-        raise error
+    ) as client_error:
+        raise client_error
 
     logger.info("Get bucket name and object key from sink with id %s", sink.id)
     structure_bucket, object_key = sink.to_structure_bucket_and_object_key()
@@ -56,23 +56,31 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
         raise AdapterConnectionError(
             f"The bucket '{structure_bucket.name}' does not exist!"
         ) from error
-    except ClientError as error:
-        error_code = error.response["Error"]["Code"]
+    except ClientError as client_error:
+        error_code = client_error.response["Error"]["Code"]
         if error_code != "404":
             msg = (
                 "Unexpected ClientError occured for head_object call with bucket "
                 f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
             )
             logger.error(msg)
-            raise AdapterConnectionError(msg) from error
+            raise AdapterConnectionError(msg) from client_error
 
         # only write if the object does not yet exist
-        s3_client.put_object(
-            Bucket=structure_bucket.name,
-            Key=object_key.string,
-            Body=data,
-            ChecksumAlgorithm="SHA1",
-        )
+        try:
+            s3_client.put_object(
+                Bucket=structure_bucket.name,
+                Key=object_key.string,
+                Body=data,
+                ChecksumAlgorithm="SHA1",
+            )
+        except ParamValidationError as error:
+            msg = (
+                "Parameter validation error for put_object call with bucket "
+                f"{structure_bucket.name} and object key {object_key.string}:\n{error}"
+            )
+            logger.error(msg)
+            raise AdapterHandlingException(msg) from error
 
     else:
         msg = (
