@@ -1,5 +1,5 @@
 @mixin popover-transformation-theme($primary, $secondary) {
-  hd-transformation-item {
+  hd-popover-transformation {
     outline: map-get($secondary, 700) solid 1px;
 
     .popover {

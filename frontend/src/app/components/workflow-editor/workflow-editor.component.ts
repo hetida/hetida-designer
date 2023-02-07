@@ -77,7 +77,7 @@ export class WorkflowEditorComponent {
   }
 
   @Input()
-  set workflowBaseItem(workflowTransformation: WorkflowTransformation) {
+  set workflowTransformation(workflowTransformation: WorkflowTransformation) {
     this._convertWorkflowToFlowchart(workflowTransformation);
   }
 

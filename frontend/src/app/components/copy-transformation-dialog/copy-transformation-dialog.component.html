@@ -80,7 +80,9 @@
   </div>
 </div>
 <div
-  [ngClass]="{ 'copy-base-item--with-delete-button': data.showDeleteButton }"
+  [ngClass]="{
+    'copy-transformation--with-delete-button': data.showDeleteButton
+  }"
   mat-dialog-actions
 >
   <button

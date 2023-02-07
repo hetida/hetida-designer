@@ -29,7 +29,7 @@
       <div style="padding-bottom: 10px; padding-left: 15px">
         <ng-container
           [ngTemplateOutlet]="getTemplateForType(item.key)"
-          [ngTemplateOutletContext]="{ abstractBaseItem: item }"
+          [ngTemplateOutletContext]="{ transformation: item }"
         >
         </ng-container>
       </div>
@@ -45,7 +45,7 @@
   >
 </ng-container>
 
-<ng-template #plotlyTemplate let-plotlyItem="abstractBaseItem">
+<ng-template #plotlyTemplate let-plotlyItem="transformation">
   <span>{{ plotlyItem.key }}:</span>
   <br />
   <plotly-plot
@@ -61,7 +61,7 @@
   ></plotly-plot>
 </ng-template>
 
-<ng-template #simpleTemplate let-someItem="abstractBaseItem">
+<ng-template #simpleTemplate let-someItem="transformation">
   <span>{{ someItem.key }}:</span>
   <br />
   <span class="mat-body-strong">{{ stringifyJson(someItem.value) }}</span>

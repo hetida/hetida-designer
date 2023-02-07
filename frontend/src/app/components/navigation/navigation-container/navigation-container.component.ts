@@ -56,9 +56,12 @@ export class NavigationContainerComponent implements OnInit {
 
     combineLatest([this.filterChanges, this.searchFilterChanges])
       .pipe(
-        switchMap(([baseItemType, searchString]) =>
+        switchMap(([transformationType, searchString]) =>
           this.transformationStore.select(
-            selectTransformationsByCategoryAndName(baseItemType, searchString)
+            selectTransformationsByCategoryAndName(
+              transformationType,
+              searchString
+            )
           )
         )
       )
