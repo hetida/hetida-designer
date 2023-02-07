@@ -23,7 +23,7 @@ export class TabItemService {
   addTransformationTab(transformationId: string): void {
     this.addTabItem({
       transformationId,
-      tabItemType: TabItemType.BASE_ITEM
+      tabItemType: TabItemType.TRANSFORMATION
     });
   }
 

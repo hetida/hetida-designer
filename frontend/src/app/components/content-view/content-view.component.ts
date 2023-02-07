@@ -131,7 +131,7 @@ export class ContentViewComponent implements OnInit, OnDestroy {
   }
 
   _isTransformation(tabItem: TabItemWithTransformation): boolean {
-    return tabItem.tabItemType === TabItemType.BASE_ITEM;
+    return tabItem.tabItemType === TabItemType.TRANSFORMATION;
   }
 
   _onTabClose(tabItemToClose: TabItemWithTransformation) {
