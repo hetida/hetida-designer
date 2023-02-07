@@ -72,10 +72,13 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
         try:
             file_object = BytesIO()
             joblib.dump(data, file_object)
+            file_object.seek(0)
+            
+            logger.info("Dumped data of size %i into BLOB", file_object.getbuffer().nbytes)
             s3_client.put_object(
                 Bucket=structure_bucket.name,
                 Key=object_key.string,
-                Body=file_object,
+                Body=file_object.read(),
                 ChecksumAlgorithm="SHA1",
             )
         except ParamValidationError as error:

@@ -71,9 +71,10 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             f"with the key '{object_key.string}'!"
         ) from error
 
-    file_object = BytesIO()
+    data_bytes = response["Body"].read()
 
-    file_object = response["Body"].read()
+    file_object=BytesIO(data_bytes)
+    logger.info("Got BLOB of size %i", file_object.getbuffer().nbytes)
 
     data = joblib.load(file_object)
 
