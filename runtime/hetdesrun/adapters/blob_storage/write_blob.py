@@ -1,6 +1,8 @@
 import logging
+from io import BytesIO
 from typing import Any, Dict
 
+import joblib
 from botocore.exceptions import ClientError, ParamValidationError
 
 from hetdesrun.adapters.blob_storage.exceptions import (
@@ -33,8 +35,8 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
         StructureObjectNotFound,
         StructureObjectNotUnique,
         MissingHierarchyError,
-    ) as client_error:
-        raise client_error
+    ) as error:
+        raise error
 
     logger.info("Get bucket name and object key from sink with id %s", sink.id)
     structure_bucket, object_key = sink.to_structure_bucket_and_object_key()
@@ -68,10 +70,12 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
 
         # only write if the object does not yet exist
         try:
+            file_object = BytesIO()
+            joblib.dump(data, file_object)
             s3_client.put_object(
                 Bucket=structure_bucket.name,
                 Key=object_key.string,
-                Body=data,
+                Body=file_object,
                 ChecksumAlgorithm="SHA1",
             )
         except ParamValidationError as error:

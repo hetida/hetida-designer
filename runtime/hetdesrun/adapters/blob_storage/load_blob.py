@@ -1,5 +1,8 @@
 import logging
+from io import BytesIO
 from typing import Any, Dict
+
+import joblib
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     InvalidEndpointError,
@@ -67,7 +70,14 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             f"The bucket '{structure_bucket.name}' contains no object "
             f"with the key '{object_key.string}'!"
         ) from error
-    return response["Body"].read()
+
+    file_object = BytesIO()
+
+    file_object = response["Body"].read()
+
+    data = joblib.load(file_object)
+
+    return data
 
 
 async def load_data(
