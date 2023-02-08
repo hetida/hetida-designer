@@ -4,17 +4,17 @@ import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Transformation } from 'src/app/model/transformation';
-import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
+import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { LocalStorageService } from 'src/app/service/local-storage/local-storage.service';
 import { selectHashedTransformationLookupById } from 'src/app/store/transformation/transformation.selectors';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import { Utils } from 'src/app/utils/utils';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
-import { BaseItemContextMenuComponent } from '../base-item-context-menu/base-item-context-menu.component';
+import { TransformationContextMenuComponent } from '../transformation-context-menu/transformation-context-menu.component';
 
 @Component({
   selector: 'hd-home',
@@ -25,7 +25,7 @@ export class HomeComponent implements OnInit {
   constructor(
     private readonly localStorageService: LocalStorageService,
     private readonly transformationStore: Store<TransformationState>,
-    private readonly baseItemActionService: BaseItemActionService,
+    private readonly transformationActionService: TransformationActionService,
     private readonly tabItemService: TabItemService,
     private readonly contextMenuService: ContextMenuService,
     private readonly httpClient: HttpClient
@@ -64,7 +64,7 @@ export class HomeComponent implements OnInit {
     return this.lastOpened.pipe(
       map(transformations => {
         return transformations.filter(
-          transformation => transformation.type === BaseItemType.WORKFLOW
+          transformation => transformation.type === TransformationType.WORKFLOW
         );
       })
     );
@@ -74,7 +74,7 @@ export class HomeComponent implements OnInit {
     return this.lastOpened.pipe(
       map(transformations => {
         return transformations.filter(
-          transformation => transformation.type === BaseItemType.COMPONENT
+          transformation => transformation.type === TransformationType.COMPONENT
         );
       })
     );
@@ -84,13 +84,12 @@ export class HomeComponent implements OnInit {
     this.tabItemService.addTransformationTab(selectedItem.id);
   }
 
-  // TODO Change BaseItemContextMenuComponent to TransformationContextMenuComponent
   openTransformationContextMenu(
     selectedItem: Transformation,
     mouseEvent: MouseEvent
   ) {
     const { componentPortalRef } = this.contextMenuService.openContextMenu(
-      new ComponentPortal(BaseItemContextMenuComponent),
+      new ComponentPortal(TransformationContextMenuComponent),
       {
         x: mouseEvent.clientX,
         y: mouseEvent.clientY
@@ -101,10 +100,10 @@ export class HomeComponent implements OnInit {
   }
 
   newWorkflow(): void {
-    this.baseItemActionService.newWorkflow();
+    this.transformationActionService.newWorkflow();
   }
 
   newComponent(): void {
-    this.baseItemActionService.newComponent();
+    this.transformationActionService.newComponent();
   }
 }

@@ -4,8 +4,11 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
 import { BasicTestModule } from 'src/app/basic-test.module';
-import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
-import { BaseItemService } from 'src/app/service/base-item/base-item.service';
+import { TransformationType } from 'src/app/enums/transformation-type';
+import { AbstractBaseItem } from 'src/app/model/base-item';
+import { BaseItemActionService } from 'src/app/service/transformation/transformation-action.service';
+import { BaseItemService } from 'src/app/service/transformation/transformation.service';
+import { selectBaseItemsByCategory } from 'src/app/store/base-item/base-item.selectors';
 import { AuthService } from '../../../auth/auth.service';
 import { NavigationCategoryComponent } from '../navigation-category/navigation-category.component';
 import { NavigationItemComponent } from '../navigation-item/navigation-item.component';
@@ -68,7 +71,7 @@ describe('NavigationContainerComponent', () => {
   beforeEach(() => {
     const mockStore = TestBed.inject(MockStore);
     // mockStore.overrideSelector(
-    //   selectBaseItemsByCategory(BaseItemType.COMPONENT),
+    //   selectBaseItemsByCategory(TransformationType.COMPONENT),
     //   abstractBaseItemsByCategory
     // );
     fixture = TestBed.createComponent(NavigationContainerComponent);

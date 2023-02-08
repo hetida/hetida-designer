@@ -8,11 +8,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { StoreModule } from '@ngrx/store';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { appReducers } from 'src/app/store/app.reducers';
-import { PopoverBaseItemComponent } from './popover-base-item.component';
+import { PopoverTransformationComponent } from './popover-transformation.component';
 
-describe('PopoverBaseItemComponent', () => {
-  let component: PopoverBaseItemComponent;
-  let fixture: ComponentFixture<PopoverBaseItemComponent>;
+describe('PopoverTransformationComponent', () => {
+  let component: PopoverTransformationComponent;
+  let fixture: ComponentFixture<PopoverTransformationComponent>;
 
   beforeEach(
     waitForAsync(() => {
@@ -28,13 +28,13 @@ describe('PopoverBaseItemComponent', () => {
           StoreModule.forRoot(appReducers),
           HttpClientModule
         ],
-        declarations: [PopoverBaseItemComponent]
+        declarations: [PopoverTransformationComponent]
       }).compileComponents();
     })
   );
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(PopoverBaseItemComponent);
+    fixture = TestBed.createComponent(PopoverTransformationComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

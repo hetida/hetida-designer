@@ -10,34 +10,39 @@ import {
   setActiveTabItem,
   unsetActiveTabItem
 } from 'src/app/store/tab-item/tab-item.actions';
-import { BaseItemType } from '../../enums/base-item-type';
+import { TransformationType } from '../../enums/transformation-type';
 import { TabItem, TabItemType } from '../../model/tab-item';
 import { IAppState } from '../../store/app.state';
 import {
   selectActiveTabItem,
-  selectOrderedTabItemsWithBaseItem,
-  TabItemWithBaseItem
+  selectOrderedTabItemsWithTransformation,
+  TabItemWithTransformation
 } from '../../store/tab-item/tab-item.selectors';
 import { isComponentTransformation } from '../../model/transformation';
 
 const HOME_TAB = 0;
 
-const getTabItemHash = (tabItemWithBaseItem: TabItemWithBaseItem): string => {
-  return `${tabItemWithBaseItem.baseItem.id}-${tabItemWithBaseItem.tabItemType}`;
+const getTabItemHash = (
+  tabItemWithTransformation: TabItemWithTransformation
+): string => {
+  return `${tabItemWithTransformation.transformation.id}-${tabItemWithTransformation.tabItemType}`;
 };
 
 interface ContentViewStoreState {
-  orderedTabItemsWithBaseItem: TabItemWithBaseItem[];
+  orderedTabItemsWithTransformation: TabItemWithTransformation[];
   activeTabItem: TabItem;
 }
 
 // This selector is not generally re-usable but use case
 // specific, so we keep it co-located with the component.
 export const selectContentViewStoreState = createSelector(
-  selectOrderedTabItemsWithBaseItem,
+  selectOrderedTabItemsWithTransformation,
   selectActiveTabItem,
-  (orderedTabItemsWithBaseItem, activeTabItem): ContentViewStoreState => ({
-    orderedTabItemsWithBaseItem,
+  (
+    orderedTabItemsWithTransformation,
+    activeTabItem
+  ): ContentViewStoreState => ({
+    orderedTabItemsWithTransformation,
     activeTabItem
   })
 );
@@ -49,13 +54,13 @@ export const selectContentViewStoreState = createSelector(
 })
 export class ContentViewComponent implements OnInit, OnDestroy {
   // Constants
-  readonly _ItemType = BaseItemType;
+  readonly _ItemType = TransformationType;
 
   // Component State
   _selectedTabIndex = 0;
 
   // ngrx State
-  _tabItems: TabItemWithBaseItem[] = [];
+  _tabItems: TabItemWithTransformation[] = [];
 
   isComponentTransformation: typeof isComponentTransformation = isComponentTransformation;
 
@@ -75,15 +80,17 @@ export class ContentViewComponent implements OnInit, OnDestroy {
     this.store
       .select(selectContentViewStoreState)
       .pipe(takeUntil(this._ngOnDestroyNotify))
-      .subscribe(({ orderedTabItemsWithBaseItem, activeTabItem }) => {
-        this._tabItems = orderedTabItemsWithBaseItem;
+      .subscribe(({ orderedTabItemsWithTransformation, activeTabItem }) => {
+        this._tabItems = orderedTabItemsWithTransformation;
 
         const selectedTabItemIndex =
-          activeTabItem === null || orderedTabItemsWithBaseItem.length === 0
+          activeTabItem === null ||
+          orderedTabItemsWithTransformation.length === 0
             ? HOME_TAB
-            : orderedTabItemsWithBaseItem.findIndex(
+            : orderedTabItemsWithTransformation.findIndex(
                 tabItem =>
-                  tabItem.baseItem.id === activeTabItem.transformationId &&
+                  tabItem.transformation.id ===
+                    activeTabItem.transformationId &&
                   tabItem.tabItemType === activeTabItem.tabItemType
               ) + 1;
 
@@ -98,8 +105,11 @@ export class ContentViewComponent implements OnInit, OnDestroy {
       });
   }
 
-  _trackBy(_: number, tabItemWithBaseItem: TabItemWithBaseItem): string {
-    return getTabItemHash(tabItemWithBaseItem);
+  _trackBy(
+    _: number,
+    tabItemWithTransformation: TabItemWithTransformation
+  ): string {
+    return getTabItemHash(tabItemWithTransformation);
   }
 
   _onTabChange(event: MatTabChangeEvent) {
@@ -116,15 +126,15 @@ export class ContentViewComponent implements OnInit, OnDestroy {
     this.store.dispatch(setExecutionProtocol());
   }
 
-  _isDocumentation(tabItem: TabItemWithBaseItem): boolean {
+  _isDocumentation(tabItem: TabItemWithTransformation): boolean {
     return tabItem.tabItemType === TabItemType.DOCUMENTATION;
   }
 
-  _isBaseItem(tabItem: TabItemWithBaseItem): boolean {
-    return tabItem.tabItemType === TabItemType.BASE_ITEM;
+  _isTransformation(tabItem: TabItemWithTransformation): boolean {
+    return tabItem.tabItemType === TabItemType.TRANSFORMATION;
   }
 
-  _onTabClose(tabItemToClose: TabItemWithBaseItem) {
+  _onTabClose(tabItemToClose: TabItemWithTransformation) {
     this.popoverService.closePopover();
     this.store.dispatch(removeTabItem(tabItemToClose.id));
   }

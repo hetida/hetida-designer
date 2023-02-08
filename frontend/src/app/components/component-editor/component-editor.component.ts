@@ -5,7 +5,7 @@ import { RevisionState } from 'src/app/enums/revision-state';
 import { ThemeService } from 'src/app/service/theme/theme.service';
 import { environment } from '../../../environments/environment';
 import { ComponentTransformation } from '../../model/transformation';
-import { BaseItemService } from '../../service/base-item/base-item.service';
+import { TransformationService } from '../../service/transformation/transformation.service';
 
 @Component({
   selector: 'hd-component-editor',
@@ -55,7 +55,7 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
   }
 
   constructor(
-    private readonly baseItemService: BaseItemService,
+    private readonly transformationService: TransformationService,
     private readonly themeService: ThemeService
   ) {}
 
@@ -78,7 +78,7 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
       .pipe(
         switchMap(() => {
           if (this.lastSavedCode !== this.code) {
-            return this.baseItemService.updateTransformation({
+            return this.transformationService.updateTransformation({
               ...this.componentTransformation,
               content: this.code
             });

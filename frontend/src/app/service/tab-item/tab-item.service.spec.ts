@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
-import { BaseItemService } from '../base-item/base-item.service';
+import { BaseItemService } from '../transformation/transformation.service';
 import { TabItemService } from './tab-item.service';
 
 describe('TabItemService', () => {

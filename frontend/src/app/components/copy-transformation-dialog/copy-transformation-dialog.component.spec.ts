@@ -4,15 +4,15 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { BasicTestModule } from 'src/app/basic-test.module';
 import { ErrorVisualDirective } from 'src/app/directives/error-visual.directive';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { CopyBaseItemDialogComponent } from './copy-base-item-dialog.component';
+import { CopyTransformationDialogComponent } from './copy-transformation-dialog.component';
 import { Transformation } from '../../model/transformation';
 
 // TODO fix test
 describe('CopyBaseItemDialogComponent', () => {
-  let component: CopyBaseItemDialogComponent;
-  let fixture: ComponentFixture<CopyBaseItemDialogComponent>;
+  let component: CopyTransformationDialogComponent;
+  let fixture: ComponentFixture<CopyTransformationDialogComponent>;
 
   const mockAbstractBaseItem: Transformation = {
     id: 'MockId1',
@@ -20,7 +20,7 @@ describe('CopyBaseItemDialogComponent', () => {
     tag: 'Mock',
     inputs: [],
     outputs: [],
-    type: BaseItemType.COMPONENT,
+    type: TransformationType.COMPONENT,
     category: 'Mock Category',
     description: 'Mock Descr',
     groupId: 'g123',
@@ -32,7 +32,7 @@ describe('CopyBaseItemDialogComponent', () => {
     waitForAsync(() => {
       TestBed.configureTestingModule({
         imports: [BasicTestModule, FormsModule, ReactiveFormsModule],
-        declarations: [CopyBaseItemDialogComponent, ErrorVisualDirective],
+        declarations: [CopyTransformationDialogComponent, ErrorVisualDirective],
         providers: [
           provideMockStore({}),
           {
@@ -51,7 +51,7 @@ describe('CopyBaseItemDialogComponent', () => {
                 inputs: [],
                 outputs: [],
                 links: [],
-                type: BaseItemType.COMPONENT,
+                type: TransformationType.COMPONENT,
                 groupId: 'g123'
               },
               disabledState: {
@@ -69,7 +69,7 @@ describe('CopyBaseItemDialogComponent', () => {
   );
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(CopyBaseItemDialogComponent);
+    fixture = TestBed.createComponent(CopyTransformationDialogComponent);
     const mockStore = TestBed.inject(MockStore);
     // mockStore.overrideSelector(selectAbstractBaseItems, [mockAbstractBaseItem]);
     component = fixture.componentInstance;

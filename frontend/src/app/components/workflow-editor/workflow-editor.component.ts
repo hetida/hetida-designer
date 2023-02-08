@@ -9,7 +9,7 @@ import {
 } from 'hetida-flowchart';
 import { timer } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
@@ -17,7 +17,7 @@ import { v4 as UUID } from 'uuid';
 import { popoverMinHeight, popoverWidth } from '../../constants/popover-sizes';
 import { NotificationService } from '../../service/notifications/notification.service';
 import { FlowchartConverterService } from '../../service/type-converter/flowchart-converter.service';
-import { BaseItemContextMenuComponent } from '../base-item-context-menu/base-item-context-menu.component';
+import { TransformationContextMenuComponent } from '../transformation-context-menu/transformation-context-menu.component';
 import {
   OperatorChangeRevisionDialogComponent,
   OperatorChangeRevisionDialogData
@@ -38,7 +38,7 @@ import {
   selectAllTransformations,
   selectTransformationById
 } from 'src/app/store/transformation/transformation.selectors';
-import { BaseItemService } from 'src/app/service/base-item/base-item.service';
+import { TransformationService } from 'src/app/service/transformation/transformation.service';
 import { Connector } from 'src/app/model/connector';
 import { Utils } from 'src/app/utils/utils';
 
@@ -66,7 +66,7 @@ export class WorkflowEditorComponent {
   constructor(
     private readonly transformationStore: Store<TransformationState>,
     private readonly notificationService: NotificationService,
-    private readonly baseItemService: BaseItemService,
+    private readonly transformationService: TransformationService,
     private readonly flowchartConverter: FlowchartConverterService,
     private readonly popoverService: PopoverService,
     private readonly dialog: MatDialog,
@@ -77,12 +77,14 @@ export class WorkflowEditorComponent {
   }
 
   @Input()
-  set workflowBaseItem(workflowTransformation: WorkflowTransformation) {
+  set workflowTransformation(workflowTransformation: WorkflowTransformation) {
     this._convertWorkflowToFlowchart(workflowTransformation);
   }
 
   openContextMenu(mouseEvent: CustomEvent): void {
-    const componentPortal = new ComponentPortal(BaseItemContextMenuComponent);
+    const componentPortal = new ComponentPortal(
+      TransformationContextMenuComponent
+    );
     const position = {
       y: mouseEvent.detail.mousePosition[1],
       x: mouseEvent.detail.mousePosition[0]
@@ -337,7 +339,9 @@ export class WorkflowEditorComponent {
       event.detail.svgY as number
     );
     this.currentWorkflow.content.operators.push(newOperator);
-    this.baseItemService.updateTransformation(this.currentWorkflow).subscribe();
+    this.transformationService
+      .updateTransformation(this.currentWorkflow)
+      .subscribe();
   }
 
   /**
@@ -461,7 +465,7 @@ export class WorkflowEditorComponent {
       );
 
       copyOfCurrentWorkflow.content.operators.push(replacementOperator);
-      this.baseItemService
+      this.transformationService
         .updateTransformation(copyOfCurrentWorkflow)
         .subscribe();
     });
@@ -492,7 +496,7 @@ export class WorkflowEditorComponent {
         return;
       }
       operator.name = newName;
-      this.baseItemService
+      this.transformationService
         .updateTransformation(this.currentWorkflow)
         .subscribe();
     });
@@ -515,7 +519,7 @@ export class WorkflowEditorComponent {
           currentOperator.position.y + 100
         );
         this.currentWorkflow.content.operators.push(copyOperator);
-        this.baseItemService
+        this.transformationService
           .updateTransformation(this.currentWorkflow)
           .subscribe();
       });
@@ -531,8 +535,8 @@ export class WorkflowEditorComponent {
     );
     if (
       currentOperator === undefined ||
-      (currentOperator.type !== BaseItemType.WORKFLOW &&
-        currentOperator.type !== BaseItemType.COMPONENT)
+      (currentOperator.type !== TransformationType.WORKFLOW &&
+        currentOperator.type !== TransformationType.COMPONENT)
     ) {
       throw new Error('Invalid operator');
     }
@@ -543,7 +547,7 @@ export class WorkflowEditorComponent {
     if (!this.hasChanges || this.currentWorkflow.state === 'RELEASED') {
       return;
     }
-    this.baseItemService
+    this.transformationService
       .updateTransformation(this.currentWorkflow)
       .subscribe(() => (this.hasChanges = false));
   }

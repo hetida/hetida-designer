@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { BasicTestModule } from 'src/app/basic-test.module';
 import { ErrorVisualDirective } from 'src/app/directives/error-visual.directive';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { ComponentIODialogComponent } from './component-io-dialog.component';
 
 describe('ComponentIODialogComponent', () => {
@@ -34,7 +34,7 @@ describe('ComponentIODialogComponent', () => {
                 inputs: [],
                 outputs: [],
                 links: [],
-                type: BaseItemType.COMPONENT
+                type: TransformationType.COMPONENT
               },
               editMode: true
             }

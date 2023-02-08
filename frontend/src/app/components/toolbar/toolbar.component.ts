@@ -3,9 +3,9 @@ import { Store } from '@ngrx/store';
 import { NgHetidaFlowchartService } from 'ng-hetida-flowchart';
 import { of, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
+import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
 import { TransformationState } from 'src/app/store/transformation/transformation.state';
 import {
   isWorkflowTransformation,
@@ -22,7 +22,7 @@ export class ToolbarComponent implements OnInit {
   constructor(
     private readonly transformationStore: Store<TransformationState>,
     private readonly flowchartService: NgHetidaFlowchartService,
-    private readonly baseItemAction: BaseItemActionService
+    private readonly transformationActionService: TransformationActionService
   ) {}
 
   @Input() transformationId: string;
@@ -30,13 +30,13 @@ export class ToolbarComponent implements OnInit {
   transformation: Transformation | undefined;
 
   get isWorkflow(): boolean {
-    return this.transformation.type === BaseItemType.WORKFLOW;
+    return this.transformation.type === TransformationType.WORKFLOW;
   }
 
   get isWorkflowWithoutIo(): boolean {
     return (
       isWorkflowTransformation(this.transformation) &&
-      this.baseItemAction.isWorkflowWithoutIo(this.transformation)
+      this.transformationActionService.isWorkflowWithoutIo(this.transformation)
     );
   }
 
@@ -46,7 +46,7 @@ export class ToolbarComponent implements OnInit {
     timer(0, 100)
       .pipe(
         switchMap(() =>
-          of(this.baseItemAction.isIncomplete(this.transformation))
+          of(this.transformationActionService.isIncomplete(this.transformation))
         )
       )
       .subscribe(isIncomplete => {
@@ -72,11 +72,11 @@ export class ToolbarComponent implements OnInit {
   }
 
   showDocumentation() {
-    this.baseItemAction.showDocumentation(this.transformation.id);
+    this.transformationActionService.showDocumentation(this.transformation.id);
   }
 
   async execute() {
-    await this.baseItemAction.execute(this.transformation);
+    await this.transformationActionService.execute(this.transformation);
   }
 
   get publishTooltip(): string {
@@ -87,12 +87,14 @@ export class ToolbarComponent implements OnInit {
   }
 
   publish(): void {
-    this.baseItemAction.publish(this.transformation);
+    this.transformationActionService.publish(this.transformation);
   }
 
   configureIO() {
-    this.baseItemAction.configureIO(this.transformation);
-    this.incompleteFlag = this.baseItemAction.isIncomplete(this.transformation);
+    this.transformationActionService.configureIO(this.transformation);
+    this.incompleteFlag = this.transformationActionService.isIncomplete(
+      this.transformation
+    );
   }
 
   get deprecateTooltip(): string {
@@ -103,11 +105,11 @@ export class ToolbarComponent implements OnInit {
   }
 
   deprecate(): void {
-    this.baseItemAction.deprecate(this.transformation);
+    this.transformationActionService.deprecate(this.transformation);
   }
 
   copy() {
-    this.baseItemAction.copy(this.transformation);
+    this.transformationActionService.copy(this.transformation);
   }
 
   get newRevisionTooltip(): string {
@@ -118,7 +120,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   newRevision() {
-    this.baseItemAction.newRevision(this.transformation);
+    this.transformationActionService.newRevision(this.transformation);
   }
 
   isReleased() {
@@ -140,10 +142,10 @@ export class ToolbarComponent implements OnInit {
   }
 
   delete() {
-    this.baseItemAction.delete(this.transformation).subscribe();
+    this.transformationActionService.delete(this.transformation).subscribe();
   }
 
   editDetails(): void {
-    this.baseItemAction.editDetails(this.transformation);
+    this.transformationActionService.editDetails(this.transformation);
   }
 }

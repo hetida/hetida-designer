@@ -3,11 +3,11 @@ import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { combineLatest, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { BaseItemType } from 'src/app/enums/base-item-type';
-import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
+import { TransformationType } from 'src/app/enums/transformation-type';
+import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
 import { PopoverService } from 'src/app/service/popover/popover.service';
 import { AuthService } from '../../../auth/auth.service';
-import { BaseItemService } from '../../../service/base-item/base-item.service';
+import { TransformationService } from '../../../service/transformation/transformation.service';
 import { TransformationState } from '../../../store/transformation/transformation.state';
 import { selectTransformationsByCategoryAndName } from '../../../store/transformation/transformation.selectors';
 import { Transformation } from 'src/app/model/transformation';
@@ -22,14 +22,14 @@ import { Utils } from '../../../utils/utils';
 export class NavigationContainerComponent implements OnInit {
   constructor(
     private readonly transformationStore: Store<TransformationState>,
-    private readonly baseItemService: BaseItemService,
+    private readonly transformationService: TransformationService,
     private readonly popoverService: PopoverService,
-    private readonly baseItemActionService: BaseItemActionService,
+    private readonly transformationActionService: TransformationActionService,
     private readonly authService: AuthService
   ) {}
 
   readonly searchFilter = new FormControl('');
-  readonly typeFilter = new FormControl(BaseItemType.WORKFLOW);
+  readonly typeFilter = new FormControl(TransformationType.WORKFLOW);
 
   transformationsByCategory: { [category: string]: Transformation[] };
 
@@ -37,7 +37,7 @@ export class NavigationContainerComponent implements OnInit {
     return (this.typeFilter.value as string) === type;
   }
 
-  get filterChanges(): Observable<BaseItemType> {
+  get filterChanges(): Observable<TransformationType> {
     return this.typeFilter.valueChanges;
   }
 
@@ -51,14 +51,17 @@ export class NavigationContainerComponent implements OnInit {
 
   ngOnInit(): void {
     this.authService.isAuthenticated$().subscribe(() => {
-      this.baseItemService.fetchAllTransformations();
+      this.transformationService.fetchAllTransformations();
     });
 
     combineLatest([this.filterChanges, this.searchFilterChanges])
       .pipe(
-        switchMap(([baseItemType, searchString]) =>
+        switchMap(([transformationType, searchString]) =>
           this.transformationStore.select(
-            selectTransformationsByCategoryAndName(baseItemType, searchString)
+            selectTransformationsByCategoryAndName(
+              transformationType,
+              searchString
+            )
           )
         )
       )
@@ -72,11 +75,11 @@ export class NavigationContainerComponent implements OnInit {
   }
 
   newWorkflow(): void {
-    this.baseItemActionService.newWorkflow();
+    this.transformationActionService.newWorkflow();
   }
 
   newComponent(): void {
-    this.baseItemActionService.newComponent();
+    this.transformationActionService.newComponent();
   }
 
   closePopover(): void {

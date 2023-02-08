@@ -3,7 +3,7 @@ import { Store } from '@ngrx/store';
 import { EMPTY, Observable, of } from 'rxjs';
 import { finalize, first, switchMap, switchMapTo, tap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
-import { BaseItemType } from '../../enums/base-item-type';
+import { TransformationType } from '../../enums/transformation-type';
 import { RevisionState } from '../../enums/revision-state';
 import { IAppState } from '../../store/app.state';
 import {
@@ -31,7 +31,7 @@ import { Utils } from 'src/app/utils/utils';
 @Injectable({
   providedIn: 'root'
 })
-export class BaseItemService {
+export class TransformationService {
   constructor(
     private readonly transformationHttpService: TransformationHttpService,
     private readonly localStorageService: LocalStorageService,
@@ -68,7 +68,7 @@ export class BaseItemService {
       revision_group_id: uuid().toString(),
       name: 'New component',
       category: 'Draft',
-      type: BaseItemType.COMPONENT,
+      type: TransformationType.COMPONENT,
       version_tag: '0.1.0',
       state: RevisionState.DRAFT,
       description: 'New created component',
@@ -90,7 +90,7 @@ export class BaseItemService {
       revision_group_id: uuid().toString(),
       name: 'New Workflow',
       category: 'Draft',
-      type: BaseItemType.WORKFLOW,
+      type: TransformationType.WORKFLOW,
       version_tag: '0.1.0',
       state: RevisionState.DRAFT,
       description: 'New created workflow',

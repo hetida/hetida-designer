@@ -16,20 +16,20 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData
 } from 'src/app/components/confirmation-dialog/confirm-dialog.component';
-import { CopyBaseItemDialogComponent } from 'src/app/components/copy-base-item-dialog/copy-base-item-dialog.component';
+import { CopyTransformationDialogComponent } from 'src/app/components/copy-transformation-dialog/copy-transformation-dialog.component';
 import {
   WorkflowIODialogComponent,
   WorkflowIODialogData
 } from 'src/app/components/workflow-io-dialog/workflow-io-dialog.component';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import * as uuid from 'uuid';
-import { BaseItemDialogData } from '../../model/base-item-dialog-data';
+import { TransformationDialogData } from '../../model/transformation-dialog-data';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
-import { BaseItemService } from './base-item.service';
+import { TransformationService } from './transformation.service';
 import {
   ComponentTransformation,
   isComponentTransformation,
@@ -53,12 +53,12 @@ import { Utils } from '../../utils/utils';
 @Injectable({
   providedIn: 'root'
 })
-export class BaseItemActionService {
+export class TransformationActionService {
   constructor(
     private readonly dialog: MatDialog,
     private readonly transformationStore: Store<TransformationState>,
     private readonly transformationHttpService: TransformationHttpService,
-    private readonly baseItemService: BaseItemService,
+    private readonly transformationService: TransformationService,
     private readonly tabItemService: TabItemService,
     private readonly notificationService: NotificationService
   ) {}
@@ -70,9 +70,9 @@ export class BaseItemActionService {
 
     let title: string;
 
-    if (transformation.type === BaseItemType.COMPONENT) {
+    if (transformation.type === TransformationType.COMPONENT) {
       title = 'Execute Component';
-    } else if (transformation.type === BaseItemType.WORKFLOW) {
+    } else if (transformation.type === TransformationType.WORKFLOW) {
       title = 'Execute Workflow';
     } else {
       console.warn(
@@ -100,7 +100,7 @@ export class BaseItemActionService {
     const transformationExecution$ = (
       executeTestClickEvent: ConfirmClickEvent
     ): Observable<ExecutionResponse> => {
-      return this.baseItemService.testTransformation(
+      return this.transformationService.testTransformation(
         executeTestClickEvent.id,
         executeTestClickEvent.test_wiring
       );
@@ -125,7 +125,7 @@ export class BaseItemActionService {
             )
         ),
         switchMap(({ selectedTransformation, test_wiring }) =>
-          this.baseItemService.updateTransformation({
+          this.transformationService.updateTransformation({
             ...selectedTransformation,
             test_wiring
           })
@@ -144,10 +144,10 @@ export class BaseItemActionService {
   public editDetails(transformation: Transformation): void {
     const isReleased = this.isReleased(transformation);
     const dialogRef = this.dialog.open<
-      CopyBaseItemDialogComponent,
-      BaseItemDialogData,
+      CopyTransformationDialogComponent,
+      TransformationDialogData,
       Transformation | undefined
-    >(CopyBaseItemDialogComponent, {
+    >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
         title: `Edit ${transformation.type.toLowerCase()} ${
@@ -182,7 +182,7 @@ export class BaseItemActionService {
       .pipe(
         switchMap((transformationToUpdate: Transformation | undefined) => {
           if (transformationToUpdate) {
-            return this.baseItemService.updateTransformation(
+            return this.transformationService.updateTransformation(
               transformationToUpdate
             );
           }
@@ -206,10 +206,10 @@ export class BaseItemActionService {
       transformation
     );
     const dialogRef = this.dialog.open<
-      CopyBaseItemDialogComponent,
-      BaseItemDialogData,
+      CopyTransformationDialogComponent,
+      TransformationDialogData,
       Transformation | undefined
-    >(CopyBaseItemDialogComponent, {
+    >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
         title: 'Create new revision?',
@@ -296,7 +296,9 @@ export class BaseItemActionService {
         .pipe(
           switchMap(isConfirmed => {
             if (isConfirmed) {
-              return this.baseItemService.releaseTransformation(transformation);
+              return this.transformationService.releaseTransformation(
+                transformation
+              );
             }
             return of(null);
           })
@@ -320,10 +322,10 @@ export class BaseItemActionService {
     type = `${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
     const dialogRef = this.dialog.open<
-      CopyBaseItemDialogComponent,
-      Omit<BaseItemDialogData, 'content'>,
+      CopyTransformationDialogComponent,
+      Omit<TransformationDialogData, 'content'>,
       Transformation | undefined
-    >(CopyBaseItemDialogComponent, {
+    >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
         title: `Copy ${type} ${copyOfTransformation.name} ${copyOfTransformation.version_tag}`,
@@ -370,16 +372,16 @@ export class BaseItemActionService {
 
   public newWorkflow(): void {
     const dialogRef = this.dialog.open<
-      CopyBaseItemDialogComponent,
-      Omit<BaseItemDialogData, 'content'>,
+      CopyTransformationDialogComponent,
+      Omit<TransformationDialogData, 'content'>,
       Transformation | undefined
-    >(CopyBaseItemDialogComponent, {
+    >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
         title: 'Create new workflow',
         actionOk: 'Create Workflow',
         actionCancel: 'Cancel',
-        transformation: this.baseItemService.getDefaultWorkflowTransformation(),
+        transformation: this.transformationService.getDefaultWorkflowTransformation(),
         disabledState: {
           name: false,
           category: false,
@@ -399,16 +401,16 @@ export class BaseItemActionService {
 
   public newComponent(): void {
     const dialogRef = this.dialog.open<
-      CopyBaseItemDialogComponent,
-      Omit<BaseItemDialogData, 'content'>,
+      CopyTransformationDialogComponent,
+      Omit<TransformationDialogData, 'content'>,
       Transformation | undefined
-    >(CopyBaseItemDialogComponent, {
+    >(CopyTransformationDialogComponent, {
       width: '640px',
       data: {
         title: 'Create new component',
         actionOk: 'Create Component',
         actionCancel: 'Cancel',
-        transformation: this.baseItemService.getDefaultComponentTransformation(),
+        transformation: this.transformationService.getDefaultComponentTransformation(),
         disabledState: {
           name: false,
           category: false,
@@ -450,7 +452,9 @@ export class BaseItemActionService {
       .pipe(
         switchMap(isConfirmed => {
           if (isConfirmed) {
-            return this.baseItemService.disableTransformation(transformation);
+            return this.transformationService.disableTransformation(
+              transformation
+            );
           }
           return of(null);
         })
@@ -484,7 +488,7 @@ export class BaseItemActionService {
     transformation: Transformation
   ): Observable<void> {
     this.tabItemService.deselectActiveTabItem();
-    return this.baseItemService.deleteTransformation(transformation.id);
+    return this.transformationService.deleteTransformation(transformation.id);
   }
 
   // TODO unit test
@@ -596,7 +600,7 @@ export class BaseItemActionService {
       .pipe(
         switchMap(updatedComponentTransformation => {
           if (updatedComponentTransformation) {
-            return this.baseItemService.updateTransformation(
+            return this.transformationService.updateTransformation(
               updatedComponentTransformation
             );
           }
@@ -698,7 +702,7 @@ export class BaseItemActionService {
                 }
               };
 
-              this.baseItemService
+              this.transformationService
                 .updateTransformation(updatedWorkflowTransformation)
                 .subscribe();
             }

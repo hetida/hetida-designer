@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
+import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
 import { TabItemService } from '../../service/tab-item/tab-item.service';
 import {
   isWorkflowTransformation,
@@ -18,12 +18,13 @@ import {
 } from '../../model/transformation';
 
 @Component({
-  selector: 'hd-base-item-context-menu',
-  templateUrl: './base-item-context-menu.component.html',
-  styleUrls: ['./base-item-context-menu.component.scss'],
+  selector: 'hd-transformation-context-menu',
+  templateUrl: './transformation-context-menu.component.html',
+  styleUrls: ['./transformation-context-menu.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
+export class TransformationContextMenuComponent
+  implements AfterViewInit, OnDestroy {
   @ViewChild(MatMenuTrigger) readonly _trigger: MatMenuTrigger;
   @ViewChild(MatMenu) readonly _menu: MatMenu;
   @ViewChild('invisibleTrigger') _elementRef: ElementRef;
@@ -35,14 +36,14 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   @Input()
   set transformation(transformation: Transformation) {
     // show or hide execute button
-    this._isIncomplete = this.baseItemActionsService.isIncomplete(
+    this._isIncomplete = this.transformationActionService.isIncomplete(
       transformation
     );
     this._isNotPublished = transformation.state === RevisionState.DRAFT;
     // show or hide configureIO button in workflows
     this._isWorkflowWithoutIo =
       isWorkflowTransformation(transformation) &&
-      this.baseItemActionsService.isWorkflowWithoutIo(transformation);
+      this.transformationActionService.isWorkflowWithoutIo(transformation);
     this._transformation = transformation;
   }
 
@@ -52,7 +53,7 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     public readonly changeDetector: ChangeDetectorRef,
-    private readonly baseItemActionsService: BaseItemActionService,
+    private readonly transformationActionService: TransformationActionService,
     private readonly tabItemService: TabItemService
   ) {}
 
@@ -73,41 +74,41 @@ export class BaseItemContextMenuComponent implements AfterViewInit, OnDestroy {
   }
 
   editItem() {
-    this.baseItemActionsService.editDetails(this.transformation);
+    this.transformationActionService.editDetails(this.transformation);
   }
 
   openDocumentation() {
-    this.baseItemActionsService.showDocumentation(
+    this.transformationActionService.showDocumentation(
       this.transformation.id,
       false
     );
   }
 
   editDocumentation() {
-    this.baseItemActionsService.showDocumentation(this.transformation.id);
+    this.transformationActionService.showDocumentation(this.transformation.id);
   }
 
   copyItem() {
-    this.baseItemActionsService.copy(this.transformation);
+    this.transformationActionService.copy(this.transformation);
   }
 
   publish() {
-    this.baseItemActionsService.publish(this.transformation);
+    this.transformationActionService.publish(this.transformation);
   }
 
   delete() {
-    this.baseItemActionsService.delete(this.transformation).subscribe();
+    this.transformationActionService.delete(this.transformation).subscribe();
   }
 
   async execute() {
-    await this.baseItemActionsService.execute(this.transformation);
+    await this.transformationActionService.execute(this.transformation);
   }
 
   configureIO() {
-    this.baseItemActionsService.configureIO(this.transformation);
+    this.transformationActionService.configureIO(this.transformation);
   }
 
   deprecate() {
-    this.baseItemActionsService.deprecate(this.transformation);
+    this.transformationActionService.deprecate(this.transformation);
   }
 }
