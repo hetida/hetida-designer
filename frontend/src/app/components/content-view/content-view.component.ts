@@ -25,7 +25,7 @@ const HOME_TAB = 0;
 const getTabItemHash = (
   tabItemWithTransformation: TabItemWithTransformation
 ): string => {
-  return `${tabItemWithTransformation.Transformation.id}-${tabItemWithTransformation.tabItemType}`;
+  return `${tabItemWithTransformation.transformation.id}-${tabItemWithTransformation.tabItemType}`;
 };
 
 interface ContentViewStoreState {
@@ -89,7 +89,7 @@ export class ContentViewComponent implements OnInit, OnDestroy {
             ? HOME_TAB
             : orderedTabItemsWithTransformation.findIndex(
                 tabItem =>
-                  tabItem.Transformation.id ===
+                  tabItem.transformation.id ===
                     activeTabItem.transformationId &&
                   tabItem.tabItemType === activeTabItem.tabItemType
               ) + 1;

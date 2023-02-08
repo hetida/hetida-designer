@@ -6,7 +6,7 @@ import { selectHashedTransformationLookupById } from '../transformation/transfor
 import { Transformation } from '../../model/transformation';
 
 export type TabItemWithTransformation = Omit<TabItem, 'transformationId'> & {
-  Transformation: Transformation;
+  transformation: Transformation;
 };
 
 const { selectEntities, selectAll } = tabItemEntityAdapter.getSelectors();
@@ -37,7 +37,7 @@ export const selectOrderedTabItemsWithTransformation = createSelector(
         }
         return {
           ...tabItem,
-          Transformation: transformation
+          transformation: transformation
         };
       }
     )
