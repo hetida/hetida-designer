@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import cast
 from uuid import UUID
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -8,7 +8,7 @@ from hetdesrun.utils import Type
 
 def get_direct_dependencies(
     transformation_revision: TransformationRevision,
-) -> List[UUID]:
+) -> list[UUID]:
     """Obtain the direct dependencies of a transformation revision
 
     A component has no direct dependencies. For a workflow, this returns

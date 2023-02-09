@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+echo "CALLING RUFF"
+python3 -m ruff --format junit demo_adapter_python tests >ruff_report.xml
+
+echo "FINISH RUFF"
+exit 0 # ruff may throw exit code != 0 if it finds something!

@@ -12,7 +12,7 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.utils import get_uuid_from_seed
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def clean_test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"

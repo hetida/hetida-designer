@@ -1,5 +1,4 @@
 import logging
-from typing import Set
 from uuid import UUID
 
 from hetdesrun.exportimport.importing import import_transformations
@@ -20,7 +19,7 @@ def deprecate_all_but_latest_per_group(directly_in_db: bool = False) -> None:
         directly_from_db=directly_in_db,
     )
 
-    revision_group_ids: Set[UUID] = set()
+    revision_group_ids: set[UUID] = set()
 
     for tr in tr_list:
         revision_group_ids.add(tr.revision_group_id)

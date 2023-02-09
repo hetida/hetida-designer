@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException, Path, status
@@ -110,8 +109,7 @@ async def create_component_revision(
     deprecated=True,
 )
 async def get_component_revision_by_id(
-    # pylint: disable=redefined-builtin
-    id: UUID = Path(
+    id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
     ),
@@ -156,8 +154,7 @@ async def get_component_revision_by_id(
     deprecated=True,
 )
 async def update_component_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     updated_component_dto: ComponentRevisionFrontendDto,
 ) -> ComponentRevisionFrontendDto:
     """Update or store a transformation revision of type component in the data base.
@@ -189,7 +186,7 @@ async def update_component_revision(
         logger.error("The following validation error occured:\n%s", str(e))
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
-    existing_transformation_revision: Optional[TransformationRevision] = None
+    existing_transformation_revision: TransformationRevision | None = None
 
     try:
         existing_transformation_revision = read_single_transformation_revision(
@@ -247,8 +244,7 @@ async def update_component_revision(
     deprecated=True,
 )
 async def delete_component_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
 ) -> None:
     """Delete a transformation revision of type component from the data base.
 
@@ -282,11 +278,10 @@ async def delete_component_revision(
     deprecated=True,
 )
 async def execute_component_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
-    job_id: Optional[UUID] = None,
+    job_id: UUID | None = None,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision of type component.
 
@@ -326,8 +321,7 @@ async def execute_component_revision(
     deprecated=True,
 )
 async def bind_wiring_to_component_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     wiring_dto: WiringFrontendDto,
 ) -> ComponentRevisionFrontendDto:
     """Store or update the test wiring of a transformation revision of type component.

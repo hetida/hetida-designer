@@ -2,20 +2,7 @@ from unittest import mock
 
 import pytest
 
-from hetdesrun.persistence import get_db_engine, sessionmaker
-from hetdesrun.persistence.dbmodels import Base
-
-
-@pytest.fixture(scope="function")
-def clean_test_db_engine(use_in_memory_db):
-    if use_in_memory_db:
-        in_memory_database_url = "sqlite+pysqlite:///:memory:"
-        engine = get_db_engine(override_db_url=in_memory_database_url)
-    else:
-        engine = get_db_engine()
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    return engine
+from hetdesrun.persistence import sessionmaker
 
 
 @pytest.mark.asyncio

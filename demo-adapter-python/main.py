@@ -11,7 +11,6 @@ Usage: Call with activated virtual environment via
 from project directory.
 """
 
-# pylint: disable=wrong-import-order
 import logging
 
 from demo_adapter_python import configure_logging

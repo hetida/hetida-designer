@@ -1,9 +1,7 @@
 import datetime
 import os
 from enum import Enum
-from typing import Optional, Union
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
@@ -128,7 +126,7 @@ class RuntimeConfig(BaseSettings):
         SecretStr("hetida_designer_dbpasswd"), env="HD_DB_PASSWORD"
     )
 
-    sqlalchemy_connection_string: Optional[Union[SecretStr, SQLAlchemy_DB_URL]] = Field(
+    sqlalchemy_connection_string: SecretStr | SQLAlchemy_DB_URL | None = Field(
         None,
         description=(
             "Rfc 1738 database url. Not set by default."
@@ -158,7 +156,7 @@ class RuntimeConfig(BaseSettings):
     )
 
     auth_public_key_url: str = Field(
-        "http://hetida-designer-keycloak:8080/auth/realms/hetida-designer/protocol/openid-connect/certs",  # pylint: disable=line-too-long
+        "http://hetida-designer-keycloak:8080/auth/realms/hetida-designer/protocol/openid-connect/certs",  # noqa: E501
         description="URL to endpoint providing public keys for verifying bearer token signature",
         env="HD_AUTH_PUBLIC_KEY_URL",
     )
@@ -174,7 +172,7 @@ class RuntimeConfig(BaseSettings):
         env="HD_AUTH_ROLE_KEY",
     )
 
-    auth_allowed_role: Optional[str] = Field(
+    auth_allowed_role: str | None = Field(
         None,
         description=(
             "Role provided in bearer access token that is allowed access."
@@ -199,7 +197,7 @@ class RuntimeConfig(BaseSettings):
         example="P0DT00H00M15S",
     )
 
-    auth_bearer_token_for_outgoing_requests: Optional[str] = Field(
+    auth_bearer_token_for_outgoing_requests: str | None = Field(
         None,
         description=(
             "A string containing a bearer token for making outgoing requests. "
@@ -224,9 +222,9 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_INTERNAL_AUTH_MODE",
     )
-    internal_auth_client_credentials: Optional[
-        Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
-    ] = Field(
+    internal_auth_client_credentials: ServiceCredentials | Json[
+        ServiceCredentials
+    ] | None = Field(
         None,
         description=(
             "Client credentials as json encoded string."
@@ -251,9 +249,9 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_EXTERNAL_AUTH_MODE",
     )
-    external_auth_client_credentials: Optional[
-        Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
-    ] = Field(
+    external_auth_client_credentials: ServiceCredentials | Json[
+        ServiceCredentials
+    ] | None = Field(
         None,
         description="Client credentials as json encoded string.",
         example=(
@@ -311,12 +309,12 @@ class RuntimeConfig(BaseSettings):
             " use the corresponding environment variables!"
         ),
     )
-    hd_backend_basic_auth_user: Optional[str] = Field(
+    hd_backend_basic_auth_user: str | None = Field(
         None,
         env="HETIDA_DESIGNER_BASIC_AUTH_USER",
         description="Basic Auth User",
     )
-    hd_backend_basic_auth_password: Optional[str] = Field(
+    hd_backend_basic_auth_password: str | None = Field(
         None,
         env="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD",
         description="Basic Auth User",
@@ -382,13 +380,12 @@ class RuntimeConfig(BaseSettings):
         env="HETIDA_DESIGNER_KAFKA_RESPONSE_TOPIC",
     )
 
-    # pylint: disable=no-self-argument
     @validator("internal_auth_client_credentials")
     def internal_auth_client_credentials_set_if_internal_auth_mode_is_client(
         cls,
-        v: Optional[Json[ServiceCredentials]],  # pylint: disable=unsubscriptable-object
+        v: Json[ServiceCredentials] | None,
         values: dict,
-    ) -> Optional[Json[ServiceCredentials]]:  # pylint: disable=unsubscriptable-object
+    ) -> Json[ServiceCredentials] | None:
 
         internal_auth_mode = values["internal_auth_mode"]
 
@@ -400,13 +397,12 @@ class RuntimeConfig(BaseSettings):
             raise ValueError(msg)
         return v
 
-    # pylint: disable=no-self-argument
     @validator("external_auth_client_credentials")
     def external_auth_client_credentials_set_if_external_auth_mode_is_client(
         cls,
-        v: Optional[Json[ServiceCredentials]],  # pylint: disable=unsubscriptable-object
+        v: Json[ServiceCredentials] | None,
         values: dict,
-    ) -> Optional[Json[ServiceCredentials]]:  # pylint: disable=unsubscriptable-object
+    ) -> Json[ServiceCredentials] | None:
 
         external_auth_mode = values["external_auth_mode"]
 
@@ -418,7 +414,6 @@ class RuntimeConfig(BaseSettings):
             raise ValueError(msg)
         return v
 
-    # pylint: disable=no-self-argument
     @validator("is_runtime_service")
     def must_be_at_least_backend_or_runtime(cls, v: bool, values: dict) -> bool:
 
@@ -432,7 +427,6 @@ class RuntimeConfig(BaseSettings):
             raise ValueError(msg)
         return v
 
-    # pylint: disable=no-self-argument
     @validator("hd_backend_api_url")
     def backend_api_url_ends_with_slash(cls, v: str) -> str:
         """make it end with a slash"""
@@ -440,11 +434,10 @@ class RuntimeConfig(BaseSettings):
             v += "/"
         return v
 
-    # pylint: disable=no-self-argument
     @validator("sqlalchemy_connection_string")
     def database_url(
-        cls, v: Optional[Union[SecretStr, SQLAlchemy_DB_URL]], values: dict
-    ) -> Optional[Union[SecretStr, SQLAlchemy_DB_URL]]:
+        cls, v: SecretStr | SQLAlchemy_DB_URL | None, values: dict
+    ) -> SecretStr | SQLAlchemy_DB_URL | None:
 
         if v is None:
             pw_secret = values["sqlalchemy_db_password"]

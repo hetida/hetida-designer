@@ -2,7 +2,7 @@
 
 import asyncio
 import functools
-from typing import Callable, Dict, Optional
+from typing import Callable
 
 from hetdesrun.component.load import ComponentCodeImportError
 from hetdesrun.datatypes import DataType
@@ -12,21 +12,20 @@ class ComponentEntryPointRegistrationError(ComponentCodeImportError):
     pass
 
 
-# pylint: disable=redefined-builtin
 def register(
     *,
-    inputs: Dict[str, DataType],
-    outputs: Dict[str, DataType],
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-    category: Optional[str] = None,
-    id: Optional[str] = None,
-    revision_group_id: Optional[str] = None,
-    version_tag: Optional[str] = None,
-    state: Optional[str] = None,
-    released_timestamp: Optional[str] = None,
-    disabled_timestamp: Optional[str] = None,
-    is_pure_plot_component: Optional[bool] = None  # pylint: disable=unused-argument
+    inputs: dict[str, DataType],
+    outputs: dict[str, DataType],
+    name: str | None = None,
+    description: str | None = None,
+    category: str | None = None,
+    id: str | None = None,  # noqa: A002
+    revision_group_id: str | None = None,
+    version_tag: str | None = None,
+    state: str | None = None,
+    released_timestamp: str | None = None,
+    disabled_timestamp: str | None = None,
+    is_pure_plot_component: bool | None = None  # noqa: ARG001
 ) -> Callable[[Callable], Callable]:
     """Additonal features for component entrypoint functions
 

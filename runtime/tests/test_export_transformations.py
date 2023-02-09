@@ -134,7 +134,7 @@ def test_get_transformation_from_java_backend():
         assert tr_json_from_backend == tr_json_from_dict
 
 
-def mock_get_trafo_from_java_backend(id, type):
+def mock_get_trafo_from_java_backend(id, type):  # noqa: A002,
     return TransformationRevision(**tr_json_dict[str(id)])
 
 
@@ -143,7 +143,7 @@ def test_export_all_base_items(tmp_path):
     resp_mock.status_code = 200
     resp_mock.json = mock.Mock(return_value=bi_list)
 
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.exportimport.export.requests.get",
         return_value=resp_mock,
     ) as mocked_get:

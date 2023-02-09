@@ -1,7 +1,5 @@
-from typing import List
 from uuid import UUID, uuid4
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, root_validator
 
 from hetdesrun.backend.models.io import ConnectorFrontendDto
@@ -11,7 +9,7 @@ from hetdesrun.persistence.models.link import Link, Vertex
 
 
 class PointFrontendDto(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
     pos_x: int
     pos_y: int
 
@@ -20,15 +18,14 @@ class PointFrontendDto(BaseModel):
 
 
 class WorkflowLinkFrontendDto(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
     from_operator: UUID
     from_connector: UUID
     to_operator: UUID
     to_connector: UUID
-    path: List[PointFrontendDto] = []
+    path: list[PointFrontendDto] = []
 
     @root_validator()
-    # pylint: disable=no-self-argument
     def no_self_reference(cls, values: dict) -> dict:
         try:
             to_operator = values["to_operator"]

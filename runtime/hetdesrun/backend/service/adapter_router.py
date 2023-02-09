@@ -1,5 +1,4 @@
 import logging
-from typing import Dict, List
 
 from fastapi import HTTPException, status
 
@@ -25,11 +24,22 @@ adapter_router = HandleTrailingSlashAPIRouter(
 )
 
 
-def get_adapter_dict() -> Dict[str, AdapterFrontendDto]:
-    adapter_dict: Dict[str, AdapterFrontendDto] = {}
+@adapter_router.get(
+    "",
+    response_model=list[AdapterFrontendDto],
+    summary="Returns all adapters",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully got list of adapters"}
+    },
+)
+async def get_all_adapters() -> list[AdapterFrontendDto]:
+    """Get all adapters."""
+    logger.info("get adapters")
+    adapter_list: list[AdapterFrontendDto] = []
 
     if adapters is None:
-        return adapter_dict
+        return adapter_list
 
     for adapter in adapters.split(","):
         adapter_properties = adapter.split("|")
@@ -42,14 +52,16 @@ def get_adapter_dict() -> Dict[str, AdapterFrontendDto]:
             logger.error(msg)
             raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
-        adapter_dict[adapter_properties[0]] = AdapterFrontendDto(
-            id=adapter_properties[0],
-            name=adapter_properties[1],
-            url=adapter_properties[2],
-            internalUrl=adapter_properties[3],
+        adapter_list.append(
+            AdapterFrontendDto(
+                id=adapter_properties[0],
+                name=adapter_properties[1],
+                url=adapter_properties[2],
+                internalUrl=adapter_properties[3],
+            )
         )
 
-    return adapter_dict
+    return adapter_list
 
 
 @adapter_router.get(

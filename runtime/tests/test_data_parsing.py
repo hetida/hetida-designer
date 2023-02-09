@@ -59,8 +59,8 @@ def test_dataframe_parsing():
     df1 = MyDfModel(df='{"a":{"0":1.0,"1":2.0,"2":null},"b":{"0":1,"1":2,"2":3}}').df
 
     assert len(df1) == 3
-    assert df1.isnull()["a"].iloc[1] == False  # pylint: disable=singleton-compariosn
-    assert df1.isnull()["a"].iloc[2] == True  # pylint: disable=singleton-compariosn
+    assert df1.isna()["a"].iloc[1] == False  # noqa: E712
+    assert df1.isna()["a"].iloc[2] == True  # noqa: E712
     df2 = MyDfModel(
         df={"a": {"0": 1.0, "1": 2.0, "2": None}, "b": {"0": 1, "1": 2, "2": 3}}
     ).df
@@ -81,28 +81,32 @@ def test_parsing_of_null_values():
     test_obj = ExampleObj(s="[null, 1.2, null]")
 
     assert is_float_dtype(test_obj.s.dtype)
-    assert np.isnan(test_obj.s.iloc[0]) and np.isnan(test_obj.s.iloc[2])
+    assert np.isnan(test_obj.s.iloc[0])
+    assert np.isnan(test_obj.s.iloc[2])
 
 
 def test_null_in_integers_parses_as_floats():
     test_obj = ExampleObj(s="[null, 1, null]")
 
     assert is_float_dtype(test_obj.s.dtype)
-    assert np.isnan(test_obj.s.iloc[0]) and np.isnan(test_obj.s.iloc[2])
+    assert np.isnan(test_obj.s.iloc[0])
+    assert np.isnan(test_obj.s.iloc[2])
 
 
 def test_null_in_bool_parses_as_floats():
     test_obj = ExampleObj(s="[null, true, null]")
 
     assert is_float_dtype(test_obj.s.dtype)
-    assert np.isnan(test_obj.s.iloc[0]) and np.isnan(test_obj.s.iloc[2])
+    assert np.isnan(test_obj.s.iloc[0])
+    assert np.isnan(test_obj.s.iloc[2])
 
 
 def test_null_in_timestamps_parses_as_datetimes():
     test_obj = ExampleObj(s='[null, "2020-02-03T14:55:12", null]')
 
     assert is_datetime64_any_dtype(test_obj.s.dtype)
-    assert pd.isnull(test_obj.s.iloc[0]) and pd.isnull(test_obj.s.iloc[2])
+    assert pd.isna(test_obj.s.iloc[0])
+    assert pd.isna(test_obj.s.iloc[2])
 
 
 def test_parse_series_from_dict_with_null():

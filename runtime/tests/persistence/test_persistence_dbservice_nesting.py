@@ -15,7 +15,7 @@ from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import get_uuid_from_seed
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def clean_test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
@@ -60,7 +60,7 @@ def workflow_creator(identifier: str) -> TransformationRevision:
 # @pytest.mark.skip
 def test_update_or_create_nesting(clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -106,7 +106,6 @@ def test_update_or_create_nesting(clean_test_db_engine):
             store_single_transformation_revision(workflow_parent)
             update_or_create_nesting(workflow_parent)
 
-            # workflow_sister.io_interface.inputs[0].name = "name"
             workflow_sister.release()
             workflow_parent.content.operators.append(workflow_sister.to_operator())
             update_or_create_nesting(workflow_parent)

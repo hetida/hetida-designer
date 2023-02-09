@@ -6,7 +6,6 @@ category together with the transitive dependency closure.
 
 This module contains filtering functions for ensembles of transformation revisions.
 """
-from typing import Dict, List
 from uuid import UUID
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -17,8 +16,8 @@ from hetdesrun.utils import State
 
 
 def basic_trafo_filter_map(
-    transformation_revisions: List[TransformationRevision], filter_params: FilterParams
-) -> Dict[UUID, bool]:
+    transformation_revisions: list[TransformationRevision], filter_params: FilterParams
+) -> dict[UUID, bool]:
     """Get a filter map which does not consider dependencies and unused criteria
 
     If criteria are set, they all must be fulfilled (logical AND). If no criteria
@@ -71,9 +70,9 @@ def basic_trafo_filter_map(
 
 
 def update_filter_for_dependencies(
-    filter_map: Dict[UUID, bool],
-    ids_by_nesting_level: Dict[int, List[UUID]],
-    transformation_dict: Dict[UUID, TransformationRevision],
+    filter_map: dict[UUID, bool],
+    ids_by_nesting_level: dict[int, list[UUID]],
+    transformation_dict: dict[UUID, TransformationRevision],
     raise_on_missing_dependency: bool = False,
 ) -> None:
     """Update filter_map inplace to include dependencies
@@ -90,7 +89,7 @@ def update_filter_for_dependencies(
     Note: Dependencies always have strictly smaller level(=depth). This allows to
     iterate from higher level to lower level.
     """
-    for level in reversed(sorted(ids_by_nesting_level)):
+    for level in sorted(ids_by_nesting_level, reverse=True):
         for transformation_id in ids_by_nesting_level[level]:
             if filter_map[transformation_id]:
                 transformation = transformation_dict[transformation_id]
@@ -101,20 +100,18 @@ def update_filter_for_dependencies(
                     except KeyError as e:
                         if raise_on_missing_dependency:
                             raise KeyError(
-                                (
-                                    f"Could not find dependency with id {direct_dependency_id} of "
-                                    f"trafo {transformation.name} with id {transformation_id} in"
-                                    " filter_map."
-                                )
+                                f"Could not find dependency with id {direct_dependency_id} of "
+                                f"trafo {transformation.name} with id {transformation_id} in"
+                                " filter_map."
                             ) from e
 
 
 def complete_trafo_filter_map(
-    transformation_revisions: List[TransformationRevision],
+    transformation_revisions: list[TransformationRevision],
     filter_params: FilterParams,
-    ids_by_nesting_level: Dict[int, List[UUID]],
+    ids_by_nesting_level: dict[int, list[UUID]],
     raise_on_missing_dependency: bool = False,
-) -> Dict[UUID, bool]:
+) -> dict[UUID, bool]:
     filter_map = basic_trafo_filter_map(transformation_revisions, filter_params)
 
     if filter_params.include_dependencies:
@@ -129,10 +126,10 @@ def complete_trafo_filter_map(
 
 
 def filter_and_order_trafos(
-    transformation_revisions: List[TransformationRevision],
+    transformation_revisions: list[TransformationRevision],
     filter_params: FilterParams,
     raise_on_missing_dependency: bool = False,
-) -> List[TransformationRevision]:
+) -> list[TransformationRevision]:
     """Filter trafos and order them for import
 
     This filters the given transformation_revisions using filter_params

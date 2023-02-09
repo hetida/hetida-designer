@@ -1,8 +1,7 @@
--c requirements-base.txt
 -c requirements.txt
+-c requirements-base.txt
 pytest
 coverage
-pylint
 pytest-cov
 black
 pytest-asyncio
@@ -13,3 +12,5 @@ types-requests
 types-pytz
 ipykernel
 boto3-stubs[essential]
+ruff
+pytest-random-order

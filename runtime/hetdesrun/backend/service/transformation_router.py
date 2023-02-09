@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 import httpx
@@ -116,7 +116,7 @@ async def create_transformation_revision(
 
 @transformation_router.get(
     "",
-    response_model=List[TransformationRevision],
+    response_model=list[TransformationRevision],
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Returns combined list of all transformation revisions (components and workflows)",
@@ -128,26 +128,30 @@ async def create_transformation_revision(
     },
 )
 async def get_all_transformation_revisions(
-    type: Optional[Type] = Query(  # pylint: disable=redefined-builtin
+    type: Type  # noqa: A002
+    | None = Query(
         None,
         description="Filter for specified type",
     ),
-    state: Optional[State] = Query(
+    state: State
+    | None = Query(
         None,
         description="Filter for specified state",
     ),
-    category: Optional[ValidStr] = Query(
+    category: ValidStr
+    | None = Query(
         None,
         description="Filter for specified category",
     ),
-    revision_group_id: Optional[UUID] = Query(
-        None, description="Filter for specified revision group id"
-    ),
-    ids: Optional[List[UUID]] = Query(
+    revision_group_id: UUID
+    | None = Query(None, description="Filter for specified revision group id"),
+    ids: list[UUID]
+    | None = Query(
         None,
         description="Filter for specified list of ids",
     ),
-    names: Optional[List[NonEmptyValidStr]] = Query(
+    names: list[NonEmptyValidStr]
+    | None = Query(
         None,
         description=("Filter for specified list of names"),
     ),
@@ -172,7 +176,7 @@ async def get_all_transformation_revisions(
             "not contained in workflows that do not have the state DISABLED."
         ),
     ),
-) -> List[TransformationRevision]:
+) -> list[TransformationRevision]:
     """Get all transformation revisions from the data base.
 
     Used by frontend for initial loading of all transformations to populate the sidebar
@@ -220,8 +224,7 @@ async def get_all_transformation_revisions(
     },
 )
 async def get_transformation_revision_by_id(
-    # pylint: disable=redefined-builtin
-    id: UUID = Path(
+    id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
     ),
@@ -252,7 +255,9 @@ def contains_deprecated(transformation_id: UUID) -> bool:
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
-    assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
+    assert isinstance(  # noqa: S101
+        transformation_revision.content, WorkflowContent
+    )  # hint for mypy
 
     is_disabled = []
     for operator in transformation_revision.content.operators:
@@ -280,30 +285,31 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     },
 )
 async def update_transformation_revisions(
-    updated_transformation_revisions: List[TransformationRevision],
+    updated_transformation_revisions: list[TransformationRevision],
     response: Response,
-    type: Optional[Type] = Query(  # pylint: disable=redefined-builtin
+    type: Type  # noqa: A002
+    | None = Query(
         None,
         description="Filter for specified type",
     ),
-    state: Optional[State] = Query(
+    state: State
+    | None = Query(
         None,
         description="Filter for specified state",
     ),
-    categories: Optional[List[ValidStr]] = Query(
-        None, description="Filter for categories", alias="category"
-    ),
-    category_prefix: Optional[str] = Query(
+    categories: list[ValidStr]
+    | None = Query(None, description="Filter for categories", alias="category"),
+    category_prefix: str
+    | None = Query(
         None,
         description="Category prefix that must be matched exactly (case-sensitive).",
     ),
-    revision_group_id: Optional[UUID] = Query(
-        None, description="Filter for specified revision group id"
-    ),
-    ids: Optional[List[UUID]] = Query(
-        None, description="Filter for specified list of ids", alias="id"
-    ),
-    names: Optional[List[NonEmptyValidStr]] = Query(
+    revision_group_id: UUID
+    | None = Query(None, description="Filter for specified revision group id"),
+    ids: list[UUID]
+    | None = Query(None, description="Filter for specified list of ids", alias="id"),
+    names: list[NonEmptyValidStr]
+    | None = Query(
         None, description=("Filter for specified list of names"), alias="name"
     ),
     include_deprecated: bool = Query(
@@ -357,7 +363,7 @@ async def update_transformation_revisions(
             " an error anywhere."
         ),
     ),
-) -> Dict[UUID, TrafoUpdateProcessSummary]:
+) -> dict[UUID, TrafoUpdateProcessSummary]:
     """Update/store multiple transformation revisions
 
     This updates or creates the given transformation revisions. Automatically
@@ -423,8 +429,7 @@ async def update_transformation_revisions(
     },
 )
 async def update_transformation_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     updated_transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = Query(
         False, description="Only set to True for deployment"
@@ -498,8 +503,7 @@ async def update_transformation_revision(
     },
 )
 async def delete_transformation_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     ignore_state: bool = Query(
         False,
         description=(
@@ -566,7 +570,6 @@ async def handle_trafo_revision_execution_request(
     },
 )
 async def execute_transformation_revision_endpoint(
-    # pylint: disable=redefined-builtin
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision.
@@ -584,7 +587,7 @@ callback_router = APIRouter()
 
 @callback_router.post("{$callback_url}", response_model=ExecutionResponseFrontendDto)
 def receive_execution_response(
-    body: ExecutionResponseFrontendDto,  # pylint: disable=unused-argument
+    body: ExecutionResponseFrontendDto,  # noqa: ARG001
 ) -> None:
     pass
 
@@ -689,12 +692,12 @@ async def handle_latest_trafo_revision_execution_request(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
 ) -> ExecutionResponseFrontendDto:
     try:
-        # pylint: disable=redefined-builtin
-        id = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
+
+        id_ = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
-    exec_by_id_input = exec_latest_by_group_id_input.to_exec_by_id(id)
+    exec_by_id_input = exec_latest_by_group_id_input.to_exec_by_id(id_)
 
     return await handle_trafo_revision_execution_request(exec_by_id_input)
 

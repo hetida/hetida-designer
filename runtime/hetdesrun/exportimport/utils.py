@@ -2,7 +2,6 @@ import json
 import logging
 from datetime import datetime
 from posixpath import join as posix_urljoin
-from typing import Dict, List
 from uuid import UUID
 
 import requests
@@ -28,14 +27,14 @@ logger = logging.getLogger(__name__)
 def get_transformation_revisions(
     params: FilterParams = FilterParams(include_dependencies=False),
     directly_from_db: bool = False,
-) -> List[TransformationRevision]:
+) -> list[TransformationRevision]:
     logger.info(
         "Getting transformation revisions with " + repr(params) + " directly from db"
         if directly_from_db
         else ""
     )
 
-    tr_list: List[TransformationRevision] = []
+    tr_list: list[TransformationRevision] = []
 
     if directly_from_db:
         tr_list = get_multiple_transformation_revisions(params)
@@ -193,7 +192,7 @@ def update_or_create_transformation_revision(
 
 
 def delete_transformation_revision(
-    id: UUID, directly_in_db: bool = False  # pylint: disable=redefined-builtin
+    id: UUID, directly_in_db: bool = False  # noqa: A002
 ) -> None:
     if directly_in_db:
         try:
@@ -243,7 +242,7 @@ def delete_transformation_revision(
 
 
 def delete_transformation_revisions(
-    tr_list: List[TransformationRevision], directly_in_db: bool = False
+    tr_list: list[TransformationRevision], directly_in_db: bool = False
 ) -> None:
     delete_tr_ids = [tr.id for tr in tr_list]
     tr_list_including_dependencies = get_transformation_revisions(
@@ -277,9 +276,9 @@ def deprecate_all_but_latest_in_group(
         directly_from_db=directly_in_db,
     )
 
-    released_tr_dict: Dict[datetime, TransformationRevision] = {}
+    released_tr_dict: dict[datetime, TransformationRevision] = {}
     for released_tr in tr_list:
-        assert released_tr.released_timestamp is not None  # hint for mypy
+        assert released_tr.released_timestamp is not None  # hint for mypy # noqa: S101
         released_tr_dict[released_tr.released_timestamp] = released_tr
 
     latest_timestamp = max(released_tr_dict.keys())

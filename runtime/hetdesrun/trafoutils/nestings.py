@@ -6,7 +6,6 @@ this structure.
 """
 
 import logging
-from typing import Dict, List
 from uuid import UUID
 
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -17,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 def structure_ids_by_nesting_level(
-    transformation_dict: Dict[UUID, TransformationRevision]
-) -> Dict[int, List[UUID]]:
+    transformation_dict: dict[UUID, TransformationRevision]
+) -> dict[int, list[UUID]]:
     """Get ensemble of transformation structured by nesting level
 
     Components have nesting level ("depth") 0.
@@ -40,7 +39,8 @@ def structure_ids_by_nesting_level(
 
         level = level + 1
         nextlevel = level
-        assert isinstance(transformation.content, WorkflowContent)
+        if not isinstance(transformation.content, WorkflowContent):
+            raise TypeError(f"Expected type workflow of trafo {transformation_id}")
         for operator in transformation.content.operators:
             if operator.type == Type.WORKFLOW:
                 logger.info(
@@ -55,7 +55,7 @@ def structure_ids_by_nesting_level(
 
         return nextlevel
 
-    ids_by_nesting_level: Dict[int, List[UUID]] = {}
+    ids_by_nesting_level: dict[int, list[UUID]] = {}
     for tr_id, tr in transformation_dict.items():
         level = nesting_level(tr_id)
         if level not in ids_by_nesting_level:

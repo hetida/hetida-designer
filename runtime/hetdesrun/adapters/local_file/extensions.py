@@ -1,17 +1,17 @@
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
-from pydantic import BaseModel, validator  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, validator
 
 
 class FileSupportHandler(BaseModel):
-    associated_extensions: List[str]
-    read_handler_func: Optional[Callable] = None
-    write_handler_func: Optional[Callable] = None
+    associated_extensions: list[str]
+    read_handler_func: Callable | None = None
+    write_handler_func: Callable | None = None
 
     @validator("write_handler_func", always=True)
-    def at_least_one_handler_func(  # pylint: disable=no-self-argument
-        cls, v: Any, values: Dict[str, Any]
-    ) -> Optional[Callable]:
+    def at_least_one_handler_func(
+        cls, v: Any, values: dict[str, Any]
+    ) -> Callable | None:
         if (values["read_handler_func"] is None) and (
             values["write_handler_func"] is None
         ):
@@ -21,18 +21,16 @@ class FileSupportHandler(BaseModel):
         return v  # type: ignore
 
 
-handlers_by_extension: Dict[str, FileSupportHandler] = {}
+handlers_by_extension: dict[str, FileSupportHandler] = {}
 
 
-def get_file_support_handler(path: str) -> Optional[FileSupportHandler]:
+def get_file_support_handler(path: str) -> FileSupportHandler | None:
     """Get corresponding file support handler for the given path's extension
 
     This returns the first matching handler where ordering depends on Pythons dict keys ordering
     based on the order of registration.
     """
-    for (
-        registered_extension
-    ) in handlers_by_extension.keys():  # pylint: disable=consider-iterating-dictionary
+    for registered_extension in handlers_by_extension:
         if path.endswith(registered_extension):
             return handlers_by_extension[registered_extension]
 

@@ -2,6 +2,7 @@
   <img class="home-header__logo" src="assets/svg/logo.svg" />
   <h1>Welcome to hetida designer</h1>
   <h3>{{ version }}</h3>
+  <p *ngIf="_userInfoText !== ''" class="user-info-text">{{ _userInfoText }}</p>
 </header>
 <nav class="home-content">
   <ul class="home-content__item-list">
@@ -65,9 +66,7 @@
       <span class="mat-body-strong"> Documentation </span>
     </li>
     <li class="home-content__item">
-      <a
-        href="https://github.com/hetida/hetida-designer"
-        target="_blank"
+      <a href="https://github.com/hetida/hetida-designer" target="_blank"
         >hetida designer website</a
       >
     </li>

@@ -1,56 +1,56 @@
-from typing import Dict, List, Literal, Optional
+from typing import Literal
 
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field
 
 
 class InfoResponse(BaseModel):
-    id: str
+    id: str  # noqa: A003
     name: str
     version: str
 
 
 class StructureThingNode(BaseModel):
-    id: str
-    parentId: Optional[str] = None
+    id: str  # noqa: A003
+    parentId: str | None = None
     name: str
     description: str
 
 
 class LocalFileStructureSource(BaseModel):
-    id: str
+    id: str  # noqa: A003
     thingNodeId: str
     name: str
-    type: Literal["dataframe"] = "dataframe"
+    type: Literal["dataframe"] = "dataframe"  # noqa: A003
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
     metadataKey: Literal[None] = None
-    filters: Optional[Dict[str, Dict]] = {}
+    filters: dict[str, dict] | None = {}
 
 
 class MultipleSourcesResponse(BaseModel):
     resultCount: int
-    sources: List[LocalFileStructureSource]
+    sources: list[LocalFileStructureSource]
 
 
 class LocalFileStructureSink(BaseModel):
-    id: str
+    id: str  # noqa: A003
     thingNodeId: str
     name: str
-    type: Literal["dataframe"] = "dataframe"
+    type: Literal["dataframe"] = "dataframe"  # noqa: A003
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
     metadataKey: Literal[None] = None
-    filters: Optional[Dict[str, Dict]] = {}
+    filters: dict[str, dict] | None = {}
 
 
 class MultipleSinksResponse(BaseModel):
     resultCount: int
-    sinks: List[LocalFileStructureSink]
+    sinks: list[LocalFileStructureSink]
 
 
 class StructureResponse(BaseModel):
-    id: str
+    id: str  # noqa: A003
     name: str
-    thingNodes: List[StructureThingNode]
-    sources: List[LocalFileStructureSource]
-    sinks: List[LocalFileStructureSink]
+    thingNodes: list[StructureThingNode]
+    sources: list[LocalFileStructureSource]
+    sinks: list[LocalFileStructureSink]
