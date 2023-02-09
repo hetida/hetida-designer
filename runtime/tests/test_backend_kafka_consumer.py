@@ -197,6 +197,7 @@ async def run_kafka_msg(
             from hetdesrun.backend.kafka.consumer import get_kafka_worker_context
 
             kafka_ctx = get_kafka_worker_context()
+            kafka_ctx.last_unhandled_exception = None  # reset
             await kafka_ctx.start()
             loop = asyncio.get_event_loop()
 
@@ -257,7 +258,7 @@ async def test_consumer_invalid_msg():
 
 
 @pytest.mark.asyncio
-async def test_consumer_failed_exec():
+async def test_consumer_failed_exec_trafo_exec_error():
     results, kafka_ctx, mocked_producer = await run_kafka_msg(
         exec_by_id_input_msg, exec_func_mock=mock_failed_execute_transformation_revision
     )

@@ -60,12 +60,14 @@ async def test_auth_headers_stored_correctly(
         return auth_headers_after_response
 
     first_1, second_1 = await asyncio.gather(
-        request_task(0, valid_access_token), request_task(1, second_valid_access_token)
+        request_task(0, valid_access_token),
+        request_task(0.05, second_valid_access_token),
     )
     assert first_1["Authorization"] != second_1["Authorization"]
 
     first_2, second_2 = await asyncio.gather(
-        request_task(1, valid_access_token), request_task(0, second_valid_access_token)
+        request_task(0.05, valid_access_token),
+        request_task(0, second_valid_access_token),
     )
     assert first_2["Authorization"] != second_2["Authorization"]
 
@@ -83,10 +85,10 @@ async def test_auth_with_wrong_key_access_token_fails(
     open_async_test_client_with_auth,
     mocked_clean_test_db_session,
     wrong_key_access_token,
+    mocked_pre_loaded_public_key,
     mocked_public_key_fetching,
 ):
     client = open_async_test_client_with_auth
-
     # request with correct access token succeeds
     response = await client.get(
         "/api/transformations/",
@@ -134,7 +136,6 @@ async def test_auth_wrong_public_key_fails(
     mocked_pre_loaded_wrong_public_key,
 ):
     client = open_async_test_client_with_auth
-
     response = await client.get(
         "/api/transformations/",
         headers={"Authorization": "Bearer " + valid_access_token},

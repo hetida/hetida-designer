@@ -10,16 +10,21 @@ from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.application import init_app
 
 
-@pytest.fixture()
-def clean_test_db_engine(use_in_memory_db):
+@pytest.fixture(scope="session")
+def test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
         engine = get_db_engine(override_db_url=in_memory_database_url)
     else:
         engine = get_db_engine()
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
     return engine
+
+
+@pytest.fixture()
+def clean_test_db_engine(test_db_engine):
+    Base.metadata.drop_all(test_db_engine)
+    Base.metadata.create_all(test_db_engine)
+    return test_db_engine
 
 
 @pytest.fixture(scope="session")
@@ -44,7 +49,7 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def use_in_memory_db(pytestconfig):
     return pytestconfig.getoption("use_in_memory_db")
 
