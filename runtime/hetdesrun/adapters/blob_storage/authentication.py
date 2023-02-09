@@ -121,6 +121,7 @@ def obtain_credential_info_from_rest_api(access_token: str) -> CredentialInfo:
     try:
         credential_info = parse_credential_info_from_xml_string(response.text, now)
     except StorageAuthenticationError as error:
+        # TODO: tidy up repeating log messages
         msg = f"Error parsing response from storage credential request as XML:\n{response.text}"
         logger.error(msg)
         raise error
@@ -151,6 +152,7 @@ def obtain_or_refresh_credential_info(
     try:
         return obtain_credential_info_from_rest_api(access_token)
     except StorageAuthenticationError as error:
+        # TODO: tidy up repeating log messages
         logger.error("Obtaining new credentails failed:\n%s", str(error))
         raise error
 
@@ -164,14 +166,20 @@ class CredentialManager:
         self._credential_thread_lock = threading.Lock()
 
     def _obtain_or_refresh_credential_info(self) -> None:
-        credential_info = obtain_or_refresh_credential_info(
-            self.access_token, self._current_credential_info
-        )
+        try:
+            credential_info = obtain_or_refresh_credential_info(
+                self.access_token, self._current_credential_info
+            )
+        except StorageAuthenticationError as error:
+            raise error
         with self._credential_thread_lock:
             self._current_credential_info = credential_info
 
     def get_credentials(self) -> Credentials:
-        self._obtain_or_refresh_credential_info()
+        try:
+            self._obtain_or_refresh_credential_info()
+        except StorageAuthenticationError as error:
+            raise error
         assert self._current_credential_info is not None
         return self._current_credential_info.credentials
 
@@ -243,6 +251,9 @@ def get_credentials() -> Credentials:
     credential_manager = create_or_get_named_credential_manager(
         "blob_adapter_cred", access_token
     )
-    credentials = credential_manager.get_credentials()
+    try:
+        credentials = credential_manager.get_credentials()
+    except StorageAuthenticationError as error:
+        raise error
     logger.info("Got credentials from credential manager")
     return credentials

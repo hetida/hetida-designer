@@ -76,7 +76,12 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     file_object = BytesIO(data_bytes)
     logger.info("Got BLOB of size %i", file_object.getbuffer().nbytes)
 
-    data = joblib.load(file_object)
+    try:
+        data = joblib.load(file_object)
+    except ModuleNotFoundError as error:
+        msg = f"Cannot load module to unpickle file object:\n{error}"
+        logger.error(msg)
+        raise AdapterHandlingException(msg)
 
     return data
 
