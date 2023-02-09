@@ -254,7 +254,7 @@ class BlobStorageStructureSource(BaseModel):
         cls, bucket: StructureBucket, object_key: ObjectKey
     ) -> "BlobStorageStructureSource":
         name = (
-            object_key.name
+            object_key.name.rsplit(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[-1]
             + LEAF_NAME_SEPARATOR
             + object_key.time.astimezone(timezone.utc).isoformat(sep=" ")
         )
