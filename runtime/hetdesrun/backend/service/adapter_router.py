@@ -62,19 +62,3 @@ async def get_all_adapters() -> list[AdapterFrontendDto]:
         )
 
     return adapter_list
-
-
-@adapter_router.get(
-    "",
-    response_model=List[AdapterFrontendDto],
-    summary="Returns all adapters",
-    status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {"description": "Successfully got list of adapters"}
-    },
-)
-async def get_all_adapters() -> List[AdapterFrontendDto]:
-    """Get all adapters."""
-    logger.info("get adapters")
-
-    return list(get_adapter_dict().values())

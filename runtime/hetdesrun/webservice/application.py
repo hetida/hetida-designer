@@ -12,7 +12,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from hetdesrun import VERSION
-from hetdesrun.backend.service.adapter_router import adapter_router, get_adapter_dict
+from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
 from hetdesrun.backend.service.documentation_router import documentation_router
@@ -125,15 +125,12 @@ def init_app() -> FastAPI:
         return await request_validation_exception_handler(request, exc)
 
     if get_config().is_runtime_service:
-        adapters = get_adapter_dict()
-        if "local-file-adapter" in adapters:
-            app.include_router(
-                local_file_adapter_router
-            )  # auth dependency set individually per endpoint
-        if "blob-storage-adapter" in adapters:
-            app.include_router(
-                blob_storage_adapter_router
-            )  # auth dependency set individually per endpoint
+        app.include_router(
+            local_file_adapter_router
+        )  # auth dependency set individually per endpoint
+        app.include_router(
+            blob_storage_adapter_router
+        )  # auth dependency set individually per endpoint
         app.include_router(
             runtime_router, prefix="/engine"
         )  # auth dependency set individually per endpoint
