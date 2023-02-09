@@ -37,19 +37,16 @@ def register(
     """
 
     def wrapper_func(func: Callable) -> Callable:
-
         if not asyncio.iscoroutinefunction(func):
 
             @functools.wraps(func)
             def return_func_or_coro(*args, **kwargs):  # type: ignore
-
                 return func(*args, **kwargs)
 
         else:
 
             @functools.wraps(func)
             async def return_func_or_coro(*args, **kwargs):  # type: ignore
-
                 return await func(*args, **kwargs)
 
         # add input output infos to function attributes

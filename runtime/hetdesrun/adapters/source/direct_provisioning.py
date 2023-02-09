@@ -14,7 +14,6 @@ def load_directly_provisioned_data(
     wf_input_name_to_filtered_source_mapping_dict: dict[str, FilteredSource],
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:
-
     try:
         return {
             wf_inp_name: direct_provisioning_filtered_source.filters["value"]

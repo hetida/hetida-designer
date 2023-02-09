@@ -129,7 +129,6 @@ def gen_execution_input_from_single_component(
 async def run_single_component(
     component_json_file_path, input_data_dict, open_async_test_client
 ):
-
     response = await open_async_test_client.post(
         "engine/runtime",
         json=json.loads(
@@ -146,7 +145,6 @@ async def run_single_component(
 @pytest.mark.asyncio
 async def test_null_values_pass_any_pass_through(async_test_client):
     async with async_test_client as client:
-
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
@@ -165,7 +163,6 @@ async def test_null_values_pass_any_pass_through(async_test_client):
 @pytest.mark.asyncio
 async def test_null_list_values_pass_any_pass_through(async_test_client):
     async with async_test_client as client:
-
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
@@ -180,7 +177,6 @@ async def test_null_list_values_pass_any_pass_through(async_test_client):
 @pytest.mark.asyncio
 async def test_null_values_pass_series_pass_through(async_test_client):
     async with async_test_client as client:
-
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
@@ -208,7 +204,6 @@ async def test_null_values_pass_series_pass_through(async_test_client):
 @pytest.mark.asyncio
 async def test_all_null_values_pass_series_pass_through(async_test_client):
     async with async_test_client as client:
-
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
@@ -226,7 +221,6 @@ async def test_all_null_values_pass_series_pass_through(async_test_client):
 @pytest.mark.asyncio
 async def test_nested_wf_execution(async_test_client):
     async with async_test_client as client:
-
         with open(
             os.path.join("tests", "data", "nested_wf_execution_input.json"),
             encoding="utf8",

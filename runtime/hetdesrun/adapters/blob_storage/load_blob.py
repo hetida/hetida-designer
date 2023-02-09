@@ -96,7 +96,6 @@ async def load_data(
         wf_input_name,
         filtered_source,
     ) in wf_input_name_to_filtered_source_mapping_dict.items():
-
         if filtered_source.ref_id is None or filtered_source.ref_key is None:
             msg = ""
             logger.error(msg)

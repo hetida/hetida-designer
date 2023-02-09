@@ -92,7 +92,6 @@ def is_link_start(
     links: list[WorkflowLinkFrontendDto],
     workflow_id: UUID,
 ) -> bool:
-
     for link in links:
         if (
             link.from_operator == operator_id
@@ -145,7 +144,6 @@ def get_or_create_input(
     type: DataType,  # noqa: A002
     inputs: list[WorkflowIoFrontendDto],
 ) -> WorkflowIoFrontendDto:
-
     matching_inputs: list[WorkflowIoFrontendDto] = []
 
     for inp in inputs:
@@ -167,7 +165,6 @@ def get_or_create_output(
     type: DataType,  # noqa: A002
     outputs: list[WorkflowIoFrontendDto],
 ) -> WorkflowIoFrontendDto:
-
     matching_outputs: list[WorkflowIoFrontendDto] = []
 
     for output in outputs:
@@ -187,7 +184,6 @@ def get_link_start_type_from_operator(
     link: WorkflowLinkFrontendDto,
     operators: list[WorkflowOperatorFrontendDto],
 ) -> DataType | None:
-
     data_type: DataType | None = None
 
     for operator in operators:
@@ -203,7 +199,6 @@ def get_link_start_type_from_input(
     link: WorkflowLinkFrontendDto,
     inputs: list[WorkflowIoFrontendDto],
 ) -> DataType | None:
-
     data_type: DataType | None = None
 
     for inp in inputs:
@@ -217,7 +212,6 @@ def get_link_end_type_from_operator(
     link: WorkflowLinkFrontendDto,
     operators: list[WorkflowOperatorFrontendDto],
 ) -> DataType | None:
-
     data_type: DataType | None = None
 
     for operator in operators:
@@ -233,7 +227,6 @@ def get_link_end_type_from_output(
     link: WorkflowLinkFrontendDto,
     outputs: list[WorkflowIoFrontendDto],
 ) -> DataType | None:
-
     data_type: DataType | None = None
 
     for output in outputs:
@@ -281,7 +274,6 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def operator_names_unique(
         cls, operators: list[WorkflowOperatorFrontendDto]
     ) -> list[WorkflowOperatorFrontendDto]:
-
         operator_groups: dict[str, list[WorkflowOperatorFrontendDto]] = {}
 
         for operator in operators:
@@ -305,7 +297,6 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def reduce_to_valid_links(
         cls, links: list[WorkflowLinkFrontendDto], values: dict
     ) -> list[WorkflowLinkFrontendDto]:
-
         try:
             operators = values["operators"]
             workflow_id = values["id"]
@@ -341,7 +332,6 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def links_acyclic_directed_graph(
         cls, links: list[WorkflowLinkFrontendDto], values: dict
     ) -> list[WorkflowLinkFrontendDto]:
-
         try:
             workflow_id = values["id"]
         except KeyError as e:
@@ -400,7 +390,6 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def determine_inputs_from_operators_and_links(
         cls, inputs: list[WorkflowIoFrontendDto], values: dict
     ) -> list[WorkflowIoFrontendDto]:
-
         try:
             operators = values["operators"]
             links = values["links"]
@@ -430,7 +419,6 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def determine_outputs_from_operators_and_links(
         cls, outputs: list[WorkflowIoFrontendDto], values: dict
     ) -> list[WorkflowIoFrontendDto]:
-
         try:
             operators = values["operators"]
             links = values["links"]
@@ -554,7 +542,6 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         from_connector_list: list[ConnectorFrontendDto] = []
 
         if link.from_operator == self.id:
-
             for inp in self.inputs:
                 if inp.id == link.from_connector:
                     if inp.constant:
@@ -735,7 +722,6 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def from_transformation_revision(
         cls, transformation_revision: TransformationRevision
     ) -> "WorkflowRevisionFrontendDto":
-
         assert isinstance(  # noqa: S101
             transformation_revision.content, WorkflowContent
         )  # hint for mypy

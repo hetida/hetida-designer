@@ -100,14 +100,12 @@ def init_app() -> FastAPI:
     except KeyError:
         pass
 
-    from hetdesrun.adapters.local_file.webservice import (
-        local_file_adapter_router,
-    )
-
     from hetdesrun.adapters.blob_storage.webservice import (
         blob_storage_adapter_router,
     )
-
+    from hetdesrun.adapters.local_file.webservice import (
+        local_file_adapter_router,
+    )
 
     app = FastAPI(
         title="Hetida Designer " + app_desc_part() + " API",

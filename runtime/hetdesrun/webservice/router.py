@@ -41,7 +41,6 @@ class HandleTrailingSlashAPIRouter(FastAPIRouter):
     def api_route(
         self, path: str, *, include_in_schema: bool = True, **kwargs: Any
     ) -> Callable[[DecoratedCallable], DecoratedCallable]:
-
         if self.prefix == "" and path == "":
             path = "/"
 

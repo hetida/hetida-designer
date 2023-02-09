@@ -215,7 +215,6 @@ async def load_framelike_data(
                 str(e),
             )
         else:
-
             df.index = parsed_timestamps
             df = df.sort_index()
 

@@ -1669,7 +1669,6 @@ async def test_execute_async_for_transformation_revision_with_exception(
                         "handle_trafo_revision_execution_request",
                         side_effect=HTTPException(404),
                     ):
-
                         await ac.post(
                             "/api/transformations/execute-async",
                             json=json.loads(exec_by_id_input.json()),
@@ -1873,7 +1872,6 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
                         "handle_latest_trafo_revision_execution_request",
                         side_effect=HTTPException(404),
                     ):
-
                         await ac.post(
                             "/api/transformations/execute-latest-async",
                             json=json.loads(exec_latest_by_group_id_input.json()),
@@ -1914,7 +1912,6 @@ async def test_execute_for_nested_workflow(async_test_client, clean_test_db_engi
             patched_session,
         ):
             async with async_test_client as ac:
-
                 json_files = [
                     "./transformations/components/connectors/pass-through-integer_100_57eea09f-d28e-89af-4e81-2027697a3f0f.json",
                     "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
@@ -2002,7 +1999,6 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
         patched_session,
     ):
         async with async_test_client as ac:
-
             json_files = [
                 "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
                 "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
@@ -2167,7 +2163,6 @@ async def test_put_component_transformation_with_update_code(
         "hetdesrun.persistence.dbservice.revision.Session",
         patched_session,
     ):
-
         path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"  # noqa: E501
         example_component_tr_json = load_json(path)
 
@@ -2198,7 +2193,6 @@ async def test_put_component_transformation_without_update_code(
         "hetdesrun.persistence.dbservice.revision.Session",
         patched_session,
     ):
-
         path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"  # noqa: E501
         example_component_tr_json = load_json(path)
 
@@ -2227,7 +2221,6 @@ async def test_put_multiple_trafos(async_test_client, clean_test_db_engine):
         "hetdesrun.persistence.dbservice.revision.Session",
         patched_session,
     ):
-
         path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"  # noqa: E501
         example_component_tr_json = load_json(path)
 

@@ -220,7 +220,6 @@ class TransformationRevision(BaseModel):
     def io_interface_no_names_empty(
         cls, io_interface: IOInterface, values: dict
     ) -> IOInterface:
-
         try:
             state = values["state"]
         except KeyError as e:
@@ -397,7 +396,6 @@ class TransformationRevision(BaseModel):
     def from_orm_model(
         cls, orm_model: TransformationRevisionDBModel
     ) -> "TransformationRevision":
-
         try:
             return TransformationRevision(
                 id=orm_model.id,

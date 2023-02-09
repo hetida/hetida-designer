@@ -169,15 +169,12 @@ def test_blob_storage_class_structure_source():
             object_key=ObjectKey.from_string("x/C_2023-02-08T16:48:58+00:00"),
         )
     )
-    assert (
-        multi_level_ok_src_from_bkt_and_ok.id == "iii/x/C_2023-02-08T16:48:58+00:00"
-    )
-    assert (
-        multi_level_ok_src_from_bkt_and_ok.name == "C - 2023-02-08 16:48:58+00:00"
-    )
+    assert multi_level_ok_src_from_bkt_and_ok.id == "iii/x/C_2023-02-08T16:48:58+00:00"
+    assert multi_level_ok_src_from_bkt_and_ok.name == "C - 2023-02-08 16:48:58+00:00"
     assert multi_level_ok_src_from_bkt_and_ok.thingNodeId == "iii/x/C"
     assert (
-        multi_level_ok_src_from_bkt_and_ok.metadataKey == "C - 2023-02-08 16:48:58+00:00"
+        multi_level_ok_src_from_bkt_and_ok.metadataKey
+        == "C - 2023-02-08 16:48:58+00:00"
     )
     assert multi_level_ok_src_from_bkt_and_ok.path == "iii/x/C"
 
@@ -738,7 +735,6 @@ def test_blob_storage_adapter_hierarchy_with_structure_invalid_error():
 
 
 def test_blob_storage_adapter_hierarchy_with_duplicates():
-
     adapter_hierarchy = AdapterHierarchy(
         structure=[
             Category(

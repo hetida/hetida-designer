@@ -135,10 +135,8 @@ def update_nesting(
 
 
 def update_or_create_nesting(transformation_revision: TransformationRevision) -> None:
-
     if transformation_revision.type == Type.WORKFLOW:
         with Session() as session, session.begin():
-
             assert isinstance(  # noqa: S101
                 transformation_revision.content, WorkflowContent
             )  # hint for mypy

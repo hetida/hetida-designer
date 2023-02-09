@@ -72,7 +72,6 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
     local_root_dirs = local_file_adapter_config.local_dirs
 
     if parent_id is None:  # get root Nodes
-
         return StructureResponse(
             id="local-file-adapter",
             name="Local File Adapter",

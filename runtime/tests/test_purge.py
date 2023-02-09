@@ -442,7 +442,6 @@ def test_deprecate_all_but_latest_per_group():
             "hetdesrun.exportimport.purge.get_transformation_revisions",
             return_value=[example_tr_released_old],
         ) as patched_get:
-
             deprecate_all_but_latest_per_group()
 
             assert patched_get.call_count == 1

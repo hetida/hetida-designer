@@ -121,10 +121,9 @@ async def load_data(
     series_data_to_load: dict[str, FilteredSource] = {}
     dataframe_data_to_load: dict[str, FilteredSource] = {}
 
-    for (wf_input_name, parsed_source_type) in zip(
+    for wf_input_name, parsed_source_type in zip(
         wf_input_names, parsed_source_types, strict=True
     ):
-
         entry = wf_input_name_to_filtered_source_mapping_dict[wf_input_name]
         entry.type = parsed_source_type
 
@@ -171,10 +170,9 @@ async def send_data(
     dataframe_data_to_send: dict[str, pd.DataFrame] = {}
     dataframe_filtered_sinks: dict[str, FilteredSink] = {}
 
-    for (wf_output_name, parsed_sink_type) in zip(
+    for wf_output_name, parsed_sink_type in zip(
         wf_output_names, parsed_sink_types, strict=True
     ):
-
         entry = wf_output_name_to_filtered_sink_mapping_dict[wf_output_name]
         entry.type = parsed_sink_type
         value = wf_output_name_to_value_mapping_dict[wf_output_name]

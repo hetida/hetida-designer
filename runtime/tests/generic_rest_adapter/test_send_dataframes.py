@@ -11,7 +11,6 @@ from hetdesrun.models.data_selection import FilteredSink
 
 @pytest.mark.asyncio
 async def test_end_to_end_send_only_dataframe_data():
-
     response = mock.Mock()
     response.status_code = 200
     post_mock = mock.AsyncMock(return_value=response)
@@ -20,12 +19,10 @@ async def test_end_to_end_send_only_dataframe_data():
         "hetdesrun.adapters.generic_rest.send_framelike.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):
-
         with mock.patch(
             "hetdesrun.adapters.generic_rest.send_dataframe.AsyncClient.post",
             new=post_mock,
         ):
-
             # one frame
             await send_data(
                 {

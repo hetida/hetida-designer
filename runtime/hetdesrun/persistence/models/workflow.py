@@ -16,7 +16,6 @@ def get_link_start_connector_from_operator(
     link_start_connector_id: UUID,
     operators: list[Operator],
 ) -> Connector | None:
-
     for operator in operators:
         if operator.id == link_start_operator_id:
             for connector in operator.outputs:
@@ -31,7 +30,6 @@ def get_link_end_connector_from_operator(
     link_end_connector_id: UUID,
     operators: list[Operator],
 ) -> Connector | None:
-
     for operator in operators:
         if operator.id == link_end_operator_id:
             for connector in operator.inputs:
@@ -44,7 +42,6 @@ def get_link_end_connector_from_operator(
 def get_link_by_output_connector(
     operator_id: UUID | None, connector_id: UUID, links: list[Link]
 ) -> Link | None:
-
     for link in links:
         if (
             link.start.operator == operator_id
@@ -69,7 +66,6 @@ def get_input_by_link_start(
     link_start_connector_id: UUID,
     inputs: list[IOConnector],
 ) -> IOConnector | None:
-
     for input_connector in inputs:
         if input_connector.id == link_start_connector_id:
             return input_connector
@@ -81,7 +77,6 @@ def get_constant_by_link_start(
     link_start_connector_id: UUID,
     constants: list[Constant],
 ) -> Constant | None:
-
     for constant in constants:
         if constant.id == link_start_connector_id:
             return constant
@@ -93,7 +88,6 @@ def get_output_by_link_end(
     link_end_connector_id: UUID,
     outputs: list[IOConnector],
 ) -> IOConnector | None:
-
     for output_connector in outputs:
         if output_connector.id == link_end_connector_id:
             return output_connector
@@ -153,7 +147,6 @@ class WorkflowContent(BaseModel):
 
     @validator("links", each_item=False)
     def reduce_to_valid_links(cls, links: list[Link], values: dict) -> list[Link]:
-
         try:
             operators = values["operators"]
         except KeyError as e:
@@ -191,7 +184,6 @@ class WorkflowContent(BaseModel):
 
     @validator("links", each_item=False)
     def links_acyclic_directed_graph(cls, links: list[Link]) -> list[Link]:
-
         indegrees: dict[UUID, int] = {}
         edges: list[tuple[UUID, UUID]] = []
 
@@ -243,7 +235,6 @@ class WorkflowContent(BaseModel):
     def determine_inputs_from_operators_and_links(
         cls, inputs: list[IOConnector], values: dict
     ) -> list[IOConnector]:
-
         try:
             operators = values["operators"]
             links = values["links"]
@@ -280,7 +271,6 @@ class WorkflowContent(BaseModel):
     def determine_outputs_from_operators_and_links(
         cls, outputs: list[IOConnector], values: dict
     ) -> list[IOConnector]:
-
         try:
             operators = values["operators"]
             links = values["links"]
@@ -317,7 +307,6 @@ class WorkflowContent(BaseModel):
     def connector_names_empty_or_unique(
         cls, io_connectors: list[IOConnector]
     ) -> list[IOConnector]:
-
         io_connectors_with_nonempty_name = [
             io_connector
             for io_connector in io_connectors
@@ -330,7 +319,6 @@ class WorkflowContent(BaseModel):
 
     @root_validator()
     def clean_up_io_links(cls, values: dict) -> dict:
-
         try:
             operators = values["operators"]
             links = values["links"]
@@ -413,7 +401,6 @@ class WorkflowContent(BaseModel):
         operator_name: str | None,
         sub_nodes: list[WorkflowNode | ComponentNode],
     ) -> WorkflowNode:
-
         inputs = []
         for input_connector in self.inputs:
             link = get_link_by_output_connector(None, input_connector.id, self.links)

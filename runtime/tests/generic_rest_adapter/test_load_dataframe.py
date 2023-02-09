@@ -80,7 +80,6 @@ async def test_end_to_end_load_dataframe_data_with_timestamp_column():
             "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
             return_value=resp_mock,
         ):
-
             loaded_data = await load_data(
                 {
                     "inp_1": FilteredSource(ref_id="id_1", type=ExternalType.DATAFRAME),
@@ -113,7 +112,6 @@ async def test_end_to_end_load_dataframe_data_with_attrs():
             "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
             return_value=resp_mock,
         ):
-
             loaded_data = await load_data(
                 {
                     "inp_1": FilteredSource(ref_id="id_1", type=ExternalType.DATAFRAME),

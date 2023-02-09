@@ -109,7 +109,6 @@ async def send_data(
         wf_output_name,
         filtered_sink,
     ) in wf_output_name_to_filtered_sink_mapping_dict.items():
-
         if filtered_sink.ref_id is None or filtered_sink.ref_key is None:
             msg = ""
             logger.error(msg)

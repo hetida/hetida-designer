@@ -55,7 +55,6 @@ def test_export_all_transformations(tmp_path):
         "hetdesrun.exportimport.export.requests.get",
         return_value=resp_mock,
     ) as mocked_get:
-
         export_transformations(tmp_path)
 
         assert mocked_get.call_count == 1

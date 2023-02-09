@@ -35,7 +35,6 @@ def dataframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
 async def post_dataframe(
     df: pd.DataFrame, ref_id: str, adapter_key: str, client: AsyncClient
 ) -> None:
-
     records = dataframe_to_list_of_dicts(df)
 
     await post_framelike_records(
@@ -68,7 +67,6 @@ async def send_dataframes_to_adapter(
     data_to_send: dict[str, pd.DataFrame],
     adapter_key: str,
 ) -> None:
-
     keys = filtered_sinks.keys()
     ref_ids: list[str] = [str(filtered_sinks[key].ref_id) for key in keys]
     dfs = [data_to_send[key] for key in keys]

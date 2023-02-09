@@ -187,13 +187,11 @@ async def run_kafka_msg(
         new_callable=mock.PropertyMock,
         return_value=MockKafkaConsumer(exec_msg_str=msg_str),
     ) as _mocked_ctx_consumer:
-
         producer_mock = mock.AsyncMock()
         with mock.patch(
             "hetdesrun.backend.kafka.consumer.KafkaWorkerContext.producer",
             producer_mock,
         ) as mocked_ctx_producer:
-
             from hetdesrun.backend.kafka.consumer import get_kafka_worker_context
 
             kafka_ctx = get_kafka_worker_context()
@@ -234,7 +232,6 @@ async def test_consumer_successful_exec_latest_by_group_id_input():
         "hetdesrun.backend.kafka.consumer.get_latest_revision_id",
         return_value=UUID("79ce1eb1-3ef8-4c74-9114-c856fd88dc89"),
     ) as _mocked_get_latest_id:
-
         results, kafka_ctx, mocked_producer = await run_kafka_msg(
             exec_latest_by_group_id_input_msg
         )

@@ -150,7 +150,6 @@ async def test_resources_offered_from_blob_storage_webservice(
         ):
             """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""
             async with async_test_client as client:
-
                 response_obj = (await client.get("/adapters/blob/structure")).json()
 
                 assert len(response_obj["sources"]) == 0

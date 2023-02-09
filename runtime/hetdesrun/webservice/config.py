@@ -386,7 +386,6 @@ class RuntimeConfig(BaseSettings):
         v: Json[ServiceCredentials] | None,
         values: dict,
     ) -> Json[ServiceCredentials] | None:
-
         internal_auth_mode = values["internal_auth_mode"]
 
         if internal_auth_mode == InternalAuthMode.CLIENT and v is None:
@@ -403,7 +402,6 @@ class RuntimeConfig(BaseSettings):
         v: Json[ServiceCredentials] | None,
         values: dict,
     ) -> Json[ServiceCredentials] | None:
-
         external_auth_mode = values["external_auth_mode"]
 
         if external_auth_mode == ExternalAuthMode.CLIENT and v is None:
@@ -416,7 +414,6 @@ class RuntimeConfig(BaseSettings):
 
     @validator("is_runtime_service")
     def must_be_at_least_backend_or_runtime(cls, v: bool, values: dict) -> bool:
-
         is_backend_service = values["is_backend_service"]
 
         if not (v or is_backend_service):
@@ -438,7 +435,6 @@ class RuntimeConfig(BaseSettings):
     def database_url(
         cls, v: SecretStr | SQLAlchemy_DB_URL | None, values: dict
     ) -> SecretStr | SQLAlchemy_DB_URL | None:
-
         if v is None:
             pw_secret = values["sqlalchemy_db_password"]
             return SQLAlchemy_DB_URL.create(

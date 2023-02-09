@@ -38,7 +38,6 @@ class OutputWiring(BaseModel):
 
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
-
         if not EXPORT_MODE and (not v in SINK_ADAPTERS and not isinstance(v, str)):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
@@ -58,7 +57,6 @@ class OutputWiring(BaseModel):
             and (GeneralType(v.general_type) == GeneralType.METADATA)
             and (values["ref_id_type"] is None or values["ref_key"] is None)
         ):
-
             raise ValueError(
                 "metadata datatype in OutputWiring requires additional fields "
                 '"ref_id_type" and "ref_key". At least one of them is missing.'
@@ -94,7 +92,6 @@ class InputWiring(BaseModel):
 
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
-
         if not EXPORT_MODE and (not v in SOURCE_ADAPTERS and not isinstance(v, str)):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."

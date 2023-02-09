@@ -368,7 +368,6 @@ async def test_create_transformation_revision_from_workflow_dto(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
-
         async with async_test_client as ac:
             response = await ac.post("/api/workflows/", json=dto_json_workflow_1)
 
@@ -598,7 +597,6 @@ async def test_set_test_wiring_to_workflow(async_test_client, clean_test_db_engi
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
-
         store_single_transformation_revision(
             ComponentRevisionFrontendDto(
                 **dto_json_component_1
@@ -693,7 +691,6 @@ async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_en
             patched_session,
         ):
             async with async_test_client as ac:
-
                 json_files = [
                     "./transformations/components/connectors/pass-through-float_100_2f511674-f766-748d-2de3-ad5e62e10a1a.json",
                     "./transformations/components/connectors/pass-through-integer_100_57eea09f-d28e-89af-4e81-2027697a3f0f.json",
@@ -750,7 +747,6 @@ async def test_execute_for_full_workflow_dto_with_nan(
         patched_session,
     ):
         async with async_test_client as ac:
-
             json_files = [
                 "./transformations/components/arithmetic/consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json",
                 "./transformations/components/basic/filter_100_18260aab-bdd6-af5c-cac1-7bafde85188f.json",

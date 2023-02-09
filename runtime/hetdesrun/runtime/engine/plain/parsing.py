@@ -51,7 +51,6 @@ def parse_workflow_input(
     components: list[ComponentRevision],
     code_modules: list[CodeModule],
 ) -> Workflow:
-
     component_dict: dict[str, ComponentRevision] = {str(c.uuid): c for c in components}
 
     code_module_dict: dict[str, CodeModule] = {str(c.uuid): c for c in code_modules}

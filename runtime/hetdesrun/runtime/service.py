@@ -133,7 +133,6 @@ async def runtime_service(
         # to ensure that every node is run, even if in a part of the graph not leading
         # to a final output. This is necessary for example for the Store Model component.
         for computation_node in all_nodes:
-
             _res = (
                 await computation_node.result
                 if not (
