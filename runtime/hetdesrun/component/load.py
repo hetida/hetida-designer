@@ -1,4 +1,5 @@
 """Loading code and importing functions"""
+import hashlib
 import importlib
 import logging
 import sys
@@ -29,7 +30,7 @@ def module_path_from_code(code: str) -> str:
 
 def hash_code(code: str) -> str:
     """Generate a hash from a str representing code that can be used as part of module path"""
-    return hex(hash(code)).replace("-", "_m_")
+    return hashlib.sha256(code.encode("utf8")).hexdigest()
 
 
 def import_func_from_code(
