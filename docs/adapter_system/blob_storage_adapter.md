@@ -75,5 +75,8 @@ docker-compose up
 ```
 
 Now all all objects for which bucket name and object key match the adapter hierarchy should be available as sources via selecting "Blob Storage Adapter" for an input in the Execution dialog:
+<img src="./assets/blob_storage_adapter_selected.png" height="100" width=450>
+<img src="./assets/blob_storage_adapter_assign_source.png" height="780" width=700>
 
 Similarly a sink should be available for each end node in the hierarchy via selecting "Blob Storage Adapter" for an output in the Execution dialog:
+<img src="./assets/blob_storage_adapter_assign_sink.png" height="780" width=700>
