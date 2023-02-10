@@ -15,7 +15,6 @@ async def load_data(
     wf_input_name_to_filtered_source_mapping_dict: dict[str, FilteredSource],
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:
-
     return {
         wf_input_name: load_file_from_id(str(filtered_source.ref_id))
         for wf_input_name, filtered_source in wf_input_name_to_filtered_source_mapping_dict.items()
@@ -27,7 +26,6 @@ async def send_data(
     wf_output_name_to_value_mapping_dict: dict[str, Any],
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:
-
     for (
         wf_output_name,
         filtered_sink,

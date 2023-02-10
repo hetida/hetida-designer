@@ -444,7 +444,6 @@ async def test_set_test_wiring_for_component_dto(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
-
         store_single_transformation_revision(
             ComponentRevisionFrontendDto(
                 **dto_json_component_1_update
@@ -468,7 +467,6 @@ async def test_execute_for_component_dto(async_test_client, clean_test_db_engine
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
-
         store_single_transformation_revision(
             ComponentRevisionFrontendDto(
                 **valid_component_dto_dict
@@ -493,7 +491,6 @@ async def test_execute_for_component_without_hetdesrun_imports(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
-
         path = (
             "./tests/data/components/"
             "alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d"
@@ -554,7 +551,6 @@ async def test_execute_for_component_with_nan_and_nat_input(
         patched_session,
     ):
         async with async_test_client as ac:
-
             json_files = [
                 "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
                 "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",

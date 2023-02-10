@@ -146,7 +146,6 @@ async def test_update_wiring(async_test_client, clean_test_db_engine):
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
-
         store_single_transformation_revision(
             ComponentRevisionFrontendDto(
                 **dto_json_component_1

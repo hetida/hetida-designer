@@ -26,7 +26,6 @@ def get_object_path(name: str, tag: str) -> str:
 
 
 def symlink_latest(name: str, tag: str) -> None:
-
     latest_path = get_object_path(name, "latest")
 
     # remove possibly existing symlink

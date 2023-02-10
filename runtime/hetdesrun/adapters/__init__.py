@@ -137,7 +137,6 @@ def register_source_adapter(
     output_data_error_class: type[Exception] | None = None,
     client_wiring_invalid_error_class: type[Exception] | None = None,
 ) -> None:
-
     connection_errors, output_data_errors, invalid_wiring_errors = prepare_exc_classes(
         connection_custom_error=connection_error_class,
         output_data_custom_error=output_data_error_class,
@@ -161,7 +160,6 @@ def register_sink_adapter(
     output_data_error_class: type[Exception] | None = None,
     client_wiring_invalid_error_class: type[Exception] | None = None,
 ) -> None:
-
     connection_errors, output_data_errors, invalid_wiring_errors = prepare_exc_classes(
         connection_custom_error=connection_error_class,
         output_data_custom_error=output_data_error_class,

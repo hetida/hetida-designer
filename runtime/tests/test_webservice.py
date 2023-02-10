@@ -152,7 +152,6 @@ async def run_workflow_with_client(workflow_json, async_test_client):
 
 @pytest.mark.asyncio
 async def test_running_workflow(async_test_client):
-
     status_code, output = await run_workflow_with_client(
         base_workflow_json.copy(), async_test_client
     )

@@ -390,7 +390,6 @@ async def test_obtain_refresh_logic_valid_existing_token(
     refresh_token_works,
     service_credentials,
 ):
-
     token_info = await obtain_or_refresh_token(
         service_user_credentials=service_credentials,
         existing_token_info=token_info_both_longer_valid,
@@ -408,7 +407,6 @@ async def test_obtain_refresh_logic_valid_existing_token(
 async def test_obtain_refresh_logic_new_token(
     obtain_token_works, refresh_token_works, service_credentials, result_token_info
 ):
-
     token_info = await obtain_or_refresh_token(
         service_user_credentials=service_credentials,
         existing_token_info=None,
@@ -428,7 +426,6 @@ async def test_obtain_refresh_logic_refresh(
     service_credentials,
     result_token_info,
 ):
-
     token_info = await obtain_or_refresh_token(
         service_user_credentials=service_credentials,
         existing_token_info=token_info_access_overdue_refresh_valid,
@@ -448,7 +445,6 @@ async def test_obtain_refresh_logic_both_overdue(
     service_credentials,
     result_token_info,
 ):
-
     token_info = await obtain_or_refresh_token(
         service_user_credentials=service_credentials,
         existing_token_info=token_info_both_overdue,
@@ -470,7 +466,6 @@ async def test_obtain_refresh_logic_valid_existing_token_refresh_overdue(
     refresh_token_works,
     service_credentials,
 ):
-
     token_info = await obtain_or_refresh_token(
         service_user_credentials=service_credentials,
         existing_token_info=token_info_access_valid_refresh_overdue,
@@ -528,7 +523,6 @@ async def test_obtain_refresh_logic_refresh_raises_obtain_works(
 def test_get_access_token_manager(
     service_credentials, obtain_token_works, result_token_info
 ):
-
     test_uuid_key = "test_" + str(uuid4())
     token_mgr = create_or_get_named_access_token_manager(
         test_uuid_key, service_credentials

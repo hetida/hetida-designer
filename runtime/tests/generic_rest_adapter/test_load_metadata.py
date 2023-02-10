@@ -121,7 +121,6 @@ async def test_load_metadata_request():
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             new=detailed_mocked_async_client_get,
         ):
-
             loaded_metadata = await load_multiple_metadata(
                 {
                     "wf_input_1": FilteredSource(

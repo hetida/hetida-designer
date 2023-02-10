@@ -69,7 +69,6 @@ def test_component_import_via_rest_api(caplog):
     response_mock.status_code = 200
 
     with caplog.at_level(logging.DEBUG):  # noqa: SIM117
-
         with mock.patch(
             "hetdesrun.utils.requests.put", return_value=response_mock
         ) as patched_put:
@@ -128,7 +127,6 @@ def test_component_import_directly_into_db(caplog, clean_test_db_engine):
             response_mock.status_code = 200
 
             with caplog.at_level(logging.DEBUG):  # noqa: SIM117
-
                 with mock.patch(
                     "hetdesrun.utils.requests.put", return_value=response_mock
                 ) as patched_put:
@@ -154,7 +152,6 @@ def test_import_with_deprecate_older_versions():
             "hetdesrun.exportimport.importing.deprecate_all_but_latest_in_group",
             return_value=None,
         ) as patched_deprecate_group:
-
             import_transformations(
                 "./transformations/components", deprecate_older_revisions=True
             )
@@ -172,7 +169,6 @@ def test_generate_import_order_file_without_transform_py_to_json(tmp_path):
     with mock.patch(  # noqa: SIM117
         "hetdesrun.utils.requests.put", return_value=response_mock
     ) as rest_api_mock:
-
         with mock.patch(
             "hetdesrun.exportimport.importing.deprecate_all_but_latest_in_group",
             return_value=None,

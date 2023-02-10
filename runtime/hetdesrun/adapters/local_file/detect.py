@@ -83,7 +83,6 @@ def local_file_from_path(
     """Obtain complete LocalFile datastructure from path to either a data file or a settings file"""
 
     if file_path.endswith(".settings.json"):  # only config file present
-
         data_file_path = file_path.removesuffix(".settings.json")
 
         # only infer from settings file if no data file is present:
@@ -115,7 +114,6 @@ def local_file_from_path(
     possible_file_support_handler = get_file_support_handler(file_path)
 
     if possible_file_support_handler is not None:
-
         parsed_settings_file = parse_settings_file(data_file_path=file_path)
 
         if parsed_settings_file.loadable is None:

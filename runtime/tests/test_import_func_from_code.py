@@ -5,7 +5,6 @@ from hetdesrun.component.load import import_func_from_code
 
 def test_importing():
     with pytest.raises(ImportError):
-
         import_func_from_code(
             """def main():\n    pass""",
             "main",

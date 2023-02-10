@@ -7,7 +7,6 @@ from hetdesrun.utils import State, Type
 
 
 class FilterParams(BaseModel):
-
     type: Type | None = Field(  # noqa: A003
         None, description="Filter for specified type"
     )
