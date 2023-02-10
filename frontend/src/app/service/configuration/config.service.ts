@@ -15,7 +15,7 @@ export interface Configuration {
   readonly apiEndpoint: string;
   authEnabled?: boolean;
   authConfig?: AuthConfig;
-  readonly userInfoText: string;
+  readonly userInfoText?: string;
 }
 
 @Injectable({
