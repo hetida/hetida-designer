@@ -1,0 +1,359 @@
+{
+  "category": "Examples",
+  "content": {
+    "constants": [],
+    "inputs": [
+      {
+        "connector_id": "c53cec03-7ec0-4e69-92d1-7868ff26f4df",
+        "connector_name": "name",
+        "data_type": "STRING",
+        "id": "c92e34ae-c170-47e5-a811-86960b1abae3",
+        "name": "name",
+        "operator_id": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "operator_name": "Create ExampleClass Entity",
+        "position": {
+          "x": 625,
+          "y": 290
+        }
+      },
+      {
+        "connector_id": "cff50eea-8660-4e8a-8648-e381ab482a68",
+        "connector_name": "amount",
+        "data_type": "INT",
+        "id": "94d18342-d7f4-40b2-8d6f-23b1e04b20fc",
+        "name": "amount",
+        "operator_id": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "operator_name": "Create ExampleClass Entity",
+        "position": {
+          "x": 625,
+          "y": 320
+        }
+      },
+      {
+        "connector_id": "9b8a1514-1756-4944-aec0-78abc2669367",
+        "connector_name": "value",
+        "data_type": "FLOAT",
+        "id": "633d031d-069e-45d1-aaf3-95936e060814",
+        "name": "value",
+        "operator_id": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "operator_name": "Create ExampleClass Entity",
+        "position": {
+          "x": 625,
+          "y": 350
+        }
+      }
+    ],
+    "links": [
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "c53cec03-7ec0-4e69-92d1-7868ff26f4df",
+            "name": "name",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b6722131-a47b-429b-ab8f-d977233bf408"
+        },
+        "id": "0bd3602c-88b3-4f49-984d-39005bb1e11c",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "c92e34ae-c170-47e5-a811-86960b1abae3",
+            "name": "name",
+            "position": {
+              "x": 625,
+              "y": 290
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "INT",
+            "id": "cff50eea-8660-4e8a-8648-e381ab482a68",
+            "name": "amount",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b6722131-a47b-429b-ab8f-d977233bf408"
+        },
+        "id": "a90fd40c-e9ba-425f-a7ea-84eff60ae2a0",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "INT",
+            "id": "94d18342-d7f4-40b2-8d6f-23b1e04b20fc",
+            "name": "amount",
+            "position": {
+              "x": 625,
+              "y": 320
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "FLOAT",
+            "id": "9b8a1514-1756-4944-aec0-78abc2669367",
+            "name": "value",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b6722131-a47b-429b-ab8f-d977233bf408"
+        },
+        "id": "fbc54ef0-3fa1-4026-b9ce-c0391a48cda6",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "FLOAT",
+            "id": "633d031d-069e-45d1-aaf3-95936e060814",
+            "name": "value",
+            "position": {
+              "x": 625,
+              "y": 350
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "d8efd9d5-11a6-4483-9d26-563f2f41591e",
+            "name": "class_entity",
+            "position": {
+              "x": 1325,
+              "y": 260
+            }
+          }
+        },
+        "id": "157ba7ef-e029-4567-bfe3-b6033491157b",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "0b207b91-9be4-40cf-9575-0a7105e61ebd",
+            "name": "class_entity",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b6722131-a47b-429b-ab8f-d977233bf408"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "18a6c776-bd73-48e7-814a-d86cbf3e87cc",
+            "name": "class_object",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b6722131-a47b-429b-ab8f-d977233bf408"
+        },
+        "id": "510acef7-4c1b-4fdb-a553-f101955acb7d",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "c00635c2-3183-4e10-9fbb-18ac16f4660c",
+            "name": "class_object",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "86d5518b-f114-4089-ad47-67be46b7ed5d"
+        }
+      }
+    ],
+    "operators": [
+      {
+        "id": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "id": "18a6c776-bd73-48e7-814a-d86cbf3e87cc",
+            "name": "class_object",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "c53cec03-7ec0-4e69-92d1-7868ff26f4df",
+            "name": "name",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "INT",
+            "id": "cff50eea-8660-4e8a-8648-e381ab482a68",
+            "name": "amount",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "FLOAT",
+            "id": "9b8a1514-1756-4944-aec0-78abc2669367",
+            "name": "value",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Create ExampleClass Entity",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "0b207b91-9be4-40cf-9575-0a7105e61ebd",
+            "name": "class_entity",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 875,
+          "y": 200
+        },
+        "revision_group_id": "1545b944-d54b-4de2-949a-f11ef530678d",
+        "state": "RELEASED",
+        "transformation_id": "81142909-2bd5-43ea-ba35-de5068a5f8d8",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "86d5518b-f114-4089-ad47-67be46b7ed5d",
+        "inputs": [],
+        "name": "ExampleClass",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "c00635c2-3183-4e10-9fbb-18ac16f4660c",
+            "name": "class_object",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 425,
+          "y": 197
+        },
+        "revision_group_id": "59cc4583-0b84-4fef-8076-468b6f150edd",
+        "state": "RELEASED",
+        "transformation_id": "fd0464cb-4691-4ce1-bb2b-9efbcc7626f4",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      }
+    ],
+    "outputs": [
+      {
+        "connector_id": "0b207b91-9be4-40cf-9575-0a7105e61ebd",
+        "connector_name": "connector_name",
+        "data_type": "ANY",
+        "id": "d8efd9d5-11a6-4483-9d26-563f2f41591e",
+        "name": "class_entity",
+        "operator_id": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "operator_name": "Create ExampleClass Entity",
+        "position": {
+          "x": 1325,
+          "y": 260
+        }
+      }
+    ]
+  },
+  "description": "Create ExampleClass entity",
+  "documentation": "# Create ExampleClass Entity\n## Description\nCreate an entity of the ExampleClass class.\n\n## Inputs\n* **name** (String): Set the attribute \"name\" of the ExampleClass entity.\n* **amount** (Integer): Set the attribute \"amount\" of the ExampleClass entity.\n* **value** (Float): Set the attribute \"value\" of the ExampleClass entity.\n\n## Outputs\n* **class_entity** (Any): ExampleClass entity with the attributes set to the corresponding input values.\n\n## Details\nIt is not possible to execute the component on its own, but only in the context of a workflow, where the **class_object** is provided by the component \"ExampleClass\" from the category \"Classes\".\n\n## Example\nThe json input of a typical call of this workflow\n```\n{\n    \"name\": \"name\",\n    \"amount\": 1,\n    \"value\": 0.5\n}\n```",
+  "id": "678df189-a969-4ed9-9c3f-162b87d578b6",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "STRING",
+        "id": "c92e34ae-c170-47e5-a811-86960b1abae3",
+        "name": "name"
+      },
+      {
+        "data_type": "INT",
+        "id": "94d18342-d7f4-40b2-8d6f-23b1e04b20fc",
+        "name": "amount"
+      },
+      {
+        "data_type": "FLOAT",
+        "id": "633d031d-069e-45d1-aaf3-95936e060814",
+        "name": "value"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "d8efd9d5-11a6-4483-9d26-563f2f41591e",
+        "name": "class_entity"
+      }
+    ]
+  },
+  "name": "Create ExampleClass Entity",
+  "released_timestamp": "2023-02-10T13:45:52.982547+00:00",
+  "revision_group_id": "039f8445-93e8-4006-a5b2-47f60ee240e8",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "name"
+        },
+        "workflow_input_name": "name"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "1"
+        },
+        "workflow_input_name": "amount"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "0.5"
+        },
+        "workflow_input_name": "value"
+      }
+    ],
+    "output_wirings": [
+      {
+        "adapter_id": "blob-storage-adapter",
+        "ref_id": "i-i/B",
+        "ref_id_type": "THINGNODE",
+        "ref_key": "B - Next Object",
+        "type": "metadata(any)",
+        "workflow_output_name": "class_entity"
+      }
+    ]
+  },
+  "type": "WORKFLOW",
+  "version_tag": "1.0.0"
+}

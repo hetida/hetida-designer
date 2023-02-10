@@ -1,0 +1,43 @@
+{
+  "category": "Basic",
+  "content": "# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"class_entity\": \"ANY\",\n    },\n    \"outputs\": {\n        \"name\": \"STRING\",\n        \"amount\": \"INT\",\n        \"value\": \"FLOAT\",\n    },\n    \"name\": \"ExampleClass Entity Attributes\",\n    \"category\": \"Basic\",\n    \"description\": \"Output all attributes of a given ExampleClass entity\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"47880b66-dbad-4c89-98c9-d39dd13163dd\",\n    \"revision_group_id\": \"da990513-b0ce-41e1-ba1b-4c62c0ad798a\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-02-09T12:13:26.138254+00:00\",\n}\n\n\ndef main(*, class_entity):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\n        \"name\": class_entity.name,\n        \"amount\": class_entity.amount,\n        \"value\": class_entity.value\n    }",
+  "description": "Output all attributes of a given ExampleClass entity",
+  "documentation": "# Get ExampleClass Entity Attribute\n\n## Description\nGet attributes of the provided ExampleClass entity.\n\n## Inputs\n* **class_entity** (Any): ExampleClass entity, i.e. from the component/workflow \"Create ExampleClass Entity\" or from a stored object.\n\n## Outputs\n* **name** (String): Attribute \"name\" of the ExampleClass entity.\n* **amount** (Integer): Attribute \"amount\" of the ExampleClass entity.\n* **value** (Float): Attribute \"value\" of the ExampleClass entity.\n\n## Details\nIt is not possible to execute the component on its own, but only in the context of a workflow, where the class_object is provided by the component \"ExampleClass\" from the category \"Classes\".",
+  "id": "47880b66-dbad-4c89-98c9-d39dd13163dd",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "ae9ad473-be37-4e0c-8e78-2a01b24ffd3e",
+        "name": "class_entity"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "STRING",
+        "id": "6462b468-7b45-4c75-87d1-644981a20cd9",
+        "name": "name"
+      },
+      {
+        "data_type": "INT",
+        "id": "8c5ba5ca-9103-4852-9374-6693a57ba044",
+        "name": "amount"
+      },
+      {
+        "data_type": "FLOAT",
+        "id": "5cbe117e-dae2-420b-81aa-f5c438a5eeb3",
+        "name": "value"
+      }
+    ]
+  },
+  "name": "ExampleClass Entity Attributes",
+  "released_timestamp": "2023-02-09T12:13:26.138254+00:00",
+  "revision_group_id": "da990513-b0ce-41e1-ba1b-4c62c0ad798a",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}
