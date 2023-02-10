@@ -1,8 +1,10 @@
 import logging
 import struct
+from io import BytesIO
 from unittest import mock
 
 import boto3
+import joblib
 import pytest
 from moto import mock_s3
 
@@ -55,7 +57,9 @@ def test_blob_storage_write_blob_to_storage_works(caplog):
             assert object_summaries_response["KeyCount"] == 1
             object_key = object_summaries_response["Contents"][0]["Key"]
             object_response = client_mock.get_object(Bucket=bucket_name, Key=object_key)
-            assert struct.unpack(">i", object_response["Body"].read()) == (42,)
+            pickled_data_bytes = object_response["Body"].read()
+            file_object = BytesIO(pickled_data_bytes)
+            assert struct.unpack(">i", joblib.load(file_object)) == (42,)
 
 
 def test_blob_storage_write_blob_to_storage_with_non_existing_sink():

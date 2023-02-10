@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from pydantic import ValidationError
@@ -17,6 +17,7 @@ from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
     BlobStorageStructureSource,
     Category,
+    IdString,
     ObjectKey,
     StructureBucket,
     StructureThingNode,
@@ -24,7 +25,7 @@ from hetdesrun.adapters.blob_storage.models import (
 )
 
 
-def test_blob_storage_class_structure_bucket():
+def test_blob_storage_class_structure_bucket() -> None:
     StructureBucket(name="iii")
 
     with pytest.raises(ValidationError):
@@ -42,7 +43,7 @@ def test_blob_storage_class_structure_bucket():
         )
 
 
-def test_blob_storage_class_object_key():
+def test_blob_storage_class_object_key() -> None:
     with pytest.raises(ValueError, match="UTC") as exc_info:
         object_key = ObjectKey(
             string="A_2022-01-02T14:23:18+00:00",
@@ -54,7 +55,7 @@ def test_blob_storage_class_object_key():
                 hour=14,
                 minute=23,
                 second=18,
-                tzinfo=timezone.utc,
+                tzinfo=timezone(timedelta(hours=1)),
             ),
         )
     assert "The ObjectKey attribute time must have timezone UTC!" in str(exc_info.value)
@@ -79,7 +80,7 @@ def test_blob_storage_class_object_key():
         year=2022, month=1, day=2, hour=14, minute=23, second=18, tzinfo=timezone.utc
     )
 
-    object_key_from_name = ObjectKey.from_name("B")
+    object_key_from_name = ObjectKey.from_name(IdString("B"))
     object_key_from_string = ObjectKey.from_string(object_key_from_name.string)
     assert object_key_from_name == object_key_from_string
 
@@ -89,14 +90,14 @@ def test_blob_storage_class_object_key():
     with pytest.raises(
         ValueError, match=f"contains no '{IDENTIFIER_SEPARATOR}'"
     ) as exc_info:
-        ObjectKey.from_string("A2022-01-02T14:23:18+00:00")
+        ObjectKey.from_string(IdString("A2022-01-02T14:23:18+00:00"))
     assert (
         f"not a valid ObjectKey string, because it contains no '{IDENTIFIER_SEPARATOR}'"
         in str(exc_info.value)
     )
 
 
-def test_blob_storage_class_structure_thing_node():
+def test_blob_storage_class_structure_thing_node() -> None:
     StructureThingNode(id="i-ii", parentId="i", name="II", description="")
     StructureThingNode(id="i-ii/A", parentId="i-ii", name="A", description="")
 
@@ -139,7 +140,7 @@ def test_blob_storage_class_structure_thing_node():
     assert f"or '{OBJECT_KEY_DIR_SEPARATOR}' with its name 'A'!" in str(exc_info.value)
 
 
-def test_blob_storage_class_structure_source_works():
+def test_blob_storage_class_structure_source_works() -> None:
     source = BlobStorageStructureSource(
         id="i-ii/A_2022-01-02T14:23:18+00:00",
         thingNodeId="i-ii/A",
@@ -168,7 +169,7 @@ def test_blob_storage_class_structure_source_works():
     multi_level_ok_src_from_bkt_and_ok = (
         BlobStorageStructureSource.from_structure_bucket_and_object_key(
             bucket=StructureBucket(name="iii"),
-            object_key=ObjectKey.from_string("x/C_2023-02-08T16:48:58+00:00"),
+            object_key=ObjectKey.from_string(IdString("x/C_2023-02-08T16:48:58+00:00")),
         )
     )
     assert multi_level_ok_src_from_bkt_and_ok.id == "iii/x/C_2023-02-08T16:48:58+00:00"
@@ -181,7 +182,7 @@ def test_blob_storage_class_structure_source_works():
     assert multi_level_ok_src_from_bkt_and_ok.path == "iii/x/C"
 
 
-def test_blob_storage_class_structure_source_raises_exceptions():
+def test_blob_storage_class_structure_source_raises_exceptions() -> None:
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to no object key dir separator
         BlobStorageStructureSource(
@@ -322,7 +323,7 @@ def test_blob_storage_class_structure_source_raises_exceptions():
     )
 
 
-def test_blob_storage_class_structure_sink():
+def test_blob_storage_class_structure_sink() -> None:
     sink = BlobStorageStructureSink(
         id="i-ii/A_next",
         thingNodeId="i-ii/A",
@@ -484,7 +485,7 @@ def test_blob_storage_class_structure_sink():
     assert "the same string as its name 'A - Next Object'!" in str(exc_info.value)
 
 
-def test_blob_storage_class_category():
+def test_blob_storage_class_category() -> None:
     category = Category(
         name="I",
         description="Category",
@@ -497,6 +498,7 @@ def test_blob_storage_class_category():
 
     assert category.name == "I"
     assert category.description == "Category"
+    assert category.substructure is not None
     assert len(category.substructure) == 2
     assert isinstance(category.substructure[0], Category)
     assert category.substructure[0].name == "A"
@@ -509,7 +511,9 @@ def test_blob_storage_class_category():
     assert category.substructure[1].get_depth() == 1
     assert category.get_depth() == 2
 
-    thing_node_from_category = category.to_thing_node(parent_id="i", separator="-")
+    thing_node_from_category = category.to_thing_node(
+        parent_id=IdString("i"), separator="-"
+    )
     assert thing_node_from_category.id == "i-i"
     assert thing_node_from_category.parentId == "i"
     assert thing_node_from_category.name == "I"
@@ -522,7 +526,7 @@ def test_blob_storage_class_category():
         thing_nodes=thing_nodes,
         buckets=bucket_names,
         sinks=sinks,
-        parent_id="i",
+        parent_id=IdString("i"),
         part_of_bucket_name=True,
     )
     assert len(thing_nodes) == 3
@@ -546,7 +550,7 @@ def test_blob_storage_class_category():
     assert sinks[1].name == "B - Next Object"
 
 
-def test_blob_storage_category_create_structure_too_long_bucket_name():
+def test_blob_storage_category_create_structure_too_long_bucket_name() -> None:
     category = Category(
         name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
         description="Super Category",
@@ -581,7 +585,7 @@ def test_blob_storage_category_create_structure_too_long_bucket_name():
     assert "to BucketName" in str(exc_info.value)
 
 
-def test_blob_storage_models_find_duplicates():
+def test_blob_storage_models_find_duplicates() -> None:
     item_list = ["apple", "banana", "cherry", "apple", "banana"]
     duplicates = find_duplicates(item_list)
 
@@ -590,7 +594,7 @@ def test_blob_storage_models_find_duplicates():
     assert "banana" in duplicates
 
 
-def test_blob_storage_class_adapter_hierarchy_happy_path():
+def test_blob_storage_class_adapter_hierarchy_happy_path() -> None:
     adapter_hierarchy = AdapterHierarchy(
         structure=[
             Category(
@@ -637,7 +641,9 @@ def test_blob_storage_class_adapter_hierarchy_happy_path():
     )
 
     assert adapter_hierarchy.structure[0].get_depth() == 3
+    assert adapter_hierarchy.structure[0].substructure is not None
     assert adapter_hierarchy.structure[0].substructure[0].get_depth() == 2
+    assert adapter_hierarchy.structure[0].substructure[0].substructure is not None
     assert (
         adapter_hierarchy.structure[0].substructure[0].substructure[0].get_depth() == 1
     )
@@ -665,7 +671,9 @@ def test_blob_storage_class_adapter_hierarchy_happy_path():
         AdapterHierarchy.from_file("tests/data/blob_storage/not_there.json")
 
 
-def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path():
+def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path() -> (
+    None
+):
     adapter_hierarchy = AdapterHierarchy(
         structure=(Category(name="I", description=""),)
     )
@@ -674,7 +682,7 @@ def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path(
     assert "Without an object key prefix no sinks or sources" in str(exc_info.value)
 
 
-def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error():
+def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error() -> None:
     structure = (
         Category(
             name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
@@ -706,7 +714,7 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error():
     assert "to BucketName" in str(exc_info.value)
 
 
-def test_blob_storage_adapter_hierarchy_with_structure_invalid_error():
+def test_blob_storage_adapter_hierarchy_with_structure_invalid_error() -> None:
     adapter_hierarchy = AdapterHierarchy(
         structure=(
             Category(
@@ -728,7 +736,7 @@ def test_blob_storage_adapter_hierarchy_with_structure_invalid_error():
     assert "Without an object key prefix no sinks or sources" in str(exc_info.value)
 
 
-def test_blob_storage_adapter_hierarchy_with_duplicates():
+def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
     adapter_hierarchy = AdapterHierarchy(
         structure=[
             Category(

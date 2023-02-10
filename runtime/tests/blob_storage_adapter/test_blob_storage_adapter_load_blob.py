@@ -1,9 +1,11 @@
 import logging
 import struct
+from io import BytesIO
 from typing import Any
 from unittest import mock
 
 import boto3
+import joblib
 import pytest
 from moto import mock_s3
 
@@ -21,11 +23,15 @@ def test_blob_storage_load_blob_from_storage_works(caplog: Any) -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
+        file_object = BytesIO()
+        data = struct.pack(">i", 42)
+        joblib.dump(data, file_object)
+        file_object.seek(0)
         client_mock.create_bucket(Bucket=bucket_name)
         client_mock.put_object(
             Bucket=bucket_name,
             Key="A_2022-01-02T14:23:18+00:00",
-            Body=struct.pack(">i", 42),
+            Body=file_object.read(),
         )
         with mock.patch(
             "hetdesrun.adapters.blob_storage.load_blob.get_s3_client",
