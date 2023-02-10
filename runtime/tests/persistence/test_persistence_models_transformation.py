@@ -273,7 +273,7 @@ def test_wrap_component_in_tr_workflow():
 
     assert tr_workflow.name == "Wrapper Workflow"
     assert valid_component_tr_dict["category"] == tr_workflow.category
-    assert valid_component_tr_dict["tag"] == tr_workflow.version_tag
+    assert valid_component_tr_dict["version_tag"] == tr_workflow.version_tag
     assert valid_component_tr_dict["state"] == tr_workflow.state
     assert tr_workflow.type == Type.WORKFLOW
     assert len(tr_workflow.content.operators) == 1
