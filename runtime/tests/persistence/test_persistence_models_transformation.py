@@ -59,7 +59,7 @@ def test_tr_validators_accept_valid_released_tr():
 
 
 def test_tr_validator_content_type_correct():
-    id = get_uuid_from_seed("test")
+    id_ = get_uuid_from_seed("test")
 
     combi = namedtuple("combi", "type content")
     incorrect_combis = (
@@ -75,8 +75,8 @@ def test_tr_validator_content_type_correct():
     for combi in incorrect_combis:
         with pytest.raises(ValidationError):
             TransformationRevision(
-                id=id,
-                revision_group_id=id,
+                id=id_,
+                revision_group_id=id_,
                 name="Test",
                 description="Test description",
                 version_tag="1.0.0",
@@ -91,8 +91,8 @@ def test_tr_validator_content_type_correct():
     for combi in correct_combis:
         # no validation errors
         TransformationRevision(
-            id=id,
-            revision_group_id=id,
+            id=id_,
+            revision_group_id=id_,
             name="Test",
             description="Test description",
             version_tag="1.0.0",
@@ -107,11 +107,11 @@ def test_tr_validator_content_type_correct():
 
 
 def test_tr_validator_version_tag_not_latest():
-    id = get_uuid_from_seed("test")
+    id_ = get_uuid_from_seed("test")
     with pytest.raises(ValidationError):
         TransformationRevision(
-            id=id,
-            revision_group_id=id,
+            id=id_,
+            revision_group_id=id_,
             name="Test",
             description="Test description",
             version_tag="latest",
@@ -126,11 +126,11 @@ def test_tr_validator_version_tag_not_latest():
 
 
 def test_tr_nonemptyvalidstr_regex_validator_not_whitelisted_character():
-    id = get_uuid_from_seed("test")
+    id_ = get_uuid_from_seed("test")
     with pytest.raises(ValidationError):
         TransformationRevision(
-            id=id,
-            revision_group_id=id,
+            id=id_,
+            revision_group_id=id_,
             name="'",
             description="Test description",
             version_tag="1.0.0",
@@ -145,10 +145,10 @@ def test_tr_nonemptyvalidstr_regex_validator_not_whitelisted_character():
 
 
 def test_tr_validstr_regex_validator_empty():
-    id = get_uuid_from_seed("test")
+    id_ = get_uuid_from_seed("test")
     TransformationRevision(
-        id=id,
-        revision_group_id=id,
+        id=id_,
+        revision_group_id=id_,
         name="Test",
         description="",
         version_tag="1.0.0",
@@ -163,11 +163,11 @@ def test_tr_validstr_regex_validator_empty():
 
 
 def test_tr_nonemptyvalidstr_regex_validator_empty():
-    id = get_uuid_from_seed("test")
+    id_ = get_uuid_from_seed("test")
     with pytest.raises(ValidationError):
         TransformationRevision(
-            id=id,
-            revision_group_id=id,
+            id=id_,
+            revision_group_id=id_,
             name="",
             description="Test description",
             version_tag="1.0.0",
@@ -182,11 +182,11 @@ def test_tr_nonemptyvalidstr_regex_validator_empty():
 
 
 def test_tr_nonemptyvalidstr_validator_max_characters():
-    id = get_uuid_from_seed("test")
+    id_ = get_uuid_from_seed("test")
     with pytest.raises(ValidationError):
         TransformationRevision(
-            id=id,
-            revision_group_id=id,
+            id=id_,
+            revision_group_id=id_,
             name="Name Name Name Name Name Name Name Name Name Name Name Name Name",
             description="Test description",
             version_tag="1.0.0",
@@ -201,11 +201,11 @@ def test_tr_nonemptyvalidstr_validator_max_characters():
 
 
 def test_tr_shortnonemptyvalidstr_validator_max_characters():
-    id = get_uuid_from_seed("test")
+    id_ = get_uuid_from_seed("test")
     with pytest.raises(ValidationError):
         TransformationRevision(
-            id=id,
-            revision_group_id=id,
+            id=id_,
+            revision_group_id=id_,
             name="Name",
             description="Test description",
             version_tag="1.0.0.0.0.0.0.0.0.0.0",
@@ -220,10 +220,10 @@ def test_tr_shortnonemptyvalidstr_validator_max_characters():
 
 
 def test_tr_nonemptyvalidstr_regex_validator_fancy_characters():
-    id = get_uuid_from_seed("test")
+    id_ = get_uuid_from_seed("test")
     TransformationRevision(
-        id=id,
-        revision_group_id=id,
+        id=id_,
+        revision_group_id=id_,
         name="bößä",
         description="中文, español, Çok teşekkürler",
         version_tag="(-_-) /  =.= & +_+",
@@ -271,12 +271,12 @@ def test_wrap_component_in_tr_workflow():
 
     tr_workflow = tr_component.wrap_component_in_tr_workflow()
 
-    assert "Wrapper Workflow" == tr_workflow.name
+    assert tr_workflow.name == "Wrapper Workflow"
     assert valid_component_tr_dict["category"] == tr_workflow.category
-    assert valid_component_tr_dict["version_tag"] == tr_workflow.version_tag
+    assert valid_component_tr_dict["tag"] == tr_workflow.version_tag
     assert valid_component_tr_dict["state"] == tr_workflow.state
-    assert Type.WORKFLOW == tr_workflow.type
-    assert 1 == len(tr_workflow.content.operators)
+    assert tr_workflow.type == Type.WORKFLOW
+    assert len(tr_workflow.content.operators) == 1
     assert valid_component_tr_dict["id"] == str(
         tr_workflow.content.operators[0].transformation_id
     )

@@ -1,6 +1,6 @@
 import logging
 from posixpath import join as posix_urljoin
-from typing import Any, List, Optional, Union
+from typing import Any
 from uuid import UUID
 
 import requests
@@ -20,9 +20,9 @@ from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=redefined-builtin
+
 def get_transformation_from_java_backend(
-    id: UUID, type: Type
+    id: UUID, type: Type  # noqa: A002
 ) -> TransformationRevision:
     """Get transformation via REST API from old backend (old endpoints)
 
@@ -98,7 +98,7 @@ def get_transformation_from_java_backend(
 
     doc_text = doc_response.json().get("document", "")
 
-    frontend_dto: Union[ComponentRevisionFrontendDto, WorkflowRevisionFrontendDto]
+    frontend_dto: ComponentRevisionFrontendDto | WorkflowRevisionFrontendDto
 
     # Generate transformation revision
     if type == Type.COMPONENT:
@@ -118,30 +118,27 @@ def get_transformation_from_java_backend(
 
 
 def selection_list_empty_or_contains_value(
-    selection_list: Optional[List[Any]], actual_value: Any
+    selection_list: list[Any] | None, actual_value: Any
 ) -> bool:
     if selection_list is None:
         return True
     return actual_value in selection_list
 
 
-def criterion_unset_or_matches_value(
-    criterion: Optional[Any], actual_value: Any
-) -> bool:
+def criterion_unset_or_matches_value(criterion: Any | None, actual_value: Any) -> bool:
     if criterion is None:
         return True
     return bool(actual_value == criterion)
 
 
 ##Export transformations based on type, id, name and category if provided
-# pylint: disable=redefined-builtin
 def export_transformations(
     download_path: str,
-    type: Optional[Type] = None,
-    state: Optional[State] = None,
-    category: Optional[ValidStr] = None,
-    ids: Optional[List[Union[UUID, str]]] = None,
-    names: Optional[List[NonEmptyValidStr]] = None,
+    type: Type | None = None,  # noqa: A002
+    state: State | None = None,
+    category: ValidStr | None = None,
+    ids: list[UUID | str] | None = None,
+    names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
     directly_from_db: bool = False,
     java_backend: bool = False,
@@ -189,15 +186,15 @@ def export_transformations(
         )
 
     """
-    import hetdesrun.models.wiring  # pylint: disable=import-outside-toplevel
+    import hetdesrun.models.wiring
 
     hetdesrun.models.wiring.EXPORT_MODE = True
 
-    import hetdesrun.backend.models.wiring  # pylint: disable=import-outside-toplevel
+    import hetdesrun.backend.models.wiring
 
     hetdesrun.backend.models.wiring.EXPORT_MODE = True
 
-    transformation_list: List[TransformationRevision] = []
+    transformation_list: list[TransformationRevision] = []
     try:
         headers = sync_wrapped_get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
@@ -210,7 +207,7 @@ def export_transformations(
 
     if java_backend:
         if ids is not None:
-            ids = [UUID(id) for id in ids if isinstance(id, str)]
+            ids = [UUID(id_) for id_ in ids if isinstance(id_, str)]
 
         url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
         response = requests.get(
@@ -231,25 +228,23 @@ def export_transformations(
             )
             raise Exception(msg)
 
-        failed_exports: List[Any] = []
+        failed_exports: list[Any] = []
         for trafo_json in response.json():
             if (
                 criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
                 and selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
                 and selection_list_empty_or_contains_value(names, trafo_json["name"])
                 and criterion_unset_or_matches_value(category, trafo_json["category"])
+                and (include_deprecated or trafo_json["state"] != State.DISABLED)
             ):
-                if include_deprecated or trafo_json["state"] != State.DISABLED:
-                    try:
-                        transformation = get_transformation_from_java_backend(
-                            UUID(trafo_json["id"]), Type(trafo_json["type"])
-                        )
-                    except ValidationError as e:
-                        failed_exports.append((trafo_json, e))
-                    else:
-                        save_transformation_into_directory(
-                            transformation, download_path
-                        )
+                try:
+                    transformation = get_transformation_from_java_backend(
+                        UUID(trafo_json["id"]), Type(trafo_json["type"])
+                    )
+                except ValidationError as e:
+                    failed_exports.append((trafo_json, e))
+                else:
+                    save_transformation_into_directory(transformation, download_path)
         for export in failed_exports:
             trafo_json = export[0]
             error = export[1]

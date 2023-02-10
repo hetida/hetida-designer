@@ -20,7 +20,7 @@ from hetdesrun.webservice.auth_outgoing import (
 )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def http_error_token_request():
     async def mocked_post_to_auth_provider(*args, **kwargs):
         mocked_post_to_auth_provider.last_called_args = deepcopy(args)
@@ -34,7 +34,7 @@ def http_error_token_request():
         yield test_mocked_post_to_auth_provider
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def json_parsing_error_token_request():
     mocked_resp = mock.Mock
     mocked_resp.json = mock.Mock(
@@ -54,7 +54,7 @@ def json_parsing_error_token_request():
         yield test_mocked_post_to_auth_provider
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def invalid_token_response_mocked_token_request(valid_token_response):
     mocked_resp = mock.Mock
     mocked_resp.json = mock.Mock(return_value={"a": 42})
@@ -107,9 +107,11 @@ async def test_outgoing_auth_token_fetching_with_password_grant(mocked_token_req
 
 
 @pytest.mark.asyncio
-async def test_http_error_on_outgoing_auth_token_fetching(http_error_token_request):
+async def test_http_error_on_outgoing_auth_token_fetching(
+    http_error_token_request,
+):
     with pytest.raises(ServiceAuthenticationError, match=r".*test error.*"):
-        token_response = await obtain_token_from_auth_provider(
+        _token_response = await obtain_token_from_auth_provider(
             ServiceCredentials(
                 realm="my-realm",
                 grant_credentials=PasswordGrantCredentials(
@@ -126,7 +128,7 @@ async def test_json_parsing_error_on_outgoing_auth_token_fetching(
     json_parsing_error_token_request,
 ):
     with pytest.raises(ServiceAuthenticationError, match=r".*json parsing error.*"):
-        token_response = await obtain_token_from_auth_provider(
+        _token_response = await obtain_token_from_auth_provider(
             ServiceCredentials(
                 realm="my-realm",
                 grant_credentials=PasswordGrantCredentials(
@@ -143,7 +145,7 @@ async def test_invalid_token_response_outgoing_auth_token_fetching(
     invalid_token_response_mocked_token_request,
 ):
     with pytest.raises(ServiceAuthenticationError, match=r".*validation error.*"):
-        token_response = await obtain_token_from_auth_provider(
+        _token_response = await obtain_token_from_auth_provider(
             ServiceCredentials(
                 realm="my-realm",
                 grant_credentials=PasswordGrantCredentials(
@@ -228,7 +230,7 @@ async def test_outgoing_auth_token_refreshing(
     ).total_seconds() < 30
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def service_credentials():
     return ServiceCredentials(
         realm="my-realm",
@@ -240,7 +242,7 @@ def service_credentials():
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def result_token_info() -> TokenResponse:
     return TokenResponse(
         access_token="result_access_token",
@@ -255,7 +257,7 @@ def result_token_info() -> TokenResponse:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def token_info_both_longer_valid() -> TokenResponse:
     return TokenResponse(
         access_token="some_access_token",
@@ -270,7 +272,7 @@ def token_info_both_longer_valid() -> TokenResponse:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def token_info_access_overdue_refresh_valid() -> TokenResponse:
     return TokenResponse(
         access_token="some_access_token",
@@ -285,7 +287,7 @@ def token_info_access_overdue_refresh_valid() -> TokenResponse:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def token_info_access_valid_refresh_overdue() -> TokenResponse:
     return TokenResponse(
         access_token="some_access_token",
@@ -300,7 +302,7 @@ def token_info_access_valid_refresh_overdue() -> TokenResponse:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def token_info_both_overdue() -> TokenResponse:
     return TokenResponse(
         access_token="some_access_token",
@@ -315,7 +317,7 @@ def token_info_both_overdue() -> TokenResponse:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def obtain_token_works(result_token_info):
     async def mocked_obtain_func(*args, **kwargs):
         mocked_obtain_func.last_called_args = deepcopy(args)
@@ -331,7 +333,7 @@ def obtain_token_works(result_token_info):
         yield mocked
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def obtain_token_raises():
     async def mocked_obtain_func(*args, **kwargs):
         mocked_obtain_func.last_called_args = deepcopy(args)
@@ -348,7 +350,7 @@ def obtain_token_raises():
         yield _mocked_obtain_token_function_raises
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def refresh_token_works(result_token_info):
     async def mocked_obtain_func(*args, **kwargs):
         mocked_obtain_func.last_called_args = deepcopy(args)
@@ -364,7 +366,7 @@ def refresh_token_works(result_token_info):
         yield mocked
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def refresh_token_raises():
     async def mocked_obtain_func(*args, **kwargs):
         mocked_obtain_func.last_called_args = deepcopy(args)
@@ -488,8 +490,8 @@ async def test_obtain_refresh_logic_new_token_obtain_fails(
     refresh_token_works,
     service_credentials,
 ):
-    with pytest.raises(ServiceAuthenticationError) as exc:
-        token_info = await obtain_or_refresh_token(
+    with pytest.raises(ServiceAuthenticationError) as _exc:
+        _token_info = await obtain_or_refresh_token(
             service_user_credentials=service_credentials,
             existing_token_info=None,
         )
@@ -520,7 +522,7 @@ async def test_obtain_refresh_logic_refresh_raises_obtain_works(
     assert refresh_token_raises.num_called == 1
 
     assert len(obtain_token_works.last_called_args) == 1
-    obtain_token_works.last_called_args[0] == service_credentials
+    assert obtain_token_works.last_called_args[0] == service_credentials
 
 
 def test_get_access_token_manager(
@@ -534,7 +536,7 @@ def test_get_access_token_manager(
 
     access_token_str = token_mgr.sync_get_access_token()
 
-    assert access_token_str == "result_access_token"
+    assert access_token_str == "result_access_token"  # noqa: S105
 
     # load cached works
     token_mgr = create_or_get_named_access_token_manager(

@@ -1,7 +1,6 @@
 import datetime
 import logging
 from copy import deepcopy
-from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from sqlalchemy import delete, select, update
@@ -55,7 +54,7 @@ def store_single_transformation_revision(
         add_tr(session, transformation_revision)
 
         if transformation_revision.type == Type.WORKFLOW:
-            assert isinstance(
+            assert isinstance(  # noqa: S101
                 transformation_revision.content, WorkflowContent
             )  # hint for mypy
             update_nesting(
@@ -63,9 +62,8 @@ def store_single_transformation_revision(
             )
 
 
-# pylint: disable=redefined-builtin
 def select_tr_by_id(
-    session: SQLAlchemySession, id: UUID, log_error: bool = True
+    session: SQLAlchemySession, id: UUID, log_error: bool = True  # noqa: A002
 ) -> TransformationRevision:
 
     result = session.execute(
@@ -83,9 +81,8 @@ def select_tr_by_id(
     return TransformationRevision.from_orm_model(result)
 
 
-# pylint: disable=redefined-builtin
 def read_single_transformation_revision(
-    id: UUID, log_error: bool = True
+    id: UUID, log_error: bool = True  # noqa: A002
 ) -> TransformationRevision:
     with Session() as session, session.begin():
         return select_tr_by_id(session, id, log_error)
@@ -136,7 +133,7 @@ def pass_on_deprecation(session: SQLAlchemySession, transformation_id: UUID) -> 
 
     for nesting in sup_nestings:
         transformation_revision = select_tr_by_id(session, nesting.workflow_id)
-        assert isinstance(
+        assert isinstance(  # noqa: S101
             transformation_revision.content, WorkflowContent
         )  # hint for mypy
         for operator in transformation_revision.content.operators:
@@ -160,7 +157,7 @@ def is_modifiable(
     existing_transformation_revision: TransformationRevision,
     updated_transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = False,
-) -> Tuple[bool, str]:
+) -> tuple[bool, str]:
     if existing_transformation_revision.type != updated_transformation_revision.type:
         return False, (
             f"The type ({updated_transformation_revision.type}) of the "
@@ -208,8 +205,9 @@ def contains_deprecated(transformation_id: UUID) -> bool:
         logger.error(msg)
         raise DBIntegrityError(msg)
 
-    assert isinstance(transformation_revision.content, WorkflowContent)  # hint for mypy
-
+    assert isinstance(  # noqa: S101
+        transformation_revision.content, WorkflowContent
+    )  # hint for mypy
     is_disabled = []
     for operator in transformation_revision.content.operators:
         logger.info(
@@ -224,22 +222,22 @@ def contains_deprecated(transformation_id: UUID) -> bool:
 
 def update_content(
     updated_transformation_revision: TransformationRevision,
-    existing_transformation_revision: Optional[TransformationRevision] = None,
+    existing_transformation_revision: TransformationRevision | None = None,
 ) -> TransformationRevision:
     if updated_transformation_revision.type == Type.COMPONENT:
         updated_transformation_revision.content = update_code(
             updated_transformation_revision
         )
     elif existing_transformation_revision is not None:
-        assert isinstance(
+        assert isinstance(  # noqa: S101
             existing_transformation_revision.content, WorkflowContent
         )  # hint for mypy
 
-        existing_operator_ids: List[UUID] = []
+        existing_operator_ids: list[UUID] = []
         for operator in existing_transformation_revision.content.operators:
             existing_operator_ids.append(operator.id)
 
-        assert isinstance(
+        assert isinstance(  # noqa: S101
             updated_transformation_revision.content, WorkflowContent
         )  # hint for mypy
 
@@ -257,7 +255,7 @@ def update_content(
 
 
 def if_applicable_release_or_deprecate(
-    existing_transformation_revision: Optional[TransformationRevision],
+    existing_transformation_revision: TransformationRevision | None,
     updated_transformation_revision: TransformationRevision,
 ) -> TransformationRevision:
     if existing_transformation_revision is not None:
@@ -339,7 +337,7 @@ def update_or_create_single_transformation_revision(
             return select_tr_by_id(session, transformation_revision.id)
 
         if transformation_revision.type == Type.WORKFLOW:
-            assert isinstance(
+            assert isinstance(  # noqa: S101
                 transformation_revision.content, WorkflowContent
             )  # hint for mypy
             update_nesting(
@@ -365,9 +363,8 @@ def delete_tr(session: SQLAlchemySession, tr_id: UUID) -> None:
         raise DBIntegrityError(msg) from e
 
 
-# pylint: disable=redefined-builtin
 def delete_single_transformation_revision(
-    id: UUID, type: Optional[Type] = None, ignore_state: bool = False
+    id: UUID, type: Type | None = None, ignore_state: bool = False  # noqa: A002
 ) -> None:
     with Session() as session, session.begin():
 
@@ -421,14 +418,14 @@ def is_unused(transformation_id: UUID) -> bool:
 
 
 def select_multiple_transformation_revisions(
-    type: Optional[Type] = None,  # pylint: disable=redefined-builtin
-    state: Optional[State] = None,
-    category: Optional[ValidStr] = None,
-    revision_group_id: Optional[UUID] = None,
-    ids: Optional[List[UUID]] = None,
-    names: Optional[List[NonEmptyValidStr]] = None,
+    type: Type | None = None,  # noqa: A002
+    state: State | None = None,
+    category: ValidStr | None = None,
+    revision_group_id: UUID | None = None,
+    ids: list[UUID] | None = None,
+    names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
-) -> List[TransformationRevision]:
+) -> list[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
     with Session() as session, session.begin():
         selection = select(TransformationRevisionDBModel)
@@ -465,7 +462,7 @@ def select_multiple_transformation_revisions(
 
 def get_multiple_transformation_revisions(
     params: FilterParams,
-) -> List[TransformationRevision]:
+) -> list[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
 
     tr_list = select_multiple_transformation_revisions(
@@ -486,9 +483,7 @@ def get_multiple_transformation_revisions(
         for tr in tr_list:
             if tr.type == Type.WORKFLOW:
                 nested_tr_dict = get_all_nested_transformation_revisions(tr)
-                for (
-                    nested_tr_id
-                ) in nested_tr_dict:  # pylint: disable=consider-using-dict-items
+                for nested_tr_id in nested_tr_dict:
                     if nested_tr_id not in tr_ids:
                         tr_list.append(nested_tr_dict[nested_tr_id])
 
@@ -505,7 +500,7 @@ def nof_db_entries() -> int:
 
 def get_all_nested_transformation_revisions(
     transformation_revision: TransformationRevision,
-) -> Dict[UUID, TransformationRevision]:
+) -> dict[UUID, TransformationRevision]:
 
     if transformation_revision.type != Type.WORKFLOW:
         msg = (
@@ -520,7 +515,7 @@ def get_all_nested_transformation_revisions(
             session, transformation_revision.id
         )
 
-        nested_transformation_revisions: Dict[UUID, TransformationRevision] = {}
+        nested_transformation_revisions: dict[UUID, TransformationRevision] = {}
 
         for descendant in descendants:
             nested_transformation_revisions[descendant.operator_id] = select_tr_by_id(
@@ -546,10 +541,13 @@ def get_latest_revision_id(revision_group_id: UUID) -> UUID:
         logger.error(msg)
         raise DBNotFoundError(msg)
 
-    id_by_released_timestamp: Dict[datetime.datetime, UUID] = {}
+    id_by_released_timestamp: dict[datetime.datetime, UUID] = {}
 
     for revision in revision_group_list:
-        assert isinstance(revision.released_timestamp, datetime.datetime)
+        if not isinstance(revision.released_timestamp, datetime.datetime):
+            raise TypeError(
+                "revision.released_timestamp must be of type datetime.datetime"
+            )
         id_by_released_timestamp[revision.released_timestamp] = revision.id
     _, latest_revision_id = sorted(id_by_released_timestamp.items(), reverse=True)[0]
     return latest_revision_id

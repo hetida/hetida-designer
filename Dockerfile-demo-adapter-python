@@ -40,7 +40,7 @@ FROM application_base AS test
 WORKDIR /app
 RUN ./pipt sync-system --dev
 RUN python3 -m pytest --cov=demo_adapter_python --cov-report xml --junitxml test_results.xml tests
-RUN bash /app/scripts/gen_pylint_report.sh
+RUN bash /app/scripts/gen_ruff_report.sh
 
 # prod should still be the default build, this is why we close with FROM prod
 # Note that in order to really skip the test stage you either need to explicitly specify the prod

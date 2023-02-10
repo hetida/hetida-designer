@@ -82,9 +82,9 @@ def test_get_transformation_revisions(caplog):
             assert len(args) == 1
             assert len(kwargs) == 0
             assert isinstance(args[0], FilterParams)
-            assert args[0].include_dependencies == False  # default value
-            assert args[0].include_deprecated == True  # default value
-            assert args[0].unused == False  # default value
+            assert args[0].include_dependencies is False  # default value
+            assert args[0].include_deprecated is True  # default value
+            assert args[0].unused is False  # default value
 
             params = FilterParams(
                 type=Type.COMPONENT,
@@ -109,10 +109,10 @@ def test_get_transformation_revisions(caplog):
             assert kwargs["params"]["revision_group_id"] == str(
                 params.revision_group_id
             )
-            assert kwargs["params"]["ids"] == [str(id) for id in params.ids]
+            assert kwargs["params"]["ids"] == [str(id_) for id_ in params.ids]
             assert kwargs["params"]["names"] == params.names
-            assert kwargs["params"]["include_deprecated"] == True
-            assert kwargs["params"]["unused"] == False
+            assert kwargs["params"]["include_deprecated"] is True
+            assert kwargs["params"]["unused"] is False
 
     with caplog.at_level(logging.ERROR):
         resp_mock = mock.Mock()
@@ -136,22 +136,22 @@ def test_delete_transformation_revision(caplog):
         with mock.patch(
             "hetdesrun.exportimport.utils.requests.delete", return_value=resp_mock
         ) as mocked_delete_from_backend:
-            id = uuid4()
-            delete_transformation_revision(id, directly_in_db=True)
+            id_ = uuid4()
+            delete_transformation_revision(id_, directly_in_db=True)
             assert mocked_delete_from_db.call_count == 1
             assert mocked_delete_from_backend.call_count == 0
             _, args, kwargs = mocked_delete_from_db.mock_calls[0]
-            assert args[0] == id
-            assert kwargs["ignore_state"] == True
+            assert args[0] == id_
+            assert kwargs["ignore_state"] is True
 
-            delete_transformation_revision(id)
+            delete_transformation_revision(id_)
             assert mocked_delete_from_db.call_count == 1  # no second call
             assert mocked_delete_from_backend.call_count == 1
             _, args, kwargs = mocked_delete_from_backend.mock_calls[0]
             assert args[0] == posix_urljoin(
-                get_config().hd_backend_api_url, "transformations", str(id)
+                get_config().hd_backend_api_url, "transformations", str(id_)
             )
-            assert kwargs["params"]["ignore_state"] == True
+            assert kwargs["params"]["ignore_state"] is True
 
     with caplog.at_level(logging.ERROR):
         resp_mock = mock.Mock()
@@ -203,7 +203,7 @@ def test_delete_transformation_revisions():
         documentation="",
         test_wiring=WorkflowWiring(),
     )
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.exportimport.utils.delete_transformation_revision", return_value=None
     ) as mocked_delete:
         with mock.patch(
@@ -224,7 +224,7 @@ def test_delete_transformation_revisions():
                 example_wf_contained.id,
                 example_wf_containing.id,
             ]
-            assert kwargs["params"].include_dependencies == True
+            assert kwargs["params"].include_dependencies is True
 
             assert mocked_delete.call_count == 3
             _, args, _ = mocked_delete.mock_calls[0]
@@ -235,7 +235,7 @@ def test_delete_transformation_revisions():
             assert args[0] == example_tr_released.id
 
 
-def test_update_or_create_transformation_revision_happy_path(caplog):
+def test_update_or_create_transformation_revision_happy_path():
     with mock.patch(
         "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
         return_value=None,
@@ -256,7 +256,7 @@ def test_update_or_create_transformation_revision_happy_path(caplog):
             assert mocked_update_in_backend.call_count == 0
             _, args, kwargs = mocked_update_in_db.mock_calls[0]
             assert args[0] == tr_with_updated_tag
-            assert kwargs["update_component_code"] == False
+            assert kwargs["update_component_code"] is False
 
             update_or_create_transformation_revision(
                 tr_with_updated_tag, directly_in_db=True
@@ -265,8 +265,8 @@ def test_update_or_create_transformation_revision_happy_path(caplog):
             assert mocked_update_in_backend.call_count == 0
             _, args, kwargs = mocked_update_in_db.mock_calls[1]
             assert args[0] == tr_with_updated_tag
-            assert kwargs["update_component_code"] == True
-            assert kwargs["strip_wiring"] == False
+            assert kwargs["update_component_code"] is True
+            assert kwargs["strip_wiring"] is False
 
             update_or_create_transformation_revision(
                 tr_with_updated_tag, directly_in_db=True, strip_wiring=True
@@ -275,7 +275,7 @@ def test_update_or_create_transformation_revision_happy_path(caplog):
             assert mocked_update_in_backend.call_count == 0
             _, args, kwargs = mocked_update_in_db.mock_calls[2]
             assert args[0] == tr_with_updated_tag
-            assert kwargs["strip_wiring"] == True
+            assert kwargs["strip_wiring"] is True
 
             update_or_create_transformation_revision(example_tr_draft)
             assert mocked_update_in_db.call_count == 3  # no fourth call
@@ -286,9 +286,9 @@ def test_update_or_create_transformation_revision_happy_path(caplog):
                 "transformations",
                 str(example_tr_draft.id),
             )
-            assert kwargs["params"]["allow_overwrite_released"] == True
-            assert kwargs["params"]["update_component_code"] == True
-            assert kwargs["params"]["strip_wiring"] == False
+            assert kwargs["params"]["allow_overwrite_released"] is True
+            assert kwargs["params"]["update_component_code"] is True
+            assert kwargs["params"]["strip_wiring"] is False
 
             update_or_create_transformation_revision(
                 example_tr_draft,
@@ -304,9 +304,9 @@ def test_update_or_create_transformation_revision_happy_path(caplog):
                 "transformations",
                 str(example_tr_draft.id),
             )
-            assert kwargs["params"]["allow_overwrite_released"] == False
-            assert kwargs["params"]["update_component_code"] == False
-            assert kwargs["params"]["strip_wiring"] == True
+            assert kwargs["params"]["allow_overwrite_released"] is False
+            assert kwargs["params"]["update_component_code"] is False
+            assert kwargs["params"]["strip_wiring"] is True
 
 
 def test_update_or_create_transformation_revision_rest_api_error(caplog):
@@ -336,7 +336,7 @@ def test_update_or_create_transformation_revision_rest_api_update_forbidden(capl
 
 
 def test_update_or_create_transformation_revision_db_not_found(caplog):
-    with caplog.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):  # noqa: SIM117
         with mock.patch(
             "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
             side_effect=DBNotFoundError,
@@ -349,7 +349,7 @@ def test_update_or_create_transformation_revision_db_not_found(caplog):
 
 
 def test_update_or_create_transformation_revision_db_integrity_error(caplog):
-    with caplog.at_level(logging.ERROR):
+    with caplog.at_level(logging.ERROR):  # noqa: SIM117
         with mock.patch(
             "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
             side_effect=DBIntegrityError,
@@ -362,20 +362,21 @@ def test_update_or_create_transformation_revision_db_integrity_error(caplog):
 
 
 def test_update_or_create_transformation_revision_db_update_forbidden(caplog):
-    with caplog.at_level(logging.INFO):
-        with pytest.raises(ModifyForbidden):
-            with mock.patch(
-                "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
-                side_effect=ModifyForbidden,
-            ):
-                caplog.clear()
+    with caplog.at_level(logging.INFO):  # noqa: SIM117
+        with mock.patch(
+            "hetdesrun.exportimport.utils.update_or_create_single_transformation_revision",
+            side_effect=ModifyForbidden,
+        ):
+            caplog.clear()
+
+            with pytest.raises(ModifyForbidden):
                 update_or_create_transformation_revision(
                     example_tr_draft, directly_in_db=True
                 )
-                assert "Update forbidden for entry" in caplog.text
+            assert "Update forbidden for entry" in caplog.text
 
 
-def test_deprecate_all_but_latest_in_group(caplog):
+def test_deprecate_all_but_latest_in_group():
     path = os.path.join(
         "tests",
         "data",
@@ -396,7 +397,7 @@ def test_deprecate_all_but_latest_in_group(caplog):
     stored_wf.deprecate()
     deprecated_stored_json = json.loads(stored_wf.json())
 
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.exportimport.utils.get_transformation_revisions",
         return_value=[import_wf, stored_wf],
     ) as patched_get:
@@ -433,7 +434,7 @@ def test_deprecate_all_but_latest_per_group():
             assert patched_get.call_count == 1
             _, _, kwargs = patched_get.mock_calls[0]
             assert kwargs["params"].state == State.RELEASED
-            assert kwargs["directly_from_db"] == False
+            assert kwargs["directly_from_db"] is False
 
             assert patched_deprecate_old.call_count == 0
 
@@ -447,12 +448,12 @@ def test_deprecate_all_but_latest_per_group():
             assert patched_get.call_count == 1
             _, _, kwargs = patched_get.mock_calls[0]
             assert kwargs["params"].state == State.RELEASED
-            assert kwargs["directly_from_db"] == False
+            assert kwargs["directly_from_db"] is False
 
             assert patched_deprecate_old.call_count == 1
             _, args, kwargs = patched_deprecate_old.mock_calls[0]
             assert args[0] == example_tr_released_old.revision_group_id
-            assert kwargs["directly_in_db"] == False
+            assert kwargs["directly_in_db"] is False
 
 
 def test_delete_drafts():
@@ -469,7 +470,7 @@ def test_delete_drafts():
             assert patched_get.call_count == 1
             _, _, kwargs = patched_get.mock_calls[0]
             assert kwargs["params"].state == State.DRAFT
-            assert kwargs["directly_from_db"] == False
+            assert kwargs["directly_from_db"] is False
 
             assert mocked_delete.call_count == 1
 
@@ -482,7 +483,7 @@ def test_delete_drafts():
             assert patched_get.call_count == 1
             _, _, kwargs = patched_get.mock_calls[0]
             assert kwargs["params"].state == State.DRAFT
-            assert kwargs["directly_from_db"] == False
+            assert kwargs["directly_from_db"] is False
 
             assert mocked_delete.call_count == 2  # one more than before
             _, args, _ = mocked_delete.mock_calls[1]
@@ -503,7 +504,7 @@ def test_delete_unused_deprecated():
             assert patched_get.call_count == 1
             _, _, kwargs = patched_get.mock_calls[0]
             assert kwargs["params"].state == State.DISABLED
-            assert kwargs["directly_from_db"] == False
+            assert kwargs["directly_from_db"] is False
 
             assert mocked_delete.call_count == 1
 
@@ -516,7 +517,7 @@ def test_delete_unused_deprecated():
             assert patched_get.call_count == 1
             _, _, kwargs = patched_get.mock_calls[0]
             assert kwargs["params"].state == State.DISABLED
-            assert kwargs["directly_from_db"] == False
+            assert kwargs["directly_from_db"] is False
 
             assert mocked_delete.call_count == 2  # one more than before
             _, args, _ = mocked_delete.mock_calls[1]
@@ -524,7 +525,7 @@ def test_delete_unused_deprecated():
 
 
 def test_delete_all_restart():
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.exportimport.purge.delete_transformation_revisions",
         return_value=None,
     ) as mocked_delete:
@@ -540,7 +541,7 @@ def test_delete_all_restart():
 
                 assert patched_get.call_count == 1
                 _, _, kwargs = patched_get.mock_calls[0]
-                assert kwargs["directly_from_db"] == False
+                assert kwargs["directly_from_db"] is False
 
                 assert mocked_delete.call_count == 1
 
@@ -559,7 +560,7 @@ def test_delete_all_restart():
 
                 assert patched_get.call_count == 1
                 _, _, kwargs = patched_get.mock_calls[0]
-                assert kwargs["directly_from_db"] == False
+                assert kwargs["directly_from_db"] is False
 
                 assert mocked_delete.call_count == 2  # one more than before
                 _, args, kwargs = mocked_delete.mock_calls[1]
@@ -569,9 +570,9 @@ def test_delete_all_restart():
                     example_tr_released,
                     example_tr_deprecated,
                 ]
-                assert kwargs["directly_in_db"] == False
+                assert kwargs["directly_in_db"] is False
 
                 assert mocked_import.call_count == 2  # one more than before
                 _, args, kwargs = mocked_import.mock_calls[0]
                 assert args[0] == "./transformations"
-                assert kwargs["directly_into_db"] == False
+                assert kwargs["directly_into_db"] is False

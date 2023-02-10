@@ -12,6 +12,8 @@ There are cleanup options of varying scope:
 
 The first two actions can easily be performed for individual transformation revisions via the user interface, doing so regularly is recommended. Apart from that, there are also functions for all four actions that automatically apply them to all matching transformation revisions.
 
+**Note**: All commands listed below assume an external hetida designer installation, i.e. not the local docker-compose setup. For the former you may need authentication configuration according to your setup. For the later you may need to add `--network hetida-designer-network ` and set `http://hetida-designer-backend:8090/api/` as `HETIDA_DESIGNER_BACKEND_API_URL`.
+
 ## 1. Deprecate Old Transformation Revisions
 
 In this case a transformation revision is considered "old" if it is released and there is another  released transformation revision in the same revision group, which has a later release timestamp.

@@ -20,7 +20,7 @@ from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def clean_test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
@@ -64,7 +64,7 @@ dto_json_component_1_update = {
     ],
     "outputs": [],
     "wirings": [],
-    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 1",\n    description="description of component 1",\n    category="category",\n    uuid="c3f0ffdc-ff1c-a612-668c-0a606020ffaa",\n    group_id="b301ff9e-bdbb-8d7c-f6e2-7e83b919a8d3",\n    tag="1.0.0"\n)\ndef main(*, new_input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',
+    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 1",\n    description="description of component 1",\n    category="category",\n    uuid="c3f0ffdc-ff1c-a612-668c-0a606020ffaa",\n    group_id="b301ff9e-bdbb-8d7c-f6e2-7e83b919a8d3",\n    tag="1.0.0"\n)\ndef main(*, new_input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',  # noqa: E501
 }
 dto_json_component_1_publish = {
     "id": str(get_uuid_from_seed("component 1")),
@@ -84,7 +84,7 @@ dto_json_component_1_publish = {
     ],
     "outputs": [],
     "wirings": [],
-    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 1",\n    description="description of component 1",\n    category="category",\n    uuid="c3f0ffdc-ff1c-a612-668c-0a606020ffaa",\n    group_id="b301ff9e-bdbb-8d7c-f6e2-7e83b919a8d3",\n    tag="1.0.0"\n)\ndef main(*, new_input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',
+    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 1",\n    description="description of component 1",\n    category="category",\n    uuid="c3f0ffdc-ff1c-a612-668c-0a606020ffaa",\n    group_id="b301ff9e-bdbb-8d7c-f6e2-7e83b919a8d3",\n    tag="1.0.0"\n)\ndef main(*, new_input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',  # noqa: E501
 }
 dto_json_component_2 = {
     "id": str(get_uuid_from_seed("component 2")),
@@ -112,11 +112,11 @@ dto_json_component_2_update = {
     "inputs": [],
     "outputs": [],
     "wirings": [],
-    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 2",\n    description="description of component 2",\n    category="category",\n    uuid="'
+    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 2",\n    description="description of component 2",\n    category="category",\n    uuid="'  # noqa: E501
     + str(get_uuid_from_seed("component 2"))
     + '",\n    group_id="'
     + str(get_uuid_from_seed("group of component 2"))
-    + '",\n    tag="1.0.0"\n)\ndef main(*):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',
+    + '",\n    tag="1.0.0"\n)\ndef main(*):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',  # noqa: E501
 }
 dto_json_component_2_deprecate = {
     "id": str(get_uuid_from_seed("component 2")),
@@ -130,11 +130,11 @@ dto_json_component_2_deprecate = {
     "inputs": [],
     "outputs": [],
     "wirings": [],
-    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 2",\n    description="description of component 2",\n    category="category",\n    uuid="'
+    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 2",\n    description="description of component 2",\n    category="category",\n    uuid="'  # noqa: E501
     + str(get_uuid_from_seed("component 2"))
     + '",\n    group_id="'
     + str(get_uuid_from_seed("group of component 2"))
-    + '",\n    tag="1.0.0"\n)\ndef main(*):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',
+    + '",\n    tag="1.0.0"\n)\ndef main(*):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',  # noqa: E501
 }
 
 dto_json_wiring = {
@@ -153,7 +153,7 @@ dto_json_wiring = {
 
 valid_component_dto_dict = {
     "category": "Arithmetic",
-    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"a": DataType.Any, "b": DataType.Integer},\n    outputs={"modulo": DataType.Any},\n    component_name="Modulo",\n    description="Calculates the modulo to some given b",\n    category="Arithmetic",\n    uuid="ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",\n    group_id="ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",\n    tag="1.0.0"\n)\ndef main(*, a, b):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"modulo": a % b}\n',
+    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\nimport numpy as np\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"a": DataType.Any, "b": DataType.Integer},\n    outputs={"modulo": DataType.Any},\n    component_name="Modulo",\n    description="Calculates the modulo to some given b",\n    category="Arithmetic",\n    uuid="ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",\n    group_id="ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",\n    tag="1.0.0"\n)\ndef main(*, a, b):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"modulo": a % b}\n',  # noqa: E501
     "description": "Calculates the modulo to some given b",
     "groupId": "ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",
     "id": "ebb5b2d1-7c25-94dd-ca81-6a9e5b21bc2f",
@@ -595,7 +595,7 @@ async def test_execute_for_component_with_nan_and_nat_input(
                             adapter_id="direct_provisioning",
                             workflow_input_name="input",
                             filters={
-                                "value": '{"2020-05-01T00:00:00.000Z": "2020-05-01T01:00:00.000Z", "2020-05-01T02:00:00.000Z": null}'
+                                "value": '{"2020-05-01T00:00:00.000Z": "2020-05-01T01:00:00.000Z", "2020-05-01T02:00:00.000Z": null}'  # noqa: E501
                             },
                         ),
                     ],
@@ -616,7 +616,7 @@ async def test_execute_for_component_with_nan_and_nat_input(
             ]
             assert "output" in output_results_by_output_name
             assert len(output_results_by_output_name["output"]) == 3
-            assert output_results_by_output_name["output"]["1"] == None
+            assert output_results_by_output_name["output"]["1"] == None  # noqa: E711
 
             response_nat = await ac.post(
                 "/api/components/" + str(component_id_series) + "/execute",
@@ -632,5 +632,5 @@ async def test_execute_for_component_with_nan_and_nat_input(
             assert len(output_results_by_output_name["output"]) == 2
             assert (
                 output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
-                == None
+                == None  # noqa: E711
             )

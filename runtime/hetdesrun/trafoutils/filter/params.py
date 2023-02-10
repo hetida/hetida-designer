@@ -1,4 +1,3 @@
-from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -8,26 +7,24 @@ from hetdesrun.utils import State, Type
 
 
 class FilterParams(BaseModel):
-    # pylint: disable=too-many-instance-attributes
-    type: Optional[Type] = Field(None, description="Filter for specified type")
-    state: Optional[State] = Field(None, description="Filter for specified state")
-    category: Optional[ValidStr] = Field(
-        None, description="Filter for specified category"
+
+    type: Type | None = Field(  # noqa: A003
+        None, description="Filter for specified type"
     )
-    categories: Optional[List[ValidStr]] = Field(
+    state: State | None = Field(None, description="Filter for specified state")
+    category: ValidStr | None = Field(None, description="Filter for specified category")
+    categories: list[ValidStr] | None = Field(
         None, description="Filter for several specified categories"
     )
-    category_prefix: Optional[str] = Field(
+    category_prefix: str | None = Field(
         None,
         description="Category prefix that must be matched exactly (case-sensitive).",
     )
-    revision_group_id: Optional[UUID] = Field(
+    revision_group_id: UUID | None = Field(
         None, description="Filter for specified revision group id"
     )
-    ids: Optional[List[UUID]] = Field(
-        None, description="Filter for specified list of ids"
-    )
-    names: Optional[List[NonEmptyValidStr]] = Field(
+    ids: list[UUID] | None = Field(None, description="Filter for specified list of ids")
+    names: list[NonEmptyValidStr] | None = Field(
         None, description="Filter for specified list of names"
     )
     include_deprecated: bool = Field(

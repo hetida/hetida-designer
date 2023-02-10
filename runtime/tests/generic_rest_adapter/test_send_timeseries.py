@@ -17,7 +17,7 @@ async def test_end_to_end_send_only_timeseries_data():
     response.status_code = 200
     post_mock = mock.AsyncMock(return_value=response)
 
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.send_framelike.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):
@@ -93,7 +93,7 @@ async def test_end_to_end_send_only_timeseries_data():
             assert (len(kwargs_1["json"]) == 2) or (len(kwargs_2["json"]) == 2)
 
             # a timeseries with attributes
-            ts = pd.Series(
+            ts_3 = pd.Series(
                 [1.2, 3.4, np.nan],
                 index=pd.to_datetime(
                     [
@@ -103,21 +103,23 @@ async def test_end_to_end_send_only_timeseries_data():
                     ]
                 ),
             )
-            ts_1_attrs = {"a": 1}
-            ts_1.attrs = ts_1_attrs
+            ts_3_attrs = {"a": 1}
+            ts_3.attrs = ts_3_attrs
             await send_data(
                 {
                     "inp_1": FilteredSink(
                         ref_id="sink_id_1", type="timeseries(float)", filters={}
                     ),
                 },
-                {"inp_1": ts_1},
+                {"inp_1": ts_3},
                 adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
             )
             # note: can be async!
             func_name_3, args_3, kwargs_3 = post_mock.mock_calls[3]
+
+            assert kwargs_3["json"][2]["value"] is None  # np.nan comes through as null
             assert "Data-Attributes" in kwargs_3["headers"]
             received_attrs = decode_attributes(kwargs_3["headers"]["Data-Attributes"])
-            for key, value in ts_1_attrs.items():
-                key in received_attrs
+            for key, value in ts_3_attrs.items():
+                assert key in received_attrs
                 assert received_attrs[key] == value

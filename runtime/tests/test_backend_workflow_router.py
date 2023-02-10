@@ -26,7 +26,7 @@ from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def clean_test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
@@ -163,7 +163,7 @@ dto_json_component_1_publish = {
     ],
     "outputs": [],
     "wirings": [],
-    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 1",\n    description="description of component 1",\n    category="category",\n    uuid="c3f0ffdc-ff1c-a612-668c-0a606020ffaa",\n    group_id="b301ff9e-bdbb-8d7c-f6e2-7e83b919a8d3",\n    tag="1.0.0"\n)\ndef main(*, new_input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',
+    "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n# add your own imports here, e.g.\n#     import pandas as pd\n#     import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change."\n@register(\n    inputs={},\n    outputs={},\n    component_name="component 1",\n    description="description of component 1",\n    category="category",\n    uuid="c3f0ffdc-ff1c-a612-668c-0a606020ffaa",\n    group_id="b301ff9e-bdbb-8d7c-f6e2-7e83b919a8d3",\n    tag="1.0.0"\n)\ndef main(*, new_input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    # new comment\n    pass\n',  # noqa: E501
 }
 dto_json_workflow_2_publishable = {
     "id": "c92da3cf-c9fb-9582-f9a2-c05d6e54bbd7",
@@ -481,7 +481,7 @@ async def test_delete_multiple_inputs_of_wf_at_once(
             tr_json = load_json(file)
             store_single_transformation_revision(TransformationRevision(**tr_json))
 
-        with open(
+        with open(  # noqa: UP015
             "./tests/data/workflows/iso_forest_wf_dto.json", "r", encoding="utf8"
         ) as f:
             wf_dto_json = json.load(f)
@@ -532,8 +532,6 @@ async def test_publish_transformation_revision_from_workflow_dto(
 
         dto_json_workflow_2_publish = deepcopy(dto_json_workflow_2_publishable)
         dto_json_workflow_2_publish["state"] = "RELEASED"
-        # print("json inputs",dto_json_workflow_2_publish["inputs"])
-        # print("json outputs",dto_json_workflow_2_publish["outputs"])
         print()
 
         async with async_test_client as ac:
@@ -624,7 +622,7 @@ async def test_set_test_wiring_to_workflow(async_test_client, clean_test_db_engi
 @pytest.mark.asyncio
 async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -686,7 +684,7 @@ async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine)
 @pytest.mark.asyncio
 async def test_execute_for_full_workflow_dto(async_test_client, clean_test_db_engine):
     patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.persistence.dbservice.nesting.Session",
         patched_session,
     ):
@@ -785,7 +783,7 @@ async def test_execute_for_full_workflow_dto_with_nan(
                             adapter_id="direct_provisioning",
                             workflow_input_name="inp_series",
                             filters={
-                                "value": '{"2020-05-01T00:00:00.000Z": 1.2, "2020-05-01T01:00:00.000Z": 3.14, "2020-05-01T02:00:00.000Z": 5, "2020-05-01T03:00:00.000Z": null}'
+                                "value": '{"2020-05-01T00:00:00.000Z": 1.2, "2020-05-01T01:00:00.000Z": 3.14, "2020-05-01T02:00:00.000Z": 5, "2020-05-01T03:00:00.000Z": null}'  # noqa: E501
                             },
                         ),
                         InputWiring(
@@ -815,5 +813,5 @@ async def test_execute_for_full_workflow_dto_with_nan(
                 output_results_by_output_name["series_from_last_step"][
                     "2020-05-01T03:00:00.000Z"
                 ]
-                == None
+                == None  # noqa: E711
             )

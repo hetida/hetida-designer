@@ -10,16 +10,21 @@ from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.application import init_app
 
 
-@pytest.fixture(scope="function")
-def clean_test_db_engine(use_in_memory_db):
+@pytest.fixture(scope="session")
+def test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
         engine = get_db_engine(override_db_url=in_memory_database_url)
     else:
         engine = get_db_engine()
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
     return engine
+
+
+@pytest.fixture()
+def clean_test_db_engine(test_db_engine):
+    Base.metadata.drop_all(test_db_engine)
+    Base.metadata.create_all(test_db_engine)
+    return test_db_engine
 
 
 @pytest.fixture(scope="session")
@@ -32,7 +37,7 @@ def deactivate_auth():
 
 @pytest.fixture(scope="session")
 def app_without_auth(deactivate_auth):
-    yield init_app()
+    return init_app()
 
 
 def pytest_addoption(parser):
@@ -44,7 +49,7 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def use_in_memory_db(pytestconfig):
     return pytestconfig.getoption("use_in_memory_db")
 
@@ -64,11 +69,11 @@ base_workflow_json = {
     "code_modules": [
         {  # ordinary function entry point
             "uuid": str(get_uuid_from_seed("my_code_module")),
-            "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nimport logging\ntest_logger = logging.getLogger(__name__)\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"x": DataType.Float, "y": DataType.Float}, outputs={"z": DataType.Float}\n)\ndef main(*, x, y):\n    """entrypoint function for this component"""\n    test_logger.info("TEST in component function " + __name__)\n    # print(1 / 0)\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"z": x+y}',
+            "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nimport logging\ntest_logger = logging.getLogger(__name__)\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"x": DataType.Float, "y": DataType.Float}, outputs={"z": DataType.Float}\n)\ndef main(*, x, y):\n    """entrypoint function for this component"""\n    test_logger.info("TEST in component function " + __name__)\n    # print(1 / 0)\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"z": x+y}',  # noqa: E501
         },
         {  # async def entrypoint
             "uuid": str(get_uuid_from_seed("const_giver_module")),
-            "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nfrom hetdesrun import logger\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={}, outputs={"c": DataType.Float}\n)\nasync def main():\n    """entrypoint function for this component"""\n    logger.info("TEST")\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"c": 2.0}',
+            "code": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nfrom hetdesrun import logger\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={}, outputs={"c": DataType.Float}\n)\nasync def main():\n    """entrypoint function for this component"""\n    logger.info("TEST")\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"c": 2.0}',  # noqa: E501
         },
     ],
     "components": [
@@ -192,7 +197,7 @@ def input_json_with_wiring_with_input():
 
     json_with_wiring["code_modules"][1][
         "code"
-    ] = 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nfrom hetdesrun import logger\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"inp": DataType.Float}, outputs={"c": DataType.Float}\n)\nasync def main(*, inp):\n    """entrypoint function for this component"""\n    logger.info("TEST")\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"c": inp}'
+    ] = 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\nfrom hetdesrun import logger\n# add your own imports here\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if input/output changes.\n@register(\n    inputs={"inp": DataType.Float}, outputs={"c": DataType.Float}\n)\nasync def main(*, inp):\n    """entrypoint function for this component"""\n    logger.info("TEST")\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n    return {"c": inp}'  # noqa: E501
 
     json_with_wiring["code_modules"][1]["uuid"] = str(
         get_uuid_from_seed("value_giver_module")

@@ -1,8 +1,6 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-# pylint: disable=duplicate-code
-
-thing_node_json_objects: List[Dict[str, Any]] = [
+thing_node_json_objects: list[dict[str, Any]] = [
     {
         "id": "root",
         "parentId": None,
@@ -97,8 +95,8 @@ thing_node_json_objects: List[Dict[str, Any]] = [
 
 
 def get_thing_nodes(
-    parent_id: Optional[str] = None, include_sub_objects: bool = False
-) -> List[Dict[str, Any]]:
+    parent_id: str | None = None, include_sub_objects: bool = False
+) -> list[dict[str, Any]]:
     if parent_id is None:
         if include_sub_objects:
             return thing_node_json_objects

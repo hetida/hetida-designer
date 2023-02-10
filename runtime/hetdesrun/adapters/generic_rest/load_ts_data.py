@@ -1,6 +1,5 @@
 import logging
 from collections import defaultdict
-from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 async def load_ts_data_from_adapter(
-    filtered_sources: List[FilteredSource],
+    filtered_sources: list[FilteredSource],
     from_timestamp: str,
     to_timestamp: str,
     adapter_key: str,
@@ -77,8 +76,8 @@ def extract_one_channel_series_from_loaded_data(
 
 
 async def load_grouped_timeseries_data_together(
-    data_to_load: Dict[str, FilteredSource], adapter_key: str
-) -> Dict[str, pd.Series]:
+    data_to_load: dict[str, FilteredSource], adapter_key: str
+) -> dict[str, pd.Series]:
     """Reorganize query information by timestamp pairs and load timeseries data
 
     Generic Rest Adapter allows to query for multiple timeseries in one request but then only with
@@ -92,9 +91,9 @@ async def load_grouped_timeseries_data_together(
     loaded_data = {}
 
     # group by occuring timestamp pairs
-    group_by_timestamp_pair: Dict[
-        Tuple[str, str, ExternalType],
-        Dict[str, FilteredSource],
+    group_by_timestamp_pair: dict[
+        tuple[str, str, ExternalType],
+        dict[str, FilteredSource],
     ] = defaultdict(dict)
 
     for filtered_source in data_to_load.values():

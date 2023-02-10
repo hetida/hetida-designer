@@ -1,4 +1,5 @@
 {
   "apiEndpoint": "/hdapi",
-  "authEnabled": false
+  "authEnabled": false,
+  "userInfoText": "This is the local docker setup."
 }

@@ -7,18 +7,18 @@ The generic rest adapter "types" differ from the types used in the designer.
 import json
 import logging
 from enum import Enum
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any
 
 import pandas as pd
-from pydantic import create_model  # pylint: disable=no-name-in-module
+from pydantic import create_model
 
 logger = logging.getLogger(__name__)
 
 
 def df_empty(
-    col_to_dtype_map: Dict[str, Union[Type, str]],
-    index: Optional[pd.Index] = None,
-    attrs: Optional[Any] = None,
+    col_to_dtype_map: dict[str, type | str],
+    index: pd.Index | None = None,
+    attrs: Any | None = None,
 ) -> pd.DataFrame:
     """Create empty Pandas DataFrame with columns of given dtypes"""
     df = pd.DataFrame(index=index)
@@ -46,27 +46,24 @@ class ValueDataType(str, Enum):
         # first value is canonical value (e.g. what you get when calling ValueDataType.INT.value)
         obj._value_ = values[0]
 
-        cls.parse_type: Type  # for mypy
+        cls.parse_type: type  # for mypy
         obj.parse_type = values[1]  # set parse_type to second tuple entry
 
-        cls.pandas_value_type: Type  # for mypy
+        cls.pandas_value_type: type  # for mypy
         obj.pandas_value_type = values[2]
 
         for other_value in values[3:]:
             # register other values in order to allow initializations ValueDataType("integer")
             # and ValueDataType("str") to work. This uses an internal attribute of Enum!
-            # pylint: disable=no-member
+
             cls._value2member_map_[other_value] = obj  # type: ignore
 
-        obj._all_values = (  # type: ignore # pylint: disable=no-member
-            values[0],
-        ) + values[2:]
+        obj._all_values = (values[0],) + values[2:]  # type: ignore
         return obj  # type:ignore
 
     def __repr__(self) -> str:
-        return "<%s.%s: %s>" % (  # pylint: disable=consider-using-f-string
+        return "<{}.{}: {}>".format(
             self.__class__.__name__,
-            # pylint: disable=no-member
             self._name_,
             ", ".join([repr(v) for v in self._all_values]),  # type: ignore
         )
@@ -144,22 +141,22 @@ class ExternalType(str, Enum):
         obj._value_ = values[0]
 
         cls.general_type: GeneralType  # for mypy
-        cls.value_datatype: Optional[ValueDataType]  # for mypy
+        cls.value_datatype: ValueDataType | None  # for mypy
 
         cls.store_value_datatypes(obj)
         cls.store_general_type(obj)
 
         for other_value in values[1:]:
-            # pylint: disable=no-member
+
             cls._value2member_map_[other_value] = obj  # type: ignore
         obj._all_values = values  # type: ignore
         return obj  # type: ignore
 
     def __repr__(self) -> str:
-        # pylint: disable=no-member
-        return "<%s.%s: %s>" % (  # pylint: disable=consider-using-f-string
+
+        return "<{}.{}: {}>".format(
             self.__class__.__name__,
-            self._name_,  # pylint: disable=no-member
+            self._name_,
             ", ".join([repr(v) for v in self._all_values]),  # type: ignore
         )
 
@@ -171,7 +168,6 @@ class ExternalType(str, Enum):
         Will be set to None if value_datatype can be determined.
         """
 
-        # pylint: disable=protected-access
         if member._value_.endswith("(string)"):
             member.value_datatype = ValueDataType.STRING
         elif member._value_.endswith("(float)"):

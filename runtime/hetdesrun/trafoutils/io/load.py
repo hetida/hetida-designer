@@ -5,7 +5,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Iterable
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, parse_file_as
@@ -36,13 +36,13 @@ def load_json(path: str) -> Any:
     return loaded_json_object
 
 
-def load_python_file(path: str) -> Optional[str]:
+def load_python_file(path: str) -> str | None:
     """Load pyython code from a file
 
     Returns None if file is not found, the contained code as str otherwise.
     """
     try:
-        with open(path, "r", encoding="utf8") as f:
+        with open(path, encoding="utf8") as f:
             python_code = f.read()
     except FileNotFoundError:
         logger.error("Could not find python file at path %s", path)
@@ -189,9 +189,9 @@ def transformation_revision_from_python_code(code: str) -> Any:
 
 def load_transformation_revisions_from_directory(
     download_path: str, transform_py_to_json: bool = False
-) -> Tuple[Dict[UUID, TransformationRevision], Dict[UUID, str]]:
-    transformation_dict: Dict[UUID, TransformationRevision] = {}
-    path_dict: Dict[UUID, str] = {}
+) -> tuple[dict[UUID, TransformationRevision], dict[UUID, str]]:
+    transformation_dict: dict[UUID, TransformationRevision] = {}
+    path_dict: dict[UUID, str] = {}
 
     for root, _, files in os.walk(download_path):
         for file in files:
@@ -246,21 +246,21 @@ def load_transformation_revisions_from_directory(
 
 def load_trafos_from_trafo_list_json_file(
     path: str,
-) -> List[TransformationRevision]:
+) -> list[TransformationRevision]:
     """Load trafo rev list from a json file
 
     For example the json of api/transformations GET endpoint response written into
     a file is a valid input for this function.
     """
 
-    trafo_revisions = parse_file_as(List[TransformationRevision], path)
+    trafo_revisions = parse_file_as(list[TransformationRevision], path)
     return trafo_revisions
 
 
 class ImportSource(BaseModel):
     path: str
     is_dir: bool
-    config_file: Optional[str]
+    config_file: str | None
 
 
 class MultipleTrafosUpdateConfig(BaseModel):
@@ -324,7 +324,7 @@ def get_import_sources(directory_path: str) -> Iterable[ImportSource]:
     Note: Does not parse/validate import sources.
     """
 
-    import_sources: Dict[str, Dict[str, Optional[str] | bool]] = {}
+    import_sources: dict[str, dict[str, str | None | bool]] = {}
     for sub_element in os.listdir(directory_path):
 
         sub_path = os.path.join(directory_path, sub_element)
@@ -385,7 +385,7 @@ def get_import_sources(directory_path: str) -> Iterable[ImportSource]:
 
 
 class Importable(BaseModel):
-    transformation_revisions: List[TransformationRevision]
+    transformation_revisions: list[TransformationRevision]
     import_config: ImportSourceConfig
 
 
@@ -415,9 +415,9 @@ def load_import_source(
     )
 
 
-def load_import_sources(import_sources: Iterable[ImportSource]) -> List[Importable]:
+def load_import_sources(import_sources: Iterable[ImportSource]) -> list[Importable]:
     return [load_import_source(import_source) for import_source in import_sources]
 
 
-def load_import_sources_from_directory(directory_path: str) -> List[Importable]:
+def load_import_sources_from_directory(directory_path: str) -> list[Importable]:
     return load_import_sources(get_import_sources(directory_path=directory_path))

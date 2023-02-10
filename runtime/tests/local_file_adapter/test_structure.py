@@ -1,13 +1,11 @@
 from unittest import mock
 
-import nest_asyncio
 import pandas as pd
 import pytest
 
+from hetdesrun.adapters.generic_rest import ExternalType
 from hetdesrun.adapters.local_file import load_data, send_data
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
-
-nest_asyncio.apply()
 
 
 async def walk_thing_nodes(
@@ -75,7 +73,7 @@ async def walk_thing_nodes(
     "ignore:an integer is required*"
 )  # pandas to_json currently throws a deprecation warning
 async def test_resources_offered_from_structure_hierarchy(async_test_client):
-    """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""
+    """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""  # noqa: E501
     async with async_test_client as client:
 
         response_obj = (await client.get("/adapters/localfile/structure")).json()
@@ -116,14 +114,14 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
             response_obj = (
                 await client.get(f'/adapters/localfile/sources/{src["id"]}')
             ).json()
-            for key in src.keys():
+            for key in src:
                 assert response_obj[key] == src[key]
 
         for snk in all_snks:
             response_obj = (
                 await client.get(f'/adapters/localfile/sinks/{snk["id"]}')
             ).json()
-            for key in snk.keys():
+            for key in snk:
                 print(response_obj)
                 assert response_obj[key] == snk[key]
 
@@ -131,7 +129,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
             response_obj = (
                 await client.get(f'/adapters/localfile/thingNodes/{tn["id"]}')
             ).json()
-            for key in tn.keys():
+            for key in tn:
                 print(response_obj)
                 assert response_obj[key] == tn[key]
 
@@ -197,6 +195,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                 print(response_obj, "versus", src)
 
                 assert response_obj["key"] == src["metadataKey"]
+
                 assert response_obj["dataType"] == (
                     ExternalType(src["type"]).value_datatype.value
                 )
@@ -245,7 +244,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                 assert resp.status_code == 200
 
             if snk["type"].startswith("dataframe"):
-                with mock.patch(
+                with mock.patch(  # noqa: SIM117
                     "hetdesrun.adapters.local_file.write_file.pd.DataFrame.to_csv"
                 ) as to_csv_mock:
                     with mock.patch(

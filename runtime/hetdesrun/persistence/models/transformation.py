@@ -1,8 +1,7 @@
 import datetime
-from typing import List, Optional, Union, cast
+from typing import cast
 from uuid import UUID, uuid4
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, ValidationError, validator
 
 from hetdesrun.models.code import (
@@ -59,7 +58,7 @@ class TransformationRevision(BaseModel):
     (possibly newer) released revisions from the the same revision group (i.e. same group id).
     """
 
-    id: UUID
+    id: UUID  # noqa: A003
     revision_group_id: UUID
     name: NonEmptyValidStr
     description: ValidStr = ValidStr("")
@@ -70,14 +69,14 @@ class TransformationRevision(BaseModel):
         ),
     )
     version_tag: ShortNonEmptyValidStr
-    disabled_timestamp: Optional[datetime.datetime] = Field(
+    disabled_timestamp: datetime.datetime | None = Field(
         None,
         description=(
             "If the revision is DISABLED then this should be disable/deprecation timestamp."
         ),
         example=datetime.datetime.now(datetime.timezone.utc),
     )
-    released_timestamp: Optional[datetime.datetime] = Field(
+    released_timestamp: datetime.datetime | None = Field(
         None,
         description="If the revision is RELEASED then this should be release timestamp.",
         example=datetime.datetime.now(datetime.timezone.utc),
@@ -86,7 +85,7 @@ class TransformationRevision(BaseModel):
         ...,
         description="one of " + ", ".join(['"' + x.value + '"' for x in list(State)]),
     )
-    type: Type = Field(
+    type: Type = Field(  # noqa: A003
         ...,
         description="one of " + ", ".join(['"' + x.value + '"' for x in list(Type)]),
     )
@@ -102,7 +101,7 @@ class TransformationRevision(BaseModel):
         ),
         description="Documentation in markdown format.",
     )
-    content: Union[str, WorkflowContent] = Field(
+    content: str | WorkflowContent = Field(
         ...,
         description=(
             "Code as string in case of type COMPONENT, "
@@ -127,28 +126,24 @@ class TransformationRevision(BaseModel):
         ),
     )
 
-    # pylint: disable=no-self-argument
     @validator("version_tag")
     def version_tag_not_latest(cls, v: str) -> str:
         if v.lower() == "latest":
             raise ValueError('version_tag is not allowed to be "latest"')
         return v
 
-    # pylint: disable=no-self-argument
     @validator("disabled_timestamp")
     def disabled_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
         if v is None:
             return v
         return transform_to_utc_datetime(v)
 
-    # pylint: disable=no-self-argument
     @validator("released_timestamp")
     def released_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
         if v is None:
             return v
         return transform_to_utc_datetime(v)
 
-    # pylint: disable=no-self-argument
     @validator("released_timestamp", always=True)
     def disabled_timestamp_requires_released_timestamp(
         cls, v: datetime.datetime, values: dict
@@ -161,7 +156,6 @@ class TransformationRevision(BaseModel):
             return values["disabled_timestamp"]
         return v
 
-    # pylint: disable=no-self-argument
     @validator("state")
     def timestamps_set_if_released_or_disabled(cls, v: State, values: dict) -> State:
         if v is State.RELEASED and (
@@ -174,37 +168,35 @@ class TransformationRevision(BaseModel):
             raise ValueError("disabled_timestamp must be set if state is DISABLED")
         return v
 
-    # pylint: disable=no-self-argument
     @validator("content")
     def content_type_correct(
-        cls, v: Union[str, WorkflowContent], values: dict
-    ) -> Union[str, WorkflowContent]:
+        cls, v: str | WorkflowContent, values: dict
+    ) -> str | WorkflowContent:
         try:
-            type = values["type"]  # pylint: disable=redefined-builtin
+            type_ = values["type"]
         except KeyError as e:
             raise ValueError(
                 "Cannot check if the content type is correct if the attribute 'type' is missing!"
             ) from e
 
-        if type is Type.WORKFLOW and not isinstance(v, WorkflowContent):
+        if type_ is Type.WORKFLOW and not isinstance(v, WorkflowContent):
             raise ValueError(
                 "Content must be of type WorkflowContent for transformation revision"
                 " with type WORKFLOW"
             )
-        if type is Type.COMPONENT and not isinstance(v, str):
+        if type_ is Type.COMPONENT and not isinstance(v, str):
             raise ValueError(
                 "Content must be of type str (representing code) for transformation revision"
                 " with type COMPONENT"
             )
         return v
 
-    # pylint: disable=no-self-argument
     @validator("io_interface")
     def io_interface_fits_to_content(
         cls, io_interface: IOInterface, values: dict
     ) -> IOInterface:
         try:
-            type = values["type"]  # pylint: disable=redefined-builtin
+            type_ = values["type"]
             workflow_content = values["content"]
         except KeyError as e:
             raise ValueError(
@@ -212,17 +204,18 @@ class TransformationRevision(BaseModel):
                 "'type', 'content' is missing!"
             ) from e
 
-        if type is not Type.WORKFLOW:
+        if type_ is not Type.WORKFLOW:
             return io_interface
 
-        assert isinstance(workflow_content, WorkflowContent)  # hint for mypy
+        assert isinstance(  # noqa: S101
+            workflow_content, WorkflowContent
+        )  # hint for mypy
 
-        io_interface.inputs = [input.to_io() for input in workflow_content.inputs]
+        io_interface.inputs = [inp.to_io() for inp in workflow_content.inputs]
         io_interface.outputs = [output.to_io() for output in workflow_content.outputs]
 
         return io_interface
 
-    # pylint: disable=no-self-argument
     @validator("io_interface")
     def io_interface_no_names_empty(
         cls, io_interface: IOInterface, values: dict
@@ -267,7 +260,7 @@ class TransformationRevision(BaseModel):
             tag=self.version_tag,
             code_module_uuid=self.id,
             function_name="main",
-            inputs=[input.to_component_input() for input in self.io_interface.inputs],
+            inputs=[inp.to_component_input() for inp in self.io_interface.inputs],
             outputs=[
                 output.to_component_output() for output in self.io_interface.outputs
             ],
@@ -288,14 +281,14 @@ class TransformationRevision(BaseModel):
     def to_workflow_node(
         self,
         operator_id: UUID,
-        sub_nodes: List[Union[ComponentNode, WorkflowNode]],
+        sub_nodes: list[ComponentNode | WorkflowNode],
     ) -> WorkflowNode:
         if self.type != Type.WORKFLOW:
             raise ValueError(
                 f"will not convert transformation revision {self.id}"
                 f"into a workflow node since its type is not WORKFLOW"
             )
-        assert isinstance(self.content, WorkflowContent)  # hint for mypy
+        assert isinstance(self.content, WorkflowContent)  # hint for mypy # noqa: S101
         return self.content.to_workflow_node(
             transformation_id=self.id,
             transformation_name=self.name,
@@ -322,7 +315,7 @@ class TransformationRevision(BaseModel):
             state=State.RELEASED,
             version_tag=self.version_tag,
             transformation_id=self.id,
-            inputs=[Connector.from_io(input) for input in self.io_interface.inputs],
+            inputs=[Connector.from_io(inp) for inp in self.io_interface.inputs],
             outputs=[Connector.from_io(output) for output in self.io_interface.outputs],
             position=Position(x=0, y=0),
         )

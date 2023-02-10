@@ -1,6 +1,5 @@
 import json
 from copy import deepcopy
-from typing import Any, Dict, List, Tuple
 from urllib.parse import quote
 
 import pytest
@@ -29,14 +28,14 @@ async def test_swagger_ui_available(async_test_client: AsyncClient) -> None:
     assert "swagger-ui" in response.text.lower()
 
 
-async def walk_thing_nodes(
+async def walk_thing_nodes(  # noqa: PLR0913
     parent_id: str,
-    tn_append_list: List[StructureThingNode],
-    src_append_list: List[StructureSource],
-    snk_append_list: List[StructureSink],
-    src_attached_metadata_dict: Dict[Tuple[str, str], Metadatum],
-    snk_attached_metadata_dict: Dict[Tuple[str, str], Metadatum],
-    tn_attached_metadata_dict: Dict[Tuple[str, str], Metadatum],
+    tn_append_list: list[StructureThingNode],
+    src_append_list: list[StructureSource],
+    snk_append_list: list[StructureSink],
+    src_attached_metadata_dict: dict[tuple[str, str], Metadatum],
+    snk_attached_metadata_dict: dict[tuple[str, str], Metadatum],
+    tn_attached_metadata_dict: dict[tuple[str, str], Metadatum],
     open_async_test_client: AsyncClient,
 ) -> None:
     """Recursively walk thingnodes"""
@@ -97,7 +96,7 @@ async def walk_thing_nodes(
 async def test_resources_offered_from_structure_hierarchy(
     async_test_client: AsyncClient,
 ) -> None:
-    """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""
+    """Walks through the structure-hierarchy providedand gets/posts offered resources"""
     async with async_test_client as client:
 
         response_obj = (await client.get("/structure")).json()
@@ -111,12 +110,12 @@ async def test_resources_offered_from_structure_hierarchy(
 
         root = roots[0]
 
-        all_tns: List[StructureThingNode] = []
-        all_srcs: List[StructureSource] = []
-        all_snks: List[StructureSink] = []
-        tn_attached_metadata_dict: Dict[Tuple[str, str], Metadatum] = {}
-        src_attached_metadata_dict: Dict[Tuple[str, str], Metadatum] = {}
-        snk_attached_metadata_dict: Dict[Tuple[str, str], Metadatum] = {}
+        all_tns: list[StructureThingNode] = []
+        all_srcs: list[StructureSource] = []
+        all_snks: list[StructureSink] = []
+        tn_attached_metadata_dict: dict[tuple[str, str], Metadatum] = {}
+        src_attached_metadata_dict: dict[tuple[str, str], Metadatum] = {}
+        snk_attached_metadata_dict: dict[tuple[str, str], Metadatum] = {}
 
         await walk_thing_nodes(
             root.id,
@@ -323,7 +322,7 @@ async def test_post_metadata_to_sink_get_metadata_from_source(
 @pytest.mark.asyncio
 async def test_sending_attrs_via_get_dataframe(async_test_client: AsyncClient) -> None:
     async with async_test_client as client:
-        response = await client.get(f"/dataframe?id=root.plantA.maintenance_events")
+        response = await client.get("/dataframe?id=root.plantA.maintenance_events")
 
         assert response.status_code == 200
         assert "Data-Attributes" in response.headers

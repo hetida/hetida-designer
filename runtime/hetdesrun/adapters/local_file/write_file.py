@@ -44,7 +44,7 @@ def write_to_file(df: pd.DataFrame, sink_id: str) -> None:
         file_support_handler.write_handler_func(
             df, possible_local_file.path, **write_kwargs
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         msg = (
             f"Failed to write local file \n{str(possible_local_file)}\n with "
             f"file_support_handler \n{str(file_support_handler)}\nException was:\n{str(e)}."
