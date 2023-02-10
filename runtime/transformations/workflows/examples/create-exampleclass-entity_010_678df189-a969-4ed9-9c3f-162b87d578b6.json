@@ -343,16 +343,7 @@
         "workflow_input_name": "value"
       }
     ],
-    "output_wirings": [
-      {
-        "adapter_id": "blob-storage-adapter",
-        "ref_id": "i-i/B",
-        "ref_id_type": "THINGNODE",
-        "ref_key": "B - Next Object",
-        "type": "metadata(any)",
-        "workflow_output_name": "class_entity"
-      }
-    ]
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"
