@@ -8,24 +8,33 @@ import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { CopyTransformationDialogComponent } from './copy-transformation-dialog.component';
 import { Transformation } from '../../model/transformation';
+import { selectAllTransformations } from 'src/app/store/transformation/transformation.selectors';
 
-// TODO fix test
-describe('CopyBaseItemDialogComponent', () => {
+describe('CopyTransformationDialogComponent', () => {
   let component: CopyTransformationDialogComponent;
   let fixture: ComponentFixture<CopyTransformationDialogComponent>;
 
-  const mockAbstractBaseItem: Transformation = {
-    id: 'MockId1',
-    name: 'Mock',
-    tag: 'Mock',
-    inputs: [],
-    outputs: [],
-    type: TransformationType.COMPONENT,
-    category: 'Mock Category',
-    description: 'Mock Descr',
-    groupId: 'g123',
+  const mockTransformation: Transformation = {
+    id: 'mockId',
+    revision_group_id: 'mockGroupId',
+    name: 'mock',
+    description: 'mock description',
+    category: 'EXAMPLES',
+    version_tag: '0.0.1',
+    released_timestamp: new Date().toISOString(),
+    disabled_timestamp: new Date().toISOString(),
     state: RevisionState.DRAFT,
-    wirings: []
+    type: TransformationType.COMPONENT,
+    documentation: null,
+    content: 'python code',
+    io_interface: {
+      inputs: [],
+      outputs: []
+    },
+    test_wiring: {
+      input_wirings: [],
+      output_wirings: []
+    }
   };
 
   beforeEach(
@@ -42,23 +51,33 @@ describe('CopyBaseItemDialogComponent', () => {
               content: 'MOCK',
               actionOk: 'MOCK',
               actionCancel: 'MOCK',
-              abstractBaseItem: {
-                id: 'MockId1',
-                name: 'Mock',
-                tag: 'Mock',
-                pos_x: null,
-                pos_y: null,
-                inputs: [],
-                outputs: [],
-                links: [],
+              transformation: {
+                id: 'mockId',
+                revision_group_id: 'mockGroupId',
+                name: 'mock',
+                description: 'mock description',
+                category: 'EXAMPLES',
+                version_tag: '0.0.1',
+                released_timestamp: new Date().toISOString(),
+                disabled_timestamp: new Date().toISOString(),
+                state: RevisionState.DRAFT,
                 type: TransformationType.COMPONENT,
-                groupId: 'g123'
-              },
-              disabledState: {
-                name: true,
-                category: true,
-                tag: true,
-                description: true
+                documentation: null,
+                content: 'python code',
+                io_interface: {
+                  inputs: [],
+                  outputs: []
+                },
+                test_wiring: {
+                  input_wirings: [],
+                  output_wirings: []
+                },
+                disabledState: {
+                  name: true,
+                  category: true,
+                  tag: true,
+                  description: true
+                }
               }
             }
           },
@@ -71,7 +90,7 @@ describe('CopyBaseItemDialogComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(CopyTransformationDialogComponent);
     const mockStore = TestBed.inject(MockStore);
-    // mockStore.overrideSelector(selectAbstractBaseItems, [mockAbstractBaseItem]);
+    mockStore.overrideSelector(selectAllTransformations, [mockTransformation]);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

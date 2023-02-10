@@ -3,16 +3,17 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
 import { BasicTestModule } from 'src/app/basic-test.module';
-import { BaseItemActionService } from 'src/app/service/transformation/transformation-action.service';
+import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { HomeComponent } from './home.component';
+import { selectHashedTransformationLookupById } from 'src/app/store/transformation/transformation.selectors';
 
 // TODO fix test
 describe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
 
-  const mockBaseItemActionService = jasmine.createSpy();
+  const mockTransformationActionService = jasmine.createSpy();
   const mockTabItemService = jasmine.createSpy();
   const httpClientSpy = jasmine.createSpyObj('HttpClient', ['get']);
 
@@ -23,8 +24,8 @@ describe('HomeComponent', () => {
         providers: [
           provideMockStore(),
           {
-            provide: BaseItemActionService,
-            useValue: mockBaseItemActionService
+            provide: TransformationActionService,
+            useValue: mockTransformationActionService
           },
           {
             provide: TabItemService,
@@ -42,7 +43,7 @@ describe('HomeComponent', () => {
 
   beforeEach(() => {
     const mockStore = TestBed.inject(MockStore);
-    // mockStore.overrideSelector(selectHashedAbstractBaseItemLookupById, {});
+    mockStore.overrideSelector(selectHashedTransformationLookupById, {});
     httpClientSpy.get.and.returnValue(of('1.0'));
     fixture = TestBed.createComponent(HomeComponent);
     component = fixture.componentInstance;

@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { BasicTestModule } from 'src/app/basic-test.module';
 import { ErrorVisualDirective } from 'src/app/directives/error-visual.directive';
+import { RevisionState } from 'src/app/enums/revision-state';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { ComponentIODialogComponent } from './component-io-dialog.component';
 
@@ -25,16 +26,27 @@ describe('ComponentIODialogComponent', () => {
           {
             provide: MAT_DIALOG_DATA,
             useValue: {
-              componentBaseItem: {
-                id: 'Mock',
-                name: 'Mock',
-                tag: 'Mock',
-                pos_x: null,
-                pos_y: null,
-                inputs: [],
-                outputs: [],
-                links: [],
-                type: TransformationType.COMPONENT
+              transformation: {
+                id: 'mockId',
+                revision_group_id: 'mockGroupId',
+                name: 'mock',
+                description: 'mock description',
+                category: 'EXAMPLES',
+                version_tag: '0.0.1',
+                released_timestamp: new Date().toISOString(),
+                disabled_timestamp: new Date().toISOString(),
+                state: RevisionState.DRAFT,
+                type: TransformationType.COMPONENT,
+                documentation: null,
+                content: 'python code',
+                io_interface: {
+                  inputs: [],
+                  outputs: []
+                },
+                test_wiring: {
+                  input_wirings: [],
+                  output_wirings: []
+                }
               },
               editMode: true
             }
