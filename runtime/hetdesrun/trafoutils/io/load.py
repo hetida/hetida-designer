@@ -4,8 +4,9 @@ import importlib
 import json
 import logging
 import os
+from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Any, Iterable
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, parse_file_as
@@ -187,7 +188,8 @@ def transformation_revision_from_python_code(code: str) -> Any:
     return tr_json
 
 
-def load_transformation_revisions_from_directory(
+# TODO: reduce branches
+def load_transformation_revisions_from_directory(  # noqa: PLR0912
     download_path: str, transform_py_to_json: bool = False
 ) -> tuple[dict[UUID, TransformationRevision], dict[UUID, str]]:
     transformation_dict: dict[UUID, TransformationRevision] = {}
@@ -318,7 +320,8 @@ class ImportSourceConfig(BaseModel):
     update_config: MultipleTrafosUpdateConfig
 
 
-def get_import_sources(directory_path: str) -> Iterable[ImportSource]:
+# TODO: reduce branches
+def get_import_sources(directory_path: str) -> Iterable[ImportSource]:  # noqa: PLR0912
     """Get all import sources inside a directory
 
     Note: Does not parse/validate import sources.

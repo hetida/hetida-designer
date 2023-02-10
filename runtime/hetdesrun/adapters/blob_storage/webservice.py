@@ -8,7 +8,6 @@ Actual data ingestion/egestion happens in the corresponding Runtime-Python-Plugi
 """
 
 import logging
-from typing import List, Optional
 
 from fastapi import HTTPException, Query, status
 
@@ -69,7 +68,7 @@ async def get_info_endpoint() -> InfoResponse:
     dependencies=get_auth_deps(),
 )
 async def get_structure_endpoint(
-    parentId: Optional[IdString] = None,
+    parentId: IdString | None = None,
 ) -> StructureResponse:
     logger.info("GET structure for parentId '%s'", parentId)
     try:
@@ -118,15 +117,13 @@ async def get_structure_endpoint(
     dependencies=get_auth_deps(),
 )
 async def get_sources_endpoint(
-    filter_str: Optional[str] = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter")
 ) -> MultipleSourcesResponse:
     logger.info("GET sources for filter string '%s'", filter_str)
     try:
         found_sources = get_filtered_sources(filter_str=filter_str)
     except MissingHierarchyError as error:
-        msg = (
-            f"Could not get sources " f"because the hierarchy json is missing:\n{error}"
-        )
+        msg = f"Could not get sources because the hierarchy json is missing:\n{error}"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
@@ -161,13 +158,13 @@ async def get_sources_endpoint(
     dependencies=get_auth_deps(),
 )
 async def get_sinks_endpoint(
-    filter_str: Optional[str] = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter")
 ) -> MultipleSinksResponse:
     logger.info("GET sinks for filter string '%s'", filter_str)
     try:
         found_sinks = get_filtered_sinks(filter_str=filter_str)
     except MissingHierarchyError as error:
-        msg = f"Could not get sinks " f"because the hierarchy json is missing:\n{error}"
+        msg = f"Could not get sinks because the hierarchy json is missing:\n{error}"
         logger.error(msg)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
@@ -180,12 +177,12 @@ async def get_sinks_endpoint(
 
 @blob_storage_adapter_router.get(
     "/sources/{sourceId:path}/metadata/",
-    response_model=List,
+    response_model=list,
     dependencies=get_auth_deps(),
 )
 async def get_sources_metadata(
-    sourceId: IdString,  # pylint: disable=unused-argument
-) -> List:
+    sourceId: IdString,  # noqa: ARG001
+) -> list:
     """Get metadata attached to sources
 
     This adapter does not implement attached metadata. Therefore this will always result
@@ -246,12 +243,12 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
 
 @blob_storage_adapter_router.get(
     "/sinks/{sinkId:path}/metadata/",
-    response_model=List,
+    response_model=list,
     dependencies=get_auth_deps(),
 )
 async def get_sinks_metadata(
-    sinkId: IdString,  # pylint: disable=unused-argument
-) -> List:
+    sinkId: IdString,  # noqa: ARG001
+) -> list:
     """Get metadata attached to sinks
 
     This adapter does not implement attached metadata. Therefore this will always result
@@ -298,12 +295,12 @@ async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
 
 @blob_storage_adapter_router.get(
     "/thingNodes/{thingNodeId:path}/metadata/",
-    response_model=List,
+    response_model=list,
     dependencies=get_auth_deps(),
 )
 async def get_thing_nodes_metadata(
-    thingNodeId: IdString,  # pylint: disable=unused-argument
-) -> List:
+    thingNodeId: IdString,  # noqa: ARG001
+) -> list:
     """Get metadata attached to thing Nodes.
 
     This adapter does not implement attached metadata. Therefore this will always result

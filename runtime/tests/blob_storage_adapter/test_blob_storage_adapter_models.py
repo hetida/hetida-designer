@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import List
 
 import pytest
 from pydantic import ValidationError
@@ -44,7 +43,7 @@ def test_blob_storage_class_structure_bucket():
 
 
 def test_blob_storage_class_object_key():
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match="UTC") as exc_info:
         object_key = ObjectKey(
             string="A_2022-01-02T14:23:18+00:00",
             name="A",
@@ -55,6 +54,7 @@ def test_blob_storage_class_object_key():
                 hour=14,
                 minute=23,
                 second=18,
+                tzinfo=timezone.utc,
             ),
         )
     assert "The ObjectKey attribute time must have timezone UTC!" in str(exc_info.value)
@@ -86,7 +86,9 @@ def test_blob_storage_class_object_key():
     thing_node_id = object_key.to_thing_node_id(bucket=StructureBucket(name="i-ii"))
     assert thing_node_id == "i-ii/A"
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(
+        ValueError, match=f"contains no '{IDENTIFIER_SEPARATOR}'"
+    ) as exc_info:
         ObjectKey.from_string("A2022-01-02T14:23:18+00:00")
     assert (
         f"not a valid ObjectKey string, because it contains no '{IDENTIFIER_SEPARATOR}'"
@@ -137,7 +139,7 @@ def test_blob_storage_class_structure_thing_node():
     assert f"or '{OBJECT_KEY_DIR_SEPARATOR}' with its name 'A'!" in str(exc_info.value)
 
 
-def test_blob_storage_class_structure_source():
+def test_blob_storage_class_structure_source_works():
     source = BlobStorageStructureSource(
         id="i-ii/A_2022-01-02T14:23:18+00:00",
         thingNodeId="i-ii/A",
@@ -152,7 +154,7 @@ def test_blob_storage_class_structure_source():
     assert source.path == "i-ii/A"
     assert source.metadataKey == "A - 2022-01-02 14:23:18+00:00"
     assert source.type == "metadata(any)"
-    assert source.visible == True
+    assert source.visible is True
     assert source.filters == {}
 
     src_bucket_name, src_object_key = source.to_structure_bucket_and_object_key()
@@ -178,6 +180,8 @@ def test_blob_storage_class_structure_source():
     )
     assert multi_level_ok_src_from_bkt_and_ok.path == "iii/x/C"
 
+
+def test_blob_storage_class_structure_source_raises_exceptions():
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to no object key dir separator
         BlobStorageStructureSource(
@@ -333,7 +337,7 @@ def test_blob_storage_class_structure_sink():
     assert sink.path == "i-ii/A"
     assert sink.metadataKey == "A - Next Object"
     assert sink.type == "metadata(any)"
-    assert sink.visible == True
+    assert sink.visible is True
     assert sink.filters == {}
 
     snk_bucket, snk_object_key = sink.to_structure_bucket_and_object_key()
@@ -497,11 +501,11 @@ def test_blob_storage_class_category():
     assert isinstance(category.substructure[0], Category)
     assert category.substructure[0].name == "A"
     assert category.substructure[0].description == "Subcategory"
-    assert category.substructure[0].substructure == None
+    assert category.substructure[0].substructure is None
     assert category.substructure[0].get_depth() == 1
     assert category.substructure[1].name == "B"
     assert category.substructure[1].description == "Subcategory"
-    assert category.substructure[1].substructure == None
+    assert category.substructure[1].substructure is None
     assert category.substructure[1].get_depth() == 1
     assert category.get_depth() == 2
 
@@ -511,9 +515,9 @@ def test_blob_storage_class_category():
     assert thing_node_from_category.name == "I"
     assert thing_node_from_category.description == "Category"
 
-    thing_nodes: List[StructureThingNode] = []
-    bucket_names: List[StructureBucket] = []
-    sinks: List[BlobStorageStructureSink] = []
+    thing_nodes: list[StructureThingNode] = []
+    bucket_names: list[StructureBucket] = []
+    sinks: list[BlobStorageStructureSink] = []
     category.create_structure(
         thing_nodes=thing_nodes,
         buckets=bucket_names,
@@ -544,26 +548,24 @@ def test_blob_storage_class_category():
 
 def test_blob_storage_category_create_structure_too_long_bucket_name():
     category = Category(
-        **{
-            "name": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
-            "description": "Super Category",
-            "substructure": [
-                {
-                    "name": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
-                    "description": "Category",
-                    "end_of_bucket": True,
-                    "substructure": [
-                        {"name": "C", "description": "Subcategory"},
-                    ],
-                },
-            ],
-        }
+        name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+        description="Super Category",
+        substructure=[
+            Category(
+                name="iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+                description="Category",
+                end_of_bucket=True,
+                substructure=[
+                    Category(name="C", description="Subcategory"),
+                ],
+            ),
+        ],
     )
 
-    thing_nodes: List[StructureThingNode] = []
-    bucket_names: List[StructureBucket] = []
-    sinks: List[BlobStorageStructureSink] = []
-    with pytest.raises(ValueError) as exc_info:
+    thing_nodes: list[StructureThingNode] = []
+    bucket_names: list[StructureBucket] = []
+    sinks: list[BlobStorageStructureSink] = []
+    with pytest.raises(ValueError, match="to BucketName") as exc_info:
         category.create_structure(
             thing_nodes=thing_nodes,
             buckets=bucket_names,
@@ -590,52 +592,48 @@ def test_blob_storage_models_find_duplicates():
 
 def test_blob_storage_class_adapter_hierarchy_happy_path():
     adapter_hierarchy = AdapterHierarchy(
-        **{
-            "structure": [
-                {
-                    "name": "I",
-                    "description": "Super Category",
-                    "substructure": [
-                        {
-                            "name": "i",
-                            "description": "Category",
-                            "end_of_bucket": True,
-                            "substructure": [
-                                {
-                                    "name": "A",
-                                    "description": "Subcategory",
-                                    "substructure": [],
-                                },
-                                {
-                                    "name": "B",
-                                    "description": "Subcategory",
-                                    "substructure": None,
-                                },
-                                {"name": "C", "description": "Subcategory"},
-                                {"name": "D", "description": "Subcategory"},
-                            ],
-                        },
-                        {
-                            "name": "ii",
-                            "description": "Category",
-                            "end_of_bucket": True,
-                            "substructure": [
-                                {"name": "E", "description": "Subcategory"}
-                            ],
-                        },
-                        {
-                            "name": "iii",
-                            "description": "Category",
-                            "end_of_bucket": True,
-                            "substructure": [
-                                {"name": "F", "description": "Subcategory"},
-                                {"name": "G", "description": "Subcategory"},
-                            ],
-                        },
-                    ],
-                }
-            ],
-        }
+        structure=[
+            Category(
+                name="I",
+                description="Super Category",
+                substructure=[
+                    Category(
+                        name="i",
+                        description="Category",
+                        end_of_bucket=True,
+                        substructure=[
+                            Category(
+                                name="A",
+                                description="Subcategory",
+                                substructure=[],
+                            ),
+                            Category(
+                                name="B",
+                                description="Subcategory",
+                                substructure=None,
+                            ),
+                            Category(name="C", description="Subcategory"),
+                            Category(name="D", description="Subcategory"),
+                        ],
+                    ),
+                    Category(
+                        name="ii",
+                        description="Category",
+                        end_of_bucket=True,
+                        substructure=[Category(name="E", description="Subcategory")],
+                    ),
+                    Category(
+                        name="iii",
+                        description="Category",
+                        end_of_bucket=True,
+                        substructure=[
+                            Category(name="F", description="Subcategory"),
+                            Category(name="G", description="Subcategory"),
+                        ],
+                    ),
+                ],
+            )
+        ],
     )
 
     assert adapter_hierarchy.structure[0].get_depth() == 3
@@ -671,7 +669,7 @@ def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path(
     adapter_hierarchy = AdapterHierarchy(
         structure=(Category(name="I", description=""),)
     )
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match="Without an object key prefix") as exc_info:
         adapter_hierarchy.thing_nodes
     assert "Without an object key prefix no sinks or sources" in str(exc_info.value)
 
@@ -679,26 +677,24 @@ def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path(
 def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error():
     structure = (
         Category(
-            **{
-                "name": "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
-                "description": "Super Category",
-                "substructure": [
-                    {
-                        "name": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
-                        "description": "Category",
-                        "end_of_bucket": True,
-                        "substructure": [
-                            {"name": "C", "description": "Subcategory"},
-                        ],
-                    },
-                ],
-            }
+            name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+            description="Super Category",
+            substructure=[
+                Category(
+                    name="iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+                    description="Category",
+                    end_of_bucket=True,
+                    substructure=[
+                        Category(name="C", description="Subcategory"),
+                    ],
+                ),
+            ],
         ),
     )
 
     adapter_hierarchy = AdapterHierarchy(structure=structure)
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match="to BucketName") as exc_info:
         adapter_hierarchy.structure_buckets
 
     assert "Validation Error for transformation of StructureThingNode " in str(
@@ -714,21 +710,19 @@ def test_blob_storage_adapter_hierarchy_with_structure_invalid_error():
     adapter_hierarchy = AdapterHierarchy(
         structure=(
             Category(
-                **{
-                    "name": "I",
-                    "description": "Super Category",
-                    "substructure": [
-                        {
-                            "name": "i",
-                            "description": "Category",
-                        },
-                    ],
-                }
+                name="I",
+                description="Super Category",
+                substructure=[
+                    Category(
+                        name="i",
+                        description="Category",
+                    ),
+                ],
             ),
         )
     )
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match="Without an object key prefix") as exc_info:
         adapter_hierarchy.thing_nodes
 
     assert "Without an object key prefix no sinks or sources" in str(exc_info.value)
@@ -738,34 +732,30 @@ def test_blob_storage_adapter_hierarchy_with_duplicates():
     adapter_hierarchy = AdapterHierarchy(
         structure=[
             Category(
-                **{
-                    "name": "III",
-                    "description": "Super Category",
-                    "end_of_bucket": True,
-                    "substructure": [
-                        {
-                            "name": "i",
-                            "description": "Category",
-                        }
-                    ],
-                }
+                name="III",
+                description="Super Category",
+                end_of_bucket=True,
+                substructure=[
+                    Category(
+                        name="i",
+                        description="Category",
+                    )
+                ],
             ),
             Category(
-                **{
-                    "name": "iii",
-                    "description": "Super Category",
-                    "end_of_bucket": True,
-                    "substructure": [
-                        {
-                            "name": "I",
-                            "description": "Category",
-                        }
-                    ],
-                }
+                name="iii",
+                description="Super Category",
+                end_of_bucket=True,
+                substructure=[
+                    Category(
+                        name="I",
+                        description="Category",
+                    )
+                ],
             ),
         ],
     )
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match="not unique") as exc_info:
         adapter_hierarchy.structure_buckets
     assert "The bucket names generated from the config file are not unique!" in str(
         exc_info.value

@@ -1,6 +1,6 @@
 import logging
 from io import BytesIO
-from typing import Any, Dict
+from typing import Any
 
 import joblib
 from botocore.exceptions import ClientError, ParamValidationError
@@ -101,10 +101,10 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
 
 
 async def send_data(
-    wf_output_name_to_filtered_sink_mapping_dict: Dict[str, FilteredSink],
-    wf_output_name_to_value_mapping_dict: Dict[str, Any],
-    adapter_key: str,  # pylint: disable=unused-argument
-) -> Dict[str, Any]:
+    wf_output_name_to_filtered_sink_mapping_dict: dict[str, FilteredSink],
+    wf_output_name_to_value_mapping_dict: dict[str, Any],
+    adapter_key: str,  # noqa: ARG001
+) -> dict[str, Any]:
     for (
         wf_output_name,
         filtered_sink,

@@ -191,9 +191,8 @@ def test_blob_storage_get_thing_node_by_id():
                     id="i-ii", parentId="i", name="ii", description="Kategory"
                 ),
             ],
-        ):
-            with pytest.raises(StructureObjectNotUnique):
-                get_thing_node_by_id("i-ii")
+        ), pytest.raises(StructureObjectNotUnique):
+            get_thing_node_by_id("i-ii")
 
 
 def test_blob_storage_get_source_by_id():
@@ -226,9 +225,8 @@ def test_blob_storage_get_source_by_id():
                 metadataKey="A - 2022-01-02 14:57:31+00:00",
             ),
         ],
-    ):
-        with pytest.raises(StructureObjectNotUnique):
-            get_source_by_id("i-i/A_2022-01-02T14:57:31+00:00")
+    ), pytest.raises(StructureObjectNotUnique):
+        get_source_by_id("i-i/A_2022-01-02T14:57:31+00:00")
 
 
 def test_blob_storage_get_sink_by_id():
@@ -264,9 +262,8 @@ def test_blob_storage_get_sink_by_id():
                     metadataKey="A - Next Object",
                 ),
             ],
-        ):
-            with pytest.raises(StructureObjectNotUnique):
-                get_sink_by_id("i-i/A_next")
+        ), pytest.raises(StructureObjectNotUnique):
+            get_sink_by_id("i-i/A_next")
 
 
 def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
@@ -306,11 +303,10 @@ def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
                 metadataKey="A - 2022-01-02 14:57:31+00:00",
             ),
         ],
-    ):
-        with pytest.raises(StructureObjectNotUnique):
-            source_by_tn_id_and_md_key = get_source_by_thing_node_id_and_metadata_key(
-                thing_node_id="i-i/A", metadata_key="A - 2022-01-02 14:57:31+00:00"
-            )
+    ), pytest.raises(StructureObjectNotUnique):
+        source_by_tn_id_and_md_key = get_source_by_thing_node_id_and_metadata_key(
+            thing_node_id="i-i/A", metadata_key="A - 2022-01-02 14:57:31+00:00"
+        )
 
 
 def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
@@ -352,8 +348,7 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
                     metadataKey="A - Next Object",
                 ),
             ],
-        ):
-            with pytest.raises(StructureObjectNotUnique):
-                sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
-                    thing_node_id="i-i/A", metadata_key="A - Next Object"
-                )
+        ), pytest.raises(StructureObjectNotUnique):
+            sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
+                thing_node_id="i-i/A", metadata_key="A - Next Object"
+            )

@@ -4,7 +4,8 @@ This implements source and sink runtime adapter client for the generic rest adap
 """
 
 import asyncio
-from typing import Any, Mapping, TypeVar
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 import pandas as pd
 

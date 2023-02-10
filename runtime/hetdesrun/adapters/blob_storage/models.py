@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timezone
 from functools import cache, cached_property
-from typing import Dict, List, Literal, Optional, Tuple
+from typing import Literal
 
 from pydantic import BaseModel, ConstrainedStr, Field, ValidationError, validator
 
@@ -32,10 +32,8 @@ class BucketName(ConstrainedStr):
 class IdString(ConstrainedStr):
     min_length = 1
     regex = re.compile(
-        (
-            r"^[a-zA-Z0-9:+\-"
-            rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+$"
-        )
+        r"^[a-zA-Z0-9:+\-"
+        rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+$"
     )
 
 
@@ -51,7 +49,6 @@ class ObjectKey(BaseModel):
     name: IdString
     time: datetime
 
-    # pylint: disable=no-self-argument
     @validator("time")
     def has_timezone_utc(cls, time: datetime) -> datetime:
         if time.tzinfo != timezone.utc:
@@ -87,24 +84,23 @@ class ObjectKey(BaseModel):
 
 
 class InfoResponse(BaseModel):
-    id: str
+    id: str  # noqa: A003
     name: str
     version: str
 
 
 class StructureThingNode(BaseModel):
-    id: IdString
-    parentId: Optional[IdString] = None
+    id: IdString  # noqa: A003
+    parentId: IdString | None = None
     name: ThingNodeName
     description: str
 
-    # pylint: disable=no-self-argument
     @validator("name")
     def id_consists_of_parent_id_and_name(
         cls, name: ThingNodeName, values: dict
     ) -> ThingNodeName:
         try:
-            id = values["id"]  # pylint: disable=redefined-builtin
+            id = values["id"]  # noqa: A001
             parent_id = values["parentId"]
         except KeyError as e:
             raise ValueError(
@@ -126,20 +122,17 @@ class StructureThingNode(BaseModel):
 
 
 class BlobStorageStructureSource(BaseModel):
-    id: IdString
+    id: IdString  # noqa: A003
     thingNodeId: IdString
     name: str
     path: str = Field(..., description="Display path used in Designer Frontend")
     metadataKey: str
-    type: Literal["metadata(any)"] = "metadata(any)"
+    type: Literal["metadata(any)"] = "metadata(any)"  # noqa: A003
     visible: Literal[True] = True
-    filters: Optional[Dict[str, Dict]] = {}
+    filters: dict[str, dict] | None = {}
 
-    # pylint: disable=no-self-argument
     @validator("id")
-    def id_matches_scheme(
-        cls, id: IdString  # pylint: disable=redefined-builtin
-    ) -> IdString:
+    def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
         if OBJECT_KEY_DIR_SEPARATOR not in id:
             raise ValueError(
                 f"The source id '{id}' must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'!"
@@ -164,11 +157,10 @@ class BlobStorageStructureSource(BaseModel):
             ) from e
         return id
 
-    # pylint: disable=no-self-argument
     @validator("thingNodeId")
     def thing_node_id_matches_id(cls, thingNodeId: IdString, values: dict) -> IdString:
         try:
-            id = values["id"]  # pylint: disable=redefined-builtin
+            id = values["id"]  # noqa: A001
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if the source's thingNodeId '{thingNodeId}' matches its id "
@@ -182,11 +174,10 @@ class BlobStorageStructureSource(BaseModel):
             )
         return thingNodeId
 
-    # pylint: disable=no-self-argument
     @validator("name")
     def name_matches_id(cls, name: str, values: dict) -> str:
         try:
-            id = values["id"]  # pylint: disable=redefined-builtin
+            id = values["id"]  # noqa: A001
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if the source's name '{name}' matches its id "
@@ -211,7 +202,6 @@ class BlobStorageStructureSource(BaseModel):
 
         return name
 
-    # pylint: disable=no-self-argument
     @validator("path")
     def path_matches_thing_node_id(cls, path: str, values: dict) -> str:
         try:
@@ -230,7 +220,6 @@ class BlobStorageStructureSource(BaseModel):
 
         return path
 
-    # pylint: disable=no-self-argument
     @validator("metadataKey")
     def metadata_key_matches_name(cls, metadataKey: str, values: dict) -> str:
         try:
@@ -267,7 +256,7 @@ class BlobStorageStructureSource(BaseModel):
             metadataKey=name,
         )
 
-    def to_structure_bucket_and_object_key(self) -> Tuple[StructureBucket, ObjectKey]:
+    def to_structure_bucket_and_object_key(self) -> tuple[StructureBucket, ObjectKey]:
         bucket_name_string, object_key_string = self.id.split(
             sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
         )
@@ -278,24 +267,21 @@ class BlobStorageStructureSource(BaseModel):
 
 class MultipleSourcesResponse(BaseModel):
     resultCount: int
-    sources: List[BlobStorageStructureSource]
+    sources: list[BlobStorageStructureSource]
 
 
 class BlobStorageStructureSink(BaseModel):
-    id: IdString
+    id: IdString  # noqa: A003
     thingNodeId: IdString
     name: str
     path: str = Field(..., description="Display path used in Designer Frontend")
     metadataKey: str
-    type: Literal["metadata(any)"] = "metadata(any)"
+    type: Literal["metadata(any)"] = "metadata(any)"  # noqa: A003
     visible: Literal[True] = True
-    filters: Optional[Dict[str, Dict]] = {}
+    filters: dict[str, dict] | None = {}
 
-    # pylint: disable=no-self-argument
     @validator("id")
-    def id_matches_scheme(
-        cls, id: IdString  # pylint: disable=redefined-builtin
-    ) -> IdString:
+    def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
         if OBJECT_KEY_DIR_SEPARATOR not in id:
             raise ValueError(
                 f"The sink id '{id}' must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'!"
@@ -316,11 +302,10 @@ class BlobStorageStructureSink(BaseModel):
             )
         return id
 
-    # pylint: disable=no-self-argument
     @validator("thingNodeId")
     def thing_node_id_matches_id(cls, thingNodeId: IdString, values: dict) -> IdString:
         try:
-            id = values["id"]  # pylint: disable=redefined-builtin
+            id = values["id"]  # noqa: A001
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if the sink's thingNodeId '{thingNodeId}' matches its id "
@@ -334,11 +319,10 @@ class BlobStorageStructureSink(BaseModel):
             )
         return thingNodeId
 
-    # pylint: disable=no-self-argument
     @validator("name")
     def name_matches_id(cls, name: str, values: dict) -> str:
         try:
-            id = values["id"]  # pylint: disable=redefined-builtin
+            id = values["id"]  # noqa: A001
         except KeyError as e:
             raise ValueError(
                 f"Cannot check if the sink's name '{name}' matches its id if the attribute 'id' "
@@ -367,7 +351,6 @@ class BlobStorageStructureSink(BaseModel):
 
         return name
 
-    # pylint: disable=no-self-argument
     @validator("path")
     def path_matches_thing_node_id(cls, path: str, values: dict) -> str:
         try:
@@ -386,7 +369,6 @@ class BlobStorageStructureSink(BaseModel):
 
         return path
 
-    # pylint: disable=no-self-argument
     @validator("metadataKey")
     def metadata_key_matches_name(cls, metadataKey: str, values: dict) -> str:
         try:
@@ -417,7 +399,7 @@ class BlobStorageStructureSink(BaseModel):
             metadataKey=thing_node.name + LEAF_NAME_SEPARATOR + SINK_NAME_ENDING,
         )
 
-    def to_structure_bucket_and_object_key(self) -> Tuple[StructureBucket, ObjectKey]:
+    def to_structure_bucket_and_object_key(self) -> tuple[StructureBucket, ObjectKey]:
         bucket_name_string, object_key_name = self.thingNodeId.split(
             sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
         )
@@ -428,22 +410,22 @@ class BlobStorageStructureSink(BaseModel):
 
 class MultipleSinksResponse(BaseModel):
     resultCount: int
-    sinks: List[BlobStorageStructureSink]
+    sinks: list[BlobStorageStructureSink]
 
 
 class StructureResponse(BaseModel):
-    id: str
+    id: str  # noqa: A003
     name: str
-    thingNodes: List[StructureThingNode]
-    sources: List[BlobStorageStructureSource]
-    sinks: List[BlobStorageStructureSink]
+    thingNodes: list[StructureThingNode]
+    sources: list[BlobStorageStructureSource]
+    sinks: list[BlobStorageStructureSink]
 
 
 class Category(BaseModel):
     name: ThingNodeName
     description: str
-    substructure: Optional[Tuple["Category", ...]] = None
-    end_of_bucket: Optional[bool] = None
+    substructure: tuple["Category", ...] | None = None
+    end_of_bucket: bool | None = None
 
     class Config:
         frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
@@ -451,15 +433,14 @@ class Category(BaseModel):
     def get_depth(self) -> int:
         depth = 1
         if self.substructure is not None and len(self.substructure) != 0:
-            depths: List[int] = []
-            # pylint: disable=not-an-iterable
+            depths: list[int] = []
             for category in self.substructure:
                 depths.append(category.get_depth())
             depth = depth + max(depths)
         return depth
 
     def to_thing_node(
-        self, parent_id: Optional[IdString], separator: Literal["-", "/"]
+        self, parent_id: IdString | None, separator: Literal["-", "/"]
     ) -> StructureThingNode:
         return StructureThingNode(
             id=(parent_id + separator if parent_id is not None else "")
@@ -475,10 +456,10 @@ class Category(BaseModel):
 
     def create_structure(
         self,
-        thing_nodes: List[StructureThingNode],
-        buckets: List[StructureBucket],
-        sinks: List[BlobStorageStructureSink],
-        parent_id: Optional[IdString],
+        thing_nodes: list[StructureThingNode],
+        buckets: list[StructureBucket],
+        sinks: list[BlobStorageStructureSink],
+        parent_id: IdString | None,
         part_of_bucket_name: bool,
     ) -> None:
         if part_of_bucket_name is True and (
@@ -516,7 +497,6 @@ class Category(BaseModel):
                 buckets.append(bucket)
 
         if self.substructure is not None and len(self.substructure) != 0:
-            # pylint: disable=not-an-iterable
             for category in self.substructure:
                 category.create_structure(
                     thing_nodes=thing_nodes,
@@ -532,7 +512,7 @@ class Category(BaseModel):
             sinks.append(sink)
 
 
-def find_duplicates(item_list: List) -> List:
+def find_duplicates(item_list: list) -> list:
     seen = set()
     duplicates = []
     for item in item_list:
@@ -545,13 +525,13 @@ def find_duplicates(item_list: List) -> List:
 
 @cache
 def create_blob_storage_adapter_structure_objects_from_hierarchy(
-    structure: Tuple[Category, ...]
-) -> Tuple[
-    List[StructureThingNode], List[StructureBucket], List[BlobStorageStructureSink]
+    structure: tuple[Category, ...]
+) -> tuple[
+    list[StructureThingNode], list[StructureBucket], list[BlobStorageStructureSink]
 ]:
-    thing_nodes: List[StructureThingNode] = []
-    bucket_names: List[StructureBucket] = []
-    sinks: List[BlobStorageStructureSink] = []
+    thing_nodes: list[StructureThingNode] = []
+    bucket_names: list[StructureBucket] = []
+    sinks: list[BlobStorageStructureSink] = []
     for category in structure:
         category.create_structure(
             thing_nodes, bucket_names, sinks, parent_id=None, part_of_bucket_name=True
@@ -569,7 +549,7 @@ class AdapterHierarchy(BaseModel):
     and delimiters and introduce the concept of folders.
     """
 
-    structure: Tuple[Category, ...]
+    structure: tuple[Category, ...]
 
     class Config:
         arbitrary_types_allowed = True
@@ -581,20 +561,20 @@ class AdapterHierarchy(BaseModel):
 
     def create_structure(
         self,
-    ) -> Tuple[
-        List[StructureThingNode], List[StructureBucket], List[BlobStorageStructureSink]
+    ) -> tuple[
+        list[StructureThingNode], list[StructureBucket], list[BlobStorageStructureSink]
     ]:
         return create_blob_storage_adapter_structure_objects_from_hierarchy(
             structure=self.structure
         )
 
     @cached_property
-    def thing_nodes(self) -> List[StructureThingNode]:
+    def thing_nodes(self) -> list[StructureThingNode]:
         thing_nodes, _, _ = self.create_structure()
         return thing_nodes
 
     @cached_property
-    def structure_buckets(self) -> List[StructureBucket]:
+    def structure_buckets(self) -> list[StructureBucket]:
         _, buckets, _ = self.create_structure()
         if len(buckets) != len(set(buckets)):
             msg = (
@@ -606,7 +586,7 @@ class AdapterHierarchy(BaseModel):
         return buckets
 
     @cached_property
-    def sinks(self) -> List[BlobStorageStructureSink]:
+    def sinks(self) -> list[BlobStorageStructureSink]:
         _, _, sinks = self.create_structure()
         return sinks
 

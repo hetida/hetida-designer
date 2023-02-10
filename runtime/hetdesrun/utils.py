@@ -30,11 +30,14 @@ def check_explicit_utc(dt: datetime.datetime) -> bool:
     return check_aware(dt) and dt.utcoffset().total_seconds() == 0  # type: ignore
 
 
-def get_backend_basic_auth() -> tuple[str | None, str | None]:
-    return (
-        get_config().hd_backend_basic_auth_user,
-        get_config().hd_backend_basic_auth_password,
-    )
+def get_backend_basic_auth() -> tuple[str | None, str | None] | None:
+    if get_config().hd_backend_use_basic_auth:
+        # TODO: add exception handling for case config params are not set and make typecheck work
+        return (
+            get_config().hd_backend_basic_auth_user,
+            get_config().hd_backend_basic_auth_password,
+        )
+    return None
 
 
 def get_uuid_from_seed(seed_str: str) -> UUID:

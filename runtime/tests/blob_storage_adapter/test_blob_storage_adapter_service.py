@@ -19,46 +19,42 @@ def test_blob_storage_service_get_session():
         "hetdesrun.adapters.blob_storage.service.get_credentials",
         return_value=Credentials(
             access_key_id="some_id",
-            secret_access_key="some_key",
-            session_token="some_token",
+            secret_access_key="some_key",  # noqa: S106
+            session_token="some_token",  # noqa: S106
         ),
-    ):
-        with mock_s3():
-            session = get_session()
-            boto3_credentials = session.get_credentials()
-            assert boto3_credentials.access_key == "some_id"
-            assert boto3_credentials.secret_key == "some_key"
-            assert boto3_credentials.token == "some_token"
-            assert session.region_name == "eu-central-1"
+    ), mock_s3():
+        session = get_session()
+        boto3_credentials = session.get_credentials()
+        assert boto3_credentials.access_key == "some_id"
+        assert boto3_credentials.secret_key == "some_key"  # noqa: S105
+        assert boto3_credentials.token == "some_token"  # noqa: S105
+        assert session.region_name == "eu-central-1"
 
 
 def test_blob_storage_service_get_s3_client():
-    with mock_s3():
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.service.get_session",
-            return_value=boto3.Session(
-                aws_access_key_id="some_key_id",
-                aws_secret_access_key="some_key",
-                aws_session_token="some_token",
-                region_name="eu-central-1",
-            ),
-        ):
-            with mock.patch(
-                "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
-                return_value=mock.Mock(endpoint_url="invalid_endpoint_url"),
-            ):
-                with pytest.raises(InvalidEndpointError) as exc_info:
-                    get_s3_client()
-                assert (
-                    "The string 'invalid_endpoint_url' is no valid endpoint url!"
-                    in str(exc_info.value)
-                )
+    with mock_s3(), mock.patch(
+        "hetdesrun.adapters.blob_storage.service.get_session",
+        return_value=boto3.Session(
+            aws_access_key_id="some_key_id",
+            aws_secret_access_key="some_key",  # noqa: S106
+            aws_session_token="some_token",  # noqa: S106
+            region_name="eu-central-1",
+        ),
+    ), mock.patch(
+        "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
+        return_value=mock.Mock(endpoint_url="invalid_endpoint_url"),
+    ):
+        with pytest.raises(InvalidEndpointError) as exc_info:
+            get_s3_client()
+        assert "The string 'invalid_endpoint_url' is no valid endpoint url!" in str(
+            exc_info.value
+        )
 
-            with mock.patch(
-                "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
-                return_value=mock.Mock(endpoint_url="http://localhost:9000"),
-            ):
-                get_s3_client()
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
+        return_value=mock.Mock(endpoint_url="http://localhost:9000"),
+    ):
+        get_s3_client()
 
 
 def test_blob_storage_service_get_object_key_strings_in_bucket():

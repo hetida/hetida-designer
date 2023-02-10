@@ -1,5 +1,5 @@
 from keyword import iskeyword
-from typing import Any, Protocol, TypeVar, Union
+from typing import Any, Protocol, TypeVar
 
 
 class NamedEntity(Protocol):
@@ -16,7 +16,7 @@ def valid_python_identifier(cls: Any, name: str) -> str:  # noqa: ARG001
     raise ValueError(f"{name} is not a valid Python identifier")
 
 
-T = TypeVar("T", bound=Union[NamedEntity, OptionallyNamedEntity])
+T = TypeVar("T", bound=NamedEntity | OptionallyNamedEntity)
 
 
 def names_unique(cls: Any, inputs_or_outputs: list[T]) -> list[T]:  # noqa: ARG001

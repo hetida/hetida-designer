@@ -1,5 +1,6 @@
+from collections.abc import Callable, Coroutine
 from inspect import Parameter, signature
-from typing import Any, Callable, Coroutine, Protocol
+from typing import Any, Protocol
 
 from cached_property import cached_property  # async compatible variant
 from pydantic import ValidationError

@@ -1,6 +1,7 @@
 """Execution helpers"""
 import asyncio
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 async def run_func_or_coroutine(

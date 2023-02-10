@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exception_handlers import request_validation_exception_handler

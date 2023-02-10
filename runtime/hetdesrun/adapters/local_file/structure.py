@@ -1,5 +1,5 @@
 import os
-from typing import Callable
+from collections.abc import Callable
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.local_file.config import local_file_adapter_config

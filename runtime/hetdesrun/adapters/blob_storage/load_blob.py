@@ -1,6 +1,6 @@
 import logging
 from io import BytesIO
-from typing import Any, Dict
+from typing import Any
 
 import joblib
 
@@ -81,16 +81,16 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     except ModuleNotFoundError as error:
         msg = f"Cannot load module to unpickle file object:\n{error}"
         logger.error(msg)
-        raise AdapterHandlingException(msg)
+        raise AdapterHandlingException(msg) from error
 
     return data
 
 
 async def load_data(
-    wf_input_name_to_filtered_source_mapping_dict: Dict[str, FilteredSource],
-    adapter_key: str,  # pylint: disable=unused-argument
-) -> Dict[str, Any]:
-    wf_input_name_to_data_dict: Dict[str, Any] = {}
+    wf_input_name_to_filtered_source_mapping_dict: dict[str, FilteredSource],
+    adapter_key: str,  # noqa: ARG001
+) -> dict[str, Any]:
+    wf_input_name_to_data_dict: dict[str, Any] = {}
 
     for (
         wf_input_name,

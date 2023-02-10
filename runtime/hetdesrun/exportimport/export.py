@@ -47,9 +47,7 @@ def get_transformation_from_java_backend(
     response = requests.get(
         url,
         verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()  # type: ignore
-        if get_config().hd_backend_use_basic_auth
-        else None,
+        auth=get_backend_basic_auth(),  # type: ignore
         headers=headers,
         timeout=get_config().external_request_timeout,
     )
@@ -75,9 +73,7 @@ def get_transformation_from_java_backend(
     doc_response = requests.get(
         posix_urljoin(get_config().hd_backend_api_url, "documentations", str(id)),
         verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()  # type: ignore
-        if get_config().hd_backend_use_basic_auth
-        else None,
+        auth=get_backend_basic_auth(),  # type: ignore
         headers=headers,
         timeout=get_config().external_request_timeout,
     )
@@ -129,6 +125,14 @@ def criterion_unset_or_matches_value(criterion: Any | None, actual_value: Any) -
     if criterion is None:
         return True
     return bool(actual_value == criterion)
+
+
+def convert_id_type_to_uuid(
+    ids: list[UUID | str] | None,
+) -> list[UUID | str] | None:
+    if ids is None:
+        return None
+    return [UUID(id_) for id_ in ids if isinstance(id_, str)]
 
 
 ##Export transformations based on type, id, name and category if provided
@@ -206,16 +210,13 @@ def export_transformations(
         raise Exception(msg) from e
 
     if java_backend:
-        if ids is not None:
-            ids = [UUID(id_) for id_ in ids if isinstance(id_, str)]
+        ids = convert_id_type_to_uuid(ids)
 
         url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
         response = requests.get(
             url,
             verify=get_config().hd_backend_verify_certs,
-            auth=get_backend_basic_auth()  # type: ignore
-            if get_config().hd_backend_use_basic_auth
-            else None,
+            auth=get_backend_basic_auth(),  # type: ignore
             headers=headers,
             timeout=get_config().external_request_timeout,
         )

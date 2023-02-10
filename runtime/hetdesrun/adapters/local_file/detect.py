@@ -91,7 +91,7 @@ def local_file_from_path(
                 (not os.path.exists(data_file_path))
                 or provide_from_settings_file_if_data_file_present
             )
-            and (data_file_path.endswith(".csv") or data_file_path.endswith(".csv.zip"))
+            and (data_file_path.endswith((".csv", ".csv.zip")))
         ) or provide_from_settings_file_if_data_file_present:
             parsed_settings_file = parse_settings_file(data_file_path=data_file_path)
 

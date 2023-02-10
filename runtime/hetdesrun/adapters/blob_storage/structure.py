@@ -1,5 +1,4 @@
 from logging import getLogger
-from typing import List, Optional
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     InvalidEndpointError,
@@ -21,8 +20,8 @@ logger = getLogger(__name__)
 
 
 def get_thing_nodes_by_parent_id(
-    parent_id: Optional[IdString],
-) -> List[StructureThingNode]:
+    parent_id: IdString | None,
+) -> list[StructureThingNode]:
     try:
         tn_list = get_adapter_structure().thing_nodes
     except MissingHierarchyError as error:
@@ -32,8 +31,8 @@ def get_thing_nodes_by_parent_id(
 
 
 def get_sources_by_parent_id(
-    parent_id: Optional[IdString],
-) -> List[BlobStorageStructureSource]:
+    parent_id: IdString | None,
+) -> list[BlobStorageStructureSource]:
     if parent_id is None:
         return []
 
@@ -50,8 +49,8 @@ def get_sources_by_parent_id(
 
 
 def get_sinks_by_parent_id(
-    parent_id: Optional[IdString],
-) -> List[BlobStorageStructureSink]:
+    parent_id: IdString | None,
+) -> list[BlobStorageStructureSink]:
     if parent_id is None:
         return []
 
@@ -63,7 +62,7 @@ def get_sinks_by_parent_id(
     return [snk for snk in snk_list if snk.thingNodeId == parent_id]
 
 
-def get_filtered_sources(filter_str: Optional[str]) -> List[BlobStorageStructureSource]:
+def get_filtered_sources(filter_str: str | None) -> list[BlobStorageStructureSource]:
     if filter_str is None:
         filter_str = ""
 
@@ -79,7 +78,7 @@ def get_filtered_sources(filter_str: Optional[str]) -> List[BlobStorageStructure
     return [src for src in src_list if filter_str in src.id]
 
 
-def get_filtered_sinks(filter_str: Optional[str]) -> List[BlobStorageStructureSink]:
+def get_filtered_sinks(filter_str: str | None) -> list[BlobStorageStructureSink]:
     if filter_str is None:
         filter_str = ""
 

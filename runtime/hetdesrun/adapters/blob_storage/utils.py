@@ -1,5 +1,4 @@
 from logging import getLogger
-from typing import List
 
 from hetdesrun.adapters.blob_storage.exceptions import MissingHierarchyError
 from hetdesrun.adapters.blob_storage.models import (
@@ -13,13 +12,13 @@ from hetdesrun.adapters.exceptions import AdapterConnectionError
 logger = getLogger(__name__)
 
 
-def create_sources() -> List[BlobStorageStructureSource]:
+def create_sources() -> list[BlobStorageStructureSource]:
     try:
         thing_nodes = get_adapter_structure().thing_nodes
         buckets = get_adapter_structure().structure_buckets
     except MissingHierarchyError as error:
         raise error
-    source_list: List[BlobStorageStructureSource] = []
+    source_list: list[BlobStorageStructureSource] = []
     for bucket in buckets:
         try:
             object_key_strings = get_object_key_strings_in_bucket(bucket.name)

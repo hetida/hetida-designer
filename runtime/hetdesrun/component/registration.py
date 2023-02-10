@@ -2,7 +2,7 @@
 
 import asyncio
 import functools
-from typing import Callable
+from collections.abc import Callable
 
 from hetdesrun.component.load import ComponentCodeImportError
 from hetdesrun.datatypes import DataType

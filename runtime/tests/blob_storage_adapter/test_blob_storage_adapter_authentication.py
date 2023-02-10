@@ -6,7 +6,6 @@ import pytest
 from hetdesrun.adapters.blob_storage.authentication import (
     CredentialInfo,
     Credentials,
-    StorageAuthenticationError,
     create_or_get_named_credential_manager,
     credentials_still_valid_enough,
     get_access_token,
@@ -33,26 +32,23 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string():
                 <AssumeRoleId></AssumeRoleId>
             </AssumedRoleUser>
             <Credentials>
-                <AccessKeyId>82Q5PD5XG8LNUR9IEOJ0</AccessKeyId>
-                <SecretAccessKey>HlZQdbbJNAzhttjDg3pgjU8Nn8BYY0oShqFgMb7M</SecretAccessKey>
-                <SessionToken>eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NLZXkiOiI4MlE1UEQ1WEc4TE5VUjlJRU9KMCIsImFsbG93ZWQtb3JpZ2lucyI6WyJodHRwczovL2Rlc2lnbmVyLWVnbHYtenJwLmRldi5kc2EtaWQuZGUiLCJodHRwOi8vbG9jYWxob3N0Il0sImF1ZCI6ImFjY291bnQiLCJhdXRoX3RpbWUiOjE2NzUxNjU2ODEsImF6cCI6InpycC1oZXRpZGFkZXNpZ25lciIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZXhwIjoxNjc1MTY2ODgyLCJncm91cHMiOlsiMjEiXSwiaWF0IjoxNjc1MTY1NjgyLCJpc3MiOiJodHRwczovL3pycC1pZHAuZGV2LmRzYS1pZC5kZS9hdXRoL3JlYWxtcy9lZ2x2LXpycCIsImp0aSI6Ijc4NjAwM2U0LTk5ZTYtNDg2ZS04YjRmLTI1ODIxYjM2OWViOCIsIm5vbmNlIjoiY2Y2MzJhZDA5NmViOGU4MmIxOTc1MDYxZjJkYzgxYmU2ZFBjVVVidGoiLCJwb2xpY3kiOiJyZWFkd3JpdGUiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJkZXNpZ25lcjEiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiRGVzaWduZXIiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIiwiSW5mbyIsIkVkaXRvciJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInJvbGVzIjpbIkRlc2lnbmVyIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiIsIkluZm8iLCJFZGl0b3IiXSwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSBvZmZsaW5lX2FjY2VzcyIsInNlc3Npb25fc3RhdGUiOiIzMWI4OTFmNC02YmRmLTRmOGYtOTA5Yi00NWRhNzQ0MjM2MzciLCJzaWQiOiIzMWI4OTFmNC02YmRmLTRmOGYtOTA5Yi00NWRhNzQ0MjM2MzciLCJzdWIiOiIzN2I0OWMxMi1hZThhLTQyNWUtYmJhYS00ZjBmODM5MjIyZGYiLCJ0eXAiOiJCZWFyZXIifQ.ca0m1-Wsa9u31J9LLKUazouu-WI02E58NW4iJ0PQ6fiEU67YmaIbmdfpPkVpt-KB2es_vSvxnUTOqInzAJN0Lw</SessionToken>
+                <AccessKeyId>access_key_id</AccessKeyId>
+                <SecretAccessKey>secret_access_key</SecretAccessKey>
+                <SessionToken>session_token</SessionToken>
                 <Expiration>2023-01-31T12:08:02Z</Expiration>
             </Credentials>
-            <SubjectFromWebIdentityToken>37b49c12-ae8a-425e-bbaa-4f0f839222df</SubjectFromWebIdentityToken>
+            <SubjectFromWebIdentityToken>subject_from_web_identity_token</SubjectFromWebIdentityToken>
         </AssumeRoleWithWebIdentityResult>
-        <ResponseMetadata><RequestId>173F62A5F8F1DC8B</RequestId></ResponseMetadata>
+        <ResponseMetadata><RequestId>request_id</RequestId></ResponseMetadata>
     </AssumeRoleWithWebIdentityResponse>
     """
     credential_info = parse_credential_info_from_xml_string(xml_response_text, now)
-    assert credential_info.credentials.access_key_id == "82Q5PD5XG8LNUR9IEOJ0"
+    assert credential_info.credentials.access_key_id == "access_key_id"
     assert (
         credential_info.credentials.secret_access_key
-        == "HlZQdbbJNAzhttjDg3pgjU8Nn8BYY0oShqFgMb7M"
+        == "secret_access_key"  # noqa: S105
     )
-    assert (
-        credential_info.credentials.session_token
-        == "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NLZXkiOiI4MlE1UEQ1WEc4TE5VUjlJRU9KMCIsImFsbG93ZWQtb3JpZ2lucyI6WyJodHRwczovL2Rlc2lnbmVyLWVnbHYtenJwLmRldi5kc2EtaWQuZGUiLCJodHRwOi8vbG9jYWxob3N0Il0sImF1ZCI6ImFjY291bnQiLCJhdXRoX3RpbWUiOjE2NzUxNjU2ODEsImF6cCI6InpycC1oZXRpZGFkZXNpZ25lciIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZXhwIjoxNjc1MTY2ODgyLCJncm91cHMiOlsiMjEiXSwiaWF0IjoxNjc1MTY1NjgyLCJpc3MiOiJodHRwczovL3pycC1pZHAuZGV2LmRzYS1pZC5kZS9hdXRoL3JlYWxtcy9lZ2x2LXpycCIsImp0aSI6Ijc4NjAwM2U0LTk5ZTYtNDg2ZS04YjRmLTI1ODIxYjM2OWViOCIsIm5vbmNlIjoiY2Y2MzJhZDA5NmViOGU4MmIxOTc1MDYxZjJkYzgxYmU2ZFBjVVVidGoiLCJwb2xpY3kiOiJyZWFkd3JpdGUiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJkZXNpZ25lcjEiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiRGVzaWduZXIiLCJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIiwiSW5mbyIsIkVkaXRvciJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInJvbGVzIjpbIkRlc2lnbmVyIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiIsIkluZm8iLCJFZGl0b3IiXSwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSBvZmZsaW5lX2FjY2VzcyIsInNlc3Npb25fc3RhdGUiOiIzMWI4OTFmNC02YmRmLTRmOGYtOTA5Yi00NWRhNzQ0MjM2MzciLCJzaWQiOiIzMWI4OTFmNC02YmRmLTRmOGYtOTA5Yi00NWRhNzQ0MjM2MzciLCJzdWIiOiIzN2I0OWMxMi1hZThhLTQyNWUtYmJhYS00ZjBmODM5MjIyZGYiLCJ0eXAiOiJCZWFyZXIifQ.ca0m1-Wsa9u31J9LLKUazouu-WI02E58NW4iJ0PQ6fiEU67YmaIbmdfpPkVpt-KB2es_vSvxnUTOqInzAJN0Lw"
-    )
+    assert credential_info.credentials.session_token == "session_token"  # noqa: S105
     assert credential_info.issue_timestamp.isoformat() == "2023-01-31T11:08:05+00:00"
     assert credential_info.expiration_time_in_seconds == 3597
 
@@ -73,8 +69,8 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string():
         <Code>AccessDenied</Code>
         <Message>Access Denied.</Message>
         <Resource>/</Resource>
-        <RequestId>173F1539BE0F18F9</RequestId>
-        <HostId>9597299a-6a20-4aed-8f65-39688096cd70</HostId>
+        <RequestId>request_id</RequestId>
+        <HostId>host_id</HostId>
     </Error>
     """
     with pytest.raises(StorageAuthenticationError) as exc_info:
@@ -90,15 +86,15 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string():
                 <AssumeRoleId></AssumeRoleId>
             </AssumedRoleUser>
             <Credentials>
-                <AccessKeyId>82Q5PD5XG8LNUR9IEOJ0</AccessKeyId>
-                <SecretAccessKey>HlZQdbbJNAzhttjDg3pgjU8Nn8BYY0oShqFgMb7M</SecretAccessKey>
+                <AccessKeyId>access_key_id</AccessKeyId>
+                <SecretAccessKey>secret_access_key</SecretAccessKey>
                 <Expiration>2023-01-31T12:08:02Z</Expiration>
             </Credentials>
-            <SubjectFromWebIdentityToken>37b49c12-ae8a-425e-bbaa-4f0f839222df</SubjectFromWebIdentityToken>
+            <SubjectFromWebIdentityToken>subject_from_web_identity_token</SubjectFromWebIdentityToken>
         </AssumeRoleWithWebIdentityResult>
-        <ResponseMetadata><RequestId>173F62A5F8F1DC8B</RequestId></ResponseMetadata>
+        <ResponseMetadata><RequestId>request_id</RequestId></ResponseMetadata>
     </AssumeRoleWithWebIdentityResponse>
-    """
+    """  # noqa: S105
     with pytest.raises(StorageAuthenticationError) as exc_info:
         parse_credential_info_from_xml_string(
             missing_session_token_xml_response_text, now
@@ -108,12 +104,12 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string():
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def credentials() -> Credentials:
     return Credentials(
         access_key_id="some_id",
-        secret_access_key="some_key",
-        session_token="some_token",
+        secret_access_key="some_key",  # noqa: S106
+        session_token="some_token",  # noqa: S106
     )
 
 
@@ -145,7 +141,7 @@ def test_blob_storage_authentication_obtain_credential_info_from_rest_api(creden
             with pytest.raises(StorageAuthenticationError) as exc_info:
                 obtain_credential_info_from_rest_api("access_token")
 
-            assert "error message" == str(exc_info.value)
+            assert str(exc_info.value) == "error message"
 
     with mock.patch(
         "hetdesrun.adapters.blob_storage.authentication.requests.post",
@@ -176,25 +172,25 @@ def test_blob_storage_authentication_credentials_still_valid_enough(credentials)
     assert credentials_still_valid_enough(credential_info) is False
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def access_token():
     return "1234"
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def result_credential_info() -> CredentialInfo:
     return CredentialInfo(
         credentials=Credentials(
             access_key_id="result_id",
-            secret_access_key="result_key",
-            session_token="result_token",
+            secret_access_key="result_key",  # noqa: S106
+            session_token="result_token",  # noqa: S106
         ),
         expiration_time_in_seconds=3600,
         issue_timestamp=datetime.now(timezone.utc),
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def credential_info_longer_valid(credentials) -> CredentialInfo:
     return CredentialInfo(
         credentials=credentials,
@@ -203,13 +199,13 @@ def credential_info_longer_valid(credentials) -> CredentialInfo:
     )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def credential_info_overdue() -> CredentialInfo:
     return CredentialInfo(
         credentials=Credentials(
             access_key_id="some_id",
-            secret_access_key="some_key",
-            session_token="some_token",
+            secret_access_key="some_key",  # noqa: S106
+            session_token="some_token",  # noqa: S106
         ),
         expiration_time_in_seconds=-1,
         issue_timestamp=datetime.now(timezone.utc),
@@ -301,7 +297,7 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_r
         side_effect=StorageAuthenticationError,
     ) as mocked_obtain_credential_info_from_rest_api_raises:
         with pytest.raises(StorageAuthenticationError):
-            credential_info = obtain_or_refresh_credential_info(
+            obtain_or_refresh_credential_info(
                 access_token=access_token,
                 existing_credential_info=credential_info_overdue,
             )
@@ -323,8 +319,8 @@ def test_blob_storage_adapter_create_or_get_named_credential_manager(
         credentials = credential_manager.get_credentials()
 
         assert credentials.access_key_id == "result_id"
-        assert credentials.secret_access_key == "result_key"
-        assert credentials.session_token == "result_token"
+        assert credentials.secret_access_key == "result_key"  # noqa: S105
+        assert credentials.session_token == "result_token"  # noqa: S105
 
         # load cached works
 
@@ -333,12 +329,12 @@ def test_blob_storage_adapter_create_or_get_named_credential_manager(
         )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def service_credentials():
     return ServiceCredentials(
         realm="my-realm",
         grant_credentials=ClientCredentialsGrantCredentials(
-            client_id="my-client", client_secret="abcd"
+            client_id="my-client", client_secret="abcd"  # noqa: S106
         ),
         auth_url="https://test.com/auth",
         post_client_kwargs={"verify": False},
@@ -360,12 +356,11 @@ def test_blob_storage_adapter_get_access_token(access_token):
     with mock.patch(
         "hetdesrun.adapters.blob_storage.authentication.get_config",
         return_value=mock.Mock(external_auth_mode=ExternalAuthMode.FORWARD_OR_FIXED),
+    ), mock.patch(
+        "hetdesrun.adapters.blob_storage.authentication.forward_request_token_or_get_fixed_token_auth_headers",
+        return_value={"Authorization": "Bearer " + access_token},
     ):
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.authentication.forward_request_token_or_get_fixed_token_auth_headers",
-            return_value={"Authorization": "Bearer " + access_token},
-        ):
-            assert get_access_token() == access_token
+        assert get_access_token() == access_token
 
     with mock.patch(
         "hetdesrun.adapters.blob_storage.authentication.get_config",

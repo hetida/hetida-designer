@@ -3,7 +3,6 @@ import threading
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from functools import cache
-from typing import Dict, Optional
 
 import requests
 from pydantic import BaseModel, Field
@@ -71,6 +70,7 @@ def parse_credential_info_from_xml_string(
         or xml_secret_access_key is None
         or xml_session_token is None
         or xml_expiration is None
+        or xml_expiration.text is None
     ):
         msg = (
             "Could not find at least one of the required Credentials "
@@ -84,7 +84,6 @@ def parse_credential_info_from_xml_string(
         secret_access_key=xml_secret_access_key.text,
         session_token=xml_session_token.text,
     )
-    assert xml_expiration.text is not None  # hint for mypy
     expiration_time = datetime.fromisoformat(xml_expiration.text.replace("Z", "+00:00"))
     expiration_time_in_seconds = (expiration_time - now).total_seconds()
 
@@ -142,7 +141,7 @@ def credentials_still_valid_enough(credential_info: CredentialInfo) -> bool:
 
 
 def obtain_or_refresh_credential_info(
-    access_token: str, existing_credential_info: Optional[CredentialInfo] = None
+    access_token: str, existing_credential_info: CredentialInfo | None = None
 ) -> CredentialInfo:
     if existing_credential_info is not None:
         if credentials_still_valid_enough(existing_credential_info):
@@ -158,7 +157,7 @@ def obtain_or_refresh_credential_info(
 
 
 class CredentialManager:
-    _current_credential_info: Optional[CredentialInfo]
+    _current_credential_info: CredentialInfo | None
 
     def __init__(self, access_token: str):
         self.access_token = access_token
@@ -180,17 +179,20 @@ class CredentialManager:
             self._obtain_or_refresh_credential_info()
         except StorageAuthenticationError as error:
             raise error
-        assert self._current_credential_info is not None
+        if self._current_credential_info is None:
+            msg = "Obtained credentials are None"
+            logger.error(msg)
+            raise StorageAuthenticationError(msg)
         return self._current_credential_info.credentials
 
 
 @cache
-def global_credential_manager_dict() -> Dict[str, CredentialManager]:
+def global_credential_manager_dict() -> dict[str, CredentialManager]:
     return {}
 
 
 def create_or_get_named_credential_manager(
-    key: str, access_token: Optional[str]
+    key: str, access_token: str | None
 ) -> CredentialManager:
     manager_dict = global_credential_manager_dict()
 
@@ -227,7 +229,10 @@ def get_access_token() -> str:
         return access_token
     if external_mode == ExternalAuthMode.CLIENT:
         service_credentials = get_config().external_auth_client_credentials
-        assert service_credentials is not None  # for mypy
+        if service_credentials is None:
+            msg = "HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS must be set!"
+            logger.error(msg)
+            raise StorageAuthenticationError
         access_token_manager = create_or_get_named_access_token_manager(
             "outgoing_external_auth", service_credentials
         )

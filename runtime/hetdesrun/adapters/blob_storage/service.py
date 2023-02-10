@@ -1,5 +1,4 @@
 from logging import getLogger
-from typing import List
 
 import boto3
 from mypy_boto3_s3 import S3Client
@@ -46,7 +45,7 @@ def get_s3_client() -> S3Client:
     return client
 
 
-def get_object_key_strings_in_bucket(bucket_name: BucketName) -> List[IdString]:
+def get_object_key_strings_in_bucket(bucket_name: BucketName) -> list[IdString]:
     try:
         s3_client = get_s3_client()
     except (AdapterConnectionError, InvalidEndpointError) as error:
