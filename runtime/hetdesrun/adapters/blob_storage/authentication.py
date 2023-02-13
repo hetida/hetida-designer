@@ -9,11 +9,8 @@ from pydantic import BaseModel, Field
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StorageAuthenticationError
-from hetdesrun.webservice.auth_dependency import (
-    forward_request_token_or_get_fixed_token_auth_headers,
-)
-from hetdesrun.webservice.auth_outgoing import create_or_get_named_access_token_manager
-from hetdesrun.webservice.config import ExternalAuthMode, get_config
+from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -94,8 +91,12 @@ def parse_credential_info_from_xml_string(
     )
 
 
-def obtain_credential_info_from_rest_api(access_token: str) -> CredentialInfo:
+def obtain_credential_info_from_rest_api() -> CredentialInfo:
     now = datetime.now(timezone.utc)
+    try:
+        access_token = get_access_token()
+    except StorageAuthenticationError as error:
+        raise error
     response = requests.post(
         url=get_blob_adapter_config().endpoint_url,
         params={
@@ -141,7 +142,7 @@ def credentials_still_valid_enough(credential_info: CredentialInfo) -> bool:
 
 
 def obtain_or_refresh_credential_info(
-    access_token: str, existing_credential_info: CredentialInfo | None = None
+    existing_credential_info: CredentialInfo | None = None,
 ) -> CredentialInfo:
     if existing_credential_info is not None:
         if credentials_still_valid_enough(existing_credential_info):
@@ -149,7 +150,7 @@ def obtain_or_refresh_credential_info(
         logger.debug("Credentials will soon expire. Trying to get new credentials.")
 
     try:
-        return obtain_credential_info_from_rest_api(access_token)
+        return obtain_credential_info_from_rest_api()
     except StorageAuthenticationError as error:
         # TODO: tidy up repeating log messages
         logger.error("Obtaining new credentails failed:\n%s", str(error))
@@ -159,15 +160,14 @@ def obtain_or_refresh_credential_info(
 class CredentialManager:
     _current_credential_info: CredentialInfo | None
 
-    def __init__(self, access_token: str):
-        self.access_token = access_token
+    def __init__(self) -> None:
         self._current_credential_info = None
         self._credential_thread_lock = threading.Lock()
 
     def _obtain_or_refresh_credential_info(self) -> None:
         try:
             credential_info = obtain_or_refresh_credential_info(
-                self.access_token, self._current_credential_info
+                self._current_credential_info
             )
         except StorageAuthenticationError as error:
             raise error
@@ -191,9 +191,7 @@ def global_credential_manager_dict() -> dict[str, CredentialManager]:
     return {}
 
 
-def create_or_get_named_credential_manager(
-    key: str, access_token: str | None
-) -> CredentialManager:
+def create_or_get_named_credential_manager(key: str) -> CredentialManager:
     manager_dict = global_credential_manager_dict()
 
     if key in manager_dict:
@@ -201,61 +199,29 @@ def create_or_get_named_credential_manager(
 
     logger.info("Creating new credential manager for key %s", key)
 
-    if access_token is None:
-        msg = (
-            "Access token has to be specified at least the first time"
-            " the credential manager is requested!"
-        )
-        logger.error(msg)
-        raise ValueError(msg)
-
-    manager_dict[key] = CredentialManager(access_token=access_token)
+    manager_dict[key] = CredentialManager()
 
     return manager_dict[key]
 
 
 def get_access_token() -> str:
-    external_mode = get_config().external_auth_mode
-    if external_mode == ExternalAuthMode.OFF:
-        msg = (
-            "Config option external_auth_mode is set to 'OFF' "
-            "thus no access token is available!"
-        )
+    try:
+        token_header = sync_wrapped_get_auth_headers()
+    except ValueError as error:
+        msg = "Cannot get access token from auth header"
         logger.error(msg)
-        raise StorageAuthenticationError(msg)
-    if external_mode == ExternalAuthMode.FORWARD_OR_FIXED:
-        token_header = forward_request_token_or_get_fixed_token_auth_headers()
+        raise StorageAuthenticationError(msg) from error
+    try:
         access_token = token_header["Authorization"].split("Bearer ")[-1]
-        return access_token
-    if external_mode == ExternalAuthMode.CLIENT:
-        service_credentials = get_config().external_auth_client_credentials
-        if service_credentials is None:
-            msg = "HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS must be set!"
-            logger.error(msg)
-            raise StorageAuthenticationError
-        access_token_manager = create_or_get_named_access_token_manager(
-            "outgoing_external_auth", service_credentials
-        )
-        access_token = access_token_manager.sync_get_access_token()
-        return access_token
-
-    msg = (
-        f"Unknown config option for external_auth_mode '{external_mode}' "
-        "thus no access token is available!"
-    )
-    logger.error(msg)
-    raise StorageAuthenticationError(msg)
+    except KeyError as error:
+        msg = "Cannot extract access token from auth header"
+        logger.error(msg)
+        raise StorageAuthenticationError(msg) from error
+    return access_token
 
 
 def get_credentials() -> Credentials:
-    try:
-        access_token = get_access_token()
-    except StorageAuthenticationError as error:
-        raise error
-
-    credential_manager = create_or_get_named_credential_manager(
-        "blob_adapter_cred", access_token
-    )
+    credential_manager = create_or_get_named_credential_manager("blob_adapter_cred")
     try:
         credentials = credential_manager.get_credentials()
     except StorageAuthenticationError as error:
