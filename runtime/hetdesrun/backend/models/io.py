@@ -4,17 +4,15 @@ from uuid import UUID, uuid4
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, validator
 
-from hetdesrun.datatypes import DataType
-
 from hetdesrun.backend.service.utils import to_camel
+from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import valid_python_identifier
-
 from hetdesrun.persistence.models.io import (
-    Connector,
-    Position,
     IO,
-    IOConnector,
+    Connector,
     Constant,
+    IOConnector,
+    Position,
 )
 
 
@@ -30,8 +28,9 @@ class WorkflowIoFrontendDto(BaseModel):
     constant: bool = False
 
     @validator("name")
-    # pylint: disable=no-self-argument,no-self-use
-    def name_valid_python_identifier(cls, name: Optional[str]) -> Optional[str]:
+    def name_valid_python_identifier(  # pylint: disable=no-self-argument
+        cls, name: Optional[str]
+    ) -> Optional[str]:
         if name is None or name == "":
             return name
         return valid_python_identifier(cls, name)
@@ -113,7 +112,7 @@ class ConnectorFrontendDto(BaseModel):
     pos_y: int = 0
     type: DataType
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         if name is None or name == "":

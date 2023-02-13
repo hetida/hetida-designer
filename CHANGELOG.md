@@ -1,3 +1,30 @@
+## 0.8.5
+* fix NaN value serialization (should now be serialized to null json values)
+* fix broken pure plot execution config
+* more bug fixes
+* improvements for example workflows
+## 0.8.4
+* fix outgoing auth config parsing
+## 0.8.3
+* some new timeseries related base components and example workflows
+* improved export / import supporting clean-up operations and filters
+* more flexible authentication for outgoing requests
+* bug fixes
+## 0.8.2
+* add some time measurement to successful execution output
+* update base images
+## 0.8.1
+* improve contextualized logging
+* add async (web hook / callback) execution web endpoint
+* minor improvements and fixes
+## 0.8.0
+* authentication via OpenID Connect. See [documentation](https://github.com/hetida/hetida-designer/blob/develop/docs/enabling_openidconnect_auth.md). **When upgrading, you may have to explicitely deactivate auth via `HD_USE_AUTH=false` environment variables for runtime and backend service in your setup, since it is activated per default for both these services. See the changed default docker-compose setup!** 
+* automatic deployment of base components. Documented [here](https://github.com/hetida/hetida-designer/blob/develop/docs/base_component_deployment.md).
+* usability improvements wiring / selection dialog
+* adapter system: directly attach any metadata as attributes to dataframes / series. See for example [here](https://github.com/hetida/hetida-designer/blob/develop/docs/adapter_system/generic_rest_adapters/web_service_interface.md#dataframe-get)
+* additional playwright end2end tests
+* bug fixes, refactorings
+
 ## 0.7.6
 * fix db config management bug
 * add more logging

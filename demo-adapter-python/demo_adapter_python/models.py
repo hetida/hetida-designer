@@ -1,13 +1,9 @@
-from typing import Optional, Dict, List, Any
-
 import datetime
-
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 
-from demo_adapter_python.external_types import ExternalType
-
-from demo_adapter_python.external_types import ValueDataType
+from demo_adapter_python.external_types import ExternalType, ValueDataType
 
 
 class InfoResponse(BaseModel):
@@ -73,7 +69,7 @@ class PostMetadatum(BaseModel):
     value: Any = Field(..., example=True)
 
 
-class GetMetadatum(BaseModel):
+class Metadatum(BaseModel):
     key: str
     value: Optional[Any] = None
     dataType: ValueDataType
@@ -81,5 +77,7 @@ class GetMetadatum(BaseModel):
 
 
 class TimeseriesRecord(BaseModel):
-    timestamp: datetime.datetime
+    timestamp: datetime.datetime = Field(
+        ..., example=datetime.datetime.now(datetime.timezone.utc)
+    )
     value: Any = Field(..., example=0.25)

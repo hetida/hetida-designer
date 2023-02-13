@@ -1,11 +1,11 @@
-from uuid import UUID
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field, validator  # pylint: disable=no-name-in-module
-from hetdesrun.datatypes import DataType
 
-from hetdesrun.models.util import valid_python_identifier, names_unique
+from hetdesrun.datatypes import DataType
 from hetdesrun.models.base import AbstractNode
+from hetdesrun.models.util import names_unique, valid_python_identifier
 
 
 class UnnamedInput(BaseModel):
@@ -33,7 +33,7 @@ class ComponentInput(UnnamedInput):
 
     name: str = Field(..., example="x", description="must be a valid Python identifier")
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         return valid_python_identifier(cls, name)
@@ -50,7 +50,7 @@ class ComponentOutput(BaseModel):
         example=DataType.Integer,
     )
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         return valid_python_identifier(cls, name)
@@ -61,6 +61,7 @@ class ComponentRevision(BaseModel):
 
     uuid: UUID
     name: Optional[str] = Field(None, description="component name")
+    tag: str
     code_module_uuid: UUID = Field(
         ...,
         description=(
@@ -79,17 +80,17 @@ class ComponentRevision(BaseModel):
     inputs: List[ComponentInput]
     outputs: List[ComponentOutput]
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("function_name")
     def function_name_valid_python_identifier(cls, function_name: str) -> str:
         return valid_python_identifier(cls, function_name)
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("inputs", each_item=False)
     def input_names_unique(cls, inputs: List[ComponentInput]) -> List[ComponentInput]:
         return names_unique(cls, inputs)
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("outputs", each_item=False)
     def output_names_unique(
         cls, outputs: List[ComponentOutput]

@@ -1,33 +1,24 @@
-from typing import List, Dict, Optional, Tuple, Literal
+import re
+from datetime import datetime, timezone
+from typing import Dict, List, Literal, Optional, Tuple
 from uuid import UUID
 
-import re
-
-from datetime import datetime
-
 # pylint: disable=no-name-in-module
-from pydantic import validator, root_validator
+from pydantic import root_validator, validator
 
-from hetdesrun.datatypes import DataType
-from hetdesrun.utils import State, Type
-
-from hetdesrun.models.util import names_unique
-
-from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.info import BasicInformation
-from hetdesrun.backend.models.io import (
-    WorkflowIoFrontendDto,
-    ConnectorFrontendDto,
-)
+from hetdesrun.backend.models.io import ConnectorFrontendDto, WorkflowIoFrontendDto
 from hetdesrun.backend.models.link import WorkflowLinkFrontendDto
 from hetdesrun.backend.models.operator import WorkflowOperatorFrontendDto
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.io import IOInterface, IOConnector
-from hetdesrun.persistence.models.link import Link
-from hetdesrun.persistence.models.workflow import WorkflowContent
-
+from hetdesrun.backend.models.wiring import WiringFrontendDto
+from hetdesrun.datatypes import DataType
+from hetdesrun.models.util import names_unique
 from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.persistence.models.io import IOConnector, IOInterface
+from hetdesrun.persistence.models.link import Link
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.utils import State, Type
 
 
 # is unambiguous for inputs outputs
@@ -297,7 +288,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     wirings: List[WiringFrontendDto] = []
 
     @validator("operators", each_item=False)
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def operator_names_unique(
         cls, operators: List[WorkflowOperatorFrontendDto]
     ) -> List[WorkflowOperatorFrontendDto]:
@@ -322,7 +313,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return operators
 
     @validator("links", each_item=False)
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def reduce_to_valid_links(
         cls, links: List[WorkflowLinkFrontendDto], values: dict
     ) -> List[WorkflowLinkFrontendDto]:
@@ -358,7 +349,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return updated_links
 
     @validator("links", each_item=False)
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def links_acyclic_directed_graph(
         cls, links: List[WorkflowLinkFrontendDto], values: dict
     ) -> List[WorkflowLinkFrontendDto]:
@@ -411,7 +402,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return links
 
     @validator("inputs", each_item=False)
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def determine_inputs_from_operators_and_links(
         cls, inputs: List[WorkflowIoFrontendDto], values: dict
     ) -> List[WorkflowIoFrontendDto]:
@@ -445,7 +436,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return updated_inputs
 
     @validator("outputs", each_item=False)
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def determine_outputs_from_operators_and_links(
         cls, outputs: List[WorkflowIoFrontendDto], values: dict
     ) -> List[WorkflowIoFrontendDto]:
@@ -479,7 +470,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return updated_outputs
 
     @validator("inputs", "outputs", each_item=False)
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def io_names_none_or_unique(
         cls, ios: List[WorkflowIoFrontendDto]
     ) -> List[WorkflowIoFrontendDto]:
@@ -490,7 +481,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return ios
 
     @validator("inputs", "outputs", each_item=True)
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def name_or_constant_data_provided(
         cls, io: WorkflowIoFrontendDto, values: dict
     ) -> WorkflowIoFrontendDto:
@@ -516,7 +507,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         return io
 
     @root_validator()
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def clean_up_io_links(cls, values: dict) -> dict:
         try:
             operators = values["operators"]
@@ -744,10 +735,10 @@ class WorkflowRevisionFrontendDto(BasicInformation):
         )
 
     def to_transformation_revision(
-        self, documentation: str = "", timestamp: datetime = None
+        self, documentation: str = "", timestamp: Optional[datetime] = None
     ) -> TransformationRevision:
         if timestamp is None:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
         return TransformationRevision(
             id=self.id,
             revision_group_id=self.group_id,
@@ -755,7 +746,9 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             description=self.description,
             category=self.category,
             version_tag=self.tag,
-            released_timestamp=timestamp if self.state == State.RELEASED else None,
+            released_timestamp=timestamp
+            if self.state in (State.RELEASED, State.DISABLED)
+            else None,
             disabled_timestamp=timestamp if self.state == State.DISABLED else None,
             state=self.state,
             type=self.type,

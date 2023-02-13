@@ -1,32 +1,32 @@
-from typing import List
 import logging
+from typing import List
 
-from fastapi import APIRouter, status, HTTPException
-
-from hetdesrun.webservice.config import runtime_config
+from fastapi import HTTPException, status
 
 from hetdesrun.backend.models.adapter import AdapterFrontendDto
+from hetdesrun.webservice.config import get_config
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 
-adapters = runtime_config.hd_adapters
+adapters = get_config().hd_adapters
 
 
-adapter_router = APIRouter(
+adapter_router = HandleTrailingSlashAPIRouter(
     prefix="/adapters",
     tags=["adapters"],
     responses={  # are these only used for display in the Swagger UI?
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
 
 
 @adapter_router.get(
-    "/",
+    "",
     response_model=List[AdapterFrontendDto],
     summary="Returns all adapters",
     status_code=status.HTTP_200_OK,
@@ -51,7 +51,7 @@ async def get_all_adapters() -> List[AdapterFrontendDto]:
                 '"id|name|url|internalUrl,id2|name2|url2|internalUrl2,..."'
             )
             logger.error(msg)
-            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+            raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
         adapter_list.append(
             AdapterFrontendDto(

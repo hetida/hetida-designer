@@ -1,14 +1,15 @@
 import logging
-from hetdesrun.component.load import base_module_path
 
+from hetdesrun.component.load import base_module_path
 from hetdesrun.runtime.exceptions import (
-    RuntimeExecutionError,
-    DAGProcessingError,
-    UncaughtComponentException,
-    MissingOutputDataError,
     ComponentDataValidationError,
-    WorkflowOutputValidationError,
+    DAGProcessingError,
+    MissingOutputDataError,
+    RuntimeExecutionError,
+    UncaughtComponentException,
     WorkflowInputDataValidationError,
+    WorkflowOutputValidationError,
 )
 
-runtime_component_logger = logging.getLogger(base_module_path)
+runtime_execution_logger = logging.getLogger(base_module_path)
+runtime_logger = logging.getLogger("hetdesrun_runtime_service")

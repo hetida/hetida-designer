@@ -1,18 +1,16 @@
-from typing import List
 import logging
+from typing import List
 from uuid import UUID
 
-from sqlalchemy import select, delete, and_
+from sqlalchemy import and_, delete, select
 from sqlalchemy.exc import IntegrityError
 
-from hetdesrun.utils import Type
-
+from hetdesrun.persistence import Session, SQLAlchemySession
+from hetdesrun.persistence.dbmodels import Descendant, NestingDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
-
-from hetdesrun.persistence import SQLAlchemySession, Session
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.persistence.dbmodels import NestingDBModel, Descendant
+from hetdesrun.utils import Type
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +59,7 @@ def find_all_nested_transformation_revisions(
     return descendants
 
 
-def find_all_nesting_transformation_revisions(
+def find_all_nestings(
     session: SQLAlchemySession, nested_transformation_id: UUID
 ) -> List[NestingDBModel]:
     result = session.execute(
@@ -74,7 +72,9 @@ def find_all_nesting_transformation_revisions(
 
 
 def delete_own_nestings(session: SQLAlchemySession, workflow_id: UUID) -> None:
-    logger.debug("delete own nestings of workflow %s", str(workflow_id))
+    logger.debug(
+        "delete nestings of transformation revision %s if existing", str(workflow_id)
+    )
     session.execute(
         delete(NestingDBModel).where(NestingDBModel.workflow_id == workflow_id)
     )

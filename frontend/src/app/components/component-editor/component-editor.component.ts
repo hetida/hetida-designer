@@ -41,8 +41,13 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     this._componentBaseItem = componentBaseItem;
     this.code = this.componentBaseItem.code;
     this.lastSaved = this.componentBaseItem.code;
-    this.editorOptions.readOnly =
-      this.componentBaseItem.state === RevisionState.RELEASED;
+
+    if (this.componentBaseItem.state !== RevisionState.DRAFT) {
+      this.editorOptions = {
+        ...this.editorOptions,
+        readOnly: true
+      };
+    }
   }
 
   get componentBaseItem(): ComponentBaseItem {

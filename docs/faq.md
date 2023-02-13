@@ -20,9 +20,7 @@ One way to achieve this in components is to temporarily add a line that raises a
 
 ```
 ...
-vols = diffs.abs().rolling(freq).sum() - diffs.rolling(freq).sum().abs()
-
-raise ValueError(str(vols))
+raise ValueError(interesting_value)
 ...
 ```
 
@@ -30,13 +28,24 @@ The first lines of the resulting error message will then e.g. look like:
 
 ```
 {
-	"error": "Exception during Component execution of component instance Simple Volatility Score (operator hierarchical id: :3ca9b6cc-593f-4780-afcf-a44676494be0):
-2020-01-01 01:15:27+00:00     NaN
-2020-01-03 08:20:03+00:00     0.0
-2020-01-03 08:20:04+00:00    14.4
-Name: volatilities, dtype: float64",
+	"error": "Exception during execution!
+              tr type: COMPONENT, tr id: f3d57870-7307-473c-a635-2e165aa8ac3b, tr name: Raise ValueError, tr tag: 1.0.0,
+              op id(s): \\170c3d2a-c88f-4aba-9999-f2740d4abf25\\d2e7a4d4-08da-4e7e-b0e5-06276ae9b234\\,
+              op name(s): \\Wrapper Workflow\\Raise ValueError\\
+              reason: Unexpected error from user code",
+	"output_results_by_output_name": {},
+	"output_types_by_output_name": {
+			"o": "ANY"
+	},
+	"result": "failure",
+	"traceback": "Traceback (most recent call last):
+	...
+  File \"<string>\", line 28, in main
+ValueError: 42
 ...
 ```
+
+The last line shows the value of the variable `interesting_value`, normally an error message would be displayed there. The second to last line shows in which line of your component code the error occurred.
 
 ## <a name="debugging-workflows"></a> Debugging workflow revisions
 
@@ -48,8 +57,8 @@ In order to add an output for an intermediate variable, which is passed from an 
 These components are in the category "Connectors".
 The output of the "Pass through" operator can be used, to set a new workflow output.
 
-<img src="./faq/workflow_without_debugging.png" height="250" width=1090>
-<img src="./faq/workflow_debugging.png" height="250" width=1090>
+<img src="./assets/workflow_without_debugging.png" height="250" width=1090>
+<img src="./assets/workflow_debugging.png" height="250" width=1090>
 
 ## <a name="data-type-parsing"></a> Explicitely specify data type to enable correct parsing
 
@@ -70,7 +79,7 @@ unsupported operand type(s) for +: 'dict' and 'dict'",
 
 This can be avoided by putting a "Pass through (Series)" component in front of it, so that the input data type is changed and thus explicit:
 
-<img src="./faq/parsing_any.png" height="160" width=485>
-<img src="./faq/parsing_series.png" height="140" width=730>
+<img src="./assets/parsing_any.png" height="160" width=485>
+<img src="./assets/parsing_series.png" height="140" width=730>
 
 So the general tip is to avoid ANY as input that needs to be wired and instead to put the respective Pass Through component in front.

@@ -1,9 +1,9 @@
-from typing import Optional, Any, List, Union
+from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, Field, validator  # pylint: disable=no-name-in-module
 
-from hetdesrun.models.component import UnnamedInput, ComponentOutput, ComponentNode
 from hetdesrun.models.base import AbstractNode
+from hetdesrun.models.component import ComponentNode, ComponentOutput, UnnamedInput
 from hetdesrun.models.util import valid_python_identifier
 
 
@@ -28,14 +28,14 @@ class WorkflowInput(UnnamedInput):
     )
     name_in_subnode: str
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("name", always=True)
     def name_valid_python_identifier(cls, name: Optional[str]) -> Optional[str]:
         if name is None:
             return name
         return valid_python_identifier(cls, name)
 
-    # pylint: disable=no-self-argument,no-self-use,unused-argument
+    # pylint: disable=no-self-argument,unused-argument
     @validator("constant", always=True)
     def name_or_constant_data_provided(cls, v, values, **kwargs):  # type: ignore
         if values["name"] is None and ((not v) or values["constantValue"] is None):
@@ -73,6 +73,9 @@ class WorkflowNode(AbstractNode):
     inputs: List[WorkflowInput]
     outputs: List[WorkflowOutput]
     name: Optional[str] = Field(None, description="workflow node name")
+    tr_id: str
+    tr_name: str
+    tr_tag: str
 
 
 WorkflowNode.update_forward_refs()

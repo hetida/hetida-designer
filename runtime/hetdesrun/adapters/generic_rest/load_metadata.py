@@ -1,38 +1,23 @@
-from typing import Dict, Any, Optional
-
 import asyncio
-
-import urllib
 import logging
+import urllib
 from posixpath import join as posix_urljoin
-
+from typing import Any, Dict, Optional
 
 import httpx
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    ValidationError,
-)
-
-from hetdesrun.models.data_selection import FilteredSource
-
-
-from hetdesrun.models.adapter_data import RefIdType
+from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
 
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
     AdapterHandlingException,
 )
-
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
-
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
-
-from hetdesrun.adapters.generic_rest.external_types import ExternalType
-
-from hetdesrun.webservice.config import runtime_config
-
-
-from hetdesrun.adapters.generic_rest.external_types import ValueDataType
+from hetdesrun.adapters.generic_rest.external_types import ExternalType, ValueDataType
+from hetdesrun.models.adapter_data import RefIdType
+from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -132,9 +117,20 @@ async def load_single_metadatum_from_adapter(
 async def load_multiple_metadata(
     data_to_load: Dict[str, FilteredSource], adapter_key: str
 ) -> Dict[str, Any]:
-    headers = get_generic_rest_adapter_auth_headers()
+    try:
+        headers = await get_generic_rest_adapter_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for loading multiple metadata from adapter"
+            f"with key {adapter_key}. Error was:\n{str(e)}"
+        )
+        logger.info(msg)
+        raise AdapterHandlingException(msg) from e
+
     async with httpx.AsyncClient(
-        headers=headers, verify=runtime_config.hd_adapters_verify_certs
+        headers=headers,
+        verify=get_config().hd_adapters_verify_certs,
+        timeout=get_config().external_request_timeout,
     ) as client:
         loaded_metadata = await asyncio.gather(
             *(

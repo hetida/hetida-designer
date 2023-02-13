@@ -54,7 +54,9 @@ git checkout release
 
 #### Starting the hetida designer
 
-**Note:** The following command will expose ports of designer containers to your local network and depending on your OS setup these ports may be exposed to the outside world allowing arbitrary code execution. If in doubt, [restrict all port rules to localhost](https://stackoverflow.com/a/48208039) by editing the docker-compose.yml accordingly.
+**Note:** The following command will expose ports of designer containers to your local network and depending on your OS setup these ports may be exposed to the outside world allowing arbitrary code execution. If in doubt, [restrict all port rules to localhost](https://stackoverflow.com/a/48208039) by editing the `docker-compose.yml` accordingly.
+
+**Note:** By default [base component and worklfow deployment](./docs/base_component_deployment.md) will run automatically and fill the empty database.
 
 Once you have the source code, docker and docker-compose properly set up, run
 
@@ -67,20 +69,6 @@ to start the application.
 Make sure you execute this command from inside the root source code directory, i.e. the hetida-designer directory you checked out from git.
 
 Wait some time for the hetida designer to start up (downloading / building of docker images may take some time the first time you are doing this).
-
-#### Deployment of base component set into your installation
-
-Now you should run
-
-```bash
-docker run --rm \
-  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
-  --name htdruntime_deployment \
-  --network hetida-designer-network \
-  --entrypoint python hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
-```
-
-to install/deploy base components and some example workflows. **This step is only necessary the first time starting hetida designer!**
 
 #### Opening hetida designer
 
@@ -115,7 +103,7 @@ makes the frontend available at 127.0.0.1:4200.
 
 You can expose the backend and runtime ports with
 
-```
+```docker
   hetida-designer-backend:
     ...
     ports:
@@ -199,22 +187,9 @@ So first of all, follow the above instructions to set up a fully working local i
 either with [docker-compose](#gs-docker-compose) or with [standalone docker containers](#gs-docker-standalone). If using docker-compose, you should expose backend and runtime 
 ports in the docker-compose file as is described under [Modifying Ports](#modify-ports). There is a `docker-compose-dev.yml` that builds images from your local development files which you can use via
 
-```
+```shell
 docker-compose -f docker-compose-dev.yml up -d
 ```
-
-Note that in this case it makes sense to run the base component deployment command using the locally
-built runtime image via
-
-```
-docker run --rm \
-  -e "HETIDA_DESIGNER_BACKEND_API_URL=http://hetida-designer-backend:8090/api/" \
-  --name htdruntime_deployment \
-  --network hetida-designer-network \
-  --entrypoint python hetida-designer_hetida-designer-runtime -c 'from hetdesrun.exportimport.importing import import_all; import_all("./transformations/");'
-```
-
-In case your checked out repository directory has a different name replace `hetida-designer_hetida-designer-runtime` by `<directory name>_hetida-designer-runtime`.
 
 Once you have the application running, only stop the container containing the submodule that you
 want to work on. We use a monorepo approach, so you already have the source code for all submodules on your machine by now.
@@ -243,18 +218,15 @@ OS's availability of precompiled packages for numerical libraries like **numpy**
 or **scipy**. That said, development on Linux is recommended.
 
 1. Navigate to the `runtime` folder.
-2. Create virtual environment: `python3.9 -m venv venv`
-3. Activate virtual environment: `source venv/bin/activate`
-4. Install dependency management tooling: `python -m pip install pip==21.3.1 pip-tools==6.4.0 wheel==0.37.0`
-5. Install development dependencies: `pip-sync ./requirements.txt ./requirements-dev.txt `
+2. Create, sync and activate virtual environmnet: `./pipt shell`
 
 Now a development web server using a sqlite in-memory db can be started via
-```
+```shell
 python main.py
 ```
 
 If you want to develop against the postgres db running in the docker-compose dev environment the command is
-```
+```shell
 HD_DATABASE_URL="postgresql+psycopg2://hetida_designer_dbuser:hetida_designer_dbpasswd@localhost:5430/hetida_designer_db" python main.py
 ```
 
@@ -268,7 +240,7 @@ When deactivating the backend endpoints you do not need to specify a database co
 This assumes existence of the Python virtual environment as described above.
 
 1. Navigate to the `runtime` folder.
-2. Activate virtuale environment with `source venv/bin/activate`.
+2. Activate virtual environment with `./pipt shell`.
 3. Run `python -m pytest --cov=hetdesrun tests`.
 
 ## <a name="tutorial"></a> Tutorial

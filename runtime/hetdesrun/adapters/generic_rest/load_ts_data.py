@@ -1,19 +1,16 @@
-from typing import List, Dict, Tuple
-from collections import defaultdict
-
 import logging
+from collections import defaultdict
+from typing import Dict, List, Tuple
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from hetdesrun.adapters.generic_rest.load_framelike import load_framelike_data
-
-from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.exceptions import (
     AdapterClientWiringInvalidError,
     AdapterHandlingException,
 )
-
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
+from hetdesrun.adapters.generic_rest.load_framelike import load_framelike_data
 from hetdesrun.models.data_selection import FilteredSource
 
 logger = logging.getLogger(__name__)
@@ -40,12 +37,17 @@ async def load_ts_data_from_adapter(
     It therefore currently isn't async.
     """
 
-    return await load_framelike_data(
+    df = await load_framelike_data(
         filtered_sources=filtered_sources,
         additional_params=[("from", from_timestamp), ("to", to_timestamp)],
         adapter_key=adapter_key,
         endpoint="timeseries",
     )
+
+    if "timeseriesId" in df.columns:
+        df["timeseriesId"] = df["timeseriesId"].astype("string")
+
+    return df
 
 
 def extract_one_channel_series_from_loaded_data(
@@ -55,6 +57,12 @@ def extract_one_channel_series_from_loaded_data(
         extracted_df = df[df["timeseriesId"] == ts_id].copy()
         extracted_df.index = extracted_df["timestamp"]
         extracted_series = extracted_df["value"].sort_index()
+        extracted_series.attrs = df.attrs.get(ts_id, {})
+        logger.debug(
+            "extracted attributes %s for series with id %s",
+            extracted_series.attrs,
+            ts_id,
+        )
     except KeyError as e:
         msg = (
             f"Missing keys in received timeseries records. Got columns {str(df.columns)}"

@@ -4,14 +4,12 @@ from uuid import UUID
 # pylint: disable=no-name-in-module
 from pydantic import Field, root_validator
 
-from hetdesrun.utils import State
-
-from hetdesrun.backend.service.utils import to_camel
-
 from hetdesrun.backend.models.info import BasicInformation
 from hetdesrun.backend.models.io import ConnectorFrontendDto
+from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.persistence.models.io import Position
 from hetdesrun.persistence.models.operator import Operator
+from hetdesrun.utils import State
 
 
 class WorkflowOperatorFrontendDto(BasicInformation):
@@ -22,7 +20,7 @@ class WorkflowOperatorFrontendDto(BasicInformation):
     pos_y: int = 0
 
     @root_validator()
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def is_not_draft(cls, values: dict) -> dict:
         if values["state"] == State.DRAFT:
             raise ValueError(

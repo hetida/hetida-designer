@@ -137,6 +137,17 @@ hd-copy-base-item-dialog {
   }
 }
 
+.mat-snack-bar-container {
+  background-color: $hd-pink;
+}
+
+.dark-theme {
+  & .mat-snack-bar-container {
+    color: rgba($hd-white, 0.7);
+    background-color: $hd-pink;
+  }
+}
+
 // TODO: Remove important flags by increasing the specificity of these classes if possible.
 .mat-raised-button {
   border-radius: 0 !important;

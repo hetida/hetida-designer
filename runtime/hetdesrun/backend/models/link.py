@@ -4,11 +4,10 @@ from uuid import UUID, uuid4
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, root_validator
 
-from hetdesrun.backend.service.utils import to_camel
-
 from hetdesrun.backend.models.io import ConnectorFrontendDto
+from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.persistence.models.io import Position
-from hetdesrun.persistence.models.link import Vertex, Link
+from hetdesrun.persistence.models.link import Link, Vertex
 
 
 class PointFrontendDto(BaseModel):
@@ -29,7 +28,7 @@ class WorkflowLinkFrontendDto(BaseModel):
     path: List[PointFrontendDto] = []
 
     @root_validator()
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def no_self_reference(cls, values: dict) -> dict:
         if values["to_operator"] == values["from_operator"]:
             raise ValueError(

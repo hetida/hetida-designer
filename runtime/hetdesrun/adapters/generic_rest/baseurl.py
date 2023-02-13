@@ -1,28 +1,22 @@
 """Loading and caching of generic rest adapter base urls"""
 
-import threading
-from typing import List, Dict
-
 import logging
-
+import threading
 from posixpath import join as posix_urljoin
+from typing import Dict, List
 
 import httpx
-
 from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
 
-from hetdesrun.webservice.config import runtime_config
-
-from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
     AdapterHandlingException,
 )
-
-from hetdesrun.backend.service.adapter_router import get_all_adapters
-
+from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.backend.models.adapter import AdapterFrontendDto
-
+from hetdesrun.backend.service.adapter_router import get_all_adapters
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +48,20 @@ class BackendRegisteredGenericRestAdapters(BaseModel):
 
 async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestAdapter]:
     """Loads generic REST adapter infos from the corresponding designer backend endpoint"""
+    try:
+        headers = await get_generic_rest_adapter_auth_headers(external=False)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failure trying to get auth headers for adapter base url request. Error was:\n"
+            + str(e)
+        )
+        logger.info(msg)
+        raise AdapterHandlingException(msg) from e
 
-    headers = get_generic_rest_adapter_auth_headers()
-
-    url = posix_urljoin(runtime_config.hd_backend_api_url, "adapters/")
+    url = posix_urljoin(get_config().hd_backend_api_url, "adapters/")
     logger.info("Start getting Generic REST Adapter URLS from HD Backend url %s", url)
 
-    if runtime_config.is_backend_service:
+    if get_config().is_backend_service:
         # call function directly
         adapter_list = await get_all_adapters()
 
@@ -82,7 +83,8 @@ async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestA
     else:
         # call backend service "adapters" endpoint
         async with httpx.AsyncClient(
-            verify=runtime_config.hd_backend_verify_certs
+            verify=get_config().hd_backend_verify_certs,
+            timeout=get_config().external_request_timeout,
         ) as client:
             try:
                 resp = await client.get(url, headers=headers)

@@ -41,7 +41,7 @@ print(s.to_json(date_format="iso", indent=2))
     }
 }
 ```
-Having a pandas dataframe variable `df` (e.g. in a jupyter notebook) you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
+Having a Pandas DataFrame variable `df` (e.g. in a jupyter notebook) you can obtain this format by calling the `to_json` method with `orient="columns", date_format="iso"`:
 ```python
 print(df.to_json(orient="columns", date_format="iso", indent=2))
 ```

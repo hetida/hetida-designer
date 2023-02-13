@@ -1,36 +1,31 @@
-from typing import List, Union, Optional, cast
+import datetime
+from typing import List, Optional, Union, cast
 from uuid import UUID, uuid4
 
-import datetime
-
 # pylint: disable=no-name-in-module
-from pydantic import BaseModel, Field, validator, ValidationError
+from pydantic import BaseModel, Field, ValidationError, validator
 
-from hetdesrun.utils import State, Type
 from hetdesrun.models.code import (
-    CodeBody,
     CodeModule,
     NonEmptyValidStr,
     ShortNonEmptyValidStr,
     ValidStr,
 )
-
-from hetdesrun.models.component import ComponentRevision, ComponentNode
-from hetdesrun.models.workflow import WorkflowNode
+from hetdesrun.models.component import ComponentNode, ComponentRevision
 from hetdesrun.models.wiring import WorkflowWiring
-
-from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
+from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
-
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
 from hetdesrun.persistence.models.io import (
-    IOInterface,
-    Position,
     Connector,
     IOConnector,
+    IOInterface,
+    Position,
 )
-from hetdesrun.persistence.models.link import Vertex, Link
+from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.operator import Operator
 from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.utils import State, Type
 
 
 def transform_to_utc_datetime(dt: datetime.datetime) -> datetime.datetime:
@@ -67,14 +62,15 @@ class TransformationRevision(BaseModel):
         description='Category in which this is classified, i.e. the "drawer" in the User Interface',
     )
     version_tag: ShortNonEmptyValidStr
-    released_timestamp: Optional[datetime.datetime] = Field(
-        None,
-        description="If the revision is RELEASED then this should be release timestamp",
-    )
-
     disabled_timestamp: Optional[datetime.datetime] = Field(
         None,
         description="If the revision is DISABLED then this should be disable/deprecation timestamp",
+        example=datetime.datetime.now(datetime.timezone.utc),
+    )
+    released_timestamp: Optional[datetime.datetime] = Field(
+        None,
+        description="If the revision is RELEASED then this should be release timestamp",
+        example=datetime.datetime.now(datetime.timezone.utc),
     )
     state: State = Field(
         ...,
@@ -87,7 +83,6 @@ class TransformationRevision(BaseModel):
 
     documentation: str = Field(
         (
-            "\n"
             "# New Component/Workflow\n"
             "## Description\n"
             "## Inputs\n"
@@ -121,28 +116,41 @@ class TransformationRevision(BaseModel):
         ),
     )
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("version_tag")
     def version_tag_not_latest(cls, v: str) -> str:
         if v.lower() == "latest":
             raise ValueError('version_tag is not allowed to be "latest"')
         return v
 
-    # pylint: disable=no-self-argument,no-self-use
-    @validator("released_timestamp")
-    def released_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
-        if v is None:
-            return v
-        return transform_to_utc_datetime(v)
-
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("disabled_timestamp")
     def disabled_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
         if v is None:
             return v
         return transform_to_utc_datetime(v)
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
+    @validator("released_timestamp")
+    def released_timestamp_to_utc(cls, v: datetime.datetime) -> datetime.datetime:
+        if v is None:
+            return v
+        return transform_to_utc_datetime(v)
+
+    # pylint: disable=no-self-argument
+    @validator("released_timestamp", always=True)
+    def disabled_timestamp_requires_released_timestamp(
+        cls, v: datetime.datetime, values: dict
+    ) -> datetime.datetime:
+        if (
+            "disabled_timestamp" in values
+            and values["disabled_timestamp"] is not None
+            and v is None
+        ):
+            return values["disabled_timestamp"]
+        return v
+
+    # pylint: disable=no-self-argument
     @validator("state")
     def timestamps_set_if_released_or_disabled(cls, v: State, values: dict) -> State:
         if v is State.RELEASED and (
@@ -155,7 +163,7 @@ class TransformationRevision(BaseModel):
             raise ValueError("disabled_timestamp must be set if state is DISABLED")
         return v
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("content")
     def content_type_correct(
         cls, v: Union[str, WorkflowContent], values: dict
@@ -172,7 +180,7 @@ class TransformationRevision(BaseModel):
             )
         return v
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("io_interface")
     def io_interface_fits_to_content(
         cls, io_interface: IOInterface, values: dict
@@ -194,13 +202,21 @@ class TransformationRevision(BaseModel):
 
         return io_interface
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("io_interface")
     def io_interface_no_names_empty(
         cls, io_interface: IOInterface, values: dict
     ) -> IOInterface:
 
-        if values["state"] is not State.RELEASED:
+        try:
+            state = values["state"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot validate that no names in io_interface are empty "
+                "if attribute 'state' is missing"
+            ) from e
+
+        if state is not State.RELEASED:
             return io_interface
 
         for io in io_interface.inputs + io_interface.outputs:
@@ -247,28 +263,12 @@ class TransformationRevision(BaseModel):
         return test_wiring
 
     def release(self) -> None:
-        self.released_timestamp = datetime.datetime.utcnow()
+        self.released_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.state = State.RELEASED
 
     def deprecate(self) -> None:
-        self.disabled_timestamp = datetime.datetime.utcnow()
+        self.disabled_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.state = State.DISABLED
-
-    def to_code_body(self) -> CodeBody:
-        return CodeBody(
-            code=self.content,
-            function_name=self.name,
-            inputs=[input.to_component_input() for input in self.io_interface.inputs],
-            outputs=[
-                output.to_component_output() for output in self.io_interface.outputs
-            ],
-            name=self.name,
-            description=self.description,
-            category=self.category,
-            id=self.id,
-            revision_group_id=self.revision_group_id,
-            version_tag=self.version_tag,
-        )
 
     def to_component_revision(self) -> ComponentRevision:
         if self.type != Type.COMPONENT:
@@ -279,6 +279,7 @@ class TransformationRevision(BaseModel):
         return ComponentRevision(
             uuid=self.id,
             name=self.name,
+            tag=self.version_tag,
             code_module_uuid=self.id,
             function_name="main",
             inputs=[input.to_component_input() for input in self.io_interface.inputs],
@@ -300,7 +301,9 @@ class TransformationRevision(BaseModel):
         )
 
     def to_workflow_node(
-        self, operator_id: UUID, sub_nodes: List[Union[ComponentNode, WorkflowNode]]
+        self,
+        operator_id: UUID,
+        sub_nodes: List[Union[ComponentNode, WorkflowNode]],
     ) -> WorkflowNode:
         if self.type != Type.WORKFLOW:
             raise ValueError(
@@ -308,7 +311,14 @@ class TransformationRevision(BaseModel):
                 f"into a workflow node since its type is not WORKFLOW"
             )
         assert isinstance(self.content, WorkflowContent)  # hint for mypy
-        return self.content.to_workflow_node(operator_id, self.name, sub_nodes)
+        return self.content.to_workflow_node(
+            transformation_id=self.id,
+            transformation_name=self.name,
+            transformation_tag=self.version_tag,
+            operator_id=operator_id,
+            operator_name=self.name,
+            sub_nodes=sub_nodes,
+        )
 
     def to_code_module(self) -> CodeModule:
         if self.type != Type.COMPONENT:
@@ -323,7 +333,6 @@ class TransformationRevision(BaseModel):
             revision_group_id=self.revision_group_id,
             name=self.name,
             description=self.description,
-            category=self.category,
             type=self.type,
             state=State.RELEASED,
             version_tag=self.version_tag,
@@ -386,7 +395,7 @@ class TransformationRevision(BaseModel):
         return TransformationRevision(
             id=uuid4(),
             revision_group_id=uuid4(),
-            name=self.name,
+            name="Wrapper Workflow",
             category=self.category,
             version_tag=self.version_tag,
             released_timestamp=self.released_timestamp,

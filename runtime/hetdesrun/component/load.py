@@ -1,10 +1,9 @@
 """Loading code and importing functions"""
-from types import ModuleType
-from typing import Callable, Coroutine, Union, Tuple, Optional
-
-import sys
-import logging
 import importlib
+import logging
+import sys
+from types import ModuleType
+from typing import Callable, Coroutine, Union
 
 
 class ComponentCodeImportError(Exception):
@@ -59,7 +58,7 @@ def import_func_from_code(
             raise e
         logger.info(
             (
-                "Function %s from code not yet imported once."
+                "Function %s from code not yet imported once. "
                 "Importing it from provided code."
             ),
             func_name,
@@ -94,17 +93,3 @@ def import_func_from_code(
 
         func = getattr(mod, func_name)
         return func
-
-
-def check_importability(code: str, func_name: str) -> Tuple[bool, Optional[Exception]]:
-    """Very simple check just to see whether the code is at least importable"""
-    try:
-        import_func_from_code(
-            code,
-            func_name,
-            raise_if_not_found=False,
-            register_module=False,
-        )
-        return True, None
-    except Exception as e:  # pylint: disable=broad-except
-        return False, e

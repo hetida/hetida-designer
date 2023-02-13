@@ -1,23 +1,17 @@
-from typing import Dict, List
 import asyncio
-
 import datetime
+from typing import Dict, List
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytz
-
 from httpx import AsyncClient
 
-from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
-from hetdesrun.adapters.generic_rest.external_types import ExternalType
-
-from hetdesrun.models.data_selection import FilteredSink
-
-from hetdesrun.webservice.config import runtime_config
-
-
 from hetdesrun.adapters.exceptions import AdapterOutputDataError
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
+from hetdesrun.adapters.generic_rest.send_framelike import post_framelike_records
+from hetdesrun.models.data_selection import FilteredSink
+from hetdesrun.webservice.config import get_config
 
 
 def validate_series_dtype(series: pd.Series, sink_type: ExternalType) -> None:
@@ -104,6 +98,7 @@ async def post_single_timeseries(
 
     await post_framelike_records(
         records,
+        attributes=series.attrs,
         ref_id=ref_id,
         adapter_key=adapter_key,
         endpoint="timeseries",
@@ -117,7 +112,10 @@ async def post_multiple_timeseries(
     sink_types: List[ExternalType],
     adapter_key: str,
 ) -> None:
-    async with AsyncClient(verify=runtime_config.hd_adapters_verify_certs) as client:
+    async with AsyncClient(
+        verify=get_config().hd_adapters_verify_certs,
+        timeout=get_config().external_request_timeout,
+    ) as client:
         await asyncio.gather(
             *(
                 post_single_timeseries(

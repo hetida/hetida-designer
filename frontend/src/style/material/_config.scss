@@ -70,12 +70,14 @@
 $mg-primary-palette: (
   100: $hd-grey,
   200: $hd-blue-dark,
+  300: $hd-blue-light,
   400: $hd-pink,
   500: $hd-black,
   700: $hd-grey-dark,
   contrast: (
     100: $hd-black,
     200: $hd-white,
+    300: $hd-white,
     400: $hd-white,
     500: $hd-white,
     700: $hd-white
@@ -85,12 +87,14 @@ $mg-primary-palette: (
 $mg-secondary-palette: (
   100: $hd-grey,
   200: $hd-grey-dark,
+  300: $hd-blue-light,
   400: $hd-black,
   500: $hd-white,
   700: $hd-grey,
   contrast: (
     100: $hd-yellow,
     200: $hd-yellow,
+    300: $hd-yellow,
     400: $hd-yellow,
     500: $hd-black,
     700: $hd-black

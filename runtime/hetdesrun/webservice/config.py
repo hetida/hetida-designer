@@ -1,16 +1,13 @@
+import datetime
 import os
 from enum import Enum
 from typing import Optional, Union
 
 # pylint: disable=no-name-in-module
-from pydantic import (
-    BaseSettings,
-    Field,
-    SecretStr,
-    validator,
-)
-
+from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
+
+from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
 
 class LogLevel(str, Enum):
@@ -20,7 +17,19 @@ class LogLevel(str, Enum):
     WARNING = "WARNING"
     INFO = "INFO"
     DEBUG = "DEBUG"
-    NOTESET = "NOTSET"
+    NOTSET = "NOTSET"
+
+
+class ExternalAuthMode(str, Enum):
+    OFF = "OFF"
+    CLIENT = "CLIENT"
+    FORWARD_OR_FIXED = "FORWARD_OR_FIXED"
+
+
+class InternalAuthMode(str, Enum):
+    OFF = "OFF"
+    CLIENT = "CLIENT"
+    FORWARD_OR_FIXED = "FORWARD_OR_FIXED"
 
 
 class RuntimeConfig(BaseSettings):
@@ -35,10 +44,29 @@ class RuntimeConfig(BaseSettings):
         description="Python logging level as string, i.e. one of "
         + ", ".join(['"' + x.value + '"' for x in list(LogLevel)]),
     )
+
+    advanced_performance_measurement_active: bool = Field(
+        True,
+        env="HD_ADVANCED_PERFORMANCE_MEASUREMENT_INFORMATION",
+        description=(
+            "Whether some additional information is returned by execution requests."
+            " At the moment this setting only affects the process id (PID),"
+            " while time measurements are always provided."
+        ),
+    )
+
     swagger_prefix: str = Field(
         "",
         env="OPENAPI_PREFIX",
         description="root path (necessary for OpenAPI UI if behind proxy)",
+    )
+    external_request_timeout: int = Field(
+        90,
+        env="EXTERNAL_REQUEST_TIMEOUT",
+        description=(
+            "The time (in seconds) to wait for a response of an external REST API "
+            "such as a generic REST adapter"
+        ),
     )
     model_repo_path: str = Field(
         "/mnt/obj_repo",
@@ -119,55 +147,122 @@ class RuntimeConfig(BaseSettings):
     )
 
     # HD Keycloak auth
-    hd_auth_use_keycloak: bool = Field(
-        False,
-        env="HD_AUTH_USE_KEYCLOAK",
-        description="Whether Keycloak is used for verifying requests to runtime service endpoints",
-    )
-    hd_keycloak_auth_url: Optional[str] = Field(None, env="HD_KEYCLOAK_AUTH_URL")
-    hd_keycloak_realm: Optional[str] = Field("Hetida", env="HD_KEYCLOAK_REALM")
-    hd_keycloak_runtime_audience: Optional[str] = Field(
-        "account", env="HD_KEYCLOAK_RUNTIME_AUDIENCE"
-    )
-    hd_keycloak_runtime_client_id: Optional[str] = Field(
-        None, env="HD_KEYCLOAK_RUNTIME_CLIENT_ID"
-    )
-    hd_keycloak_runtime_username: Optional[str] = Field(
-        None, env="HD_KEYCLOAK_RUNTIME_USERNAME"
-    )
-    hd_keycloak_runtime_password: Optional[str] = Field(
-        None,
-        env="HD_KEYCLOAK_RUNTIME_PASSWORD",
-        description="the password of the service user",
+
+    auth: bool = Field(
+        True,
+        description=(
+            "Whether authentication checking is active. This configures"
+            " ingoing auth, i.e. whether bearer tokens are checked."
+        ),
+        env="HD_USE_AUTH",
     )
 
-    # Keycloak Auth for generic rest adapters
-    hd_generic_rest_adapter_auth_use_keycloak: bool = Field(
-        False,
-        env="HD_GENERIC_REST_ADAPTER_AUTH_USE_KEYCLOAK",
+    auth_public_key_url: str = Field(
+        "http://hetida-designer-keycloak:8080/auth/realms/hetida-designer/protocol/openid-connect/certs",  # pylint: disable=line-too-long
+        description="URL to endpoint providing public keys for verifying bearer token signature",
+        env="HD_AUTH_PUBLIC_KEY_URL",
+    )
+
+    auth_verify_certs: bool = Field(True, env="HD_AUTH_VERIFY_CERTS")
+
+    auth_role_key: str = Field(
+        "roles",
         description=(
-            "Whether Keycloak is used for requests from runtime to generic rest adapter endpoints"
+            "Under which key of the access token payload the roles will"
+            " be expected as a list."
         ),
+        env="HD_AUTH_ROLE_KEY",
     )
-    hd_generic_rest_adapter_keycloak_auth_url: Optional[str] = Field(
-        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_AUTH_URL"
-    )
-    hd_generic_rest_adapter_keycloak_realm: Optional[str] = Field(
-        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_REALM"
-    )
-    hd_generic_rest_adapter_keycloak_runtime_client_id: Optional[str] = Field(
-        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_CLIENT_ID"
-    )
-    hd_generic_rest_adapter_keycloak_runtime_username: Optional[str] = Field(
-        None, env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_USERNAME"
-    )
-    hd_generic_rest_adapter_keycloak_runtime_password: Optional[str] = Field(
+
+    auth_allowed_role: Optional[str] = Field(
         None,
-        env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_PASSWORD",
-        description="the password of the service user",
+        description=(
+            "Role provided in bearer access token that is allowed access."
+            " If None, role is not checked / everybody is allowed."
+        ),
+        env="HD_AUTH_ALLOWED_ROLE",
     )
-    hd_generic_rest_adapter_keycloak_runtime_audience: Optional[str] = Field(
-        "account", env="HD_GENERIC_REST_ADAPTER_KEYCLOAK_RUNTIME_AUDIENCE"
+
+    auth_reload_public_key: bool = Field(
+        True,
+        description="Whether public keys for signature check will be reloaded"
+        " if a verification fails and if they are old",
+        env="HD_AUTH_RELOAD_PUBLIC_KEY",
+    )
+
+    auth_public_key_reloading_minimum_age: datetime.timedelta = Field(
+        15,
+        description="If auth fails and auth_reload_public_key is True "
+        "public keys are only tried to load again if older than this timedelta."
+        " Can be either seconds as int or float or an ISO 8601 timedelta string",  # 15 seconds
+        env="HD_AUTH_KEY_RELOAD_MINIMUM_AGE",
+        example="P0DT00H00M15S",
+    )
+
+    auth_bearer_token_for_outgoing_requests: Optional[str] = Field(
+        None,
+        description=(
+            "A string containing a bearer token for making outgoing requests. "
+            "If set and there is no currently handled API request with a provided access token,"
+            " this will be used when making outgoing requests to adapters or runtime/backend"
+            " if the corrsponding auth mode (internal/external) for outgoing request"
+            " is FORWARD_OR_FIXED."
+            " This setting makes export/import possible when having auth activated, i.e."
+            " its intended use is for scripting using the hetdesrun Python package."
+            " Make sure the expiration of the token is long enough for your script invocation."
+        ),
+        env="HD_BEARER_TOKEN_FOR_OUTGOING_REQUESTS",
+    )
+
+    internal_auth_mode: InternalAuthMode = Field(
+        InternalAuthMode.FORWARD_OR_FIXED,
+        description=(
+            "How outgoing requests to internal services should be handled."
+            " For example from backend to runtime if both are run as separate services."
+            " One of "
+            ", ".join(['"' + x.value + '"' for x in list(InternalAuthMode)])
+        ),
+        env="HD_INTERNAL_AUTH_MODE",
+    )
+    internal_auth_client_credentials: Optional[
+        Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
+    ] = Field(
+        None,
+        description=(
+            "Client credentials as json encoded string."
+            " For details confer the ServiceCredentials model class in the auth_outgoing.py"
+            " file."
+        ),
+        example=(
+            '{"realm": "my-realm", "auth_url": "https://test.com/auth", "audience": "account",'
+            ' "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",'
+            ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
+            ' "post_kwargs": {}}'
+        ),
+        env="HD_INTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
+    )
+    external_auth_mode: ExternalAuthMode = Field(
+        ExternalAuthMode.FORWARD_OR_FIXED,
+        description=(
+            "How outgoing requests to external services should be handled."
+            " For example from runtime to adapters or during export/import."
+            " One of "
+            ", ".join(['"' + x.value + '"' for x in list(ExternalAuthMode)])
+        ),
+        env="HD_EXTERNAL_AUTH_MODE",
+    )
+    external_auth_client_credentials: Optional[
+        Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
+    ] = Field(
+        None,
+        description="Client credentials as json encoded string.",
+        example=(
+            '{"realm": "my-realm", "auth_url": "https://test.com/auth", "audience": "account",'
+            ' "grant_credentials": {"grant_type": "client_credentials", "client_id": "my-client",'
+            ' "client_secret": "my client secret"}, "post_client_kwargs": {"verify": false},'
+            ' "post_kwargs": {}}'
+        ),
+        env="HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
     )
 
     hd_adapters: str = Field(
@@ -194,12 +289,12 @@ class RuntimeConfig(BaseSettings):
         True, env="HETIDA_DESIGNER_RUNTIME_VERIFY_CERTS"
     )
 
-    # For scripts (e.g. component deployment)
+    # For scripts (e.g. transformation deployment)
     hd_backend_api_url: str = Field(
         "http://hetida-designer-backend:8090/api/",
         env="HETIDA_DESIGNER_BACKEND_API_URL",
         description=(
-            "URL to backend. Necessary for component deployment "
+            "URL to backend. Necessary for transformation deployment "
             "and to allow runtime to access adapters endpoint."
         ),
     )
@@ -209,8 +304,8 @@ class RuntimeConfig(BaseSettings):
         description=(
             "Whether Backend is protected via Basic Auth."
             " Only necessary for component deployment."
-            " If Backend is protected via Keycloak instead "
-            " use the corresponding keycloak environment variables!"
+            " If Backend is protected via OpenIDConnect instead "
+            " use the corresponding environment variables!"
         ),
     )
     hd_backend_basic_auth_user: Optional[str] = Field(
@@ -284,7 +379,43 @@ class RuntimeConfig(BaseSettings):
         env="HETIDA_DESIGNER_KAFKA_RESPONSE_TOPIC",
     )
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
+    @validator("internal_auth_client_credentials")
+    def internal_auth_client_credentials_set_if_internal_auth_mode_is_client(
+        cls,
+        v: Optional[Json[ServiceCredentials]],  # pylint: disable=unsubscriptable-object
+        values: dict,
+    ) -> Optional[Json[ServiceCredentials]]:  # pylint: disable=unsubscriptable-object
+
+        internal_auth_mode = values["internal_auth_mode"]
+
+        if internal_auth_mode == InternalAuthMode.CLIENT and v is None:
+            msg = (
+                "If internal auth mode is set to CLIENT, "
+                "internal auth client credentials must be configured"
+            )
+            raise ValueError(msg)
+        return v
+
+    # pylint: disable=no-self-argument
+    @validator("external_auth_client_credentials")
+    def external_auth_client_credentials_set_if_external_auth_mode_is_client(
+        cls,
+        v: Optional[Json[ServiceCredentials]],  # pylint: disable=unsubscriptable-object
+        values: dict,
+    ) -> Optional[Json[ServiceCredentials]]:  # pylint: disable=unsubscriptable-object
+
+        external_auth_mode = values["external_auth_mode"]
+
+        if external_auth_mode == ExternalAuthMode.CLIENT and v is None:
+            msg = (
+                "If external auth mode is set to CLIENT, "
+                "external auth client credentials must be configured"
+            )
+            raise ValueError(msg)
+        return v
+
+    # pylint: disable=no-self-argument
     @validator("is_runtime_service")
     def must_be_at_least_backend_or_runtime(cls, v: bool, values: dict) -> bool:
 
@@ -298,7 +429,7 @@ class RuntimeConfig(BaseSettings):
             raise ValueError(msg)
         return v
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("hd_backend_api_url")
     def backend_api_url_ends_with_slash(cls, v: str) -> str:
         """make it end with a slash"""
@@ -306,7 +437,7 @@ class RuntimeConfig(BaseSettings):
             v += "/"
         return v
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("sqlalchemy_connection_string")
     def database_url(
         cls, v: Optional[Union[SecretStr, SQLAlchemy_DB_URL]], values: dict
@@ -332,3 +463,7 @@ class RuntimeConfig(BaseSettings):
 environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
 
 runtime_config = RuntimeConfig(_env_file=environment_file if environment_file else None)
+
+
+def get_config() -> RuntimeConfig:
+    return runtime_config

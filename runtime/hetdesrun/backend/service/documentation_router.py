@@ -1,32 +1,26 @@
 import logging
-
 from uuid import UUID
 
-from fastapi import APIRouter, Path, status, HTTPException
+from fastapi import HTTPException, Path, status
 
 from hetdesrun.backend.models.info import DocumentationFrontendDto
-
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
-
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBNotFoundError,
-    DBIntegrityError,
-)
-
+from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 logger = logging.getLogger(__name__)
 
 
-documentation_router = APIRouter(
+documentation_router = HandleTrailingSlashAPIRouter(
     prefix="/documentations",
     tags=["documentations"],
     responses={  # are these only used for display in the Swagger UI?
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Documentation not found"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
@@ -102,7 +96,7 @@ async def update_documentation(
             f"the id of the documentation DTO {documentation_dto.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
     try:
         transformation_revision = read_single_transformation_revision(id)

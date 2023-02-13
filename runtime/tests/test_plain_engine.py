@@ -1,12 +1,14 @@
 import logging
+
 import pytest
-from hetdesrun.runtime.exceptions import (
-    MissingOutputException,
-    MissingInputSource,
-    RuntimeExecutionError,
-    CircularDependency,
-)
+
 from hetdesrun.runtime.engine.plain.workflow import ComputationNode, Workflow
+from hetdesrun.runtime.exceptions import (
+    CircularDependency,
+    MissingInputSource,
+    MissingOutputException,
+    RuntimeExecutionError,
+)
 
 
 @pytest.mark.asyncio
@@ -112,11 +114,7 @@ async def test_computation_nodes_user_raised_runtime_error_and_logging(caplog):
         func=add_two_values,
         inputs={
             "c": (source_node, "a"),
-            "d": (
-                source_node,
-                # b is not present in the output of source_node
-                "b",
-            ),
+            "d": (source_node, "b"),
         },
     )
 
@@ -126,9 +124,6 @@ async def test_computation_nodes_user_raised_runtime_error_and_logging(caplog):
             res = await target_node.result
 
         assert "User raised" in caplog.text
-        assert "UNKNOWN" in caplog.text
-        assert "SOURCE_ID" in caplog.text
-        assert "TEST_SOURCE_OPERATOR" in caplog.text
 
 
 @pytest.mark.asyncio
@@ -148,6 +143,9 @@ async def test_basic_workflow_execution():
         sub_nodes=[source_node, target_node],
         input_mappings={},
         output_mappings={"sum_result": (target_node, "sum")},
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
     )
 
     res = await wf.result
@@ -169,6 +167,9 @@ async def test_workflow_with_inputs_via_constant_node():
         sub_nodes=[target_node],
         input_mappings={"first": (target_node, "c"), "second": (target_node, "d")},
         output_mappings={"sum_result": (target_node, "sum")},
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
         operator_hierarchical_name="Workflow",
         operator_hierarchical_id="Workflow",
     )
@@ -209,14 +210,19 @@ async def test_nested_workflow():
             "sub_wf_first_inp": (source_node, "a"),
             "sub_wf_second_inp": (source_node, "b"),
         },
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
     )
 
     wf = Workflow(
         sub_nodes=[source_node, sub_wf],
         input_mappings={},
         output_mappings={"sum_result": (sub_wf, "sub_wf_sum_outp")},
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
     )
 
     res = await wf.result
     assert res["sum_result"] == 3.7
-

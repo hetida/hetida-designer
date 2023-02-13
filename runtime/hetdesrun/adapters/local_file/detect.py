@@ -1,13 +1,13 @@
-import os
 import json
-
-from typing import Optional, List, Tuple
+import os
+from typing import List, Optional, Tuple
 
 from pydantic import (  # pylint: disable=no-name-in-module
     BaseModel,
     Field,
     ValidationError,
 )
+
 from hetdesrun.adapters.local_file.extensions import (
     FileSupportHandler,
     get_file_support_handler,
@@ -47,7 +47,7 @@ class LocalFile(BaseModel):
 
 
 def parse_settings_file(
-    *, data_file_path: str = None, settings_file_path: str = None
+    *, data_file_path: Optional[str] = None, settings_file_path: Optional[str] = None
 ) -> SettingsFile:
     if settings_file_path is None:
         if data_file_path is None:

@@ -1,14 +1,18 @@
-from typing import Any, Literal
 import contextvars
 import datetime
 import json
-from uuid import UUID
 import logging
+from typing import Any, Literal
+from uuid import UUID
 
 import numpy as np
 
 _WF_EXEC_LOGGING_CONTEXT_VAR: contextvars.ContextVar[dict] = contextvars.ContextVar(
     "workflow_execution_logging_context"
+)
+
+_JOB_ID_LOGGING_CONTEXT_VAR: contextvars.ContextVar[dict] = contextvars.ContextVar(
+    "job_id_logging_context"
 )
 
 
@@ -34,7 +38,7 @@ class MinimallyMoreCapableJsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def _get_context() -> dict:
+def _get_execution_context() -> dict:
     try:
         return _WF_EXEC_LOGGING_CONTEXT_VAR.get()
     except LookupError:
@@ -46,36 +50,91 @@ class ExecutionContextFilter(logging.Filter):
     """Filter to enrich log records with execution environment information"""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.currently_executed_node_instance = None
-        self.currently_executed_component = None
+        self.currently_executed_transformation_id = None
+        self.currently_executed_transformation_name = None
+        self.currently_executed_transformation_tag = None
+        self.currently_executed_transformation_type = None
+        self.currently_executed_operator_hierarchical_id = None
+        self.currently_executed_operator_hierarchical_name = None
+        self.currently_executed_job_id = None
         super().__init__(*args, **kwargs)
 
-    def bind_context(self, **kwargs: Any) -> None:  # pylint: disable=no-self-use
-        _get_context().update(kwargs)
+    def bind_context(self, **kwargs: Any) -> None:
+        _get_execution_context().update(kwargs)
 
-    def unbind_context(self, *args: str) -> None:  # pylint: disable=no-self-use
+    def unbind_context(self, *args: str) -> None:
         """Remove entries with provided keys from context"""
-        ctx_dict = _get_context()
+        ctx_dict = _get_execution_context()
         for key in args:
             ctx_dict.pop(key, None)
 
-    def clear_context(self) -> None:  # pylint: disable=no-self-use
+    def clear_context(self) -> None:
         _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
 
     def filter(self, record: logging.LogRecord) -> Literal[True]:
-        context_dict = _get_context()
+        context_dict = _get_execution_context()
 
-        record.currently_executed_instance_id = context_dict.get(  # type: ignore
-            "currently_executed_instance_id", None
+        record.currently_executed_transformation_id = context_dict.get(  # type: ignore
+            "currently_executed_transformation_id", None
         )
-        record.currently_executed_component_id = context_dict.get(  # type: ignore
-            "currently_executed_component_id", None
+        record.currently_executed_transformation_name = context_dict.get(  # type: ignore
+            "currently_executed_transformation_name", None
         )
-        record.currently_executed_component_node_name = context_dict.get(  # type: ignore
-            "currently_executed_component_node_name", None
+        record.currently_executed_transformation_tag = context_dict.get(  # type: ignore
+            "currently_executed_transformation_tag", None
         )
-        record.job_id = context_dict.get("job_id", None)  # type: ignore
+        record.currently_executed_transformation_type = context_dict.get(  # type: ignore
+            "currently_executed_transformation_type", None
+        )
+        record.currently_executed_operator_hierarchical_id = context_dict.get(  # type: ignore
+            "currently_executed_operator_hierarchical_id", None
+        )
+        record.currently_executed_operator_hierarchical_name = context_dict.get(  # type: ignore
+            "currently_executed_operator_hierarchical_name", None
+        )
+        record.currently_executed_job_id = context_dict.get(  # type: ignore
+            "currently_executed_job_id", None
+        )
         return True
 
 
 execution_context_filter = ExecutionContextFilter()
+
+
+def _get_job_id_context() -> dict:
+    try:
+        return _JOB_ID_LOGGING_CONTEXT_VAR.get()
+    except LookupError:
+        _JOB_ID_LOGGING_CONTEXT_VAR.set({})
+        return _JOB_ID_LOGGING_CONTEXT_VAR.get()
+
+
+class JobIdContextFilter(logging.Filter):
+    """Filter to enrich log records with execution environment information"""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.currently_executed_job_id = None
+        super().__init__(*args, **kwargs)
+
+    def bind_context(self, **kwargs: Any) -> None:
+        _get_job_id_context().update(kwargs)
+
+    def unbind_context(self, *args: str) -> None:
+        """Remove entries with provided keys from context"""
+        ctx_dict = _get_job_id_context()
+        for key in args:
+            ctx_dict.pop(key, None)
+
+    def clear_context(self) -> None:
+        _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
+
+    def filter(self, record: logging.LogRecord) -> Literal[True]:
+        context_dict = _get_job_id_context()
+
+        record.currently_executed_job_id = context_dict.get(  # type: ignore
+            "currently_executed_job_id", None
+        )
+        return True
+
+
+job_id_context_filter = JobIdContextFilter()

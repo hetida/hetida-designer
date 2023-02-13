@@ -4,26 +4,29 @@ The generic rest adapter "types" differ from the types used in the designer.
 """
 
 
-from typing import Optional, Dict, Union, Type, Any
-from enum import Enum
 import json
-
 import logging
-
-from pydantic import create_model  # pylint: disable=no-name-in-module
+from enum import Enum
+from typing import Any, Dict, Optional, Type, Union
 
 import pandas as pd
+from pydantic import create_model  # pylint: disable=no-name-in-module
 
 logger = logging.getLogger(__name__)
 
 
 def df_empty(
-    col_to_dtype_map: Dict[str, Union[Type, str]], index: Optional[pd.Index] = None
+    col_to_dtype_map: Dict[str, Union[Type, str]],
+    index: Optional[pd.Index] = None,
+    attrs: Optional[Any] = None,
 ) -> pd.DataFrame:
     """Create empty Pandas DataFrame with columns of given dtypes"""
     df = pd.DataFrame(index=index)
     for c, d in col_to_dtype_map.items():
         df[c] = pd.Series(dtype=d)
+    if attrs is None:
+        attrs = {}
+    df.attrs = attrs
     return df
 
 

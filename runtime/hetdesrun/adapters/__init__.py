@@ -10,40 +10,30 @@ See the hetdesrun_config.py file in runtime main directory for hints / docs
 on registering your own data adapters.
 """
 
+import asyncio
+import logging
 from typing import (
+    Any,
+    Awaitable,
     Callable,
     Dict,
-    Any,
     List,
-    Union,
+    NewType,
     Optional,
     Tuple,
-    TypedDict,
     Type,
-    NewType,
-    Awaitable,
-)
-import asyncio
-
-import logging
-
-from hetdesrun.adapters.source.direct_provisioning import load_directly_provisioned_data
-
-from hetdesrun.adapters.sink.direct_provisioning import send_directly_provisioned_data
-
-from hetdesrun.adapters.generic_rest import (
-    load_data as generic_rest_adapter_load_func,
-    send_data as generic_rest_adapter_send_func,
-)
-
-from hetdesrun.adapters.local_file import (
-    load_data as local_file_load_data,
-    send_data as local_file_send_data,
+    TypedDict,
+    Union,
 )
 
 from hetdesrun.adapters.exceptions import *
-
-from hetdesrun.models.data_selection import FilteredSource, FilteredSink
+from hetdesrun.adapters.generic_rest import load_data as generic_rest_adapter_load_func
+from hetdesrun.adapters.generic_rest import send_data as generic_rest_adapter_send_func
+from hetdesrun.adapters.local_file import load_data as local_file_load_data
+from hetdesrun.adapters.local_file import send_data as local_file_send_data
+from hetdesrun.adapters.sink.direct_provisioning import send_directly_provisioned_data
+from hetdesrun.adapters.source.direct_provisioning import load_directly_provisioned_data
+from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 ConnectionErrorTuple = Union[
     Tuple[Type[AdapterConnectionError]],
@@ -159,12 +149,12 @@ def register_source_adapter(
         output_data_custom_error=output_data_error_class,
         client_wiring_invalid_error_class=client_wiring_invalid_error_class,
     )
-    SOURCE_ADAPTERS[adapter_key] = {
-        "load_sources_func": load_func,
-        "connection_error_classes": connection_errors,
-        "output_data_error_classes": output_data_errors,
-        "client_wiring_invalid_error_classes": invalid_wiring_errors,
-    }
+    SOURCE_ADAPTERS[adapter_key] = SourceAdapter(
+        load_sources_func=load_func,
+        connection_error_classes=connection_errors,
+        output_data_error_classes=output_data_errors,
+        client_wiring_invalid_error_classes=invalid_wiring_errors,
+    )
 
 
 def register_sink_adapter(
@@ -183,12 +173,12 @@ def register_sink_adapter(
         output_data_custom_error=output_data_error_class,
         client_wiring_invalid_error_class=client_wiring_invalid_error_class,
     )
-    SINK_ADAPTERS[adapter_key] = {
-        "send_sinks_func": send_func,
-        "connection_error_classes": connection_errors,
-        "output_data_error_classes": output_data_errors,
-        "client_wiring_invalid_error_classes": invalid_wiring_errors,
-    }
+    SINK_ADAPTERS[adapter_key] = SinkAdapter(
+        send_sinks_func=send_func,
+        connection_error_classes=connection_errors,
+        output_data_error_classes=output_data_errors,
+        client_wiring_invalid_error_classes=invalid_wiring_errors,
+    )
 
 
 # Registering direct provisioning adapters
@@ -247,7 +237,7 @@ def get_sink_adapter(adapter_key: Union[int, str]) -> SinkAdapter:
 
 async def load_data_from_adapter(
     adapter_key: Union[str, int],
-    wf_input_name_to_filtered_source_mapping_dict: Dict[str, Any],
+    wf_input_name_to_filtered_source_mapping_dict: Dict[str, FilteredSource],
 ) -> Dict[str, Any]:
     """Generic data loading from adapter
 

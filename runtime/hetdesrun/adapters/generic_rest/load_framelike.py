@@ -4,39 +4,33 @@ Common utilities for loading data that is frame-like (tabular), i.e. dataframes 
 timeseries (where the later can be understood as special dataframe/table)
 """
 
-from typing import List, Tuple, Literal, Dict, Union, Type
-from posixpath import join as posix_urljoin
-
-import logging
+import base64
 import datetime
-
-import requests
+import json
+import logging
+from posixpath import join as posix_urljoin
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import pandas as pd
+import requests
 
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
     AdapterHandlingException,
 )
-
-from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
-
-from hetdesrun.adapters.generic_rest.external_types import (
-    ExternalType,
-    df_empty,
-)
-
-from hetdesrun.models.data_selection import FilteredSource
-
-from hetdesrun.webservice.config import runtime_config
-
-
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
+from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
+from hetdesrun.adapters.generic_rest.external_types import ExternalType, df_empty
+from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
 
-def create_empty_ts_df(data_type: ExternalType) -> pd.DataFrame:
+def create_empty_ts_df(
+    data_type: ExternalType, attrs: Optional[Any] = None
+) -> pd.DataFrame:
     """Create empty timeseries dataframe with explicit dtypes"""
     dtype_dict: Dict[str, Union[Type, str]] = {
         "timeseriesId": str,
@@ -47,7 +41,33 @@ def create_empty_ts_df(data_type: ExternalType) -> pd.DataFrame:
     assert value_datatype is not None  # for mypy
     dtype_dict["value"] = value_datatype.pandas_value_type
 
-    return df_empty(dtype_dict)
+    if attrs is None:
+        attrs = {}
+    return df_empty(dtype_dict, attrs=attrs)
+
+
+def decode_attributes(data_attributes: str) -> Any:
+    base64_bytes = data_attributes.encode("utf-8")
+    logger.debug("data_attributes=%s", data_attributes)
+    df_attrs_bytes = base64.b64decode(base64_bytes)
+    df_attrs_json_str = df_attrs_bytes.decode("utf-8")
+    logger.debug("df_attrs_json_str=%s", df_attrs_json_str)
+    df_attrs = json.loads(df_attrs_json_str)
+    return df_attrs
+
+
+def are_valid_sources(filtered_sources: List[FilteredSource]) -> Tuple[bool, str]:
+    if len({fs.type for fs in filtered_sources}) > 1:
+        return False, "Got more than one datatype in same grouped data"
+
+    if len(filtered_sources) == 0:
+        return False, "Requested fetching 0 sources"
+
+    if (filtered_sources[0].type == ExternalType.DATAFRAME) and len(
+        filtered_sources
+    ) > 1:
+        return False, "Cannot request more than one dataframe together"
+    return True, ""
 
 
 async def load_framelike_data(
@@ -60,22 +80,15 @@ async def load_framelike_data(
 ) -> pd.DataFrame:
     """Load framelike data from REST endpoint"""
 
+    # pylint: disable=too-many-statements
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
-    if len({fs.type for fs in filtered_sources}) > 1:
-        raise AdapterHandlingException(
-            "Got more than one datatype in same grouped data"
-        )
-
-    if len(filtered_sources) == 0:
-        raise AdapterHandlingException("Requested fetching 0 sources")
+    valid, msg = are_valid_sources(filtered_sources)
+    if not valid:
+        logger.error(msg)
+        raise AdapterHandlingException(msg)
 
     common_data_type = filtered_sources[0].type
-
-    if (common_data_type == ExternalType.DATAFRAME) and len(filtered_sources) > 1:
-        raise AdapterHandlingException(
-            "Cannot request more than one dataframe together"
-        )
 
     logger.info(
         (
@@ -88,8 +101,15 @@ async def load_framelike_data(
         str(additional_params),
         str(common_data_type),
     )
-
-    headers = get_generic_rest_adapter_auth_headers()
+    try:
+        headers = await get_generic_rest_adapter_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for loading framelike data from adapter"
+            f"with key {adapter_key}. Error was:\n{str(e)}"
+        )
+        logger.info(msg)
+        raise AdapterHandlingException(msg) from e
 
     with requests.Session() as session:
         try:
@@ -108,7 +128,8 @@ async def load_framelike_data(
                 + additional_params,
                 stream=True,
                 headers=headers,
-                verify=runtime_config.hd_adapters_verify_certs,
+                verify=get_config().hd_adapters_verify_certs,
+                timeout=get_config().external_request_timeout,
             )
             if (
                 resp.status_code == 404
@@ -137,7 +158,7 @@ async def load_framelike_data(
                 raise AdapterConnectionError(msg)
             logger.info("Start reading in and parsing framelike data")
 
-            df = pd.read_json(resp.raw, lines=True)
+            df: pd.DataFrame = pd.read_json(resp.raw, lines=True)
             end_time = datetime.datetime.now(datetime.timezone.utc)
             logger.info(
                 (
@@ -145,8 +166,8 @@ async def load_framelike_data(
                     " at %s. DataFrame shape is %s with columns %s"
                 ),
                 end_time.isoformat(),
-                str(df.shape),
-                str(df.columns),
+                str(df.shape),  # pylint: disable=no-member
+                str(df.columns),  # pylint: disable=no-member
             )
             logger.info(
                 (
@@ -156,6 +177,13 @@ async def load_framelike_data(
                 ),
                 str(end_time - start_time),
             )
+
+            if "Data-Attributes" in resp.headers:
+                logger.debug("Got Data-Attributes via GET response header")
+                data_attributes = resp.headers["Data-Attributes"]
+                df.attrs = decode_attributes(data_attributes)
+
+            # pylint: disable=no-member
             logger.debug(
                 "Received dataframe of form %s:\n%s",
                 str(df.shape) if len(df) > 0 else "EMPTY RESULT",
@@ -174,10 +202,11 @@ async def load_framelike_data(
     logger.info("Complete generic rest adapter %s framelike request", adapter_key)
     if len(df) == 0:
         if endpoint == "timeseries":
-            return create_empty_ts_df(ExternalType(common_data_type))
+            return create_empty_ts_df(ExternalType(common_data_type), attrs=df.attrs)
         # must be dataframe:
-        return df_empty({})
+        return df_empty({}, attrs=df.attrs)
 
+    # pylint: disable=no-member
     if "timestamp" in df.columns and endpoint == "dataframe":
         try:
             parsed_timestamps = pd.to_datetime(df["timestamp"])
@@ -189,6 +218,7 @@ async def load_framelike_data(
                 str(e),
             )
         else:
+            # pylint: disable=no-member
             df.index = parsed_timestamps
             df = df.sort_index()
 

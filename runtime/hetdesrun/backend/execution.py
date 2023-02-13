@@ -1,49 +1,41 @@
 """Handle execution of transformation revisions."""
 
-from typing import List, Dict, Union
 import json
 import logging
-from uuid import UUID, uuid4
 from posixpath import join as posix_urljoin
+from typing import Dict, List, Union
+from uuid import UUID, uuid4
 
-
-from pydantic import (
-    BaseModel,
-    ValidationError,
-    Field,
-)  # pylint: disable=no-name-in-module
 import httpx
-
-from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.models.workflow import WorkflowNode
-from hetdesrun.models.component import ComponentNode
-
-from hetdesrun.utils import Type, get_auth_headers
+from pydantic import (  # pylint: disable=no-name-in-module
+    BaseModel,
+    Field,
+    ValidationError,
+)
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-
-from hetdesrun.persistence.models.workflow import WorkflowContent
-from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
-from hetdesrun.persistence.dbservice.exceptions import DBNotFoundError, DBIntegrityError
-
-
-from hetdesrun.webservice.config import runtime_config
-from hetdesrun.service.runtime_router import runtime_service
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
-from hetdesrun.runtime.logging import execution_context_filter
-
-
+from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.run import (
     ConfigurationInput,
+    PerformanceMeasuredStep,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-
+from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.workflow import WorkflowNode
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_all_nested_transformation_revisions,
+    read_single_transformation_revision,
 )
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.persistence.models.workflow import WorkflowContent
+from hetdesrun.runtime.logging import execution_context_filter
+from hetdesrun.runtime.service import runtime_service
+from hetdesrun.utils import Type
+from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 logger.addFilter(execution_context_filter)
@@ -57,7 +49,10 @@ class ExecByIdInput(BaseModel):
     )
     job_id: UUID = Field(
         default_factory=uuid4,
-        description="Optional job id, that can be used to track an execution job.",
+        description=(
+            "Id to identify an individual execution job, "
+            "will be generated if it is not provided."
+        ),
     )
 
 
@@ -156,9 +151,12 @@ def nested_nodes(
                 }
                 sub_nodes.append(
                     tr_workflow.content.to_workflow_node(
-                        operator.id,
-                        operator.name,
-                        children_nodes(tr_workflow.content, tr_children),
+                        transformation_id=all_nested_tr[operator.id].id,
+                        transformation_name=all_nested_tr[operator.id].name,
+                        transformation_tag=all_nested_tr[operator.id].version_tag,
+                        operator_id=operator.id,
+                        operator_name=operator.name,
+                        sub_nodes=children_nodes(tr_workflow.content, tr_children),
                     )
                 )
 
@@ -202,7 +200,8 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         tr.id: tr for tr in nested_transformations.values() if tr.type == Type.COMPONENT
     }
     workflow_node = tr_workflow.to_workflow_node(
-        uuid4(), nested_nodes(tr_workflow, nested_transformations)
+        operator_id=uuid4(),
+        sub_nodes=nested_nodes(tr_workflow, nested_transformations),
     )
 
     execution_input = WorkflowExecutionInput(
@@ -235,25 +234,38 @@ async def run_execution_input(
 
     Raises subtypes of TrafoExecutionError on errors.
     """
+    run_execution_input_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "run_execution_input"
+    )
+
     output_types = {
         output.name: output.type for output in execution_input.workflow.outputs
     }
 
     execution_result: WorkflowExecutionResult
 
-    if runtime_config.is_runtime_service:
+    if get_config().is_runtime_service:
         execution_result = await runtime_service(execution_input)
     else:
-        headers = get_auth_headers()
+        try:
+            headers = await get_auth_headers(external=False)
+        except ServiceAuthenticationError as e:
+            msg = (
+                "Failed to get auth headers for internal runtime execution request."
+                f" Error was:\n{str(e)}"
+            )
+            logger.info(msg)
+            raise TrafoExecutionRuntimeConnectionError(msg) from e
 
         async with httpx.AsyncClient(
-            verify=runtime_config.hd_runtime_verify_certs
+            verify=get_config().hd_runtime_verify_certs,
+            timeout=get_config().external_request_timeout,
         ) as client:
-            url = posix_urljoin(runtime_config.hd_runtime_engine_url, "runtime")
+            url = posix_urljoin(get_config().hd_runtime_engine_url, "runtime")
             try:
                 response = await client.post(
                     url,
-                    headers=headers,  # TODO: authentication
+                    headers=headers,
                     json=json.loads(
                         execution_input.json()
                     ),  # TODO: avoid double serialization.
@@ -262,6 +274,8 @@ async def run_execution_input(
                     timeout=None,
                 )
             except httpx.HTTPError as e:
+                # handles both request errors (connection problems)
+                # and 4xx and 5xx errors. See https://www.python-httpx.org/exceptions/
                 msg = f"Failure connecting to hd runtime endpoint ({url}):\n{str(e)}"
                 logger.info(msg)
                 raise TrafoExecutionRuntimeConnectionError(msg) from e
@@ -283,8 +297,14 @@ async def run_execution_input(
         result=execution_result.result,
         traceback=execution_result.traceback,
         job_id=execution_input.job_id,
+        measured_steps=execution_result.measured_steps,
     )
 
+    run_execution_input_measured_step.stop()
+
+    execution_response.measured_steps.run_execution_input = (
+        run_execution_input_measured_step
+    )
     return execution_response
 
 
@@ -297,5 +317,19 @@ async def execute_transformation_revision(
     """
 
     execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
+
+    # prepare execution input
+
+    prep_exec_input_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "prepare_execution_input"
+    )
+
     execution_input = prepare_execution_input(exec_by_id_input)
-    return await run_execution_input(execution_input)
+
+    prep_exec_input_measured_step.stop()
+
+    exec_resp_frontend_dto = await run_execution_input(execution_input)
+    exec_resp_frontend_dto.measured_steps.prepare_execution_input = (
+        prep_exec_input_measured_step
+    )
+    return exec_resp_frontend_dto

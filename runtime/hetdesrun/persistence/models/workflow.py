@@ -1,17 +1,14 @@
-from typing import List, Dict, Tuple, Optional, Union
+import re
+from typing import Dict, List, Optional, Tuple, Union
 from uuid import UUID
 
-import re
-
 # pylint: disable=no-name-in-module
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from hetdesrun.datatypes import DataType
-
 from hetdesrun.models.util import names_unique
-from hetdesrun.models.workflow import WorkflowNode, ComponentNode
-
-from hetdesrun.persistence.models.io import Connector, IOConnector, Constant
+from hetdesrun.models.workflow import ComponentNode, WorkflowNode
+from hetdesrun.persistence.models.io import Connector, Constant, IOConnector
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import NonEmptyValidStr, Operator
 
@@ -133,7 +130,7 @@ class WorkflowContent(BaseModel):
         ),
     )
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("operators", each_item=False)
     def operator_names_unique(cls, operators: List[Operator]) -> List[Operator]:
         operator_groups: dict[str, List[Operator]] = {}
@@ -157,7 +154,7 @@ class WorkflowContent(BaseModel):
 
         return operators
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("links", each_item=False)
     def reduce_to_valid_links(cls, links: List[Link], values: dict) -> List[Link]:
 
@@ -196,7 +193,7 @@ class WorkflowContent(BaseModel):
 
         return updated_links
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("links", each_item=False)
     def links_acyclic_directed_graph(cls, links: List[Link]) -> List[Link]:
 
@@ -247,7 +244,7 @@ class WorkflowContent(BaseModel):
 
         return links
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("inputs", each_item=False)
     def determine_inputs_from_operators_and_links(
         cls, inputs: List[IOConnector], values: dict
@@ -285,7 +282,7 @@ class WorkflowContent(BaseModel):
 
         return updated_inputs
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("outputs", each_item=False)
     def determine_outputs_from_operators_and_links(
         cls, outputs: List[IOConnector], values: dict
@@ -323,7 +320,7 @@ class WorkflowContent(BaseModel):
 
         return updated_outputs
 
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     @validator("inputs", "outputs", each_item=False)
     def connector_names_empty_or_unique(
         cls, io_connectors: List[IOConnector]
@@ -417,8 +414,11 @@ class WorkflowContent(BaseModel):
 
     def to_workflow_node(
         self,
+        transformation_id: UUID,
+        transformation_name: str,
+        transformation_tag: str,
         operator_id: Optional[UUID],
-        name: Optional[str],
+        operator_name: Optional[str],
         sub_nodes: List[Union[WorkflowNode, ComponentNode]],
     ) -> WorkflowNode:
 
@@ -468,7 +468,10 @@ class WorkflowContent(BaseModel):
             ],
             inputs=inputs,
             outputs=outputs,
-            name=name,
+            name=operator_name,
+            tr_id=str(transformation_id),
+            tr_name=transformation_name,
+            tr_tag=transformation_tag,
         )
 
     class Config:

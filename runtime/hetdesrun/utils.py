@@ -1,61 +1,39 @@
 """Utilities for scripting and in particular component/workflow deployment"""
 
+import datetime
 import json
-from typing import List, Optional, Tuple, Any, Dict
-from enum import Enum
-from uuid import UUID
-import random
 import logging
+import random
+from enum import Enum
+from typing import Any, List, Optional, Tuple
+from uuid import UUID
 
 import requests  # pylint: disable=unused-import
-
-from pydantic import BaseModel  # pylint: disable=no-name-in-module
-
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
+from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 from hetdesrun.datatypes import DataType
-
-from hetdesrun.auth.keycloak import KeycloakAccessTokenManager, ServiceUserCredentials
-
-from hetdesrun.webservice.config import RuntimeConfig
-
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
 
-runtime_config = RuntimeConfig()
-# reload actively here for usage in Jupyter notebook where
-# env variables may be set before importing this module
-
-kc_access_token_manager = (
-    KeycloakAccessTokenManager(
-        creds=ServiceUserCredentials(
-            realm=runtime_config.hd_keycloak_realm,
-            client_id=runtime_config.hd_keycloak_runtime_client_id,
-            username=runtime_config.hd_keycloak_runtime_username,
-            password=runtime_config.hd_keycloak_runtime_password,
-            auth_url=runtime_config.hd_keycloak_auth_url,
-            audience=runtime_config.hd_keycloak_runtime_audience,
-        )
-    )
-    if runtime_config.hd_auth_use_keycloak
-    else None
-)
+def check_aware(dt: datetime.datetime) -> bool:
+    """check whether datetime is non-naive"""
+    # see https://stackoverflow.com/a/27596917
+    return dt.tzinfo is not None and dt.tzinfo.utcoffset(dt) is not None
 
 
-def get_auth_headers() -> Dict[str, str]:
-    return (
-        {"Authorization": "Bearer " + kc_access_token_manager.get_access_token()}
-        if kc_access_token_manager is not None
-        else {}
-    )
+def check_explicit_utc(dt: datetime.datetime) -> bool:
+    """check whether datetime is explicitely utc"""
+    return check_aware(dt) and dt.utcoffset().total_seconds() == 0  # type: ignore
 
 
 def get_backend_basic_auth() -> Tuple[Optional[str], Optional[str]]:
     return (
-        runtime_config.hd_backend_basic_auth_user,
-        runtime_config.hd_backend_basic_auth_password,
+        get_config().hd_backend_basic_auth_user,
+        get_config().hd_backend_basic_auth_password,
     )
 
 
@@ -179,19 +157,3 @@ def plotly_fig_to_json_dict(fig: Figure) -> Any:
     # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
     # should be definitely compatible with the plotly javascript library:
     return json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
-
-
-def selection_list_empty_or_contains_value(
-    selection_list: Optional[List[Any]], actual_value: Any
-) -> bool:
-    if selection_list is None:
-        return True
-    return actual_value in selection_list
-
-
-def criterion_unset_or_matches_value(
-    criterion: Optional[Any], actual_value: Any
-) -> bool:
-    if criterion is None:
-        return True
-    return bool(actual_value == criterion)

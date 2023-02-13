@@ -1,16 +1,14 @@
-from uuid import UUID, uuid4
 from typing import Optional
+from uuid import UUID, uuid4
 
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, validator
 
-from hetdesrun.utils import State, Type
-
 from hetdesrun.backend.service.utils import to_camel
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
+from hetdesrun.models.run import AllMeasuredSteps
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import State, Type
 
 
 class BasicInformation(BaseModel):
@@ -24,7 +22,7 @@ class BasicInformation(BaseModel):
     tag: str = Field(..., max_length=20)
 
     @validator("tag")
-    # pylint: disable=no-self-argument,no-self-use
+    # pylint: disable=no-self-argument
     def tag_not_latest(cls, tag: str) -> str:
         if tag != "latest":
             return tag
@@ -58,4 +56,17 @@ class ExecutionResponseFrontendDto(BaseModel):
     traceback: Optional[str]
     job_id: UUID
 
+    measured_steps: AllMeasuredSteps = AllMeasuredSteps()
+    process_id: Optional[int] = Field(
+        None,
+        description=(
+            "Process Id (PID) of the process handling the request, "
+            "if advanced performance measuring is configured."
+        ),
+    )
+
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
+
+
+class ExecutionResultReceived(BaseModel):
+    ok: bool

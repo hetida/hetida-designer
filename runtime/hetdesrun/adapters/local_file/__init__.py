@@ -1,11 +1,8 @@
-from typing import Dict, Any
-
-from hetdesrun.models.data_selection import FilteredSource, FilteredSink
+from typing import Any, Dict
 
 from hetdesrun.adapters.local_file.load_file import load_file_from_id
-
 from hetdesrun.adapters.local_file.write_file import write_to_file
-
+from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 try:
     with open("VERSION", "r", encoding="utf8") as version_file:

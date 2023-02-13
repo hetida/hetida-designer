@@ -1,5 +1,4 @@
-from typing import Optional, List, Callable, Dict, Any
-
+from typing import Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel, validator  # pylint: disable=no-name-in-module
 
@@ -10,7 +9,7 @@ class FileSupportHandler(BaseModel):
     write_handler_func: Optional[Callable] = None
 
     @validator("write_handler_func", always=True)
-    def at_least_one_handler_func(  # pylint: disable=no-self-use,no-self-argument
+    def at_least_one_handler_func(  # pylint: disable=no-self-argument
         cls, v: Any, values: Dict[str, Any]
     ) -> Optional[Callable]:
         if (values["read_handler_func"] is None) and (

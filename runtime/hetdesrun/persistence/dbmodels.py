@@ -1,24 +1,64 @@
-from typing import NamedTuple
-
+from typing import List, NamedTuple, Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy.orm import declarative_base, relationship
+from pydantic import BaseModel, Field
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Enum,
-    DateTime,
     JSON,
-    UniqueConstraint,
     CheckConstraint,
+    Column,
+    DateTime,
+    Enum,
     ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
 )
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy_utils import UUIDType
 
+from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.utils import State, Type
 
 Base = declarative_base()
+
+
+class FilterParams(BaseModel):
+    # pylint: disable=too-many-instance-attributes
+    type: Optional[Type] = Field(None, description="Filter for specified type")
+    state: Optional[State] = Field(None, description="Filter for specified state")
+    category: Optional[ValidStr] = Field(
+        None, description="Filter for specified category"
+    )
+    revision_group_id: Optional[UUID] = Field(
+        None, description="Filter for specified revision group id"
+    )
+    ids: Optional[List[UUID]] = Field(
+        None, description="Filter for specified list of ids"
+    )
+    names: Optional[List[NonEmptyValidStr]] = Field(
+        None, description="Filter for specified list of names"
+    )
+    include_deprecated: bool = Field(
+        True,
+        description=(
+            "Set to True to additionally get those transformation revisions "
+            "that the selected ones depend on"
+        ),
+    )
+    include_dependencies: bool = Field(
+        False,
+        description=(
+            "Set to False to omit transformation revisions with state DISABLED "
+            "this will not affect included dependent transformation revisions"
+        ),
+    )
+    unused: bool = Field(
+        False,
+        description=(
+            "Set to True to obtain only those transformation revisions that are "
+            "not contained in workflows that do not have the state DISABLED."
+        ),
+    )
 
 
 class TransformationRevisionDBModel(Base):
