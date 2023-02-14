@@ -85,8 +85,8 @@ This can be avoided by putting a "Pass through (Series)" component in front of i
 So the general tip is to avoid ANY as input that needs to be wired and instead to put the respective Pass Through component in front.
 
 
-## Storing and loading Objects with self defined classes
-When combining self-defined classes with storing and loading objects, e.g. via the Blob Storage Adapter, the classes must be defined in seperate components.
+## Storing and loading objects with self defined classes
+When combining self-defined classes with storing and loading objects, e.g. via the [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md), the classes must be defined in seperate components.
 The component that contains such a class, should just return the class object as i.e. in the component "ExampleClass" from the category "Classes". 
 ```python
 
@@ -108,3 +108,32 @@ Hence, when loading the stored object in a worklfow the exactly same component m
 <img src="./assets/store_object_with_class.png" height="250" width=750 data-align="center">
 Usually the class is not needed explicitly so that the there is no reason to link the component with the class definition to any input, instead it can be linked to the component "Forget" from the category "Connectors".
 <img src="./assets/load_object_with_class.png" height="250" width=750 data-align="center">
+
+
+## Identifiy source for latest stored object via endpoints
+The [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md) adds the storage timestamp to the name of each stored object and automatically generates a new source corresponding to this object.
+
+A request to the [structure-endpoint-get](./adapter_system/generic_rest_adapters/web_service_interface.md#structure-endpoint-get) with the `ref_id` as `parentId` path parameter will yield a list of all thing nodes, sources and sinks below the thing node with the id `parentId` as a response.
+The sources list is sorted in ascending order, hence the last list item is the source corresponding to the latest stored object.
+```json
+{
+	"id": "i-i/C_2023-02-14T12:19:38+00:00",
+	"thingNodeId": "i-i/C",
+	"name": "C - 2023-02-14 12:19:38+00:00",
+	"path": "i-i/C",
+	"metadataKey": "C - 2023-02-14 12:19:38+00:00"
+}
+```
+
+The attributes `ref_id` and `ref_key` of the corresponding input wiring must be set to the values of the attributes `thingNodeId` and `metadataKey` of this source, respectively.
+```json
+{
+	"adapter_id": "blob-storage-adapter",
+	"filters": {},
+	"ref_id": "i-i/C",
+	"ref_id_type": "THINGNODE",
+	"ref_key": "C - 2023-02-14 12:19:38+00:00",
+	"type": "metadata(any)",
+	"workflow_input_name": "class_entity"
+}
+```
