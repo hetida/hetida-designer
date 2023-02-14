@@ -30,14 +30,14 @@ def get_thing_nodes_by_parent_id(
     return [tn for tn in tn_list if tn.parentId == parent_id]
 
 
-def get_sources_by_parent_id(
+async def get_sources_by_parent_id(
     parent_id: IdString | None,
 ) -> list[BlobStorageStructureSource]:
     if parent_id is None:
         return []
 
     try:
-        src_list = create_sources()
+        src_list = await create_sources()
     except (
         MissingHierarchyError,
         InvalidEndpointError,
@@ -62,12 +62,14 @@ def get_sinks_by_parent_id(
     return [snk for snk in snk_list if snk.thingNodeId == parent_id]
 
 
-def get_filtered_sources(filter_str: str | None) -> list[BlobStorageStructureSource]:
+async def get_filtered_sources(
+    filter_str: str | None,
+) -> list[BlobStorageStructureSource]:
     if filter_str is None:
         filter_str = ""
 
     try:
-        src_list = create_sources()
+        src_list = await create_sources()
     except (
         MissingHierarchyError,
         InvalidEndpointError,
@@ -103,9 +105,9 @@ def get_thing_node_by_id(thing_node_id: IdString) -> StructureThingNode:
     return filtered_tn_list[0]
 
 
-def get_source_by_id(source_id: IdString) -> BlobStorageStructureSource:
+async def get_source_by_id(source_id: IdString) -> BlobStorageStructureSource:
     try:
-        src_list = create_sources()
+        src_list = await create_sources()
     except (
         MissingHierarchyError,
         InvalidEndpointError,
@@ -145,13 +147,13 @@ def get_sink_by_id(sink_id: IdString) -> BlobStorageStructureSink:
     return filtered_snk_list[0]
 
 
-def get_source_by_thing_node_id_and_metadata_key(
+async def get_source_by_thing_node_id_and_metadata_key(
     thing_node_id: IdString, metadata_key: str
 ) -> BlobStorageStructureSource:
     filtered_src_list = []
 
     try:
-        src_list = create_sources()
+        src_list = await create_sources()
     except (
         MissingHierarchyError,
         InvalidEndpointError,

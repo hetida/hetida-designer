@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     Category,
@@ -10,7 +12,7 @@ from hetdesrun.adapters.blob_storage.models import (
 from hetdesrun.adapters.blob_storage.utils import create_sources
 
 
-def mocked_get_oks_in_bucket(bucket_name: StructureBucket) -> list[IdString]:
+async def mocked_get_oks_in_bucket(bucket_name: StructureBucket) -> list[IdString]:
     if bucket_name == "i-i":
         return [
             IdString("A_2022-01-02T14:23:18+00:00"),
@@ -26,7 +28,8 @@ def mocked_get_oks_in_bucket(bucket_name: StructureBucket) -> list[IdString]:
     raise ValueError("bucket_name must be 'i-i' or 'i-ii'!")
 
 
-def test_blob_storage_utils_create_sources():
+@pytest.mark.asyncio
+async def test_blob_storage_utils_create_sources() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.utils.get_adapter_structure",
         return_value=AdapterHierarchy(
@@ -63,7 +66,7 @@ def test_blob_storage_utils_create_sources():
         "hetdesrun.adapters.blob_storage.utils.get_object_key_strings_in_bucket",
         new=mocked_get_oks_in_bucket,
     ):
-        sources = create_sources()
+        sources = await create_sources()
         assert len(sources) == 3
         assert sources[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
         assert sources[0].thingNodeId == "i-i/A"

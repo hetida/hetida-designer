@@ -3,6 +3,7 @@ from unittest import mock
 
 import nest_asyncio
 import pytest
+from httpx import AsyncClient
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     InvalidEndpointError,
@@ -20,7 +21,7 @@ nest_asyncio.apply()
 
 
 @pytest.mark.asyncio
-async def test_access_blob_storage_adapter_info(async_test_client):
+async def test_access_blob_storage_adapter_info(async_test_client: AsyncClient) -> None:
     async with async_test_client as ac:
         response = await ac.get("adapters/blob/info")
     assert response.status_code == 200
@@ -28,15 +29,15 @@ async def test_access_blob_storage_adapter_info(async_test_client):
 
 
 async def walk_thing_nodes(
-    parent_id,
-    tn_append_list,
-    src_append_list,
-    snk_append_list,
-    src_attached_metadata_dict,
-    snk_attached_metadata_dict,
-    tn_attached_metadata_dict,
-    open_async_test_client,
-):
+    parent_id: str,
+    tn_append_list: list[dict],
+    src_append_list: list[dict],
+    snk_append_list: list[dict],
+    src_attached_metadata_dict: dict,
+    snk_attached_metadata_dict: dict,
+    tn_attached_metadata_dict: dict,
+    open_async_test_client: AsyncClient,
+) -> None:
     print("walk_thing_nodes call with parent_id=" + parent_id)
     """Recursively walk thingnodes"""
     response_obj = (
@@ -136,8 +137,8 @@ source_list = [
 
 @pytest.mark.asyncio
 async def test_resources_offered_from_blob_storage_webservice(
-    async_test_client,
-):
+    async_test_client: AsyncClient,
+) -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
         return_value=AdapterHierarchy.from_file(
@@ -156,12 +157,12 @@ async def test_resources_offered_from_blob_storage_webservice(
             roots = response_obj["thingNodes"]
             assert len(roots) == 2
 
-            all_tns = deepcopy(roots)
-            all_srcs = []
-            all_snks = []
-            tn_attached_metadata_dict = {}
-            src_attached_metadata_dict = {}
-            snk_attached_metadata_dict = {}
+            all_tns: list[dict] = deepcopy(roots)
+            all_srcs: list[dict] = []
+            all_snks: list[dict] = []
+            tn_attached_metadata_dict: dict = {}
+            src_attached_metadata_dict: dict = {}
+            snk_attached_metadata_dict: dict = {}
 
             for root in roots:
                 await walk_thing_nodes(
@@ -208,7 +209,7 @@ async def test_resources_offered_from_blob_storage_webservice(
 
 
 @pytest.mark.asyncio
-async def test_blob_adapter_webservice_filtered(async_test_client):
+async def test_blob_adapter_webservice_filtered(async_test_client: AsyncClient) -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
         return_value=AdapterHierarchy.from_file(
@@ -238,7 +239,9 @@ async def test_blob_adapter_webservice_filtered(async_test_client):
 
 
 @pytest.mark.asyncio
-async def test_blob_adapter_webservice_exceptions(async_test_client):
+async def test_blob_adapter_webservice_exceptions(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_thing_nodes_by_parent_id",

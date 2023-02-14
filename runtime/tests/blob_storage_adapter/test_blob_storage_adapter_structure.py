@@ -10,6 +10,7 @@ from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
+    IdString,
     StructureThingNode,
 )
 from hetdesrun.adapters.blob_storage.structure import (
@@ -26,7 +27,7 @@ from hetdesrun.adapters.blob_storage.structure import (
 )
 
 
-def test_blob_storage_get_thing_nodes_by_parent_id():
+def test_blob_storage_get_thing_nodes_by_parent_id() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
         return_value=AdapterHierarchy.from_file(
@@ -38,13 +39,13 @@ def test_blob_storage_get_thing_nodes_by_parent_id():
         assert len(thing_nodes_with_no_parents) == 2
         assert thing_nodes_with_no_parents[0].id == "i"
 
-        thing_nodes_with_parent_i = get_thing_nodes_by_parent_id("i")
+        thing_nodes_with_parent_i = get_thing_nodes_by_parent_id(IdString("i"))
         assert len(thing_nodes_with_parent_i) == 3
         assert thing_nodes_with_parent_i[0].id == "i-i"
         assert thing_nodes_with_parent_i[1].id == "i-ii"
         assert thing_nodes_with_parent_i[2].id == "i-iii"
 
-        thing_nodes_with_parent_bla = get_thing_nodes_by_parent_id("bla")
+        thing_nodes_with_parent_bla = get_thing_nodes_by_parent_id(IdString("bla"))
         assert len(thing_nodes_with_parent_bla) == 0
 
 
@@ -94,59 +95,61 @@ source_list = [
 ]
 
 
-def test_blob_storage_get_sources_by_parent_id():
+@pytest.mark.asyncio
+async def test_blob_storage_get_sources_by_parent_id() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=source_list,
     ):
-        sources_with_parent_i_ii = get_sources_by_parent_id("i-ii/E")
+        sources_with_parent_i_ii = await get_sources_by_parent_id(IdString("i-ii/E"))
         assert len(sources_with_parent_i_ii) == 1
         assert sources_with_parent_i_ii[0].id == "i-ii/E_2022-01-02T14:23:18+00:00"
 
-        sources_with_parent_bla = get_sources_by_parent_id("bla")
+        sources_with_parent_bla = await get_sources_by_parent_id(IdString("bla"))
         assert len(sources_with_parent_bla) == 0
 
 
-def test_blob_storage_get_sinks_by_parent_id():
+def test_blob_storage_get_sinks_by_parent_id() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
         return_value=AdapterHierarchy.from_file(
             "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
         ),
     ):
-        sinks_with_parent_id_i_iii = get_sinks_by_parent_id("i-iii/F")
+        sinks_with_parent_id_i_iii = get_sinks_by_parent_id(IdString("i-iii/F"))
         assert len(sinks_with_parent_id_i_iii) == 1
         assert sinks_with_parent_id_i_iii[0].id == "i-iii/F_next"
 
-        sinks_with_parent_bla = get_sinks_by_parent_id("bla")
+        sinks_with_parent_bla = get_sinks_by_parent_id(IdString("bla"))
         assert len(sinks_with_parent_bla) == 0
 
 
-def test_blob_storage_get_filtered_sources():
+@pytest.mark.asyncio
+async def test_blob_storage_get_filtered_sources() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=source_list,
     ):
-        unfiltered_sources = get_filtered_sources(None)
+        unfiltered_sources = await get_filtered_sources(None)
         assert len(unfiltered_sources) == 6
 
-        sources_filtered_by_name = get_filtered_sources("A")
+        sources_filtered_by_name = await get_filtered_sources("A")
         assert len(sources_filtered_by_name) == 2
         assert sources_filtered_by_name[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
         assert sources_filtered_by_name[1].id == "i-i/A_2022-01-02T14:57:31+00:00"
 
-        sources_filtered_by_date = get_filtered_sources("14")
+        sources_filtered_by_date = await get_filtered_sources("14")
         assert len(sources_filtered_by_date) == 4
         assert sources_filtered_by_date[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
         assert sources_filtered_by_date[1].id == "i-i/A_2022-01-02T14:57:31+00:00"
         assert sources_filtered_by_date[2].id == "i-i/B_2022-01-02T14:25:56+00:00"
         assert sources_filtered_by_date[3].id == "i-ii/E_2022-01-02T14:23:18+00:00"
 
-        sources_filtered_by_bla = get_filtered_sources("bla")
+        sources_filtered_by_bla = await get_filtered_sources("bla")
         assert len(sources_filtered_by_bla) == 0
 
 
-def test_blob_storage_get_filtered_sinks():
+def test_blob_storage_get_filtered_sinks() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
         return_value=AdapterHierarchy.from_file(
@@ -164,21 +167,21 @@ def test_blob_storage_get_filtered_sinks():
         assert len(sinks_filtered_by_bla) == 0
 
 
-def test_blob_storage_get_thing_node_by_id():
+def test_blob_storage_get_thing_node_by_id() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
         return_value=AdapterHierarchy.from_file(
             "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
         ),
     ):
-        thing_node = get_thing_node_by_id("i-ii")
+        thing_node = get_thing_node_by_id(IdString("i-ii"))
         assert thing_node.id == "i-ii"
         assert thing_node.parentId == "i"
         assert thing_node.name == "ii"
         assert thing_node.description == "Category"
 
         with pytest.raises(StructureObjectNotFound):
-            get_thing_node_by_id("bla")
+            get_thing_node_by_id(IdString("bla"))
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.thing_nodes",
@@ -192,20 +195,23 @@ def test_blob_storage_get_thing_node_by_id():
                 ),
             ],
         ), pytest.raises(StructureObjectNotUnique):
-            get_thing_node_by_id("i-ii")
+            get_thing_node_by_id(IdString("i-ii"))
 
 
-def test_blob_storage_get_source_by_id():
+@pytest.mark.asyncio
+async def test_blob_storage_get_source_by_id() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=source_list,
     ):
-        source_by_id = get_source_by_id("i-i/A_2022-01-02T14:57:31+00:00")
+        source_by_id = await get_source_by_id(
+            IdString("i-i/A_2022-01-02T14:57:31+00:00")
+        )
         assert source_by_id.name == "A - 2022-01-02 14:57:31+00:00"
         assert source_by_id.thingNodeId == "i-i/A"
 
         with pytest.raises(StructureObjectNotFound):
-            get_source_by_id("bla")
+            await get_source_by_id(IdString("bla"))
 
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.create_sources",
@@ -226,22 +232,22 @@ def test_blob_storage_get_source_by_id():
             ),
         ],
     ), pytest.raises(StructureObjectNotUnique):
-        get_source_by_id("i-i/A_2022-01-02T14:57:31+00:00")
+        await get_source_by_id(IdString("i-i/A_2022-01-02T14:57:31+00:00"))
 
 
-def test_blob_storage_get_sink_by_id():
+def test_blob_storage_get_sink_by_id() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
         return_value=AdapterHierarchy.from_file(
             "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
         ),
     ):
-        sink_by_id = get_sink_by_id("i-i/A_next")
+        sink_by_id = get_sink_by_id(IdString("i-i/A_next"))
         assert sink_by_id.name == "A - Next Object"
         assert sink_by_id.thingNodeId == "i-i/A"
 
         with pytest.raises(StructureObjectNotFound):
-            get_sink_by_id("bla")
+            get_sink_by_id(IdString("bla"))
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
@@ -263,16 +269,18 @@ def test_blob_storage_get_sink_by_id():
                 ),
             ],
         ), pytest.raises(StructureObjectNotUnique):
-            get_sink_by_id("i-i/A_next")
+            get_sink_by_id(IdString("i-i/A_next"))
 
 
-def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
+@pytest.mark.asyncio
+async def test_blob_storage_get_source_by_thing_node_id_and_metadata_key() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=source_list,
     ):
-        source_by_tn_id_and_md_key = get_source_by_thing_node_id_and_metadata_key(
-            thing_node_id="i-i/A", metadata_key="A - 2022-01-02 14:57:31+00:00"
+        source_by_tn_id_and_md_key = await get_source_by_thing_node_id_and_metadata_key(
+            thing_node_id=IdString("i-i/A"),
+            metadata_key="A - 2022-01-02 14:57:31+00:00",
         )
         assert source_by_tn_id_and_md_key.id == "i-i/A_2022-01-02T14:57:31+00:00"
         assert source_by_tn_id_and_md_key.thingNodeId == "i-i/A"
@@ -281,8 +289,9 @@ def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
         assert source_by_tn_id_and_md_key.metadataKey == "A - 2022-01-02 14:57:31+00:00"
 
         with pytest.raises(StructureObjectNotFound):
-            get_source_by_thing_node_id_and_metadata_key(
-                thing_node_id="i-i/B", metadata_key="A - 2022-01-02 14:57:31+00:00"
+            await get_source_by_thing_node_id_and_metadata_key(
+                thing_node_id=IdString("i-i/B"),
+                metadata_key="A - 2022-01-02 14:57:31+00:00",
             )
 
     with mock.patch(
@@ -304,12 +313,13 @@ def test_blob_storage_get_source_by_thing_node_id_and_metadata_key():
             ),
         ],
     ), pytest.raises(StructureObjectNotUnique):
-        source_by_tn_id_and_md_key = get_source_by_thing_node_id_and_metadata_key(
-            thing_node_id="i-i/A", metadata_key="A - 2022-01-02 14:57:31+00:00"
+        source_by_tn_id_and_md_key = await get_source_by_thing_node_id_and_metadata_key(
+            thing_node_id=IdString("i-i/A"),
+            metadata_key="A - 2022-01-02 14:57:31+00:00",
         )
 
 
-def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
+def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
         return_value=AdapterHierarchy.from_file(
@@ -317,7 +327,7 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
         ),
     ):
         sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
-            thing_node_id="i-i/A", metadata_key="A - Next Object"
+            thing_node_id=IdString("i-i/A"), metadata_key="A - Next Object"
         )
         assert sink_by_tn_id_and_md_key.id == "i-i/A_next"
         assert sink_by_tn_id_and_md_key.thingNodeId == "i-i/A"
@@ -327,7 +337,7 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
 
         with pytest.raises(StructureObjectNotFound):
             get_sink_by_thing_node_id_and_metadata_key(
-                thing_node_id="i-i/B", metadata_key="A - Next Object"
+                thing_node_id=IdString("i-i/B"), metadata_key="A - Next Object"
             )
         with mock.patch(
             "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
@@ -350,5 +360,5 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key():
             ],
         ), pytest.raises(StructureObjectNotUnique):
             sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
-                thing_node_id="i-i/A", metadata_key="A - Next Object"
+                thing_node_id=IdString("i-i/A"), metadata_key="A - Next Object"
             )

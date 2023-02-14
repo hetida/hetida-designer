@@ -25,14 +25,14 @@ from hetdesrun.models.data_selection import FilteredSource
 logger = logging.getLogger(__name__)
 
 
-def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
+async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     logger.info(
         "Identify source with thing node id '%s' and metadata key '%s'",
         thing_node_id,
         metadata_key,
     )
     try:
-        source = get_source_by_thing_node_id_and_metadata_key(
+        source = await get_source_by_thing_node_id_and_metadata_key(
             IdString(thing_node_id), metadata_key
         )
     except (
@@ -54,7 +54,7 @@ def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         object_key.string,
     )
     try:
-        s3_client = get_s3_client()
+        s3_client = await get_s3_client()
     except (AdapterConnectionError, InvalidEndpointError) as error:
         raise error
     try:
@@ -102,7 +102,7 @@ async def load_data(
             raise AdapterClientWiringInvalidError(msg)
 
         try:
-            wf_input_name_to_data_dict[wf_input_name] = load_blob_from_storage(
+            wf_input_name_to_data_dict[wf_input_name] = await load_blob_from_storage(
                 filtered_source.ref_id, filtered_source.ref_key
             )
         except (AdapterHandlingException, AdapterConnectionError) as error:

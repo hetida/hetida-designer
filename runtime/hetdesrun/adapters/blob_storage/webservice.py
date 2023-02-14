@@ -73,7 +73,7 @@ async def get_structure_endpoint(
     logger.info("GET structure for parentId '%s'", parentId)
     try:
         filtered_tn_list = get_thing_nodes_by_parent_id(parentId)
-        filtered_src_list = get_sources_by_parent_id(parentId)
+        filtered_src_list = await get_sources_by_parent_id(parentId)
         filtered_snk_list = get_sinks_by_parent_id(parentId)
     except MissingHierarchyError as error:
         msg = (
@@ -121,7 +121,7 @@ async def get_sources_endpoint(
 ) -> MultipleSourcesResponse:
     logger.info("GET sources for filter string '%s'", filter_str)
     try:
-        found_sources = get_filtered_sources(filter_str=filter_str)
+        found_sources = await get_filtered_sources(filter_str=filter_str)
     except MissingHierarchyError as error:
         msg = f"Could not get sources because the hierarchy json is missing:\n{error}"
         logger.error(msg)
@@ -199,7 +199,7 @@ async def get_sources_metadata(
 async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
     logger.info("GET source with id '%s'", sourceId)
     try:
-        source = get_source_by_id(sourceId)
+        source = await get_source_by_id(sourceId)
     except StructureObjectNotFound as not_found_error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

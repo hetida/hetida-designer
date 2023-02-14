@@ -26,7 +26,9 @@ from hetdesrun.models.data_selection import FilteredSink
 logger = logging.getLogger(__name__)
 
 
-def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> None:
+async def write_blob_to_storage(
+    data: Any, thing_node_id: str, metadata_key: str
+) -> None:
     try:
         sink = get_sink_by_thing_node_id_and_metadata_key(
             IdString(thing_node_id), metadata_key
@@ -48,7 +50,7 @@ def write_blob_to_storage(data: Any, thing_node_id: str, metadata_key: str) -> N
         object_key.string,
     )
     try:
-        s3_client = get_s3_client()
+        s3_client = await get_s3_client()
     except (AdapterConnectionError, StorageAuthenticationError) as error:
         raise error
     try:
@@ -116,7 +118,9 @@ async def send_data(
 
         blob = wf_output_name_to_value_mapping_dict[wf_output_name]
         try:
-            write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key)
+            await write_blob_to_storage(
+                blob, filtered_sink.ref_id, filtered_sink.ref_key
+            )
         except (AdapterHandlingException, AdapterConnectionError) as error:
             raise error
     return {}

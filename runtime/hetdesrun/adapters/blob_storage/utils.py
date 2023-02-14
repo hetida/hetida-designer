@@ -12,7 +12,7 @@ from hetdesrun.adapters.exceptions import AdapterConnectionError
 logger = getLogger(__name__)
 
 
-def create_sources() -> list[BlobStorageStructureSource]:
+async def create_sources() -> list[BlobStorageStructureSource]:
     try:
         thing_nodes = get_adapter_structure().thing_nodes
         buckets = get_adapter_structure().structure_buckets
@@ -21,7 +21,7 @@ def create_sources() -> list[BlobStorageStructureSource]:
     source_list: list[BlobStorageStructureSource] = []
     for bucket in buckets:
         try:
-            object_key_strings = get_object_key_strings_in_bucket(bucket.name)
+            object_key_strings = await get_object_key_strings_in_bucket(bucket.name)
         except AdapterConnectionError as error:
             raise error
         for object_key_string in object_key_strings:

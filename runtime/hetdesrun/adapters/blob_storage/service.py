@@ -15,9 +15,9 @@ from hetdesrun.adapters.exceptions import AdapterConnectionError
 logger = getLogger(__name__)
 
 
-def get_session() -> boto3.Session:
+async def get_session() -> boto3.Session:
     try:
-        credentials = get_credentials()
+        credentials = await get_credentials()
     except StorageAuthenticationError as error:
         raise AdapterConnectionError(error) from error
     session = boto3.Session(
@@ -30,10 +30,10 @@ def get_session() -> boto3.Session:
     return session
 
 
-def get_s3_client() -> S3Client:
+async def get_s3_client() -> S3Client:
     endpoint_url = get_blob_adapter_config().endpoint_url
     try:
-        session = get_session()
+        session = await get_session()
     except AdapterConnectionError as error:
         raise error
     try:
@@ -45,9 +45,9 @@ def get_s3_client() -> S3Client:
     return client
 
 
-def get_object_key_strings_in_bucket(bucket_name: BucketName) -> list[IdString]:
+async def get_object_key_strings_in_bucket(bucket_name: BucketName) -> list[IdString]:
     try:
-        s3_client = get_s3_client()
+        s3_client = await get_s3_client()
     except (AdapterConnectionError, InvalidEndpointError) as error:
         raise error
     try:

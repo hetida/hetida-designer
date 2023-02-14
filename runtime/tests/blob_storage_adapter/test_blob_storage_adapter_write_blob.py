@@ -15,6 +15,7 @@ from hetdesrun.adapters.blob_storage.exceptions import (
 )
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
+    IdString,
     ObjectKey,
     StructureBucket,
 )
@@ -22,7 +23,10 @@ from hetdesrun.adapters.blob_storage.write_blob import send_data, write_blob_to_
 from hetdesrun.models.data_selection import FilteredSink
 
 
-def test_blob_storage_write_blob_to_storage_works(caplog):
+@pytest.mark.asyncio
+async def test_blob_storage_write_blob_to_storage_works(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
@@ -43,7 +47,7 @@ def test_blob_storage_write_blob_to_storage_works(caplog):
             logging.INFO
         ):
             caplog.clear()
-            write_blob_to_storage(
+            await write_blob_to_storage(
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
@@ -62,13 +66,14 @@ def test_blob_storage_write_blob_to_storage_works(caplog):
             assert struct.unpack(">i", joblib.load(file_object)) == (42,)
 
 
-def test_blob_storage_write_blob_to_storage_with_non_existing_sink():
+@pytest.mark.asyncio
+async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
         side_effect=StructureObjectNotFound("SinkNotFound message"),
     ):
         with pytest.raises(StructureObjectNotFound) as exc_info:
-            write_blob_to_storage(
+            await write_blob_to_storage(
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
@@ -76,13 +81,14 @@ def test_blob_storage_write_blob_to_storage_with_non_existing_sink():
         assert "SinkNotFound message" in str(exc_info.value)
 
 
-def test_blob_storage_write_blob_to_storage_with_multiple_existing_sinks():
+@pytest.mark.asyncio
+async def test_blob_storage_write_blob_to_storage_with_multiple_existing_sinks() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
         side_effect=StructureObjectNotUnique("SinkNotUnique message"),
     ):
         with pytest.raises(StructureObjectNotUnique) as exc_info:
-            write_blob_to_storage(
+            await write_blob_to_storage(
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
@@ -90,7 +96,8 @@ def test_blob_storage_write_blob_to_storage_with_multiple_existing_sinks():
         assert "SinkNotUnique message" in str(exc_info.value)
 
 
-def test_blob_storage_write_blob_to_storage_with_non_existing_bucket():
+@pytest.mark.asyncio
+async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
         with mock.patch(
@@ -107,7 +114,7 @@ def test_blob_storage_write_blob_to_storage_with_non_existing_bucket():
             ),
         ):
             with pytest.raises(AdapterConnectionError) as exc_info:
-                write_blob_to_storage(
+                await write_blob_to_storage(
                     data=struct.pack(">i", 42),
                     thing_node_id="i-ii/A",
                     metadata_key="A - Next Object",
@@ -115,7 +122,8 @@ def test_blob_storage_write_blob_to_storage_with_non_existing_bucket():
             assert "The bucket 'i-ii' does not exist!" in str(exc_info.value)
 
 
-def test_blob_storage_write_blob_to_storage_with_existing_object():
+@pytest.mark.asyncio
+async def test_blob_storage_write_blob_to_storage_with_existing_object() -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
@@ -141,13 +149,13 @@ def test_blob_storage_write_blob_to_storage_with_existing_object():
             )
             mocked_sink.to_structure_bucket_and_object_key.return_value = (
                 StructureBucket(name=bucket_name),
-                ObjectKey.from_string(object_key_string),
+                ObjectKey.from_string(IdString(object_key_string)),
             )
             with mock.patch(
                 "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
                 return_value=mocked_sink,
             ), pytest.raises(AdapterConnectionError):
-                write_blob_to_storage(
+                await write_blob_to_storage(
                     data=struct.pack(">i", 42),
                     thing_node_id="i-ii/A",
                     metadata_key="A - Next Object",
@@ -155,7 +163,7 @@ def test_blob_storage_write_blob_to_storage_with_existing_object():
 
 
 @pytest.mark.asyncio
-async def test_blob_storage_send_data_works():
+async def test_blob_storage_send_data_works() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.write_blob.write_blob_to_storage"
     ) as mocked_write_blob_to_storage:
@@ -180,7 +188,7 @@ async def test_blob_storage_send_data_works():
 
 
 @pytest.mark.asyncio
-async def test_blob_storage_send_data_with_error():
+async def test_blob_storage_send_data_with_error() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.write_blob.write_blob_to_storage",
         side_effect=AdapterConnectionError("Error message"),

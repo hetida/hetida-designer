@@ -112,13 +112,14 @@ def credentials() -> Credentials:
     )
 
 
-def test_blob_storage_authentication_obtain_credential_info_from_rest_api(
+@pytest.mark.asyncio
+async def test_blob_storage_authentication_obtain_credential_info_from_rest_api(
     access_token: str,
     credentials: Credentials,
 ) -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.authentication.get_access_token",
-        return_value=access_token,
+        return_value=mock.AsyncMock(return_value=access_token),
     ):
         with mock.patch(
             "hetdesrun.adapters.blob_storage.authentication.requests.post",
@@ -132,7 +133,7 @@ def test_blob_storage_authentication_obtain_credential_info_from_rest_api(
                     expiration_time_in_seconds=3600,
                 ),
             ):
-                credential_info = obtain_credential_info_from_rest_api()
+                credential_info = await obtain_credential_info_from_rest_api()
                 assert credential_info.credentials == credentials
                 assert (
                     credential_info.issue_timestamp.isoformat()
@@ -145,7 +146,7 @@ def test_blob_storage_authentication_obtain_credential_info_from_rest_api(
                 side_effect=StorageAuthenticationError("error message"),
             ):
                 with pytest.raises(StorageAuthenticationError) as exc_info:
-                    obtain_credential_info_from_rest_api()
+                    await obtain_credential_info_from_rest_api()
 
                 assert str(exc_info.value) == "error message"
 
@@ -154,7 +155,7 @@ def test_blob_storage_authentication_obtain_credential_info_from_rest_api(
             return_value=mock.Mock(status_code=333, text="error"),
         ):
             with pytest.raises(StorageAuthenticationError) as exc_info:
-                obtain_credential_info_from_rest_api()
+                await obtain_credential_info_from_rest_api()
 
             assert (
                 "BLOB storage credential request returned with status code 333"
@@ -221,7 +222,8 @@ def credential_info_overdue() -> CredentialInfo:
     )
 
 
-def test_blob_storage_authentication_obtain_or_refresh_credential_info_still_valid(
+@pytest.mark.asyncio
+async def test_blob_storage_authentication_obtain_or_refresh_credential_info_still_valid(
     credential_info_longer_valid: CredentialInfo,
     result_credential_info: CredentialInfo,
 ) -> None:
@@ -229,7 +231,7 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_still_val
         "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
         return_value=result_credential_info,
     ) as mocked_obtain_credential_info_from_rest_api:
-        credential_info = obtain_or_refresh_credential_info(
+        credential_info = await obtain_or_refresh_credential_info(
             existing_credential_info=credential_info_longer_valid,
         )
 
@@ -240,14 +242,15 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_still_val
         assert mocked_obtain_credential_info_from_rest_api.call_count == 0
 
 
-def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_works(
+@pytest.mark.asyncio
+async def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_works(
     result_credential_info: CredentialInfo,
 ) -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
         return_value=result_credential_info,
     ) as mocked_obtain_credential_info_from_rest_api:
-        credential_info = obtain_or_refresh_credential_info(
+        credential_info = await obtain_or_refresh_credential_info(
             existing_credential_info=None
         )
 
@@ -258,7 +261,8 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_works
         assert mocked_obtain_credential_info_from_rest_api.call_count == 1
 
 
-def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_works(
+@pytest.mark.asyncio
+async def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_works(
     credential_info_overdue: CredentialInfo,
     result_credential_info: CredentialInfo,
 ) -> None:
@@ -266,7 +270,7 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_w
         "hetdesrun.adapters.blob_storage.authentication.obtain_credential_info_from_rest_api",
         return_value=result_credential_info,
     ) as mocked_obtain_credential_info_from_rest_api:
-        credential_info = obtain_or_refresh_credential_info(
+        credential_info = await obtain_or_refresh_credential_info(
             existing_credential_info=credential_info_overdue
         )
 
@@ -277,7 +281,8 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_w
         assert mocked_obtain_credential_info_from_rest_api.call_count == 1
 
 
-def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_raises() -> (
+@pytest.mark.asyncio
+async def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_raises() -> (
     None
 ):
     with mock.patch(
@@ -285,13 +290,14 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_new_raise
         side_effect=StorageAuthenticationError,
     ) as mocked_obtain_credential_info_from_rest_api_raises:
         with pytest.raises(StorageAuthenticationError):
-            obtain_or_refresh_credential_info(existing_credential_info=None)
+            await obtain_or_refresh_credential_info(existing_credential_info=None)
 
         # not token obtain:
         assert mocked_obtain_credential_info_from_rest_api_raises.call_count == 1
 
 
-def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_raises(
+@pytest.mark.asyncio
+async def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_raises(
     credential_info_overdue: CredentialInfo,
 ) -> None:
     with mock.patch(
@@ -299,7 +305,7 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_r
         side_effect=StorageAuthenticationError,
     ) as mocked_obtain_credential_info_from_rest_api_raises:
         with pytest.raises(StorageAuthenticationError):
-            obtain_or_refresh_credential_info(
+            await obtain_or_refresh_credential_info(
                 existing_credential_info=credential_info_overdue,
             )
 
@@ -307,7 +313,8 @@ def test_blob_storage_authentication_obtain_or_refresh_credential_info_refresh_r
         assert mocked_obtain_credential_info_from_rest_api_raises.call_count == 1
 
 
-def test_blob_storage_adapter_create_or_get_named_credential_manager(
+@pytest.mark.asyncio
+async def test_blob_storage_adapter_create_or_get_named_credential_manager(
     result_credential_info: CredentialInfo,
 ) -> None:
     with mock.patch(
@@ -315,7 +322,7 @@ def test_blob_storage_adapter_create_or_get_named_credential_manager(
         return_value=result_credential_info,
     ):
         credential_manager = create_or_get_named_credential_manager(key="key")
-        credentials = credential_manager.get_credentials()
+        credentials = await credential_manager.get_credentials()
 
         assert credentials.access_key_id == "result_id"
         assert credentials.secret_access_key == "result_key"  # noqa: S105
@@ -338,37 +345,40 @@ def service_credentials() -> ServiceCredentials:
     )
 
 
-def test_blob_storage_adapter_get_access_token(access_token: str) -> None:
+@pytest.mark.asyncio
+async def test_blob_storage_adapter_get_access_token(access_token: str) -> None:
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.sync_wrapped_get_auth_headers",
+        "hetdesrun.adapters.blob_storage.authentication.get_auth_headers",
         return_value={"Authorization": "Bearer " + access_token},
     ):
-        assert get_access_token() == access_token
+        assert await get_access_token() == access_token
 
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.sync_wrapped_get_auth_headers",
+        "hetdesrun.adapters.blob_storage.authentication.get_auth_headers",
         side_effect=ValueError,
     ), pytest.raises(StorageAuthenticationError, match="Cannot get access token"):
-        get_access_token()
+        await get_access_token()
 
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.sync_wrapped_get_auth_headers",
+        "hetdesrun.adapters.blob_storage.authentication.get_auth_headers",
         return_value={},
     ), pytest.raises(StorageAuthenticationError, match="Cannot extract access token"):
-        get_access_token()
+        await get_access_token()
 
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.authentication.sync_wrapped_get_auth_headers",
+        "hetdesrun.adapters.blob_storage.authentication.get_auth_headers",
         return_value={"Authorization": access_token},
     ):
-        assert get_access_token() == access_token
+        assert await get_access_token() == access_token
 
 
-def test_blob_storage_adapter_get_credentials(credentials: Credentials) -> None:
+@pytest.mark.asyncio
+async def test_blob_storage_adapter_get_credentials(credentials: Credentials) -> None:
     credential_manager_mock = mock.Mock()
-    credential_manager_mock.get_credentials = mock.MagicMock(return_value=credentials)
+    credential_manager_mock.get_credentials = mock.AsyncMock(return_value=credentials)
     with mock.patch(
         "hetdesrun.adapters.blob_storage.authentication.create_or_get_named_credential_manager",
         return_value=credential_manager_mock,
     ):
-        assert get_credentials() == credentials
+        returned_credentials = await get_credentials()
+        assert returned_credentials == credentials

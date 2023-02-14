@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StorageAuthenticationError
-from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
+from hetdesrun.webservice.auth_dependency import get_auth_headers
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -91,10 +91,10 @@ def parse_credential_info_from_xml_string(
     )
 
 
-def obtain_credential_info_from_rest_api() -> CredentialInfo:
+async def obtain_credential_info_from_rest_api() -> CredentialInfo:
     now = datetime.now(timezone.utc)
     try:
-        access_token = get_access_token()
+        access_token = await get_access_token()
     except StorageAuthenticationError as error:
         raise error
     response = requests.post(
@@ -109,11 +109,13 @@ def obtain_credential_info_from_rest_api() -> CredentialInfo:
         auth=None,
         timeout=get_config().external_request_timeout,
     )
+    # TODO: remove access token from logging
     if response.status_code >= 300:
         msg = (
             f"BLOB storage credential request returned with status code {response.status_code} "
             f"and response text:\n{response.text}\n"
             f"When calling URL:\n{get_blob_adapter_config().endpoint_url}\n"
+            f"with access token:\n{access_token}"
         )
         logger.error(msg)
         raise StorageAuthenticationError(msg)
@@ -141,7 +143,7 @@ def credentials_still_valid_enough(credential_info: CredentialInfo) -> bool:
     )
 
 
-def obtain_or_refresh_credential_info(
+async def obtain_or_refresh_credential_info(
     existing_credential_info: CredentialInfo | None = None,
 ) -> CredentialInfo:
     if existing_credential_info is not None:
@@ -150,7 +152,7 @@ def obtain_or_refresh_credential_info(
         logger.debug("Credentials will soon expire. Trying to get new credentials.")
 
     try:
-        return obtain_credential_info_from_rest_api()
+        return await obtain_credential_info_from_rest_api()
     except StorageAuthenticationError as error:
         # TODO: tidy up repeating log messages
         logger.error("Obtaining new credentails failed:\n%s", str(error))
@@ -164,9 +166,9 @@ class CredentialManager:
         self._current_credential_info = None
         self._credential_thread_lock = threading.Lock()
 
-    def _obtain_or_refresh_credential_info(self) -> None:
+    async def _obtain_or_refresh_credential_info(self) -> None:
         try:
-            credential_info = obtain_or_refresh_credential_info(
+            credential_info = await obtain_or_refresh_credential_info(
                 self._current_credential_info
             )
         except StorageAuthenticationError as error:
@@ -174,9 +176,9 @@ class CredentialManager:
         with self._credential_thread_lock:
             self._current_credential_info = credential_info
 
-    def get_credentials(self) -> Credentials:
+    async def get_credentials(self) -> Credentials:
         try:
-            self._obtain_or_refresh_credential_info()
+            await self._obtain_or_refresh_credential_info()
         except StorageAuthenticationError as error:
             raise error
         if self._current_credential_info is None:
@@ -204,9 +206,9 @@ def create_or_get_named_credential_manager(key: str) -> CredentialManager:
     return manager_dict[key]
 
 
-def get_access_token() -> str:
+async def get_access_token() -> str:
     try:
-        token_header = sync_wrapped_get_auth_headers()
+        token_header = await get_auth_headers()
     except ValueError as error:
         msg = "Cannot get access token from auth header"
         logger.error(msg)
@@ -220,10 +222,10 @@ def get_access_token() -> str:
     return access_token
 
 
-def get_credentials() -> Credentials:
+async def get_credentials() -> Credentials:
     credential_manager = create_or_get_named_credential_manager("blob_adapter_cred")
     try:
-        credentials = credential_manager.get_credentials()
+        credentials = await credential_manager.get_credentials()
     except StorageAuthenticationError as error:
         raise error
     logger.info("Got credentials from credential manager")

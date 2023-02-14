@@ -19,7 +19,8 @@ from hetdesrun.adapters.blob_storage.models import BlobStorageStructureSource
 from hetdesrun.models.data_selection import FilteredSource
 
 
-def test_blob_storage_load_blob_from_storage_works(caplog: Any) -> None:
+@pytest.mark.asyncio
+async def test_blob_storage_load_blob_from_storage_works(caplog: Any) -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
@@ -49,7 +50,7 @@ def test_blob_storage_load_blob_from_storage_works(caplog: Any) -> None:
             logging.INFO
         ):
             caplog.clear()
-            blob = load_blob_from_storage(
+            blob = await load_blob_from_storage(
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
             )
@@ -61,7 +62,8 @@ def test_blob_storage_load_blob_from_storage_works(caplog: Any) -> None:
             assert struct.unpack(">i", blob) == (42,)
 
 
-def test_blob_storage_load_blob_from_storage_with_non_existing_source() -> None:
+@pytest.mark.asyncio
+async def test_blob_storage_load_blob_from_storage_with_non_existing_source() -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
@@ -80,7 +82,7 @@ def test_blob_storage_load_blob_from_storage_with_non_existing_source() -> None:
         ), pytest.raises(
             StructureObjectNotFound
         ) as exc_info:
-            load_blob_from_storage(
+            await load_blob_from_storage(
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
             )
@@ -88,7 +90,8 @@ def test_blob_storage_load_blob_from_storage_with_non_existing_source() -> None:
         assert "SourceNotFound message" in str(exc_info.value)
 
 
-def test_blob_storage_load_blob_from_storage_with_multiple_existing_sources() -> None:
+@pytest.mark.asyncio
+async def test_blob_storage_load_blob_from_storage_with_multiple_existing_sources() -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
@@ -107,7 +110,7 @@ def test_blob_storage_load_blob_from_storage_with_multiple_existing_sources() ->
         ), pytest.raises(
             StructureObjectNotUnique
         ) as exc_info:
-            load_blob_from_storage(
+            await load_blob_from_storage(
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
             )
@@ -115,7 +118,8 @@ def test_blob_storage_load_blob_from_storage_with_multiple_existing_sources() ->
         assert ("SourceNotUnique message") in str(exc_info.value)
 
 
-def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() -> None:
+@pytest.mark.asyncio
+async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
         with mock.patch(
@@ -133,14 +137,15 @@ def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() -> None:
         ), pytest.raises(
             AdapterConnectionError
         ) as exc_info:
-            load_blob_from_storage(
+            await load_blob_from_storage(
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
             )
         assert "The bucket 'i-ii' does not exist!" in str(exc_info.value)
 
 
-def test_blob_storage_load_blob_from_storage_with_non_existing_object() -> None:
+@pytest.mark.asyncio
+async def test_blob_storage_load_blob_from_storage_with_non_existing_object() -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
@@ -160,7 +165,7 @@ def test_blob_storage_load_blob_from_storage_with_non_existing_object() -> None:
         ), pytest.raises(
             AdapterConnectionError
         ) as exc_info:
-            load_blob_from_storage(
+            await load_blob_from_storage(
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
             )
