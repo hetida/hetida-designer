@@ -111,10 +111,10 @@ Usually the class is not needed explicitly so that the there is no reason to lin
 
 
 ## Identifiy source for latest stored object via endpoints
-The [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md) adds the storage timestamp to the name of each stored object and automatically generates a new source corresponding to this object.
+The [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md) adds the storage timestamp to the name of each stored object and automatically creates a new source corresponding to that object.
 
-A request to the [structure-endpoint-get](./adapter_system/generic_rest_adapters/web_service_interface.md#structure-endpoint-get) with the `ref_id` as `parentId` path parameter will yield a list of all thing nodes, sources and sinks below the thing node with the id `parentId` as a response.
-The sources list is sorted in ascending order, hence the last list item is the source corresponding to the latest stored object.
+A request to the [/structure endpoint (GET)](./adapter_system/generic_rest_adapters/web_service_interface.md#structure-endpoint-get) with the `ref_id` as `parentId` path parameter will return a list of all thing nodes, sources and sinks below the thingnode with the id `parentId` as a response.
+The source list is sorted in ascending order so that the last list item is the source corresponding to the last object saved.
 ```json
 {
 	"id": "i-i/C_2023-02-14T12:19:38+00:00",
