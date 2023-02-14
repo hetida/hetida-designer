@@ -11,7 +11,6 @@ from moto import mock_s3
 
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
-    BlobStorageStructureSource,
 )
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import (
