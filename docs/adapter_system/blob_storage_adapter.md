@@ -55,7 +55,7 @@ This [file](../../runtime/demodata/blob_storage_adapter_hierarchy.json) contains
 }
 ```
 
-The names for the categories should consist only of alphanumeric upper and lower case letters without spaces, because they are interpreted as parts of the bucket names and object keys. Since bucket names cannot contain uppercase letters, the category names are converted to lowercase when the corresponding bucket names are generated. When naming categories, note that bucket names must consist of a minimum of 3 and a maximum of 63 characters.
+The names for the hierarchy nodes should consist only of alphanumeric upper and lower case letters without spaces, because they are interpreted as parts of the bucket names and object keys. Since bucket names cannot contain uppercase letters, the hierarchy node names are converted to lowercase when the corresponding bucket names are generated. When naming hierarchy nodes, note that bucket names must consist of a minimum of 3 and a maximum of 63 characters.
 
 The buckets defined by the adapter structure must already be present in the blob storage. For the example adapter hierarchy these would be buckets with the following names:
 * `planta-picklingunit`

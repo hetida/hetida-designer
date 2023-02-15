@@ -4,7 +4,7 @@ import pytest
 
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
-    Category,
+    HierarchyNode,
     IdString,
     StructureBucket,
     StructureThingNode,
@@ -34,10 +34,10 @@ async def test_blob_storage_utils_create_sources() -> None:
         "hetdesrun.adapters.blob_storage.utils.get_adapter_structure",
         return_value=AdapterHierarchy(
             structure=(
-                Category(
+                HierarchyNode(
                     name="I",
                     description="",
-                    substructure=(Category(name="I", description=""),),
+                    substructure=(HierarchyNode(name="I", description=""),),
                 ),
             ),
         ),

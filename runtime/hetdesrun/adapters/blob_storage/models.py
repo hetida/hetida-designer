@@ -421,10 +421,10 @@ class StructureResponse(BaseModel):
     sinks: list[BlobStorageStructureSink]
 
 
-class Category(BaseModel):
+class HierarchyNode(BaseModel):
     name: ThingNodeName
     description: str
-    substructure: tuple["Category", ...] | None = None
+    substructure: tuple["HierarchyNode", ...] | None = None
     below_structure_defines_object_key: bool = False
 
     class Config:
@@ -525,7 +525,7 @@ def find_duplicates(item_list: list) -> list:
 
 @cache
 def create_blob_storage_adapter_structure_objects_from_hierarchy(
-    structure: tuple[Category, ...]
+    structure: tuple[HierarchyNode, ...]
 ) -> tuple[
     list[StructureThingNode], list[StructureBucket], list[BlobStorageStructureSink]
 ]:
@@ -549,7 +549,7 @@ class AdapterHierarchy(BaseModel):
     and delimiters and introduce the concept of folders.
     """
 
-    structure: tuple[Category, ...]
+    structure: tuple[HierarchyNode, ...]
 
     class Config:
         arbitrary_types_allowed = True

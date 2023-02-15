@@ -16,7 +16,7 @@ from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
-    Category,
+    HierarchyNode,
     IdString,
     ObjectKey,
     StructureBucket,
@@ -486,13 +486,13 @@ def test_blob_storage_class_structure_sink() -> None:
 
 
 def test_blob_storage_class_category() -> None:
-    category = Category(
+    category = HierarchyNode(
         name="I",
         description="Category",
         below_structure_defines_object_key=True,
         substructure=[
-            Category(name="A", description="Subcategory"),
-            Category(name="B", description="Subcategory"),
+            HierarchyNode(name="A", description="Subcategory"),
+            HierarchyNode(name="B", description="Subcategory"),
         ],
     )
 
@@ -500,7 +500,7 @@ def test_blob_storage_class_category() -> None:
     assert category.description == "Category"
     assert category.substructure is not None
     assert len(category.substructure) == 2
-    assert isinstance(category.substructure[0], Category)
+    assert isinstance(category.substructure[0], HierarchyNode)
     assert category.substructure[0].name == "A"
     assert category.substructure[0].description == "Subcategory"
     assert category.substructure[0].substructure is None
@@ -551,16 +551,16 @@ def test_blob_storage_class_category() -> None:
 
 
 def test_blob_storage_category_create_structure_too_long_bucket_name() -> None:
-    category = Category(
+    category = HierarchyNode(
         name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
         description="Super Category",
         substructure=[
-            Category(
+            HierarchyNode(
                 name="iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
                 description="Category",
                 below_structure_defines_object_key=True,
                 substructure=[
-                    Category(name="C", description="Subcategory"),
+                    HierarchyNode(name="C", description="Subcategory"),
                 ],
             ),
         ],
@@ -597,42 +597,44 @@ def test_blob_storage_models_find_duplicates() -> None:
 def test_blob_storage_class_adapter_hierarchy_happy_path() -> None:
     adapter_hierarchy = AdapterHierarchy(
         structure=[
-            Category(
+            HierarchyNode(
                 name="I",
                 description="Super Category",
                 substructure=[
-                    Category(
+                    HierarchyNode(
                         name="i",
                         description="Category",
                         below_structure_defines_object_key=True,
                         substructure=[
-                            Category(
+                            HierarchyNode(
                                 name="A",
                                 description="Subcategory",
                                 substructure=[],
                             ),
-                            Category(
+                            HierarchyNode(
                                 name="B",
                                 description="Subcategory",
                                 substructure=None,
                             ),
-                            Category(name="C", description="Subcategory"),
-                            Category(name="D", description="Subcategory"),
+                            HierarchyNode(name="C", description="Subcategory"),
+                            HierarchyNode(name="D", description="Subcategory"),
                         ],
                     ),
-                    Category(
+                    HierarchyNode(
                         name="ii",
                         description="Category",
                         below_structure_defines_object_key=True,
-                        substructure=[Category(name="E", description="Subcategory")],
+                        substructure=[
+                            HierarchyNode(name="E", description="Subcategory")
+                        ],
                     ),
-                    Category(
+                    HierarchyNode(
                         name="iii",
                         description="Category",
                         below_structure_defines_object_key=True,
                         substructure=[
-                            Category(name="F", description="Subcategory"),
-                            Category(name="G", description="Subcategory"),
+                            HierarchyNode(name="F", description="Subcategory"),
+                            HierarchyNode(name="G", description="Subcategory"),
                         ],
                     ),
                 ],
@@ -675,7 +677,7 @@ def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path(
     None
 ):
     adapter_hierarchy = AdapterHierarchy(
-        structure=(Category(name="I", description=""),)
+        structure=(HierarchyNode(name="I", description=""),)
     )
     with pytest.raises(ValueError, match="Without an object key prefix") as exc_info:
         adapter_hierarchy.thing_nodes
@@ -684,16 +686,16 @@ def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path(
 
 def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error() -> None:
     structure = (
-        Category(
+        HierarchyNode(
             name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
             description="Super Category",
             substructure=[
-                Category(
+                HierarchyNode(
                     name="iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
                     description="Category",
                     below_structure_defines_object_key=True,
                     substructure=[
-                        Category(name="C", description="Subcategory"),
+                        HierarchyNode(name="C", description="Subcategory"),
                     ],
                 ),
             ],
@@ -717,11 +719,11 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error() -> None:
 def test_blob_storage_adapter_hierarchy_with_structure_invalid_error() -> None:
     adapter_hierarchy = AdapterHierarchy(
         structure=(
-            Category(
+            HierarchyNode(
                 name="I",
                 description="Super Category",
                 substructure=[
-                    Category(
+                    HierarchyNode(
                         name="i",
                         description="Category",
                     ),
@@ -739,23 +741,23 @@ def test_blob_storage_adapter_hierarchy_with_structure_invalid_error() -> None:
 def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
     adapter_hierarchy = AdapterHierarchy(
         structure=[
-            Category(
+            HierarchyNode(
                 name="III",
                 description="Super Category",
                 below_structure_defines_object_key=True,
                 substructure=[
-                    Category(
+                    HierarchyNode(
                         name="i",
                         description="Category",
                     )
                 ],
             ),
-            Category(
+            HierarchyNode(
                 name="iii",
                 description="Super Category",
                 below_structure_defines_object_key=True,
                 substructure=[
-                    Category(
+                    HierarchyNode(
                         name="I",
                         description="Category",
                     )
