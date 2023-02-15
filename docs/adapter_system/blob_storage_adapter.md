@@ -102,17 +102,14 @@ blob-storage-adapter|Blob-Storage-Adapter|http://localhost:8090/adapters/blob|ht
 ```
 
 ## Usage
+All sources and sinks of the blob storage adapter are of type `Any`, thus only inputs and outputs of type `Any` can be wired to the blob storage adapter.
+The `dump` and `load` methods of the Python package `joblib` are used to serialize and deserialize these inputs and outputs.
 
 ### Basic Usage
 
-After having made adaptions to the configuration described above you need to (re)start with
+The workflows "Get ExampleClass Entity Attributes" and "Create ExampleClass Entity" provide a minimal example of how objects with a self defined class can be stored and loaded.
 
-```bash
-docker-compose stop
-docker-compose up
-```
-
-Now all all objects for which bucket name and object key match the adapter hierarchy should be available as sources via selecting "Blob Storage Adapter" for an input in the Execution dialog:
+Selecting "Blob Storage Adapter" for an input in the Execution dialog sources should be available for all objects for which bucket name and object key match the adapter hierarchy:
 <img src="./assets/blob_storage_adapter_selected.png" height="100" width=450>
 <img src="./assets/blob_storage_adapter_assign_source.png" height="780" width=700>
 
