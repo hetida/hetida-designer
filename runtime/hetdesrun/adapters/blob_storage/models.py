@@ -479,7 +479,11 @@ class HierarchyNode(BaseModel):
         )
         thing_nodes.append(thing_node)
 
-        if self.below_structure_defines_object_key is True:
+        below_structure_defines_object_key = (
+            self.below_structure_defines_object_key is True
+            or (part_of_bucket_name is True and self.get_depth() == 2)
+        )
+        if below_structure_defines_object_key:
             if part_of_bucket_name is False:
                 raise ValueError(
                     f"Hierarchy Error identified at HierarchyNode '{self.name}'! It appears as if "
@@ -504,7 +508,7 @@ class HierarchyNode(BaseModel):
                     sinks=sinks,
                     parent_id=thing_node.id,
                     part_of_bucket_name=part_of_bucket_name
-                    if self.below_structure_defines_object_key in (None, False)
+                    if below_structure_defines_object_key is False
                     else False,
                 )
         else:  # hierarchy_node.substructure is None or len(hierarchy_node.substructure) == 0

@@ -7,7 +7,7 @@
                 {
                     "name": "i",
                     "description": "Category",
-                    "below_structure_defines_object_key": true,
+                    "below_structure_defines_object_key": false,
                     "substructure": [
                         {
                             "name": "A",

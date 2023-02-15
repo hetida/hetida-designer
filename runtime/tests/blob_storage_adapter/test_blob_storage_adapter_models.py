@@ -485,8 +485,8 @@ def test_blob_storage_class_structure_sink() -> None:
     assert "the same string as its name 'A - Next Object'!" in str(exc_info.value)
 
 
-def test_blob_storage_class_category() -> None:
-    category = HierarchyNode(
+def test_blob_storage_class_hierarchy_node() -> None:
+    hierarchy_node = HierarchyNode(
         name="I",
         description="Category",
         below_structure_defines_object_key=True,
@@ -496,33 +496,33 @@ def test_blob_storage_class_category() -> None:
         ],
     )
 
-    assert category.name == "I"
-    assert category.description == "Category"
-    assert category.substructure is not None
-    assert len(category.substructure) == 2
-    assert isinstance(category.substructure[0], HierarchyNode)
-    assert category.substructure[0].name == "A"
-    assert category.substructure[0].description == "Subcategory"
-    assert category.substructure[0].substructure is None
-    assert category.substructure[0].get_depth() == 1
-    assert category.substructure[1].name == "B"
-    assert category.substructure[1].description == "Subcategory"
-    assert category.substructure[1].substructure is None
-    assert category.substructure[1].get_depth() == 1
-    assert category.get_depth() == 2
+    assert hierarchy_node.name == "I"
+    assert hierarchy_node.description == "Category"
+    assert hierarchy_node.substructure is not None
+    assert len(hierarchy_node.substructure) == 2
+    assert isinstance(hierarchy_node.substructure[0], HierarchyNode)
+    assert hierarchy_node.substructure[0].name == "A"
+    assert hierarchy_node.substructure[0].description == "Subcategory"
+    assert hierarchy_node.substructure[0].substructure is None
+    assert hierarchy_node.substructure[0].get_depth() == 1
+    assert hierarchy_node.substructure[1].name == "B"
+    assert hierarchy_node.substructure[1].description == "Subcategory"
+    assert hierarchy_node.substructure[1].substructure is None
+    assert hierarchy_node.substructure[1].get_depth() == 1
+    assert hierarchy_node.get_depth() == 2
 
-    thing_node_from_category = category.to_thing_node(
+    thing_node_from_hierarchy_node = hierarchy_node.to_thing_node(
         parent_id=IdString("i"), separator="-"
     )
-    assert thing_node_from_category.id == "i-i"
-    assert thing_node_from_category.parentId == "i"
-    assert thing_node_from_category.name == "I"
-    assert thing_node_from_category.description == "Category"
+    assert thing_node_from_hierarchy_node.id == "i-i"
+    assert thing_node_from_hierarchy_node.parentId == "i"
+    assert thing_node_from_hierarchy_node.name == "I"
+    assert thing_node_from_hierarchy_node.description == "Category"
 
     thing_nodes: list[StructureThingNode] = []
     bucket_names: list[StructureBucket] = []
     sinks: list[BlobStorageStructureSink] = []
-    category.create_structure(
+    hierarchy_node.create_structure(
         thing_nodes=thing_nodes,
         buckets=bucket_names,
         sinks=sinks,
@@ -550,8 +550,8 @@ def test_blob_storage_class_category() -> None:
     assert sinks[1].name == "B - Next Object"
 
 
-def test_blob_storage_category_create_structure_too_long_bucket_name() -> None:
-    category = HierarchyNode(
+def test_blob_storage_hierarchy_node_create_structure_too_long_bucket_name() -> None:
+    hierarchy_node = HierarchyNode(
         name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
         description="Super Category",
         substructure=[
@@ -570,7 +570,7 @@ def test_blob_storage_category_create_structure_too_long_bucket_name() -> None:
     bucket_names: list[StructureBucket] = []
     sinks: list[BlobStorageStructureSink] = []
     with pytest.raises(ValueError, match="to BucketName") as exc_info:
-        category.create_structure(
+        hierarchy_node.create_structure(
             thing_nodes=thing_nodes,
             buckets=bucket_names,
             sinks=sinks,
@@ -716,11 +716,13 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error() -> None:
     assert "to BucketName" in str(exc_info.value)
 
 
-def test_blob_storage_adapter_hierarchy_with_structure_invalid_error() -> None:
+def test_blob_storage_adapter_hierarchy_identify_second_last_node_as_bucket_end() -> (
+    None
+):
     adapter_hierarchy = AdapterHierarchy(
         structure=(
             HierarchyNode(
-                name="I",
+                name="III",
                 description="Super Category",
                 substructure=[
                     HierarchyNode(
@@ -732,10 +734,7 @@ def test_blob_storage_adapter_hierarchy_with_structure_invalid_error() -> None:
         )
     )
 
-    with pytest.raises(ValueError, match="Without an object key prefix") as exc_info:
-        adapter_hierarchy.thing_nodes
-
-    assert "Without an object key prefix no sinks or sources" in str(exc_info.value)
+    assert adapter_hierarchy.structure_buckets[0].name == "iii"
 
 
 def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
