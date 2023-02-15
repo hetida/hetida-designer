@@ -100,11 +100,9 @@ def init_app() -> FastAPI:
     except KeyError:
         pass
 
+    from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
     from hetdesrun.adapters.blob_storage.webservice import (
         blob_storage_adapter_router,
-    )
-    from hetdesrun.adapters.blob_storage.config import (
-        get_blob_adapter_config
     )
     from hetdesrun.adapters.local_file.webservice import (
         local_file_adapter_router,
@@ -131,7 +129,7 @@ def init_app() -> FastAPI:
         app.include_router(
             local_file_adapter_router
         )  # auth dependency set individually per endpoint
-        if get_blob_adapter_config().adapter_hierarchy_location is not None:
+        if get_blob_adapter_config().adapter_hierarchy_location != "":
             app.include_router(
                 blob_storage_adapter_router
             )  # auth dependency set individually per endpoint

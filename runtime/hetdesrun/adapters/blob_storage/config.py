@@ -5,7 +5,7 @@ class BlobStorageAdapterConfig(BaseSettings):
     """Configuration for blob storage adapter"""
 
     adapter_hierarchy_location: str = Field(
-        "/mount/blob_storage_adapter_hierarchy.json",
+        "",
         env="BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION",
     )
     access_duration: int = Field(3600, env="BLOB_STORAGE_ACCESS_DURATION")
