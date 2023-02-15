@@ -489,7 +489,7 @@ def test_blob_storage_class_category() -> None:
     category = Category(
         name="I",
         description="Category",
-        end_of_bucket=True,
+        below_structure_defines_object_key=True,
         substructure=[
             Category(name="A", description="Subcategory"),
             Category(name="B", description="Subcategory"),
@@ -558,7 +558,7 @@ def test_blob_storage_category_create_structure_too_long_bucket_name() -> None:
             Category(
                 name="iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
                 description="Category",
-                end_of_bucket=True,
+                below_structure_defines_object_key=True,
                 substructure=[
                     Category(name="C", description="Subcategory"),
                 ],
@@ -604,7 +604,7 @@ def test_blob_storage_class_adapter_hierarchy_happy_path() -> None:
                     Category(
                         name="i",
                         description="Category",
-                        end_of_bucket=True,
+                        below_structure_defines_object_key=True,
                         substructure=[
                             Category(
                                 name="A",
@@ -623,13 +623,13 @@ def test_blob_storage_class_adapter_hierarchy_happy_path() -> None:
                     Category(
                         name="ii",
                         description="Category",
-                        end_of_bucket=True,
+                        below_structure_defines_object_key=True,
                         substructure=[Category(name="E", description="Subcategory")],
                     ),
                     Category(
                         name="iii",
                         description="Category",
-                        end_of_bucket=True,
+                        below_structure_defines_object_key=True,
                         substructure=[
                             Category(name="F", description="Subcategory"),
                             Category(name="G", description="Subcategory"),
@@ -691,7 +691,7 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error() -> None:
                 Category(
                     name="iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
                     description="Category",
-                    end_of_bucket=True,
+                    below_structure_defines_object_key=True,
                     substructure=[
                         Category(name="C", description="Subcategory"),
                     ],
@@ -742,7 +742,7 @@ def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
             Category(
                 name="III",
                 description="Super Category",
-                end_of_bucket=True,
+                below_structure_defines_object_key=True,
                 substructure=[
                     Category(
                         name="i",
@@ -753,7 +753,7 @@ def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
             Category(
                 name="iii",
                 description="Super Category",
-                end_of_bucket=True,
+                below_structure_defines_object_key=True,
                 substructure=[
                     Category(
                         name="I",

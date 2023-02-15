@@ -425,7 +425,7 @@ class Category(BaseModel):
     name: ThingNodeName
     description: str
     substructure: tuple["Category", ...] | None = None
-    end_of_bucket: bool | None = None
+    below_structure_defines_object_key: bool | None = None
 
     class Config:
         frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
@@ -479,12 +479,12 @@ class Category(BaseModel):
         )
         thing_nodes.append(thing_node)
 
-        if self.end_of_bucket is True:
+        if self.below_structure_defines_object_key is True:
             if part_of_bucket_name is False:
                 raise ValueError(
-                    f"Hierarchy Error identified at Category '{self.name}'! "
-                    'It appears "end_of_bucket" has been true for a super category already, '
-                    "but then it should not be true again for any of its subcategories!"
+                    f"Hierarchy Error identified at Category '{self.name}'! It appears as if "
+                    '"below_structure_defines_object_key" has been true for a super category '
+                    "already, but then it should not be true again for any of its subcategories!"
                 )
             try:
                 bucket = StructureBucket(name=thing_node.id)
@@ -504,7 +504,7 @@ class Category(BaseModel):
                     sinks=sinks,
                     parent_id=thing_node.id,
                     part_of_bucket_name=part_of_bucket_name
-                    if self.end_of_bucket in (None, False)
+                    if self.below_structure_defines_object_key in (None, False)
                     else False,
                 )
         else:  # category.substructure is None or len(category.substructure) == 0

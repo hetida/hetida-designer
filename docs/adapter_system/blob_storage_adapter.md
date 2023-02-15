@@ -35,7 +35,7 @@ This [file](../../runtime/demodata/blob_storage_adapter_hierarchy.json) contains
                 {
                     "name": "PicklingUnit",
                     "description": "Plant A Pickling Unit",
-                    "end_of_bucket": true,
+                    "below_structure_defines_object_key": true,
                     "substructure": [
                         {
                             "name": "Influx",

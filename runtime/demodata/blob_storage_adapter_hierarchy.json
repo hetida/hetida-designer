@@ -7,7 +7,7 @@
                 {
                     "name": "PicklingUnit",
                     "description": "Plant A Pickling Unit",
-                    "end_of_bucket": true,
+                    "below_structure_defines_object_key": true,
                     "substructure": [
                         {
                             "name": "Influx",
@@ -34,7 +34,7 @@
                 {
                     "name": "MillingUnit",
                     "description": "Plant A Milling Unit",
-                    "end_of_bucket": true,
+                    "below_structure_defines_object_key": true,
                     "substructure": [
                         {
                             "name": "Influx",
@@ -63,7 +63,7 @@
         {
             "name": "PlantB",
             "description": "Plant B",
-            "end_of_bucket": true,
+            "below_structure_defines_object_key": true,
             "substructure": [
                 {
                     "name": "PicklingUnit",

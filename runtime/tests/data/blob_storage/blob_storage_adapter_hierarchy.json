@@ -7,7 +7,7 @@
                 {
                     "name": "i",
                     "description": "Category",
-                    "end_of_bucket": true,
+                    "below_structure_defines_object_key": true,
                     "substructure": [
                         {
                             "name": "A",
@@ -32,7 +32,7 @@
                 {
                     "name": "ii",
                     "description": "Category",
-                    "end_of_bucket": true,
+                    "below_structure_defines_object_key": true,
                     "substructure": [
                         {
                             "name": "E",
@@ -43,7 +43,7 @@
                 {
                     "name": "iii",
                     "description": "Category",
-                    "end_of_bucket": true,
+                    "below_structure_defines_object_key": true,
                     "substructure": [
                         {
                             "name": "F",
@@ -60,7 +60,7 @@
         {
             "name": "III",
             "description": "Category",
-            "end_of_bucket": true,
+            "below_structure_defines_object_key": true,
             "substructure": [
                 {
                     "name": "x",
