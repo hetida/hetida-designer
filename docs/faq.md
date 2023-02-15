@@ -117,11 +117,11 @@ A request to the [/structure endpoint (GET)](./adapter_system/generic_rest_adapt
 The source list is sorted in ascending order so that the last list item is the source corresponding to the last object saved.
 ```json
 {
-	"id": "i-i/C_2023-02-14T12:19:38+00:00",
-	"thingNodeId": "i-i/C",
-	"name": "C - 2023-02-14 12:19:38+00:00",
-	"path": "i-i/C",
-	"metadataKey": "C - 2023-02-14 12:19:38+00:00"
+	"id": "planta-picklingunit/InfluxAnomalies_2023-02-14T12:19:38+00:00",
+	"thingNodeId": "planta-picklingunit/InfluxAnomalies",
+	"name": "InfluxAnomalies - 2023-02-14 12:19:38+00:00",
+	"path": "planta-picklingunit/InfluxAnomalies",
+	"metadataKey": "InfluxAnomalies - 2023-02-14 12:19:38+00:00"
 }
 ```
 
@@ -130,9 +130,9 @@ The attributes `ref_id` and `ref_key` of the corresponding input wiring must be 
 {
 	"adapter_id": "blob-storage-adapter",
 	"filters": {},
-	"ref_id": "i-i/C",
+	"ref_id": "planta-picklingunit/InfluxAnomalies",
 	"ref_id_type": "THINGNODE",
-	"ref_key": "C - 2023-02-14 12:19:38+00:00",
+	"ref_key": "InfluxAnomalies - 2023-02-14 12:19:38+00:00",
 	"type": "metadata(any)",
 	"workflow_input_name": "class_entity"
 }

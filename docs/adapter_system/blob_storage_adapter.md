@@ -23,13 +23,45 @@ The blob storage adapter offers resources from blob storage in a hierarchical st
 
 You just need to replace the path `./runtime/demodata/blob_storage_adapter_hierarchy.json` with a path to the file on your machine.
 
-This file should contain a json object with the attribute `structure`. The value of this attribute must contain a list of categories each with attributes `name`, `description`, and `substructure`. The latter must either itself contain a list of nested categories or be omitted. The nested categories correspond to a tree data structure. The boolean attribute `end_of_bucket` (defaulting to `false`) must be set to `true` for exactly one category for each branch of this tree, but not for the deepest category. The json file is read only once, thus when changes to the structure are made in the json file, the Docker container of the blob storage adapter must be restarted to implement these changes.
+This [file](../../runtime/demodata/blob_storage_adapter_hierarchy.json) contains an example of such a json starting with:
+
+```json
+{
+    "structure": [
+        {
+            "name": "PlantA",
+            "description": "Plant A",
+            "substructure": [
+                {
+                    "name": "PicklingUnit",
+                    "description": "Plant A Pickling Unit",
+                    "end_of_bucket": true,
+                    "substructure": [
+                        {
+                            "name": "InfluxAnomalies",
+                            "description": "Plant A Pickling Unit Influx Anomalies"
+                        }, //...
+                    ]
+                }, //...
+            ]
+        }, //...
+    ]
+}
+```
 
 The names for the categories should consist only of alphanumeric upper and lower case letters without spaces, because they are interpreted as parts of the bucket names and object keys. Since bucket names cannot contain uppercase letters, the category names are converted to lowercase when the corresponding bucket names are generated. When naming categories, note that bucket names must consist of a minimum of 3 and a maximum of 63 characters.
 
-A generic sink is generated for each end node of the hierarchy. Using it will always create a new object, the creation timestamp is appended to the object key. E.g. the object key will be
-TODO: example _<TIMESTAMP>
-Vice-versa object keys are expected to have such a suffix to be available as sources via the adapter.
+The buckets defined by the adapter structure must already be present in the blob storage. For the example adapter hierarchy these would be buckets with the following names:
+* `planta-picklingunit`
+* `planta-millingunit`
+* `plantb`
+
+A generic sink is generated for each end node of the hierarchy. Using it will always create a new object, the creation timestamp is appended to the object key. Vice-versa object keys are expected to have such a suffix to be available as sources via the adapter.
+
+For the example adapter hierarchy e.g. the following objects would be available as source:
+* in bucket `planta-picklingunit` an object with key `InfluxAnomalies_2023-02-14T12:19:38+00:00`
+* in bucket `plantb` an object with key `PicklingUnit/InfluxAnomalies_2023-02-14T12:19:38+00:00`
+
 
 ### Configuring the runtime
 
