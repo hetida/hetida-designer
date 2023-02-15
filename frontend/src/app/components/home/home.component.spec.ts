@@ -8,7 +8,6 @@ import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { HomeComponent } from './home.component';
 import { selectHashedTransformationLookupById } from 'src/app/store/transformation/transformation.selectors';
 
-// TODO fix test
 describe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
