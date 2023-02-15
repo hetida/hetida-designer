@@ -425,7 +425,7 @@ class Category(BaseModel):
     name: ThingNodeName
     description: str
     substructure: tuple["Category", ...] | None = None
-    below_structure_defines_object_key: bool | None = None
+    below_structure_defines_object_key: bool = False
 
     class Config:
         frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
