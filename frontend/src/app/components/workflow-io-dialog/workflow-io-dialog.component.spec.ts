@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { ErrorVisualDirective } from 'src/app/directives/error-visual.directive';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { MaterialModule } from 'src/app/material.module';
 import { WorkflowIODialogComponent } from './workflow-io-dialog.component';
+import { IOType } from 'hetida-flowchart';
+import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 
 describe('WorkflowIODialogComponent', () => {
   let component: WorkflowIODialogComponent;
@@ -28,9 +29,9 @@ describe('WorkflowIODialogComponent', () => {
             provide: MAT_DIALOG_DATA,
             useValue: {
               workflowTransformation: {
-                id: 'mockId0',
+                id: 'mockId',
                 revision_group_id: 'mockGroupId',
-                name: 'Mock',
+                name: 'mock',
                 description: 'mock description',
                 category: 'EXAMPLES',
                 version_tag: '0.0.1',
@@ -47,8 +48,20 @@ describe('WorkflowIODialogComponent', () => {
                   constants: []
                 },
                 io_interface: {
-                  inputs: [],
-                  outputs: []
+                  inputs: [
+                    {
+                      id: 'mockId0',
+                      name: 'mockInput',
+                      data_type: IOType.ANY
+                    }
+                  ],
+                  outputs: [
+                    {
+                      id: 'mockId0',
+                      name: 'mockInput',
+                      data_type: IOType.ANY
+                    }
+                  ]
                 },
                 test_wiring: {
                   input_wirings: [],

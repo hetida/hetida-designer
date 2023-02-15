@@ -3,7 +3,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { MaterialModule } from 'src/app/material.module';
-import { BaseItemActionService } from 'src/app/service/transformation/transformation-action.service';
+import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { TransformationContextMenuComponent } from './transformation-context-menu.component';
 
@@ -13,8 +13,8 @@ describe('TransformationContextMenuComponent', () => {
 
   beforeEach(
     waitForAsync(() => {
-      const baseItemActionService = jasmine.createSpyObj<BaseItemActionService>(
-        'BaseItemActionService',
+      const transformationActionService = jasmine.createSpyObj<TransformationActionService>(
+        'TransformationActionService',
         ['isIncomplete']
       );
 
@@ -28,8 +28,8 @@ describe('TransformationContextMenuComponent', () => {
         declarations: [TransformationContextMenuComponent],
         providers: [
           {
-            provide: BaseItemActionService,
-            useValue: baseItemActionService
+            provide: TransformationActionService,
+            useValue: transformationActionService
           },
           {
             provide: TabItemService,
@@ -44,9 +44,9 @@ describe('TransformationContextMenuComponent', () => {
     fixture = TestBed.createComponent(TransformationContextMenuComponent);
     component = fixture.componentInstance;
     component.transformation = {
-      id: 'mockId0',
+      id: 'mockId',
       revision_group_id: 'mockGroupId',
-      name: 'Mock',
+      name: 'mock',
       description: 'mock description',
       category: 'EXAMPLES',
       version_tag: '0.0.1',

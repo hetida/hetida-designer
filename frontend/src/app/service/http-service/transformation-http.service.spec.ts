@@ -1,16 +1,18 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-
 import { TransformationHttpService } from './transformation-http.service';
 
 describe('TransformationHttpService', () => {
-  let service: TransformationHttpService;
+  let transformationHttpService: TransformationHttpService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(TransformationHttpService);
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule]
+    });
+    transformationHttpService = TestBed.inject(TransformationHttpService);
   });
 
   it('should be created', () => {
-    expect(service).toBeTruthy();
+    expect(transformationHttpService).toBeTruthy();
   });
 });

@@ -13,7 +13,7 @@ const {
   selectEntities
 } = transformationEntityAdapter.getSelectors();
 
-const selectTransformationState = createFeatureSelector<TransformationState>(
+export const selectTransformationState = createFeatureSelector<TransformationState>(
   'transformations'
 );
 

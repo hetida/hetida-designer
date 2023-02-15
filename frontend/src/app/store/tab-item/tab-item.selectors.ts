@@ -37,7 +37,7 @@ export const selectOrderedTabItemsWithTransformation = createSelector(
         }
         return {
           ...tabItem,
-          transformation: transformation
+          transformation
         };
       }
     )
