@@ -272,10 +272,7 @@ class RuntimeConfig(BaseSettings):
         "|http://hetida-designer-demo-adapter-java:8091/adapter,"
         "local-file-adapter|Local-File-Adapter"
         "|http://localhost:8090/adapters/localfile"
-        "|http://hetida-designer-runtime:8090/adapters/localfile,"
-        "blob-storage-adapter|Blob-Storage-Adapter"
-        "|http://localhost:8090/adapters/blob"
-        "|http://hetida-designer-runtime:8090/adapters/blob",
+        "|http://hetida-designer-runtime:8090/adapters/localfile",
         env="HETIDA_DESIGNER_ADAPTERS",
         description="list of the installed adapters",
     )
