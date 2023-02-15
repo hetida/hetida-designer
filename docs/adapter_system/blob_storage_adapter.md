@@ -78,8 +78,10 @@ The blob storage adapter is configured by the following environment variables:
 * BLOB_STORAGE_ENDPOINT_URL
 * BLOB_STORAGE_REGION_NAME
 
-The `BLOB_STORAGE_REGION_NAME` should be one of the [AWS regional endpoint codes](https://docs.aws.amazon.com/de_de/general/latest/gr/rande.html#regional-endpoints).
-The `BLOB_STORAGE_ACCESS_DURATION` should provide the access duration of the storage in seconds.
+The `BLOB_STORAGE_REGION_NAME` default value is "eu-central-1".
+The environment variable  `BLOB_STORAGE_ACCESS_DURATION` is used to set the [request parameter](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html#API_AssumeRoleWithWebIdentity_RequestParameters) `DurationSeconds` in the authentication towards the blob storage.
+It sets the duration of the role session in seconds and must be in the range of 900 (15 min) and the maximum session duration setting for the role.
+Its default value is 3600 (1 hour).
 
 An example using a minio instance as blob storage provider:
 
@@ -88,9 +90,7 @@ An example using a minio instance as blob storage provider:
     ...
     environment:
       BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION: /mnt/blob_storage_adapter_hierarchy.json
-      BLOB_STORAGE_ACCESS_DURATION: 3600
       BLOB_STORAGE_ENDPOINT_URL: http://minio:9000
-      BLOB_STORAGE_REGION_NAME: eu-central-1
       ...
 ```
 
