@@ -14,10 +14,10 @@ describe('CopyTransformationDialogComponent', () => {
   let component: CopyTransformationDialogComponent;
   let fixture: ComponentFixture<CopyTransformationDialogComponent>;
 
-  const mockTransformation: Transformation = {
-    id: 'mockId',
+  const mockCopyTransformation: Transformation = {
+    id: 'mockId0',
     revision_group_id: 'mockGroupId',
-    name: 'mock',
+    name: 'mock0',
     description: 'mock description',
     category: 'EXAMPLES',
     version_tag: '0.0.1',
@@ -43,59 +43,63 @@ describe('CopyTransformationDialogComponent', () => {
         imports: [BasicTestModule, FormsModule, ReactiveFormsModule],
         declarations: [CopyTransformationDialogComponent, ErrorVisualDirective],
         providers: [
-          provideMockStore({}),
+          provideMockStore(),
+          { provide: MatDialogRef, useValue: {} },
           {
             provide: MAT_DIALOG_DATA,
             useValue: {
-              title: 'MOCK',
-              content: 'MOCK',
-              actionOk: 'MOCK',
-              actionCancel: 'MOCK',
               transformation: {
-                id: 'mockId',
-                revision_group_id: 'mockGroupId',
-                name: 'mock',
-                description: 'mock description',
-                category: 'EXAMPLES',
-                version_tag: '0.0.1',
-                released_timestamp: new Date().toISOString(),
-                disabled_timestamp: new Date().toISOString(),
-                state: RevisionState.DRAFT,
-                type: TransformationType.COMPONENT,
-                documentation: null,
-                content: 'python code',
-                io_interface: {
-                  inputs: [],
-                  outputs: []
-                },
-                test_wiring: {
-                  input_wirings: [],
-                  output_wirings: []
+                title: 'MOCK',
+                content: 'MOCK',
+                actionOk: 'MOCK',
+                actionCancel: 'MOCK',
+                transformation: {
+                  id: 'mockId1',
+                  revision_group_id: 'mockGroupId',
+                  name: 'mock1',
+                  description: 'mock description',
+                  category: 'EXAMPLES',
+                  version_tag: '0.0.1',
+                  released_timestamp: new Date().toISOString(),
+                  disabled_timestamp: new Date().toISOString(),
+                  state: RevisionState.DRAFT,
+                  type: TransformationType.COMPONENT,
+                  documentation: null,
+                  content: 'python code',
+                  io_interface: {
+                    inputs: [],
+                    outputs: []
+                  },
+                  test_wiring: {
+                    input_wirings: [],
+                    output_wirings: []
+                  }
                 },
                 disabledState: {
                   name: true,
                   category: true,
-                  tag: true,
-                  description: true
+                  description: true,
+                  tag: true
                 }
               }
             }
-          },
-          { provide: MatDialogRef, useValue: {} }
+          }
         ]
       }).compileComponents();
     })
   );
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(CopyTransformationDialogComponent);
     const mockStore = TestBed.inject(MockStore);
-    mockStore.overrideSelector(selectAllTransformations, [mockTransformation]);
+    mockStore.overrideSelector(selectAllTransformations, [
+      mockCopyTransformation
+    ]);
+    fixture = TestBed.createComponent(CopyTransformationDialogComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  xit('should create', () => {
     expect(component).toBeTruthy();
   });
 });

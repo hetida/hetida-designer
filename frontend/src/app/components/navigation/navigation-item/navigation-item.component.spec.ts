@@ -3,7 +3,7 @@ import { provideMockStore } from '@ngrx/store/testing';
 import { BasicTestModule } from 'src/app/basic-test.module';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { BaseItemService } from 'src/app/service/transformation/transformation.service';
+import { TransformationService } from 'src/app/service/transformation/transformation.service';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
 import { NavigationItemComponent } from './navigation-item.component';
@@ -18,7 +18,7 @@ describe('NavigationItemComponent', () => {
   );
 
   const mockTabItemService = jasmine.createSpy();
-  const mockBaseItemService = jasmine.createSpy();
+  const mockTransformationService = jasmine.createSpy();
 
   beforeEach(
     waitForAsync(() => {
@@ -28,8 +28,8 @@ describe('NavigationItemComponent', () => {
         providers: [
           provideMockStore(),
           {
-            provide: BaseItemService,
-            useValue: mockBaseItemService
+            provide: TransformationService,
+            useValue: mockTransformationService
           },
           {
             provide: ContextMenuService,
@@ -50,9 +50,9 @@ describe('NavigationItemComponent', () => {
     component.transformation = {
       id: 'mockId',
       revision_group_id: 'mockGroupId',
-      name: 'mock transformation',
+      name: 'mock',
       description: 'mock description',
-      category: 'DRAFT',
+      category: 'EXAMPLES',
       version_tag: '0.0.1',
       released_timestamp: new Date().toISOString(),
       disabled_timestamp: new Date().toISOString(),
