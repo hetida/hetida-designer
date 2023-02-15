@@ -10,6 +10,8 @@ This section explains how to make blob storage available via the blob storage ad
 
 ### Mounting the adapter hierarchy configuration
 
+The S3 data model is flat, consisting only of buckets in which objects can be stored. There is no hierarchy of sub-buckets of sub-folders. The blob storage adapter can infer a more complex hierarchical structure to increase  by using delimiters. Hyphens `-` are used as delimiters in bucket names and slashes `/` are used as delimiters within object keys to mimic the paths to files in nested folders. Some tools for S3 blob storages can infer hierarchy in the user interface from object keys with such delimiters.
+
 The blob storage adapter offers resources from blob storage in a hierarchical structure. This hierarchy is defined in a file named `blob_storage_adapter_hierarchy.json` which needs to be available to the runtime service and is loaded at startup. E.g. a demo hierarchy can be mounted in the docker-compose setup as follows:
 ```yaml
   hetida-designer-runtime:
@@ -22,8 +24,6 @@ The blob storage adapter offers resources from blob storage in a hierarchical st
 You just need to replace the path `./runtime/demodata/blob_storage_adapter_hierarchy.json` with a path to the file on your machine.
 
 This file should contain a json object with the attribute `structure`. The value of this attribute must contain a list of categories each with attributes `name`, `description`, and `substructure`. The latter must either itself contain a list of nested categories or be omitted. The nested categories correspond to a tree data structure. The boolean attribute `end_of_bucket` (defaulting to `false`) must be set to `true` for exactly one category for each branch of this tree, but not for the deepest category. The json file is read only once, thus when changes to the structure are made in the json file, the Docker container of the blob storage adapter must be restarted to implement these changes.
-
-The S3 data model is flat, consisting only of buckets in which objects can be stored. There is no hierarchy of sub-buckets of sub-folders. Therefore, the hierarchy of the adapter is transferred to the bucket names and object keys by using delimiters. Hyphens `-` are used as delimiters in bucket names and slashes `/` are used as delimiters within object keys to mimic the paths to files in nested folders. Some tools for S3 blob storages can infer hierarchy in the user interface from object keys with such delimiters.
 
 The names for the categories should consist only of alphanumeric upper and lower case letters without spaces, because they are interpreted as parts of the bucket names and object keys. Since bucket names cannot contain uppercase letters, the category names are converted to lowercase when the corresponding bucket names are generated. When naming categories, note that bucket names must consist of a minimum of 3 and a maximum of 63 characters.
 
