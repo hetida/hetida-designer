@@ -38,9 +38,15 @@ This [file](../../runtime/demodata/blob_storage_adapter_hierarchy.json) contains
                     "end_of_bucket": true,
                     "substructure": [
                         {
-                            "name": "InfluxAnomalies",
-                            "description": "Plant A Pickling Unit Influx Anomalies"
-                        }, //...
+                            "name": "Influx",
+                            "description": "Plant A Pickling Unit Influx",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant A Pickling Unit Influx Anomalies"
+                                }, //...
+                            ]
+                        }
                     ]
                 }, //...
             ]
@@ -59,8 +65,8 @@ The buckets defined by the adapter structure must already be present in the blob
 A generic sink is generated for each end node of the hierarchy. Using it will always create a new object, the creation timestamp is appended to the object key. Vice-versa object keys are expected to have such a suffix to be available as sources via the adapter.
 
 For the example adapter hierarchy e.g. the following objects would be available as source:
-* in bucket `planta-picklingunit` an object with key `InfluxAnomalies_2023-02-14T12:19:38+00:00`
-* in bucket `plantb` an object with key `PicklingUnit/InfluxAnomalies_2023-02-14T12:19:38+00:00`
+* in bucket `planta-picklingunit` an object with key `Influx/Anomalies_2023-02-14T12:19:38+00:00`
+* in bucket `plantb` an object with key `PicklingUnit/Influx/Anomalies_2023-02-14T12:19:38+00:00`
 
 
 ### Configuring the runtime
