@@ -434,8 +434,8 @@ class HierarchyNode(BaseModel):
         depth = 1
         if self.substructure is not None and len(self.substructure) != 0:
             depths: list[int] = []
-            for category in self.substructure:
-                depths.append(category.get_depth())
+            for hierarchy_node in self.substructure:
+                depths.append(hierarchy_node.get_depth())
             depth = depth + max(depths)
         return depth
 
@@ -466,7 +466,7 @@ class HierarchyNode(BaseModel):
             self.substructure is None or len(self.substructure) == 0
         ):
             raise ValueError(
-                f"Hierarchy Error identified at Category '{self.name}' which appears to be "
+                f"Hierarchy Error identified at HierarchyNode '{self.name}' which appears to be "
                 "part of a bucket name but does not contain a substructure! "
                 "Without an object key prefix no sinks or sources can be generated!"
             )
@@ -482,8 +482,8 @@ class HierarchyNode(BaseModel):
         if self.below_structure_defines_object_key is True:
             if part_of_bucket_name is False:
                 raise ValueError(
-                    f"Hierarchy Error identified at Category '{self.name}'! It appears as if "
-                    '"below_structure_defines_object_key" has been true for a super category '
+                    f"Hierarchy Error identified at HierarchyNode '{self.name}'! It appears as if "
+                    '"below_structure_defines_object_key" has been true for a parent HierarchyNode '
                     "already, but then it should not be true again for any of its subcategories!"
                 )
             try:
@@ -491,14 +491,14 @@ class HierarchyNode(BaseModel):
             except ValidationError as error:
                 raise ValueError(
                     f"Validation Error for transformation of StructureThingNode "
-                    f"{thing_node.id} to BucketName for category '{self.name}':\n{error}"
+                    f"{thing_node.id} to BucketName for HierarchyNode '{self.name}':\n{error}"
                 ) from error
             else:
                 buckets.append(bucket)
 
         if self.substructure is not None and len(self.substructure) != 0:
-            for category in self.substructure:
-                category.create_structure(
+            for hierarchy_node in self.substructure:
+                hierarchy_node.create_structure(
                     thing_nodes=thing_nodes,
                     buckets=buckets,
                     sinks=sinks,
@@ -507,7 +507,7 @@ class HierarchyNode(BaseModel):
                     if self.below_structure_defines_object_key in (None, False)
                     else False,
                 )
-        else:  # category.substructure is None or len(category.substructure) == 0
+        else:  # hierarchy_node.substructure is None or len(hierarchy_node.substructure) == 0
             sink = BlobStorageStructureSink.from_thing_node(thing_node)
             sinks.append(sink)
 
@@ -532,8 +532,8 @@ def create_blob_storage_adapter_structure_objects_from_hierarchy(
     thing_nodes: list[StructureThingNode] = []
     bucket_names: list[StructureBucket] = []
     sinks: list[BlobStorageStructureSink] = []
-    for category in structure:
-        category.create_structure(
+    for hierarchy_node in structure:
+        hierarchy_node.create_structure(
             thing_nodes, bucket_names, sinks, parent_id=None, part_of_bucket_name=True
         )
     return thing_nodes, bucket_names, sinks
