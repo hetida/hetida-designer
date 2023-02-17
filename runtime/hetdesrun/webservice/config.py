@@ -1,11 +1,14 @@
 import datetime
 import os
+import re
 from enum import Enum
 
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
 from hetdesrun.webservice.auth_outgoing import ServiceCredentials
+
+maintenance_secret_pattern = re.compile("[a-zA-Z0-9]+")
 
 
 class LogLevel(str, Enum):
@@ -263,6 +266,21 @@ class RuntimeConfig(BaseSettings):
         env="HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
     )
 
+    maintenance_secret: SecretStr | None = Field(
+        None,
+        description="Secret necessary to access maintenance endpoints of the backend."
+        " If this is set, the maintenance endpoints are activated."
+        " To use them this secret is required as part of the payload."
+        " Only alphanumeric characters are allowed",
+        env="HD_MAINTENANCE_SECRET",
+    )
+
+    autoimport_directory: str = Field(
+        "",
+        description="Path to directory where to look for import sources during autoimport",
+        env="HD_BACKEND_AUTOIMPORT_DIRECTORY",
+    )
+
     hd_adapters: str = Field(
         "demo-adapter-python|Python-Demo-Adapter"
         "|http://localhost:8092"
@@ -409,6 +427,19 @@ class RuntimeConfig(BaseSettings):
                 "external auth client credentials must be configured"
             )
             raise ValueError(msg)
+        return v
+
+    @validator("maintenance_secret")
+    def maintenance_secret_allowed_characters(
+        cls, v: SecretStr | None
+    ) -> SecretStr | None:
+        if v is None:
+            return v
+        if not maintenance_secret_pattern.fullmatch(v.get_secret_value()):
+            raise ValueError(
+                "Only numbers and alphabet letters allowed for the maintenance secret"
+                " and it must have non-zero length."
+            )
         return v
 
     @validator("is_runtime_service")
