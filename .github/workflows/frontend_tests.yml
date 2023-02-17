@@ -20,6 +20,9 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
+      - run: |
+          set -e
+          d "$GITHUB_WORKSPACE"/frontend
+          npm ci
       - run: npm run test-docker
       - run: npm run lint
