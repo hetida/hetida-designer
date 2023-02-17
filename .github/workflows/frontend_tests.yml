@@ -22,7 +22,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: |
           set -e
-          d "$GITHUB_WORKSPACE"/frontend
+          cd "$GITHUB_WORKSPACE"/frontend
           npm ci
       - run: npm run test-docker
       - run: npm run lint
