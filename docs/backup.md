@@ -36,4 +36,3 @@ docker run --rm \
     "pg_restore --clean --exit-on-error -v -h hetida-designer-db -p 5432 -U hetida_designer_dbuser -d hetida_designer_db < /backup_dir/hd-backup.tar"
 
 ```
-
