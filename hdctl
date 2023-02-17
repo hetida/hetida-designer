@@ -489,6 +489,10 @@ deprecate_all_but_latest_per_group() {
     _ensure_maintenance_secret
     ensure_access_token
 
+    curl_args=()
+    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+        curl_args+=("--insecure")
+    fi
     curl "${curl_args[@]}" -X POST \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
@@ -503,6 +507,10 @@ delete_drafts() {
     _ensure_maintenance_secret
     ensure_access_token
 
+    curl_args=()
+    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+        curl_args+=("--insecure")
+    fi
     curl "${curl_args[@]}" -X POST \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
@@ -523,6 +531,10 @@ delete_unused_deprecated() {
     _ensure_maintenance_secret
     ensure_access_token
 
+    curl_args=()
+    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+        curl_args+=("--insecure")
+    fi
     curl "${curl_args[@]}" -X POST \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
@@ -541,6 +553,10 @@ purge() {
     _ensure_maintenance_secret
     ensure_access_token
 
+    curl_args=()
+    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+        curl_args+=("--insecure")
+    fi
     curl "${curl_args[@]}" -X POST \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
@@ -558,6 +574,10 @@ deploy_base_trafos() {
     _ensure_maintenance_secret
     ensure_access_token
 
+    curl_args=()
+    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+        curl_args+=("--insecure")
+    fi
     curl "${curl_args[@]}" -X POST \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
@@ -575,6 +595,10 @@ autoimport() {
     _ensure_maintenance_secret
     ensure_access_token
 
+    curl_args=()
+    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+        curl_args+=("--insecure")
+    fi
     curl "${curl_args[@]}" -X POST \
         -H "Authorization: Bearer $ACCESS_TOKEN" \
         -H "Content-Type: application/json" \
