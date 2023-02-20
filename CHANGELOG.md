@@ -1,3 +1,9 @@
+## 0.8.6
+* (frontend) add configurable user info text on main tab
+* fixes, in particular around validation
+* fixes around updating components
+* add maintenance backend endpoints (deactivated by default)
+* add hdctl command line bash script for maintenance / devops tasks via those endpoints
 ## 0.8.5
 * fix NaN value serialization (should now be serialized to null json values)
 * fix broken pure plot execution config
