@@ -326,11 +326,11 @@ export class WorkflowEditorComponent {
    * @param event drop event, carrying the transformation and flowchartComponent data
    */
   dropInterceptor(event: CustomEvent): void {
-    if (event.detail.baseItemJSON === '') {
+    if (event.detail.transformationJSON === '') {
       return;
     }
     const transformation = JSON.parse(
-      event.detail.baseItemJSON
+      event.detail.transformationJSON
     ) as Transformation;
 
     const newOperator = this._createNewOperator(
