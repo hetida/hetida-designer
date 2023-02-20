@@ -1,6 +1,6 @@
 import logging
 import secrets
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import HTTPException, Query, Response, status
 from pydantic import BaseModel, Field, SecretStr
