@@ -57,6 +57,10 @@ This [file](../../runtime/demodata/blob_storage_adapter_hierarchy.json) contains
 
 The names for the hierarchy nodes should consist only of alphanumeric upper and lower case letters without spaces, because they are interpreted as parts of the bucket names and object keys. Since bucket names cannot contain uppercase letters, the hierarchy node names are converted to lowercase when the corresponding bucket names are generated. When naming hierarchy nodes, note that bucket names must consist of a minimum of 3 and a maximum of 63 characters.
 
+The attribute `below_structure_defines_object_key` is per default `false`.
+If it is not set, only the name of the hierarchy end nodes are considered as part of the object key and the names of all higher hierarchy nodes are considered as part of the bucket name.
+Setting this attribute to `true` means that the names of all deeper hierarchy nodes are considered as part of the object key.
+
 The buckets defined by the adapter structure must already be present in the blob storage. For the example adapter hierarchy these would be buckets with the following names:
 * `planta-picklingunit`
 * `planta-millingunit`
@@ -110,8 +114,11 @@ The `dump` and `load` methods of the Python package `joblib` are used to seriali
 The workflows "Get ExampleClass Entity Attributes" and "Create ExampleClass Entity" provide a minimal example of how objects with a self defined class can be stored and loaded.
 
 Selecting "Blob Storage Adapter" for an input in the Execution dialog sources should be available for all objects for which bucket name and object key match the adapter hierarchy:
+
 <img src="./assets/blob_storage_adapter_selected.png" height="100" width=450>
+
 <img src="./assets/blob_storage_adapter_assign_source.png" height="780" width=700>
 
 Similarly a sink should be available for each end node in the hierarchy via selecting "Blob Storage Adapter" for an output in the Execution dialog:
+
 <img src="./assets/blob_storage_adapter_assign_sink.png" height="780" width=700>
