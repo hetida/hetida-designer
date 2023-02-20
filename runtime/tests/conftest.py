@@ -1,8 +1,12 @@
+from collections.abc import AsyncGenerator, Generator
 from copy import deepcopy
+from typing import Any
 from unittest import mock
 
 import pytest
+from fastapi import FastAPI
 from httpx import AsyncClient
+from sqlalchemy.future.engine import Engine
 
 from hetdesrun.persistence import get_db_engine
 from hetdesrun.persistence.dbmodels import Base
@@ -11,7 +15,7 @@ from hetdesrun.webservice.application import init_app
 
 
 @pytest.fixture(scope="session")
-def test_db_engine(use_in_memory_db):
+def test_db_engine(use_in_memory_db: bool) -> Engine:
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
         engine = get_db_engine(override_db_url=in_memory_database_url)
@@ -21,14 +25,14 @@ def test_db_engine(use_in_memory_db):
 
 
 @pytest.fixture()
-def clean_test_db_engine(test_db_engine):
+def clean_test_db_engine(test_db_engine: Engine) -> Engine:
     Base.metadata.drop_all(test_db_engine)
     Base.metadata.create_all(test_db_engine)
     return test_db_engine
 
 
 @pytest.fixture(scope="session")
-def deactivate_auth():
+def deactivate_auth() -> Generator:
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.auth", False
     ) as _fixture:
@@ -36,11 +40,20 @@ def deactivate_auth():
 
 
 @pytest.fixture(scope="session")
-def app_without_auth(deactivate_auth):
+def app_without_auth(deactivate_auth: Generator) -> FastAPI:
     return init_app()
 
 
-def pytest_addoption(parser):
+@pytest.fixture(scope="session")
+def app_without_auth_with_blob_storage_adapter() -> FastAPI:
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.config.get_blob_adapter_config",
+        adapter_hierarchy_location="tests/data/blob_storage/blob_storage_adapter_hierarchy.json",
+    ), mock.patch("hetdesrun.webservice.config.runtime_config.auth", False):
+        return init_app()
+
+
+def pytest_addoption(parser: Any) -> None:
     parser.addoption(
         "--dont-use-in-memory-db",
         action="store_false",
@@ -50,22 +63,31 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def use_in_memory_db(pytestconfig):
+def use_in_memory_db(pytestconfig: pytest.Config) -> Any:
     return pytestconfig.getoption("use_in_memory_db")
 
 
 @pytest.fixture
-def async_test_client(app_without_auth):
+def async_test_client(app_without_auth: FastAPI) -> AsyncClient:
     return AsyncClient(app=app_without_auth, base_url="http://test")
 
 
 @pytest.fixture
-async def open_async_test_client(async_test_client):
+def async_test_client_with_blob_storage_adapter(
+    app_without_auth_with_blob_storage_adapter: FastAPI,
+) -> AsyncClient:
+    return AsyncClient(
+        app=app_without_auth_with_blob_storage_adapter, base_url="http://test"
+    )
+
+
+@pytest.fixture
+async def open_async_test_client(async_test_client: AsyncClient) -> AsyncGenerator:
     async with async_test_client as ac:
         yield ac
 
 
-base_workflow_json = {
+base_workflow_json: dict = {
     "code_modules": [
         {  # ordinary function entry point
             "uuid": str(get_uuid_from_seed("my_code_module")),
@@ -170,12 +192,12 @@ base_workflow_json = {
 
 
 @pytest.fixture
-def runtime_execution_base_input_json():
+def runtime_execution_base_input_json() -> dict:
     return deepcopy(base_workflow_json)
 
 
 @pytest.fixture
-def input_json_with_wiring():
+def input_json_with_wiring() -> dict:
     json_with_wiring = deepcopy(base_workflow_json)
 
     json_with_wiring["workflow_wiring"] = {
@@ -192,7 +214,7 @@ def input_json_with_wiring():
 
 
 @pytest.fixture
-def input_json_with_wiring_with_input():
+def input_json_with_wiring_with_input() -> Any:
     json_with_wiring = deepcopy(base_workflow_json)
 
     json_with_wiring["code_modules"][1][

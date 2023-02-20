@@ -263,7 +263,7 @@ async def test_nested_wf_execution(async_test_client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_load_object_with_self_defined_class(
-    async_test_client: AsyncClient,
+    async_test_client_with_blob_storage_adapter: AsyncClient,
 ) -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
@@ -297,7 +297,7 @@ async def test_load_object_with_self_defined_class(
             "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
             return_value=client_mock,
         ):
-            async with async_test_client as client:
+            async with async_test_client_with_blob_storage_adapter as client:
                 with open(
                     os.path.join(
                         "tests",

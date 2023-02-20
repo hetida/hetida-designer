@@ -21,8 +21,10 @@ nest_asyncio.apply()
 
 
 @pytest.mark.asyncio
-async def test_access_blob_storage_adapter_info(async_test_client: AsyncClient) -> None:
-    async with async_test_client as ac:
+async def test_access_blob_storage_adapter_info(
+    async_test_client_with_blob_storage_adapter: AsyncClient,
+) -> None:
+    async with async_test_client_with_blob_storage_adapter as ac:
         response = await ac.get("adapters/blob/info")
     assert response.status_code == 200
     assert "version" in response.json()
@@ -36,12 +38,12 @@ async def walk_thing_nodes(
     src_attached_metadata_dict: dict,
     snk_attached_metadata_dict: dict,
     tn_attached_metadata_dict: dict,
-    open_async_test_client: AsyncClient,
+    open_async_test_client_with_blob_storage_adapter: AsyncClient,
 ) -> None:
     print("walk_thing_nodes call with parent_id=" + parent_id)
     """Recursively walk thingnodes"""
     response_obj = (
-        await open_async_test_client.get(
+        await open_async_test_client_with_blob_storage_adapter.get(
             f"/adapters/blob/structure?parentId={parent_id}"
         )
     ).json()
@@ -50,7 +52,7 @@ async def walk_thing_nodes(
 
     for src in response_obj["sources"]:
         metadata = (
-            await open_async_test_client.get(
+            await open_async_test_client_with_blob_storage_adapter.get(
                 f'/adapters/blob/sources/{src["id"]}/metadata/'
             )
         ).json()
@@ -59,7 +61,7 @@ async def walk_thing_nodes(
 
     for snk in response_obj["sinks"]:
         metadata = (
-            await open_async_test_client.get(
+            await open_async_test_client_with_blob_storage_adapter.get(
                 f'/adapters/blob/sinks/{snk["id"]}/metadata/'
             )
         ).json()
@@ -67,7 +69,7 @@ async def walk_thing_nodes(
             snk_attached_metadata_dict[(snk["id"], metadatum["key"])] = metadatum
 
     metadata_tn = (
-        await open_async_test_client.get(
+        await open_async_test_client_with_blob_storage_adapter.get(
             f"/adapters/blob/thingNodes/{parent_id}/metadata/"
         )
     ).json()
@@ -85,7 +87,7 @@ async def walk_thing_nodes(
             src_attached_metadata_dict,
             snk_attached_metadata_dict,
             tn_attached_metadata_dict,
-            open_async_test_client,
+            open_async_test_client_with_blob_storage_adapter,
         )
 
 
@@ -137,7 +139,7 @@ source_list = [
 
 @pytest.mark.asyncio
 async def test_resources_offered_from_blob_storage_webservice(
-    async_test_client: AsyncClient,
+    async_test_client_with_blob_storage_adapter: AsyncClient,
 ) -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
@@ -148,9 +150,11 @@ async def test_resources_offered_from_blob_storage_webservice(
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=source_list,
     ):
-        async with async_test_client as client:
-            response_obj = (await client.get("/adapters/blob/structure")).json()
+        async with async_test_client_with_blob_storage_adapter as client:
+            response = await client.get("/adapters/blob/structure")
+            assert response.status_code == 200
 
+            response_obj = response.json()
             assert len(response_obj["sources"]) == 0
             assert len(response_obj["sinks"]) == 0
 
@@ -173,7 +177,7 @@ async def test_resources_offered_from_blob_storage_webservice(
                     src_attached_metadata_dict=src_attached_metadata_dict,
                     snk_attached_metadata_dict=snk_attached_metadata_dict,
                     tn_attached_metadata_dict=tn_attached_metadata_dict,
-                    open_async_test_client=client,
+                    open_async_test_client_with_blob_storage_adapter=client,
                 )
             print("all_tns")
             for tn in all_tns:
@@ -209,7 +213,9 @@ async def test_resources_offered_from_blob_storage_webservice(
 
 
 @pytest.mark.asyncio
-async def test_blob_adapter_webservice_filtered(async_test_client: AsyncClient) -> None:
+async def test_blob_adapter_webservice_filtered(
+    async_test_client_with_blob_storage_adapter: AsyncClient,
+) -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
         return_value=AdapterHierarchy.from_file(
@@ -219,7 +225,7 @@ async def test_blob_adapter_webservice_filtered(async_test_client: AsyncClient) 
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=source_list,
     ):
-        async with async_test_client as client:
+        async with async_test_client_with_blob_storage_adapter as client:
             sink_response = await client.get(
                 "/adapters/blob/sinks", params={"filter": "ii"}
             )
@@ -227,12 +233,14 @@ async def test_blob_adapter_webservice_filtered(async_test_client: AsyncClient) 
                 "/adapters/blob/sources", params={"filter": "_2022-01-02T"}
             )
 
+        assert sink_response.status_code == 200
         assert sink_response.json()["resultCount"] == 4
         assert sink_response.json()["sinks"][0]["id"] == "i-ii/E_next"
         assert sink_response.json()["sinks"][1]["id"] == "i-iii/F_next"
         assert sink_response.json()["sinks"][2]["id"] == "i-iii/G_next"
         assert sink_response.json()["sinks"][3]["id"] == "iii/x/C_next"
 
+        assert source_response.status_code == 200
         assert source_response.json()["resultCount"] == 4
         assert source_response.json()["sources"][:3] == source_list[:3]
         assert source_response.json()["sources"][3] == source_list[5]
@@ -240,9 +248,9 @@ async def test_blob_adapter_webservice_filtered(async_test_client: AsyncClient) 
 
 @pytest.mark.asyncio
 async def test_blob_adapter_webservice_exceptions(
-    async_test_client: AsyncClient,
+    async_test_client_with_blob_storage_adapter: AsyncClient,
 ) -> None:
-    async with async_test_client as client:
+    async with async_test_client_with_blob_storage_adapter as client:
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_thing_nodes_by_parent_id",
             side_effect=MissingHierarchyError,
