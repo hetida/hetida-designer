@@ -17,6 +17,7 @@ from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
 from hetdesrun.backend.service.documentation_router import documentation_router
 from hetdesrun.backend.service.info_router import info_router
+from hetdesrun.backend.service.maintenance_router import maintenance_router
 from hetdesrun.backend.service.transformation_router import transformation_router
 from hetdesrun.backend.service.wiring_router import wiring_router
 from hetdesrun.backend.service.workflow_router import workflow_router
@@ -156,6 +157,14 @@ def init_app() -> FastAPI:
         app.include_router(
             transformation_router, prefix="/api", dependencies=get_auth_deps()
         )
+        possible_maintenance_secret = get_config().maintenance_secret
+        if (
+            possible_maintenance_secret is not None
+            and len(possible_maintenance_secret.get_secret_value()) > 0
+        ):
+            app.include_router(
+                maintenance_router, prefix="/api", dependencies=get_auth_deps()
+            )
 
     @app.on_event("startup")
     async def startup_event() -> None:
