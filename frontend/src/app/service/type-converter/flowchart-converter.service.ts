@@ -17,6 +17,7 @@ import {
 import { Operator } from 'src/app/model/operator';
 import { Constant } from 'src/app/model/constant';
 import { VertexIds } from 'src/app/components/workflow-editor/workflow-editor.component';
+import { Utils } from 'src/app/utils/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -63,9 +64,7 @@ export class FlowchartConverterService {
     workflow: WorkflowTransformation
   ): FlowchartConfiguration {
     // don't show workflow io without a name
-    const workflowClean = JSON.parse(
-      JSON.stringify(workflow)
-    ) as WorkflowTransformation;
+    const workflowClean = Utils.deepCopy(workflow);
     workflowClean.content.inputs = workflowClean.content.inputs.filter(
       io => io.name !== '' && io.name !== null && io.name !== undefined
     );
