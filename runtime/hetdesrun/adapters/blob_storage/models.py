@@ -7,11 +7,11 @@ from pydantic import BaseModel, ConstrainedStr, Field, ValidationError, validato
 
 from hetdesrun.adapters.blob_storage import (
     BUCKET_NAME_DIR_SEPARATOR,
+    GENERIC_SINK_ID_SUFFIX,
+    GENERIC_SINK_NAME_SUFFIX,
+    HIERARCHY_END_NODE_NAME_SEPARATOR,
     IDENTIFIER_SEPARATOR,
-    LEAF_NAME_SEPARATOR,
     OBJECT_KEY_DIR_SEPARATOR,
-    SINK_ID_ENDING,
-    SINK_NAME_ENDING,
 )
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import MissingHierarchyError
@@ -185,11 +185,12 @@ class BlobStorageStructureSource(BaseModel):
             ) from e
         file_string_from_id = id.rsplit(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
         file_ok = ObjectKey.from_string(IdString(file_string_from_id))
-        if LEAF_NAME_SEPARATOR not in name:
+        if HIERARCHY_END_NODE_NAME_SEPARATOR not in name:
             raise ValueError(
-                f"The source name '{name}' must contain the string '{LEAF_NAME_SEPARATOR}'!"
+                f"The source name '{name}' must contain "
+                f"the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}'!"
             )
-        thing_node_name, source_time = name.split(LEAF_NAME_SEPARATOR)
+        thing_node_name, source_time = name.split(HIERARCHY_END_NODE_NAME_SEPARATOR)
         if thing_node_name != file_ok.name:
             raise ValueError(
                 f"The source name '{name}' must start with the name '{file_ok.name}' "
@@ -244,7 +245,7 @@ class BlobStorageStructureSource(BaseModel):
     ) -> "BlobStorageStructureSource":
         name = (
             object_key.name.rsplit(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[-1]
-            + LEAF_NAME_SEPARATOR
+            + HIERARCHY_END_NODE_NAME_SEPARATOR
             + object_key.time.astimezone(timezone.utc).isoformat(sep=" ")
         )
         thing_node_id = object_key.to_thing_node_id(bucket)
@@ -296,9 +297,9 @@ class BlobStorageStructureSink(BaseModel):
                 "correspond to a bucket name!\nBut it does not:\n" + str(e)
             ) from e
 
-        if not id.endswith(IDENTIFIER_SEPARATOR + SINK_ID_ENDING):
+        if not id.endswith(IDENTIFIER_SEPARATOR + GENERIC_SINK_ID_SUFFIX):
             raise ValueError(
-                f"The sink id '{id}' must end with '{IDENTIFIER_SEPARATOR+SINK_ID_ENDING}'!"
+                f"The sink id '{id}' must end with '{IDENTIFIER_SEPARATOR+GENERIC_SINK_ID_SUFFIX}'!"
             )
         return id
 
@@ -312,7 +313,9 @@ class BlobStorageStructureSink(BaseModel):
                 "if the attribute 'id' is missing!"
             ) from e
 
-        thing_node_id_from_id = str(id).rsplit(sep="_", maxsplit=1)[0]
+        thing_node_id_from_id = str(id).rsplit(
+            sep=IDENTIFIER_SEPARATOR + GENERIC_SINK_ID_SUFFIX, maxsplit=1
+        )[0]
         if thing_node_id_from_id != thingNodeId:
             raise ValueError(
                 f"The sink's thing node id '{thingNodeId}' does not match its id '{id}'!"
@@ -334,19 +337,20 @@ class BlobStorageStructureSink(BaseModel):
             IDENTIFIER_SEPARATOR, maxsplit=1
         )[0]
 
-        if LEAF_NAME_SEPARATOR not in name:
+        if HIERARCHY_END_NODE_NAME_SEPARATOR not in name:
             raise ValueError(
-                f"The sink name '{name}' must contain the string '{LEAF_NAME_SEPARATOR}'!"
+                f"The sink name '{name}' must contain "
+                f"the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}'!"
             )
-        thing_node_name, sink_name_end = name.split(LEAF_NAME_SEPARATOR)
+        thing_node_name, sink_name_end = name.split(HIERARCHY_END_NODE_NAME_SEPARATOR)
         if thing_node_name != thing_node_name_from_id:
             raise ValueError(
                 f"The sink name '{name}' must start with the name '{thing_node_name_from_id}' "
                 "of the corresponding thing node!"
             )
-        if sink_name_end != SINK_NAME_ENDING:
+        if sink_name_end != GENERIC_SINK_NAME_SUFFIX:
             raise ValueError(
-                f"The sink name '{name}' must end with '{SINK_NAME_ENDING}'!"
+                f"The sink name '{name}' must end with '{GENERIC_SINK_NAME_SUFFIX}'!"
             )
 
         return name
@@ -392,11 +396,15 @@ class BlobStorageStructureSink(BaseModel):
         cls, thing_node: StructureThingNode
     ) -> "BlobStorageStructureSink":
         return BlobStorageStructureSink(
-            id=thing_node.id + IDENTIFIER_SEPARATOR + SINK_ID_ENDING,
+            id=thing_node.id + IDENTIFIER_SEPARATOR + GENERIC_SINK_ID_SUFFIX,
             thingNodeId=thing_node.id,
-            name=thing_node.name + LEAF_NAME_SEPARATOR + SINK_NAME_ENDING,
+            name=thing_node.name
+            + HIERARCHY_END_NODE_NAME_SEPARATOR
+            + GENERIC_SINK_NAME_SUFFIX,
             path=thing_node.id,
-            metadataKey=thing_node.name + LEAF_NAME_SEPARATOR + SINK_NAME_ENDING,
+            metadataKey=thing_node.name
+            + HIERARCHY_END_NODE_NAME_SEPARATOR
+            + GENERIC_SINK_NAME_SUFFIX,
         )
 
     def to_structure_bucket_and_object_key(self) -> tuple[StructureBucket, ObjectKey]:

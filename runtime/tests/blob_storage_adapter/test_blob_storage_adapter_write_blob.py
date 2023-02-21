@@ -37,7 +37,7 @@ async def test_blob_storage_write_blob_to_storage_works(
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
             return_value=BlobStorageStructureSink(
-                id="i-ii/A_next",
+                id="i-ii/A_generic_sink",
                 thingNodeId="i-ii/A",
                 name="A - Next Object",
                 path="i-ii/A",
@@ -53,7 +53,7 @@ async def test_blob_storage_write_blob_to_storage_works(
                 metadata_key="A - Next Object",
             )
             assert (
-                "Write data for sink 'i-ii/A_next' to storage "
+                "Write data for sink 'i-ii/A_generic_sink' to storage "
                 "into bucket 'i-ii' as blob with key 'A_"
             ) in caplog.text
 
@@ -106,7 +106,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> 
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
             return_value=BlobStorageStructureSink(
-                id="i-ii/A_next",
+                id="i-ii/A_generic_sink",
                 thingNodeId="i-ii/A",
                 name="A - Next Object",
                 path="i-ii/A",
@@ -140,7 +140,7 @@ async def test_blob_storage_write_blob_to_storage_with_existing_object() -> None
         ):
             mocked_sink = mock.Mock(
                 return_value=BlobStorageStructureSink(
-                    id="i-ii/A_next",
+                    id="i-ii/A_generic_sink",
                     thingNodeId="i-ii/A",
                     name="A - Next Object",
                     path="i-ii/A",

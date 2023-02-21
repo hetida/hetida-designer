@@ -235,10 +235,10 @@ async def test_blob_adapter_webservice_filtered(
 
         assert sink_response.status_code == 200
         assert sink_response.json()["resultCount"] == 4
-        assert sink_response.json()["sinks"][0]["id"] == "i-ii/E_next"
-        assert sink_response.json()["sinks"][1]["id"] == "i-iii/F_next"
-        assert sink_response.json()["sinks"][2]["id"] == "i-iii/G_next"
-        assert sink_response.json()["sinks"][3]["id"] == "iii/x/C_next"
+        assert sink_response.json()["sinks"][0]["id"] == "i-ii/E_generic_sink"
+        assert sink_response.json()["sinks"][1]["id"] == "i-iii/F_generic_sink"
+        assert sink_response.json()["sinks"][2]["id"] == "i-iii/G_generic_sink"
+        assert sink_response.json()["sinks"][3]["id"] == "iii/x/C_generic_sink"
 
         assert source_response.status_code == 200
         assert source_response.json()["resultCount"] == 4
@@ -471,20 +471,26 @@ async def test_blob_adapter_webservice_exceptions(
             "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
             side_effect=StructureObjectNotFound,
         ):
-            no_sink_response = await client.get("/adapters/blob/sinks/i-i/A_next")
+            no_sink_response = await client.get(
+                "/adapters/blob/sinks/i-i/A_generic_sink"
+            )
 
             assert no_sink_response.status_code == 404
             assert "Could not find sink" in no_sink_response.json()["detail"]
-            assert "with id 'i-i/A_next'" in no_sink_response.json()["detail"]
+            assert "with id 'i-i/A_generic_sink'" in no_sink_response.json()["detail"]
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
             side_effect=StructureObjectNotUnique,
         ):
-            many_sinks_response = await client.get("/adapters/blob/sinks/i-i/A_next")
+            many_sinks_response = await client.get(
+                "/adapters/blob/sinks/i-i/A_generic_sink"
+            )
 
             assert many_sinks_response.status_code == 500
-            assert "with id 'i-i/A_next'" in many_sinks_response.json()["detail"]
+            assert (
+                "with id 'i-i/A_generic_sink'" in many_sinks_response.json()["detail"]
+            )
             assert "not unique" in many_sinks_response.json()["detail"]
 
         with mock.patch(
@@ -492,12 +498,12 @@ async def test_blob_adapter_webservice_exceptions(
             side_effect=MissingHierarchyError,
         ):
             missing_hierarchy_sinks_response = await client.get(
-                "/adapters/blob/sinks/i-i/A_next"
+                "/adapters/blob/sinks/i-i/A_generic_sink"
             )
 
             assert missing_hierarchy_sinks_response.status_code == 500
             assert (
-                "with id 'i-i/A_next'"
+                "with id 'i-i/A_generic_sink'"
                 in missing_hierarchy_sinks_response.json()["detail"]
             )
             assert (
@@ -534,12 +540,12 @@ async def test_blob_adapter_webservice_exceptions(
             side_effect=MissingHierarchyError,
         ):
             missing_hierarchy_thing_nodes_response = await client.get(
-                "/adapters/blob/thingNodes/i-i/A_next"
+                "/adapters/blob/thingNodes/i-i/A_generic_sink"
             )
 
             assert missing_hierarchy_thing_nodes_response.status_code == 500
             assert (
-                "with id 'i-i/A_next'"
+                "with id 'i-i/A_generic_sink'"
                 in missing_hierarchy_thing_nodes_response.json()["detail"]
             )
             assert (

@@ -118,7 +118,7 @@ def test_blob_storage_get_sinks_by_parent_id() -> None:
     ):
         sinks_with_parent_id_i_iii = get_sinks_by_parent_id(IdString("i-iii/F"))
         assert len(sinks_with_parent_id_i_iii) == 1
-        assert sinks_with_parent_id_i_iii[0].id == "i-iii/F_next"
+        assert sinks_with_parent_id_i_iii[0].id == "i-iii/F_generic_sink"
 
         sinks_with_parent_bla = get_sinks_by_parent_id(IdString("bla"))
         assert len(sinks_with_parent_bla) == 0
@@ -161,7 +161,7 @@ def test_blob_storage_get_filtered_sinks() -> None:
 
         sinks_filtered_by_c = get_filtered_sinks("C")
         assert len(sinks_filtered_by_c) == 2
-        assert sinks_filtered_by_c[0].id == "i-i/C_next"
+        assert sinks_filtered_by_c[0].id == "i-i/C_generic_sink"
 
         sinks_filtered_by_bla = get_filtered_sinks("bla")
         assert len(sinks_filtered_by_bla) == 0
@@ -242,7 +242,7 @@ def test_blob_storage_get_sink_by_id() -> None:
             "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
         ),
     ):
-        sink_by_id = get_sink_by_id(IdString("i-i/A_next"))
+        sink_by_id = get_sink_by_id(IdString("i-i/A_generic_sink"))
         assert sink_by_id.name == "A - Next Object"
         assert sink_by_id.thingNodeId == "i-i/A"
 
@@ -254,14 +254,14 @@ def test_blob_storage_get_sink_by_id() -> None:
             new_callable=mock.PropertyMock,
             return_value=[
                 BlobStorageStructureSink(
-                    id="i-i/A_next",
+                    id="i-i/A_generic_sink",
                     thingNodeId="i-i/A",
                     name="A - Next Object",
                     path="i-i/A",
                     metadataKey="A - Next Object",
                 ),
                 BlobStorageStructureSink(
-                    id="i-i/A_next",
+                    id="i-i/A_generic_sink",
                     thingNodeId="i-i/A",
                     name="A - Next Object",
                     path="i-i/A",
@@ -269,7 +269,7 @@ def test_blob_storage_get_sink_by_id() -> None:
                 ),
             ],
         ), pytest.raises(StructureObjectNotUnique):
-            get_sink_by_id(IdString("i-i/A_next"))
+            get_sink_by_id(IdString("i-i/A_generic_sink"))
 
 
 @pytest.mark.asyncio
@@ -329,7 +329,7 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key() -> None:
         sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
             thing_node_id=IdString("i-i/A"), metadata_key="A - Next Object"
         )
-        assert sink_by_tn_id_and_md_key.id == "i-i/A_next"
+        assert sink_by_tn_id_and_md_key.id == "i-i/A_generic_sink"
         assert sink_by_tn_id_and_md_key.thingNodeId == "i-i/A"
         assert sink_by_tn_id_and_md_key.name == "A - Next Object"
         assert sink_by_tn_id_and_md_key.path == "i-i/A"
@@ -344,14 +344,14 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key() -> None:
             new_callable=mock.PropertyMock,
             return_value=[
                 BlobStorageStructureSink(
-                    id="i-i/A_next",
+                    id="i-i/A_generic_sink",
                     thingNodeId="i-i/A",
                     name="A - Next Object",
                     path="i-i/A",
                     metadataKey="A - Next Object",
                 ),
                 BlobStorageStructureSink(
-                    id="i-i/A_next",
+                    id="i-i/A_generic_sink",
                     thingNodeId="i-i/A",
                     name="A - Next Object",
                     path="i-i/A",

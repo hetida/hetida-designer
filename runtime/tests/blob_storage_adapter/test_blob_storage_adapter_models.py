@@ -5,11 +5,11 @@ from pydantic import ValidationError
 
 from hetdesrun.adapters.blob_storage import (
     BUCKET_NAME_DIR_SEPARATOR,
+    GENERIC_SINK_ID_SUFFIX,
+    GENERIC_SINK_NAME_SUFFIX,
+    HIERARCHY_END_NODE_NAME_SEPARATOR,
     IDENTIFIER_SEPARATOR,
-    LEAF_NAME_SEPARATOR,
     OBJECT_KEY_DIR_SEPARATOR,
-    SINK_ID_ENDING,
-    SINK_NAME_ENDING,
 )
 from hetdesrun.adapters.blob_storage.exceptions import MissingHierarchyError
 from hetdesrun.adapters.blob_storage.models import (
@@ -255,7 +255,8 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
 
     assert (
         "The source name 'A 2022-01-02 14:23:18+00:00' "
-        f"must contain the string '{LEAF_NAME_SEPARATOR}'!" in str(exc_info.value)
+        f"must contain the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}'!"
+        in str(exc_info.value)
     )
 
     with pytest.raises(ValidationError) as exc_info:
@@ -325,14 +326,14 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
 
 def test_blob_storage_class_structure_sink() -> None:
     sink = BlobStorageStructureSink(
-        id="i-ii/A_next",
+        id="i-ii/A_generic_sink",
         thingNodeId="i-ii/A",
         name="A - Next Object",
         path="i-ii/A",
         metadataKey="A - Next Object",
     )
 
-    assert sink.id == "i-ii/A_next"
+    assert sink.id == "i-ii/A_generic_sink"
     assert sink.thingNodeId == "i-ii/A"
     assert sink.name == "A - Next Object"
     assert sink.path == "i-ii/A"
@@ -359,7 +360,7 @@ def test_blob_storage_class_structure_sink() -> None:
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to no object key dir separator
         BlobStorageStructureSink(
-            id="A_next",
+            id="A_generic_sink",
             thingNodeId="A",
             name="A - Next Object",
             path="A",
@@ -373,7 +374,7 @@ def test_blob_storage_class_structure_sink() -> None:
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to bucket name part invalid
         BlobStorageStructureSink(
-            id="I-ii/A_next",
+            id="I-ii/A_generic_sink",
             thingNodeId="i-ii/A",
             name="A - Next Object",
             path="i-ii/A",
@@ -381,7 +382,7 @@ def test_blob_storage_class_structure_sink() -> None:
         )
 
     assert "The first part 'I-ii'" in str(exc_info.value)
-    assert "of the sink id 'I-ii/A_next'" in str(exc_info.value)
+    assert "of the sink id 'I-ii/A_generic_sink'" in str(exc_info.value)
     assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
     assert "must correspond to a bucket name!" in str(exc_info.value)
 
@@ -396,14 +397,14 @@ def test_blob_storage_class_structure_sink() -> None:
         )
 
     assert (
-        f"The sink id 'i-ii/Anext' must end with '{IDENTIFIER_SEPARATOR}{SINK_ID_ENDING}'!"
+        f"The sink id 'i-ii/Anext' must end with '{IDENTIFIER_SEPARATOR}{GENERIC_SINK_ID_SUFFIX}'!"
         in str(exc_info.value)
     )
 
     with pytest.raises(ValidationError) as exc_info:
         # thingNodeId does not match id
         BlobStorageStructureSink(
-            id="i-ii/A_next",
+            id="i-ii/A_generic_sink",
             thingNodeId="i-ii/B",
             name="A - Next Object",
             path="i-ii/A",
@@ -411,12 +412,12 @@ def test_blob_storage_class_structure_sink() -> None:
         )
 
     assert "The sink's thing node id 'i-ii/B'" in str(exc_info.value)
-    assert "does not match its id 'i-ii/A_next'" in str(exc_info.value)
+    assert "does not match its id 'i-ii/A_generic_sink'" in str(exc_info.value)
 
     with pytest.raises(ValidationError) as exc_info:
         # name invalid due to missing separator
         BlobStorageStructureSink(
-            id="i-ii/A_next",
+            id="i-ii/A_generic_sink",
             thingNodeId="i-ii/A",
             name="A Next Object",
             path="i-ii/A",
@@ -424,14 +425,14 @@ def test_blob_storage_class_structure_sink() -> None:
         )
 
     assert (
-        f"The sink name 'A Next Object' must contain the string '{LEAF_NAME_SEPARATOR}'!"
-        in str(exc_info.value)
+        "The sink name 'A Next Object' must contain "
+        f"the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}'!" in str(exc_info.value)
     )
 
     with pytest.raises(ValidationError) as exc_info:
         # name does not match id due to thing node name
         BlobStorageStructureSink(
-            id="i-ii/A_next",
+            id="i-ii/A_generic_sink",
             thingNodeId="i-ii/A",
             name="B - Next Object",
             path="i-ii/A",
@@ -446,7 +447,7 @@ def test_blob_storage_class_structure_sink() -> None:
     with pytest.raises(ValidationError) as exc_info:
         # name does not match id due to timestamp
         BlobStorageStructureSink(
-            id="i-ii/A_next",
+            id="i-ii/A_generic_sink",
             thingNodeId="i-ii/A",
             name="A - Next Trained Model",
             path="i-ii/A",
@@ -454,14 +455,14 @@ def test_blob_storage_class_structure_sink() -> None:
         )
 
     assert (
-        f"The sink name 'A - Next Trained Model' must end with '{SINK_NAME_ENDING}'"
+        f"The sink name 'A - Next Trained Model' must end with '{GENERIC_SINK_NAME_SUFFIX}'"
         in str(exc_info.value)
     )
 
     with pytest.raises(ValidationError) as exc_info:
         # path does not match thingNodeId
         BlobStorageStructureSink(
-            id="i-ii/A_next",
+            id="i-ii/A_generic_sink",
             thingNodeId="i-ii/A",
             name="A - Next Object",
             path="i-ii/B",
@@ -474,7 +475,7 @@ def test_blob_storage_class_structure_sink() -> None:
     with pytest.raises(ValidationError) as exc_info:
         # metadataKey does not match name
         BlobStorageStructureSink(
-            id="i-ii/A_next",
+            id="i-ii/A_generic_sink",
             thingNodeId="i-ii/A",
             name="A - Next Object",
             path="i-ii/A",
@@ -542,10 +543,10 @@ def test_blob_storage_class_hierarchy_node() -> None:
     assert len(bucket_names) == 1
     assert bucket_names[0] == StructureBucket(name="i-i")
     assert len(sinks) == 2
-    assert sinks[0].id == "i-i/A_next"
+    assert sinks[0].id == "i-i/A_generic_sink"
     assert sinks[0].thingNodeId == "i-i/A"
     assert sinks[0].name == "A - Next Object"
-    assert sinks[1].id == "i-i/B_next"
+    assert sinks[1].id == "i-i/B_generic_sink"
     assert sinks[1].thingNodeId == "i-i/B"
     assert sinks[1].name == "B - Next Object"
 
