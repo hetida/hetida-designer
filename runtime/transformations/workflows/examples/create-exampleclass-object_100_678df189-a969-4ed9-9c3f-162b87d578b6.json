@@ -10,7 +10,7 @@
         "id": "c92e34ae-c170-47e5-a811-86960b1abae3",
         "name": "name",
         "operator_id": "b6722131-a47b-429b-ab8f-d977233bf408",
-        "operator_name": "Create ExampleClass Entity",
+        "operator_name": "Create ExampleClass Object",
         "position": {
           "x": 625,
           "y": 290
@@ -23,7 +23,7 @@
         "id": "94d18342-d7f4-40b2-8d6f-23b1e04b20fc",
         "name": "amount",
         "operator_id": "b6722131-a47b-429b-ab8f-d977233bf408",
-        "operator_name": "Create ExampleClass Entity",
+        "operator_name": "Create ExampleClass Object",
         "position": {
           "x": 625,
           "y": 320
@@ -36,7 +36,7 @@
         "id": "633d031d-069e-45d1-aaf3-95936e060814",
         "name": "value",
         "operator_id": "b6722131-a47b-429b-ab8f-d977233bf408",
-        "operator_name": "Create ExampleClass Entity",
+        "operator_name": "Create ExampleClass Object",
         "position": {
           "x": 625,
           "y": 350
@@ -130,7 +130,7 @@
           "connector": {
             "data_type": "ANY",
             "id": "d8efd9d5-11a6-4483-9d26-563f2f41591e",
-            "name": "class_entity",
+            "name": "example_class_object",
             "position": {
               "x": 1325,
               "y": 260
@@ -143,7 +143,7 @@
           "connector": {
             "data_type": "ANY",
             "id": "0b207b91-9be4-40cf-9575-0a7105e61ebd",
-            "name": "class_entity",
+            "name": "example_class_object",
             "position": {
               "x": 0,
               "y": 0
@@ -157,7 +157,7 @@
           "connector": {
             "data_type": "ANY",
             "id": "18a6c776-bd73-48e7-814a-d86cbf3e87cc",
-            "name": "class_object",
+            "name": "ExampleClass",
             "position": {
               "x": 0,
               "y": 0
@@ -171,7 +171,7 @@
           "connector": {
             "data_type": "ANY",
             "id": "c00635c2-3183-4e10-9fbb-18ac16f4660c",
-            "name": "class_object",
+            "name": "ExampleClass",
             "position": {
               "x": 0,
               "y": 0
@@ -188,7 +188,7 @@
           {
             "data_type": "ANY",
             "id": "18a6c776-bd73-48e7-814a-d86cbf3e87cc",
-            "name": "class_object",
+            "name": "ExampleClass",
             "position": {
               "x": 0,
               "y": 0
@@ -222,12 +222,12 @@
             }
           }
         ],
-        "name": "Create ExampleClass Entity",
+        "name": "Create ExampleClass Object",
         "outputs": [
           {
             "data_type": "ANY",
             "id": "0b207b91-9be4-40cf-9575-0a7105e61ebd",
-            "name": "class_entity",
+            "name": "example_class_object",
             "position": {
               "x": 0,
               "y": 0
@@ -252,7 +252,7 @@
           {
             "data_type": "ANY",
             "id": "c00635c2-3183-4e10-9fbb-18ac16f4660c",
-            "name": "class_object",
+            "name": "ExampleClass",
             "position": {
               "x": 0,
               "y": 0
@@ -276,9 +276,9 @@
         "connector_name": "connector_name",
         "data_type": "ANY",
         "id": "d8efd9d5-11a6-4483-9d26-563f2f41591e",
-        "name": "class_entity",
+        "name": "example_class_object",
         "operator_id": "b6722131-a47b-429b-ab8f-d977233bf408",
-        "operator_name": "Create ExampleClass Entity",
+        "operator_name": "Create ExampleClass Object",
         "position": {
           "x": 1325,
           "y": 260
@@ -287,7 +287,7 @@
     ]
   },
   "description": "Create ExampleClass entity",
-  "documentation": "# Create ExampleClass Entity\n## Description\nCreate an entity of the ExampleClass class.\n\n## Inputs\n* **name** (String): Set the attribute \"name\" of the ExampleClass entity.\n* **amount** (Integer): Set the attribute \"amount\" of the ExampleClass entity.\n* **value** (Float): Set the attribute \"value\" of the ExampleClass entity.\n\n## Outputs\n* **class_entity** (Any): ExampleClass entity with the attributes set to the corresponding input values.\n\n## Details\nIt is not possible to execute the component on its own, but only in the context of a workflow, where the **class_object** is provided by the component \"ExampleClass\" from the category \"Classes\".\n\n## Example\nThe json input of a typical call of this workflow\n```\n{\n    \"name\": \"name\",\n    \"amount\": 1,\n    \"value\": 0.5\n}\n```",
+  "documentation": "# Create ExampleClass Object\n## Description\nCreate an entity of the ExampleClass class.\n\n## Inputs\n* **name** (String): Set the attribute \"name\" of the ExampleClass entity.\n* **amount** (Integer): Set the attribute \"amount\" of the ExampleClass entity.\n* **value** (Float): Set the attribute \"value\" of the ExampleClass entity.\n\n## Outputs\n* **example_class_object** (Any): ExampleClass entity with the attributes set to the corresponding input values.\n\n## Details\nIt is not possible to execute the component on its own, but only in the context of a workflow, where the **ExampleClass** is provided by the component \"ExampleClass\" from the category \"Classes\".\n\n## Example\nThe json input of a typical call of this workflow\n```\n{\n    \"name\": \"name\",\n    \"amount\": 1,\n    \"value\": 0.5\n}\n```",
   "id": "678df189-a969-4ed9-9c3f-162b87d578b6",
   "io_interface": {
     "inputs": [
@@ -311,11 +311,11 @@
       {
         "data_type": "ANY",
         "id": "d8efd9d5-11a6-4483-9d26-563f2f41591e",
-        "name": "class_entity"
+        "name": "example_class_object"
       }
     ]
   },
-  "name": "Create ExampleClass Entity",
+  "name": "Create ExampleClass Object",
   "released_timestamp": "2023-02-10T13:45:52.982547+00:00",
   "revision_group_id": "039f8445-93e8-4006-a5b2-47f60ee240e8",
   "state": "RELEASED",
@@ -343,7 +343,16 @@
         "workflow_input_name": "value"
       }
     ],
-    "output_wirings": []
+    "output_wirings": [
+      {
+        "adapter_id": "blob-storage-adapter",
+        "ref_id": "planta-millingunit/Influx/Anomalies",
+        "ref_id_type": "THINGNODE",
+        "ref_key": "Anomalies - Next Object",
+        "type": "metadata(any)",
+        "workflow_output_name": "example_class_object"
+      }
+    ]
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

@@ -5,12 +5,12 @@
     "inputs": [
       {
         "connector_id": "ae9ad473-be37-4e0c-8e78-2a01b24ffd3e",
-        "connector_name": "class_entity",
+        "connector_name": "example_class_object",
         "data_type": "ANY",
         "id": "9a1d7434-3e66-46d8-844c-7769e7e13603",
-        "name": "class_entity",
+        "name": "example_class_object",
         "operator_id": "f707da5d-1584-4a2f-83cb-8a84c0733a6a",
-        "operator_name": "Get ExampleClass Entity Attributes",
+        "operator_name": "Get ExampleClass Object Attributes",
         "position": {
           "x": 475,
           "y": 262
@@ -23,7 +23,7 @@
           "connector": {
             "data_type": "ANY",
             "id": "ae9ad473-be37-4e0c-8e78-2a01b24ffd3e",
-            "name": "class_entity",
+            "name": "example_class_object",
             "position": {
               "x": 0,
               "y": 0
@@ -37,7 +37,7 @@
           "connector": {
             "data_type": "ANY",
             "id": "9a1d7434-3e66-46d8-844c-7769e7e13603",
-            "name": "class_entity",
+            "name": "example_class_object",
             "position": {
               "x": 475,
               "y": 262
@@ -145,7 +145,7 @@
           "connector": {
             "data_type": "ANY",
             "id": "c00635c2-3183-4e10-9fbb-18ac16f4660c",
-            "name": "class_object",
+            "name": "ExampleClass",
             "position": {
               "x": 0,
               "y": 0
@@ -162,14 +162,14 @@
           {
             "data_type": "ANY",
             "id": "ae9ad473-be37-4e0c-8e78-2a01b24ffd3e",
-            "name": "class_entity",
+            "name": "example_class_object",
             "position": {
               "x": 0,
               "y": 0
             }
           }
         ],
-        "name": "Get ExampleClass Entity Attributes",
+        "name": "Get ExampleClass Object Attributes",
         "outputs": [
           {
             "data_type": "STRING",
@@ -242,7 +242,7 @@
           {
             "data_type": "ANY",
             "id": "c00635c2-3183-4e10-9fbb-18ac16f4660c",
-            "name": "class_object",
+            "name": "ExampleClass",
             "position": {
               "x": 0,
               "y": 0
@@ -268,7 +268,7 @@
         "id": "ad70f00f-7c2c-4699-b313-c01f49cdf522",
         "name": "name",
         "operator_id": "f707da5d-1584-4a2f-83cb-8a84c0733a6a",
-        "operator_name": "Get ExampleClass Entity Attributes",
+        "operator_name": "Get ExampleClass Object Attributes",
         "position": {
           "x": 1175,
           "y": 262
@@ -281,7 +281,7 @@
         "id": "5931f296-979b-4166-832d-cbe553a40ead",
         "name": "amount",
         "operator_id": "f707da5d-1584-4a2f-83cb-8a84c0733a6a",
-        "operator_name": "Get ExampleClass Entity Attributes",
+        "operator_name": "Get ExampleClass Object Attributes",
         "position": {
           "x": 1175,
           "y": 292
@@ -294,7 +294,7 @@
         "id": "99038020-75c9-4c76-a1aa-bcc9e59b9d8b",
         "name": "value",
         "operator_id": "f707da5d-1584-4a2f-83cb-8a84c0733a6a",
-        "operator_name": "Get ExampleClass Entity Attributes",
+        "operator_name": "Get ExampleClass Object Attributes",
         "position": {
           "x": 1175,
           "y": 322
@@ -302,15 +302,15 @@
       }
     ]
   },
-  "description": "Get attributes of the provided ExampleClass entity",
-  "documentation": "# Get ExampleClass Entity Attribute\n\n## Description\nGet attributes of the provided ExampleClass entity.\n\n## Inputs\n* **class_entity** (Any): ExampleClass entity, i.e. from the component/workflow \"Create ExampleClass Entity\" or from a stored object.\n\n## Outputs\n* **name** (String): Attribute \"name\" of the ExampleClass entity.\n* **amount** (Integer): Attribute \"amount\" of the ExampleClass entity.\n* **value** (Float): Attribute \"value\" of the ExampleClass entity.\n\n## Details\nThe **class_object** is provided by the component \"ExampleClass\" from the category \"Classes\", so that the component \"Get ExampleClass Entity Attribute\" from the category \"Basic\" can actually be executed within this worklfow.\n\nThis workflow cannot be executed with manual input. It is intended to be used with stored objects or in another workflow.",
+  "description": "Get attributes of the provided ExampleClass object",
+  "documentation": "# Get ExampleClass Object Attribute\n\n## Description\nGet attributes of the provided ExampleClass object.\n\n## Inputs\n* **example_class_object** (Any): ExampleClass object, i.e. from the component/workflow \"Create ExampleClass Object\" or from a stored object.\n\n## Outputs\n* **name** (String): Attribute \"name\" of the ExampleClass object.\n* **amount** (Integer): Attribute \"amount\" of the ExampleClass object.\n* **value** (Float): Attribute \"value\" of the ExampleClass object.\n\n## Details\nThe **ExampleClass** is provided by the component \"ExampleClass\" from the category \"Classes\", so that the component \"Get ExampleClass Entity Attribute\" from the category \"Basic\" can actually be executed within this worklfow.\n\nThis workflow cannot be executed with manual input. It is intended to be used with stored objects or in another workflow.",
   "id": "ef8a1989-434a-4227-8b4a-cb96635c5a44",
   "io_interface": {
     "inputs": [
       {
         "data_type": "ANY",
         "id": "9a1d7434-3e66-46d8-844c-7769e7e13603",
-        "name": "class_entity"
+        "name": "example_class_object"
       }
     ],
     "outputs": [
@@ -331,12 +331,22 @@
       }
     ]
   },
-  "name": "Get ExampleClass Entity Attributes",
+  "name": "Get ExampleClass Object Attributes",
   "released_timestamp": "2023-02-10T13:45:46.989976+00:00",
   "revision_group_id": "bb6ffbca-abb6-4bf6-aef1-4eaa42ef816f",
   "state": "RELEASED",
   "test_wiring": {
-    "input_wirings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "blob-storage-adapter",
+        "filters": {},
+        "ref_id": "planta-millingunit/Influx/Anomalies",
+        "ref_id_type": "THINGNODE",
+        "ref_key": "Anomalies - 2023-02-21 15:23:22+00:00",
+        "type": "metadata(any)",
+        "workflow_input_name": "example_class_object"
+      }
+    ],
     "output_wirings": []
   },
   "type": "WORKFLOW",
