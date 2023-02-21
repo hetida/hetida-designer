@@ -139,11 +139,9 @@ export class CopyTransformationDialogComponent implements OnInit {
             },
             [NotOnlyWhitespacesValidator(), AllowedCharsValidator()]
           ),
-          // TODO rename form control to version tag?
           tag: new FormControl(
             {
               value: this.data.transformation.version_tag,
-              // TODO disabled state rename tag?
               disabled: this.data.disabledState.tag
             },
             [

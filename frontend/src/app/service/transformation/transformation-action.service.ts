@@ -192,7 +192,6 @@ export class TransformationActionService {
       .subscribe();
   }
 
-  // TODO unit test
   public newRevision(transformation: Transformation): void {
     if (!this.isReleased(transformation)) {
       return;
@@ -491,7 +490,6 @@ export class TransformationActionService {
     return this.transformationService.deleteTransformation(transformation.id);
   }
 
-  // TODO unit test
   private copyTransformation(
     newId: string,
     groupId: string,

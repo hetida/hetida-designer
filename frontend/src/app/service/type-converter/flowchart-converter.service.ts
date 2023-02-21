@@ -116,7 +116,7 @@ export class FlowchartConverterService {
       connector.constant = true;
       connector.value = constant.value;
 
-      // TODO: Maybe links to constants can be removed from the API completely, since they are deleted here anyway.
+      // TODO: Maybe links to constants can be removed from the API completely, since they are deleted here anyway, HDOS-487.
       flowchart.links = flowchart.links.filter(
         link =>
           (isInput ? link.to : link.from) !==
@@ -292,7 +292,6 @@ export class FlowchartConverterService {
     let foundConnector: Connector;
 
     if (searchInWorkflowIoInterface) {
-      // TODO search in workflow content io to get positions
       const ios = [
         ...workflowTransformation.io_interface.inputs,
         ...workflowTransformation.io_interface.outputs
