@@ -10,9 +10,16 @@ This section explains how to make blob storage available via the blob storage ad
 
 ### Mounting the adapter hierarchy configuration
 
-The S3 data model is flat, consisting only of buckets in which objects can be stored. There is no hierarchy of sub-buckets of sub-folders. The blob storage adapter can infer a more complex hierarchical structure to increase  by using delimiters. Hyphens `-` are used as delimiters in bucket names and slashes `/` are used as delimiters within object keys to mimic the paths to files in nested folders. Some tools for S3 blob storages can infer hierarchy in the user interface from object keys with such delimiters.
+The S3 data model is flat, consisting only of buckets in which objects can be stored.
+There is no hierarchy of sub-buckets of sub-folders.
+The blob storage adapter can infer a more complex hierarchical structure by using delimiters.
+Hyphens `-` are used as delimiters in bucket names, and slashes `/` are used as delimiters within object keys to mimic paths to files in nested folders.
+Some tools for S3 blob storages can infer hierarchy in the user interface from object keys with such delimiters.
 
-The blob storage adapter offers resources from blob storage in a hierarchical structure. This hierarchy is defined in a file named `blob_storage_adapter_hierarchy.json` which needs to be available to the runtime service and is loaded at startup. E.g. a demo hierarchy can be mounted in the docker-compose setup as follows:
+The blob storage adapter offers resources from the blob storage in a hierarchical structure.
+This hierarchy is defined in a file named `blob_storage_adapter_hierarchy.json` which must be available to the runtime service and is loaded at startup.
+For example, a demo hierarchy can be mounted in the docker-compose setup as follows:
+
 ```yaml
   hetida-designer-runtime:
     ...
@@ -57,9 +64,9 @@ This [file](../../runtime/demodata/blob_storage_adapter_hierarchy.json) contains
 
 The names for the hierarchy nodes should consist only of alphanumeric upper and lower case letters without spaces, because they are interpreted as parts of the bucket names and object keys. Since bucket names cannot contain uppercase letters, the hierarchy node names are converted to lowercase when the corresponding bucket names are generated. When naming hierarchy nodes, note that bucket names must consist of a minimum of 3 and a maximum of 63 characters.
 
-The attribute `below_structure_defines_object_key` is per default `false`.
-If it is not set, only the name of the hierarchy end nodes are considered as part of the object key and the names of all higher hierarchy nodes are considered as part of the bucket name.
-Setting this attribute to `true` means that the names of all deeper hierarchy nodes are considered as part of the object key.
+The `below_structure_defines_object_key` attribute is `false` by default.
+If it is not set, only the names of the hierarchy end nodes are used as prefix of the object key, which is supplemented by the respective creation time stamp, and the bucket name is composed of the names of all higher hierarchy nodes.
+If this attribute is set to "true" for a hierarchy node, the names of all lower hierarchy nodes are used as prefix of the object key.
 
 The buckets defined by the adapter structure must already be present in the blob storage. For the example adapter hierarchy these would be buckets with the following names:
 * `planta-picklingunit`
@@ -82,9 +89,10 @@ The blob storage adapter is configured by the following environment variables:
 * BLOB_STORAGE_ENDPOINT_URL
 * BLOB_STORAGE_REGION_NAME
 
-The `BLOB_STORAGE_REGION_NAME` default value is "eu-central-1".
+The environment variable `BLOB_STORAGE_REGION_NAME` should be set to the region name matching your blob storage setup.
+Its default value is "eu-central-1".
 The environment variable  `BLOB_STORAGE_ACCESS_DURATION` is used to set the [request parameter](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html#API_AssumeRoleWithWebIdentity_RequestParameters) `DurationSeconds` in the authentication towards the blob storage.
-It sets the duration of the role session in seconds and must be in the range of 900 (15 min) and the maximum session duration setting for the role.
+It sets the duration of the role session in seconds and must be in the range between 900 (15 min) and the maximum session duration setting for the role.
 Its default value is 3600 (1 hour).
 
 An example using a minio instance as blob storage provider:
@@ -111,14 +119,12 @@ The `dump` and `load` methods of the Python package `joblib` are used to seriali
 
 ### Basic Usage
 
-The workflows "Get ExampleClass Entity Attributes" and "Create ExampleClass Entity" provide a minimal example of how objects with a self defined class can be stored and loaded.
+The workflows "Get ExampleClass Object Attributes" and "Create ExampleClass Object" provide a minimal example of how objects with a self defined class can be stored and loaded.
 
 Selecting "Blob Storage Adapter" for an input in the Execution dialog sources should be available for all objects for which bucket name and object key match the adapter hierarchy:
 
-<img src="./assets/blob_storage_adapter_selected.png" height="100" width=450>
-
-<img src="./assets/blob_storage_adapter_assign_source.png" height="780" width=700>
+<img src="./assets/blob_storage_adapter_assign_source.png" height="630" width=530 data-align="center">
 
 Similarly a sink should be available for each end node in the hierarchy via selecting "Blob Storage Adapter" for an output in the Execution dialog:
 
-<img src="./assets/blob_storage_adapter_assign_sink.png" height="780" width=700>
+<img src="./assets/blob_storage_adapter_assign_sink.png" height="630" width=530 data-align="center">
