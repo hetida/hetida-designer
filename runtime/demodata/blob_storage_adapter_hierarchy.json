@@ -70,12 +70,24 @@
                     "description": "Plant B Pickling Unit",
                     "substructure": [
                         {
-                            "name": "InfluxAnomalies",
-                            "description": "Plant B Pickling Unit Influx Anomalies"
+                            "name": "Influx",
+                            "description": "Plant B Pickling Unit Influx",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant B Pickling Unit Influx Anomalies"
+                                }
+                            ]
                         },
                         {
                             "name": "Outfeed",
-                            "description": "Plant B Pickling Unit Outfeed Anomalies"
+                            "description": "Plant B Pickling Unit Outfeed Anomalies",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant B Pickling Unit Outfeed Anomalies"
+                                }
+                            ]
                         }
                     ]
                 },
