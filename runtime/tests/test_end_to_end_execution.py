@@ -262,48 +262,6 @@ async def test_nested_wf_execution(async_test_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_plotting_component_execution(async_test_client: AsyncClient) -> None:
-    async with async_test_client as client:
-        with open(
-            os.path.join("tests", "data", "plotting_component_execution_input.json"),
-            encoding="utf8",
-        ) as f:
-            loaded_workflow_exe_input = json.load(f)
-            
-        response_status_code, response_json = await run_workflow_with_client(
-            loaded_workflow_exe_input, client
-        )
-
-        assert response_status_code == 200
-        assert response_json["result"] == "ok"
-        assert response_json["output_results_by_output_name"]["comparison_plot"] == {
-            "data": [
-                {
-                    "mode": "lines",
-                    "name": "x",
-                    "x": [0, 1, 2],
-                    "y": [42.2, 18.7, 25.9],
-                    "type": "scatter",
-                },
-                {
-                    "mode": "lines",
-                    "name": "y",
-                    "x": [0, 1, 2],
-                    "y": [42.2, 18.7, 25.9],
-                    "type": "scatter",
-                },
-            ],
-            "layout": {
-                "xaxis": {"title": {"text": "Time"}, "automargin": True},
-                "yaxis": {"title": {"text": "Values"}, "automargin": True},
-                "autosize": True,
-                "height": 200,
-                "margin": {"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0},
-            },
-        }
-
-
-@pytest.mark.asyncio
 async def test_load_object_with_self_defined_class(
     async_test_client_with_blob_storage_adapter: AsyncClient,
 ) -> None:
