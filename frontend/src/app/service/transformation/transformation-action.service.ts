@@ -498,7 +498,7 @@ export class TransformationActionService {
     suffix: string,
     transformation: Transformation
   ): Transformation {
-    let copy: Transformation;
+    let copy: Transformation = null;
 
     if (isWorkflowTransformation(transformation)) {
       copy = {
@@ -513,7 +513,7 @@ export class TransformationActionService {
           outputs: []
         }
       };
-    } else {
+    } else if (isComponentTransformation(transformation)) {
       copy = {
         ...transformation,
         id: newId,
