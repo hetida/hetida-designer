@@ -29,7 +29,7 @@ class BlobStorageAdapterConfig(BaseSettings):
         "",
         description="URL under which the BLOB storage is accessible.",
         env="BLOB_STORAGE_ENDPOINT_URL",
-        example="/mnt/blob_storage_adapter_hierarchy.json",
+        example="http://minio:9000",
     )
     region_name: str = Field(
         "eu-central-1", description="", env="BLOB_STORAGE_REGION_NAME"
