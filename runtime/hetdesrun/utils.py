@@ -32,7 +32,6 @@ def check_explicit_utc(dt: datetime.datetime) -> bool:
 
 def get_backend_basic_auth() -> tuple[str | None, str | None] | None:
     if get_config().hd_backend_use_basic_auth:
-        # TODO: add exception handling for case config params are not set and make typecheck work
         return (
             get_config().hd_backend_basic_auth_user,
             get_config().hd_backend_basic_auth_password,

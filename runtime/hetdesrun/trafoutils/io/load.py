@@ -188,7 +188,6 @@ def transformation_revision_from_python_code(code: str) -> Any:
     return tr_json
 
 
-# TODO: reduce branches
 def load_transformation_revisions_from_directory(  # noqa: PLR0912
     download_path: str, transform_py_to_json: bool = False
 ) -> tuple[dict[UUID, TransformationRevision], dict[UUID, str]]:
@@ -320,7 +319,6 @@ class ImportSourceConfig(BaseModel):
     update_config: MultipleTrafosUpdateConfig
 
 
-# TODO: reduce branches
 def get_import_sources(directory_path: str) -> Iterable[ImportSource]:  # noqa: PLR0912
     """Get all import sources inside a directory
 

@@ -28,7 +28,6 @@ from hetdesrun.wiring import (
 runtime_logger.addFilter(job_id_context_filter)
 
 
-# TODO: reduce return statements, branches, statements
 async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:
