@@ -98,7 +98,7 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string() -> 
         parse_credential_info_from_xml_string(
             missing_session_token_xml_response_text, now
         )
-    assert "Could not find at least one of the required Credentials" in str(
+    assert "At least one of the required Credentials could not be found" in str(
         exc_info.value
     )
 
@@ -123,7 +123,7 @@ async def test_blob_storage_authentication_obtain_credential_info_from_rest_api(
     ):
         with mock.patch(
             "hetdesrun.adapters.blob_storage.authentication.requests.post",
-            return_value=mock.Mock(status_code=201, text="text"),
+            return_value=mock.Mock(status_code=200, text="text"),
         ):
             with mock.patch(
                 "hetdesrun.adapters.blob_storage.authentication.parse_credential_info_from_xml_string",
