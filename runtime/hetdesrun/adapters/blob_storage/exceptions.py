@@ -4,14 +4,8 @@ from hetdesrun.adapters.exceptions import (
 )
 
 
-# rather AdapterConfigurationError -> in mounted hierarchy json or its path
 class MissingHierarchyError(AdapterHandlingException):
-    pass
-
-
-# rather AdapterConfigurationError -> in docker compose yml
-class InvalidEndpointError(AdapterHandlingException):
-    pass
+    """Raise if the hierarchy json cannot be found"""
 
 
 class StorageAuthenticationError(AdapterConnectionError):
@@ -19,8 +13,8 @@ class StorageAuthenticationError(AdapterConnectionError):
 
 
 class StructureObjectNotFound(AdapterHandlingException):
-    pass
+    """Errors around not finding a sink / source / thingnode"""
 
 
 class StructureObjectNotUnique(AdapterHandlingException):
-    pass
+    """Errors around not unique sinks / sources / thingnodes"""

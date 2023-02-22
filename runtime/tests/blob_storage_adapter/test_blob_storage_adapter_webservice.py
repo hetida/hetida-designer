@@ -6,8 +6,8 @@ import pytest
 from httpx import AsyncClient
 
 from hetdesrun.adapters.blob_storage.exceptions import (
-    InvalidEndpointError,
     MissingHierarchyError,
+    StorageAuthenticationError,
     StructureObjectNotFound,
     StructureObjectNotUnique,
 )
@@ -277,7 +277,7 @@ async def test_blob_adapter_webservice_exceptions(
         ):
             with mock.patch(
                 "hetdesrun.adapters.blob_storage.webservice.get_sources_by_parent_id",
-                side_effect=InvalidEndpointError,
+                side_effect=StorageAuthenticationError,
             ):
                 invalid_endpoint_get_structure_response = await client.get(
                     "/adapters/blob/structure"
@@ -331,7 +331,7 @@ async def test_blob_adapter_webservice_exceptions(
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_filtered_sources",
-            side_effect=InvalidEndpointError,
+            side_effect=StorageAuthenticationError,
         ):
             invalid_endpoint_get_sources_response = await client.get(
                 "/adapters/blob/sources"
@@ -433,7 +433,7 @@ async def test_blob_adapter_webservice_exceptions(
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
-            side_effect=InvalidEndpointError,
+            side_effect=StorageAuthenticationError,
         ):
             invalid_endpoint_sources_response = await client.get(
                 "/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"

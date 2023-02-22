@@ -4,12 +4,6 @@ from typing import Any
 
 import joblib
 
-from hetdesrun.adapters.blob_storage.exceptions import (
-    InvalidEndpointError,
-    MissingHierarchyError,
-    StructureObjectNotFound,
-    StructureObjectNotUnique,
-)
 from hetdesrun.adapters.blob_storage.models import IdString
 from hetdesrun.adapters.blob_storage.service import get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
@@ -26,23 +20,20 @@ logger = logging.getLogger(__name__)
 
 
 async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
+    """Load BLOB from storage.
+
+    Note, that StructureObjectNotFound, StructureObjectNotUnique, MissingHierarchyError,
+    StorageAuthenticationError, and AdapterConnectionError raised from
+    get_source_by_thing_node_id_and_metadata_key or get_s3_client may occur.
+    """
     logger.info(
         "Identify source with thing node id '%s' and metadata key '%s'",
         thing_node_id,
         metadata_key,
     )
-    try:
-        source = await get_source_by_thing_node_id_and_metadata_key(
-            IdString(thing_node_id), metadata_key
-        )
-    except (
-        StructureObjectNotFound,
-        StructureObjectNotUnique,
-        MissingHierarchyError,
-        InvalidEndpointError,
-        AdapterConnectionError,
-    ) as error:
-        raise error
+    source = await get_source_by_thing_node_id_and_metadata_key(
+        IdString(thing_node_id), metadata_key
+    )
 
     logger.info("Get bucket name and object key from source with id %s", source.id)
     structure_bucket, object_key = source.to_structure_bucket_and_object_key()
@@ -53,10 +44,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         structure_bucket.name,
         object_key.string,
     )
-    try:
-        s3_client = await get_s3_client()
-    except (AdapterConnectionError, InvalidEndpointError) as error:
-        raise error
+    s3_client = await get_s3_client()
     try:
         response = s3_client.get_object(
             Bucket=structure_bucket.name, Key=object_key.string, ChecksumMode="ENABLED"
@@ -90,6 +78,11 @@ async def load_data(
     wf_input_name_to_filtered_source_mapping_dict: dict[str, FilteredSource],
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:
+    """Load data for filtered sources from BLOB storage.
+
+    A AdapterHandlingException or AdapterConnectionError raised in
+    load_blob_from_storage may occur.
+    """
     wf_input_name_to_data_dict: dict[str, Any] = {}
 
     for (
@@ -101,11 +94,8 @@ async def load_data(
             logger.error(msg)
             raise AdapterClientWiringInvalidError(msg)
 
-        try:
-            wf_input_name_to_data_dict[wf_input_name] = await load_blob_from_storage(
-                filtered_source.ref_id, filtered_source.ref_key
-            )
-        except (AdapterHandlingException, AdapterConnectionError) as error:
-            raise error
+        wf_input_name_to_data_dict[wf_input_name] = await load_blob_from_storage(
+            filtered_source.ref_id, filtered_source.ref_key
+        )
 
     return wf_input_name_to_data_dict

@@ -5,7 +5,7 @@ import pytest
 from moto import mock_s3
 
 from hetdesrun.adapters.blob_storage.authentication import Credentials
-from hetdesrun.adapters.blob_storage.exceptions import InvalidEndpointError
+from hetdesrun.adapters.blob_storage.exceptions import StorageAuthenticationError
 from hetdesrun.adapters.blob_storage.models import BucketName
 from hetdesrun.adapters.blob_storage.service import (
     get_object_key_strings_in_bucket,
@@ -48,7 +48,7 @@ async def test_blob_storage_service_get_s3_client() -> None:
             "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
             return_value=mock.Mock(endpoint_url="invalid_endpoint_url"),
         ):
-            with pytest.raises(InvalidEndpointError) as exc_info:
+            with pytest.raises(StorageAuthenticationError) as exc_info:
                 await get_s3_client()
             assert "The string 'invalid_endpoint_url' is no valid endpoint url!" in str(
                 exc_info.value

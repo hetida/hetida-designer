@@ -111,7 +111,7 @@ async def obtain_credential_info_from_rest_api() -> CredentialInfo:
             "Action": "AssumeRoleWithWebIdentity",
             "DurationSeconds": str(get_blob_adapter_config().access_duration),
             "WebIdentityToken": access_token,
-            "Version": "2011-06-15", # must be exactly this value
+            "Version": "2011-06-15",  # must be exactly this value
         },
         verify=get_config().hd_adapters_verify_certs,
         auth=None,
@@ -146,6 +146,10 @@ def credentials_still_valid_enough(credential_info: CredentialInfo) -> bool:
 async def obtain_or_refresh_credential_info(
     existing_credential_info: CredentialInfo | None = None,
 ) -> CredentialInfo:
+    """Obtain new credential info if necessary.
+
+    A StorageAuthenticationError raised in obtain_credentail_info_from_rest_api may occur.
+    """
     if existing_credential_info is not None:
         if credentials_still_valid_enough(existing_credential_info):
             return existing_credential_info
@@ -162,6 +166,10 @@ class CredentialManager:
         self._credential_thread_lock = threading.Lock()
 
     async def _obtain_or_refresh_credential_info(self) -> None:
+        """Obtain new credential info if necessary.
+
+        A StorageAuthenticationError raised in obtain_credentail_info_from_rest_api may occur.
+        """
         credential_info = await obtain_or_refresh_credential_info(
             self._current_credential_info
         )
@@ -212,6 +220,10 @@ async def get_access_token() -> str:
 
 
 async def get_credentials() -> Credentials:
+    """Get credentials for the BLOB storage.
+
+    A StorageAuthenticationError raised in the CredentialManager method get_credentials may occur.
+    """
     credential_manager = create_or_get_named_credential_manager("blob_adapter_cred")
     credentials = await credential_manager.get_credentials()
     logger.info("Got credentials from credential manager")

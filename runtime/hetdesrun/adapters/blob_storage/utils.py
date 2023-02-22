@@ -1,29 +1,26 @@
 from logging import getLogger
 
-from hetdesrun.adapters.blob_storage.exceptions import MissingHierarchyError
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSource,
     ObjectKey,
     get_adapter_structure,
 )
 from hetdesrun.adapters.blob_storage.service import get_object_key_strings_in_bucket
-from hetdesrun.adapters.exceptions import AdapterConnectionError
 
 logger = getLogger(__name__)
 
 
 async def create_sources() -> list[BlobStorageStructureSource]:
-    try:
-        thing_nodes = get_adapter_structure().thing_nodes
-        buckets = get_adapter_structure().structure_buckets
-    except MissingHierarchyError as error:
-        raise error
+    """Create sources from buckets and object keys.
+
+    A MissingHierarchyError raised from get_adapter_structure may or an AdapterConnectionError
+    raised from get_object_key_strings_in_bucket may occur.
+    """
+    thing_nodes = get_adapter_structure().thing_nodes
+    buckets = get_adapter_structure().structure_buckets
     source_list: list[BlobStorageStructureSource] = []
     for bucket in buckets:
-        try:
-            object_key_strings = await get_object_key_strings_in_bucket(bucket.name)
-        except AdapterConnectionError as error:
-            raise error
+        object_key_strings = await get_object_key_strings_in_bucket(bucket.name)
         for object_key_string in object_key_strings:
             try:
                 object_key = ObjectKey.from_string(object_key_string)

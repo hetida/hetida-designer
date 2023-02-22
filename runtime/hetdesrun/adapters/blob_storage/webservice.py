@@ -13,8 +13,8 @@ from fastapi import HTTPException, Query, status
 
 from hetdesrun.adapters.blob_storage import VERSION
 from hetdesrun.adapters.blob_storage.exceptions import (
-    InvalidEndpointError,
     MissingHierarchyError,
+    StorageAuthenticationError,
     StructureObjectNotFound,
     StructureObjectNotUnique,
 )
@@ -84,7 +84,7 @@ async def get_structure_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
         ) from error
-    except InvalidEndpointError as error:
+    except StorageAuthenticationError as error:
         msg = (
             f"Could not get structure for parentId '{parentId}' "
             f"because the provided BLOB storage endpoint url is invalid:\n{error}"
@@ -128,7 +128,7 @@ async def get_sources_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
         ) from error
-    except InvalidEndpointError as error:
+    except StorageAuthenticationError as error:
         msg = (
             f"Could not get sources "
             f"because the provided BLOB storage endpoint url is invalid:\n{error}"
@@ -219,7 +219,7 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
         ) from error
-    except InvalidEndpointError as error:
+    except StorageAuthenticationError as error:
         msg = (
             f"Could not get source with id '{sourceId}' "
             f"because the provided BLOB storage endpoint url is invalid:\n{error}"

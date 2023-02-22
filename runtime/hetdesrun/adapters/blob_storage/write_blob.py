@@ -5,12 +5,6 @@ from typing import Any
 import joblib
 from botocore.exceptions import ClientError, ParamValidationError
 
-from hetdesrun.adapters.blob_storage.exceptions import (
-    MissingHierarchyError,
-    StorageAuthenticationError,
-    StructureObjectNotFound,
-    StructureObjectNotUnique,
-)
 from hetdesrun.adapters.blob_storage.models import IdString
 from hetdesrun.adapters.blob_storage.service import get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
@@ -29,16 +23,15 @@ logger = logging.getLogger(__name__)
 async def write_blob_to_storage(
     data: Any, thing_node_id: str, metadata_key: str
 ) -> None:
-    try:
-        sink = get_sink_by_thing_node_id_and_metadata_key(
-            IdString(thing_node_id), metadata_key
-        )
-    except (
-        StructureObjectNotFound,
-        StructureObjectNotUnique,
-        MissingHierarchyError,
-    ) as error:
-        raise error
+    """Write BLOB to storage.
+
+    Note, that StructureObjectNotFound, StructureObjectNotUnique, and MissingHierarchyError,
+    raised from get_sink_by_thing_node_id_and_metadata_key or StorageAuthenticationError and
+    AdapterConnectionError get_s3_client may occur.
+    """
+    sink = get_sink_by_thing_node_id_and_metadata_key(
+        IdString(thing_node_id), metadata_key
+    )
 
     logger.info("Get bucket name and object key from sink with id %s", sink.id)
     structure_bucket, object_key = sink.to_structure_bucket_and_object_key()
@@ -49,10 +42,7 @@ async def write_blob_to_storage(
         structure_bucket.name,
         object_key.string,
     )
-    try:
-        s3_client = await get_s3_client()
-    except (AdapterConnectionError, StorageAuthenticationError) as error:
-        raise error
+    s3_client = await get_s3_client()
     try:
         # head_object is as get_object but without the body
         s3_client.head_object(Bucket=structure_bucket.name, Key=object_key.string)
@@ -107,6 +97,11 @@ async def send_data(
     wf_output_name_to_value_mapping_dict: dict[str, Any],
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:
+    """Send data for filtered sinks from BLOB storage.
+
+    A AdapterHandlingException or AdapterConnectionError raised in
+    write_blob_to_storage may occur.
+    """
     for (
         wf_output_name,
         filtered_sink,
@@ -117,10 +112,5 @@ async def send_data(
             raise AdapterClientWiringInvalidError(msg)
 
         blob = wf_output_name_to_value_mapping_dict[wf_output_name]
-        try:
-            await write_blob_to_storage(
-                blob, filtered_sink.ref_id, filtered_sink.ref_key
-            )
-        except (AdapterHandlingException, AdapterConnectionError) as error:
-            raise error
+        await write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key)
     return {}

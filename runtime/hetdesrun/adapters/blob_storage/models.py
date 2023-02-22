@@ -617,7 +617,8 @@ class AdapterHierarchy(BaseModel):
 
 @cache
 def get_adapter_structure() -> AdapterHierarchy:
-    try:
-        return AdapterHierarchy.from_file()
-    except MissingHierarchyError as error:
-        raise error
+    """Get adapter structure.
+
+    A MissingHierarchyError raised from the AdapterHierarchy method from_file may occur.
+    """
+    return AdapterHierarchy.from_file()
