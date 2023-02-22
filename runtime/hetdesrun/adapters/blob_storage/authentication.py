@@ -48,13 +48,16 @@ def parse_credential_info_from_xml_string(
         if xml_response.tag == "Error":
             error_code = xml_response.find("Code")
             error_message = xml_response.find("Message")
-            if (
-                error_code is not None
-                and error_code.text is not None
-                and error_message is not None
-                and error_message.text is not None
-            ):
-                msg = msg + f":\nCode: {error_code.text}\nMessage: {error_message.text}"
+            error_code_text = "NOT PROVIDED"
+            error_message_text = "NOT PROVIDED"
+            try:
+                if error_message is not None:
+                    error_message_text = str(error_message.text)
+                if error_code is not None:
+                    error_code_text = str(error_code.text)
+            except AttributeError:
+                pass
+            msg = msg + f":\nCode: {error_code_text}\nMessage: {error_message_text}"
         logger.error(msg)
         raise StorageAuthenticationError(msg)
     path = "./aws:AssumeRoleWithWebIdentityResult/aws:Credentials/aws:"
@@ -67,11 +70,10 @@ def parse_credential_info_from_xml_string(
         or xml_secret_access_key is None
         or xml_session_token is None
         or xml_expiration is None
-        or xml_expiration.text is None
     ):
         msg = (
-            "Could not find at least one of the required Credentials "
-            f"in the response text:\n{xml_string}"
+            "At least one of the required Credentials could not be found"
+            f"in the XML response:\n{xml_string}"
         )
         logger.error(msg)
         raise StorageAuthenticationError(msg)
@@ -81,7 +83,16 @@ def parse_credential_info_from_xml_string(
         secret_access_key=xml_secret_access_key.text,
         session_token=xml_session_token.text,
     )
-    expiration_time = datetime.fromisoformat(xml_expiration.text.replace("Z", "+00:00"))
+    try:
+        expiration_time = datetime.fromisoformat(
+            str(xml_expiration.text).replace("Z", "+00:00")
+        )
+    except ValueError as error:
+        msg = (
+            f"Expiration '{xml_expiration.text}' from XML response cannot be parsed "
+            f"to a datetime:\n{str(error)}"
+        )
+        raise StorageAuthenticationError(msg) from error
     expiration_time_in_seconds = (expiration_time - now).total_seconds()
 
     return CredentialInfo(
@@ -93,40 +104,29 @@ def parse_credential_info_from_xml_string(
 
 async def obtain_credential_info_from_rest_api() -> CredentialInfo:
     now = datetime.now(timezone.utc)
-    try:
-        access_token = await get_access_token()
-    except StorageAuthenticationError as error:
-        raise error
+    access_token = await get_access_token()
     response = requests.post(
         url=get_blob_adapter_config().endpoint_url,
         params={
             "Action": "AssumeRoleWithWebIdentity",
             "DurationSeconds": str(get_blob_adapter_config().access_duration),
             "WebIdentityToken": access_token,
-            "Version": "2011-06-15",
+            "Version": "2011-06-15", # must be exactly this value
         },
         verify=get_config().hd_adapters_verify_certs,
         auth=None,
         timeout=get_config().external_request_timeout,
     )
-    # TODO: remove access token from logging
-    if response.status_code >= 300:
+    if response.status_code != 200:
         msg = (
             f"BLOB storage credential request returned with status code {response.status_code} "
             f"and response text:\n{response.text}\n"
             f"When calling URL:\n{get_blob_adapter_config().endpoint_url}\n"
-            f"with access token:\n{access_token}"
         )
         logger.error(msg)
         raise StorageAuthenticationError(msg)
 
-    try:
-        credential_info = parse_credential_info_from_xml_string(response.text, now)
-    except StorageAuthenticationError as error:
-        # TODO: tidy up repeating log messages
-        msg = f"Error parsing response from storage credential request as XML:\n{response.text}"
-        logger.error(msg)
-        raise error
+    credential_info = parse_credential_info_from_xml_string(response.text, now)
 
     return credential_info
 
@@ -151,12 +151,7 @@ async def obtain_or_refresh_credential_info(
             return existing_credential_info
         logger.debug("Credentials will soon expire. Trying to get new credentials.")
 
-    try:
-        return await obtain_credential_info_from_rest_api()
-    except StorageAuthenticationError as error:
-        # TODO: tidy up repeating log messages
-        logger.error("Obtaining new credentails failed:\n%s", str(error))
-        raise error
+    return await obtain_credential_info_from_rest_api()
 
 
 class CredentialManager:
@@ -167,20 +162,14 @@ class CredentialManager:
         self._credential_thread_lock = threading.Lock()
 
     async def _obtain_or_refresh_credential_info(self) -> None:
-        try:
-            credential_info = await obtain_or_refresh_credential_info(
-                self._current_credential_info
-            )
-        except StorageAuthenticationError as error:
-            raise error
+        credential_info = await obtain_or_refresh_credential_info(
+            self._current_credential_info
+        )
         with self._credential_thread_lock:
             self._current_credential_info = credential_info
 
     async def get_credentials(self) -> Credentials:
-        try:
-            await self._obtain_or_refresh_credential_info()
-        except StorageAuthenticationError as error:
-            raise error
+        await self._obtain_or_refresh_credential_info()
         if self._current_credential_info is None:
             msg = "Obtained credentials are None"
             logger.error(msg)
@@ -224,9 +213,6 @@ async def get_access_token() -> str:
 
 async def get_credentials() -> Credentials:
     credential_manager = create_or_get_named_credential_manager("blob_adapter_cred")
-    try:
-        credentials = await credential_manager.get_credentials()
-    except StorageAuthenticationError as error:
-        raise error
+    credentials = await credential_manager.get_credentials()
     logger.info("Got credentials from credential manager")
     return credentials
