@@ -88,12 +88,16 @@ The blob storage adapter is configured by the following environment variables:
 * BLOB_STORAGE_ACCESS_DURATION
 * BLOB_STORAGE_ENDPOINT_URL
 * BLOB_STORAGE_REGION_NAME
+* BLOB_STORAGE_VERSION
+* BLOB_STORAGE_ROLE_ARN
 
-The environment variable `BLOB_STORAGE_REGION_NAME` should be set to the region name matching your blob storage setup.
-Its default value is "eu-central-1".
 The environment variable  `BLOB_STORAGE_ACCESS_DURATION` is used to set the [request parameter](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html#API_AssumeRoleWithWebIdentity_RequestParameters) `DurationSeconds` in the authentication towards the blob storage.
 It sets the duration of the role session in seconds and must be in the range between 900 (15 min) and the maximum session duration setting for the role.
 Its default value is 3600 (1 hour).
+The environment variable `BLOB_STORAGE_REGION_NAME` should be set to the region name matching your blob storage setup.
+Its default value is "eu-central-1".
+The environment variable `BLOB_STORAGE_VERSION` should be set to the STS API version. The default value is "2011-06-15".
+The environment variable `BLOB_STORAGE_ROLE_ARN` is used to set the Amazon Resource Name (ARN) of the role that the hetida designer should be assuming. Its default value is an empty string.
 
 An example using a minio instance as blob storage provider:
 

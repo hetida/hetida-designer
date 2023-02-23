@@ -32,7 +32,23 @@ class BlobStorageAdapterConfig(BaseSettings):
         example="http://minio:9000",
     )
     region_name: str = Field(
-        "eu-central-1", description="", env="BLOB_STORAGE_REGION_NAME"
+        "eu-central-1",
+        description="The name of the region associated with the S3 client.",
+        env="BLOB_STORAGE_REGION_NAME",
+    )
+    version: str = Field(
+        "2011-06-15",
+        description="STS API version",
+        env="BLOB_STORAGE_VERSION",
+        example="2011-06-15",
+    )
+    role_arn: str = Field(
+        "",
+        description=(
+            "The Amazon Resource Name (ARN) of the role "
+            "that the hetida designer should be assuming."
+        ),
+        env="BLOB_STORAGE_ROLE_ARN",
     )
 
     @validator("access_duration")

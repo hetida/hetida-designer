@@ -34,7 +34,7 @@ class CredentialInfo(BaseModel):
 
 
 def parse_credential_info_from_xml_string(
-    xml_string: str, now: datetime
+    xml_string: str, utc_now: datetime
 ) -> CredentialInfo:
     namespace = {"aws": "https://sts.amazonaws.com/doc/2011-06-15/"}
     try:
@@ -44,20 +44,7 @@ def parse_credential_info_from_xml_string(
         logger.error(msg)
         raise StorageAuthenticationError(msg) from error
     if not xml_response.tag.endswith("AssumeRoleWithWebIdentityResponse"):
-        msg = "The authentication request does not have the expected structure"
-        if xml_response.tag == "Error":
-            error_code = xml_response.find("Code")
-            error_message = xml_response.find("Message")
-            error_code_text = "NOT PROVIDED"
-            error_message_text = "NOT PROVIDED"
-            try:
-                if error_message is not None:
-                    error_message_text = str(error_message.text)
-                if error_code is not None:
-                    error_code_text = str(error_code.text)
-            except AttributeError:
-                pass
-            msg = msg + f":\nCode: {error_code_text}\nMessage: {error_message_text}"
+        msg = f"The authentication request does not have the expected structure:\n{xml_string}"
         logger.error(msg)
         raise StorageAuthenticationError(msg)
     path = "./aws:AssumeRoleWithWebIdentityResult/aws:Credentials/aws:"
@@ -84,6 +71,7 @@ def parse_credential_info_from_xml_string(
         session_token=xml_session_token.text,
     )
     try:
+        # TODO: After upgrade to python 3.11 directly parse timestamp string
         expiration_time = datetime.fromisoformat(
             str(xml_expiration.text).replace("Z", "+00:00")
         )
@@ -93,17 +81,21 @@ def parse_credential_info_from_xml_string(
             f"to a datetime:\n{str(error)}"
         )
         raise StorageAuthenticationError(msg) from error
-    expiration_time_in_seconds = (expiration_time - now).total_seconds()
+    if expiration_time.tzinfo is None:
+        msg = f"Expiration time {xml_expiration.text} must not be timezone naive!"
+        raise StorageAuthenticationError(msg)
+    expiration_time_in_seconds = (expiration_time - utc_now).total_seconds()
 
     return CredentialInfo(
-        issue_timestamp=now,
+        issue_timestamp=utc_now,
         credentials=credentials,
         expiration_time_in_seconds=expiration_time_in_seconds,
     )
 
 
-async def obtain_credential_info_from_rest_api() -> CredentialInfo:
-    now = datetime.now(timezone.utc)
+async def obtain_credential_info_from_sts_rest_api() -> CredentialInfo:
+    """Obtain credential info from STS REST API."""
+    utc_now = datetime.now(timezone.utc)
     access_token = await get_access_token()
     response = requests.post(
         url=get_blob_adapter_config().endpoint_url,
@@ -111,22 +103,40 @@ async def obtain_credential_info_from_rest_api() -> CredentialInfo:
             "Action": "AssumeRoleWithWebIdentity",
             "DurationSeconds": str(get_blob_adapter_config().access_duration),
             "WebIdentityToken": access_token,
-            "Version": "2011-06-15",  # must be exactly this value
+            "Version": get_blob_adapter_config().version,
+            "RoleArn": get_blob_adapter_config().role_arn,
         },
         verify=get_config().hd_adapters_verify_certs,
         auth=None,
         timeout=get_config().external_request_timeout,
     )
     if response.status_code != 200:
-        msg = (
-            f"BLOB storage credential request returned with status code {response.status_code} "
-            f"and response text:\n{response.text}\n"
-            f"When calling URL:\n{get_blob_adapter_config().endpoint_url}\n"
-        )
+        xml_response = ET.fromstring(response.text)
+        msg = f"BLOB storage STS REST API request returned with status code {response.status_code} "
+        if xml_response.tag == "Error":
+            error_code = xml_response.find("Code")
+            error_message = xml_response.find("Message")
+            error_code_text = "NOT PROVIDED"
+            error_message_text = "NOT PROVIDED"
+            try:
+                if error_message is not None:
+                    error_message_text = str(error_message.text)
+                if error_code is not None:
+                    error_code_text = str(error_code.text)
+            except AttributeError:
+                pass
+            msg = (
+                msg
+                + f":\nError Code: {error_code_text}\nError Message: {error_message_text}\n"
+            )
+        else:
+            msg = msg + f"and response text:\n{response.text}\n"
+
+        msg = f"When calling URL: {get_blob_adapter_config().endpoint_url}\n"
         logger.error(msg)
         raise StorageAuthenticationError(msg)
 
-    credential_info = parse_credential_info_from_xml_string(response.text, now)
+    credential_info = parse_credential_info_from_xml_string(response.text, utc_now)
 
     return credential_info
 
@@ -155,7 +165,7 @@ async def obtain_or_refresh_credential_info(
             return existing_credential_info
         logger.debug("Credentials will soon expire. Trying to get new credentials.")
 
-    return await obtain_credential_info_from_rest_api()
+    return await obtain_credential_info_from_sts_rest_api()
 
 
 class CredentialManager:
