@@ -1,5 +1,6 @@
 import logging
 import threading
+import urllib
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from functools import cache
@@ -33,21 +34,25 @@ class CredentialInfo(BaseModel):
     expiration_time_in_seconds: int
 
 
+def extract_namespace_from_root_tag(root_tag: str) -> str:
+    return root_tag.split("}")[0].strip("{")
+
+
 def parse_credential_info_from_xml_string(
     xml_string: str, utc_now: datetime
 ) -> CredentialInfo:
-    namespace = {"aws": "https://sts.amazonaws.com/doc/2011-06-15/"}
     try:
         xml_response = ET.fromstring(xml_string)
     except ET.ParseError as error:
         msg = f"Cannot parse authentication request response as XML:\n{error}"
         logger.error(msg)
         raise StorageAuthenticationError(msg) from error
+    namespace = {"sts": extract_namespace_from_root_tag(xml_response.tag)}
     if not xml_response.tag.endswith("AssumeRoleWithWebIdentityResponse"):
         msg = f"The authentication request does not have the expected structure:\n{xml_string}"
         logger.error(msg)
         raise StorageAuthenticationError(msg)
-    path = "./aws:AssumeRoleWithWebIdentityResult/aws:Credentials/aws:"
+    path = "./sts:AssumeRoleWithWebIdentityResult/sts:Credentials/sts:"
     xml_access_key = xml_response.find(path + "AccessKeyId", namespace)
     xml_secret_access_key = xml_response.find(path + "SecretAccessKey", namespace)
     xml_session_token = xml_response.find(path + "SessionToken", namespace)
@@ -93,10 +98,45 @@ def parse_credential_info_from_xml_string(
     )
 
 
+def parse_xml_error_response(xml_string: str) -> str:
+    try:
+        xml_response = ET.fromstring(xml_string)
+    except ET.ParseError as error:
+        msg = f"Cannot parse authentication request response as XML:\n{error}"
+        logger.error(msg)
+        raise StorageAuthenticationError(msg) from error
+
+    namespace = {"sts": extract_namespace_from_root_tag(xml_response.tag)}
+
+    if xml_response.tag == "ErrorResponse":
+        path = "./sts:Error/sts:"
+        error_code = xml_response.find(path + "Code", namespace)
+        error_message = xml_response.find(path + "Message", namespace)
+        error_code_text = "NOT PROVIDED"
+        error_message_text = "NOT PROVIDED"
+        try:
+            if error_message is not None:
+                error_message_text = str(error_message.text)
+            if error_code is not None:
+                error_code_text = str(error_code.text)
+        except AttributeError:
+            pass
+        return (
+            f":\nError Code: {error_code_text}\nError Message: {error_message_text}\n"
+        )
+    return f"and response text:\n{xml_string}\n"
+
+
 async def obtain_credential_info_from_sts_rest_api() -> CredentialInfo:
     """Obtain credential info from STS REST API."""
     utc_now = datetime.now(timezone.utc)
     access_token = await get_access_token()
+    params = {
+        "Action": "AssumeRoleWithWebIdentity",
+        "WebIdentityToken": access_token,
+        **get_blob_adapter_config().sts_params,
+    }
+    params_string = urllib.parse.urlencode(params, safe=":/")
     async with AsyncClient(
         verify=get_config().hd_runtime_verify_certs,
         timeout=get_config().external_request_timeout,
@@ -104,37 +144,15 @@ async def obtain_credential_info_from_sts_rest_api() -> CredentialInfo:
     ) as client:
         response = await client.post(
             url=get_blob_adapter_config().endpoint_url,
-            params={
-                "Action": "AssumeRoleWithWebIdentity",
-                "DurationSeconds": str(get_blob_adapter_config().access_duration),
-                "WebIdentityToken": access_token,
-                "Version": get_blob_adapter_config().version,
-                "RoleArn": get_blob_adapter_config().role_arn,
-            },
+            params=params_string,
         )
     if response.status_code != 200:
-        xml_response = ET.fromstring(response.text)
         msg = f"BLOB storage STS REST API request returned with status code {response.status_code} "
-        if xml_response.tag == "Error":
-            error_code = xml_response.find("Code")
-            error_message = xml_response.find("Message")
-            error_code_text = "NOT PROVIDED"
-            error_message_text = "NOT PROVIDED"
-            try:
-                if error_message is not None:
-                    error_message_text = str(error_message.text)
-                if error_code is not None:
-                    error_code_text = str(error_code.text)
-            except AttributeError:
-                pass
-            msg = (
-                msg
-                + f":\nError Code: {error_code_text}\nError Message: {error_message_text}\n"
-            )
-        else:
-            msg = msg + f"and response text:\n{response.text}\n"
-
-        msg = f"When calling URL: {get_blob_adapter_config().endpoint_url}\n"
+        msg = msg + parse_xml_error_response(response.text)
+        msg = msg + (
+            f"When calling URL: {get_blob_adapter_config().endpoint_url}"
+            f"with query parameters: {params_string}"
+        )
         logger.error(msg)
         raise StorageAuthenticationError(msg)
 

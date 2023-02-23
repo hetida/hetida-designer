@@ -1,6 +1,6 @@
 import os
 
-from pydantic import BaseSettings, Field, validator
+from pydantic import BaseSettings, Field
 
 
 class BlobStorageAdapterConfig(BaseSettings):
@@ -36,32 +36,18 @@ class BlobStorageAdapterConfig(BaseSettings):
         description="The name of the region associated with the S3 client.",
         env="BLOB_STORAGE_REGION_NAME",
     )
-    version: str = Field(
-        "2011-06-15",
-        description="STS API version",
-        env="BLOB_STORAGE_VERSION",
-        example="2011-06-15",
-    )
-    role_arn: str = Field(
-        "",
+    sts_params: dict = Field(
+        {},
         description=(
-            "The Amazon Resource Name (ARN) of the role "
-            "that the hetida designer should be assuming."
+            "Parameters needed for authentication at the STS client "
+            "additionaly to Action and WebIdentityToken."
         ),
-        env="BLOB_STORAGE_ROLE_ARN",
+        env="BLOB_STORAGE_STS_PARAMS",
+        example={
+            "DurationSeconds": 3600,
+            "Version": "2011-06-15",
+        },
     )
-
-    @validator("access_duration")
-    def access_duration_in_range(cls, access_duration: int) -> int:
-        if access_duration < 900:
-            raise ValueError("The access duration must be at least 900 (seconds).")
-        if access_duration > 43200:
-            raise ValueError(
-                "The access duration for the role session must be smaller than the maximum session "
-                "duration setting for the role, which may at most be 12 hours, "
-                "and thus at most 43200 (seconds)."
-            )
-        return access_duration
 
 
 environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)

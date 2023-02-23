@@ -8,17 +8,27 @@ from hetdesrun.adapters.blob_storage.authentication import (
     Credentials,
     create_or_get_named_credential_manager,
     credentials_still_valid_enough,
+    extract_namespace_from_root_tag,
     get_access_token,
     get_credentials,
     obtain_credential_info_from_sts_rest_api,
     obtain_or_refresh_credential_info,
     parse_credential_info_from_xml_string,
+    parse_xml_error_response,
 )
 from hetdesrun.adapters.blob_storage.exceptions import StorageAuthenticationError
 from hetdesrun.webservice.auth_outgoing import (
     ClientCredentialsGrantCredentials,
     ServiceCredentials,
 )
+
+
+def test_blob_storage_extract_namespace_from_root_tag() -> None:
+    root_tag = (
+        "{https://sts.amazonaws.com/doc/2011-06-15/}AssumeRoleWithWebIdentityResponse"
+    )
+    namespace = extract_namespace_from_root_tag(root_tag)
+    assert namespace == "https://sts.amazonaws.com/doc/2011-06-15/"
 
 
 def test_blob_storage_authentication_parse_credential_info_from_xml_string() -> None:
@@ -63,20 +73,6 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string() -> 
         exc_info.value
     )
 
-    error_xml_response_text = """
-    <Error>
-        <Code>AccessDenied</Code>
-        <Message>Access Denied.</Message>
-        <Resource>/</Resource>
-        <RequestId>request_id</RequestId>
-        <HostId>host_id</HostId>
-    </Error>
-    """
-    with pytest.raises(StorageAuthenticationError) as exc_info:
-        parse_credential_info_from_xml_string(error_xml_response_text, now)
-    assert "Code: AccessDenied" in str(exc_info.value)
-    assert "Message: Access Denied." in str(exc_info.value)
-
     missing_session_token_xml_response_text = """
     <AssumeRoleWithWebIdentityResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
         <AssumeRoleWithWebIdentityResult>
@@ -103,6 +99,22 @@ def test_blob_storage_authentication_parse_credential_info_from_xml_string() -> 
     )
 
 
+def test_blob_storage_authentication_parse_xml_error_response() -> None:
+    error_xml_response_text = """
+    <ErrorResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
+        <Error>
+            <Type></Type>
+            <Code>InvalidParameterValue</Code>
+            <Message>Error processing RoleArn parameter: RoleARN parse err: Invalid ARN</Message>
+        </Error>
+        <RequestId>17467834FFE4296F</RequestId>
+    </ErrorResponse>
+    """
+    error = parse_xml_error_response(error_xml_response_text)
+    assert "InvalidParameterValue" in error
+    assert "Error processing RoleArn parameter: RoleARN parse err: Invalid ARN" in error
+
+
 @pytest.fixture()
 def credentials() -> Credentials:
     return Credentials(
@@ -122,7 +134,7 @@ async def test_blob_storage_authentication_obtain_credential_info_from_sts_rest_
         return_value=mock.AsyncMock(return_value=access_token),
     ):
         with mock.patch(
-            "hetdesrun.adapters.blob_storage.authentication.requests.post",
+            "hetdesrun.adapters.blob_storage.authentication.httpx.AsyncClient.post",
             return_value=mock.Mock(status_code=200, text="text"),
         ):
             with mock.patch(
@@ -151,7 +163,7 @@ async def test_blob_storage_authentication_obtain_credential_info_from_sts_rest_
                 assert str(exc_info.value) == "error message"
 
         with mock.patch(
-            "hetdesrun.adapters.blob_storage.authentication.requests.post",
+            "hetdesrun.adapters.blob_storage.authentication.httpx.AsyncClient.post",
             return_value=mock.Mock(status_code=333, text="error"),
         ):
             with pytest.raises(StorageAuthenticationError) as exc_info:
