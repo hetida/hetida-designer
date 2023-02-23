@@ -73,11 +73,11 @@ The buckets defined by the adapter structure must already be present in the blob
 * `planta-millingunit`
 * `plantb`
 
-A generic sink is generated for each end node of the hierarchy. Using it will always create a new object, the creation timestamp is appended to the object key. Vice-versa object keys are expected to have such a suffix to be available as sources via the adapter.
+A generic sink is generated for each end node of the hierarchy. Using it will always create a new object, the creation timestamp and the job id of the execution are appended to the object key. Vice-versa object keys are expected to have such a suffix to be available as sources via the adapter.
 
 For the example adapter hierarchy e.g. the following objects would be available as source:
-* in bucket `planta-picklingunit` an object with key `Influx/Anomalies_2023-02-14T12:19:38+00:00`
-* in bucket `plantb` an object with key `PicklingUnit/Influx/Anomalies_2023-02-14T12:19:38+00:00`
+* in bucket `planta-picklingunit` an object with key `Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa`
+* in bucket `plantb` an object with key `PicklingUnit/Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa`
 
 
 ### Configuring the runtime
