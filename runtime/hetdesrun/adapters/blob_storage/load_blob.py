@@ -1,8 +1,6 @@
 import logging
-from io import BytesIO
+import pickle
 from typing import Any
-
-import joblib
 
 from hetdesrun.adapters.blob_storage.models import IdString
 from hetdesrun.adapters.blob_storage.service import get_s3_client
@@ -59,13 +57,8 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             f"with the key '{object_key.string}'!"
         ) from error
 
-    pickled_data_bytes = response["Body"].read()
-
-    file_object = BytesIO(pickled_data_bytes)
-    logger.info("Got BLOB of size %i", file_object.getbuffer().nbytes)
-
     try:
-        data = joblib.load(file_object)
+        data = pickle.load(response["Body"])
     except ModuleNotFoundError as error:
         msg = f"Cannot load module to unpickle file object:\n{error}"
         logger.error(msg)

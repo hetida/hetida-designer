@@ -1,8 +1,8 @@
 import logging
+import pickle
 from io import BytesIO
 from typing import Any
 
-import joblib
 from botocore.exceptions import ClientError, ParamValidationError
 
 from hetdesrun.adapters.blob_storage.models import IdString
@@ -63,7 +63,7 @@ async def write_blob_to_storage(
         # only write if the object does not yet exist
         try:
             file_object = BytesIO()
-            joblib.dump(data, file_object)
+            pickle.dump(data, file_object, protocol=pickle.HIGHEST_PROTOCOL)
             file_object.seek(0)
 
             logger.info(
@@ -72,7 +72,7 @@ async def write_blob_to_storage(
             s3_client.put_object(
                 Bucket=structure_bucket.name,
                 Key=object_key.string,
-                Body=file_object.read(),
+                Body=file_object,
                 ChecksumAlgorithm="SHA1",
             )
         except ParamValidationError as error:

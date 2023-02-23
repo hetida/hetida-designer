@@ -119,7 +119,7 @@ blob-storage-adapter|Blob-Storage-Adapter|http://localhost:8090/adapters/blob|ht
 
 ## Usage
 All sources and sinks of the blob storage adapter are of type `Any`, thus only inputs and outputs of type `Any` can be wired to the blob storage adapter.
-The `dump` and `load` methods of the Python package `joblib` are used to serialize and deserialize these inputs and outputs.
+The `dump` and `load` methods of the Python package `pickle` are used to serialize and deserialize these inputs and outputs.
 
 ### Basic Usage
 
