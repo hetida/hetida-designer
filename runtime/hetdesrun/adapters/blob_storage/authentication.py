@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from functools import cache
 
-import requests
+from httpx import AsyncClient
 from pydantic import BaseModel, Field
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
@@ -97,19 +97,21 @@ async def obtain_credential_info_from_sts_rest_api() -> CredentialInfo:
     """Obtain credential info from STS REST API."""
     utc_now = datetime.now(timezone.utc)
     access_token = await get_access_token()
-    response = requests.post(
-        url=get_blob_adapter_config().endpoint_url,
-        params={
-            "Action": "AssumeRoleWithWebIdentity",
-            "DurationSeconds": str(get_blob_adapter_config().access_duration),
-            "WebIdentityToken": access_token,
-            "Version": get_blob_adapter_config().version,
-            "RoleArn": get_blob_adapter_config().role_arn,
-        },
-        verify=get_config().hd_adapters_verify_certs,
-        auth=None,
+    async with AsyncClient(
+        verify=get_config().hd_runtime_verify_certs,
         timeout=get_config().external_request_timeout,
-    )
+        auth=None,
+    ) as client:
+        response = await client.post(
+            url=get_blob_adapter_config().endpoint_url,
+            params={
+                "Action": "AssumeRoleWithWebIdentity",
+                "DurationSeconds": str(get_blob_adapter_config().access_duration),
+                "WebIdentityToken": access_token,
+                "Version": get_blob_adapter_config().version,
+                "RoleArn": get_blob_adapter_config().role_arn,
+            },
+        )
     if response.status_code != 200:
         xml_response = ET.fromstring(response.text)
         msg = f"BLOB storage STS REST API request returned with status code {response.status_code} "
@@ -236,5 +238,5 @@ async def get_credentials() -> Credentials:
     """
     credential_manager = create_or_get_named_credential_manager("blob_adapter_cred")
     credentials = await credential_manager.get_credentials()
-    logger.info("Got credentials from credential manager")
+    logger.debug("Got credentials from credential manager")
     return credentials
