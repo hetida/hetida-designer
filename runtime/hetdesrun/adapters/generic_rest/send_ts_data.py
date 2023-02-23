@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from uuid import UUID
 
 import numpy as np
 import pandas as pd
@@ -82,6 +83,7 @@ async def post_single_timeseries(
     series: pd.Series,
     ref_id: str,
     sink_type: ExternalType,
+    job_id: UUID,
     adapter_key: str,
     client: AsyncClient,
 ) -> None:
@@ -91,6 +93,7 @@ async def post_single_timeseries(
         records,
         attributes=series.attrs,
         ref_id=ref_id,
+        job_id=job_id,
         adapter_key=adapter_key,
         endpoint="timeseries",
         client=client,
@@ -101,6 +104,7 @@ async def post_multiple_timeseries(
     timeseries_list: list[pd.Series],
     ref_ids: list[str],
     sink_types: list[ExternalType],
+    job_id: UUID,
     adapter_key: str,
 ) -> None:
     async with AsyncClient(
@@ -110,7 +114,12 @@ async def post_multiple_timeseries(
         await asyncio.gather(
             *(
                 post_single_timeseries(
-                    series, ref_id, sink_type, adapter_key=adapter_key, client=client
+                    series,
+                    ref_id,
+                    sink_type,
+                    job_id,
+                    adapter_key=adapter_key,
+                    client=client,
                 )
                 for series, ref_id, sink_type in zip(
                     timeseries_list, ref_ids, sink_types, strict=True
@@ -122,6 +131,7 @@ async def post_multiple_timeseries(
 async def send_multiple_timeseries_to_adapter(
     filtered_sinks: dict[str, FilteredSink],
     data_to_send: dict[str, pd.Series],
+    job_id: UUID,
     adapter_key: str,
 ) -> None:
     keys = filtered_sinks.keys()
@@ -130,5 +140,5 @@ async def send_multiple_timeseries_to_adapter(
     series_list = [data_to_send[key] for key in keys]
 
     await post_multiple_timeseries(
-        series_list, ref_ids, sink_types, adapter_key=adapter_key
+        series_list, ref_ids, sink_types, job_id, adapter_key=adapter_key
     )

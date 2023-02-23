@@ -2,6 +2,7 @@ import re
 from datetime import datetime, timezone
 from functools import cache, cached_property
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConstrainedStr, Field, ValidationError, validator
 
@@ -48,6 +49,7 @@ class ObjectKey(BaseModel):
     string: IdString
     name: IdString
     time: datetime
+    job_id: UUID
 
     @validator("time")
     def has_timezone_utc(cls, time: datetime) -> datetime:
@@ -56,27 +58,35 @@ class ObjectKey(BaseModel):
         return time
 
     @classmethod
-    def from_name(cls, name: IdString) -> "ObjectKey":
+    def from_name_and_job_id(cls, name: IdString, job_id: UUID) -> "ObjectKey":
         now = datetime.now(timezone.utc).replace(microsecond=0)
         return ObjectKey(
-            string=name + IDENTIFIER_SEPARATOR + now.isoformat(),
+            string=name
+            + IDENTIFIER_SEPARATOR
+            + now.isoformat()
+            + IDENTIFIER_SEPARATOR
+            + str(job_id),
             name=name,
             time=now,
+            job_id=job_id,
         )
 
     @classmethod
     def from_string(cls, string: IdString) -> "ObjectKey":
         try:
-            name, timestring = string.rsplit(IDENTIFIER_SEPARATOR, maxsplit=1)
+            name, time_string, job_id_string = string.rsplit(
+                IDENTIFIER_SEPARATOR, maxsplit=2
+            )
         except ValueError as e:
             raise ValueError(
                 f"String '{string}' not a valid ObjectKey string, "
-                f"because it contains no '{IDENTIFIER_SEPARATOR}'!"
+                f"because it contains '{IDENTIFIER_SEPARATOR}' less than twice!"
             ) from e
         return ObjectKey(
             string=string,
             name=name,
-            time=datetime.fromisoformat(timestring).replace(tzinfo=timezone.utc),
+            time=datetime.fromisoformat(time_string).replace(tzinfo=timezone.utc),
+            job_id=UUID(job_id_string),
         )
 
     def to_thing_node_id(self, bucket: StructureBucket) -> IdString:
@@ -167,7 +177,7 @@ class BlobStorageStructureSource(BaseModel):
                 "if the attribute 'id' is missing!"
             ) from e
 
-        thing_node_id_from_id = str(id).rsplit(sep=IDENTIFIER_SEPARATOR, maxsplit=1)[0]
+        thing_node_id_from_id = str(id).rsplit(sep=IDENTIFIER_SEPARATOR, maxsplit=2)[0]
         if thing_node_id_from_id != thingNodeId:
             raise ValueError(
                 f"The source's thing node id '{thingNodeId}' does not match its id '{id}'!"
@@ -185,12 +195,14 @@ class BlobStorageStructureSource(BaseModel):
             ) from e
         file_string_from_id = id.rsplit(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
         file_ok = ObjectKey.from_string(IdString(file_string_from_id))
-        if HIERARCHY_END_NODE_NAME_SEPARATOR not in name:
+        if name.count(HIERARCHY_END_NODE_NAME_SEPARATOR) != 2:
             raise ValueError(
                 f"The source name '{name}' must contain "
-                f"the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}'!"
+                f"the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice!"
             )
-        thing_node_name, source_time = name.split(HIERARCHY_END_NODE_NAME_SEPARATOR)
+        thing_node_name, source_time, job_id = name.split(
+            HIERARCHY_END_NODE_NAME_SEPARATOR
+        )
         if thing_node_name != file_ok.name:
             raise ValueError(
                 f"The source name '{name}' must start with the name '{file_ok.name}' "
@@ -199,6 +211,12 @@ class BlobStorageStructureSource(BaseModel):
         if file_ok.time.astimezone(timezone.utc).isoformat(sep=" ") != source_time:
             raise ValueError(
                 f"The time of the source's name '{name}' must match to the time in its id '{id}'!"
+            )
+
+        if not str(file_ok.job_id) == job_id:
+            raise ValueError(
+                f"The job id '{job_id}' of the source's name '{name}' "
+                f"must match to the job id '{file_ok.job_id}' in its id '{id}'!"
             )
 
         return name
@@ -247,6 +265,8 @@ class BlobStorageStructureSource(BaseModel):
             object_key.name.rsplit(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[-1]
             + HIERARCHY_END_NODE_NAME_SEPARATOR
             + object_key.time.astimezone(timezone.utc).isoformat(sep=" ")
+            + HIERARCHY_END_NODE_NAME_SEPARATOR
+            + str(object_key.job_id)
         )
         thing_node_id = object_key.to_thing_node_id(bucket)
         return BlobStorageStructureSource(
@@ -407,12 +427,14 @@ class BlobStorageStructureSink(BaseModel):
             + GENERIC_SINK_NAME_SUFFIX,
         )
 
-    def to_structure_bucket_and_object_key(self) -> tuple[StructureBucket, ObjectKey]:
+    def to_structure_bucket_and_object_key(
+        self, job_id: UUID
+    ) -> tuple[StructureBucket, ObjectKey]:
         bucket_name_string, object_key_name = self.thingNodeId.split(
             sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
         )
-        return StructureBucket(name=bucket_name_string), ObjectKey.from_name(
-            IdString(object_key_name)
+        return StructureBucket(name=bucket_name_string), ObjectKey.from_name_and_job_id(
+            IdString(object_key_name), job_id
         )
 
 

@@ -14,6 +14,7 @@ import asyncio
 import logging
 from collections.abc import Awaitable, Callable
 from typing import Any, TypedDict
+from uuid import UUID
 
 from hetdesrun.adapters.exceptions import (  # noqa: F401
     AdapterClientWiringInvalidError,
@@ -154,7 +155,7 @@ def register_source_adapter(
 def register_sink_adapter(
     adapter_key: int | str,
     send_func: Callable[
-        [dict[str, FilteredSink], dict[str, Any], str],
+        [dict[str, FilteredSink], dict[str, Any], UUID, str],
         dict[str, Any] | Awaitable[dict[str, Any]],
     ],
     connection_error_class: type[Exception] | None = None,
@@ -275,6 +276,7 @@ async def send_data_with_adapter(
     adapter_key: int | str,
     wf_output_name_to_filtered_sink_mapping_dict: dict,
     result_data: dict,
+    job_id: UUID,
 ) -> dict[str, Any] | None:
     """Generic data emitting using adapter
 
@@ -291,12 +293,14 @@ async def send_data_with_adapter(
             data_not_sent = await adapter_func(
                 wf_output_name_to_filtered_sink_mapping_dict,
                 result_data,
+                job_id,
                 adapter_key=str(adapter_key),
             )
         else:
             data_not_sent = adapter_func(
                 wf_output_name_to_filtered_sink_mapping_dict,
                 result_data,
+                job_id,
                 adapter_key=str(adapter_key),
             )
 

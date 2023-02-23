@@ -51,46 +51,46 @@ def test_blob_storage_get_thing_nodes_by_parent_id() -> None:
 
 source_list = [
     BlobStorageStructureSource(
-        id="i-i/A_2022-01-02T14:23:18+00:00",
+        id="i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         thingNodeId="i-i/A",
-        name="A - 2022-01-02 14:23:18+00:00",
+        name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         path="i-i/A",
-        metadataKey="A - 2022-01-02 14:23:18+00:00",
+        metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
     ),
     BlobStorageStructureSource(
-        id="i-i/A_2022-01-02T14:57:31+00:00",
+        id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43",
         thingNodeId="i-i/A",
-        name="A - 2022-01-02 14:57:31+00:00",
+        name="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
         path="i-i/A",
-        metadataKey="A - 2022-01-02 14:57:31+00:00",
+        metadataKey="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
     ),
     BlobStorageStructureSource(
-        id="i-i/B_2022-01-02T14:25:56+00:00",
+        id="i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51",
         thingNodeId="i-i/B",
-        name="B - 2022-01-02 14:25:56+00:00",
+        name="B - 2022-01-02 14:25:56+00:00 - f1a16db0-c075-4ed9-8953-f97c2dc3ae51",
         path="i-i/B",
-        metadataKey="B - 2022-01-02 14:25:56+00:00",
+        metadataKey="B - 2022-01-02 14:25:56+00:00 - f1a16db0-c075-4ed9-8953-f97c2dc3ae51",
     ),
     BlobStorageStructureSource(
-        id="i-i/D_2022-03-08T17:23:18+00:00",
+        id="i-i/D_2022-03-08T17:23:18+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa",
         thingNodeId="i-i/D",
-        name="D - 2022-03-08 17:23:18+00:00",
+        name="D - 2022-03-08 17:23:18+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa",
         path="i-i/D",
-        metadataKey="D - 2022-03-08 17:23:18+00:00",
+        metadataKey="D - 2022-03-08 17:23:18+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa",
     ),
     BlobStorageStructureSource(
-        id="i-i/D_2022-04-02T13:28:29+00:00",
+        id="i-i/D_2022-04-02T13:28:29+00:00_af77087b-a064-4ff9-9c4a-d23b2c503ade",
         thingNodeId="i-i/D",
-        name="D - 2022-04-02 13:28:29+00:00",
+        name="D - 2022-04-02 13:28:29+00:00 - af77087b-a064-4ff9-9c4a-d23b2c503ade",
         path="i-i/D",
-        metadataKey="D - 2022-04-02 13:28:29+00:00",
+        metadataKey="D - 2022-04-02 13:28:29+00:00 - af77087b-a064-4ff9-9c4a-d23b2c503ade",
     ),
     BlobStorageStructureSource(
-        id="i-ii/E_2022-01-02T14:23:18+00:00",
+        id="i-ii/E_2022-01-02T14:23:18+00:00_3bd049f4-1d0e-4993-ac4c-306ebe320144",
         thingNodeId="i-ii/E",
-        name="E - 2022-01-02 14:23:18+00:00",
+        name="E - 2022-01-02 14:23:18+00:00 - 3bd049f4-1d0e-4993-ac4c-306ebe320144",
         path="i-ii/E",
-        metadataKey="E - 2022-01-02 14:23:18+00:00",
+        metadataKey="E - 2022-01-02 14:23:18+00:00 - 3bd049f4-1d0e-4993-ac4c-306ebe320144",
     ),
 ]
 
@@ -103,7 +103,10 @@ async def test_blob_storage_get_sources_by_parent_id() -> None:
     ):
         sources_with_parent_i_ii = await get_sources_by_parent_id(IdString("i-ii/E"))
         assert len(sources_with_parent_i_ii) == 1
-        assert sources_with_parent_i_ii[0].id == "i-ii/E_2022-01-02T14:23:18+00:00"
+        assert (
+            sources_with_parent_i_ii[0].id
+            == "i-ii/E_2022-01-02T14:23:18+00:00_3bd049f4-1d0e-4993-ac4c-306ebe320144"
+        )
 
         sources_with_parent_bla = await get_sources_by_parent_id(IdString("bla"))
         assert len(sources_with_parent_bla) == 0
@@ -135,15 +138,33 @@ async def test_blob_storage_get_filtered_sources() -> None:
 
         sources_filtered_by_name = await get_filtered_sources("A")
         assert len(sources_filtered_by_name) == 2
-        assert sources_filtered_by_name[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
-        assert sources_filtered_by_name[1].id == "i-i/A_2022-01-02T14:57:31+00:00"
+        assert (
+            sources_filtered_by_name[0].id
+            == "i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        )
+        assert (
+            sources_filtered_by_name[1].id
+            == "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+        )
 
         sources_filtered_by_date = await get_filtered_sources("14")
         assert len(sources_filtered_by_date) == 4
-        assert sources_filtered_by_date[0].id == "i-i/A_2022-01-02T14:23:18+00:00"
-        assert sources_filtered_by_date[1].id == "i-i/A_2022-01-02T14:57:31+00:00"
-        assert sources_filtered_by_date[2].id == "i-i/B_2022-01-02T14:25:56+00:00"
-        assert sources_filtered_by_date[3].id == "i-ii/E_2022-01-02T14:23:18+00:00"
+        assert (
+            sources_filtered_by_date[0].id
+            == "i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        )
+        assert (
+            sources_filtered_by_date[1].id
+            == "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+        )
+        assert (
+            sources_filtered_by_date[2].id
+            == "i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
+        )
+        assert (
+            sources_filtered_by_date[3].id
+            == "i-ii/E_2022-01-02T14:23:18+00:00_3bd049f4-1d0e-4993-ac4c-306ebe320144"
+        )
 
         sources_filtered_by_bla = await get_filtered_sources("bla")
         assert len(sources_filtered_by_bla) == 0
@@ -205,9 +226,14 @@ async def test_blob_storage_get_source_by_id() -> None:
         return_value=source_list,
     ):
         source_by_id = await get_source_by_id(
-            IdString("i-i/A_2022-01-02T14:57:31+00:00")
+            IdString(
+                "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+            )
         )
-        assert source_by_id.name == "A - 2022-01-02 14:57:31+00:00"
+        assert (
+            source_by_id.name
+            == "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+        )
         assert source_by_id.thingNodeId == "i-i/A"
 
         with pytest.raises(StructureObjectNotFound):
@@ -217,22 +243,26 @@ async def test_blob_storage_get_source_by_id() -> None:
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=[
             BlobStorageStructureSource(
-                id="i-i/A_2022-01-02T14:57:31+00:00",
+                id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43",
                 thingNodeId="i-i/A",
-                name="A - 2022-01-02 14:57:31+00:00",
+                name="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
                 path="i-i/A",
-                metadataKey="A - 2022-01-02 14:57:31+00:00",
+                metadataKey="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
             ),
             BlobStorageStructureSource(
-                id="i-i/A_2022-01-02T14:57:31+00:00",
+                id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43",
                 thingNodeId="i-i/A",
-                name="A - 2022-01-02 14:57:31+00:00",
+                name="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
                 path="i-i/A",
-                metadataKey="A - 2022-01-02 14:57:31+00:00",
+                metadataKey="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
             ),
         ],
     ), pytest.raises(StructureObjectNotUnique):
-        await get_source_by_id(IdString("i-i/A_2022-01-02T14:57:31+00:00"))
+        await get_source_by_id(
+            IdString(
+                "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+            )
+        )
 
 
 def test_blob_storage_get_sink_by_id() -> None:
@@ -280,13 +310,22 @@ async def test_blob_storage_get_source_by_thing_node_id_and_metadata_key() -> No
     ):
         source_by_tn_id_and_md_key = await get_source_by_thing_node_id_and_metadata_key(
             thing_node_id=IdString("i-i/A"),
-            metadata_key="A - 2022-01-02 14:57:31+00:00",
+            metadata_key="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
         )
-        assert source_by_tn_id_and_md_key.id == "i-i/A_2022-01-02T14:57:31+00:00"
+        assert (
+            source_by_tn_id_and_md_key.id
+            == "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+        )
         assert source_by_tn_id_and_md_key.thingNodeId == "i-i/A"
-        assert source_by_tn_id_and_md_key.name == "A - 2022-01-02 14:57:31+00:00"
+        assert (
+            source_by_tn_id_and_md_key.name
+            == "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+        )
         assert source_by_tn_id_and_md_key.path == "i-i/A"
-        assert source_by_tn_id_and_md_key.metadataKey == "A - 2022-01-02 14:57:31+00:00"
+        assert (
+            source_by_tn_id_and_md_key.metadataKey
+            == "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+        )
 
         with pytest.raises(StructureObjectNotFound):
             await get_source_by_thing_node_id_and_metadata_key(
@@ -298,24 +337,24 @@ async def test_blob_storage_get_source_by_thing_node_id_and_metadata_key() -> No
         "hetdesrun.adapters.blob_storage.structure.create_sources",
         return_value=[
             BlobStorageStructureSource(
-                id="i-i/A_2022-01-02T14:57:31+00:00",
+                id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43",
                 thingNodeId="i-i/A",
-                name="A - 2022-01-02 14:57:31+00:00",
+                name="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
                 path="i-i/A",
-                metadataKey="A - 2022-01-02 14:57:31+00:00",
+                metadataKey="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
             ),
             BlobStorageStructureSource(
-                id="i-i/A_2022-01-02T14:57:31+00:00",
+                id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43",
                 thingNodeId="i-i/A",
-                name="A - 2022-01-02 14:57:31+00:00",
+                name="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
                 path="i-i/A",
-                metadataKey="A - 2022-01-02 14:57:31+00:00",
+                metadataKey="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
             ),
         ],
     ), pytest.raises(StructureObjectNotUnique):
         source_by_tn_id_and_md_key = await get_source_by_thing_node_id_and_metadata_key(
             thing_node_id=IdString("i-i/A"),
-            metadata_key="A - 2022-01-02 14:57:31+00:00",
+            metadata_key="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
         )
 
 

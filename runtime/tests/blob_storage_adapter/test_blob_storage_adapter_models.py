@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
 import pytest
 from pydantic import ValidationError
@@ -57,6 +58,7 @@ def test_blob_storage_class_object_key() -> None:
                 second=18,
                 tzinfo=timezone(timedelta(hours=1)),
             ),
+            job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
         )
     assert "The ObjectKey attribute time must have timezone UTC!" in str(exc_info.value)
 
@@ -72,6 +74,7 @@ def test_blob_storage_class_object_key() -> None:
             second=18,
             tzinfo=timezone.utc,
         ),
+        job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
     )
 
     assert object_key.string == "A_2022-01-02T14:23:18+00:00"
@@ -80,7 +83,9 @@ def test_blob_storage_class_object_key() -> None:
         year=2022, month=1, day=2, hour=14, minute=23, second=18, tzinfo=timezone.utc
     )
 
-    object_key_from_name = ObjectKey.from_name(IdString("B"))
+    object_key_from_name = ObjectKey.from_name_and_job_id(
+        IdString("B"), job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f")
+    )
     object_key_from_string = ObjectKey.from_string(object_key_from_name.string)
     assert object_key_from_name == object_key_from_string
 
@@ -88,11 +93,13 @@ def test_blob_storage_class_object_key() -> None:
     assert thing_node_id == "i-ii/A"
 
     with pytest.raises(
-        ValueError, match=f"contains no '{IDENTIFIER_SEPARATOR}'"
+        ValueError, match=f"contains '{IDENTIFIER_SEPARATOR}' less than"
     ) as exc_info:
-        ObjectKey.from_string(IdString("A2022-01-02T14:23:18+00:00"))
+        ObjectKey.from_string(
+            IdString("A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f")
+        )
     assert (
-        f"not a valid ObjectKey string, because it contains no '{IDENTIFIER_SEPARATOR}'"
+        f"not a valid ObjectKey string, because it contains '{IDENTIFIER_SEPARATOR}'"
         in str(exc_info.value)
     )
 
@@ -142,18 +149,27 @@ def test_blob_storage_class_structure_thing_node() -> None:
 
 def test_blob_storage_class_structure_source_works() -> None:
     source = BlobStorageStructureSource(
-        id="i-ii/A_2022-01-02T14:23:18+00:00",
+        id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         thingNodeId="i-ii/A",
-        name="A - 2022-01-02 14:23:18+00:00",
+        name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         path="i-ii/A",
-        metadataKey="A - 2022-01-02 14:23:18+00:00",
+        metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
     )
 
-    assert source.id == "i-ii/A_2022-01-02T14:23:18+00:00"
+    assert (
+        source.id
+        == "i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+    )
     assert source.thingNodeId == "i-ii/A"
-    assert source.name == "A - 2022-01-02 14:23:18+00:00"
+    assert (
+        source.name
+        == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+    )
     assert source.path == "i-ii/A"
-    assert source.metadataKey == "A - 2022-01-02 14:23:18+00:00"
+    assert (
+        source.metadataKey
+        == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+    )
     assert source.type == "metadata(any)"
     assert source.visible is True
     assert source.filters == {}
@@ -169,15 +185,25 @@ def test_blob_storage_class_structure_source_works() -> None:
     multi_level_ok_src_from_bkt_and_ok = (
         BlobStorageStructureSource.from_structure_bucket_and_object_key(
             bucket=StructureBucket(name="iii"),
-            object_key=ObjectKey.from_string(IdString("x/C_2023-02-08T16:48:58+00:00")),
+            object_key=ObjectKey.from_string(
+                IdString(
+                    "x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+                )
+            ),
         )
     )
-    assert multi_level_ok_src_from_bkt_and_ok.id == "iii/x/C_2023-02-08T16:48:58+00:00"
-    assert multi_level_ok_src_from_bkt_and_ok.name == "C - 2023-02-08 16:48:58+00:00"
+    assert (
+        multi_level_ok_src_from_bkt_and_ok.id
+        == "iii/x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+    )
+    assert (
+        multi_level_ok_src_from_bkt_and_ok.name
+        == "C - 2023-02-08 16:48:58+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+    )
     assert multi_level_ok_src_from_bkt_and_ok.thingNodeId == "iii/x/C"
     assert (
         multi_level_ok_src_from_bkt_and_ok.metadataKey
-        == "C - 2023-02-08 16:48:58+00:00"
+        == "C - 2023-02-08 16:48:58+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
     )
     assert multi_level_ok_src_from_bkt_and_ok.path == "iii/x/C"
 
@@ -186,11 +212,11 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to no object key dir separator
         BlobStorageStructureSource(
-            id="A_2022-01-02T14:23:18+00:00",
+            id="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             thingNodeId="A",
-            name="A - 2022-01-02 14:23:18+00:00",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             path="A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00",
+            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
     assert f"must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'" in str(
@@ -201,75 +227,86 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to bucket name part invalid
         BlobStorageStructureSource(
-            id="I-ii/A_2022-01-02T14:23:18+00:00",
+            id="I-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             thingNodeId="i-ii/A",
-            name="A - 2022-01-02 14:23:18+00:00",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00",
+            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
     assert "The first part 'I-ii'" in str(exc_info.value)
-    assert "of the source id 'I-ii/A_2022-01-02T14:23:18+00:00'" in str(exc_info.value)
+    assert "of the source id 'I-ii/A_2022-01-02T14:23:18+00:00" in str(exc_info.value)
     assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
     assert "must correspond to a bucket name!" in str(exc_info.value)
 
     with pytest.raises(ValidationError) as exc_info:
         # invalid id due to object key part invalid
         BlobStorageStructureSource(
-            id="i-ii/A2022-01-02T14:23:18+00:00",
+            id="i-ii/A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             thingNodeId="i-ii/A",
-            name="A - 2022-01-02 14:23:18+00:00",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00",
+            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert "The second part 'A2022-01-02T14:23:18+00:00'" in str(exc_info.value)
-    assert "of the source id 'i-ii/A2022-01-02T14:23:18+00:00'" in str(exc_info.value)
+    assert (
+        "The second part 'A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
+        in str(exc_info.value)
+    )
+    assert (
+        "of the source id 'i-ii/A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
+        in str(exc_info.value)
+    )
     assert f"after the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
     assert "must correspond to an object key string!" in str(exc_info.value)
 
     with pytest.raises(ValidationError) as exc_info:
         # thingNodeId does not match id
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             thingNodeId="i-ii/B",
-            name="A - 2022-01-02 14:23:18+00:00",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00",
+            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
     assert "The source's thing node id 'i-ii/B'" in str(exc_info.value)
-    assert "does not match its id 'i-ii/A_2022-01-02T14:23:18+00:00'" in str(
-        exc_info.value
+    assert (
+        "does not match its id "
+        "'i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
+        in str(exc_info.value)
     )
 
     with pytest.raises(ValidationError) as exc_info:
         # name invalid due to missing separator
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             thingNodeId="i-ii/A",
-            name="A 2022-01-02 14:23:18+00:00",
+            name="A 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00",
+            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
     assert (
-        "The source name 'A 2022-01-02 14:23:18+00:00' "
-        f"must contain the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}'!"
+        "The source name 'A 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f' "
+        f"must contain the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice!"
         in str(exc_info.value)
     )
 
     with pytest.raises(ValidationError) as exc_info:
         # name does not match id due to thing node name
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             thingNodeId="i-ii/A",
-            name="B - 2022-01-02 14:23:18+00:00",
+            name="B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00",
+            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert "The source name 'B - 2022-01-02 14:23:18+00:00'" in str(exc_info.value)
+    assert (
+        "The source name 'B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
+        in str(exc_info.value)
+    )
     assert "must start with the name 'A' of the corresponding thing node" in str(
         exc_info.value
     )
@@ -277,28 +314,32 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
     with pytest.raises(ValidationError) as exc_info:
         # name does not match id due to timestamp
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             thingNodeId="i-ii/A",
-            name="A - 2023-01-02 14:23:18+00:00",
+            name="A - 2023-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00",
+            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert "The time of the source's name 'A - 2023-01-02 14:23:18+00:00'" in str(
-        exc_info.value
+    assert (
+        "The time of the source's name "
+        "'A - 2023-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
+        in str(exc_info.value)
     )
-    assert "must match to the time in its id 'i-ii/A_2022-01-02T14:23:18+00:00'" in str(
-        exc_info.value
+    assert (
+        "must match to the time in its id "
+        "'i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
+        in str(exc_info.value)
     )
 
     with pytest.raises(ValidationError) as exc_info:
         # path does not match thingNodeId
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             thingNodeId="i-ii/A",
-            name="A - 2022-01-02 14:23:18+00:00",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             path="i-ii/B",
-            metadataKey="A - 2022-01-02 14:23:18+00:00",
+            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
     assert "The source path" in str(exc_info.value)
@@ -309,18 +350,22 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
     with pytest.raises(ValidationError) as exc_info:
         # metadataKey does not match name
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             thingNodeId="i-ii/A",
-            name="A - 2022-01-02 14:23:18+00:00",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             path="i-ii/A",
-            metadataKey="B - 2022-01-02 14:23:18+00:00",
+            metadataKey="B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert "The source's metadataKey 'B - 2022-01-02 14:23:18+00:00'" in str(
-        exc_info.value
+    assert (
+        "The source's metadataKey "
+        "'B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
+        in str(exc_info.value)
     )
-    assert "must be the same string as its name 'A - 2022-01-02 14:23:18+00:00'" in str(
-        exc_info.value
+    assert (
+        "must be the same string as its name "
+        "'A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
+        in str(exc_info.value)
     )
 
 
@@ -342,7 +387,9 @@ def test_blob_storage_class_structure_sink() -> None:
     assert sink.visible is True
     assert sink.filters == {}
 
-    snk_bucket, snk_object_key = sink.to_structure_bucket_and_object_key()
+    snk_bucket, snk_object_key = sink.to_structure_bucket_and_object_key(
+        job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f")
+    )
     assert snk_bucket.name == "i-ii"
     assert snk_object_key.name == "A"
 

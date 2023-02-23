@@ -83,7 +83,11 @@ async def load_data(
         filtered_source,
     ) in wf_input_name_to_filtered_source_mapping_dict.items():
         if filtered_source.ref_id is None or filtered_source.ref_key is None:
-            msg = ""
+            msg = (
+                "To use the BLOB storage adapter each filtered "
+                "source must have 'ref_id' and 'ref_key' set!\n"
+                f"That is not the case for {filtered_source.json()}"
+            )
             logger.error(msg)
             raise AdapterClientWiringInvalidError(msg)
 

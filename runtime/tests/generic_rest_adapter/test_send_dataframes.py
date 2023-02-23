@@ -1,4 +1,5 @@
 from unittest import mock
+from uuid import UUID
 
 import numpy as np
 import pandas as pd
@@ -31,6 +32,7 @@ async def test_end_to_end_send_only_dataframe_data():
                     )
                 },
                 {"inp_1": pd.DataFrame({"a": [1.2, 3.4, 5.9], "b": [2.9, 8.7, 2.2]})},
+                job_id=UUID("0788f303-61ce-47a9-b5f9-ec7b0de3be43"),
                 adapter_key="test_end_to_end_send_only_dataframe_data_adapter_key",
             )
             assert post_mock.called  # we got through to actually posting!
@@ -59,6 +61,7 @@ async def test_end_to_end_send_only_dataframe_data():
                     "inp_1": pd.DataFrame({"a": [1.2, 3.4, 5.9], "b": [2.9, 8.7, 2.2]}),
                     "inp_2": pd.DataFrame({"c": [1.9, np.nan]}),
                 },
+                job_id=UUID("0788f303-61ce-47a9-b5f9-ec7b0de3be43"),
                 adapter_key="test_end_to_end_send_only_dataframe_data_adapter_key",
             )
 
@@ -89,6 +92,7 @@ async def test_end_to_end_send_only_dataframe_data():
                     )
                 },
                 {"inp_1": df},
+                job_id=UUID("0788f303-61ce-47a9-b5f9-ec7b0de3be43"),
                 adapter_key="test_end_to_end_send_only_dataframe_data_adapter_key",
             )
             assert post_mock.called  # we got through to actually posting!

@@ -3,6 +3,7 @@ import logging
 import urllib
 from posixpath import join as posix_urljoin
 from typing import Any
+from uuid import UUID
 
 import httpx
 
@@ -30,6 +31,7 @@ async def post_json_with_open_client(
 async def send_single_metadatum_to_adapter(
     filtered_sink: FilteredSink,
     metadatum_value: Any,
+    job_id: UUID,  # noqa: ARG001
     adapter_key: str,
     client: httpx.AsyncClient,
 ) -> None:
@@ -89,6 +91,7 @@ async def send_single_metadatum_to_adapter(
 async def send_multiple_metadata_to_adapter(
     filtered_sinks: dict[str, FilteredSink],
     data_to_send: dict[str, Any],
+    job_id: UUID,
     adapter_key: str,
 ) -> None:
     try:
@@ -112,6 +115,7 @@ async def send_multiple_metadata_to_adapter(
                 send_single_metadatum_to_adapter(
                     filtered_sinks[wf_output_name],
                     data_to_send[wf_output_name],
+                    job_id,
                     adapter_key=adapter_key,
                     client=client,
                 )

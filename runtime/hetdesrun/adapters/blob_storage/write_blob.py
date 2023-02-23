@@ -2,6 +2,7 @@ import logging
 import pickle
 from io import BytesIO
 from typing import Any
+from uuid import UUID
 
 from botocore.exceptions import ClientError, ParamValidationError
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 async def write_blob_to_storage(
-    data: Any, thing_node_id: str, metadata_key: str
+    data: Any, thing_node_id: str, metadata_key: str, job_id: UUID
 ) -> None:
     """Write BLOB to storage.
 
@@ -34,7 +35,7 @@ async def write_blob_to_storage(
     )
 
     logger.info("Get bucket name and object key from sink with id %s", sink.id)
-    structure_bucket, object_key = sink.to_structure_bucket_and_object_key()
+    structure_bucket, object_key = sink.to_structure_bucket_and_object_key(job_id)
 
     logger.info(
         "Write data for sink '%s' to storage into bucket '%s' as blob with key '%s'",
@@ -95,6 +96,7 @@ async def write_blob_to_storage(
 async def send_data(
     wf_output_name_to_filtered_sink_mapping_dict: dict[str, FilteredSink],
     wf_output_name_to_value_mapping_dict: dict[str, Any],
+    job_id: UUID,
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:
     """Send data for filtered sinks from BLOB storage.
@@ -107,10 +109,16 @@ async def send_data(
         filtered_sink,
     ) in wf_output_name_to_filtered_sink_mapping_dict.items():
         if filtered_sink.ref_id is None or filtered_sink.ref_key is None:
-            msg = ""
+            msg = (
+                "To use the BLOB storage adapter each filtered "
+                "sink must have 'ref_id' and 'ref_key' set!"
+                f"That is not the case for {filtered_sink.json()}"
+            )
             logger.error(msg)
             raise AdapterClientWiringInvalidError(msg)
 
         blob = wf_output_name_to_value_mapping_dict[wf_output_name]
-        await write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key)
+        await write_blob_to_storage(
+            blob, filtered_sink.ref_id, filtered_sink.ref_key, job_id
+        )
     return {}

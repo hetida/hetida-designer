@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import UUID
 
 from hetdesrun.adapters.local_file.load_file import load_file_from_id
 from hetdesrun.adapters.local_file.write_file import write_to_file
@@ -24,6 +25,7 @@ async def load_data(
 async def send_data(
     wf_output_name_to_filtered_sink_mapping_dict: dict[str, FilteredSink],
     wf_output_name_to_value_mapping_dict: dict[str, Any],
+    job_id: UUID,  # noqa: ARG001
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:
     for (
