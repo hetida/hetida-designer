@@ -496,18 +496,42 @@ export class TransformationActionService {
     suffix: string,
     transformation: Transformation
   ): Transformation {
-    const copy: Transformation = {
-      ...transformation,
-      id: newId,
-      revision_group_id: groupId,
-      version_tag: `${transformation.version_tag} ${suffix}`,
-      state: RevisionState.DRAFT,
-      // io_interface is generated in the backend, so we just send empty arrays
-      io_interface: {
-        inputs: [],
-        outputs: []
-      }
-    };
+    let copy: Transformation = null;
+
+    if (isWorkflowTransformation(transformation)) {
+      copy = {
+        ...transformation,
+        id: newId,
+        revision_group_id: groupId,
+        version_tag: `${transformation.version_tag} ${suffix}`,
+        state: RevisionState.DRAFT,
+        // io_interface is generated in the backend for workflows, so we just send empty arrays
+        io_interface: {
+          inputs: [],
+          outputs: []
+        }
+      };
+    } else if (isComponentTransformation(transformation)) {
+      copy = {
+        ...transformation,
+        id: newId,
+        revision_group_id: groupId,
+        version_tag: `${transformation.version_tag} ${suffix}`,
+        state: RevisionState.DRAFT,
+        // io_interface will copied for components, with new ids
+        io_interface: {
+          inputs: transformation.io_interface.inputs.map(input => ({
+            ...input,
+            id: uuid().toString()
+          })),
+          outputs: transformation.io_interface.outputs.map(output => ({
+            ...output,
+            id: uuid().toString()
+          }))
+        }
+      };
+    }
+
     return copy;
   }
 
