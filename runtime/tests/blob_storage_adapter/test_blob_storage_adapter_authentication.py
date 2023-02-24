@@ -164,16 +164,27 @@ async def test_blob_storage_authentication_obtain_credential_info_from_sts_rest_
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.authentication.httpx.AsyncClient.post",
-            return_value=mock.Mock(status_code=333, text="error"),
+            return_value=mock.Mock(
+                status_code=400,
+                text="""
+                <ErrorResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
+                    <Error>
+                        <Type></Type>
+                        <Code>InvalidParameterValue</Code>
+                        <Message>Error processing RoleArn parameter: RoleARN parse err</Message>
+                    </Error>
+                    <RequestId>17467834FFE4296F</RequestId>
+                </ErrorResponse>
+                """,
+            ),
         ):
             with pytest.raises(StorageAuthenticationError) as exc_info:
                 await obtain_credential_info_from_sts_rest_api()
 
-            assert (
-                "BLOB storage credential request returned with status code 333"
-                in str(exc_info.value)
-            )
-            assert "and response text:\nerror\n" in str(exc_info.value)
+            assert "status code 400" in str(exc_info.value)
+            assert "Error Code:" in str(exc_info.value)
+            assert "InvalidParameterValue" in str(exc_info.value)
+            assert "Error processing RoleArn parameter" in str(exc_info.value)
 
 
 def test_blob_storage_authentication_credentials_still_valid_enough(

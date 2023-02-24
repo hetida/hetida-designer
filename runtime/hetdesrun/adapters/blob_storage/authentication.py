@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from functools import cache
 
-from httpx import AsyncClient
+import httpx
 from pydantic import BaseModel, Field
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
@@ -107,8 +107,7 @@ def parse_xml_error_response(xml_string: str) -> str:
         raise StorageAuthenticationError(msg) from error
 
     namespace = {"sts": extract_namespace_from_root_tag(xml_response.tag)}
-
-    if xml_response.tag == "ErrorResponse":
+    if xml_response.tag.endswith("ErrorResponse"):
         path = "./sts:Error/sts:"
         error_code = xml_response.find(path + "Code", namespace)
         error_message = xml_response.find(path + "Message", namespace)
@@ -137,7 +136,7 @@ async def obtain_credential_info_from_sts_rest_api() -> CredentialInfo:
         **get_blob_adapter_config().sts_params,
     }
     params_string = urllib.parse.urlencode(params, safe=":/")
-    async with AsyncClient(
+    async with httpx.AsyncClient(
         verify=get_config().hd_runtime_verify_certs,
         timeout=get_config().external_request_timeout,
         auth=None,
