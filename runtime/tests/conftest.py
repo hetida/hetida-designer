@@ -44,15 +44,6 @@ def app_without_auth(deactivate_auth: Generator) -> FastAPI:
     return init_app()
 
 
-@pytest.fixture(scope="session")
-def app_without_auth_with_blob_storage_adapter() -> FastAPI:
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.config.get_blob_adapter_config",
-        adapter_hierarchy_location="tests/data/blob_storage/blob_storage_adapter_hierarchy.json",
-    ), mock.patch("hetdesrun.webservice.config.runtime_config.auth", False):
-        return init_app()
-
-
 def pytest_addoption(parser: Any) -> None:
     parser.addoption(
         "--dont-use-in-memory-db",
@@ -70,15 +61,6 @@ def use_in_memory_db(pytestconfig: pytest.Config) -> Any:
 @pytest.fixture
 def async_test_client(app_without_auth: FastAPI) -> AsyncClient:
     return AsyncClient(app=app_without_auth, base_url="http://test")
-
-
-@pytest.fixture
-def async_test_client_with_blob_storage_adapter(
-    app_without_auth_with_blob_storage_adapter: FastAPI,
-) -> AsyncClient:
-    return AsyncClient(
-        app=app_without_auth_with_blob_storage_adapter, base_url="http://test"
-    )
 
 
 @pytest.fixture
