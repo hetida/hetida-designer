@@ -1,5 +1,4 @@
 import asyncio
-from uuid import UUID
 
 import numpy as np
 import pandas as pd
@@ -34,7 +33,7 @@ def dataframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
 
 
 async def post_dataframe(
-    df: pd.DataFrame, ref_id: str, job_id: UUID, adapter_key: str, client: AsyncClient
+    df: pd.DataFrame, ref_id: str, adapter_key: str, client: AsyncClient
 ) -> None:
     records = dataframe_to_list_of_dicts(df)
 
@@ -42,7 +41,6 @@ async def post_dataframe(
         records,
         attributes=df.attrs,
         ref_id=ref_id,
-        job_id=job_id,
         adapter_key=adapter_key,
         endpoint="dataframe",
         client=client,
@@ -50,7 +48,7 @@ async def post_dataframe(
 
 
 async def post_dataframes(
-    dfs: list[pd.DataFrame], ref_ids: list[str], job_id: UUID, adapter_key: str
+    dfs: list[pd.DataFrame], ref_ids: list[str], adapter_key: str
 ) -> None:
     async with AsyncClient(
         verify=get_config().hd_adapters_verify_certs,
@@ -58,9 +56,7 @@ async def post_dataframes(
     ) as client:
         await asyncio.gather(
             *(
-                post_dataframe(
-                    df, ref_id, job_id, adapter_key=adapter_key, client=client
-                )
+                post_dataframe(df, ref_id, adapter_key=adapter_key, client=client)
                 for df, ref_id in zip(dfs, ref_ids, strict=True)
             )
         )
@@ -69,11 +65,10 @@ async def post_dataframes(
 async def send_dataframes_to_adapter(
     filtered_sinks: dict[str, FilteredSink],
     data_to_send: dict[str, pd.DataFrame],
-    job_id: UUID,
     adapter_key: str,
 ) -> None:
     keys = filtered_sinks.keys()
     ref_ids: list[str] = [str(filtered_sinks[key].ref_id) for key in keys]
     dfs = [data_to_send[key] for key in keys]
 
-    await post_dataframes(dfs, ref_ids=ref_ids, job_id=job_id, adapter_key=adapter_key)
+    await post_dataframes(dfs, ref_ids=ref_ids, adapter_key=adapter_key)

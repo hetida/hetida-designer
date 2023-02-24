@@ -1,5 +1,4 @@
 from unittest import mock
-from uuid import UUID
 
 import pytest
 
@@ -34,7 +33,6 @@ async def test_end_to_end_send_only_single_metadata_data():
                     )
                 },
                 {"inp_1": 55},
-                job_id=UUID("0788f303-61ce-47a9-b5f9-ec7b0de3be43"),
                 adapter_key="test_end_to_end_send_only_metadata_data_adapter_key",
             )
             assert post_mock.called  # we got through to actually posting!
@@ -58,7 +56,6 @@ async def test_end_to_end_send_only_single_metadata_data():
                         )
                     },
                     {"inp_1": 55},
-                    job_id=UUID("0788f303-61ce-47a9-b5f9-ec7b0de3be43"),
                     adapter_key="test_end_to_end_send_only_metadata_data_adapter_key",
                 )
 
@@ -96,7 +93,6 @@ async def test_end_to_end_send_only_metadata_data():
                     ),
                 },
                 {"outp_1": "some description", "outp_2": 47.8},
-                job_id=UUID("0788f303-61ce-47a9-b5f9-ec7b0de3be43"),
                 adapter_key="test_end_to_end_send_only_metadata_data_adapter_key",
             )
 

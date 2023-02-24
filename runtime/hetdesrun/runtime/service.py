@@ -204,7 +204,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         send_data_measured_step = PerformanceMeasuredStep.create_and_begin("send_data")
 
         direct_return_data: dict = await resolve_and_send_data_from_wiring(
-            runtime_input.workflow_wiring, workflow_result, runtime_input.job_id
+            runtime_input.workflow_wiring, workflow_result
         )
 
         send_data_measured_step.stop()

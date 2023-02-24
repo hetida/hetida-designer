@@ -6,7 +6,6 @@ This implements source and sink runtime adapter client for the generic rest adap
 import asyncio
 from collections.abc import Mapping
 from typing import Any, TypeVar
-from uuid import UUID
 
 import pandas as pd
 
@@ -154,7 +153,6 @@ async def load_data(
 async def send_data(
     wf_output_name_to_filtered_sink_mapping_dict: dict[str, FilteredSink],
     wf_output_name_to_value_mapping_dict: dict[str, Any],
-    job_id: UUID,
     adapter_key: str,
 ) -> dict[str, Any]:
     """Send data to generic rest adapter"""
@@ -197,22 +195,13 @@ async def send_data(
 
     await asyncio.gather(
         send_dataframes_to_adapter(
-            dataframe_filtered_sinks,
-            dataframe_data_to_send,
-            job_id,
-            adapter_key=adapter_key,
+            dataframe_filtered_sinks, dataframe_data_to_send, adapter_key=adapter_key
         ),
         send_multiple_timeseries_to_adapter(
-            timeseries_filtered_sinks,
-            timeseries_data_to_send,
-            job_id,
-            adapter_key=adapter_key,
+            timeseries_filtered_sinks, timeseries_data_to_send, adapter_key=adapter_key
         ),
         send_multiple_metadata_to_adapter(
-            metadata_filtered_sinks,
-            metadata_data_to_send,
-            job_id,
-            adapter_key=adapter_key,
+            metadata_filtered_sinks, metadata_data_to_send, adapter_key=adapter_key
         ),
     )
 

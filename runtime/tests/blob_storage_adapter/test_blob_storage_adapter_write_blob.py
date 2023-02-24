@@ -52,7 +52,6 @@ async def test_blob_storage_write_blob_to_storage_works(
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
-                job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
             )
             assert (
                 "Write data for sink 'i-ii/A_generic_sink' to storage "
@@ -79,7 +78,6 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
-                job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
             )
         assert "SinkNotFound message" in str(exc_info.value)
 
@@ -95,7 +93,6 @@ async def test_blob_storage_write_blob_to_storage_with_multiple_existing_sinks()
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
-                job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
             )
         assert "SinkNotUnique message" in str(exc_info.value)
 
@@ -122,7 +119,6 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> 
                     data=struct.pack(">i", 42),
                     thing_node_id="i-ii/A",
                     metadata_key="A - Next Object",
-                    job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
                 )
             assert "The bucket 'i-ii' does not exist!" in str(exc_info.value)
 
@@ -166,7 +162,6 @@ async def test_blob_storage_write_blob_to_storage_with_existing_object() -> None
                     data=struct.pack(">i", 42),
                     thing_node_id="i-ii/A",
                     metadata_key="A - Next Object",
-                    job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
                 )
 
 
@@ -185,16 +180,14 @@ async def test_blob_storage_send_data_works() -> None:
         await send_data(
             wf_output_name_to_filtered_sink_mapping_dict={"output_name": filtered_sink},
             wf_output_name_to_value_mapping_dict={"output_name": data},
-            job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
             adapter_key="blob-storage-adapter",
         )
         assert mocked_write_blob_to_storage.call_count == 1
         _, args, _ = mocked_write_blob_to_storage.mock_calls[0]
-        assert len(args) == 4
+        assert len(args) == 3
         assert args[0] == data
         assert args[1] == filtered_sink.ref_id
         assert args[2] == filtered_sink.ref_key
-        assert args[3] == UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f")
 
 
 @pytest.mark.asyncio
@@ -216,7 +209,6 @@ async def test_blob_storage_send_data_with_error() -> None:
                     "output_name": filtered_sink
                 },
                 wf_output_name_to_value_mapping_dict={"output_name": data},
-                job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
                 adapter_key="blob-storage-adapter",
             )
         assert "Error message" in str(exc_info.value)

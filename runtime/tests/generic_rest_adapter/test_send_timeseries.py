@@ -1,5 +1,4 @@
 from unittest import mock
-from uuid import UUID
 
 import numpy as np
 import pandas as pd
@@ -44,7 +43,6 @@ async def test_end_to_end_send_only_timeseries_data():
                     )
                 },
                 {"inp_1": ts_1},
-                job_id=UUID("0788f303-61ce-47a9-b5f9-ec7b0de3be43"),
                 adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
             )
             assert post_mock.called  # we got through to actually posting!
@@ -83,7 +81,6 @@ async def test_end_to_end_send_only_timeseries_data():
                     "inp_1": ts_1,
                     "inp_2": ts_2,
                 },
-                job_id=UUID("0788f303-61ce-47a9-b5f9-ec7b0de3be43"),
                 adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
             )
 
@@ -113,7 +110,6 @@ async def test_end_to_end_send_only_timeseries_data():
                     ),
                 },
                 {"inp_1": ts_3},
-                job_id=UUID("0788f303-61ce-47a9-b5f9-ec7b0de3be43"),
                 adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
             )
             # note: can be async!

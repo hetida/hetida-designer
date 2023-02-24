@@ -2,7 +2,6 @@ import logging
 import pickle
 from io import BytesIO
 from typing import Any
-from uuid import UUID
 
 from botocore.exceptions import ClientError, ParamValidationError
 
@@ -17,12 +16,13 @@ from hetdesrun.adapters.exceptions import (
     AdapterHandlingException,
 )
 from hetdesrun.models.data_selection import FilteredSink
+from hetdesrun.runtime.logging import _get_job_id_context
 
 logger = logging.getLogger(__name__)
 
 
 async def write_blob_to_storage(
-    data: Any, thing_node_id: str, metadata_key: str, job_id: UUID
+    data: Any, thing_node_id: str, metadata_key: str
 ) -> None:
     """Write BLOB to storage.
 
@@ -33,7 +33,8 @@ async def write_blob_to_storage(
     sink = get_sink_by_thing_node_id_and_metadata_key(
         IdString(thing_node_id), metadata_key
     )
-
+    job_id_context = _get_job_id_context()
+    job_id = job_id_context["currently_executed_job_id"]
     logger.info("Get bucket name and object key from sink with id %s", sink.id)
     structure_bucket, object_key = sink.to_structure_bucket_and_object_key(job_id)
 
@@ -96,7 +97,6 @@ async def write_blob_to_storage(
 async def send_data(
     wf_output_name_to_filtered_sink_mapping_dict: dict[str, FilteredSink],
     wf_output_name_to_value_mapping_dict: dict[str, Any],
-    job_id: UUID,
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:
     """Send data for filtered sinks from BLOB storage.
@@ -118,7 +118,5 @@ async def send_data(
             raise AdapterClientWiringInvalidError(msg)
 
         blob = wf_output_name_to_value_mapping_dict[wf_output_name]
-        await write_blob_to_storage(
-            blob, filtered_sink.ref_id, filtered_sink.ref_key, job_id
-        )
+        await write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key)
     return {}

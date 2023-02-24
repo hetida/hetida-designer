@@ -1,6 +1,5 @@
 from collections import defaultdict
 from typing import Any
-from uuid import UUID
 
 from hetdesrun.adapters import load_data_from_adapter, send_data_with_adapter
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
@@ -44,7 +43,7 @@ async def resolve_and_load_data_from_wiring(
 
 
 async def resolve_and_send_data_from_wiring(
-    workflow_wiring: WorkflowWiring, result_data: dict[str, Any], job_id: UUID
+    workflow_wiring: WorkflowWiring, result_data: dict[str, Any]
 ) -> dict[str, Any]:
     """Sends data to sinks
 
@@ -73,7 +72,6 @@ async def resolve_and_send_data_from_wiring(
                 for output_wiring in output_wirings_of_adapter
             },
             result_data,
-            job_id,
         )
 
         if data_not_send_by_adapter is not None:

@@ -1,5 +1,4 @@
 from unittest import mock
-from uuid import UUID
 
 import pandas as pd
 import pytest
@@ -263,7 +262,6 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                                     {"a": [1, 2, 3], "b": [12.2, 13.3, 14.4]}
                                 )
                             },
-                            job_id=UUID("0788f303-61ce-47a9-b5f9-ec7b0de3be43"),
                             adapter_key="local-file-adapter",
                         )
 

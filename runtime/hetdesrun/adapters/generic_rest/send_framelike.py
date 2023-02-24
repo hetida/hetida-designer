@@ -9,7 +9,6 @@ import json
 import logging
 from posixpath import join as posix_urljoin
 from typing import Any, Literal
-from uuid import UUID
 
 import httpx
 from httpx import AsyncClient
@@ -36,7 +35,6 @@ async def post_framelike_records(
     list_of_records: list[dict],
     attributes: Any | None,
     ref_id: str,
-    job_id: UUID,  # noqa: ARG001
     adapter_key: str,
     endpoint: Literal["timeseries", "dataframe"],
     client: AsyncClient,
