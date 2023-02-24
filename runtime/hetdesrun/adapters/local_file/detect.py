@@ -85,7 +85,6 @@ def local_file_from_path(
     if file_path.endswith(".settings.json"):  # only config file present
 
         data_file_path = file_path.removesuffix(".settings.json")
-
         # only infer from settings file if no data file is present:
         if (
             (
@@ -166,5 +165,4 @@ def get_local_files_and_dirs(
 
         if not walk_sub_dirs:
             break
-
     return local_files, sub_directories

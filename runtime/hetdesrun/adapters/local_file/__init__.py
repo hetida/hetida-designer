@@ -17,7 +17,13 @@ async def load_data(
 ) -> dict[str, Any]:
 
     return {
-        wf_input_name: load_file_from_id(str(filtered_source.ref_id))
+        wf_input_name: load_file_from_id(
+            str(
+                filtered_source.ref_key
+                if filtered_source.ref_key is not None
+                else filtered_source.ref_id
+            )
+        )
         for wf_input_name, filtered_source in wf_input_name_to_filtered_source_mapping_dict.items()
     }
 
@@ -32,6 +38,17 @@ async def send_data(
         wf_output_name,
         filtered_sink,
     ) in wf_output_name_to_filtered_sink_mapping_dict.items():
-        df = wf_output_name_to_value_mapping_dict[wf_output_name]
-        write_to_file(df, str(filtered_sink.ref_id))
+        data = wf_output_name_to_value_mapping_dict[wf_output_name]
+
+        # for metadata(any) the complete path is expected to be encoded into the refKey while
+        # the ref_id only contains the thing node 's path (a directory) where it is considered
+        # to be attached to
+
+        id_to_use = (
+            filtered_sink.ref_key
+            if filtered_sink.ref_key is not None
+            else filtered_sink.ref_id
+        )
+
+        write_to_file(data, str(id_to_use))
     return {}

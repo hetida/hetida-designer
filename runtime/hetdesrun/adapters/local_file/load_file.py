@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import pandas as pd
 
@@ -9,7 +10,7 @@ from hetdesrun.adapters.local_file.utils import from_url_representation
 logger = logging.getLogger(__name__)
 
 
-def load_file_from_id(source_id: str) -> pd.DataFrame:
+def load_file_from_id(source_id: str) -> Any:
     possible_local_file = get_local_file_by_id(source_id)
 
     if possible_local_file is None:
@@ -55,11 +56,14 @@ def load_file_from_id(source_id: str) -> pd.DataFrame:
         raise AdapterHandlingException(msg) from e
 
     logger.info(
-        "Finished retrieving local file \n%s\n with file_support_handler \n%s\n"
-        " Resulting DataFrame of shape %s:\n%s",
+        "Finished retrieving local file \n%s\n with file_support_handler \n%s",
         str(possible_local_file),
         str(file_support_handler),
-        str(loaded_df.shape),
-        str(loaded_df),
     )
+    if isinstance(loaded_df, pd.DataFrame):
+        logger.info(
+            "Retrieved DataFrame from local file of shape %s:\n%s",
+            str(loaded_df.shape),
+            str(loaded_df),
+        )
     return loaded_df

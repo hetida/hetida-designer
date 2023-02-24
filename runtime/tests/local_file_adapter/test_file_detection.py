@@ -10,7 +10,7 @@ def test_file_detection():
     )
 
     # found all files in test data dir
-    assert len(found_local_files) == 9
+    assert len(found_local_files) == 10
 
     def load_settings_has_semicol_sep(local_file):
         if local_file.parsed_settings_file.load_settings is None:
@@ -28,7 +28,7 @@ def test_file_detection():
 
     # directories:
 
-    assert len(found_directories) == 4
+    assert len(found_directories) == 5
 
     print("FOUND DIRs", found_directories)
     assert (

@@ -2,6 +2,7 @@ import os
 from typing import Callable
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.local_file.config import local_file_adapter_config
 from hetdesrun.adapters.local_file.detect import (
     LocalFile,
@@ -21,26 +22,40 @@ from hetdesrun.adapters.local_file.utils import (
 
 
 def source_from_local_file(local_file: LocalFile) -> LocalFileStructureSource:
+
+    file_support_handler = local_file.file_support_handler()
+    assert file_support_handler is not None  # for mypy # noqa: S101
+    external_type = file_support_handler.adapter_data_type
+
     return LocalFileStructureSource(
         id=to_url_representation(local_file.path),
         thingNodeId=to_url_representation(local_file.dir_path),
         name=os.path.basename(local_file.path),
-        type="dataframe",
+        type=external_type,
         visible=True,
-        metadataKey=None,
+        metadataKey=to_url_representation(local_file.path)
+        if external_type is ExternalType.METADATA_ANY
+        else None,
         path=local_file.path,
         filters={},
     )
 
 
 def sink_from_local_file(local_file: LocalFile) -> LocalFileStructureSink:
+
+    file_support_handler = local_file.file_support_handler()
+    assert file_support_handler is not None  # for mypy # noqa: S101
+    external_type = file_support_handler.adapter_data_type
+
     return LocalFileStructureSink(
         id=to_url_representation(local_file.path),
         thingNodeId=to_url_representation(local_file.dir_path),
         name=os.path.basename(local_file.path),
-        type="dataframe",
+        type=external_type,
         visible=True,
-        metadataKey=None,
+        metadataKey=to_url_representation(local_file.path)
+        if external_type is ExternalType.METADATA_ANY
+        else None,
         path=local_file.path,
         filters={},
     )
@@ -48,9 +63,12 @@ def sink_from_local_file(local_file: LocalFile) -> LocalFileStructureSink:
 
 def local_file_loadable(local_file: LocalFile) -> bool:
     return (
-        local_file.parsed_settings_file is None
-        or local_file.parsed_settings_file.loadable is None
+        local_file.parsed_settings_file is None  # loadable by default config
         or local_file.parsed_settings_file.loadable
+        is None  # loadable null is interpreted as True
+        or local_file.parsed_settings_file.loadable
+    ) and (  # cannot load if extension is not registered
+        local_file.file_support_handler() is not None
     )
 
 
@@ -59,6 +77,8 @@ def local_file_writable(local_file: LocalFile) -> bool:
         local_file.parsed_settings_file is not None
         and local_file.parsed_settings_file.writable is not None
         and local_file.parsed_settings_file.writable
+    ) and (  # cannot load if extension is not registered
+        local_file.file_support_handler() is not None
     )
 
 

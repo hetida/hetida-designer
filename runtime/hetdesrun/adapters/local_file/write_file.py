@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import pandas as pd
 
@@ -9,7 +10,7 @@ from hetdesrun.adapters.local_file.utils import from_url_representation
 logger = logging.getLogger(__name__)
 
 
-def write_to_file(df: pd.DataFrame, sink_id: str) -> None:
+def write_to_file(data_obj: Any, sink_id: str) -> None:
     possible_local_file = get_local_file_by_id(sink_id)
 
     if possible_local_file is None:
@@ -42,7 +43,7 @@ def write_to_file(df: pd.DataFrame, sink_id: str) -> None:
 
     try:
         file_support_handler.write_handler_func(
-            df, possible_local_file.path, **write_kwargs
+            data_obj, possible_local_file.path, **write_kwargs
         )
     except Exception as e:  # noqa: BLE001
         msg = (
@@ -52,10 +53,11 @@ def write_to_file(df: pd.DataFrame, sink_id: str) -> None:
         logger.info(msg)
         raise AdapterHandlingException(msg) from e
     logger.info(
-        "Finished writing local file \n%s\n with file_support_handler \n%s\n"
-        " Written DataFrame of shape %s:\n%s",
+        "Finished writing local file \n%s\n with file_support_handler \n%s",
         str(possible_local_file),
         str(file_support_handler),
-        str(df.shape),
-        str(df),
     )
+    if isinstance(data_obj, pd.DataFrame):
+        logger.info(
+            "Written DataFrame of shape %s:\n%s", str(data_obj.shape), str(data_obj)
+        )
