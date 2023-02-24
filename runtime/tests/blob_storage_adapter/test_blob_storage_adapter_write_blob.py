@@ -44,6 +44,13 @@ async def test_blob_storage_write_blob_to_storage_works(
                 path="i-ii/A",
                 metadataKey="A - Next Object",
             ),
+        ), mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+            return_value={
+                "currently_executed_job_id": UUID(
+                    "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
+                )
+            },
         ), caplog.at_level(
             logging.INFO
         ):
@@ -113,6 +120,13 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> 
                 path="i-ii/A",
                 metadataKey="A - Next Object",
             ),
+        ), mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+            return_value={
+                "currently_executed_job_id": UUID(
+                    "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
+                )
+            },
         ):
             with pytest.raises(AdapterConnectionError) as exc_info:
                 await write_blob_to_storage(
@@ -157,7 +171,16 @@ async def test_blob_storage_write_blob_to_storage_with_existing_object() -> None
             with mock.patch(
                 "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
                 return_value=mocked_sink,
-            ), pytest.raises(AdapterConnectionError):
+            ), mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+                return_value={
+                    "currently_executed_job_id": UUID(
+                        "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
+                    )
+                },
+            ), pytest.raises(
+                AdapterConnectionError
+            ):
                 await write_blob_to_storage(
                     data=struct.pack(">i", 42),
                     thing_node_id="i-ii/A",

@@ -150,7 +150,7 @@ async def obtain_credential_info_from_sts_rest_api() -> CredentialInfo:
         msg = f"BLOB storage STS REST API request returned with status code {response.status_code} "
         msg = msg + parse_xml_error_response(response.text)
         msg = msg + (
-            f"When calling URL: {get_blob_adapter_config().endpoint_url}"
+            f"When calling URL: {get_blob_adapter_config().endpoint_url} "
             f"with query parameters: {params_string}"
         )
         logger.error(msg)
