@@ -82,6 +82,19 @@ def local_file_writable(local_file: LocalFile) -> bool:
     )
 
 
+def generic_any_sink_at_dir(parent_id) -> LocalFileStructureSink:
+    gneric_sink_id = "GENERIC_ANY_SINK_AT_" + parent_id
+    return LocalFileStructureSink(
+        id=gneric_sink_id,
+        thingNodeId=parent_id,
+        name="New Pickle File",
+        type=ExternalType.METADATA_ANY,
+        visible=True,
+        path="Prepared Generic Sink",
+        metadataKey=gneric_sink_id,
+    )
+
+
 def get_structure(parent_id: str | None = None) -> StructureResponse:
     """Obtain structure for corresponding adapter web service endpoint
 
@@ -143,7 +156,12 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
             sink_from_local_file(local_file)
             for local_file in local_files
             if local_file_writable(local_file)
-        ],
+        ]
+        + (
+            [generic_any_sink_at_dir(parent_id)]
+            if local_file_adapter_config.generic_any_sink
+            else []
+        ),
     )
 
 
@@ -191,6 +209,7 @@ def get_sinks(filter_str: str | None) -> list[LocalFileStructureSink]:
             filter_str=filter_str, selection_criterion_func=local_file_writable
         )
     ]
+    # TODO: should generic sinks be present for selection in filtered view?
 
 
 def get_valid_top_dir(path: str) -> str | None:
@@ -208,7 +227,7 @@ def get_valid_top_dir(path: str) -> str | None:
 
 
 def get_local_file_by_id(
-    id: str,  # noqa: A002
+    id: str, verify_existence: bool = True  # noqa: A002
 ) -> LocalFile | None:
     """Get a specific file by id
 
@@ -226,7 +245,7 @@ def get_local_file_by_id(
     if local_file is None:
         return None
 
-    if not (
+    if verify_existence and not (
         os.path.exists(local_file.path)
         or os.path.exists(local_file.path + ".settings.json")
     ):
@@ -294,6 +313,10 @@ def get_sink_by_id(sink_id: str) -> LocalFileStructureSink | None:
 
     Returns None if sink could not be found.
     """
+
+    if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
+        parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
+        return generic_any_sink_at_dir(parent_id)
 
     local_file = get_local_file_by_id(sink_id)
 

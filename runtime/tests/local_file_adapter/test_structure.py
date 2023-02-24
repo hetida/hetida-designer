@@ -104,7 +104,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
 
         assert len(all_tns) == 5
         assert len(all_srcs) == 8
-        assert len(all_snks) == 3
+        assert len(all_snks) == 9
         assert len(src_attached_metadata_dict) == 0
         assert len(snk_attached_metadata_dict) == 0
         assert len(tn_attached_metadata_dict) == 0

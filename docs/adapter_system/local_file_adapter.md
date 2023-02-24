@@ -1,14 +1,22 @@
 # Local File Adapter
 
-The built-in local file adapter allows to read and write files (e.g. csv, excel) in directories that are mounted (as volumes) into the runtime container.
+The built-in local file adapter allows to read and write files in directories that are mounted (as volumes) into the runtime container. It currently enables mapping
 
-It allows to access data from files, typically
+* DATAFRAME input/outputs to .csv (and variants like csv.zip), .xlsx / .xls / .odf, .parquet or .h5 files using corresponding Pandas functions
+* ANY input/outputs to .pkl files using Python's builtin pickle module for object serialization.
 
-* at early stages of an analytical project working with dumps from databases when it is still unclear whether the benefits of properly integrating this data justify development of a a distinguished adapter for that database
+It is even possible to add your own file handlers for your file format.
 
-* if these data files are too large for the manual input, i.e. data files exceeeding several hundred lines etc.
+One purpose of this adapter is to access data from files, typically
 
-Furthermore even some production setups may work with data files instead of proper databases, for example via mounted SFTP directories. Note however that the local file adapter does not come with proper guarantees like for example atomic read/write operations, proper file locking etc which may reduce its applicability for such production scenarios!
+* at early exploratory stages of an analytical project. For example when working with dumps from databases when it is still unclear whether the benefits of properly integrating this database via an adapter justify the expected development costs.
+* if these data files are too large for manual input, i.e. data files exceeeding several hundred lines etc.
+
+Furthermore even some production setups may work with data files instead of proper databases, for example via mounted SFTP directories or properly backuped NFS shares.
+
+Note however that the local file adapter does not come with guarantees like atomic read/write operations, proper file locking etc which may reduce its applicability for such production scenarios!
+
+This built-in adapter is an example of a [general custom adapter](general_custom_adapters/instructions.md).
 
 ## Configuration
 
@@ -48,6 +56,10 @@ local-file-adapter|Local-File-Adapter|http://localhost:8090/adapters/localfile|h
 ```
 
 If you have not changed anything else in your setup you may just leave this as is.
+### Configuring generic sinks
+By default a generic sink for ANY type outputs is offered at each subdirectory of the configured local directories, allowing to write to generically named .pkl files. You can turn this off via setting the environment variable `RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_ANY_SINKS` to `false`.
+
+When used these generic sinks create files with name consisiting of timestamp at writing time and the job_id of the execution job.
 
 ## Usage
 
@@ -60,13 +72,13 @@ docker-compose stop
 docker-compose up
 ```
 
-Now all mounted directories and included local files with known extensions (.csv, .excel) should be available via selecting "Local File Adapter" in the Execution dialog:
+Now all mounted directories and included local files with known extensions (.csv, .excel, .pkl, ...) should be available via selecting "Local File Adapter" in the Execution dialog:
 
 <img title="" src="../assets/local_file_adapter_selected.png" alt="" width="277" data-align="center">
 
 ![](../assets/browsing_local_file_adapter.png)
 
-This makes them available for reading with default settings, i.e. the default settings employed by the corresponding Pandas functions [read_csv](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html) or [read_excel](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html). The next sections describe how to
+This makes them available for reading with default settings, e.g. the default settings employed by the corresponding Pandas functions [read_csv](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html) or [read_excel](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html) for dataframes. The next sections describe how to
 
 * allow writing of files
 
@@ -95,4 +107,4 @@ The `load_settings` and `write_settings` contain a keyword-to-value mapping whic
 
 ## Adding your own file formats
 
-The local file adapter is not restricted to the built-in supported file formats – you can add/register your own code for loading / writing your use case specific file format. This is done in the [hetdesrun_config.py](https://github.com/hetida/hetida-designer/blob/release/runtime/hetdesrun_config.py) in a straight-forward way. See there for further details and use the existing configuration for csv and excel files as examples/guideline on how to integrate your own file format.
+The local file adapter is not restricted to the built-in supported file formats – you can add/register your own code for loading / writing your use case specific file format. This is done in the [hetdesrun_config.py](https://github.com/hetida/hetida-designer/blob/release/runtime/hetdesrun_config.py) in a straight-forward way. See there for further details and use the existing configuration for csv and excel or pickle files as examples/guideline on how to integrate your own file format.

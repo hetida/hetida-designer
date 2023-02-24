@@ -1,17 +1,46 @@
+import datetime
 import logging
+import os
 from typing import Any
 
 import pandas as pd
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
+from hetdesrun.adapters.local_file.detect import LocalFile
 from hetdesrun.adapters.local_file.structure import get_local_file_by_id
-from hetdesrun.adapters.local_file.utils import from_url_representation
+from hetdesrun.adapters.local_file.utils import (
+    from_url_representation,
+    to_url_representation,
+)
+from hetdesrun.runtime.logging import _get_job_id_context
 
 logger = logging.getLogger(__name__)
 
 
+def obtain_possible_local_sink_file(sink_id: str) -> LocalFile | None:
+    if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
+        parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
+        current_job_id = _get_job_id_context()["currently_executed_job_id"]
+        local_file_path = (
+            from_url_representation(parent_id)
+            + os.sep
+            + datetime.datetime.now(datetime.timezone.utc).isoformat()
+            + "_"
+            + str(current_job_id)
+            + ".pkl"
+        )
+        possible_local_file = get_local_file_by_id(
+            to_url_representation(local_file_path), verify_existence=False
+        )
+        possible_local_file.parsed_settings_file.writable = True
+
+    else:
+        possible_local_file = get_local_file_by_id(sink_id)
+    return possible_local_file
+
+
 def write_to_file(data_obj: Any, sink_id: str) -> None:
-    possible_local_file = get_local_file_by_id(sink_id)
+    possible_local_file = obtain_possible_local_sink_file(sink_id)
 
     if possible_local_file is None:
         raise AdapterHandlingException(
