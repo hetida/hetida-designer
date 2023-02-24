@@ -17,6 +17,7 @@ import {
 import { Operator } from 'src/app/model/operator';
 import { Constant } from 'src/app/model/constant';
 import { VertexIds } from 'src/app/components/workflow-editor/workflow-editor.component';
+import { Utils } from 'src/app/utils/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -63,9 +64,7 @@ export class FlowchartConverterService {
     workflow: WorkflowTransformation
   ): FlowchartConfiguration {
     // don't show workflow io without a name
-    const workflowClean = JSON.parse(
-      JSON.stringify(workflow)
-    ) as WorkflowTransformation;
+    const workflowClean = Utils.deepCopy(workflow);
     workflowClean.content.inputs = workflowClean.content.inputs.filter(
       io => io.name !== '' && io.name !== null && io.name !== undefined
     );
@@ -117,7 +116,7 @@ export class FlowchartConverterService {
       connector.constant = true;
       connector.value = constant.value;
 
-      // TODO: Maybe links to constants can be removed from the API completely, since they are deleted here anyway.
+      // TODO: Maybe links to constants can be removed from the API completely, since they are deleted here anyway, HDOS-487.
       flowchart.links = flowchart.links.filter(
         link =>
           (isInput ? link.to : link.from) !==
@@ -293,7 +292,6 @@ export class FlowchartConverterService {
     let foundConnector: Connector;
 
     if (searchInWorkflowIoInterface) {
-      // TODO search in workflow content io to get positions
       const ios = [
         ...workflowTransformation.io_interface.inputs,
         ...workflowTransformation.io_interface.outputs

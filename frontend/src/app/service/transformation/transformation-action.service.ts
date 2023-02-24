@@ -192,7 +192,6 @@ export class TransformationActionService {
       .subscribe();
   }
 
-  // TODO unit test
   public newRevision(transformation: Transformation): void {
     if (!this.isReleased(transformation)) {
       return;
@@ -491,7 +490,6 @@ export class TransformationActionService {
     return this.transformationService.deleteTransformation(transformation.id);
   }
 
-  // TODO unit test
   private copyTransformation(
     newId: string,
     groupId: string,
@@ -577,10 +575,8 @@ export class TransformationActionService {
     componentTransformation: ComponentTransformation
   ) {
     const componentIoDialogData: ComponentIoDialogData = {
-      // TODO: Check whether the item is being mutated and if so remove the mutations. Then remove JSON.*().
-      componentTransformation: JSON.parse(
-        JSON.stringify(componentTransformation)
-      ),
+      // TODO: Check whether the item is being mutated and if so remove the mutations.
+      componentTransformation: Utils.deepCopy(componentTransformation),
       editMode: componentTransformation.state !== RevisionState.RELEASED,
       actionOk: 'Save',
       actionCancel: 'Cancel'
@@ -633,9 +629,9 @@ export class TransformationActionService {
           minHeight: '200px',
           data: {
             // TODO refactor all mutations in workflow dialog component and remove stringify.
-            workflowTransformation: JSON.parse(
-              JSON.stringify(selectedTransformation)
-            ),
+            workflowTransformation: Utils.deepCopy(
+              selectedTransformation
+            ) as WorkflowTransformation,
             editMode: selectedTransformation.state !== RevisionState.RELEASED,
             actionOk: 'Save',
             actionCancel: 'Cancel'
