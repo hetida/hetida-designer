@@ -1,6 +1,6 @@
-"""Web service endpoints for frontend for the blob storage adapter
+"""Web service endpoints for frontend for the BLOB Storage Adapter
 
-Note that the blob storage adapter is not a generic rest adapter, so these webendpoints
+Note that the BLOB Storage Adapter is a General Custom Adapter, so these webendpoints
 have the sole purpose to tell the frontend which data sources and sinks are available and
 can be wired.
 
