@@ -1,3 +1,5 @@
+* add pickle persistence for ANY type to local file adapter
+* fix docker-compose reverse proxy config
 ## 0.8.6
 * (frontend) add configurable user info text on main tab
 * fixes, in particular around validation
