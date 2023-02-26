@@ -19,6 +19,7 @@ from hetdesrun.adapters.blob_storage.models import (
     IdString,
     ObjectKey,
     StructureBucket,
+    StructureThingNode,
 )
 from hetdesrun.adapters.blob_storage.write_blob import send_data, write_blob_to_storage
 from hetdesrun.models.data_selection import FilteredSink
@@ -38,11 +39,11 @@ async def test_blob_storage_write_blob_to_storage_works(
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
             return_value=BlobStorageStructureSink(
-                id="i-ii/A_generic_sink",
-                thingNodeId="i-ii/A",
-                name="A - Next Object",
-                path="i-ii/A",
-                metadataKey="A - Next Object",
+                id="i-ii/E_generic_sink",
+                thingNodeId="i-ii/E",
+                name="E - Next Object",
+                path="i-ii/E",
+                metadataKey="E - Next Object",
             ),
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
@@ -57,12 +58,12 @@ async def test_blob_storage_write_blob_to_storage_works(
             caplog.clear()
             await write_blob_to_storage(
                 data=struct.pack(">i", 42),
-                thing_node_id="i-ii/A",
-                metadata_key="A - Next Object",
+                thing_node_id="i-ii/E",
+                metadata_key="E - Next Object",
             )
             assert (
                 "Write data for sink 'i-ii/A_generic_sink' to storage "
-                "into bucket 'i-ii' as blob with key 'A_"
+                "into bucket 'i-ii' as blob with key 'E_"
             ) in caplog.text
 
             object_summaries_response = client_mock.list_objects_v2(Bucket=bucket_name)
@@ -76,17 +77,51 @@ async def test_blob_storage_write_blob_to_storage_works(
 
 @pytest.mark.asyncio
 async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> None:
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-        side_effect=StructureObjectNotFound("SinkNotFound message"),
-    ):
-        with pytest.raises(StructureObjectNotFound) as exc_info:
+    with mock_s3():
+        client_mock = boto3.client("s3", region_name="us-east-1")
+        bucket_name = "i-ii"
+        client_mock.create_bucket(Bucket=bucket_name)
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
+            return_value=client_mock,
+        ), mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
+            side_effect=StructureObjectNotFound("SinkNotFound message"),
+        ), mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob.get_thing_node_by_id",
+            return_value=StructureThingNode(
+                id="i-ii/E",
+                parentId="i-ii",
+                name="E",
+                description="",
+            ),
+        ), mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+            return_value={
+                "currently_executed_job_id": UUID(
+                    "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
+                )
+            },
+        ):
             await write_blob_to_storage(
-                data=struct.pack(">i", 42),
-                thing_node_id="i-ii/A",
-                metadata_key="A - Next Object",
+                data=struct.pack(">i", 23),
+                thing_node_id="i-ii/E",
+                metadata_key=(
+                    "E - 2001-02-03T04:05:06+00:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
+                ),
             )
-        assert "SinkNotFound message" in str(exc_info.value)
+
+            object_summaries_response = client_mock.list_objects_v2(Bucket=bucket_name)
+            assert object_summaries_response["KeyCount"] == 1
+            object_key = object_summaries_response["Contents"][0]["Key"]
+            assert (
+                object_key
+                == "E_2001-02-03T04:05:06+00:00_e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
+            )
+            object_response = client_mock.get_object(Bucket=bucket_name, Key=object_key)
+            pickled_data_bytes = object_response["Body"].read()
+            file_object = BytesIO(pickled_data_bytes)
+            assert struct.unpack(">i", joblib.load(file_object)) == (23,)
 
 
 @pytest.mark.asyncio

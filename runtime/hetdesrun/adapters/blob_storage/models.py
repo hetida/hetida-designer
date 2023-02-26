@@ -130,6 +130,34 @@ class StructureThingNode(BaseModel):
             )
         return name
 
+    def to_bucket_name_and_object_key(
+        self, metadata_key: str
+    ) -> tuple[StructureBucket, ObjectKey]:
+        if metadata_key.count(HIERARCHY_END_NODE_NAME_SEPARATOR) != 2:
+            raise ValueError(
+                f"Cannot create bucket name and object key based on a metadata key {metadata_key} "
+                f"which does not contain '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice."
+            )
+        _, time, job_id = metadata_key.split(HIERARCHY_END_NODE_NAME_SEPARATOR)
+        if self.id.count(OBJECT_KEY_DIR_SEPARATOR) == 0:
+            raise ValueError(
+                f"Cannot create bucket name and object key based on a thing node id {self.id} "
+                f"which does not contain '{OBJECT_KEY_DIR_SEPARATOR}'."
+            )
+        bucket_name, object_key_prefix = self.id.split(
+            OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
+        )
+        structure_bucket = StructureBucket(name=bucket_name)
+        object_key_string = (
+            object_key_prefix
+            + IDENTIFIER_SEPARATOR
+            + time
+            + IDENTIFIER_SEPARATOR
+            + job_id
+        )
+        object_key = ObjectKey.from_string(IdString(object_key_string))
+        return structure_bucket, object_key
+
 
 class BlobStorageStructureSource(BaseModel):
     id: IdString  # noqa: A003

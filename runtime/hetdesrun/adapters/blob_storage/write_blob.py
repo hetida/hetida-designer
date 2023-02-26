@@ -5,10 +5,12 @@ from typing import Any
 
 from botocore.exceptions import ClientError, ParamValidationError
 
-from hetdesrun.adapters.blob_storage.models import IdString
+from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
+from hetdesrun.adapters.blob_storage.models import BlobStorageStructureSink, IdString
 from hetdesrun.adapters.blob_storage.service import get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
     get_sink_by_thing_node_id_and_metadata_key,
+    get_thing_node_by_id,
 )
 from hetdesrun.adapters.exceptions import (
     AdapterClientWiringInvalidError,
@@ -30,13 +32,30 @@ async def write_blob_to_storage(
     raised from get_sink_by_thing_node_id_and_metadata_key or StorageAuthenticationError and
     AdapterConnectionError get_s3_client may occur.
     """
-    sink = get_sink_by_thing_node_id_and_metadata_key(
-        IdString(thing_node_id), metadata_key
-    )
-    job_id_context = _get_job_id_context()
-    job_id = job_id_context["currently_executed_job_id"]
-    logger.info("Get bucket name and object key from sink with id %s", sink.id)
-    structure_bucket, object_key = sink.to_structure_bucket_and_object_key(job_id)
+    try:
+        sink = get_sink_by_thing_node_id_and_metadata_key(
+            IdString(thing_node_id), metadata_key
+        )
+    except StructureObjectNotFound:
+        thing_node = get_thing_node_by_id(IdString(thing_node_id))
+        sink = BlobStorageStructureSink.from_thing_node(thing_node)
+        try:
+            structure_bucket, object_key = thing_node.to_bucket_name_and_object_key(
+                metadata_key
+            )
+        except ValueError as error:
+            msg = (
+                f"Cannot write BLOB to sink with thing node id {thing_node_id} and "
+                f"metadata key {metadata_key}. No such sink exists and it is not possible "
+                f"to generate bucket name and object key:\n{error}"
+            )
+            logger.error(msg)
+            raise AdapterClientWiringInvalidError(msg) from error
+    else:
+        job_id_context = _get_job_id_context()
+        job_id = job_id_context["currently_executed_job_id"]
+        logger.info("Get bucket name and object key from sink with id %s", sink.id)
+        structure_bucket, object_key = sink.to_structure_bucket_and_object_key(job_id)
 
     logger.info(
         "Write data for sink '%s' to storage into bucket '%s' as blob with key '%s'",

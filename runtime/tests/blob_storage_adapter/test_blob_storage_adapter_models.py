@@ -106,7 +106,11 @@ def test_blob_storage_class_object_key() -> None:
 
 def test_blob_storage_class_structure_thing_node() -> None:
     StructureThingNode(id="i-ii", parentId="i", name="II", description="")
-    StructureThingNode(id="i-ii/A", parentId="i-ii", name="A", description="")
+    thing_node = StructureThingNode(id="i-ii/A", parentId="i-ii", name="A", description="")
+
+    structure_bucket, object_key =thing_node.to_bucket_name_and_object_key(metadata_key="A - 2001-02-03T04:05:06+00:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe")
+    assert structure_bucket.name == "i-ii"
+    assert object_key.string == "A_2001-02-03T04:05:06+00:00_e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
 
     with pytest.raises(ValidationError) as exc_info:
         # ThingNodeName shorter than min_length
