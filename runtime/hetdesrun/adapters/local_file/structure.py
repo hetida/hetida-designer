@@ -82,7 +82,7 @@ def local_file_writable(local_file: LocalFile) -> bool:
     )
 
 
-def generic_any_sink_at_dir(parent_id) -> LocalFileStructureSink:
+def generic_any_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
     gneric_sink_id = "GENERIC_ANY_SINK_AT_" + parent_id
     return LocalFileStructureSink(
         id=gneric_sink_id,

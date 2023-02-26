@@ -49,7 +49,7 @@ This adapter is a special adapter that allows to provide data directly when exec
 
 In particular this adapter is responsible for the manual input in the designer test execution dialog.
 
-On the output side it handles the case of returning data from outputs with the execution web request: Result data from Outputs "wired" to this adapter is returned as part of the execution response when executing a workflow via the hetida designer backend webservice.
+On the output side it handles the case of returning data from outputs with the execution web request: Result data from Outputs "wired" to this adapter is returned as part of the execution response when executing a workflow via the hetida designer backend webservice. This also is the default if an output wiring is not provided for an output.
 
 When automating workflows in production scenarios this adapter is typically used for simple parameters (like FLOAT or STRING inputs) but not for mass data (like DATAFRAME inputs/outputs).
 
@@ -64,6 +64,9 @@ They are **generic Rest adapters**, a certain kind of custom adapters that is ea
 This adapter allows to read/write csv or excel files from/to directories directly mounted (as volumes) in the runtime container. This adapter is an example of a **general custom adapter** (read below on what that means).
 
 Detail on usage and configuration of the Local File Adapter can be found [here](./local_file_adapter.md).
+
+#### Blob Storage Adapter
+(TODO)
 
 ### Custom adapters
 

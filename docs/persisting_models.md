@@ -17,9 +17,19 @@ hetida designer is equipped with two built-in such general custom adapters suita
 
 Apart from these two, you can write your completely own general custom adapters tailored to your specific needs and persistence backends.
 
-Another solution consist of using serialization/deserialization components directly from within the workflows. This is not recommended as its thwarts hetida designer's principles like reproducibility and separation of analytics from data in/egestion. Nvertheless it is explained below.
+Another solution consist of using serialization/deserialization components directly from within the workflows. This is not recommended as its thwarts hetida designer's principles like reproducibility and separation of analytics from data in/egestion. Nevertheless it is explained below.
 
 **General warning on deserialization**: Deserializing executes code and therefore is a security risk - you should only load objects from trusted sources!
+
+### Note on model management
+As well as it does not provide scheduling, hetida designer is not a model management framework. It treats models as data that is put out from workflows and read into workflow inputs.
+
+You can of course establish analytical steps of model management like for example automatic performance measuring / evaluation as part of hetida designer workflows.
+
+But the "management" part, i.e. selecting the current/prod model, fallback procedures on declining performance and so on has to be implemented around the systems which invoke hetida designer from the outside.
+
+### Note on custom classes
+(TODO)
 ## Persisting and Loading via General Custom Adapter
 ### Built in general custom adapters
 
@@ -29,19 +39,20 @@ The [local file adapter](adapter_system/local_file_adapter.md) supports pickling
 #### blob storage adapter
 (TODO)
 ### Writing your own general custom adapter
-Writing your own [General Custom Adapter](./adapter_system/general_custom_adapters/instructions.md) has the following advantages
+If the builtin adapters are not suitable for your scenario, writing your own [General Custom Adapter](./adapter_system/general_custom_adapters/instructions.md) is the recommended way for persisting and loading models. It has the following advantages specific to model persistence:
 
-* Keeps your workflow modular and reproducible in accordance with hetida designers separation of analytics and data ingestion/egestion (Adapter system, wirings etc.). We strongly recommend to follow this approach for production scenarios!
+* Keeps your workflow modular and reproducible in accordance with hetida designers separation of analytics and data ingestion/egestion (Adapter system, wirings etc.). We strongly recommend to follow this approach for production scenarios over for example storing/loading from inside workflow operators as described below!
+* Faster and more efficient when handling large models as binary blobs compared to generic rest adapters.
 * You may choose a format of your choice, such as [ONNX](https://onnx.ai/) which allows integration into other solutions, even non-Python-based ones.
 
 To get started, besides the [general custom adaper documentation](./adapter_system/general_custom_adapters/instructions.md) you can checkout the [description](./adapter_system/local_file_adapter.md) and implementation of the built-in local file adapter, which is a general custom adapter.
+
+You typically will use the ANY type for arbitrary models / Python objects.
 
 In case additional Python libraries such as [`onnx`](https://github.com/onnx/onnx), [`tensorflow-onnx`](https://github.com/onnx/tensorflow-onnx), [`onnx-tensorflow`](https://github.com/onnx/onnx-tensorflow), or [`sklearn-onnx`](https://github.com/onnx/sklearn-onnx) are needed, just follow the instructions on how to add [Custom Python Dependencies](./custom_python_dependencies.md) to your runtime Docker container.
 
 
 ## Persisting and Loading from within Workflows via Components
-
-
 A simple option for development purposes is to use basic components for serializing objects to disk. 
 
 **WARNING:** We only recommend this for early development / experimentation as its counteracts basic hetida designer principles. For production environments it is higly recommended to use or write a suitable general custom adapter.

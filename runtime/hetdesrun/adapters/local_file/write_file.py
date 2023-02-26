@@ -32,6 +32,11 @@ def obtain_possible_local_sink_file(sink_id: str) -> LocalFile | None:
         possible_local_file = get_local_file_by_id(
             to_url_representation(local_file_path), verify_existence=False
         )
+        assert possible_local_file is not None  # for mypy # noqa: S101
+        assert (  # noqa: S101
+            possible_local_file.parsed_settings_file is not None
+        )  # for mypy
+
         possible_local_file.parsed_settings_file.writable = True
 
     else:
