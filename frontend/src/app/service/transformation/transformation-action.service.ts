@@ -491,8 +491,8 @@ export class TransformationActionService {
     return this.transformationService.deleteTransformation(transformation.id);
   }
 
-  // TODO unit test
-  private copyTransformation(
+  // Visible for testing
+  protected copyTransformation(
     newId: string,
     groupId: string,
     suffix: string,
