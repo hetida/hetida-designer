@@ -1,13 +1,19 @@
 from collections.abc import Callable
 from typing import Any
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, validator
+
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 
 
 class FileSupportHandler(BaseModel):
     associated_extensions: list[str]
     read_handler_func: Callable | None = None
     write_handler_func: Callable | None = None
+    adapter_data_type: ExternalType = Field(
+        ExternalType.DATAFRAME,
+        description="As which type the adapter should offer files.",
+    )
 
     @validator("write_handler_func", always=True)
     def at_least_one_handler_func(

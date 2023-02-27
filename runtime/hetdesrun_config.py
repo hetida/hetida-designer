@@ -1,7 +1,10 @@
-"""Configuration of Hetida Designer Runtime
+# noqa: INP001
+"""Adapter Plugin configuration file of hetida designer Runtime
 
 After the import statements you can insert code to import and register your own
-source / sink adapter runtime client implementations.
+source / sink adapter runtime client implementations for general custom adapters.
+
+See https://github.com/hetida/hetida-designer/blob/release/docs/adapter_system/general_custom_adapters/instructions.md
 
 They must comply with following signatures:
 
@@ -30,7 +33,10 @@ This file must be in PYTHONPATH as well as your adapter implementation packages 
 are importing here.
 """
 
-from hetdesrun.adapters import register_sink_adapter, register_source_adapter
+from hetdesrun.adapters import (  # noqa: E402
+    register_sink_adapter,  # noqa: F401
+    register_source_adapter,  # noqa: F401
+)
 
 """
 Example:
@@ -141,3 +147,22 @@ parquet_file_support_handler = FileSupportHandler(
 )
 
 register_file_support(parquet_file_support_handler)
+
+
+from hetdesrun.adapters.generic_rest.external_types import ExternalType  # noqa: E402
+from hetdesrun.adapters.local_file.handlers.pickle import (  # noqa: E402
+    load_pickle,
+    write_pickle,
+)
+
+pickle_filehandler = FileSupportHandler(
+    associated_extensions=[
+        # this determines which files are associated to the handler functions
+        ".pkl"
+    ],
+    read_handler_func=load_pickle,
+    write_handler_func=write_pickle,
+    adapter_data_type=ExternalType.METADATA_ANY,
+)
+
+register_file_support(pickle_filehandler)

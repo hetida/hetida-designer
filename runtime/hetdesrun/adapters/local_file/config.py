@@ -24,6 +24,11 @@ class LocalFileAdapterConfig(BaseSettings):
         env="RUNTIME_LOCAL_FILE_ADAPTER_ALLOWED_ORIGINS",
         example="http://exampledomain.com,http://anotherexampledomain.de",
     )
+    generic_any_sink: bool = Field(
+        True,
+        description="Whether a generic sink of type any is offered in each directory",
+        env="RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_ANY_SINKS",
+    )
 
 
 environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
