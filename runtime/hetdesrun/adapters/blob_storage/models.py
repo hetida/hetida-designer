@@ -38,6 +38,21 @@ class IdString(ConstrainedStr):
     )
 
 
+def get_bucket_name_and_object_key_prefix_from_id(
+    id: IdString,  # noqa: A002
+) -> tuple[BucketName, "IdString"]:
+    if OBJECT_KEY_DIR_SEPARATOR not in id:
+        raise ValueError(
+            f"Cannot create bucket name and object key based on an id {id} "
+            f"which does not contain '{OBJECT_KEY_DIR_SEPARATOR}'."
+        )
+
+    bucket_name_string, object_key_string = id.split(
+        OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
+    )
+    return (BucketName(bucket_name_string), IdString(object_key_string))
+
+
 class StructureBucket(BaseModel):
     name: BucketName
 
@@ -139,13 +154,9 @@ class StructureThingNode(BaseModel):
                 f"which does not contain '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice."
             )
         _, time, job_id = metadata_key.split(HIERARCHY_END_NODE_NAME_SEPARATOR)
-        if self.id.count(OBJECT_KEY_DIR_SEPARATOR) == 0:
-            raise ValueError(
-                f"Cannot create bucket name and object key based on a thing node id {self.id} "
-                f"which does not contain '{OBJECT_KEY_DIR_SEPARATOR}'."
-            )
-        bucket_name, object_key_prefix = self.id.split(
-            OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
+
+        bucket_name, object_key_prefix = get_bucket_name_and_object_key_prefix_from_id(
+            self.id
         )
         structure_bucket = StructureBucket(name=bucket_name)
         object_key_string = (
@@ -171,11 +182,9 @@ class BlobStorageStructureSource(BaseModel):
 
     @validator("id")
     def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
-        if OBJECT_KEY_DIR_SEPARATOR not in id:
-            raise ValueError(
-                f"The source id '{id}' must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'!"
-            )
-        bucket_name, object_key_string = id.split(sep="/", maxsplit=1)
+        bucket_name, object_key_string = get_bucket_name_and_object_key_prefix_from_id(
+            id
+        )
         try:
             StructureBucket(name=bucket_name)
         except ValidationError as e:
@@ -306,9 +315,10 @@ class BlobStorageStructureSource(BaseModel):
         )
 
     def to_structure_bucket_and_object_key(self) -> tuple[StructureBucket, ObjectKey]:
-        bucket_name_string, object_key_string = self.id.split(
-            sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
-        )
+        (
+            bucket_name_string,
+            object_key_string,
+        ) = get_bucket_name_and_object_key_prefix_from_id(self.id)
         return StructureBucket(name=bucket_name_string), ObjectKey.from_string(
             IdString(object_key_string)
         )
@@ -331,11 +341,7 @@ class BlobStorageStructureSink(BaseModel):
 
     @validator("id")
     def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
-        if OBJECT_KEY_DIR_SEPARATOR not in id:
-            raise ValueError(
-                f"The sink id '{id}' must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'!"
-            )
-        bucket_name_string = id.split(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[0]
+        bucket_name_string, _ = get_bucket_name_and_object_key_prefix_from_id(id)
         try:
             StructureBucket(name=bucket_name_string)
         except ValidationError as e:
@@ -458,9 +464,10 @@ class BlobStorageStructureSink(BaseModel):
     def to_structure_bucket_and_object_key(
         self, job_id: UUID
     ) -> tuple[StructureBucket, ObjectKey]:
-        bucket_name_string, object_key_name = self.thingNodeId.split(
-            sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
-        )
+        (
+            bucket_name_string,
+            object_key_name,
+        ) = get_bucket_name_and_object_key_prefix_from_id(self.thingNodeId)
         return StructureBucket(name=bucket_name_string), ObjectKey.from_name_and_job_id(
             IdString(object_key_name), job_id
         )

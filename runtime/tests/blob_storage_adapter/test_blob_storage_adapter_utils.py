@@ -9,7 +9,9 @@ from hetdesrun.adapters.blob_storage.models import (
     StructureBucket,
     StructureThingNode,
 )
-from hetdesrun.adapters.blob_storage.utils import create_sources
+from hetdesrun.adapters.blob_storage.utils import (
+    get_all_sources_from_buckets_and_object_keys,
+)
 
 
 async def mocked_get_oks_in_bucket(bucket_name: StructureBucket) -> list[IdString]:
@@ -39,7 +41,7 @@ async def mocked_get_oks_in_bucket(bucket_name: StructureBucket) -> list[IdStrin
 
 
 @pytest.mark.asyncio
-async def test_blob_storage_utils_create_sources() -> None:
+async def test_blob_storage_utils_get_all_sources_from_buckets_and_object_keys() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.utils.get_adapter_structure",
         return_value=AdapterHierarchy(
@@ -76,7 +78,7 @@ async def test_blob_storage_utils_create_sources() -> None:
         "hetdesrun.adapters.blob_storage.utils.get_object_key_strings_in_bucket",
         new=mocked_get_oks_in_bucket,
     ):
-        sources = await create_sources()
+        sources = await get_all_sources_from_buckets_and_object_keys()
         assert len(sources) == 3
         assert (
             sources[0].id

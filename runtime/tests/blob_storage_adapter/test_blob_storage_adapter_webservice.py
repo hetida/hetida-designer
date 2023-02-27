@@ -14,6 +14,7 @@ from hetdesrun.adapters.blob_storage.exceptions import (
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSource,
+    IdString,
 )
 from hetdesrun.adapters.exceptions import AdapterConnectionError
 
@@ -136,6 +137,14 @@ source_list = [
     ),
 ]
 
+source_dict = {src.id: src for src in source_list}
+
+
+async def mocked_get_source_by_id(
+    id: IdString,  # noqa: A002
+) -> BlobStorageStructureSource:
+    return source_dict[id]
+
 
 @pytest.mark.asyncio
 async def test_resources_offered_from_blob_storage_webservice(
@@ -147,8 +156,11 @@ async def test_resources_offered_from_blob_storage_webservice(
             "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
         ),
     ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
         return_value=source_list,
+    ), mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_keys",
+        new=mocked_get_source_by_id,
     ):
         async with async_test_client_with_blob_storage_adapter as client:
             response = await client.get("/adapters/blob/structure")
@@ -222,7 +234,7 @@ async def test_blob_adapter_webservice_filtered(
             "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
         ),
     ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
         return_value=source_list,
     ):
         async with async_test_client_with_blob_storage_adapter as client:

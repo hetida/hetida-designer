@@ -11,7 +11,10 @@ from hetdesrun.adapters.blob_storage.models import (
     StructureThingNode,
     get_adapter_structure,
 )
-from hetdesrun.adapters.blob_storage.utils import create_sources
+from hetdesrun.adapters.blob_storage.utils import (
+    get_all_sources_from_buckets_and_object_keys,
+    get_source_by_id_from_bucket_and_object_keys,
+)
 
 logger = getLogger(__name__)
 
@@ -35,12 +38,12 @@ async def get_sources_by_parent_id(
     """Get sources by parent id.
 
     A MissingHierarchyError, StorageAuthenticationError, or AdapterConnectionError
-    raised by create_sources may occur.
+    raised by get_all_sources_from_buckets_and_object_keys may occur.
     """
     if parent_id is None:
         return []
 
-    src_list = await create_sources()
+    src_list = await get_all_sources_from_buckets_and_object_keys()
 
     return [src for src in src_list if src.thingNodeId == parent_id]
 
@@ -66,12 +69,12 @@ async def get_filtered_sources(
     """Get filtered sources.
 
     A MissingHierarchyError, StorageAuthenticationError, or AdapterConnectionError
-    raised by create_sources may occur.
+    raised by get_all_sources_from_buckets_and_object_keys may occur.
     """
     if filter_str is None:
         filter_str = ""
 
-    src_list = await create_sources()
+    src_list = await get_all_sources_from_buckets_and_object_keys()
 
     return [src for src in src_list if filter_str in src.id]
 
@@ -110,22 +113,9 @@ async def get_source_by_id(source_id: IdString) -> BlobStorageStructureSource:
     """Get source by id.
 
     A MissingHierarchyError, StorageAuthenticationError, or AdapterConnectionError
-    raised by create_sources may occur.
+    raised by get_all_sources_from_buckets_and_object_keys may occur.
     """
-    src_list = await create_sources()
-
-    filtered_src_list = [src for src in src_list if src.id == source_id]
-    if len(filtered_src_list) == 0:
-        msg = f"Found no source with id {source_id}!"
-        logger.error(msg)
-        raise StructureObjectNotFound(msg)
-    if len(filtered_src_list) > 1:
-        msg = (
-            f"Found more than one source with id {source_id}:\n{str(filtered_src_list)}"
-        )
-        logger.error(msg)
-        raise StructureObjectNotUnique(msg)
-    return filtered_src_list[0]
+    return await get_source_by_id_from_bucket_and_object_keys(source_id)
 
 
 def get_sink_by_id(sink_id: IdString) -> BlobStorageStructureSink:
@@ -153,11 +143,11 @@ async def get_source_by_thing_node_id_and_metadata_key(
     """Get source by thing node id and metadata key.
 
     A MissingHierarchyError, StorageAuthenticationError, or AdapterConnectionError
-    raised by create_sources may occur.
+    raised by get_all_sources_from_buckets_and_object_keys may occur.
     """
     filtered_src_list = []
 
-    src_list = await create_sources()
+    src_list = await get_all_sources_from_buckets_and_object_keys()
 
     for src in src_list:
         if src.thingNodeId == thing_node_id and src.metadataKey == metadata_key:

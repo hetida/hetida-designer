@@ -98,7 +98,7 @@ source_list = [
 @pytest.mark.asyncio
 async def test_blob_storage_get_sources_by_parent_id() -> None:
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
         return_value=source_list,
     ):
         sources_with_parent_i_ii = await get_sources_by_parent_id(IdString("i-ii/E"))
@@ -130,7 +130,7 @@ def test_blob_storage_get_sinks_by_parent_id() -> None:
 @pytest.mark.asyncio
 async def test_blob_storage_get_filtered_sources() -> None:
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
         return_value=source_list,
     ):
         unfiltered_sources = await get_filtered_sources(None)
@@ -222,8 +222,8 @@ def test_blob_storage_get_thing_node_by_id() -> None:
 @pytest.mark.asyncio
 async def test_blob_storage_get_source_by_id() -> None:
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
-        return_value=source_list,
+        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_keys",
+        return_value=source_list[1],
     ):
         source_by_id = await get_source_by_id(
             IdString(
@@ -236,33 +236,11 @@ async def test_blob_storage_get_source_by_id() -> None:
         )
         assert source_by_id.thingNodeId == "i-i/A"
 
-        with pytest.raises(StructureObjectNotFound):
-            await get_source_by_id(IdString("bla"))
-
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
-        return_value=[
-            BlobStorageStructureSource(
-                id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43",
-                thingNodeId="i-i/A",
-                name="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
-                path="i-i/A",
-                metadataKey="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
-            ),
-            BlobStorageStructureSource(
-                id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43",
-                thingNodeId="i-i/A",
-                name="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
-                path="i-i/A",
-                metadataKey="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
-            ),
-        ],
-    ), pytest.raises(StructureObjectNotUnique):
-        await get_source_by_id(
-            IdString(
-                "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
-            )
-        )
+        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_keys",
+        side_effect=StructureObjectNotFound,
+    ), pytest.raises(StructureObjectNotFound):
+        await get_source_by_id(IdString("bla"))
 
 
 def test_blob_storage_get_sink_by_id() -> None:
@@ -305,7 +283,7 @@ def test_blob_storage_get_sink_by_id() -> None:
 @pytest.mark.asyncio
 async def test_blob_storage_get_source_by_thing_node_id_and_metadata_key() -> None:
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
         return_value=source_list,
     ):
         source_by_tn_id_and_md_key = await get_source_by_thing_node_id_and_metadata_key(
@@ -334,7 +312,7 @@ async def test_blob_storage_get_source_by_thing_node_id_and_metadata_key() -> No
             )
 
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
         return_value=[
             BlobStorageStructureSource(
                 id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43",

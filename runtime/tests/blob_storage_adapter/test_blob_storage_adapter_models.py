@@ -6,7 +6,6 @@ from pydantic import ValidationError
 
 from hetdesrun.adapters.blob_storage import (
     IDENTIFIER_SEPARATOR,
-    OBJECT_KEY_DIR_SEPARATOR,
 )
 from hetdesrun.adapters.blob_storage.exceptions import MissingHierarchyError
 from hetdesrun.adapters.blob_storage.models import (
@@ -204,7 +203,7 @@ def test_blob_storage_class_structure_source_works() -> None:
 
 
 def test_blob_storage_class_structure_source_raises_exceptions() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"id.* does not contain"):
         # invalid id due to no object key dir separator
         BlobStorageStructureSource(
             id="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
@@ -213,10 +212,6 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             path="A",
             metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
-
-    assert f"must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'" in str(
-        exc_info.value
-    )
 
     with pytest.raises(
         ValidationError, match=r"first part.* of.* id.* correspond to.* bucket"
@@ -342,7 +337,7 @@ def test_blob_storage_class_structure_sink() -> None:
 
     assert sink_from_thing_node == sink
 
-    with pytest.raises(ValidationError, match=r"sink id.* must contain"):
+    with pytest.raises(ValidationError, match=r"id.* does not contain"):
         # invalid id due to no object key dir separator
         BlobStorageStructureSink(
             id="A_generic_sink",
