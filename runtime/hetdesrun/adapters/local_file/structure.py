@@ -22,7 +22,6 @@ from hetdesrun.adapters.local_file.utils import (
 
 
 def source_from_local_file(local_file: LocalFile) -> LocalFileStructureSource:
-
     file_support_handler = local_file.file_support_handler()
     assert file_support_handler is not None  # for mypy # noqa: S101
     external_type = file_support_handler.adapter_data_type
@@ -42,7 +41,6 @@ def source_from_local_file(local_file: LocalFile) -> LocalFileStructureSource:
 
 
 def sink_from_local_file(local_file: LocalFile) -> LocalFileStructureSink:
-
     file_support_handler = local_file.file_support_handler()
     assert file_support_handler is not None  # for mypy # noqa: S101
     external_type = file_support_handler.adapter_data_type
