@@ -1,3 +1,5 @@
+## 0.8.7
+* add S3 compatible built-in blob storage adapter
 * add pickle persistence for ANY type to local file adapter
 * fix docker-compose reverse proxy config
 ## 0.8.6
