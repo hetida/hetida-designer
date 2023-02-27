@@ -78,13 +78,12 @@ async def test_blob_storage_service_get_object_key_strings_in_bucket() -> None:
             "hetdesrun.adapters.blob_storage.service.get_s3_client",
             return_value=client_mock,
         ):
-            with pytest.raises(AdapterConnectionError) as exc_info:
+            with pytest.raises(
+                AdapterConnectionError, match=r"bucket.* does not exist"
+            ):
                 await get_object_key_strings_in_bucket(
                     BucketName("non_existent_bucket_name")
                 )
-            assert "The bucket 'non_existent_bucket_name' does not exist!" in str(
-                exc_info.value
-            )
 
             empty_object_key_string_list = await get_object_key_strings_in_bucket(
                 BucketName("bucket-without-objects-name")

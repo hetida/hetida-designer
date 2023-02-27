@@ -378,6 +378,7 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key() -> None:
             get_sink_by_thing_node_id_and_metadata_key(
                 thing_node_id=IdString("i-i/B"), metadata_key="A - Next Object"
             )
+
         with mock.patch(
             "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
             new_callable=mock.PropertyMock,

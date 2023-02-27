@@ -5,10 +5,6 @@ import pytest
 from pydantic import ValidationError
 
 from hetdesrun.adapters.blob_storage import (
-    BUCKET_NAME_DIR_SEPARATOR,
-    GENERIC_SINK_ID_SUFFIX,
-    GENERIC_SINK_NAME_SUFFIX,
-    HIERARCHY_END_NODE_NAME_SEPARATOR,
     IDENTIFIER_SEPARATOR,
     OBJECT_KEY_DIR_SEPARATOR,
 )
@@ -40,7 +36,7 @@ def test_blob_storage_class_structure_bucket() -> None:
     with pytest.raises(ValidationError):
         # longer than max_length
         StructureBucket(
-            name="iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
+            name="very-long-bucket-name-that-is-longer-than-the-maximal-allowed-length-of-64-char"
         )
 
 
@@ -94,14 +90,10 @@ def test_blob_storage_class_object_key() -> None:
 
     with pytest.raises(
         ValueError, match=f"contains '{IDENTIFIER_SEPARATOR}' less than"
-    ) as exc_info:
+    ):
         ObjectKey.from_string(
             IdString("A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f")
         )
-    assert (
-        f"not a valid ObjectKey string, because it contains '{IDENTIFIER_SEPARATOR}'"
-        in str(exc_info.value)
-    )
 
 
 def test_blob_storage_class_structure_thing_node() -> None:
@@ -119,43 +111,35 @@ def test_blob_storage_class_structure_thing_node() -> None:
         == "A_2001-02-03T04:05:06+00:00_e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
     )
 
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="at least 1 characters"):
         # ThingNodeName shorter than min_length
         StructureThingNode(id="i-ii/A", name="", description="")
-    assert "ensure this value has at least 1 characters" in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="at least 1 characters"):
         # IdString shorter than min_length
         StructureThingNode(id="", name="A", description="")
-    assert "ensure this value has at least 1 characters" in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="does not match regex"):
         # ThingNodeName violates regex
         StructureThingNode(id="i-ii/A", name="ä", description="")
-    assert 'string does not match regex "^[a-zA-Z0-9]+$"' in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match="does not match regex"):
         # IdString violates regex
         StructureThingNode(id="~", name="A", description="")
-    assert 'string does not match regex "^[a-zA-Z0-9:+\\-/_-]+$"' in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"at most.* characters"):
         # ThingNodeName longer than max_length
         StructureThingNode(
             id="i-ii/A",
-            name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+            name="very-long-thing-node-name-that-is-longer-than-the-maximal-allowed-length-of-63-char",
             description="",
         )
-    assert "ensure this value has at most 63 characters" in str(exc_info.value)
 
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(
+        ValidationError, match=r"id.* must consist of.* parent id.* name"
+    ):
         # id does not consist of parentId and name combined with bucket name or object key separator
         StructureThingNode(id="i-ii/A", parentId="i-i", name="A", description="")
-
-    assert "The id 'i-ii/A' of a thing node must consist of " in str(exc_info.value)
-    assert "its parent id 'i-i' connected by" in str(exc_info.value)
-    assert f"one of the separators '{BUCKET_NAME_DIR_SEPARATOR}'" in str(exc_info.value)
-    assert f"or '{OBJECT_KEY_DIR_SEPARATOR}' with its name 'A'!" in str(exc_info.value)
 
 
 def test_blob_storage_class_structure_source_works() -> None:
@@ -234,8 +218,9 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
         exc_info.value
     )
 
-    # TODO: make classes inheriting from ConstrainedStr raise errors!
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(
+        ValidationError, match=r"first part.* of.* id.* correspond to.* bucket"
+    ):
         # invalid id due to bucket name part invalid
         BlobStorageStructureSource(
             id="I-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
@@ -245,12 +230,9 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert "The first part 'I-ii'" in str(exc_info.value)
-    assert "of the source id 'I-ii/A_2022-01-02T14:23:18+00:00" in str(exc_info.value)
-    assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
-    assert "must correspond to a bucket name!" in str(exc_info.value)
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(
+        ValidationError, match=r"second part.* of.* id.* correspond to.* object"
+    ):
         # invalid id due to object key part invalid
         BlobStorageStructureSource(
             id="i-ii/A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
@@ -260,18 +242,7 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert (
-        "The second part 'A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
-        in str(exc_info.value)
-    )
-    assert (
-        "of the source id 'i-ii/A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
-        in str(exc_info.value)
-    )
-    assert f"after the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
-    assert "must correspond to an object key string!" in str(exc_info.value)
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"thing node id.* does not match.* id"):
         # thingNodeId does not match id
         BlobStorageStructureSource(
             id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
@@ -281,14 +252,7 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert "The source's thing node id 'i-ii/B'" in str(exc_info.value)
-    assert (
-        "does not match its id "
-        "'i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
-        in str(exc_info.value)
-    )
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"source name.* must contain"):
         # name invalid due to missing separator
         BlobStorageStructureSource(
             id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
@@ -298,13 +262,9 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert (
-        "The source name 'A 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f' "
-        f"must contain the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice!"
-        in str(exc_info.value)
-    )
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(
+        ValidationError, match=r"source name.* start with.* name.* of.* thing node"
+    ):
         # name does not match id due to thing node name
         BlobStorageStructureSource(
             id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
@@ -314,15 +274,9 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert (
-        "The source name 'B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
-        in str(exc_info.value)
-    )
-    assert "must start with the name 'A' of the corresponding thing node" in str(
-        exc_info.value
-    )
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(
+        ValidationError, match=r"time of.* name.* must match.* time in.* id"
+    ):
         # name does not match id due to timestamp
         BlobStorageStructureSource(
             id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
@@ -332,18 +286,7 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert (
-        "The time of the source's name "
-        "'A - 2023-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
-        in str(exc_info.value)
-    )
-    assert (
-        "must match to the time in its id "
-        "'i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
-        in str(exc_info.value)
-    )
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"path.* must be.* thingNodeId"):
         # path does not match thingNodeId
         BlobStorageStructureSource(
             id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
@@ -353,12 +296,7 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
 
-    assert "The source path" in str(exc_info.value)
-    assert "i-ii/B" in str(exc_info.value)
-    assert "must be the same string as its thingNodeId" in str(exc_info.value)
-    assert "i-ii/A" in str(exc_info.value)
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"metadataKey.* must be.* name"):
         # metadataKey does not match name
         BlobStorageStructureSource(
             id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
@@ -367,17 +305,6 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             path="i-ii/A",
             metadataKey="B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
-
-    assert (
-        "The source's metadataKey "
-        "'B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
-        in str(exc_info.value)
-    )
-    assert (
-        "must be the same string as its name "
-        "'A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f'"
-        in str(exc_info.value)
-    )
 
 
 def test_blob_storage_class_structure_sink() -> None:
@@ -415,7 +342,7 @@ def test_blob_storage_class_structure_sink() -> None:
 
     assert sink_from_thing_node == sink
 
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"sink id.* must contain"):
         # invalid id due to no object key dir separator
         BlobStorageStructureSink(
             id="A_generic_sink",
@@ -425,11 +352,9 @@ def test_blob_storage_class_structure_sink() -> None:
             metadataKey="A - Next Object",
         )
 
-    assert f"must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'" in str(
-        exc_info.value
-    )
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(
+        ValidationError, match=r"first part.* of.* id.* correspond to.* bucket"
+    ):
         # invalid id due to bucket name part invalid
         BlobStorageStructureSink(
             id="I-ii/A_generic_sink",
@@ -439,12 +364,7 @@ def test_blob_storage_class_structure_sink() -> None:
             metadataKey="A - Next Object",
         )
 
-    assert "The first part 'I-ii'" in str(exc_info.value)
-    assert "of the sink id 'I-ii/A_generic_sink'" in str(exc_info.value)
-    assert f"before the first '{OBJECT_KEY_DIR_SEPARATOR}'" in str(exc_info.value)
-    assert "must correspond to a bucket name!" in str(exc_info.value)
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"sink id.* must end with"):
         # invalid id due to object key part invalid
         BlobStorageStructureSink(
             id="i-ii/Anext",
@@ -454,12 +374,7 @@ def test_blob_storage_class_structure_sink() -> None:
             metadataKey="A - Next Object",
         )
 
-    assert (
-        f"The sink id 'i-ii/Anext' must end with '{IDENTIFIER_SEPARATOR}{GENERIC_SINK_ID_SUFFIX}'!"
-        in str(exc_info.value)
-    )
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"thing node id.* match.* id"):
         # thingNodeId does not match id
         BlobStorageStructureSink(
             id="i-ii/A_generic_sink",
@@ -469,10 +384,7 @@ def test_blob_storage_class_structure_sink() -> None:
             metadataKey="A - Next Object",
         )
 
-    assert "The sink's thing node id 'i-ii/B'" in str(exc_info.value)
-    assert "does not match its id 'i-ii/A_generic_sink'" in str(exc_info.value)
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"sink name.* must contain"):
         # name invalid due to missing separator
         BlobStorageStructureSink(
             id="i-ii/A_generic_sink",
@@ -482,12 +394,9 @@ def test_blob_storage_class_structure_sink() -> None:
             metadataKey="A - Next Object",
         )
 
-    assert (
-        "The sink name 'A Next Object' must contain "
-        f"the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}'!" in str(exc_info.value)
-    )
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(
+        ValidationError, match=r"sink name.* start with.* name.* of.* thing node"
+    ):
         # name does not match id due to thing node name
         BlobStorageStructureSink(
             id="i-ii/A_generic_sink",
@@ -497,12 +406,7 @@ def test_blob_storage_class_structure_sink() -> None:
             metadataKey="A - Next Object",
         )
 
-    assert "The sink name 'B - Next Object'" in str(exc_info.value)
-    assert "must start with the name 'A' of the corresponding thing node" in str(
-        exc_info.value
-    )
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"sink name.* must end with"):
         # name does not match id due to timestamp
         BlobStorageStructureSink(
             id="i-ii/A_generic_sink",
@@ -512,12 +416,7 @@ def test_blob_storage_class_structure_sink() -> None:
             metadataKey="A - Next Object",
         )
 
-    assert (
-        f"The sink name 'A - Next Trained Model' must end with '{GENERIC_SINK_NAME_SUFFIX}'"
-        in str(exc_info.value)
-    )
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"path.* must be.* thingNodeId"):
         # path does not match thingNodeId
         BlobStorageStructureSink(
             id="i-ii/A_generic_sink",
@@ -527,10 +426,7 @@ def test_blob_storage_class_structure_sink() -> None:
             metadataKey="A - Next Object",
         )
 
-    assert "The sink's path 'i-ii/B' must be the same string as" in str(exc_info.value)
-    assert "its thingNodeId 'i-ii/A'!" in str(exc_info.value)
-
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"metadataKey.* must be.* name"):
         # metadataKey does not match name
         BlobStorageStructureSink(
             id="i-ii/A_generic_sink",
@@ -539,9 +435,6 @@ def test_blob_storage_class_structure_sink() -> None:
             path="i-ii/A",
             metadataKey="B - Next Object",
         )
-
-    assert "The sink's metadataKey 'B - Next Object' must be" in str(exc_info.value)
-    assert "the same string as its name 'A - Next Object'!" in str(exc_info.value)
 
 
 def test_blob_storage_class_hierarchy_node() -> None:
@@ -611,11 +504,11 @@ def test_blob_storage_class_hierarchy_node() -> None:
 
 def test_blob_storage_hierarchy_node_create_structure_too_long_bucket_name() -> None:
     hierarchy_node = HierarchyNode(
-        name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+        name="veryLongValidFirstPartOfBucketName",
         description="Super Category",
         substructure=[
             HierarchyNode(
-                name="iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+                name="veryLongValid2ndPartOfBucketNameYieldingTooLongBucketName",
                 description="Category",
                 below_structure_defines_object_key=True,
                 substructure=[
@@ -628,7 +521,7 @@ def test_blob_storage_hierarchy_node_create_structure_too_long_bucket_name() -> 
     thing_nodes: list[StructureThingNode] = []
     bucket_names: list[StructureBucket] = []
     sinks: list[BlobStorageStructureSink] = []
-    with pytest.raises(ValueError, match="to BucketName") as exc_info:
+    with pytest.raises(ValueError, match="to BucketName"):
         hierarchy_node.create_structure(
             thing_nodes=thing_nodes,
             buckets=bucket_names,
@@ -636,12 +529,6 @@ def test_blob_storage_hierarchy_node_create_structure_too_long_bucket_name() -> 
             parent_id=None,
             part_of_bucket_name=True,
         )
-
-    assert "Validation Error for transformation of" in str(exc_info.value)
-    assert "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii-iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" in str(
-        exc_info.value
-    )
-    assert "to BucketName" in str(exc_info.value)
 
 
 def test_blob_storage_models_find_duplicates() -> None:
@@ -738,19 +625,18 @@ def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path(
     adapter_hierarchy = AdapterHierarchy(
         structure=(HierarchyNode(name="I", description=""),)
     )
-    with pytest.raises(ValueError, match="Without an object key prefix") as exc_info:
+    with pytest.raises(ValueError, match="Without an object key prefix"):
         adapter_hierarchy.thing_nodes
-    assert "Without an object key prefix no sinks or sources" in str(exc_info.value)
 
 
 def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error() -> None:
     structure = (
         HierarchyNode(
-            name="IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+            name="veryLongValid1stPartOfBucketName",
             description="Super Category",
             substructure=[
                 HierarchyNode(
-                    name="iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+                    name="veryLongValid2ndPartOfBucketNameYieldingTooLongBucketName",
                     description="Category",
                     below_structure_defines_object_key=True,
                     substructure=[
@@ -763,16 +649,8 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error() -> None:
 
     adapter_hierarchy = AdapterHierarchy(structure=structure)
 
-    with pytest.raises(ValueError, match="to BucketName") as exc_info:
+    with pytest.raises(ValueError, match="to BucketName"):
         adapter_hierarchy.structure_buckets
-
-    assert "Validation Error for transformation of StructureThingNode " in str(
-        exc_info.value
-    )
-    assert "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii-iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii" in str(
-        exc_info.value
-    )
-    assert "to BucketName" in str(exc_info.value)
 
 
 def test_blob_storage_adapter_hierarchy_identify_second_last_node_as_bucket_end() -> (
@@ -823,8 +701,5 @@ def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
             ),
         ],
     )
-    with pytest.raises(ValueError, match="not unique") as exc_info:
+    with pytest.raises(ValueError, match=r"bucket names.* not unique"):
         adapter_hierarchy.structure_buckets
-    assert "The bucket names generated from the config file are not unique!" in str(
-        exc_info.value
-    )

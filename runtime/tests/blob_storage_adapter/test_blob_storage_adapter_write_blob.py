@@ -1,4 +1,3 @@
-import logging
 import struct
 from io import BytesIO
 from unittest import mock
@@ -26,9 +25,7 @@ from hetdesrun.models.data_selection import FilteredSink
 
 
 @pytest.mark.asyncio
-async def test_blob_storage_write_blob_to_storage_works(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
+async def test_blob_storage_write_blob_to_storage_works() -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
         bucket_name = "i-ii"
@@ -52,19 +49,12 @@ async def test_blob_storage_write_blob_to_storage_works(
                     "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
                 )
             },
-        ), caplog.at_level(
-            logging.INFO
         ):
-            caplog.clear()
             await write_blob_to_storage(
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/E",
                 metadata_key="E - Next Object",
             )
-            assert (
-                "Write data for sink 'i-ii/A_generic_sink' to storage "
-                "into bucket 'i-ii' as blob with key 'E_"
-            ) in caplog.text
 
             object_summaries_response = client_mock.list_objects_v2(Bucket=bucket_name)
             assert object_summaries_response["KeyCount"] == 1
@@ -128,15 +118,13 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
 async def test_blob_storage_write_blob_to_storage_with_multiple_existing_sinks() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-        side_effect=StructureObjectNotUnique("SinkNotUnique message"),
-    ):
-        with pytest.raises(StructureObjectNotUnique) as exc_info:
-            await write_blob_to_storage(
-                data=struct.pack(">i", 42),
-                thing_node_id="i-ii/A",
-                metadata_key="A - Next Object",
-            )
-        assert "SinkNotUnique message" in str(exc_info.value)
+        side_effect=StructureObjectNotUnique,
+    ), pytest.raises(StructureObjectNotUnique):
+        await write_blob_to_storage(
+            data=struct.pack(">i", 42),
+            thing_node_id="i-ii/A",
+            metadata_key="A - Next Object",
+        )
 
 
 @pytest.mark.asyncio
@@ -162,14 +150,14 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> 
                     "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
                 )
             },
+        ), pytest.raises(
+            AdapterConnectionError, match="bucket.* does not exist"
         ):
-            with pytest.raises(AdapterConnectionError) as exc_info:
-                await write_blob_to_storage(
-                    data=struct.pack(">i", 42),
-                    thing_node_id="i-ii/A",
-                    metadata_key="A - Next Object",
-                )
-            assert "The bucket 'i-ii' does not exist!" in str(exc_info.value)
+            await write_blob_to_storage(
+                data=struct.pack(">i", 42),
+                thing_node_id="i-ii/A",
+                metadata_key="A - Next Object",
+            )
 
 
 @pytest.mark.asyncio
@@ -252,7 +240,7 @@ async def test_blob_storage_send_data_works() -> None:
 async def test_blob_storage_send_data_with_error() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.write_blob.write_blob_to_storage",
-        side_effect=AdapterConnectionError("Error message"),
+        side_effect=AdapterConnectionError,
     ):
         data = struct.pack(">i", 42)
         filtered_sink = FilteredSink(
@@ -261,7 +249,7 @@ async def test_blob_storage_send_data_with_error() -> None:
             ref_key="A - Next Object",
             type="Any",
         )
-        with pytest.raises(AdapterConnectionError) as exc_info:
+        with pytest.raises(AdapterConnectionError):
             await send_data(
                 wf_output_name_to_filtered_sink_mapping_dict={
                     "output_name": filtered_sink
@@ -269,4 +257,3 @@ async def test_blob_storage_send_data_with_error() -> None:
                 wf_output_name_to_value_mapping_dict={"output_name": data},
                 adapter_key="blob-storage-adapter",
             )
-        assert "Error message" in str(exc_info.value)

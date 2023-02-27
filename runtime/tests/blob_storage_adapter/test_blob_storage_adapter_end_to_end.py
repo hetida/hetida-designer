@@ -196,4 +196,6 @@ async def test_store_object_under_key_which_already_exists(
                 assert store_response_status_code == 200
                 assert store_response_json["result"] == "failure"
                 assert "already contains an object" in store_response_json["error"]
-                assert "write request will not be executed" in store_response_json["error"]
+                assert (
+                    "write request will not be executed" in store_response_json["error"]
+                )

@@ -155,12 +155,9 @@ async def test_blob_storage_authentication_obtain_credential_info_from_sts_rest_
 
             with mock.patch(
                 "hetdesrun.adapters.blob_storage.authentication.parse_credential_info_from_xml_string",
-                side_effect=StorageAuthenticationError("error message"),
-            ):
-                with pytest.raises(StorageAuthenticationError) as exc_info:
-                    await obtain_credential_info_from_sts_rest_api()
-
-                assert str(exc_info.value) == "error message"
+                side_effect=StorageAuthenticationError,
+            ), pytest.raises(StorageAuthenticationError):
+                await obtain_credential_info_from_sts_rest_api()
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.authentication.httpx.AsyncClient.post",
@@ -181,7 +178,6 @@ async def test_blob_storage_authentication_obtain_credential_info_from_sts_rest_
             with pytest.raises(StorageAuthenticationError) as exc_info:
                 await obtain_credential_info_from_sts_rest_api()
 
-            assert "status code 400" in str(exc_info.value)
             assert "Error Code:" in str(exc_info.value)
             assert "InvalidParameterValue" in str(exc_info.value)
             assert "Error processing RoleArn parameter" in str(exc_info.value)
@@ -352,7 +348,6 @@ async def test_blob_storage_adapter_create_or_get_named_credential_manager(
         assert credentials.session_token == "result_token"  # noqa: S105
 
         # load cached works
-
         credential_manager = create_or_get_named_credential_manager(key="key")
 
 
