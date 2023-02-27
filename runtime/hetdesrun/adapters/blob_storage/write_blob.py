@@ -58,7 +58,7 @@ async def write_blob_to_storage(
         structure_bucket, object_key = sink.to_structure_bucket_and_object_key(job_id)
 
     logger.info(
-        "Write data for sink '%s' to storage into bucket '%s' as blob with key '%s'",
+        "Write data for sink '%s' to storage into bucket '%s' as BLOB with key '%s'",
         sink.id,
         structure_bucket.name,
         object_key.string,

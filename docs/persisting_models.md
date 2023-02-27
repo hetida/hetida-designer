@@ -29,15 +29,18 @@ You can of course establish analytical steps of model management like for exampl
 But the "management" part, i.e. selecting the current/prod model, fallback procedures on declining performance and so on has to be implemented around the systems which invoke hetida designer from the outside.
 
 ### Note on custom classes
-(TODO)
+Custom classes can be defined in components, which return the class via a component output. If it is only necessary to ensure that such a class has been imported it is sufficient to include the exact same component in the respective workflow. The output of the component may be routed to the "Forget" component.
+A minimal example is provided in the [Tips and Tricks](./faq.md).
+
 ## Persisting and Loading via General Custom Adapter
 ### Built in general custom adapters
 
-#### local file adapter
-The [local file adapter](adapter_system/local_file_adapter.md) supports pickling objects from ANY typed outputs to disk and loading them into ANY type inputs.
+#### Local File Adapter
+The [Local File Adapter](./adapter_system/local_file_adapter.md) supports pickling objects from `ANY` typed outputs to disk and loading them into `ANY` type inputs.
 
-#### blob storage adapter
-(TODO)
+#### Blob Storage Adapter
+The [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md) supports pickling objects from `ANY` typed outputs to a mounted Blob storage and loading them into `ANY` type inputs via the S3 standard.
+
 ### Writing your own general custom adapter
 If the builtin adapters are not suitable for your scenario, writing your own [General Custom Adapter](./adapter_system/general_custom_adapters/instructions.md) is the recommended way for persisting and loading models. It has the following advantages specific to model persistence:
 

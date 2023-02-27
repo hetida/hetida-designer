@@ -127,3 +127,14 @@ Selecting "Blob Storage Adapter" for an input in the Execution dialog sources sh
 Similarly a sink should be available for each end node in the hierarchy via selecting "Blob Storage Adapter" for an output in the Execution dialog:
 
 <img src="./assets/blob_storage_adapter_assign_sink.png" height="630" width=530 data-align="center">
+
+### Usage in production
+
+The wirings to a source or sink of the Blob storage adapter must contain the path to the respective hierarchy end node as `ref_id` and the name of the sink or source as `ref_key`.
+E.g. for the examplary sources presented at the end of the section [Mounting the adapter hierarchy configuration](#mounting-the-adapter-hierarchy-configuration) these would be:
+* `ref_id="planta-picklingunit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14T12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa"`
+* `ref_id="plantb/PicklingUnit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14T12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa"`
+
+For sinks the `ref_key` contains the suffix `Next Object` instead of time and job id, e.g. `ref_key="Anomalies - Next Object"`. Time and job id for the stored object will then be determined automatically.
+Alternatively, it is possible to provide a `ref_key` with time and job id, which will then be used to set the object key.
+If an object with this object key already exists or either `ref_id` or `ref_key` are not allowed, this object will not be overwritten but an exception will be raised so that the response to the execution request will still have the HTTP status code 200 but the attriube `result` of response JSON will have the value `failure` and the attribute `error` will contain the  according error message.
