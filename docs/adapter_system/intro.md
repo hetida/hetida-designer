@@ -66,7 +66,9 @@ This adapter allows to read/write csv or excel files from/to directories directl
 Detail on usage and configuration of the Local File Adapter can be found [here](./local_file_adapter.md).
 
 #### Blob Storage Adapter
-(TODO)
+The Blob Storage Adapter allows to read/write objects, such as e.g. trained models, as pickled byte files to a mounted Blob storage based on the S3 standard.
+
+The adapter structure can be configured via a JSON file, in particular which parts of the Blob storage should be accessible via the adapter. Details on usage and configurateon of the Blob Storage Adapter can be found [here](./blob_storage_adapter.md)
 
 ### Custom adapters
 

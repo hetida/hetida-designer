@@ -50,7 +50,6 @@ def store_single_transformation_revision(
     transformation_revision: TransformationRevision,
 ) -> None:
     with Session() as session, session.begin():
-
         add_tr(session, transformation_revision)
 
         if transformation_revision.type == Type.WORKFLOW:
@@ -65,7 +64,6 @@ def store_single_transformation_revision(
 def select_tr_by_id(
     session: SQLAlchemySession, id: UUID, log_error: bool = True  # noqa: A002
 ) -> TransformationRevision:
-
     result = session.execute(
         select(TransformationRevisionDBModel).where(
             TransformationRevisionDBModel.id == id
@@ -298,7 +296,6 @@ def update_or_create_single_transformation_revision(
     strip_wiring: bool = False,
 ) -> TransformationRevision:
     with Session() as session, session.begin():
-
         if strip_wiring:
             transformation_revision.test_wiring = WorkflowWiring()
 
@@ -367,7 +364,6 @@ def delete_single_transformation_revision(
     id: UUID, type: Type | None = None, ignore_state: bool = False  # noqa: A002
 ) -> None:
     with Session() as session, session.begin():
-
         result = select_tr_by_id(session, id)
 
         transformation_revision: TransformationRevision = result
@@ -501,7 +497,6 @@ def nof_db_entries() -> int:
 def get_all_nested_transformation_revisions(
     transformation_revision: TransformationRevision,
 ) -> dict[UUID, TransformationRevision]:
-
     if transformation_revision.type != Type.WORKFLOW:
         msg = (
             f"cannot get operators of transformation revision {transformation_revision.id} "

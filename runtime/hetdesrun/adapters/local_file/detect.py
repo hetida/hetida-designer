@@ -83,7 +83,6 @@ def local_file_from_path(
     """Obtain complete LocalFile datastructure from path to either a data file or a settings file"""
 
     if file_path.endswith(".settings.json"):  # only config file present
-
         data_file_path = file_path.removesuffix(".settings.json")
         # only infer from settings file if no data file is present:
         if (
@@ -91,7 +90,7 @@ def local_file_from_path(
                 (not os.path.exists(data_file_path))
                 or provide_from_settings_file_if_data_file_present
             )
-            and (data_file_path.endswith(".csv") or data_file_path.endswith(".csv.zip"))
+            and (data_file_path.endswith((".csv", ".csv.zip")))
         ) or provide_from_settings_file_if_data_file_present:
             parsed_settings_file = parse_settings_file(data_file_path=data_file_path)
 
@@ -114,7 +113,6 @@ def local_file_from_path(
     possible_file_support_handler = get_file_support_handler(file_path)
 
     if possible_file_support_handler is not None:
-
         parsed_settings_file = parse_settings_file(data_file_path=file_path)
 
         if parsed_settings_file.loadable is None:

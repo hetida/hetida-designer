@@ -28,7 +28,6 @@ def dumps(d: Any) -> str:
 
 @cache
 def get_db_engine(override_db_url: SecretStr | str | URL | None = None) -> Engine:
-
     if get_config().sqlalchemy_connection_string is None:
         raise TypeError("No sqlalchemy connection string configured/inferred!")
 

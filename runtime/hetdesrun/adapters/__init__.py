@@ -12,7 +12,8 @@ on registering your own data adapters.
 
 import asyncio
 import logging
-from typing import Any, Awaitable, Callable, TypedDict, Union
+from collections.abc import Awaitable, Callable
+from typing import Any, TypedDict
 
 from hetdesrun.adapters.exceptions import (  # noqa: F401
     AdapterClientWiringInvalidError,
@@ -29,20 +30,20 @@ from hetdesrun.adapters.sink.direct_provisioning import send_directly_provisione
 from hetdesrun.adapters.source.direct_provisioning import load_directly_provisioned_data
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
-ConnectionErrorTuple = Union[
-    tuple[type[AdapterConnectionError]],
-    tuple[type[AdapterConnectionError], type[Exception]],
-]
+ConnectionErrorTuple = (
+    tuple[type[AdapterConnectionError]]
+    | tuple[type[AdapterConnectionError], type[Exception]]
+)
 
-OutputDataErrorTuple = Union[
-    tuple[type[AdapterOutputDataError]],
-    tuple[type[AdapterOutputDataError], type[Exception]],
-]
+OutputDataErrorTuple = (
+    tuple[type[AdapterOutputDataError]]
+    | tuple[type[AdapterOutputDataError], type[Exception]]
+)
 
-ClientWiringInvalidErrorTuple = Union[
-    tuple[type[AdapterClientWiringInvalidError]],
-    tuple[type[AdapterClientWiringInvalidError], type[Exception]],
-]
+ClientWiringInvalidErrorTuple = (
+    tuple[type[AdapterClientWiringInvalidError]]
+    | tuple[type[AdapterClientWiringInvalidError], type[Exception]]
+)
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +138,6 @@ def register_source_adapter(
     output_data_error_class: type[Exception] | None = None,
     client_wiring_invalid_error_class: type[Exception] | None = None,
 ) -> None:
-
     connection_errors, output_data_errors, invalid_wiring_errors = prepare_exc_classes(
         connection_custom_error=connection_error_class,
         output_data_custom_error=output_data_error_class,
@@ -161,7 +161,6 @@ def register_sink_adapter(
     output_data_error_class: type[Exception] | None = None,
     client_wiring_invalid_error_class: type[Exception] | None = None,
 ) -> None:
-
     connection_errors, output_data_errors, invalid_wiring_errors = prepare_exc_classes(
         connection_custom_error=connection_error_class,
         output_data_custom_error=output_data_error_class,

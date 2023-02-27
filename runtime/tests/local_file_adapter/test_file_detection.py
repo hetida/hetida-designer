@@ -4,7 +4,6 @@ from hetdesrun.adapters.local_file.detect import get_local_files_and_dirs
 
 
 def test_file_detection():
-
     found_local_files, found_directories = get_local_files_and_dirs(
         os.path.join("tests", "data", "local_files")
     )

@@ -31,7 +31,6 @@ class Metadatum(BaseModel):
 async def load_single_metadatum_from_adapter(
     filtered_source: FilteredSource, adapter_key: str, client: httpx.AsyncClient
 ) -> Any:
-
     if filtered_source.ref_id_type == RefIdType.SOURCE:
         endpoint = "sources"
     elif filtered_source.ref_id_type == RefIdType.SINK:

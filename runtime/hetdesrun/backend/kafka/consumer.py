@@ -1,7 +1,7 @@
 import asyncio
 import logging
+from collections.abc import Callable
 from functools import cache
-from typing import Callable
 from uuid import uuid4
 
 import aiokafka
@@ -73,7 +73,6 @@ class KafkaWorkerContext:
         producer_topic: str,
         producer_options: dict,
     ):
-
         self.event_loop = asyncio.get_event_loop()
         self.consumer_topic = consumer_topic
         self.consumer_options = consumer_options

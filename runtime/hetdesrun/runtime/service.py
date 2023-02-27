@@ -28,7 +28,7 @@ from hetdesrun.wiring import (
 runtime_logger.addFilter(job_id_context_filter)
 
 
-async def runtime_service(
+async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:
     """Running stuff with appropriate error handling, serializing etc.
@@ -133,7 +133,6 @@ async def runtime_service(
         # to ensure that every node is run, even if in a part of the graph not leading
         # to a final output. This is necessary for example for the Store Model component.
         for computation_node in all_nodes:
-
             _res = (
                 await computation_node.result
                 if not (

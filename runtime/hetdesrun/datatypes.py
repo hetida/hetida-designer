@@ -1,8 +1,9 @@
 import datetime
 import json
 import logging
+from collections.abc import Generator
 from enum import Enum
-from typing import Any, Generator, TypedDict
+from typing import Any, TypedDict
 from uuid import UUID
 
 import numpy as np

@@ -1,7 +1,7 @@
 import logging
 import os
+from collections.abc import Iterable
 from enum import Enum
-from typing import Iterable
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -246,7 +246,6 @@ def generate_import_order_file(
         for level in sorted(ids_by_nesting_level):
             logger.info("importing level %i transformation revisions", level)
             for transformation_id in ids_by_nesting_level[level]:
-
                 if transformation_id in path_dict:
                     file.write(path_dict[transformation_id])
                     file.write("\n")

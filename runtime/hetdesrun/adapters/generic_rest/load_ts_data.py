@@ -114,7 +114,7 @@ async def load_grouped_timeseries_data_together(
         ][key] = filtered_source
 
     # load each group together:
-    for (group_tuple, grouped_source_dict) in group_by_timestamp_pair.items():
+    for group_tuple, grouped_source_dict in group_by_timestamp_pair.items():
         loaded_ts_data_from_adapter = await load_ts_data_from_adapter(
             list(grouped_source_dict.values()),
             group_tuple[0],

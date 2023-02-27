@@ -229,7 +229,6 @@ async def get_transformation_revision_by_id(
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
     ),
 ) -> TransformationRevision:
-
     logger.info("get transformation revision %s", id)
 
     try:
@@ -532,7 +531,6 @@ async def delete_transformation_revision(
 async def handle_trafo_revision_execution_request(
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
-
     internal_full_measured_step = PerformanceMeasuredStep.create_and_begin(
         "internal_full"
     )
@@ -595,7 +593,6 @@ def receive_execution_response(
 async def send_result_to_callback_url(
     callback_url: HttpUrl, result: ExecutionResponseFrontendDto
 ) -> None:
-
     try:
         headers = await get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
@@ -692,7 +689,6 @@ async def handle_latest_trafo_revision_execution_request(
     exec_latest_by_group_id_input: ExecLatestByGroupIdInput,
 ) -> ExecutionResponseFrontendDto:
     try:
-
         id_ = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e

@@ -71,7 +71,6 @@ def test_dataframe_parsing():
 
 
 def test_parsing_of_boolean_series():
-
     test_obj = ExampleObj(s="[true, true, false]")
 
     assert is_bool_dtype(test_obj.s.dtype)

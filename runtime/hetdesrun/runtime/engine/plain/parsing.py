@@ -1,5 +1,6 @@
 """Parse workflow input into data structures of plain engine"""
-from typing import Callable, Coroutine, cast
+from collections.abc import Callable, Coroutine
+from typing import cast
 
 from hetdesrun.component.load import ComponentCodeImportError, import_func_from_code
 from hetdesrun.datatypes import DataType, NamedDataTypedValue
@@ -51,7 +52,6 @@ def parse_workflow_input(
     components: list[ComponentRevision],
     code_modules: list[CodeModule],
 ) -> Workflow:
-
     component_dict: dict[str, ComponentRevision] = {str(c.uuid): c for c in components}
 
     code_module_dict: dict[str, CodeModule] = {str(c.uuid): c for c in code_modules}

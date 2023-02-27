@@ -53,7 +53,6 @@ async def test_wiring_direct_input_provisioning(
     input_json_with_wiring_with_input, async_test_client
 ):
     async with async_test_client as client:
-
         status_code, output = await run_workflow_with_client(
             input_json_with_wiring_with_input, client
         )

@@ -73,7 +73,6 @@ async def walk_thing_nodes(
 async def test_resources_offered_from_structure_hierarchy(async_test_client):
     """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""  # noqa: E501
     async with async_test_client as client:
-
         response_obj = (await client.get("/adapters/localfile/structure")).json()
 
         assert len(response_obj["sources"]) == 0
@@ -132,7 +131,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                 assert response_obj[key] == tn[key]
 
         # we actually get all metadata that is available as attached to something:
-        for ((src_id, key), md) in src_attached_metadata_dict.items():
+        for (src_id, key), md in src_attached_metadata_dict.items():
             response_obj = (
                 await client.get(f"/adapters/localfile/sources/{src_id}/metadata/{key}")
             ).json()
@@ -148,7 +147,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                 )
                 assert resp.status_code == 200
 
-        for ((snk_id, key), md) in snk_attached_metadata_dict.items():
+        for (snk_id, key), md in snk_attached_metadata_dict.items():
             response_obj = (
                 await client.get(f"/adapters/localfile/sinks/{snk_id}/metadata/{key}")
             ).json()
@@ -164,7 +163,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                 )
                 assert resp.status_code == 200
 
-        for ((tn_id, key), md) in tn_attached_metadata_dict.items():
+        for (tn_id, key), md in tn_attached_metadata_dict.items():
             response_obj = (
                 await client.get(
                     f"/adapters/localfile/thingNodes/{tn_id}/metadata/{key}"
@@ -221,7 +220,6 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                     with mock.patch(
                         "hetdesrun.adapters.local_file.write_file.pd.DataFrame.to_excel"
                     ) as to_excel_mock:
-
                         await send_data(
                             {
                                 "wf_output": FilteredSink(

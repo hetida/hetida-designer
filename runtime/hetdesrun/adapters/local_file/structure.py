@@ -1,5 +1,5 @@
 import os
-from typing import Callable
+from collections.abc import Callable
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
@@ -22,7 +22,6 @@ from hetdesrun.adapters.local_file.utils import (
 
 
 def source_from_local_file(local_file: LocalFile) -> LocalFileStructureSource:
-
     file_support_handler = local_file.file_support_handler()
     assert file_support_handler is not None  # for mypy # noqa: S101
     external_type = file_support_handler.adapter_data_type
@@ -42,7 +41,6 @@ def source_from_local_file(local_file: LocalFile) -> LocalFileStructureSource:
 
 
 def sink_from_local_file(local_file: LocalFile) -> LocalFileStructureSink:
-
     file_support_handler = local_file.file_support_handler()
     assert file_support_handler is not None  # for mypy # noqa: S101
     external_type = file_support_handler.adapter_data_type
@@ -105,7 +103,6 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
     local_root_dirs = local_file_adapter_config.local_dirs
 
     if parent_id is None:  # get root Nodes
-
         return StructureResponse(
             id="local-file-adapter",
             name="Local File Adapter",

@@ -4,8 +4,9 @@ import importlib
 import json
 import logging
 import os
+from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Any, Iterable
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, parse_file_as
@@ -187,7 +188,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
     return tr_json
 
 
-def load_transformation_revisions_from_directory(
+def load_transformation_revisions_from_directory(  # noqa: PLR0912
     download_path: str, transform_py_to_json: bool = False
 ) -> tuple[dict[UUID, TransformationRevision], dict[UUID, str]]:
     transformation_dict: dict[UUID, TransformationRevision] = {}
@@ -318,7 +319,7 @@ class ImportSourceConfig(BaseModel):
     update_config: MultipleTrafosUpdateConfig
 
 
-def get_import_sources(directory_path: str) -> Iterable[ImportSource]:
+def get_import_sources(directory_path: str) -> Iterable[ImportSource]:  # noqa: PLR0912
     """Get all import sources inside a directory
 
     Note: Does not parse/validate import sources.
@@ -326,11 +327,9 @@ def get_import_sources(directory_path: str) -> Iterable[ImportSource]:
 
     import_sources: dict[str, dict[str, str | None | bool]] = {}
     for sub_element in os.listdir(directory_path):
-
         sub_path = os.path.join(directory_path, sub_element)
 
         if os.path.isdir(sub_path):
-
             try:
                 existing_info = import_sources[sub_path]
                 existing_info["is_dir"] = True
@@ -340,7 +339,6 @@ def get_import_sources(directory_path: str) -> Iterable[ImportSource]:
             import_sources[sub_path] = existing_info
 
         elif os.path.isfile(sub_path):
-
             if sub_path.endswith(".config.json"):
                 original_path = sub_path.removesuffix(".config.json")
                 try:
@@ -351,7 +349,6 @@ def get_import_sources(directory_path: str) -> Iterable[ImportSource]:
                 import_sources[original_path] = existing_info
 
             elif sub_path.endswith(".json"):
-
                 try:
                     existing_info = import_sources[sub_path]
                     existing_info["is_dir"] = False
@@ -392,7 +389,6 @@ class Importable(BaseModel):
 def load_import_source(
     import_source: ImportSource,
 ) -> Importable:
-
     # Get import config
     if import_source.config_file is None:
         import_config = ImportSourceConfig(

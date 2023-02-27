@@ -39,3 +39,5 @@ regex!=2022.3.15 # bug in combination with dateparser "bad escape..."
 pillow
 kaleido
 numba!=0.56.2 # due to setuptools dependency resolution problems
+boto3
+boto3-stubs[essential]

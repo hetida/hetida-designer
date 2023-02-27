@@ -1,5 +1,6 @@
+from collections.abc import Callable, Coroutine
 from inspect import Parameter, signature
-from typing import Any, Callable, Coroutine, Protocol
+from typing import Any, Protocol
 
 from cached_property import cached_property  # async compatible variant
 from pydantic import ValidationError
@@ -150,8 +151,7 @@ class ComputationNode:
 
         input_value_dict: dict[str, Any] = {}
 
-        for (input_name, (another_node, output_name)) in self.inputs.items():
-
+        for input_name, (another_node, output_name) in self.inputs.items():
             # Cycle detection logic
             if another_node._in_computation:
                 msg = (
@@ -182,7 +182,9 @@ class ComputationNode:
                 self.func, input_values  # type: ignore
             )
             function_result = function_result if function_result is not None else {}
-        except RuntimeExecutionError as e:  # user code may raise runtime execution errors
+        except (
+            RuntimeExecutionError
+        ) as e:  # user code may raise runtime execution errors
             e.set_context(self.context)
             runtime_execution_logger.warning(
                 "User raised RuntimeExecutionError!",
@@ -197,7 +199,6 @@ class ComputationNode:
         if not isinstance(
             function_result, dict
         ):  # user functions may return completely unknown type
-
             msg = (
                 f"Component function of component instance {self.operator_hierarchical_id} from "
                 f"component {self.operator_hierarchical_name} did not return an output dict!"

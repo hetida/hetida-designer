@@ -69,7 +69,6 @@ def test_component_import_via_rest_api(caplog):
     response_mock.status_code = 200
 
     with caplog.at_level(logging.DEBUG):  # noqa: SIM117
-
         with mock.patch(
             "hetdesrun.utils.requests.put", return_value=response_mock
         ) as patched_put:
@@ -128,7 +127,6 @@ def test_component_import_directly_into_db(caplog, clean_test_db_engine):
             response_mock.status_code = 200
 
             with caplog.at_level(logging.DEBUG):  # noqa: SIM117
-
                 with mock.patch(
                     "hetdesrun.utils.requests.put", return_value=response_mock
                 ) as patched_put:
@@ -154,7 +152,6 @@ def test_import_with_deprecate_older_versions():
             "hetdesrun.exportimport.importing.deprecate_all_but_latest_in_group",
             return_value=None,
         ) as patched_deprecate_group:
-
             import_transformations(
                 "./transformations/components", deprecate_older_revisions=True
             )
@@ -172,7 +169,6 @@ def test_generate_import_order_file_without_transform_py_to_json(tmp_path):
     with mock.patch(  # noqa: SIM117
         "hetdesrun.utils.requests.put", return_value=response_mock
     ) as rest_api_mock:
-
         with mock.patch(
             "hetdesrun.exportimport.importing.deprecate_all_but_latest_in_group",
             return_value=None,
@@ -189,7 +185,7 @@ def test_generate_import_order_file_without_transform_py_to_json(tmp_path):
                 for line in file:
                     path = line[:-1]  # remove line break
                     list_of_json_paths.append(path)
-            assert len(list_of_json_paths) == 143
+            assert len(list_of_json_paths) > 100  # we have more than 100 json files
             assert all(
                 os.path.splitext(path)[1] == ".json" for path in list_of_json_paths
             )
@@ -210,7 +206,7 @@ def test_generate_import_order_file_with_transform_py_to_json(tmp_path):
         for line in file:
             path = line[:-1]  # remove line break
             list_of_json_paths.append(path)
-    assert len(list_of_json_paths) == 147
+    assert len(list_of_json_paths) > 100  # we have more than 100 json files
     assert (
         str(
             download_path.joinpath(

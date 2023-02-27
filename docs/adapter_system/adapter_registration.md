@@ -1,8 +1,6 @@
 ## Registering a new generic Rest adapter
 
-A new generic Rest adapter must be registered in the hetida designer backend in order to make it available to all hetida designer components (backend, frontend, runtime).
-
-This is done by adding values to the environment variable `org.hetida.designer.backend.installed.adapters` of the hetida designer backend service.
+A new generic Rest adapter must be registered in the hetida designer backend in order to make it available to all hetida designer components (backend, frontend, runtime) by setting the environment variable `HETIDA_DESIGNER_ADAPTERS`.
 
 This environment variable is a string consisting of comma-separated entries (one for each adapter) where each entry itself consists of `|`-separated configuration parameters as follows:
 

@@ -78,7 +78,6 @@ async def test_wiring_with_generic_rest_input(
                         "hetdesrun.adapters.generic_rest.send_metadata.post_json_with_open_client",
                         new=send_metadata_post_mock,
                     ):
-
                         status_code, output = await run_workflow_with_client(
                             json_with_wiring, client
                         )

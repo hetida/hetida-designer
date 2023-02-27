@@ -11,5 +11,6 @@ nest_asyncio
 types-requests
 types-pytz
 ipykernel
+moto
 ruff
 pytest-random-order
