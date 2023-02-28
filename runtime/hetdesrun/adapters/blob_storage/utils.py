@@ -63,12 +63,15 @@ async def get_source_by_id_from_bucket_and_object_keys(
         raise StructureObjectNotFound(msg)
 
     object_key_strings = await get_object_key_strings_in_bucket(bucket.name)
-    for oks in object_key_strings:
-        if oks == object_key_string:
-            object_key = ObjectKey.from_string(oks)
-            return BlobStorageStructureSource.from_structure_bucket_and_object_key(
-                bucket=bucket, object_key=object_key
-            )
-    msg = f"Found no source with id {source_id}!"
-    logger.error(msg)
-    raise StructureObjectNotFound(msg)
+    if object_key_string not in object_key_strings:
+        msg = (
+            f"There is no object with key {object_key_string} in bucket {bucket_name}, "
+            f"hence no source with id {source_id} can be found!"
+        )
+        logger.error(msg)
+        raise StructureObjectNotFound(msg)
+
+    object_key = ObjectKey.from_string(object_key_string)
+    return BlobStorageStructureSource.from_structure_bucket_and_object_key(
+        bucket=bucket, object_key=object_key
+    )
