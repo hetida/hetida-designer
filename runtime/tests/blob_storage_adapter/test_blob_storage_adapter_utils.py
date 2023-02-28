@@ -149,11 +149,13 @@ async def test_blob_storage_utils_get_source_by_id_from_bucket_and_object_key() 
             == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
         )
 
-        source_id_without_bucket = IdString(
+        structure_not_matching_source_id = IdString(
             "i-ii/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
         )
-        with pytest.raises(StructureObjectNotFound, match="no bucket"):
-            await get_source_by_id_from_bucket_and_object_key(source_id_without_bucket)
+        with pytest.raises(StructureObjectNotFound, match="No thing node matching"):
+            await get_source_by_id_from_bucket_and_object_key(
+                structure_not_matching_source_id
+            )
 
         source_id_without_object_key = IdString(
             "i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
@@ -206,8 +208,10 @@ async def test_blob_storage_utils_get_sources_by_parent_id_from_bucket_and_objec
 
         assert len(sources_from_too_high_parent_id) == 0
 
-        parent_id_without_bucket = IdString("i-ii/A")
-        with pytest.raises(StructureObjectNotFound, match="no bucket"):
+        structure_not_matching_parent_id = IdString("i-ii/A")
+        with pytest.raises(
+            StructureObjectNotFound, match=r"parent id.* does not occur"
+        ):
             await get_sources_by_parent_id_from_bucket_and_object_keys(
-                parent_id_without_bucket
+                structure_not_matching_parent_id
             )
