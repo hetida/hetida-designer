@@ -40,7 +40,7 @@ async def write_blob_to_storage(
         thing_node = get_thing_node_by_id(IdString(thing_node_id))
         sink = BlobStorageStructureSink.from_thing_node(thing_node)
         try:
-            structure_bucket, object_key = thing_node.to_bucket_name_and_object_key(
+            structure_bucket, object_key = thing_node.to_bucket_and_object_key(
                 metadata_key
             )
         except ValueError as error:

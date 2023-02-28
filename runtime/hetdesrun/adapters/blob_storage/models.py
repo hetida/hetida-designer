@@ -145,7 +145,7 @@ class StructureThingNode(BaseModel):
             )
         return name
 
-    def to_bucket_name_and_object_key(
+    def to_bucket_and_object_key(
         self, metadata_key: str
     ) -> tuple[StructureBucket, ObjectKey]:
         if metadata_key.count(HIERARCHY_END_NODE_NAME_SEPARATOR) != 2:

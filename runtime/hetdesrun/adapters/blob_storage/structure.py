@@ -11,6 +11,7 @@ from hetdesrun.adapters.blob_storage.models import (
     StructureThingNode,
     get_adapter_structure,
 )
+from hetdesrun.adapters.blob_storage.service import get_object_key_strings_in_bucket
 from hetdesrun.adapters.blob_storage.utils import (
     get_all_sources_from_buckets_and_object_keys,
     get_source_by_id_from_bucket_and_object_key,
@@ -144,29 +145,25 @@ async def get_source_by_thing_node_id_and_metadata_key(
     A MissingHierarchyError, StorageAuthenticationError, or AdapterConnectionError
     raised by get_all_sources_from_buckets_and_object_keys may occur.
     """
-    filtered_src_list = []
+    thing_node = get_thing_node_by_id(thing_node_id)
+    try:
+        bucket, object_key = thing_node.to_bucket_and_object_key(metadata_key)
+    except ValueError as error:
+        raise StructureObjectNotFound from error
 
-    src_list = await get_all_sources_from_buckets_and_object_keys()
-
-    for src in src_list:
-        if src.thingNodeId == thing_node_id and src.metadataKey == metadata_key:
-            filtered_src_list.append(src)
-
-    if len(filtered_src_list) == 0:
+    object_key_strings = await get_object_key_strings_in_bucket(bucket.name)
+    if object_key.string not in object_key_strings:
         msg = (
-            f"Found no source with thing node id '{thing_node_id}' "
-            f"and metadata key '{metadata_key}'!"
+            f"There is no object with key '{object_key.string}' in bucket '{bucket.name}', "
+            f"hence no source with thing node id '{thing_node_id}' and "
+            f"metadata key '{metadata_key}' can be found!"
         )
         logger.error(msg)
         raise StructureObjectNotFound(msg)
-    if len(filtered_src_list) > 1:
-        msg = (
-            f"Found more than one source with thing node id '{thing_node_id}' "
-            f"and metadata key '{metadata_key}':\n{str(filtered_src_list)}"
-        )
-        logger.error(msg)
-        raise StructureObjectNotUnique(msg)
-    return filtered_src_list[0]
+
+    return BlobStorageStructureSource.from_structure_bucket_and_object_key(
+        bucket=bucket, object_key=object_key
+    )
 
 
 def get_sink_by_thing_node_id_and_metadata_key(
