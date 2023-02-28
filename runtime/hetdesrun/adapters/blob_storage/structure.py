@@ -13,7 +13,8 @@ from hetdesrun.adapters.blob_storage.models import (
 )
 from hetdesrun.adapters.blob_storage.utils import (
     get_all_sources_from_buckets_and_object_keys,
-    get_source_by_id_from_bucket_and_object_keys,
+    get_source_by_id_from_bucket_and_object_key,
+    get_sources_by_parent_id_from_bucket_and_object_keys,
 )
 
 logger = getLogger(__name__)
@@ -38,14 +39,12 @@ async def get_sources_by_parent_id(
     """Get sources by parent id.
 
     A MissingHierarchyError, StorageAuthenticationError, or AdapterConnectionError
-    raised by get_all_sources_from_buckets_and_object_keys may occur.
+    raised by get_sources_by_parent_id_from_bucket_and_object_keys.
     """
     if parent_id is None:
         return []
 
-    src_list = await get_all_sources_from_buckets_and_object_keys()
-
-    return [src for src in src_list if src.thingNodeId == parent_id]
+    return await get_sources_by_parent_id_from_bucket_and_object_keys(parent_id)
 
 
 def get_sinks_by_parent_id(
@@ -113,9 +112,9 @@ async def get_source_by_id(source_id: IdString) -> BlobStorageStructureSource:
     """Get source by id.
 
     A MissingHierarchyError, StorageAuthenticationError, or AdapterConnectionError
-    raised by get_all_sources_from_buckets_and_object_keys may occur.
+    raised by get_source_by_id_from_bucket_and_object_key may occur.
     """
-    return await get_source_by_id_from_bucket_and_object_keys(source_id)
+    return await get_source_by_id_from_bucket_and_object_key(source_id)
 
 
 def get_sink_by_id(sink_id: IdString) -> BlobStorageStructureSink:

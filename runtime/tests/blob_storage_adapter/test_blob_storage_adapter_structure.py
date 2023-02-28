@@ -94,12 +94,27 @@ source_list = [
     ),
 ]
 
+source_by_thing_node_id_dict: dict[IdString, list[BlobStorageStructureSource]] = {}
+for src in source_list:
+    if src.thingNodeId not in source_by_thing_node_id_dict:
+        source_by_thing_node_id_dict[src.thingNodeId] = [src]
+    else:
+        source_by_thing_node_id_dict[src.thingNodeId].append(src)
+
+
+async def mocked_get_source_by_parent_id(
+    parent_id: IdString,
+) -> list[BlobStorageStructureSource]:
+    if parent_id not in source_by_thing_node_id_dict:
+        return []
+    return source_by_thing_node_id_dict[parent_id]
+
 
 @pytest.mark.asyncio
 async def test_blob_storage_get_sources_by_parent_id() -> None:
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
-        return_value=source_list,
+        "hetdesrun.adapters.blob_storage.structure.get_sources_by_parent_id_from_bucket_and_object_keys",
+        new=mocked_get_source_by_parent_id,
     ):
         sources_with_parent_i_ii = await get_sources_by_parent_id(IdString("i-ii/E"))
         assert len(sources_with_parent_i_ii) == 1
@@ -222,7 +237,7 @@ def test_blob_storage_get_thing_node_by_id() -> None:
 @pytest.mark.asyncio
 async def test_blob_storage_get_source_by_id() -> None:
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_keys",
+        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_key",
         return_value=source_list[1],
     ):
         source_by_id = await get_source_by_id(
@@ -237,7 +252,7 @@ async def test_blob_storage_get_source_by_id() -> None:
         assert source_by_id.thingNodeId == "i-i/A"
 
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_keys",
+        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_key",
         side_effect=StructureObjectNotFound,
     ), pytest.raises(StructureObjectNotFound):
         await get_source_by_id(IdString("bla"))

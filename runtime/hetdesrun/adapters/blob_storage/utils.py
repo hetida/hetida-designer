@@ -1,5 +1,9 @@
 from logging import getLogger
 
+from hetdesrun.adapters.blob_storage import (
+    IDENTIFIER_SEPARATOR,
+    OBJECT_KEY_DIR_SEPARATOR,
+)
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSource,
@@ -47,9 +51,15 @@ async def get_all_sources_from_buckets_and_object_keys() -> list[
     return source_list
 
 
-async def get_source_by_id_from_bucket_and_object_keys(
+# TODO: check compatibility with adapter hierarchy
+async def get_source_by_id_from_bucket_and_object_key(
     source_id: IdString,
 ) -> BlobStorageStructureSource:
+    """Get source by id from bucket and object key.
+
+    A MissingHierarchyError raised from get_adapter_structure or an AdapterConnectionError
+    raised from get_object_key_strings_in_bucket may occur.
+    """
     bucket_name, object_key_string = get_bucket_name_and_object_key_prefix_from_id(
         source_id
     )
@@ -75,3 +85,59 @@ async def get_source_by_id_from_bucket_and_object_keys(
     return BlobStorageStructureSource.from_structure_bucket_and_object_key(
         bucket=bucket, object_key=object_key
     )
+
+
+def get_parent_id_from_bucket_name_and_object_key_string(
+    bucket_name: str, object_key_string: str
+) -> IdString:
+    source_id = bucket_name + OBJECT_KEY_DIR_SEPARATOR + object_key_string
+    parent_id = source_id.rsplit(sep=IDENTIFIER_SEPARATOR, maxsplit=2)[0]
+    return IdString(parent_id)
+
+
+# TODO: check compatibility with adapter hierarchy
+async def get_sources_by_parent_id_from_bucket_and_object_keys(
+    parent_id: IdString,
+) -> list[BlobStorageStructureSource]:
+    """Get sources by parent id from bucket and object keys.
+
+    A MissingHierarchyError raised from get_adapter_structure or an AdapterConnectionError
+    raised from get_object_key_strings_in_bucket may occur.
+    """
+    try:
+        (
+            bucket_name,
+            object_key_string_prefix,
+        ) = get_bucket_name_and_object_key_prefix_from_id(parent_id)
+    except ValueError:
+        return []
+
+    bucket = StructureBucket(name=bucket_name)
+    if bucket not in get_adapter_structure().structure_buckets:
+        msg = (
+            f"There is no bucket with name {bucket_name}, hence no sources with "
+            f"parent id {parent_id} can be found."
+        )
+        logger.error(msg)
+        raise StructureObjectNotFound(msg)
+
+    object_key_strings = await get_object_key_strings_in_bucket(bucket.name)
+    sources: list[BlobStorageStructureSource] = []
+    for object_key_string in object_key_strings:
+        if object_key_string.startswith(
+            object_key_string_prefix
+        ) and parent_id == get_parent_id_from_bucket_name_and_object_key_string(
+            bucket_name, object_key_string
+        ):
+            try:
+                object_key = ObjectKey.from_string(object_key_string)
+            except ValueError:
+                # ignore objects with keys that do not match the expected name scheme
+                continue
+            sources.append(
+                BlobStorageStructureSource.from_structure_bucket_and_object_key(
+                    bucket=bucket, object_key=object_key
+                )
+            )
+
+    return sources

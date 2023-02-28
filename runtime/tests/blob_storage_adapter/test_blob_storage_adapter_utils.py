@@ -12,7 +12,8 @@ from hetdesrun.adapters.blob_storage.models import (
 )
 from hetdesrun.adapters.blob_storage.utils import (
     get_all_sources_from_buckets_and_object_keys,
-    get_source_by_id_from_bucket_and_object_keys,
+    get_source_by_id_from_bucket_and_object_key,
+    get_sources_by_parent_id_from_bucket_and_object_keys,
 )
 
 
@@ -112,7 +113,7 @@ async def test_blob_storage_utils_get_all_sources_from_buckets_and_object_keys()
 
 
 @pytest.mark.asyncio
-async def test_blob_storage_utils_get_source_by_id_from_bucket_and_object_keys() -> None:
+async def test_blob_storage_utils_get_source_by_id_from_bucket_and_object_key() -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.utils.get_adapter_structure",
         return_value=AdapterHierarchy(
@@ -141,7 +142,7 @@ async def test_blob_storage_utils_get_source_by_id_from_bucket_and_object_keys()
             "i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
         )
 
-        source = await get_source_by_id_from_bucket_and_object_keys(source_id)
+        source = await get_source_by_id_from_bucket_and_object_key(source_id)
 
         assert (
             source.name
@@ -152,10 +153,61 @@ async def test_blob_storage_utils_get_source_by_id_from_bucket_and_object_keys()
             "i-ii/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
         )
         with pytest.raises(StructureObjectNotFound, match="no bucket"):
-            await get_source_by_id_from_bucket_and_object_keys(source_id_without_bucket)
+            await get_source_by_id_from_bucket_and_object_key(source_id_without_bucket)
 
         source_id_without_object_key = IdString(
             "i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
         )
         with pytest.raises(StructureObjectNotFound, match="no object"):
-            await get_source_by_id_from_bucket_and_object_keys(source_id_without_object_key)
+            await get_source_by_id_from_bucket_and_object_key(
+                source_id_without_object_key
+            )
+
+
+@pytest.mark.asyncio
+async def test_blob_storage_utils_get_sources_by_parent_id_from_bucket_and_object_keys() -> None:
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.utils.get_adapter_structure",
+        return_value=AdapterHierarchy(
+            structure=(
+                HierarchyNode(
+                    name="I",
+                    description="",
+                    substructure=(
+                        HierarchyNode(
+                            name="I",
+                            description="",
+                            substructure=[
+                                HierarchyNode(name="A", description=""),
+                                HierarchyNode(name="B", description=""),
+                            ],
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    ), mock.patch(
+        "hetdesrun.adapters.blob_storage.utils.get_object_key_strings_in_bucket",
+        new=mocked_get_oks_in_bucket,
+    ):
+        parent_id = IdString("i-i/A")
+        sources_from_parent_id = (
+            await get_sources_by_parent_id_from_bucket_and_object_keys(parent_id)
+        )
+
+        assert len(sources_from_parent_id) == 2
+
+        too_high_parent_id = IdString("i-i")
+        sources_from_too_high_parent_id = (
+            await get_sources_by_parent_id_from_bucket_and_object_keys(
+                too_high_parent_id
+            )
+        )
+
+        assert len(sources_from_too_high_parent_id) == 0
+
+        parent_id_without_bucket = IdString("i-ii/A")
+        with pytest.raises(StructureObjectNotFound, match="no bucket"):
+            await get_sources_by_parent_id_from_bucket_and_object_keys(
+                parent_id_without_bucket
+            )

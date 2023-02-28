@@ -146,6 +146,22 @@ async def mocked_get_source_by_id(
     return source_dict[id]
 
 
+source_by_thing_node_id_dict: dict[IdString, list[BlobStorageStructureSource]] = {}
+for src in source_list:
+    if src.thingNodeId not in source_by_thing_node_id_dict:
+        source_by_thing_node_id_dict[src.thingNodeId] = [src]
+    else:
+        source_by_thing_node_id_dict[src.thingNodeId].append(src)
+
+
+async def mocked_get_source_by_parent_id(
+    parent_id: IdString,
+) -> list[BlobStorageStructureSource]:
+    if parent_id not in source_by_thing_node_id_dict:
+        return []
+    return source_by_thing_node_id_dict[parent_id]
+
+
 @pytest.mark.asyncio
 async def test_resources_offered_from_blob_storage_webservice(
     async_test_client_with_blob_storage_adapter: AsyncClient,
@@ -159,8 +175,11 @@ async def test_resources_offered_from_blob_storage_webservice(
         "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
         return_value=source_list,
     ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_keys",
+        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_key",
         new=mocked_get_source_by_id,
+    ), mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.get_sources_by_parent_id_from_bucket_and_object_keys",
+        new=mocked_get_source_by_parent_id,
     ):
         async with async_test_client_with_blob_storage_adapter as client:
             response = await client.get("/adapters/blob/structure")
