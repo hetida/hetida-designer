@@ -87,6 +87,21 @@ class ObjectKey(BaseModel):
         )
 
     @classmethod
+    def from_name_and_time_and_job_id(
+        cls, name: IdString, time: datetime, job_id: UUID
+    ) -> "ObjectKey":
+        return ObjectKey(
+            string=name
+            + IDENTIFIER_SEPARATOR
+            + time.isoformat()
+            + IDENTIFIER_SEPARATOR
+            + str(job_id),
+            name=name,
+            time=time,
+            job_id=job_id,
+        )
+
+    @classmethod
     def from_string(cls, string: IdString) -> "ObjectKey":
         try:
             name, time_string, job_id_string = string.rsplit(
@@ -153,20 +168,30 @@ class StructureThingNode(BaseModel):
                 f"Cannot create bucket name and object key based on a metadata key {metadata_key} "
                 f"which does not contain '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice."
             )
-        _, time, job_id = metadata_key.split(HIERARCHY_END_NODE_NAME_SEPARATOR)
+        _, time_string, job_id_string = metadata_key.split(
+            HIERARCHY_END_NODE_NAME_SEPARATOR
+        )
 
         bucket_name, object_key_prefix = get_bucket_name_and_object_key_prefix_from_id(
             self.id
         )
-        structure_bucket = StructureBucket(name=bucket_name)
-        object_key_string = (
-            object_key_prefix
-            + IDENTIFIER_SEPARATOR
-            + time
-            + IDENTIFIER_SEPARATOR
-            + job_id
-        )
-        object_key = ObjectKey.from_string(IdString(object_key_string))
+        try:
+            structure_bucket = StructureBucket(name=bucket_name)
+        except ValueError as error:
+            msg = f"Cannot except '{bucket_name}' as name for a bucket:\n{error}"
+            raise ValueError(msg) from error
+        try:
+            object_key = ObjectKey.from_name_and_time_and_job_id(
+                name=IdString(object_key_prefix),
+                time=datetime.fromisoformat(time_string),
+                job_id=UUID(job_id_string),
+            )
+        except ValueError as error:
+            msg = (
+                f"Cannot except name '{object_key_prefix}', time '{time_string}' or "
+                f"job id '{job_id_string}' as input for an object key:\n{error}"
+            )
+            raise ValueError(msg) from error
         return structure_bucket, object_key
 
 
