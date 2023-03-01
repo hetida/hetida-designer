@@ -172,13 +172,13 @@ async def test_resources_offered_from_blob_storage_webservice(
             "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
         ),
     ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources",
         return_value=source_list,
     ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_key",
+        "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
         new=mocked_get_source_by_id,
     ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_sources_by_parent_id_from_bucket_and_object_keys",
+        "hetdesrun.adapters.blob_storage.webservice.get_sources_by_parent_id",
         new=mocked_get_source_by_parent_id,
     ):
         async with async_test_client_with_blob_storage_adapter as client:
@@ -253,7 +253,7 @@ async def test_blob_adapter_webservice_filtered(
             "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
         ),
     ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources",
         return_value=source_list,
     ):
         async with async_test_client_with_blob_storage_adapter as client:

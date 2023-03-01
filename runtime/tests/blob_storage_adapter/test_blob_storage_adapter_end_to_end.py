@@ -40,7 +40,7 @@ async def test_load_object_with_self_defined_class(
             Bucket="iii"
         )  # needed for get_all_sources_from_buckets_and_object_keys based on adapter structure
         with mock.patch(
-            "hetdesrun.adapters.blob_storage.utils.get_adapter_structure",
+            "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
             return_value=AdapterHierarchy.from_file(
                 "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
             ),
@@ -142,7 +142,7 @@ async def test_store_object_under_key_which_already_exists(
             Body=file_object,
         )
         with mock.patch(
-            "hetdesrun.adapters.blob_storage.utils.get_adapter_structure",
+            "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
             return_value=AdapterHierarchy.from_file(
                 "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
             ),

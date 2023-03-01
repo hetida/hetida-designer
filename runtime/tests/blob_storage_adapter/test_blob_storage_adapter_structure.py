@@ -10,7 +10,9 @@ from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
+    HierarchyNode,
     IdString,
+    StructureBucket,
     StructureThingNode,
 )
 from hetdesrun.adapters.blob_storage.structure import (
@@ -102,29 +104,75 @@ for src in source_list:
         source_by_thing_node_id_dict[src.thingNodeId].append(src)
 
 
-async def mocked_get_source_by_parent_id(
-    parent_id: IdString,
-) -> list[BlobStorageStructureSource]:
-    if parent_id not in source_by_thing_node_id_dict:
-        return []
-    return source_by_thing_node_id_dict[parent_id]
+async def mocked_get_oks_in_bucket(bucket_name: StructureBucket) -> list[IdString]:
+    if bucket_name == "i-i":
+        return [
+            IdString(
+                "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+            ),
+            IdString(
+                "A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+            ),
+            IdString("A_test"),
+        ]
+    if bucket_name == "i-ii":
+        return [
+            IdString(
+                "B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
+            ),
+            IdString(
+                "D_2022-03-08T17:23:18+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa"
+            ),
+            IdString(
+                "D_2022-04-02T13:28:29+00:00_af77087b-a064-4ff9-9c4a-d23b2c503ade"
+            ),
+        ]
+    raise ValueError("bucket_name must be 'i-i' or 'i-ii'!")
 
 
 @pytest.mark.asyncio
 async def test_blob_storage_get_sources_by_parent_id() -> None:
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_sources_by_parent_id_from_bucket_and_object_keys",
-        new=mocked_get_source_by_parent_id,
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy(
+            structure=(
+                HierarchyNode(
+                    name="I",
+                    description="",
+                    substructure=(
+                        HierarchyNode(
+                            name="I",
+                            description="",
+                            substructure=[
+                                HierarchyNode(name="A", description=""),
+                                HierarchyNode(name="B", description=""),
+                            ],
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    ), mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.get_object_key_strings_in_bucket",
+        new=mocked_get_oks_in_bucket,
     ):
-        sources_with_parent_i_ii = await get_sources_by_parent_id(IdString("i-ii/E"))
-        assert len(sources_with_parent_i_ii) == 1
-        assert (
-            sources_with_parent_i_ii[0].id
-            == "i-ii/E_2022-01-02T14:23:18+00:00_3bd049f4-1d0e-4993-ac4c-306ebe320144"
+        parent_id = IdString("i-i/A")
+        sources_from_parent_id = await get_sources_by_parent_id(parent_id)
+
+        assert len(sources_from_parent_id) == 2
+
+        too_high_parent_id = IdString("i-i")
+        sources_from_too_high_parent_id = await get_sources_by_parent_id(
+            too_high_parent_id
         )
 
-        sources_with_parent_bla = await get_sources_by_parent_id(IdString("bla"))
-        assert len(sources_with_parent_bla) == 0
+        assert len(sources_from_too_high_parent_id) == 0
+
+        structure_not_matching_parent_id = IdString("i-ii/A")
+        with pytest.raises(
+            StructureObjectNotFound, match=r"parent id.* does not occur"
+        ):
+            await get_sources_by_parent_id(structure_not_matching_parent_id)
 
 
 def test_blob_storage_get_sinks_by_parent_id() -> None:
@@ -145,7 +193,7 @@ def test_blob_storage_get_sinks_by_parent_id() -> None:
 @pytest.mark.asyncio
 async def test_blob_storage_get_filtered_sources() -> None:
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_all_sources_from_buckets_and_object_keys",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources",
         return_value=source_list,
     ):
         unfiltered_sources = await get_filtered_sources(None)
@@ -237,25 +285,51 @@ def test_blob_storage_get_thing_node_by_id() -> None:
 @pytest.mark.asyncio
 async def test_blob_storage_get_source_by_id() -> None:
     with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_key",
-        return_value=source_list[1],
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy(
+            structure=(
+                HierarchyNode(
+                    name="I",
+                    description="",
+                    substructure=(
+                        HierarchyNode(
+                            name="I",
+                            description="",
+                            substructure=[
+                                HierarchyNode(name="A", description=""),
+                                HierarchyNode(name="B", description=""),
+                            ],
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    ), mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.get_object_key_strings_in_bucket",
+        new=mocked_get_oks_in_bucket,
     ):
-        source_by_id = await get_source_by_id(
-            IdString(
-                "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
-            )
+        source_id = IdString(
+            "i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
         )
-        assert (
-            source_by_id.name
-            == "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43"
-        )
-        assert source_by_id.thingNodeId == "i-i/A"
 
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_source_by_id_from_bucket_and_object_key",
-        side_effect=StructureObjectNotFound,
-    ), pytest.raises(StructureObjectNotFound):
-        await get_source_by_id(IdString("bla"))
+        source = await get_source_by_id(source_id)
+
+        assert (
+            source.name
+            == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        )
+
+        structure_not_matching_source_id = IdString(
+            "i-ii/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
+        )
+        with pytest.raises(StructureObjectNotFound, match="No thing node matching"):
+            await get_source_by_id(structure_not_matching_source_id)
+
+        source_id_without_object_key = IdString(
+            "i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
+        )
+        with pytest.raises(StructureObjectNotFound, match="no object"):
+            await get_source_by_id(source_id_without_object_key)
 
 
 def test_blob_storage_get_sink_by_id() -> None:
