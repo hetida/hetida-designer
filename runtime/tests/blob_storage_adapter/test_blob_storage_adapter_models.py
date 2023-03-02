@@ -18,6 +18,7 @@ from hetdesrun.adapters.blob_storage.models import (
     StructureBucket,
     StructureThingNode,
     find_duplicates,
+    get_structure_bucket_and_object_key_prefix_from_id,
 )
 
 
@@ -84,9 +85,6 @@ def test_blob_storage_class_object_key() -> None:
     object_key_from_string = ObjectKey.from_string(object_key_from_name.string)
     assert object_key_from_name == object_key_from_string
 
-    thing_node_id = object_key.to_thing_node_id(bucket=StructureBucket(name="i-ii"))
-    assert thing_node_id == "i-ii/A"
-
     with pytest.raises(
         ValueError, match=f"contains '{IDENTIFIER_SEPARATOR}' less than"
     ):
@@ -97,18 +95,7 @@ def test_blob_storage_class_object_key() -> None:
 
 def test_blob_storage_class_structure_thing_node() -> None:
     StructureThingNode(id="i-ii", parentId="i", name="II", description="")
-    thing_node = StructureThingNode(
-        id="i-ii/A", parentId="i-ii", name="A", description=""
-    )
-
-    structure_bucket, object_key = thing_node.to_bucket_and_object_key(
-        metadata_key="A - 2001-02-03T04:05:06+00:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
-    )
-    assert structure_bucket.name == "i-ii"
-    assert (
-        object_key.string
-        == "A_2001-02-03T04:05:06+00:00_e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
-    )
+    StructureThingNode(id="i-ii/A", parentId="i-ii", name="A", description="")
 
     with pytest.raises(ValidationError, match="at least 1 characters"):
         # ThingNodeName shorter than min_length
@@ -168,10 +155,13 @@ def test_blob_storage_class_structure_source_works() -> None:
     assert source.visible is True
     assert source.filters == {}
 
-    src_bucket_name, src_object_key = source.to_structure_bucket_and_object_key()
+    (
+        src_bucket,
+        src_object_key_string,
+    ) = get_structure_bucket_and_object_key_prefix_from_id(source.id)
     src_from_bkt_and_ok = (
         BlobStorageStructureSource.from_structure_bucket_and_object_key(
-            bucket=src_bucket_name, object_key=src_object_key
+            bucket=src_bucket, object_key=ObjectKey.from_string(src_object_key_string)
         )
     )
     assert src_from_bkt_and_ok == source

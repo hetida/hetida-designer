@@ -38,26 +38,38 @@ class IdString(ConstrainedStr):
     )
 
 
-def get_bucket_name_and_object_key_prefix_from_id(
+class StructureBucket(BaseModel):
+    name: BucketName
+
+    class Config:
+        frozen = True
+
+
+def get_structure_bucket_and_object_key_prefix_from_id(
     id: IdString,  # noqa: A002
-) -> tuple[BucketName, "IdString"]:
+) -> tuple[StructureBucket, "IdString"]:
     if OBJECT_KEY_DIR_SEPARATOR not in id:
         raise ValueError(
-            f"Cannot create bucket name and object key based on an id {id} "
+            f"Cannot create bucket name and object key prefix based on an id {id} "
             f"which does not contain '{OBJECT_KEY_DIR_SEPARATOR}'."
         )
 
     bucket_name_string, object_key_string = id.split(
         OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
     )
-    return (BucketName(bucket_name_string), IdString(object_key_string))
 
-
-class StructureBucket(BaseModel):
-    name: BucketName
-
-    class Config:
-        frozen = True
+    try:
+        bucket = StructureBucket(name=BucketName(bucket_name_string))
+    except ValueError as e:
+        raise ValueError(
+            f"The first part '{bucket_name_string}' of the source id '{id}' "
+            f"before the first '{OBJECT_KEY_DIR_SEPARATOR}' "
+            "must correspond to a bucket name!\nBut it does not:\n" + str(e)
+        ) from e
+    return (
+        bucket,
+        IdString(object_key_string),
+    )
 
 
 class ObjectKey(BaseModel):
@@ -119,6 +131,34 @@ class ObjectKey(BaseModel):
             job_id=UUID(job_id_string),
         )
 
+    @classmethod
+    def from_thing_node_id_and_metadata_key(
+        cls, thing_node_id: IdString, metadata_key: str
+    ) -> "ObjectKey":
+        if metadata_key.count(HIERARCHY_END_NODE_NAME_SEPARATOR) != 2:
+            raise ValueError(
+                f"Cannot create bucket name and object key based on a metadata key {metadata_key} "
+                f"which does not contain '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice."
+            )
+        name, time_string, job_id_string = metadata_key.split(
+            HIERARCHY_END_NODE_NAME_SEPARATOR
+        )
+
+        if not thing_node_id.endswith(name):
+            raise ValueError(
+                f"Thing node id '{thing_node_id}' and metadata key '{metadata_key}' do not match."
+            )
+
+        _, object_key_prefix = get_structure_bucket_and_object_key_prefix_from_id(
+            thing_node_id
+        )
+
+        return ObjectKey.from_name_and_time_and_job_id(
+            name=object_key_prefix,
+            time=datetime.fromisoformat(time_string).replace(tzinfo=timezone.utc),
+            job_id=UUID(job_id_string),
+        )
+
     def to_thing_node_id(self, bucket: StructureBucket) -> IdString:
         return IdString(bucket.name + OBJECT_KEY_DIR_SEPARATOR + self.name)
 
@@ -160,40 +200,6 @@ class StructureThingNode(BaseModel):
             )
         return name
 
-    def to_bucket_and_object_key(
-        self, metadata_key: str
-    ) -> tuple[StructureBucket, ObjectKey]:
-        if metadata_key.count(HIERARCHY_END_NODE_NAME_SEPARATOR) != 2:
-            raise ValueError(
-                f"Cannot create bucket name and object key based on a metadata key {metadata_key} "
-                f"which does not contain '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice."
-            )
-        _, time_string, job_id_string = metadata_key.split(
-            HIERARCHY_END_NODE_NAME_SEPARATOR
-        )
-
-        bucket_name, object_key_prefix = get_bucket_name_and_object_key_prefix_from_id(
-            self.id
-        )
-        try:
-            structure_bucket = StructureBucket(name=bucket_name)
-        except ValueError as error:
-            msg = f"Cannot except '{bucket_name}' as name for a bucket:\n{error}"
-            raise ValueError(msg) from error
-        try:
-            object_key = ObjectKey.from_name_and_time_and_job_id(
-                name=IdString(object_key_prefix),
-                time=datetime.fromisoformat(time_string),
-                job_id=UUID(job_id_string),
-            )
-        except ValueError as error:
-            msg = (
-                f"Cannot except name '{object_key_prefix}', time '{time_string}' or "
-                f"job id '{job_id_string}' as input for an object key:\n{error}"
-            )
-            raise ValueError(msg) from error
-        return structure_bucket, object_key
-
 
 class BlobStorageStructureSource(BaseModel):
     id: IdString  # noqa: A003
@@ -207,18 +213,7 @@ class BlobStorageStructureSource(BaseModel):
 
     @validator("id")
     def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
-        bucket_name, object_key_string = get_bucket_name_and_object_key_prefix_from_id(
-            id
-        )
-        try:
-            StructureBucket(name=bucket_name)
-        except ValidationError as e:
-            raise ValueError(
-                f"The first part '{bucket_name}' of the source id '{id}' "
-                f"before the first '{OBJECT_KEY_DIR_SEPARATOR}' "
-                "must correspond to a bucket name!\nBut it does not:\n" + str(e)
-            ) from e
-
+        _, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(id)
         try:
             ObjectKey.from_string(IdString(object_key_string))
         except ValueError as e:
@@ -339,15 +334,6 @@ class BlobStorageStructureSource(BaseModel):
             metadataKey=name,
         )
 
-    def to_structure_bucket_and_object_key(self) -> tuple[StructureBucket, ObjectKey]:
-        (
-            bucket_name_string,
-            object_key_string,
-        ) = get_bucket_name_and_object_key_prefix_from_id(self.id)
-        return StructureBucket(name=bucket_name_string), ObjectKey.from_string(
-            IdString(object_key_string)
-        )
-
 
 class MultipleSourcesResponse(BaseModel):
     resultCount: int
@@ -366,15 +352,7 @@ class BlobStorageStructureSink(BaseModel):
 
     @validator("id")
     def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
-        bucket_name_string, _ = get_bucket_name_and_object_key_prefix_from_id(id)
-        try:
-            StructureBucket(name=bucket_name_string)
-        except ValidationError as e:
-            raise ValueError(
-                f"The first part '{bucket_name_string}' of the sink id '{id}' "
-                f"before the first '{OBJECT_KEY_DIR_SEPARATOR}' must "
-                "correspond to a bucket name!\nBut it does not:\n" + str(e)
-            ) from e
+        bucket, _ = get_structure_bucket_and_object_key_prefix_from_id(id)
 
         if not id.endswith(IDENTIFIER_SEPARATOR + GENERIC_SINK_ID_SUFFIX):
             raise ValueError(
@@ -490,12 +468,10 @@ class BlobStorageStructureSink(BaseModel):
         self, job_id: UUID
     ) -> tuple[StructureBucket, ObjectKey]:
         (
-            bucket_name_string,
+            bucket,
             object_key_name,
-        ) = get_bucket_name_and_object_key_prefix_from_id(self.thingNodeId)
-        return StructureBucket(name=bucket_name_string), ObjectKey.from_name_and_job_id(
-            IdString(object_key_name), job_id
-        )
+        ) = get_structure_bucket_and_object_key_prefix_from_id(self.thingNodeId)
+        return bucket, ObjectKey.from_name_and_job_id(IdString(object_key_name), job_id)
 
 
 class MultipleSinksResponse(BaseModel):

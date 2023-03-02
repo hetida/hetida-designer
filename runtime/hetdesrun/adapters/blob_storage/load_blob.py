@@ -2,7 +2,10 @@ import logging
 import pickle
 from typing import Any
 
-from hetdesrun.adapters.blob_storage.models import IdString
+from hetdesrun.adapters.blob_storage.models import (
+    IdString,
+    get_structure_bucket_and_object_key_prefix_from_id,
+)
 from hetdesrun.adapters.blob_storage.service import get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
     get_source_by_thing_node_id_and_metadata_key,
@@ -34,27 +37,29 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     )
 
     logger.info("Get bucket name and object key from source with id %s", source.id)
-    structure_bucket, object_key = source.to_structure_bucket_and_object_key()
+    bucket, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(
+        source.id
+    )
 
     logger.info(
         "Load data for source '%s' from storage in bucket '%s' under object key '%s'",
         source.id,
-        structure_bucket.name,
-        object_key.string,
+        bucket.name,
+        object_key_string,
     )
     s3_client = await get_s3_client()
     try:
         response = s3_client.get_object(
-            Bucket=structure_bucket.name, Key=object_key.string, ChecksumMode="ENABLED"
+            Bucket=bucket.name, Key=object_key_string, ChecksumMode="ENABLED"
         )
     except s3_client.exceptions.NoSuchBucket as error:
         raise AdapterConnectionError(
-            f"The bucket '{structure_bucket.name}' does not exist!"
+            f"The bucket '{bucket.name}' does not exist!"
         ) from error
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
-            f"The bucket '{structure_bucket.name}' contains no object "
-            f"with the key '{object_key.string}'!"
+            f"The bucket '{bucket.name}' contains no object "
+            f"with the key '{object_key_string}'!"
         ) from error
 
     try:

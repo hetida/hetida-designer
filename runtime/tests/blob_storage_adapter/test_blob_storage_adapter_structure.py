@@ -348,6 +348,11 @@ async def test_blob_storage_get_source_by_thing_node_id_and_metadata_key() -> No
         "hetdesrun.adapters.blob_storage.structure.get_thing_node_by_id",
         new=mocked_get_thing_node_by_id,
     ), mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy.from_file(
+            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+        ),
+    ), mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_object_key_strings_in_bucket",
         return_value=[
             "A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"

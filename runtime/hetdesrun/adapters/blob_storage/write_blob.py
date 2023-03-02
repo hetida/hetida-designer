@@ -6,7 +6,12 @@ from typing import Any
 from botocore.exceptions import ClientError, ParamValidationError
 
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
-from hetdesrun.adapters.blob_storage.models import BlobStorageStructureSink, IdString
+from hetdesrun.adapters.blob_storage.models import (
+    BlobStorageStructureSink,
+    IdString,
+    ObjectKey,
+    get_structure_bucket_and_object_key_prefix_from_id,
+)
 from hetdesrun.adapters.blob_storage.service import get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
     get_sink_by_thing_node_id_and_metadata_key,
@@ -40,8 +45,11 @@ async def write_blob_to_storage(
         thing_node = get_thing_node_by_id(IdString(thing_node_id))
         sink = BlobStorageStructureSink.from_thing_node(thing_node)
         try:
-            structure_bucket, object_key = thing_node.to_bucket_and_object_key(
-                metadata_key
+            structure_bucket, _ = get_structure_bucket_and_object_key_prefix_from_id(
+                IdString(thing_node_id)
+            )
+            object_key = ObjectKey.from_thing_node_id_and_metadata_key(
+                thing_node_id=IdString(thing_node_id), metadata_key=metadata_key
             )
         except ValueError as error:
             msg = (
