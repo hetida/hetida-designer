@@ -78,9 +78,10 @@ async def test_blob_storage_service_get_object_key_strings_in_bucket() -> None:
             "hetdesrun.adapters.blob_storage.service.get_s3_client",
             return_value=client_mock,
         ):
-            with pytest.raises(
-                AdapterConnectionError, match=r"bucket.* does not exist"
-            ):
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
+                return_value=mock.Mock(allow_bucket_creation=False),
+            ), pytest.raises(AdapterConnectionError, match=r"bucket.* does not exist"):
                 await get_object_key_strings_in_bucket(
                     BucketName("non_existent_bucket_name")
                 )

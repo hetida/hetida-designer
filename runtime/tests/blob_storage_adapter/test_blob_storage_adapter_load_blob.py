@@ -48,7 +48,7 @@ async def test_blob_storage_load_blob_from_storage_works(caplog: Any) -> None:
         ):
             blob = await load_blob_from_storage(
                 thing_node_id="i-ii/A",
-                metadata_key="A - Next Object",
+                metadata_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             )
 
             assert struct.unpack(">i", blob) == (42,)
@@ -76,7 +76,7 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_source() ->
         ):
             await load_blob_from_storage(
                 thing_node_id="i-ii/A",
-                metadata_key="A - Next Object",
+                metadata_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             )
 
 
@@ -102,7 +102,7 @@ async def test_blob_storage_load_blob_from_storage_with_multiple_existing_source
         ):
             await load_blob_from_storage(
                 thing_node_id="i-ii/A",
-                metadata_key="A - Next Object",
+                metadata_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             )
 
 
@@ -122,13 +122,25 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() ->
                 path="i-ii/A",
                 metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             ),
-        ), pytest.raises(
-            AdapterConnectionError, match=r"bucket.* does not exist"
         ):
-            await load_blob_from_storage(
-                thing_node_id="i-ii/A",
-                metadata_key="A - Next Object",
-            )
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.load_blob.get_blob_adapter_config",
+                return_value=mock.Mock(allow_bucket_creation=False),
+            ), pytest.raises(AdapterConnectionError, match=r"bucket.* does not exist"):
+                await load_blob_from_storage(
+                    thing_node_id="i-ii/A",
+                    metadata_key=(
+                        "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+                    ),
+                )
+
+            with pytest.raises(AdapterConnectionError, match="no object"):
+                await load_blob_from_storage(
+                    thing_node_id="i-ii/A",
+                    metadata_key=(
+                        "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+                    ),
+                )
 
 
 @pytest.mark.asyncio
@@ -154,7 +166,7 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_object() ->
         ):
             await load_blob_from_storage(
                 thing_node_id="i-ii/A",
-                metadata_key="A - Next Object",
+                metadata_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             )
 
 
@@ -166,8 +178,8 @@ async def test_blob_storage_load_data_works() -> None:
     ) as mocked_load_blob_from_storage:
         filtered_source = FilteredSource(
             ref_id="i-ii/A",
-            ref_id_type="SINK",
-            ref_key="A - Next Object",
+            ref_id_type="SOURCE",
+            ref_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             type="Any",
         )
         loaded_data = await load_data(
@@ -193,8 +205,8 @@ async def test_blob_storage_load_data_with_error() -> None:
     ):
         filtered_source = FilteredSource(
             ref_id="i-ii/A",
-            ref_id_type="SINK",
-            ref_key="A - Next Object",
+            ref_id_type="SOURCE",
+            ref_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             type="Any",
         )
         with pytest.raises(AdapterConnectionError):

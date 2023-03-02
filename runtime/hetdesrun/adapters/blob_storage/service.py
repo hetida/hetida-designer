@@ -1,6 +1,7 @@
 from logging import getLogger
 
 import boto3
+from botocore.exceptions import ClientError
 from mypy_boto3_s3 import S3Client
 
 from hetdesrun.adapters.blob_storage.authentication import get_credentials
@@ -50,11 +51,29 @@ async def get_object_key_strings_in_bucket(bucket_name: BucketName) -> list[IdSt
     """
     s3_client = await get_s3_client()
     try:
-        s3_response = s3_client.list_objects_v2(Bucket=bucket_name)
-    except s3_client.exceptions.NoSuchBucket as error:
-        msg = f"The bucket '{bucket_name}' does not exist!"
-        logger.error(msg)
-        raise AdapterConnectionError(msg) from error
+        s3_client.head_bucket(Bucket=bucket_name)
+    except ClientError as client_error:
+        error_code = client_error.response["Error"]["Code"]
+        if error_code != "404":
+            msg = (
+                "Unexpected ClientError occured for head_bucket call with bucket "
+                f"{bucket_name}:\n{error_code}"
+            )
+            logger.error(msg)
+            raise AdapterConnectionError(msg) from client_error
+        if get_blob_adapter_config().allow_bucket_creation:
+            s3_client.create_bucket(
+                Bucket=bucket_name,
+                CreateBucketConfiguration={
+                    "LocationConstraint": get_blob_adapter_config().region_name
+                },
+            )
+        else:
+            msg = f"The bucket '{bucket_name}' does not exist!"
+            logger.error(msg)
+            raise AdapterConnectionError(msg) from client_error
+
+    s3_response = s3_client.list_objects_v2(Bucket=bucket_name)
 
     if s3_response["KeyCount"] == 0:
         return []

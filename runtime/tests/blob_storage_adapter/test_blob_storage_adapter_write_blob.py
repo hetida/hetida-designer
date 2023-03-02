@@ -150,14 +150,23 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> 
                     "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
                 )
             },
-        ), pytest.raises(
-            AdapterConnectionError, match="bucket.* does not exist"
         ):
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.get_blob_adapter_config",
+                return_value=mock.Mock(allow_bucket_creation=False),
+            ), pytest.raises(AdapterConnectionError, match="bucket.* does not exist"):
+                await write_blob_to_storage(
+                    data=struct.pack(">i", 42),
+                    thing_node_id="i-ii/A",
+                    metadata_key="A - Next Object",
+                )
+
             await write_blob_to_storage(
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
             )
+            client_mock.head_bucket(Bucket="i-ii")
 
 
 @pytest.mark.asyncio

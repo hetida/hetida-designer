@@ -5,8 +5,14 @@ from typing import Any
 
 from botocore.exceptions import ClientError, ParamValidationError
 
+from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
-from hetdesrun.adapters.blob_storage.models import BlobStorageStructureSink, IdString
+from hetdesrun.adapters.blob_storage.models import (
+    BlobStorageStructureSink,
+    IdString,
+    ObjectKey,
+    StructureBucket,
+)
 from hetdesrun.adapters.blob_storage.service import get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
     get_sink_by_thing_node_id_and_metadata_key,
@@ -23,14 +29,14 @@ from hetdesrun.runtime.logging import _get_job_id_context
 logger = logging.getLogger(__name__)
 
 
-async def write_blob_to_storage(
-    data: Any, thing_node_id: str, metadata_key: str
-) -> None:
-    """Write BLOB to storage.
+def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
+    thing_node_id: str, metadata_key: str
+) -> tuple[BlobStorageStructureSink, StructureBucket, ObjectKey]:
+    """Get sink, bucket, and object key from thing node id and metadata key.
 
-    Note, that StructureObjectNotFound, StructureObjectNotUnique, and MissingHierarchyError,
-    raised from get_sink_by_thing_node_id_and_metadata_key or StorageAuthenticationError and
-    AdapterConnectionError get_s3_client may occur.
+    Note, that StructureObjectNotFound, StructureObjectNotUnique, MissingHierarchyError, and
+    AdapterClientWiringInvalidError raised from get_sink_by_thing_node_id_and_metadata_key or
+    get_thing_node_by_id may occur.
     """
     try:
         sink = get_sink_by_thing_node_id_and_metadata_key(
@@ -57,6 +63,27 @@ async def write_blob_to_storage(
         logger.info("Get bucket name and object key from sink with id %s", sink.id)
         structure_bucket, object_key = sink.to_structure_bucket_and_object_key(job_id)
 
+    return sink, structure_bucket, object_key
+
+
+async def write_blob_to_storage(
+    data: Any, thing_node_id: str, metadata_key: str
+) -> None:
+    """Write BLOB to storage.
+
+    Note, that StructureObjectNotFound, StructureObjectNotUnique, MissingHierarchyError, and
+    AdapterClientWiringInvalidError raised from
+    get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key or
+    StorageAuthenticationError and AdapterConnectionError raised from get_s3_client may occur.
+    """
+    (
+        sink,
+        structure_bucket,
+        object_key,
+    ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
+        thing_node_id=thing_node_id, metadata_key=metadata_key
+    )
+
     logger.info(
         "Write data for sink '%s' to storage into bucket '%s' as BLOB with key '%s'",
         sink.id,
@@ -64,13 +91,33 @@ async def write_blob_to_storage(
         object_key.string,
     )
     s3_client = await get_s3_client()
+
+    try:
+        s3_client.head_bucket(Bucket=structure_bucket.name)
+    except ClientError as client_error:
+        error_code = client_error.response["Error"]["Code"]
+        if error_code != "404":
+            msg = (
+                "Unexpected ClientError occured for head_bucket call with bucket "
+                f"{structure_bucket.name}:\n{error_code}"
+            )
+            logger.error(msg)
+            raise AdapterConnectionError(msg) from client_error
+        if get_blob_adapter_config().allow_bucket_creation:
+            s3_client.create_bucket(
+                Bucket=structure_bucket.name,
+                CreateBucketConfiguration={
+                    "LocationConstraint": get_blob_adapter_config().region_name
+                },
+            )
+        else:
+            msg = f"The bucket '{structure_bucket.name}' does not exist!"
+            logger.error(msg)
+            raise AdapterConnectionError(msg) from client_error
+
     try:
         # head_object is as get_object but without the body
         s3_client.head_object(Bucket=structure_bucket.name, Key=object_key.string)
-    except s3_client.exceptions.NoSuchBucket as error:
-        raise AdapterConnectionError(
-            f"The bucket '{structure_bucket.name}' does not exist!"
-        ) from error
     except ClientError as client_error:
         error_code = client_error.response["Error"]["Code"]
         if error_code != "404":
