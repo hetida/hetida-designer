@@ -28,8 +28,8 @@ async def write_blob_to_storage(
 ) -> None:
     """Write BLOB to storage.
 
-    Note, that StructureObjectNotFound, StructureObjectNotUnique, and MissingHierarchyError,
-    raised from get_sink_by_thing_node_id_and_metadata_key or StorageAuthenticationError and
+    Note, that StructureObjectNotFound and MissingHierarchyError raised from
+    get_sink_by_thing_node_id_and_metadata_key or StorageAuthenticationError and
     AdapterConnectionError get_s3_client may occur.
     """
     try:

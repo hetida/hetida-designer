@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     """Load BLOB from storage.
 
-    Note, that StructureObjectNotFound, StructureObjectNotUnique, MissingHierarchyError,
-    StorageAuthenticationError, and AdapterConnectionError raised from
-    get_source_by_thing_node_id_and_metadata_key or get_s3_client may occur.
+    Note, that StructureObjectNotFound, MissingHierarchyError, StorageAuthenticationError, and
+    AdapterConnectionError raised from get_source_by_thing_node_id_and_metadata_key or
+    get_s3_client may occur.
     """
     logger.info(
         "Identify source with thing node id '%s' and metadata key '%s'",

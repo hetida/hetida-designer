@@ -4,11 +4,9 @@ import pytest
 
 from hetdesrun.adapters.blob_storage.exceptions import (
     StructureObjectNotFound,
-    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
-    BlobStorageStructureSink,
     BlobStorageStructureSource,
     HierarchyNode,
     IdString,
@@ -267,20 +265,6 @@ def test_blob_storage_get_thing_node_by_id() -> None:
         with pytest.raises(StructureObjectNotFound):
             get_thing_node_by_id(IdString("bla"))
 
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.thing_nodes",
-            new_callable=mock.PropertyMock,
-            return_value=[
-                StructureThingNode(
-                    id="i-ii", parentId="i", name="ii", description="Category"
-                ),
-                StructureThingNode(
-                    id="i-ii", parentId="i", name="ii", description="Kategory"
-                ),
-            ],
-        ), pytest.raises(StructureObjectNotUnique):
-            get_thing_node_by_id(IdString("i-ii"))
-
 
 @pytest.mark.asyncio
 async def test_blob_storage_get_source_by_id() -> None:
@@ -345,28 +329,6 @@ def test_blob_storage_get_sink_by_id() -> None:
 
         with pytest.raises(StructureObjectNotFound):
             get_sink_by_id(IdString("bla"))
-
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
-            new_callable=mock.PropertyMock,
-            return_value=[
-                BlobStorageStructureSink(
-                    id="i-i/A_generic_sink",
-                    thingNodeId="i-i/A",
-                    name="A - Next Object",
-                    path="i-i/A",
-                    metadataKey="A - Next Object",
-                ),
-                BlobStorageStructureSink(
-                    id="i-i/A_generic_sink",
-                    thingNodeId="i-i/A",
-                    name="A - Next Object",
-                    path="i-i/A",
-                    metadataKey="A - Next Object",
-                ),
-            ],
-        ), pytest.raises(StructureObjectNotUnique):
-            get_sink_by_id(IdString("i-i/A_generic_sink"))
 
 
 def mocked_get_thing_node_by_id(thing_node_id: IdString) -> StructureThingNode:
@@ -436,28 +398,4 @@ def test_blob_storage_get_sink_by_thing_node_id_and_metadata_key() -> None:
         with pytest.raises(StructureObjectNotFound):
             get_sink_by_thing_node_id_and_metadata_key(
                 thing_node_id=IdString("i-i/B"), metadata_key="A - Next Object"
-            )
-
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.models.AdapterHierarchy.sinks",
-            new_callable=mock.PropertyMock,
-            return_value=[
-                BlobStorageStructureSink(
-                    id="i-i/A_generic_sink",
-                    thingNodeId="i-i/A",
-                    name="A - Next Object",
-                    path="i-i/A",
-                    metadataKey="A - Next Object",
-                ),
-                BlobStorageStructureSink(
-                    id="i-i/A_generic_sink",
-                    thingNodeId="i-i/A",
-                    name="A - Next Object",
-                    path="i-i/A",
-                    metadataKey="A - Next Object",
-                ),
-            ],
-        ), pytest.raises(StructureObjectNotUnique):
-            sink_by_tn_id_and_md_key = get_sink_by_thing_node_id_and_metadata_key(
-                thing_node_id=IdString("i-i/A"), metadata_key="A - Next Object"
             )

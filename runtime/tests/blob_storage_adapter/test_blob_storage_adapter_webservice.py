@@ -9,7 +9,6 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     MissingHierarchyError,
     StorageAuthenticationError,
     StructureObjectNotFound,
-    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
@@ -431,21 +430,6 @@ async def test_blob_adapter_webservice_exceptions(
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
-            side_effect=StructureObjectNotUnique,
-        ):
-            many_sources_response = await client.get(
-                "/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
-            )
-
-            assert many_sources_response.status_code == 500
-            assert (
-                "with id 'i-i/A_2022-01-02T14:23:18+00:00'"
-                in many_sources_response.json()["detail"]
-            )
-            assert "not unique" in many_sources_response.json()["detail"]
-
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
             side_effect=MissingHierarchyError,
         ):
             missing_hierarchy_sources_response = await client.get(
@@ -512,20 +496,6 @@ async def test_blob_adapter_webservice_exceptions(
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
-            side_effect=StructureObjectNotUnique,
-        ):
-            many_sinks_response = await client.get(
-                "/adapters/blob/sinks/i-i/A_generic_sink"
-            )
-
-            assert many_sinks_response.status_code == 500
-            assert (
-                "with id 'i-i/A_generic_sink'" in many_sinks_response.json()["detail"]
-            )
-            assert "not unique" in many_sinks_response.json()["detail"]
-
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
             side_effect=MissingHierarchyError,
         ):
             missing_hierarchy_sinks_response = await client.get(
@@ -553,18 +523,6 @@ async def test_blob_adapter_webservice_exceptions(
                 "Could not find thing node" in no_thing_node_response.json()["detail"]
             )
             assert "with id 'i-i/A'" in no_thing_node_response.json()["detail"]
-
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",
-            side_effect=StructureObjectNotUnique,
-        ):
-            many_thing_nodes_response = await client.get(
-                "/adapters/blob/thingNodes/i-i/A"
-            )
-
-            assert many_thing_nodes_response.status_code == 500
-            assert "with id 'i-i/A'" in many_thing_nodes_response.json()["detail"]
-            assert "not unique" in many_thing_nodes_response.json()["detail"]
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",

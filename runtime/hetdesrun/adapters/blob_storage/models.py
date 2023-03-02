@@ -653,6 +653,7 @@ class AdapterHierarchy(BaseModel):
         # https://github.com/pydantic/pydantic/issues/1241
         frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
 
+    @cached_property
     def create_structure(
         self,
     ) -> tuple[
@@ -664,12 +665,28 @@ class AdapterHierarchy(BaseModel):
 
     @cached_property
     def thing_nodes(self) -> list[StructureThingNode]:
-        thing_nodes, _, _ = self.create_structure()
+        thing_nodes, _, _ = self.create_structure
         return thing_nodes
 
     @cached_property
+    def thing_node_by_id(self) -> dict[IdString, StructureThingNode]:
+        return {tn.id: tn for tn in self.thing_nodes}
+
+    @cached_property
+    def thing_nodes_by_parent_id(
+        self,
+    ) -> dict[IdString | None, list[StructureThingNode]]:
+        tn_dict: dict[IdString | None, list[StructureThingNode]] = {}
+        for tn in self.thing_nodes:
+            if tn.parentId in tn_dict:
+                tn_dict[tn.parentId].append(tn)
+            else:
+                tn_dict[tn.parentId] = [tn]
+        return tn_dict
+
+    @cached_property
     def structure_buckets(self) -> list[StructureBucket]:
-        _, buckets, _ = self.create_structure()
+        _, buckets, _ = self.create_structure
         if len(buckets) != len(set(buckets)):
             msg = (
                 "The bucket names generated from the config file are not unique!\n"
@@ -681,8 +698,28 @@ class AdapterHierarchy(BaseModel):
 
     @cached_property
     def sinks(self) -> list[BlobStorageStructureSink]:
-        _, _, sinks = self.create_structure()
+        _, _, sinks = self.create_structure
         return sinks
+
+    @cached_property
+    def sink_by_id(self) -> dict[IdString, BlobStorageStructureSink]:
+        return {snk.id: snk for snk in self.sinks}
+
+    @cached_property
+    def sinks_by_parent_id(self) -> dict[IdString, list[BlobStorageStructureSink]]:
+        snk_dict: dict[IdString, list[BlobStorageStructureSink]] = {}
+        for snk in self.sinks:
+            if snk.thingNodeId in snk_dict:
+                snk_dict[snk.thingNodeId].append(snk)
+            else:
+                snk_dict[snk.thingNodeId] = [snk]
+        return snk_dict
+
+    @cached_property
+    def sink_by_thing_node_id_and_metadata_key(
+        self,
+    ) -> dict[tuple[IdString, str], BlobStorageStructureSink]:
+        return {(snk.thingNodeId, snk.metadataKey): snk for snk in self.sinks}
 
     @classmethod
     def from_file(

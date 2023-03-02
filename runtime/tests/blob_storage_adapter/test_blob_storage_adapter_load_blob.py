@@ -11,7 +11,6 @@ from moto import mock_s3
 from hetdesrun.adapters.blob_storage.exceptions import (
     AdapterConnectionError,
     StructureObjectNotFound,
-    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.load_blob import load_blob_from_storage, load_data
 from hetdesrun.adapters.blob_storage.models import BlobStorageStructureSource
@@ -73,32 +72,6 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_source() ->
             side_effect=StructureObjectNotFound,
         ), pytest.raises(
             StructureObjectNotFound
-        ):
-            await load_blob_from_storage(
-                thing_node_id="i-ii/A",
-                metadata_key="A - Next Object",
-            )
-
-
-@pytest.mark.asyncio
-async def test_blob_storage_load_blob_from_storage_with_multiple_existing_sources() -> None:
-    with mock_s3():
-        client_mock = boto3.client("s3", region_name="us-east-1")
-        bucket_name = "i-ii"
-        client_mock.create_bucket(Bucket=bucket_name)
-        client_mock.put_object(
-            Bucket=bucket_name,
-            Key="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
-            Body=struct.pack(">i", 42),
-        )
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.load_blob.get_s3_client",
-            return_value=client_mock,
-        ), mock.patch(
-            "hetdesrun.adapters.blob_storage.load_blob.get_source_by_thing_node_id_and_metadata_key",
-            side_effect=StructureObjectNotUnique,
-        ), pytest.raises(
-            StructureObjectNotUnique
         ):
             await load_blob_from_storage(
                 thing_node_id="i-ii/A",
