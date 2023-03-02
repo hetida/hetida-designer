@@ -630,6 +630,18 @@ def create_blob_storage_adapter_structure_objects_from_hierarchy(
         hierarchy_node.create_structure(
             thing_nodes, bucket_names, sinks, parent_id=None, part_of_bucket_name=True
         )
+
+    if len(bucket_names) != len(set(bucket_names)):
+        bucket_names_string = ", ".join(bn.name for bn in bucket_names)
+        raise ValueError(f"Bucket names are not unique!\n{bucket_names_string}")
+
+    thing_node_ids = [tn.id for tn in thing_nodes]
+    if len(thing_nodes) != len(set(thing_node_ids)):
+        thing_nodes_string = ", ".join(thing_node_ids)
+        raise ValueError(f"Thing nodes are not unique!\n{thing_nodes_string}")
+
+    # The sinks are unique if the thing nodes are unique.
+
     return thing_nodes, bucket_names, sinks
 
 

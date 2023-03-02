@@ -678,7 +678,7 @@ def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
                 below_structure_defines_object_key=True,
                 substructure=[
                     HierarchyNode(
-                        name="i",
+                        name="I",
                         description="Category",
                     )
                 ],
@@ -690,11 +690,33 @@ def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
                 substructure=[
                     HierarchyNode(
                         name="I",
-                        description="Category",
+                        description="Another Category",
                     )
                 ],
             ),
         ],
     )
-    with pytest.raises(ValueError, match=r"bucket names.* not unique"):
+    with pytest.raises(ValueError, match="Bucket names are not unique"):
+        adapter_hierarchy.structure_buckets
+
+    adapter_hierarchy = AdapterHierarchy(
+        structure=[
+            HierarchyNode(
+                name="III",
+                description="Super Category",
+                below_structure_defines_object_key=True,
+                substructure=[
+                    HierarchyNode(
+                        name="I",
+                        description="Category",
+                    ),
+                    HierarchyNode(
+                        name="I",
+                        description="Another Category",
+                    ),
+                ],
+            ),
+        ],
+    )
+    with pytest.raises(ValueError, match="Thing nodes are not unique"):
         adapter_hierarchy.structure_buckets
