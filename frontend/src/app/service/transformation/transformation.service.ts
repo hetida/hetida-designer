@@ -129,7 +129,6 @@ export class TransformationService {
     );
   }
 
-  // TODO unit test
   releaseTransformation(
     transformation: Transformation
   ): Observable<Transformation> {
