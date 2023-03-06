@@ -43,7 +43,7 @@ jobs:
           echo "START designer in background using overmind"
           # Start designer in background
           nix-shell --run 'echo "Running for dep buildup"'
-          nix-shell --run 'overmind s' &
+          nix-shell --run 'overmind s > overmind_log.txt' &
 
 
       - name: Prepare_Playwright
@@ -117,3 +117,10 @@ jobs:
           nix-shell --run 'overmind k'
 
           echo "Cleanup completed."
+
+      - name: Archive overmind log
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: overmind_log
+          path: overmind_log.txt

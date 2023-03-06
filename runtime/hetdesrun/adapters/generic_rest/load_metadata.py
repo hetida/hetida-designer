@@ -2,10 +2,10 @@ import asyncio
 import logging
 import urllib
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
-from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, ValidationError
 
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
@@ -16,6 +16,7 @@ from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_bas
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, ValueDataType
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -24,13 +25,12 @@ logger = logging.getLogger(__name__)
 class Metadatum(BaseModel):
     key: str
     value: Any
-    dataType: Optional[ValueDataType] = None
+    dataType: ValueDataType | None = None
 
 
 async def load_single_metadatum_from_adapter(
     filtered_source: FilteredSource, adapter_key: str, client: httpx.AsyncClient
 ) -> Any:
-
     if filtered_source.ref_id_type == RefIdType.SOURCE:
         endpoint = "sources"
     elif filtered_source.ref_id_type == RefIdType.SINK:
@@ -89,7 +89,7 @@ async def load_single_metadatum_from_adapter(
         raise AdapterConnectionError(msg)
 
     value_datatype = ExternalType(filtered_source.type).value_datatype
-    assert value_datatype is not None  # for mypy
+    assert value_datatype is not None  # for mypy   # noqa: S101
 
     if metadatum.dataType is not None and metadatum.dataType != value_datatype:
         msg = (
@@ -114,9 +114,18 @@ async def load_single_metadatum_from_adapter(
 
 
 async def load_multiple_metadata(
-    data_to_load: Dict[str, FilteredSource], adapter_key: str
-) -> Dict[str, Any]:
-    headers = get_generic_rest_adapter_auth_headers()
+    data_to_load: dict[str, FilteredSource], adapter_key: str
+) -> dict[str, Any]:
+    try:
+        headers = await get_generic_rest_adapter_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for loading multiple metadata from adapter"
+            f"with key {adapter_key}. Error was:\n{str(e)}"
+        )
+        logger.info(msg)
+        raise AdapterHandlingException(msg) from e
+
     async with httpx.AsyncClient(
         headers=headers,
         verify=get_config().hd_adapters_verify_certs,
@@ -128,4 +137,4 @@ async def load_multiple_metadata(
                 for filtered_source in data_to_load.values()
             )
         )
-    return dict(zip(data_to_load.keys(), loaded_metadata))
+    return dict(zip(data_to_load.keys(), loaded_metadata, strict=True))

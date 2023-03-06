@@ -1,5 +1,6 @@
 """Parse workflow input into data structures of plain engine"""
-from typing import Callable, Coroutine, Dict, List, Tuple, Union, cast
+from collections.abc import Callable, Coroutine
+from typing import cast
 
 from hetdesrun.component.load import ComponentCodeImportError, import_func_from_code
 from hetdesrun.datatypes import DataType, NamedDataTypedValue
@@ -39,9 +40,7 @@ class ConnectionInvalidError(WorkflowParsingException):
     pass
 
 
-def only_plot_outputs(
-    outputs: Union[List[ComponentOutput], List[WorkflowOutput]]
-) -> bool:
+def only_plot_outputs(outputs: list[ComponentOutput] | list[WorkflowOutput]) -> bool:
     # in case of an empty output list all will yield true
     return len(outputs) > 0 and all(
         output.type == DataType.PlotlyJson for output in outputs
@@ -50,13 +49,12 @@ def only_plot_outputs(
 
 def parse_workflow_input(
     workflow_node: WorkflowNode,
-    components: List[ComponentRevision],
-    code_modules: List[CodeModule],
+    components: list[ComponentRevision],
+    code_modules: list[CodeModule],
 ) -> Workflow:
+    component_dict: dict[str, ComponentRevision] = {str(c.uuid): c for c in components}
 
-    component_dict: Dict[str, ComponentRevision] = {str(c.uuid): c for c in components}
-
-    code_module_dict: Dict[str, CodeModule] = {str(c.uuid): c for c in code_modules}
+    code_module_dict: dict[str, CodeModule] = {str(c.uuid): c for c in code_modules}
 
     workflow = recursively_parse_workflow_node(
         workflow_node,
@@ -70,8 +68,8 @@ def parse_workflow_input(
 
 
 def load_func(
-    component: ComponentRevision, code_module_dict: Dict[str, CodeModule]
-) -> Union[Coroutine, Callable]:
+    component: ComponentRevision, code_module_dict: dict[str, CodeModule]
+) -> Coroutine | Callable:
     """Load entrypoint function"""
     code_module_uuid = component.code_module_uuid
     try:
@@ -106,8 +104,8 @@ def load_func(
 
 def parse_component_node(
     component_node: ComponentNode,
-    component_dict: Dict[str, ComponentRevision],
-    code_module_dict: Dict[str, CodeModule],
+    component_dict: dict[str, ComponentRevision],
+    code_module_dict: dict[str, CodeModule],
     name_prefix: str,
     id_prefix: str,
 ) -> ComputationNode:
@@ -147,8 +145,8 @@ def parse_component_node(
 
 
 def apply_connections(
-    wf_sub_nodes: Dict[str, Node],
-    connections: List[WorkflowConnection],
+    wf_sub_nodes: dict[str, Node],
+    connections: list[WorkflowConnection],
 ) -> None:
     """Wires one level of a workflow from this level's connections
 
@@ -183,7 +181,7 @@ def apply_connections(
 
 def obtain_inputs_by_role(
     node: WorkflowNode,
-) -> Tuple[List[WorkflowInput], List[WorkflowInput]]:
+) -> tuple[list[WorkflowInput], list[WorkflowInput]]:
     """
     returns a pair of Lists where the first list contains all dynamic inputs and the second
     consists of all constant inputs
@@ -199,19 +197,19 @@ def generate_constant_input_name(inp: WorkflowInput) -> str:
 
 
 def obtain_mappings(
-    dynamic_inputs: List[WorkflowInput],
-    constant_inputs: List[WorkflowInput],
-    outputs: List[WorkflowOutput],
-    new_sub_nodes: Dict[str, Node],
-) -> Tuple[
-    Dict[str, Tuple[Node, str]],
-    Dict[str, Tuple[Node, str]],
-    Dict[str, Tuple[Node, str]],
+    dynamic_inputs: list[WorkflowInput],
+    constant_inputs: list[WorkflowInput],
+    outputs: list[WorkflowOutput],
+    new_sub_nodes: dict[str, Node],
+) -> tuple[
+    dict[str, tuple[Node, str]],
+    dict[str, tuple[Node, str]],
+    dict[str, tuple[Node, str]],
 ]:
     """
     Return Tripel consisting of dynamic input mappings, constant input mappings, output mappings
     """
-    dynamic_input_mappings: Dict[str, Tuple[Node, str]] = {
+    dynamic_input_mappings: dict[str, tuple[Node, str]] = {
         cast(str, inp.name): (
             # casting since mypy does not know that for non-constant inputs
             # a name is mandatory
@@ -239,8 +237,8 @@ def obtain_mappings(
 
 def recursively_parse_workflow_node(
     node: WorkflowNode,
-    component_dict: Dict[str, ComponentRevision],
-    code_module_dict: Dict[str, CodeModule],
+    component_dict: dict[str, ComponentRevision],
+    code_module_dict: dict[str, CodeModule],
     name_prefix: str = "\\",
     id_prefix: str = "\\",
 ) -> Workflow:
@@ -250,7 +248,7 @@ def recursively_parse_workflow_node(
     workflows.
     """
     node_name = node.name if node.name is not None else "UNKNOWN"
-    new_sub_nodes: Dict[str, Node] = {}
+    new_sub_nodes: dict[str, Node] = {}
     for sub_input_node in node.sub_nodes:
         new_sub_node: Node
         if isinstance(sub_input_node, WorkflowNode):
@@ -262,7 +260,9 @@ def recursively_parse_workflow_node(
                 id_prefix=id_prefix + node.id + "\\",
             )
         else:  # ComponentNode
-            assert isinstance(sub_input_node, ComponentNode)  # hint for mypy # nosec
+            assert isinstance(  # noqa: S101
+                sub_input_node, ComponentNode
+            )  # hint for mypy
             new_sub_node = parse_component_node(
                 sub_input_node,
                 component_dict,
@@ -272,7 +272,7 @@ def recursively_parse_workflow_node(
             )
         new_sub_nodes[str(sub_input_node.id)] = new_sub_node
 
-    connections: List[WorkflowConnection] = node.connections
+    connections: list[WorkflowConnection] = node.connections
 
     apply_connections(new_sub_nodes, connections)
 

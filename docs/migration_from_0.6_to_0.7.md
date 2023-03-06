@@ -42,4 +42,3 @@ docker run --rm \
   --entrypoint python \
   hetida/designer-runtime:0.7.2 -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/migration_data/", update_component_code=False);'
 ```
-

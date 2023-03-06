@@ -79,7 +79,62 @@ unsupported operand type(s) for +: 'dict' and 'dict'",
 
 This can be avoided by putting a "Pass through (Series)" component in front of it, so that the input data type is changed and thus explicit:
 
-<img src="./assets/parsing_any.png" height="160" width=485>
+<img src="./assets/parsing_any.png" height="160" width=485 data-align="center">
 <img src="./assets/parsing_series.png" height="140" width=730>
 
 So the general tip is to avoid ANY as input that needs to be wired and instead to put the respective Pass Through component in front.
+
+
+## Storing and loading objects with self defined classes
+When combining self-defined classes with storing and loading objects, e.g. via the [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md), the classes must be defined in seperate components.
+The component that contains such a class, should just return the class as i.e. in the component "ExampleClass" from the category "Classes". 
+```python
+
+class ExampleClass:
+    ...
+return {"class _object": ExampleClass}
+```
+A component in which an instance of this class is created should take this class as an input.
+For better readability it is recommended to name the input just as the class, but it may as well be named differently.
+```python
+...
+def main(*, ExampleClass, ...)
+	...
+	example_class_object = ExampleClass(...)
+	...
+```
+When loading the stored object in a worklfow the exactly same component must be contained in this workflow to ensure that the class is imported correctly.
+
+<img src="./assets/store_object_with_class.png" height="150" width=750 data-align="center">
+
+Usually the class is not needed explicitly so that the there is no reason to link the component with the class definition to any input, instead it can be linked to the component "Forget" from the category "Connectors".
+
+<img src="./assets/load_object_with_class.png" height="225" width=750 data-align="center">
+
+
+## Identifiy source for latest stored object via endpoints
+The [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md) adds the storage timestamp to the name of each stored object and automatically creates a new source corresponding to that object.
+
+A request to the [/structure endpoint (GET)](./adapter_system/generic_rest_adapters/web_service_interface.md#structure-endpoint-get) with the `ref_id` as `parentId` path parameter will return a list of all thing nodes, sources and sinks below the thingnode with the id `parentId` as a response.
+```json
+{
+	"id": "planta-picklingunit/Influx/Anomalies_2023-02-14T12:19:38+00:00",
+	"thingNodeId": "planta-picklingunit/Influx/Anomalies",
+	"name": "Anomalies - 2023-02-14 12:19:38+00:00",
+	"path": "planta-picklingunit/Influx/Anomalies",
+	"metadataKey": "Anomalies - 2023-02-14 12:19:38+00:00"
+}
+```
+
+The attributes `ref_id` and `ref_key` of the corresponding input wiring must be set to the values of the attributes `thingNodeId` and `metadataKey` of this source, respectively.
+```json
+{
+	"adapter_id": "blob-storage-adapter",
+	"filters": {},
+	"ref_id": "planta-picklingunit/Influx/Anomalies",
+	"ref_id_type": "THINGNODE",
+	"ref_key": "Anomalies - 2023-02-14 12:19:38+00:00",
+	"type": "metadata(any)",
+	"workflow_input_name": "example_class_object"
+}
+```

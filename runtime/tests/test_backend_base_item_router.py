@@ -12,7 +12,7 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.utils import get_uuid_from_seed
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def clean_test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
@@ -472,7 +472,7 @@ async def test_update_transformation_revision_from_released_component_dto(
                 json=tr_dto_json_component_2_update,
             )
 
-        assert response.status_code == 403
+        assert response.status_code == 409
 
 
 @pytest.mark.asyncio

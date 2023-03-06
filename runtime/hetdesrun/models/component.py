@@ -1,7 +1,6 @@
-from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field, validator
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.base import AbstractNode
@@ -16,8 +15,8 @@ class UnnamedInput(BaseModel):
     since there the name is the mean through which the input is mapped to a function parameter.
     """
 
-    id: UUID
-    type: DataType = Field(
+    id: UUID  # noqa: A003
+    type: DataType = Field(  # noqa: A003
         ...,
         description="one of "
         + ", ".join(['"' + x.value + '"' for x in list(DataType)]),
@@ -33,24 +32,22 @@ class ComponentInput(UnnamedInput):
 
     name: str = Field(..., example="x", description="must be a valid Python identifier")
 
-    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         return valid_python_identifier(cls, name)
 
 
 class ComponentOutput(BaseModel):
-    id: UUID
+    id: UUID  # noqa: A003
 
     name: str = Field(..., example="z", description="must be a valid Python identifier")
-    type: DataType = Field(
+    type: DataType = Field(  # noqa: A003
         ...,
         description="one of "
         + ", ".join(['"' + x.value + '"' for x in list(DataType)]),
         example=DataType.Integer,
     )
 
-    # pylint: disable=no-self-argument
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         return valid_python_identifier(cls, name)
@@ -60,7 +57,7 @@ class ComponentRevision(BaseModel):
     """Runtime representation of a component revision"""
 
     uuid: UUID
-    name: Optional[str] = Field(None, description="component name")
+    name: str | None = Field(None, description="component name")
     tag: str
     code_module_uuid: UUID = Field(
         ...,
@@ -77,27 +74,24 @@ class ComponentRevision(BaseModel):
         "which is the entrypoint for this component",
     )
 
-    inputs: List[ComponentInput]
-    outputs: List[ComponentOutput]
+    inputs: list[ComponentInput]
+    outputs: list[ComponentOutput]
 
-    # pylint: disable=no-self-argument
     @validator("function_name")
     def function_name_valid_python_identifier(cls, function_name: str) -> str:
         return valid_python_identifier(cls, function_name)
 
-    # pylint: disable=no-self-argument
     @validator("inputs", each_item=False)
-    def input_names_unique(cls, inputs: List[ComponentInput]) -> List[ComponentInput]:
+    def input_names_unique(cls, inputs: list[ComponentInput]) -> list[ComponentInput]:
         return names_unique(cls, inputs)
 
-    # pylint: disable=no-self-argument
     @validator("outputs", each_item=False)
     def output_names_unique(
-        cls, outputs: List[ComponentOutput]
-    ) -> List[ComponentOutput]:
+        cls, outputs: list[ComponentOutput]
+    ) -> list[ComponentOutput]:
         return names_unique(cls, outputs)
 
 
 class ComponentNode(AbstractNode):
     component_uuid: str  # ref to the component
-    name: Optional[str] = Field(None, description="component node name")
+    name: str | None = Field(None, description="component node name")

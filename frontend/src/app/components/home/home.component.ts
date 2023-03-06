@@ -8,6 +8,7 @@ import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Transformation } from 'src/app/model/transformation';
 import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
+import { ConfigService } from '../../service/configuration/config.service';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { LocalStorageService } from 'src/app/service/local-storage/local-storage.service';
 import { selectHashedTransformationLookupById } from 'src/app/store/transformation/transformation.selectors';
@@ -28,11 +29,13 @@ export class HomeComponent implements OnInit {
     private readonly transformationActionService: TransformationActionService,
     private readonly tabItemService: TabItemService,
     private readonly contextMenuService: ContextMenuService,
-    private readonly httpClient: HttpClient
+    private readonly httpClient: HttpClient,
+    private readonly configService: ConfigService
   ) {}
 
   public lastOpened: Observable<Transformation[]>;
   public version: string;
+  public _userInfoText: string;
 
   ngOnInit() {
     this.httpClient
@@ -58,6 +61,9 @@ export class HomeComponent implements OnInit {
           );
       })
     );
+    this.configService.getConfig().subscribe(config => {
+      this._userInfoText = config.userInfoText;
+    });
   }
 
   get lastOpenedWorkflows() {

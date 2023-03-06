@@ -1,13 +1,10 @@
 from unittest import mock
 
-import nest_asyncio
 import pandas as pd
 import pytest
 
 from hetdesrun.adapters.local_file import load_data, send_data
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
-
-nest_asyncio.apply()
 
 
 async def walk_thing_nodes(
@@ -20,7 +17,6 @@ async def walk_thing_nodes(
     tn_attached_metadata_dict,
     open_async_test_client,
 ):
-
     """Recursively walk thingnodes"""
     response_obj = (
         await open_async_test_client.get(
@@ -75,9 +71,8 @@ async def walk_thing_nodes(
     "ignore:an integer is required*"
 )  # pandas to_json currently throws a deprecation warning
 async def test_resources_offered_from_structure_hierarchy(async_test_client):
-    """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""
+    """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""  # noqa: E501
     async with async_test_client as client:
-
         response_obj = (await client.get("/adapters/localfile/structure")).json()
 
         assert len(response_obj["sources"]) == 0
@@ -106,9 +101,9 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
             open_async_test_client=client,
         )
 
-        assert len(all_tns) == 4
-        assert len(all_srcs) == 7
-        assert len(all_snks) == 2
+        assert len(all_tns) == 5
+        assert len(all_srcs) == 8
+        assert len(all_snks) == 9
         assert len(src_attached_metadata_dict) == 0
         assert len(snk_attached_metadata_dict) == 0
         assert len(tn_attached_metadata_dict) == 0
@@ -116,14 +111,14 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
             response_obj = (
                 await client.get(f'/adapters/localfile/sources/{src["id"]}')
             ).json()
-            for key in src.keys():
+            for key in src:
                 assert response_obj[key] == src[key]
 
         for snk in all_snks:
             response_obj = (
                 await client.get(f'/adapters/localfile/sinks/{snk["id"]}')
             ).json()
-            for key in snk.keys():
+            for key in snk:
                 print(response_obj)
                 assert response_obj[key] == snk[key]
 
@@ -131,12 +126,12 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
             response_obj = (
                 await client.get(f'/adapters/localfile/thingNodes/{tn["id"]}')
             ).json()
-            for key in tn.keys():
+            for key in tn:
                 print(response_obj)
                 assert response_obj[key] == tn[key]
 
         # we actually get all metadata that is available as attached to something:
-        for ((src_id, key), md) in src_attached_metadata_dict.items():
+        for (src_id, key), md in src_attached_metadata_dict.items():
             response_obj = (
                 await client.get(f"/adapters/localfile/sources/{src_id}/metadata/{key}")
             ).json()
@@ -152,7 +147,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                 )
                 assert resp.status_code == 200
 
-        for ((snk_id, key), md) in snk_attached_metadata_dict.items():
+        for (snk_id, key), md in snk_attached_metadata_dict.items():
             response_obj = (
                 await client.get(f"/adapters/localfile/sinks/{snk_id}/metadata/{key}")
             ).json()
@@ -168,7 +163,7 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                 )
                 assert resp.status_code == 200
 
-        for ((tn_id, key), md) in tn_attached_metadata_dict.items():
+        for (tn_id, key), md in tn_attached_metadata_dict.items():
             response_obj = (
                 await client.get(
                     f"/adapters/localfile/thingNodes/{tn_id}/metadata/{key}"
@@ -189,17 +184,8 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
         # all metadata that is a source in the tree is also found
         for src in all_srcs:
             if src["type"].startswith("metadata"):
-                response_obj = (
-                    await client.get(
-                        f'/adapters/localfile/thingNodes/{src["thingNodeId"]}/metadata/{src["metadataKey"]}'
-                    )
-                ).json()
-                print(response_obj, "versus", src)
+                continue  # we do not offer these in metadata endpoints
 
-                assert response_obj["key"] == src["metadataKey"]
-                assert response_obj["dataType"] == (
-                    ExternalType(src["type"]).value_datatype.value
-                )
             if src["type"].startswith("dataframe"):
                 loaded_df = (
                     await load_data(
@@ -225,33 +211,15 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
         # metadata that is a sink in the tree is also always obtainable
         for snk in all_snks:
             if snk["type"].startswith("metadata"):
-                response_obj = (
-                    await client.get(
-                        f'/adapters/localfile/thingNodes/{snk["thingNodeId"]}/metadata/{snk["metadataKey"]}'
-                    )
-                ).json()
-                print(response_obj, "versus", snk)
-
-                assert response_obj["key"] == snk["metadataKey"]
-                assert response_obj["dataType"] == (
-                    ExternalType(snk["type"]).value_datatype.value
-                )
-
-                resp = await client.post(
-                    f'/adapters/localfile/thingNodes/{snk["thingNodeId"]}/metadata/{snk["metadataKey"]}',
-                    json=response_obj,
-                )
-
-                assert resp.status_code == 200
+                continue  # we do not offer these in metadata endpoints
 
             if snk["type"].startswith("dataframe"):
-                with mock.patch(
+                with mock.patch(  # noqa: SIM117
                     "hetdesrun.adapters.local_file.write_file.pd.DataFrame.to_csv"
                 ) as to_csv_mock:
                     with mock.patch(
                         "hetdesrun.adapters.local_file.write_file.pd.DataFrame.to_excel"
                     ) as to_excel_mock:
-
                         await send_data(
                             {
                                 "wf_output": FilteredSink(

@@ -5,13 +5,13 @@ import json
 import logging
 import random
 from enum import Enum
-from typing import Any, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
-import requests  # pylint: disable=unused-import
+import requests  # noqa: F401
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
-from pydantic import BaseModel  # pylint: disable=no-name-in-module
+from pydantic import BaseModel
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.webservice.config import get_config
@@ -30,11 +30,13 @@ def check_explicit_utc(dt: datetime.datetime) -> bool:
     return check_aware(dt) and dt.utcoffset().total_seconds() == 0  # type: ignore
 
 
-def get_backend_basic_auth() -> Tuple[Optional[str], Optional[str]]:
-    return (
-        get_config().hd_backend_basic_auth_user,
-        get_config().hd_backend_basic_auth_password,
-    )
+def get_backend_basic_auth() -> tuple[str | None, str | None] | None:
+    if get_config().hd_backend_use_basic_auth:
+        return (
+            get_config().hd_backend_basic_auth_user,
+            get_config().hd_backend_basic_auth_password,
+        )
+    return None
 
 
 def get_uuid_from_seed(seed_str: str) -> UUID:
@@ -51,8 +53,8 @@ def get_uuid_from_seed(seed_str: str) -> UUID:
 
 
 def load_data(
-    json_file: str, md_file: str, code_file: Optional[str] = None
-) -> Tuple[Optional[dict], Optional[str], Optional[str]]:
+    json_file: str, md_file: str, code_file: str | None = None
+) -> tuple[dict | None, str | None, str | None]:
     """Loads structured and unstructured component / workflow data from files
 
     Helper function to load a bunch of data from
@@ -70,15 +72,15 @@ def load_data(
         from json file as first entry, documentation as second entry and if code_file
         is not None the code as third entry. If some part of loading failes, None is returned
     """
-    with open(json_file, "r", encoding="utf8") as f:
+    with open(json_file, encoding="utf8") as f:
         try:
             info = json.load(f)
         except json.JSONDecodeError:
             logger.error("Could not decode %s", json_file)
             info = None
-    doc: Optional[str]
+    doc: str | None
     try:
-        with open(md_file, "r", encoding="utf8") as f:
+        with open(md_file, encoding="utf8") as f:
             doc = f.read()
     except FileNotFoundError:
         logger.error("Could not find documentation markdonw file %s", md_file)
@@ -87,9 +89,9 @@ def load_data(
     if code_file is None:
         return info, doc, None
 
-    code: Optional[str]
+    code: str | None
     try:
-        with open(code_file, "r", encoding="utf8") as f:
+        with open(code_file, encoding="utf8") as f:
             code = f.read()
     except FileNotFoundError:
         logger.error("Could not find code file %s", code_file)
@@ -112,11 +114,11 @@ class Type(str, Enum):
 
 
 class IODTO(BaseModel):
-    id: UUID
+    id: UUID  # noqa: A003
     name: str
     posX: int = 0
     posY: int = 0
-    type: DataType
+    type: DataType  # noqa: A003
 
 
 class ComponentDTO(BaseModel):
@@ -127,13 +129,13 @@ class ComponentDTO(BaseModel):
     code: str
     description: str
     groupId: UUID
-    id: UUID
-    inputs: List[IODTO]
-    outputs: List[IODTO]
+    id: UUID  # noqa: A003
+    inputs: list[IODTO]
+    outputs: list[IODTO]
     state: State = State.RELEASED
     tag: str
     testInput: dict = {}
-    type: Type = Type.COMPONENT
+    type: Type = Type.COMPONENT  # noqa: A003
 
 
 def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
@@ -157,19 +159,3 @@ def plotly_fig_to_json_dict(fig: Figure) -> Any:
     # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
     # should be definitely compatible with the plotly javascript library:
     return json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
-
-
-def selection_list_empty_or_contains_value(
-    selection_list: Optional[List[Any]], actual_value: Any
-) -> bool:
-    if selection_list is None:
-        return True
-    return actual_value in selection_list
-
-
-def criterion_unset_or_matches_value(
-    criterion: Optional[Any], actual_value: Any
-) -> bool:
-    if criterion is None:
-        return True
-    return bool(actual_value == criterion)

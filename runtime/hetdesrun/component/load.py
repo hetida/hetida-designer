@@ -1,9 +1,10 @@
 """Loading code and importing functions"""
+import hashlib
 import importlib
 import logging
 import sys
+from collections.abc import Callable, Coroutine
 from types import ModuleType
-from typing import Callable, Coroutine, Union
 
 
 class ComponentCodeImportError(Exception):
@@ -29,7 +30,7 @@ def module_path_from_code(code: str) -> str:
 
 def hash_code(code: str) -> str:
     """Generate a hash from a str representing code that can be used as part of module path"""
-    return hex(hash(code)).replace("-", "_m_")
+    return hashlib.sha256(code.encode("utf8")).hexdigest()
 
 
 def import_func_from_code(
@@ -37,7 +38,7 @@ def import_func_from_code(
     func_name: str,
     raise_if_not_found: bool = False,
     register_module: bool = True,
-) -> Union[Callable, Coroutine]:
+) -> Callable | Coroutine:
     """Lazily loads a function from the given code and registers the imported module
 
     The module is only created and registered if direct import does not work. I.e. if the module
@@ -51,7 +52,7 @@ def import_func_from_code(
 
     try:
         mod = importlib.import_module(module_path)
-        func: Union[Callable, Coroutine] = getattr(mod, func_name)
+        func: Callable | Coroutine = getattr(mod, func_name)
         return func
     except ImportError as e:
         if raise_if_not_found:
@@ -71,7 +72,7 @@ def import_func_from_code(
             ] = mod  # now reachable under the constructed module_path
         try:
             # actually import the module;
-            exec(code, mod.__dict__)  # pylint: disable=exec-used
+            exec(code, mod.__dict__)  # noqa: S102
         except SyntaxError as exec_syntax_exception:
             logger.info(
                 "Syntax Error during importing function %s",
@@ -81,7 +82,7 @@ def import_func_from_code(
                 "Could not import code due to Syntax Errors"
             ) from exec_syntax_exception
 
-        except Exception as exec_exception:
+        except Exception as exec_exception:  # noqa: BLE001
             logger.info(
                 "Exception during importing function %s: %s",
                 func_name,

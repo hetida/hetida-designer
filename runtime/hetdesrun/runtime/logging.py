@@ -24,7 +24,7 @@ class MinimallyMoreCapableJsonEncoder(json.JSONEncoder):
 
     """
 
-    def default(self, obj: Any) -> Any:  # pylint: disable=arguments-renamed
+    def default(self, obj: Any) -> Any:
         if isinstance(obj, UUID):
             # if the obj is uuid, we simply return the value of uuid
             return obj.hex
@@ -71,7 +71,7 @@ class ExecutionContextFilter(logging.Filter):
     def clear_context(self) -> None:
         _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
 
-    def filter(self, record: logging.LogRecord) -> Literal[True]:
+    def filter(self, record: logging.LogRecord) -> Literal[True]:  # noqa: A003
         context_dict = _get_execution_context()
 
         record.currently_executed_transformation_id = context_dict.get(  # type: ignore
@@ -128,7 +128,7 @@ class JobIdContextFilter(logging.Filter):
     def clear_context(self) -> None:
         _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
 
-    def filter(self, record: logging.LogRecord) -> Literal[True]:
+    def filter(self, record: logging.LogRecord) -> Literal[True]:  # noqa: A003
         context_dict = _get_job_id_context()
 
         record.currently_executed_job_id = context_dict.get(  # type: ignore

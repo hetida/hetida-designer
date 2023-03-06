@@ -53,7 +53,7 @@
 with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/af21d41260846fb9c9840a75e310e56dfe97d6a3.tar.gz") {};
 
 let
-  pythonPackages = python39Packages; # Fix Python version from the used nixpkgs commit
+  pythonPackages = python310Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
   venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
   venvDirPythonDemoAdapter = toString ./runtime/nix_venv_hd_dev_python_demo_adapter;
@@ -146,6 +146,7 @@ let
             # Test some imports (for system libraries missing / not found)
             echo "Run test Python command: $run_test_python_command"
             "$venv_target_dir"/bin/python -c "$run_test_python_command"
+            echo "Test command completed."
         fi
 
         if "$configure_jupyter_in_venv" ; then
@@ -163,8 +164,10 @@ let
         fi
 
         if "$activate_venv" ; then
+            echo "Activating venv"
             source "$venv_target_dir/bin/activate"
         fi
+        echo "finished prepare_venv"
 
     }
 
@@ -216,8 +219,9 @@ let
 
       cd ${runtimeDir}
       export HD_DATABASE_URL="postgresql+psycopg2://$(whoami):hetida_designer_dbpasswd@localhost:5432/hetida_designer_db"
-      export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092"
+      export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092,local-file-adapter|Local-File-Adapter|http://localhost:8080/adapters/localfile|http://localhost:8080/adapters/localfile"
       export HD_USE_AUTH=false
+      export HD_MAINTENANCE_SECRET="maintenance"
       echo "WAIT FOR POSTGRES DB"
       sleep 5 # wait for stopping possibly existing postgres instances before trying
       # wait for postgres to be up using the pg_isready utility
@@ -255,7 +259,7 @@ in pkgs.mkShell rec {
   buildInputs = [
     # A Python interpreter including the 'venv' module is required to bootstrap
     # the environment (>36)
-    python39Packages.python
+    python310Packages.python
 
     # Some libraries that may be required by Python libraries we want to use.
     taglib

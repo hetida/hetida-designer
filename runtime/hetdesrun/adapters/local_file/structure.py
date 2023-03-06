@@ -1,7 +1,8 @@
 import os
-from typing import Callable, List, Optional, Tuple
+from collections.abc import Callable
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.local_file.config import local_file_adapter_config
 from hetdesrun.adapters.local_file.detect import (
     LocalFile,
@@ -21,26 +22,38 @@ from hetdesrun.adapters.local_file.utils import (
 
 
 def source_from_local_file(local_file: LocalFile) -> LocalFileStructureSource:
+    file_support_handler = local_file.file_support_handler()
+    assert file_support_handler is not None  # for mypy # noqa: S101
+    external_type = file_support_handler.adapter_data_type
+
     return LocalFileStructureSource(
         id=to_url_representation(local_file.path),
         thingNodeId=to_url_representation(local_file.dir_path),
         name=os.path.basename(local_file.path),
-        type="dataframe",
+        type=external_type,
         visible=True,
-        metadataKey=None,
+        metadataKey=to_url_representation(local_file.path)
+        if external_type is ExternalType.METADATA_ANY
+        else None,
         path=local_file.path,
         filters={},
     )
 
 
 def sink_from_local_file(local_file: LocalFile) -> LocalFileStructureSink:
+    file_support_handler = local_file.file_support_handler()
+    assert file_support_handler is not None  # for mypy # noqa: S101
+    external_type = file_support_handler.adapter_data_type
+
     return LocalFileStructureSink(
         id=to_url_representation(local_file.path),
         thingNodeId=to_url_representation(local_file.dir_path),
         name=os.path.basename(local_file.path),
-        type="dataframe",
+        type=external_type,
         visible=True,
-        metadataKey=None,
+        metadataKey=to_url_representation(local_file.path)
+        if external_type is ExternalType.METADATA_ANY
+        else None,
         path=local_file.path,
         filters={},
     )
@@ -48,9 +61,12 @@ def sink_from_local_file(local_file: LocalFile) -> LocalFileStructureSink:
 
 def local_file_loadable(local_file: LocalFile) -> bool:
     return (
-        local_file.parsed_settings_file is None
-        or local_file.parsed_settings_file.loadable is None
+        local_file.parsed_settings_file is None  # loadable by default config
         or local_file.parsed_settings_file.loadable
+        is None  # loadable null is interpreted as True
+        or local_file.parsed_settings_file.loadable
+    ) and (  # cannot load if extension is not registered
+        local_file.file_support_handler() is not None
     )
 
 
@@ -59,10 +75,25 @@ def local_file_writable(local_file: LocalFile) -> bool:
         local_file.parsed_settings_file is not None
         and local_file.parsed_settings_file.writable is not None
         and local_file.parsed_settings_file.writable
+    ) and (  # cannot load if extension is not registered
+        local_file.file_support_handler() is not None
     )
 
 
-def get_structure(parent_id: Optional[str] = None) -> StructureResponse:
+def generic_any_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
+    gneric_sink_id = "GENERIC_ANY_SINK_AT_" + parent_id
+    return LocalFileStructureSink(
+        id=gneric_sink_id,
+        thingNodeId=parent_id,
+        name="New Pickle File",
+        type=ExternalType.METADATA_ANY,
+        visible=True,
+        path="Prepared Generic Sink",
+        metadataKey=gneric_sink_id,
+    )
+
+
+def get_structure(parent_id: str | None = None) -> StructureResponse:
     """Obtain structure for corresponding adapter web service endpoint
 
     parent_id is a local path encoded via to_url_representation from the utils module of this
@@ -72,7 +103,6 @@ def get_structure(parent_id: Optional[str] = None) -> StructureResponse:
     local_root_dirs = local_file_adapter_config.local_dirs
 
     if parent_id is None:  # get root Nodes
-
         return StructureResponse(
             id="local-file-adapter",
             name="Local File Adapter",
@@ -95,10 +125,8 @@ def get_structure(parent_id: Optional[str] = None) -> StructureResponse:
 
     if not len([current_dir.startswith(root_dir) for root_dir in local_root_dirs]) > 0:
         raise AdapterHandlingException(
-            (
-                f"Requested local file dir {current_dir} not contained in configured "
-                f"root directories {str(local_root_dirs)}"
-            )
+            f"Requested local file dir {current_dir} not contained in configured "
+            f"root directories {str(local_root_dirs)}"
         )
 
     local_files, dirs = get_local_files_and_dirs(current_dir, walk_sub_dirs=False)
@@ -125,14 +153,19 @@ def get_structure(parent_id: Optional[str] = None) -> StructureResponse:
             sink_from_local_file(local_file)
             for local_file in local_files
             if local_file_writable(local_file)
-        ],
+        ]
+        + (
+            [generic_any_sink_at_dir(parent_id)]
+            if local_file_adapter_config.generic_any_sink
+            else []
+        ),
     )
 
 
 def get_filtered_local_files(
-    filter_str: Optional[str],
+    filter_str: str | None,
     selection_criterion_func: Callable[[LocalFile], bool] = local_file_loadable,
-) -> List[LocalFile]:
+) -> list[LocalFile]:
     local_root_dirs = local_file_adapter_config.local_dirs
 
     gathered_local_files = []
@@ -157,7 +190,7 @@ def get_filtered_local_files(
     return gathered_local_files
 
 
-def get_sources(filter_str: Optional[str]) -> List[LocalFileStructureSource]:
+def get_sources(filter_str: str | None) -> list[LocalFileStructureSource]:
     return [
         source_from_local_file(local_file)
         for local_file in get_filtered_local_files(
@@ -166,16 +199,17 @@ def get_sources(filter_str: Optional[str]) -> List[LocalFileStructureSource]:
     ]
 
 
-def get_sinks(filter_str: Optional[str]) -> List[LocalFileStructureSink]:
+def get_sinks(filter_str: str | None) -> list[LocalFileStructureSink]:
     return [
         sink_from_local_file(local_file)
         for local_file in get_filtered_local_files(
             filter_str=filter_str, selection_criterion_func=local_file_writable
         )
     ]
+    # TODO: should generic sinks be present for selection in filtered view?
 
 
-def get_valid_top_dir(path: str) -> Optional[str]:
+def get_valid_top_dir(path: str) -> str | None:
     """Configured top dir in which given path resides"""
 
     local_root_dirs = local_file_adapter_config.local_dirs
@@ -190,8 +224,8 @@ def get_valid_top_dir(path: str) -> Optional[str]:
 
 
 def get_local_file_by_id(
-    id: str,  # pylint: disable=redefined-builtin
-) -> Optional[LocalFile]:
+    id: str, verify_existence: bool = True  # noqa: A002
+) -> LocalFile | None:
     """Get a specific file by id
 
     Rudimentarily checks for existence and returns None if local file could not be found
@@ -208,7 +242,7 @@ def get_local_file_by_id(
     if local_file is None:
         return None
 
-    if not (
+    if verify_existence and not (
         os.path.exists(local_file.path)
         or os.path.exists(local_file.path + ".settings.json")
     ):
@@ -219,7 +253,7 @@ def get_local_file_by_id(
 
 def get_local_dir_info_from_thing_node_id(
     thing_node_id: str,
-) -> Tuple[str, Optional[str]]:
+) -> tuple[str, str | None]:
     dir_path = from_url_representation(thing_node_id)
 
     top_dir = get_valid_top_dir(dir_path)
@@ -231,8 +265,8 @@ def get_local_dir_info_from_thing_node_id(
 
 
 def get_thing_node_by_id(
-    id: str,  # pylint: disable=redefined-builtin
-) -> Optional[StructureThingNode]:
+    id: str,  # noqa: A002
+) -> StructureThingNode | None:
     dir_path, top_dir = get_local_dir_info_from_thing_node_id(id)
 
     if top_dir is None:
@@ -257,7 +291,7 @@ def get_thing_node_by_id(
     )
 
 
-def get_source_by_id(source_id: str) -> Optional[LocalFileStructureSource]:
+def get_source_by_id(source_id: str) -> LocalFileStructureSource | None:
     """Get a specific source file by id
 
     Returns None if source could not be found.
@@ -271,11 +305,15 @@ def get_source_by_id(source_id: str) -> Optional[LocalFileStructureSource]:
     return source_from_local_file(local_file)
 
 
-def get_sink_by_id(sink_id: str) -> Optional[LocalFileStructureSink]:
+def get_sink_by_id(sink_id: str) -> LocalFileStructureSink | None:
     """Get a specific sink file by id
 
     Returns None if sink could not be found.
     """
+
+    if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
+        parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
+        return generic_any_sink_at_dir(parent_id)
 
     local_file = get_local_file_by_id(sink_id)
 

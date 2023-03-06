@@ -15,7 +15,7 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def clean_test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
@@ -97,7 +97,7 @@ async def test_update_documentation_of_component_dto_with_unmatching_ids(
                 json=json_of_new_documentation,
             )
 
-        assert response.status_code == 403
+        assert response.status_code == 409
         assert "does not match" in response.json()["detail"]
 
 

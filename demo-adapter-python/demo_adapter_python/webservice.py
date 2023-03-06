@@ -3,7 +3,7 @@ import datetime
 import json
 import logging
 from io import StringIO
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable
 from urllib.parse import unquote
 
 import numpy as np
@@ -91,9 +91,7 @@ class AdditionalLoggingRoute(APIRoute):
                 body = await request.body()
                 detail = {"errors": exc.errors(), "body": body.decode()}
                 logger.info("Request Validation Error: %s", str(exc))
-                raise HTTPException(  # pylint: disable=raise-missing-from
-                    status_code=422, detail=detail
-                )
+                raise HTTPException(status_code=422, detail=detail) from exc
 
         return custom_route_handler
 
@@ -114,7 +112,7 @@ async def info() -> InfoResponse:
 
 
 @demo_adapter_main_router.get("/structure", response_model=StructureResponse)
-async def structure(parentId: Optional[str] = None) -> StructureResponse:
+async def structure(parentId: str | None = None) -> StructureResponse:
     """The hierarchical structure for easy assignment of sources/sinks in user interfaces
 
     This endpoint is required by the hetida designer UI to show and allow assignment of sources
@@ -150,7 +148,7 @@ async def structure(parentId: Optional[str] = None) -> StructureResponse:
 
 @demo_adapter_main_router.get("/sources", response_model=MultipleSourcesResponse)
 async def sources(
-    filter_str: Optional[str] = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter")
 ) -> MultipleSourcesResponse:
 
     return_sources = get_sources(filter_str=filter_str, include_sub_objects=True)
@@ -161,9 +159,9 @@ async def sources(
 
 
 @demo_adapter_main_router.get(
-    "/sources/{sourceId}/metadata/", response_model=List[Metadatum]
+    "/sources/{sourceId}/metadata/", response_model=list[Metadatum]
 )
-async def get_all_metadata_source(sourceId: str) -> List[Metadatum]:
+async def get_all_metadata_source(sourceId: str) -> list[Metadatum]:
     if sourceId.endswith("temp") and "plantA" in sourceId:
         return [
             Metadatum(key="Max Value", value=300.0, dataType="float"),
@@ -198,7 +196,6 @@ async def get_all_metadata_source(sourceId: str) -> List[Metadatum]:
     "/sources/{sourceId}/metadata/{key}", response_model=Metadatum
 )
 async def get_metadata_source_by_key(sourceId: str, key: str) -> Metadatum:
-    # pylint: disable=too-many-return-statements,too-many-branches
     key = unquote(key)
     if sourceId.endswith("temp") and "plantA" in sourceId:
         if key == "Max Value":
@@ -240,10 +237,12 @@ async def get_metadata_source_by_key(sourceId: str, key: str) -> Metadatum:
     )
 
 
-@demo_adapter_main_router.post("/sources/{sourceId}/metadata/{key}", status_code=200)
+@demo_adapter_main_router.post(
+    "/sources/{sourceId}/metadata/{key}", status_code=200, response_model=None
+)
 async def post_metadata_source_by_key(
     sourceId: str, key: str, metadatum: PostMetadatum
-) -> Union[dict, HTTPException]:
+) -> dict | HTTPException:
     key = unquote(key)
     if sourceId.endswith("temp") and key == "Sensor Config":
 
@@ -253,7 +252,7 @@ async def post_metadata_source_by_key(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
-            isSink=old_metadatum.isSink or True,
+            isSink=old_metadatum.isSink or True,  # noqa: SIM222
         )
 
         set_metadatum_in_store(sourceId, key, new_metadatum)
@@ -286,7 +285,7 @@ async def source(source_id: str) -> StructureSource:
 
 @demo_adapter_main_router.get("/sinks", response_model=MultipleSinksResponse)
 async def sinks(
-    filter_str: Optional[str] = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter")
 ) -> MultipleSinksResponse:
     return_sinks = get_sinks(filter_str=filter_str, include_sub_objects=True)
 
@@ -294,9 +293,9 @@ async def sinks(
 
 
 @demo_adapter_main_router.get(
-    "/sinks/{sinkId}/metadata/", response_model=List[Metadatum]
+    "/sinks/{sinkId}/metadata/", response_model=list[Metadatum]
 )
-async def get_all_metadata_sink(sinkId: str) -> List[Metadatum]:
+async def get_all_metadata_sink(sinkId: str) -> list[Metadatum]:
     if sinkId.endswith("anomaly_score") and "plantA" in sinkId:
         return [
             Metadatum(key="Max Value", value=1.0, dataType="float"),
@@ -339,10 +338,12 @@ async def get_metadata_sink_by_key(sinkId: str, key: str) -> Metadatum:
     )
 
 
-@demo_adapter_main_router.post("/sinks/{sinkId}/metadata/{key}", status_code=200)
+@demo_adapter_main_router.post(
+    "/sinks/{sinkId}/metadata/{key}", status_code=200, response_model=None
+)
 async def post_metadata_sink_by_key(
     sinkId: str, key: str, metadatum: PostMetadatum
-) -> Union[dict, HTTPException]:
+) -> dict | HTTPException:
     key = unquote(key)
     if sinkId.endswith("anomaly_score") and key == "Overshooting Allowed":
 
@@ -352,7 +353,7 @@ async def post_metadata_sink_by_key(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
-            isSink=old_metadatum.isSink or True,
+            isSink=old_metadatum.isSink or True,  # noqa: SIM222
         )
 
         set_metadatum_in_store(sinkId, key, new_metadatum)
@@ -382,9 +383,9 @@ async def sink(sink_id: str) -> StructureSink:
 
 
 @demo_adapter_main_router.get(
-    "/thingNodes/{thingNodeId}/metadata/", response_model=List[Metadatum]
+    "/thingNodes/{thingNodeId}/metadata/", response_model=list[Metadatum]
 )
-async def get_all_metadata_thingNode(thingNodeId: str) -> List[Metadatum]:
+async def get_all_metadata_thingNode(thingNodeId: str) -> list[Metadatum]:
     if thingNodeId == "root.plantA":
         return [
             Metadatum(key="Temperature Unit", value="F", dataType="string"),
@@ -415,7 +416,7 @@ async def get_all_metadata_thingNode(thingNodeId: str) -> List[Metadatum]:
 
 
 def calculate_age(born: datetime.date) -> int:
-    today = datetime.date.today()
+    today = datetime.date.today()  # noqa: DTZ011
     return (
         today.year - born.year - int((today.month, today.day) < (born.month, born.day))
     )
@@ -425,7 +426,6 @@ def calculate_age(born: datetime.date) -> int:
     "/thingNodes/{thingNodeId}/metadata/{key}", response_model=Metadatum
 )
 async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> Metadatum:
-    # pylint: disable=too-many-return-statements
     key = unquote(key)
     if thingNodeId == "root.plantA":
         if key == "Temperature Unit":
@@ -477,11 +477,11 @@ async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> Metadatum
 
 
 @demo_adapter_main_router.post(
-    "/thingNodes/{thingNodeId}/metadata/{key}", status_code=200
+    "/thingNodes/{thingNodeId}/metadata/{key}", status_code=200, response_model=None
 )
 async def post_metadata_thingNode_by_key(
     thingNodeId: str, key: str, metadatum: PostMetadatum
-) -> Union[dict, HTTPException]:
+) -> dict | HTTPException:
     key = unquote(key)
     if thingNodeId in ["root.plantA", "root.plantB"]:
 
@@ -491,7 +491,7 @@ async def post_metadata_thingNode_by_key(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
-            isSink=old_metadatum.isSink or True,
+            isSink=old_metadatum.isSink or True,  # noqa: SIM222
         )
 
         set_metadatum_in_store(thingNodeId, key, new_metadatum)
@@ -505,8 +505,8 @@ async def post_metadata_thingNode_by_key(
 
 @demo_adapter_main_router.get("/thingNodes/{id}", response_model=StructureThingNode)
 async def thing_node(
-    id: str,  # pylint: disable=redefined-builtin
-) -> StructureThingNode:  # pylint: disable=redefined-builtin
+    id: str,  # noqa: A002
+) -> StructureThingNode:
     """Get a single sink by id"""
     requested_thing_nodes = [
         tn for tn in get_thing_nodes(include_sub_objects=True) if tn["id"] == id
@@ -535,7 +535,7 @@ def encode_attributes(data_attrs: Any) -> str:
 
 @demo_adapter_main_router.get("/timeseries")
 async def timeseries(
-    ids: List[str] = Query(..., alias="id", min_length=1),
+    ids: list[str] = Query(..., alias="id", min_length=1),
     from_timestamp: datetime.datetime = Query(
         ..., alias="from", example=datetime.datetime.now(datetime.timezone.utc)
     ),
@@ -626,10 +626,10 @@ def decode_attributes(data_attributes: str) -> Any:
 
 @demo_adapter_main_router.post("/timeseries", status_code=200)
 async def post_timeseries(
-    ts_body: List[TimeseriesRecord],
+    ts_body: list[TimeseriesRecord],
     ts_id: str = Query(..., alias="timeseriesId"),
-    data_attributes: Optional[str] = Header(None),
-) -> Dict:
+    data_attributes: str | None = Header(None),
+) -> dict:
     logger.info("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
     if ts_id.endswith("anomaly_score"):
         df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
@@ -649,10 +649,10 @@ async def post_timeseries(
     raise HTTPException(404, f"No writable timeseries with id {ts_id}")
 
 
-@demo_adapter_main_router.get("/dataframe")
+@demo_adapter_main_router.get("/dataframe", response_model=None)
 async def dataframe(
     df_id: str = Query(..., alias="id"),
-) -> Union[HTTPException, StreamingResponse]:
+) -> StreamingResponse | HTTPException:
 
     if df_id.endswith("plantA.maintenance_events"):
         df = pd.DataFrame(
@@ -726,7 +726,7 @@ async def dataframe(
 
 @demo_adapter_main_router.post("/dataframe", status_code=200)
 async def post_dataframe(
-    df_body: List[Dict] = Body(
+    df_body: list[dict] = Body(
         ...,
         example=[
             {"column_A": 42.0, "column_B": "example"},
@@ -734,7 +734,7 @@ async def post_dataframe(
         ],
     ),
     df_id: str = Query(..., alias="id"),
-    data_attributes: Optional[str] = Header(None),
+    data_attributes: str | None = Header(None),
 ) -> dict:
     if df_id.endswith("alerts"):
         df = pd.DataFrame.from_dict(df_body, orient="columns")

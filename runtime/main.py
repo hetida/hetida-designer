@@ -11,7 +11,6 @@ Usage: Call with activated virtual environment via
 from project directory.
 """
 
-# pylint: disable=wrong-import-order
 import logging
 import os
 
@@ -68,12 +67,11 @@ def run_migrations(
 
     migrations_invoked_from_py = True
 
-    from pydantic import SecretStr
-
     import hetdesrun.persistence.dbmodels
     from alembic import command
     from alembic.config import Config
     from hetdesrun.persistence import get_db_engine
+    from pydantic import SecretStr
 
     engine = get_db_engine()
 
@@ -144,7 +142,7 @@ if __name__ == "__main__":
     logger.info("Start app as host %s with port %s", str(host), str(port))
     uvicorn.run(
         "main:app",
-        debug=True,
+        log_level="debug",
         reload=True,
         host=host,
         port=port,

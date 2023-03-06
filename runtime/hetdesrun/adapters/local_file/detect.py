@@ -1,17 +1,15 @@
 import json
+import logging
 import os
-from typing import List, Optional, Tuple
 
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    Field,
-    ValidationError,
-)
+from pydantic import BaseModel, Field, ValidationError
 
 from hetdesrun.adapters.local_file.extensions import (
     FileSupportHandler,
     get_file_support_handler,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class SettingsFile(BaseModel):
@@ -26,10 +24,10 @@ class SettingsFile(BaseModel):
     the write settings for writing the data file.
     """
 
-    loadable: Optional[bool] = True
-    load_settings: Optional[dict] = None
-    writable: Optional[bool] = False
-    write_settings: Optional[dict] = None
+    loadable: bool | None = True
+    load_settings: dict | None = None
+    writable: bool | None = False
+    write_settings: dict | None = None
 
 
 class LocalFile(BaseModel):
@@ -40,14 +38,14 @@ class LocalFile(BaseModel):
     dir_path: str
     settings_file_path: str
     dir_path_from_root_path: str
-    parsed_settings_file: Optional[SettingsFile] = Field(...)
+    parsed_settings_file: SettingsFile | None = Field(...)
 
-    def file_support_handler(self) -> Optional[FileSupportHandler]:
+    def file_support_handler(self) -> FileSupportHandler | None:
         return get_file_support_handler(self.path)
 
 
 def parse_settings_file(
-    *, data_file_path: str = None, settings_file_path: str = None
+    *, data_file_path: str | None = None, settings_file_path: str | None = None
 ) -> SettingsFile:
     if settings_file_path is None:
         if data_file_path is None:
@@ -58,20 +56,20 @@ def parse_settings_file(
         settings_file_path = data_file_path + ".settings.json"
 
     try:
-        with open(settings_file_path, "r", encoding="utf8") as f:
+        with open(settings_file_path, encoding="utf8") as f:
             loaded_json = json.load(f)
-    except IOError:
-        print("Settings File could not be found/opened.")
+    except OSError:
+        logger.info("Settings File could not be found/opened.")
         return SettingsFile()
 
     except json.JSONDecodeError:  # decoding error
-        print("Settings File JSON Decoding Error.")
+        logger.warning("Settings File JSON Decoding Error.")
         return SettingsFile()
 
     try:
         parsed_settings = SettingsFile.parse_obj(loaded_json)
     except ValidationError as e:
-        print(f"Settings File Validation Error: {str(e)}")
+        logger.warning("Settings File Validation Error: %s", str(e))
         return SettingsFile()
 
     return parsed_settings
@@ -81,22 +79,18 @@ def local_file_from_path(
     file_path: str,
     top_dir: str,
     provide_from_settings_file_if_data_file_present: bool = False,
-) -> Optional[LocalFile]:
+) -> LocalFile | None:
     """Obtain complete LocalFile datastructure from path to either a data file or a settings file"""
 
     if file_path.endswith(".settings.json"):  # only config file present
-
-        data_file_path = file_path.rstrip(".settings.json")
-
+        data_file_path = file_path.removesuffix(".settings.json")
         # only infer from settings file if no data file is present:
         if (
             (
                 (not os.path.exists(data_file_path))
                 or provide_from_settings_file_if_data_file_present
             )
-            and (
-                (data_file_path.endswith(".csv") or data_file_path.endswith(".csv.zip"))
-            )
+            and (data_file_path.endswith((".csv", ".csv.zip")))
         ) or provide_from_settings_file_if_data_file_present:
             parsed_settings_file = parse_settings_file(data_file_path=data_file_path)
 
@@ -119,7 +113,6 @@ def local_file_from_path(
     possible_file_support_handler = get_file_support_handler(file_path)
 
     if possible_file_support_handler is not None:
-
         parsed_settings_file = parse_settings_file(data_file_path=file_path)
 
         if parsed_settings_file.loadable is None:
@@ -144,7 +137,7 @@ def local_file_from_path(
 
 def get_local_files_and_dirs(
     top_dir: str, walk_sub_dirs: bool = True
-) -> Tuple[List[LocalFile], List[str]]:
+) -> tuple[list[LocalFile], list[str]]:
     """Get file and directory structure information
 
     Returns a list of local files and a list of directory (full) pathes.
@@ -154,10 +147,10 @@ def get_local_files_and_dirs(
     """
     local_files = []
 
-    sub_directories: List[str] = []
+    sub_directories: list[str] = []
 
     for root, dirs, files in os.walk(top_dir):
-        print(root, dirs, files)
+        logger.debug("%s, %s, %s", str(root), str(dirs), str(files))
         for file in files:
             file_path = os.path.join(root, file)
 
@@ -170,5 +163,4 @@ def get_local_files_and_dirs(
 
         if not walk_sub_dirs:
             break
-
     return local_files, sub_directories

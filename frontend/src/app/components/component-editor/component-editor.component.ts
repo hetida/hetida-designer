@@ -44,10 +44,13 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     this._componentTransformation = componentTransformation;
     this.code = this.componentTransformation.content;
     this.lastSavedCode = this.componentTransformation.content;
-    this.editorOptions = {
-      ...this.editorOptions,
-      readOnly: this.componentTransformation.state !== RevisionState.DRAFT
-    };
+
+    if (this.componentTransformation.state !== RevisionState.DRAFT) {
+      this.editorOptions = {
+        ...this.editorOptions,
+        readOnly: true
+      };
+    }
   }
 
   get componentTransformation(): ComponentTransformation {

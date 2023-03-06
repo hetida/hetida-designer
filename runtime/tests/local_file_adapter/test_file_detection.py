@@ -4,13 +4,12 @@ from hetdesrun.adapters.local_file.detect import get_local_files_and_dirs
 
 
 def test_file_detection():
-
     found_local_files, found_directories = get_local_files_and_dirs(
         os.path.join("tests", "data", "local_files")
     )
 
     # found all files in test data dir
-    assert len(found_local_files) == 9
+    assert len(found_local_files) == 10
 
     def load_settings_has_semicol_sep(local_file):
         if local_file.parsed_settings_file.load_settings is None:
@@ -28,7 +27,7 @@ def test_file_detection():
 
     # directories:
 
-    assert len(found_directories) == 4
+    assert len(found_directories) == 5
 
     print("FOUND DIRs", found_directories)
     assert (

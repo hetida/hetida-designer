@@ -1,0 +1,124 @@
+{
+    "structure": [
+        {
+            "name": "PlantA",
+            "description": "Plant A",
+            "substructure": [
+                {
+                    "name": "PicklingUnit",
+                    "description": "Plant A Pickling Unit",
+                    "below_structure_defines_object_key": true,
+                    "substructure": [
+                        {
+                            "name": "Influx",
+                            "description": "Plant A Pickling Unit Influx",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant A Pickling Unit Influx Anomalies"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Outfeed",
+                            "description": "Plant A Pickling Unit Outfeed",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant A Pickling Unit Outfeed Anomalies"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "MillingUnit",
+                    "description": "Plant A Milling Unit",
+                    "below_structure_defines_object_key": true,
+                    "substructure": [
+                        {
+                            "name": "Influx",
+                            "description": "Plant A Milling Unit Influx",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant A Milling Unit Influx Anomalies"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Outfeed",
+                            "description": "Plant A Milling Unit Outfeed",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant A Milling Unit Outfeed Anomalies"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "PlantB",
+            "description": "Plant B",
+            "below_structure_defines_object_key": true,
+            "substructure": [
+                {
+                    "name": "PicklingUnit",
+                    "description": "Plant B Pickling Unit",
+                    "substructure": [
+                        {
+                            "name": "Influx",
+                            "description": "Plant B Pickling Unit Influx",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant B Pickling Unit Influx Anomalies"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Outfeed",
+                            "description": "Plant B Pickling Unit Outfeed Anomalies",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant B Pickling Unit Outfeed Anomalies"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "MillingUnit",
+                    "description": "Plant B Milling Unit",
+                    "substructure": [
+                        {
+                            "name": "Influx",
+                            "description": "Plant B Milling Unit Influx",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant B Milling Unit Influx Anomalies"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Outfeed",
+                            "description": "Plant B Milling Unit Outfeed",
+                            "substructure": [
+                                {
+                                    "name": "Anomalies",
+                                    "description": "Plant B Milling Unit Outfeed Anomalies"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+
+    ]
+}

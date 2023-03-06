@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional, Union
+from copy import deepcopy
 from unittest import mock
 from uuid import uuid4
 
@@ -13,6 +13,170 @@ from jose import constants, jwk, jwt
 
 from hetdesrun.persistence import sessionmaker
 from hetdesrun.webservice.application import init_app
+from hetdesrun.webservice.auth_dependency import ExternalAuthMode, InternalAuthMode
+from hetdesrun.webservice.auth_outgoing import (
+    ClientCredentialsGrantCredentials,
+    ServiceCredentials,
+)
+
+token_response_stub = {
+    "access_token": "nothing",
+    "expires_in": 1200,
+    "refresh_expires_in": 1800,
+    "refresh_token": "nothing",
+    "token_type": "bearer",
+    "not-before-policy": 0,
+    "scope": "email profile",
+    "session_state": "123",
+}
+
+
+@pytest.fixture()
+def valid_token_response(valid_access_token):
+    token_response_dict = deepcopy(token_response_stub)
+    token_response_dict["access_token"] = valid_access_token
+    token_response_dict["refresh_token"] = valid_access_token
+
+    return token_response_dict
+
+
+@pytest.fixture()
+def mocked_token_request(valid_token_response):
+    mocked_resp = mock.Mock
+    mocked_resp.json = mock.Mock(return_value=valid_token_response)
+
+    async def mocked_post_to_auth_provider(*args, **kwargs):
+        mocked_post_to_auth_provider.last_called_args = deepcopy(args)
+        mocked_post_to_auth_provider.last_called_kwargs = deepcopy(kwargs)
+        return mocked_resp
+
+    mocked_post_to_auth_provider.token_response_dict = deepcopy(valid_token_response)
+
+    with mock.patch(
+        "hetdesrun.webservice.auth_outgoing.post_to_auth_provider",
+        mocked_post_to_auth_provider,
+    ) as test_mocked_post_to_auth_provider:
+        yield test_mocked_post_to_auth_provider
+
+
+@pytest.fixture()
+def outgoing_auth_internal_mode_off():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.internal_auth_mode",
+        InternalAuthMode.OFF,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture()
+def outgoing_auth_external_mode_off():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.external_auth_mode",
+        ExternalAuthMode.OFF,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture()
+def outgoing_auth_internal_mode_forward_or_fixed():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.internal_auth_mode",
+        InternalAuthMode.FORWARD_OR_FIXED,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture()
+def outgoing_auth_external_mode_forward_or_fixed():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.external_auth_mode",
+        ExternalAuthMode.FORWARD_OR_FIXED,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture()
+def outgoing_auth_internal_mode_client():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.internal_auth_mode",
+        InternalAuthMode.CLIENT,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture()
+def outgoing_auth_external_mode_client():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.external_auth_mode",
+        ExternalAuthMode.CLIENT,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture()
+def auth_bearer_token_for_outgoing_requests_is_set():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.auth_bearer_token_for_outgoing_requests",
+        "some token string",
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture()
+def auth_bearer_token_for_outgoing_requests_not_set():
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.auth_bearer_token_for_outgoing_requests",
+        None,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture()
+def set_request_auth_context():
+    with mock.patch(
+        "hetdesrun.webservice.auth_dependency.get_request_auth_context",
+        return_value={"token": "token from request"},
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture()
+def unset_request_auth_context():
+    with mock.patch(
+        "hetdesrun.webservice.auth_dependency.get_request_auth_context",
+        return_value={},
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture(scope="package")
+def service_client_credentials():
+    return ServiceCredentials(
+        realm="my-realm",
+        grant_credentials=ClientCredentialsGrantCredentials(
+            client_id="my-client", client_secret="my-client-secret"  # noqa: S106
+        ),
+        auth_url="https://test.com/auth",
+        post_client_kwargs={"verify": False},
+    )
+
+
+@pytest.fixture()
+def set_external_client_creds(service_client_credentials):
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.external_auth_client_credentials",
+        service_client_credentials,
+    ) as _fixture:
+        yield _fixture
+
+
+@pytest.fixture()
+def set_internal_client_creds(service_client_credentials):
+    with mock.patch(
+        "hetdesrun.webservice.config.runtime_config.internal_auth_client_credentials",
+        service_client_credentials,
+    ) as _fixture:
+        yield _fixture
 
 
 @pytest.fixture(scope="package")
@@ -25,7 +189,7 @@ def activate_auth():
 
 @pytest.fixture(scope="package")
 def app_with_auth(activate_auth):
-    yield init_app()
+    return init_app()
 
 
 @pytest.fixture
@@ -52,22 +216,22 @@ def wrong_key_pair():
     return gen_jose_rs256_key_pair()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def valid_access_token(key_pair):
     return generate_token(algorithm="RS256", key=key_pair[0])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def second_valid_access_token(key_pair):
     return generate_token(payload={"sub": "second"}, algorithm="RS256", key=key_pair[0])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def wrong_key_access_token(wrong_key_pair):
     return generate_token(algorithm="RS256", key=wrong_key_pair[0])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def mocked_clean_test_db_session(clean_test_db_engine):
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
@@ -94,11 +258,12 @@ def mocked_pre_loaded_wrong_public_key(wrong_key_pair):
         yield _fixture
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def mocked_public_key_fetching(key_pair):
     def _mocked_obtain_public_key(self, force: bool = False):
         if self._public_key_data is not None and not force:
             # do not reload key if not forced
+            _mocked_obtain_public_key.called = _mocked_obtain_public_key.called + 1
             return
         self._public_key_data = key_pair[1]
         _mocked_obtain_public_key.called = _mocked_obtain_public_key.called + 1
@@ -118,10 +283,10 @@ def datetime_to_unix_seconds(dt):
 
 def generate_token(
     payload=None,
-    exp_dt: Optional[datetime.datetime] = None,
+    exp_dt: datetime.datetime | None = None,
     algorithm="HS256",
     key="secret",
-    audience: Optional[Union[str, List[str]]] = None,
+    audience: str | list[str] | None = None,
     expired_by_default=False,
 ):
     """Generate jwt tokens combining some defaults with a (partly) payload.
@@ -147,9 +312,11 @@ def generate_token(
     generated_payload = {
         "iss": "Example Issuer",  # issuer
         "sub": "test_case",  # subject: for whom is the claim
-        "iat": str(datetime_to_unix_seconds(datetime.datetime.now())),  # issued at
+        "iat": str(
+            datetime_to_unix_seconds(datetime.datetime.now())  # noqa: DTZ005
+        ),  # issued at
         "nbf": str(
-            datetime_to_unix_seconds(datetime.datetime.now()) - 30
+            datetime_to_unix_seconds(datetime.datetime.now()) - 30  # noqa: DTZ005
         ),  # not before
         # "aud": ["account"], # audience (target domain)
         "jti": str(uuid4()),  # jwt ID (token identifier making replication improssible)
@@ -158,7 +325,8 @@ def generate_token(
         else (
             str(
                 datetime_to_unix_seconds(
-                    datetime.datetime.now() + datetime.timedelta(seconds=300)
+                    datetime.datetime.now()  # noqa: DTZ005
+                    + datetime.timedelta(seconds=300)
                 )
                 - 600 * expired_by_default
             )
@@ -240,7 +408,10 @@ def gen_jose_rs256_key_pair():
     """
 
     key = rsa.generate_private_key(
-        backend=crypto_default_backend(), public_exponent=65537, key_size=4096
+        # reduced keysize from 4096 for increasing test speed
+        backend=crypto_default_backend(),
+        public_exponent=65537,
+        key_size=1024,
     )
 
     private_key = key.private_bytes(

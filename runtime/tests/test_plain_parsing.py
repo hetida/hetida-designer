@@ -15,5 +15,5 @@ async def test_plain_wf_parsing_and_execution(input_json_with_wiring):
 
     res = await parsed_wf.result  # workflow execution
 
-    assert "z" in res.keys()
+    assert "z" in res
     assert res["z"] == 4.0
