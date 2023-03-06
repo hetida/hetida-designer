@@ -57,12 +57,20 @@ def ensure_bucket_exists(s3_client: S3Client, bucket_name: BucketName) -> None:
             logger.error(msg)
             raise AdapterConnectionError(msg) from client_error
         if get_blob_adapter_config().allow_bucket_creation:
-            s3_client.create_bucket(
-                Bucket=bucket_name,
-                CreateBucketConfiguration={
-                    "LocationConstraint": get_blob_adapter_config().region_name
-                },
-            )
+            try:
+                s3_client.create_bucket(
+                    Bucket=bucket_name,
+                    CreateBucketConfiguration={
+                        "LocationConstraint": get_blob_adapter_config().region_name
+                    },
+                )
+            except ClientError as another_client_error:
+                error_code = client_error.response["Error"]["Code"]
+                msg = (
+                    "Unexpected ClientError occured for create_bucket call with bucket "
+                    f"{bucket_name}:\n{error_code}"
+                )
+                raise AdapterConnectionError(msg) from another_client_error
         else:
             msg = f"The bucket '{bucket_name}' does not exist!"
             logger.error(msg)
