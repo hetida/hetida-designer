@@ -1,3 +1,4 @@
+import pickle
 import struct
 from io import BytesIO
 from typing import Any
@@ -110,6 +111,16 @@ async def test_blob_storage_load_blob_from_storage_with_multiple_existing_source
 async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
+        bucket_name = "i-ii"
+        client_mock.create_bucket(Bucket=bucket_name)
+        file_object = BytesIO()
+        pickle.dump(42, file_object, protocol=pickle.HIGHEST_PROTOCOL)
+        file_object.seek(0)
+        client_mock.put_object(
+            Bucket=bucket_name,
+            Key="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            Body=file_object,
+        )
         with mock.patch(
             "hetdesrun.adapters.blob_storage.load_blob.get_s3_client",
             return_value=client_mock,
@@ -124,9 +135,9 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() ->
             ),
         ):
             with mock.patch(
-                "hetdesrun.adapters.blob_storage.load_blob.get_blob_adapter_config",
-                return_value=mock.Mock(allow_bucket_creation=False),
-            ), pytest.raises(AdapterConnectionError, match=r"bucket.* does not exist"):
+                "hetdesrun.adapters.blob_storage.load_blob.ensure_bucket_exists",
+                side_effect=AdapterConnectionError,
+            ), pytest.raises(AdapterConnectionError):
                 await load_blob_from_storage(
                     thing_node_id="i-ii/A",
                     metadata_key=(
@@ -134,7 +145,10 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() ->
                     ),
                 )
 
-            with pytest.raises(AdapterConnectionError, match="no object"):
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.load_blob.ensure_bucket_exists",
+                return_value=None,
+            ):
                 await load_blob_from_storage(
                     thing_node_id="i-ii/A",
                     metadata_key=(

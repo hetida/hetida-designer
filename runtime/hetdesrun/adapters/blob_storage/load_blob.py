@@ -2,11 +2,8 @@ import logging
 import pickle
 from typing import Any
 
-from botocore.exceptions import ClientError
-
-from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.models import IdString
-from hetdesrun.adapters.blob_storage.service import get_s3_client
+from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
     get_source_by_thing_node_id_and_metadata_key,
 )
@@ -47,28 +44,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     )
     s3_client = await get_s3_client()
 
-    try:
-        s3_client.head_bucket(Bucket=structure_bucket.name)
-    except ClientError as client_error:
-        error_code = client_error.response["Error"]["Code"]
-        if error_code != "404":
-            msg = (
-                "Unexpected ClientError occured for head_bucket call with bucket "
-                f"{structure_bucket.name}:\n{error_code}"
-            )
-            logger.error(msg)
-            raise AdapterConnectionError(msg) from client_error
-        if get_blob_adapter_config().allow_bucket_creation:
-            s3_client.create_bucket(
-                Bucket=structure_bucket.name,
-                CreateBucketConfiguration={
-                    "LocationConstraint": get_blob_adapter_config().region_name
-                },
-            )
-        else:
-            msg = f"The bucket '{structure_bucket.name}' does not exist!"
-            logger.error(msg)
-            raise AdapterConnectionError(msg) from client_error
+    ensure_bucket_exists(s3_client=s3_client, bucket_name=structure_bucket.name)
 
     try:
         response = s3_client.get_object(

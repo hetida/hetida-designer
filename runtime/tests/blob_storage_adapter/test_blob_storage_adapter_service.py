@@ -8,6 +8,7 @@ from hetdesrun.adapters.blob_storage.authentication import Credentials
 from hetdesrun.adapters.blob_storage.exceptions import StorageAuthenticationError
 from hetdesrun.adapters.blob_storage.models import BucketName
 from hetdesrun.adapters.blob_storage.service import (
+    ensure_bucket_exists,
     get_object_key_strings_in_bucket,
     get_s3_client,
     get_session,
@@ -59,6 +60,29 @@ async def test_blob_storage_service_get_s3_client() -> None:
             return_value=mock.Mock(endpoint_url="http://localhost:9000"),
         ):
             await get_s3_client()
+
+
+@pytest.mark.asyncio
+async def test_ensure_bucket_exists() -> None:
+    with mock_s3():
+        client_mock = boto3.client("s3", region_name="us-east-1")
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.service.get_s3_client",
+            return_value=client_mock,
+        ):
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.service.get_blob_adapter_config",
+                return_value=mock.Mock(allow_bucket_creation=False),
+            ), pytest.raises(AdapterConnectionError, match=r"bucket.* does not exist"):
+                ensure_bucket_exists(
+                    s3_client=client_mock,
+                    bucket_name=BucketName("bucket_name"),
+                )
+
+            ensure_bucket_exists(
+                s3_client=client_mock,
+                bucket_name=BucketName("bucket_name"),
+            )
 
 
 @pytest.mark.asyncio

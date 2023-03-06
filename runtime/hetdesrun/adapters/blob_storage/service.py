@@ -44,12 +44,7 @@ async def get_s3_client() -> S3Client:
     return client
 
 
-async def get_object_key_strings_in_bucket(bucket_name: BucketName) -> list[IdString]:
-    """Get the object key strings of all objects in the given bucket.
-
-    A AdapterConnectionError or StorageAuthenticationError raised in get_s3_client may occur.
-    """
-    s3_client = await get_s3_client()
+def ensure_bucket_exists(s3_client: S3Client, bucket_name: BucketName) -> None:
     try:
         s3_client.head_bucket(Bucket=bucket_name)
     except ClientError as client_error:
@@ -72,6 +67,16 @@ async def get_object_key_strings_in_bucket(bucket_name: BucketName) -> list[IdSt
             msg = f"The bucket '{bucket_name}' does not exist!"
             logger.error(msg)
             raise AdapterConnectionError(msg) from client_error
+
+
+async def get_object_key_strings_in_bucket(bucket_name: BucketName) -> list[IdString]:
+    """Get the object key strings of all objects in the given bucket.
+
+    A AdapterConnectionError or StorageAuthenticationError raised in get_s3_client may occur.
+    """
+    s3_client = await get_s3_client()
+
+    ensure_bucket_exists(s3_client, bucket_name)
 
     s3_response = s3_client.list_objects_v2(Bucket=bucket_name)
 
