@@ -6,7 +6,7 @@ from hetdesrun.adapters.blob_storage.models import (
     IdString,
     get_structure_bucket_and_object_key_prefix_from_id,
 )
-from hetdesrun.adapters.blob_storage.service import get_s3_client
+from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
     get_source_by_thing_node_id_and_metadata_key,
 )
@@ -48,14 +48,13 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         object_key_string,
     )
     s3_client = await get_s3_client()
+
+    ensure_bucket_exists(s3_client=s3_client, bucket_name=bucket.name)
+
     try:
         response = s3_client.get_object(
             Bucket=bucket.name, Key=object_key_string, ChecksumMode="ENABLED"
         )
-    except s3_client.exceptions.NoSuchBucket as error:
-        raise AdapterConnectionError(
-            f"The bucket '{bucket.name}' does not exist!"
-        ) from error
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
             f"The bucket '{bucket.name}' contains no object "
