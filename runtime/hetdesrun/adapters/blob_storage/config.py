@@ -1,4 +1,5 @@
 import os
+from typing import Literal
 
 from pydantic import BaseSettings, Field
 
@@ -15,26 +16,18 @@ class BlobStorageAdapterConfig(BaseSettings):
         env="BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION",
         example="/mnt/blob_storage_adapter_hierarchy.json",
     )
-    access_duration: int = Field(
-        3600,
+    allow_bucket_creation: bool = Field(
+        True,
         description=(
-            "Sets the request parameter `DurationSeconds` "
-            "in the role session authentication towards the BLOB storage. "
-            "Must be at least 900 (15 minutes) and smaller than "
-            "the maximum session duration setting for the role, which is at most 12 hours."
+            "Allow the creation of buckets which match the adapter hierarchy if they are missing"
         ),
-        env="BLOB_STORAGE_ACCESS_DURATION",
+        env="BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION",
     )
     endpoint_url: str = Field(
         "",
         description="URL under which the BLOB storage is accessible.",
         env="BLOB_STORAGE_ENDPOINT_URL",
         example="http://minio:9000",
-    )
-    region_name: str = Field(
-        "eu-central-1",
-        description="The name of the region associated with the S3 client.",
-        env="BLOB_STORAGE_REGION_NAME",
     )
     sts_params: dict = Field(
         {},
@@ -47,6 +40,38 @@ class BlobStorageAdapterConfig(BaseSettings):
             "DurationSeconds": 3600,
             "Version": "2011-06-15",
         },
+    )
+    region_name: Literal[
+        "EU",
+        "af-south-1",
+        "ap-east-1",
+        "ap-northeast-1",
+        "ap-northeast-2",
+        "ap-northeast-3",
+        "ap-south-1",
+        "ap-southeast-1",
+        "ap-southeast-2",
+        "ap-southeast-3",
+        "ca-central-1",
+        "cn-north-1",
+        "cn-northwest-1",
+        "eu-central-1",
+        "eu-north-1",
+        "eu-south-1",
+        "eu-west-1",
+        "eu-west-2",
+        "eu-west-3",
+        "me-south-1",
+        "sa-east-1",
+        "us-east-2",
+        "us-gov-east-1",
+        "us-gov-west-1",
+        "us-west-1",
+        "us-west-2",
+    ] = Field(
+        "eu-central-1",
+        description="The name of the region associated with the S3 client.",
+        env="BLOB_STORAGE_REGION_NAME",
     )
 
 

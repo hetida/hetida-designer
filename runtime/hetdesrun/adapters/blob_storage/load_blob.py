@@ -3,7 +3,7 @@ import pickle
 from typing import Any
 
 from hetdesrun.adapters.blob_storage.models import IdString
-from hetdesrun.adapters.blob_storage.service import get_s3_client
+from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
     get_source_by_thing_node_id_and_metadata_key,
 )
@@ -43,14 +43,13 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         object_key.string,
     )
     s3_client = await get_s3_client()
+
+    ensure_bucket_exists(s3_client=s3_client, bucket_name=structure_bucket.name)
+
     try:
         response = s3_client.get_object(
             Bucket=structure_bucket.name, Key=object_key.string, ChecksumMode="ENABLED"
         )
-    except s3_client.exceptions.NoSuchBucket as error:
-        raise AdapterConnectionError(
-            f"The bucket '{structure_bucket.name}' does not exist!"
-        ) from error
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
             f"The bucket '{structure_bucket.name}' contains no object "
