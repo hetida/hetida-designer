@@ -26,6 +26,7 @@ class DataType(str, Enum):
     String = "STRING"
     DataFrame = "DATAFRAME"
     Series = "SERIES"
+    MultiTSFrame = "MULTITSFRAME"
     Boolean = "BOOLEAN"
     Any = "ANY"
     PlotlyJson = "PLOTLYJSON"
@@ -177,6 +178,7 @@ data_type_map: dict[DataType, type] = {
     DataType.Float: float,
     DataType.String: str,
     DataType.Series: PydanticPandasSeries,
+    DataType.MultiTSFrame: PydanticPandasDataFrame,
     DataType.DataFrame: PydanticPandasDataFrame,
     DataType.Boolean: bool,
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:

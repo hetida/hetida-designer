@@ -1,0 +1,38 @@
+{
+  "category": "Connectors",
+  "content": "import pandas as pd\n\ndef generate_next_metric_name(df):\n    i = 0\n    existing_metrics = set(df[\"metric\"].unique().tolist())\n    while True:\n        name = \"metric_\" + str(i)\n        if not name in existing_metrics:\n            break\n        i = i + 1\n\n    return name\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"df_or_series\": \"ANY\",\n        \"series_to_add\": \"SERIES\",\n    },\n    \"outputs\": {\n        \"timeseries_df\": \"DATAFRAME\",\n    },\n    \"name\": \"Timeseries Dataframe\",\n    \"category\": \"Connectors\",\n    \"description\": \"Create and/or append to a multi-timeseries dataframe\",\n    \"version_tag\": \"1.1.0\",\n    \"id\": \"95cc0677-beab-44b8-a005-b385c9d79446\",\n    \"revision_group_id\": \"d71a0cef-1d56-818f-a1a5-dd6bb6d50399\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-08T17:18:56.814872+00:00\",\n}\n\n\ndef main(*, df_or_series, series_to_add):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    if series_to_add.name is None or series_to_add.name is None:\n        name = generate_next_metric_name(df_or_series)\n    else:\n        name = series_to_add.name\n\n    if isinstance(df_or_series, pd.DataFrame):\n        return {\n            \"timeseries_df\": pd.concat(\n                [\n                    df_or_series,\n                    pd.DataFrame(\n                        {\n                            \"timestamp\": series_to_add.index,\n                            \"value\": series_to_add.values,\n                            \"metric\": name,\n                        }\n                    ),\n                ],\n                ignore_index=True,\n            )\n        }\n    else:\n        return {\n            \"timeseries_df\": pd.concat(\n                [\n                    pd.DataFrame(\n                        {\n                            \"timestamp\": df_or_series.index,\n                            \"value\": df_or_series.values,\n                            \"metric\": df_or_series.name\n                            if df_or_series.name is not None\n                            else \"metric_0\",\n                        }\n                    ),\n                    pd.DataFrame(\n                        {\n                            \"timestamp\": series_to_add.index,\n                            \"value\": series_to_add.values,\n                            \"metric\": name,\n                        }\n                    ),\n                ],\n                ignore_index=True,\n            )\n        }\n",
+  "description": "Create and/or append to a multi-timeseries dataframe",
+  "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+  "id": "95cc0677-beab-44b8-a005-b385c9d79446",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "29c94add-f821-4acc-8fb8-f3b5cc053853",
+        "name": "df_or_series"
+      },
+      {
+        "data_type": "SERIES",
+        "id": "a592e520-86aa-48fd-bed3-5c02753ba773",
+        "name": "series_to_add"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "MULTITSFRAME",
+        "id": "600263b1-a804-4d77-b399-d2c7290d4ccf",
+        "name": "timeseries_df"
+      }
+    ]
+  },
+  "name": "Timeseries Dataframe",
+  "released_timestamp": "2023-03-08T17:18:56.814872+00:00",
+  "revision_group_id": "d71a0cef-1d56-818f-a1a5-dd6bb6d50399",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.1.0"
+}

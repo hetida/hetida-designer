@@ -109,6 +109,7 @@ class GeneralType(Enum):
     METADATA = "metadata"
     TIMESERIES = "timeseries"
     SERIES = "series"
+    MULTITSFRAME = "multitsframe"
     DATAFRAME = "dataframe"
 
 
@@ -130,6 +131,8 @@ class ExternalType(str, Enum):
     SERIES_STR = "series(string)", "series(str)"
     SERIES_BOOLEAN = "series(boolean)", "series(bool)"
     SERIES_ANY = "series(any)", "series(object)"
+
+    MULTITSFRAME = "multitsframe"
 
     DATAFRAME = "dataframe"
 
