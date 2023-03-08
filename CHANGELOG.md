@@ -1,3 +1,5 @@
+## 0.8.8
+* add automatic bucket creation to blob storage adapter
 ## 0.8.7
 * add S3 compatible built-in blob storage adapter
 * add pickle persistence for ANY type to local file adapter
