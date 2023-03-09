@@ -2,6 +2,7 @@ from unittest import mock
 
 import pytest
 
+from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
@@ -11,7 +12,7 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.utils import get_uuid_from_seed
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def clean_test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
@@ -22,6 +23,33 @@ def clean_test_db_engine(use_in_memory_db):
     Base.metadata.create_all(engine)
     return engine
 
+
+dto_json_component_1 = {
+    "id": str(get_uuid_from_seed("component 1")),
+    "groupId": str(get_uuid_from_seed("group of component 1")),
+    "name": "new name",
+    "description": "description of component 1",
+    "category": "Test",
+    "type": "COMPONENT",
+    "state": "RELEASED",
+    "tag": "1.0.0",
+    "inputs": [
+        {
+            "id": str(get_uuid_from_seed("operator input")),
+            "name": "operator_input",
+            "type": "INT",
+        }
+    ],
+    "outputs": [
+        {
+            "id": str(get_uuid_from_seed("operator output")),
+            "name": "operator_output",
+            "type": "INT",
+        }
+    ],
+    "wirings": [],
+    "code": "",
+}
 
 dto_json_workflow_2_update = {
     "id": str(get_uuid_from_seed("workflow 2")),
@@ -118,7 +146,11 @@ async def test_update_wiring(async_test_client, clean_test_db_engine):
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
     ):
-
+        store_single_transformation_revision(
+            ComponentRevisionFrontendDto(
+                **dto_json_component_1
+            ).to_transformation_revision()
+        )
         store_single_transformation_revision(
             WorkflowRevisionFrontendDto(
                 **dto_json_workflow_2_update

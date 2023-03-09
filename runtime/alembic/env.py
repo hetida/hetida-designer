@@ -93,7 +93,7 @@ def run_migrations_online():
             if connection.dialect.name == "postgresql":
                 logger.info("Detected postgresql driver. Ensuring versioning table")
                 # Make sure no two processed can migrate at the same time
-                context.get_context()._ensure_version_table()  # pylint: disable=protected-access
+                context.get_context()._ensure_version_table()
                 logger.info(
                     "Ensured versioning table. Now locking alembic version table"
                 )

@@ -8,7 +8,7 @@ import datetime
 import json
 import logging
 from posixpath import join as posix_urljoin
-from typing import Any, List, Literal, Optional
+from typing import Any, Literal
 
 import httpx
 from httpx import AsyncClient
@@ -16,6 +16,7 @@ from httpx import AsyncClient
 from hetdesrun.adapters.exceptions import AdapterConnectionError
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 
 logger = logging.getLogger(__name__)
 
@@ -31,15 +32,24 @@ def encode_attributes(df_attrs: Any) -> str:
 
 
 async def post_framelike_records(
-    list_of_records: List[dict],
-    attributes: Optional[Any],
+    list_of_records: list[dict],
+    attributes: Any | None,
     ref_id: str,
     adapter_key: str,
     endpoint: Literal["timeseries", "dataframe"],
     client: AsyncClient,
 ) -> None:
     """Post a list of dicts (records) to the appropriate endpoint"""
-    headers = get_generic_rest_adapter_auth_headers()
+    try:
+        headers = await get_generic_rest_adapter_auth_headers(external=True)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failed to get auth headers for posting framelike data to adapter"
+            f"with key {adapter_key}. Error was:\n{str(e)}"
+        )
+        logger.info(msg)
+        raise AdapterConnectionError(msg) from e
+
     if attributes is not None and len(attributes) != 0:
         logger.debug("Sending Data-Attributes via POST request header")
         headers["Data-Attributes"] = encode_attributes(attributes)

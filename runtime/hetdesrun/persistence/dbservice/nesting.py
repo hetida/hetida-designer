@@ -1,5 +1,4 @@
 import logging
-from typing import List
 from uuid import UUID
 
 from sqlalchemy import and_, delete, select
@@ -35,7 +34,7 @@ def add_single_nesting(session: SQLAlchemySession, nesting: NestingDBModel) -> N
 
 def find_all_nested_transformation_revisions(
     session: SQLAlchemySession, workflow_id: UUID
-) -> List[Descendant]:
+) -> list[Descendant]:
     result = session.execute(
         select(
             NestingDBModel.depth,
@@ -59,9 +58,9 @@ def find_all_nested_transformation_revisions(
     return descendants
 
 
-def find_all_nesting_transformation_revisions(
+def find_all_nestings(
     session: SQLAlchemySession, nested_transformation_id: UUID
-) -> List[NestingDBModel]:
+) -> list[NestingDBModel]:
     result = session.execute(
         select(NestingDBModel).where(
             NestingDBModel.nested_transformation_id == nested_transformation_id
@@ -72,7 +71,9 @@ def find_all_nesting_transformation_revisions(
 
 
 def delete_own_nestings(session: SQLAlchemySession, workflow_id: UUID) -> None:
-    logger.debug("delete own nestings of workflow %s", str(workflow_id))
+    logger.debug(
+        "delete nestings of transformation revision %s if existing", str(workflow_id)
+    )
     session.execute(
         delete(NestingDBModel).where(NestingDBModel.workflow_id == workflow_id)
     )
@@ -134,11 +135,9 @@ def update_nesting(
 
 
 def update_or_create_nesting(transformation_revision: TransformationRevision) -> None:
-
     if transformation_revision.type == Type.WORKFLOW:
         with Session() as session, session.begin():
-
-            assert isinstance(
+            assert isinstance(  # noqa: S101
                 transformation_revision.content, WorkflowContent
             )  # hint for mypy
 

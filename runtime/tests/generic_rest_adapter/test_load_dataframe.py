@@ -72,7 +72,7 @@ async def test_end_to_end_load_dataframe_data_with_timestamp_column():
         {"timestamp": "2020-03-11T15:45:18.194000000Z", "a": 15.89922333}
         """
     resp_mock.headers = {}
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.load_framelike.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):
@@ -80,7 +80,6 @@ async def test_end_to_end_load_dataframe_data_with_timestamp_column():
             "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
             return_value=resp_mock,
         ):
-
             loaded_data = await load_data(
                 {
                     "inp_1": FilteredSource(ref_id="id_1", type=ExternalType.DATAFRAME),
@@ -105,7 +104,7 @@ async def test_end_to_end_load_dataframe_data_with_attrs():
         {"timestamp": "2020-03-11T14:45:18.194000000Z", "a": 41.7}
         {"timestamp": "2020-03-11T15:45:18.194000000Z", "a": 15.89922333}
         """
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.load_framelike.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):
@@ -113,7 +112,6 @@ async def test_end_to_end_load_dataframe_data_with_attrs():
             "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
             return_value=resp_mock,
         ):
-
             loaded_data = await load_data(
                 {
                     "inp_1": FilteredSource(ref_id="id_1", type=ExternalType.DATAFRAME),

@@ -24,25 +24,26 @@ async def test_wiring_with_generic_rest_input(
                 "ref_id": "thing_node_id",
                 "ref_id_type": "THINGNODE",
                 "ref_key": "number",
-                "type": "metadata(int)",
+                "type": "metadata(float)",
             }
         ]
 
-        ww = WorkflowWiring(**json_with_wiring["workflow_wiring"])
+        # check parsable as WorkflowWiring:
+        ww = WorkflowWiring(**json_with_wiring["workflow_wiring"])  # noqa: F841
 
         resp_mock = mock.Mock()
         resp_mock.status_code = 200
         resp_mock.json = mock.Mock(
-            return_value={"key": "number", "value": 32, "dataType": "int"}
+            return_value={"key": "number", "value": 32, "dataType": "float"}
         )
-        with mock.patch(
+        with mock.patch(  # noqa: SIM117
             "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_base_url",
             return_value="https://hetida.de",
         ):
             with mock.patch(
                 "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
                 return_value=resp_mock,
-            ) as mocked_async_client_get:
+            ) as _mocked_async_client_get:
                 status_code, output = await run_workflow_with_client(
                     json_with_wiring, client
                 )
@@ -77,7 +78,6 @@ async def test_wiring_with_generic_rest_input(
                         "hetdesrun.adapters.generic_rest.send_metadata.post_json_with_open_client",
                         new=send_metadata_post_mock,
                     ):
-
                         status_code, output = await run_workflow_with_client(
                             json_with_wiring, client
                         )

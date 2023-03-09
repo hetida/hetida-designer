@@ -1,5 +1,5 @@
 ##### Build stage
-FROM python:3.9.14-slim-bullseye as base
+FROM python:3.10.8-slim-bullseye as base
 
 ENV TIMEOUT=900
 
@@ -27,6 +27,9 @@ RUN chmod +x /app/start.sh
 RUN mkdir -p /mnt/obj_repo
 RUN chmod -R a+rw /mnt/obj_repo
 
+RUN mkdir -p /mnt/autoimport
+RUN chmod -R a+rw /mnt/autoimport
+
 ##### Production stage
 # making prod stage available early allows to build it without building test stage
 # since test stage is only necessary on build system
@@ -41,7 +44,7 @@ CMD ["/app/start.sh"]
 FROM application_base AS test
 RUN ./pipt sync-system --dev
 RUN python3 -m pytest --cov=hetdesrun --cov-report xml --junitxml test_results.xml tests
-RUN bash /app/scripts/gen_pylint_report.sh
+RUN bash /app/scripts/gen_ruff_report.sh
 
 # prod should still be the default build, this is why we close with FROM prod
 # Note that in order to really skip building the test stage you need to explicitly specify

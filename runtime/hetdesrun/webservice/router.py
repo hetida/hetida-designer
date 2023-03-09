@@ -1,4 +1,5 @@
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import APIRouter as FastAPIRouter
 from fastapi.types import DecoratedCallable
@@ -41,7 +42,6 @@ class HandleTrailingSlashAPIRouter(FastAPIRouter):
     def api_route(
         self, path: str, *, include_in_schema: bool = True, **kwargs: Any
     ) -> Callable[[DecoratedCallable], DecoratedCallable]:
-
         if self.prefix == "" and path == "":
             path = "/"
 

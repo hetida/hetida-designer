@@ -1,7 +1,5 @@
-from typing import List
 from uuid import UUID
 
-# pylint: disable=no-name-in-module
 from pydantic import Field, root_validator
 
 from hetdesrun.backend.models.info import BasicInformation
@@ -14,15 +12,21 @@ from hetdesrun.utils import State
 
 class WorkflowOperatorFrontendDto(BasicInformation):
     transformation_id: UUID = Field(..., alias="itemId")
-    inputs: List[ConnectorFrontendDto] = []
-    outputs: List[ConnectorFrontendDto] = []
+    inputs: list[ConnectorFrontendDto] = []
+    outputs: list[ConnectorFrontendDto] = []
     pos_x: int = 0
     pos_y: int = 0
 
     @root_validator()
-    # pylint: disable=no-self-argument
     def is_not_draft(cls, values: dict) -> dict:
-        if values["state"] == State.DRAFT:
+        try:
+            state = values["state"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if operator has state DRAFT if the attribute "
+                "'state' is missing!"
+            ) from e
+        if state == State.DRAFT:
             raise ValueError(
                 f"Only released components/workflows can be dragged into a workflow! "
                 f'Operator with id {values["id"]} of type {values["type"]}'

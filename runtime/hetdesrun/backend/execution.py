@@ -3,15 +3,10 @@
 import json
 import logging
 from posixpath import join as posix_urljoin
-from typing import Dict, List, Union
 from uuid import UUID, uuid4
 
 import httpx
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    Field,
-    ValidationError,
-)
+from pydantic import BaseModel, Field, ValidationError
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.component import ComponentNode
@@ -34,6 +29,7 @@ from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.runtime.service import runtime_service
 from hetdesrun.utils import Type
 from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -41,7 +37,7 @@ logger.addFilter(execution_context_filter)
 
 
 class ExecByIdInput(BaseModel):
-    id: UUID
+    id: UUID  # noqa: A003
     wiring: WorkflowWiring
     run_pure_plot_operators: bool = Field(
         False, description="Whether pure plot components should be run."
@@ -82,8 +78,7 @@ class ExecLatestByGroupIdInput(BaseModel):
         description="Optional job id, that can be used to track an execution job.",
     )
 
-    # pylint: disable=redefined-builtin
-    def to_exec_by_id(self, id: UUID) -> ExecByIdInput:
+    def to_exec_by_id(self, id: UUID) -> ExecByIdInput:  # noqa: A002
         return ExecByIdInput(
             id=id,
             wiring=self.wiring,
@@ -110,14 +105,16 @@ class TrafoExecutionResultValidationError(TrafoExecutionError):
 
 def nested_nodes(
     tr_workflow: TransformationRevision,
-    all_nested_tr: Dict[UUID, TransformationRevision],
-) -> List[Union[ComponentNode, WorkflowNode]]:
+    all_nested_tr: dict[UUID, TransformationRevision],
+) -> list[ComponentNode | WorkflowNode]:
     if tr_workflow.type != Type.WORKFLOW:
         raise ValueError
 
-    assert isinstance(tr_workflow.content, WorkflowContent)  # hint for mypy
+    assert isinstance(  # noqa: S101
+        tr_workflow.content, WorkflowContent
+    )  # hint for mypy
     ancestor_operator_ids = [operator.id for operator in tr_workflow.content.operators]
-    ancestor_children: Dict[UUID, TransformationRevision] = {}
+    ancestor_children: dict[UUID, TransformationRevision] = {}
     for operator_id in ancestor_operator_ids:
         if operator_id in all_nested_tr:
             ancestor_children[operator_id] = all_nested_tr[operator_id]
@@ -128,9 +125,9 @@ def nested_nodes(
             )
 
     def children_nodes(
-        workflow: WorkflowContent, tr_operators: Dict[UUID, TransformationRevision]
-    ) -> List[Union[ComponentNode, WorkflowNode]]:
-        sub_nodes: List[Union[ComponentNode, WorkflowNode]] = []
+        workflow: WorkflowContent, tr_operators: dict[UUID, TransformationRevision]
+    ) -> list[ComponentNode | WorkflowNode]:
+        sub_nodes: list[ComponentNode | WorkflowNode] = []
 
         for operator in workflow.operators:
             if operator.type == Type.COMPONENT:
@@ -141,12 +138,16 @@ def nested_nodes(
                 )
             if operator.type == Type.WORKFLOW:
                 tr_workflow = tr_operators[operator.id]
-                assert isinstance(tr_workflow.content, WorkflowContent)  # hint for mypy
+                assert isinstance(  # noqa: S101
+                    tr_workflow.content, WorkflowContent
+                )  # hint for mypy
                 operator_ids = [
                     operator.id for operator in tr_workflow.content.operators
                 ]
                 tr_children = {
-                    id: all_nested_tr[id] for id in operator_ids if id in all_nested_tr
+                    id_: all_nested_tr[id_]
+                    for id_ in operator_ids
+                    if id_ in all_nested_tr
                 }
                 sub_nodes.append(
                     tr_workflow.content.to_workflow_node(
@@ -187,7 +188,9 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
 
     if transformation_revision.type == Type.COMPONENT:
         tr_workflow = transformation_revision.wrap_component_in_tr_workflow()
-        assert isinstance(tr_workflow.content, WorkflowContent)  # hint for mypy
+        assert isinstance(  # noqa: S101
+            tr_workflow.content, WorkflowContent
+        )  # hint for mypy
         nested_transformations = {
             tr_workflow.content.operators[0].id: transformation_revision
         }
@@ -246,7 +249,15 @@ async def run_execution_input(
     if get_config().is_runtime_service:
         execution_result = await runtime_service(execution_input)
     else:
-        headers = get_auth_headers()
+        try:
+            headers = await get_auth_headers(external=False)
+        except ServiceAuthenticationError as e:
+            msg = (
+                "Failed to get auth headers for internal runtime execution request."
+                f" Error was:\n{str(e)}"
+            )
+            logger.info(msg)
+            raise TrafoExecutionRuntimeConnectionError(msg) from e
 
         async with httpx.AsyncClient(
             verify=get_config().hd_runtime_verify_certs,

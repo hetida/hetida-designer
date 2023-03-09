@@ -15,7 +15,6 @@ info_router = HandleTrailingSlashAPIRouter(
     tags=["info"],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },

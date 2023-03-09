@@ -11,7 +11,7 @@ usage() {
     echo "  - shell           :    Activate virtual environment, thereby creating and syncing if necessary"
     echo "  - test            :    run pytest on demo_adapter_python code"
     # echo "  - test_components :    run pytest/doctest on components"
-    echo "  - lint            :    call pylint"
+    echo "  - lint            :    call ruff"
     echo "  - typecheck       :    run mypy static type check"
 }
 
@@ -50,11 +50,11 @@ test() {
 # }
 
 lint() {
-    pylint demo_adapter_python "${@}"
+    ruff demo_adapter_python tests "${@}"
 }
 
 imsort() {
-    isort demo_adapter_python tests "${@}"
+    ruff --select I demo_adapter_python tests --fix "${@}"
 }
 
 typecheck() {
@@ -62,18 +62,18 @@ typecheck() {
 }
 
 format() {
+    ruff --select I demo_adapter_python tests --fix "${@}" && echo "--> Ruff import sorting run."
     black demo_adapter_python tests "${@}" && echo "--> Black run."
-    isort demo_adapter_python tests "${@}" && echo "--> Isort run."
-}                           
+}
 
 check() {
     # Will fail with non-zero exit status if any tool has some complaint.
     # If everything is okay this will have 0 exits status
     echo "--> Running black in check mode" && black demo_adapter_python tests --check &&
-        echo "--> Running isort in check mode" && isort demo_adapter_python tests --check &&
         echo "--> Running tests" && python -m pytest --cov=demo_adapter_python --cov-report=term-missing tests &&
         echo "--> Running mypy" && mypy demo_adapter_python tests &&
-        echo "--> Running pylint ignoring fixme / TODO entries" && pylint demo_adapter_python tests --disable=fixme
+        echo "--> Running ruff" && ruff demo_adapter_python tests &&
+        echo "CHECKS EXECUTION RESULTS: All checks were successful!"
 }
 
 #----- Execution -----#

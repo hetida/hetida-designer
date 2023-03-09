@@ -1,5 +1,4 @@
 import logging
-from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, Path, status
@@ -11,24 +10,18 @@ from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
 from hetdesrun.backend.service.transformation_router import (
     handle_trafo_revision_execution_request,
-    if_applicable_release_or_deprecate,
-    is_modifiable,
-    update_content,
 )
-from hetdesrun.persistence.dbservice.exceptions import (
-    DBBadRequestError,
-    DBIntegrityError,
-    DBNotFoundError,
-    DBTypeError,
-)
+from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
+    get_multiple_transformation_revisions,
     read_single_transformation_revision,
-    select_multiple_transformation_revisions,
     store_single_transformation_revision,
     update_or_create_single_transformation_revision,
 )
+from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -40,8 +33,8 @@ workflow_router = HandleTrailingSlashAPIRouter(
     tags=["workflows"],
     responses={
         status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
-        status.HTTP_403_FORBIDDEN: {"description": "Forbidden"},
         status.HTTP_404_NOT_FOUND: {"description": "Workflow not found"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
@@ -107,7 +100,7 @@ async def create_workflow_revision(
 
 @workflow_router.get(
     "",
-    response_model=List[WorkflowRevisionFrontendDto],
+    response_model=list[WorkflowRevisionFrontendDto],
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Returns a list of all workflows",
@@ -117,7 +110,7 @@ async def create_workflow_revision(
     },
     deprecated=True,
 )
-async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
+async def get_all_workflow_revisions() -> list[WorkflowRevisionFrontendDto]:
     """Get all transformation revisions of type workflow from the data base.
 
     This endpoint is deprecated and will be removed soon,
@@ -126,8 +119,8 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
 
     logger.info("get all workflows")
 
-    transformation_revision_list = select_multiple_transformation_revisions(
-        type=Type.WORKFLOW
+    transformation_revision_list = get_multiple_transformation_revisions(
+        FilterParams(type=Type.WORKFLOW, include_dependencies=False)
     )
 
     logger.info("got all workflows")
@@ -151,8 +144,7 @@ async def get_all_workflow_revisions() -> List[WorkflowRevisionFrontendDto]:
     deprecated=True,
 )
 async def get_workflow_revision_by_id(
-    # pylint: disable=redefined-builtin
-    id: UUID = Path(
+    id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
     ),
@@ -197,8 +189,7 @@ async def get_workflow_revision_by_id(
     deprecated=True,
 )
 async def update_workflow_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     updated_workflow_dto: WorkflowRevisionFrontendDto,
 ) -> WorkflowRevisionFrontendDto:
     """Update or store a transformation revision of type workflow in the data base.
@@ -220,7 +211,7 @@ async def update_workflow_revision(
             f"the id of the provided workflow revision DTO {updated_workflow_dto.id}"
         )
         logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
     try:
         updated_transformation_revision = (
@@ -230,7 +221,7 @@ async def update_workflow_revision(
         logger.error("The following validation error occured:\n%s", str(e))
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
-    existing_transformation_revision: Optional[TransformationRevision] = None
+    existing_transformation_revision: TransformationRevision | None = None
 
     try:
         existing_transformation_revision = read_single_transformation_revision(
@@ -241,14 +232,6 @@ async def update_workflow_revision(
         # base/example workflow deployment needs to be able to put
         # with an id and either create or update the workflow revision
         pass
-
-    modifiable, msg = is_modifiable(
-        existing_transformation_revision,
-        updated_transformation_revision,
-    )
-    if not modifiable:
-        logger.error(msg)
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)
 
     if existing_transformation_revision is not None:
         updated_transformation_revision.documentation = (
@@ -261,14 +244,6 @@ async def update_workflow_revision(
             existing_transformation_revision.released_timestamp
         )
 
-    updated_transformation_revision = if_applicable_release_or_deprecate(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
-    updated_transformation_revision = update_content(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
     try:
         persisted_transformation_revision = (
             update_or_create_single_transformation_revision(
@@ -280,6 +255,8 @@ async def update_workflow_revision(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except ModelConstraintViolation as e:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision
@@ -297,13 +274,12 @@ async def update_workflow_revision(
         status.HTTP_204_NO_CONTENT: {
             "description": "Successfully deleted the workflow"
         },
-        status.HTTP_403_FORBIDDEN: {"description": "Workflow is already released"},
+        status.HTTP_409_CONFLICT: {"description": "Workflow is already released"},
     },
     deprecated=True,
 )
 async def delete_workflow_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
 ) -> None:
     """Delete a transformation revision of type workflow from the data base.
 
@@ -319,22 +295,16 @@ async def delete_workflow_revision(
         delete_single_transformation_revision(id, type=Type.WORKFLOW)
         logger.info("deleted workflow %s", id)
 
-    except DBTypeError as e:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail=str(e)) from e
-
-    except DBBadRequestError as e:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=str(e)) from e
+    except ModelConstraintViolation as e:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
-# pylint: disable=redefined-builtin
 @workflow_router.post(
     "/{id}/execute",
     response_model=ExecutionResponseFrontendDto,
-    response_model_exclude_none=True,  # needed because:
-    # frontend handles attributes with value null in a different way than missing attributes
     summary="Executes a new workflow.",
     status_code=status.HTTP_200_OK,
     responses={
@@ -343,11 +313,10 @@ async def delete_workflow_revision(
     deprecated=True,
 )
 async def execute_workflow_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     wiring_dto: WiringFrontendDto,
     run_pure_plot_operators: bool = False,
-    job_id: Optional[UUID] = None,
+    job_id: UUID | None = None,
 ) -> ExecutionResponseFrontendDto:
     """Execute a transformation revision of type workflow.
 
@@ -357,13 +326,13 @@ async def execute_workflow_revision(
     if job_id is None:
         exec_by_id = ExecByIdInput(
             id=id,
-            wiring=wiring_dto.to_workflow_wiring(),
+            wiring=wiring_dto.to_wiring(),
             run_pure_plot_operators=run_pure_plot_operators,
         )
     else:
         exec_by_id = ExecByIdInput(
             id=id,
-            wiring=wiring_dto.to_workflow_wiring(),
+            wiring=wiring_dto.to_wiring(),
             run_pure_plot_operators=run_pure_plot_operators,
             job_id=job_id,
         )
@@ -381,13 +350,12 @@ async def execute_workflow_revision(
     responses={
         status.HTTP_200_OK: {"description": "OK"},
         status.HTTP_204_NO_CONTENT: {"description": "Successfully bound the workflow"},
-        status.HTTP_403_FORBIDDEN: {"description": "Wiring is already bound"},
+        status.HTTP_409_CONFLICT: {"description": "Wiring is already bound"},
     },
     deprecated=True,
 )
 async def bind_wiring_to_workflow_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     wiring_dto: WiringFrontendDto,
 ) -> WorkflowRevisionFrontendDto:
     """Store or update the test wiring of a transformation revision of type workflow.
@@ -421,6 +389,8 @@ async def bind_wiring_to_workflow_revision(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except ModelConstraintViolation as e:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
 
     persisted_workflow_dto = WorkflowRevisionFrontendDto.from_transformation_revision(
         persisted_transformation_revision

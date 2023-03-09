@@ -1,10 +1,8 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from demo_adapter_python.external_types import ExternalType
 
-# pylint: disable=duplicate-code
-
-sources_json_objects: List[Dict[str, Any]] = [
+sources_json_objects: list[dict[str, Any]] = [
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantA.plant_temperature_unit",
         "thingNodeId": "root.plantA",
@@ -251,12 +249,12 @@ sources_json_objects: List[Dict[str, Any]] = [
 
 
 def get_sources(
-    parent_id: Optional[str] = None,
-    filter_str: Optional[str] = None,
+    parent_id: str | None = None,
+    filter_str: str | None = None,
     include_sub_objects: bool = False,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     if parent_id is None:
-        if include_sub_objects:
+        if include_sub_objects:  # noqa: SIM018
             selected_sources = sources_json_objects
         else:
             selected_sources = []
@@ -277,7 +275,7 @@ def get_sources(
         selected_sources = [
             src
             for src in selected_sources
-            if ((filter_str.lower() in (src["path"] + src["name"]).lower()))
+            if (filter_str.lower() in (src["path"] + src["name"]).lower())
         ]
 
     return selected_sources

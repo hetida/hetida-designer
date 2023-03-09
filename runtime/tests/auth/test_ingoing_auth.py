@@ -19,7 +19,7 @@ async def test_auth_with_correct_access_token_works(
         headers={"Authorization": "Bearer " + valid_access_token},
     )
     assert response.status_code == 200
-    auth_headers = get_auth_headers()
+    auth_headers = await get_auth_headers()
     assert len(auth_headers) > 0
     assert auth_headers["Authorization"].startswith("Bearer ")
 
@@ -44,7 +44,7 @@ async def test_auth_headers_stored_correctly(
     async def request_task(sleep_time_before, access_token):
         await asyncio.sleep(sleep_time_before)
 
-        auth_headers_before_request = get_auth_headers()
+        auth_headers_before_request = await get_auth_headers()
         assert len(auth_headers_before_request) == 0
 
         response = await client.get(
@@ -53,19 +53,21 @@ async def test_auth_headers_stored_correctly(
         )
         assert response.status_code == 200
 
-        auth_headers_after_response = get_auth_headers()
+        auth_headers_after_response = await get_auth_headers()
 
         assert len(auth_headers_after_response) > 0
         assert auth_headers_after_response["Authorization"].startswith("Bearer ")
         return auth_headers_after_response
 
     first_1, second_1 = await asyncio.gather(
-        request_task(0, valid_access_token), request_task(1, second_valid_access_token)
+        request_task(0, valid_access_token),
+        request_task(0.05, second_valid_access_token),
     )
     assert first_1["Authorization"] != second_1["Authorization"]
 
     first_2, second_2 = await asyncio.gather(
-        request_task(1, valid_access_token), request_task(0, second_valid_access_token)
+        request_task(0.05, valid_access_token),
+        request_task(0, second_valid_access_token),
     )
     assert first_2["Authorization"] != second_2["Authorization"]
 
@@ -74,7 +76,7 @@ async def test_auth_headers_stored_correctly(
 
     # not leaked: after all tasks completed, the context var should be set back to its
     # default which leads to empty auth headers.
-    last_auth_headers = get_auth_headers()
+    last_auth_headers = await get_auth_headers()
     assert len(last_auth_headers) == 0
 
 
@@ -83,10 +85,10 @@ async def test_auth_with_wrong_key_access_token_fails(
     open_async_test_client_with_auth,
     mocked_clean_test_db_session,
     wrong_key_access_token,
+    mocked_pre_loaded_public_key,
     mocked_public_key_fetching,
 ):
     client = open_async_test_client_with_auth
-
     # request with correct access token succeeds
     response = await client.get(
         "/api/transformations/",
@@ -94,7 +96,7 @@ async def test_auth_with_wrong_key_access_token_fails(
     )
     assert response.status_code == 401
     # should have tried exactly once to update the public key:
-    assert mocked_public_key_fetching.called == 1
+    assert mocked_public_key_fetching.called == 2
 
 
 @pytest.mark.asyncio
@@ -134,7 +136,6 @@ async def test_auth_wrong_public_key_fails(
     mocked_pre_loaded_wrong_public_key,
 ):
     client = open_async_test_client_with_auth
-
     response = await client.get(
         "/api/transformations/",
         headers={"Authorization": "Bearer " + valid_access_token},

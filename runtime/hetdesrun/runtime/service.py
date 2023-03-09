@@ -1,5 +1,4 @@
 import traceback
-from typing import Optional
 
 from fastapi.encoders import jsonable_encoder
 
@@ -18,6 +17,7 @@ from hetdesrun.runtime.engine.plain.parsing import (
     parse_workflow_input,
 )
 from hetdesrun.runtime.engine.plain.workflow import obtain_all_nodes
+from hetdesrun.runtime.exceptions import WorkflowInputDataValidationError
 from hetdesrun.runtime.logging import execution_context_filter, job_id_context_filter
 from hetdesrun.utils import model_to_pretty_json_str
 from hetdesrun.wiring import (
@@ -28,7 +28,7 @@ from hetdesrun.wiring import (
 runtime_logger.addFilter(job_id_context_filter)
 
 
-async def runtime_service(  # pylint: disable=too-many-return-statements,too-many-statements
+async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:
     """Running stuff with appropriate error handling, serializing etc.
@@ -56,7 +56,7 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
         parsed_wf = parse_workflow_input(
             runtime_input.workflow, runtime_input.components, runtime_input.code_modules
         )
-    except WorkflowParsingException as e:
+    except (WorkflowParsingException, WorkflowInputDataValidationError) as e:
         runtime_logger.info(
             "Workflow Parsing Exception during workflow execution",
             exc_info=True,
@@ -101,9 +101,22 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
     ]
 
     # Provide data as constants
-    parsed_wf.add_constant_providing_node(
-        constant_providing_data, id_suffix="dynamic_data"
-    )
+    try:
+        parsed_wf.add_constant_providing_node(
+            constant_providing_data, id_suffix="dynamic_data"
+        )
+    except WorkflowInputDataValidationError as exc:
+        runtime_logger.info(
+            "Input Data Validation Error during data provision",
+            exc_info=True,
+        )
+        return WorkflowExecutionResult(
+            result="failure",
+            error=str(exc),
+            traceback=traceback.format_exc(),
+            output_results_by_output_name={},
+            job_id=runtime_input.job_id,
+        )
 
     # run workflow
 
@@ -120,8 +133,14 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
         # to ensure that every node is run, even if in a part of the graph not leading
         # to a final output. This is necessary for example for the Store Model component.
         for computation_node in all_nodes:
-
-            res = await computation_node.result  # pylint: disable=unused-variable
+            _res = (
+                await computation_node.result
+                if not (
+                    computation_node.has_only_plot_outputs is True
+                    and runtime_input.configuration.run_pure_plot_operators is False
+                )
+                else {}
+            )
 
         pure_execution_measured_step.stop()
 
@@ -176,7 +195,7 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
             else (all_results_str[:50] + " ... " + all_results_str[-50:]),
         )
 
-        node_results: Optional[str] = all_results_str
+        node_results: str | None = all_results_str
     else:
         node_results = None
 
@@ -227,7 +246,7 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
     # (because user can produce arbitrary non-serializable objects)
     try:
         jsonable_encoder(wf_exec_result)
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         runtime_logger.info(
             "Exception during workflow execution response serialisation: %s",
             str(e),

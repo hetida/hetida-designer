@@ -22,8 +22,13 @@ Further information about developing, deploying, connecting, using and running h
 - [Base Component/Workflow Deployment](./base_component_deployment.md)
 - [Backup](./backup.md)
 - [Export and Import](./import_export.md)
-- [Enabling OpenID Connect](./enabling_openidconnect.md)
 - [Migration from 0.6 to 0.7](./migration_from_0.6_to_0.7.md)
+- [Migration from 0.6 to 0.8](./migration_from_0.6_to_0.8.md)
+- [Clean up](./cleanup.md)
+
+## Authentication
+
+- [Enabling OpenID Connect Authentication](enabling_openidconnect_auth.md)
 
 ## Adapter System
 
@@ -31,6 +36,7 @@ Further information about developing, deploying, connecting, using and running h
 - [Adapter Registration](./adapter_system/adapter_registration.md)
 - [Manual Input](./adapter_system/manual_input.md)
 - [Local File Adapter](./adapter_system/local_file_adapter.md)
+- [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md)
 - [Generic REST Adapters](./adapter_system/generic_rest_adapters/web_service_interface.md)
 - [General Custom Adapters](./adapter_system/general_custom_adapters/instructions.md)
 
@@ -47,3 +53,4 @@ Further information about developing, deploying, connecting, using and running h
 - [Execution via Kafka](./execution/execution_via_kafka.md)
 - [Execution via REST API](./execution/running_transformation_revisions.md)
 - [Timeouts](./execution/timeouts.md)
+- [Scaling](./execution/scaling.md)

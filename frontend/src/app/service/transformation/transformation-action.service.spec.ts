@@ -26,10 +26,10 @@ class TransformationActionServiceExtended extends TransformationActionService {
 }
 
 describe('TransformationActionService', () => {
-  let transformationHttpService: TransformationHttpService;
-  let transformationService: TransformationService;
-  let tabItemService: TabItemService;
-  let notificationService: NotificationService;
+  let transformationHttpServiceSpy;
+  let transformationServiceSpy;
+  let tabItemServiceSpy;
+  let notificationServiceSpy;
   let mockTransformation: Transformation;
   let mockWorkflowContent: WorkflowContent;
   let transformationActionService: TransformationActionServiceExtended;
@@ -247,25 +247,30 @@ describe('TransformationActionService', () => {
       ]
     };
 
+    transformationHttpServiceSpy = jasmine.createSpy();
+    transformationServiceSpy = jasmine.createSpy();
+    tabItemServiceSpy = jasmine.createSpy();
+    notificationServiceSpy = jasmine.createSpy();
+
     TestBed.configureTestingModule({
       imports: [MaterialModule, HttpClientTestingModule],
       providers: [
         provideMockStore(),
         {
           provide: TransformationHttpService,
-          useValue: transformationHttpService
+          useValue: transformationHttpServiceSpy
         },
         {
           provide: TransformationService,
-          useValue: transformationService
+          useValue: transformationServiceSpy
         },
         {
           provide: TabItemService,
-          useValue: tabItemService
+          useValue: tabItemServiceSpy
         },
         {
           provide: NotificationService,
-          useValue: notificationService
+          useValue: notificationServiceSpy
         }
       ]
     });
@@ -274,10 +279,10 @@ describe('TransformationActionService', () => {
   beforeEach(() => {
     const matDialog = TestBed.inject(MatDialog);
     const mockStore = TestBed.inject(MockStore);
-    transformationHttpService = TestBed.inject(TransformationHttpService);
-    transformationService = TestBed.inject(TransformationService);
-    tabItemService = TestBed.inject(TabItemService);
-    notificationService = TestBed.inject(NotificationService);
+    const transformationHttpService = TestBed.inject(TransformationHttpService);
+    const transformationService = TestBed.inject(TransformationService);
+    const tabItemService = TestBed.inject(TabItemService);
+    const notificationService = TestBed.inject(NotificationService);
     transformationActionService = new TransformationActionServiceExtended(
       matDialog,
       mockStore,
@@ -293,7 +298,7 @@ describe('TransformationActionService', () => {
     expect(transformationActionService).toBeTruthy();
   });
 
-  it('Copy a transformation from type component', () => {
+  it('Copy transformation should copy components correctly', () => {
     // Arrange
     const mockNewId = 'mockId1';
     const mockGroupId = 'mockGroupId1';
@@ -311,24 +316,24 @@ describe('TransformationActionService', () => {
     expect(copyTransformation.version_tag).toBe('0.0.1 Copy');
     expect(copyTransformation.state).toBe(RevisionState.DRAFT);
 
-    expect(copyTransformation.io_interface.inputs[0].id).not.toBe(
-      'mockInputId0'
-    );
+    expect(copyTransformation.io_interface.inputs[0].id)
+      .withContext('Inputs should get new generated ids')
+      .not.toBe('mockInputId0');
     expect(copyTransformation.io_interface.inputs[0].name).toBe('mockInput');
     expect(copyTransformation.io_interface.inputs[0].data_type).toBe(
       IOType.ANY
     );
 
-    expect(copyTransformation.io_interface.outputs[0].id).not.toBe(
-      'mockOutputId0'
-    );
+    expect(copyTransformation.io_interface.outputs[0].id)
+      .withContext('Outputs should get new generated ids')
+      .not.toBe('mockOutputId0');
     expect(copyTransformation.io_interface.outputs[0].name).toBe('mockOutput');
     expect(copyTransformation.io_interface.outputs[0].data_type).toBe(
       IOType.ANY
     );
   });
 
-  it('Copy a transformation from type workflow', () => {
+  it('Copy transformation should copy workflows correctly', () => {
     // Arrange
     const mockNewId = 'mockId1';
     const mockGroupId = 'mockGroupId1';
@@ -347,8 +352,16 @@ describe('TransformationActionService', () => {
     expect(copyTransformation.version_tag).toBe('0.0.1 Copy');
     expect(copyTransformation.state).toBe(RevisionState.DRAFT);
 
-    expect(copyTransformation.io_interface.inputs).toHaveSize(0);
-    expect(copyTransformation.io_interface.outputs).toHaveSize(0);
+    expect(copyTransformation.io_interface.inputs)
+      .withContext(
+        'Inputs in io-interface should be empty because they are regenerated in the backend'
+      )
+      .toHaveSize(0);
+    expect(copyTransformation.io_interface.outputs)
+      .withContext(
+        'Outputs in io-interface should be empty because they are regenerated in the backend'
+      )
+      .toHaveSize(0);
   });
 
   it('Transformation from type component is complete', () => {
