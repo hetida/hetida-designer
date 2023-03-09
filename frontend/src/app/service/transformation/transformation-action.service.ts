@@ -490,7 +490,8 @@ export class TransformationActionService {
     return this.transformationService.deleteTransformation(transformation.id);
   }
 
-  private copyTransformation(
+  // Visible for testing
+  protected copyTransformation(
     newId: string,
     groupId: string,
     suffix: string,
