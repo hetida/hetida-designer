@@ -14,6 +14,8 @@ from pydantic import BaseConfig, BaseModel, create_model
 
 logger = logging.getLogger(__name__)
 
+MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
+
 
 class DataType(str, Enum):
     """hetida designer data types
@@ -116,6 +118,57 @@ class PydanticPandasDataFrame:
                 ) from read_json_exception
 
 
+class PydanticMultiTimeseriesPandasDataFrame:
+    """Custom pydantic Data Type for parsing Multi Timeseries Pandas DataFrames
+
+    Parses either a json string according to pandas.read_json
+    with typ="frame" and default arguments otherwise or
+    a Python dict-like data structure using the constructor
+    of the pandas.DataFrame class with default arguments
+    """
+
+    @classmethod
+    def __get_validators__(cls) -> Generator:
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
+        df: pd.DataFrame | None = None
+        if isinstance(v, pd.DataFrame):
+            df = v
+        else:
+            try:
+                df = pd.read_json(v, typ="frame")
+
+            except Exception:  # noqa: BLE001
+                try:
+                    df = pd.read_json(json.dumps(v), typ="frame")
+                except Exception as read_json_exception:  # noqa: BLE001
+                    raise ValueError(
+                        "Could not parse provided input as Pandas DataFrame"
+                    ) from read_json_exception
+
+            if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
+                column_names_string = ", ".join(df.columns)
+                multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
+                raise ValueError(
+                    f"The column names {column_names_string} don't match the column names "
+                    f"required for a MultiTSFrame {multitsframe_column_names_string}"
+                )
+
+        if df["metric"].isna().any():
+            raise ValueError(
+                "No null values are allowed for the column 'metric' of a MulitTSFrame"
+            )
+
+        if df["timestamp"].isna().any():
+            raise ValueError(
+                "No null values are allowed for the column 'timestamp' of a MulitTSFrame"
+            )
+
+        return df
+
+
 class ParsedAny:
     """Tries to parse Any objects somehow intelligently
 
@@ -178,7 +231,7 @@ data_type_map: dict[DataType, type] = {
     DataType.Float: float,
     DataType.String: str,
     DataType.Series: PydanticPandasSeries,
-    DataType.MultiTSFrame: PydanticPandasDataFrame,
+    DataType.MultiTSFrame: PydanticMultiTimeseriesPandasDataFrame,
     DataType.DataFrame: PydanticPandasDataFrame,
     DataType.Boolean: bool,
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
