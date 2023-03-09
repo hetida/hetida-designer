@@ -354,17 +354,17 @@ describe('TransformationActionService', () => {
 
     expect(copyTransformation.io_interface.inputs)
       .withContext(
-        'Inputs in io-interface should be empty because they are regenerated in the backend'
+        'Inputs in io_interface should be empty because they are regenerated in the backend'
       )
       .toHaveSize(0);
     expect(copyTransformation.io_interface.outputs)
       .withContext(
-        'Outputs in io-interface should be empty because they are regenerated in the backend'
+        'Outputs in io_interface should be empty because they are regenerated in the backend'
       )
       .toHaveSize(0);
   });
 
-  it('Transformation from type component is complete', () => {
+  it('IsIncomplete should return false if component fulfills all requirements', () => {
     // Act
     const isIncomplete = transformationActionService.isIncomplete(
       mockTransformation
@@ -373,7 +373,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeFalse();
   });
 
-  it('Transformation from type component is incomplete because io_interface is empty', () => {
+  it('IsIncomplete should return true if io_interface is empty', () => {
     // Arrange
     mockTransformation.io_interface = { inputs: [], outputs: [] };
     // Act
@@ -384,7 +384,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeTrue();
   });
 
-  it('Transformation from type workflow is complete', () => {
+  it('IsIncomplete should return false if workflow fulfills all requirements', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.type = TransformationType.WORKFLOW;
@@ -396,7 +396,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeFalse();
   });
 
-  it('Transformation from type workflow is incomplete because it has no operators', () => {
+  it('IsIncomplete should return false if workflow has no operators', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.content.operators = [];
@@ -409,7 +409,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeTrue();
   });
 
-  it('Transformation from type workflow is incomplete because any input name is empty', () => {
+  it('IsIncomplete should return false if any workflow input name is empty', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.content.inputs[0].name = '';
@@ -422,7 +422,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeTrue();
   });
 
-  it('Transformation from type workflow is incomplete because any output name is empty', () => {
+  it('IsIncomplete should return false if any workflow output name is empty', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.content.outputs[0].name = '';
@@ -435,7 +435,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeTrue();
   });
 
-  it('Transformation from type workflow is incomplete because any input name is not a valid python identifier', () => {
+  it('IsIncomplete should return false if any workflow input name is not a valid python identifier', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.content.inputs[0].name = '0input';
@@ -448,7 +448,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeTrue();
   });
 
-  it('Transformation from type workflow is incomplete because any output name is not a valid python identifier', () => {
+  it('IsIncomplete should return false if any workflow output name is not a valid python identifier', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.content.outputs[0].name = '0output';
@@ -461,7 +461,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeTrue();
   });
 
-  it('Transformation from type workflow is incomplete because any input name is a python keyword', () => {
+  it('IsIncomplete should return false if any workflow input name is a python keyword', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.content.inputs[0].name = 'break';
@@ -474,7 +474,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeTrue();
   });
 
-  it('Transformation from type workflow is incomplete because any output name is a python keyword', () => {
+  it('IsIncomplete should return false if any workflow output name is a python keyword', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.content.outputs[0].name = 'break';
@@ -487,7 +487,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeTrue();
   });
 
-  it('Transformation from type workflow is incomplete because there is not a link from every input', () => {
+  it('IsIncomplete should return false if workflow does not have a link from every input', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.content.links = mockTransformation.content.links.filter(
@@ -502,7 +502,7 @@ describe('TransformationActionService', () => {
     expect(isIncomplete).toBeTrue();
   });
 
-  it('Transformation from type workflow is incomplete because there is not a link to every output', () => {
+  it('IsIncomplete should return false if workflow does not have a link to every output', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.content.links = mockTransformation.content.links.filter(
