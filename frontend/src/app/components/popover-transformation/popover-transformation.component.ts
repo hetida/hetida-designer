@@ -161,7 +161,7 @@ export class PopoverTransformationComponent implements OnInit {
     event.dataTransfer.effectAllowed = 'all';
     event.dataTransfer.dropEffect = 'none';
     event.dataTransfer.setData(
-      'hetida/baseItem',
+      'hetida/transformation',
       JSON.stringify(this.transformation)
     );
   }
