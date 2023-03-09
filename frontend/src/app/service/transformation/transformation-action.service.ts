@@ -306,7 +306,6 @@ export class TransformationActionService {
     }
   }
 
-  // TODO unit test
   public copy(transformation: Transformation): void {
     const newId = uuid().toString();
     const groupId = uuid().toString();
@@ -543,7 +542,6 @@ export class TransformationActionService {
     this.tabItemService.createTransformationAndOpenInNewTab(transformation);
   }
 
-  // TODO unit test
   /**
    * checks if the workflow is in an incomplete state
    * - has no operators
