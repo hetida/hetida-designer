@@ -6,7 +6,6 @@ from pydantic import ValidationError
 
 from hetdesrun.adapters.blob_storage import (
     IDENTIFIER_SEPARATOR,
-    OBJECT_KEY_DIR_SEPARATOR,
 )
 from hetdesrun.adapters.blob_storage.exceptions import MissingHierarchyError
 from hetdesrun.adapters.blob_storage.models import (
@@ -19,6 +18,7 @@ from hetdesrun.adapters.blob_storage.models import (
     StructureBucket,
     StructureThingNode,
     find_duplicates,
+    get_structure_bucket_and_object_key_prefix_from_id,
 )
 
 
@@ -85,9 +85,6 @@ def test_blob_storage_class_object_key() -> None:
     object_key_from_string = ObjectKey.from_string(object_key_from_name.string)
     assert object_key_from_name == object_key_from_string
 
-    thing_node_id = object_key.to_thing_node_id(bucket=StructureBucket(name="i-ii"))
-    assert thing_node_id == "i-ii/A"
-
     with pytest.raises(
         ValueError, match=f"contains '{IDENTIFIER_SEPARATOR}' less than"
     ):
@@ -98,18 +95,7 @@ def test_blob_storage_class_object_key() -> None:
 
 def test_blob_storage_class_structure_thing_node() -> None:
     StructureThingNode(id="i-ii", parentId="i", name="II", description="")
-    thing_node = StructureThingNode(
-        id="i-ii/A", parentId="i-ii", name="A", description=""
-    )
-
-    structure_bucket, object_key = thing_node.to_bucket_name_and_object_key(
-        metadata_key="A - 2001-02-03T04:05:06+00:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
-    )
-    assert structure_bucket.name == "i-ii"
-    assert (
-        object_key.string
-        == "A_2001-02-03T04:05:06+00:00_e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
-    )
+    StructureThingNode(id="i-ii/A", parentId="i-ii", name="A", description="")
 
     with pytest.raises(ValidationError, match="at least 1 characters"):
         # ThingNodeName shorter than min_length
@@ -169,10 +155,13 @@ def test_blob_storage_class_structure_source_works() -> None:
     assert source.visible is True
     assert source.filters == {}
 
-    src_bucket_name, src_object_key = source.to_structure_bucket_and_object_key()
+    (
+        src_bucket,
+        src_object_key_string,
+    ) = get_structure_bucket_and_object_key_prefix_from_id(source.id)
     src_from_bkt_and_ok = (
         BlobStorageStructureSource.from_structure_bucket_and_object_key(
-            bucket=src_bucket_name, object_key=src_object_key
+            bucket=src_bucket, object_key=ObjectKey.from_string(src_object_key_string)
         )
     )
     assert src_from_bkt_and_ok == source
@@ -204,7 +193,7 @@ def test_blob_storage_class_structure_source_works() -> None:
 
 
 def test_blob_storage_class_structure_source_raises_exceptions() -> None:
-    with pytest.raises(ValidationError) as exc_info:
+    with pytest.raises(ValidationError, match=r"id.* does not contain"):
         # invalid id due to no object key dir separator
         BlobStorageStructureSource(
             id="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
@@ -213,10 +202,6 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
             path="A",
             metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         )
-
-    assert f"must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'" in str(
-        exc_info.value
-    )
 
     with pytest.raises(
         ValidationError, match=r"first part.* of.* id.* correspond to.* bucket"
@@ -342,7 +327,7 @@ def test_blob_storage_class_structure_sink() -> None:
 
     assert sink_from_thing_node == sink
 
-    with pytest.raises(ValidationError, match=r"sink id.* must contain"):
+    with pytest.raises(ValidationError, match=r"id.* does not contain"):
         # invalid id due to no object key dir separator
         BlobStorageStructureSink(
             id="A_generic_sink",
@@ -683,7 +668,7 @@ def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
                 below_structure_defines_object_key=True,
                 substructure=[
                     HierarchyNode(
-                        name="i",
+                        name="I",
                         description="Category",
                     )
                 ],
@@ -695,11 +680,33 @@ def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
                 substructure=[
                     HierarchyNode(
                         name="I",
-                        description="Category",
+                        description="Another Category",
                     )
                 ],
             ),
         ],
     )
-    with pytest.raises(ValueError, match=r"bucket names.* not unique"):
+    with pytest.raises(ValueError, match="Bucket names are not unique"):
+        adapter_hierarchy.structure_buckets
+
+    adapter_hierarchy = AdapterHierarchy(
+        structure=[
+            HierarchyNode(
+                name="III",
+                description="Super Category",
+                below_structure_defines_object_key=True,
+                substructure=[
+                    HierarchyNode(
+                        name="I",
+                        description="Category",
+                    ),
+                    HierarchyNode(
+                        name="I",
+                        description="Another Category",
+                    ),
+                ],
+            ),
+        ],
+    )
+    with pytest.raises(ValueError, match="Thing nodes are not unique"):
         adapter_hierarchy.structure_buckets

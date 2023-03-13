@@ -45,6 +45,33 @@ class StructureBucket(BaseModel):
         frozen = True
 
 
+def get_structure_bucket_and_object_key_prefix_from_id(
+    id: IdString,  # noqa: A002
+) -> tuple[StructureBucket, "IdString"]:
+    if OBJECT_KEY_DIR_SEPARATOR not in id:
+        raise ValueError(
+            f"Cannot create bucket name and object key prefix based on an id {id} "
+            f"which does not contain '{OBJECT_KEY_DIR_SEPARATOR}'."
+        )
+
+    bucket_name_string, object_key_string = id.split(
+        OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
+    )
+
+    try:
+        bucket = StructureBucket(name=BucketName(bucket_name_string))
+    except ValueError as e:
+        raise ValueError(
+            f"The first part '{bucket_name_string}' of the source id '{id}' "
+            f"before the first '{OBJECT_KEY_DIR_SEPARATOR}' "
+            "must correspond to a bucket name!\nBut it does not:\n" + str(e)
+        ) from e
+    return (
+        bucket,
+        IdString(object_key_string),
+    )
+
+
 class ObjectKey(BaseModel):
     string: IdString
     name: IdString
@@ -72,6 +99,21 @@ class ObjectKey(BaseModel):
         )
 
     @classmethod
+    def from_name_and_time_and_job_id(
+        cls, name: IdString, time: datetime, job_id: UUID
+    ) -> "ObjectKey":
+        return ObjectKey(
+            string=name
+            + IDENTIFIER_SEPARATOR
+            + time.isoformat()
+            + IDENTIFIER_SEPARATOR
+            + str(job_id),
+            name=name,
+            time=time,
+            job_id=job_id,
+        )
+
+    @classmethod
     def from_string(cls, string: IdString) -> "ObjectKey":
         try:
             name, time_string, job_id_string = string.rsplit(
@@ -85,6 +127,34 @@ class ObjectKey(BaseModel):
         return ObjectKey(
             string=string,
             name=name,
+            time=datetime.fromisoformat(time_string).replace(tzinfo=timezone.utc),
+            job_id=UUID(job_id_string),
+        )
+
+    @classmethod
+    def from_thing_node_id_and_metadata_key(
+        cls, thing_node_id: IdString, metadata_key: str
+    ) -> "ObjectKey":
+        if metadata_key.count(HIERARCHY_END_NODE_NAME_SEPARATOR) != 2:
+            raise ValueError(
+                f"Cannot create bucket name and object key based on a metadata key {metadata_key} "
+                f"which does not contain '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice."
+            )
+        name, time_string, job_id_string = metadata_key.split(
+            HIERARCHY_END_NODE_NAME_SEPARATOR
+        )
+
+        if not thing_node_id.endswith(name):
+            raise ValueError(
+                f"Thing node id '{thing_node_id}' and metadata key '{metadata_key}' do not match."
+            )
+
+        _, object_key_prefix = get_structure_bucket_and_object_key_prefix_from_id(
+            thing_node_id
+        )
+
+        return ObjectKey.from_name_and_time_and_job_id(
+            name=object_key_prefix,
             time=datetime.fromisoformat(time_string).replace(tzinfo=timezone.utc),
             job_id=UUID(job_id_string),
         )
@@ -130,34 +200,6 @@ class StructureThingNode(BaseModel):
             )
         return name
 
-    def to_bucket_name_and_object_key(
-        self, metadata_key: str
-    ) -> tuple[StructureBucket, ObjectKey]:
-        if metadata_key.count(HIERARCHY_END_NODE_NAME_SEPARATOR) != 2:
-            raise ValueError(
-                f"Cannot create bucket name and object key based on a metadata key {metadata_key} "
-                f"which does not contain '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice."
-            )
-        _, time, job_id = metadata_key.split(HIERARCHY_END_NODE_NAME_SEPARATOR)
-        if self.id.count(OBJECT_KEY_DIR_SEPARATOR) == 0:
-            raise ValueError(
-                f"Cannot create bucket name and object key based on a thing node id {self.id} "
-                f"which does not contain '{OBJECT_KEY_DIR_SEPARATOR}'."
-            )
-        bucket_name, object_key_prefix = self.id.split(
-            OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
-        )
-        structure_bucket = StructureBucket(name=bucket_name)
-        object_key_string = (
-            object_key_prefix
-            + IDENTIFIER_SEPARATOR
-            + time
-            + IDENTIFIER_SEPARATOR
-            + job_id
-        )
-        object_key = ObjectKey.from_string(IdString(object_key_string))
-        return structure_bucket, object_key
-
 
 class BlobStorageStructureSource(BaseModel):
     id: IdString  # noqa: A003
@@ -171,20 +213,7 @@ class BlobStorageStructureSource(BaseModel):
 
     @validator("id")
     def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
-        if OBJECT_KEY_DIR_SEPARATOR not in id:
-            raise ValueError(
-                f"The source id '{id}' must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'!"
-            )
-        bucket_name, object_key_string = id.split(sep="/", maxsplit=1)
-        try:
-            StructureBucket(name=bucket_name)
-        except ValidationError as e:
-            raise ValueError(
-                f"The first part '{bucket_name}' of the source id '{id}' "
-                f"before the first '{OBJECT_KEY_DIR_SEPARATOR}' "
-                "must correspond to a bucket name!\nBut it does not:\n" + str(e)
-            ) from e
-
+        _, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(id)
         try:
             ObjectKey.from_string(IdString(object_key_string))
         except ValueError as e:
@@ -305,14 +334,6 @@ class BlobStorageStructureSource(BaseModel):
             metadataKey=name,
         )
 
-    def to_structure_bucket_and_object_key(self) -> tuple[StructureBucket, ObjectKey]:
-        bucket_name_string, object_key_string = self.id.split(
-            sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
-        )
-        return StructureBucket(name=bucket_name_string), ObjectKey.from_string(
-            IdString(object_key_string)
-        )
-
 
 class MultipleSourcesResponse(BaseModel):
     resultCount: int
@@ -331,19 +352,7 @@ class BlobStorageStructureSink(BaseModel):
 
     @validator("id")
     def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
-        if OBJECT_KEY_DIR_SEPARATOR not in id:
-            raise ValueError(
-                f"The sink id '{id}' must contain at least one '{OBJECT_KEY_DIR_SEPARATOR}'!"
-            )
-        bucket_name_string = id.split(sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[0]
-        try:
-            StructureBucket(name=bucket_name_string)
-        except ValidationError as e:
-            raise ValueError(
-                f"The first part '{bucket_name_string}' of the sink id '{id}' "
-                f"before the first '{OBJECT_KEY_DIR_SEPARATOR}' must "
-                "correspond to a bucket name!\nBut it does not:\n" + str(e)
-            ) from e
+        bucket, _ = get_structure_bucket_and_object_key_prefix_from_id(id)
 
         if not id.endswith(IDENTIFIER_SEPARATOR + GENERIC_SINK_ID_SUFFIX):
             raise ValueError(
@@ -458,12 +467,11 @@ class BlobStorageStructureSink(BaseModel):
     def to_structure_bucket_and_object_key(
         self, job_id: UUID
     ) -> tuple[StructureBucket, ObjectKey]:
-        bucket_name_string, object_key_name = self.thingNodeId.split(
-            sep=OBJECT_KEY_DIR_SEPARATOR, maxsplit=1
-        )
-        return StructureBucket(name=bucket_name_string), ObjectKey.from_name_and_job_id(
-            IdString(object_key_name), job_id
-        )
+        (
+            bucket,
+            object_key_name,
+        ) = get_structure_bucket_and_object_key_prefix_from_id(self.thingNodeId)
+        return bucket, ObjectKey.from_name_and_job_id(IdString(object_key_name), job_id)
 
 
 class MultipleSinksResponse(BaseModel):
@@ -598,6 +606,18 @@ def create_blob_storage_adapter_structure_objects_from_hierarchy(
         hierarchy_node.create_structure(
             thing_nodes, bucket_names, sinks, parent_id=None, part_of_bucket_name=True
         )
+
+    if len(bucket_names) != len(set(bucket_names)):
+        bucket_names_string = ", ".join(bn.name for bn in bucket_names)
+        raise ValueError(f"Bucket names are not unique!\n{bucket_names_string}")
+
+    thing_node_ids = [tn.id for tn in thing_nodes]
+    if len(thing_nodes) != len(set(thing_node_ids)):
+        thing_nodes_string = ", ".join(thing_node_ids)
+        raise ValueError(f"Thing nodes are not unique!\n{thing_nodes_string}")
+
+    # The sinks are unique if the thing nodes are unique.
+
     return thing_nodes, bucket_names, sinks
 
 
@@ -621,6 +641,7 @@ class AdapterHierarchy(BaseModel):
         # https://github.com/pydantic/pydantic/issues/1241
         frozen = True  # __setattr__ not allowed and a __hash__ method for the class is generated
 
+    @cached_property
     def create_structure(
         self,
     ) -> tuple[
@@ -632,12 +653,28 @@ class AdapterHierarchy(BaseModel):
 
     @cached_property
     def thing_nodes(self) -> list[StructureThingNode]:
-        thing_nodes, _, _ = self.create_structure()
+        thing_nodes, _, _ = self.create_structure
         return thing_nodes
 
     @cached_property
+    def thing_node_by_id(self) -> dict[IdString, StructureThingNode]:
+        return {tn.id: tn for tn in self.thing_nodes}
+
+    @cached_property
+    def thing_nodes_by_parent_id(
+        self,
+    ) -> dict[IdString | None, list[StructureThingNode]]:
+        tn_dict: dict[IdString | None, list[StructureThingNode]] = {}
+        for tn in self.thing_nodes:
+            if tn.parentId in tn_dict:
+                tn_dict[tn.parentId].append(tn)
+            else:
+                tn_dict[tn.parentId] = [tn]
+        return tn_dict
+
+    @cached_property
     def structure_buckets(self) -> list[StructureBucket]:
-        _, buckets, _ = self.create_structure()
+        _, buckets, _ = self.create_structure
         if len(buckets) != len(set(buckets)):
             msg = (
                 "The bucket names generated from the config file are not unique!\n"
@@ -649,8 +686,28 @@ class AdapterHierarchy(BaseModel):
 
     @cached_property
     def sinks(self) -> list[BlobStorageStructureSink]:
-        _, _, sinks = self.create_structure()
+        _, _, sinks = self.create_structure
         return sinks
+
+    @cached_property
+    def sink_by_id(self) -> dict[IdString, BlobStorageStructureSink]:
+        return {snk.id: snk for snk in self.sinks}
+
+    @cached_property
+    def sinks_by_parent_id(self) -> dict[IdString, list[BlobStorageStructureSink]]:
+        snk_dict: dict[IdString, list[BlobStorageStructureSink]] = {}
+        for snk in self.sinks:
+            if snk.thingNodeId in snk_dict:
+                snk_dict[snk.thingNodeId].append(snk)
+            else:
+                snk_dict[snk.thingNodeId] = [snk]
+        return snk_dict
+
+    @cached_property
+    def sink_by_thing_node_id_and_metadata_key(
+        self,
+    ) -> dict[tuple[IdString, str], BlobStorageStructureSink]:
+        return {(snk.thingNodeId, snk.metadataKey): snk for snk in self.sinks}
 
     @classmethod
     def from_file(

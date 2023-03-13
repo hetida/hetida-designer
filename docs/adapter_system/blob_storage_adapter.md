@@ -55,9 +55,23 @@ This [file](../../runtime/demodata/blob_storage_adapter_hierarchy.json) contains
                             ]
                         }
                     ]
-                }, //...
+                },
+                {
+                    "name": "MillingUnit",
+                    "description": "Plant A Milling Unit",
+                    "below_structure_defines_object_key": true,
+                    "substructure": [//...
+                    ]
+                }
             ]
-        }, //...
+        },
+        {
+            "name": "PlantB",
+            "description": "Plant B",
+            "below_structure_defines_object_key": true,
+            "substructure": [//...
+            ]
+        }
     ]
 }
 ```
@@ -125,11 +139,11 @@ The workflows "Get ExampleClass Object Attributes" and "Create ExampleClass Obje
 
 Selecting "Blob Storage Adapter" for an input in the Execution dialog sources should be available for all objects for which bucket name and object key match the adapter hierarchy:
 
-<img src="./assets/blob_storage_adapter_assign_source.png" height="630" width=530 data-align="center">
+<img src="../assets/blob_storage_adapter_assign_source.png" height="630" width=530 data-align="center">
 
 Similarly a sink should be available for each end node in the hierarchy via selecting "Blob Storage Adapter" for an output in the Execution dialog:
 
-<img src="./assets/blob_storage_adapter_assign_sink.png" height="630" width=530 data-align="center">
+<img src="../assets/blob_storage_adapter_assign_sink.png" height="630" width=530 data-align="center">
 
 ### Usage in production
 

@@ -11,6 +11,7 @@ from hetdesrun.adapters.blob_storage.models import (
     IdString,
     ObjectKey,
     StructureBucket,
+    get_structure_bucket_and_object_key_prefix_from_id,
 )
 from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
@@ -45,8 +46,11 @@ def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
         thing_node = get_thing_node_by_id(IdString(thing_node_id))
         sink = BlobStorageStructureSink.from_thing_node(thing_node)
         try:
-            structure_bucket, object_key = thing_node.to_bucket_name_and_object_key(
-                metadata_key
+            structure_bucket, _ = get_structure_bucket_and_object_key_prefix_from_id(
+                IdString(thing_node_id)
+            )
+            object_key = ObjectKey.from_thing_node_id_and_metadata_key(
+                thing_node_id=IdString(thing_node_id), metadata_key=metadata_key
             )
         except ValueError as error:
             msg = (

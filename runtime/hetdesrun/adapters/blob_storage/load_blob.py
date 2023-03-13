@@ -2,7 +2,10 @@ import logging
 import pickle
 from typing import Any
 
-from hetdesrun.adapters.blob_storage.models import IdString
+from hetdesrun.adapters.blob_storage.models import (
+    IdString,
+    get_structure_bucket_and_object_key_prefix_from_id,
+)
 from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
     get_source_by_thing_node_id_and_metadata_key,
@@ -20,9 +23,9 @@ logger = logging.getLogger(__name__)
 async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     """Load BLOB from storage.
 
-    Note, that StructureObjectNotFound, StructureObjectNotUnique, MissingHierarchyError,
-    StorageAuthenticationError, and AdapterConnectionError raised from
-    get_source_by_thing_node_id_and_metadata_key or get_s3_client may occur.
+    Note, that StructureObjectNotFound, MissingHierarchyError, StorageAuthenticationError, and
+    AdapterConnectionError raised from get_source_by_thing_node_id_and_metadata_key or
+    get_s3_client may occur.
     """
     logger.info(
         "Identify source with thing node id '%s' and metadata key '%s'",
@@ -34,26 +37,28 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     )
 
     logger.info("Get bucket name and object key from source with id %s", source.id)
-    structure_bucket, object_key = source.to_structure_bucket_and_object_key()
+    bucket, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(
+        source.id
+    )
 
     logger.info(
         "Load data for source '%s' from storage in bucket '%s' under object key '%s'",
         source.id,
-        structure_bucket.name,
-        object_key.string,
+        bucket.name,
+        object_key_string,
     )
     s3_client = await get_s3_client()
 
-    ensure_bucket_exists(s3_client=s3_client, bucket_name=structure_bucket.name)
+    ensure_bucket_exists(s3_client=s3_client, bucket_name=bucket.name)
 
     try:
         response = s3_client.get_object(
-            Bucket=structure_bucket.name, Key=object_key.string, ChecksumMode="ENABLED"
+            Bucket=bucket.name, Key=object_key_string, ChecksumMode="ENABLED"
         )
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
-            f"The bucket '{structure_bucket.name}' contains no object "
-            f"with the key '{object_key.string}'!"
+            f"The bucket '{bucket.name}' contains no object "
+            f"with the key '{object_key_string}'!"
         ) from error
 
     try:

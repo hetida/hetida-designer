@@ -32,15 +32,15 @@ async def test_load_object_with_self_defined_class(
         client_mock.create_bucket(Bucket="i-i")
         client_mock.create_bucket(
             Bucket="i-ii"
-        )  # needed for create_sources based on adapter structure
+        )  # needed for get_all_sources_from_buckets_and_object_keys based on adapter structure
         client_mock.create_bucket(
             Bucket="i-iii"
-        )  # needed for create_sources based on adapter structure
+        )  # needed for get_all_sources_from_buckets_and_object_keys based on adapter structure
         client_mock.create_bucket(
             Bucket="iii"
-        )  # needed for create_sources based on adapter structure
+        )  # needed for get_all_sources_from_buckets_and_object_keys based on adapter structure
         with mock.patch(
-            "hetdesrun.adapters.blob_storage.utils.get_adapter_structure",
+            "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
             return_value=AdapterHierarchy.from_file(
                 "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
             ),
@@ -124,13 +124,13 @@ async def test_store_object_under_key_which_already_exists(
         client_mock.create_bucket(Bucket="i-i")
         client_mock.create_bucket(
             Bucket="i-ii"
-        )  # needed for create_sources based on adapter structure
+        )  # needed for get_all_sources_from_buckets_and_object_keys based on adapter structure
         client_mock.create_bucket(
             Bucket="i-iii"
-        )  # needed for create_sources based on adapter structure
+        )  # needed for get_all_sources_from_buckets_and_object_keys based on adapter structure
         client_mock.create_bucket(
             Bucket="iii"
-        )  # needed for create_sources based on adapter structure
+        )  # needed for get_all_sources_from_buckets_and_object_keys based on adapter structure
         file_object = BytesIO()
         data = struct.pack(">i", 42)
         pickle.dump(data, file_object)
@@ -142,7 +142,7 @@ async def test_store_object_under_key_which_already_exists(
             Body=file_object,
         )
         with mock.patch(
-            "hetdesrun.adapters.blob_storage.utils.get_adapter_structure",
+            "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
             return_value=AdapterHierarchy.from_file(
                 "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
             ),
