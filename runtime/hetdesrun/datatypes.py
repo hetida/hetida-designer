@@ -145,7 +145,7 @@ class PydanticMultiTimeseriesPandasDataFrame:
                     df = pd.read_json(json.dumps(v), typ="frame")
                 except Exception as read_json_exception:  # noqa: BLE001
                     raise ValueError(
-                        "Could not parse provided input as Pandas DataFrame"
+                        "Could not parse provided input as Pandas DataFrame."
                     ) from read_json_exception
 
             if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
@@ -153,17 +153,17 @@ class PydanticMultiTimeseriesPandasDataFrame:
                 multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
                 raise ValueError(
                     f"The column names {column_names_string} don't match the column names "
-                    f"required for a MultiTSFrame {multitsframe_column_names_string}"
+                    f"required for a MultiTSFrame {multitsframe_column_names_string}."
                 )
 
         if df["metric"].isna().any():
             raise ValueError(
-                "No null values are allowed for the column 'metric' of a MulitTSFrame"
+                "No null values are allowed for the column 'metric' of a MulitTSFrame."
             )
 
         if df["timestamp"].isna().any():
             raise ValueError(
-                "No null values are allowed for the column 'timestamp' of a MulitTSFrame"
+                "No null values are allowed for the column 'timestamp' of a MulitTSFrame."
             )
 
         return df
