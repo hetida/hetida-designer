@@ -98,7 +98,6 @@ async def test_resources_offered_from_structure_hierarchy(
 ) -> None:
     """Walks through the structure-hierarchy providedand gets/posts offered resources"""
     async with async_test_client as client:
-
         response_obj = (await client.get("/structure")).json()
 
         structure_response = StructureResponse(**response_obj)
@@ -129,8 +128,8 @@ async def test_resources_offered_from_structure_hierarchy(
         )
 
         assert len(all_tns) == 14
-        assert len(all_srcs) == 33
-        assert len(all_snks) == 12
+        assert len(all_srcs) == 35
+        assert len(all_snks) == 14
         assert len(src_attached_metadata_dict) == 52
         assert len(snk_attached_metadata_dict) == 24
         assert len(tn_attached_metadata_dict) == 8
@@ -148,7 +147,7 @@ async def test_resources_offered_from_structure_hierarchy(
             assert tn == StructureThingNode(**response_obj)
 
         # we actually get all metadata that is available as attached to something:
-        for ((src_id, key), md) in src_attached_metadata_dict.items():
+        for (src_id, key), md in src_attached_metadata_dict.items():
             response_obj = (
                 await client.get(f"/sources/{src_id}/metadata/{key}")
             ).json()
@@ -164,7 +163,7 @@ async def test_resources_offered_from_structure_hierarchy(
                 )
                 assert resp.status_code == 200
 
-        for ((snk_id, key), md) in snk_attached_metadata_dict.items():
+        for (snk_id, key), md in snk_attached_metadata_dict.items():
             response_obj = (await client.get(f"/sinks/{snk_id}/metadata/{key}")).json()
             print(response_obj, "versus", md)
             assert response_obj["key"] == key
@@ -178,7 +177,7 @@ async def test_resources_offered_from_structure_hierarchy(
                 )
                 assert resp.status_code == 200
 
-        for ((tn_id, key), md) in tn_attached_metadata_dict.items():
+        for (tn_id, key), md in tn_attached_metadata_dict.items():
             response_obj = (
                 await client.get(f"/thingNodes/{tn_id}/metadata/{key}")
             ).json()
@@ -208,8 +207,21 @@ async def test_resources_offered_from_structure_hierarchy(
                 value_datatype = ExternalType(src.type).value_datatype
                 assert value_datatype is not None
                 assert response_obj["dataType"] == (value_datatype.value)
+
             if src.type.startswith("dataframe"):
                 response = await client.get(f"/dataframe?id={src.id}")
+                lines = response.text.splitlines()
+                for line in lines:
+                    print(line)
+                    if len(line) > 0:
+                        json.loads(line)
+
+            if src.type.startswith("multitsframe"):
+                response = await client.get(
+                    f'/multitsframe?id={src.id}&from={quote("2020-01-01T00:00:00.000000000Z")}'
+                    f'&to={quote("2020-01-02T00:00:00.0000000Z")}'
+                )
+                assert response.status_code == 200
                 lines = response.text.splitlines()
                 for line in lines:
                     print(line)
@@ -257,6 +269,18 @@ async def test_resources_offered_from_structure_hierarchy(
                     json=[
                         {"a": 14.5, "b": 12.3},
                         {"a": 13.5, "b": 11.9},
+                    ],
+                )
+                assert response.status_code == 200
+
+            if snk.type.startswith("multitsframe"):
+                print("Posting something for multitsframe sink:", snk)
+                response = await client.post(
+                    f"/multitsframe?id={snk.id}",
+                    json=[
+                        
+                        {"metric": "b", "timestamp": "2020-01-01T00:00:00.000Z", "value": 12.3},
+                        {"metric": "b", "timestamp": "2020-01-02T00:00:00.000Z", "value": 11.9},
                     ],
                 )
                 assert response.status_code == 200
