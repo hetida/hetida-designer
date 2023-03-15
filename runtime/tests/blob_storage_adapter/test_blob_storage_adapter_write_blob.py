@@ -13,11 +13,15 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     StructureObjectNotFound,
 )
 from hetdesrun.adapters.blob_storage.models import (
+    AdapterHierarchy,
     BlobStorageStructureSink,
     IdString,
     ObjectKey,
     StructureBucket,
     StructureThingNode,
+)
+from hetdesrun.adapters.blob_storage.structure import (
+    get_source_by_thing_node_id_and_metadata_key,
 )
 from hetdesrun.adapters.blob_storage.write_blob import send_data, write_blob_to_storage
 from hetdesrun.models.data_selection import FilteredSink
@@ -92,25 +96,39 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
                 )
             },
         ):
+            thing_node_id = "i-ii/E"
+            metadata_key = (
+                "E - 2001-02-03 04:05:06+00:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
+            )
             await write_blob_to_storage(
                 data=struct.pack(">i", 23),
-                thing_node_id="i-ii/E",
-                metadata_key=(
-                    "E - 2001-02-03T04:05:06+00:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
-                ),
+                thing_node_id=thing_node_id,
+                metadata_key=metadata_key,
             )
 
             object_summaries_response = client_mock.list_objects_v2(Bucket=bucket_name)
             assert object_summaries_response["KeyCount"] == 1
-            object_key = object_summaries_response["Contents"][0]["Key"]
+            object_key_string = object_summaries_response["Contents"][0]["Key"]
             assert (
-                object_key
+                object_key_string
                 == "E_2001-02-03T04:05:06+00:00_e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
             )
-            object_response = client_mock.get_object(Bucket=bucket_name, Key=object_key)
+            object_response = client_mock.get_object(Bucket=bucket_name, Key=object_key_string)
             pickled_data_bytes = object_response["Body"].read()
             file_object = BytesIO(pickled_data_bytes)
             assert struct.unpack(">i", joblib.load(file_object)) == (23,)
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+                return_value=AdapterHierarchy.from_file(
+                    "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
+                ),
+            ),mock.patch(
+                "hetdesrun.adapters.blob_storage.structure.get_object_key_strings_in_bucket",
+                return_value=object_key_string,
+            ):
+                _ = await get_source_by_thing_node_id_and_metadata_key(
+                    IdString(thing_node_id), metadata_key
+                )
 
 
 @pytest.mark.asyncio

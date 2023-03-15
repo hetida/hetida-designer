@@ -149,8 +149,8 @@ Similarly a sink should be available for each end node in the hierarchy via sele
 
 The wirings to a source or sink of the Blob storage adapter must contain the path to the respective hierarchy end node as `ref_id` and the name of the sink or source as `ref_key`.
 E.g. for the examplary sources presented at the end of the section [Mounting the adapter hierarchy configuration](#mounting-the-adapter-hierarchy-configuration) these would be:
-* `ref_id="planta-picklingunit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14T12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa"`
-* `ref_id="plantb/PicklingUnit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14T12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa"`
+* `ref_id="planta-picklingunit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa"`
+* `ref_id="plantb/PicklingUnit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa"`
 
 For sinks the `ref_key` contains the suffix `Next Object` instead of time and job id, e.g. `ref_key="Anomalies - Next Object"`. Time and job id for the stored object will then be determined automatically.
 Alternatively, it is possible to provide a `ref_key` with time and job id, which will then be used to set the object key.

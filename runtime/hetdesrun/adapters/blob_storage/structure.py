@@ -274,7 +274,7 @@ def get_sink_by_thing_node_id_and_metadata_key(
 
     except KeyError as error:
         msg = (
-            f"Found no source with thing node id {thing_node_id} "
+            f"Found no sink with thing node id {thing_node_id} "
             f"and metadata key {metadata_key}!"
         )
         logger.error(msg)
