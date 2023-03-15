@@ -1,7 +1,8 @@
 import os
-from typing import Callable
+from collections.abc import Callable
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.local_file.config import local_file_adapter_config
 from hetdesrun.adapters.local_file.detect import (
     LocalFile,
@@ -21,26 +22,38 @@ from hetdesrun.adapters.local_file.utils import (
 
 
 def source_from_local_file(local_file: LocalFile) -> LocalFileStructureSource:
+    file_support_handler = local_file.file_support_handler()
+    assert file_support_handler is not None  # for mypy # noqa: S101
+    external_type = file_support_handler.adapter_data_type
+
     return LocalFileStructureSource(
         id=to_url_representation(local_file.path),
         thingNodeId=to_url_representation(local_file.dir_path),
         name=os.path.basename(local_file.path),
-        type="dataframe",
+        type=external_type,
         visible=True,
-        metadataKey=None,
+        metadataKey=to_url_representation(local_file.path)
+        if external_type is ExternalType.METADATA_ANY
+        else None,
         path=local_file.path,
         filters={},
     )
 
 
 def sink_from_local_file(local_file: LocalFile) -> LocalFileStructureSink:
+    file_support_handler = local_file.file_support_handler()
+    assert file_support_handler is not None  # for mypy # noqa: S101
+    external_type = file_support_handler.adapter_data_type
+
     return LocalFileStructureSink(
         id=to_url_representation(local_file.path),
         thingNodeId=to_url_representation(local_file.dir_path),
         name=os.path.basename(local_file.path),
-        type="dataframe",
+        type=external_type,
         visible=True,
-        metadataKey=None,
+        metadataKey=to_url_representation(local_file.path)
+        if external_type is ExternalType.METADATA_ANY
+        else None,
         path=local_file.path,
         filters={},
     )
@@ -48,9 +61,12 @@ def sink_from_local_file(local_file: LocalFile) -> LocalFileStructureSink:
 
 def local_file_loadable(local_file: LocalFile) -> bool:
     return (
-        local_file.parsed_settings_file is None
-        or local_file.parsed_settings_file.loadable is None
+        local_file.parsed_settings_file is None  # loadable by default config
         or local_file.parsed_settings_file.loadable
+        is None  # loadable null is interpreted as True
+        or local_file.parsed_settings_file.loadable
+    ) and (  # cannot load if extension is not registered
+        local_file.file_support_handler() is not None
     )
 
 
@@ -59,6 +75,21 @@ def local_file_writable(local_file: LocalFile) -> bool:
         local_file.parsed_settings_file is not None
         and local_file.parsed_settings_file.writable is not None
         and local_file.parsed_settings_file.writable
+    ) and (  # cannot load if extension is not registered
+        local_file.file_support_handler() is not None
+    )
+
+
+def generic_any_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
+    gneric_sink_id = "GENERIC_ANY_SINK_AT_" + parent_id
+    return LocalFileStructureSink(
+        id=gneric_sink_id,
+        thingNodeId=parent_id,
+        name="New Pickle File",
+        type=ExternalType.METADATA_ANY,
+        visible=True,
+        path="Prepared Generic Sink",
+        metadataKey=gneric_sink_id,
     )
 
 
@@ -122,7 +153,12 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
             sink_from_local_file(local_file)
             for local_file in local_files
             if local_file_writable(local_file)
-        ],
+        ]
+        + (
+            [generic_any_sink_at_dir(parent_id)]
+            if local_file_adapter_config.generic_any_sink
+            else []
+        ),
     )
 
 
@@ -170,6 +206,7 @@ def get_sinks(filter_str: str | None) -> list[LocalFileStructureSink]:
             filter_str=filter_str, selection_criterion_func=local_file_writable
         )
     ]
+    # TODO: should generic sinks be present for selection in filtered view?
 
 
 def get_valid_top_dir(path: str) -> str | None:
@@ -187,7 +224,7 @@ def get_valid_top_dir(path: str) -> str | None:
 
 
 def get_local_file_by_id(
-    id: str,  # noqa: A002
+    id: str, verify_existence: bool = True  # noqa: A002
 ) -> LocalFile | None:
     """Get a specific file by id
 
@@ -205,7 +242,7 @@ def get_local_file_by_id(
     if local_file is None:
         return None
 
-    if not (
+    if verify_existence and not (
         os.path.exists(local_file.path)
         or os.path.exists(local_file.path + ".settings.json")
     ):
@@ -273,6 +310,10 @@ def get_sink_by_id(sink_id: str) -> LocalFileStructureSink | None:
 
     Returns None if sink could not be found.
     """
+
+    if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
+        parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
+        return generic_any_sink_at_dir(parent_id)
 
     local_file = get_local_file_by_id(sink_id)
 

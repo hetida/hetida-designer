@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exception_handlers import request_validation_exception_handler
@@ -17,6 +17,7 @@ from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
 from hetdesrun.backend.service.documentation_router import documentation_router
 from hetdesrun.backend.service.info_router import info_router
+from hetdesrun.backend.service.maintenance_router import maintenance_router
 from hetdesrun.backend.service.transformation_router import transformation_router
 from hetdesrun.backend.service.wiring_router import wiring_router
 from hetdesrun.backend.service.workflow_router import workflow_router
@@ -100,6 +101,10 @@ def init_app() -> FastAPI:
     except KeyError:
         pass
 
+    from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
+    from hetdesrun.adapters.blob_storage.webservice import (
+        blob_storage_adapter_router,
+    )
     from hetdesrun.adapters.local_file.webservice import (
         local_file_adapter_router,
     )
@@ -125,6 +130,10 @@ def init_app() -> FastAPI:
         app.include_router(
             local_file_adapter_router
         )  # auth dependency set individually per endpoint
+        if get_blob_adapter_config().adapter_hierarchy_location != "":
+            app.include_router(
+                blob_storage_adapter_router
+            )  # auth dependency set individually per endpoint
         app.include_router(
             runtime_router, prefix="/engine"
         )  # auth dependency set individually per endpoint
@@ -148,6 +157,14 @@ def init_app() -> FastAPI:
         app.include_router(
             transformation_router, prefix="/api", dependencies=get_auth_deps()
         )
+        possible_maintenance_secret = get_config().maintenance_secret
+        if (
+            possible_maintenance_secret is not None
+            and len(possible_maintenance_secret.get_secret_value()) > 0
+        ):
+            app.include_router(
+                maintenance_router, prefix="/api", dependencies=get_auth_deps()
+            )
 
     @app.on_event("startup")
     async def startup_event() -> None:

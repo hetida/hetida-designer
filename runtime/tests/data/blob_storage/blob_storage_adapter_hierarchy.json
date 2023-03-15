@@ -1,0 +1,79 @@
+{
+    "structure": [
+        {
+            "name": "I",
+            "description": "Super Category",
+            "substructure": [
+                {
+                    "name": "i",
+                    "description": "Category",
+                    "below_structure_defines_object_key": false,
+                    "substructure": [
+                        {
+                            "name": "A",
+                            "description": "Subcategory",
+                            "substructure": []
+                        },
+                        {
+                            "name": "B",
+                            "description": "Subcategory",
+                            "substructure": null
+                        },
+                        {
+                            "name": "C",
+                            "description": "Subcategory"
+                        },
+                        {
+                            "name": "D",
+                            "description": "Subcategory"
+                        }
+                    ]
+                },
+                {
+                    "name": "ii",
+                    "description": "Category",
+                    "below_structure_defines_object_key": true,
+                    "substructure": [
+                        {
+                            "name": "E",
+                            "description": "Subcategory"
+                        }
+                    ]
+                },
+                {
+                    "name": "iii",
+                    "description": "Category",
+                    "below_structure_defines_object_key": true,
+                    "substructure": [
+                        {
+                            "name": "F",
+                            "description": "Subcategory"
+                        },
+                        {
+                            "name": "G",
+                            "description": "Subcategory"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "III",
+            "description": "Category",
+            "below_structure_defines_object_key": true,
+            "substructure": [
+                {
+                    "name": "x",
+                    "description": "Subcategory",
+                    "substructure": [
+                        {
+                            "name": "C",
+                            "description": "Subcategory"
+                        }
+                    ]
+                }
+            ]
+        }
+
+    ]
+}

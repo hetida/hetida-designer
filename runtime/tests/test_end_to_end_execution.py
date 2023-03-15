@@ -1,8 +1,10 @@
 import json
 import os
+from typing import Any
 from uuid import uuid4
 
 import pytest
+from httpx import AsyncClient
 
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import (
@@ -22,14 +24,18 @@ from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import get_uuid_from_seed
 
 
-async def run_workflow_with_client(workflow_json, open_async_test_client):
+async def run_workflow_with_client(
+    workflow_json: dict, open_async_test_client: AsyncClient
+) -> tuple[int, Any]:
     response = await open_async_test_client.post("engine/runtime", json=workflow_json)
     return response.status_code, response.json()
 
 
 def gen_execution_input_from_single_component(
-    component_json_path, direct_provisioning_data_dict=None, wf_wiring=None
-):
+    component_json_path: str,
+    direct_provisioning_data_dict: dict | None = None,
+    wf_wiring: WorkflowWiring | None = None,
+) -> WorkflowExecutionInput:
     """Wraps a single component into a workflow and generates the execution input json
 
     input data is provided directly
@@ -109,7 +115,9 @@ def gen_execution_input_from_single_component(
                 InputWiring(
                     workflow_input_name=comp_input.name,
                     adapter_id=1,
-                    filters={"value": direct_provisioning_data_dict[comp_input.name]},
+                    filters={"value": direct_provisioning_data_dict[comp_input.name]}
+                    if direct_provisioning_data_dict is not None
+                    else None,
                 )
                 for comp_input in comp_inputs
             ],
@@ -127,8 +135,10 @@ def gen_execution_input_from_single_component(
 
 
 async def run_single_component(
-    component_json_file_path, input_data_dict, open_async_test_client
-):
+    component_json_file_path: str,
+    input_data_dict: dict,
+    open_async_test_client: AsyncClient,
+) -> WorkflowExecutionResult:
     response = await open_async_test_client.post(
         "engine/runtime",
         json=json.loads(
@@ -143,7 +153,9 @@ async def run_single_component(
 
 
 @pytest.mark.asyncio
-async def test_null_values_pass_any_pass_through(async_test_client):
+async def test_null_values_pass_any_pass_through(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
         exec_result = await run_single_component(
             (
@@ -161,7 +173,9 @@ async def test_null_values_pass_any_pass_through(async_test_client):
 
 
 @pytest.mark.asyncio
-async def test_null_list_values_pass_any_pass_through(async_test_client):
+async def test_null_list_values_pass_any_pass_through(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
         exec_result = await run_single_component(
             (
@@ -175,7 +189,9 @@ async def test_null_list_values_pass_any_pass_through(async_test_client):
 
 
 @pytest.mark.asyncio
-async def test_null_values_pass_series_pass_through(async_test_client):
+async def test_null_values_pass_series_pass_through(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
         exec_result = await run_single_component(
             (
@@ -202,7 +218,9 @@ async def test_null_values_pass_series_pass_through(async_test_client):
 
 
 @pytest.mark.asyncio
-async def test_all_null_values_pass_series_pass_through(async_test_client):
+async def test_all_null_values_pass_series_pass_through(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
         exec_result = await run_single_component(
             (
@@ -219,7 +237,7 @@ async def test_all_null_values_pass_series_pass_through(async_test_client):
 
 
 @pytest.mark.asyncio
-async def test_nested_wf_execution(async_test_client):
+async def test_nested_wf_execution(async_test_client: AsyncClient) -> None:
     async with async_test_client as client:
         with open(
             os.path.join("tests", "data", "nested_wf_execution_input.json"),

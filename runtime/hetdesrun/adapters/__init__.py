@@ -12,7 +12,8 @@ on registering your own data adapters.
 
 import asyncio
 import logging
-from typing import Any, Awaitable, Callable, TypedDict, Union
+from collections.abc import Awaitable, Callable
+from typing import Any, TypedDict
 
 from hetdesrun.adapters.exceptions import (  # noqa: F401
     AdapterClientWiringInvalidError,
@@ -29,20 +30,20 @@ from hetdesrun.adapters.sink.direct_provisioning import send_directly_provisione
 from hetdesrun.adapters.source.direct_provisioning import load_directly_provisioned_data
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
-ConnectionErrorTuple = Union[
-    tuple[type[AdapterConnectionError]],
-    tuple[type[AdapterConnectionError], type[Exception]],
-]
+ConnectionErrorTuple = (
+    tuple[type[AdapterConnectionError]]
+    | tuple[type[AdapterConnectionError], type[Exception]]
+)
 
-OutputDataErrorTuple = Union[
-    tuple[type[AdapterOutputDataError]],
-    tuple[type[AdapterOutputDataError], type[Exception]],
-]
+OutputDataErrorTuple = (
+    tuple[type[AdapterOutputDataError]]
+    | tuple[type[AdapterOutputDataError], type[Exception]]
+)
 
-ClientWiringInvalidErrorTuple = Union[
-    tuple[type[AdapterClientWiringInvalidError]],
-    tuple[type[AdapterClientWiringInvalidError], type[Exception]],
-]
+ClientWiringInvalidErrorTuple = (
+    tuple[type[AdapterClientWiringInvalidError]]
+    | tuple[type[AdapterClientWiringInvalidError], type[Exception]]
+)
 
 logger = logging.getLogger(__name__)
 

@@ -52,9 +52,7 @@ def get_transformation_revisions(
             posix_urljoin(get_config().hd_backend_api_url, "transformations"),
             params=json.loads(params.json(exclude_none=True)),
             verify=get_config().hd_backend_verify_certs,
-            auth=get_backend_basic_auth()  # type: ignore
-            if get_config().hd_backend_use_basic_auth
-            else None,
+            auth=get_backend_basic_auth(),  # type: ignore
             headers=headers,
             timeout=get_config().external_request_timeout,
         )
@@ -160,9 +158,7 @@ def update_or_create_transformation_revision(
             },
             verify=get_config().hd_backend_verify_certs,
             json=json.loads(tr.json()),  # TODO: avoid double serialization.
-            auth=get_backend_basic_auth()  # type: ignore
-            if get_config().hd_backend_use_basic_auth
-            else None,
+            auth=get_backend_basic_auth(),  # type: ignore
             headers=headers,
             timeout=get_config().external_request_timeout,
         )
@@ -222,9 +218,7 @@ def delete_transformation_revision(
             posix_urljoin(get_config().hd_backend_api_url, "transformations", str(id)),
             params={"ignore_state": True},
             verify=get_config().hd_backend_verify_certs,
-            auth=get_backend_basic_auth()  # type: ignore
-            if get_config().hd_backend_use_basic_auth
-            else None,
+            auth=get_backend_basic_auth(),  # type: ignore
             headers=headers,
             timeout=get_config().external_request_timeout,
         )

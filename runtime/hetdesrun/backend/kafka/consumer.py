@@ -1,7 +1,7 @@
 import asyncio
 import logging
+from collections.abc import Callable
 from functools import cache
-from typing import Callable
 from uuid import uuid4
 
 import aiokafka

@@ -23,15 +23,15 @@ def validate_series_dtype(series: pd.Series, sink_type: ExternalType) -> None:
         raise AdapterOutputDataError(
             f"Expected int value dtype for series but got {str(series.dtype)}."
         )
-    if (
-        sink_type.endswith("(boolean)") or sink_type.endswith("(bool)")
-    ) and not pd.api.types.is_bool_dtype(series):
+    if (sink_type.endswith(("(boolean)", "(bool)"))) and not pd.api.types.is_bool_dtype(
+        series
+    ):
         raise AdapterOutputDataError(
             f"Expected bool value dtype for series but got {str(series.dtype)}."
         )
-    if (
-        sink_type.endswith("(str)") or sink_type.endswith("(string)")
-    ) and not pd.api.types.is_string_dtype(series):
+    if (sink_type.endswith(("(str)", "(string)"))) and not pd.api.types.is_string_dtype(
+        series
+    ):
         raise AdapterOutputDataError(
             f"Expected string value dtype for series but got {str(series.dtype)}."
         )

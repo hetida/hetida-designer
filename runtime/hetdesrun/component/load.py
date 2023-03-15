@@ -3,8 +3,8 @@ import hashlib
 import importlib
 import logging
 import sys
+from collections.abc import Callable, Coroutine
 from types import ModuleType
-from typing import Callable, Coroutine
 
 
 class ComponentCodeImportError(Exception):

@@ -70,7 +70,7 @@ def are_valid_sources(filtered_sources: list[FilteredSource]) -> tuple[bool, str
     return True, ""
 
 
-async def load_framelike_data(
+async def load_framelike_data(  # noqa: PLR0915
     filtered_sources: list[FilteredSource],
     additional_params: list[
         tuple[str, str]

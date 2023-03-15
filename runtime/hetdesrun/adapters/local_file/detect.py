@@ -84,14 +84,13 @@ def local_file_from_path(
 
     if file_path.endswith(".settings.json"):  # only config file present
         data_file_path = file_path.removesuffix(".settings.json")
-
         # only infer from settings file if no data file is present:
         if (
             (
                 (not os.path.exists(data_file_path))
                 or provide_from_settings_file_if_data_file_present
             )
-            and (data_file_path.endswith(".csv") or data_file_path.endswith(".csv.zip"))
+            and (data_file_path.endswith((".csv", ".csv.zip")))
         ) or provide_from_settings_file_if_data_file_present:
             parsed_settings_file = parse_settings_file(data_file_path=data_file_path)
 
@@ -164,5 +163,4 @@ def get_local_files_and_dirs(
 
         if not walk_sub_dirs:
             break
-
     return local_files, sub_directories
