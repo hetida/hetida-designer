@@ -6,7 +6,6 @@ import pytest
 from pydantic import ValidationError
 
 from hetdesrun.backend.execution import nested_nodes
-from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
