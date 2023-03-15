@@ -6371,7 +6371,7 @@
           "operator_id": "ec91517d-99d0-4707-861e-5ede39da8ef6",
           "connector_id": "4309e6d9-dc4d-781c-4ef4-e2d8fa1d195c",
           "operator_name": "Filter",
-          "connector_name": "connector_name",
+          "connector_name": "filtered",
           "position": {
             "x": 1600,
             "y": 530
@@ -6384,7 +6384,7 @@
           "operator_id": "c6c815a9-60f3-4ef1-b6f2-54384cc15ec5",
           "connector_id": "a36ab320-ae3d-48f0-b57c-5e541e987615",
           "operator_name": "Band Filter Plot",
-          "connector_name": "connector_name",
+          "connector_name": "band_filter_plot",
           "position": {
             "x": 1600,
             "y": 432
@@ -7629,7 +7629,7 @@
           "operator_id": "e362967a-fa2d-4d7c-8ef9-e58eceb45e2b",
           "connector_id": "53dff70b-364f-e5b7-fbb4-c293a5d2f339",
           "operator_name": "Contour Plot",
-          "connector_name": "connector_name",
+          "connector_name": "contour_plot",
           "position": {
             "x": 2010,
             "y": -100
@@ -8570,7 +8570,7 @@
           "operator_id": "a1f1affa-03ca-4896-91a2-dbf9580d9105",
           "connector_id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
           "operator_name": "Pass Through Limit Violation Timestamp",
-          "connector_name": "connector_name",
+          "connector_name": "output",
           "position": {
             "x": 1710,
             "y": 430
@@ -8583,7 +8583,7 @@
           "operator_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
           "connector_id": "cf404526-75de-f1ff-f961-200e99dde8d6",
           "operator_name": "Univariate Linear RUL Regression",
-          "connector_name": "connector_name",
+          "connector_name": "intercept",
           "position": {
             "x": 1100,
             "y": 60
@@ -8596,7 +8596,7 @@
           "operator_id": "4426ace6-15a5-4a0b-927b-558d50c28915",
           "connector_id": "1828c68d-c5c9-f31a-f2e9-3493409f53ed",
           "operator_name": "Univariate Linear RUL Regression",
-          "connector_name": "connector_name",
+          "connector_name": "slope",
           "position": {
             "x": 1100,
             "y": 490
@@ -8609,7 +8609,7 @@
           "operator_id": "1ff7ea36-4444-4d39-ba14-5702b5c52d32",
           "connector_id": "aebbc55f-1e4a-c035-bbd0-2475307536c9",
           "operator_name": "Univariate Linear RUL Regression Result Plot",
-          "connector_name": "connector_name",
+          "connector_name": "rul_regression_result_plot",
           "position": {
             "x": 1710,
             "y": 230
@@ -9700,7 +9700,7 @@
           "operator_id": "b94d9834-bcac-4f02-bdfa-e3d21cc877a5",
           "connector_id": "5c3b2c95-872a-4d08-91ff-a847532af488",
           "operator_name": "Moving Window Aggregated Timeseries Plot",
-          "connector_name": "connector_name",
+          "connector_name": "plot",
           "position": {
             "x": 1870,
             "y": 660
@@ -9713,7 +9713,7 @@
           "operator_id": "4fd3f87b-819f-4a0c-8694-ea71a6d4480b",
           "connector_id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
           "operator_name": "window_means",
-          "connector_name": "connector_name",
+          "connector_name": "output",
           "position": {
             "x": 1870,
             "y": 262
@@ -11461,7 +11461,7 @@
           "operator_id": "7cfaff69-b68b-4d72-b553-104d826b0b13",
           "connector_id": "1658275f-5ff6-1e12-c44c-3dac33a6a56d",
           "operator_name": "Timeseries Interval Boxplots",
-          "connector_name": "connector_name",
+          "connector_name": "plot",
           "position": {
             "x": 850,
             "y": 1180
@@ -11474,7 +11474,7 @@
           "operator_id": "fbaa5750-fd58-4e67-a3a7-6989121de3f9",
           "connector_id": "7c1a20a3-f8ae-be72-f6c3-73e874904c74",
           "operator_name": "Simple Scatter Map Plot",
-          "connector_name": "connector_name",
+          "connector_name": "map_plot",
           "position": {
             "x": 849,
             "y": 1320
@@ -11487,7 +11487,7 @@
           "operator_id": "2602969e-04f3-446c-973f-f84c2b358204",
           "connector_id": "66990a60-30fa-7a61-65f6-0c6a27636b83",
           "operator_name": "2D Scatter Plot colored by Index",
-          "connector_name": "connector_name",
+          "connector_name": "scatter_plot",
           "position": {
             "x": 850,
             "y": 1490
@@ -11500,7 +11500,7 @@
           "operator_id": "b8f38976-0d14-417f-a707-8e9c55040565",
           "connector_id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
           "operator_name": "Single Timeseries Plot",
-          "connector_name": "connector_name",
+          "connector_name": "plot",
           "position": {
             "x": 850,
             "y": 170
@@ -11513,7 +11513,7 @@
           "operator_id": "e2e8b968-c82d-455e-8ae7-1f0584853a43",
           "connector_id": "c0d410fa-e324-7d06-186a-8096b4aa4468",
           "operator_name": "Timeseries DataFrame Plot",
-          "connector_name": "connector_name",
+          "connector_name": "plot",
           "position": {
             "x": 850,
             "y": 280
@@ -11526,7 +11526,7 @@
           "operator_id": "ebfd511b-7165-48a4-b50a-24f7944aa671",
           "connector_id": "9ab59d8b-9927-3664-dc40-ab9924e91e88",
           "operator_name": "Vertical Bar Plot",
-          "connector_name": "connector_name",
+          "connector_name": "plot",
           "position": {
             "x": 850,
             "y": 390
@@ -11539,7 +11539,7 @@
           "operator_id": "9abcae45-e58d-45a8-9239-95a180715225",
           "connector_id": "2ba3fb5f-4be0-f48a-3124-894113466b62",
           "operator_name": "Pie Chart Plot",
-          "connector_name": "connector_name",
+          "connector_name": "plot",
           "position": {
             "x": 850,
             "y": 500
@@ -11552,7 +11552,7 @@
           "operator_id": "4f6db4f7-0db0-4138-ad8b-fd5c23ec89be",
           "connector_id": "dd24f709-50f3-f9d5-94f6-ac9b0d403275",
           "operator_name": "Correlation Matrix Heatmap Plot",
-          "connector_name": "connector_name",
+          "connector_name": "plot",
           "position": {
             "x": 850,
             "y": 670
@@ -11565,7 +11565,7 @@
           "operator_id": "cccbeeed-c40a-4adf-bb15-42a2fc680e19",
           "connector_id": "0951b836-933c-044d-030b-6c2ee3b5d00a",
           "operator_name": "Compare Two Timeseries Plot",
-          "connector_name": "connector_name",
+          "connector_name": "comparison_plot",
           "position": {
             "x": 850,
             "y": 780
@@ -11578,7 +11578,7 @@
           "operator_id": "024a61e0-036b-40f7-98f0-88b96b6db022",
           "connector_id": "c3d55f42-2827-2899-9bb0-c1537171a8cc",
           "operator_name": "Compare Timeshifted Timeseries",
-          "connector_name": "connector_name",
+          "connector_name": "comparison_plot",
           "position": {
             "x": 850,
             "y": 920
@@ -12504,7 +12504,7 @@
           "operator_id": "6b028851-a407-4946-b131-954a64703506",
           "connector_id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
           "operator_name": "Single Timeseries Plot",
-          "connector_name": "connector_name",
+          "connector_name": "plot",
           "position": {
             "x": 1340,
             "y": 110
@@ -12517,7 +12517,7 @@
           "operator_id": "3a5a440a-13b8-4a5e-a21d-f15405201dea",
           "connector_id": "83af48bc-135e-9def-a5cf-e9a2f233f03f",
           "operator_name": "Timeseries and Alerts Plot",
-          "connector_name": "connector_name",
+          "connector_name": "alert_plot",
           "position": {
             "x": 1830,
             "y": 380
@@ -13388,7 +13388,7 @@
           "operator_id": "4f1b4f7b-2f09-479f-961d-f79ae337b2ec",
           "connector_id": "f78f48b5-4981-e34a-df07-54f8e5a01df3",
           "operator_name": "Pass Through (Series) (2)",
-          "connector_name": "connector_name",
+          "connector_name": "output",
           "position": {
             "x": 3230,
             "y": 30
@@ -13727,7 +13727,7 @@
           "operator_id": "ea5479cb-a8df-4f8c-8165-86c21d0fd8e8",
           "connector_id": "cbf856b7-faf7-3079-d8e8-3b666d6f9d84",
           "operator_name": "Combine into DataFrame (2)",
-          "connector_name": "connector_name",
+          "connector_name": "dataframe",
           "position": {
             "x": 1230,
             "y": 160
@@ -14154,7 +14154,7 @@
           "operator_id": "4081d021-3252-4a92-9cb9-3df129b2969b",
           "connector_id": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
           "operator_name": "Combine as named column into DataFrame (2)",
-          "connector_name": "connector_name",
+          "connector_name": "dataframe",
           "position": {
             "x": 1470,
             "y": 340
@@ -14839,7 +14839,7 @@
           "operator_id": "ca5ce637-5736-491b-b2e2-13ec1748a538",
           "connector_id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
           "operator_name": "Single Timeseries Plot",
-          "connector_name": "connector_name",
+          "connector_name": "plot",
           "position": {
             "x": 780,
             "y": 400
@@ -14852,7 +14852,7 @@
           "operator_id": "223b0263-af3b-4324-b9f0-c441860edb42",
           "connector_id": "93cf92d4-4082-464e-bc21-724513e59d41",
           "operator_name": "Univariate Linear RUL Regression Example",
-          "connector_name": "connector_name",
+          "connector_name": "intercept",
           "position": {
             "x": 1400,
             "y": 200
@@ -14865,7 +14865,7 @@
           "operator_id": "223b0263-af3b-4324-b9f0-c441860edb42",
           "connector_id": "aa7edab2-3da0-48b9-bbd0-ed6f3136f8ed",
           "operator_name": "Univariate Linear RUL Regression Example",
-          "connector_name": "connector_name",
+          "connector_name": "limit_violation_timestamp",
           "position": {
             "x": 1400,
             "y": 230
@@ -14878,7 +14878,7 @@
           "operator_id": "223b0263-af3b-4324-b9f0-c441860edb42",
           "connector_id": "8a4a9698-5d7f-401a-b6f6-bc2f549d9395",
           "operator_name": "Univariate Linear RUL Regression Example",
-          "connector_name": "connector_name",
+          "connector_name": "rul_regression_result_plot",
           "position": {
             "x": 1400,
             "y": 260
@@ -14891,7 +14891,7 @@
           "operator_id": "223b0263-af3b-4324-b9f0-c441860edb42",
           "connector_id": "02699d2d-865e-493a-bae2-7e79577d549c",
           "operator_name": "Univariate Linear RUL Regression Example",
-          "connector_name": "connector_name",
+          "connector_name": "slope",
           "position": {
             "x": 1400,
             "y": 290
