@@ -8,6 +8,7 @@ from uuid import UUID
 
 import numpy as np
 import pandas as pd
+import pytz
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
 from pydantic import BaseConfig, BaseModel, create_model
@@ -164,6 +165,17 @@ class PydanticMultiTimeseriesPandasDataFrame:
         if df["timestamp"].isna().any():
             raise ValueError(
                 "No null values are allowed for the column 'timestamp' of a MulitTSFrame."
+            )
+
+        if not pd.api.types.is_datetime64tz_dtype(df["timestamp"]):
+            raise ValueError(
+                "Column 'timestamp' of MultiTSFrame does not have datetime64tz dtype."
+                f'Got {str(df["timestamp"].dtype)} index dtype instead.'
+            )
+
+        if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
+            raise ValueError(
+                "Column 'timestamp' of MultiTSFrame does not have UTC timezon."
             )
 
         return df
