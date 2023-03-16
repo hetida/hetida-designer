@@ -1,26 +1,21 @@
-from typing import List, Optional
 from uuid import UUID, uuid4
 
-# pylint: disable=no-name-in-module
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from hetdesrun.datatypes import DataType
-
-from hetdesrun.models.util import valid_python_identifier
-from hetdesrun.models.util import names_unique
 from hetdesrun.models.component import ComponentInput, ComponentOutput
+from hetdesrun.models.util import names_unique, valid_python_identifier
 from hetdesrun.models.workflow import WorkflowInput, WorkflowOutput
 
 
 class IO(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
-    name: Optional[str] = Field(
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
+    name: str | None = Field(
         None,
         description="Must be a valid python identifier because it will be used for computation",
     )
     data_type: DataType
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         if name is None or name == "":
@@ -40,13 +35,12 @@ class IOInterface(BaseModel):
     Note: The names in the list of inputs and outputs must be unique, respectively.
     """
 
-    inputs: List[IO] = []
-    outputs: List[IO] = []
+    inputs: list[IO] = []
+    outputs: list[IO] = []
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("inputs", "outputs", each_item=False)
-    def io_names_unique(cls, ios: List[IO]) -> List[IO]:
-        ios_with_name = [io for io in ios if io.name is not None]
+    def io_names_unique(cls, ios: list[IO]) -> list[IO]:
+        ios_with_name = [io for io in ios if not (io.name is None or io.name == "")]
 
         names_unique(cls, ios_with_name)
 
@@ -150,7 +144,6 @@ class Constant(IOConnector):
     # the runtime will take care of the correct data type before execution
     value: str
 
-    # pylint: disable=no-self-argument,no-self-use
     @root_validator()
     def name_none(cls, values: dict) -> dict:
         if not ("name" not in values or values["name"] is None or values["name"] == ""):

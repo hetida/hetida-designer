@@ -1,13 +1,10 @@
-"""Context of workflow execution
+from pydantic import BaseModel
 
-This is used to inject execution configuration information into
-the entrypoint registration decorator.
-"""
 
-from contextvars import ContextVar
-
-from hetdesrun.models.run import ConfigurationInput
-
-execution_context: ContextVar[ConfigurationInput] = ContextVar(
-    "execution_context", default=ConfigurationInput()
-)
+class ExecutionContext(BaseModel):
+    currently_executed_transformation_id: str
+    currently_executed_transformation_name: str
+    currently_executed_transformation_tag: str
+    currently_executed_transformation_type: str
+    currently_executed_operator_hierarchical_id: str
+    currently_executed_operator_hierarchical_name: str

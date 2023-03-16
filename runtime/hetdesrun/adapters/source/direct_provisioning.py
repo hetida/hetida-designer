@@ -4,19 +4,16 @@ This adapter is used when data is provided directly during workflow
 execution, i.e. when it is provided as part of the execution request.
 """
 
-from typing import Dict, Any
+from typing import Any
 
+from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
 from hetdesrun.models.data_selection import FilteredSource
 
 
-from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
-
-
 def load_directly_provisioned_data(
-    wf_input_name_to_filtered_source_mapping_dict: Dict[str, FilteredSource],
-    adapter_key: str,  # pylint: disable=unused-argument
-) -> Dict[str, Any]:
-
+    wf_input_name_to_filtered_source_mapping_dict: dict[str, FilteredSource],
+    adapter_key: str,  # noqa: ARG001
+) -> dict[str, Any]:
     try:
         return {
             wf_inp_name: direct_provisioning_filtered_source.filters["value"]

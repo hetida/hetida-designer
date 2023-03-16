@@ -1,14 +1,10 @@
-from typing import List
 from uuid import UUID, uuid4
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, root_validator
 
 from hetdesrun.models.code import NonEmptyValidStr, ShortNonEmptyValidStr
-
+from hetdesrun.persistence.models.io import Connector, Position
 from hetdesrun.utils import State, Type
-
-from hetdesrun.persistence.models.io import Position, Connector
 
 
 class Operator(BaseModel):
@@ -20,24 +16,37 @@ class Operator(BaseModel):
     Note: Only released transformation revisions can be used as operators in a workflow.
     """
 
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
     revision_group_id: UUID = Field(default_factory=uuid4)
     name: NonEmptyValidStr
-    type: Type
+    type: Type  # noqa: A003
     state: State
     version_tag: ShortNonEmptyValidStr
     transformation_id: UUID
-    inputs: List[Connector]
-    outputs: List[Connector]
+    inputs: list[Connector]
+    outputs: list[Connector]
     position: Position
 
-    # pylint: disable=no-self-argument,no-self-use
     @root_validator()
     def is_not_draft(cls, values: dict) -> dict:
-        if values["state"] == State.DRAFT:
+        try:
+            state = values["state"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot validate that operator is not DRAFT if the attribute 'state' is missing!"
+            ) from e
+        if state == State.DRAFT:
+            try:
+                operator_id = values["id"]
+                type_ = values["type"]
+            except KeyError as e:
+                raise ValueError(
+                    "Cannot provide information for which operator validation has failed "
+                    "if any of the attributes 'id', 'type' is missing!"
+                ) from e
             raise ValueError(
                 f"Only released components/workflows can be dragged into a workflow! "
-                f'Operator with id {values["id"]} of type {values["type"]}'
-                f' has state {values["state"]} '
+                f"Operator with id {operator_id} of type {type_}"
+                f" has state {state} "
             )
         return values

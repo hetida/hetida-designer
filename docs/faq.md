@@ -20,9 +20,7 @@ One way to achieve this in components is to temporarily add a line that raises a
 
 ```
 ...
-vols = diffs.abs().rolling(freq).sum() - diffs.rolling(freq).sum().abs()
-
-raise ValueError(str(vols))
+raise ValueError(interesting_value)
 ...
 ```
 
@@ -30,13 +28,24 @@ The first lines of the resulting error message will then e.g. look like:
 
 ```
 {
-	"error": "Exception during Component execution of component instance Simple Volatility Score (operator hierarchical id: :3ca9b6cc-593f-4780-afcf-a44676494be0):
-2020-01-01 01:15:27+00:00     NaN
-2020-01-03 08:20:03+00:00     0.0
-2020-01-03 08:20:04+00:00    14.4
-Name: volatilities, dtype: float64",
+	"error": "Exception during execution!
+              tr type: COMPONENT, tr id: f3d57870-7307-473c-a635-2e165aa8ac3b, tr name: Raise ValueError, tr tag: 1.0.0,
+              op id(s): \\170c3d2a-c88f-4aba-9999-f2740d4abf25\\d2e7a4d4-08da-4e7e-b0e5-06276ae9b234\\,
+              op name(s): \\Wrapper Workflow\\Raise ValueError\\
+              reason: Unexpected error from user code",
+	"output_results_by_output_name": {},
+	"output_types_by_output_name": {
+			"o": "ANY"
+	},
+	"result": "failure",
+	"traceback": "Traceback (most recent call last):
+	...
+  File \"<string>\", line 28, in main
+ValueError: 42
 ...
 ```
+
+The last line shows the value of the variable `interesting_value`, normally an error message would be displayed there. The second to last line shows in which line of your component code the error occurred.
 
 ## <a name="debugging-workflows"></a> Debugging workflow revisions
 
@@ -48,8 +57,8 @@ In order to add an output for an intermediate variable, which is passed from an 
 These components are in the category "Connectors".
 The output of the "Pass through" operator can be used, to set a new workflow output.
 
-<img src="./faq/workflow_without_debugging.png" height="250" width=1090>
-<img src="./faq/workflow_debugging.png" height="250" width=1090>
+<img src="./assets/workflow_without_debugging.png" height="250" width=1090>
+<img src="./assets/workflow_debugging.png" height="250" width=1090>
 
 ## <a name="data-type-parsing"></a> Explicitely specify data type to enable correct parsing
 
@@ -70,7 +79,62 @@ unsupported operand type(s) for +: 'dict' and 'dict'",
 
 This can be avoided by putting a "Pass through (Series)" component in front of it, so that the input data type is changed and thus explicit:
 
-<img src="./faq/parsing_any.png" height="160" width=485>
-<img src="./faq/parsing_series.png" height="140" width=730>
+<img src="./assets/parsing_any.png" height="160" width=485 data-align="center">
+<img src="./assets/parsing_series.png" height="140" width=730>
 
 So the general tip is to avoid ANY as input that needs to be wired and instead to put the respective Pass Through component in front.
+
+
+## Storing and loading objects with self defined classes
+When combining self-defined classes with storing and loading objects, e.g. via the [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md), the classes must be defined in seperate components.
+The component that contains such a class, should just return the class as i.e. in the component "ExampleClass" from the category "Classes". 
+```python
+
+class ExampleClass:
+    ...
+return {"class _object": ExampleClass}
+```
+A component in which an instance of this class is created should take this class as an input.
+For better readability it is recommended to name the input just as the class, but it may as well be named differently.
+```python
+...
+def main(*, ExampleClass, ...)
+	...
+	example_class_object = ExampleClass(...)
+	...
+```
+When loading the stored object in a worklfow the exactly same component must be contained in this workflow to ensure that the class is imported correctly.
+
+<img src="./assets/store_object_with_class.png" height="150" width=750 data-align="center">
+
+Usually the class is not needed explicitly so that the there is no reason to link the component with the class definition to any input, instead it can be linked to the component "Forget" from the category "Connectors".
+
+<img src="./assets/load_object_with_class.png" height="225" width=750 data-align="center">
+
+
+## Identifiy source for latest stored object via endpoints
+The [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md) adds the storage timestamp to the name of each stored object and automatically creates a new source corresponding to that object.
+
+A request to the [/structure endpoint (GET)](./adapter_system/generic_rest_adapters/web_service_interface.md#structure-endpoint-get) with the `ref_id` as `parentId` path parameter will return a list of all thing nodes, sources and sinks below the thingnode with the id `parentId` as a response.
+```json
+{
+	"id": "planta-picklingunit/Influx/Anomalies_2023-02-14T12:19:38+00:00",
+	"thingNodeId": "planta-picklingunit/Influx/Anomalies",
+	"name": "Anomalies - 2023-02-14 12:19:38+00:00",
+	"path": "planta-picklingunit/Influx/Anomalies",
+	"metadataKey": "Anomalies - 2023-02-14 12:19:38+00:00"
+}
+```
+
+The attributes `ref_id` and `ref_key` of the corresponding input wiring must be set to the values of the attributes `thingNodeId` and `metadataKey` of this source, respectively.
+```json
+{
+	"adapter_id": "blob-storage-adapter",
+	"filters": {},
+	"ref_id": "planta-picklingunit/Influx/Anomalies",
+	"ref_id_type": "THINGNODE",
+	"ref_key": "Anomalies - 2023-02-14 12:19:38+00:00",
+	"type": "metadata(any)",
+	"workflow_input_name": "example_class_object"
+}
+```

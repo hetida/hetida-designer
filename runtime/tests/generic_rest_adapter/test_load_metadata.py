@@ -1,32 +1,15 @@
-from typing import Dict, List, Any
-
+from typing import Any
 from unittest import mock
 
 import pytest
 
-import pandas as pd
-
 from hetdesrun.adapters.exceptions import (
-    AdapterClientWiringInvalidError,
     AdapterConnectionError,
     AdapterHandlingException,
 )
-
-from hetdesrun.adapters.generic_rest.external_types import (
-    ExternalType,
-)
-
-from hetdesrun.adapters.generic_rest import (
-    load_grouped_timeseries_data_together,
-    load_data,
-)
-
+from hetdesrun.adapters.generic_rest import load_data
+from hetdesrun.adapters.generic_rest.load_metadata import load_multiple_metadata
 from hetdesrun.models.data_selection import FilteredSource
-
-from hetdesrun.adapters.generic_rest.load_metadata import (
-    load_multiple_metadata,
-    load_single_metadatum_from_adapter,
-)
 
 
 async def detailed_mocked_async_client_get(self, url, *args, **kwargs):
@@ -59,6 +42,8 @@ async def detailed_mocked_async_client_get(self, url, *args, **kwargs):
             }
         )
         return response_mock
+
+    raise ValueError("Could not produce mock")
 
 
 @pytest.mark.asyncio
@@ -136,7 +121,6 @@ async def test_load_metadata_request():
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             new=detailed_mocked_async_client_get,
         ):
-
             loaded_metadata = await load_multiple_metadata(
                 {
                     "wf_input_1": FilteredSource(
@@ -186,7 +170,7 @@ async def test_load_metadata_any_from_string_response():
         with mock.patch(
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             return_value=resp_mock,
-        ) as mocked_async_client_get:
+        ) as _mocked_async_client_get:
             loaded_metadata = await load_multiple_metadata(
                 data_to_load,
                 adapter_key="test_load_metadata_adapter_key",
@@ -201,7 +185,7 @@ async def test_load_metadata_any_from_string_response():
         with mock.patch(
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             return_value=resp_mock,
-        ) as mocked_async_client_get:
+        ) as _mocked_async_client_get:
             loaded_metadata = await load_multiple_metadata(
                 data_to_load,
                 adapter_key="test_load_metadata_adapter_key",
@@ -216,7 +200,7 @@ async def test_load_metadata_any_from_string_response():
         with mock.patch(
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             return_value=resp_mock,
-        ) as mocked_async_client_get:
+        ) as _mocked_async_client_get:
             loaded_metadata = await load_multiple_metadata(
                 data_to_load,
                 adapter_key="test_load_metadata_adapter_key",
@@ -226,8 +210,8 @@ async def test_load_metadata_any_from_string_response():
 
 
 async def mock_load_multiple_metadata(
-    data_to_load: Dict[str, FilteredSource], adapter_key: str
-) -> Dict[str, Any]:
+    data_to_load: dict[str, FilteredSource], adapter_key: str
+) -> dict[str, Any]:
     return {"wf_inp_1": 42, "wf_inp_2": "some description"}
 
 

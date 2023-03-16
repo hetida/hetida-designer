@@ -17,20 +17,18 @@ As code formatter, [black](https://github.com/ambv/black) is used. It is recomme
 
 
 ### Code Quality Check
-Pylint is recommended to be used to check static code quality. See [Runtime Readme](./README.md) for details on running and configuring pylint. Used pylint rules are controlled through the `pylintrc` file in the runtime directory of the repository.
+Ruff is recommended to be used to check static code quality. See [Runtime Readme](./README.md) for details on running and configuring ruff. Used ruff rules are controlled through the `pyproject.toml` file in the runtime directory of the repository.
 
-Pylint isn't perfect. We sometimes need to suppress its warnings manually through comments
+Ruff isn't perfect. We sometimes need to suppress its warnings manually through comments
 in code like
 ```
 ...
-try: # pylint: disable=broad-except
+try: # noqa: RULECODE
 ...
 ```
-Or we add general exceptions to the `pylintrc`. 
+Or we add general ignore entries to the `pyproject.toml`. 
 
-Note that currently build processes do not include pylint checking, we may add that in the future to enforce code quality according to the `pylintrc` file.
-
-It is recommended to set up your editor/IDE to use pylint with this `pylintrc`.
+It is recommended to set up your editor/IDE to use ruff with this `pyproject.toml`.
 
 
 ### Unit Tests

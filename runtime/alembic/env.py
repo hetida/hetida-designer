@@ -45,10 +45,10 @@ def run_migrations_offline():
 
     """
 
-    from hetdesrun.webservice.config import runtime_config
+    from hetdesrun.webservice.config import get_config
 
     url = (
-        runtime_config.sqlalchemy_connection_string
+        get_config().sqlalchemy_connection_string
     )  # config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -93,7 +93,7 @@ def run_migrations_online():
             if connection.dialect.name == "postgresql":
                 logger.info("Detected postgresql driver. Ensuring versioning table")
                 # Make sure no two processed can migrate at the same time
-                context.get_context()._ensure_version_table()  # pylint: disable=protected-access
+                context.get_context()._ensure_version_table()
                 logger.info(
                     "Ensured versioning table. Now locking alembic version table"
                 )

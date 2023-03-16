@@ -1,7 +1,7 @@
 -c requirements.txt
+-c requirements-base.txt
 pytest
 coverage
-pylint
 pytest-cov
 black
 pytest-asyncio
@@ -11,3 +11,6 @@ nest_asyncio
 types-requests
 types-pytz
 ipykernel
+moto
+ruff
+pytest-random-order

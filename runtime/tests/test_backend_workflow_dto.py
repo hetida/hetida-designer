@@ -1,19 +1,18 @@
 from copy import deepcopy
 from uuid import UUID
+
 import pytest
 
 from hetdesrun.backend.models.io import ConnectorFrontendDto
+from hetdesrun.backend.models.wiring import InputWiringFrontendDto, WiringFrontendDto
 from hetdesrun.backend.models.workflow import (
     WorkflowIoFrontendDto,
-    WorkflowOperatorFrontendDto,
     WorkflowLinkFrontendDto,
+    WorkflowOperatorFrontendDto,
     WorkflowRevisionFrontendDto,
-    position_from_input_connector_id,
     get_operator_and_connector_name,
+    position_from_input_connector_id,
 )
-
-from hetdesrun.backend.models.wiring import InputWiringFrontendDto, WiringFrontendDto
-
 
 valid_workflow_example_iso_forest: dict = {
     "id": "67c14cf2-cd4e-410e-9aca-6664273ccc3f",
@@ -837,11 +836,6 @@ valid_workflow_example_iso_forest: dict = {
                     "workflowOutputName": "contour_plot",
                     "adapterId": "direct_provisioning",
                 },
-                {
-                    "id": "d01005c7-552c-48a4-972c-28cd7044597a",
-                    "workflowOutputName": "xs",
-                    "adapterId": "direct_provisioning",
-                },
             ],
         }
     ],
@@ -861,7 +855,7 @@ def test_io_validator_name_valid_python_identifier_identifies_keyword_name():
     input_with_keyword_name["name"] = "pass"
     print(input_with_keyword_name["name"])
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowIoFrontendDto(**input_with_keyword_name)
 
     assert "not a valid Python identifier" in str(exc.value)
@@ -871,7 +865,7 @@ def test_io_validator_name_valid_python_identifier_identifies_invalid_name():
     input_with_invalid_name = deepcopy(valid_input_with_name)
     input_with_invalid_name["name"] = "1name"
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowIoFrontendDto(**input_with_invalid_name)
 
     assert "not a valid Python identifier" in str(exc.value)
@@ -896,7 +890,7 @@ def test_operator_validator_is_released_identifies_state_other_than_released():
     operator_with_invalid_state = deepcopy(valid_operator)
     operator_with_invalid_state["state"] = "DRAFT"
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowOperatorFrontendDto(**operator_with_invalid_state)
 
     assert "released" in str(exc.value)
@@ -914,7 +908,7 @@ def test_link_validator_no_self_reference_identifies_self_reference():
     print(link_with_self_reference.keys())
     link_with_self_reference["toOperator"] = link_with_self_reference["fromOperator"]
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowLinkFrontendDto(**link_with_self_reference)
 
     assert "must differ" in str(exc.value)
@@ -932,7 +926,7 @@ def test_parent_validator_tag_not_latest_identifies_tag_latest():
     workflow_tagged_latest = deepcopy(valid_workflow_example_iso_forest)
     workflow_tagged_latest["tag"] = "latest"
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowRevisionFrontendDto(**workflow_tagged_latest)
 
     assert "internal use only" in str(exc.value)
@@ -957,7 +951,7 @@ def test_workflow_validator_input_names_none_or_unique_identifies_double_name():
         "name"
     ] = workflow_with_double_input_name["inputs"][0]["name"]
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowRevisionFrontendDto(**workflow_with_double_input_name)
 
     assert "duplicates" in str(exc.value)
@@ -976,23 +970,23 @@ def test_workflow_validator_determine_outputs_from_operators_and_links_removes_u
     )
 
 
-def test_workflow_validator_name_or_constant_data_provided_identifies_io_without_name_and_constant_value():
+def test_workflow_validator_name_or_constant_data_provided_identifies_io_without_name_and_constant_value():  # noqa: E501
     workflow_io_with_no_name_no_value = deepcopy(valid_workflow_example_iso_forest)
     del workflow_io_with_no_name_no_value["inputs"][0]["name"]
 
-    with pytest.raises(ValueError) as exc:
-        workflow_dto = WorkflowRevisionFrontendDto(**workflow_io_with_no_name_no_value)
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
+        _workflow_dto = WorkflowRevisionFrontendDto(**workflow_io_with_no_name_no_value)
 
     assert "Either name or constant data" in str(exc.value)
 
 
-def test_workflow_validator_name_or_constant_data_provided_identifies_io_with_name_and_constant_true():
+def test_workflow_validator_name_or_constant_data_provided_identifies_io_with_name_and_constant_true():  # noqa: E501
     workflow_with_input_with_name_and_constant_true = deepcopy(
         valid_workflow_example_iso_forest
     )
     workflow_with_input_with_name_and_constant_true["inputs"][0]["constant"] = True
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowRevisionFrontendDto(**workflow_with_input_with_name_and_constant_true)
 
     assert "constant must be false" in str(exc.value)
@@ -1031,14 +1025,14 @@ def test_workflow_validator_links_acyclic_directed_graph_identifies_cyclic_links
         "toConnector"
     ] = valid_workflow_example_iso_forest["links"][11]["toConnector"]
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         WorkflowRevisionFrontendDto(**workflow_with_cyclic_links)
 
     assert "may not form any loop" in str(exc.value)
 
 
 def test_to_link():
-    from_connector = ConnectorFrontendDto(
+    from_connector = ConnectorFrontendDto(  # noqa: PIE804
         **{
             "id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
             "type": "SERIES",
@@ -1047,7 +1041,7 @@ def test_to_link():
             "posX": 0,
         }
     )
-    to_connector = ConnectorFrontendDto(
+    to_connector = ConnectorFrontendDto(  # noqa: PIE804
         **{
             "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
             "type": "ANY",
@@ -1068,7 +1062,7 @@ def test_to_link():
 
 
 def test_from_link():
-    from_connector = ConnectorFrontendDto(
+    from_connector = ConnectorFrontendDto(  # noqa: PIE804
         **{
             "id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
             "type": "SERIES",
@@ -1077,7 +1071,7 @@ def test_from_link():
             "posX": 0,
         }
     )
-    to_connector = ConnectorFrontendDto(
+    to_connector = ConnectorFrontendDto(  # noqa: PIE804
         **{
             "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
             "type": "ANY",
@@ -1154,8 +1148,6 @@ def test_from_operator():
     assert str(operator_dto.id) == valid_operator["id"]
     assert str(operator_dto.group_id) == valid_operator["groupId"]
     assert operator_dto.name == valid_operator["name"]
-    # assert operator_dto.description == valid_operator["description"]
-    # assert operator_dto.category == valid_operator["category"]
     assert operator_dto.type == valid_operator["type"]
     assert operator_dto.state == valid_operator["state"]
     assert operator_dto.tag == valid_operator["tag"]
@@ -1228,7 +1220,7 @@ def test_from_constant():
     )
 
     assert str(io_dto.id) == valid_input_without_name["id"]
-    assert io_dto.name == None
+    assert io_dto.name is None
     assert io_dto.type == valid_input_without_name["type"]
     assert io_dto.pos_x == valid_input_without_name["posX"]
     assert io_dto.pos_y == valid_input_without_name["posY"]
@@ -1294,15 +1286,15 @@ def test_to_workflow_content():
 
 
 def test_io_from_io():
-    input = WorkflowIoFrontendDto(**valid_input_with_name).to_io()
+    inp = WorkflowIoFrontendDto(**valid_input_with_name).to_io()
     workflow_content = WorkflowRevisionFrontendDto(
         **valid_workflow_example_iso_forest
     ).to_workflow_content()
     io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_io(
-        input,
+        inp,
         valid_input_with_name["operator"],
         valid_input_with_name["connector"],
-        *position_from_input_connector_id(input.id, workflow_content.inputs),
+        *position_from_input_connector_id(inp.id, workflow_content.inputs),
     )
 
     assert str(io_dto.id) == valid_input_with_name["id"]
@@ -1727,8 +1719,9 @@ def test_workflow_dto_from_transformation_revision_and_back_matches_with_ambiguo
     assert len(transformation_revision.content.operators) == len(
         returned_transformation_revision.content.operators
     )
-    for i in range(len(transformation_revision.content.operators)):
-        assert (
-            transformation_revision.content.operators[i]
-            == returned_transformation_revision.content.operators[i]
-        )
+    for op, op_returned in zip(
+        transformation_revision.content.operators,
+        returned_transformation_revision.content.operators,
+        strict=True,
+    ):
+        assert op == op_returned

@@ -1,10 +1,8 @@
-from typing import Optional, Any, List, Dict
+from typing import Any
 
 from demo_adapter_python.external_types import ExternalType
 
-# pylint: disable=duplicate-code
-
-sinks_json_objects: List[Dict[str, Any]] = [
+sinks_json_objects: list[dict[str, Any]] = [
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantA.anomaly_state",
         "thingNodeId": "root.plantA",
@@ -95,12 +93,12 @@ sinks_json_objects: List[Dict[str, Any]] = [
 
 
 def get_sinks(
-    parent_id: Optional[str] = None,
-    filter_str: Optional[str] = None,
-    include_sub_objects=False,
-) -> List[Dict[str, Any]]:
+    parent_id: str | None = None,
+    filter_str: str | None = None,
+    include_sub_objects: bool = False,
+) -> list[dict[str, Any]]:
     if parent_id is None:
-        if include_sub_objects:
+        if include_sub_objects:  # noqa: SIM108
             selected_sinks = sinks_json_objects
         else:
             selected_sinks = []
@@ -121,7 +119,7 @@ def get_sinks(
         selected_sinks = [
             snk
             for snk in selected_sinks
-            if ((filter_str.lower() in (snk["path"] + snk["name"]).lower()))
+            if (filter_str.lower() in (snk["path"] + snk["name"]).lower())
         ]
 
     return selected_sinks

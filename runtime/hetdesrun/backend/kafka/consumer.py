@@ -1,12 +1,11 @@
 import asyncio
 import logging
+from collections.abc import Callable
 from functools import cache
-from typing import Callable, Optional
 from uuid import uuid4
 
-from pydantic import ValidationError
-
 import aiokafka
+from pydantic import ValidationError
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -15,16 +14,16 @@ from hetdesrun.backend.execution import (
     execute_transformation_revision,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-from hetdesrun.webservice.config import runtime_config
 from hetdesrun.persistence.dbservice.revision import (
     DBNotFoundError,
     get_latest_revision_id,
 )
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
 
-class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
+class KafkaWorkerContext:
     """Bundles the per webservice-worker-process Kafka consumer and producer instances
 
     This class handles the typical scenario where a consumer consumes messages from
@@ -74,12 +73,11 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
         producer_topic: str,
         producer_options: dict,
     ):
-
         self.event_loop = asyncio.get_event_loop()
         self.consumer_topic = consumer_topic
         self.consumer_options = consumer_options
         self.msg_handling_coroutine = msg_handling_coroutine
-        self.last_unhandled_exception: Optional[Exception] = None
+        self.last_unhandled_exception: Exception | None = None
 
         self.producer_topic = producer_topic
         self.producer_options = producer_options
@@ -117,7 +115,8 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
         await self._start_consumer()
 
     async def _stop_consumer(self) -> None:
-        assert self.consumer_task is not None
+        if self.consumer_task is None:
+            raise ValueError("No consumer_task active. Cannot stop non-existing task!")
         self.consumer_task.cancel()
         await self.consumer.stop()
 
@@ -133,11 +132,11 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
 def get_kafka_worker_context() -> KafkaWorkerContext:
     """Kafka worker context singleton"""
     return KafkaWorkerContext(
-        consumer_topic=runtime_config.hd_kafka_consumer_topic,
-        consumer_options=runtime_config.hd_kafka_consumer_options,
+        consumer_topic=get_config().hd_kafka_consumer_topic,
+        consumer_options=get_config().hd_kafka_consumer_options,
         msg_handling_coroutine=consume_execution_trigger_message,
-        producer_topic=runtime_config.hd_kafka_response_topic,
-        producer_options=runtime_config.hd_kafka_producer_options,
+        producer_topic=get_config().hd_kafka_response_topic,
+        producer_options=get_config().hd_kafka_producer_options,
     )
 
 
@@ -223,7 +222,7 @@ async def consume_execution_trigger_message(
             )
             logger.debug("Kafka consumer execution result: \n%s", str(exec_result))
             await producer_send_result_msg(kafka_ctx, exec_result)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # noqa: BLE001
             kafka_ctx.last_unhandled_exception = e
             logger.error(
                 "Unexpected Error during Kafka execution: %s. Aborting.", str(e)
@@ -241,7 +240,7 @@ async def producer_send_result_msg(
         str(exec_result.job_id),
     )
     await kakfa_ctx.producer.send_and_wait(
-        runtime_config.hd_kafka_response_topic,
+        get_config().hd_kafka_response_topic,
         key=None,
         value=message_value,
     )

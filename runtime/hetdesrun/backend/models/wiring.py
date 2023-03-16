@@ -1,38 +1,45 @@
-from typing import List, Union, Optional
 from uuid import UUID, uuid4
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, StrictInt, StrictStr, validator
 
-from hetdesrun.backend.service.utils import to_camel
-from hetdesrun.models.util import valid_python_identifier
-from hetdesrun.models.adapter_data import RefIdType
-from hetdesrun.models.wiring import WorkflowWiring, InputWiring, OutputWiring
-
-from hetdesrun.adapters import SOURCE_ADAPTERS, SINK_ADAPTERS
+from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
+from hetdesrun.backend.service.utils import to_camel
+from hetdesrun.models.adapter_data import RefIdType
+from hetdesrun.models.util import valid_python_identifier
+from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
 
 EXPORT_MODE = False
 
 
 class IoWiringFrontendDto(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
-    ref_id: Optional[str] = None
-    ref_id_type: Optional[RefIdType] = None
-    ref_key: Optional[str] = None
-    type: Optional[ExternalType] = None
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
+    ref_id: str | None = None
+    ref_id_type: RefIdType | None = None
+    ref_key: str | None = None
+    type: ExternalType | None = None  # noqa: A003
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("type")
     def metadata_type_includes_additional_fields(
-        cls, v: Optional[ExternalType], values: dict
-    ) -> Optional[ExternalType]:
-        if v is not None and (GeneralType(v.general_type) == GeneralType.METADATA):
-            if values["ref_id_type"] is None or values["ref_key"] is None:
-                raise ValueError(
-                    "metadata datatype in OutputWiring requires additional fields "
-                    '"ref_id_type" and "ref_key". At least one of them is missing.'
-                )
+        cls, v: ExternalType | None, values: dict
+    ) -> ExternalType | None:
+        try:
+            ref_id_type = values["ref_id_type"]
+            ref_key = values["ref_key"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if metadata type includes additional fields if any of the attributes "
+                "'ref_id_type', 'ref_key' is missing!"
+            ) from e
+        if (
+            (v is not None)
+            and (GeneralType(v.general_type) == GeneralType.METADATA)
+            and (ref_id_type is None or ref_key is None)
+        ):
+            raise ValueError(
+                "metadata datatype in OutputWiring requires additional fields "
+                '"ref_id_type" and "ref_key". At least one of them is missing.'
+            )
         return v
 
     class Config:
@@ -41,18 +48,14 @@ class IoWiringFrontendDto(BaseModel):
 
 class OutputWiringFrontendDto(IoWiringFrontendDto):
     workflow_output_name: str
-    adapter_id: Union[StrictInt, StrictStr]
+    adapter_id: StrictInt | StrictStr
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("workflow_output_name")
     def name_valid_python_identifier(cls, workflow_output_name: str) -> str:
         return valid_python_identifier(cls, workflow_output_name)
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("adapter_id")
-    def adapter_id_known(
-        cls, v: Union[StrictInt, StrictStr]
-    ) -> Union[StrictInt, StrictStr]:
+    def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
         if not EXPORT_MODE and (not v in SINK_ADAPTERS and not isinstance(v, str)):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
@@ -88,20 +91,16 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
 
 class InputWiringFrontendDto(IoWiringFrontendDto):
     workflow_input_name: str
-    adapter_id: Union[StrictInt, StrictStr]
+    adapter_id: StrictInt | StrictStr
     filters: dict = {}
-    value: Optional[str] = None
+    value: str | None = None
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("workflow_input_name")
     def name_valid_python_identifier(cls, workflow_input_name: str) -> str:
         return valid_python_identifier(cls, workflow_input_name)
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("adapter_id")
-    def adapter_id_known(
-        cls, v: Union[StrictInt, StrictStr]
-    ) -> Union[StrictInt, StrictStr]:
+    def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
         if not EXPORT_MODE and (not v in SOURCE_ADAPTERS and not isinstance(v, str)):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."
@@ -136,31 +135,27 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
 
 
 class WiringFrontendDto(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
     name: str = "STANDARD-WIRING"
-    input_wirings: List[InputWiringFrontendDto]
-    output_wirings: List[OutputWiringFrontendDto]
+    input_wirings: list[InputWiringFrontendDto]
+    output_wirings: list[OutputWiringFrontendDto]
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("input_wirings", each_item=False)
     def input_names_unique(
-        cls, input_wirings: List[InputWiringFrontendDto]
-    ) -> List[InputWiringFrontendDto]:
-        if len(set(iw.workflow_input_name for iw in input_wirings)) == len(
-            input_wirings
-        ):
+        cls, input_wirings: list[InputWiringFrontendDto]
+    ) -> list[InputWiringFrontendDto]:
+        if len({iw.workflow_input_name for iw in input_wirings}) == len(input_wirings):
             return input_wirings
 
         raise ValueError(
             "Duplicates in workflow input names occuring in the input wirings not allowed."
         )
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("output_wirings", each_item=False)
     def output_names_unique(
-        cls, output_wirings: List[OutputWiringFrontendDto]
-    ) -> List[OutputWiringFrontendDto]:
-        if len(set(ow.workflow_output_name for ow in output_wirings)) == len(
+        cls, output_wirings: list[OutputWiringFrontendDto]
+    ) -> list[OutputWiringFrontendDto]:
+        if len({ow.workflow_output_name for ow in output_wirings}) == len(
             output_wirings
         ):
             return output_wirings
@@ -173,14 +168,6 @@ class WiringFrontendDto(BaseModel):
         return WorkflowWiring(
             input_wirings=[iw.to_input_wiring() for iw in self.input_wirings],
             output_wirings=[ow.to_output_wiring() for ow in self.output_wirings],
-        )
-
-    def to_workflow_wiring(self) -> WorkflowWiring:
-        return WorkflowWiring(
-            input_wirings=[wiring.to_input_wiring() for wiring in self.input_wirings],
-            output_wirings=[
-                wiring.to_output_wiring() for wiring in self.output_wirings
-            ],
         )
 
     @classmethod

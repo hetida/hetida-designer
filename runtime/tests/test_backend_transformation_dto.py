@@ -1,4 +1,5 @@
 from copy import deepcopy
+
 import pytest
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
@@ -66,7 +67,7 @@ def test_transformation_validator_input_names_unique_identifies_double_name():
         "name"
     ] = transformation_with_double_input_name["inputs"][0]["name"]
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         TransformationRevisionFrontendDto(**transformation_with_double_input_name)
 
     assert "duplicates" in str(exc.value)
@@ -78,7 +79,7 @@ def test_transformation_validator_output_names_unique_identifies_double_name():
         "name"
     ] = transformation_with_double_output_name["outputs"][0]["name"]
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc:  # noqa: PT011
         TransformationRevisionFrontendDto(**transformation_with_double_output_name)
 
     assert "duplicates" in str(exc.value)
@@ -101,8 +102,10 @@ def test_transformation_dto_from_transformation_revision():
     transformation_revision = TransformationRevisionFrontendDto(
         **valid_transformation
     ).to_transformation_revision()
-    transformation_revision_dto = TransformationRevisionFrontendDto.from_transformation_revision(
-        transformation_revision
+    transformation_revision_dto = (
+        TransformationRevisionFrontendDto.from_transformation_revision(
+            transformation_revision
+        )
     )
 
     assert len(transformation_revision_dto.inputs) == len(

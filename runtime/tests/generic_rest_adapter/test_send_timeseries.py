@@ -1,35 +1,39 @@
 from unittest import mock
 
+import numpy as np
+import pandas as pd
 import pytest
 
-import pandas as pd
-import numpy as np
-
-from hetdesrun.adapters.generic_rest import (
-    send_data,
-)
-
+from hetdesrun.adapters.generic_rest import send_data
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
-
+from hetdesrun.adapters.generic_rest.load_framelike import decode_attributes
 from hetdesrun.models.data_selection import FilteredSink
 
 
 @pytest.mark.asyncio
 async def test_end_to_end_send_only_timeseries_data():
-
     response = mock.Mock()
     response.status_code = 200
     post_mock = mock.AsyncMock(return_value=response)
 
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.send_framelike.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):
-
         with mock.patch(
             "hetdesrun.adapters.generic_rest.send_ts_data.AsyncClient.post",
             new=post_mock,
         ):
+            ts_1 = pd.Series(
+                [1.2, 3.4, 5.9],
+                index=pd.to_datetime(
+                    [
+                        "2020-01-15T00:00:00.000Z",
+                        "2020-01-15T01:00:00.000Z",
+                        "2020-01-15T02:00:00.000Z",
+                    ]
+                ),
+            )
 
             # one timeseries
             await send_data(
@@ -38,18 +42,7 @@ async def test_end_to_end_send_only_timeseries_data():
                         ref_id="sink_id_1", type="timeseries(float)", filters={}
                     )
                 },
-                {
-                    "inp_1": pd.Series(
-                        [1.2, 3.4, 5.9],
-                        index=pd.to_datetime(
-                            [
-                                "2020-01-15T00:00:00.000Z",
-                                "2020-01-15T01:00:00.000Z",
-                                "2020-01-15T02:00:00.000Z",
-                            ]
-                        ),
-                    )
-                },
+                {"inp_1": ts_1},
                 adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
             )
             assert post_mock.called  # we got through to actually posting!
@@ -63,6 +56,16 @@ async def test_end_to_end_send_only_timeseries_data():
             ]
 
             # more than one timeseries
+            ts_2 = pd.Series(
+                ["first", "second"],
+                index=pd.to_datetime(
+                    [
+                        "2020-01-15T00:00:00.000Z",
+                        "2020-01-15T01:00:00.000Z",
+                    ]
+                ),
+            )
+
             await send_data(
                 {
                     "inp_1": FilteredSink(
@@ -75,25 +78,8 @@ async def test_end_to_end_send_only_timeseries_data():
                     ),
                 },
                 {
-                    "inp_1": pd.Series(
-                        [1.2, 3.4, np.nan],
-                        index=pd.to_datetime(
-                            [
-                                "2020-01-15T00:00:00.000Z",
-                                "2020-01-15T01:00:00.000Z",
-                                "2020-01-15T02:00:00.000Z",
-                            ]
-                        ),
-                    ),
-                    "inp_2": pd.Series(
-                        ["first", "second"],
-                        index=pd.to_datetime(
-                            [
-                                "2020-01-15T00:00:00.000Z",
-                                "2020-01-15T01:00:00.000Z",
-                            ]
-                        ),
-                    ),
+                    "inp_1": ts_1,
+                    "inp_2": ts_2,
                 },
                 adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
             )
@@ -103,3 +89,35 @@ async def test_end_to_end_send_only_timeseries_data():
             func_name_2, args_2, kwargs_2 = post_mock.mock_calls[2]
             assert (len(kwargs_1["json"]) == 3) or (len(kwargs_2["json"]) == 3)
             assert (len(kwargs_1["json"]) == 2) or (len(kwargs_2["json"]) == 2)
+
+            # a timeseries with attributes
+            ts_3 = pd.Series(
+                [1.2, 3.4, np.nan],
+                index=pd.to_datetime(
+                    [
+                        "2020-01-15T00:00:00.000Z",
+                        "2020-01-15T01:00:00.000Z",
+                        "2020-01-15T02:00:00.000Z",
+                    ]
+                ),
+            )
+            ts_3_attrs = {"a": 1}
+            ts_3.attrs = ts_3_attrs
+            await send_data(
+                {
+                    "inp_1": FilteredSink(
+                        ref_id="sink_id_1", type="timeseries(float)", filters={}
+                    ),
+                },
+                {"inp_1": ts_3},
+                adapter_key="test_end_to_end_send_only_timeseries_data_adapter_key",
+            )
+            # note: can be async!
+            func_name_3, args_3, kwargs_3 = post_mock.mock_calls[3]
+
+            assert kwargs_3["json"][2]["value"] is None  # np.nan comes through as null
+            assert "Data-Attributes" in kwargs_3["headers"]
+            received_attrs = decode_attributes(kwargs_3["headers"]["Data-Attributes"])
+            for key, value in ts_3_attrs.items():
+                assert key in received_attrs
+                assert received_attrs[key] == value

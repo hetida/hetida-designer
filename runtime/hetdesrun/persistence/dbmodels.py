@@ -1,19 +1,18 @@
 from typing import NamedTuple
-
 from uuid import UUID, uuid4
 
-from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Enum,
-    DateTime,
     JSON,
-    UniqueConstraint,
     CheckConstraint,
+    Column,
+    DateTime,
+    Enum,
     ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
 )
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy_utils import UUIDType
 
 from hetdesrun.utils import State, Type
@@ -24,7 +23,9 @@ Base = declarative_base()
 class TransformationRevisionDBModel(Base):
     __tablename__ = "transformation_revisions"
 
-    id: UUIDType = Column(UUIDType(binary=False), primary_key=True, default=uuid4)
+    id: UUIDType = Column(  # noqa: A003
+        UUIDType(binary=False), primary_key=True, default=uuid4
+    )
     revision_group_id: UUIDType = Column(
         UUIDType(binary=False), default=uuid4, nullable=False
     )
@@ -33,7 +34,7 @@ class TransformationRevisionDBModel(Base):
     category = Column(String, nullable=False)
     version_tag = Column(String, nullable=False)
     state = Column(Enum(State), nullable=False)
-    type = Column(Enum(Type), nullable=False)
+    type = Column(Enum(Type), nullable=False)  # noqa: A003
     documentation = Column(String, nullable=False)
     workflow_content = Column(
         JSON(none_as_null=True), nullable=True, default=lambda: None

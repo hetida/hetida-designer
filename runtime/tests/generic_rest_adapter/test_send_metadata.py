@@ -2,37 +2,25 @@ from unittest import mock
 
 import pytest
 
-import pandas as pd
-import numpy as np
-
-from hetdesrun.adapters.generic_rest import (
-    send_data,
-)
-
-from hetdesrun.adapters.generic_rest.external_types import ExternalType
-
-from hetdesrun.models.data_selection import FilteredSink
-
 from hetdesrun.adapters.exceptions import AdapterConnectionError
+from hetdesrun.adapters.generic_rest import send_data
+from hetdesrun.models.data_selection import FilteredSink
 
 
 @pytest.mark.asyncio
 async def test_end_to_end_send_only_single_metadata_data():
-
     response = mock.Mock()
     response.status_code = 200
     post_mock = mock.AsyncMock(return_value=response)
 
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.send_metadata.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):
-
         with mock.patch(
             "hetdesrun.adapters.generic_rest.send_metadata.httpx.AsyncClient.post",
             new=post_mock,
         ):
-
             # one frame
             await send_data(
                 {
@@ -74,21 +62,18 @@ async def test_end_to_end_send_only_single_metadata_data():
 
 @pytest.mark.asyncio
 async def test_end_to_end_send_only_metadata_data():
-
     response = mock.Mock()
     response.status_code = 200
     post_mock = mock.AsyncMock(return_value=response)
 
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.send_metadata.get_generic_rest_adapter_base_url",
         return_value="https://hetida.de",
     ):
-
         with mock.patch(
             "hetdesrun.adapters.generic_rest.send_metadata.httpx.AsyncClient.post",
             new=post_mock,
         ):
-
             # more than one
             await send_data(
                 {

@@ -1,0 +1,45 @@
+{
+    "id": "9b160d5b-f821-4b7a-b314-b2c94e54c983",
+    "revision_group_id": "30c08359-aeb2-4ce5-b1b0-c5ca253f9f23",
+    "name": "Extract Attributes (Series)",
+    "description": "Extract attributes from a series",
+    "category": "Connectors",
+    "version_tag": "1.0.0",
+    "released_timestamp": "2022-06-27T15:54:16.543713+00:00",
+    "state": "RELEASED",
+    "type": "COMPONENT",
+    "documentation": "# Extract Attributes\n\n## Description\nExtract attributes from a series.\n\n## Inputs\n* **series** (Pandas Series): The input Series.\n\n## Outputs\n* **attributes** (Any): A dictionary containing the attributes of the series.\n\n## Details\n**Note**: It is not possible to provide a series with attributes via manual input. To add or update the attributes of a series, use the \"Add/Update Attributes (Series)\" component.\n \n**Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
+    "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"series\": \"SERIES\",\n    },\n    \"outputs\": {\n        \"attributes\": \"ANY\",\n    },\n    \"name\": \"Extract Attributes (Series)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Extract attributes from a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"9b160d5b-f821-4b7a-b314-b2c94e54c983\",\n    \"revision_group_id\": \"30c08359-aeb2-4ce5-b1b0-c5ca253f9f23\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-06-27T15:54:16.536240+00:00\"\n}\n\n\ndef main(*, series):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    \n    return {\"attributes\": series.attrs}\n",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "7950ddc9-c1e7-4cf7-afa4-304db0bafc0e",
+                "name": "series",
+                "data_type": "SERIES"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "62546db3-1c7d-49f3-95ae-3eb1e87ba73c",
+                "name": "attributes",
+                "data_type": "ANY"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "series",
+                "adapter_id": "demo-adapter-python",
+                "ref_id": "root.plantA.picklingUnit.influx.anomaly_score",
+                "ref_id_type": "SOURCE",
+                "type": "timeseries(float)",
+                "filters": {
+                    "timestampFrom": "2022-06-27T07:56:00.000000000Z",
+                    "timestampTo": "2022-06-28T07:56:00.000000000Z"
+                }
+            }
+        ],
+        "output_wirings": []
+    }
+}

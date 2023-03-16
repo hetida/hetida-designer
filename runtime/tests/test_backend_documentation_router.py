@@ -1,33 +1,21 @@
+import json
 from unittest import mock
+
 import pytest
 
-import json
-
-from starlette.testclient import TestClient
-
-from hetdesrun.webservice.application import app
-
-from hetdesrun.persistence import get_db_engine, sessionmaker
-from hetdesrun.persistence.models.io import IOInterface
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
+from hetdesrun.backend.models.info import DocumentationFrontendDto
 from hetdesrun.models.wiring import WorkflowWiring
-
+from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
 )
+from hetdesrun.persistence.models.io import IOInterface
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 
-from hetdesrun.utils import Type, State, get_uuid_from_seed
-
-from hetdesrun.backend.models.info import DocumentationFrontendDto
-
-
-client = TestClient(app)
-
-
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def clean_test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
@@ -109,7 +97,7 @@ async def test_update_documentation_of_component_dto_with_unmatching_ids(
                 json=json_of_new_documentation,
             )
 
-        assert response.status_code == 403
+        assert response.status_code == 409
         assert "does not match" in response.json()["detail"]
 
 

@@ -8,6 +8,7 @@ import { BaseItemType } from 'src/app/enums/base-item-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { BaseItem } from 'src/app/model/base-item';
 import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
+import { ConfigService } from '../../service/configuration/config.service';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { LocalStorageService } from 'src/app/service/local-storage/local-storage.service';
 import { IAppState } from 'src/app/store/app.state';
@@ -28,11 +29,13 @@ export class HomeComponent implements OnInit {
     private readonly baseItemActionService: BaseItemActionService,
     private readonly tabItemService: TabItemService,
     private readonly contextMenuService: ContextMenuService,
-    private readonly httpClient: HttpClient
+    private readonly httpClient: HttpClient,
+    private readonly configService: ConfigService
   ) {}
 
   public lastOpened: Observable<BaseItem[]>;
   public version: string;
+  public _userInfoText: string;
 
   ngOnInit() {
     this.httpClient
@@ -58,6 +61,9 @@ export class HomeComponent implements OnInit {
           );
       })
     );
+    this.configService.getConfig().subscribe(config => {
+      this._userInfoText = config.userInfoText;
+    });
   }
 
   get lastOpenedWorkflows() {

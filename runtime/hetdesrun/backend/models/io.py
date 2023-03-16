@@ -1,37 +1,32 @@
-from typing import Optional
 from uuid import UUID, uuid4
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, validator
 
-from hetdesrun.datatypes import DataType
-
 from hetdesrun.backend.service.utils import to_camel
+from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import valid_python_identifier
-
 from hetdesrun.persistence.models.io import (
-    Connector,
-    Position,
     IO,
-    IOConnector,
+    Connector,
     Constant,
+    IOConnector,
+    Position,
 )
 
 
 class WorkflowIoFrontendDto(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
-    name: Optional[str] = None
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
+    name: str | None = None
     pos_x: int = 0
     pos_y: int = 0
-    type: DataType
+    type: DataType  # noqa: A003
     operator: UUID
     connector: UUID
-    constant_value: Optional[dict] = None
+    constant_value: dict | None = None
     constant: bool = False
 
     @validator("name")
-    # pylint: disable=no-self-argument,no-self-use
-    def name_valid_python_identifier(cls, name: Optional[str]) -> Optional[str]:
+    def name_valid_python_identifier(cls, name: str | None) -> str | None:
         if name is None or name == "":
             return name
         return valid_python_identifier(cls, name)
@@ -57,10 +52,8 @@ class WorkflowIoFrontendDto(BaseModel):
             operator_name=operator_name,
             connector_name=connector_name,
             position=Position(x=self.pos_x, y=self.pos_y),
-            # pylint: disable=unsubscriptable-object
             value=self.constant_value["value"]
-            if isinstance(self.constant_value, dict)
-            and "value" in self.constant_value.keys()
+            if isinstance(self.constant_value, dict) and "value" in self.constant_value
             else None,
         )
 
@@ -107,13 +100,12 @@ class WorkflowIoFrontendDto(BaseModel):
 
 
 class ConnectorFrontendDto(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
-    name: Optional[str]
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
+    name: str | None
     pos_x: int = 0
     pos_y: int = 0
-    type: DataType
+    type: DataType  # noqa: A003
 
-    # pylint: disable=no-self-argument,no-self-use
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
         if name is None or name == "":

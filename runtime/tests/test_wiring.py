@@ -1,7 +1,5 @@
-from starlette.testclient import TestClient
-
 import pytest
-from hetdesrun.webservice.application import app
+
 
 async def run_workflow_with_client(workflow_json, open_async_test_client):
     response = await open_async_test_client.post("engine/runtime", json=workflow_json)
@@ -55,7 +53,6 @@ async def test_wiring_direct_input_provisioning(
     input_json_with_wiring_with_input, async_test_client
 ):
     async with async_test_client as client:
-
         status_code, output = await run_workflow_with_client(
             input_json_with_wiring_with_input, client
         )

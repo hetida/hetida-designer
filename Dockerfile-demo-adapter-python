@@ -1,5 +1,5 @@
 ##### Build stage
-FROM python:3.9.9-buster as base
+FROM python:3.10.8-slim-bullseye as base
 
 ENV TIMEOUT=60
 
@@ -14,7 +14,7 @@ COPY ./demo-adapter-python/pipt /app/pipt
 WORKDIR /app
 
 ENV PIPT_PIP_INSTALL_ARGS "--no-cache-dir"
-ENV PIPT_PIP_SYNC_ARGS "--no-cache-dir"
+ENV PIPT_PIP_SYNC_PIP_ARGS "--no-cache-dir --no-deps"
 RUN ./pipt sync-system --prod
 
 ##### Intermediate stage with actual application content
@@ -40,7 +40,7 @@ FROM application_base AS test
 WORKDIR /app
 RUN ./pipt sync-system --dev
 RUN python3 -m pytest --cov=demo_adapter_python --cov-report xml --junitxml test_results.xml tests
-RUN bash /app/scripts/gen_pylint_report.sh
+RUN bash /app/scripts/gen_ruff_report.sh
 
 # prod should still be the default build, this is why we close with FROM prod
 # Note that in order to really skip the test stage you either need to explicitly specify the prod

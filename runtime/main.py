@@ -11,10 +11,8 @@ Usage: Call with activated virtual environment via
 from project directory.
 """
 
-import os
-
-# pylint: disable=wrong-import-order
 import logging
+import os
 
 if __name__ == "__main__":
     if os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None) is None:
@@ -28,8 +26,10 @@ logger = logging.getLogger(__name__)
 configure_logging(logger)
 
 # must be after logging config:
-from hetdesrun.webservice.application import app
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice import get_app
+from hetdesrun.webservice.config import get_config
+
+app = get_app()
 
 
 def detect_in_memory_db() -> bool:
@@ -52,7 +52,7 @@ def detect_in_memory_db() -> bool:
 
 def run_migrations(
     alembic_dir: str = "./alembic",
-    connection_url=runtime_config.sqlalchemy_connection_string,
+    connection_url=get_config().sqlalchemy_connection_string,
 ) -> None:
     """Runs alembic migrations from within Python code
 
@@ -67,12 +67,11 @@ def run_migrations(
 
     migrations_invoked_from_py = True
 
-    from alembic.config import Config
-    from alembic import command
-    from pydantic import SecretStr
     import hetdesrun.persistence.dbmodels
-
+    from alembic import command
+    from alembic.config import Config
     from hetdesrun.persistence import get_db_engine
+    from pydantic import SecretStr
 
     engine = get_db_engine()
 
@@ -94,13 +93,30 @@ def run_migrations(
     logger.info("Finished running migrations.")
 
 
+def run_trafo_rev_deployment():
+    from hetdesrun.exportimport.importing import import_transformations
+
+    import_transformations(
+        "./transformations", update_component_code=False, directly_into_db=True
+    )
+
+
 in_memory_db = detect_in_memory_db()
+is_backend = get_config().is_backend_service
 
 if in_memory_db:
     logger.info(
         "Detected in-memory db usage: Running migrations during importing of main.py."
     )
     run_migrations()
+
+    if is_backend:
+        logger.info(
+            "Detected in-memory db usage: "
+            "Running base component and example workflow deployment "
+            "during importing of main.py."
+        )
+        run_trafo_rev_deployment()
 
 if __name__ == "__main__":
 
@@ -110,15 +126,23 @@ if __name__ == "__main__":
         )
         run_migrations()
 
+        if is_backend:
+            logger.info(
+                "Running base component and example workflow deployment "
+                "from main.py since main.py was invoked directly."
+            )
+            run_trafo_rev_deployment()
+
     import os
+
     import uvicorn
 
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", 8000))
     logger.info("Start app as host %s with port %s", str(host), str(port))
     uvicorn.run(
-        "hetdesrun.webservice.application:app",
-        debug=True,
+        "main:app",
+        log_level="debug",
         reload=True,
         host=host,
         port=port,

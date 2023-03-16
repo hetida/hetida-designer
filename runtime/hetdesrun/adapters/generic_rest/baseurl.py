@@ -1,28 +1,21 @@
 """Loading and caching of generic rest adapter base urls"""
 
-import threading
-from typing import List, Dict
-
 import logging
-
+import threading
 from posixpath import join as posix_urljoin
 
 import httpx
+from pydantic import BaseModel, ValidationError
 
-from pydantic import BaseModel, ValidationError  # pylint: disable=no-name-in-module
-
-from hetdesrun.webservice.config import runtime_config
-
-from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.exceptions import (
     AdapterConnectionError,
     AdapterHandlingException,
 )
-
-from hetdesrun.backend.service.adapter_router import get_all_adapters
-
+from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.backend.models.adapter import AdapterFrontendDto
-
+from hetdesrun.backend.service.adapter_router import get_all_adapters
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -31,41 +24,48 @@ generic_rest_adapter_urls_lock = threading.Lock()
 # inititalize cache for adapter urls as global singleton
 try:
     with generic_rest_adapter_urls_lock:
-        generic_rest_adapter_urls  # pylint: disable=pointless-statement,used-before-assignment
+        generic_rest_adapter_urls  # type: ignore
 except NameError:
     with generic_rest_adapter_urls_lock:
-        generic_rest_adapter_urls: Dict[str, str] = {}
+        generic_rest_adapter_urls: dict[str, str] = {}
 
 
 class BackendRegisteredGenericRestAdapter(BaseModel):
-    id: str
+    id: str  # noqa: A003
     name: str
     url: str
     internalUrl: str
 
 
 class AdapterFrontendDtoRegisteredGenericRestAdapters(BaseModel):
-    __root__: List[AdapterFrontendDto]
+    __root__: list[AdapterFrontendDto]
 
 
 class BackendRegisteredGenericRestAdapters(BaseModel):
-    __root__: List[BackendRegisteredGenericRestAdapter]
+    __root__: list[BackendRegisteredGenericRestAdapter]
 
 
-async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestAdapter]:
+async def load_generic_adapter_base_urls() -> list[BackendRegisteredGenericRestAdapter]:
     """Loads generic REST adapter infos from the corresponding designer backend endpoint"""
+    try:
+        headers = await get_generic_rest_adapter_auth_headers(external=False)
+    except ServiceAuthenticationError as e:
+        msg = (
+            "Failure trying to get auth headers for adapter base url request. Error was:\n"
+            + str(e)
+        )
+        logger.info(msg)
+        raise AdapterHandlingException(msg) from e
 
-    headers = get_generic_rest_adapter_auth_headers()
-
-    url = posix_urljoin(runtime_config.hd_backend_api_url, "adapters/")
+    url = posix_urljoin(get_config().hd_backend_api_url, "adapters/")
     logger.info("Start getting Generic REST Adapter URLS from HD Backend url %s", url)
 
-    if runtime_config.is_backend_service:
+    if get_config().is_backend_service:
         # call function directly
         adapter_list = await get_all_adapters()
 
         try:
-            loaded_generic_rest_adapters: List[BackendRegisteredGenericRestAdapter] = [
+            loaded_generic_rest_adapters: list[BackendRegisteredGenericRestAdapter] = [
                 BackendRegisteredGenericRestAdapter(
                     id=adapter_dto.id,
                     name=adapter_dto.name,
@@ -82,7 +82,8 @@ async def load_generic_adapter_base_urls() -> List[BackendRegisteredGenericRestA
     else:
         # call backend service "adapters" endpoint
         async with httpx.AsyncClient(
-            verify=runtime_config.hd_backend_verify_certs
+            verify=get_config().hd_backend_verify_certs,
+            timeout=get_config().external_request_timeout,
         ) as client:
             try:
                 resp = await client.get(url, headers=headers)
@@ -132,7 +133,7 @@ async def update_generic_adapter_base_urls_cache() -> None:
     """Update the cached mapping from adapter keys to their base urls"""
     generic_adapter_infos = await load_generic_adapter_base_urls()
 
-    global generic_rest_adapter_urls  # pylint: disable=global-statement,global-variable-not-assigned
+    global generic_rest_adapter_urls  # noqa: PLW0602
     with generic_rest_adapter_urls_lock:
         for generic_adapter_info in generic_adapter_infos:
             generic_rest_adapter_urls[

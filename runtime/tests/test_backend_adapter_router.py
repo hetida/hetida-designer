@@ -1,32 +1,16 @@
 from unittest import mock
+
 import pytest
+from httpx import AsyncClient
+from sqlalchemy.future.engine import Engine
 
-from starlette.testclient import TestClient
-
-from hetdesrun.webservice.application import app
-
-from hetdesrun.persistence import get_db_engine, sessionmaker
-
-from hetdesrun.persistence.dbmodels import Base
-
-
-client = TestClient(app)
-
-
-@pytest.fixture(scope="function")
-def clean_test_db_engine(use_in_memory_db):
-    if use_in_memory_db:
-        in_memory_database_url = "sqlite+pysqlite:///:memory:"
-        engine = get_db_engine(override_db_url=in_memory_database_url)
-    else:
-        engine = get_db_engine()
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    return engine
+from hetdesrun.persistence import sessionmaker
 
 
 @pytest.mark.asyncio
-async def test_get_all_adapters(async_test_client, clean_test_db_engine):
+async def test_get_all_default_adapters(
+    async_test_client: AsyncClient, clean_test_db_engine: Engine
+) -> None:
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
@@ -35,4 +19,5 @@ async def test_get_all_adapters(async_test_client, clean_test_db_engine):
             response = await ac.get("/api/adapters/")
 
         assert response.status_code == 200
-        assert len(response.json()) == 3
+        adapter_list = response.json()
+        assert len(adapter_list) == 3

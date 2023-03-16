@@ -1,30 +1,25 @@
 from uuid import UUID, uuid4
-from typing import Optional
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, validator
 
-from hetdesrun.utils import State, Type
-
 from hetdesrun.backend.service.utils import to_camel
-
-from hetdesrun.persistence.models.transformation import TransformationRevision
-
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
+from hetdesrun.models.run import AllMeasuredSteps
+from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import State, Type
 
 
 class BasicInformation(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
     group_id: UUID = Field(default_factory=uuid4)
     name: str = Field(..., max_length=60)
     description: str
     category: str = Field(..., max_length=60)
-    type: Type
+    type: Type  # noqa: A003
     state: State
     tag: str = Field(..., max_length=20)
 
     @validator("tag")
-    # pylint: disable=no-self-argument,no-self-use
     def tag_not_latest(cls, tag: str) -> str:
         if tag != "latest":
             return tag
@@ -35,7 +30,7 @@ class BasicInformation(BaseModel):
 
 
 class DocumentationFrontendDto(BaseModel):
-    id: UUID
+    id: UUID  # noqa: A003
     document: str
 
     @classmethod
@@ -49,13 +44,26 @@ class DocumentationFrontendDto(BaseModel):
 
 
 class ExecutionResponseFrontendDto(BaseModel):
-    error: Optional[str]
-    execution_id: Optional[UUID]
+    error: str | None
+    execution_id: UUID | None
     output_results_by_output_name: dict = {}
     output_types_by_output_name: dict = {}
-    response: Optional[str]
+    response: str | None
     result: str
-    traceback: Optional[str]
+    traceback: str | None
     job_id: UUID
 
+    measured_steps: AllMeasuredSteps = AllMeasuredSteps()
+    process_id: int | None = Field(
+        None,
+        description=(
+            "Process Id (PID) of the process handling the request, "
+            "if advanced performance measuring is configured."
+        ),
+    )
+
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
+
+
+class ExecutionResultReceived(BaseModel):
+    ok: bool

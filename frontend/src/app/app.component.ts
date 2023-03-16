@@ -2,7 +2,8 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { Component, ElementRef, OnInit } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { AuthService } from './service/auth.service';
+import { Observable } from 'rxjs';
+import { AuthService } from './auth/auth.service';
 import { ContextMenuService } from './service/context-menu/context-menu.service';
 import { LocalStorageService } from './service/local-storage/local-storage.service';
 import { ThemeService } from './service/theme/theme.service';
@@ -24,7 +25,8 @@ export class AppComponent implements OnInit {
     private readonly overlayContainer: OverlayContainer,
     private readonly themeService: ThemeService,
     private readonly appElement: ElementRef<Element>,
-    private readonly contextMenuService: ContextMenuService
+    private readonly contextMenuService: ContextMenuService,
+    private readonly authService: AuthService
   ) {
     this.iconRegistry.addSvgIcon(
       'icon-component',
@@ -70,21 +72,20 @@ export class AppComponent implements OnInit {
     );
   }
 
-  public get userName(): string {
-    return AuthService.getFullName();
+  public get userName$(): Observable<string> {
+    return this.authService.userName$();
   }
 
   public logout(): void {
-    AuthService.logout();
+    this.authService.logout();
   }
 
   public closeContextMenu() {
     this.contextMenuService.disposeAllContextMenus();
   }
 
-  public get keycloakEnabled(): boolean {
-    const keycloak = AuthService.keycloak;
-    return keycloak ? true : false;
+  public get isAuthenticated$(): Observable<boolean> {
+    return this.authService.isAuthenticated$();
   }
 
   public get theme(): string {

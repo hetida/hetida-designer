@@ -1,6 +1,5 @@
 from keyword import iskeyword
-
-from typing import Protocol, List, TypeVar, Any, Optional, Union
+from typing import Any, Protocol, TypeVar
 
 
 class NamedEntity(Protocol):
@@ -8,25 +7,21 @@ class NamedEntity(Protocol):
 
 
 class OptionallyNamedEntity(Protocol):
-    name: Optional[str]
+    name: str | None
 
 
-def valid_python_identifier(
-    cls: Any, name: str  # pylint: disable=unused-argument
-) -> str:
+def valid_python_identifier(cls: Any, name: str) -> str:  # noqa: ARG001
     if name.isidentifier() and not iskeyword(name):
         return name
     raise ValueError(f"{name} is not a valid Python identifier")
 
 
-T = TypeVar("T", bound=Union[NamedEntity, OptionallyNamedEntity])
+T = TypeVar("T", bound=NamedEntity | OptionallyNamedEntity)
 
 
-def names_unique(
-    cls: Any, inputs_or_outputs: List[T]  # pylint: disable=unused-argument
-) -> List[T]:
+def names_unique(cls: Any, inputs_or_outputs: list[T]) -> list[T]:  # noqa: ARG001
     if any(io.name is None for io in inputs_or_outputs):
         raise ValueError("uniqueness of names can only be checked if name is not None")
-    if len(set(io.name for io in inputs_or_outputs)) == len(inputs_or_outputs):
+    if len({io.name for io in inputs_or_outputs}) == len(inputs_or_outputs):
         return inputs_or_outputs
     raise ValueError("duplicates in names not allowed.")

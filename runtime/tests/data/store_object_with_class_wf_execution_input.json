@@ -1,0 +1,184 @@
+{
+  "code_modules": [
+    {
+      "code": "# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"class_object\": \"ANY\",\n        \"name\": \"STRING\",\n        \"amount\": \"INT\",\n        \"value\": \"FLOAT\",\n    },\n    \"outputs\": {\n        \"class_entity\": \"ANY\",\n    },\n    \"name\": \"ExampleClass Entity\",\n    \"category\": \"Basic\",\n    \"description\": \"Create entity of ExampleClass\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"81142909-2bd5-43ea-ba35-de5068a5f8d8\",\n    \"revision_group_id\": \"1545b944-d54b-4de2-949a-f11ef530678d\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-02-09T11:07:02.332070+00:00\",\n}\n\n\ndef main(*, class_object, name, amount, value):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"class_entity\": class_object(name=name, amount=amount, value=value)}",
+      "uuid": "81142909-2bd5-43ea-ba35-de5068a5f8d8"
+    },
+    {
+      "code": "class ExampleClass():\n    def __init__(self, name: str, amount: int, value: float):\n        self.name = name\n        self.amount = amount\n        self.value = value\n    \n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {\n        \"class_object\": \"ANY\",\n    },\n    \"name\": \"ExampleClass\",\n    \"category\": \"Classes\",\n    \"description\": \"Defines a class named ExampleClass\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"fd0464cb-4691-4ce1-bb2b-9efbcc7626f4\",\n    \"revision_group_id\": \"59cc4583-0b84-4fef-8076-468b6f150edd\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-02-09T12:25:01.990787+00:00\",\n}\n\n\ndef main():\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"class_object\": ExampleClass}",
+      "uuid": "fd0464cb-4691-4ce1-bb2b-9efbcc7626f4"
+    }
+  ],
+  "components": [
+    {
+      "code_module_uuid": "81142909-2bd5-43ea-ba35-de5068a5f8d8",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "18a6c776-bd73-48e7-814a-d86cbf3e87cc",
+          "name": "class_object",
+          "type": "ANY"
+        },
+        {
+          "id": "c53cec03-7ec0-4e69-92d1-7868ff26f4df",
+          "name": "name",
+          "type": "STRING"
+        },
+        {
+          "id": "cff50eea-8660-4e8a-8648-e381ab482a68",
+          "name": "amount",
+          "type": "INT"
+        },
+        {
+          "id": "9b8a1514-1756-4944-aec0-78abc2669367",
+          "name": "value",
+          "type": "FLOAT"
+        }
+      ],
+      "name": "ExampleClass Entity",
+      "outputs": [
+        {
+          "id": "0b207b91-9be4-40cf-9575-0a7105e61ebd",
+          "name": "class_entity",
+          "type": "ANY"
+        }
+      ],
+      "tag": "1.0.0",
+      "uuid": "81142909-2bd5-43ea-ba35-de5068a5f8d8"
+    },
+    {
+      "code_module_uuid": "fd0464cb-4691-4ce1-bb2b-9efbcc7626f4",
+      "function_name": "main",
+      "inputs": [],
+      "name": "ExampleClass",
+      "outputs": [
+        {
+          "id": "c00635c2-3183-4e10-9fbb-18ac16f4660c",
+          "name": "class_object",
+          "type": "ANY"
+        }
+      ],
+      "tag": "1.0.0",
+      "uuid": "fd0464cb-4691-4ce1-bb2b-9efbcc7626f4"
+    }
+  ],
+  "configuration": {
+    "engine": "plain",
+    "name": "678df189-a969-4ed9-9c3f-162b87d578b6",
+    "return_individual_node_results": false,
+    "run_pure_plot_operators": false
+  },
+  "job_id": "00ff4079-8a73-424a-bb04-867422fdcf18",
+  "workflow": {
+    "connections": [
+      {
+        "input_in_workflow_id": "86d5518b-f114-4089-ad47-67be46b7ed5d",
+        "input_name": "class_object",
+        "output_in_workflow_id": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "output_name": "class_object"
+      }
+    ],
+    "id": "77082269-7004-4873-b6e7-f8744c68bfeb",
+    "inputs": [
+      {
+        "constant": false,
+        "constantValue": null,
+        "id": "c92e34ae-c170-47e5-a811-86960b1abae3",
+        "id_of_sub_node": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "name": "name",
+        "name_in_subnode": "name",
+        "type": "STRING"
+      },
+      {
+        "constant": false,
+        "constantValue": null,
+        "id": "94d18342-d7f4-40b2-8d6f-23b1e04b20fc",
+        "id_of_sub_node": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "name": "amount",
+        "name_in_subnode": "amount",
+        "type": "INT"
+      },
+      {
+        "constant": false,
+        "constantValue": null,
+        "id": "633d031d-069e-45d1-aaf3-95936e060814",
+        "id_of_sub_node": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "name": "value",
+        "name_in_subnode": "value",
+        "type": "FLOAT"
+      }
+    ],
+    "name": "Create ExampleClass Entity",
+    "outputs": [
+      {
+        "id": "d8efd9d5-11a6-4483-9d26-563f2f41591e",
+        "id_of_sub_node": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "name": "class_entity",
+        "name_in_subnode": "class_entity",
+        "type": "ANY"
+      }
+    ],
+    "sub_nodes": [
+      {
+        "component_uuid": "81142909-2bd5-43ea-ba35-de5068a5f8d8",
+        "id": "b6722131-a47b-429b-ab8f-d977233bf408",
+        "name": "Create ExampleClass Entity"
+      },
+      {
+        "component_uuid": "fd0464cb-4691-4ce1-bb2b-9efbcc7626f4",
+        "id": "86d5518b-f114-4089-ad47-67be46b7ed5d",
+        "name": "ExampleClass"
+      }
+    ],
+    "tr_id": "678df189-a969-4ed9-9c3f-162b87d578b6",
+    "tr_name": "Create ExampleClass Entity",
+    "tr_tag": "1.0.0"
+  },
+  "workflow_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "name"
+        },
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "workflow_input_name": "name"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "1"
+        },
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "workflow_input_name": "amount"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "0.5"
+        },
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "workflow_input_name": "value"
+      }
+    ],
+    "output_wirings": [
+      {
+        "adapter_id": "blob-storage-adapter",
+        "ref_id": "i-i/C",
+        "ref_id_type": "THINGNODE",
+        "ref_key": "C - Next Object",
+        "type": "metadata(any)",
+        "workflow_output_name": "class_entity"
+      }
+    ]
+  }
+}

@@ -1,26 +1,22 @@
-from typing import List, Dict, Tuple
+import logging
 from collections import defaultdict
 
-import logging
-
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from hetdesrun.adapters.generic_rest.load_framelike import load_framelike_data
-
-from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.exceptions import (
     AdapterClientWiringInvalidError,
     AdapterHandlingException,
 )
-
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
+from hetdesrun.adapters.generic_rest.load_framelike import load_framelike_data
 from hetdesrun.models.data_selection import FilteredSource
 
 logger = logging.getLogger(__name__)
 
 
 async def load_ts_data_from_adapter(
-    filtered_sources: List[FilteredSource],
+    filtered_sources: list[FilteredSource],
     from_timestamp: str,
     to_timestamp: str,
     adapter_key: str,
@@ -40,12 +36,17 @@ async def load_ts_data_from_adapter(
     It therefore currently isn't async.
     """
 
-    return await load_framelike_data(
+    df = await load_framelike_data(
         filtered_sources=filtered_sources,
         additional_params=[("from", from_timestamp), ("to", to_timestamp)],
         adapter_key=adapter_key,
         endpoint="timeseries",
     )
+
+    if "timeseriesId" in df.columns:
+        df["timeseriesId"] = df["timeseriesId"].astype("string")
+
+    return df
 
 
 def extract_one_channel_series_from_loaded_data(
@@ -55,6 +56,12 @@ def extract_one_channel_series_from_loaded_data(
         extracted_df = df[df["timeseriesId"] == ts_id].copy()
         extracted_df.index = extracted_df["timestamp"]
         extracted_series = extracted_df["value"].sort_index()
+        extracted_series.attrs = df.attrs.get(ts_id, {})
+        logger.debug(
+            "extracted attributes %s for series with id %s",
+            extracted_series.attrs,
+            ts_id,
+        )
     except KeyError as e:
         msg = (
             f"Missing keys in received timeseries records. Got columns {str(df.columns)}"
@@ -69,8 +76,8 @@ def extract_one_channel_series_from_loaded_data(
 
 
 async def load_grouped_timeseries_data_together(
-    data_to_load: Dict[str, FilteredSource], adapter_key: str
-) -> Dict[str, pd.Series]:
+    data_to_load: dict[str, FilteredSource], adapter_key: str
+) -> dict[str, pd.Series]:
     """Reorganize query information by timestamp pairs and load timeseries data
 
     Generic Rest Adapter allows to query for multiple timeseries in one request but then only with
@@ -84,9 +91,9 @@ async def load_grouped_timeseries_data_together(
     loaded_data = {}
 
     # group by occuring timestamp pairs
-    group_by_timestamp_pair: Dict[
-        Tuple[str, str, ExternalType],
-        Dict[str, FilteredSource],
+    group_by_timestamp_pair: dict[
+        tuple[str, str, ExternalType],
+        dict[str, FilteredSource],
     ] = defaultdict(dict)
 
     for filtered_source in data_to_load.values():
@@ -107,7 +114,7 @@ async def load_grouped_timeseries_data_together(
         ][key] = filtered_source
 
     # load each group together:
-    for (group_tuple, grouped_source_dict) in group_by_timestamp_pair.items():
+    for group_tuple, grouped_source_dict in group_by_timestamp_pair.items():
         loaded_ts_data_from_adapter = await load_ts_data_from_adapter(
             list(grouped_source_dict.values()),
             group_tuple[0],

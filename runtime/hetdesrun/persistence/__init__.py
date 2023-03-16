@@ -1,20 +1,17 @@
-from functools import cache
-
-from typing import Any, Optional, Union
 import json
+import logging
+from functools import cache
+from typing import Any
 from uuid import UUID
 
-import logging
-
-# pylint: disable=no-name-in-module
 from pydantic import SecretStr
 from sqlalchemy import create_engine
-from sqlalchemy.future.engine import Engine
-
 from sqlalchemy.engine import URL
-from sqlalchemy.orm import sessionmaker, Session as SQLAlchemySession
+from sqlalchemy.future.engine import Engine
+from sqlalchemy.orm import Session as SQLAlchemySession  # noqa: F401
+from sqlalchemy.orm import sessionmaker
 
-from hetdesrun.webservice.config import runtime_config
+from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -30,15 +27,13 @@ def dumps(d: Any) -> str:
 
 
 @cache
-def get_db_engine(
-    override_db_url: Optional[Union[SecretStr, str, URL]] = None
-) -> Engine:
+def get_db_engine(override_db_url: SecretStr | str | URL | None = None) -> Engine:
+    if get_config().sqlalchemy_connection_string is None:
+        raise TypeError("No sqlalchemy connection string configured/inferred!")
 
-    assert runtime_config.sqlalchemy_connection_string is not None
-
-    db_url_to_use: Union[SecretStr, str, URL]
+    db_url_to_use: SecretStr | str | URL
     if override_db_url is None:
-        db_url_to_use = runtime_config.sqlalchemy_connection_string
+        db_url_to_use = get_config().sqlalchemy_connection_string  # type: ignore
     else:
         db_url_to_use = override_db_url
 
@@ -49,7 +44,7 @@ def get_db_engine(
         str(db_url_to_use),
         future=True,
         json_serializer=dumps,
-        pool_size=runtime_config.sqlalchemy_pool_size,
+        pool_size=get_config().sqlalchemy_pool_size,
     )
 
     logger.debug("Created DB Engine with url: %s", repr(engine.url))
