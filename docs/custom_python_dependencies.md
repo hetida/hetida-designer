@@ -1,6 +1,6 @@
 # Adding custom Python dependencies
 
-The hetida designer runtime is equipped with a good selection of standard Python libraries from the Python Data Science Stack like numpy, pandas, scikit-learn, scipy or tensorflow and more. 
+The hetida designer runtime is equipped with a good selection of standard Python libraries from the Python Data Science Stack like numpy, pandas, scikit-learn or scipy and more. 
 
 While these may be sufficient for many use cases it is often necessary to use more and specialised libraries.
 
