@@ -169,13 +169,14 @@ class PydanticMultiTimeseriesPandasDataFrame:
 
         if not pd.api.types.is_datetime64tz_dtype(df["timestamp"]):
             raise ValueError(
-                "Column 'timestamp' of MultiTSFrame does not have datetime64tz dtype."
+                "Column 'timestamp' of MultiTSFrame does not have datetime64tz dtype. "
                 f'Got {str(df["timestamp"].dtype)} index dtype instead.'
             )
 
         if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
             raise ValueError(
-                "Column 'timestamp' of MultiTSFrame does not have UTC timezon."
+                "Column 'timestamp' of MultiTSFrame does not have UTC timezone. "
+                f'Got {str(df["timestamp"].dt.tz)} timezone instead.'
             )
 
         return df

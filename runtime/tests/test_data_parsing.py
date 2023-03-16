@@ -152,6 +152,36 @@ def test_multitsframe_parsing():
                 ],
             }
         )
+    with pytest.raises(ValueError, match="does not have datetime64tz dtype"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "value": [1.0, 2, "x", 1.9, None, "y"],
+                "metric": ["a", "b", "c", "a", "b", "c"],
+                "timestamp": [
+                    "2019-08-01T15:45:36.000",
+                    "2019-08-01T15:45:36.000",
+                    "2019-08-01T15:45:36.000",
+                    "2019-08-02T15:45:36.000",
+                    "2019-08-02T15:45:36.000",
+                    "2019-08-02T15:45:36.000",
+                ],
+            }
+        )
+    with pytest.raises(ValueError, match="does not have UTC timezone"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "value": [1.0, 2, "x", 1.9, None, "y"],
+                "metric": ["a", "b", "c", "a", "b", "c"],
+                "timestamp": [
+                    "2019-08-01T15:45:36.000+01:00",
+                    "2019-08-01T15:45:36.000+01:00",
+                    "2019-08-01T15:45:36.000+01:00",
+                    "2019-08-02T15:45:36.000+01:00",
+                    "2019-08-02T15:45:36.000+01:00",
+                    "2019-08-02T15:45:36.000+01:00",
+                ],
+            }
+        )
 
 
 def test_parsing_of_boolean_series():

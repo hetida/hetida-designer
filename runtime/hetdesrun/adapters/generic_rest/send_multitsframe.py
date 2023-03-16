@@ -23,8 +23,6 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
             f" Got {str(type(df))} instead."
         )
 
-    # TODO: next three statements basically copied from hetdesrun.datatypes
-    # how and where to define functions to avoid code duplication?
     if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
         column_names_string = ", ".join(df.columns)
         multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
@@ -53,7 +51,8 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
     if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
         raise AdapterOutputDataError(
             "Column 'timestamp' of the received Pandas Dataframe does not have UTC timezone "
-            "but generic rest adapter only accepts UTC timeseries data."
+            "but generic rest adapter only accepts UTC timeseries data. "
+            f'Got {str(df["timestamp"].dt.tz)} timezone instead.'
         )
 
     new_df = df.replace({np.nan: None})
