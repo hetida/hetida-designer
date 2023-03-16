@@ -57,7 +57,13 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
         )
 
     new_df = df.replace({np.nan: None})
-    new_df["timestamp"] = new_df["timestamp"].apply(lambda x: x.isoformat())
+    new_df["timestamp"] = new_df["timestamp"].apply(
+        lambda x: x.strftime(
+            "%Y-%m-%dT%H:%M:%S.%f"
+        )  # Generic Rest datetime format is yyyy-MM-ddTHH:mm:ss.SSSSSSSSSX
+        + "{:03d}".format(x.nanosecond)  # noqa: UP032
+        + "Z"  # we guaranteed UTC time zone some lines above!
+    )
     return new_df.to_dict(orient="records")  # type: ignore
 
 
