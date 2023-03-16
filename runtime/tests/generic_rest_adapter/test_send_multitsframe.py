@@ -79,15 +79,15 @@ async def test_end_to_end_send_only_multitsframe_data() -> None:
         _, _, kwargs_1 = post_mock.mock_calls[0]
         assert kwargs_1["params"] == [("id", "sink_id_1")]
         assert kwargs_1["json"] == [
-            {"timestamp": "2019-08-01T15:45:36+00:00", "metric": "a", "value": 1.0},
-            {"timestamp": "2019-08-01T15:45:37+00:00", "metric": "b", "value": 1.2},
-            {"timestamp": "2019-08-01T15:45:37+00:00", "metric": "c", "value": 0.5},
-            {"timestamp": "2019-08-01T15:45:46+00:00", "metric": "a", "value": 1.9},
-            {"timestamp": "2019-08-01T15:45:46+00:00", "metric": "b", "value": 1.3},
-            {"timestamp": "2019-08-01T15:45:47+00:00", "metric": "c", "value": 0.2},
-            {"timestamp": "2019-08-01T15:45:56+00:00", "metric": "a", "value": 1.5},
-            {"timestamp": "2019-08-01T15:45:57+00:00", "metric": "b", "value": 1.7},
-            {"timestamp": "2019-08-01T15:45:58+00:00", "metric": "c", "value": 0.1},
+            {"timestamp": "2019-08-01T15:45:36.000000000Z", "metric": "a", "value": 1.0},
+            {"timestamp": "2019-08-01T15:45:37.000000000Z", "metric": "b", "value": 1.2},
+            {"timestamp": "2019-08-01T15:45:37.000000000Z", "metric": "c", "value": 0.5},
+            {"timestamp": "2019-08-01T15:45:46.000000000Z", "metric": "a", "value": 1.9},
+            {"timestamp": "2019-08-01T15:45:46.000000000Z", "metric": "b", "value": 1.3},
+            {"timestamp": "2019-08-01T15:45:47.000000000Z", "metric": "c", "value": 0.2},
+            {"timestamp": "2019-08-01T15:45:56.000000000Z", "metric": "a", "value": 1.5},
+            {"timestamp": "2019-08-01T15:45:57.000000000Z", "metric": "b", "value": 1.7},
+            {"timestamp": "2019-08-01T15:45:58.000000000Z", "metric": "c", "value": 0.1},
         ]
         assert "Data-Attributes" in kwargs_1["headers"]
         received_attrs = decode_attributes(kwargs_1["headers"]["Data-Attributes"])
@@ -97,12 +97,12 @@ async def test_end_to_end_send_only_multitsframe_data() -> None:
         _, _, kwargs_2 = post_mock.mock_calls[1]
         assert kwargs_2["params"] == [("id", "sink_id_2")]
         assert kwargs_2["json"] == [
-            {"timestamp": "2019-08-01T15:45:36+00:00", "metric": "a", "value": 1.0},
-            {"timestamp": "2019-08-01T15:45:37+00:00", "metric": "d", "value": None},
-            {"timestamp": "2019-08-01T15:45:37+00:00", "metric": "e", "value": None},
-            {"timestamp": "2019-08-01T15:45:46+00:00", "metric": "a", "value": 1.9},
-            {"timestamp": "2019-08-01T15:45:56+00:00", "metric": "a", "value": 1.5},
-            {"timestamp": "2019-08-01T15:45:57+00:00", "metric": "e", "value": "text"},
+            {"timestamp": "2019-08-01T15:45:36.000000000Z", "metric": "a", "value": 1.0},
+            {"timestamp": "2019-08-01T15:45:37.000000000Z", "metric": "d", "value": None},
+            {"timestamp": "2019-08-01T15:45:37.000000000Z", "metric": "e", "value": None},
+            {"timestamp": "2019-08-01T15:45:46.000000000Z", "metric": "a", "value": 1.9},
+            {"timestamp": "2019-08-01T15:45:56.000000000Z", "metric": "a", "value": 1.5},
+            {"timestamp": "2019-08-01T15:45:57.000000000Z", "metric": "e", "value": "text"},
         ]
         assert "Data-Attributes" not in kwargs_2["headers"]
 
