@@ -376,7 +376,7 @@
     "outputs": [
       {
         "connector_id": "2bad1916-9d38-2409-b236-ebfce1fc1fae",
-        "connector_name": "connector_name",
+        "connector_name": "dataframe",
         "data_type": "DATAFRAME",
         "id": "809be129-f35c-47ef-be5d-687256470181",
         "name": "dataframe",

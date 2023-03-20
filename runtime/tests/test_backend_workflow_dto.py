@@ -701,7 +701,7 @@ valid_workflow_example_iso_forest: dict = {
         {
             "id": "5dcdf141-590f-42d6-86bd-460af86147a7",
             "type": "PLOTLYJSON",
-            "name": "contour_plot",
+            "name": "output",
             "posY": -100,
             "posX": 2010,
             "operator": "e362967a-fa2d-4d7c-8ef9-e58eceb45e2b",
@@ -843,6 +843,7 @@ valid_workflow_example_iso_forest: dict = {
 
 valid_input_with_name: dict = valid_workflow_example_iso_forest["inputs"][0]
 valid_input_without_name: dict = valid_workflow_example_iso_forest["inputs"][8]
+valid_output_with_name: dict = valid_workflow_example_iso_forest["outputs"][0]
 
 
 def test_io_validator_name_valid_python_identifier_accepts_valid_io():
@@ -1158,24 +1159,52 @@ def test_from_operator():
     assert operator_dto.pos_y == valid_operator["posY"]
 
 
-def test_io_to_io_connector():
+def test_io_to_io_connector_for_input():
     operators = [
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
     ]
-    connector = WorkflowIoFrontendDto(**valid_input_with_name).to_io_connector(
+    io_connector = WorkflowIoFrontendDto(**valid_input_with_name).to_io_connector(
         *get_operator_and_connector_name(
-            valid_input_with_name["operator"],
-            valid_input_with_name["connector"],
+            UUID(valid_input_with_name["operator"]),
+            UUID(valid_input_with_name["connector"]),
             operators,
         )
     )
 
-    assert str(connector.id) == valid_input_with_name["id"]
-    assert connector.name == valid_input_with_name["name"]
-    assert connector.data_type == valid_input_with_name["type"]
-    assert connector.position.x == valid_input_with_name["posX"]
-    assert connector.position.y == valid_input_with_name["posY"]
+    assert str(io_connector.id) == valid_input_with_name["id"]
+    assert io_connector.name == valid_input_with_name["name"]
+    assert io_connector.data_type == valid_input_with_name["type"]
+    assert io_connector.position.x == valid_input_with_name["posX"]
+    assert io_connector.position.y == valid_input_with_name["posY"]
+    assert str(io_connector.operator_id) == valid_input_with_name["operator"]
+    assert str(io_connector.connector_id) == valid_input_with_name["connector"]
+    assert io_connector.operator_name == "Isolation Forest"
+    assert io_connector.connector_name == "n_estimators"
+
+
+def test_io_to_io_connector_for_output():
+    operators = [
+        WorkflowOperatorFrontendDto(**operator).to_operator()
+        for operator in valid_workflow_example_iso_forest["operators"]
+    ]
+    io_connector = WorkflowIoFrontendDto(**valid_output_with_name).to_io_connector(
+        *get_operator_and_connector_name(
+            UUID(valid_output_with_name["operator"]),
+            UUID(valid_output_with_name["connector"]),
+            operators,
+        )
+    )
+
+    assert str(io_connector.id) == valid_output_with_name["id"]
+    assert io_connector.name == valid_output_with_name["name"]
+    assert io_connector.data_type == valid_output_with_name["type"]
+    assert io_connector.position.x == valid_output_with_name["posX"]
+    assert io_connector.position.y == valid_output_with_name["posY"]
+    assert str(io_connector.operator_id) == valid_output_with_name["operator"]
+    assert str(io_connector.connector_id) == valid_output_with_name["connector"]
+    assert io_connector.operator_name == "Contour Plot"
+    assert io_connector.connector_name == "contour_plot"
 
 
 def test_to_constant():
@@ -1186,8 +1215,8 @@ def test_to_constant():
 
     constant = WorkflowIoFrontendDto(**valid_input_without_name).to_constant(
         *get_operator_and_connector_name(
-            valid_input_with_name["operator"],
-            valid_input_with_name["connector"],
+            UUID(valid_input_without_name["operator"]),
+            UUID(valid_input_without_name["connector"]),
             operators,
         )
     )
@@ -1196,6 +1225,10 @@ def test_to_constant():
     assert constant.data_type == valid_input_without_name["type"]
     assert constant.position.x == valid_input_without_name["posX"]
     assert constant.position.y == valid_input_without_name["posY"]
+    assert str(constant.operator_id) == valid_input_without_name["operator"]
+    assert str(constant.connector_id) == valid_input_without_name["connector"]
+    assert constant.operator_name == "Combine as named column into DataFrame"
+    assert constant.connector_name == "column_name"
 
     assert constant.value == valid_input_without_name["constantValue"]["value"]
 

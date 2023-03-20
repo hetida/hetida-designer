@@ -83,6 +83,10 @@ def get_operator_and_connector_name(
                 if connector.id == connector_id:
                     assert isinstance(connector.name, str)  # hint for mypy # noqa: S101
                     connector_name = connector.name
+            for connector in operator.outputs:
+                if connector.id == connector_id:
+                    assert isinstance(connector.name, str)  # hint for mypy # noqa: S101
+                    connector_name = connector.name
     return operator_name, connector_name
 
 
