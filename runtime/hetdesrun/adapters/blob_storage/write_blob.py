@@ -135,6 +135,10 @@ async def write_blob_to_storage(
                     logger.error(msg)
                     raise AdapterHandlingException(msg) from error
                 else:
+                    logger.info(
+                        "Successfully imported tensorflow version %s",
+                        tf.__version__
+                    )
                     with h5py.File(data, "w") as f:
                         tf.keras.models.save_model(data, f)
                     content = f

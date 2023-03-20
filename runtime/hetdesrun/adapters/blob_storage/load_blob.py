@@ -81,6 +81,10 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
                 logger.error(msg)
                 raise AdapterHandlingException(msg) from error
             else:
+                logger.info(
+                        "Successfully imported tensorflow version %s",
+                        tf.__version__
+                    )
                 with h5py.File(content, "r") as f:
                     data = tf.keras.models.load_model(content, f)
         else:
