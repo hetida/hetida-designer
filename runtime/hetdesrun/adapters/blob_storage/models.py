@@ -34,7 +34,7 @@ class IdString(ConstrainedStr):
     min_length = 1
     regex = re.compile(
         r"^[a-zA-Z0-9:+\-"
-        rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+$"
+        rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+(|.h5)$"
     )
 
 
@@ -77,6 +77,7 @@ class ObjectKey(BaseModel):
     name: IdString
     time: datetime
     job_id: UUID
+    file_extension: Literal["", ".h5"] = ""
 
     @validator("time")
     def has_timezone_utc(cls, time: datetime) -> datetime:
@@ -100,17 +101,19 @@ class ObjectKey(BaseModel):
 
     @classmethod
     def from_name_and_time_and_job_id(
-        cls, name: IdString, time: datetime, job_id: UUID
+        cls, name: IdString, time: datetime, job_id: UUID, file_extension: str = ""
     ) -> "ObjectKey":
         return ObjectKey(
             string=name
             + IDENTIFIER_SEPARATOR
             + time.isoformat()
             + IDENTIFIER_SEPARATOR
-            + str(job_id),
+            + str(job_id)
+            + file_extension,
             name=name,
             time=time,
             job_id=job_id,
+            file_extension=file_extension,
         )
 
     @classmethod
@@ -133,7 +136,7 @@ class ObjectKey(BaseModel):
 
     @classmethod
     def from_thing_node_id_and_metadata_key(
-        cls, thing_node_id: IdString, metadata_key: str
+        cls, thing_node_id: IdString, metadata_key: str, file_extension: str = ""
     ) -> "ObjectKey":
         if metadata_key.count(HIERARCHY_END_NODE_NAME_SEPARATOR) != 2:
             raise ValueError(
@@ -157,6 +160,7 @@ class ObjectKey(BaseModel):
             name=object_key_prefix,
             time=datetime.fromisoformat(time_string).replace(tzinfo=timezone.utc),
             job_id=UUID(job_id_string),
+            file_extension=file_extension,
         )
 
     def to_thing_node_id(self, bucket: StructureBucket) -> IdString:

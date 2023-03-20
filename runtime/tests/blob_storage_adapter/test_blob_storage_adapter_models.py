@@ -82,6 +82,32 @@ def test_blob_storage_class_object_key() -> None:
     object_key_from_name = ObjectKey.from_name_and_job_id(
         IdString("B"), job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f")
     )
+
+    object_key_from_name_and_time_and_job_id = ObjectKey.from_name_and_time_and_job_id(
+        name=IdString("A"),
+        time=datetime.fromisoformat("2022-01-02T14:23:18+00:00").replace(
+            tzinfo=timezone.utc
+        ),
+        job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
+    )
+    assert object_key_from_name_and_time_and_job_id.string == (
+        "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+    )
+
+    object_key_from_name_and_time_and_job_id_with_ext = (
+        ObjectKey.from_name_and_time_and_job_id(
+            name=IdString("A"),
+            time=datetime.fromisoformat("2022-01-02T14:23:18+00:00").replace(
+                tzinfo=timezone.utc
+            ),
+            job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
+            file_extension=".h5",
+        )
+    )
+    assert object_key_from_name_and_time_and_job_id_with_ext.string == (
+        "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5"
+    )
+
     object_key_from_string = ObjectKey.from_string(object_key_from_name.string)
     assert object_key_from_name == object_key_from_string
 
@@ -91,6 +117,32 @@ def test_blob_storage_class_object_key() -> None:
         ObjectKey.from_string(
             IdString("A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f")
         )
+
+    object_key_from_thing_node_id_and_metadata_key = ObjectKey.from_thing_node_id_and_metadata_key(
+        thing_node_id=IdString("i-ii/A"),
+        metadata_key="A - 2022-01-02T14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+    )
+    assert (
+        object_key_from_thing_node_id_and_metadata_key.string
+        == "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+    )
+
+    ok_from_thing_node_id_and_metadata_key_with_ext = ObjectKey.from_thing_node_id_and_metadata_key(
+        thing_node_id=IdString("i-ii/A"),
+        metadata_key="A - 2022-01-02T14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+        file_extension=".h5",
+    )
+    assert (
+        ok_from_thing_node_id_and_metadata_key_with_ext.string
+        == "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5"
+    )
+
+    thing_node_id_from_ok = (
+        object_key_from_thing_node_id_and_metadata_key.to_thing_node_id(
+            bucket=StructureBucket(name="i-ii")
+        )
+    )
+    assert thing_node_id_from_ok == IdString("i-ii/A")
 
 
 def test_blob_storage_class_structure_thing_node() -> None:

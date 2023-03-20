@@ -113,7 +113,9 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
                 object_key_string
                 == "E_2001-02-03T04:05:06+00:00_e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
             )
-            object_response = client_mock.get_object(Bucket=bucket_name, Key=object_key_string)
+            object_response = client_mock.get_object(
+                Bucket=bucket_name, Key=object_key_string
+            )
             pickled_data_bytes = object_response["Body"].read()
             file_object = BytesIO(pickled_data_bytes)
             assert struct.unpack(">i", joblib.load(file_object)) == (23,)
@@ -122,7 +124,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
                 return_value=AdapterHierarchy.from_file(
                     "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
                 ),
-            ),mock.patch(
+            ), mock.patch(
                 "hetdesrun.adapters.blob_storage.structure.get_object_key_strings_in_bucket",
                 return_value=object_key_string,
             ):

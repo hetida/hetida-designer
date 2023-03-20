@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
-    thing_node_id: str, metadata_key: str
+    thing_node_id: str, metadata_key: str, file_extension: str
 ) -> tuple[BlobStorageStructureSink, StructureBucket, ObjectKey]:
     """Get sink, bucket, and object key from thing node id and metadata key.
 
@@ -50,7 +50,9 @@ def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
                 IdString(thing_node_id)
             )
             object_key = ObjectKey.from_thing_node_id_and_metadata_key(
-                thing_node_id=IdString(thing_node_id), metadata_key=metadata_key
+                thing_node_id=IdString(thing_node_id),
+                metadata_key=metadata_key,
+                file_extension=file_extension,
             )
         except ValueError as error:
             msg = (
@@ -84,7 +86,7 @@ async def write_blob_to_storage(
         structure_bucket,
         object_key,
     ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
-        thing_node_id=thing_node_id, metadata_key=metadata_key
+        thing_node_id=thing_node_id, metadata_key=metadata_key, file_extension=""
     )
 
     logger.info(
