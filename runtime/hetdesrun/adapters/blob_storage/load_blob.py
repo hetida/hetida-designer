@@ -2,8 +2,11 @@ import logging
 import pickle
 from typing import Any
 
+import h5py
+
 from hetdesrun.adapters.blob_storage.models import (
     IdString,
+    ObjectKey,
     get_structure_bucket_and_object_key_prefix_from_id,
 )
 from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
@@ -40,6 +43,10 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     bucket, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(
         source.id
     )
+    try:
+        object_key = ObjectKey.from_string(object_key_string)
+    except ValueError as error:
+        raise AdapterClientWiringInvalidError() from error
 
     logger.info(
         "Load data for source '%s' from storage in bucket '%s' under object key '%s'",
@@ -62,7 +69,22 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         ) from error
 
     try:
-        data = pickle.load(response["Body"])
+        content = pickle.load(response["Body"])
+        if object_key.file_extension == ".h5":
+            try:
+                import tensorflow as tf
+            except ModuleNotFoundError as error:
+                msg = (
+                    "To load a model from a BLOB in the hdf5 format, "
+                    f"add tensorflow to the runtime dependencies:\n{error}"
+                )
+                logger.error(msg)
+                raise AdapterHandlingException(msg) from error
+            else:
+                with h5py.File(content, "r") as f:
+                    data = tf.keras.models.load_model(content, f)
+        else:
+            data = content
     except ModuleNotFoundError as error:
         msg = f"Cannot load module to unpickle file object:\n{error}"
         logger.error(msg)

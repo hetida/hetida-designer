@@ -3,6 +3,7 @@ import pickle
 from io import BytesIO
 from typing import Any
 
+import h5py
 from botocore.exceptions import ClientError, ParamValidationError
 
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
@@ -27,6 +28,10 @@ from hetdesrun.models.data_selection import FilteredSink
 from hetdesrun.runtime.logging import _get_job_id_context
 
 logger = logging.getLogger(__name__)
+
+
+def check_if_keras_model(data: Any) -> bool:
+    return hasattr(data, "_tf_api_names") and hasattr(data, "_keras_api_names")
 
 
 def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
@@ -81,12 +86,15 @@ async def write_blob_to_storage(
     get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key or
     StorageAuthenticationError and AdapterConnectionError raised from get_s3_client may occur.
     """
+    is_keras_model = check_if_keras_model(data)
     (
         sink,
         structure_bucket,
         object_key,
     ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
-        thing_node_id=thing_node_id, metadata_key=metadata_key, file_extension=""
+        thing_node_id=thing_node_id,
+        metadata_key=metadata_key,
+        file_extension=".h5" if is_keras_model else "",
     )
 
     logger.info(
@@ -115,7 +123,24 @@ async def write_blob_to_storage(
         # only write if the object does not yet exist
         try:
             file_object = BytesIO()
-            pickle.dump(data, file_object, protocol=pickle.HIGHEST_PROTOCOL)
+            content: Any | None = None
+            if is_keras_model:
+                try:
+                    import tensorflow as tf
+                except ModuleNotFoundError as error:
+                    msg = (
+                        "To store a keras model, "
+                        f"add tensorflow to the runtime dependencies:\n{error}"
+                    )
+                    logger.error(msg)
+                    raise AdapterHandlingException(msg) from error
+                else:
+                    with h5py.File(data, "w") as f:
+                        tf.keras.models.save_model(data, f)
+                    content = f
+            else:
+                content = data
+            pickle.dump(content, file_object, protocol=pickle.HIGHEST_PROTOCOL)
             file_object.seek(0)
 
             logger.info(
