@@ -72,6 +72,17 @@ RUN pip-sync ./requirements-base.txt ./requirements.txt ./requirements-custom.tx
 USER hdrt_app
 ```
 
+Now save the `docker-compose.yml` file as a new file with name `docker-compose-custom-dependencies.yml` and edit the hetida designer runtime service section as follows:
+
+```yml
+...
+    hetida-designer-runtime:
+    build:
+        context: .
+        dockerfile: Dockerfile-runtime-custom-python-deps
+...
+```
+
 After that build the modified runtime image with
 
 ```bash
