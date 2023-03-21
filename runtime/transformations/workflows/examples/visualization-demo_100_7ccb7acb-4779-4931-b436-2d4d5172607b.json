@@ -1639,7 +1639,7 @@
     "outputs": [
       {
         "connector_id": "1658275f-5ff6-1e12-c44c-3dac33a6a56d",
-        "connector_name": "connector_name",
+        "connector_name": "plot",
         "data_type": "PLOTLYJSON",
         "id": "9c36a4be-a223-47cb-ae98-093e6e08aed8",
         "name": "h_ts_box_plot",
@@ -1652,7 +1652,7 @@
       },
       {
         "connector_id": "7c1a20a3-f8ae-be72-f6c3-73e874904c74",
-        "connector_name": "connector_name",
+        "connector_name": "map_plot",
         "data_type": "PLOTLYJSON",
         "id": "687e9b02-dd1d-401b-9713-76462cb5af5a",
         "name": "i_map_plot",
@@ -1665,7 +1665,7 @@
       },
       {
         "connector_id": "66990a60-30fa-7a61-65f6-0c6a27636b83",
-        "connector_name": "connector_name",
+        "connector_name": "scatter_plot",
         "data_type": "PLOTLYJSON",
         "id": "7be67df5-1e30-4070-8130-7d57c23685bd",
         "name": "j_scatter_plot",
@@ -1678,7 +1678,7 @@
       },
       {
         "connector_id": "eb779c1e-6d98-2cec-506f-ffb8fc11f38a",
-        "connector_name": "connector_name",
+        "connector_name": "plot",
         "data_type": "PLOTLYJSON",
         "id": "edbf0dc7-5673-4faa-8cda-26b6dc633c23",
         "name": "a_single_ts",
@@ -1691,7 +1691,7 @@
       },
       {
         "connector_id": "c0d410fa-e324-7d06-186a-8096b4aa4468",
-        "connector_name": "connector_name",
+        "connector_name": "plot",
         "data_type": "PLOTLYJSON",
         "id": "525a5fe0-f1c4-4ad6-a7fb-bea695637260",
         "name": "b_ts_frame",
@@ -1704,7 +1704,7 @@
       },
       {
         "connector_id": "9ab59d8b-9927-3664-dc40-ab9924e91e88",
-        "connector_name": "connector_name",
+        "connector_name": "plot",
         "data_type": "PLOTLYJSON",
         "id": "17432dbe-9015-410c-98b3-3a98c9688241",
         "name": "c_bar_plot",
@@ -1717,7 +1717,7 @@
       },
       {
         "connector_id": "2ba3fb5f-4be0-f48a-3124-894113466b62",
-        "connector_name": "connector_name",
+        "connector_name": "plot",
         "data_type": "PLOTLYJSON",
         "id": "5530e5d9-440d-47b8-98a8-994badd859b5",
         "name": "d_pie_chart",
@@ -1730,7 +1730,7 @@
       },
       {
         "connector_id": "dd24f709-50f3-f9d5-94f6-ac9b0d403275",
-        "connector_name": "connector_name",
+        "connector_name": "plot",
         "data_type": "PLOTLYJSON",
         "id": "63057577-7123-46df-a5ab-d53f48ca40e0",
         "name": "f_corr_heatmap",
@@ -1743,7 +1743,7 @@
       },
       {
         "connector_id": "0951b836-933c-044d-030b-6c2ee3b5d00a",
-        "connector_name": "connector_name",
+        "connector_name": "comparison_plot",
         "data_type": "PLOTLYJSON",
         "id": "86e04d63-2bc8-4360-9630-32c91ae6d2f1",
         "name": "e_comp_2_ts",
@@ -1756,7 +1756,7 @@
       },
       {
         "connector_id": "c3d55f42-2827-2899-9bb0-c1537171a8cc",
-        "connector_name": "connector_name",
+        "connector_name": "comparison_plot",
         "data_type": "PLOTLYJSON",
         "id": "40b46035-52d7-4200-9e3c-c24ef0b4bdce",
         "name": "g_comp_2_shifted",

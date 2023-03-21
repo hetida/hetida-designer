@@ -14,7 +14,3 @@ class StorageAuthenticationError(AdapterConnectionError):
 
 class StructureObjectNotFound(AdapterHandlingException):
     """Errors around not finding a sink / source / thingnode"""
-
-
-class StructureObjectNotUnique(AdapterHandlingException):
-    """Errors around not unique sinks / sources / thingnodes"""

@@ -191,6 +191,8 @@ ports in the docker-compose file as is described under [Modifying Ports](#modify
 docker-compose -f docker-compose-dev.yml up -d
 ```
 
+**Note:** The dockerfiles assume a linux/amd64 platform/architexture, you may have to turn on / [configure emulation](https://github.com/docker/roadmap/issues/384#issuecomment-1377337935) if you are building on another architecture, for example on ARM based environments such as Apple M1 based systems.
+
 Once you have the application running, only stop the container containing the submodule that you
 want to work on. We use a monorepo approach, so you already have the source code for all submodules on your machine by now.
 

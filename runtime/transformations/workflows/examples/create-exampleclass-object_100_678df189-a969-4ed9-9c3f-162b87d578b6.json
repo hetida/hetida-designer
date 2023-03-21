@@ -273,7 +273,7 @@
     "outputs": [
       {
         "connector_id": "0b207b91-9be4-40cf-9575-0a7105e61ebd",
-        "connector_name": "connector_name",
+        "connector_name": "example_class_object",
         "data_type": "ANY",
         "id": "d8efd9d5-11a6-4483-9d26-563f2f41591e",
         "name": "example_class_object",
@@ -343,16 +343,7 @@
         "workflow_input_name": "value"
       }
     ],
-    "output_wirings": [
-      {
-        "adapter_id": "blob-storage-adapter",
-        "ref_id": "planta-millingunit/Influx/Anomalies",
-        "ref_id_type": "THINGNODE",
-        "ref_key": "Anomalies - Next Object",
-        "type": "metadata(any)",
-        "workflow_output_name": "example_class_object"
-      }
-    ]
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

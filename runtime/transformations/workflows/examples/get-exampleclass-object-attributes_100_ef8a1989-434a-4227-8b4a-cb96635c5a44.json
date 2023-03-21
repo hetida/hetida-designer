@@ -263,7 +263,7 @@
     "outputs": [
       {
         "connector_id": "6462b468-7b45-4c75-87d1-644981a20cd9",
-        "connector_name": "connector_name",
+        "connector_name": "name",
         "data_type": "STRING",
         "id": "ad70f00f-7c2c-4699-b313-c01f49cdf522",
         "name": "name",
@@ -276,7 +276,7 @@
       },
       {
         "connector_id": "8c5ba5ca-9103-4852-9374-6693a57ba044",
-        "connector_name": "connector_name",
+        "connector_name": "amount",
         "data_type": "INT",
         "id": "5931f296-979b-4166-832d-cbe553a40ead",
         "name": "amount",
@@ -289,7 +289,7 @@
       },
       {
         "connector_id": "5cbe117e-dae2-420b-81aa-f5c438a5eeb3",
-        "connector_name": "connector_name",
+        "connector_name": "value",
         "data_type": "FLOAT",
         "id": "99038020-75c9-4c76-a1aa-bcc9e59b9d8b",
         "name": "value",
@@ -336,17 +336,7 @@
   "revision_group_id": "bb6ffbca-abb6-4bf6-aef1-4eaa42ef816f",
   "state": "RELEASED",
   "test_wiring": {
-    "input_wirings": [
-      {
-        "adapter_id": "blob-storage-adapter",
-        "filters": {},
-        "ref_id": "planta-millingunit/Influx/Anomalies",
-        "ref_id_type": "THINGNODE",
-        "ref_key": "Anomalies - 2023-02-21 15:23:22+00:00",
-        "type": "metadata(any)",
-        "workflow_input_name": "example_class_object"
-      }
-    ],
+    "input_wirings": [],
     "output_wirings": []
   },
   "type": "WORKFLOW",

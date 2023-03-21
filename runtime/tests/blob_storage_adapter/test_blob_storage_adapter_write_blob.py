@@ -11,7 +11,6 @@ from moto import mock_s3
 from hetdesrun.adapters.blob_storage.exceptions import (
     AdapterConnectionError,
     StructureObjectNotFound,
-    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
@@ -112,19 +111,6 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
             pickled_data_bytes = object_response["Body"].read()
             file_object = BytesIO(pickled_data_bytes)
             assert struct.unpack(">i", joblib.load(file_object)) == (23,)
-
-
-@pytest.mark.asyncio
-async def test_blob_storage_write_blob_to_storage_with_multiple_existing_sinks() -> None:
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-        side_effect=StructureObjectNotUnique,
-    ), pytest.raises(StructureObjectNotUnique):
-        await write_blob_to_storage(
-            data=struct.pack(">i", 42),
-            thing_node_id="i-ii/A",
-            metadata_key="A - Next Object",
-        )
 
 
 @pytest.mark.asyncio
