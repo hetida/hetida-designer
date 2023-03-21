@@ -31,7 +31,14 @@ logger = logging.getLogger(__name__)
 
 
 def check_if_keras_model(data: Any) -> bool:
-    return hasattr(data, "_tf_api_names") and hasattr(data, "_keras_api_names")
+    try:
+        import tensorflow as tf
+    except ModuleNotFoundError:
+        msg = "To store a keras model, add tensorflow to the runtime dependencies."
+        logger.info(msg)
+        return False
+    logger.info("Successfully imported tensorflow version %s", tf.__version__)
+    return isinstance(data, (tf.keras.models.Model, tf.keras.models.Sequential))
 
 
 def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
@@ -123,29 +130,12 @@ async def write_blob_to_storage(
         # only write if the object does not yet exist
         try:
             file_object = BytesIO()
-            content: Any | None = None
             if is_keras_model:
-                try:
-                    import tensorflow as tf
-                except ModuleNotFoundError as error:
-                    msg = (
-                        "To store a keras model, "
-                        f"add tensorflow to the runtime dependencies:\n{error}"
-                    )
-                    logger.error(msg)
-                    raise AdapterHandlingException(msg) from error
-                else:
-                    logger.info(
-                        "Successfully imported tensorflow version %s",
-                        tf.__version__
-                    )
-                    with h5py.File(data, "w") as f:
-                        tf.keras.models.save_model(data, f)
-                    content = f
+                with h5py.File(file_object, "w") as f:
+                    tf.keras.models.save_model(data, f)  # type: ignore # noqa: F821
             else:
-                content = data
-            pickle.dump(content, file_object, protocol=pickle.HIGHEST_PROTOCOL)
-            file_object.seek(0)
+                pickle.dump(data, file_object, protocol=pickle.HIGHEST_PROTOCOL)
+                file_object.seek(0)
 
             logger.info(
                 "Dumped data of size %i into BLOB", file_object.getbuffer().nbytes
