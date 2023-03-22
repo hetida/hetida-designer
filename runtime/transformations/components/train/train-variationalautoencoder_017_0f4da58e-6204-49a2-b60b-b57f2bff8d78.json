@@ -1,0 +1,38 @@
+{
+  "category": "Train",
+  "content": "import pandas as pd\nimport tensorflow as tf\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"VariationalAutoEncoder\": \"ANY\",\n    },\n    \"outputs\": {\n        \"trained_variational_auto_encoder\": \"ANY\",\n        \"mean_loss\": \"DATAFRAME\",\n    },\n    \"name\": \"Train VariationalAutoEncoder\",\n    \"category\": \"Train\",\n    \"description\": \"Train VariationalAutoEncoder with keras MNIST sample\",\n    \"version_tag\": \"0.1.7\",\n    \"id\": \"0f4da58e-6204-49a2-b60b-b57f2bff8d78\",\n    \"revision_group_id\": \"1ecaca1d-2b22-40f7-ae66-49e0b73502e4\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-22T09:16:35.096250+00:00\",\n}\n\n\ndef main(*, VariationalAutoEncoder):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    original_dim = 784\n    vae = VariationalAutoEncoder(original_dim, 64, 32)\n\n    optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)\n    mse_loss_fn = tf.keras.losses.MeanSquaredError()\n\n    loss_metric = tf.keras.metrics.Mean()\n\n    (x_train, _), _ = tf.keras.datasets.mnist.load_data()\n    x_train = x_train.reshape(60000, 784).astype(\"float32\") / 255\n\n    train_dataset = tf.data.Dataset.from_tensor_slices(x_train)\n    train_dataset = train_dataset.shuffle(buffer_size=1024).batch(64)\n\n    nof_epochs = 2\n\n    steps = []\n    epochs = []\n    mean_loss_values = []\n    # Iterate over epochs.\n    for epoch in range(nof_epochs):\n        print(\"Start of epoch %d\" % (epoch,))\n\n        # Iterate over the batches of the dataset.\n        for step, x_batch_train in enumerate(train_dataset):\n            with tf.GradientTape() as tape:\n                reconstructed = vae(x_batch_train)\n                # Compute reconstruction loss\n                loss = mse_loss_fn(x_batch_train, reconstructed)\n                loss += sum(vae.losses)  # Add KLD regularization loss\n\n            grads = tape.gradient(loss, vae.trainable_weights)\n            optimizer.apply_gradients(zip(grads, vae.trainable_weights))\n\n            loss_metric(loss)\n\n            if step % 100 == 0:\n                epochs.append(epoch)\n                steps.append(step)\n                mean_loss_values.append(loss_metric.result().numpy())\n    mean_loss = pd.DataFrame({\"epoch\":epochs,\"step\":steps,\"loss\":mean_loss_values})\n    return {\"trained_variational_auto_encoder\": vae, \"mean_loss\": mean_loss}",
+  "description": "Train VariationalAutoEncoder with keras MNIST sample",
+  "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+  "id": "0f4da58e-6204-49a2-b60b-b57f2bff8d78",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "e8f92c6f-b195-449c-bd3b-585873d4618c",
+        "name": "VariationalAutoEncoder"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "3689a0d7-1759-41ae-ad5e-ac0a7792badf",
+        "name": "trained_variational_auto_encoder"
+      },
+      {
+        "data_type": "DATAFRAME",
+        "id": "269aa838-a809-4d73-9e3a-d55277b6320f",
+        "name": "mean_loss"
+      }
+    ]
+  },
+  "name": "Train VariationalAutoEncoder",
+  "released_timestamp": "2023-03-22T09:16:35.096250+00:00",
+  "revision_group_id": "1ecaca1d-2b22-40f7-ae66-49e0b73502e4",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "0.1.7"
+}
