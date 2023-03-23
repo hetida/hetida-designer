@@ -1,0 +1,172 @@
+{
+  "category": "Examples",
+  "content": {
+    "constants": [],
+    "inputs": [],
+    "links": [
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "290092b5-0fc0-46c5-a8d0-df9a7058757c",
+            "name": "Sampling",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b0f6cdae-23f5-4e00-961d-110a46e9c9a1"
+        },
+        "id": "59cfe415-baa4-4d98-8469-9b65ca63ee49",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "6b3e3154-81c0-48e1-b445-d2b6bf2980e8",
+            "name": "Sampling",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "50e23ecd-ddb8-4f2a-b656-12afd6a4cd84"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "6b5d0844-c5de-47a4-9249-d2f007f9bf01",
+            "name": "trained_variational_auto_encoder",
+            "position": {
+              "x": 1345,
+              "y": 312
+            }
+          }
+        },
+        "id": "befb3fd8-1a7d-4e18-ab69-aec0e3806e36",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "0b998bfa-2715-4c18-a6aa-aa973e862621",
+            "name": "trained_variational_auto_encoder",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "b0f6cdae-23f5-4e00-961d-110a46e9c9a1"
+        }
+      }
+    ],
+    "operators": [
+      {
+        "id": "50e23ecd-ddb8-4f2a-b656-12afd6a4cd84",
+        "inputs": [],
+        "name": "Sampling (VariationalAutoEncoder)",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "6b3e3154-81c0-48e1-b445-d2b6bf2980e8",
+            "name": "Sampling",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 400,
+          "y": 252
+        },
+        "revision_group_id": "a5126b64-0f42-4db8-89d4-90192062cac6",
+        "state": "RELEASED",
+        "transformation_id": "a46adaa5-cccf-46c5-80a0-af5830e99025",
+        "type": "COMPONENT",
+        "version_tag": "0.1.0"
+      },
+      {
+        "id": "b0f6cdae-23f5-4e00-961d-110a46e9c9a1",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "id": "290092b5-0fc0-46c5-a8d0-df9a7058757c",
+            "name": "Sampling",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Train Functional API VariationalAutoEncoder Model",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "0b998bfa-2715-4c18-a6aa-aa973e862621",
+            "name": "trained_variational_auto_encoder",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 895,
+          "y": 252
+        },
+        "revision_group_id": "e0b7b84d-93d5-41ab-a86a-d39cf0e7ffd2",
+        "state": "RELEASED",
+        "transformation_id": "70d4d79f-5b33-4e4e-9211-42957ed74864",
+        "type": "COMPONENT",
+        "version_tag": "0.1.2"
+      }
+    ],
+    "outputs": [
+      {
+        "connector_id": "0b998bfa-2715-4c18-a6aa-aa973e862621",
+        "connector_name": "trained_variational_auto_encoder",
+        "data_type": "ANY",
+        "id": "6b5d0844-c5de-47a4-9249-d2f007f9bf01",
+        "name": "trained_variational_auto_encoder",
+        "operator_id": "b0f6cdae-23f5-4e00-961d-110a46e9c9a1",
+        "operator_name": "Train Functional API VariationalAutoEncoder Model",
+        "position": {
+          "x": 1345,
+          "y": 312
+        }
+      }
+    ]
+  },
+  "description": "Train functional API VariationalAutoEncoder model",
+  "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+  "id": "5207139a-c0b4-4797-8a5b-84f932f77ba2",
+  "io_interface": {
+    "inputs": [],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "6b5d0844-c5de-47a4-9249-d2f007f9bf01",
+        "name": "trained_variational_auto_encoder"
+      }
+    ]
+  },
+  "name": "Train Functional API VariationalAutoEncoder Model",
+  "revision_group_id": "ebd55e6a-2cdb-4928-9f75-190ca9547ee3",
+  "state": "DRAFT",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": [
+      {
+        "adapter_id": "blob-storage-adapter",
+        "ref_id": "plantb/PicklingUnit/Outfeed/Anomalies",
+        "ref_id_type": "THINGNODE",
+        "ref_key": "Anomalies - Next Object",
+        "type": "metadata(any)",
+        "workflow_output_name": "trained_variational_auto_encoder"
+      }
+    ]
+  },
+  "type": "WORKFLOW",
+  "version_tag": "0.1.0"
+}

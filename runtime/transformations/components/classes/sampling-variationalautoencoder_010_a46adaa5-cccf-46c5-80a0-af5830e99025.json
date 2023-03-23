@@ -1,0 +1,27 @@
+{
+  "category": "Classes",
+  "content": "import tensorflow as tf\n\n\nclass Sampling(tf.keras.layers.Layer):\n    \"\"\"Uses (z_mean, z_log_var) to sample z, the vector encoding a digit.\"\"\"\n\n    def call(self, inputs):\n        z_mean, z_log_var = inputs\n        batch = tf.shape(z_mean)[0]\n        dim = tf.shape(z_mean)[1]\n        epsilon = tf.keras.backend.random_normal(shape=(batch, dim))\n        return z_mean + tf.exp(0.5 * z_log_var) * epsilon\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {\n        \"Sampling\": \"ANY\",\n    },\n    \"name\": \"Sampling (VariationalAutoEncoder)\",\n    \"category\": \"Classes\",\n    \"description\": \"Sampling Class from VariationalAutoEncoder\",\n    \"version_tag\": \"0.1.0\",\n    \"id\": \"a46adaa5-cccf-46c5-80a0-af5830e99025\",\n    \"revision_group_id\": \"a5126b64-0f42-4db8-89d4-90192062cac6\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-23T08:32:37.598406+00:00\",\n}\n\n\ndef main():\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"Sampling\": Sampling}",
+  "description": "Sampling Class from VariationalAutoEncoder",
+  "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+  "id": "a46adaa5-cccf-46c5-80a0-af5830e99025",
+  "io_interface": {
+    "inputs": [],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "6b3e3154-81c0-48e1-b445-d2b6bf2980e8",
+        "name": "Sampling"
+      }
+    ]
+  },
+  "name": "Sampling (VariationalAutoEncoder)",
+  "released_timestamp": "2023-03-23T08:32:37.598406+00:00",
+  "revision_group_id": "a5126b64-0f42-4db8-89d4-90192062cac6",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "0.1.0"
+}

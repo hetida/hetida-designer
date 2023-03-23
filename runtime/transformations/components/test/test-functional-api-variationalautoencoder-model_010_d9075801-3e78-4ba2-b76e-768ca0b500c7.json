@@ -1,0 +1,33 @@
+{
+  "category": "Test",
+  "content": "import pandas as pd\nimport tensorflow as tf\n\n\n@tf.function\ndef test_model(images, labels, model):\n    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)\n    # training=False is only needed if there are layers with different\n    # behavior during training versus inference (e.g. Dropout).\n    predictions = model(images, training=False)\n    t_loss = loss_object(labels, predictions)\n\n    return t_loss, predictions\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"model\": \"ANY\",\n    },\n    \"outputs\": {\n        \"result\": \"ANY\",\n    },\n    \"name\": \"Test Functional API VariationalAutoEncoder Model\",\n    \"category\": \"Test\",\n    \"description\": \"Test functional API VariationalAutoEncoder model\",\n    \"version_tag\": \"0.1.0\",\n    \"id\": \"d9075801-3e78-4ba2-b76e-768ca0b500c7\",\n    \"revision_group_id\": \"46fea040-8321-4572-b75b-bdba0c3774cc\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-23T09:50:14.531609+00:00\",\n}\n\n\ndef main(*, model):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    _, (x_test, y_test) = tf.keras.datasets.mnist.load_data()\n    x_test = x_test / 255.0\n\n    # Add a channels dimension\n    x_test = x_test[..., tf.newaxis].astype(\"float32\")\n\n    test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(32)\n\n    test_loss = tf.keras.metrics.Mean(name='test_loss')\n    test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='test_accuracy')\n\n    test_loss.reset_states()\n    test_accuracy.reset_states()\n    \n    for test_images, test_labels in test_ds:\n        t_loss, predictions = test_model(test_images, test_labels, model)\n        test_loss(t_loss)\n        test_accuracy(test_labels, predictions)\n\n    return {\n        \"result\": {\n            \"Loss\": test_loss.result(),\n            \"Accuracy\": test_accuracy.result() * 100\n        }\n    }",
+  "description": "Test functional API VariationalAutoEncoder model",
+  "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+  "id": "d9075801-3e78-4ba2-b76e-768ca0b500c7",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "ab8e2612-2417-4feb-85f0-89c016fa8aea",
+        "name": "model"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "0bae8cc5-6d59-484a-b891-6c2b67eacb0f",
+        "name": "result"
+      }
+    ]
+  },
+  "name": "Test Functional API VariationalAutoEncoder Model",
+  "released_timestamp": "2023-03-23T09:50:14.531609+00:00",
+  "revision_group_id": "46fea040-8321-4572-b75b-bdba0c3774cc",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "0.1.0"
+}

@@ -1,0 +1,245 @@
+{
+  "category": "Examples",
+  "content": {
+    "constants": [],
+    "inputs": [
+      {
+        "connector_id": "ab8e2612-2417-4feb-85f0-89c016fa8aea",
+        "connector_name": "model",
+        "data_type": "ANY",
+        "id": "c31f7c5e-c988-44eb-986a-77dc11de7d1f",
+        "name": "variational_auto_encoder_model",
+        "operator_id": "8bbe8f1b-1b3d-4d25-b1f4-d30f8b54a042",
+        "operator_name": "Test Functional API VariationalAutoEncoder Model",
+        "position": {
+          "x": 410,
+          "y": 392
+        }
+      }
+    ],
+    "links": [
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "b7803aec-db20-6bea-970f-0566ded49a7c",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "d2f76e65-699c-4281-89ab-e3365760c31f"
+        },
+        "id": "a68d8ad9-13c7-4409-942b-27da807c4fb0",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "6b3e3154-81c0-48e1-b445-d2b6bf2980e8",
+            "name": "Sampling",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "07c8abd9-ae37-4125-b152-5f8d959edb77"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "ab8e2612-2417-4feb-85f0-89c016fa8aea",
+            "name": "model",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "8bbe8f1b-1b3d-4d25-b1f4-d30f8b54a042"
+        },
+        "id": "41902c61-b86e-43a4-bb13-aa2fcd5e42df",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "c31f7c5e-c988-44eb-986a-77dc11de7d1f",
+            "name": "variational_auto_encoder_model",
+            "position": {
+              "x": 410,
+              "y": 392
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "f959b2a0-79ac-4ad0-b442-ae39629e3c16",
+            "name": "result",
+            "position": {
+              "x": 1110,
+              "y": 392
+            }
+          }
+        },
+        "id": "aed95dc9-206f-4b2f-b0eb-5fe61359ebf3",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "0bae8cc5-6d59-484a-b891-6c2b67eacb0f",
+            "name": "result",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "8bbe8f1b-1b3d-4d25-b1f4-d30f8b54a042"
+        }
+      }
+    ],
+    "operators": [
+      {
+        "id": "d2f76e65-699c-4281-89ab-e3365760c31f",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "id": "b7803aec-db20-6bea-970f-0566ded49a7c",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Forget",
+        "outputs": [],
+        "position": {
+          "x": 900,
+          "y": 472
+        },
+        "revision_group_id": "d1fb4ae5-ef27-26b8-7a58-40b7cd8412e7",
+        "state": "RELEASED",
+        "transformation_id": "d1fb4ae5-ef27-26b8-7a58-40b7cd8412e7",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "07c8abd9-ae37-4125-b152-5f8d959edb77",
+        "inputs": [],
+        "name": "Sampling (VariationalAutoEncoder)",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "6b3e3154-81c0-48e1-b445-d2b6bf2980e8",
+            "name": "Sampling",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 415,
+          "y": 472
+        },
+        "revision_group_id": "a5126b64-0f42-4db8-89d4-90192062cac6",
+        "state": "RELEASED",
+        "transformation_id": "a46adaa5-cccf-46c5-80a0-af5830e99025",
+        "type": "COMPONENT",
+        "version_tag": "0.1.0"
+      },
+      {
+        "id": "8bbe8f1b-1b3d-4d25-b1f4-d30f8b54a042",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "id": "ab8e2612-2417-4feb-85f0-89c016fa8aea",
+            "name": "model",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Test Functional API VariationalAutoEncoder Model",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "0bae8cc5-6d59-484a-b891-6c2b67eacb0f",
+            "name": "result",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 660,
+          "y": 332
+        },
+        "revision_group_id": "46fea040-8321-4572-b75b-bdba0c3774cc",
+        "state": "RELEASED",
+        "transformation_id": "d9075801-3e78-4ba2-b76e-768ca0b500c7",
+        "type": "COMPONENT",
+        "version_tag": "0.1.0"
+      }
+    ],
+    "outputs": [
+      {
+        "connector_id": "0bae8cc5-6d59-484a-b891-6c2b67eacb0f",
+        "connector_name": "result",
+        "data_type": "ANY",
+        "id": "f959b2a0-79ac-4ad0-b442-ae39629e3c16",
+        "name": "result",
+        "operator_id": "8bbe8f1b-1b3d-4d25-b1f4-d30f8b54a042",
+        "operator_name": "Test Functional API VariationalAutoEncoder Model",
+        "position": {
+          "x": 1110,
+          "y": 392
+        }
+      }
+    ]
+  },
+  "description": "Test Functional API VariationalAutoEncoder Model",
+  "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+  "id": "be36f7f4-1bdd-4b2a-a193-1012a0121b88",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "c31f7c5e-c988-44eb-986a-77dc11de7d1f",
+        "name": "variational_auto_encoder_model"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "f959b2a0-79ac-4ad0-b442-ae39629e3c16",
+        "name": "result"
+      }
+    ]
+  },
+  "name": "Test Functional API VariationalAutoEncoder Model",
+  "revision_group_id": "ffb18092-4785-438d-9e0c-1919678f0149",
+  "state": "DRAFT",
+  "test_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "blob-storage-adapter",
+        "filters": {},
+        "ref_id": "plantb/PicklingUnit/Outfeed/Anomalies",
+        "ref_id_type": "THINGNODE",
+        "ref_key": "Anomalies - 2023-03-23 09:20:26+00:00 - 55da2d0c-c141-4687-a06d-a8259def180e",
+        "type": "metadata(any)",
+        "workflow_input_name": "variational_auto_encoder_model"
+      }
+    ],
+    "output_wirings": []
+  },
+  "type": "WORKFLOW",
+  "version_tag": "0.1.0"
+}
