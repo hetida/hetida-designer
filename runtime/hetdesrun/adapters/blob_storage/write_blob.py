@@ -153,7 +153,7 @@ async def write_blob_to_storage(
                 Body=file_object,
                 ChecksumAlgorithm="SHA1",
             )
-        except ParamValidationError as error: # do not know how to trigger this
+        except ParamValidationError as error: # TODO: clarify if it makes sense to raise this here
             msg = (
                 "Parameter validation error for put_object call with bucket "
                 f"{structure_bucket.name} and object key {object_key.string}:\n{error}"
