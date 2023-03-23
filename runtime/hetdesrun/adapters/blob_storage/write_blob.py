@@ -91,6 +91,8 @@ async def write_blob_to_storage(
     else:
         logger.debug("Successfully imported tensorflow version %s", tf.__version__)
         is_keras_model = isinstance(data, (tf.keras.models.Model, tf.keras.models.Sequential))
+        if is_keras_model:
+            logger.info("Identified object as tensorflow keras model")
 
     (
         sink,
