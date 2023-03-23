@@ -147,8 +147,8 @@ class ObjectKey(BaseModel):
                 f"Cannot create bucket name and object key based on a metadata key {metadata_key} "
                 f"which does not contain '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice."
             )
-        name, time_string, job_id_string = metadata_key.split(
-            HIERARCHY_END_NODE_NAME_SEPARATOR
+        name, time_string, job_id_string = metadata_key.rsplit(
+            HIERARCHY_END_NODE_NAME_SEPARATOR, maxsplit=2
         )
 
         if not thing_node_id.endswith(name):

@@ -4,6 +4,7 @@ from typing import Any
 
 import h5py
 
+from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
     IdString,
     ObjectKey,
@@ -35,18 +36,20 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         thing_node_id,
         metadata_key,
     )
-    source = await get_source_by_thing_node_id_and_metadata_key(
-        IdString(thing_node_id), metadata_key
-    )
+    try:
+        source = await get_source_by_thing_node_id_and_metadata_key(
+            IdString(thing_node_id), metadata_key
+        )
+    except StructureObjectNotFound as error:
+        raise AdapterClientWiringInvalidError(error) from error
 
     logger.info("Get bucket name and object key from source with id %s", source.id)
     bucket, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(
         source.id
     )
-    try:
-        object_key = ObjectKey.from_string(object_key_string)
-    except ValueError as error:
-        raise AdapterClientWiringInvalidError() from error
+    # This must work because otherwise get_source_by_thing_node_id_and_metadata_key
+    # would have raised a StructureObjectNotFound error already.
+    object_key = ObjectKey.from_string(object_key_string)
 
     logger.info(
         "Load data for source '%s' from storage in bucket '%s' under object key '%s'",
