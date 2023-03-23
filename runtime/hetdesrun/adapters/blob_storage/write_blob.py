@@ -44,7 +44,10 @@ def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
             IdString(thing_node_id), metadata_key
         )
     except StructureObjectNotFound:
-        thing_node = get_thing_node_by_id(IdString(thing_node_id))
+        try:
+            thing_node = get_thing_node_by_id(IdString(thing_node_id))
+        except StructureObjectNotFound as error:
+            raise AdapterClientWiringInvalidError(error) from error
         sink = BlobStorageStructureSink.from_thing_node(thing_node)
         try:
             structure_bucket, _ = get_structure_bucket_and_object_key_prefix_from_id(
@@ -150,7 +153,7 @@ async def write_blob_to_storage(
                 Body=file_object,
                 ChecksumAlgorithm="SHA1",
             )
-        except ParamValidationError as error:
+        except ParamValidationError as error: # do not know how to trigger this
             msg = (
                 "Parameter validation error for put_object call with bucket "
                 f"{structure_bucket.name} and object key {object_key.string}:\n{error}"

@@ -28,6 +28,7 @@ from hetdesrun.adapters.blob_storage.write_blob import (
     send_data,
     write_blob_to_storage,
 )
+from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
 from hetdesrun.models.data_selection import FilteredSink
 
 
@@ -78,6 +79,26 @@ def test_blob_storage_get_sink_and_bucket_and_ok_from_thing_node_and_metadata_ke
             "PicklingUnit/Outfeed/Anomalies_2023-03-23T10:16:25+00:00"
             "_1681ea7e-c57f-469a-ac12-592e3e8665cf.h5"
         )
+
+        with pytest.raises(AdapterClientWiringInvalidError, match="no thing node"):
+            get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
+                thing_node_id="plntb/PicklingUnit/Outfeed/Anomalies",  # misspelled bucket name
+                metadata_key=(
+                    "Anomalies - 2023-03-23 10:16:25+00:00 - 1681ea7e-c57f-469a-ac12-592e3e8665cf"
+                ),
+                file_extension=".h5",
+            )
+
+        with pytest.raises(
+            AdapterClientWiringInvalidError, match="not possible to generate"
+        ):
+            get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
+                thing_node_id="plantb/PicklingUnit/Outfeed/Anomalies",
+                metadata_key=(
+                    "Anomalies - 2023-03-23 10:16:25+00:00"  # missing job id
+                ),
+                file_extension=".h5",
+            )
 
 
 @pytest.mark.asyncio
@@ -305,23 +326,18 @@ async def test_blob_storage_send_data_works() -> None:
 
 
 @pytest.mark.asyncio
-async def test_blob_storage_send_data_with_error() -> None:
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.write_blob.write_blob_to_storage",
-        side_effect=AdapterConnectionError,
-    ):
-        data = struct.pack(">i", 42)
-        filtered_sink = FilteredSink(
-            ref_id="i-ii/A",
-            ref_id_type="SINK",
-            ref_key="A - Next Object",
-            type="Any",
+async def test_blob_storage_send_data_with_invalid_wiring_rror() -> None:
+    data = struct.pack(">i", 42)
+    filtered_sink = FilteredSink(
+        ref_id=None,
+        ref_id_type="SINK",
+        ref_key="A - Next Object",
+        type="Any",
+    )
+
+    with pytest.raises(AdapterClientWiringInvalidError):
+        await send_data(
+            wf_output_name_to_filtered_sink_mapping_dict={"output_name": filtered_sink},
+            wf_output_name_to_value_mapping_dict={"output_name": data},
+            adapter_key="blob-storage-adapter",
         )
-        with pytest.raises(AdapterConnectionError):
-            await send_data(
-                wf_output_name_to_filtered_sink_mapping_dict={
-                    "output_name": filtered_sink
-                },
-                wf_output_name_to_value_mapping_dict={"output_name": data},
-                adapter_key="blob-storage-adapter",
-            )
