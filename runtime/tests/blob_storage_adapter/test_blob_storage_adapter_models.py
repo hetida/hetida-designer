@@ -101,7 +101,7 @@ def test_blob_storage_class_object_key() -> None:
                 tzinfo=timezone.utc
             ),
             job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
-            file_extension=".h5",
+            file_extension="h5",
         )
     )
     assert object_key_from_name_and_time_and_job_id_with_ext.string == (
@@ -110,6 +110,11 @@ def test_blob_storage_class_object_key() -> None:
 
     object_key_from_string = ObjectKey.from_string(object_key_from_name.string)
     assert object_key_from_name == object_key_from_string
+
+    object_key_from_string_with_extension = ObjectKey.from_string(
+        IdString("A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5")
+    )
+    assert object_key_from_string_with_extension.file_extension == "h5"
 
     with pytest.raises(
         ValueError, match=f"contains '{IDENTIFIER_SEPARATOR}' less than"
@@ -130,7 +135,7 @@ def test_blob_storage_class_object_key() -> None:
     ok_from_thing_node_id_and_metadata_key_with_ext = ObjectKey.from_thing_node_id_and_metadata_key(
         thing_node_id=IdString("i-ii/A"),
         metadata_key="A - 2022-01-02T14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
-        file_extension=".h5",
+        file_extension="h5",
     )
     assert (
         ok_from_thing_node_id_and_metadata_key_with_ext.string
@@ -242,6 +247,29 @@ def test_blob_storage_class_structure_source_works() -> None:
         == "C - 2023-02-08 16:48:58+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
     )
     assert multi_level_ok_src_from_bkt_and_ok.path == "iii/x/C"
+
+    src_with_ext_from_bkt_and_ok = BlobStorageStructureSource.from_structure_bucket_and_object_key(
+        bucket=StructureBucket(name="iii"),
+        object_key=ObjectKey.from_string(
+            IdString(
+                "x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5"
+            )
+        ),
+    )
+    assert (
+        src_with_ext_from_bkt_and_ok.id
+        == "iii/x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5"
+    )
+    assert (
+        src_with_ext_from_bkt_and_ok.name
+        == "C - 2023-02-08 16:48:58+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (h5)"
+    )
+    assert src_with_ext_from_bkt_and_ok.thingNodeId == "iii/x/C"
+    assert (
+        src_with_ext_from_bkt_and_ok.metadataKey
+        == "C - 2023-02-08 16:48:58+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (h5)"
+    )
+    assert src_with_ext_from_bkt_and_ok.path == "iii/x/C"
 
 
 def test_blob_storage_class_structure_source_raises_exceptions() -> None:

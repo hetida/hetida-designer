@@ -72,7 +72,9 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_source() ->
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.load_blob.get_source_by_thing_node_id_and_metadata_key",
             side_effect=StructureObjectNotFound("Found no thing node"),
-        ), pytest.raises(AdapterClientWiringInvalidError, match="Found no thing node"):
+        ), pytest.raises(
+            AdapterClientWiringInvalidError, match="Found no thing node"
+        ):
             await load_blob_from_storage(
                 thing_node_id="i-ii/A",
                 metadata_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",

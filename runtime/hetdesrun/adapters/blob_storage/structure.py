@@ -42,11 +42,19 @@ async def get_sources_from_bucket(
     src_list: list[BlobStorageStructureSource] = []
 
     object_key_strings = await get_object_key_strings_in_bucket(bucket.name)
+    logger.info(
+        "There are the following object keys in bucket %s:\n%s",
+        bucket.name,
+        ", ".join(oks for oks in object_key_strings),
+    )
     for object_key_string in object_key_strings:
         try:
             object_key = ObjectKey.from_string(object_key_string)
         except ValueError:
             # ignore objects with keys that do not match the expected name scheme
+            logger.warning(
+                "The string %s cannot be parsed into an object key.", object_key_string
+            )
             continue
 
         # ignore objects that do not match the configured hierarchy

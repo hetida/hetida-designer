@@ -72,7 +72,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         ) from error
 
     try:
-        if object_key.file_extension == ".h5":
+        if object_key.file_extension == "h5":
             try:
                 import tensorflow as tf
             except ModuleNotFoundError as error:

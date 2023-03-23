@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConstrainedStr, Field, ValidationError, validato
 
 from hetdesrun.adapters.blob_storage import (
     BUCKET_NAME_DIR_SEPARATOR,
+    FILE_EXTENSION_SEPARATOR,
     GENERIC_SINK_ID_SUFFIX,
     GENERIC_SINK_NAME_SUFFIX,
     HIERARCHY_END_NODE_NAME_SEPARATOR,
@@ -34,7 +35,8 @@ class IdString(ConstrainedStr):
     min_length = 1
     regex = re.compile(
         r"^[a-zA-Z0-9:+\-"
-        rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+(|.h5)$"
+        rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+"
+        rf"(|{FILE_EXTENSION_SEPARATOR}h5)$"
     )
 
 
@@ -77,7 +79,7 @@ class ObjectKey(BaseModel):
     name: IdString
     time: datetime
     job_id: UUID
-    file_extension: Literal["", ".h5"] = ""
+    file_extension: Literal["", "h5"] = ""
 
     @validator("time")
     def has_timezone_utc(cls, time: datetime) -> datetime:
@@ -96,6 +98,7 @@ class ObjectKey(BaseModel):
             + now.isoformat()
             + IDENTIFIER_SEPARATOR
             + str(job_id)
+            + (FILE_EXTENSION_SEPARATOR if file_extension != "" else "")
             + file_extension,
             name=name,
             time=now,
@@ -113,6 +116,7 @@ class ObjectKey(BaseModel):
             + time.isoformat()
             + IDENTIFIER_SEPARATOR
             + str(job_id)
+            + (FILE_EXTENSION_SEPARATOR if file_extension != "" else "")
             + file_extension,
             name=name,
             time=time,
@@ -122,6 +126,7 @@ class ObjectKey(BaseModel):
 
     @classmethod
     def from_string(cls, string: IdString) -> "ObjectKey":
+        file_extension = ""
         try:
             name, time_string, job_id_string = string.rsplit(
                 IDENTIFIER_SEPARATOR, maxsplit=2
@@ -131,11 +136,16 @@ class ObjectKey(BaseModel):
                 f"String '{string}' not a valid ObjectKey string, "
                 f"because it contains '{IDENTIFIER_SEPARATOR}' less than twice!"
             ) from e
+        if FILE_EXTENSION_SEPARATOR in job_id_string:
+            job_id_string, file_extension = job_id_string.split(
+                FILE_EXTENSION_SEPARATOR, maxsplit=1
+            )
         return ObjectKey(
             string=string,
             name=name,
             time=datetime.fromisoformat(time_string).replace(tzinfo=timezone.utc),
             job_id=UUID(job_id_string),
+            file_extension=file_extension,
         )
 
     @classmethod
@@ -159,6 +169,10 @@ class ObjectKey(BaseModel):
         _, object_key_prefix = get_structure_bucket_and_object_key_prefix_from_id(
             thing_node_id
         )
+
+        if " (" in job_id_string:
+            job_id_string, file_extension = job_id_string.split(" (", maxsplit=1)
+            file_extension = file_extension.split(")", maxsplit=1)[0]
 
         return ObjectKey.from_name_and_time_and_job_id(
             name=object_key_prefix,
@@ -265,6 +279,7 @@ class BlobStorageStructureSource(BaseModel):
                 f"The source name '{name}' must contain "
                 f"the string '{HIERARCHY_END_NODE_NAME_SEPARATOR}' exactly twice!"
             )
+
         thing_node_name, source_time, job_id = name.split(
             HIERARCHY_END_NODE_NAME_SEPARATOR
         )
@@ -277,7 +292,20 @@ class BlobStorageStructureSource(BaseModel):
             raise ValueError(
                 f"The time of the source's name '{name}' must match to the time in its id '{id}'!"
             )
-
+        if " (" in job_id:
+            job_id, file_extension = job_id.split(" (", maxsplit=1)
+            if ")" not in file_extension:
+                raise ValueError(f"Missing closing bracket in source's name {name}!")
+            file_extension = file_extension.split(")", maxsplit=1)[0]
+            if not file_ok.file_extension == file_extension:
+                raise ValueError(
+                    f"The file extension of the source's name '{name}' must match to the "
+                    f"file extension '{file_ok.file_extension}' in its id '{id}'!"
+                )
+            if file_extension not in ("h5"):
+                raise ValueError(
+                    f"The only allowed file extension is 'h5', but got {file_extension}!"
+                )
         if not str(file_ok.job_id) == job_id:
             raise ValueError(
                 f"The job id '{job_id}' of the source's name '{name}' "
@@ -332,6 +360,11 @@ class BlobStorageStructureSource(BaseModel):
             + object_key.time.astimezone(timezone.utc).isoformat(sep=" ")
             + HIERARCHY_END_NODE_NAME_SEPARATOR
             + str(object_key.job_id)
+            + (
+                " (" + object_key.file_extension + ")"
+                if object_key.file_extension != ""
+                else ""
+            )
         )
         thing_node_id = object_key.to_thing_node_id(bucket)
         return BlobStorageStructureSource(

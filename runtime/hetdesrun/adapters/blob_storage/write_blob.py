@@ -108,7 +108,7 @@ async def write_blob_to_storage(
     ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
         thing_node_id=thing_node_id,
         metadata_key=metadata_key,
-        file_extension=".h5" if is_keras_model else "",
+        file_extension="h5" if is_keras_model else "",
     )
 
     logger.info(
@@ -153,7 +153,9 @@ async def write_blob_to_storage(
                 Body=file_object,
                 ChecksumAlgorithm="SHA1",
             )
-        except ParamValidationError as error: # TODO: clarify if it makes sense to raise this here
+        except (
+            ParamValidationError
+        ) as error:  # TODO: clarify if it makes sense to raise this here
             msg = (
                 "Parameter validation error for put_object call with bucket "
                 f"{structure_bucket.name} and object key {object_key.string}:\n{error}"
