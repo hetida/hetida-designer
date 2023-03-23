@@ -23,8 +23,61 @@ from hetdesrun.adapters.blob_storage.models import (
 from hetdesrun.adapters.blob_storage.structure import (
     get_source_by_thing_node_id_and_metadata_key,
 )
-from hetdesrun.adapters.blob_storage.write_blob import send_data, write_blob_to_storage
+from hetdesrun.adapters.blob_storage.write_blob import (
+    get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key,
+    send_data,
+    write_blob_to_storage,
+)
 from hetdesrun.models.data_selection import FilteredSink
+
+
+def test_blob_storage_get_sink_and_bucket_and_ok_from_thing_node_and_metadata_key() -> (
+    None
+):
+    with mock.patch(
+        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
+        return_value=AdapterHierarchy.from_file(
+            "demodata/blob_storage_adapter_hierarchy.json"
+        ),
+    ), mock.patch(
+        "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+        return_value={
+            "currently_executed_job_id": "1681ea7e-c57f-469a-ac12-592e3e8665cf"
+        },
+    ):
+        (
+            sink,
+            bucket,
+            ok,
+        ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
+            thing_node_id="plantb/PicklingUnit/Outfeed/Anomalies",
+            metadata_key="Anomalies - Next Object",
+            file_extension=".h5",
+        )
+        assert str(sink.id) == "plantb/PicklingUnit/Outfeed/Anomalies_generic_sink"
+        assert str(bucket.name) == "plantb"
+        assert ok.file_extension == ".h5"
+        assert ok.string.endswith(".h5")
+
+        # deterministic metadata key
+        (
+            sink,
+            bucket,
+            ok,
+        ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
+            thing_node_id="plantb/PicklingUnit/Outfeed/Anomalies",
+            metadata_key=(
+                "Anomalies - 2023-03-23 10:16:25+00:00 - 1681ea7e-c57f-469a-ac12-592e3e8665cf"
+            ),
+            file_extension=".h5",
+        )
+        assert str(sink.id) == "plantb/PicklingUnit/Outfeed/Anomalies_generic_sink"
+        assert str(bucket.name) == "plantb"
+        assert ok.file_extension == ".h5"
+        assert ok.string == (
+            "PicklingUnit/Outfeed/Anomalies_2023-03-23T10:16:25+00:00"
+            "_1681ea7e-c57f-469a-ac12-592e3e8665cf.h5"
+        )
 
 
 @pytest.mark.asyncio

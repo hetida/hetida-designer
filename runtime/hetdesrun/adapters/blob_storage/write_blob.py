@@ -67,7 +67,9 @@ def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
         job_id_context = _get_job_id_context()
         job_id = job_id_context["currently_executed_job_id"]
         logger.info("Get bucket name and object key from sink with id %s", sink.id)
-        structure_bucket, object_key = sink.to_structure_bucket_and_object_key(job_id)
+        structure_bucket, object_key = sink.to_structure_bucket_and_object_key(
+            job_id=job_id, file_extension=file_extension
+        )
 
     return sink, structure_bucket, object_key
 
@@ -90,7 +92,9 @@ async def write_blob_to_storage(
         logger.debug(msg)
     else:
         logger.debug("Successfully imported tensorflow version %s", tf.__version__)
-        is_keras_model = isinstance(data, (tf.keras.models.Model, tf.keras.models.Sequential))
+        is_keras_model = isinstance(
+            data, (tf.keras.models.Model, tf.keras.models.Sequential)
+        )
         if is_keras_model:
             logger.info("Identified object as tensorflow keras model")
 
@@ -132,7 +136,7 @@ async def write_blob_to_storage(
             file_object = BytesIO()
             if is_keras_model:
                 with h5py.File(file_object, "w") as f:
-                    tf.keras.models.save_model(data, f)  
+                    tf.keras.models.save_model(data, f)
             else:
                 pickle.dump(data, file_object, protocol=pickle.HIGHEST_PROTOCOL)
                 file_object.seek(0)

@@ -86,17 +86,21 @@ class ObjectKey(BaseModel):
         return time
 
     @classmethod
-    def from_name_and_job_id(cls, name: IdString, job_id: UUID) -> "ObjectKey":
+    def from_name_and_job_id(
+        cls, name: IdString, job_id: UUID, file_extension: str = ""
+    ) -> "ObjectKey":
         now = datetime.now(timezone.utc).replace(microsecond=0)
         return ObjectKey(
             string=name
             + IDENTIFIER_SEPARATOR
             + now.isoformat()
             + IDENTIFIER_SEPARATOR
-            + str(job_id),
+            + str(job_id)
+            + file_extension,
             name=name,
             time=now,
             job_id=job_id,
+            file_extension=file_extension,
         )
 
     @classmethod
@@ -469,13 +473,15 @@ class BlobStorageStructureSink(BaseModel):
         )
 
     def to_structure_bucket_and_object_key(
-        self, job_id: UUID
+        self, job_id: UUID, file_extension: str = ""
     ) -> tuple[StructureBucket, ObjectKey]:
         (
             bucket,
             object_key_name,
         ) = get_structure_bucket_and_object_key_prefix_from_id(self.thingNodeId)
-        return bucket, ObjectKey.from_name_and_job_id(IdString(object_key_name), job_id)
+        return bucket, ObjectKey.from_name_and_job_id(
+            name=IdString(object_key_name), job_id=job_id, file_extension=file_extension
+        )
 
 
 class MultipleSinksResponse(BaseModel):
