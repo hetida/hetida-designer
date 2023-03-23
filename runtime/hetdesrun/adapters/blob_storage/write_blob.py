@@ -30,17 +30,6 @@ from hetdesrun.runtime.logging import _get_job_id_context
 logger = logging.getLogger(__name__)
 
 
-def check_if_keras_model(data: Any) -> bool:
-    try:
-        import tensorflow as tf
-    except ModuleNotFoundError:
-        msg = "To store a keras model, add tensorflow to the runtime dependencies."
-        logger.info(msg)
-        return False
-    logger.info("Successfully imported tensorflow version %s", tf.__version__)
-    return isinstance(data, (tf.keras.models.Model, tf.keras.models.Sequential))
-
-
 def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
     thing_node_id: str, metadata_key: str, file_extension: str
 ) -> tuple[BlobStorageStructureSink, StructureBucket, ObjectKey]:
@@ -93,7 +82,16 @@ async def write_blob_to_storage(
     get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key or
     StorageAuthenticationError and AdapterConnectionError raised from get_s3_client may occur.
     """
-    is_keras_model = check_if_keras_model(data)
+    is_keras_model = False
+    try:
+        import tensorflow as tf
+    except ModuleNotFoundError:
+        msg = "To store a keras model, add tensorflow to the runtime dependencies."
+        logger.debug(msg)
+    else:
+        logger.debug("Successfully imported tensorflow version %s", tf.__version__)
+        is_keras_model = isinstance(data, (tf.keras.models.Model, tf.keras.models.Sequential))
+
     (
         sink,
         structure_bucket,
@@ -132,7 +130,7 @@ async def write_blob_to_storage(
             file_object = BytesIO()
             if is_keras_model:
                 with h5py.File(file_object, "w") as f:
-                    tf.keras.models.save_model(data, f)  # type: ignore # noqa: F821
+                    tf.keras.models.save_model(data, f)  
             else:
                 pickle.dump(data, file_object, protocol=pickle.HIGHEST_PROTOCOL)
                 file_object.seek(0)
