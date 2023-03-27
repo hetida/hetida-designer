@@ -55,9 +55,23 @@ This [file](../../runtime/demodata/blob_storage_adapter_hierarchy.json) contains
                             ]
                         }
                     ]
-                }, //...
+                },
+                {
+                    "name": "MillingUnit",
+                    "description": "Plant A Milling Unit",
+                    "below_structure_defines_object_key": true,
+                    "substructure": [//...
+                    ]
+                }
             ]
-        }, //...
+        },
+        {
+            "name": "PlantB",
+            "description": "Plant B",
+            "below_structure_defines_object_key": true,
+            "substructure": [//...
+            ]
+        }
     ]
 }
 ```
@@ -85,10 +99,13 @@ For the example adapter hierarchy e.g. the following objects would be available 
 The blob storage adapter is configured by the following environment variables:
 
 * BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION
+* BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION
 * BLOB_STORAGE_ENDPOINT_URL
 * BLOB_STORAGE_STS_PARAMS
 * BLOB_STORAGE_REGION_NAME
 
+The location of the hierarchy JSON file within the runtime instance is specified with the environment variable `BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION`.
+Whether to automatically create buckets that are expected according to the hierarchy JSON file or to throw an error if they do not exist can be configured with the `BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION` environment variable.
 The environment variable `BLOB_STORAGE_STS_PRAMS` is supposed to be a JSON string that contains all parameters needed for the authentication via the STS REST API under the `BLOB_STORAGE_ENDPOINT_URL` besides `Action=AssumeRoleWithWebIdentity` and the `WebIdentityToken`.
 The environment variable `BLOB_STORAGE_REGION_NAME` should be set to the region name matching your blob storage setup.
 Its default value is "eu-central-1".
@@ -122,11 +139,11 @@ The workflows "Get ExampleClass Object Attributes" and "Create ExampleClass Obje
 
 Selecting "Blob Storage Adapter" for an input in the Execution dialog sources should be available for all objects for which bucket name and object key match the adapter hierarchy:
 
-<img src="./assets/blob_storage_adapter_assign_source.png" height="630" width=530 data-align="center">
+<img src="../assets/blob_storage_adapter_assign_source.png" height="630" width=530 data-align="center">
 
 Similarly a sink should be available for each end node in the hierarchy via selecting "Blob Storage Adapter" for an output in the Execution dialog:
 
-<img src="./assets/blob_storage_adapter_assign_sink.png" height="630" width=530 data-align="center">
+<img src="../assets/blob_storage_adapter_assign_sink.png" height="630" width=530 data-align="center">
 
 ### Usage in production
 

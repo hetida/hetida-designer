@@ -16,7 +16,6 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     MissingHierarchyError,
     StorageAuthenticationError,
     StructureObjectNotFound,
-    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
@@ -205,11 +204,6 @@ async def get_single_source(sourceId: IdString) -> BlobStorageStructureSource:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Could not find source with id '{sourceId}'",
         ) from not_found_error
-    except StructureObjectNotUnique as not_unique_error:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Source with id '{sourceId}' not unique",
-        ) from not_unique_error
     except MissingHierarchyError as error:
         msg = (
             f"Could not get source with id '{sourceId}' "
@@ -273,13 +267,6 @@ async def get_single_sink(sinkId: IdString) -> BlobStorageStructureSink:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=msg,
         ) from not_found_error
-    except StructureObjectNotUnique as not_unique_error:
-        msg = f"Sink with id '{sinkId}' not unique!"
-        logger.error(msg)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=msg,
-        ) from not_unique_error
     except MissingHierarchyError as error:
         msg = (
             f"Could not get sink with id '{sinkId}' "
@@ -327,13 +314,6 @@ async def get_single_thingNode(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=msg,
         ) from not_found_error
-    except StructureObjectNotUnique as not_unique_error:
-        msg = f"Thing node with id '{thingNodeId}' not unique!"
-        logger.error(msg)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=msg,
-        ) from not_unique_error
     except MissingHierarchyError as error:
         msg = (
             f"Could not get thing node with id '{thingNodeId}' "

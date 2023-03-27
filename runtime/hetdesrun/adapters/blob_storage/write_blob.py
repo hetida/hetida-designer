@@ -6,8 +6,14 @@ from typing import Any
 from botocore.exceptions import ClientError, ParamValidationError
 
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
-from hetdesrun.adapters.blob_storage.models import BlobStorageStructureSink, IdString
-from hetdesrun.adapters.blob_storage.service import get_s3_client
+from hetdesrun.adapters.blob_storage.models import (
+    BlobStorageStructureSink,
+    IdString,
+    ObjectKey,
+    StructureBucket,
+    get_structure_bucket_and_object_key_prefix_from_id,
+)
+from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
 from hetdesrun.adapters.blob_storage.structure import (
     get_sink_by_thing_node_id_and_metadata_key,
     get_thing_node_by_id,
@@ -23,14 +29,14 @@ from hetdesrun.runtime.logging import _get_job_id_context
 logger = logging.getLogger(__name__)
 
 
-async def write_blob_to_storage(
-    data: Any, thing_node_id: str, metadata_key: str
-) -> None:
-    """Write BLOB to storage.
+def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
+    thing_node_id: str, metadata_key: str
+) -> tuple[BlobStorageStructureSink, StructureBucket, ObjectKey]:
+    """Get sink, bucket, and object key from thing node id and metadata key.
 
-    Note, that StructureObjectNotFound, StructureObjectNotUnique, and MissingHierarchyError,
-    raised from get_sink_by_thing_node_id_and_metadata_key or StorageAuthenticationError and
-    AdapterConnectionError get_s3_client may occur.
+    Note, that StructureObjectNotFound, StructureObjectNotUnique, MissingHierarchyError, and
+    AdapterClientWiringInvalidError raised from get_sink_by_thing_node_id_and_metadata_key or
+    get_thing_node_by_id may occur.
     """
     try:
         sink = get_sink_by_thing_node_id_and_metadata_key(
@@ -40,8 +46,11 @@ async def write_blob_to_storage(
         thing_node = get_thing_node_by_id(IdString(thing_node_id))
         sink = BlobStorageStructureSink.from_thing_node(thing_node)
         try:
-            structure_bucket, object_key = thing_node.to_bucket_name_and_object_key(
-                metadata_key
+            structure_bucket, _ = get_structure_bucket_and_object_key_prefix_from_id(
+                IdString(thing_node_id)
+            )
+            object_key = ObjectKey.from_thing_node_id_and_metadata_key(
+                thing_node_id=IdString(thing_node_id), metadata_key=metadata_key
             )
         except ValueError as error:
             msg = (
@@ -57,6 +66,27 @@ async def write_blob_to_storage(
         logger.info("Get bucket name and object key from sink with id %s", sink.id)
         structure_bucket, object_key = sink.to_structure_bucket_and_object_key(job_id)
 
+    return sink, structure_bucket, object_key
+
+
+async def write_blob_to_storage(
+    data: Any, thing_node_id: str, metadata_key: str
+) -> None:
+    """Write BLOB to storage.
+
+    Note, that StructureObjectNotFound, StructureObjectNotUnique, MissingHierarchyError, and
+    AdapterClientWiringInvalidError raised from
+    get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key or
+    StorageAuthenticationError and AdapterConnectionError raised from get_s3_client may occur.
+    """
+    (
+        sink,
+        structure_bucket,
+        object_key,
+    ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
+        thing_node_id=thing_node_id, metadata_key=metadata_key
+    )
+
     logger.info(
         "Write data for sink '%s' to storage into bucket '%s' as BLOB with key '%s'",
         sink.id,
@@ -64,13 +94,12 @@ async def write_blob_to_storage(
         object_key.string,
     )
     s3_client = await get_s3_client()
+
+    ensure_bucket_exists(s3_client=s3_client, bucket_name=structure_bucket.name)
+
     try:
         # head_object is as get_object but without the body
         s3_client.head_object(Bucket=structure_bucket.name, Key=object_key.string)
-    except s3_client.exceptions.NoSuchBucket as error:
-        raise AdapterConnectionError(
-            f"The bucket '{structure_bucket.name}' does not exist!"
-        ) from error
     except ClientError as client_error:
         error_code = client_error.response["Error"]["Code"]
         if error_code != "404":

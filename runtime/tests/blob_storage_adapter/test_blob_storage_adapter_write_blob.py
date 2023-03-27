@@ -11,7 +11,6 @@ from moto import mock_s3
 from hetdesrun.adapters.blob_storage.exceptions import (
     AdapterConnectionError,
     StructureObjectNotFound,
-    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
@@ -115,19 +114,6 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
 
 
 @pytest.mark.asyncio
-async def test_blob_storage_write_blob_to_storage_with_multiple_existing_sinks() -> None:
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-        side_effect=StructureObjectNotUnique,
-    ), pytest.raises(StructureObjectNotUnique):
-        await write_blob_to_storage(
-            data=struct.pack(">i", 42),
-            thing_node_id="i-ii/A",
-            metadata_key="A - Next Object",
-        )
-
-
-@pytest.mark.asyncio
 async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> None:
     with mock_s3():
         client_mock = boto3.client("s3", region_name="us-east-1")
@@ -150,14 +136,23 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> 
                     "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
                 )
             },
-        ), pytest.raises(
-            AdapterConnectionError, match="bucket.* does not exist"
         ):
+            with mock.patch(
+                "hetdesrun.adapters.blob_storage.write_blob.ensure_bucket_exists",
+                side_effect=AdapterConnectionError,
+            ), pytest.raises(AdapterConnectionError):
+                await write_blob_to_storage(
+                    data=struct.pack(">i", 42),
+                    thing_node_id="i-ii/A",
+                    metadata_key="A - Next Object",
+                )
+
             await write_blob_to_storage(
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
             )
+            client_mock.head_bucket(Bucket="i-ii")
 
 
 @pytest.mark.asyncio

@@ -10,7 +10,7 @@ export class HetidaDesigner {
     this.browserContext = page.context();
   }
 
-  // run after every test
+  // Run after every test
   public async clearTest(): Promise<void> {
     await this.browserContext.clearCookies();
   }
@@ -30,7 +30,7 @@ export class HetidaDesigner {
     buttonText: string
   ): Promise<void> {
     if (buttonText === '') {
-      throw new Error(`ERROR: Button text must not be empty`);
+      throw new Error('ERROR: Button text must not be empty');
     }
 
     await this.page.locator(`button:has-text("${buttonText}")`).click();
@@ -41,7 +41,7 @@ export class HetidaDesigner {
     buttonText: string
   ): Promise<void> {
     if (buttonText === '') {
-      throw new Error(`ERROR: Button text must not be empty`);
+      throw new Error('ERROR: Button text must not be empty');
     }
 
     await this.page.locator(`.add-button:has-text("${buttonText}")`).click();
@@ -50,7 +50,7 @@ export class HetidaDesigner {
 
   public async clickCategoryInNavigation(categoryName: string): Promise<void> {
     if (categoryName === '') {
-      throw new Error(`ERROR: Category name must not be empty`);
+      throw new Error('ERROR: Category name must not be empty');
     }
 
     await this.page.click(
@@ -63,7 +63,7 @@ export class HetidaDesigner {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      throw new Error(`ERROR: Category name and item name must not be empty`);
+      throw new Error('ERROR: Category name and item name must not be empty');
     }
 
     await this.page
@@ -77,7 +77,7 @@ export class HetidaDesigner {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      throw new Error(`ERROR: Category name and item name must not be empty`);
+      throw new Error('ERROR: Category name and item name must not be empty');
     }
 
     await this.page
@@ -91,7 +91,7 @@ export class HetidaDesigner {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      throw new Error(`ERROR: Category name and item name must not be empty`);
+      throw new Error('ERROR: Category name and item name must not be empty');
     }
 
     await this.page
@@ -100,9 +100,30 @@ export class HetidaDesigner {
       .click({ button: 'right' });
   }
 
+  public async dragAndDropItemInNavigation(
+    categoryName: string,
+    itemName: string,
+    targetHtmlTag: string
+  ): Promise<void> {
+    if (categoryName === '' || itemName === '' || targetHtmlTag === '') {
+      throw new Error(
+        'ERROR: Category name, target html tag and item name must not be empty'
+      );
+    }
+
+    const source = this.page
+      .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
+      .locator(`.navigation-item:has-text("${itemName}") >> nth=0`);
+    const target = this.page.locator(
+      'svg:has-text(".svg-small-grid { stroke: #a9a9a9; } .svg-grid { stroke: #a9a9a9; }") >> nth=0'
+    );
+
+    await source.dragTo(target);
+  }
+
   public async clickOnContextMenu(menuItem: string): Promise<void> {
     if (menuItem === '') {
-      throw new Error(`ERROR: Menu item must not be empty`);
+      throw new Error('ERROR: Menu item must not be empty');
     }
 
     await this.page
@@ -112,7 +133,7 @@ export class HetidaDesigner {
 
   public async typeInSearchTerm(searchTerm: string): Promise<void> {
     if (searchTerm === '') {
-      throw new Error(`ERROR: Search term must not be empty`);
+      throw new Error('ERROR: Search term must not be empty');
     }
 
     await this.page
@@ -122,12 +143,15 @@ export class HetidaDesigner {
 
   public async clickIconInToolbar(iconTitle: string): Promise<void> {
     if (iconTitle === '') {
-      throw new Error(`ERROR: Icon title must not be empty`);
+      throw new Error('ERROR: Icon title must not be empty');
     }
 
+    await this.page.waitForSelector(
+      `hd-toolbar >> mat-icon[title="${iconTitle}"]:not(.disabled)`
+    );
+
     await this.page
-      .locator('hd-toolbar')
-      .locator(`mat-icon[title="${iconTitle}"]`)
+      .locator(`hd-toolbar >> mat-icon[title="${iconTitle}"]`)
       .click();
   }
 
@@ -157,7 +181,7 @@ export class HetidaDesigner {
 
   public async typeInInput(inputId: string, inputText: string): Promise<void> {
     if (inputId === '' || inputText === '') {
-      throw new Error(`ERROR: Input id or text must not be empty`);
+      throw new Error('ERROR: Input id or text must not be empty');
     }
 
     // Select default input text and overwrite it
@@ -165,7 +189,7 @@ export class HetidaDesigner {
     await this.page.press(`input[id=${inputId}]`, 'Control+a');
     await this.page.locator(`input[id=${inputId}]`).type(inputText);
 
-    // workaround for autocomplete in create component / workflow dialog
+    // Workaround for autocomplete in create component / workflow dialog
     if (inputId === 'category') {
       // tab out of input field to close suggested options
       await this.page.press(`input[id=${inputId}]`, 'Tab');
@@ -244,5 +268,58 @@ export class HetidaDesigner {
     await this.page
       .locator('owl-date-time-container >> button:has-text("Set")')
       .click();
+    }
+  }
+
+  public async typeInInputPosition(
+    inputPosition: number,
+    inputText: string
+  ): Promise<void> {
+    if (inputPosition < 0 || inputText === '') {
+      throw new Error('ERROR: Input position is negative or text is empty');
+    }
+
+    await this.page
+      .locator(`input[type="text"] >> nth=${inputPosition}`)
+      .click();
+    await this.page.press(
+      `input[type="text"] >> nth=${inputPosition}`,
+      'Control+a'
+    );
+    await this.page
+      .locator(`input[type="text"] >> nth=${inputPosition}`)
+      .type(inputText);
+  }
+
+  public async typeInTextarea(textareaText: string): Promise<void> {
+    if (textareaText === '') {
+      throw new Error('ERROR: Textarea text must not be empty');
+    }
+
+    await this.page
+      .locator('hd-documentation-editor-dialog >> textarea')
+      .click();
+    await this.page.press(
+      'hd-documentation-editor-dialog >> textarea',
+      'Control+a'
+    );
+    await this.page.press(
+      'hd-documentation-editor-dialog >> textarea',
+      'Delete'
+    );
+    await this.page
+      .locator('hd-documentation-editor-dialog >> textarea')
+      .type(textareaText);
+  }
+
+  public async importJson(importData: string): Promise<void> {
+    if (importData === '') {
+      throw new Error('ERROR: Import data must not be empty');
+    }
+
+    await this.page.locator('.editor-container').click();
+    await this.page.press('.editor-container >> textarea', 'Control+a');
+    await this.page.press('.editor-container >> textarea', 'Delete');
+    await this.page.locator('.editor-container >> textarea').type(importData);
   }
 }

@@ -9,11 +9,11 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     MissingHierarchyError,
     StorageAuthenticationError,
     StructureObjectNotFound,
-    StructureObjectNotUnique,
 )
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSource,
+    IdString,
 )
 from hetdesrun.adapters.exceptions import AdapterConnectionError
 
@@ -136,6 +136,30 @@ source_list = [
     ),
 ]
 
+source_dict = {src.id: src for src in source_list}
+
+
+async def mocked_get_source_by_id(
+    id: IdString,  # noqa: A002
+) -> BlobStorageStructureSource:
+    return source_dict[id]
+
+
+source_by_thing_node_id_dict: dict[IdString, list[BlobStorageStructureSource]] = {}
+for src in source_list:
+    if src.thingNodeId not in source_by_thing_node_id_dict:
+        source_by_thing_node_id_dict[src.thingNodeId] = [src]
+    else:
+        source_by_thing_node_id_dict[src.thingNodeId].append(src)
+
+
+async def mocked_get_source_by_parent_id(
+    parent_id: IdString,
+) -> list[BlobStorageStructureSource]:
+    if parent_id not in source_by_thing_node_id_dict:
+        return []
+    return source_by_thing_node_id_dict[parent_id]
+
 
 @pytest.mark.asyncio
 async def test_resources_offered_from_blob_storage_webservice(
@@ -147,8 +171,14 @@ async def test_resources_offered_from_blob_storage_webservice(
             "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
         ),
     ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources",
         return_value=source_list,
+    ), mock.patch(
+        "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
+        new=mocked_get_source_by_id,
+    ), mock.patch(
+        "hetdesrun.adapters.blob_storage.webservice.get_sources_by_parent_id",
+        new=mocked_get_source_by_parent_id,
     ):
         async with async_test_client_with_blob_storage_adapter as client:
             response = await client.get("/adapters/blob/structure")
@@ -222,7 +252,7 @@ async def test_blob_adapter_webservice_filtered(
             "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
         ),
     ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.create_sources",
+        "hetdesrun.adapters.blob_storage.structure.get_all_sources",
         return_value=source_list,
     ):
         async with async_test_client_with_blob_storage_adapter as client:
@@ -400,21 +430,6 @@ async def test_blob_adapter_webservice_exceptions(
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
-            side_effect=StructureObjectNotUnique,
-        ):
-            many_sources_response = await client.get(
-                "/adapters/blob/sources/i-i/A_2022-01-02T14:23:18+00:00"
-            )
-
-            assert many_sources_response.status_code == 500
-            assert (
-                "with id 'i-i/A_2022-01-02T14:23:18+00:00'"
-                in many_sources_response.json()["detail"]
-            )
-            assert "not unique" in many_sources_response.json()["detail"]
-
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
             side_effect=MissingHierarchyError,
         ):
             missing_hierarchy_sources_response = await client.get(
@@ -481,20 +496,6 @@ async def test_blob_adapter_webservice_exceptions(
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
-            side_effect=StructureObjectNotUnique,
-        ):
-            many_sinks_response = await client.get(
-                "/adapters/blob/sinks/i-i/A_generic_sink"
-            )
-
-            assert many_sinks_response.status_code == 500
-            assert (
-                "with id 'i-i/A_generic_sink'" in many_sinks_response.json()["detail"]
-            )
-            assert "not unique" in many_sinks_response.json()["detail"]
-
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.webservice.get_sink_by_id",
             side_effect=MissingHierarchyError,
         ):
             missing_hierarchy_sinks_response = await client.get(
@@ -522,18 +523,6 @@ async def test_blob_adapter_webservice_exceptions(
                 "Could not find thing node" in no_thing_node_response.json()["detail"]
             )
             assert "with id 'i-i/A'" in no_thing_node_response.json()["detail"]
-
-        with mock.patch(
-            "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",
-            side_effect=StructureObjectNotUnique,
-        ):
-            many_thing_nodes_response = await client.get(
-                "/adapters/blob/thingNodes/i-i/A"
-            )
-
-            assert many_thing_nodes_response.status_code == 500
-            assert "with id 'i-i/A'" in many_thing_nodes_response.json()["detail"]
-            assert "not unique" in many_thing_nodes_response.json()["detail"]
 
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_thing_node_by_id",
