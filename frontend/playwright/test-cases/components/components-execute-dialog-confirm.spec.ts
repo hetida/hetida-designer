@@ -13,7 +13,7 @@ test('Confirm "execute component" dialog', async ({ page, hetidaDesigner }) => {
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector('mat-dialog-container');
 
-  await hetidaDesigner.clickButton('Execute');
+  await hetidaDesigner.clickButton('execute-wiring-dialog');
   await page.waitForSelector('hd-protocol-viewer');
 
   // Assert
