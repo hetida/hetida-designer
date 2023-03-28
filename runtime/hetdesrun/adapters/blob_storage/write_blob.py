@@ -135,11 +135,10 @@ async def write_blob_to_storage(
             raise AdapterConnectionError(msg) from client_error
 
         # only write if the object does not yet exist
-        try:
-            file_object = BytesIO()
+        with BytesIO() as file_object:
             if is_keras_model:
-                with h5py.File(file_object, "w") as f:
-                    tf.keras.models.save_model(data, f)
+                with h5py.File(file_object, "w") as h5_file_object:
+                    tf.keras.models.save_model(data, h5_file_object)
             else:
                 pickle.dump(data, file_object, protocol=pickle.HIGHEST_PROTOCOL)
                 file_object.seek(0)
@@ -147,21 +146,22 @@ async def write_blob_to_storage(
             logger.info(
                 "Dumped data of size %i into BLOB", file_object.getbuffer().nbytes
             )
-            s3_client.put_object(
-                Bucket=structure_bucket.name,
-                Key=object_key.string,
-                Body=file_object,
-                ChecksumAlgorithm="SHA1",
-            )
-        except (
-            ParamValidationError
-        ) as error:  # TODO: clarify if it makes sense to raise this here
-            msg = (
-                "Parameter validation error for put_object call with bucket "
-                f"{structure_bucket.name} and object key {object_key.string}:\n{error}"
-            )
-            logger.error(msg)
-            raise AdapterHandlingException(msg) from error
+            try:
+                s3_client.put_object(
+                    Bucket=structure_bucket.name,
+                    Key=object_key.string,
+                    Body=file_object,
+                    ChecksumAlgorithm="SHA1",
+                )
+            except (
+                ParamValidationError
+            ) as error:  # TODO: clarify if it makes sense to raise this here
+                msg = (
+                    "Parameter validation error for put_object call with bucket "
+                    f"{structure_bucket.name} and object key {object_key.string}:\n{error}"
+                )
+                logger.error(msg)
+                raise AdapterHandlingException(msg) from error
 
     else:
         msg = (

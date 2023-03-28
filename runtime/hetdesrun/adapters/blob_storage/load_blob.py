@@ -1,5 +1,6 @@
 import logging
 import pickle
+from io import BytesIO
 from typing import Any
 
 import h5py
@@ -71,29 +72,23 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             f"with the key '{object_key_string}'!"
         ) from error
 
-    try:
-        if object_key.file_extension == "h5":
-            try:
-                import tensorflow as tf
-            except ModuleNotFoundError as error:
-                msg = (
-                    "To load a model from a BLOB in the hdf5 format, "
-                    f"add tensorflow to the runtime dependencies:\n{error}"
-                )
-                logger.error(msg)
-                raise AdapterHandlingException(msg) from error
-            else:
-                logger.info(
-                    "Successfully imported tensorflow version %s", tf.__version__
-                )
-                with h5py.File(response["Body"], "r") as f:
-                    data = tf.keras.models.load_model(f)
+    if object_key.file_extension == "h5":
+        try:
+            import tensorflow as tf
+        except ModuleNotFoundError as error:
+            msg = (
+                "To load a model from a BLOB in the hdf5 format, "
+                f"add tensorflow to the runtime dependencies:\n{error}"
+            )
+            logger.error(msg)
+            raise AdapterHandlingException(msg) from error
         else:
-            data = pickle.load(response["Body"])
-    except ModuleNotFoundError as error:
-        msg = f"Cannot load module to unpickle file object:\n{error}"
-        logger.error(msg)
-        raise AdapterHandlingException(msg) from error
+            logger.info("Successfully imported tensorflow version %s", tf.__version__)
+            file_object = BytesIO(response["Body"].read())
+            with h5py.File(file_object, "r") as f:
+                data = tf.keras.models.load_model(f)
+    else:
+        data = pickle.load(response["Body"])
 
     return data
 
