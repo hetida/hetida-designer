@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timezone
+from enum import Enum
 from functools import cache, cached_property
 from typing import Literal
 from uuid import UUID
@@ -31,12 +32,24 @@ class BucketName(ConstrainedStr):
     regex = re.compile(rf"^[a-z0-9{BUCKET_NAME_DIR_SEPARATOR}]+$")
 
 
+class FileExtension(str, Enum):
+    """BLOB storage adapter file extensions.
+
+    These are the allowed file extensions for objects covered by the adapter hierarchy.
+    """
+
+    H5 = "h5"
+    Pickle = "pkl"
+    Empty = ""
+
+
 class IdString(ConstrainedStr):
     min_length = 1
     regex = re.compile(
         r"^[a-zA-Z0-9:+\-"
         rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+"
-        rf"(|{FILE_EXTENSION_SEPARATOR}h5)$"
+        rf"(|{FILE_EXTENSION_SEPARATOR}"
+        rf"({'|'.join(ext.value for ext in FileExtension if ext != FileExtension.Empty)}))$"
     )
 
 
@@ -79,7 +92,7 @@ class ObjectKey(BaseModel):
     name: IdString
     time: datetime
     job_id: UUID
-    file_extension: Literal["", "h5"] = ""
+    file_extension: FileExtension = FileExtension.Empty
 
     @validator("time")
     def has_timezone_utc(cls, time: datetime) -> datetime:
@@ -296,15 +309,20 @@ class BlobStorageStructureSource(BaseModel):
             job_id, file_extension = job_id.split(" (", maxsplit=1)
             if ")" not in file_extension:
                 raise ValueError(f"Missing closing bracket in source's name {name}!")
+
             file_extension = file_extension.split(")", maxsplit=1)[0]
             if not file_ok.file_extension == file_extension:
                 raise ValueError(
                     f"The file extension of the source's name '{name}' must match to the "
                     f"file extension '{file_ok.file_extension}' in its id '{id}'!"
                 )
-            if file_extension not in ("h5"):
+
+            file_extensions = [ext.value for ext in FileExtension]
+            file_extensions_string = ", ".join(f"'{ext}'" for ext in file_extensions)
+            if file_extension not in file_extensions:
                 raise ValueError(
-                    f"The only allowed file extension is 'h5', but got {file_extension}!"
+                    f"The only allowed file extensions are {file_extensions_string}, "
+                    f"but got {file_extension}!"
                 )
         if not str(file_ok.job_id) == job_id:
             raise ValueError(

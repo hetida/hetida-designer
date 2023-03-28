@@ -9,6 +9,7 @@ from botocore.exceptions import ClientError, ParamValidationError
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
+    FileExtension,
     IdString,
     ObjectKey,
     StructureBucket,
@@ -108,7 +109,7 @@ async def write_blob_to_storage(
     ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
         thing_node_id=thing_node_id,
         metadata_key=metadata_key,
-        file_extension="h5" if is_keras_model else "",
+        file_extension=FileExtension.H5 if is_keras_model else FileExtension.Empty,
     )
 
     logger.info(
@@ -153,7 +154,7 @@ async def write_blob_to_storage(
                     Key=object_key.string,
                     Body=file_object,
                     ChecksumAlgorithm="SHA1",
-                    ContentType="application/octet-stream"
+                    ContentType="application/octet-stream",
                 )
             except (
                 ParamValidationError

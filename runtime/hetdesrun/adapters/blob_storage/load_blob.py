@@ -7,6 +7,7 @@ import h5py
 
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
+    FileExtension,
     IdString,
     ObjectKey,
     get_structure_bucket_and_object_key_prefix_from_id,
@@ -72,7 +73,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             f"with the key '{object_key_string}'!"
         ) from error
 
-    if object_key.file_extension == "h5":
+    if object_key.file_extension == FileExtension.H5:
         try:
             import tensorflow as tf
         except ModuleNotFoundError as error:
