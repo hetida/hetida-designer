@@ -139,6 +139,7 @@ async def write_blob_to_storage(
             if is_keras_model:
                 with h5py.File(file_object, "w") as h5_file_object:
                     tf.keras.models.save_model(data, h5_file_object)
+                file_object.seek(0)
             else:
                 pickle.dump(data, file_object, protocol=pickle.HIGHEST_PROTOCOL)
                 file_object.seek(0)
@@ -152,6 +153,7 @@ async def write_blob_to_storage(
                     Key=object_key.string,
                     Body=file_object,
                     ChecksumAlgorithm="SHA1",
+                    ContentType="application/octet-stream"
                 )
             except (
                 ParamValidationError
