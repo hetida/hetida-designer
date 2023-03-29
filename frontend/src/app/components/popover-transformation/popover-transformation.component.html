@@ -1,0 +1,78 @@
+<div *ngIf="_isPopoverVisible" class="popover">
+  <div
+    class="d-flex align-items-center content-space-between p-3"
+    *ngIf="!showPopoverData.showPreview"
+  >
+    <mat-icon
+      class="clickable"
+      (click)="open()"
+      title="Open {{ transformation.type.toLowerCase() }}"
+      >open_in_new
+    </mat-icon>
+    <mat-icon class="clickable" (click)="close()" title="Close">close</mat-icon>
+  </div>
+
+  <div
+    class="popover__flowchart-container"
+    *ngIf="showPopoverData.showPreview"
+    (click)="open()"
+    (dragstart)="_dragComponent($event)"
+    [draggable]="transformation.state === RevisionState.RELEASED"
+  >
+    <hetida-flowchart
+      [initConfiguration]="componentPreview"
+      [flowchartConfiguration]="svgConfiguration"
+      [clearSVG]="true"
+      [alwaysShowEntireWorkflow]="true"
+      class="noninteractive"
+    >
+    </hetida-flowchart>
+  </div>
+
+  <mat-divider></mat-divider>
+  <div class="p-1">
+    <mat-form-field>
+      <mat-label>{{ transformation.type | titlecase }} name</mat-label>
+      <input
+        id="name"
+        matInput
+        type="text"
+        readonly
+        [value]="transformation.name"
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Category</mat-label>
+      <input
+        id="category"
+        matInput
+        type="text"
+        readonly
+        [value]="transformation.category"
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Short description</mat-label>
+      <input
+        id="description"
+        matInput
+        type="text"
+        readonly
+        [value]="transformation.description"
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Tag</mat-label>
+      <input
+        id="tag"
+        matInput
+        type="text"
+        readonly
+        [value]="transformation.version_tag"
+      />
+    </mat-form-field>
+  </div>
+</div>

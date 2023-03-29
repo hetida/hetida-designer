@@ -18,58 +18,60 @@
           <mat-icon>description</mat-icon>
         </span>
         <div class="tab-item__title">
-          <span class="text-ellipsis" [title]="tabItem.baseItem.name">{{
-            tabItem.baseItem.name
+          <span class="text-ellipsis" [title]="tabItem.transformation.name">{{
+            tabItem.transformation.name
           }}</span>
           <span class="text-keep-whitespace">
-            ({{ tabItem.baseItem.tag }})</span
+            ({{ tabItem.transformation.version_tag }})</span
           >
         </div>
         <button (click)="_onTabClose(tabItem)" mat-icon-button>
           <mat-icon>close</mat-icon>
         </button>
       </ng-template>
-      <hd-documentation-editor-dialog
+      <hd-documentation-editor
         [editMode]="tabItem.initialDocumentationEditMode"
-        [itemId]="tabItem.baseItem.id"
-      ></hd-documentation-editor-dialog>
+        [itemId]="tabItem.transformation.id"
+      ></hd-documentation-editor>
     </ng-container>
-    <ng-container *ngIf="_isBaseItem(tabItem)">
+    <ng-container *ngIf="_isTransformation(tabItem)">
       <ng-template mat-tab-label>
         <span class="d-flex">
           <mat-icon
-            *ngIf="tabItem.baseItem.type === _ItemType.COMPONENT"
+            *ngIf="tabItem.transformation.type === _ItemType.COMPONENT"
             svgIcon="icon-component"
             class="mat-icon-svg"
           ></mat-icon>
           <mat-icon
-            *ngIf="tabItem.baseItem.type === _ItemType.WORKFLOW"
+            *ngIf="tabItem.transformation.type === _ItemType.WORKFLOW"
             svgIcon="icon-workflow"
             class="mat-icon-svg"
           ></mat-icon>
         </span>
         <div class="tab-item__title">
-          <span class="text-ellipsis" [title]="tabItem.baseItem.name">{{
-            tabItem.baseItem.name
+          <span class="text-ellipsis" [title]="tabItem.transformation.name">{{
+            tabItem.transformation.name
           }}</span>
           <span class="text-keep-whitespace">
-            ({{ tabItem.baseItem.tag }})</span
+            ({{ tabItem.transformation.version_tag }})</span
           >
         </div>
         <button (click)="_onTabClose(tabItem)" mat-icon-button>
           <mat-icon>close</mat-icon>
         </button>
       </ng-template>
-      <hd-toolbar [baseItemId]="tabItem.baseItem.id"></hd-toolbar>
+      <hd-toolbar [transformationId]="tabItem.transformation.id"></hd-toolbar>
       <hd-component-editor
-        *ngIf="tabItem.baseItem.type === _ItemType.COMPONENT && matTab.isActive"
-        [componentBaseItem]="tabItem.baseItem"
+        *ngIf="
+          isComponentTransformation(tabItem.transformation) && matTab.isActive
+        "
+        [componentTransformation]="tabItem.transformation"
         (click)="_closePopover()"
       >
       </hd-component-editor>
       <hd-workflow-editor
-        *ngIf="tabItem.baseItem.type === _ItemType.WORKFLOW"
-        [workflowBaseItem]="tabItem.baseItem"
+        *ngIf="tabItem.transformation.type === _ItemType.WORKFLOW"
+        [workflowTransformation]="tabItem.transformation"
       ></hd-workflow-editor>
     </ng-container>
   </mat-tab>
