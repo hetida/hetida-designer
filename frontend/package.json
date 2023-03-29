@@ -70,7 +70,7 @@
     "@angular/compiler-cli": "^12.2.15",
     "@angular/language-service": "^12.2.15",
     "@ngrx/store-devtools": "^12.5.1",
-    "@playwright/test": "^1.30.0",
+    "@playwright/test": "^1.18.1",
     "@types/jasmine": "~3.6.0",
     "@types/jasminewd2": "^2.0.8",
     "@types/katex": "^0.10.2",
