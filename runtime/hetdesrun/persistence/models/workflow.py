@@ -95,6 +95,36 @@ def get_output_by_link_end(
     return None
 
 
+def get_input_by_operator_id_and_connector_id(
+    operator_id: UUID,
+    connector_id: UUID,
+    inputs: list[IOConnector],
+) -> IOConnector | None:
+    for input_connector in inputs:
+        if (
+            input_connector.operator_id == operator_id
+            and input_connector.connector_id == connector_id
+        ):
+            return input_connector
+
+    return None
+
+
+def get_output_by_operator_id_and_connector_id(
+    operator_id: UUID,
+    connector_id: UUID,
+    outputs: list[IOConnector],
+) -> IOConnector | None:
+    for output_connector in outputs:
+        if (
+            output_connector.operator_id == operator_id
+            and output_connector.connector_id == connector_id
+        ):
+            return output_connector
+
+    return None
+
+
 class WorkflowContent(BaseModel):
     operators: list[Operator] = []
     links: list[Link] = Field([], description="Links may not form loops.")
@@ -232,7 +262,7 @@ class WorkflowContent(BaseModel):
         return links
 
     @validator("inputs", each_item=False)
-    def determine_inputs_from_operators_and_links(
+    def keep_unnamed_inputs_and_determine_named_inputs_from_operators_and_links(
         cls, inputs: list[IOConnector], values: dict
     ) -> list[IOConnector]:
         try:
@@ -249,15 +279,18 @@ class WorkflowContent(BaseModel):
             for connector in operator.inputs:
                 link = get_link_by_input_connector(operator.id, connector.id, links)
                 if link is None:
-                    updated_inputs.append(
-                        IOConnector(
+                    input_connector = get_input_by_operator_id_and_connector_id(
+                        operator.id, connector.id, inputs
+                    )
+                    if input_connector is None:
+                        input_connector = IOConnector(
                             data_type=connector.data_type,
                             operator_id=operator.id,
                             connector_id=connector.id,
                             operator_name=operator.name,
                             connector_name=connector.name,
                         )
-                    )
+                    updated_inputs.append(input_connector)
                 else:
                     input_connector = get_input_by_link_start(
                         link.start.connector.id, inputs
@@ -285,15 +318,18 @@ class WorkflowContent(BaseModel):
             for connector in operator.outputs:
                 link = get_link_by_output_connector(operator.id, connector.id, links)
                 if link is None:
-                    updated_outputs.append(
-                        IOConnector(
+                    output_connector = get_input_by_operator_id_and_connector_id(
+                        operator.id, connector.id, outputs
+                    )
+                    if output_connector is None:
+                        output_connector = IOConnector(
                             data_type=connector.data_type,
                             operator_id=operator.id,
                             connector_id=connector.id,
                             operator_name=operator.name,
                             connector_name=connector.name,
                         )
-                    )
+                    updated_outputs.append(output_connector)
                 else:
                     output_connector = get_output_by_link_end(
                         link.end.connector.id, outputs

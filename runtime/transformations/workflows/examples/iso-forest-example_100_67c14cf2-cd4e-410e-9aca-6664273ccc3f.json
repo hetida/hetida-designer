@@ -1195,7 +1195,7 @@
     "outputs": [
       {
         "connector_id": "53dff70b-364f-e5b7-fbb4-c293a5d2f339",
-        "connector_name": "connector_name",
+        "connector_name": "contour_plot",
         "data_type": "PLOTLYJSON",
         "id": "5dcdf141-590f-42d6-86bd-460af86147a7",
         "name": "contour_plot",
