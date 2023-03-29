@@ -4,7 +4,7 @@ from io import BytesIO
 from typing import Any
 
 import h5py
-from botocore.exceptions import ClientError, ParamValidationError
+from botocore.exceptions import ClientError
 
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
@@ -23,7 +23,6 @@ from hetdesrun.adapters.blob_storage.structure import (
 from hetdesrun.adapters.exceptions import (
     AdapterClientWiringInvalidError,
     AdapterConnectionError,
-    AdapterHandlingException,
 )
 from hetdesrun.models.data_selection import FilteredSink
 from hetdesrun.runtime.logging import _get_job_id_context
@@ -156,15 +155,13 @@ async def write_blob_to_storage(
                     ChecksumAlgorithm="SHA1",
                     ContentType="application/octet-stream",
                 )
-            except (
-                ParamValidationError
-            ) as error:  # TODO: clarify if it makes sense to raise this here
+            except ClientError as error:
                 msg = (
-                    "Parameter validation error for put_object call with bucket "
-                    f"{structure_bucket.name} and object key {object_key.string}:\n{error}"
+                    "Unexpected ClientError occured for head_object call with bucket "
+                    f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
                 )
                 logger.error(msg)
-                raise AdapterHandlingException(msg) from error
+                raise AdapterConnectionError(msg) from error
 
     else:
         msg = (
