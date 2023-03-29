@@ -26,7 +26,7 @@ export class LocalStorageService {
     this.notifier.next(null);
   }
 
-  removeBaseItemFromLastOpened(itemId: string) {
+  removeItemFromLastOpened(itemId: string) {
     let lastOpened = (this.getItem('last-opened') ?? []) as string[];
     lastOpened = lastOpened.filter(id => id !== itemId);
     this.setItem('last-opened', lastOpened);

@@ -1,11 +1,11 @@
 export enum TabItemType {
-  BASE_ITEM = 'BASE_ITEM',
+  TRANSFORMATION = 'TRANSFORMATION',
   DOCUMENTATION = 'DOCUMENTATION'
 }
 
 export interface TabItem {
-  id: string; // A hash identifying the tab item: 'baseItemId-tabItemType'.
-  baseItemId: string;
+  id: string; // A hash identifying the tab item: 'transformationId-tabItemType'.
+  transformationId: string;
   tabItemType: TabItemType;
   initialDocumentationEditMode?: boolean;
 }

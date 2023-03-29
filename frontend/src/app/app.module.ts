@@ -40,19 +40,19 @@ import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
 import { AuthGuard } from './auth/auth.guard';
 import { AuthInterceptor } from './auth/auth.interceptor';
-import { BaseItemContextMenuComponent } from './components/base-item-context-menu/base-item-context-menu.component';
+import { TransformationContextMenuComponent } from './components/transformation-context-menu/transformation-context-menu.component';
 import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
 import { ComponentIODialogComponent } from './components/component-io-dialog/component-io-dialog.component';
 import { ConfirmDialogComponent } from './components/confirmation-dialog/confirm-dialog.component';
 import { ContentViewComponent } from './components/content-view/content-view.component';
-import { CopyBaseItemDialogComponent } from './components/copy-base-item-dialog/copy-base-item-dialog.component';
+import { CopyTransformationDialogComponent } from './components/copy-transformation-dialog/copy-transformation-dialog.component';
 import { DocumentationEditorComponent } from './components/documentation-editor-dialog/documentation-editor.component';
 import { HomeComponent } from './components/home/home.component';
 import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
 import { OperatorChangeRevisionDialogComponent } from './components/operator-change-revision-dialog/operator-change-revision-dialog.component';
-import { PopoverBaseItemComponent } from './components/popover-base-item/popover-base-item.component';
+import { PopoverTransformationComponent } from './components/popover-transformation/popover-transformation.component';
 import { ProtocolViewerComponent } from './components/protocol-viewer/protocol-viewer.component';
 import { RenameOperatorDialogComponent } from './components/rename-operator-dialog/rename-operator-dialog.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -114,12 +114,12 @@ const httpLoaderFactory = (configService: ConfigService) => {
     OperatorChangeRevisionDialogComponent,
     ProtocolViewerComponent,
     ToolbarComponent,
-    PopoverBaseItemComponent,
+    PopoverTransformationComponent,
     NavigationItemComponent,
-    CopyBaseItemDialogComponent,
+    CopyTransformationDialogComponent,
     RenameOperatorDialogComponent,
     ErrorVisualDirective,
-    BaseItemContextMenuComponent
+    TransformationContextMenuComponent
   ],
 
   imports: [

@@ -1,18 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
-import { BaseItemService } from '../base-item/base-item.service';
+import { TransformationService } from '../transformation/transformation.service';
 import { TabItemService } from './tab-item.service';
 
 describe('TabItemService', () => {
   beforeEach(() => {
-    const baseItemService = jasmine.createSpy();
+    const transformationService = jasmine.createSpy();
 
     TestBed.configureTestingModule({
       providers: [
         provideMockStore(),
         {
-          provide: BaseItemService,
-          useValue: baseItemService
+          provide: TransformationService,
+          useValue: transformationService
         }
       ]
     });

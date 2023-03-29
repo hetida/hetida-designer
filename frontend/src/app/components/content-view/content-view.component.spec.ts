@@ -45,11 +45,11 @@ describe('ContentViewComponent', () => {
   beforeEach(() => {
     const mockStore = TestBed.inject(MockStore);
     mockStore.overrideSelector(selectContentViewStoreState, {
-      orderedTabItemsWithBaseItem: [],
+      orderedTabItemsWithTransformation: [],
       activeTabItem: {
-        baseItemId: 'test',
-        id: 'testId',
-        tabItemType: TabItemType.BASE_ITEM
+        transformationId: 'mockTransformationId',
+        id: 'mockId',
+        tabItemType: TabItemType.TRANSFORMATION
       }
     });
     fixture = TestBed.createComponent(ContentViewComponent);

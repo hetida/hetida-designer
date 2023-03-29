@@ -57,11 +57,12 @@
 <div class="navigation-container__scrollable">
   <hd-navigation-category
     *ngFor="
-      let category of abstractBaseItemsByCategory;
-      trackBy: trackByBaseItemId
+      let item of transformationsByCategory
+        | keyvalue: sortByCategoryAlphabetically;
+      trackBy: trackCategory
     "
-    [abstractBaseItem]="category[1]"
-    [category]="category[0]"
+    [transformations]="item.value"
+    [category]="item.key"
     (mouseleave)="closePopover()"
   >
   </hd-navigation-category>

@@ -1,14 +1,17 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { select, Store } from '@ngrx/store';
+import { Store } from '@ngrx/store';
 import { NgHetidaFlowchartService } from 'ng-hetida-flowchart';
-import { timer } from 'rxjs';
-import { filter, switchMap } from 'rxjs/operators';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { of, timer } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { BaseItem } from 'src/app/model/base-item';
-import { BaseItemActionService } from 'src/app/service/base-item/base-item-action.service';
-import { IAppState } from 'src/app/store/app.state';
-import { selectBaseItemById } from 'src/app/store/base-item/base-item.selectors';
+import { TransformationActionService } from 'src/app/service/transformation/transformation-action.service';
+import { TransformationState } from 'src/app/store/transformation/transformation.state';
+import {
+  isWorkflowTransformation,
+  Transformation
+} from '../../model/transformation';
+import { selectTransformationById } from '../../store/transformation/transformation.selectors';
 
 @Component({
   selector: 'hd-toolbar',
@@ -17,22 +20,23 @@ import { selectBaseItemById } from 'src/app/store/base-item/base-item.selectors'
 })
 export class ToolbarComponent implements OnInit {
   constructor(
-    private readonly store: Store<IAppState>,
+    private readonly transformationStore: Store<TransformationState>,
     private readonly flowchartService: NgHetidaFlowchartService,
-    private readonly baseItemAction: BaseItemActionService
+    private readonly transformationActionService: TransformationActionService
   ) {}
 
-  @Input() baseItemId: string;
+  @Input() transformationId: string;
 
-  baseItem: BaseItem;
+  transformation: Transformation | undefined;
 
   get isWorkflow(): boolean {
-    return this.baseItem.type === BaseItemType.WORKFLOW;
+    return this.transformation.type === TransformationType.WORKFLOW;
   }
 
-  get baseItemHasEmptyInputsAndOutputs(): boolean {
+  get isWorkflowWithoutIo(): boolean {
     return (
-      this.baseItem.inputs.length === 0 && this.baseItem.outputs.length === 0
+      isWorkflowTransformation(this.transformation) &&
+      this.transformationActionService.isWorkflowWithoutIo(this.transformation)
     );
   }
 
@@ -40,38 +44,39 @@ export class ToolbarComponent implements OnInit {
 
   ngOnInit() {
     timer(0, 100)
-      .pipe(switchMap(() => this.baseItemAction.isIncomplete(this.baseItem)))
+      .pipe(
+        switchMap(() =>
+          of(this.transformationActionService.isIncomplete(this.transformation))
+        )
+      )
       .subscribe(isIncomplete => {
         this.incompleteFlag = isIncomplete;
       });
-    this.store
-      .pipe(
-        select(
-          selectBaseItemById(this.baseItemId),
-          filter(baseItem => baseItem !== undefined)
-        )
-      )
-      .subscribe(baseItem => (this.baseItem = baseItem));
+    this.transformationStore
+      .select(selectTransformationById(this.transformationId))
+      .subscribe(transformation => {
+        this.transformation = transformation;
+      });
   }
 
   zoomIn() {
-    this.flowchartService.zoomIn(this.baseItem.id);
+    this.flowchartService.zoomIn(this.transformation.id);
   }
 
   zoomOut() {
-    this.flowchartService.zoomOut(this.baseItem.id);
+    this.flowchartService.zoomOut(this.transformation.id);
   }
 
   showWorkflow() {
-    this.flowchartService.showEntireWorkflow(this.baseItem.id);
+    this.flowchartService.showEntireWorkflow(this.transformation.id);
   }
 
   showDocumentation() {
-    this.baseItemAction.showDocumentation(this.baseItem);
+    this.transformationActionService.showDocumentation(this.transformation.id);
   }
 
   async execute() {
-    await this.baseItemAction.execute(this.baseItem);
+    await this.transformationActionService.execute(this.transformation);
   }
 
   get publishTooltip(): string {
@@ -81,66 +86,66 @@ export class ToolbarComponent implements OnInit {
     return 'Already published';
   }
 
-  async publish(): Promise<void> {
-    await this.baseItemAction.publish(this.baseItem);
+  publish(): void {
+    this.transformationActionService.publish(this.transformation);
   }
 
   configureIO() {
-    this.baseItemAction.configureIO(this.baseItem);
-    this.baseItemAction.isIncomplete(this.baseItem).then(b => {
-      this.incompleteFlag = b;
-    });
+    this.transformationActionService.configureIO(this.transformation);
+    this.incompleteFlag = this.transformationActionService.isIncomplete(
+      this.transformation
+    );
   }
 
   get deprecateTooltip(): string {
     if (!this.isReleased()) {
-      return `Deprecate is disabled, because the ${this.baseItem.type.toLowerCase()} is not released.`;
+      return `Deprecate is disabled, because the ${this.transformation.type.toLowerCase()} is not released.`;
     }
     return 'Deprecate';
   }
 
   deprecate(): void {
-    this.baseItemAction.deprecate(this.baseItem);
+    this.transformationActionService.deprecate(this.transformation);
   }
 
-  async copy() {
-    await this.baseItemAction.copy(this.baseItem);
+  copy() {
+    this.transformationActionService.copy(this.transformation);
   }
 
   get newRevisionTooltip(): string {
     if (!this.isReleased()) {
-      return `New revision is disabled, because the ${this.baseItem.type.toLowerCase()} is not released.`;
+      return `New revision is disabled, because the ${this.transformation.type.toLowerCase()} is not released.`;
     }
     return 'New revision';
   }
 
-  async newRevision() {
-    await this.baseItemAction.newRevision(this.baseItem);
+  newRevision() {
+    this.transformationActionService.newRevision(this.transformation);
   }
 
   isReleased() {
-    return this.baseItem.state === RevisionState.RELEASED;
+    return this.transformation.state === RevisionState.RELEASED;
   }
 
   get executeTooltip(): string {
     if (this.incompleteFlag === true) {
-      return `Cannot execute, because the ${this.baseItem.type.toLowerCase()} is incomplete.`;
+      return `Cannot execute, because the ${this.transformation.type.toLowerCase()} is incomplete.`;
     }
     return 'Execute';
   }
 
   get deleteTooltip(): string {
     if (this.isReleased()) {
-      return `Cannot delete this ${this.baseItem.type.toLowerCase()}, because it is already released`;
+      return `Cannot delete this ${this.transformation.type.toLowerCase()}, because it is already released`;
     }
     return 'Delete';
   }
 
   delete() {
-    this.baseItemAction.delete(this.baseItem).subscribe();
+    this.transformationActionService.delete(this.transformation).subscribe();
   }
 
   editDetails(): void {
-    this.baseItemAction.editDetails(this.baseItem);
+    this.transformationActionService.editDetails(this.transformation);
   }
 }
