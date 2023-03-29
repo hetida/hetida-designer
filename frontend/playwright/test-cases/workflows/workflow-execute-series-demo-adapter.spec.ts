@@ -1,7 +1,7 @@
 const moment = require('moment');
 import { expect, test } from '../fixtures/fixture';
 
-test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter as adapter selected', async ({
+test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter selected', async ({
   page,
   hetidaDesigner
 }) => {
@@ -22,10 +22,12 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter as
   );
 
   await hetidaDesigner.selectItemInDropdown(
-    'input_series-adapter-list-wiring-dialog',
+    'input_series-adapter-list-input-wiring-dialog',
     'Python-Demo-Adapter'
   );
-  await hetidaDesigner.clickInput('input_series-browse-sources-wiring-dialog');
+  await hetidaDesigner.clickInput(
+    'input_series-browse-sources-input-wiring-dialog'
+  );
   await page.waitForSelector(`mat-dialog-container:has-text("Search Sources")`);
 
   await hetidaDesigner.typeInInput('search-tree-node', 'Influx Temperature');
@@ -34,7 +36,9 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter as
   await page.mouse.click(0, 0); // close context menu
   await hetidaDesigner.clickButton('done-tree-node-modal');
 
-  await hetidaDesigner.clickInput('input_series-timestamp-range-wiring-dialog');
+  await hetidaDesigner.clickInput(
+    'input_series-timestamp-range-input-wiring-dialog'
+  );
   await hetidaDesigner.selectTimestampRange(
     timestampRangeFrom,
     timestampRangeTo
@@ -60,7 +64,7 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter as
     `mat-dialog-container:has-text("Execute Workflow Volatility Detection Example 1.0.0")`
   );
   await hetidaDesigner.clickButton('input_series-clear-input-wiring-dialog');
-  await hetidaDesigner.clickInput('input_series-input-value-wiring-dialog');
+  await hetidaDesigner.clickInput('input_series-value-input-wiring-dialog');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Json input for input_series")`
   );

@@ -160,7 +160,7 @@ export class HetidaDesigner {
       throw new Error(`ERROR: Button id must not be empty`);
     }
 
-    await this.page.locator(`button[id=${buttonId}]`).click();
+    await this.page.getByTestId(buttonId).click();
   }
 
   public async clickInput(inputId: string): Promise<void> {
@@ -168,7 +168,7 @@ export class HetidaDesigner {
       throw new Error(`ERROR: Input id must not be empty`);
     }
 
-    await this.page.locator(`input[id=${inputId}]`).click();
+    await this.page.getByTestId(inputId).click();
   }
 
   public async clickCheckbox(checkboxId: string): Promise<void> {
@@ -176,7 +176,7 @@ export class HetidaDesigner {
       throw new Error(`ERROR: Checkbox id must not be empty`);
     }
 
-    await this.page.locator(`mat-checkbox[id=${checkboxId}]`).click();
+    await this.page.getByTestId(checkboxId).click();
   }
 
   public async typeInInput(inputId: string, inputText: string): Promise<void> {
@@ -185,15 +185,47 @@ export class HetidaDesigner {
     }
 
     // Select default input text and overwrite it
-    await this.page.locator(`input[id=${inputId}]`).click();
-    await this.page.press(`input[id=${inputId}]`, 'Control+a');
-    await this.page.locator(`input[id=${inputId}]`).type(inputText);
+    await this.page.getByTestId(inputId).click();
+    await this.page.getByTestId(inputId).press('Control+a');
+    await this.page.getByTestId(inputId).type(inputText);
 
     // Workaround for autocomplete in create component / workflow dialog
     if (inputId === 'category') {
       // tab out of input field to close suggested options
-      await this.page.press(`input[id=${inputId}]`, 'Tab');
+      await this.page.getByTestId(inputId).press('Tab');
     }
+  }
+  // TODO
+  public async typeInTextarea(textareaText: string): Promise<void> {
+    if (textareaText === '') {
+      throw new Error('ERROR: Textarea text must not be empty');
+    }
+
+    await this.page
+      .locator('hd-documentation-editor-dialog >> textarea')
+      .click();
+    await this.page.press(
+      'hd-documentation-editor-dialog >> textarea',
+      'Control+a'
+    );
+    await this.page.press(
+      'hd-documentation-editor-dialog >> textarea',
+      'Delete'
+    );
+    await this.page
+      .locator('hd-documentation-editor-dialog >> textarea')
+      .type(textareaText);
+  }
+  // TODO
+  public async importJson(importData: string): Promise<void> {
+    if (importData === '') {
+      throw new Error('ERROR: Import data must not be empty');
+    }
+
+    await this.page.locator('.editor-container').click();
+    await this.page.press('.editor-container >> textarea', 'Control+a');
+    await this.page.press('.editor-container >> textarea', 'Delete');
+    await this.page.locator('.editor-container >> textarea').type(importData);
   }
 
   public async selectItemInDropdown(
@@ -204,7 +236,7 @@ export class HetidaDesigner {
       throw new Error(`ERROR: Dropdown id or item text must not be empty`);
     }
 
-    await this.page.locator(`mat-select[id=${dropdownId}]`).click();
+    await this.page.getByTestId(dropdownId).click();
     await this.page.locator(`mat-option:has-text("${itemText}")`).click();
   }
 
@@ -229,7 +261,7 @@ export class HetidaDesigner {
       throw new Error(`ERROR: From or to date must not be empty`);
     }
 
-    const timestampRange: Moment [] = [from, to];
+    const timestampRange: Moment[] = [from, to];
 
     for (const timestamp of timestampRange) {
       await this.page.locator('.owl-dt-container-from[role="radio"]').click();
@@ -268,58 +300,5 @@ export class HetidaDesigner {
     await this.page
       .locator('owl-date-time-container >> button:has-text("Set")')
       .click();
-    }
-  }
-
-  public async typeInInputPosition(
-    inputPosition: number,
-    inputText: string
-  ): Promise<void> {
-    if (inputPosition < 0 || inputText === '') {
-      throw new Error('ERROR: Input position is negative or text is empty');
-    }
-
-    await this.page
-      .locator(`input[type="text"] >> nth=${inputPosition}`)
-      .click();
-    await this.page.press(
-      `input[type="text"] >> nth=${inputPosition}`,
-      'Control+a'
-    );
-    await this.page
-      .locator(`input[type="text"] >> nth=${inputPosition}`)
-      .type(inputText);
-  }
-
-  public async typeInTextarea(textareaText: string): Promise<void> {
-    if (textareaText === '') {
-      throw new Error('ERROR: Textarea text must not be empty');
-    }
-
-    await this.page
-      .locator('hd-documentation-editor-dialog >> textarea')
-      .click();
-    await this.page.press(
-      'hd-documentation-editor-dialog >> textarea',
-      'Control+a'
-    );
-    await this.page.press(
-      'hd-documentation-editor-dialog >> textarea',
-      'Delete'
-    );
-    await this.page
-      .locator('hd-documentation-editor-dialog >> textarea')
-      .type(textareaText);
-  }
-
-  public async importJson(importData: string): Promise<void> {
-    if (importData === '') {
-      throw new Error('ERROR: Import data must not be empty');
-    }
-
-    await this.page.locator('.editor-container').click();
-    await this.page.press('.editor-container >> textarea', 'Control+a');
-    await this.page.press('.editor-container >> textarea', 'Delete');
-    await this.page.locator('.editor-container >> textarea').type(importData);
   }
 }

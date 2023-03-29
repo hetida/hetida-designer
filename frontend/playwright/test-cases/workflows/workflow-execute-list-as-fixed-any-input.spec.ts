@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures/fixture';
 
-test('HDOS-379: use a list as fixed any input', async ({
+test('Confirm execute workflow with a list as fixed any input', async ({
   page,
   hetidaDesigner,
   browserName
@@ -9,9 +9,9 @@ test('HDOS-379: use a list as fixed any input', async ({
   const componentCategory = 'Connectors';
   const componentName = 'Pass Through';
   const workflowCategory = 'Test';
-  const workflowName = `Test Workflow HDOS-379 ${browserName}`;
+  const workflowName = `Test list as fixed any input ${browserName}`;
   const workflowDescription = 'Use a list as fixed any input';
-  const workflowImportData = '["hello","world"]';
+  const workflowImportData = '["MockData1","MockData2"]';
 
   // Act
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
@@ -58,5 +58,6 @@ test('HDOS-379: use a list as fixed any input', async ({
   await page.locator('.mat-menu-panel').hover();
   await hetidaDesigner.clickOnContextMenu('Delete');
   await hetidaDesigner.clickButton('Delete workflow');
+
   await hetidaDesigner.clearTest();
 });

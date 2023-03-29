@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures/fixture';
 
-test('HDOS-364: releases a workflow or component', async ({
+test('Confirm release a workflow or component', async ({
   page,
   hetidaDesigner,
   browserName
@@ -126,6 +126,7 @@ ${workflowImportData}
   // Documentation
   expect(workflowDocumentationReleased).toEqual(workflowDocumentation);
 
+  // Clear
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
   await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
   await hetidaDesigner.rightClickItemInNavigation(
@@ -135,5 +136,6 @@ ${workflowImportData}
   await page.locator('.mat-menu-panel').hover();
   await hetidaDesigner.clickOnContextMenu('Deprecate');
   await hetidaDesigner.clickButton('Deprecate workflow');
+
   await hetidaDesigner.clearTest();
 });
