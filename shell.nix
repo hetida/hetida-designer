@@ -293,7 +293,7 @@ in pkgs.mkShell rec {
     postgresql
   
     # Node
-    nodejs-12_x
+    nodejs-14_x
     chromium # for tests
     #google-chrome 
     # you may use google-chrome for tests with chrome instead of chromium.

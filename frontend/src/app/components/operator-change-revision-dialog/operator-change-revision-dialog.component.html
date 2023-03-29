@@ -4,7 +4,7 @@
     <mat-label>Available Revisions</mat-label>
     <mat-select [(value)]="selectedRevision">
       <mat-option *ngFor="let rev of data.revisions" [value]="rev">
-        {{ rev.name }} ({{ rev.tag }})
+        {{ rev.name }} ({{ rev.version_tag }})
       </mat-option>
     </mat-select>
   </mat-form-field>

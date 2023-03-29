@@ -25,7 +25,7 @@ import {
   selectExecutionProtocolLoading
 } from 'src/app/store/execution-protocol/execution-protocol.selectors';
 
-interface ExecutionResponse {
+export interface ExecutionResponse {
   executionId: string;
   result: string;
   response: string;

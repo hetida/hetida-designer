@@ -1,8 +1,8 @@
-<ng-container *ngIf="baseItem !== undefined">
+<ng-container *ngIf="transformation !== undefined">
   <span>
     <mat-icon
       class="clickable unselectable"
-      title="Edit {{ baseItem.type | lowercase }} details"
+      title="Edit {{ transformation.type | lowercase }} details"
       (click)="editDetails()"
     >
       edit
@@ -10,8 +10,10 @@
     <mat-icon
       class="clickable unselectable"
       title="Configure I/O"
-      [ngClass]="{ disabled: baseItemHasEmptyInputsAndOutputs && isWorkflow }"
       (click)="configureIO()"
+      [ngClass]="{
+        disabled: isWorkflowWithoutIo
+      }"
       >settings_input_component
     </mat-icon>
     <mat-icon
@@ -45,8 +47,8 @@
       >zoom_out</mat-icon
     >
   </span>
-  <span [ngClass]="baseItem.state.toLowerCase()" class="unselectable">
-    {{ baseItem.state }}
+  <span [ngClass]="transformation.state.toLowerCase()" class="unselectable">
+    {{ transformation.state }}
   </span>
   <span>
     <mat-icon

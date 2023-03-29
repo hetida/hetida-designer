@@ -9,12 +9,10 @@
   </mat-expansion-panel-header>
 
   <div
-    *ngFor="let abstractBaseItem of abstractBaseItem"
+    *ngFor="let transformation of transformations"
     class="unselectable expansion-panel-content"
-    [ngClass]="{ active: abstractBaseItem.id === activeBaseItemId }"
+    [ngClass]="{ active: transformation.id === activeTransformationId }"
   >
-    <hd-navigation-item
-      [abstractBaseItem]="abstractBaseItem"
-    ></hd-navigation-item>
+    <hd-navigation-item [transformation]="transformation"></hd-navigation-item>
   </div>
 </mat-expansion-panel>

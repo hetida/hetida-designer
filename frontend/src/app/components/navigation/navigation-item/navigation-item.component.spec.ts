@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
 import { BasicTestModule } from 'src/app/basic-test.module';
-import { BaseItemType } from 'src/app/enums/base-item-type';
+import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { ComponentEditorService } from 'src/app/service/component-editor.service';
+import { TransformationService } from 'src/app/service/transformation/transformation.service';
 import { ContextMenuService } from 'src/app/service/context-menu/context-menu.service';
 import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
-import { WorkflowEditorService } from 'src/app/service/workflow-editor/workflow-editor.service';
 import { NavigationItemComponent } from './navigation-item.component';
 
 describe('NavigationItemComponent', () => {
@@ -19,9 +18,7 @@ describe('NavigationItemComponent', () => {
   );
 
   const mockTabItemService = jasmine.createSpy();
-
-  const mockWorkflowEditorService = jasmine.createSpy();
-  const mockComponentEditorService = jasmine.createSpy();
+  const mockTransformationService = jasmine.createSpy();
 
   beforeEach(
     waitForAsync(() => {
@@ -31,12 +28,8 @@ describe('NavigationItemComponent', () => {
         providers: [
           provideMockStore(),
           {
-            provide: WorkflowEditorService,
-            useValue: mockWorkflowEditorService
-          },
-          {
-            provide: ComponentEditorService,
-            useValue: mockComponentEditorService
+            provide: TransformationService,
+            useValue: mockTransformationService
           },
           {
             provide: ContextMenuService,
@@ -54,18 +47,27 @@ describe('NavigationItemComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(NavigationItemComponent);
     component = fixture.componentInstance;
-    component.abstractBaseItem = {
-      id: 'Mock',
-      name: 'Mock',
-      tag: 'Mock',
-      inputs: [],
-      outputs: [],
-      type: BaseItemType.COMPONENT,
-      groupId: 'Mock',
-      description: 'Mock',
-      category: 'Mock',
+    component.transformation = {
+      id: 'mockId',
+      revision_group_id: 'mockGroupId',
+      name: 'mock',
+      description: 'mock description',
+      category: 'EXAMPLES',
+      version_tag: '0.0.1',
+      released_timestamp: new Date().toISOString(),
+      disabled_timestamp: new Date().toISOString(),
       state: RevisionState.DRAFT,
-      wirings: []
+      type: TransformationType.COMPONENT,
+      documentation: null,
+      content: 'python code',
+      io_interface: {
+        inputs: [],
+        outputs: []
+      },
+      test_wiring: {
+        input_wirings: [],
+        output_wirings: []
+      }
     };
     fixture.detectChanges();
   });

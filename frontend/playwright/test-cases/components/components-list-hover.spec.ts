@@ -12,7 +12,7 @@ test('Hover over component, load popover', async ({ page, hetidaDesigner }) => {
   await hetidaDesigner.hoverItemInNavigation(categoryName, componentName);
 
   // Assert
-  const popover = page.locator('hd-popover-base-item');
+  const popover = page.locator('hd-popover-transformation');
   await expect(popover).not.toBeEmpty();
 
   await hetidaDesigner.clearTest();
