@@ -772,7 +772,7 @@ async def multitsframe(
         mtsf = get_value_from_store(mtsf_id)
     else:
         return HTTPException(
-            404, f"no dataframe data available with provided id {mtsf_id}"
+            404, f"no multitsframe data available with provided id {mtsf_id}"
         )
 
     mtsf.attrs.update(
@@ -782,7 +782,7 @@ async def multitsframe(
         }
     )
     headers = {}
-    logger.debug("loading dataframe %s", str(mtsf))
+    logger.debug("loading multitsframe %s", str(mtsf))
     logger.debug("which has attributes %s", str(mtsf.attrs))
     df_attrs = mtsf.attrs
     if df_attrs is not None and len(df_attrs) != 0:
