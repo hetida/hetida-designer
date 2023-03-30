@@ -131,8 +131,11 @@ blob-storage-adapter|Blob-Storage-Adapter|http://localhost:8090/adapters/blob|ht
 
 ## Usage
 All sources and sinks of the blob storage adapter are of type `Any`, thus only inputs and outputs of type `Any` can be wired to the blob storage adapter.
-By default the `dump` and `load` methods of the Python package `pickle` are used to serialize and deserialize these inputs and outputs. Thus the file extension ".pkl" is added to their object key.
-Since it is [not recommended to save tensorflow keras models via pickle](https://keras.io/getting_started/faq/#what-are-my-options-for-saving-models) such models are automatically identified by the adapter and serialized by the keras `save_model` method into the HDF5 format instead. In that case the file extension ".h5" is added to the object key.
+
+By default, the `dump` and `load` methods of the Python package `pickle` are used to serialize and deserialize these inputs and outputs. Hence, the file extension ".pkl" is added to their object key.
+Since it is [not recommended to save Tensorflow Keras models via pickle](https://keras.io/getting_started/faq/#what-are-my-options-for-saving-models), such models are automatically identified by the adapter and serialized into the HDF5 format by the keras `save_model` method instead. In this case the file extension ".h5" is appended to the object key.
+
+**Note:** The python module tensorflow (or keras) is not included in the standard hetida designer dependencies. To use tensorflow in the hetida designer components or workflows, you need to [add this dependency](../custom_python_dependencies.md).
 
 ### Basic Usage
 
