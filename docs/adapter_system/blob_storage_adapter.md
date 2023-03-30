@@ -87,11 +87,11 @@ The buckets defined by the adapter structure must already be present in the blob
 * `planta-millingunit`
 * `plantb`
 
-A generic sink is generated for each end node of the hierarchy. Using it will always create a new object, the creation timestamp and the job id of the execution are appended to the object key. Vice-versa object keys are expected to have such a suffix to be available as sources via the adapter.
+A generic sink is generated for each end node of the hierarchy. Using it will always create a new object, the creation timestamp, the job id of the execution and a file extension indication the serialization method are appended to the object key. Vice-versa object keys are expected to have such a suffix to be available as sources via the adapter.
 
 For the example adapter hierarchy e.g. the following objects would be available as source:
-* in bucket `planta-picklingunit` an object with key `Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa`
-* in bucket `plantb` an object with key `PicklingUnit/Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa`
+* in bucket `planta-picklingunit` an object with key `Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa.pkl`
+* in bucket `plantb` an object with key `PicklingUnit/Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa.h5`
 
 
 ### Configuring the runtime
@@ -131,7 +131,8 @@ blob-storage-adapter|Blob-Storage-Adapter|http://localhost:8090/adapters/blob|ht
 
 ## Usage
 All sources and sinks of the blob storage adapter are of type `Any`, thus only inputs and outputs of type `Any` can be wired to the blob storage adapter.
-The `dump` and `load` methods of the Python package `pickle` are used to serialize and deserialize these inputs and outputs.
+By default the `dump` and `load` methods of the Python package `pickle` are used to serialize and deserialize these inputs and outputs. Thus the file extension ".pkl" is added to their object key.
+Since it is [not recommended to save tensorflow keras models via pickle](https://keras.io/getting_started/faq/#what-are-my-options-for-saving-models) such models are automatically identified by the adapter and serialized by the keras `save_model` method into the HDF5 format instead. In that case the file extension ".h5" is added to the object key.
 
 ### Basic Usage
 
@@ -149,8 +150,8 @@ Similarly a sink should be available for each end node in the hierarchy via sele
 
 The wirings to a source or sink of the Blob storage adapter must contain the path to the respective hierarchy end node as `ref_id` and the name of the sink or source as `ref_key`.
 E.g. for the examplary sources presented at the end of the section [Mounting the adapter hierarchy configuration](#mounting-the-adapter-hierarchy-configuration) these would be:
-* `ref_id="planta-picklingunit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa"`
-* `ref_id="plantb/PicklingUnit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa"`
+* `ref_id="planta-picklingunit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (pkl)"`
+* `ref_id="plantb/PicklingUnit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (h5)"`
 
 For sinks the `ref_key` contains the suffix `Next Object` instead of time and job id, e.g. `ref_key="Anomalies - Next Object"`. Time and job id for the stored object will then be determined automatically.
 Alternatively, it is possible to provide a `ref_key` with time and job id, which will then be used to set the object key.
