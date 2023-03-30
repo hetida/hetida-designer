@@ -50,7 +50,7 @@
 
 
 # fix nixpkgs commit:
-with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/af21d41260846fb9c9840a75e310e56dfe97d6a3.tar.gz") {};
+with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/5b7cd5c39befee629be284970415b6eb3b0ff000.tar.gz") {};
 
 let
   pythonPackages = python310Packages; # Fix Python version from the used nixpkgs commit
