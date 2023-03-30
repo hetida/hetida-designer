@@ -44,6 +44,8 @@ from demo_adapter_python.models import (
 
 logger = logging.getLogger(__name__)
 
+MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
+
 middleware = [
     Middleware(
         CORSMiddleware,
@@ -827,6 +829,13 @@ async def post_multitsframe(
 ) -> dict:
     if mtsf_id in ("root.plantA.anomalies", "root.plantB.anomalies"):
         mtsf = pd.DataFrame.from_dict(mtsf_body, orient="columns")
+        if set(mtsf.columns) != set(MULTITSFRAME_COLUMN_NAMES):
+            column_names_string = ", ".join(mtsf.columns)
+            multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
+            raise ValueError(
+                f"Dataframe from storage has column names {column_names_string} that don't match "
+                f"the column names required for a MultiTSFrame {multitsframe_column_names_string}."
+            )
         if data_attributes is not None and len(data_attributes) != 0:
             df_from_store: pd.DataFrame = get_value_from_store(mtsf_id)
             mtsf.attrs = df_from_store.attrs
