@@ -162,6 +162,8 @@ class PydanticMultiTimeseriesPandasDataFrame:
                 "No null values are allowed for the column 'metric' of a MulitTSFrame."
             )
 
+        df["metric"] = df["metric"].astype("string")
+
         if df["timestamp"].isna().any():
             raise ValueError(
                 "No null values are allowed for the column 'timestamp' of a MulitTSFrame."
