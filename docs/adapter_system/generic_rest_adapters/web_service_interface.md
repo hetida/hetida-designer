@@ -457,7 +457,7 @@ Response (Line delimited Stream of Json records):
 {"metric": "Pickling Outfeed Temperature", "timestamp": "2020-03-11T15:45:18.153000000Z", "value": 18.3}
 ```
 
-This response will always have the entries `metric`, `timestamp` and `value`. Neither `metric` nor `timestamp` may be `null` or `nan`. The `timestamp` entries have to be ISO-8601 timestamps and should always have UTC timeszone and nanosecond resolution.
+This response will always have the entries `metric`, `timestamp` and `value`. Neither `metric` nor `timestamp` may be `null`. The `timestamp` entries have to be ISO-8601 timestamps and should always have UTC timeszone and nanosecond resolution.
 
 
 ##### Attaching metadata to the multitsframe
