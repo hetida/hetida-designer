@@ -1,6 +1,10 @@
 <div class="d-flex content-space-between" mat-dialog-title>
   <h4 class="m-0">{{ data.title }}</h4>
-  <button (click)="onCancel()" mat-icon-button>
+  <button
+    (click)="onCancel()"
+    mat-icon-button
+    attr.data-testid="close-copy-transformation-dialog"
+  >
     <mat-icon>close</mat-icon>
   </button>
 </div>
@@ -15,6 +19,7 @@
         matInput
         placeholder="{{ data.transformation.type | titlecase }} name"
         type="text"
+        attr.data-testid="name-copy-transformation-dialog"
       />
       <mat-hint align="end">Max. 60 characters.</mat-hint>
       <mat-error [hdErrorVisual]="infoForm.get('name')"></mat-error>
@@ -29,6 +34,7 @@
         placeholder="Category"
         type="text"
         [matAutocomplete]="auto"
+        attr.data-testid="category-copy-transformation-dialog"
       />
       <mat-hint align="end">Max. 60 characters.</mat-hint>
       <mat-error [hdErrorVisual]="infoForm.get('category')"></mat-error>
@@ -49,6 +55,7 @@
         matInput
         placeholder="Short description"
         type="text"
+        attr.data-testid="description-copy-transformation-dialog"
       />
       <mat-error [hdErrorVisual]="infoForm.get('description')"></mat-error>
     </mat-form-field>
@@ -61,6 +68,7 @@
         matInput
         placeholder="Tag"
         type="text"
+        attr.data-testid="tag-copy-transformation-dialog"
       />
       <mat-hint align="end">Unique and max. 20 characters.</mat-hint>
       <mat-error [hdErrorVisual]="infoForm.get('tag')"></mat-error>
@@ -91,10 +99,20 @@
     (click)="_onDelete()"
     color="warn"
     mat-raised-button
+    attr.data-testid="{{
+      data.deleteButtonText + '-copy-transformation-dialog' | lowercase
+    }}"
   >
     {{ data.deleteButtonText }}
   </button>
-  <button (click)="onCancel()" color="primary" mat-raised-button>
+  <button
+    (click)="onCancel()"
+    color="primary"
+    mat-raised-button
+    attr.data-testid="{{
+      data.actionCancel + '-copy-transformation-dialog' | lowercase
+    }}"
+  >
     {{ data.actionCancel }}
   </button>
   <button
@@ -102,6 +120,9 @@
     color="primary"
     (click)="onOk()"
     [disabled]="isAllDataPropertiesDisabled()"
+    attr.data-testid="{{
+      data.actionOk + '-copy-transformation-dialog' | lowercase
+    }}"
   >
     {{ data.actionOk }}
   </button>

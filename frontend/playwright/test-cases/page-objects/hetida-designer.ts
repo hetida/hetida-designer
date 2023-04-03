@@ -114,9 +114,7 @@ export class HetidaDesigner {
     const source = this.page
       .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
       .locator(`.navigation-item:has-text("${itemName}") >> nth=0`);
-    const target = this.page.locator(
-      'svg:has-text(".svg-small-grid { stroke: #a9a9a9; } .svg-grid { stroke: #a9a9a9; }") >> nth=0'
-    );
+    const target = this.page.locator(`${targetHtmlTag}`);
 
     await source.dragTo(target);
   }
@@ -155,44 +153,28 @@ export class HetidaDesigner {
       .click();
   }
 
-  public async clickButton(buttonId: string): Promise<void> {
-    if (buttonId === '') {
-      throw new Error(`ERROR: Button id must not be empty`);
+  public async clickByTestId(testid: string): Promise<void> {
+    if (testid === '') {
+      throw new Error(`ERROR: Testid must not be empty`);
     }
 
-    await this.page.getByTestId(buttonId).click();
+    await this.page.getByTestId(testid).click();
   }
 
-  public async clickInput(inputId: string): Promise<void> {
-    if (inputId === '') {
-      throw new Error(`ERROR: Input id must not be empty`);
-    }
-
-    await this.page.getByTestId(inputId).click();
-  }
-
-  public async clickCheckbox(checkboxId: string): Promise<void> {
-    if (checkboxId === '') {
-      throw new Error(`ERROR: Checkbox id must not be empty`);
-    }
-
-    await this.page.getByTestId(checkboxId).click();
-  }
-
-  public async typeInInput(inputId: string, inputText: string): Promise<void> {
-    if (inputId === '' || inputText === '') {
-      throw new Error('ERROR: Input id or text must not be empty');
+  public async typeInInput(testid: string, inputText: string): Promise<void> {
+    if (testid === '' || inputText === '') {
+      throw new Error('ERROR: Testid or input text must not be empty');
     }
 
     // Select default input text and overwrite it
-    await this.page.getByTestId(inputId).click();
-    await this.page.getByTestId(inputId).press('Control+a');
-    await this.page.getByTestId(inputId).type(inputText);
+    await this.page.getByTestId(testid).click();
+    await this.page.getByTestId(testid).press('Control+a');
+    await this.page.getByTestId(testid).type(inputText);
 
     // Workaround for autocomplete in create component / workflow dialog
-    if (inputId === 'category') {
+    if (testid === 'category-copy-transformation-dialog') {
       // tab out of input field to close suggested options
-      await this.page.getByTestId(inputId).press('Tab');
+      await this.page.getByTestId(testid).press('Tab');
     }
   }
   // TODO

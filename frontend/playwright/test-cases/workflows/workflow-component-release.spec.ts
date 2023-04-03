@@ -6,15 +6,15 @@ test('Confirm release a workflow or component', async ({
   browserName
 }) => {
   // Arrange
-  const componentName = 'Pass Through';
   const componentCategory = 'Connectors';
-  const workflowName = `Test Workflow HDOS-364 ${browserName}`;
+  const componentName = 'Pass Through';
   const workflowCategory = 'Test';
+  const workflowName = `Test release a workflow ${browserName}`;
   const workflowDescription = 'Releases a workflow or component';
-  const workflowTag = '1.0.1';
+  const workflowTag = '0.1.1';
   const workflowInput = 'Input';
   const workflowOutput = 'Output';
-  const workflowImportData = '["hello","world"]';
+  const workflowImportData = '["MockData1","MockData2"]';
 
   const workflowDocumentation = `# Test Workflow HDOS-364 ${browserName}
 ## Description
@@ -125,17 +125,23 @@ ${workflowImportData}
   expect(outputProtocolReleased).toEqual(outputProtocol);
   // Documentation
   expect(workflowDocumentationReleased).toEqual(workflowDocumentation);
+});
 
-  // Clear
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
-  await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
-  await hetidaDesigner.rightClickItemInNavigation(
-    workflowCategory,
-    workflowName
-  );
-  await page.locator('.mat-menu-panel').hover();
-  await hetidaDesigner.clickOnContextMenu('Deprecate');
-  await hetidaDesigner.clickButton('Deprecate workflow');
+test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
+    // Clear
+    const workflowCategory = 'Test';
+    const workflowName = `Test release a workflow ${browserName}`;
+    const workflowTag = '0.1.1';
 
-  await hetidaDesigner.clearTest();
+    await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+    await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
+    await hetidaDesigner.rightClickItemInNavigation(
+      workflowCategory,
+      workflowName
+    );
+    await page.locator('.mat-menu-panel').hover();
+    await hetidaDesigner.clickOnContextMenu('Deprecate');
+    await hetidaDesigner.clickButton('Deprecate workflow');
+  
+    await hetidaDesigner.clearTest();
 });
