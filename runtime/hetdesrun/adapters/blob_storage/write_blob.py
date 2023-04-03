@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
-    thing_node_id: str, metadata_key: str, file_extension: str
+    thing_node_id: str, metadata_key: str, file_extension: FileExtension
 ) -> tuple[BlobStorageStructureSink, StructureBucket, ObjectKey]:
     """Get sink, bucket, and object key from thing node id and metadata key.
 

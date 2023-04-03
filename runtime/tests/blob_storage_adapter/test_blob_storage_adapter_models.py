@@ -12,6 +12,7 @@ from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSink,
     BlobStorageStructureSource,
+    FileExtension,
     HierarchyNode,
     IdString,
     ObjectKey,
@@ -71,6 +72,7 @@ def test_blob_storage_class_object_key() -> None:
             tzinfo=timezone.utc,
         ),
         job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
+        file_extension=FileExtension.Pickle,
     )
 
     assert object_key.string == "A_2022-01-02T14:23:18+00:00"
@@ -80,7 +82,9 @@ def test_blob_storage_class_object_key() -> None:
     )
 
     object_key_from_name = ObjectKey.from_name_and_job_id(
-        IdString("B"), job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f")
+        IdString("B"),
+        job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
+        file_extension=FileExtension.H5,
     )
 
     object_key_from_name_and_time_and_job_id = ObjectKey.from_name_and_time_and_job_id(
@@ -89,9 +93,10 @@ def test_blob_storage_class_object_key() -> None:
             tzinfo=timezone.utc
         ),
         job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
+        file_extension=FileExtension.Pickle,
     )
     assert object_key_from_name_and_time_and_job_id.string == (
-        "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
     )
 
     object_key_from_name_and_time_and_job_id_with_ext = (
@@ -101,7 +106,7 @@ def test_blob_storage_class_object_key() -> None:
                 tzinfo=timezone.utc
             ),
             job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
-            file_extension="h5",
+            file_extension=FileExtension.H5,
         )
     )
     assert object_key_from_name_and_time_and_job_id_with_ext.string == (
@@ -125,17 +130,17 @@ def test_blob_storage_class_object_key() -> None:
 
     object_key_from_thing_node_id_and_metadata_key = ObjectKey.from_thing_node_id_and_metadata_key(
         thing_node_id=IdString("i-ii/A"),
-        metadata_key="A - 2022-01-02T14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+        metadata_key="A - 2022-01-02T14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
     )
     assert (
         object_key_from_thing_node_id_and_metadata_key.string
-        == "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        == "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
     )
 
     ok_from_thing_node_id_and_metadata_key_with_ext = ObjectKey.from_thing_node_id_and_metadata_key(
         thing_node_id=IdString("i-ii/A"),
         metadata_key="A - 2022-01-02T14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
-        file_extension="h5",
+        file_extension=FileExtension.H5,
     )
     assert (
         ok_from_thing_node_id_and_metadata_key_with_ext.string
@@ -187,26 +192,26 @@ def test_blob_storage_class_structure_thing_node() -> None:
 
 def test_blob_storage_class_structure_source_works() -> None:
     source = BlobStorageStructureSource(
-        id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+        id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
         thingNodeId="i-ii/A",
-        name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+        name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
         path="i-ii/A",
-        metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+        metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
     )
 
     assert (
         source.id
-        == "i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        == "i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
     )
     assert source.thingNodeId == "i-ii/A"
     assert (
         source.name
-        == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
     )
     assert source.path == "i-ii/A"
     assert (
         source.metadataKey
-        == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
     )
     assert source.type == "metadata(any)"
     assert source.visible is True
@@ -223,30 +228,28 @@ def test_blob_storage_class_structure_source_works() -> None:
     )
     assert src_from_bkt_and_ok == source
 
-    multi_level_ok_src_from_bkt_and_ok = (
-        BlobStorageStructureSource.from_structure_bucket_and_object_key(
-            bucket=StructureBucket(name="iii"),
-            object_key=ObjectKey.from_string(
-                IdString(
-                    "x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
-                )
-            ),
-        )
+    multi_level_ok_src = BlobStorageStructureSource.from_structure_bucket_and_object_key(
+        bucket=StructureBucket(name="iii"),
+        object_key=ObjectKey.from_string(
+            IdString(
+                "x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
+            )
+        ),
     )
     assert (
-        multi_level_ok_src_from_bkt_and_ok.id
-        == "iii/x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        multi_level_ok_src.id
+        == "iii/x/C_2023-02-08T16:48:58+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
     )
     assert (
-        multi_level_ok_src_from_bkt_and_ok.name
-        == "C - 2023-02-08 16:48:58+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        multi_level_ok_src.name
+        == "C - 2023-02-08 16:48:58+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
     )
-    assert multi_level_ok_src_from_bkt_and_ok.thingNodeId == "iii/x/C"
+    assert multi_level_ok_src.thingNodeId == "iii/x/C"
     assert (
-        multi_level_ok_src_from_bkt_and_ok.metadataKey
-        == "C - 2023-02-08 16:48:58+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+        multi_level_ok_src.metadataKey
+        == "C - 2023-02-08 16:48:58+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
     )
-    assert multi_level_ok_src_from_bkt_and_ok.path == "iii/x/C"
+    assert multi_level_ok_src.path == "iii/x/C"
 
     src_with_ext_from_bkt_and_ok = BlobStorageStructureSource.from_structure_bucket_and_object_key(
         bucket=StructureBucket(name="iii"),
@@ -276,11 +279,13 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
     with pytest.raises(ValidationError, match=r"id.* does not contain"):
         # invalid id due to no object key dir separator
         BlobStorageStructureSource(
-            id="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            id="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             thingNodeId="A",
-            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
             path="A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            metadataKey=(
+                "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+            ),
         )
 
     with pytest.raises(
@@ -288,11 +293,13 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
     ):
         # invalid id due to bucket name part invalid
         BlobStorageStructureSource(
-            id="I-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            id="I-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             thingNodeId="i-ii/A",
-            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            metadataKey=(
+                "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+            ),
         )
 
     with pytest.raises(
@@ -300,31 +307,37 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
     ):
         # invalid id due to object key part invalid
         BlobStorageStructureSource(
-            id="i-ii/A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            id="i-ii/A2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             thingNodeId="i-ii/A",
-            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            metadataKey=(
+                "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+            ),
         )
 
     with pytest.raises(ValidationError, match=r"thing node id.* does not match.* id"):
         # thingNodeId does not match id
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             thingNodeId="i-ii/B",
-            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            metadataKey=(
+                "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+            ),
         )
 
     with pytest.raises(ValidationError, match=r"source name.* must contain"):
         # name invalid due to missing separator
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             thingNodeId="i-ii/A",
-            name="A 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            name="A 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            metadataKey=(
+                "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+            ),
         )
 
     with pytest.raises(
@@ -332,11 +345,13 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
     ):
         # name does not match id due to thing node name
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             thingNodeId="i-ii/A",
-            name="B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            name="B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            metadataKey=(
+                "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+            ),
         )
 
     with pytest.raises(
@@ -344,31 +359,37 @@ def test_blob_storage_class_structure_source_raises_exceptions() -> None:
     ):
         # name does not match id due to timestamp
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             thingNodeId="i-ii/A",
-            name="A - 2023-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            name="A - 2023-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
             path="i-ii/A",
-            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            metadataKey=(
+                "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+            ),
         )
 
     with pytest.raises(ValidationError, match=r"path.* must be.* thingNodeId"):
         # path does not match thingNodeId
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             thingNodeId="i-ii/A",
-            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
             path="i-ii/B",
-            metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            metadataKey=(
+                "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+            ),
         )
 
     with pytest.raises(ValidationError, match=r"metadataKey.* must be.* name"):
         # metadataKey does not match name
         BlobStorageStructureSource(
-            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             thingNodeId="i-ii/A",
-            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
             path="i-ii/A",
-            metadataKey="B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            metadataKey=(
+                "B - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+            ),
         )
 
 
@@ -391,7 +412,8 @@ def test_blob_storage_class_structure_sink() -> None:
     assert sink.filters == {}
 
     snk_bucket, snk_object_key = sink.to_structure_bucket_and_object_key(
-        job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f")
+        job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
+        file_extension=FileExtension.Pickle,
     )
     assert snk_bucket.name == "i-ii"
     assert snk_object_key.name == "A"

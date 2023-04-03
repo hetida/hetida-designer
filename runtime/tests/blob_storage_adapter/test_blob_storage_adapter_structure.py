@@ -51,46 +51,46 @@ def test_blob_storage_get_thing_nodes_by_parent_id() -> None:
 
 source_list = [
     BlobStorageStructureSource(
-        id="i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+        id="i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
         thingNodeId="i-i/A",
-        name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+        name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
         path="i-i/A",
-        metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+        metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
     ),
     BlobStorageStructureSource(
-        id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43",
+        id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43.pkl",
         thingNodeId="i-i/A",
-        name="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
+        name="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43 (pkl)",
         path="i-i/A",
-        metadataKey="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
+        metadataKey="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43 (pkl)",
     ),
     BlobStorageStructureSource(
-        id="i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51",
+        id="i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51.pkl",
         thingNodeId="i-i/B",
-        name="B - 2022-01-02 14:25:56+00:00 - f1a16db0-c075-4ed9-8953-f97c2dc3ae51",
+        name="B - 2022-01-02 14:25:56+00:00 - f1a16db0-c075-4ed9-8953-f97c2dc3ae51 (pkl)",
         path="i-i/B",
-        metadataKey="B - 2022-01-02 14:25:56+00:00 - f1a16db0-c075-4ed9-8953-f97c2dc3ae51",
+        metadataKey="B - 2022-01-02 14:25:56+00:00 - f1a16db0-c075-4ed9-8953-f97c2dc3ae51 (pkl)",
     ),
     BlobStorageStructureSource(
-        id="i-i/D_2022-03-08T17:23:18+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa",
+        id="i-i/D_2022-03-08T17:23:18+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa.pkl",
         thingNodeId="i-i/D",
-        name="D - 2022-03-08 17:23:18+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa",
+        name="D - 2022-03-08 17:23:18+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (pkl)",
         path="i-i/D",
-        metadataKey="D - 2022-03-08 17:23:18+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa",
+        metadataKey="D - 2022-03-08 17:23:18+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (pkl)",
     ),
     BlobStorageStructureSource(
-        id="i-i/D_2022-04-02T13:28:29+00:00_af77087b-a064-4ff9-9c4a-d23b2c503ade",
+        id="i-i/D_2022-04-02T13:28:29+00:00_af77087b-a064-4ff9-9c4a-d23b2c503ade.pkl",
         thingNodeId="i-i/D",
-        name="D - 2022-04-02 13:28:29+00:00 - af77087b-a064-4ff9-9c4a-d23b2c503ade",
+        name="D - 2022-04-02 13:28:29+00:00 - af77087b-a064-4ff9-9c4a-d23b2c503ade (pkl)",
         path="i-i/D",
-        metadataKey="D - 2022-04-02 13:28:29+00:00 - af77087b-a064-4ff9-9c4a-d23b2c503ade",
+        metadataKey="D - 2022-04-02 13:28:29+00:00 - af77087b-a064-4ff9-9c4a-d23b2c503ade (pkl)",
     ),
     BlobStorageStructureSource(
-        id="i-ii/E_2022-01-02T14:23:18+00:00_3bd049f4-1d0e-4993-ac4c-306ebe320144",
+        id="i-ii/E_2022-01-02T14:23:18+00:00_3bd049f4-1d0e-4993-ac4c-306ebe320144.pkl",
         thingNodeId="i-ii/E",
-        name="E - 2022-01-02 14:23:18+00:00 - 3bd049f4-1d0e-4993-ac4c-306ebe320144",
+        name="E - 2022-01-02 14:23:18+00:00 - 3bd049f4-1d0e-4993-ac4c-306ebe320144 (pkl)",
         path="i-ii/E",
-        metadataKey="E - 2022-01-02 14:23:18+00:00 - 3bd049f4-1d0e-4993-ac4c-306ebe320144",
+        metadataKey="E - 2022-01-02 14:23:18+00:00 - 3bd049f4-1d0e-4993-ac4c-306ebe320144 (pkl)",
     ),
 ]
 
@@ -106,23 +106,23 @@ async def mocked_get_oks_in_bucket(bucket_name: StructureBucket) -> list[IdStrin
     if bucket_name == "i-i":
         return [
             IdString(
-                "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+                "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
             ),
             IdString(
-                "A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+                "A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43.pkl"
             ),
             IdString("A_test"),
         ]
     if bucket_name == "i-ii":
         return [
             IdString(
-                "B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
+                "B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51.pkl"
             ),
             IdString(
-                "D_2022-03-08T17:23:18+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa"
+                "D_2022-03-08T17:23:18+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa.pkl"
             ),
             IdString(
-                "D_2022-04-02T13:28:29+00:00_af77087b-a064-4ff9-9c4a-d23b2c503ade"
+                "D_2022-04-02T13:28:29+00:00_af77087b-a064-4ff9-9c4a-d23b2c503ade.pkl"
             ),
         ]
     raise ValueError("bucket_name must be 'i-i' or 'i-ii'!")
@@ -201,30 +201,30 @@ async def test_blob_storage_get_filtered_sources() -> None:
         assert len(sources_filtered_by_name) == 2
         assert (
             sources_filtered_by_name[0].id
-            == "i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+            == "i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
         )
         assert (
             sources_filtered_by_name[1].id
-            == "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+            == "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43.pkl"
         )
 
         sources_filtered_by_date = await get_filtered_sources("14")
         assert len(sources_filtered_by_date) == 4
         assert (
             sources_filtered_by_date[0].id
-            == "i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+            == "i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
         )
         assert (
             sources_filtered_by_date[1].id
-            == "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+            == "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43.pkl"
         )
         assert (
             sources_filtered_by_date[2].id
-            == "i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
+            == "i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51.pkl"
         )
         assert (
             sources_filtered_by_date[3].id
-            == "i-ii/E_2022-01-02T14:23:18+00:00_3bd049f4-1d0e-4993-ac4c-306ebe320144"
+            == "i-ii/E_2022-01-02T14:23:18+00:00_3bd049f4-1d0e-4993-ac4c-306ebe320144.pkl"
         )
 
         sources_filtered_by_bla = await get_filtered_sources("bla")
@@ -293,24 +293,24 @@ async def test_blob_storage_get_source_by_id() -> None:
         new=mocked_get_oks_in_bucket,
     ):
         source_id = IdString(
-            "i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+            "i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
         )
 
         source = await get_source_by_id(source_id)
 
         assert (
             source.name
-            == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+            == "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
         )
 
         structure_not_matching_source_id = IdString(
-            "i-ii/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
+            "i-ii/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51.pkl"
         )
         with pytest.raises(StructureObjectNotFound, match="No thing node matching"):
             await get_source_by_id(structure_not_matching_source_id)
 
         source_id_without_object_key = IdString(
-            "i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51"
+            "i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51.pkl"
         )
         with pytest.raises(StructureObjectNotFound, match="no object"):
             await get_source_by_id(source_id_without_object_key)
@@ -355,26 +355,28 @@ async def test_blob_storage_get_source_by_thing_node_id_and_metadata_key() -> No
     ), mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_object_key_strings_in_bucket",
         return_value=[
-            "A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+            "A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43.pkl"
         ],
     ):
         source_by_tn_id_and_md_key = await get_source_by_thing_node_id_and_metadata_key(
             thing_node_id=IdString("i-i/A"),
-            metadata_key="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
+            metadata_key=(
+                "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43 (pkl)"
+            ),
         )
         assert (
             source_by_tn_id_and_md_key.id
-            == "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+            == "i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43.pkl"
         )
         assert source_by_tn_id_and_md_key.thingNodeId == "i-i/A"
         assert (
             source_by_tn_id_and_md_key.name
-            == "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+            == "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43 (pkl)"
         )
         assert source_by_tn_id_and_md_key.path == "i-i/A"
         assert (
             source_by_tn_id_and_md_key.metadataKey
-            == "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43"
+            == "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43 (pkl)"
         )
 
         with pytest.raises(StructureObjectNotFound):

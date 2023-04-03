@@ -100,7 +100,7 @@ class ObjectKey(BaseModel):
 
     @classmethod
     def from_name_and_job_id(
-        cls, name: IdString, job_id: UUID, file_extension: str = ""
+        cls, name: IdString, job_id: UUID, file_extension: FileExtension
     ) -> "ObjectKey":
         now = datetime.now(timezone.utc).replace(microsecond=0)
         return ObjectKey(
@@ -109,7 +109,7 @@ class ObjectKey(BaseModel):
             + now.isoformat()
             + IDENTIFIER_SEPARATOR
             + str(job_id)
-            + (FILE_EXTENSION_SEPARATOR if file_extension != "" else "")
+            + FILE_EXTENSION_SEPARATOR
             + file_extension,
             name=name,
             time=now,
@@ -119,7 +119,7 @@ class ObjectKey(BaseModel):
 
     @classmethod
     def from_name_and_time_and_job_id(
-        cls, name: IdString, time: datetime, job_id: UUID, file_extension: str = ""
+        cls, name: IdString, time: datetime, job_id: UUID, file_extension: FileExtension
     ) -> "ObjectKey":
         return ObjectKey(
             string=name
@@ -127,7 +127,7 @@ class ObjectKey(BaseModel):
             + time.isoformat()
             + IDENTIFIER_SEPARATOR
             + str(job_id)
-            + (FILE_EXTENSION_SEPARATOR if file_extension != "" else "")
+            + FILE_EXTENSION_SEPARATOR
             + file_extension,
             name=name,
             time=time,
@@ -147,10 +147,14 @@ class ObjectKey(BaseModel):
                 f"String '{string}' not a valid ObjectKey string, "
                 f"because it contains '{IDENTIFIER_SEPARATOR}' less than twice!"
             ) from e
-        if FILE_EXTENSION_SEPARATOR in job_id_string:
-            job_id_string, file_extension = job_id_string.split(
-                FILE_EXTENSION_SEPARATOR, maxsplit=1
+        if FILE_EXTENSION_SEPARATOR not in job_id_string:
+            raise ValueError(
+                f"String '{string}' not a valid ObjectKey string, "
+                f"because it does not contain '{IDENTIFIER_SEPARATOR}'!"
             )
+        job_id_string, file_extension = job_id_string.split(
+            FILE_EXTENSION_SEPARATOR, maxsplit=1
+        )
         return ObjectKey(
             string=string,
             name=name,
@@ -161,7 +165,10 @@ class ObjectKey(BaseModel):
 
     @classmethod
     def from_thing_node_id_and_metadata_key(
-        cls, thing_node_id: IdString, metadata_key: str, file_extension: str = ""
+        cls,
+        thing_node_id: IdString,
+        metadata_key: str,
+        file_extension: FileExtension | None = None,
     ) -> "ObjectKey":
         if metadata_key.count(HIERARCHY_END_NODE_NAME_SEPARATOR) != 2:
             raise ValueError(
@@ -181,15 +188,18 @@ class ObjectKey(BaseModel):
             thing_node_id
         )
 
+        file_extension_string = ""
         if " (" in job_id_string:
-            job_id_string, file_extension = job_id_string.split(" (", maxsplit=1)
-            file_extension = file_extension.split(")", maxsplit=1)[0]
+            job_id_string, file_extension_string = job_id_string.split(" (", maxsplit=1)
+            file_extension_string = file_extension_string.split(")", maxsplit=1)[0]
 
         return ObjectKey.from_name_and_time_and_job_id(
             name=object_key_prefix,
             time=datetime.fromisoformat(time_string).replace(tzinfo=timezone.utc),
             job_id=UUID(job_id_string),
-            file_extension=file_extension,
+            file_extension=FileExtension(file_extension_string)
+            if file_extension is None
+            else file_extension,
         )
 
     def to_thing_node_id(self, bucket: StructureBucket) -> IdString:
@@ -522,7 +532,7 @@ class BlobStorageStructureSink(BaseModel):
         )
 
     def to_structure_bucket_and_object_key(
-        self, job_id: UUID, file_extension: str = ""
+        self, job_id: UUID, file_extension: FileExtension
     ) -> tuple[StructureBucket, ObjectKey]:
         (
             bucket,

@@ -15,6 +15,7 @@ from hetdesrun.adapters.blob_storage.exceptions import (
 from hetdesrun.adapters.blob_storage.models import (
     AdapterHierarchy,
     BlobStorageStructureSink,
+    FileExtension,
     IdString,
     ObjectKey,
     StructureBucket,
@@ -53,7 +54,7 @@ def test_blob_storage_get_sink_and_bucket_and_ok_from_thing_node_and_metadata_ke
         ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
             thing_node_id="plantb/PicklingUnit/Outfeed/Anomalies",
             metadata_key="Anomalies - Next Object",
-            file_extension="h5",
+            file_extension=FileExtension.H5,
         )
         assert str(sink.id) == "plantb/PicklingUnit/Outfeed/Anomalies_generic_sink"
         assert str(bucket.name) == "plantb"
@@ -70,7 +71,7 @@ def test_blob_storage_get_sink_and_bucket_and_ok_from_thing_node_and_metadata_ke
             metadata_key=(
                 "Anomalies - 2023-03-23 10:16:25+00:00 - 1681ea7e-c57f-469a-ac12-592e3e8665cf"
             ),
-            file_extension="h5",
+            file_extension=FileExtension.H5,
         )
         assert str(sink.id) == "plantb/PicklingUnit/Outfeed/Anomalies_generic_sink"
         assert str(bucket.name) == "plantb"
@@ -86,7 +87,7 @@ def test_blob_storage_get_sink_and_bucket_and_ok_from_thing_node_and_metadata_ke
                 metadata_key=(
                     "Anomalies - 2023-03-23 10:16:25+00:00 - 1681ea7e-c57f-469a-ac12-592e3e8665cf"
                 ),
-                file_extension="h5",
+                file_extension=FileExtension.H5,
             )
 
         with pytest.raises(
@@ -97,7 +98,7 @@ def test_blob_storage_get_sink_and_bucket_and_ok_from_thing_node_and_metadata_ke
                 metadata_key=(
                     "Anomalies - 2023-03-23 10:16:25+00:00"  # missing job id
                 ),
-                file_extension="h5",
+                file_extension=FileExtension.H5,
             )
 
 
@@ -257,7 +258,7 @@ async def test_blob_storage_write_blob_to_storage_with_existing_object() -> None
         bucket_name = "i-ii"
         client_mock.create_bucket(Bucket=bucket_name)
         object_key_string = (
-            "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+            "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
         )
         client_mock.put_object(
             Bucket=bucket_name,
