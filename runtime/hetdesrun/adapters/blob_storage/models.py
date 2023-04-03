@@ -40,7 +40,6 @@ class FileExtension(str, Enum):
 
     H5 = "h5"
     Pickle = "pkl"
-    Empty = ""
 
 
 class IdString(ConstrainedStr):
@@ -48,8 +47,7 @@ class IdString(ConstrainedStr):
     regex = re.compile(
         r"^[a-zA-Z0-9:+\-"
         rf"{OBJECT_KEY_DIR_SEPARATOR}{IDENTIFIER_SEPARATOR}{BUCKET_NAME_DIR_SEPARATOR}]+"
-        rf"(|{FILE_EXTENSION_SEPARATOR}"
-        rf"({'|'.join(ext.value for ext in FileExtension if ext != FileExtension.Empty)}))$"
+        rf"(|({'|'.join(FILE_EXTENSION_SEPARATOR+ext.value for ext in FileExtension)}))$"
     )
 
 
@@ -92,7 +90,7 @@ class ObjectKey(BaseModel):
     name: IdString
     time: datetime
     job_id: UUID
-    file_extension: FileExtension = FileExtension.Empty
+    file_extension: FileExtension
 
     @validator("time")
     def has_timezone_utc(cls, time: datetime) -> datetime:

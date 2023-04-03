@@ -172,7 +172,8 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
         ):
             thing_node_id = "i-ii/E"
             metadata_key = (
-                "E - 2001-02-03 04:05:06+00:00 - e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
+                "E - 2001-02-03 04:05:06+00:00 - "
+                "e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
             )
             await write_blob_to_storage(
                 data=struct.pack(">i", 23),
@@ -185,7 +186,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
             object_key_string = object_summaries_response["Contents"][0]["Key"]
             assert (
                 object_key_string
-                == "E_2001-02-03T04:05:06+00:00_e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe"
+                == "E_2001-02-03T04:05:06+00:00_e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe.pkl"
             )
             object_response = client_mock.get_object(
                 Bucket=bucket_name, Key=object_key_string
