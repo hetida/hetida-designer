@@ -57,7 +57,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         "Load data for source '%s' from storage in bucket '%s' under object key '%s'",
         source.id,
         bucket.name,
-        object_key_string,
+        object_key.string,
     )
     s3_client = await get_s3_client()
 
@@ -70,7 +70,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
             f"The bucket '{bucket.name}' contains no object "
-            f"with the key '{object_key_string}'!"
+            f"with the key '{object_key.string}'!"
         ) from error
 
     if object_key.file_extension == FileExtension.H5:
@@ -86,8 +86,20 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         else:
             logger.info("Successfully imported tensorflow version %s", tf.__version__)
             file_object = BytesIO(response["Body"].read())
+            custom_objects: dict[str, Any] | None = None
+            custom_objects_object_key = object_key.to_custom_objects_object_key()
+            try:
+                custom_objects_response = s3_client.get_object(
+                    Bucket=bucket.name,
+                    Key=custom_objects_object_key.string,
+                    ChecksumMode="ENABLED",
+                )
+            except s3_client.exceptions.NoSuchKey:
+                pass
+            else:
+                custom_objects = pickle.load(custom_objects_response["Body"])
             with h5py.File(file_object, "r") as f:
-                data = tf.keras.models.load_model(f)
+                data = tf.keras.models.load_model(f, custom_objects=custom_objects)
     else:
         data = pickle.load(response["Body"])
 

@@ -13,6 +13,7 @@ from hetdesrun.adapters.blob_storage.models import (
     IdString,
     ObjectKey,
     StructureBucket,
+    WrappedModelWithCustomObjects,
     get_structure_bucket_and_object_key_prefix_from_id,
 )
 from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
@@ -77,6 +78,43 @@ def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
     return sink, structure_bucket, object_key
 
 
+async def write_custom_objects_to_storage(
+    custom_objects: dict[str, Any],
+    structure_bucket: StructureBucket,
+    object_key: ObjectKey,
+) -> None:
+    with BytesIO() as file_object:
+        pickle.dump(
+            custom_objects,
+            file_object,
+            protocol=pickle.HIGHEST_PROTOCOL,
+        )
+        file_object.seek(0)
+        custom_objects_object_key = object_key.to_custom_objects_object_key()
+        logger.info(
+            "Dumped custom objects dictionary into another BLOB with object key %s",
+            custom_objects_object_key,
+        )
+
+        s3_client = await get_s3_client()
+        try:
+            s3_client.put_object(
+                Bucket=structure_bucket.name,
+                Key=custom_objects_object_key.string,
+                Body=file_object,
+                ChecksumAlgorithm="SHA1",
+                ContentType="application/octet-stream",
+            )
+        except ClientError as client_error:
+            error_code = client_error.response["Error"]["Code"]
+            msg = (
+                "Unexpected ClientError occured for head_object call with bucket "
+                f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
+            )
+            logger.error(msg)
+            raise AdapterConnectionError(msg) from client_error
+
+
 async def write_blob_to_storage(
     data: Any, thing_node_id: str, metadata_key: str
 ) -> None:
@@ -88,18 +126,27 @@ async def write_blob_to_storage(
     StorageAuthenticationError and AdapterConnectionError raised from get_s3_client may occur.
     """
     is_keras_model = False
+    is_keras_model_with_custom_objects = False
     try:
         import tensorflow as tf
     except ModuleNotFoundError:
-        msg = "To store a keras model, add tensorflow to the runtime dependencies."
-        logger.debug(msg)
+        logger.debug(
+            "To store a keras model, add tensorflow to the runtime dependencies."
+        )
     else:
         logger.debug("Successfully imported tensorflow version %s", tf.__version__)
         is_keras_model = isinstance(
             data, (tf.keras.models.Model, tf.keras.models.Sequential)
         )
         if is_keras_model:
-            logger.info("Identified object as tensorflow keras model")
+            logger.debug("Identified object as tensorflow keras model")
+        is_keras_model_with_custom_objects = isinstance(
+            data, WrappedModelWithCustomObjects
+        )
+        if is_keras_model_with_custom_objects:
+            logger.debug(
+                "Identified object as tensorflow keras model with custom objects"
+            )
 
     (
         sink,
@@ -136,9 +183,11 @@ async def write_blob_to_storage(
 
         # only write if the object does not yet exist
         with BytesIO() as file_object:
-            if is_keras_model:
+            if is_keras_model or is_keras_model_with_custom_objects:
                 with h5py.File(file_object, "w") as h5_file_object:
-                    tf.keras.models.save_model(data, h5_file_object)
+                    tf.keras.models.save_model(
+                        data if is_keras_model else data.model, h5_file_object
+                    )
                 file_object.seek(0)
             else:
                 pickle.dump(data, file_object, protocol=pickle.HIGHEST_PROTOCOL)
@@ -156,13 +205,19 @@ async def write_blob_to_storage(
                     ContentType="application/octet-stream",
                 )
             except ClientError as error:
+                error_code = error.response["Error"]["Code"]
                 msg = (
                     "Unexpected ClientError occured for head_object call with bucket "
                     f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
                 )
                 logger.error(msg)
                 raise AdapterConnectionError(msg) from error
-
+        if is_keras_model_with_custom_objects:
+            await write_custom_objects_to_storage(
+                custom_objects=data.custom_objects,
+                structure_bucket=structure_bucket,
+                object_key=object_key.to_custom_objects_object_key(),
+            )
     else:
         msg = (
             f"The bucket '{structure_bucket.name}' already contains an object "

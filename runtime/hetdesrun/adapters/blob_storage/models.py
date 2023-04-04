@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timezone
 from enum import Enum
 from functools import cache, cached_property
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConstrainedStr, Field, ValidationError, validator
@@ -40,6 +40,12 @@ class FileExtension(str, Enum):
 
     H5 = "h5"
     Pickle = "pkl"
+    CustomObjectsPkl = "custom_objects_pkl"
+
+
+class WrappedModelWithCustomObjects:
+    model: Any
+    custom_objects: dict[str, Any]
 
 
 class IdString(ConstrainedStr):
@@ -204,6 +210,14 @@ class ObjectKey(BaseModel):
 
     def to_thing_node_id(self, bucket: StructureBucket) -> IdString:
         return IdString(bucket.name + OBJECT_KEY_DIR_SEPARATOR + self.name)
+
+    def to_custom_objects_object_key(self) -> "ObjectKey":
+        return ObjectKey.from_name_and_time_and_job_id(
+            name=self.name,
+            time=self.time,
+            job_id=self.job_id,
+            file_extension=FileExtension.CustomObjectsPkl,
+        )
 
 
 class InfoResponse(BaseModel):
