@@ -155,7 +155,9 @@ async def write_blob_to_storage(
     ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
         thing_node_id=thing_node_id,
         metadata_key=metadata_key,
-        file_extension=FileExtension.H5 if is_keras_model else FileExtension.Pickle,
+        file_extension=FileExtension.H5
+        if is_keras_model or is_keras_model_with_custom_objects
+        else FileExtension.Pickle,
     )
 
     logger.info(
