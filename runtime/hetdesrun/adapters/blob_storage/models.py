@@ -43,7 +43,7 @@ class FileExtension(str, Enum):
     CustomObjectsPkl = "custom_objects_pkl"
 
 
-class WrappedModelWithCustomObjects:
+class WrappedModelWithCustomObjects(BaseModel):
     model: Any
     custom_objects: dict[str, Any]
 
