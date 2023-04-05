@@ -53,9 +53,9 @@
       {
         "adapter_id": "blob-storage-adapter",
         "filters": {},
-        "ref_id": "planta-millingunit/Outfeed/Anomalies",
+        "ref_id": "planta-picklingunit/Influx/Anomalies",
         "ref_id_type": "THINGNODE",
-        "ref_key": "Anomalies - 2023-03-21 15:19:13+00:00 - 13ac8b05-42a6-4123-a852-d228f43c1f03",
+        "ref_key": "Anomalies - 2023-04-04 09:31:15+00:00 - bf2bf5a8-69d7-4a5e-b27e-eaae214c1219 (h5)",
         "type": "metadata(any)",
         "workflow_input_name": "tensorflow_keras_model"
       }

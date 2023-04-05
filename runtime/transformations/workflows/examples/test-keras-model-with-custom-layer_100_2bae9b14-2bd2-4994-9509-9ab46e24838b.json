@@ -1,0 +1,246 @@
+{
+  "category": "Examples",
+  "content": {
+    "constants": [],
+    "inputs": [
+      {
+        "connector_id": "caeec8a9-7486-49e1-a031-99f1154b8721",
+        "connector_name": "trained_model",
+        "data_type": "ANY",
+        "id": "29c577f4-829c-4a38-a1b7-1b8e10638903",
+        "name": "trained_model",
+        "operator_id": "e78755b3-344f-45c1-a898-f7bee861d4db",
+        "operator_name": "Test Keras Model",
+        "position": {
+          "x": 650,
+          "y": 572
+        }
+      }
+    ],
+    "links": [
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "caeec8a9-7486-49e1-a031-99f1154b8721",
+            "name": "trained_model",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e78755b3-344f-45c1-a898-f7bee861d4db"
+        },
+        "id": "b4596f03-5f2c-4c81-a45e-4f7242d6405c",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "29c577f4-829c-4a38-a1b7-1b8e10638903",
+            "name": "trained_model",
+            "position": {
+              "x": 650,
+              "y": 572
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "48f547d2-f1bf-4fe8-8b37-71613d43fb73",
+            "name": "metrics",
+            "position": {
+              "x": 1350,
+              "y": 572
+            }
+          }
+        },
+        "id": "2d19cea8-0442-40ca-9c7a-378b83a6fa3f",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "bc2a9598-5d1d-47f4-a9e4-781f62151008",
+            "name": "metrics",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e78755b3-344f-45c1-a898-f7bee861d4db"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "b7803aec-db20-6bea-970f-0566ded49a7c",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "a9fc7f77-6f6f-4f1c-b890-7e977fcb7ad6"
+        },
+        "id": "b14d7ac8-cc44-49cd-9262-c38eb09ee682",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "1aa929d4-24f3-400d-8318-cd337958a964",
+            "name": "AntirectifierLayer",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "385a2a12-b90f-4a95-b7ea-9f03db809b08"
+        }
+      }
+    ],
+    "operators": [
+      {
+        "id": "a9fc7f77-6f6f-4f1c-b890-7e977fcb7ad6",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "id": "b7803aec-db20-6bea-970f-0566ded49a7c",
+            "name": "input",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Forget",
+        "outputs": [],
+        "position": {
+          "x": 1145,
+          "y": 632
+        },
+        "revision_group_id": "d1fb4ae5-ef27-26b8-7a58-40b7cd8412e7",
+        "state": "RELEASED",
+        "transformation_id": "d1fb4ae5-ef27-26b8-7a58-40b7cd8412e7",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "e78755b3-344f-45c1-a898-f7bee861d4db",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "id": "caeec8a9-7486-49e1-a031-99f1154b8721",
+            "name": "trained_model",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Test Keras Model",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "bc2a9598-5d1d-47f4-a9e4-781f62151008",
+            "name": "metrics",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 900,
+          "y": 512
+        },
+        "revision_group_id": "5673a16b-7179-48fc-9472-ab6a169896ab",
+        "state": "RELEASED",
+        "transformation_id": "0c4f85b7-1cf1-48be-8cfb-19f228c1f88e",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "385a2a12-b90f-4a95-b7ea-9f03db809b08",
+        "inputs": [],
+        "name": "AntirectifierLayer",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "1aa929d4-24f3-400d-8318-cd337958a964",
+            "name": "AntirectifierLayer",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 670,
+          "y": 632
+        },
+        "revision_group_id": "58d842e6-b98a-4085-a832-7ff974471981",
+        "state": "RELEASED",
+        "transformation_id": "b871f417-a28a-420a-8a5f-752a31d613db",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      }
+    ],
+    "outputs": [
+      {
+        "connector_id": "bc2a9598-5d1d-47f4-a9e4-781f62151008",
+        "connector_name": "metrics",
+        "data_type": "ANY",
+        "id": "48f547d2-f1bf-4fe8-8b37-71613d43fb73",
+        "name": "metrics",
+        "operator_id": "e78755b3-344f-45c1-a898-f7bee861d4db",
+        "operator_name": "Test Keras Model",
+        "position": {
+          "x": 1350,
+          "y": 572
+        }
+      }
+    ]
+  },
+  "description": "Test tensorflow keras model with custom AntirectifierLayer",
+  "documentation": "# Test Keras Model with Custom Layer\n\n## Description\nTest a Tensorflow Keras model with a custom AntirectifierLayer on the Keras MNIST dataset.\n\n## Inputs\n* **trained_model** (Tensorflow Keras Model): Trained model, e.g. from a stored object.\n \n## Outputs\n* **metrics** (Dict): Dictionary which contains the metrics of the trained model.\n\n## Details\n\nThis workflow cannot be executed with manual input. It is intended to be used with stored objects or within another workflow.",
+  "id": "2bae9b14-2bd2-4994-9509-9ab46e24838b",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "29c577f4-829c-4a38-a1b7-1b8e10638903",
+        "name": "trained_model"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "48f547d2-f1bf-4fe8-8b37-71613d43fb73",
+        "name": "metrics"
+      }
+    ]
+  },
+  "name": "Test Keras Model with Custom Layer",
+  "released_timestamp": "2023-04-05T16:43:45.177060+00:00",
+  "revision_group_id": "1f2f8ca0-133a-4ab1-b874-7f03cd9f75c0",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "blob-storage-adapter",
+        "filters": {},
+        "ref_id": "planta-millingunit/Outfeed/Anomalies",
+        "ref_id_type": "THINGNODE",
+        "ref_key": "Anomalies - 2023-04-04 16:30:34+00:00 - 8ca3f9a2-e5b1-41f7-9fef-84f548b240cf (h5)",
+        "type": "metadata(any)",
+        "workflow_input_name": "trained_model"
+      }
+    ],
+    "output_wirings": []
+  },
+  "type": "WORKFLOW",
+  "version_tag": "1.0.0"
+}

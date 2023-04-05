@@ -1,0 +1,467 @@
+{
+  "category": "Examples",
+  "content": {
+    "constants": [
+      {
+        "connector_id": "e383d251-acc0-4927-bc2e-7b2ae5f064fe",
+        "connector_name": "dictionary",
+        "data_type": "ANY",
+        "id": "6b8eee43-cfb9-4d24-9f7e-b854dd6d15be",
+        "operator_id": "0025e275-03eb-49a2-8351-72df79c09681",
+        "operator_name": "Update Dictionary",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "value": "{}"
+      },
+      {
+        "connector_id": "9df3a469-e5a7-4c6d-aa09-94296995d939",
+        "connector_name": "key",
+        "data_type": "STRING",
+        "id": "afa28423-f47f-44a6-91cc-ca73f936eb49",
+        "operator_id": "0025e275-03eb-49a2-8351-72df79c09681",
+        "operator_name": "Update Dictionary",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "value": "AntirectifierLayer"
+      }
+    ],
+    "inputs": [],
+    "links": [
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "1d63a0ef-1f4a-411d-944f-2539a2fc4dee",
+            "name": "value",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "0025e275-03eb-49a2-8351-72df79c09681"
+        },
+        "id": "7c2c6146-cc22-41aa-b354-2689ced75b7a",
+        "path": [
+          {
+            "x": 1365,
+            "y": 332
+          },
+          {
+            "x": 1420,
+            "y": 332
+          },
+          {
+            "x": 1420,
+            "y": 177
+          },
+          {
+            "x": 1470,
+            "y": 177
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "1aa929d4-24f3-400d-8318-cd337958a964",
+            "name": "AntirectifierLayer",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e8f0723a-f0ce-4a27-a477-7fc912d17ff1"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "8891fc29-bb60-4cb3-8eed-7288c58a2777",
+            "name": "AntirectifierLayer",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "8a687b7e-7036-4afa-8e3b-7f76cbea41a7"
+        },
+        "id": "3d0b7279-c0db-4f17-a3ce-4135f150b3f3",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "1aa929d4-24f3-400d-8318-cd337958a964",
+            "name": "AntirectifierLayer",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "e8f0723a-f0ce-4a27-a477-7fc912d17ff1"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "e57d0548-4f98-4245-8ebd-e03cd8daba81",
+            "name": "model",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "62f3a91a-6326-4368-9197-8d295d5afe3a"
+        },
+        "id": "13b210ee-8af9-4929-8a8c-5b607a0235b4",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "8fd0c821-349e-4d1c-a722-1052e0cefbff",
+            "name": "trained_model",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "8a687b7e-7036-4afa-8e3b-7f76cbea41a7"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "dc636b7c-086a-417d-9dd5-b6304eda4d68",
+            "name": "custom_objects",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "62f3a91a-6326-4368-9197-8d295d5afe3a"
+        },
+        "id": "3620aa01-8595-4dc1-981f-ada168d2d5ce",
+        "path": [
+          {
+            "x": 1850,
+            "y": 117
+          },
+          {
+            "x": 1890,
+            "y": 117
+          },
+          {
+            "x": 1890,
+            "y": 362
+          },
+          {
+            "x": 1930,
+            "y": 360
+          }
+        ],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "69cd7863-d2a4-4469-80d7-b1c378bb2e5f",
+            "name": "dictionary",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "0025e275-03eb-49a2-8351-72df79c09681"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "4ce2fd78-1c56-48d7-990c-fbbcc7d8a365",
+            "name": "wrapped_model_with_custom_objects",
+            "position": {
+              "x": 2390,
+              "y": 320
+            }
+          }
+        },
+        "id": "7b0abac9-d1bb-467a-a842-6cac0dabaa60",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "d59f2ec0-d075-49ef-a517-058c6b3a2150",
+            "name": "wrapped_model_with_custom_objects",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "62f3a91a-6326-4368-9197-8d295d5afe3a"
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "e383d251-acc0-4927-bc2e-7b2ae5f064fe",
+            "name": "dictionary",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "0025e275-03eb-49a2-8351-72df79c09681"
+        },
+        "id": "a1722342-d6f1-43b8-892e-a053bfbc358a",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "ANY",
+            "id": "6b8eee43-cfb9-4d24-9f7e-b854dd6d15be",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        }
+      },
+      {
+        "end": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "9df3a469-e5a7-4c6d-aa09-94296995d939",
+            "name": "key",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "operator": "0025e275-03eb-49a2-8351-72df79c09681"
+        },
+        "id": "be053585-a6b5-4963-9b1c-f50e2b5f2d57",
+        "path": [],
+        "start": {
+          "connector": {
+            "data_type": "STRING",
+            "id": "afa28423-f47f-44a6-91cc-ca73f936eb49",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        }
+      }
+    ],
+    "operators": [
+      {
+        "id": "e8f0723a-f0ce-4a27-a477-7fc912d17ff1",
+        "inputs": [],
+        "name": "AntirectifierLayer",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "1aa929d4-24f3-400d-8318-cd337958a964",
+            "name": "AntirectifierLayer",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 995,
+          "y": 262
+        },
+        "revision_group_id": "58d842e6-b98a-4085-a832-7ff974471981",
+        "state": "RELEASED",
+        "transformation_id": "b871f417-a28a-420a-8a5f-752a31d613db",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "0025e275-03eb-49a2-8351-72df79c09681",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "id": "e383d251-acc0-4927-bc2e-7b2ae5f064fe",
+            "name": "dictionary",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "STRING",
+            "id": "9df3a469-e5a7-4c6d-aa09-94296995d939",
+            "name": "key",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "ANY",
+            "id": "1d63a0ef-1f4a-411d-944f-2539a2fc4dee",
+            "name": "value",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Add/Update Value in Dictionary",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "69cd7863-d2a4-4469-80d7-b1c378bb2e5f",
+            "name": "dictionary",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1480,
+          "y": 47
+        },
+        "revision_group_id": "634d8d15-15ee-4ef8-be3f-85553e0002c9",
+        "state": "RELEASED",
+        "transformation_id": "6c956baa-7fd2-4465-b87d-adbe4069d072",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "8a687b7e-7036-4afa-8e3b-7f76cbea41a7",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "id": "8891fc29-bb60-4cb3-8eed-7288c58a2777",
+            "name": "AntirectifierLayer",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Train Keras Model with Custom Layer",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "8fd0c821-349e-4d1c-a722-1052e0cefbff",
+            "name": "trained_model",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1475,
+          "y": 262
+        },
+        "revision_group_id": "1fb6b27d-53b6-4442-98d9-e053d07aa8a2",
+        "state": "RELEASED",
+        "transformation_id": "66fad534-24b0-4188-a4ad-62429497d8f1",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      },
+      {
+        "id": "62f3a91a-6326-4368-9197-8d295d5afe3a",
+        "inputs": [
+          {
+            "data_type": "ANY",
+            "id": "e57d0548-4f98-4245-8ebd-e03cd8daba81",
+            "name": "model",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "data_type": "ANY",
+            "id": "dc636b7c-086a-417d-9dd5-b6304eda4d68",
+            "name": "custom_objects",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "name": "Wrap Model and Custom Objects",
+        "outputs": [
+          {
+            "data_type": "ANY",
+            "id": "d59f2ec0-d075-49ef-a517-058c6b3a2150",
+            "name": "wrapped_model_with_custom_objects",
+            "position": {
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "position": {
+          "x": 1940,
+          "y": 260
+        },
+        "revision_group_id": "e3a1e276-2aa1-460c-bbc9-c73fa88db2ce",
+        "state": "RELEASED",
+        "transformation_id": "5576783d-421e-475b-bec8-5f2e6535c244",
+        "type": "COMPONENT",
+        "version_tag": "1.0.0"
+      }
+    ],
+    "outputs": [
+      {
+        "connector_id": "d59f2ec0-d075-49ef-a517-058c6b3a2150",
+        "connector_name": "wrapped_model_with_custom_objects",
+        "data_type": "ANY",
+        "id": "4ce2fd78-1c56-48d7-990c-fbbcc7d8a365",
+        "name": "wrapped_model_with_custom_objects",
+        "operator_id": "62f3a91a-6326-4368-9197-8d295d5afe3a",
+        "operator_name": "Wrap Model and Custom Objects",
+        "position": {
+          "x": 2390,
+          "y": 320
+        }
+      }
+    ]
+  },
+  "description": "Train tensorflow keras model with custom AntirectifierLayer",
+  "documentation": "# Train Keras Model with Custom Layer\n\n## Description\nTrain a simple Tensorflow Keras model with a custom AntirectificationLayer on the Keras MNIST dataset based on the keras tutorial: https://keras.io/examples/keras_recipes/antirectifier/#simple-custom-layer-example-antirectifier.\n\n## Inputs\nThis workflow has no inputs.\n\n## Outputs\n* **trained_model** (Tensorflow Keras Model): Trained model.\n",
+  "id": "0023ea79-9f85-4806-8dfd-d45d6ecd7510",
+  "io_interface": {
+    "inputs": [],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "4ce2fd78-1c56-48d7-990c-fbbcc7d8a365",
+        "name": "wrapped_model_with_custom_objects"
+      }
+    ]
+  },
+  "name": "Train Keras Model with Custom Layer",
+  "released_timestamp": "2023-04-05T17:36:58.771245+00:00",
+  "revision_group_id": "534aff4b-2a51-4272-93c8-35ab9236e908",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": [
+      {
+        "adapter_id": "blob-storage-adapter",
+        "ref_id": "planta-millingunit/Outfeed/Anomalies",
+        "ref_id_type": "THINGNODE",
+        "ref_key": "Anomalies - Next Object",
+        "type": "metadata(any)",
+        "workflow_output_name": "trained_model"
+      }
+    ]
+  },
+  "type": "WORKFLOW",
+  "version_tag": "1.0.0"
+}

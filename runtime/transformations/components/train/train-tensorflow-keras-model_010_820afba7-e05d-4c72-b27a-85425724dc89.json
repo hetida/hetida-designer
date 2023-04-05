@@ -49,7 +49,7 @@
     "output_wirings": [
       {
         "adapter_id": "blob-storage-adapter",
-        "ref_id": "planta-millingunit/Outfeed/Anomalies",
+        "ref_id": "planta-picklingunit/Influx/Anomalies",
         "ref_id_type": "THINGNODE",
         "ref_key": "Anomalies - Next Object",
         "type": "metadata(any)",

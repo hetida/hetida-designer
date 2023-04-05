@@ -1,0 +1,33 @@
+{
+  "category": "Models",
+  "content": "import tensorflow as tf\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"model\": \"ANY\",\n    },\n    \"outputs\": {\n        \"compiled_model\": \"ANY\",\n    },\n    \"name\": \"Compile Model with AntirectifierLayer\",\n    \"category\": \"Models\",\n    \"description\": \"Compile model with AntirectifierLayer\",\n    \"version_tag\": \"0.1.1\",\n    \"id\": \"7a3ead4e-b687-45c8-8020-874f1b57713b\",\n    \"revision_group_id\": \"abda2838-f25f-456e-9f39-790b00c33965\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-04-04T14:56:17.530091+00:00\",\n}\n\n\ndef main(*, model):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    model.compile(\n        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),\n        optimizer=tf.keras.optimizers.RMSprop(),\n        metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],\n    )\n    return {\"compiled_model\": model}",
+  "description": "Compile model with AntirectifierLayer",
+  "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+  "id": "7a3ead4e-b687-45c8-8020-874f1b57713b",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "ANY",
+        "id": "34a3d736-e249-4d6c-8ba1-f80bee7e0389",
+        "name": "model"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "b9e84497-3f77-4867-bcb8-168c7ce95ccd",
+        "name": "compiled_model"
+      }
+    ]
+  },
+  "name": "Compile Model with AntirectifierLayer",
+  "released_timestamp": "2023-04-04T14:56:17.530091+00:00",
+  "revision_group_id": "abda2838-f25f-456e-9f39-790b00c33965",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "0.1.1"
+}
