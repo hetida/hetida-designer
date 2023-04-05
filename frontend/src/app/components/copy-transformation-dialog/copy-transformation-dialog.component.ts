@@ -21,7 +21,6 @@ import { UniqueVersionTagValidator } from 'src/app/validation/unique-version-tag
 export class CopyTransformationDialogComponent implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<CopyTransformationDialogComponent>,
-    // TODO fix by reference value changes?
     @Inject(MAT_DIALOG_DATA)
     public data: Omit<TransformationDialogData, 'content'>,
     private readonly transformationStore: Store<TransformationState>
