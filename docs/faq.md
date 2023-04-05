@@ -113,16 +113,16 @@ Usually the class is not needed explicitly so that the there is no reason to lin
 
 
 ## Identifiy source for latest stored object via endpoints
-The [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md) adds the storage timestamp to the name of each stored object and automatically creates a new source corresponding to that object.
+The [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md) adds the storage timestamp and the execution job id to the name of each stored object and automatically creates a new source corresponding to that object.
 
 A request to the [/structure endpoint (GET)](./adapter_system/generic_rest_adapters/web_service_interface.md#structure-endpoint-get) with the `ref_id` as `parentId` path parameter will return a list of all thing nodes, sources and sinks below the thingnode with the id `parentId` as a response.
 ```json
 {
-	"id": "planta-picklingunit/Influx/Anomalies_2023-02-14T12:19:38+00:00",
+	"id": "planta-picklingunit/Influx/Anomalies_2023-02-14T12:19:38+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa.pkl",
 	"thingNodeId": "planta-picklingunit/Influx/Anomalies",
-	"name": "Anomalies - 2023-02-14 12:19:38+00:00",
+	"name": "Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (pkl)",
 	"path": "planta-picklingunit/Influx/Anomalies",
-	"metadataKey": "Anomalies - 2023-02-14 12:19:38+00:00"
+	"metadataKey": "Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (pkl)"
 }
 ```
 
@@ -133,7 +133,7 @@ The attributes `ref_id` and `ref_key` of the corresponding input wiring must be 
 	"filters": {},
 	"ref_id": "planta-picklingunit/Influx/Anomalies",
 	"ref_id_type": "THINGNODE",
-	"ref_key": "Anomalies - 2023-02-14 12:19:38+00:00",
+	"ref_key": "Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (pkl)",
 	"type": "metadata(any)",
 	"workflow_input_name": "example_class_object"
 }
