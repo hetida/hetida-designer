@@ -253,3 +253,56 @@ async def test_nested_wf_execution(async_test_client: AsyncClient) -> None:
         assert response_json["output_results_by_output_name"][
             "limit_violation_timestamp"
         ].startswith("2020-05-28T20:16:41")
+
+
+@pytest.mark.asyncio
+async def test_multitsframe_wf_execution(async_test_client: AsyncClient) -> None:
+    async with async_test_client as client:
+        with open(
+            os.path.join(
+                "tests", "data", "timeseries_dataframe_wf_execution_input.json"
+            ),
+            encoding="utf8",
+        ) as f:
+            loaded_workflow_exe_input = json.load(f)
+        response_status_code, response_json = await run_workflow_with_client(
+            loaded_workflow_exe_input, client
+        )
+
+        assert response_status_code == 200
+        assert response_json["result"] == "ok"
+        assert response_json["output_results_by_output_name"]["multitsframe"] == {
+            "value": {
+                "0": 1,
+                "1": 1.2,
+                "2": 1.9,
+                "3": 1.3,
+                "4": 1.5,
+                "5": 1.7,
+                "6": 0.5,
+                "7": 0.2,
+                "8": 0.1,
+            },
+            "metric": {
+                "0": "a",
+                "1": "b",
+                "2": "a",
+                "3": "b",
+                "4": "a",
+                "5": "b",
+                "6": "metric_0",
+                "7": "metric_0",
+                "8": "metric_0",
+            },
+            "timestamp": {
+                "0": "2019-08-01T15:45:36.000Z",
+                "1": "2019-08-01T15:45:36.000Z",
+                "2": "2019-08-02T15:45:36.000Z",
+                "3": "2019-08-02T15:45:36.000Z",
+                "4": "2019-08-03T15:45:36.000Z",
+                "5": "2019-08-03T15:45:36.000Z",
+                "6": "2019-08-01T15:45:36.000Z",
+                "7": "2019-08-02T15:45:36.000Z",
+                "8": "2019-08-03T15:45:36.000Z",
+            },
+        }

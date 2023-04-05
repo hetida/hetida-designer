@@ -36,7 +36,7 @@ async def post_framelike_records(
     attributes: Any | None,
     ref_id: str,
     adapter_key: str,
-    endpoint: Literal["timeseries", "dataframe"],
+    endpoint: Literal["timeseries", "dataframe", "multitsframe"],
     client: AsyncClient,
 ) -> None:
     """Post a list of dicts (records) to the appropriate endpoint"""
@@ -67,7 +67,7 @@ async def post_framelike_records(
     try:
         response = await client.post(
             url,
-            params=[("id" if endpoint == "dataframe" else "timeseriesId", ref_id)],
+            params=[("timeseriesId" if endpoint == "timeseries" else "id", ref_id)],
             json=list_of_records,
             headers=headers,
             timeout=60,
