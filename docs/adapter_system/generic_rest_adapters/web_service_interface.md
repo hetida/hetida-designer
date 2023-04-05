@@ -24,11 +24,13 @@ Possible values
 
 ### Enumeration "type"
 
-- `metadata({datatype})`(for example “metadata(string)” or “metadata(float)” )
+- `metadata({datatype})`(for example “metadata(string)” or “metadata(float)”)
 
-- `timeseries({datatype})` (for example "timeseries(float)" or "timeseries(int)"
+- `timeseries({datatype})` (for example "timeseries(float)" or "timeseries(int)")
 
 - `dataframe`
+
+- `multitsframe`
 
 ## Endpoints for browsing, filtering and wiring construction in UIs
 
@@ -432,13 +434,66 @@ Payload:
 
 ```
 [
-    {"columnA": "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3},
-    {"columnA": "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3},
-    {"columnA": "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
+  {"columnA": "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3},
+  {"columnA": "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3},
+  {"columnA": "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
 ]
 ```
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
+
+#### /multitsframe (GET)
+
+Query parameters:
+
+* id: required exactly once: This is a source id of a multitsframe source occurring in the structure endpoint
+
+Response (Line delimited Stream of Json records):
+
+```
+{"metric": "Milling Influx Temperature", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
+{"metric": "Milling Outfeed Temperature", "timestamp": "2020-03-11T14:45:18.237000000Z", "value": 41.7}
+{"metric": "Pickling Influx Temperature", "timestamp": "2020-03-11T15:45:18.081000000Z", "value": 18.4}
+{"metric": "Pickling Outfeed Temperature", "timestamp": "2020-03-11T15:45:18.153000000Z", "value": 18.3}
+```
+
+This response will always have the entries `metric`, `timestamp` and `value`. Neither `metric` nor `timestamp` may be `null`. The `timestamp` entries have to be ISO-8601 timestamps and should always have UTC timeszone and nanosecond resolution.
+
+
+##### Attaching metadata to the multitsframe
+Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution.
+
+For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata, e.g.:
+
+```json
+{
+  "column_units": {
+    "Milling Influx Temperature": "C",
+    "Milling Outfeed Temperature": "C",
+    "Pickling Influx Temperature": "C",
+    "Pickling Outfeed Temperature": "C",
+  },
+}
+```
+
+#### /multitsframe (POST)
+
+Query parameters:
+
+* id: required exactly once: This is a sink id of a multitsframe sink occurring in the structure endpoint
+
+Payload:
+
+```
+[
+  {"metric": "Milling Influx Temperature", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
+  {"metric": "Milling Outfeed Temperature", "timestamp": "2020-03-11T14:45:18.237000000Z", "value": 41.7}
+  {"metric": "Pickling Influx Temperature", "timestamp": "2020-03-11T15:45:18.081000000Z", "value": 18.4}
+  {"metric": "Pickling Outfeed Temperature", "timestamp": "2020-03-11T15:45:18.153000000Z", "value": 18.3}
+]
+```
+
+Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different.
 
 ##### Retrieving attached dataframe metadata
 Analogous to the corresponding GET endpoint, metadata stored in the Pandas DataFrame `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
@@ -468,6 +523,8 @@ In particular you do not need:
 * the /sources|sinks|thingNodes/metadata/{key} endpoints
 
 * the /timeseries endpoints
+
+* the /multitsframe endpoints
 
 * /dataframe (POST) endpoint
 
