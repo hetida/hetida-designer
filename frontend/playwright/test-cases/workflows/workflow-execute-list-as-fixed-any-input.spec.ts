@@ -7,20 +7,27 @@ test('Confirm execute workflow with a list as fixed any input', async ({
 }) => {
   // Arrange
   const componentCategory = 'Connectors';
-  const componentName = 'Pass Through';
+  const componentName = 'pass through';
+  const componentTag = '1.0.0';
+  const componentInputName = 'input';
+  const componentOutputName = 'output';
   const workflowCategory = 'Test';
   const workflowName = `Test list as fixed any input ${browserName}`;
   const workflowDescription = 'Use a list as fixed any input';
   const workflowTag = '0.1.0';
-  const workflowImportData = '["MockData1","MockData2"]';
+  const workflowInputData = '["MockData1","MockData2"]';
+  const workflowOutputName = 'output';
 
   // Act
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
   await hetidaDesigner.clickAddWorkflowComponentInNavigation('Add workflow');
-  await hetidaDesigner.typeInInput('name-copy-transformation-dialog', workflowName);
-  await hetidaDesigner.typeInInput('category-copy-transformation-dialog', workflowCategory);
-  await hetidaDesigner.typeInInput('description-copy-transformation-dialog', workflowDescription);
-  await hetidaDesigner.typeInInput('tag-copy-transformation-dialog', workflowTag);
+  await page.waitForSelector(
+    `mat-dialog-container:has-text("Create new workflow")`
+  );
+  await hetidaDesigner.typeInInputById('name', workflowName);
+  await hetidaDesigner.typeInInputById('category', workflowCategory);
+  await hetidaDesigner.typeInInputById('description', workflowDescription);
+  await hetidaDesigner.typeInInputById('tag', workflowTag);
   await hetidaDesigner.clickByTestId(
     'create workflow-copy-transformation-dialog'
   );
@@ -29,8 +36,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
   await hetidaDesigner.dragAndDropItemInNavigation(
     componentCategory,
-    componentName,
-    'hetida-flowchart'
+    `${componentName} (${componentTag})`
   );
 
   await hetidaDesigner.clickIconInToolbar('Configure I/O');
@@ -38,16 +44,16 @@ test('Confirm execute workflow with a list as fixed any input', async ({
     `mat-dialog-container:has-text("Configure Input / Output for Workflow ${workflowName} ${workflowTag}")`
   );
   await hetidaDesigner.clickByTestId(
-    'input-pass through-dynamic-fixed-workflow-io-dialog'
+    `${componentInputName}-${componentName}-dynamic-fixed-workflow-io-dialog`
   );
   await hetidaDesigner.clickByTestId(
-    'input-pass through-input-data-workflow-io-dialog'
+    `${componentInputName}-${componentName}-input-data-workflow-io-dialog`
   );
-  await hetidaDesigner.importJson(workflowImportData);
+  await hetidaDesigner.typeInJsonEditor(workflowInputData);
   await hetidaDesigner.clickByTestId('save-json-editor');
-  await hetidaDesigner.typeInInput(
-    'output-pass through-field-name-output-workflow-io-dialog',
-    'Output'
+  await hetidaDesigner.typeInInputByTestId(
+    `${componentOutputName}-${componentName}-field-name-output-workflow-io-dialog`,
+    workflowOutputName
   );
   await hetidaDesigner.clickByTestId('save-workflow-io-dialog');
 
@@ -62,7 +68,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   const output = await page
     .locator('hd-protocol-viewer >> .protocol-content >> span >> nth=1')
     .innerText();
-  expect(output).toEqual(workflowImportData);
+  expect(output).toEqual(workflowInputData);
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
@@ -80,7 +86,7 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
   await page.locator('.mat-menu-panel').hover();
   await hetidaDesigner.clickOnContextMenu('Delete');
   await page.waitForSelector(
-    `mat-dialog-container:has-text("Delete workflow ${workflowName} ${workflowTag}")`
+    `mat-dialog-container:has-text("Delete workflow ${workflowName} (${workflowTag})")`
   );
   await hetidaDesigner.clickByTestId('delete workflow-confirm-dialog');
 

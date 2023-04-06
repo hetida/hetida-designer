@@ -67,8 +67,8 @@ export class HetidaDesigner {
     }
 
     await this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
-      .locator(`.navigation-item:has-text("${itemName}") >> nth=0`)
+      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
+      .locator(`.navigation-item:has-text("${itemName}")`).first()
       .hover();
   }
 
@@ -81,8 +81,8 @@ export class HetidaDesigner {
     }
 
     await this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
-      .locator(`.navigation-item:has-text("${itemName}") >> nth=0`)
+      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
+      .locator(`.navigation-item:has-text("${itemName}")`).first()
       .dblclick();
   }
 
@@ -95,26 +95,28 @@ export class HetidaDesigner {
     }
 
     await this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
-      .locator(`.navigation-item:has-text("${itemName}") >> nth=0`)
+      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
+      .locator(`.navigation-item:has-text("${itemName}")`).first()
       .click({ button: 'right' });
   }
 
   public async dragAndDropItemInNavigation(
     categoryName: string,
-    itemName: string,
-    targetHtmlTag: string
+    itemName: string
   ): Promise<void> {
-    if (categoryName === '' || itemName === '' || targetHtmlTag === '') {
+    if (categoryName === '' || itemName === '') {
       throw new Error(
-        'ERROR: Category name, target html tag and item name must not be empty'
+        'ERROR: Category and item name must not be empty'
       );
     }
 
     const source = this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
-      .locator(`.navigation-item:has-text("${itemName}") >> nth=0`);
-    const target = this.page.locator(`${targetHtmlTag}`);
+      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
+      .locator(`.navigation-item:has-text("${itemName}")`).first();
+
+    const target = this.page.locator(
+      'svg:has-text(".svg-small-grid { stroke: #a9a9a9; } .svg-grid { stroke: #a9a9a9; }") >> nth=0'
+    );
 
     await source.dragTo(target);
   }
@@ -161,7 +163,7 @@ export class HetidaDesigner {
     await this.page.getByTestId(testid).click();
   }
 
-  public async typeInInput(testid: string, inputText: string): Promise<void> {
+  public async typeInInputByTestId(testid: string, inputText: string): Promise<void> {
     if (testid === '' || inputText === '') {
       throw new Error('ERROR: Testid or input text must not be empty');
     }
@@ -170,55 +172,66 @@ export class HetidaDesigner {
     await this.page.getByTestId(testid).click();
     await this.page.getByTestId(testid).press('Control+a');
     await this.page.getByTestId(testid).type(inputText);
+  }
+
+  public async typeInInputById(id: string, inputText: string): Promise<void> {
+    if (id === '' || inputText === '') {
+      throw new Error('ERROR: Id or input text must not be empty');
+    }
+
+    // Select default input text and overwrite it
+    await this.page.locator(`input[id="${id}"]`).click();
+    await this.page.locator(`input[id="${id}"]`).press('Control+a');
+    await this.page.locator(`input[id="${id}"]`).type(inputText);
 
     // Workaround for autocomplete in create component / workflow dialog
-    if (testid === 'category-copy-transformation-dialog') {
+    if (id === 'category') {
       // tab out of input field to close suggested options
-      await this.page.getByTestId(testid).press('Tab');
+      await this.page.locator(`input[id="${id}"]`).press('Tab');
     }
   }
-  // TODO
-  public async typeInTextarea(textareaText: string): Promise<void> {
+
+  public async typeInDocumentationEditor(textareaText: string): Promise<void> {
     if (textareaText === '') {
       throw new Error('ERROR: Textarea text must not be empty');
     }
 
     await this.page
-      .locator('hd-documentation-editor-dialog >> textarea')
+      .locator('hd-documentation-editor >> textarea')
       .click();
     await this.page.press(
-      'hd-documentation-editor-dialog >> textarea',
+      'hd-documentation-editor >> textarea',
       'Control+a'
     );
     await this.page.press(
-      'hd-documentation-editor-dialog >> textarea',
+      'hd-documentation-editor >> textarea',
       'Delete'
     );
     await this.page
-      .locator('hd-documentation-editor-dialog >> textarea')
+      .locator('hd-documentation-editor >> textarea')
       .type(textareaText);
   }
-  // TODO
-  public async importJson(importData: string): Promise<void> {
-    if (importData === '') {
-      throw new Error('ERROR: Import data must not be empty');
+
+  public async typeInJsonEditor(textareaText: string): Promise<void> {
+    if (textareaText === '') {
+      throw new Error('ERROR: Textarea text must not be empty');
     }
 
-    await this.page.locator('.editor-container').click();
-    await this.page.press('.editor-container >> textarea', 'Control+a');
-    await this.page.press('.editor-container >> textarea', 'Delete');
-    await this.page.locator('.editor-container >> textarea').type(importData);
+    await this.page.locator('ngx-monaco-editor').click();
+    await this.page.press('ngx-monaco-editor >> textarea', 'Control+a');
+    await this.page.press('ngx-monaco-editor >> textarea', 'Delete');
+    await this.page.locator('ngx-monaco-editor >> textarea').type(textareaText);
   }
 
   public async selectItemInDropdown(
-    dropdownId: string,
+    testid: string,
     itemText: string
   ): Promise<void> {
-    if (dropdownId === '' || itemText === '') {
-      throw new Error(`ERROR: Dropdown id or item text must not be empty`);
+    if (testid === '' || itemText === '') {
+      throw new Error(`ERROR: Dropdown testid or item text must not be empty`);
     }
 
-    await this.page.getByTestId(dropdownId).click();
+    await this.page.getByTestId(testid).click();
     await this.page.locator(`mat-option:has-text("${itemText}")`).click();
   }
 

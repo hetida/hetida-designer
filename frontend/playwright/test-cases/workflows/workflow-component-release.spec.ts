@@ -7,51 +7,59 @@ test('Confirm release a workflow or component', async ({
 }) => {
   // Arrange
   const componentCategory = 'Connectors';
-  const componentName = 'Pass Through';
+  const componentName = 'pass through';
+  const componentTag = '1.0.0';
+  const componentInputName = 'input';
+  const componentOutputName = 'output';
   const workflowCategory = 'Test';
   const workflowName = `Test release a workflow ${browserName}`;
   const workflowDescription = 'Releases a workflow or component';
   const workflowTag = '0.1.1';
-  const workflowInput = 'Input';
-  const workflowOutput = 'Output';
-  const workflowImportData = '["MockData1","MockData2"]';
-
-  const workflowDocumentation = `# Test Workflow HDOS-364 ${browserName}
+  const workflowInputName = 'input';
+  const workflowOutputName = 'output';
+  const workflowInputData = '["MockData1","MockData2"]';
+  const workflowDocumentation = `# ${workflowName}
 ## Description
-Releases a workflow or component, e2e test.
+${workflowDescription}
 ## Inputs
-${workflowInput}
+${workflowInputName}
 ## Outputs
-${workflowOutput}
+${workflowOutputName}
 ## Examples
 The json input of a typical call of this workflow is:
 \`\`\`JSON
-${workflowImportData}
+${workflowInputData}
 \`\`\`
 `;
 
   // Act
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
   await hetidaDesigner.clickAddWorkflowComponentInNavigation('Add workflow');
-  await hetidaDesigner.typeInInput('name', workflowName);
-  await hetidaDesigner.typeInInput('category', workflowCategory);
-  await hetidaDesigner.typeInInput('description', workflowDescription);
-  await hetidaDesigner.typeInInput('tag', workflowTag);
-  await hetidaDesigner.clickButton('Create Workflow');
+  await page.waitForSelector(
+    `mat-dialog-container:has-text("Create new workflow")`
+  );
+  await hetidaDesigner.typeInInputById('name', workflowName);
+  await hetidaDesigner.typeInInputById('category', workflowCategory);
+  await hetidaDesigner.typeInInputById('description', workflowDescription);
+  await hetidaDesigner.typeInInputById('tag', workflowTag);
+  await hetidaDesigner.clickByTestId(
+    'create workflow-copy-transformation-dialog'
+  );
 
   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
   await hetidaDesigner.dragAndDropItemInNavigation(
     componentCategory,
-    componentName,
-    'hetida-flowchart'
+    `${componentName} (${componentTag})`
   );
 
   await hetidaDesigner.clickIconInToolbar('Configure I/O');
-  await page.waitForSelector('mat-dialog-container');
-  await hetidaDesigner.typeInInputPosition(0, workflowInput);
-  await hetidaDesigner.typeInInputPosition(1, workflowOutput);
-  await hetidaDesigner.clickButton('Save');
+  await page.waitForSelector(
+    `mat-dialog-container:has-text("Configure Input / Output for Workflow ${workflowName} ${workflowTag}")`
+  );
+  await hetidaDesigner.typeInInputByTestId(`${componentInputName}-${componentName}-field-name-input-workflow-io-dialog`, workflowInputName);
+  await hetidaDesigner.typeInInputByTestId(`${componentOutputName}-${componentName}-field-name-output-workflow-io-dialog`, workflowOutputName);
+  await hetidaDesigner.clickByTestId('save-workflow-io-dialog');
 
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector('mat-dialog-container');
@@ -66,7 +74,7 @@ ${workflowImportData}
 
   await hetidaDesigner.clickIconInToolbar('Open documentation');
   await page.waitForSelector('hd-documentation-editor-dialog >> textarea');
-  await hetidaDesigner.typeInTextarea(workflowDocumentation);
+  await hetidaDesigner.typeInDocumentationEditor(workflowDocumentation);
   await hetidaDesigner.clickButton('Save');
 
   await hetidaDesigner.clickTabInNavigation(1);
@@ -118,10 +126,10 @@ ${workflowImportData}
   expect(workflowDescriptionReleased).toEqual(workflowDescription);
   expect(workflowTagReleased).toEqual(workflowTag);
   // Configure I/O
-  expect(workflowInputReleased).toEqual(workflowInput);
-  expect(workflowOutputReleased).toEqual(workflowOutput);
+  expect(workflowInputReleased).toEqual(workflowInputName);
+  expect(workflowOutputReleased).toEqual(workflowOutputName);
   // Execute
-  expect(workflowImportDataReleased).toEqual(workflowImportData);
+  expect(workflowImportDataReleased).toEqual(workflowInputData);
   expect(outputProtocolReleased).toEqual(outputProtocol);
   // Documentation
   expect(workflowDocumentationReleased).toEqual(workflowDocumentation);
@@ -141,7 +149,10 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     );
     await page.locator('.mat-menu-panel').hover();
     await hetidaDesigner.clickOnContextMenu('Deprecate');
-    await hetidaDesigner.clickButton('Deprecate workflow');
+    await page.waitForSelector(
+      `mat-dialog-container:has-text("Deprecate workflow ${workflowName} (${workflowTag})")`
+    );
+    await hetidaDesigner.clickByTestId('deprecate workflow-confirm-dialog');
   
     await hetidaDesigner.clearTest();
 });
