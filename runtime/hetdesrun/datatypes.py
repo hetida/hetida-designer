@@ -8,11 +8,14 @@ from uuid import UUID
 
 import numpy as np
 import pandas as pd
+import pytz
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
 from pydantic import BaseConfig, BaseModel, create_model
 
 logger = logging.getLogger(__name__)
+
+MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
 
 
 class DataType(str, Enum):
@@ -26,6 +29,7 @@ class DataType(str, Enum):
     String = "STRING"
     DataFrame = "DATAFRAME"
     Series = "SERIES"
+    MultiTSFrame = "MULTITSFRAME"
     Boolean = "BOOLEAN"
     Any = "ANY"
     PlotlyJson = "PLOTLYJSON"
@@ -115,6 +119,71 @@ class PydanticPandasDataFrame:
                 ) from read_json_exception
 
 
+class PydanticMultiTimeseriesPandasDataFrame:
+    """Custom pydantic Data Type for parsing Multi Timeseries Pandas DataFrames
+
+    Parses either a json string according to pandas.read_json
+    with typ="frame" and default arguments otherwise or
+    a Python dict-like data structure using the constructor
+    of the pandas.DataFrame class with default arguments
+    """
+
+    @classmethod
+    def __get_validators__(cls) -> Generator:
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
+        df: pd.DataFrame | None = None
+        if isinstance(v, pd.DataFrame):
+            df = v
+        else:
+            try:
+                df = pd.read_json(v, typ="frame")
+
+            except Exception:  # noqa: BLE001
+                try:
+                    df = pd.read_json(json.dumps(v), typ="frame")
+                except Exception as read_json_exception:  # noqa: BLE001
+                    raise ValueError(
+                        "Could not parse provided input as Pandas DataFrame."
+                    ) from read_json_exception
+
+            if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
+                column_names_string = ", ".join(df.columns)
+                multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
+                raise ValueError(
+                    f"The column names {column_names_string} don't match the column names "
+                    f"required for a MultiTSFrame {multitsframe_column_names_string}."
+                )
+
+        if df["metric"].isna().any():
+            raise ValueError(
+                "No null values are allowed for the column 'metric' of a MulitTSFrame."
+            )
+
+        df["metric"] = df["metric"].astype("string")
+
+        if df["timestamp"].isna().any():
+            raise ValueError(
+                "No null values are allowed for the column 'timestamp' of a MulitTSFrame."
+            )
+
+        if not pd.api.types.is_datetime64tz_dtype(df["timestamp"]):
+            raise ValueError(
+                "Column 'timestamp' of MultiTSFrame does not have datetime64tz dtype. "
+                f'Got {str(df["timestamp"].dtype)} index dtype instead.'
+            )
+
+        if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
+            raise ValueError(
+                "Column 'timestamp' of MultiTSFrame does not have UTC timezone. "
+                f'Got {str(df["timestamp"].dt.tz)} timezone instead.'
+            )
+
+        return df
+
+
 class ParsedAny:
     """Tries to parse Any objects somehow intelligently
 
@@ -177,6 +246,7 @@ data_type_map: dict[DataType, type] = {
     DataType.Float: float,
     DataType.String: str,
     DataType.Series: PydanticPandasSeries,
+    DataType.MultiTSFrame: PydanticMultiTimeseriesPandasDataFrame,
     DataType.DataFrame: PydanticPandasDataFrame,
     DataType.Boolean: bool,
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:

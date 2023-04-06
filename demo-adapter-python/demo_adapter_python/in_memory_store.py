@@ -1,5 +1,6 @@
+from collections.abc import MutableMapping
 from multiprocessing import Manager
-from typing import Any, MutableMapping
+from typing import Any
 
 import pandas as pd
 
@@ -41,6 +42,7 @@ for plant in ("plantA", "plantB"):
         isSink=True,
     )
     store[f"root.{plant}.alerts"] = pd.DataFrame()
+    store[f"root.{plant}.anomalies"] = pd.DataFrame()
 
 
 def get_store() -> MutableMapping[Any, Any]:
