@@ -99,7 +99,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             else:
                 custom_objects = pickle.load(custom_objects_response["Body"])
             with h5py.File(file_object, "r") as f:
-                data = tf.keras.models.load_model(f, custom_objects=custom_objects)
+                data = tf.keras.saving.load_model(f, custom_objects=custom_objects)
     else:
         data = pickle.load(response["Body"])
 

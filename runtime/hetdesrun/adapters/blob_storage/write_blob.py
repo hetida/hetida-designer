@@ -187,7 +187,7 @@ async def write_blob_to_storage(
         with BytesIO() as file_object:
             if is_keras_model or is_keras_model_with_custom_objects:
                 with h5py.File(file_object, "w") as h5_file_object:
-                    tf.keras.models.save_model(
+                    tf.keras.saving.save_model(
                         data if is_keras_model else data.model, h5_file_object
                     )
                 file_object.seek(0)
