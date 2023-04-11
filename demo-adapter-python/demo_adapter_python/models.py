@@ -1,4 +1,5 @@
 import datetime
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -19,8 +20,13 @@ class StructureThingNode(BaseModel):
     description: str
 
 
+class FilterType(Enum):
+    FreeText = "free_text"
+
+
 class StructureFilter(BaseModel):
     name: str
+    type: FilterType  # noqa: A003
     required: bool
 
 
