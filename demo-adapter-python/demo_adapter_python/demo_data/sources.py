@@ -10,7 +10,7 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant A",
         "metadataKey": "Temperature Unit",
         "type": ExternalType.METADATA_STR,
-        "filters": {"mode": {"name": "Latex", "type": "free_text"}},
+        "filters": {"mode": {"name": "Latex", "type": "free_text", "required": False}},
     },
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantA.plant_pressure_unit",
@@ -56,7 +56,7 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Alerts",
         "path": "Plant A",
         "type": ExternalType.DATAFRAME,
-        "filters": {"column_names": {"name": "columns", "type": "free_text"}},
+        "filters": {"column_names": {"name": "columns", "type": "free_text", "required": False}},
     },
     {
         "id": "root.plantB.alerts",
@@ -86,8 +86,8 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant A",
         "type": ExternalType.MULTITSFRAME,
         "filters": {
-            "lower_threshold": {"name": "above threshold", "type": "free_text"},
-            "upper_threshold": {"name": "below threshold", "type": "free_text"},
+            "lower_threshold": {"name": "above threshold", "type": "free_text", "required": False},
+            "upper_threshold": {"name": "below threshold", "type": "free_text", "required": False},
         },
     },
     {
@@ -103,7 +103,7 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Influx Temperature",
         "path": "Plant A / Pickling Unit / Influx",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {"frequency": {"name": "frequency", "type": "free_text"}},
+        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
     },
     {
         "id": "root.plantA.picklingUnit.influx.press",
