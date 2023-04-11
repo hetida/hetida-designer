@@ -67,7 +67,7 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_source() ->
         client_mock.create_bucket(Bucket=bucket_name)
         client_mock.put_object(
             Bucket=bucket_name,
-            Key="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            Key="A_2022-01-02T14:23:18+02:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             Body=struct.pack(">i", 42),
         )
         with mock.patch(
@@ -81,7 +81,7 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_source() ->
         ):
             await load_blob_from_storage(
                 thing_node_id="i-ii/A",
-                metadata_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                metadata_key="A - 2022-01-02 14:23:18+02:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
             )
 
 
