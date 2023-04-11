@@ -161,5 +161,5 @@ E.g. for the examplary sources presented at the end of the section [Mounting the
 * `ref_id="plantb/PicklingUnit/Influx/Anomalies"` and `ref_key="Anomalies - 2023-02-14 12:19:38+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa (h5)"`
 
 For sinks the `ref_key` contains the suffix `Next Object` instead of time and job id, e.g. `ref_key="Anomalies - Next Object"`. Time and job id for the stored object will then be determined automatically.
-Alternatively, it is possible to provide a `ref_key` with time and job id, which will then be used to set the object key.
+Alternatively, it is possible to provide a `ref_key` with time and job id, which will then be used to set the object key. Note, that the time must have the timezone UTC>
 If an object with this object key already exists or either `ref_id` or `ref_key` are not allowed, this object will not be overwritten but an exception will be raised so that the response to the execution request will still have the HTTP status code 200 but the attriube `result` of response JSON will have the value `failure` and the attribute `error` will contain the  according error message.
