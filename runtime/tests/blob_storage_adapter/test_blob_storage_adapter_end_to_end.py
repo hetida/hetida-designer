@@ -180,7 +180,7 @@ async def test_store_object_under_key_which_already_exists(
                         "ref_id": "i-i/C",
                         "ref_id_type": "THINGNODE",
                         "ref_key": (
-                            "C - 2022-01-02T14:23:18+00:00 - "
+                            "C - 2022-01-02 14:23:18+00:00 - "
                             "4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
                         ),
                         "type": "metadata(any)",
