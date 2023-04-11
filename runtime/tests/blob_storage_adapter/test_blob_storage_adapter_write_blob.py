@@ -21,9 +21,6 @@ from hetdesrun.adapters.blob_storage.models import (
     StructureBucket,
     StructureThingNode,
 )
-from hetdesrun.adapters.blob_storage.structure import (
-    get_source_by_thing_node_id_and_metadata_key,
-)
 from hetdesrun.adapters.blob_storage.write_blob import (
     get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key,
     send_data,
@@ -195,17 +192,16 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
             pickled_data_bytes = object_response["Body"].read()
             file_object = BytesIO(pickled_data_bytes)
             assert struct.unpack(">i", joblib.load(file_object)) == (23,)
-            with mock.patch(
-                "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
-                return_value=AdapterHierarchy.from_file(
-                    "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
-                ),
-            ), mock.patch(
-                "hetdesrun.adapters.blob_storage.structure.get_object_key_strings_in_bucket",
-                return_value=object_key_string,
-            ):
-                _ = await get_source_by_thing_node_id_and_metadata_key(
-                    IdString(thing_node_id), metadata_key
+
+            non_utc_metadata_key = (
+                "E - 2001-02-03 04:05:06+02:00 - "
+                "e54d527d-70c7-4ac7-8b67-7aa8ec7b5ebe (pkl)"
+            )
+            with pytest.raises(AdapterClientWiringInvalidError):
+                await write_blob_to_storage(
+                    data=struct.pack(">i", 23),
+                    thing_node_id=thing_node_id,
+                    metadata_key=non_utc_metadata_key,
                 )
 
 

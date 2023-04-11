@@ -355,7 +355,8 @@ async def test_blob_storage_get_source_by_thing_node_id_and_metadata_key() -> No
     ), mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_object_key_strings_in_bucket",
         return_value=[
-            "A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43.pkl"
+            "A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43.pkl",
+            "A_2022-01-02T14:57:31+02:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43.pkl",
         ],
     ):
         source_by_tn_id_and_md_key = await get_source_by_thing_node_id_and_metadata_key(
@@ -379,10 +380,23 @@ async def test_blob_storage_get_source_by_thing_node_id_and_metadata_key() -> No
             == "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43 (pkl)"
         )
 
-        with pytest.raises(StructureObjectNotFound):
+        with pytest.raises(
+            StructureObjectNotFound,
+            match="Thing node id.*and metadata key.* do not match",
+        ):
             await get_source_by_thing_node_id_and_metadata_key(
                 thing_node_id=IdString("i-i/B"),
-                metadata_key="A - 2022-01-02 14:57:31+00:00",
+                metadata_key=(
+                    "A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43 (pkl)"
+                ),
+            )
+
+        with pytest.raises(StructureObjectNotFound, match="must have timezone UTC"):
+            await get_source_by_thing_node_id_and_metadata_key(
+                thing_node_id=IdString("i-i/A"),
+                metadata_key=(
+                    "A - 2022-01-02 14:57:31+02:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43 (pkl)"
+                ),
             )
 
 
