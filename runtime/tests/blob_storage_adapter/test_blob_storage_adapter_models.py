@@ -42,9 +42,9 @@ def test_blob_storage_class_structure_bucket() -> None:
 
 
 def test_blob_storage_class_object_key() -> None:
-    with pytest.raises(ValueError, match="UTC") as exc_info:
+    with pytest.raises(ValueError, match="must have timezone UTC"):
         object_key = ObjectKey(
-            string="A_2022-01-02T14:23:18+00:00",
+            string="A_2022-01-02T14:23:18+01:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             name="A",
             time=datetime(
                 year=2022,
@@ -56,11 +56,11 @@ def test_blob_storage_class_object_key() -> None:
                 tzinfo=timezone(timedelta(hours=1)),
             ),
             job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
+            file_extension=FileExtension.Pickle,
         )
-    assert "The ObjectKey attribute time must have timezone UTC!" in str(exc_info.value)
 
     object_key = ObjectKey(
-        string="A_2022-01-02T14:23:18+00:00",
+        string="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
         name="A",
         time=datetime(
             year=2022,
@@ -75,7 +75,10 @@ def test_blob_storage_class_object_key() -> None:
         file_extension=FileExtension.Pickle,
     )
 
-    assert object_key.string == "A_2022-01-02T14:23:18+00:00"
+    assert (
+        object_key.string
+        == "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl"
+    )
     assert object_key.name == "A"
     assert object_key.time == datetime(
         year=2022, month=1, day=2, hour=14, minute=23, second=18, tzinfo=timezone.utc
@@ -121,6 +124,13 @@ def test_blob_storage_class_object_key() -> None:
     )
     assert object_key_from_string_with_extension.file_extension == "h5"
 
+    with pytest.raises(ValueError, match="must have timezone UTC"):
+        object_key_from_string_with_extension = ObjectKey.from_string(
+            IdString(
+                "A_2022-01-02T14:23:18+02:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5"
+            )
+        )
+
     with pytest.raises(
         ValueError, match=f"contains '{IDENTIFIER_SEPARATOR}' less than"
     ):
@@ -130,7 +140,7 @@ def test_blob_storage_class_object_key() -> None:
 
     object_key_from_thing_node_id_and_metadata_key = ObjectKey.from_thing_node_id_and_metadata_key(
         thing_node_id=IdString("i-ii/A"),
-        metadata_key="A - 2022-01-02T14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
+        metadata_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
     )
     assert (
         object_key_from_thing_node_id_and_metadata_key.string
@@ -139,13 +149,21 @@ def test_blob_storage_class_object_key() -> None:
 
     ok_from_thing_node_id_and_metadata_key_with_ext = ObjectKey.from_thing_node_id_and_metadata_key(
         thing_node_id=IdString("i-ii/A"),
-        metadata_key="A - 2022-01-02T14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+        metadata_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
         file_extension=FileExtension.H5,
     )
     assert (
         ok_from_thing_node_id_and_metadata_key_with_ext.string
         == "A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.h5"
     )
+
+    with pytest.raises(ValueError, match="must have timezone UTC"):
+        ObjectKey.from_thing_node_id_and_metadata_key(
+            thing_node_id=IdString("i-ii/A"),
+            metadata_key=(
+                "A - 2022-01-02 14:23:18+02:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+            ),
+        )
 
     thing_node_id_from_ok = (
         object_key_from_thing_node_id_and_metadata_key.to_thing_node_id(

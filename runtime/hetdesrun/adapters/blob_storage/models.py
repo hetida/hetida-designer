@@ -98,11 +98,117 @@ class ObjectKey(BaseModel):
     job_id: UUID
     file_extension: FileExtension
 
+    @validator("string")
+    def string_matches_pattern(cls, string: str) -> str:
+        if string.count(IDENTIFIER_SEPARATOR) != 2:
+            raise ValueError(
+                f"Object key string '{string}' must contain '{IDENTIFIER_SEPARATOR}' exactly twice!"
+            )
+
+        _, time_string, job_id_with_ext = string.split(IDENTIFIER_SEPARATOR)
+        try:
+            datetime.fromisoformat(time_string)
+        except ValueError as error:
+            raise ValueError(
+                f"Object key time string {time_string} of string {string} must be in ISO format!"
+            ) from error
+
+        if string.count(FILE_EXTENSION_SEPARATOR) != 1:
+            raise ValueError(
+                f"Object key string '{string}' must contain "
+                f"'{FILE_EXTENSION_SEPARATOR}' exaclty once!"
+            )
+
+        job_id_string, file_extension_string = job_id_with_ext.split(
+            FILE_EXTENSION_SEPARATOR
+        )
+
+        try:
+            UUID(job_id_string)
+        except ValueError as error:
+            raise ValueError(
+                f"Object key job id string {job_id_string} of {string} must be a UUID!"
+            ) from error
+
+        return string
+
+    @validator("name")
+    def name_matches_string(cls, name: str, values: dict) -> str:
+        try:
+            string = values["string"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot check if object key's time matches its string "
+                "if the string is missing!"
+            ) from error
+
+        name_string, _ = string.split(IDENTIFIER_SEPARATOR, maxsplit=1)
+        if name != name_string:
+            raise ValueError(
+                f"The object key's name '{name}' does not match its string {string}!"
+            )
+        return name
+
+    @validator("time")
+    def time_matches_string(cls, time: datetime, values: dict) -> datetime:
+        try:
+            string = values["string"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot check if object key's time matches its string "
+                "if the string is missing!"
+            ) from error
+
+        _, time_string, _ = string.split(IDENTIFIER_SEPARATOR)
+        if time.isoformat() != time_string:
+            raise ValueError(
+                f"The object key's time '{time.isoformat()}' does not match its string {string}!"
+            )
+        return time
+
     @validator("time")
     def has_timezone_utc(cls, time: datetime) -> datetime:
         if time.tzinfo != timezone.utc:
-            raise ValueError("The ObjectKey attribute time must have timezone UTC!")
+            raise ValueError(
+                f"The ObjectKey attribute time must have timezone UTC not {time.tzinfo}!"
+            )
         return time
+
+    @validator("job_id")
+    def job_id_matches_string(cls, job_id: UUID, values: dict) -> UUID:
+        try:
+            string = values["string"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot check if object key's time matches its string "
+                "if the string is missing!"
+            ) from error
+
+        ok_without_ext, _ = string.split(FILE_EXTENSION_SEPARATOR)
+        _, job_id_string = ok_without_ext.rsplit(IDENTIFIER_SEPARATOR, maxsplit=1)
+        if str(job_id) != job_id_string:
+            raise ValueError(
+                f"The object key's name '{str(job_id)}' does not match its string {string}!"
+            )
+        return job_id
+
+    @validator("file_extension")
+    def file_extension_matches_string(cls, file_extension: str, values: dict) -> str:
+        try:
+            string = values["string"]
+        except KeyError as error:
+            raise ValueError(
+                "Cannot check if object key's time matches its string "
+                "if the string is missing!"
+            ) from error
+
+        _, file_extension_string = string.split(FILE_EXTENSION_SEPARATOR)
+        if file_extension != file_extension_string:
+            raise ValueError(
+                f"The object key's file extension '{file_extension}' "
+                f"does not match its string {string}!"
+            )
+        return file_extension
 
     @classmethod
     def from_name_and_job_id(
@@ -164,7 +270,7 @@ class ObjectKey(BaseModel):
         return ObjectKey(
             string=string,
             name=name,
-            time=datetime.fromisoformat(time_string).replace(tzinfo=timezone.utc),
+            time=datetime.fromisoformat(time_string),
             job_id=UUID(job_id_string),
             file_extension=file_extension,
         )
@@ -201,7 +307,7 @@ class ObjectKey(BaseModel):
 
         return ObjectKey.from_name_and_time_and_job_id(
             name=object_key_prefix,
-            time=datetime.fromisoformat(time_string).replace(tzinfo=timezone.utc),
+            time=datetime.fromisoformat(time_string),
             job_id=UUID(job_id_string),
             file_extension=FileExtension(file_extension_string)
             if file_extension is None
