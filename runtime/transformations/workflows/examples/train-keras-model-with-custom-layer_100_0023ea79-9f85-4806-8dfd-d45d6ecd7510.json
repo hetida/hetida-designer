@@ -451,16 +451,7 @@
   "state": "RELEASED",
   "test_wiring": {
     "input_wirings": [],
-    "output_wirings": [
-      {
-        "adapter_id": "blob-storage-adapter",
-        "ref_id": "planta-millingunit/Outfeed/Anomalies",
-        "ref_id_type": "THINGNODE",
-        "ref_key": "Anomalies - Next Object",
-        "type": "metadata(any)",
-        "workflow_output_name": "trained_model"
-      }
-    ]
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

@@ -228,17 +228,7 @@
   "revision_group_id": "1f2f8ca0-133a-4ab1-b874-7f03cd9f75c0",
   "state": "RELEASED",
   "test_wiring": {
-    "input_wirings": [
-      {
-        "adapter_id": "blob-storage-adapter",
-        "filters": {},
-        "ref_id": "planta-millingunit/Outfeed/Anomalies",
-        "ref_id_type": "THINGNODE",
-        "ref_key": "Anomalies - 2023-04-04 16:30:34+00:00 - 8ca3f9a2-e5b1-41f7-9fef-84f548b240cf (h5)",
-        "type": "metadata(any)",
-        "workflow_input_name": "trained_model"
-      }
-    ],
+    "input_wirings": [],
     "output_wirings": []
   },
   "type": "WORKFLOW",
