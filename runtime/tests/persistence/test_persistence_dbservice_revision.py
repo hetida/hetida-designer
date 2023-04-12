@@ -399,6 +399,11 @@ def test_multiple_select(clean_test_db_engine):
         assert len(results) == 2
 
         results = get_multiple_transformation_revisions(
+            FilterParams(category_prefix="Test cat", include_dependencies=False)
+        )
+        assert len(results) == 2
+
+        results = get_multiple_transformation_revisions(
             FilterParams(names=["Test"], include_dependencies=False)
         )
         assert len(results) == 2
