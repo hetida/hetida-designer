@@ -15,7 +15,7 @@ class FilterParams(BaseModel):
     categories: list[ValidStr] | None = Field(
         None, description="Filter for several specified categories"
     )
-    category_prefix: str | None = Field(
+    category_prefix: ValidStr | None = Field(
         None,
         description="Category prefix that must be matched exactly (case-sensitive).",
     )
