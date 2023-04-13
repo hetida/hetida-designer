@@ -204,8 +204,8 @@
       }
     ]
   },
-  "description": "Test tensorflow keras model with custom AntirectifierLayer",
-  "documentation": "# Test Keras Model with Custom Layer\n\n## Description\nTest a Tensorflow Keras model with a custom AntirectifierLayer on the Keras MNIST dataset.\n\n## Inputs\n* **trained_model** (Tensorflow Keras Model): Trained model, e.g. from a stored object.\n \n## Outputs\n* **metrics** (Dict): Dictionary which contains the metrics of the trained model.\n\n## Details\n\nThis workflow cannot be executed with manual input. It is intended to be used with stored objects or within another workflow.",
+  "description": "Load tensorflow keras model with custom AntirectifierLayer",
+  "documentation": "# Load Keras Model with Custom Layer\n\n## Description\nThis workflows demonstrates how to load a Tensorflow Keras model with custom classes in the Blob Storage Adapter.\nAs an example a simple Tensorflow Keras model with a custom AntirectificationLayer is tested on the Keras MNIST dataset based on the keras tutorial: https://keras.io/examples/keras_recipes/antirectifier/#simple-custom-layer-example-antirectifier.\n\n## Inputs\n* **trained_model** (Tensorflow Keras Model): Trained model, e.g. from a stored object.\n \n## Outputs\n* **metrics** (Dict): Dictionary which contains the metrics of the trained model.\n\n## Details\n\nThis workflow cannot be executed with manual input. It is intended to be used with stored objects or within another workflow.",
   "id": "2bae9b14-2bd2-4994-9509-9ab46e24838b",
   "io_interface": {
     "inputs": [
@@ -223,7 +223,7 @@
       }
     ]
   },
-  "name": "Test Keras Model with Custom Layer",
+  "name": "Load Keras Model with Custom Layer",
   "released_timestamp": "2023-04-05T16:43:45.177060+00:00",
   "revision_group_id": "1f2f8ca0-133a-4ab1-b874-7f03cd9f75c0",
   "state": "RELEASED",

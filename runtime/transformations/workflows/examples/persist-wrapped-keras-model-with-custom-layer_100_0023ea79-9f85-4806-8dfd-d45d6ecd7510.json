@@ -393,7 +393,7 @@
             }
           }
         ],
-        "name": "Wrap Model and Custom Objects",
+        "name": "Wrap Keras Model with Custom Classes",
         "outputs": [
           {
             "data_type": "ANY",
@@ -424,7 +424,7 @@
         "id": "4ce2fd78-1c56-48d7-990c-fbbcc7d8a365",
         "name": "wrapped_model_with_custom_objects",
         "operator_id": "62f3a91a-6326-4368-9197-8d295d5afe3a",
-        "operator_name": "Wrap Model and Custom Objects",
+        "operator_name": "Wrap Keras Model with Custom Classes",
         "position": {
           "x": 2390,
           "y": 320
@@ -432,8 +432,8 @@
       }
     ]
   },
-  "description": "Train tensorflow keras model with custom AntirectifierLayer",
-  "documentation": "# Train Keras Model with Custom Layer\n\n## Description\nTrain a simple Tensorflow Keras model with a custom AntirectificationLayer on the Keras MNIST dataset based on the keras tutorial: https://keras.io/examples/keras_recipes/antirectifier/#simple-custom-layer-example-antirectifier.\n\n## Inputs\nThis workflow has no inputs.\n\n## Outputs\n* **trained_model** (Tensorflow Keras Model): Trained model.\n",
+  "description": "Persist wrapped tensorflow keras model with custom AntirectifierLayer",
+  "documentation": "# Persist Wrapped Keras Model with Custom Layer\n\n## Description\nThis workflows demonstrates how to persist a Tensorflow Keras model with custom classes in the Blob Storage Adapter.\nAs an example a simple Tensorflow Keras model with a custom AntirectificationLayer is trained on the Keras MNIST dataset based on the keras tutorial: https://keras.io/examples/keras_recipes/antirectifier/#simple-custom-layer-example-antirectifier.\n\n## Inputs\nThis workflow has no inputs.\n\n## Outputs\n* **trained_model** (Tensorflow Keras Model): Trained model.\n",
   "id": "0023ea79-9f85-4806-8dfd-d45d6ecd7510",
   "io_interface": {
     "inputs": [],
@@ -445,7 +445,7 @@
       }
     ]
   },
-  "name": "Train Keras Model with Custom Layer",
+  "name": "Persist Wrapped Keras Model with Custom Layer",
   "released_timestamp": "2023-04-05T17:36:58.771245+00:00",
   "revision_group_id": "534aff4b-2a51-4272-93c8-35ab9236e908",
   "state": "RELEASED",
