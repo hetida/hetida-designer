@@ -105,9 +105,7 @@ class ObjectKey(BaseModel):
                 f"Object key string '{string}' must contain "
                 f"'{FILE_EXTENSION_SEPARATOR}' exaclty once!"
             )
-        ok_without_ext, _ = string.split(
-            FILE_EXTENSION_SEPARATOR
-        )
+        ok_without_ext, _ = string.split(FILE_EXTENSION_SEPARATOR)
 
         if ok_without_ext.count(IDENTIFIER_SEPARATOR) != 2:
             raise ValueError(
@@ -183,7 +181,9 @@ class ObjectKey(BaseModel):
                 "if the string is missing!"
             ) from error
 
-        job_id_string = string.split(FILE_EXTENSION_SEPARATOR)[0].split(IDENTIFIER_SEPARATOR)[2]
+        job_id_string = string.split(FILE_EXTENSION_SEPARATOR)[0].split(
+            IDENTIFIER_SEPARATOR
+        )[2]
         if str(job_id) != job_id_string:
             raise ValueError(
                 f"The object key's name '{str(job_id)}' does not match its string {string}!"
