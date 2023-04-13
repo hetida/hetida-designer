@@ -417,6 +417,7 @@ def select_multiple_transformation_revisions(
     type: Type | None = None,  # noqa: A002
     state: State | None = None,
     category: ValidStr | None = None,
+    category_prefix: ValidStr | None = None,
     revision_group_id: UUID | None = None,
     ids: list[UUID] | None = None,
     names: list[NonEmptyValidStr] | None = None,
@@ -433,6 +434,10 @@ def select_multiple_transformation_revisions(
         if category is not None:
             selection = selection.where(
                 TransformationRevisionDBModel.category == category
+            )
+        if category_prefix is not None:
+            selection = selection.where(
+                TransformationRevisionDBModel.category.startswith(category_prefix)
             )
         if revision_group_id is not None:
             selection = selection.where(
@@ -465,6 +470,7 @@ def get_multiple_transformation_revisions(
         type=params.type,
         state=params.state,
         category=params.category,
+        category_prefix=params.category_prefix,
         revision_group_id=params.revision_group_id,
         ids=params.ids,
         names=params.names,
