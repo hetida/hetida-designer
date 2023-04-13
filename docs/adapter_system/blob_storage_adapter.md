@@ -141,8 +141,8 @@ Since it is [not recommended to save Tensorflow Keras models via pickle](https:/
 
 The workflows "Get ExampleClass Object Attributes" and "Create ExampleClass Object" provide a minimal example of [how objects with a self defined class can be stored and loaded](../faq.md#storing-and-loading-objects-with-self-defined-classes).
 
-Similarly, the workflows "Train Keras Model with Custom Layer" and "Test Keras Model with Custom Layer" demonstrate how to save and load a model which includes a self-defined class for a custom layer.
-The base component "Wrap Model with Custom Objects" is used to combine the model with a dictionary including all self-defined classes (in this simple case just one) in a single object.
+Similarly, the workflows "Persist Wrapped Keras Model with Custom Layer" and "Load Keras Model with Custom Layer" demonstrate how to save and load a model which includes a self-defined class for a custom layer.
+The base component "Wrap Keras Model with Custom Classes" is used to combine the model with a dictionary including all self-defined classes (in this simple case just one) in a single object.
 This object is used by the adapter to store the model itself and the corresponding classes in a way, that they can be recombined automatically at the time the model is loaded.
 
 Selecting "Blob Storage Adapter" for an input in the Execution dialog sources should be available for all objects for which bucket name and object key match the adapter hierarchy:
