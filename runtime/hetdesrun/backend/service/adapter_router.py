@@ -38,7 +38,7 @@ async def get_all_adapters() -> list[AdapterFrontendDto]:
     logger.info("get adapters")
     adapter_list: list[AdapterFrontendDto] = []
 
-    if adapters is None:
+    if adapters is None or adapters == "":
         return adapter_list
 
     for adapter in adapters.split(","):
