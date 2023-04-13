@@ -143,6 +143,11 @@ async def get_all_transformation_revisions(
         None,
         description="Filter for specified category",
     ),
+    category_prefix: ValidStr
+    | None = Query(
+        None,
+        description="Category prefix that must be matched exactly (case-sensitive).",
+    ),
     revision_group_id: UUID
     | None = Query(None, description="Filter for specified revision group id"),
     ids: list[UUID]
@@ -187,6 +192,7 @@ async def get_all_transformation_revisions(
         type=type,
         state=state,
         category=category,
+        category_prefix=category_prefix,
         revision_group_id=revision_group_id,
         ids=ids,
         names=names,

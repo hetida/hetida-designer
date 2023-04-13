@@ -779,6 +779,52 @@ async def test_get_all_transformation_revisions_with_specified_category(
 
 
 @pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_specified_category_prefix(
+    async_test_client, clean_test_db_engine
+):
+    with mock.patch(
+        "hetdesrun.persistence.dbservice.revision.Session",
+        sessionmaker(clean_test_db_engine),
+    ):
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_1)  # category
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_component_3)  # Äpfel
+        )
+        store_single_transformation_revision(
+            TransformationRevision(**tr_json_workflow_1)  # category
+        )
+        store_single_transformation_revision(
+            TransformationRevision(
+                **tr_json_workflow_2_with_named_io_for_operator
+            )  # category
+        )
+
+        url = "/api/transformations/"
+        async with async_test_client as ac:
+            response_cat = await ac.get(url, params={"category_prefix": "cat"})
+            response_aepfel = await ac.get(url, params={"category_prefix": "Äpfel"})
+            response_single_quote = await ac.get(url, params={"category_prefix": "'"})
+
+        assert response_cat.status_code == 200
+        for trafo_json in response_cat.json():
+            print(trafo_json["id"], trafo_json["name"], trafo_json["category"])
+        assert len(response_cat.json()) == 3
+        assert response_cat.json()[0] == tr_json_component_1
+        assert response_cat.json()[1] == tr_json_workflow_1
+        assert response_cat.json()[2] == tr_json_workflow_2_with_named_io_for_operator
+        assert response_aepfel.status_code == 200
+        assert len(response_aepfel.json()) == 1
+        assert response_aepfel.json()[0] == tr_json_component_3
+        assert response_single_quote.status_code == 422
+        assert (
+            "string does not match regex"
+            in response_single_quote.json()["detail"][0]["msg"]
+        )
+
+
+@pytest.mark.asyncio
 async def test_get_all_transformation_revisions_with_specified_revision_group_id(
     async_test_client, clean_test_db_engine
 ):
