@@ -41,6 +41,7 @@ import {
 import { TransformationService } from 'src/app/service/transformation/transformation.service';
 import { Connector } from 'src/app/model/connector';
 import { Utils } from 'src/app/utils/utils';
+import { Constant } from 'src/app/model/constant';
 
 interface IdentifiableEntity {
   id: string;
@@ -221,6 +222,15 @@ export class WorkflowEditorComponent {
           link.start.operator === deletedOperator.id ||
           link.end.operator === deletedOperator.id
         )
+    );
+  }
+
+  private _removeOperatorConstants(
+    constants: Constant[],
+    deletedOperator: Operator
+  ) {
+    return constants.filter(
+      constant => constant.operator_id !== deletedOperator.id
     );
   }
 
@@ -461,6 +471,10 @@ export class WorkflowEditorComponent {
       );
       copyOfCurrentWorkflow.content.links = this._removeOperatorLinks(
         copyOfCurrentWorkflow.content.links,
+        operator
+      );
+      copyOfCurrentWorkflow.content.constants = this._removeOperatorConstants(
+        copyOfCurrentWorkflow.content.constants,
         operator
       );
 
