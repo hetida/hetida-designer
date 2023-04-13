@@ -325,7 +325,8 @@ def test_deleting(clean_test_db_engine):
             delete_single_transformation_revision(tr_released_uuid, ignore_state=True)
 
 
-def test_multiple_select(clean_test_db_engine):
+def test_multiple_select(clean_test_db_engine):  # noqa: PLR0915
+    # TODO: restructure this test to properly solve too many statements issue
     with mock.patch(
         "hetdesrun.persistence.dbservice.revision.Session",
         sessionmaker(clean_test_db_engine),
