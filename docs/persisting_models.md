@@ -13,7 +13,7 @@ General custom adapters are preferable here over generic rest adapters since rea
 hetida designer is equipped with two built-in such general custom adapters suitable for the task of persisiting arbitrary (binary) Python objects. Both use Python's built-in pickle module for serialization / deserialization:
 
 * the [local file adapter](adapter_system/local_file_adapter.md)
-* the blob storage adapter (for S3 compatible storage) (TODO)
+* the [blob storage adapter](adapter_system/blob_storage_adapter.md) (for S3 compatible storage)
 
 Apart from these two, you can write your completely own general custom adapters tailored to your specific needs and persistence backends.
 

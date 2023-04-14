@@ -1,0 +1,27 @@
+{
+  "category": "Examples",
+  "content": "class ExampleClass():\n    def __init__(self, name: str, amount: int, value: float):\n        self.name = name\n        self.amount = amount\n        self.value = value\n    \n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {\n        \"ExampleClass\": \"ANY\",\n    },\n    \"name\": \"ExampleClass\",\n    \"category\": \"Examples\",\n    \"description\": \"Define a class named ExampleClass\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"fd0464cb-4691-4ce1-bb2b-9efbcc7626f4\",\n    \"revision_group_id\": \"59cc4583-0b84-4fef-8076-468b6f150edd\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-02-09T12:25:01.990787+00:00\",\n}\n\n\ndef main():\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"ExampleClass\": ExampleClass}",
+  "description": "Define a class named ExampleClass",
+  "documentation": "# ExampleClass\n## Description\nDefinition of the ExampleClass.\n## Inputs\nThis component has no inputs.\n## Outputs\n* **ExampleClass** (Any): Class object of the ExampleClass\n\n## Details\nThis component is used to provide workflows with the definition of the ExampleClass.",
+  "id": "fd0464cb-4691-4ce1-bb2b-9efbcc7626f4",
+  "io_interface": {
+    "inputs": [],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "c00635c2-3183-4e10-9fbb-18ac16f4660c",
+        "name": "ExampleClass"
+      }
+    ]
+  },
+  "name": "ExampleClass",
+  "released_timestamp": "2023-02-09T12:25:01.990787+00:00",
+  "revision_group_id": "59cc4583-0b84-4fef-8076-468b6f150edd",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}
