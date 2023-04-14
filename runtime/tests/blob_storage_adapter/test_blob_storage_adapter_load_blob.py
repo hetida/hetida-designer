@@ -15,6 +15,7 @@ from hetdesrun.adapters.blob_storage.exceptions import (
 )
 from hetdesrun.adapters.blob_storage.load_blob import load_blob_from_storage, load_data
 from hetdesrun.adapters.blob_storage.models import BlobStorageStructureSource
+from hetdesrun.adapters.exceptions import AdapterClientWiringInvalidError
 from hetdesrun.models.data_selection import FilteredSource
 
 
@@ -30,7 +31,7 @@ async def test_blob_storage_load_blob_from_storage_works(caplog: Any) -> None:
         client_mock.create_bucket(Bucket=bucket_name)
         client_mock.put_object(
             Bucket=bucket_name,
-            Key="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            Key="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             Body=file_object.read(),
         )
         with mock.patch(
@@ -39,16 +40,20 @@ async def test_blob_storage_load_blob_from_storage_works(caplog: Any) -> None:
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.load_blob.get_source_by_thing_node_id_and_metadata_key",
             return_value=BlobStorageStructureSource(
-                id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
                 thingNodeId="i-ii/A",
-                name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
                 path="i-ii/A",
-                metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                metadataKey=(
+                    "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+                ),
             ),
         ):
             blob = await load_blob_from_storage(
                 thing_node_id="i-ii/A",
-                metadata_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                metadata_key=(
+                    "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+                ),
             )
 
             assert struct.unpack(">i", blob) == (42,)
@@ -70,9 +75,9 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_source() ->
             return_value=client_mock,
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.load_blob.get_source_by_thing_node_id_and_metadata_key",
-            side_effect=StructureObjectNotFound,
+            side_effect=StructureObjectNotFound("Found no thing node"),
         ), pytest.raises(
-            StructureObjectNotFound
+            AdapterClientWiringInvalidError, match="Found no thing node"
         ):
             await load_blob_from_storage(
                 thing_node_id="i-ii/A",
@@ -91,7 +96,7 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() ->
         file_object.seek(0)
         client_mock.put_object(
             Bucket=bucket_name,
-            Key="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+            Key="A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
             Body=file_object,
         )
         with mock.patch(
@@ -100,11 +105,13 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() ->
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.load_blob.get_source_by_thing_node_id_and_metadata_key",
             return_value=BlobStorageStructureSource(
-                id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
                 thingNodeId="i-ii/A",
-                name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
                 path="i-ii/A",
-                metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                metadataKey=(
+                    "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+                ),
             ),
         ):
             with mock.patch(
@@ -114,7 +121,7 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() ->
                 await load_blob_from_storage(
                     thing_node_id="i-ii/A",
                     metadata_key=(
-                        "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+                        "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
                     ),
                 )
 
@@ -125,7 +132,7 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_bucket() ->
                 await load_blob_from_storage(
                     thing_node_id="i-ii/A",
                     metadata_key=(
-                        "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"
+                        "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
                     ),
                 )
 
@@ -142,18 +149,22 @@ async def test_blob_storage_load_blob_from_storage_with_non_existing_object() ->
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.load_blob.get_source_by_thing_node_id_and_metadata_key",
             return_value=BlobStorageStructureSource(
-                id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                id="i-ii/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f.pkl",
                 thingNodeId="i-ii/A",
-                name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)",
                 path="i-ii/A",
-                metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                metadataKey=(
+                    "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+                ),
             ),
         ), pytest.raises(
             AdapterConnectionError, match="contains no object with the key"
         ):
             await load_blob_from_storage(
                 thing_node_id="i-ii/A",
-                metadata_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
+                metadata_key=(
+                    "A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f (pkl)"
+                ),
             )
 
 
@@ -186,20 +197,16 @@ async def test_blob_storage_load_data_works() -> None:
 
 @pytest.mark.asyncio
 async def test_blob_storage_load_data_with_error() -> None:
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.load_blob.load_blob_from_storage",
-        side_effect=AdapterConnectionError,
-    ):
-        filtered_source = FilteredSource(
-            ref_id="i-ii/A",
-            ref_id_type="SOURCE",
-            ref_key="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
-            type="Any",
+    filtered_source = FilteredSource(
+        ref_id="i-ii/A",
+        ref_id_type="SOURCE",
+        ref_key=None,
+        type="Any",
+    )
+    with pytest.raises(AdapterClientWiringInvalidError):
+        await load_data(
+            wf_input_name_to_filtered_source_mapping_dict={
+                "input_name": filtered_source
+            },
+            adapter_key="blob-storage-adapter",
         )
-        with pytest.raises(AdapterConnectionError):
-            await load_data(
-                wf_input_name_to_filtered_source_mapping_dict={
-                    "input_name": filtered_source
-                },
-                adapter_key="blob-storage-adapter",
-            )
