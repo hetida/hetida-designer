@@ -56,7 +56,9 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Alerts",
         "path": "Plant A",
         "type": ExternalType.DATAFRAME,
-        "filters": {"column_names": {"name": "columns", "type": "free_text", "required": False}},
+        "filters": {
+            "column_names": {"name": "columns", "type": "free_text", "required": False}
+        },
     },
     {
         "id": "root.plantB.alerts",
@@ -86,8 +88,16 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant A",
         "type": ExternalType.MULTITSFRAME,
         "filters": {
-            "lower_threshold": {"name": "above threshold", "type": "free_text", "required": False},
-            "upper_threshold": {"name": "below threshold", "type": "free_text", "required": False},
+            "lower_threshold": {
+                "name": "above threshold",
+                "type": "free_text",
+                "required": False,
+            },
+            "upper_threshold": {
+                "name": "below threshold",
+                "type": "free_text",
+                "required": False,
+            },
         },
     },
     {
@@ -103,7 +113,9 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Influx Temperature",
         "path": "Plant A / Pickling Unit / Influx",
         "type": ExternalType.TIMESERIES_FLOAT,
-        "filters": {"frequency": {"name": "frequency", "type": "free_text", "required": False}},
+        "filters": {
+            "frequency": {"name": "frequency", "type": "free_text", "required": False}
+        },
     },
     {
         "id": "root.plantA.picklingUnit.influx.press",
