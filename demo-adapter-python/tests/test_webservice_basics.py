@@ -2,6 +2,7 @@ import json
 from copy import deepcopy
 from urllib.parse import quote
 
+import pandas as pd
 import pytest
 from httpx import AsyncClient
 from starlette.testclient import TestClient
@@ -593,3 +594,68 @@ async def test_updating_and_keeping_existing_attrs_for_timeseries(
         assert "test" in df_from_store_2.attrs
         for key, value in df_attrs.items():
             assert df_from_store_2.attrs[key] == value
+
+
+@pytest.mark.asyncio
+async def test_additional_query_parameter(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        mk_response = await client.get(
+            "/thingNodes/root.plantA/metadata/Temperature Unit",
+            params={
+                "id": "root.plantA.alerts",
+                "mode": "y",
+            },
+        )
+        assert mk_response.status_code == 200
+        assert mk_response.json()["value"] == "$^\\circ$F"
+
+        await client.post(
+            "/dataframe",
+            json=[
+                {"a": 14.5, "b": 12.3},
+                {"a": 13.5, "b": 11.9},
+            ],
+            params={"id": "root.plantA.alerts"},
+        )
+        df_response = await client.get(
+            "/dataframe",
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": ["b"],
+            },
+        )
+        assert df_response.status_code == 200
+        df: pd.DataFrame = pd.read_json(df_response.text, lines=True)
+        assert df.columns == ["b"]
+
+        mtsf_response = await client.get(
+            "/multitsframe",
+            params={
+                "id": "root.plantA.temperatures",
+                "from": "2020-01-01T00:00:00.000000000Z",
+                "to": "2020-01-01T00:00:00.000000000Z",
+                "upper_threshold": 107.9,
+                "lower_threshold": 93.4,
+            },
+        )
+        assert mtsf_response.status_code == 200
+        mtsf: pd.DataFrame = pd.read_json(mtsf_response.text, lines=True)
+        if len(mtsf.index > 0):
+            assert len(mtsf[mtsf["value"] > 107.9].index) == 0
+            assert len(mtsf[mtsf["value"] < 93.4].index) == 0
+
+        ts_response = await client.get(
+            "/timeseries",
+            params={
+                "id": "root.plantA.picklingUnit.influx.temp",
+                "from": "2020-01-01T00:00:00.000000000Z",
+                "to": "2020-01-02T00:00:00.000000000Z",
+                "frequency": "2H",
+            },
+        )
+        print(ts_response.text)
+        assert ts_response.status_code == 200
+        ts_df: pd.DataFrame = pd.read_json(ts_response.text, lines=True)
+        assert len(ts_df.index) == 13
