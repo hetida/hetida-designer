@@ -1,160 +1,160 @@
 {
-    "code_modules": [
-      {
-        "code": "# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"input\": \"MULTITSFRAME\",\n    },\n    \"outputs\": {\n        \"output\": \"MULTITSFRAME\",\n    },\n    \"name\": \"Pass Through (MultiTsFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Just outputs its input value\",\n    \"version_tag\": \"0.1.0\",\n    \"id\": \"78ee6b00-9239-4214-b9bf-a093647f33f5\",\n    \"revision_group_id\": \"4ff190e1-4555-4fa9-b076-671586802387\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-08T18:07:45.719821+00:00\",\n}\n\n\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"output\": input}",
-        "uuid": "78ee6b00-9239-4214-b9bf-a093647f33f5"
-      },
-      {
-        "code": "import pandas as pd\n\ndef generate_next_metric_name(df):\n    i = 0\n    existing_metrics = set(df[\"metric\"].unique().tolist())\n    while True:\n        name = \"metric_\" + str(i)\n        if not name in existing_metrics:\n            break\n        i = i + 1\n\n    return name\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"df_or_series\": \"ANY\",\n        \"series_to_add\": \"SERIES\",\n    },\n    \"outputs\": {\n        \"timeseries_df\": \"DATAFRAME\",\n    },\n    \"name\": \"Timeseries Dataframe\",\n    \"category\": \"Connectors\",\n    \"description\": \"Create and/or append to a multi-timeseries dataframe\",\n    \"version_tag\": \"1.1.0\",\n    \"id\": \"95cc0677-beab-44b8-a005-b385c9d79446\",\n    \"revision_group_id\": \"d71a0cef-1d56-818f-a1a5-dd6bb6d50399\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-08T17:18:56.814872+00:00\",\n}\n\n\ndef main(*, df_or_series, series_to_add):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    if series_to_add.name is None or series_to_add.name is None:\n        name = generate_next_metric_name(df_or_series)\n    else:\n        name = series_to_add.name\n\n    if isinstance(df_or_series, pd.DataFrame):\n        return {\n            \"timeseries_df\": pd.concat(\n                [\n                    df_or_series,\n                    pd.DataFrame(\n                        {\n                            \"timestamp\": series_to_add.index,\n                            \"value\": series_to_add.values,\n                            \"metric\": name,\n                        }\n                    ),\n                ],\n                ignore_index=True,\n            )\n        }\n    else:\n        return {\n            \"timeseries_df\": pd.concat(\n                [\n                    pd.DataFrame(\n                        {\n                            \"timestamp\": df_or_series.index,\n                            \"value\": df_or_series.values,\n                            \"metric\": df_or_series.name\n                            if df_or_series.name is not None\n                            else \"metric_0\",\n                        }\n                    ),\n                    pd.DataFrame(\n                        {\n                            \"timestamp\": series_to_add.index,\n                            \"value\": series_to_add.values,\n                            \"metric\": name,\n                        }\n                    ),\n                ],\n                ignore_index=True,\n            )\n        }\n",
-        "uuid": "95cc0677-beab-44b8-a005-b385c9d79446"
-      }
-    ],
-    "components": [
-      {
-        "code_module_uuid": "78ee6b00-9239-4214-b9bf-a093647f33f5",
-        "function_name": "main",
-        "inputs": [
-          {
-            "id": "1aeda270-0edf-beb1-dd20-40c552c53604",
-            "name": "input",
-            "type": "MULTITSFRAME"
-          }
-        ],
-        "name": "Pass Through (DataFrame)",
-        "outputs": [
-          {
-            "id": "f11d31c6-981f-8c79-1052-18da06e52d30",
-            "name": "output",
-            "type": "MULTITSFRAME"
-          }
-        ],
-        "tag": "1.0.0",
-        "uuid": "78ee6b00-9239-4214-b9bf-a093647f33f5"
-      },
-      {
-        "code_module_uuid": "95cc0677-beab-44b8-a005-b385c9d79446",
-        "function_name": "main",
-        "inputs": [
-          {
-            "id": "29c94add-f821-4acc-8fb8-f3b5cc053853",
-            "name": "df_or_series",
-            "type": "ANY"
-          },
-          {
-            "id": "a592e520-86aa-48fd-bed3-5c02753ba773",
-            "name": "series_to_add",
-            "type": "SERIES"
-          }
-        ],
-        "name": "Timeseries Dataframe",
-        "outputs": [
-          {
-            "id": "600263b1-a804-4d77-b399-d2c7290d4ccf",
-            "name": "timeseries_df",
-            "type": "DATAFRAME"
-          }
-        ],
-        "tag": "1.1.0",
-        "uuid": "95cc0677-beab-44b8-a005-b385c9d79446"
-      }
-    ],
-    "configuration": {
-      "engine": "plain",
-      "name": "dfd4e7fb-4fed-4c61-a64a-210736b3b22c",
-      "return_individual_node_results": false,
-      "run_pure_plot_operators": true
+  "code_modules": [
+    {
+      "code": "# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"input\": \"MULTITSFRAME\",\n    },\n    \"outputs\": {\n        \"output\": \"MULTITSFRAME\",\n    },\n    \"name\": \"Pass Through (MultiTsFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Just outputs its input value\",\n    \"version_tag\": \"0.1.0\",\n    \"id\": \"78ee6b00-9239-4214-b9bf-a093647f33f5\",\n    \"revision_group_id\": \"4ff190e1-4555-4fa9-b076-671586802387\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-08T18:07:45.719821+00:00\",\n}\n\n\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"output\": input}",
+      "uuid": "78ee6b00-9239-4214-b9bf-a093647f33f5"
     },
-    "job_id": "91d07d0e-101e-4326-addb-52386998a040",
-    "workflow": {
-      "connections": [
-        {
-          "input_in_workflow_id": "034c8f6a-eb6a-49fa-93a6-c16111b76f89",
-          "input_name": "output",
-          "output_in_workflow_id": "8eba3bf9-ad89-4cf1-a611-011c515b14ca",
-          "output_name": "df_or_series"
-        }
-      ],
-      "id": "825b79ab-f404-479d-a6aa-0fa033bd5821",
+    {
+      "code": "import pandas as pd\n\ndef generate_next_metric_name(df):\n    i = 0\n    existing_metrics = set(df[\"metric\"].unique().tolist())\n    while True:\n        name = \"metric_\" + str(i)\n        if not name in existing_metrics:\n            break\n        i = i + 1\n\n    return name\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"df_or_series\": \"ANY\",\n        \"series_to_add\": \"SERIES\",\n    },\n    \"outputs\": {\n        \"timeseries_df\": \"DATAFRAME\",\n    },\n    \"name\": \"Timeseries Dataframe\",\n    \"category\": \"Connectors\",\n    \"description\": \"Create and/or append to a multi-timeseries dataframe\",\n    \"version_tag\": \"1.1.0\",\n    \"id\": \"95cc0677-beab-44b8-a005-b385c9d79446\",\n    \"revision_group_id\": \"d71a0cef-1d56-818f-a1a5-dd6bb6d50399\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-08T17:18:56.814872+00:00\",\n}\n\n\ndef main(*, df_or_series, series_to_add):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    if series_to_add.name is None or series_to_add.name is None:\n        name = generate_next_metric_name(df_or_series)\n    else:\n        name = series_to_add.name\n\n    if isinstance(df_or_series, pd.DataFrame):\n        return {\n            \"timeseries_df\": pd.concat(\n                [\n                    df_or_series,\n                    pd.DataFrame(\n                        {\n                            \"timestamp\": series_to_add.index,\n                            \"value\": series_to_add.values,\n                            \"metric\": name,\n                        }\n                    ),\n                ],\n                ignore_index=True,\n            )\n        }\n    else:\n        return {\n            \"timeseries_df\": pd.concat(\n                [\n                    pd.DataFrame(\n                        {\n                            \"timestamp\": df_or_series.index,\n                            \"value\": df_or_series.values,\n                            \"metric\": df_or_series.name\n                            if df_or_series.name is not None\n                            else \"metric_0\",\n                        }\n                    ),\n                    pd.DataFrame(\n                        {\n                            \"timestamp\": series_to_add.index,\n                            \"value\": series_to_add.values,\n                            \"metric\": name,\n                        }\n                    ),\n                ],\n                ignore_index=True,\n            )\n        }\n",
+      "uuid": "95cc0677-beab-44b8-a005-b385c9d79446"
+    }
+  ],
+  "components": [
+    {
+      "code_module_uuid": "78ee6b00-9239-4214-b9bf-a093647f33f5",
+      "function_name": "main",
       "inputs": [
         {
-          "constant": false,
-          "constantValue": null,
-          "id": "dbd37ebd-6d3b-4c36-8bba-adcde2e0b6d7",
-          "id_of_sub_node": "034c8f6a-eb6a-49fa-93a6-c16111b76f89",
-          "name": "multitsframe",
-          "name_in_subnode": "input",
+          "id": "1aeda270-0edf-beb1-dd20-40c552c53604",
+          "name": "input",
           "type": "MULTITSFRAME"
+        }
+      ],
+      "name": "Pass Through (DataFrame)",
+      "outputs": [
+        {
+          "id": "f11d31c6-981f-8c79-1052-18da06e52d30",
+          "name": "output",
+          "type": "MULTITSFRAME"
+        }
+      ],
+      "tag": "1.0.0",
+      "uuid": "78ee6b00-9239-4214-b9bf-a093647f33f5"
+    },
+    {
+      "code_module_uuid": "95cc0677-beab-44b8-a005-b385c9d79446",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "29c94add-f821-4acc-8fb8-f3b5cc053853",
+          "name": "df_or_series",
+          "type": "ANY"
         },
         {
-          "constant": false,
-          "constantValue": null,
-          "id": "954ff196-a2f0-47ac-ab38-2dd667d150de",
-          "id_of_sub_node": "8eba3bf9-ad89-4cf1-a611-011c515b14ca",
-          "name": "series",
-          "name_in_subnode": "series_to_add",
+          "id": "a592e520-86aa-48fd-bed3-5c02753ba773",
+          "name": "series_to_add",
           "type": "SERIES"
         }
       ],
       "name": "Timeseries Dataframe",
       "outputs": [
         {
-          "id": "218388d6-46b6-4cb6-a6ef-bac0b7c9acd5",
-          "id_of_sub_node": "8eba3bf9-ad89-4cf1-a611-011c515b14ca",
-          "name": "multitsframe",
-          "name_in_subnode": "timeseries_df",
-          "type": "MULTITSFRAME"
+          "id": "600263b1-a804-4d77-b399-d2c7290d4ccf",
+          "name": "timeseries_df",
+          "type": "DATAFRAME"
         }
       ],
-      "sub_nodes": [
-        {
-          "component_uuid": "78ee6b00-9239-4214-b9bf-a093647f33f5",
-          "id": "034c8f6a-eb6a-49fa-93a6-c16111b76f89",
-          "name": "Pass Through (MultiTsFrame)"
-        },
-        {
-          "component_uuid": "95cc0677-beab-44b8-a005-b385c9d79446",
-          "id": "8eba3bf9-ad89-4cf1-a611-011c515b14ca",
-          "name": "Timeseries Dataframe"
-        }
-      ],
-      "tr_id": "dfd4e7fb-4fed-4c61-a64a-210736b3b22c",
-      "tr_name": "Timeseries Dataframe",
-      "tr_tag": "0.1.0"
-    },
-    "workflow_wiring": {
-      "input_wirings": [
-        {
-          "adapter_id": "direct_provisioning",
-          "filters": {
-            "value": "{\n    \"value\": [\n        1.0,\n        1.2,\n        1.9,\n        1.3,\n        1.5,\n        1.7\n    ],\n    \"metric\": [\n        \"a\",\n        \"b\",\n        \"a\",\n        \"b\",\n        \"a\",\n        \"b\"\n    ],\n    \"timestamp\": [\n        \"2019-08-01T15:45:36.000Z\",\n        \"2019-08-01T15:45:36.000Z\",\n        \"2019-08-02T15:45:36.000Z\",\n        \"2019-08-02T15:45:36.000Z\",\n        \"2019-08-03T15:45:36.000Z\",\n        \"2019-08-03T15:45:36.000Z\"\n    ]\n}"
-          },
-          "ref_id": null,
-          "ref_id_type": null,
-          "ref_key": null,
-          "type": null,
-          "workflow_input_name": "multitsframe"
-        },
-        {
-          "adapter_id": "direct_provisioning",
-          "filters": {
-            "value": "{\n    \"2019-08-01T15:45:36.000Z\": 0.5,\n    \"2019-08-02T15:45:36.000Z\": 0.2,\n    \"2019-08-03T15:45:36.000Z\": 0.1\n}"
-          },
-          "ref_id": null,
-          "ref_id_type": null,
-          "ref_key": null,
-          "type": null,
-          "workflow_input_name": "series"
-        }
-      ],
-      "output_wirings": [
-        {
-          "adapter_id": 1,
-          "ref_id": null,
-          "ref_id_type": null,
-          "ref_key": null,
-          "type": null,
-          "workflow_output_name": "multitsframe"
-        }
-      ]
+      "tag": "1.1.0",
+      "uuid": "95cc0677-beab-44b8-a005-b385c9d79446"
     }
+  ],
+  "configuration": {
+    "engine": "plain",
+    "name": "dfd4e7fb-4fed-4c61-a64a-210736b3b22c",
+    "return_individual_node_results": false,
+    "run_pure_plot_operators": true
+  },
+  "job_id": "91d07d0e-101e-4326-addb-52386998a040",
+  "workflow": {
+    "connections": [
+      {
+        "input_in_workflow_id": "034c8f6a-eb6a-49fa-93a6-c16111b76f89",
+        "input_name": "output",
+        "output_in_workflow_id": "8eba3bf9-ad89-4cf1-a611-011c515b14ca",
+        "output_name": "df_or_series"
+      }
+    ],
+    "id": "825b79ab-f404-479d-a6aa-0fa033bd5821",
+    "inputs": [
+      {
+        "constant": false,
+        "constantValue": null,
+        "id": "dbd37ebd-6d3b-4c36-8bba-adcde2e0b6d7",
+        "id_of_sub_node": "034c8f6a-eb6a-49fa-93a6-c16111b76f89",
+        "name": "multitsframe",
+        "name_in_subnode": "input",
+        "type": "MULTITSFRAME"
+      },
+      {
+        "constant": false,
+        "constantValue": null,
+        "id": "954ff196-a2f0-47ac-ab38-2dd667d150de",
+        "id_of_sub_node": "8eba3bf9-ad89-4cf1-a611-011c515b14ca",
+        "name": "series",
+        "name_in_subnode": "series_to_add",
+        "type": "SERIES"
+      }
+    ],
+    "name": "Timeseries Dataframe",
+    "outputs": [
+      {
+        "id": "218388d6-46b6-4cb6-a6ef-bac0b7c9acd5",
+        "id_of_sub_node": "8eba3bf9-ad89-4cf1-a611-011c515b14ca",
+        "name": "multitsframe",
+        "name_in_subnode": "timeseries_df",
+        "type": "MULTITSFRAME"
+      }
+    ],
+    "sub_nodes": [
+      {
+        "component_uuid": "78ee6b00-9239-4214-b9bf-a093647f33f5",
+        "id": "034c8f6a-eb6a-49fa-93a6-c16111b76f89",
+        "name": "Pass Through (MultiTsFrame)"
+      },
+      {
+        "component_uuid": "95cc0677-beab-44b8-a005-b385c9d79446",
+        "id": "8eba3bf9-ad89-4cf1-a611-011c515b14ca",
+        "name": "Timeseries Dataframe"
+      }
+    ],
+    "tr_id": "dfd4e7fb-4fed-4c61-a64a-210736b3b22c",
+    "tr_name": "Timeseries Dataframe",
+    "tr_tag": "0.1.0"
+  },
+  "workflow_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"value\": [\n        1.0,\n        1.2,\n        1.9,\n        1.3,\n        1.5,\n        1.7\n    ],\n    \"metric\": [\n        \"a\",\n        \"b\",\n        \"a\",\n        \"b\",\n        \"a\",\n        \"b\"\n    ],\n    \"timestamp\": [\n        \"2019-08-01T15:45:36.000Z\",\n        \"2019-08-01T15:45:36.000Z\",\n        \"2019-08-02T15:45:36.000Z\",\n        \"2019-08-02T15:45:36.000Z\",\n        \"2019-08-03T15:45:36.000Z\",\n        \"2019-08-03T15:45:36.000Z\"\n    ]\n}"
+        },
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "workflow_input_name": "multitsframe"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2019-08-01T15:45:36.000Z\": 0.5,\n    \"2019-08-02T15:45:36.000Z\": 0.2,\n    \"2019-08-03T15:45:36.000Z\": 0.1\n}"
+        },
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "workflow_input_name": "series"
+      }
+    ],
+    "output_wirings": [
+      {
+        "adapter_id": 1,
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "workflow_output_name": "multitsframe"
+      }
+    ]
   }
+}
