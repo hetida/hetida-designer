@@ -418,7 +418,7 @@ def calculate_age(born: datetime.date) -> int:
     "/thingNodes/{thingNodeId}/metadata/{key}", response_model=Metadatum
 )
 async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
-    thingNodeId: str, key: str, mode: str = Query(None, example="yes")
+    thingNodeId: str, key: str, latex_mode: str = Query(None, example="yes")
 ) -> Metadatum:
     key = unquote(key)
     if thingNodeId == "root.plantA":
@@ -426,7 +426,8 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
             return Metadatum(
                 key="Temperature Unit",
                 value="$^\\circ$F"
-                if mode is not None and mode in ("yes", "y", "on", "true", "1")
+                if latex_mode is not None
+                and latex_mode in ("yes", "y", "on", "true", "1")
                 else "F",
                 dataType="string",
             )
@@ -450,7 +451,8 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
             return Metadatum(
                 key="Temperature Unit",
                 value="$^\\circ$C"
-                if mode is not None and mode in ("yes", "y", "on", "true", "1")
+                if latex_mode is not None
+                and latex_mode in ("yes", "y", "on", "true", "1")
                 else "C",
                 dataType="string",
             )

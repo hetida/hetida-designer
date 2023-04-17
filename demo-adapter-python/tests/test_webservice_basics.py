@@ -605,7 +605,7 @@ async def test_additional_query_parameter(
             "/thingNodes/root.plantA/metadata/Temperature Unit",
             params={
                 "id": "root.plantA.alerts",
-                "mode": "y",
+                "latex_mode": "y",
             },
         )
         assert mk_response.status_code == 200

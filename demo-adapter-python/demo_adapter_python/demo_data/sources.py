@@ -10,7 +10,9 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant A",
         "metadataKey": "Temperature Unit",
         "type": ExternalType.METADATA_STR,
-        "filters": {"mode": {"name": "Latex", "type": "free_text", "required": False}},
+        "filters": {
+            "latex_mode": {"name": "Latex", "type": "free_text", "required": False}
+        },
     },
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantA.plant_pressure_unit",
@@ -27,7 +29,9 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant B",
         "metadataKey": "Temperature Unit",
         "type": ExternalType.METADATA_STR,
-        "filters": {"mode": {"name": "Latex", "type": "free_text", "required": False}},
+        "filters": {
+            "latex_mode": {"name": "Latex", "type": "free_text", "required": False}
+        },
     },
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantB.plant_pressure_unit",
