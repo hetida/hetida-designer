@@ -290,9 +290,9 @@ async def test_multitsframe_wf_execution(async_test_client: AsyncClient) -> None
                 "3": "b",
                 "4": "a",
                 "5": "b",
-                "6": "metric_0",
-                "7": "metric_0",
-                "8": "metric_0",
+                "6": "d",
+                "7": "d",
+                "8": "d",
             },
             "timestamp": {
                 "0": "2019-08-01T15:45:36.000Z",
