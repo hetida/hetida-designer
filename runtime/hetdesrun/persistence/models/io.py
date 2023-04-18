@@ -35,13 +35,24 @@ class InputType(str, Enum):
 
 class Input(IO):
     type: InputType  # noqa: A003
-    value: Any
+    value: Any | None
 
-    @validator("name")
-    def name_valid_python_identifier(cls, name: str) -> str:
-        if name is None or name == "":
-            return name
-        return valid_python_identifier(cls, name)
+    @validator("value")
+    def value_set_only_for_optional_input(
+        cls, value: Any | None, values: dict
+    ) -> Any | None:
+        try:
+            type = values["type"]  # noqa: A001
+        except KeyError as e:
+            raise ValueError(
+                "Cannot check if value is set correctly if any of the attributes 'type' is missing!"
+            ) from e
+        if type == InputType.REQUIRED and value is not None:
+            raise ValueError(
+                f"The value of an input must not be set if its type is '{InputType.REQUIRED}'!"
+            )
+
+        return value
 
     def to_component_input(self) -> ComponentInput:
         return ComponentInput(id=self.id, type=self.data_type, name=self.name)
