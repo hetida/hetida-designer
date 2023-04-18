@@ -107,12 +107,14 @@ class OperatorInputConnector(Input):
 
     @classmethod
     def from_input(
-        cls, io: Input, pos_x: int = 0, pos_y: int = 0
+        cls, input: Input, pos_x: int = 0, pos_y: int = 0  # noqa: A002
     ) -> "OperatorInputConnector":
         return OperatorInputConnector(
-            id=io.id,
-            name=io.name,
-            data_type=io.data_type,
+            id=input.id,
+            name=input.name,
+            data_type=input.data_type,
+            type=input.type,
+            value=input.value,
             position=Position(x=pos_x, y=pos_y),
         )
 
@@ -179,6 +181,8 @@ class InputConnector(Input):
             id=self.id,
             name=self.name,
             data_type=self.data_type,
+            type=self.type,
+            value=self.value,
             operator_id=self.operator_id,
             connector_id=self.connector_id,
         )
@@ -188,6 +192,8 @@ class InputConnector(Input):
             id=self.id,
             name=self.name,
             data_type=self.data_type,
+            type=self.type,
+            value=self.value,
             position=self.position,
         )
 
@@ -214,15 +220,20 @@ class InputConnector(Input):
 
     @classmethod
     def from_operator_input_connector(
-        cls, connector: OperatorInputConnector, operator_id: UUID, operator_name: str
+        cls,
+        operator_input_connector: OperatorInputConnector,
+        operator_id: UUID,
+        operator_name: str,
     ) -> "InputConnector":
         return InputConnector(
-            name=connector.name,
-            data_type=connector.data_type,
+            name=operator_input_connector.name,
+            data_type=operator_input_connector.data_type,
+            type=operator_input_connector.type,
+            value=operator_input_connector.value,
             operator_id=operator_id,
-            connector_id=connector.id,
+            connector_id=operator_input_connector.id,
             operator_name=operator_name,
-            connector_name=connector.name,
+            connector_name=operator_input_connector.name,
             position=Position(x=0, y=0),
         )
 
