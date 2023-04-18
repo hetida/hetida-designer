@@ -1,3 +1,5 @@
+from enum import Enum
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, root_validator, validator
@@ -22,11 +24,27 @@ class IO(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_component_input(self) -> ComponentInput:
-        return ComponentInput(id=self.id, type=self.data_type, name=self.name)
-
     def to_component_output(self) -> ComponentOutput:
         return ComponentOutput(id=self.id, type=self.data_type, name=self.name)
+
+
+class InputType(str, Enum):
+    REQUIRED = "required"
+    OPTIONAL = "optional"
+
+
+class Input(IO):
+    type: InputType  # noqa: A003
+    value: Any
+
+    @validator("name")
+    def name_valid_python_identifier(cls, name: str) -> str:
+        if name is None or name == "":
+            return name
+        return valid_python_identifier(cls, name)
+
+    def to_component_input(self) -> ComponentInput:
+        return ComponentInput(id=self.id, type=self.data_type, name=self.name)
 
 
 class IOInterface(BaseModel):
@@ -35,7 +53,7 @@ class IOInterface(BaseModel):
     Note: The names in the list of inputs and outputs must be unique, respectively.
     """
 
-    inputs: list[IO] = []
+    inputs: list[Input] = []
     outputs: list[IO] = []
 
     @validator("inputs", "outputs", each_item=False)
@@ -55,15 +73,24 @@ class Position(BaseModel):
 class Connector(IO):
     position: Position
 
-    def to_io(self) -> IO:
-        return IO(
-            name=self.name,
-            data_type=self.data_type,
-        )
-
     @classmethod
     def from_io(cls, io: IO, pos_x: int = 0, pos_y: int = 0) -> "Connector":
         return Connector(
+            id=io.id,
+            name=io.name,
+            data_type=io.data_type,
+            position=Position(x=pos_x, y=pos_y),
+        )
+
+
+class OperatorInputConnector(Input):
+    position: Position
+
+    @classmethod
+    def from_input(
+        cls, io: Input, pos_x: int = 0, pos_y: int = 0
+    ) -> "OperatorInputConnector":
+        return OperatorInputConnector(
             id=io.id,
             name=io.name,
             data_type=io.data_type,
@@ -95,19 +122,6 @@ class IOConnector(IO):
             position=self.position,
         )
 
-    def to_workflow_input(
-        self, operator_id: UUID, connector_name: str
-    ) -> WorkflowInput:
-        return WorkflowInput(
-            id=self.id,
-            name=self.name,
-            type=self.data_type,
-            id_of_sub_node=str(operator_id),
-            name_in_subnode=connector_name,
-            constantValue=None,
-            constant=False,
-        )
-
     def to_workflow_output(
         self, operator_id: UUID, connector_name: str
     ) -> WorkflowOutput:
@@ -134,6 +148,58 @@ class IOConnector(IO):
         )
 
 
+class InputConnector(Input):
+    operator_id: UUID
+    connector_id: UUID
+    operator_name: str
+    connector_name: str
+    position: Position = Position(x=0, y=0)
+
+    def to_input(self) -> Input:
+        return Input(
+            id=self.id,
+            name=self.name,
+            data_type=self.data_type,
+            operator_id=self.operator_id,
+            connector_id=self.connector_id,
+        )
+
+    def to_operator_input_connector(self) -> OperatorInputConnector:
+        return OperatorInputConnector(
+            id=self.id,
+            name=self.name,
+            data_type=self.data_type,
+            position=self.position,
+        )
+
+    def to_workflow_input(
+        self, operator_id: UUID, connector_name: str
+    ) -> WorkflowInput:
+        return WorkflowInput(
+            id=self.id,
+            name=self.name,
+            type=self.data_type,
+            id_of_sub_node=str(operator_id),
+            name_in_subnode=connector_name,
+            constantValue=None,
+            constant=False,
+        )
+
+    @classmethod
+    def from_operator_input_connector(
+        cls, connector: OperatorInputConnector, operator_id: UUID, operator_name: str
+    ) -> "InputConnector":
+        return InputConnector(
+            name=connector.name,
+            data_type=connector.data_type,
+            operator_id=operator_id,
+            connector_id=connector.id,
+            operator_name=operator_name,
+            connector_name=connector.name,
+            position=Position(x=0, y=0),
+        )
+
+
 class Constant(IOConnector):
     """Represents a fixed workflow input value
 
@@ -150,8 +216,8 @@ class Constant(IOConnector):
             raise ValueError("Constants must have an empty string as name.")
         return values
 
-    def to_connector(self) -> Connector:
-        return Connector(
+    def to_operator_input_connector(self) -> OperatorInputConnector:
+        return OperatorInputConnector(
             id=self.id, name=self.name, data_type=self.data_type, position=self.position
         )
 
