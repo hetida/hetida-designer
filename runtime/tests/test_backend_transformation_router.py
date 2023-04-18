@@ -54,6 +54,7 @@ tr_json_component_1 = {
                 "id": str(get_uuid_from_seed("operator input")),
                 "name": "operator_input",
                 "data_type": "INT",
+                "type": "required",
             }
         ],
         "outputs": [
@@ -97,6 +98,7 @@ tr_json_component_1_new_revision = {
                 "id": str(get_uuid_from_seed("operator input")),
                 "name": "operator_input",
                 "data_type": "INT",
+                "type": "required",
             }
         ],
         "outputs": [
@@ -206,6 +208,7 @@ tr_json_component_3 = {
                 "id": "a980edcb-7ad3-49a2-a78d-bd8092fccb90",
                 "name": "new_input_1",
                 "data_type": "STRING",
+                "type": "required",
             }
         ],
         "outputs": [
@@ -371,6 +374,7 @@ tr_json_workflow_2_added_io_for_operator = {
             {
                 "id": str(get_uuid_from_seed("input")),
                 "data_type": "INT",
+                "type": "required",
             }
         ],
         "outputs": [
@@ -386,6 +390,7 @@ tr_json_workflow_2_added_io_for_operator = {
             {
                 "id": str(get_uuid_from_seed("input")),
                 "data_type": "INT",
+                "type": "required",
                 "operator_id": str(get_uuid_from_seed("operator")),
                 "connector_id": str(get_uuid_from_seed("operator input")),
                 "operator_name": "operator",
@@ -418,6 +423,7 @@ tr_json_workflow_2_added_io_for_operator = {
                         "id": str(get_uuid_from_seed("operator input")),
                         "name": "operator_input",
                         "data_type": "INT",
+                        "type": "required",
                         "position": {"x": 0, "y": 0},
                     },
                 ],
@@ -455,6 +461,7 @@ tr_json_workflow_2_with_named_io_for_operator = {
                 "id": str(get_uuid_from_seed("input")),
                 "name": "wf_input",
                 "data_type": "INT",
+                "type": "required",
             }
         ],
         "outputs": [
@@ -472,6 +479,7 @@ tr_json_workflow_2_with_named_io_for_operator = {
                 "id": str(get_uuid_from_seed("input")),
                 "name": "wf_input",
                 "data_type": "INT",
+                "type": "required",
                 "operator_id": str(get_uuid_from_seed("operator")),
                 "connector_id": str(get_uuid_from_seed("operator input")),
                 "operator_name": "operator",
@@ -505,6 +513,7 @@ tr_json_workflow_2_with_named_io_for_operator = {
                         "id": str(get_uuid_from_seed("operator input")),
                         "name": "operator_input",
                         "data_type": "INT",
+                        "type": "required",
                         "position": {"x": 0, "y": 0},
                     },
                 ],
