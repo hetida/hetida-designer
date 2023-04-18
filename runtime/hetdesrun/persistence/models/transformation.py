@@ -17,6 +17,7 @@ from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
 from hetdesrun.persistence.models.io import (
     Connector,
+    InputConnector,
     IOConnector,
     IOInterface,
     Position,
@@ -211,7 +212,7 @@ class TransformationRevision(BaseModel):
             workflow_content, WorkflowContent
         )  # hint for mypy
 
-        io_interface.inputs = [inp.to_io() for inp in workflow_content.inputs]
+        io_interface.inputs = [inp.to_input() for inp in workflow_content.inputs]
         io_interface.outputs = [output.to_io() for output in workflow_content.outputs]
 
         return io_interface
@@ -349,12 +350,14 @@ class TransformationRevision(BaseModel):
         wf_outputs = []
         links = []
         for input_connector in operator.inputs:
-            wf_input = IOConnector.from_connector(
+            wf_input = InputConnector.from_operator_input_connector(
                 input_connector, operator.id, operator.name
             )
             wf_inputs.append(wf_input)
             link = Link(
-                start=Vertex(operator=None, connector=wf_input.to_connector()),
+                start=Vertex(
+                    operator=None, connector=wf_input.to_operator_input_connector()
+                ),
                 end=Vertex(operator=operator.id, connector=input_connector),
             )
             links.append(link)
@@ -386,7 +389,7 @@ class TransformationRevision(BaseModel):
                 links=links,
             ),
             io_interface=IOInterface(
-                inputs=[input_connector.to_io() for input_connector in wf_inputs],
+                inputs=[input_connector.to_input() for input_connector in wf_inputs],
                 outputs=[output_connector.to_io() for output_connector in wf_outputs],
             ),
             test_wiring=self.test_wiring,

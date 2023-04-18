@@ -97,6 +97,14 @@ class Connector(IO):
 class OperatorInputConnector(Input):
     position: Position
 
+    def to_connector(self) -> Connector:
+        return Connector(
+            id=self.id,
+            name=self.name,
+            data_type=self.data_type,
+            position=self.position,
+        )
+
     @classmethod
     def from_input(
         cls, io: Input, pos_x: int = 0, pos_y: int = 0
@@ -177,6 +185,14 @@ class InputConnector(Input):
 
     def to_operator_input_connector(self) -> OperatorInputConnector:
         return OperatorInputConnector(
+            id=self.id,
+            name=self.name,
+            data_type=self.data_type,
+            position=self.position,
+        )
+
+    def to_connector(self) -> Connector:
+        return Connector(
             id=self.id,
             name=self.name,
             data_type=self.data_type,

@@ -6,7 +6,12 @@ from pydantic import BaseModel, Field, root_validator, validator
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import names_unique
 from hetdesrun.models.workflow import ComponentNode, WorkflowNode
-from hetdesrun.persistence.models.io import Connector, Constant, IOConnector
+from hetdesrun.persistence.models.io import (
+    Connector,
+    Constant,
+    InputConnector,
+    IOConnector,
+)
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import NonEmptyValidStr, Operator
 
@@ -32,9 +37,9 @@ def get_link_end_connector_from_operator(
 ) -> Connector | None:
     for operator in operators:
         if operator.id == link_end_operator_id:
-            for connector in operator.inputs:
-                if connector.id == link_end_connector_id:
-                    return connector
+            for operator_input_connector in operator.inputs:
+                if operator_input_connector.id == link_end_connector_id:
+                    return operator_input_connector.to_connector()
 
     return None
 
@@ -64,8 +69,8 @@ def get_link_by_input_connector(
 
 def get_input_by_link_start(
     link_start_connector_id: UUID,
-    inputs: list[IOConnector],
-) -> IOConnector | None:
+    inputs: list[InputConnector],
+) -> InputConnector | None:
     for input_connector in inputs:
         if input_connector.id == link_start_connector_id:
             return input_connector
@@ -98,8 +103,8 @@ def get_output_by_link_end(
 def get_input_by_operator_id_and_connector_id(
     operator_id: UUID,
     connector_id: UUID,
-    inputs: list[IOConnector],
-) -> IOConnector | None:
+    inputs: list[InputConnector],
+) -> InputConnector | None:
     for input_connector in inputs:
         if (
             input_connector.operator_id == operator_id
@@ -128,7 +133,7 @@ def get_output_by_operator_id_and_connector_id(
 class WorkflowContent(BaseModel):
     operators: list[Operator] = []
     links: list[Link] = Field([], description="Links may not form loops.")
-    inputs: list[IOConnector] = Field(
+    inputs: list[InputConnector] = Field(
         [],
         description=(
             "Workflow inputs are determined by operator inputs, "
@@ -263,8 +268,8 @@ class WorkflowContent(BaseModel):
 
     @validator("inputs", each_item=False)
     def keep_unnamed_inputs_and_determine_named_inputs_from_operators_and_links(
-        cls, inputs: list[IOConnector], values: dict
-    ) -> list[IOConnector]:
+        cls, inputs: list[InputConnector], values: dict
+    ) -> list[InputConnector]:
         try:
             operators = values["operators"]
             links = values["links"]
@@ -283,7 +288,7 @@ class WorkflowContent(BaseModel):
                         operator.id, connector.id, inputs
                     )
                     if input_connector is None:
-                        input_connector = IOConnector(
+                        input_connector = InputConnector(
                             data_type=connector.data_type,
                             operator_id=operator.id,
                             connector_id=connector.id,
@@ -318,7 +323,7 @@ class WorkflowContent(BaseModel):
             for connector in operator.outputs:
                 link = get_link_by_output_connector(operator.id, connector.id, links)
                 if link is None:
-                    output_connector = get_input_by_operator_id_and_connector_id(
+                    output_connector = get_output_by_operator_id_and_connector_id(
                         operator.id, connector.id, outputs
                     )
                     if output_connector is None:

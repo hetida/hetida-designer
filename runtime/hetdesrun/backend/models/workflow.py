@@ -13,7 +13,7 @@ from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import names_unique
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.models.io import IOConnector, IOInterface
+from hetdesrun.persistence.models.io import InputConnector, IOConnector, IOInterface
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -40,7 +40,7 @@ def opposite_link_end_by_connector_id(
 
 
 def position_from_input_connector_id(
-    input_id: UUID, inputs: list[IOConnector]
+    input_id: UUID, inputs: list[InputConnector]
 ) -> list[int]:
     positions: list[list[int]] = []
 
@@ -768,7 +768,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             if operator_id is None:
                 operator_id = transformation_revision.id
             assert connector_id is not None  # hint for mypy # noqa: S101
-            pos_x, pos_y = position_from_input_connector_id(
+            pos_x, pos_y = position_from_output_connector_id(
                 output.id, transformation_revision.content.outputs
             )
             outputs.append(

@@ -10,6 +10,7 @@ from hetdesrun.persistence.models.io import (
     Connector,
     Constant,
     IOConnector,
+    OperatorInputConnector,
     Position,
 )
 
@@ -124,7 +125,9 @@ class ConnectorFrontendDto(BaseModel):
         return IO(id=self.id, name=self.name, data_type=self.type)
 
     @classmethod
-    def from_connector(cls, connector: Connector) -> "ConnectorFrontendDto":
+    def from_connector(
+        cls, connector: Connector | OperatorInputConnector
+    ) -> "ConnectorFrontendDto":
         return ConnectorFrontendDto(
             id=connector.id,
             name=connector.name,
