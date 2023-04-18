@@ -34,8 +34,8 @@ class InputType(str, Enum):
 
 
 class Input(IO):
-    type: InputType  # noqa: A003
-    value: Any | None
+    type: InputType = InputType.REQUIRED  # noqa: A003
+    value: Any | None = None
 
     @validator("value")
     def value_set_only_for_optional_input(
