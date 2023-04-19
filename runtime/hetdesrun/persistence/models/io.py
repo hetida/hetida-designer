@@ -98,6 +98,10 @@ class OperatorInputConnector(Input):
     position: Position
 
     def to_connector(self) -> Connector:
+        """Transform OperatorInputConnector into Conenctor
+
+        Needed for compatibility with the end Vertex of a Link.
+        """
         return Connector(
             id=self.id,
             name=self.name,
