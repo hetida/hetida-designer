@@ -359,9 +359,7 @@ class TransformationRevision(BaseModel):
             )
             wf_inputs.append(wf_input)
             link = Link(
-                start=Vertex(
-                    operator=None, connector=wf_input.to_operator_input_connector()
-                ),
+                start=Vertex(operator=None, connector=wf_input.to_connector()),
                 end=Vertex(operator=operator.id, connector=input_connector),
             )
             links.append(link)
