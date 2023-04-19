@@ -20,6 +20,7 @@ from hetdesrun.persistence.models.io import (
     InputConnector,
     IOConnector,
     IOInterface,
+    OperatorInputConnector,
     Position,
 )
 from hetdesrun.persistence.models.link import Link, Vertex
@@ -315,7 +316,10 @@ class TransformationRevision(BaseModel):
             state=State.RELEASED,
             version_tag=self.version_tag,
             transformation_id=self.id,
-            inputs=[Connector.from_io(inp) for inp in self.io_interface.inputs],
+            inputs=[
+                OperatorInputConnector.from_input(inp)
+                for inp in self.io_interface.inputs
+            ],
             outputs=[Connector.from_io(output) for output in self.io_interface.outputs],
             position=Position(x=0, y=0),
         )
