@@ -162,7 +162,7 @@ class IOConnector(IO):
             id=self.id,
             name=self.name,
             data_type=self.data_type,
-            position=self.position,
+            position=Position(x=0, y=0),
         )
 
     def to_workflow_output(self) -> WorkflowOutput:
@@ -230,7 +230,7 @@ class InputConnector(Input):
             id=self.id,
             name=self.name,
             data_type=self.data_type,
-            position=self.position,
+            position=Position(x=0, y=0),
         )
 
     def to_workflow_input(
