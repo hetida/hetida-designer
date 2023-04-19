@@ -9,7 +9,7 @@ from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
 )
-from hetdesrun.persistence.models.io import IO, IOInterface
+from hetdesrun.persistence.models.io import IO, Input, IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import get_uuid_from_seed
@@ -70,7 +70,7 @@ def test_update_or_create_nesting(clean_test_db_engine):
         ):
             component_a = component_creator("a")
             component_a.io_interface.inputs.append(
-                IO(name="component_a_input", data_type="INT")
+                Input(name="component_a_input", data_type="INT")
             )
             component_a.io_interface.outputs.append(
                 IO(name="component_a_output", data_type="INT")
@@ -80,7 +80,7 @@ def test_update_or_create_nesting(clean_test_db_engine):
 
             component_b = component_creator("b")
             component_b.io_interface.inputs.append(
-                IO(name="component_b_input", data_type="INT")
+                Input(name="component_b_input", data_type="INT")
             )
             component_b.io_interface.outputs.append(
                 IO(name="component_b_output", data_type="INT")
