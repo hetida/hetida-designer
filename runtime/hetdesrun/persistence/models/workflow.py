@@ -444,38 +444,13 @@ class WorkflowContent(BaseModel):
     ) -> WorkflowNode:
         inputs = []
         for input_connector in self.inputs:
-            link = get_link_by_output_connector(None, input_connector.id, self.links)
-            if link is not None and link.end.connector.name is not None:
-                if link.end.operator is None:
-                    raise ValueError("input must be connected to some operator")
-                inputs.append(
-                    input_connector.to_workflow_input(
-                        link.end.operator, link.end.connector.name
-                    )
-                )
+            inputs.append(input_connector.to_workflow_input())
         for constant in self.constants:
-            cn_constant = constant.to_connector()
-            link = get_link_by_output_connector(None, cn_constant.id, self.links)
-            if link is not None and link.end.connector.name is not None:
-                if link.end.operator is None:
-                    raise ValueError("constant must be connected to some operator!")
-                inputs.append(
-                    constant.to_workflow_input(
-                        link.end.operator, link.end.connector.name
-                    )
-                )
+            inputs.append(constant.to_workflow_input())
 
         outputs = []
         for output_connector in self.outputs:
-            link = get_link_by_input_connector(None, output_connector.id, self.links)
-            if link is not None and link.start.connector.name is not None:
-                if link.start.operator is None:
-                    raise ValueError("output must be connected to some operator")
-                outputs.append(
-                    output_connector.to_workflow_output(
-                        link.start.operator, link.start.connector.name
-                    )
-                )
+            outputs.append(output_connector.to_workflow_output())
 
         return WorkflowNode(
             id=str(operator_id),

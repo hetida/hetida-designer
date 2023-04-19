@@ -135,8 +135,6 @@ class IOConnector(IO):
             id=self.id,
             name=self.name,
             data_type=self.data_type,
-            operator_id=self.operator_id,
-            connector_id=self.connector_id,
         )
 
     def to_connector(self) -> Connector:
@@ -147,15 +145,13 @@ class IOConnector(IO):
             position=self.position,
         )
 
-    def to_workflow_output(
-        self, operator_id: UUID, connector_name: str
-    ) -> WorkflowOutput:
+    def to_workflow_output(self) -> WorkflowOutput:
         return WorkflowOutput(
             id=self.id,
             name=self.name,
             type=self.data_type,
-            id_of_sub_node=str(operator_id),
-            name_in_subnode=connector_name,
+            id_of_sub_node=str(self.operator_id),
+            name_in_subnode=self.connector_name,
         )
 
     @classmethod
@@ -210,14 +206,14 @@ class InputConnector(Input):
         )
 
     def to_workflow_input(
-        self, operator_id: UUID, connector_name: str
+        self,
     ) -> WorkflowInput:
         return WorkflowInput(
             id=self.id,
             name=self.name,
             type=self.data_type,
-            id_of_sub_node=str(operator_id),
-            name_in_subnode=connector_name,
+            id_of_sub_node=str(self.operator_id),
+            name_in_subnode=self.connector_name,
             constantValue=None,
             constant=False,
         )
@@ -263,15 +259,13 @@ class Constant(IOConnector):
             id=self.id, name=self.name, data_type=self.data_type, position=self.position
         )
 
-    def to_workflow_input(
-        self, operator_id: UUID, connector_name: str
-    ) -> WorkflowInput:
+    def to_workflow_input(self) -> WorkflowInput:
         return WorkflowInput(
             id=self.id,
             name=None,
             type=self.data_type,
-            id_of_sub_node=str(operator_id),
+            id_of_sub_node=str(self.operator_id),
             constantValue={"value": self.value},
             constant=True,
-            name_in_subnode=connector_name,
+            name_in_subnode=self.connector_name,
         )
