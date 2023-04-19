@@ -16,7 +16,7 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
   const timestampRangeTo = moment('2023-01-02T12:15Z', 'YYYY-MM-DD HH:mm');
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+  await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
   await hetidaDesigner.doubleClickItemInNavigation(categoryName, workflowName);
 
@@ -36,7 +36,9 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
 
   await hetidaDesigner.typeInInputByTestId('search-tree-node', source);
   await hetidaDesigner.selectSourceSearchResult(0);
-  await hetidaDesigner.clickByTestId(`${workflowInputName}-node-wiring-context-menu`);
+  await hetidaDesigner.clickByTestId(
+    `${workflowInputName}-node-wiring-context-menu`
+  );
   await page.mouse.click(0, 0); // close context menu
   await hetidaDesigner.clickByTestId('done-tree-node-modal');
 
@@ -73,8 +75,12 @@ test.afterEach(async ({ page, hetidaDesigner }) => {
   await page.waitForSelector(
     `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`
   );
-  await hetidaDesigner.clickByTestId(`${workflowInputName}-clear-input-wiring-dialog`);
-  await hetidaDesigner.clickByTestId(`${workflowInputName}-value-input-wiring-dialog`);
+  await hetidaDesigner.clickByTestId(
+    `${workflowInputName}-clear-input-wiring-dialog`
+  );
+  await hetidaDesigner.clickByTestId(
+    `${workflowInputName}-value-input-wiring-dialog`
+  );
   await page.waitForSelector(
     `mat-dialog-container:has-text("Json input for ${workflowInputName}")`
   );

@@ -9,7 +9,7 @@ test('Open context-menu via right-click on a component in navigation-menu', asyn
   const componentName = 'Pi';
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
   // Open context-menu via right-click on a component
   await hetidaDesigner.rightClickItemInNavigation(categoryName, componentName);

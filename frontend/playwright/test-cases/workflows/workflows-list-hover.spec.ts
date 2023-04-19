@@ -6,7 +6,7 @@ test('Hover over workflow, load popover', async ({ page, hetidaDesigner }) => {
   const workflowName = 'Volatility Detection Example';
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+  await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
   await hetidaDesigner.hoverItemInNavigation(categoryName, workflowName);

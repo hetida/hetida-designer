@@ -33,7 +33,7 @@
 // `;
 
 //   // Act
-//   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+//   await hetidaDesigner.clickWorkflowsInNavigation();
 //   await hetidaDesigner.clickAddWorkflowComponentInNavigation('Add workflow');
 //   await page.waitForSelector(
 //     `mat-dialog-container:has-text("Create new workflow")`
@@ -46,7 +46,7 @@
 //     'create workflow-copy-transformation-dialog'
 //   );
 
-//   await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+//   await hetidaDesigner.clickComponentsInNavigation();
 //   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
 //   await hetidaDesigner.dragAndDropItemInNavigation(
 //     componentCategory,
@@ -143,7 +143,7 @@
 //     const workflowName = `Test release a workflow ${browserName}`;
 //     const workflowTag = '0.1.1';
 
-//     await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+//     await hetidaDesigner.clickWorkflowsInNavigation();
 //     await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
 //     await hetidaDesigner.rightClickItemInNavigation(
 //       workflowCategory,
@@ -155,6 +155,6 @@
 //       `mat-dialog-container:has-text("Deprecate workflow ${workflowName} (${workflowTag})")`
 //     );
 //     await hetidaDesigner.clickByTestId('deprecate workflow-confirm-dialog');
-  
+
 //     await hetidaDesigner.clearTest();
 // });

@@ -6,7 +6,7 @@ test('Hover over component, load popover', async ({ page, hetidaDesigner }) => {
   const componentName = 'Pi';
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
   await hetidaDesigner.hoverItemInNavigation(categoryName, componentName);

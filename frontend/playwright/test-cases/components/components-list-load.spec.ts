@@ -3,7 +3,7 @@ import { expect, test } from '../fixtures/fixture';
 test('Load component list', async ({ page, hetidaDesigner }) => {
   // Arrange
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickComponentsInNavigation();
 
   // Assert
   const countComponents = await page.locator('hd-navigation-category').count();
