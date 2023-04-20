@@ -6,12 +6,13 @@ from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import valid_python_identifier
 from hetdesrun.persistence.models.io import (
-    IO,
-    Connector,
-    Constant,
-    IOConnector,
-    OperatorInputConnector,
+    OperatorInput,
+    OperatorOutput,
     Position,
+    TransformationIO,
+    TransformationOutput,
+    WorkflowContentConstantInput,
+    WorkflowContentOutput,
 )
 
 
@@ -32,8 +33,10 @@ class WorkflowIoFrontendDto(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_io_connector(self, operator_name: str, connector_name: str) -> IOConnector:
-        return IOConnector(
+    def to_io_connector(
+        self, operator_name: str, connector_name: str
+    ) -> WorkflowContentOutput:
+        return WorkflowContentOutput(
             id=self.id,
             name=self.name,
             data_type=self.type,
@@ -44,8 +47,10 @@ class WorkflowIoFrontendDto(BaseModel):
             position=Position(x=self.pos_x, y=self.pos_y),
         )
 
-    def to_constant(self, operator_name: str, connector_name: str) -> Constant:
-        return Constant(
+    def to_constant(
+        self, operator_name: str, connector_name: str
+    ) -> WorkflowContentConstantInput:
+        return WorkflowContentConstantInput(
             id=self.id,
             data_type=self.type,
             operator_id=self.operator,
@@ -58,8 +63,8 @@ class WorkflowIoFrontendDto(BaseModel):
             else None,
         )
 
-    def to_io(self) -> IO:
-        return IO(
+    def to_io(self) -> TransformationOutput:
+        return TransformationOutput(
             id=self.id,
             name=self.name,
             data_type=self.type,
@@ -67,7 +72,12 @@ class WorkflowIoFrontendDto(BaseModel):
 
     @classmethod
     def from_io(
-        cls, io: IO, operator_id: UUID, connector_id: UUID, pos_x: int, pos_y: int
+        cls,
+        io: TransformationIO,
+        operator_id: UUID,
+        connector_id: UUID,
+        pos_x: int,
+        pos_y: int,
     ) -> "WorkflowIoFrontendDto":
         return WorkflowIoFrontendDto(
             id=io.id,
@@ -83,7 +93,10 @@ class WorkflowIoFrontendDto(BaseModel):
 
     @classmethod
     def from_constant(
-        cls, constant: Constant, operator_id: UUID, connector_id: UUID
+        cls,
+        constant: WorkflowContentConstantInput,
+        operator_id: UUID,
+        connector_id: UUID,
     ) -> "WorkflowIoFrontendDto":
         return WorkflowIoFrontendDto(
             id=constant.id,
@@ -113,20 +126,20 @@ class ConnectorFrontendDto(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_connector(self) -> Connector:
-        return Connector(
+    def to_connector(self) -> OperatorOutput:
+        return OperatorOutput(
             id=self.id,
             name=self.name,
             data_type=self.type,
             position=Position(x=self.pos_x, y=self.pos_y),
         )
 
-    def to_io(self) -> IO:
-        return IO(id=self.id, name=self.name, data_type=self.type)
+    def to_io(self) -> TransformationOutput:
+        return TransformationOutput(id=self.id, name=self.name, data_type=self.type)
 
     @classmethod
     def from_connector(
-        cls, connector: Connector | OperatorInputConnector
+        cls, connector: OperatorOutput | OperatorInput
     ) -> "ConnectorFrontendDto":
         return ConnectorFrontendDto(
             id=connector.id,
@@ -137,7 +150,9 @@ class ConnectorFrontendDto(BaseModel):
         )
 
     @classmethod
-    def from_io(cls, io: IO, posX: int = 0, posY: int = 0) -> "ConnectorFrontendDto":
+    def from_io(
+        cls, io: TransformationIO, posX: int = 0, posY: int = 0
+    ) -> "ConnectorFrontendDto":
         return ConnectorFrontendDto(
             id=io.id,
             name=io.name,

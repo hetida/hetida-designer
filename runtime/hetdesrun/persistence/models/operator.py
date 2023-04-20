@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, root_validator
 
 from hetdesrun.models.code import NonEmptyValidStr, ShortNonEmptyValidStr
-from hetdesrun.persistence.models.io import Connector, OperatorInputConnector, Position
+from hetdesrun.persistence.models.io import OperatorInput, OperatorOutput, Position
 from hetdesrun.utils import State, Type
 
 
@@ -23,8 +23,8 @@ class Operator(BaseModel):
     state: State
     version_tag: ShortNonEmptyValidStr
     transformation_id: UUID
-    inputs: list[OperatorInputConnector]
-    outputs: list[Connector]
+    inputs: list[OperatorInput]
+    outputs: list[OperatorOutput]
     position: Position
 
     @root_validator()

@@ -5,14 +5,14 @@ import pytest
 
 from hetdesrun.models.component import ComponentInput, ComponentOutput
 from hetdesrun.persistence.models.io import (
-    IO,
-    Connector,
-    Constant,
-    Input,
-    InputConnector,
-    IOConnector,
     IOInterface,
-    OperatorInputConnector,
+    OperatorInput,
+    OperatorOutput,
+    TransformationInput,
+    TransformationOutput,
+    WorkflowContentConstantInput,
+    WorkflowContentDynamicInput,
+    WorkflowContentOutput,
     WorkflowInput,
     WorkflowOutput,
 )
@@ -125,7 +125,7 @@ operator_output = {
 
 
 def test_io_accepted() -> None:
-    IO(**trafo_output)
+    TransformationOutput(**trafo_output)
 
 
 def test_io_validator_name_python_identifier_identifies_keyword_name() -> None:
@@ -135,7 +135,7 @@ def test_io_validator_name_python_identifier_identifies_keyword_name() -> None:
     print(trafo_output_with_keyword_name["name"])
 
     with pytest.raises(ValueError) as exc:  # noqa: PT011
-        IO(**trafo_output_with_keyword_name)
+        TransformationOutput(**trafo_output_with_keyword_name)
 
     assert "not a valid Python identifier" in str(exc.value)
 
@@ -145,21 +145,21 @@ def test_io_validator_name_python_identifier_identifies_invalid_name() -> None:
     trafo_output_with_invalid_name["name"] = "1name"
 
     with pytest.raises(ValueError) as exc:  # noqa: PT011
-        IO(**trafo_output_with_invalid_name)
+        TransformationOutput(**trafo_output_with_invalid_name)
 
     assert "not a valid Python identifier" in str(exc.value)
 
 
 def test_io_to_component_output() -> None:
-    component_output = IO(**trafo_output).to_component_output()
+    component_output = TransformationOutput(**trafo_output).to_component_output()
     assert component_output == ComponentOutput(
         id=trafo_output["id"], type=trafo_output["data_type"], name=trafo_output["name"]
     )
 
 
 def test_input_accepted() -> None:
-    Input(**required_trafo_input)
-    Input(**optional_trafo_input)
+    TransformationInput(**required_trafo_input)
+    TransformationInput(**optional_trafo_input)
 
 
 def test_input_validator_value_only_set_for_optional_input() -> None:
@@ -167,18 +167,22 @@ def test_input_validator_value_only_set_for_optional_input() -> None:
     required_trafo_input_with_value["value"] = "test"
 
     with pytest.raises(ValueError, match=r"value.* must not be set"):
-        Input(**required_trafo_input_with_value)
+        TransformationInput(**required_trafo_input_with_value)
 
 
 def test_input_to_component_input() -> None:
-    required_component_input = Input(**required_trafo_input).to_component_input()
+    required_component_input = TransformationInput(
+        **required_trafo_input
+    ).to_component_input()
     assert required_component_input == ComponentInput(
         id=required_trafo_input["id"],
         type=required_trafo_input["data_type"],
         name=required_trafo_input["name"],
     )
 
-    optional_component_input = Input(**optional_trafo_input).to_component_input()
+    optional_component_input = TransformationInput(
+        **optional_trafo_input
+    ).to_component_input()
     assert optional_component_input == ComponentInput(
         id=optional_trafo_input["id"],
         type=optional_trafo_input["data_type"],
@@ -203,11 +207,13 @@ def test_io_interface_validator_io_names_unique() -> None:
 
 
 def test_connector_accepted() -> None:
-    Connector(**operator_output)
+    OperatorOutput(**operator_output)
 
 
 def test_connector_from_io() -> None:
-    connector_from_io = Connector.from_io(io=IO(**trafo_output), pos_x=23, pos_y=42)
+    connector_from_io = OperatorOutput.from_io(
+        io=TransformationOutput(**trafo_output), pos_x=23, pos_y=42
+    )
 
     assert str(connector_from_io.id) == trafo_output["id"]
     assert connector_from_io.name == trafo_output["name"]
@@ -217,16 +223,10 @@ def test_connector_from_io() -> None:
 
 
 def test_operator_input_connector_accepted() -> None:
-    OperatorInputConnector(
-        **exposed_operator_input_connected_to_required_workflow_input
-    )
-    OperatorInputConnector(
-        **exposed_operator_input_connected_to_optional_workflow_input
-    )
-    OperatorInputConnector(
-        **exposed_operator_input_connected_to_constant_workflow_input
-    )
-    OperatorInputConnector(**unexposed_operator_input)
+    OperatorInput(**exposed_operator_input_connected_to_required_workflow_input)
+    OperatorInput(**exposed_operator_input_connected_to_optional_workflow_input)
+    OperatorInput(**exposed_operator_input_connected_to_constant_workflow_input)
+    OperatorInput(**unexposed_operator_input)
 
 
 def test_operator_input_validator_required_inputs_exposed() -> None:
@@ -234,17 +234,17 @@ def test_operator_input_validator_required_inputs_exposed() -> None:
         exposed_operator_input_connected_to_optional_workflow_input
     )
     operator_input_required_not_exposed_json["exposed"] = False
-    operator_input_required_not_exposed_object = OperatorInputConnector(
+    operator_input_required_not_exposed_object = OperatorInput(
         **operator_input_required_not_exposed_json
     )
     assert operator_input_required_not_exposed_object.exposed is True
 
-    unexposed_operator_input_object = OperatorInputConnector(**unexposed_operator_input)
+    unexposed_operator_input_object = OperatorInput(**unexposed_operator_input)
     assert unexposed_operator_input_object.exposed is False
 
 
 def test_operator_input_connector_to_connector() -> None:
-    oic_req = OperatorInputConnector(
+    oic_req = OperatorInput(
         **exposed_operator_input_connected_to_required_workflow_input
     )
     oc_from_oic_req = oic_req.to_connector()
@@ -263,8 +263,8 @@ def test_operator_input_connector_to_connector() -> None:
 
 
 def test_operator_input_connector_from_input() -> None:
-    operator_input_connector_from_required_input = OperatorInputConnector.from_input(
-        input=Input(**required_trafo_input), pos_x=17, pos_y=19
+    operator_input_connector_from_required_input = OperatorInput.from_input(
+        input=TransformationInput(**required_trafo_input), pos_x=17, pos_y=19
     )
     assert (
         str(operator_input_connector_from_required_input.id)
@@ -289,8 +289,8 @@ def test_operator_input_connector_from_input() -> None:
     assert operator_input_connector_from_required_input.position.x == 17
     assert operator_input_connector_from_required_input.position.y == 19
 
-    operator_input_connector_from_optional_input = OperatorInputConnector.from_input(
-        input=Input(**optional_trafo_input), pos_x=19, pos_y=23
+    operator_input_connector_from_optional_input = OperatorInput.from_input(
+        input=TransformationInput(**optional_trafo_input), pos_x=19, pos_y=23
     )
     assert (
         str(operator_input_connector_from_optional_input.id)
@@ -317,16 +317,18 @@ def test_operator_input_connector_from_input() -> None:
 
 
 def test_io_connector_accepted() -> None:
-    IOConnector(**workflow_output)
+    WorkflowContentOutput(**workflow_output)
 
 
 def test_io_connector_to_io() -> None:
-    trafo_output_from_workflow_output = IOConnector(**workflow_output).to_io()
-    assert trafo_output_from_workflow_output == IO(**trafo_output)
+    trafo_output_from_workflow_output = WorkflowContentOutput(**workflow_output).to_io()
+    assert trafo_output_from_workflow_output == TransformationOutput(**trafo_output)
 
 
 def test_io_connector_to_connector() -> None:
-    operator_output_from_workflow_output = IOConnector(**workflow_output).to_connector()
+    operator_output_from_workflow_output = WorkflowContentOutput(
+        **workflow_output
+    ).to_connector()
     assert str(operator_output_from_workflow_output.id) == workflow_output["id"]
     assert operator_output_from_workflow_output.name == workflow_output["name"]
     assert (
@@ -337,7 +339,7 @@ def test_io_connector_to_connector() -> None:
 
 
 def test_io_connector_to_workflow_output() -> None:
-    workflow_node_output: WorkflowOutput = IOConnector(
+    workflow_node_output: WorkflowOutput = WorkflowContentOutput(
         **workflow_output
     ).to_workflow_output()
 
@@ -349,8 +351,8 @@ def test_io_connector_to_workflow_output() -> None:
 
 
 def test_io_connector_from_connector() -> None:
-    workflow_output_from_operator_output = IOConnector.from_connector(
-        connector=Connector(**operator_output),
+    workflow_output_from_operator_output = WorkflowContentOutput.from_connector(
+        connector=OperatorOutput(**operator_output),
         operator_id=UUID(workflow_output["operator_id"]),
         operator_name=workflow_output["operator_name"],
     )
@@ -377,19 +379,21 @@ def test_io_connector_from_connector() -> None:
 
 
 def test_input_connector_accepted() -> None:
-    IOConnector(**required_workflow_input)
-    IOConnector(**optional_workflow_input)
+    WorkflowContentOutput(**required_workflow_input)
+    WorkflowContentOutput(**optional_workflow_input)
 
 
 def test_input_connector_to_input() -> None:
-    required_trafo_input_from_workflow_input = InputConnector(
+    required_trafo_input_from_workflow_input = WorkflowContentDynamicInput(
         **required_workflow_input
     ).to_input()
-    assert required_trafo_input_from_workflow_input == Input(**required_trafo_input)
+    assert required_trafo_input_from_workflow_input == TransformationInput(
+        **required_trafo_input
+    )
 
 
 def test_input_connector_to_operator_input_connector() -> None:
-    operator_input_from_required_workflow_input = InputConnector(
+    operator_input_from_required_workflow_input = WorkflowContentDynamicInput(
         **required_workflow_input
     ).to_connector()
     assert (
@@ -409,7 +413,7 @@ def test_input_connector_to_operator_input_connector() -> None:
 
 
 def test_input_connector_to_workflow_input() -> None:
-    workflow_node_input: WorkflowInput = InputConnector(
+    workflow_node_input: WorkflowInput = WorkflowContentDynamicInput(
         **required_workflow_input
     ).to_workflow_input()
 
@@ -424,8 +428,8 @@ def test_input_connector_to_workflow_input() -> None:
 
 def test_input_connector_from_operator_input_connector() -> None:
     required_workflow_input_from_operator_input = (
-        InputConnector.from_operator_input_connector(
-            operator_input_connector=OperatorInputConnector(
+        WorkflowContentDynamicInput.from_operator_input_connector(
+            operator_input_connector=OperatorInput(
                 **exposed_operator_input_connected_to_required_workflow_input
             ),
             operator_id=UUID(required_workflow_input["operator_id"]),
@@ -464,7 +468,7 @@ def test_input_connector_from_operator_input_connector() -> None:
 
 
 def test_constant_accepted() -> None:
-    Constant(**constant_workflow_input)
+    WorkflowContentConstantInput(**constant_workflow_input)
 
 
 def test_constant_validator_name_none() -> None:
@@ -472,11 +476,11 @@ def test_constant_validator_name_none() -> None:
     constant_workflow_input_with_name["name"] = "test"
 
     with pytest.raises(ValueError, match=r"must have.* empty string"):
-        Constant(**constant_workflow_input_with_name)
+        WorkflowContentConstantInput(**constant_workflow_input_with_name)
 
 
 def test_constant_to_workflow_input() -> None:
-    workflow_node_input: WorkflowInput = Constant(
+    workflow_node_input: WorkflowInput = WorkflowContentConstantInput(
         **constant_workflow_input
     ).to_workflow_input()
 

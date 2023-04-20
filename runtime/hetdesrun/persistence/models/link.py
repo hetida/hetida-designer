@@ -4,14 +4,14 @@ from pydantic import BaseModel, Field, root_validator
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.workflow import WorkflowConnection
-from hetdesrun.persistence.models.io import Connector, Position
+from hetdesrun.persistence.models.io import OperatorIO, Position
 
 
 class Vertex(BaseModel):
     """Represents start or end point of a link."""
 
     operator: UUID | None
-    connector: Connector = Field(
+    connector: OperatorIO = Field(
         ...,
         description=(
             "Full connector including name and data type "

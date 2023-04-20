@@ -7,10 +7,10 @@ from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import names_unique
 from hetdesrun.models.workflow import ComponentNode, WorkflowNode
 from hetdesrun.persistence.models.io import (
-    Connector,
-    Constant,
-    InputConnector,
-    IOConnector,
+    OperatorIO,
+    WorkflowContentConstantInput,
+    WorkflowContentDynamicInput,
+    WorkflowContentOutput,
 )
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import NonEmptyValidStr, Operator
@@ -20,7 +20,7 @@ def get_link_start_connector_from_operator(
     link_start_operator_id: UUID | None,
     link_start_connector_id: UUID,
     operators: list[Operator],
-) -> Connector | None:
+) -> OperatorIO | None:
     for operator in operators:
         if operator.id == link_start_operator_id:
             for connector in operator.outputs:
@@ -34,7 +34,7 @@ def get_link_end_connector_from_operator(
     link_end_operator_id: UUID | None,
     link_end_connector_id: UUID,
     operators: list[Operator],
-) -> Connector | None:
+) -> OperatorIO | None:
     for operator in operators:
         if operator.id == link_end_operator_id:
             for operator_input_connector in operator.inputs:
@@ -69,8 +69,8 @@ def get_link_by_input_connector(
 
 def get_input_by_link_start(
     link_start_connector_id: UUID,
-    inputs: list[InputConnector],
-) -> InputConnector | None:
+    inputs: list[WorkflowContentDynamicInput],
+) -> WorkflowContentDynamicInput | None:
     for input_connector in inputs:
         if input_connector.id == link_start_connector_id:
             return input_connector
@@ -80,8 +80,8 @@ def get_input_by_link_start(
 
 def get_constant_by_link_start(
     link_start_connector_id: UUID,
-    constants: list[Constant],
-) -> Constant | None:
+    constants: list[WorkflowContentConstantInput],
+) -> WorkflowContentConstantInput | None:
     for constant in constants:
         if constant.id == link_start_connector_id:
             return constant
@@ -91,8 +91,8 @@ def get_constant_by_link_start(
 
 def get_output_by_link_end(
     link_end_connector_id: UUID,
-    outputs: list[IOConnector],
-) -> IOConnector | None:
+    outputs: list[WorkflowContentOutput],
+) -> WorkflowContentOutput | None:
     for output_connector in outputs:
         if output_connector.id == link_end_connector_id:
             return output_connector
@@ -103,8 +103,8 @@ def get_output_by_link_end(
 def get_input_by_operator_id_and_connector_id(
     operator_id: UUID,
     connector_id: UUID,
-    inputs: list[InputConnector],
-) -> InputConnector | None:
+    inputs: list[WorkflowContentDynamicInput],
+) -> WorkflowContentDynamicInput | None:
     for input_connector in inputs:
         if (
             input_connector.operator_id == operator_id
@@ -118,8 +118,8 @@ def get_input_by_operator_id_and_connector_id(
 def get_output_by_operator_id_and_connector_id(
     operator_id: UUID,
     connector_id: UUID,
-    outputs: list[IOConnector],
-) -> IOConnector | None:
+    outputs: list[WorkflowContentOutput],
+) -> WorkflowContentOutput | None:
     for output_connector in outputs:
         if (
             output_connector.operator_id == operator_id
@@ -133,7 +133,7 @@ def get_output_by_operator_id_and_connector_id(
 class WorkflowContent(BaseModel):
     operators: list[Operator] = []
     links: list[Link] = Field([], description="Links may not form loops.")
-    inputs: list[InputConnector] = Field(
+    inputs: list[WorkflowContentDynamicInput] = Field(
         [],
         description=(
             "Workflow inputs are determined by operator inputs, "
@@ -141,7 +141,7 @@ class WorkflowContent(BaseModel):
             "If input names are set they must be unique."
         ),
     )
-    outputs: list[IOConnector] = Field(
+    outputs: list[WorkflowContentOutput] = Field(
         [],
         description=(
             "Workflow outputs are determined by operator outputs, "
@@ -149,7 +149,7 @@ class WorkflowContent(BaseModel):
             "If output names are set they must be unique."
         ),
     )
-    constants: list[Constant] = Field(
+    constants: list[WorkflowContentConstantInput] = Field(
         [],
         description=(
             "Constant input values for the workflow are created "
@@ -268,8 +268,8 @@ class WorkflowContent(BaseModel):
 
     @validator("inputs", each_item=False)
     def keep_unnamed_inputs_and_determine_named_inputs_from_operators_and_links(
-        cls, inputs: list[InputConnector], values: dict
-    ) -> list[InputConnector]:
+        cls, inputs: list[WorkflowContentDynamicInput], values: dict
+    ) -> list[WorkflowContentDynamicInput]:
         try:
             operators = values["operators"]
             links = values["links"]
@@ -288,7 +288,7 @@ class WorkflowContent(BaseModel):
                         operator.id, connector.id, inputs
                     )
                     if input_connector is None:
-                        input_connector = InputConnector(
+                        input_connector = WorkflowContentDynamicInput(
                             data_type=connector.data_type,
                             operator_id=operator.id,
                             connector_id=connector.id,
@@ -307,8 +307,8 @@ class WorkflowContent(BaseModel):
 
     @validator("outputs", each_item=False)
     def determine_outputs_from_operators_and_links(
-        cls, outputs: list[IOConnector], values: dict
-    ) -> list[IOConnector]:
+        cls, outputs: list[WorkflowContentOutput], values: dict
+    ) -> list[WorkflowContentOutput]:
         try:
             operators = values["operators"]
             links = values["links"]
@@ -327,7 +327,7 @@ class WorkflowContent(BaseModel):
                         operator.id, connector.id, outputs
                     )
                     if output_connector is None:
-                        output_connector = IOConnector(
+                        output_connector = WorkflowContentOutput(
                             data_type=connector.data_type,
                             operator_id=operator.id,
                             connector_id=connector.id,
@@ -346,8 +346,8 @@ class WorkflowContent(BaseModel):
 
     @validator("inputs", "outputs", each_item=False)
     def connector_names_empty_or_unique(
-        cls, io_connectors: list[IOConnector]
-    ) -> list[IOConnector]:
+        cls, io_connectors: list[WorkflowContentOutput]
+    ) -> list[WorkflowContentOutput]:
         io_connectors_with_nonempty_name = [
             io_connector
             for io_connector in io_connectors

@@ -16,12 +16,12 @@ from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
 from hetdesrun.persistence.models.io import (
-    Connector,
-    InputConnector,
-    IOConnector,
     IOInterface,
-    OperatorInputConnector,
+    OperatorInput,
+    OperatorOutput,
     Position,
+    WorkflowContentDynamicInput,
+    WorkflowContentOutput,
 )
 from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.operator import Operator
@@ -316,11 +316,10 @@ class TransformationRevision(BaseModel):
             state=State.RELEASED,
             version_tag=self.version_tag,
             transformation_id=self.id,
-            inputs=[
-                OperatorInputConnector.from_input(inp)
-                for inp in self.io_interface.inputs
+            inputs=[OperatorInput.from_input(inp) for inp in self.io_interface.inputs],
+            outputs=[
+                OperatorOutput.from_io(output) for output in self.io_interface.outputs
             ],
-            outputs=[Connector.from_io(output) for output in self.io_interface.outputs],
             position=Position(x=0, y=0),
         )
 
@@ -354,7 +353,7 @@ class TransformationRevision(BaseModel):
         wf_outputs = []
         links = []
         for input_connector in operator.inputs:
-            wf_input = InputConnector.from_operator_input_connector(
+            wf_input = WorkflowContentDynamicInput.from_operator_input_connector(
                 input_connector, operator.id, operator.name
             )
             wf_inputs.append(wf_input)
@@ -364,7 +363,7 @@ class TransformationRevision(BaseModel):
             )
             links.append(link)
         for output_connector in operator.outputs:
-            wf_output = IOConnector.from_connector(
+            wf_output = WorkflowContentOutput.from_connector(
                 output_connector, operator.id, operator.name
             )
             wf_outputs.append(wf_output)

@@ -13,7 +13,11 @@ from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import names_unique
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.models.io import InputConnector, IOConnector, IOInterface
+from hetdesrun.persistence.models.io import (
+    IOInterface,
+    WorkflowContentDynamicInput,
+    WorkflowContentOutput,
+)
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -40,7 +44,7 @@ def opposite_link_end_by_connector_id(
 
 
 def position_from_input_connector_id(
-    input_id: UUID, inputs: list[InputConnector]
+    input_id: UUID, inputs: list[WorkflowContentDynamicInput]
 ) -> list[int]:
     positions: list[list[int]] = []
 
@@ -56,7 +60,7 @@ def position_from_input_connector_id(
 
 
 def position_from_output_connector_id(
-    output_id: UUID, outputs: list[IOConnector]
+    output_id: UUID, outputs: list[WorkflowContentOutput]
 ) -> list[int]:
     positions: list[list[int]] = []
 

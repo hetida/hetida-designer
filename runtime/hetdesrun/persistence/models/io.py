@@ -10,7 +10,7 @@ from hetdesrun.models.util import names_unique, valid_python_identifier
 from hetdesrun.models.workflow import WorkflowInput, WorkflowOutput
 
 
-class IO(BaseModel):
+class TransformationIO(BaseModel):
     id: UUID = Field(default_factory=uuid4)  # noqa: A003
     name: str | None = Field(
         None,
@@ -28,12 +28,19 @@ class IO(BaseModel):
         return ComponentOutput(id=self.id, type=self.data_type, name=self.name)
 
 
+class TransformationOutput(TransformationIO):
+    """Class for InterfaceIO outputs.
+
+    This class needs no attributes, it just improveses the structure logic.
+    """
+
+
 class InputType(str, Enum):
     REQUIRED = "REQUIRED"
     OPTIONAL = "OPTIONAL"
 
 
-class Input(IO):
+class TransformationInput(TransformationIO):
     type: InputType = InputType.REQUIRED  # noqa: A003
     value: Any | None = None
 
@@ -64,11 +71,13 @@ class IOInterface(BaseModel):
     Note: The names in the list of inputs and outputs must be unique, respectively.
     """
 
-    inputs: list[Input] = []
-    outputs: list[IO] = []
+    inputs: list[TransformationInput] = []
+    outputs: list[TransformationOutput] = []
 
     @validator("inputs", "outputs", each_item=False)
-    def io_names_unique(cls, ios: list[IO]) -> list[IO]:
+    def io_names_unique(
+        cls, ios: list[TransformationOutput]
+    ) -> list[TransformationOutput]:
         ios_with_name = [io for io in ios if not (io.name is None or io.name == "")]
 
         names_unique(cls, ios_with_name)
@@ -81,17 +90,21 @@ class Position(BaseModel):
     y: int
 
 
-class Connector(IO):
+class OperatorIO(TransformationIO):
     position: Position
 
+
+class OperatorOutput(OperatorIO):
     @classmethod
-    def from_io(cls, io: IO, pos_x: int = 0, pos_y: int = 0) -> "Connector":
+    def from_io(
+        cls, io: TransformationOutput, pos_x: int = 0, pos_y: int = 0
+    ) -> "OperatorOutput":
         """Transform transformation revision output into operator output.
 
         Needed to transform a component into an operator which can be wrapped into an workflow
         for execution.
         """
-        return Connector(
+        return OperatorOutput(
             id=io.id,
             name=io.name,
             data_type=io.data_type,
@@ -99,7 +112,7 @@ class Connector(IO):
         )
 
 
-class OperatorInputConnector(Input):
+class OperatorInput(TransformationInput):
     position: Position
     exposed: bool = False
 
@@ -117,12 +130,12 @@ class OperatorInputConnector(Input):
 
         return exposed
 
-    def to_connector(self) -> Connector:
+    def to_connector(self) -> OperatorOutput:
         """Transform OperatorInputConnector into Conenctor
 
         Needed for compatibility with the end Vertex of a Link.
         """
-        return Connector(
+        return OperatorOutput(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
@@ -131,14 +144,14 @@ class OperatorInputConnector(Input):
 
     @classmethod
     def from_input(
-        cls, input: Input, pos_x: int = 0, pos_y: int = 0  # noqa: A002
-    ) -> "OperatorInputConnector":
+        cls, input: TransformationInput, pos_x: int = 0, pos_y: int = 0  # noqa: A002
+    ) -> "OperatorInput":
         """Transform transformation revision input into operator input.
 
         Needed to transform a component into an operator which can be wrapped into an workflow
         for execution.
         """
-        return OperatorInputConnector(
+        return OperatorInput(
             id=input.id,
             name=input.name,
             data_type=input.data_type,
@@ -148,32 +161,34 @@ class OperatorInputConnector(Input):
         )
 
 
-class IOConnector(IO):
+class WorkflowContentIO(TransformationIO):
     operator_id: UUID
     connector_id: UUID
     operator_name: str
     connector_name: str
     position: Position = Position(x=0, y=0)
 
-    def to_io(self) -> IO:
+
+class WorkflowContentOutput(WorkflowContentIO):
+    def to_io(self) -> TransformationOutput:
         """Transform workflow output into transformation revision output.
 
         Needed to validate the equality of the outputs of the io_interface of the transformation
         revision and the outputs of the workflow content.
         """
-        return IO(
+        return TransformationOutput(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
         )
 
-    def to_connector(self) -> Connector:
+    def to_connector(self) -> OperatorOutput:
         """Transform workflow output into operator IO connector.
 
         Needed to create links when wrapping a component into a worklfow for execution, and when
         creating links to unnamed outputs during workflow validation.
         """
-        return Connector(
+        return OperatorOutput(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
@@ -195,13 +210,13 @@ class IOConnector(IO):
 
     @classmethod
     def from_connector(
-        cls, connector: Connector, operator_id: UUID, operator_name: str
-    ) -> "IOConnector":
+        cls, connector: OperatorOutput, operator_id: UUID, operator_name: str
+    ) -> "WorkflowContentOutput":
         """Transform operator output into workflow output.
 
         Needed to wrap a component into a workflow for execution.
         """
-        return IOConnector(
+        return WorkflowContentOutput(
             name=connector.name,
             data_type=connector.data_type,
             operator_id=operator_id,
@@ -212,20 +227,20 @@ class IOConnector(IO):
         )
 
 
-class InputConnector(Input):
+class WorkflowContentDynamicInput(TransformationInput):
     operator_id: UUID
     connector_id: UUID
     operator_name: str
     connector_name: str
     position: Position = Position(x=0, y=0)
 
-    def to_input(self) -> Input:
+    def to_input(self) -> TransformationInput:
         """Transform workflow input into transformation revision input.
 
         Needed to validate the equality of the inputs of the io_interface of the transformation
         revision and the inputs of the workflow content.
         """
-        return Input(
+        return TransformationInput(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
@@ -235,13 +250,13 @@ class InputConnector(Input):
             connector_id=self.connector_id,
         )
 
-    def to_connector(self) -> Connector:
+    def to_connector(self) -> OperatorOutput:
         """Transform workflow input into operator IO connector.
 
         Needed to create links when wrapping a component into a worklfow for execution, and when
         creating links to unnamed inputs during workflow validation.
         """
-        return Connector(
+        return OperatorOutput(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
@@ -268,15 +283,15 @@ class InputConnector(Input):
     @classmethod
     def from_operator_input_connector(
         cls,
-        operator_input_connector: OperatorInputConnector,
+        operator_input_connector: OperatorInput,
         operator_id: UUID,
         operator_name: str,
-    ) -> "InputConnector":
+    ) -> "WorkflowContentDynamicInput":
         """Transform operator input into workflow input.
 
         Needed to wrap a component into a workflow for execution.
         """
-        return InputConnector(
+        return WorkflowContentDynamicInput(
             name=operator_input_connector.name,
             data_type=operator_input_connector.data_type,
             type=operator_input_connector.type,
@@ -289,7 +304,7 @@ class InputConnector(Input):
         )
 
 
-class Constant(IOConnector):
+class WorkflowContentConstantInput(WorkflowContentOutput):
     """Represents a fixed workflow input value
 
     Note: The name of the underlying connector must be an empty string.
