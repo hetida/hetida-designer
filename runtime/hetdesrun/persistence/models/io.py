@@ -101,6 +101,21 @@ class Connector(IO):
 
 class OperatorInputConnector(Input):
     position: Position
+    exposed: bool = False
+
+    @validator("exposed")
+    def required_inputs_exposed(cls, exposed: bool, values: dict) -> bool:
+        try:
+            type = values["type"]  # noqa: A001
+        except KeyError as error:
+            raise ValueError(
+                "Cannot set 'exposed' to true for required inputs "
+                "if the input type is missing!"
+            ) from error
+        if type == InputType.REQUIRED:
+            return True
+
+        return exposed
 
     def to_connector(self) -> Connector:
         """Transform OperatorInputConnector into Conenctor

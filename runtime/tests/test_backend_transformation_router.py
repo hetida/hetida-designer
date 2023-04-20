@@ -425,6 +425,7 @@ tr_json_workflow_2_added_io_for_operator = {
                         "data_type": "INT",
                         "type": "REQUIRED",
                         "position": {"x": 0, "y": 0},
+                        "exposed": True,
                     },
                 ],
                 "outputs": [
@@ -515,6 +516,7 @@ tr_json_workflow_2_with_named_io_for_operator = {
                         "data_type": "INT",
                         "type": "REQUIRED",
                         "position": {"x": 0, "y": 0},
+                        "exposed": True,
                     },
                 ],
                 "outputs": [
