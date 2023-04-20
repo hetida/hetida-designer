@@ -15,6 +15,7 @@ export class HetidaDesigner {
     await this.browserContext.clearCookies();
   }
 
+  // TODO use test ids
   public async clickTabInNavigation(tabPosition: number): Promise<void> {
     if (tabPosition < 0) {
       throw new Error(
@@ -26,20 +27,18 @@ export class HetidaDesigner {
   }
 
   // Left navigation
-  public async clickWorkflowsComponentsInNavigation(
-    buttonText: string
-  ): Promise<void> {
-    if (buttonText === '') {
-      throw new Error('ERROR: Button text must not be empty');
-    }
 
-    await this.page.locator(`button:has-text("${buttonText}")`).click();
+  public async clickWorkflowsInNavigation(): Promise<void> {
+    await this.page.locator(`button:has-text("Workflows")`).click();
     await this.page.waitForSelector('hd-navigation-category');
   }
 
-  public async clickAddWorkflowComponentInNavigation(
-    buttonText: string
-  ): Promise<void> {
+  public async clickComponentsInNavigation(): Promise<void> {
+    await this.page.locator(`button:has-text("Components")`).click();
+    await this.page.waitForSelector('hd-navigation-category');
+  }
+
+  public async clickAddButtonInNavigation(buttonText: string): Promise<void> {
     if (buttonText === '') {
       throw new Error('ERROR: Button text must not be empty');
     }
@@ -68,7 +67,8 @@ export class HetidaDesigner {
 
     await this.page
       .locator(`mat-expansion-panel:has-text("${categoryName}")`)
-      .locator(`.navigation-item:has-text("${itemName}")`).first()
+      .locator(`.navigation-item:has-text("${itemName}")`)
+      .first()
       .hover();
   }
 
@@ -82,7 +82,8 @@ export class HetidaDesigner {
 
     await this.page
       .locator(`mat-expansion-panel:has-text("${categoryName}")`)
-      .locator(`.navigation-item:has-text("${itemName}")`).first()
+      .locator(`.navigation-item:has-text("${itemName}")`)
+      .first()
       .dblclick();
   }
 
@@ -96,7 +97,8 @@ export class HetidaDesigner {
 
     await this.page
       .locator(`mat-expansion-panel:has-text("${categoryName}")`)
-      .locator(`.navigation-item:has-text("${itemName}")`).first()
+      .locator(`.navigation-item:has-text("${itemName}")`)
+      .first()
       .click({ button: 'right' });
   }
 
@@ -105,20 +107,19 @@ export class HetidaDesigner {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      throw new Error(
-        'ERROR: Category and item name must not be empty'
-      );
+      throw new Error('ERROR: Category and item name must not be empty');
     }
 
     const source = this.page
       .locator(`mat-expansion-panel:has-text("${categoryName}")`)
-      .locator(`.navigation-item:has-text("${itemName}")`).first();
+      .locator(`.navigation-item:has-text("${itemName}")`)
+      .first();
 
-    const target = this.page.locator(
+    const flowChartGrid = this.page.locator(
       'svg:has-text(".svg-small-grid { stroke: #a9a9a9; } .svg-grid { stroke: #a9a9a9; }") >> nth=0'
     );
 
-    await source.dragTo(target);
+    await source.dragTo(flowChartGrid);
   }
 
   public async clickOnContextMenu(menuItem: string): Promise<void> {
@@ -131,7 +132,7 @@ export class HetidaDesigner {
       .click();
   }
 
-  public async typeInSearchTerm(searchTerm: string): Promise<void> {
+  public async searchInNavigation(searchTerm: string): Promise<void> {
     if (searchTerm === '') {
       throw new Error('ERROR: Search term must not be empty');
     }
@@ -146,32 +147,32 @@ export class HetidaDesigner {
       throw new Error('ERROR: Icon title must not be empty');
     }
 
-    await this.page.waitForSelector(
-      `hd-toolbar >> mat-icon[title="${iconTitle}"]:not(.disabled)`
-    );
-
     await this.page
-      .locator(`hd-toolbar >> mat-icon[title="${iconTitle}"]`)
+      .locator(`hd-toolbar >> mat-icon[title="${iconTitle}"]:not(.disabled)`)
       .click();
   }
 
-  public async clickByTestId(testid: string): Promise<void> {
-    if (testid === '') {
-      throw new Error(`ERROR: Testid must not be empty`);
+  public async clickByTestId(testId: string): Promise<void> {
+    if (testId === '') {
+      throw new Error(`ERROR: test id must not be empty`);
     }
 
-    await this.page.getByTestId(testid).click();
+    await this.page.getByTestId(testId).click();
   }
 
-  public async typeInInputByTestId(testid: string, inputText: string): Promise<void> {
-    if (testid === '' || inputText === '') {
-      throw new Error('ERROR: Testid or input text must not be empty');
+  public async typeInInputByTestId(
+    testId: string,
+    inputText: string
+  ): Promise<void> {
+    if (testId === '' || inputText === '') {
+      throw new Error('ERROR: test id or input text must not be empty');
     }
 
     // Select default input text and overwrite it
-    await this.page.getByTestId(testid).click();
-    await this.page.getByTestId(testid).press('Control+a');
-    await this.page.getByTestId(testid).type(inputText);
+    const input = this.page.getByTestId(testId);
+    await input.click();
+    await input.press('Control+a');
+    await input.type(inputText);
   }
 
   public async typeInInputById(id: string, inputText: string): Promise<void> {
@@ -180,14 +181,15 @@ export class HetidaDesigner {
     }
 
     // Select default input text and overwrite it
-    await this.page.locator(`input[id="${id}"]`).click();
-    await this.page.locator(`input[id="${id}"]`).press('Control+a');
-    await this.page.locator(`input[id="${id}"]`).type(inputText);
+    const input = this.page.locator(`input[id="${id}"]`);
+    await input.click();
+    await input.press('Control+a');
+    await input.type(inputText);
 
     // Workaround for autocomplete in create component / workflow dialog
     if (id === 'category') {
       // tab out of input field to close suggested options
-      await this.page.locator(`input[id="${id}"]`).press('Tab');
+      await input.press('Tab');
     }
   }
 
@@ -196,20 +198,11 @@ export class HetidaDesigner {
       throw new Error('ERROR: Textarea text must not be empty');
     }
 
-    await this.page
-      .locator('hd-documentation-editor >> textarea')
-      .click();
-    await this.page.press(
-      'hd-documentation-editor >> textarea',
-      'Control+a'
-    );
-    await this.page.press(
-      'hd-documentation-editor >> textarea',
-      'Delete'
-    );
-    await this.page
-      .locator('hd-documentation-editor >> textarea')
-      .type(textareaText);
+    const textArea = this.page.locator('hd-documentation-editor >> textarea');
+    await textArea.click();
+    await textArea.press('Control+a');
+    await textArea.press('Delete');
+    await textArea.type(textareaText);
   }
 
   public async typeInJsonEditor(textareaText: string): Promise<void> {
@@ -217,21 +210,22 @@ export class HetidaDesigner {
       throw new Error('ERROR: Textarea text must not be empty');
     }
 
-    await this.page.locator('ngx-monaco-editor').click();
-    await this.page.press('ngx-monaco-editor >> textarea', 'Control+a');
-    await this.page.press('ngx-monaco-editor >> textarea', 'Delete');
-    await this.page.locator('ngx-monaco-editor >> textarea').type(textareaText);
+    const editorTextArea = this.page.locator('ngx-monaco-editor >> textarea');
+    await editorTextArea.click();
+    await editorTextArea.press('Control+a');
+    await editorTextArea.press('Delete');
+    await editorTextArea.type(textareaText);
   }
 
   public async selectItemInDropdown(
-    testid: string,
+    testId: string,
     itemText: string
   ): Promise<void> {
-    if (testid === '' || itemText === '') {
-      throw new Error(`ERROR: Dropdown testid or item text must not be empty`);
+    if (testId === '' || itemText === '') {
+      throw new Error(`ERROR: Dropdown test id or item text must not be empty`);
     }
 
-    await this.page.getByTestId(testid).click();
+    await this.page.getByTestId(testId).click();
     await this.page.locator(`mat-option:has-text("${itemText}")`).click();
   }
 
@@ -255,11 +249,14 @@ export class HetidaDesigner {
     if (from === undefined || to === undefined) {
       throw new Error(`ERROR: From or to date must not be empty`);
     }
+    if (to.isBefore(from)) {
+      throw new Error('To date must be after from date');
+    }
 
     const timestampRange: Moment[] = [from, to];
 
     for (const timestamp of timestampRange) {
-      await this.page.locator('.owl-dt-container-from[role="radio"]').click();
+      // choose year, month and day
       await this.page
         .locator('button[aria-label="Choose month and year"]')
         .click();
@@ -270,6 +267,8 @@ export class HetidaDesigner {
       await this.page
         .locator(`td[aria-label="${timestamp.format('MMMM D, YYYY')}"]`)
         .click();
+
+      // choose hours
       await this.page
         .locator('input[class="owl-dt-timer-input"] >> nth=0')
         .click();
@@ -280,6 +279,8 @@ export class HetidaDesigner {
       await this.page
         .locator('input[class="owl-dt-timer-input"] >> nth=0')
         .type(timestamp.hours().toString());
+
+      // choose minutes
       await this.page
         .locator('input[class="owl-dt-timer-input"] >> nth=1')
         .click();
