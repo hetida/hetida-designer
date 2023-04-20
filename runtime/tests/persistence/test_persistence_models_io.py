@@ -80,15 +80,16 @@ workflow_output = {
     "operator_name": "Contour Plot",
     "position": {"x": 2010, "y": -100},
 }
-operator_input_connected_to_optional_workflow_input = {
+exposed_operator_input_connected_to_optional_workflow_input = {
     "data_type": "INT",
     "id": "64245bba-7e81-ef0a-941d-2f9b5b43d044",
     "name": "n",
     "type": "REQUIRED",
     "value": None,
     "position": {"x": 0, "y": 0},
+    "exposed": True,
 }
-operator_input_connected_to_required_workflow_input = {
+exposed_operator_input_connected_to_required_workflow_input = {
     "data_type": "SERIES",
     "id": "5336c0a5-97ac-d436-ae5f-ee75fa8c8b40",
     "name": "input",
@@ -97,7 +98,7 @@ operator_input_connected_to_required_workflow_input = {
     "position": {"x": 0, "y": 0},
     "exposed": True,
 }
-operator_input_connected_to_constant_workflow_input = {
+exposed_operator_input_connected_to_constant_workflow_input = {
     "data_type": "STRING",
     "id": "44d0fd6a-4f72-3ec1-d5dc-4f8df7029652",
     "name": "name",
@@ -105,6 +106,15 @@ operator_input_connected_to_constant_workflow_input = {
     "value": 23,
     "position": {"x": 0, "y": 0},
     "exposed": True,
+}
+unexposed_operator_input = {
+    "data_type": "INT",
+    "id": "9861c5a4-1e37-54af-70be-f4e7b81d1f64",
+    "name": "n_estimators",
+    "type": "OPTIONAL",
+    "value": 100,
+    "position": {"x": 0, "y": 0},
+    "exposed": False,
 }
 operator_output = {
     "data_type": "PLOTLYJSON",
@@ -207,27 +217,48 @@ def test_connector_from_io() -> None:
 
 
 def test_operator_input_connector_accepted() -> None:
-    OperatorInputConnector(**operator_input_connected_to_required_workflow_input)
-    OperatorInputConnector(**operator_input_connected_to_optional_workflow_input)
-    OperatorInputConnector(**operator_input_connected_to_constant_workflow_input)
+    OperatorInputConnector(
+        **exposed_operator_input_connected_to_required_workflow_input
+    )
+    OperatorInputConnector(
+        **exposed_operator_input_connected_to_optional_workflow_input
+    )
+    OperatorInputConnector(
+        **exposed_operator_input_connected_to_constant_workflow_input
+    )
+    OperatorInputConnector(**unexposed_operator_input)
+
+
+def test_operator_input_validator_required_inputs_exposed() -> None:
+    operator_input_required_not_exposed_json = deepcopy(
+        exposed_operator_input_connected_to_optional_workflow_input
+    )
+    operator_input_required_not_exposed_json["exposed"] = False
+    operator_input_required_not_exposed_object = OperatorInputConnector(
+        **operator_input_required_not_exposed_json
+    )
+    assert operator_input_required_not_exposed_object.exposed is True
+
+    unexposed_operator_input_object = OperatorInputConnector(**unexposed_operator_input)
+    assert unexposed_operator_input_object.exposed is False
 
 
 def test_operator_input_connector_to_connector() -> None:
     oic_req = OperatorInputConnector(
-        **operator_input_connected_to_required_workflow_input
+        **exposed_operator_input_connected_to_required_workflow_input
     )
     oc_from_oic_req = oic_req.to_connector()
     assert (
         str(oc_from_oic_req.id)
-        == operator_input_connected_to_required_workflow_input["id"]
+        == exposed_operator_input_connected_to_required_workflow_input["id"]
     )
     assert (
         oc_from_oic_req.name
-        == operator_input_connected_to_required_workflow_input["name"]
+        == exposed_operator_input_connected_to_required_workflow_input["name"]
     )
     assert (
         oc_from_oic_req.data_type
-        == operator_input_connected_to_required_workflow_input["data_type"]
+        == exposed_operator_input_connected_to_required_workflow_input["data_type"]
     )
 
 
@@ -395,7 +426,7 @@ def test_input_connector_from_operator_input_connector() -> None:
     required_workflow_input_from_operator_input = (
         InputConnector.from_operator_input_connector(
             operator_input_connector=OperatorInputConnector(
-                **operator_input_connected_to_required_workflow_input
+                **exposed_operator_input_connected_to_required_workflow_input
             ),
             operator_id=UUID(required_workflow_input["operator_id"]),
             operator_name=required_workflow_input["operator_name"],
@@ -404,15 +435,15 @@ def test_input_connector_from_operator_input_connector() -> None:
 
     assert (
         required_workflow_input_from_operator_input.id
-        != operator_input_connected_to_required_workflow_input["id"]
+        != exposed_operator_input_connected_to_required_workflow_input["id"]
     )
     assert (
         required_workflow_input_from_operator_input.name
-        == operator_input_connected_to_required_workflow_input["name"]
+        == exposed_operator_input_connected_to_required_workflow_input["name"]
     )
     assert (
         required_workflow_input_from_operator_input.data_type
-        == operator_input_connected_to_required_workflow_input["data_type"]
+        == exposed_operator_input_connected_to_required_workflow_input["data_type"]
     )
     assert (
         str(required_workflow_input_from_operator_input.operator_id)
@@ -424,11 +455,11 @@ def test_input_connector_from_operator_input_connector() -> None:
     )
     assert (
         str(required_workflow_input_from_operator_input.connector_id)
-        == operator_input_connected_to_required_workflow_input["id"]
+        == exposed_operator_input_connected_to_required_workflow_input["id"]
     )
     assert (
         required_workflow_input_from_operator_input.connector_name
-        == operator_input_connected_to_required_workflow_input["name"]
+        == exposed_operator_input_connected_to_required_workflow_input["name"]
     )
 
 
