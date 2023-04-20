@@ -112,8 +112,9 @@ class OperatorOutput(OperatorIO):
         )
 
 
-class OperatorInput(TransformationInput):
-    position: Position
+class OperatorInput(OperatorIO):
+    type: InputType = InputType.REQUIRED  # noqa: A003
+    value: Any | None = None
     exposed: bool = False
 
     @validator("exposed")
@@ -130,12 +131,13 @@ class OperatorInput(TransformationInput):
 
         return exposed
 
-    def to_connector(self) -> OperatorOutput:
-        """Transform OperatorInputConnector into Conenctor
+    def to_connector(self) -> OperatorIO:
+        """Transform OperatorInputConnector into operator IO connector
 
         Needed for compatibility with the end Vertex of a Link.
+        Pydantic Config extra with default Extra.ignore does not seem to apply.
         """
-        return OperatorOutput(
+        return OperatorIO(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
@@ -161,12 +163,12 @@ class OperatorInput(TransformationInput):
         )
 
 
-class WorkflowContentIO(TransformationIO):
+class WorkflowContentIO(OperatorIO):
     operator_id: UUID
     connector_id: UUID
     operator_name: str
     connector_name: str
-    position: Position = Position(x=0, y=0)
+    position = Position(x=0, y=0)
 
 
 class WorkflowContentOutput(WorkflowContentIO):
@@ -182,13 +184,13 @@ class WorkflowContentOutput(WorkflowContentIO):
             data_type=self.data_type,
         )
 
-    def to_connector(self) -> OperatorOutput:
+    def to_connector(self) -> OperatorIO:
         """Transform workflow output into operator IO connector.
 
-        Needed to create links when wrapping a component into a worklfow for execution, and when
-        creating links to unnamed outputs during workflow validation.
+        Needed for compatibility with the end Vertex of a Link.
+        Pydantic Config extra with default Extra.ignore does not seem to apply.
         """
-        return OperatorOutput(
+        return OperatorIO(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
@@ -227,12 +229,9 @@ class WorkflowContentOutput(WorkflowContentIO):
         )
 
 
-class WorkflowContentDynamicInput(TransformationInput):
-    operator_id: UUID
-    connector_id: UUID
-    operator_name: str
-    connector_name: str
-    position: Position = Position(x=0, y=0)
+class WorkflowContentDynamicInput(WorkflowContentIO):
+    type: InputType = InputType.REQUIRED  # noqa: A003
+    value: Any | None = None
 
     def to_input(self) -> TransformationInput:
         """Transform workflow input into transformation revision input.
@@ -250,13 +249,13 @@ class WorkflowContentDynamicInput(TransformationInput):
             connector_id=self.connector_id,
         )
 
-    def to_connector(self) -> OperatorOutput:
+    def to_connector(self) -> OperatorIO:
         """Transform workflow input into operator IO connector.
 
-        Needed to create links when wrapping a component into a worklfow for execution, and when
-        creating links to unnamed inputs during workflow validation.
+        Needed for compatibility with the end Vertex of a Link.
+        Pydantic Config extra with default Extra.ignore does not seem to apply.
         """
-        return OperatorOutput(
+        return OperatorIO(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
@@ -304,7 +303,7 @@ class WorkflowContentDynamicInput(TransformationInput):
         )
 
 
-class WorkflowContentConstantInput(WorkflowContentOutput):
+class WorkflowContentConstantInput(WorkflowContentIO):
     """Represents a fixed workflow input value
 
     Note: The name of the underlying connector must be an empty string.
@@ -319,6 +318,19 @@ class WorkflowContentConstantInput(WorkflowContentOutput):
         if not ("name" not in values or values["name"] is None or values["name"] == ""):
             raise ValueError("Constants must have an empty string as name.")
         return values
+
+    def to_connector(self) -> OperatorIO:
+        """Transform workflow input into operator IO connector.
+
+        Needed for compatibility with the end Vertex of a Link.
+        Pydantic Config extra with default Extra.ignore does not seem to apply.
+        """
+        return OperatorIO(
+            id=self.id,
+            name=self.name,
+            data_type=self.data_type,
+            position=Position(x=0, y=0),
+        )
 
     def to_workflow_input(self) -> WorkflowInput:
         """Transform constant workflow input into workflow node input.

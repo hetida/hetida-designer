@@ -6,13 +6,11 @@ from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import valid_python_identifier
 from hetdesrun.persistence.models.io import (
-    OperatorInput,
-    OperatorOutput,
+    OperatorIO,
     Position,
     TransformationIO,
-    TransformationOutput,
     WorkflowContentConstantInput,
-    WorkflowContentOutput,
+    WorkflowContentIO,
 )
 
 
@@ -35,8 +33,8 @@ class WorkflowIoFrontendDto(BaseModel):
 
     def to_io_connector(
         self, operator_name: str, connector_name: str
-    ) -> WorkflowContentOutput:
-        return WorkflowContentOutput(
+    ) -> WorkflowContentIO:
+        return WorkflowContentIO(
             id=self.id,
             name=self.name,
             data_type=self.type,
@@ -63,8 +61,8 @@ class WorkflowIoFrontendDto(BaseModel):
             else None,
         )
 
-    def to_io(self) -> TransformationOutput:
-        return TransformationOutput(
+    def to_io(self) -> TransformationIO:
+        return TransformationIO(
             id=self.id,
             name=self.name,
             data_type=self.type,
@@ -126,21 +124,19 @@ class ConnectorFrontendDto(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_connector(self) -> OperatorOutput:
-        return OperatorOutput(
+    def to_connector(self) -> OperatorIO:
+        return OperatorIO(
             id=self.id,
             name=self.name,
             data_type=self.type,
             position=Position(x=self.pos_x, y=self.pos_y),
         )
 
-    def to_io(self) -> TransformationOutput:
-        return TransformationOutput(id=self.id, name=self.name, data_type=self.type)
+    def to_io(self) -> TransformationIO:
+        return TransformationIO(id=self.id, name=self.name, data_type=self.type)
 
     @classmethod
-    def from_connector(
-        cls, connector: OperatorOutput | OperatorInput
-    ) -> "ConnectorFrontendDto":
+    def from_connector(cls, connector: OperatorIO) -> "ConnectorFrontendDto":
         return ConnectorFrontendDto(
             id=connector.id,
             name=connector.name,
