@@ -19,6 +19,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   const workflowOutputName = 'output';
 
   // Act
+  // Add a new test workflow
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickAddButtonInNavigation('Add workflow');
   await page.waitForSelector(
@@ -32,6 +33,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
     'create workflow-copy-transformation-dialog'
   );
 
+  // Add a component to the workflow
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
   await hetidaDesigner.dragAndDropItemInNavigation(
@@ -39,6 +41,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
     `${componentName} (${componentTag})`
   );
 
+  // Configure workflow I/O
   await hetidaDesigner.clickIconInToolbar('Configure I/O');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Workflow ${workflowName} ${workflowTag}")`
@@ -57,6 +60,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   );
   await hetidaDesigner.clickByTestId('save-workflow-io-dialog');
 
+  // Execute workflow
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`

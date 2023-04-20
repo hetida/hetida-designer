@@ -209,8 +209,7 @@ export class HetidaDesigner {
       throw new Error('ERROR: Textarea text must not be empty');
     }
 
-    const editorTextArea = this.page.locator('ngx-monaco-editor >> textarea');
-    await editorTextArea.click();
+    const editorTextArea = this.page.locator('.monaco-editor textarea').first();
     await editorTextArea.press('Control+a');
     await editorTextArea.press('Delete');
     await editorTextArea.type(textareaText);

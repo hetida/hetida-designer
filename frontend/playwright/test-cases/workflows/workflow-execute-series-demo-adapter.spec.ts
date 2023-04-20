@@ -16,24 +16,28 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
   const timestampRangeTo = moment('2023-01-02T12:15Z', 'YYYY-MM-DD HH:mm');
 
   // Act
+  // Open workflow
   await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
   await hetidaDesigner.doubleClickItemInNavigation(categoryName, workflowName);
 
+  // Open execute workflow dialog
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`
   );
 
+  // Select adapter
   await hetidaDesigner.selectItemInDropdown(
     `${workflowInputName}-adapter-list-input-wiring-dialog`,
     adapter
   );
+
+  // Select source
   await hetidaDesigner.clickByTestId(
     `${workflowInputName}-browse-sources-input-wiring-dialog`
   );
   await page.waitForSelector('mat-dialog-container:has-text("Search Sources")');
-
   await hetidaDesigner.typeInInputByTestId('search-tree-node', source);
   await hetidaDesigner.selectSourceSearchResult(0);
   await hetidaDesigner.clickByTestId(
@@ -42,6 +46,7 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
   await page.mouse.click(0, 0); // Close context menu
   await hetidaDesigner.clickByTestId('done-tree-node-modal');
 
+  // Select timestamp range
   await hetidaDesigner.clickByTestId(
     `${workflowInputName}-timestamp-range-input-wiring-dialog`
   );
@@ -50,6 +55,7 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
     timestampRangeTo
   );
 
+  // Execute workflow
   await hetidaDesigner.clickByTestId('execute-wiring-dialog');
   await page.waitForSelector('hd-protocol-viewer >> plotly-plot');
 
