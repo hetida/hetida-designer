@@ -213,8 +213,12 @@ class TransformationRevision(BaseModel):
             workflow_content, WorkflowContent
         )  # hint for mypy
 
-        io_interface.inputs = [inp.to_input() for inp in workflow_content.inputs]
-        io_interface.outputs = [output.to_io() for output in workflow_content.outputs]
+        io_interface.inputs = [
+            inp.to_transformation_input() for inp in workflow_content.inputs
+        ]
+        io_interface.outputs = [
+            output.to_transformation_output() for output in workflow_content.outputs
+        ]
 
         return io_interface
 
@@ -316,9 +320,13 @@ class TransformationRevision(BaseModel):
             state=State.RELEASED,
             version_tag=self.version_tag,
             transformation_id=self.id,
-            inputs=[OperatorInput.from_input(inp) for inp in self.io_interface.inputs],
+            inputs=[
+                OperatorInput.from_transformation_input(inp)
+                for inp in self.io_interface.inputs
+            ],
             outputs=[
-                OperatorOutput.from_io(output) for output in self.io_interface.outputs
+                OperatorOutput.from_transformation_output(output)
+                for output in self.io_interface.outputs
             ],
             position=Position(x=0, y=0),
         )
@@ -353,23 +361,23 @@ class TransformationRevision(BaseModel):
         wf_outputs = []
         links = []
         for input_connector in operator.inputs:
-            wf_input = WorkflowContentDynamicInput.from_operator_input_connector(
+            wf_input = WorkflowContentDynamicInput.from_operator_input(
                 input_connector, operator.id, operator.name
             )
             wf_inputs.append(wf_input)
             link = Link(
-                start=Vertex(operator=None, connector=wf_input.to_connector()),
+                start=Vertex(operator=None, connector=wf_input.to_operator_io()),
                 end=Vertex(operator=operator.id, connector=input_connector),
             )
             links.append(link)
         for output_connector in operator.outputs:
-            wf_output = WorkflowContentOutput.from_connector(
+            wf_output = WorkflowContentOutput.from_operator_output(
                 output_connector, operator.id, operator.name
             )
             wf_outputs.append(wf_output)
             link = Link(
                 start=Vertex(operator=operator.id, connector=output_connector),
-                end=Vertex(operator=None, connector=wf_output.to_connector()),
+                end=Vertex(operator=None, connector=wf_output.to_operator_io()),
             )
             links.append(link)
 
@@ -390,8 +398,14 @@ class TransformationRevision(BaseModel):
                 links=links,
             ),
             io_interface=IOInterface(
-                inputs=[input_connector.to_input() for input_connector in wf_inputs],
-                outputs=[output_connector.to_io() for output_connector in wf_outputs],
+                inputs=[
+                    input_connector.to_transformation_input()
+                    for input_connector in wf_inputs
+                ],
+                outputs=[
+                    output_connector.to_transformation_output()
+                    for output_connector in wf_outputs
+                ],
             ),
             test_wiring=self.test_wiring,
         )

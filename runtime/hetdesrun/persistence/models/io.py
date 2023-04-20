@@ -96,8 +96,8 @@ class OperatorIO(TransformationIO):
 
 class OperatorOutput(OperatorIO):
     @classmethod
-    def from_io(
-        cls, io: TransformationOutput, pos_x: int = 0, pos_y: int = 0
+    def from_transformation_output(
+        cls, transformation_output: TransformationOutput, pos_x: int = 0, pos_y: int = 0
     ) -> "OperatorOutput":
         """Transform transformation revision output into operator output.
 
@@ -105,9 +105,9 @@ class OperatorOutput(OperatorIO):
         for execution.
         """
         return OperatorOutput(
-            id=io.id,
-            name=io.name,
-            data_type=io.data_type,
+            id=transformation_output.id,
+            name=transformation_output.name,
+            data_type=transformation_output.data_type,
             position=Position(x=pos_x, y=pos_y),
         )
 
@@ -131,7 +131,7 @@ class OperatorInput(OperatorIO):
 
         return exposed
 
-    def to_connector(self) -> OperatorIO:
+    def to_operator_io(self) -> OperatorIO:
         """Transform OperatorInputConnector into operator IO connector
 
         Needed for compatibility with the end Vertex of a Link.
@@ -145,7 +145,7 @@ class OperatorInput(OperatorIO):
         )
 
     @classmethod
-    def from_input(
+    def from_transformation_input(
         cls, input: TransformationInput, pos_x: int = 0, pos_y: int = 0  # noqa: A002
     ) -> "OperatorInput":
         """Transform transformation revision input into operator input.
@@ -172,7 +172,7 @@ class WorkflowContentIO(OperatorIO):
 
 
 class WorkflowContentOutput(WorkflowContentIO):
-    def to_io(self) -> TransformationOutput:
+    def to_transformation_output(self) -> TransformationOutput:
         """Transform workflow output into transformation revision output.
 
         Needed to validate the equality of the outputs of the io_interface of the transformation
@@ -184,7 +184,7 @@ class WorkflowContentOutput(WorkflowContentIO):
             data_type=self.data_type,
         )
 
-    def to_connector(self) -> OperatorIO:
+    def to_operator_io(self) -> OperatorIO:
         """Transform workflow output into operator IO connector.
 
         Needed for compatibility with the end Vertex of a Link.
@@ -211,7 +211,7 @@ class WorkflowContentOutput(WorkflowContentIO):
         )
 
     @classmethod
-    def from_connector(
+    def from_operator_output(
         cls, connector: OperatorOutput, operator_id: UUID, operator_name: str
     ) -> "WorkflowContentOutput":
         """Transform operator output into workflow output.
@@ -233,7 +233,7 @@ class WorkflowContentDynamicInput(WorkflowContentIO):
     type: InputType = InputType.REQUIRED  # noqa: A003
     value: Any | None = None
 
-    def to_input(self) -> TransformationInput:
+    def to_transformation_input(self) -> TransformationInput:
         """Transform workflow input into transformation revision input.
 
         Needed to validate the equality of the inputs of the io_interface of the transformation
@@ -249,7 +249,7 @@ class WorkflowContentDynamicInput(WorkflowContentIO):
             connector_id=self.connector_id,
         )
 
-    def to_connector(self) -> OperatorIO:
+    def to_operator_io(self) -> OperatorIO:
         """Transform workflow input into operator IO connector.
 
         Needed for compatibility with the end Vertex of a Link.
@@ -280,7 +280,7 @@ class WorkflowContentDynamicInput(WorkflowContentIO):
         )
 
     @classmethod
-    def from_operator_input_connector(
+    def from_operator_input(
         cls,
         operator_input_connector: OperatorInput,
         operator_id: UUID,
@@ -319,7 +319,7 @@ class WorkflowContentConstantInput(WorkflowContentIO):
             raise ValueError("Constants must have an empty string as name.")
         return values
 
-    def to_connector(self) -> OperatorIO:
+    def to_operator_io(self) -> OperatorIO:
         """Transform workflow input into operator IO connector.
 
         Needed for compatibility with the end Vertex of a Link.
