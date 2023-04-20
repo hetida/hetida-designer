@@ -21,14 +21,14 @@ required_trafo_input = {
     "data_type": "SERIES",
     "id": "1c3224e0-90e6-4d03-9160-3a9417c27841",
     "name": "y_vals",
-    "type": "required",
+    "type": "REQUIRED",
     "value": None,
 }
 optional_trafo_input = {
     "data_type": "INT",
     "id": "b817a8f6-764d-4003-96c4-b8ba52981fb1",
     "name": "n_grid",
-    "type": "optional",
+    "type": "OPTIONAL",
     "value": None,
 }
 trafo_output = {
@@ -45,7 +45,7 @@ required_workflow_input = {
     "operator_id": "1ecddb98-6ae1-48b0-b125-20d3b4e3118c",
     "operator_name": "Name Series (2)",
     "position": {"x": -50, "y": 370},
-    "type": "required",
+    "type": "REQUIRED",
     "value": None,
 }
 optional_workflow_input = {
@@ -57,7 +57,7 @@ optional_workflow_input = {
     "operator_id": "74608f8a-d973-4add-9764-ad3348b3bb57",
     "operator_name": "2D Grid Generator",
     "position": {"x": -60, "y": 90},
-    "type": "optional",
+    "type": "OPTIONAL",
     "value": 30,
 }
 constant_workflow_input = {
@@ -84,7 +84,7 @@ operator_input_connected_to_optional_workflow_input = {
     "data_type": "INT",
     "id": "64245bba-7e81-ef0a-941d-2f9b5b43d044",
     "name": "n",
-    "type": "required",
+    "type": "REQUIRED",
     "value": None,
     "position": {"x": 0, "y": 0},
 }
@@ -92,7 +92,7 @@ operator_input_connected_to_required_workflow_input = {
     "data_type": "SERIES",
     "id": "5336c0a5-97ac-d436-ae5f-ee75fa8c8b40",
     "name": "input",
-    "type": "optional",
+    "type": "OPTIONAL",
     "value": None,
     "position": {"x": 0, "y": 0},
     "exposed": True,
@@ -101,7 +101,7 @@ operator_input_connected_to_constant_workflow_input = {
     "data_type": "STRING",
     "id": "44d0fd6a-4f72-3ec1-d5dc-4f8df7029652",
     "name": "name",
-    "type": "optional",
+    "type": "OPTIONAL",
     "value": 23,
     "position": {"x": 0, "y": 0},
     "exposed": True,

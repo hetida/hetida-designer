@@ -10,13 +10,13 @@
         "data_type": "ANY",
         "id": "ad0fb04c-fa46-f59d-5d59-054e6fc7b766",
         "name": "data",
-        "type": "required"
+        "type": "REQUIRED"
       },
       {
         "data_type": "SERIES",
         "id": "c84b0db5-bbe6-c5ef-a30d-79015134c4cf",
         "name": "filter_series",
-        "type": "required"
+        "type": "REQUIRED"
       }
     ],
     "outputs": [

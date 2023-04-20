@@ -29,8 +29,8 @@ class IO(BaseModel):
 
 
 class InputType(str, Enum):
-    REQUIRED = "required"
-    OPTIONAL = "optional"
+    REQUIRED = "REQUIRED"
+    OPTIONAL = "OPTIONAL"
 
 
 class Input(IO):
