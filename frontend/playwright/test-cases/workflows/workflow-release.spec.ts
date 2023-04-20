@@ -34,8 +34,8 @@ ${workflowInputData}
 
   // Act
   // Add a new test workflow
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
-  await hetidaDesigner.clickAddWorkflowComponentInNavigation('Add workflow');
+  await hetidaDesigner.clickWorkflowsInNavigation();
+  await hetidaDesigner.clickAddButtonInNavigation('Add workflow');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Create new workflow")`
   );
@@ -48,14 +48,14 @@ ${workflowInputData}
   );
 
   // Add a component to the workflow
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
   await hetidaDesigner.dragAndDropItemInNavigation(
     componentCategory,
     `${componentName} (${componentTag})`
   );
 
-  // Configure workflow I/O 
+  // Configure workflow I/O
   await hetidaDesigner.clickIconInToolbar('Configure I/O');
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Workflow ${workflowName} ${workflowTag}")`
@@ -75,7 +75,9 @@ ${workflowInputData}
   await page.waitForSelector(
     `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`
   );
-  await hetidaDesigner.clickByTestId(`${workflowInputName}-value-input-wiring-dialog`);
+  await hetidaDesigner.clickByTestId(
+    `${workflowInputName}-value-input-wiring-dialog`
+  );
   await hetidaDesigner.typeInJsonEditor(workflowInputData);
   await hetidaDesigner.clickByTestId('save-json-editor');
   await hetidaDesigner.clickByTestId('execute-wiring-dialog');
@@ -124,20 +126,30 @@ ${workflowInputData}
   await page.waitForSelector(
     `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`
   );
-  await hetidaDesigner.clickByTestId(`${workflowInputName}-value-input-wiring-dialog`);
-  const workflowInputDataReleased = await page.locator('.view-lines').innerText();
+  await hetidaDesigner.clickByTestId(
+    `${workflowInputName}-value-input-wiring-dialog`
+  );
+  const workflowInputDataReleased = await page
+    .locator('.view-lines')
+    .innerText();
   await hetidaDesigner.clickByTestId('cancel-json-editor');
 
   // Get released workflow protocol
   await hetidaDesigner.clickByTestId('execute-wiring-dialog');
   await page.waitForSelector('hd-protocol-viewer >> .protocol-content');
-  const outputProtocolReleased = await page.locator('hd-protocol-viewer >> .protocol-content >> span >> nth=1').innerText();
+  const outputProtocolReleased = await page
+    .locator('hd-protocol-viewer >> .protocol-content >> span >> nth=1')
+    .innerText();
 
   // Get released workflow documentation
   await hetidaDesigner.clickIconInToolbar('Open documentation');
-  await page.waitForSelector('hd-documentation-editor >> .editor-and-preview__preview');
+  await page.waitForSelector(
+    'hd-documentation-editor >> .editor-and-preview__preview'
+  );
   await hetidaDesigner.clickByTestId('save-edit-documentation-editor');
-  const workflowDocumentationReleased = await page.inputValue('hd-documentation-editor >> textarea');
+  const workflowDocumentationReleased = await page.inputValue(
+    'hd-documentation-editor >> textarea'
+  );
 
   // Assert
   // Edit details
@@ -156,20 +168,23 @@ ${workflowInputData}
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
-    // Clear
-    const workflowCategory = 'Test';
-    const workflowName = `Test release a workflow ${browserName}`;
-    const workflowTag = '0.1.0';
+  // Clear
+  const workflowCategory = 'Test';
+  const workflowName = `Test release a workflow ${browserName}`;
+  const workflowTag = '0.1.0';
 
-    await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
-    await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
-    await hetidaDesigner.rightClickItemInNavigation(workflowCategory, workflowName);
-    await page.locator('.mat-menu-panel').hover();
-    await hetidaDesigner.clickOnContextMenu('Deprecate');
-    await page.waitForSelector(
-      `mat-dialog-container:has-text("Deprecate workflow ${workflowName} (${workflowTag})")`
-    );
-    await hetidaDesigner.clickByTestId('deprecate workflow-confirm-dialog');
-  
-    await hetidaDesigner.clearTest();
+  await hetidaDesigner.clickWorkflowsInNavigation();
+  await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
+  await hetidaDesigner.rightClickItemInNavigation(
+    workflowCategory,
+    workflowName
+  );
+  await page.locator('.mat-menu-panel').hover();
+  await hetidaDesigner.clickOnContextMenu('Deprecate');
+  await page.waitForSelector(
+    `mat-dialog-container:has-text("Deprecate workflow ${workflowName} (${workflowTag})")`
+  );
+  await hetidaDesigner.clickByTestId('deprecate workflow-confirm-dialog');
+
+  await hetidaDesigner.clearTest();
 });

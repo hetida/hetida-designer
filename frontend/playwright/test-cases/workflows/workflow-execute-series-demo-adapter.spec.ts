@@ -39,7 +39,7 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
   await hetidaDesigner.clickByTestId(
     `${workflowInputName}-node-wiring-context-menu`
   );
-  await page.mouse.click(0, 0); // close context menu
+  await page.mouse.click(0, 0); // Close context menu
   await hetidaDesigner.clickByTestId('done-tree-node-modal');
 
   await hetidaDesigner.clickByTestId(

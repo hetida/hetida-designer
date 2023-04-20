@@ -27,7 +27,6 @@ export class HetidaDesigner {
   }
 
   // Left navigation
-
   public async clickWorkflowsInNavigation(): Promise<void> {
     await this.page.locator(`button:has-text("Workflows")`).click();
     await this.page.waitForSelector('hd-navigation-category');
@@ -188,7 +187,7 @@ export class HetidaDesigner {
 
     // Workaround for autocomplete in create component / workflow dialog
     if (id === 'category') {
-      // tab out of input field to close suggested options
+      // Tab out of input field to close suggested options
       await input.press('Tab');
     }
   }
@@ -256,7 +255,7 @@ export class HetidaDesigner {
     const timestampRange: Moment[] = [from, to];
 
     for (const timestamp of timestampRange) {
-      // choose year, month and day
+      // Choose year, month and day
       await this.page
         .locator('button[aria-label="Choose month and year"]')
         .click();
@@ -268,7 +267,7 @@ export class HetidaDesigner {
         .locator(`td[aria-label="${timestamp.format('MMMM D, YYYY')}"]`)
         .click();
 
-      // choose hours
+      // Choose hours
       await this.page
         .locator('input[class="owl-dt-timer-input"] >> nth=0')
         .click();
@@ -280,7 +279,7 @@ export class HetidaDesigner {
         .locator('input[class="owl-dt-timer-input"] >> nth=0')
         .type(timestamp.hours().toString());
 
-      // choose minutes
+      // Choose minutes
       await this.page
         .locator('input[class="owl-dt-timer-input"] >> nth=1')
         .click();
