@@ -239,7 +239,7 @@ export class ComponentIODialogComponent implements OnInit {
 
   private _createTypeControl(io: IO) {
     const control = this._formBuilder.control({
-      value: io.type ? io.type : IOTypeOption.REQUIRED,
+      value: io.type ?? IOTypeOption.REQUIRED,
       disabled: !this.data.editMode
     });
     control.valueChanges.subscribe(changes => {
