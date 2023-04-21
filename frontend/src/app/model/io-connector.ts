@@ -10,4 +10,5 @@ export interface IOConnector {
   operator_name: string;
   connector_name: string;
   position: Position;
+  value: string;
 }

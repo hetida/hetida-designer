@@ -26,12 +26,19 @@
 
   &__label-parameter {
     padding-right: var(--spacing-2);
-    flex: 1 1 50%;
+    flex: 1 1 40%;
   }
 
   &__type-parameter {
     padding-right: var(--spacing-2);
-    flex: 1 1 50%;
+    flex: 1 1 40%;
+  }
+  &__default-parameter {
+    padding-right: var(--spacing-2);
+    flex: 1 1 20%;
+  }
+  &__default-value {
+    padding-right: var(--spacing-2);
   }
 
   &__action {
