@@ -10,7 +10,7 @@ from hetdesrun.models.util import names_unique, valid_python_identifier
 from hetdesrun.models.workflow import WorkflowInput, WorkflowOutput
 
 
-class TransformationIO(BaseModel):
+class IO(BaseModel):
     id: UUID = Field(default_factory=uuid4)  # noqa: A003
     name: str | None = Field(
         None,
@@ -28,7 +28,7 @@ class TransformationIO(BaseModel):
         return ComponentOutput(id=self.id, type=self.data_type, name=self.name)
 
 
-class TransformationOutput(TransformationIO):
+class TransformationOutput(IO):
     """Class for InterfaceIO outputs.
 
     This class needs no attributes, it just improveses the structure logic.
@@ -40,7 +40,7 @@ class InputType(str, Enum):
     OPTIONAL = "OPTIONAL"
 
 
-class TransformationInput(TransformationIO):
+class TransformationInput(IO):
     type: InputType = InputType.REQUIRED  # noqa: A003
     value: Any | None = None
 
@@ -90,11 +90,11 @@ class Position(BaseModel):
     y: int
 
 
-class OperatorIO(TransformationIO):
+class Connector(IO):
     position: Position
 
 
-class OperatorOutput(OperatorIO):
+class OperatorOutput(Connector):
     @classmethod
     def from_transformation_output(
         cls, transformation_output: TransformationOutput, pos_x: int = 0, pos_y: int = 0
@@ -112,7 +112,7 @@ class OperatorOutput(OperatorIO):
         )
 
 
-class OperatorInput(OperatorIO):
+class OperatorInput(Connector):
     type: InputType = InputType.REQUIRED  # noqa: A003
     value: Any | None = None
     exposed: bool = False
@@ -131,12 +131,12 @@ class OperatorInput(OperatorIO):
 
         return exposed
 
-    def to_operator_io(self) -> OperatorIO:
+    def to_operator_io(self) -> Connector:
         """Transform OperatorInputConnector into operator IO connector
 
         Needed for transformation invariance in the Vertex of a Link.
         """
-        return OperatorIO(
+        return Connector(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
@@ -162,7 +162,7 @@ class OperatorInput(OperatorIO):
         )
 
 
-class WorkflowContentIO(OperatorIO):
+class WorkflowContentIO(Connector):
     operator_id: UUID
     connector_id: UUID
     operator_name: str
@@ -183,12 +183,12 @@ class WorkflowContentOutput(WorkflowContentIO):
             data_type=self.data_type,
         )
 
-    def to_operator_io(self) -> OperatorIO:
+    def to_operator_io(self) -> Connector:
         """Transform workflow output into operator IO connector.
 
         Needed for transformation invariance in the Vertex of a Link.
         """
-        return OperatorIO(
+        return Connector(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
@@ -247,12 +247,12 @@ class WorkflowContentDynamicInput(WorkflowContentIO):
             connector_id=self.connector_id,
         )
 
-    def to_operator_io(self) -> OperatorIO:
+    def to_operator_io(self) -> Connector:
         """Transform workflow input into operator IO connector.
 
         Needed for compatibility with the end Vertex of a Link.
         """
-        return OperatorIO(
+        return Connector(
             id=self.id,
             name=self.name,
             data_type=self.data_type,
@@ -316,12 +316,12 @@ class WorkflowContentConstantInput(WorkflowContentIO):
             raise ValueError("Constants must have an empty string as name.")
         return values
 
-    def to_operator_io(self) -> OperatorIO:
+    def to_operator_io(self) -> Connector:
         """Transform workflow input into operator IO connector.
 
         Needed for transformation invariance in the Vertex of a Link.
         """
-        return OperatorIO(
+        return Connector(
             id=self.id,
             name=self.name,
             data_type=self.data_type,

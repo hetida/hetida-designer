@@ -7,7 +7,7 @@ from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import names_unique
 from hetdesrun.models.workflow import ComponentNode, WorkflowNode
 from hetdesrun.persistence.models.io import (
-    OperatorIO,
+    Connector,
     WorkflowContentConstantInput,
     WorkflowContentDynamicInput,
     WorkflowContentOutput,
@@ -20,7 +20,7 @@ def get_link_start_connector_from_operator(
     link_start_operator_id: UUID | None,
     link_start_connector_id: UUID,
     operators: list[Operator],
-) -> OperatorIO | None:
+) -> Connector | None:
     for operator in operators:
         if operator.id == link_start_operator_id:
             for connector in operator.outputs:
@@ -34,7 +34,7 @@ def get_link_end_connector_from_operator(
     link_end_operator_id: UUID | None,
     link_end_connector_id: UUID,
     operators: list[Operator],
-) -> OperatorIO | None:
+) -> Connector | None:
     for operator in operators:
         if operator.id == link_end_operator_id:
             for operator_input_connector in operator.inputs:

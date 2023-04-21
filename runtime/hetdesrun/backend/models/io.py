@@ -6,9 +6,9 @@ from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import valid_python_identifier
 from hetdesrun.persistence.models.io import (
-    OperatorIO,
+    IO,
+    Connector,
     Position,
-    TransformationIO,
     WorkflowContentConstantInput,
     WorkflowContentIO,
 )
@@ -61,8 +61,8 @@ class WorkflowIoFrontendDto(BaseModel):
             else None,
         )
 
-    def to_io(self) -> TransformationIO:
-        return TransformationIO(
+    def to_io(self) -> IO:
+        return IO(
             id=self.id,
             name=self.name,
             data_type=self.type,
@@ -71,7 +71,7 @@ class WorkflowIoFrontendDto(BaseModel):
     @classmethod
     def from_io(
         cls,
-        io: TransformationIO,
+        io: IO,
         operator_id: UUID,
         connector_id: UUID,
         pos_x: int,
@@ -124,19 +124,19 @@ class ConnectorFrontendDto(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_connector(self) -> OperatorIO:
-        return OperatorIO(
+    def to_connector(self) -> Connector:
+        return Connector(
             id=self.id,
             name=self.name,
             data_type=self.type,
             position=Position(x=self.pos_x, y=self.pos_y),
         )
 
-    def to_io(self) -> TransformationIO:
-        return TransformationIO(id=self.id, name=self.name, data_type=self.type)
+    def to_io(self) -> IO:
+        return IO(id=self.id, name=self.name, data_type=self.type)
 
     @classmethod
-    def from_connector(cls, connector: OperatorIO) -> "ConnectorFrontendDto":
+    def from_connector(cls, connector: Connector) -> "ConnectorFrontendDto":
         return ConnectorFrontendDto(
             id=connector.id,
             name=connector.name,
@@ -146,9 +146,7 @@ class ConnectorFrontendDto(BaseModel):
         )
 
     @classmethod
-    def from_io(
-        cls, io: TransformationIO, posX: int = 0, posY: int = 0
-    ) -> "ConnectorFrontendDto":
+    def from_io(cls, io: IO, posX: int = 0, posY: int = 0) -> "ConnectorFrontendDto":
         return ConnectorFrontendDto(
             id=io.id,
             name=io.name,
