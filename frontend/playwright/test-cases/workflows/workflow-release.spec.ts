@@ -50,7 +50,7 @@ ${workflowInputData}
   // Add a component to the workflow
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
-  await hetidaDesigner.dragAndDropItemInNavigation(
+  await hetidaDesigner.dragAndDropItemFromNavigationToFlowchart(
     componentCategory,
     `${componentName} (${componentTag})`
   );
@@ -113,12 +113,16 @@ ${workflowInputData}
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Workflow ${workflowName} ${workflowTag}")`
   );
-  const workflowInputReleased = await page.getByTestId(
-    `${componentInputName}-${componentName}-field-name-input-workflow-io-dialog`
-  ).inputValue();
-  const workflowOutputReleased = await page.getByTestId(
-    `${componentOutputName}-${componentName}-field-name-output-workflow-io-dialog`
-  ).inputValue();
+  const workflowInputReleased = await page
+    .getByTestId(
+      `${componentInputName}-${componentName}-field-name-input-workflow-io-dialog`
+    )
+    .inputValue();
+  const workflowOutputReleased = await page
+    .getByTestId(
+      `${componentOutputName}-${componentName}-field-name-output-workflow-io-dialog`
+    )
+    .inputValue();
   await hetidaDesigner.clickByTestId('cancel-workflow-io-dialog');
 
   // Get released workflow input data

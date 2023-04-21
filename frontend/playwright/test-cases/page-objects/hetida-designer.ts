@@ -101,7 +101,7 @@ export class HetidaDesigner {
       .click({ button: 'right' });
   }
 
-  public async dragAndDropItemInNavigation(
+  public async dragAndDropItemFromNavigationToFlowchart(
     categoryName: string,
     itemName: string
   ): Promise<void> {
