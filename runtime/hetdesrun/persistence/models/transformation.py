@@ -366,7 +366,7 @@ class TransformationRevision(BaseModel):
             )
             wf_inputs.append(wf_input)
             link = Link(
-                start=Vertex(operator=None, connector=wf_input.to_operator_io()),
+                start=Vertex(operator=None, connector=wf_input.to_connector()),
                 end=Vertex(operator=operator.id, connector=input_connector),
             )
             links.append(link)
@@ -377,7 +377,7 @@ class TransformationRevision(BaseModel):
             wf_outputs.append(wf_output)
             link = Link(
                 start=Vertex(operator=operator.id, connector=output_connector),
-                end=Vertex(operator=None, connector=wf_output.to_operator_io()),
+                end=Vertex(operator=None, connector=wf_output.to_connector()),
             )
             links.append(link)
 

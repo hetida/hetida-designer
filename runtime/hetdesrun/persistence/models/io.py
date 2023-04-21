@@ -40,7 +40,7 @@ class InputType(str, Enum):
     OPTIONAL = "OPTIONAL"
 
 
-class TransformationInput(IO):
+class Flexibility(BaseModel):
     type: InputType = InputType.REQUIRED  # noqa: A003
     value: Any | None = None
 
@@ -61,6 +61,8 @@ class TransformationInput(IO):
 
         return value
 
+
+class TransformationInput(Flexibility, IO):
     def to_component_input(self) -> ComponentInput:
         return ComponentInput(id=self.id, type=self.data_type, name=self.name)
 
@@ -93,6 +95,18 @@ class Position(BaseModel):
 class Connector(IO):
     position: Position
 
+    def to_connector(self) -> "Connector":
+        """Transform inherited class object into connector.
+
+        Needed for transformation invariance in the Vertex of a Link.
+        """
+        return Connector(
+            id=self.id,
+            name=self.name,
+            data_type=self.data_type,
+            position=Position(x=0, y=0),
+        )
+
 
 class OperatorOutput(Connector):
     @classmethod
@@ -112,9 +126,7 @@ class OperatorOutput(Connector):
         )
 
 
-class OperatorInput(Connector):
-    type: InputType = InputType.REQUIRED  # noqa: A003
-    value: Any | None = None
+class OperatorInput(Flexibility, Connector):
     exposed: bool = False
 
     @validator("exposed")
@@ -130,18 +142,6 @@ class OperatorInput(Connector):
             return True
 
         return exposed
-
-    def to_operator_io(self) -> Connector:
-        """Transform OperatorInputConnector into operator IO connector
-
-        Needed for transformation invariance in the Vertex of a Link.
-        """
-        return Connector(
-            id=self.id,
-            name=self.name,
-            data_type=self.data_type,
-            position=self.position,
-        )
 
     @classmethod
     def from_transformation_input(
@@ -183,18 +183,6 @@ class WorkflowContentOutput(WorkflowContentIO):
             data_type=self.data_type,
         )
 
-    def to_operator_io(self) -> Connector:
-        """Transform workflow output into operator IO connector.
-
-        Needed for transformation invariance in the Vertex of a Link.
-        """
-        return Connector(
-            id=self.id,
-            name=self.name,
-            data_type=self.data_type,
-            position=Position(x=0, y=0),
-        )
-
     def to_workflow_output(self) -> WorkflowOutput:
         """Transform workflow output into workflow node output.
 
@@ -227,10 +215,7 @@ class WorkflowContentOutput(WorkflowContentIO):
         )
 
 
-class WorkflowContentDynamicInput(WorkflowContentIO):
-    type: InputType = InputType.REQUIRED  # noqa: A003
-    value: Any | None = None
-
+class WorkflowContentDynamicInput(Flexibility, WorkflowContentIO):
     def to_transformation_input(self) -> TransformationInput:
         """Transform workflow input into transformation revision input.
 
@@ -245,18 +230,6 @@ class WorkflowContentDynamicInput(WorkflowContentIO):
             value=self.value,
             operator_id=self.operator_id,
             connector_id=self.connector_id,
-        )
-
-    def to_operator_io(self) -> Connector:
-        """Transform workflow input into operator IO connector.
-
-        Needed for compatibility with the end Vertex of a Link.
-        """
-        return Connector(
-            id=self.id,
-            name=self.name,
-            data_type=self.data_type,
-            position=Position(x=0, y=0),
         )
 
     def to_workflow_input(
@@ -315,18 +288,6 @@ class WorkflowContentConstantInput(WorkflowContentIO):
         if not ("name" not in values or values["name"] is None or values["name"] == ""):
             raise ValueError("Constants must have an empty string as name.")
         return values
-
-    def to_operator_io(self) -> Connector:
-        """Transform workflow input into operator IO connector.
-
-        Needed for transformation invariance in the Vertex of a Link.
-        """
-        return Connector(
-            id=self.id,
-            name=self.name,
-            data_type=self.data_type,
-            position=Position(x=0, y=0),
-        )
 
     def to_workflow_input(self) -> WorkflowInput:
         """Transform constant workflow input into workflow node input.

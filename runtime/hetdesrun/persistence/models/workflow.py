@@ -39,7 +39,7 @@ def get_link_end_connector_from_operator(
         if operator.id == link_end_operator_id:
             for operator_input_connector in operator.inputs:
                 if operator_input_connector.id == link_end_connector_id:
-                    return operator_input_connector.to_operator_io()
+                    return operator_input_connector.to_connector()
 
     return None
 
@@ -391,7 +391,7 @@ class WorkflowContent(BaseModel):
                         or input_connector.data_type == DataType.Any
                         or link_end_connector.data_type == DataType.Any
                     ):
-                        link.start.connector = input_connector.to_operator_io()
+                        link.start.connector = input_connector.to_connector()
                         link.end.connector = link_end_connector
                         updated_links.append(link)
                 constant = get_constant_by_link_start(
@@ -406,7 +406,7 @@ class WorkflowContent(BaseModel):
                         or constant.data_type == DataType.Any
                         or link_end_connector.data_type == DataType.Any
                     ):
-                        link.start.connector = constant.to_operator_io()
+                        link.start.connector = constant.to_connector()
                         link.end.connector = link_end_connector
                         updated_links.append(link)
             else:  # link.end.operator is None:
@@ -423,7 +423,7 @@ class WorkflowContent(BaseModel):
                         or output_connector.data_type == DataType.Any
                     ):
                         link.start.connector = link_start_connector
-                        link.end.connector = output_connector.to_operator_io()
+                        link.end.connector = output_connector.to_connector()
                         updated_links.append(link)
 
         # frontend sends link in put-request if input/output is named

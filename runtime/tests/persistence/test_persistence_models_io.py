@@ -251,7 +251,7 @@ def test_operator_input_to_operator_io() -> None:
     oic_req = OperatorInput(
         **exposed_operator_input_connected_to_required_workflow_input
     )
-    oc_from_oic_req = oic_req.to_operator_io()
+    oc_from_oic_req = oic_req.to_connector()
     assert (
         str(oc_from_oic_req.id)
         == exposed_operator_input_connected_to_required_workflow_input["id"]
@@ -338,7 +338,7 @@ def test_workflow_content_output_to_transformation_output() -> None:
 def test_workflow_content_output_to_operator_io() -> None:
     operator_output_from_workflow_output = WorkflowContentOutput(
         **workflow_output
-    ).to_operator_io()
+    ).to_connector()
     assert str(operator_output_from_workflow_output.id) == workflow_output["id"]
     assert operator_output_from_workflow_output.name == workflow_output["name"]
     assert (
@@ -405,7 +405,7 @@ def test_workflow_content_dyanmic_input_to_transformation_input() -> None:
 def test_workflow_content_dynamic_input_to_operator_input() -> None:
     operator_input_from_required_workflow_input = WorkflowContentDynamicInput(
         **required_workflow_input
-    ).to_operator_io()
+    ).to_connector()
     assert (
         str(operator_input_from_required_workflow_input.id)
         == required_workflow_input["id"]
