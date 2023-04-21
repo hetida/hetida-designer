@@ -5,7 +5,11 @@
       componentTransformation.name + ' ' + componentTransformation.version_tag
     }}
   </h4>
-  <button (click)="_onCancel()" mat-icon-button>
+  <button
+    (click)="_onCancel()"
+    mat-icon-button
+    attr.data-testid="close-component-io-dialog"
+  >
     <mat-icon>close</mat-icon>
   </button>
 </div>
@@ -14,7 +18,12 @@
   <div class="component-io__input-configuration">
     <div class="component-io__configuration-header">
       <span class="mat-h2">Input Configuration</span>
-      <button (click)="_inputAdd()" [disabled]="!data.editMode" mat-button>
+      <button
+        (click)="_inputAdd()"
+        [disabled]="!data.editMode"
+        mat-button
+        attr.data-testid="add-input-component-io-dialog"
+      >
         <mat-icon>add</mat-icon>
         <span>Add</span>
       </button>
@@ -33,13 +42,27 @@
         <mat-form-field
           class="component-io__label-parameter mat-form-field--no-fixed-width"
         >
-          <input formControlName="name" matInput type="text" />
+          <input
+            formControlName="name"
+            matInput
+            type="text"
+            attr.data-testid="{{
+              ioItem.get('name').value + '-label-input-component-io-dialog'
+                | lowercase
+            }}"
+          />
           <mat-error [hdErrorVisual]="ioItem.get('name')"></mat-error>
         </mat-form-field>
         <mat-form-field
           class="component-io__type-parameter mat-form-field--no-fixed-width"
         >
-          <mat-select formControlName="type">
+          <mat-select
+            formControlName="type"
+            attr.data-testid="{{
+              ioItem.get('name').value + '-type-input-component-io-dialog'
+                | lowercase
+            }}"
+          >
             <mat-option *ngFor="let ioType of _ioTypes" [value]="ioType">
               {{ ioType }}
             </mat-option>
@@ -52,6 +75,10 @@
           (click)="_removeInput(i, ioItem.get('id').value)"
           mat-icon-button
           [disabled]="!data.editMode"
+          attr.data-testid="{{
+            ioItem.get('name').value + '-remove-input-component-io-dialog'
+              | lowercase
+          }}"
         >
           <mat-icon>delete</mat-icon>
         </button>
@@ -73,7 +100,12 @@
   <div class="component-io__output-configuration">
     <div class="component-io__configuration-header">
       <span class="pl-2 mat-h2"> Output Configuration </span>
-      <button (click)="_outputAdd()" [disabled]="!data.editMode" mat-button>
+      <button
+        (click)="_outputAdd()"
+        [disabled]="!data.editMode"
+        mat-button
+        attr.data-testid="add-output-component-io-dialog"
+      >
         <mat-icon>add</mat-icon>
         <span>Add</span>
       </button>
@@ -94,13 +126,27 @@
         <mat-form-field
           class="component-io__label-parameter pl-2 mat-form-field--no-fixed-width"
         >
-          <input formControlName="name" matInput type="text" />
+          <input
+            formControlName="name"
+            matInput
+            type="text"
+            attr.data-testid="{{
+              ioItem.get('name').value + '-label-output-component-io-dialog'
+                | lowercase
+            }}"
+          />
           <mat-error [hdErrorVisual]="ioItem.get('name')"></mat-error>
         </mat-form-field>
         <mat-form-field
           class="component-io__type-parameter mat-form-field--no-fixed-width"
         >
-          <mat-select formControlName="type">
+          <mat-select
+            formControlName="type"
+            attr.data-testid="{{
+              ioItem.get('name').value + '-type-output-component-io-dialog'
+                | lowercase
+            }}"
+          >
             <mat-option *ngFor="let ioType of _ioTypes" [value]="ioType">
               {{ ioType }}
             </mat-option>
@@ -113,6 +159,10 @@
           (click)="_removeOutput(i, ioItem.get('id').value)"
           mat-icon-button
           [disabled]="!data.editMode"
+          attr.data-testid="{{
+            ioItem.get('name').value + '-remove-output-component-io-dialog'
+              | lowercase
+          }}"
         >
           <mat-icon>delete</mat-icon>
         </button>
@@ -127,6 +177,9 @@
     mat-raised-button
     color="primary"
     mat-button
+    attr.data-testid="{{
+      data.actionCancel + '-component-io-dialog' | lowercase
+    }}"
   >
     {{ data.actionCancel }}
   </button>
@@ -135,6 +188,7 @@
     mat-raised-button
     color="primary"
     [disabled]="_ioItemForm.invalid"
+    attr.data-testid="{{ data.actionOk + '-component-io-dialog' | lowercase }}"
   >
     {{ data.actionOk }}
   </button>

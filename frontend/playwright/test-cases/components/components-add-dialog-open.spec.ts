@@ -3,8 +3,8 @@ import { expect, test } from '../fixtures/fixture';
 test('Open "add component" dialog', async ({ page, hetidaDesigner }) => {
   // Arrange
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
-  await hetidaDesigner.clickAddWorkflowComponentInNavigation('Add component');
+  await hetidaDesigner.clickComponentsInNavigation();
+  await hetidaDesigner.clickAddButtonInNavigation('Add component');
 
   // Assert
   const countDialogContainer = await page
