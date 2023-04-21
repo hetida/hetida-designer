@@ -134,8 +134,7 @@ class OperatorInput(OperatorIO):
     def to_operator_io(self) -> OperatorIO:
         """Transform OperatorInputConnector into operator IO connector
 
-        Needed for compatibility with the end Vertex of a Link.
-        Pydantic Config extra with default Extra.ignore does not seem to apply.
+        Needed for transformation invariance in the Vertex of a Link.
         """
         return OperatorIO(
             id=self.id,
@@ -187,8 +186,7 @@ class WorkflowContentOutput(WorkflowContentIO):
     def to_operator_io(self) -> OperatorIO:
         """Transform workflow output into operator IO connector.
 
-        Needed for compatibility with the end Vertex of a Link.
-        Pydantic Config extra with default Extra.ignore does not seem to apply.
+        Needed for transformation invariance in the Vertex of a Link.
         """
         return OperatorIO(
             id=self.id,
@@ -253,7 +251,6 @@ class WorkflowContentDynamicInput(WorkflowContentIO):
         """Transform workflow input into operator IO connector.
 
         Needed for compatibility with the end Vertex of a Link.
-        Pydantic Config extra with default Extra.ignore does not seem to apply.
         """
         return OperatorIO(
             id=self.id,
@@ -322,8 +319,7 @@ class WorkflowContentConstantInput(WorkflowContentIO):
     def to_operator_io(self) -> OperatorIO:
         """Transform workflow input into operator IO connector.
 
-        Needed for compatibility with the end Vertex of a Link.
-        Pydantic Config extra with default Extra.ignore does not seem to apply.
+        Needed for transformation invariance in the Vertex of a Link.
         """
         return OperatorIO(
             id=self.id,
