@@ -14,6 +14,7 @@ from fastapi import (
     Response,
     status,
 )
+from fastapi.responses import HTMLResponse
 from pydantic import HttpUrl
 
 from hetdesrun.backend.execution import (
@@ -817,3 +818,255 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
         "message": "Execution request for latest revision with "
         f"job id {exec_latest_by_group_id_input.job_id} accepted"
     }
+
+
+def plotlyjson_to_html_div(name: str, plotly_json: Any) -> str:
+    return f"""
+    <div class="resize-drag" style="position:absolute;top:0;left:0;padding:0px;margin:0px">
+        <div class="handle">{name}</div>
+        <div style="width:100%;height:calc(100% - 30px)">
+        <div id="{name}" style="width:100%;height:100%"></div>
+        <script>
+            Plotly.newPlot("{name}", {json.dumps(plotly_json)} )
+        </script>
+        </div>
+    </div>
+    """
+
+
+@transformation_router.get(
+    "/{id}/dashboard",
+    summary="A dashboard generated from the transformation and its test wiring.",
+    status_code=status.HTTP_200_OK,
+    response_class=HTMLResponse,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully generated dashboard"},
+    },
+)
+async def transformation_dashboard(
+    id: UUID = Path(  # noqa: A002
+        ...,
+        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+    ),
+) -> str:
+    """Dashboard fed by transformation revision plot outputs
+
+    Generates a html page containing the result plots in movable and resizable
+    rectangles, i.e. an elementary dashboard.
+    """
+
+    exec_by_id: ExecByIdInput = ExecByIdInput(
+        id=id,
+        wiring=None,  # so execution will default to the stored test wiring!
+        run_pure_plot_operators=True,
+    )
+
+    exec_resp: ExecutionResponseFrontendDto = (
+        await handle_trafo_revision_execution_request(exec_by_id)
+    )
+
+    plotly_outputs = {
+        name: exec_resp.output_results_by_output_name[name]
+        for name in exec_resp.output_results_by_output_name
+        if exec_resp.output_types_by_output_name[name] == "PLOTLYJSON"
+    }
+
+    dashboard_html = (
+        r"""
+    <!DOCTYPE html>
+    <html>
+
+    <script src="https://cdn.plot.ly/plotly-2.18.2.min.js" charset="utf-8"></script>
+    <script type="module">
+    import interact from 
+    'https://cdn.interactjs.io/v1.10.11/interactjs/index.js'
+
+    function dragMoveListener (event) {
+    var target = event.target
+    // keep the dragged position in the data-x/data-y attributes
+    var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
+    var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
+
+    // translate the element
+    target.style.transform = 'translate(' + x + 'px, ' + y + 'px)'
+
+    // update the posiion attributes
+    target.setAttribute('data-x', x)
+    target.setAttribute('data-y', y)
+    }
+
+    // this function is used later in the resizing and gesture demos
+    window.dragMoveListener = dragMoveListener
+
+    var gridTarget = interact.snappers.grid({
+    // can be a pair of x and y, left and top,
+    // right and bottom, or width, and height
+    x: 20,
+    y: 20,
+
+        offset: {x: 0, y: 0}
+
+    // optional
+    /*
+    range: 10,
+
+    // optional
+    offset: { x: 5, y: 10 },
+        
+    // optional
+    limits: {
+        top: 0,
+        left: 0,
+        bottom: 500,
+        height: 500
+    }
+    */
+    })
+
+
+    interact('.resize-drag')
+    .resizable({
+        // resize from all edges and corners
+        edges: { left: true, right: true, bottom: true, top: true },
+
+        listeners: {
+        move (event) {
+            var target = event.target
+            var x = (parseFloat(target.getAttribute('data-x')) || 0)
+            var y = (parseFloat(target.getAttribute('data-y')) || 0)
+
+            // update the element's style
+            target.style.width = event.rect.width + 'px'
+            target.style.height = event.rect.height + 'px'
+
+            // translate when resizing from top or left edges
+            x += event.deltaRect.left
+            y += event.deltaRect.top
+
+            target.style.transform = 'translate(' + x + 'px,' + y + 'px)'
+
+            target.setAttribute('data-x', x)
+            target.setAttribute('data-y', y)
+            //target.textContent = Math.round(event.rect.width) + '\u00D7' + Math.round(event.rect.height)
+            //console.log(target.firstElementChild);
+            // here plotly content should be triggered a redraw/adaption to new size?? Instead of setting textContent
+    //target.firstElementChild.redraw()
+                Plotly.Plots.resize(target.getElementsByTagName('div')[1].firstElementChild)
+            
+        }
+        },
+        restrictEdges: {
+                outer: "parent"
+        },
+        restrictSize: {
+                min: { width: 100, height: 50 }
+        },
+        origin: 'parent',    
+        snap: {
+        // snap targets pay attention to the action's origin option
+        targets: [
+            interact.createSnapGrid({
+            x: 10,
+            y: 10,
+            })
+        ],
+        relativePoints: [
+            { x: 0, y: 0 }
+        ]
+        },    
+        /*
+        modifiers: [
+        // keep the edges inside the parent
+        interact.modifiers.restrictEdges({
+            outer: 'parent'
+        }),
+
+        // minimum size
+        interact.modifiers.restrictSize({
+            min: { width: 100, height: 50 }
+        }),
+        
+        //interact.modifiers.snap({ targets: [gridTarget] })
+        ],
+        */
+
+        inertia: true
+    })
+    .draggable({
+        allowFrom: ".handle",
+        origin: 'parent',    
+        snap: {
+        // snap targets pay attention to the action's origin option
+        targets: [
+            interact.createSnapGrid({
+            x: 10,
+            y: 10,
+            })
+        ],
+        relativePoints: [
+            { x: 0, y: 0 }
+        ]
+        },
+        restrict: {
+        // restrictions *don't* pay attention to the action's origin option
+        // so using 'parent' for both origin and restrict.restriction works
+        restriction: 'parent',
+        elementRect: {top: 0, left: 0, bottom: 1, right: 1}
+        },    
+        listeners: { move: window.dragMoveListener },
+        inertia: true,
+        /*
+        modifiers: [
+        interact.modifiers.restrictRect({
+            restriction: 'parent',
+            //endOnly: true //instead of:
+            elementRect: {top: 0, left: 0, bottom: 1, right: 1}
+        })
+        ]
+        */
+    })
+    </script>
+    <head>
+    <style>
+    .resize-drag {
+    width: 400px;
+    height: 150px;
+    border-radius: 4px;
+    padding: 5px;
+    margin: 3px;
+    background-color: #29e;
+    color: white;
+    font-size: 20px;
+    font-family: sans-serif;
+    opacity: .8;
+
+    touch-action: none;
+
+    /* This makes things *much* easier */
+    box-sizing: border-box;
+    }
+
+    </style>
+    </head>
+    <body>
+
+
+
+    <div style="background-color:lightgrey;width:800px;height:600px;top:0;left:0;padding:0px;margin:30px">
+
+    """
+        + "\n".join(
+            (
+                plotlyjson_to_html_div(name, plotly_json)
+                for name, plotly_json in plotly_outputs.items()
+            )
+        )
+        + r"""
+    </div>
+    </body>
+
+    """
+    )
+    print(dashboard_html)
+    print(len(plotly_outputs))
+    return dashboard_html

@@ -3,6 +3,7 @@
 import json
 import logging
 from posixpath import join as posix_urljoin
+from typing import Optional
 from uuid import UUID, uuid4
 
 import httpx
@@ -38,7 +39,11 @@ logger.addFilter(execution_context_filter)
 
 class ExecByIdInput(BaseModel):
     id: UUID  # noqa: A003
-    wiring: WorkflowWiring
+    wiring: WorkflowWiring | None = Field(
+        None,
+        description="The wiring to be used. "
+        "If no wiring is provided the stored test wiring will be used.",
+    )
     run_pure_plot_operators: bool = Field(
         False, description="Whether pure plot components should be run."
     )
@@ -219,7 +224,9 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
             name=str(tr_workflow.id),
             run_pure_plot_operators=exec_by_id_input.run_pure_plot_operators,
         ),
-        workflow_wiring=exec_by_id_input.wiring,
+        workflow_wiring=exec_by_id_input.wiring
+        if exec_by_id_input.wiring is not None
+        else transformation_revision.test_wiring,
         job_id=exec_by_id_input.job_id,
     )
     return execution_input
