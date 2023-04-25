@@ -36,7 +36,7 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   // Add a component to the workflow
   await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(componentCategory);
-  await hetidaDesigner.dragAndDropItemInNavigation(
+  await hetidaDesigner.dragAndDropItemFromNavigationToFlowchart(
     componentCategory,
     `${componentName} (${componentTag})`
   );

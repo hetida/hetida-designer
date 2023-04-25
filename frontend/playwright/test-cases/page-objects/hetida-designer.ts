@@ -101,7 +101,7 @@ export class HetidaDesigner {
       .click({ button: 'right' });
   }
 
-  public async dragAndDropItemInNavigation(
+  public async dragAndDropItemFromNavigationToFlowchart(
     categoryName: string,
     itemName: string
   ): Promise<void> {
@@ -209,10 +209,30 @@ export class HetidaDesigner {
       throw new Error('ERROR: Textarea text must not be empty');
     }
 
-    const editorTextArea = this.page.locator('.monaco-editor textarea').first();
+    const editorTextArea = this.page.locator('hd-json-editor >> .monaco-editor textarea').first();
     await editorTextArea.press('Control+a');
     await editorTextArea.press('Delete');
     await editorTextArea.type(textareaText);
+  }
+
+  public async typeInComponentEditor(pythonCode: string, removeCharsFromEnd: number = 0): Promise<void> {
+    if (pythonCode === '') {
+      throw new Error('ERROR: Editor python code must not be empty');
+    }
+    if (removeCharsFromEnd < 0) {
+      throw new Error('ERROR: Cannot remove a negative number of chars from the end');
+    }
+
+    // Textarea gets focus, remove old code from the end and insert new python code
+    const editorTextArea = this.page.locator('hd-component-editor >> .monaco-editor textarea').first();
+    await editorTextArea.press('Control+a');
+    await editorTextArea.press('End');
+
+    for (let i = 0; i < removeCharsFromEnd; i++) {
+      await editorTextArea.press('Backspace');
+    }
+
+    await editorTextArea.type(pythonCode);
   }
 
   public async selectItemInDropdown(
