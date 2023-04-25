@@ -1,4 +1,5 @@
 import datetime
+import logging
 from typing import cast
 from uuid import UUID, uuid4
 
@@ -27,6 +28,8 @@ from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.operator import Operator
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
+
+logger = logging.getLogger(__name__)
 
 
 def transform_to_utc_datetime(dt: datetime.datetime) -> datetime.datetime:
@@ -176,10 +179,10 @@ class TransformationRevision(BaseModel):
     ) -> str | WorkflowContent:
         try:
             type_ = values["type"]
-        except KeyError as e:
+        except KeyError as error:
             raise ValueError(
                 "Cannot check if the content type is correct if the attribute 'type' is missing!"
-            ) from e
+            ) from error
 
         if type_ is Type.WORKFLOW and not isinstance(v, WorkflowContent):
             raise ValueError(
@@ -200,11 +203,11 @@ class TransformationRevision(BaseModel):
         try:
             type_ = values["type"]
             workflow_content = values["content"]
-        except KeyError as e:
+        except KeyError as error:
             raise ValueError(
                 "Cannot fit io_interface to content if any of the attributes "
                 "'type', 'content' is missing!"
-            ) from e
+            ) from error
 
         if type_ is not Type.WORKFLOW:
             return io_interface
@@ -213,12 +216,71 @@ class TransformationRevision(BaseModel):
             workflow_content, WorkflowContent
         )  # hint for mypy
 
-        io_interface_inputs_match_workl = [
-            inp.to_transformation_input() for inp in workflow_content.inputs
-        ]
-        io_interface.outputs = [
-            output.to_transformation_output() for output in workflow_content.outputs
-        ]
+        wf_inputs_by_id: dict[UUID, WorkflowContentDynamicInput] = {
+            wf_input.id: wf_input for wf_input in workflow_content.inputs
+        }
+        for trafo_input in io_interface.inputs:
+            try:
+                workflow_input = wf_inputs_by_id[trafo_input.id]
+            except KeyError:
+                logger.warning(
+                    "For the io interface input '%s' "
+                    "there is not workflow content input with the same id. "
+                    "Thus, it will be removed from the io interface.",
+                    str({trafo_input.id}),
+                )
+                io_interface.inputs.remove(trafo_input)
+            else:
+                if not workflow_input.matches_trafo_input(trafo_input):
+                    raise ValueError(
+                        f"For the io interface input '{trafo_input.id}' "
+                        "the workflow content input with the same id does not match!"
+                    )
+
+                del wf_inputs_by_id[trafo_input.id]
+
+        if len(wf_inputs_by_id) > 0:
+            logger.warning(
+                "There are %i inputs in the workflow content "
+                "but not in the io interface. These will be added to the io interface.",
+                len(wf_inputs_by_id),
+            )
+
+            for wf_input in wf_inputs_by_id.values():
+                io_interface.inputs.append(wf_input.to_transformation_input())
+
+        wf_outputs_by_id: dict[UUID, WorkflowContentOutput] = {
+            wf_output.id: wf_output for wf_output in workflow_content.outputs
+        }
+        for trafo_output in io_interface.outputs:
+            try:
+                workflow_output = wf_outputs_by_id[trafo_output.id]
+            except KeyError:
+                logger.warning(
+                    "For the io interface output '%s' "
+                    "there is not workflow content output with the same id. "
+                    "Thus, it will be removed from the io interface.",
+                    str({trafo_output.id}),
+                )
+                io_interface.outputs.remove(trafo_output)
+            else:
+                if not workflow_output.matches_trafo_output(trafo_output):
+                    raise ValueError(
+                        f"For the io interface output '{trafo_output.id}' "
+                        "the workflow content output with the same id does not match!"
+                    )
+
+                del wf_outputs_by_id[trafo_output.id]
+
+        if len(wf_outputs_by_id) > 0:
+            logger.warning(
+                "There are %i outputs in the workflow content "
+                "but not in the io interface. These will be added to the io interface.",
+                len(wf_outputs_by_id),
+            )
+
+            for wf_output in wf_outputs_by_id.values():
+                io_interface.outputs.append(wf_output.to_transformation_output())
 
         return io_interface
 
@@ -228,11 +290,11 @@ class TransformationRevision(BaseModel):
     ) -> IOInterface:
         try:
             state = values["state"]
-        except KeyError as e:
+        except KeyError as error:
             raise ValueError(
                 "Cannot validate that no names in io_interface are empty "
                 "if attribute 'state' is missing!"
-            ) from e
+            ) from error
 
         if state is not State.RELEASED:
             return io_interface
@@ -357,8 +419,8 @@ class TransformationRevision(BaseModel):
     def wrap_component_in_tr_workflow(self) -> "TransformationRevision":
         operator = self.to_operator()
 
-        wf_inputs = []
-        wf_outputs = []
+        wf_inputs: list[WorkflowContentDynamicInput] = []
+        wf_outputs: list[WorkflowContentOutput] = []
         links = []
         for input_connector in operator.inputs:
             wf_input = WorkflowContentDynamicInput.from_operator_input(
@@ -441,12 +503,12 @@ class TransformationRevision(BaseModel):
                 if orm_model.disabled_timestamp is not None
                 else None,
             )
-        except ValidationError as e:
+        except ValidationError as error:
             msg = (
                 f"Could not validate db entry for id {orm_model.id}. "
-                f"Validation error was:\n{str(e)}"
+                f"Validation error was:\n{str(error)}"
             )
-            raise DBIntegrityError(msg) from e
+            raise DBIntegrityError(msg) from error
 
     class Config:
         validate_assignment = True

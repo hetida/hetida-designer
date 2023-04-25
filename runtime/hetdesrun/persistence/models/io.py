@@ -29,8 +29,6 @@ class TransformationOutput(IO):
     def to_component_output(self) -> ComponentOutput:
         return ComponentOutput(id=self.id, type=self.data_type, name=self.name)
 
-    def matches(self, other: IO) -> bool:
-        return (self.id == other.id and self.name == other.name and self.data_type == other.data_type)
 
 class InputType(str, Enum):
     REQUIRED = "REQUIRED"
@@ -47,10 +45,10 @@ class Flexibility(BaseModel):
     ) -> Any | None:
         try:
             type = values["type"]  # noqa: A001
-        except KeyError as e:
+        except KeyError as error:
             raise ValueError(
                 "Cannot check if value is set correctly if any of the attributes 'type' is missing!"
-            ) from e
+            ) from error
         if type == InputType.REQUIRED and value is not None:
             raise ValueError(
                 f"The value of an input must not be set if its type is '{InputType.REQUIRED}'!"
@@ -62,9 +60,6 @@ class Flexibility(BaseModel):
 class TransformationInput(Flexibility, IO):
     def to_component_input(self) -> ComponentInput:
         return ComponentInput(id=self.id, type=self.data_type, name=self.name)
-    
-    def matches(self, other: "TransformationInput") -> bool:
-        return (self.id == other.id and self.name == other.name and self.data_type == other.data_type and self.type == other.type and self.value == other.value)
 
 
 class IOInterface(BaseModel):
@@ -166,11 +161,18 @@ class WorkflowContentIO(Connector):
 
 
 class WorkflowContentOutput(WorkflowContentIO):
+    def matches_trafo_output(self, other: TransformationOutput) -> bool:
+        return (
+            self.id == other.id
+            and self.name == other.name
+            and self.data_type == other.data_type
+        )
+
     def to_transformation_output(self) -> TransformationOutput:
         """Transform workflow output into transformation revision output.
 
-        Needed to validate the equality of the outputs of the io_interface of the transformation
-        revision and the outputs of the workflow content.
+        Needed to add missing puts to the io_interface of the transformation
+        revision and wrap a component into a workflow for execution.
         """
         return TransformationOutput(
             id=self.id,
@@ -211,11 +213,20 @@ class WorkflowContentOutput(WorkflowContentIO):
 
 
 class WorkflowContentDynamicInput(Flexibility, WorkflowContentIO):
+    def matches_trafo_input(self, other: TransformationInput) -> bool:
+        return (
+            self.id == other.id
+            and self.name == other.name
+            and self.data_type == other.data_type
+            and self.type == other.type
+            and self.value == other.value
+        )
+
     def to_transformation_input(self) -> TransformationInput:
         """Transform workflow input into transformation revision input.
 
-        Needed to validate the equality of the inputs of the io_interface of the transformation
-        revision and the inputs of the workflow content.
+        Needed to add missing inputs to the io_interface of the transformation
+        revision and wrap a component into a workflow for execution.
         """
         return TransformationInput(
             id=self.id,
