@@ -24,6 +24,7 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.models.exceptions import StateConflict, TypeConflict
 from hetdesrun.persistence.models.io import (
     IOInterface,
+    TransformationInput,
     TransformationOutput,
     WorkflowContentOutput,
 )
@@ -191,7 +192,7 @@ def test_updating(clean_test_db_engine):
         assert tr_object == received_tr_object
 
         tr_object.io_interface = IOInterface(
-            inputs=[TransformationOutput(name="input", data_type=DataType.Integer)]
+            inputs=[TransformationInput(name="input", data_type=DataType.Integer)]
         )
         tr_object.test_wiring = WorkflowWiring(
             input_wirings=[

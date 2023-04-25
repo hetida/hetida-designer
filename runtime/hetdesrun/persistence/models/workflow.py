@@ -7,43 +7,50 @@ from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import names_unique
 from hetdesrun.models.workflow import ComponentNode, WorkflowNode
 from hetdesrun.persistence.models.io import (
-    Connector,
+    OperatorInput,
+    OperatorOutput,
     WorkflowContentConstantInput,
     WorkflowContentDynamicInput,
+    WorkflowContentIO,
     WorkflowContentOutput,
 )
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.operator import NonEmptyValidStr, Operator
 
 
+# TODO: replace by operator_output_by_id_tuple_dict
 def get_link_start_connector_from_operator(
     link_start_operator_id: UUID | None,
     link_start_connector_id: UUID,
     operators: list[Operator],
-) -> Connector | None:
+    # ) -> Connector | None:
+) -> OperatorOutput | None:
     for operator in operators:
         if operator.id == link_start_operator_id:
-            for connector in operator.outputs:
-                if connector.id == link_start_connector_id:
-                    return connector
+            for opterator_output in operator.outputs:
+                if opterator_output.id == link_start_connector_id:
+                    return opterator_output
 
     return None
 
 
+# TODO: replace by operator_input_by_id_tuple_dict
 def get_link_end_connector_from_operator(
     link_end_operator_id: UUID | None,
     link_end_connector_id: UUID,
     operators: list[Operator],
-) -> Connector | None:
+    # ) -> Connector | None:
+) -> OperatorInput | None:
     for operator in operators:
         if operator.id == link_end_operator_id:
-            for operator_input_connector in operator.inputs:
-                if operator_input_connector.id == link_end_connector_id:
-                    return operator_input_connector.to_connector()
+            for operator_input in operator.inputs:
+                if operator_input.id == link_end_connector_id:
+                    return operator_input
 
     return None
 
 
+# TODO: replace by link_by_start_id_tuple_dict
 def get_link_by_output_connector(
     operator_id: UUID | None, connector_id: UUID, links: list[Link]
 ) -> Link | None:
@@ -57,6 +64,7 @@ def get_link_by_output_connector(
     return None
 
 
+# TODO: replace by link_by_end_id_tuple_dict
 def get_link_by_input_connector(
     operator_id: UUID | None, connector_id: UUID, links: list[Link]
 ) -> Link | None:
@@ -67,6 +75,7 @@ def get_link_by_input_connector(
     return None
 
 
+# TODO: replace by workflow_content_dynamic_input_by_id_dict
 def get_input_by_link_start(
     link_start_connector_id: UUID,
     inputs: list[WorkflowContentDynamicInput],
@@ -78,6 +87,7 @@ def get_input_by_link_start(
     return None
 
 
+# TODO: replace by workflow_content_constant_input_by_id_dict
 def get_constant_by_link_start(
     link_start_connector_id: UUID,
     constants: list[WorkflowContentConstantInput],
@@ -89,6 +99,7 @@ def get_constant_by_link_start(
     return None
 
 
+# TODO: replace by workflow_content_output_by_id_dict
 def get_output_by_link_end(
     link_end_connector_id: UUID,
     outputs: list[WorkflowContentOutput],
@@ -100,6 +111,7 @@ def get_output_by_link_end(
     return None
 
 
+# TODO: replace by workflow_content_dynamic_input_by_operator_id_and_connector_id_dict
 def get_input_by_operator_id_and_connector_id(
     operator_id: UUID,
     connector_id: UUID,
@@ -115,6 +127,7 @@ def get_input_by_operator_id_and_connector_id(
     return None
 
 
+# TODO: replace by workflow_content_output_by_operator_id_and_connector_id_dict
 def get_output_by_operator_id_and_connector_id(
     operator_id: UUID,
     connector_id: UUID,
@@ -346,8 +359,8 @@ class WorkflowContent(BaseModel):
 
     @validator("inputs", "outputs", each_item=False)
     def connector_names_empty_or_unique(
-        cls, io_connectors: list[WorkflowContentOutput]
-    ) -> list[WorkflowContentOutput]:
+        cls, io_connectors: list[WorkflowContentIO]
+    ) -> list[WorkflowContentIO]:
         io_connectors_with_nonempty_name = [
             io_connector
             for io_connector in io_connectors
@@ -362,15 +375,15 @@ class WorkflowContent(BaseModel):
     def clean_up_io_links(cls, values: dict) -> dict:
         try:
             operators = values["operators"]
-            links = values["links"]
-            constants = values["constants"]
-            inputs = values["inputs"]
-            outputs = values["outputs"]
-        except KeyError as e:
+            links: list[Link] = values["links"]
+            constants: list[WorkflowContentConstantInput] = values["constants"]
+            inputs: list[WorkflowContentDynamicInput] = values["inputs"]
+            outputs: list[WorkflowContentOutput] = values["outputs"]
+        except KeyError as error:
             raise ValueError(
                 "Cannot clean up io links if any of the attributes "
-                "'operators', 'links', 'constants', 'inputs' and 'outputs' is missing!"
-            ) from e
+                "'operators', 'links', 'inputs' and 'outputs' is missing!"
+            ) from error
 
         updated_links: list[Link] = []
 
@@ -379,51 +392,89 @@ class WorkflowContent(BaseModel):
                 # link has been checked in the reduce_to_valid_links validator already
                 updated_links.append(link)
             elif link.start.operator is None:
-                input_connector = get_input_by_link_start(
+                # thus the link is from a workflow content input to an operator output
+                workflow_content_dynamic_input = get_input_by_link_start(
                     link.start.connector.id, inputs
                 )
-                if not (input_connector is None or input_connector.name == ""):
-                    link_end_connector = get_link_end_connector_from_operator(
+                if not (
+                    workflow_content_dynamic_input is None
+                    # an input with the according id has been found in the dynamic inputs
+                    or workflow_content_dynamic_input.name == ""
+                    # the input is named
+                ):
+                    operator_input = get_link_end_connector_from_operator(
                         link.end.operator, link.end.connector.id, operators
                     )
-                    if link_end_connector is not None and (
-                        input_connector.data_type == link_end_connector.data_type
-                        or input_connector.data_type == DataType.Any
-                        or link_end_connector.data_type == DataType.Any
-                    ):
-                        link.start.connector = input_connector.to_connector()
-                        link.end.connector = link_end_connector
+                    if operator_input is not None:  # and (
+                        if not link.start.connector.matches(
+                            workflow_content_dynamic_input
+                        ):
+                            raise ValueError(
+                                f"The link start connector {link.start.connector} "
+                                f"and the referenced "
+                                f"dynamic workflow input {workflow_content_dynamic_input} "
+                                "do not match!"
+                            )
+                        if not link.end.connector.matches(operator_input):
+                            raise ValueError(
+                                f"The link {link.id} end connector {link.end.connector} and "
+                                f"the referenced operator input {operator_input} "
+                                "do not match!"
+                            )
                         updated_links.append(link)
-                constant = get_constant_by_link_start(
+                # no need for links to constant inputs
+                workflow_content_constant_input = get_constant_by_link_start(
                     link.start.connector.id, constants
                 )
-                if not constant is None:
-                    link_end_connector = get_link_end_connector_from_operator(
+                if not workflow_content_constant_input is None:
+                    # an input with the according id has been found in the constant inputs
+                    operator_input = get_link_end_connector_from_operator(
                         link.end.operator, link.end.connector.id, operators
                     )
-                    if link_end_connector is not None and (
-                        constant.data_type == link_end_connector.data_type
-                        or constant.data_type == DataType.Any
-                        or link_end_connector.data_type == DataType.Any
-                    ):
-                        link.start.connector = constant.to_connector()
-                        link.end.connector = link_end_connector
+                    if operator_input is not None:  # and (
+                        if not link.start.connector.matches(
+                            workflow_content_constant_input
+                        ):
+                            raise ValueError(
+                                f"The link start connector {link.start.connector} "
+                                f"and the referenced "
+                                f"constant workflow input {workflow_content_constant_input} "
+                                "do not match!"
+                            )
+                        if not link.end.connector.matches(operator_input):
+                            raise ValueError(
+                                f"The link end connector {link.end.connector} and "
+                                f"the referenced operator input {operator_input} "
+                                "do not match!"
+                            )
                         updated_links.append(link)
             else:  # link.end.operator is None:
-                output_connector = get_output_by_link_end(
+                # thus the link is from a workflow content input to an operator output
+                workflow_content_output = get_output_by_link_end(
                     link.end.connector.id, outputs
                 )
-                if not (output_connector is None or output_connector.name == ""):
-                    link_start_connector = get_link_start_connector_from_operator(
+                if not (
+                    workflow_content_output is None
+                    or workflow_content_output.name == ""
+                ):
+                    # an output with the according id has been found
+                    # the ouput is named
+                    operator_output = get_link_start_connector_from_operator(
                         link.start.operator, link.start.connector.id, operators
                     )
-                    if link_start_connector is not None and (
-                        link_start_connector.data_type == output_connector.data_type
-                        or link_start_connector.data_type == DataType.Any
-                        or output_connector.data_type == DataType.Any
-                    ):
-                        link.start.connector = link_start_connector
-                        link.end.connector = output_connector.to_connector()
+                    if operator_output is not None:  # and (
+                        if not link.start.connector.matches(operator_output):
+                            raise ValueError(
+                                f"The link start connector {link.start.connector} and "
+                                f"the referenced operator output {operator_output} "
+                                "do not match!"
+                            )
+                        if not link.end.connector.matches(workflow_content_output):
+                            raise ValueError(
+                                f"The link {link.id} end connector {link.end.connector} and "
+                                f"the referenced workflow output {workflow_content_output} "
+                                "do not match!"
+                            )
                         updated_links.append(link)
 
         # frontend sends link in put-request if input/output is named

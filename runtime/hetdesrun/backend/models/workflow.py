@@ -556,7 +556,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                         from_connector_list.append(
                             ConnectorFrontendDto(
                                 id=inp.id,
-                                name="constant",
+                                name=None,
                                 type=inp.type,
                                 posX=inp.pos_x,
                                 posY=inp.pos_y,
@@ -641,7 +641,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                         link_dto.to_link(
                             ConnectorFrontendDto(
                                 id=inp.id,
-                                name="constant",
+                                name=None,
                                 type=inp.type,
                                 posX=inp.pos_x,
                                 posY=inp.pos_y,

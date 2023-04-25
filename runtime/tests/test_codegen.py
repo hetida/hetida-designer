@@ -5,7 +5,11 @@ from hetdesrun.component.code import (
 )
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.code import example_code, example_code_async
-from hetdesrun.persistence.models.io import IOInterface, TransformationOutput
+from hetdesrun.persistence.models.io import (
+    IOInterface,
+    TransformationInput,
+    TransformationOutput,
+)
 from hetdesrun.persistence.models.transformation import TransformationRevision
 
 
@@ -34,8 +38,8 @@ def test_function_header_multiple_inputs():
     component = TransformationRevision(
         io_interface=IOInterface(
             inputs=[
-                TransformationOutput(name="x", data_type=DataType.Float),
-                TransformationOutput(name="okay", data_type=DataType.Boolean),
+                TransformationInput(name="x", data_type=DataType.Float),
+                TransformationInput(name="okay", data_type=DataType.Boolean),
             ],
             outputs=[TransformationOutput(name="output", data_type=DataType.Float)],
         ),

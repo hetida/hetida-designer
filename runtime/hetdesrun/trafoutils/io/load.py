@@ -17,7 +17,11 @@ from hetdesrun.component.load import (
     module_path_from_code,
 )
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.models.io import IOInterface, TransformationOutput
+from hetdesrun.persistence.models.io import (
+    IOInterface,
+    TransformationInput,
+    TransformationOutput,
+)
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.save import save_transformation_into_directory
@@ -163,7 +167,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
         documentation=component_documentation,
         io_interface=IOInterface(
             inputs=[
-                TransformationOutput(
+                TransformationInput(
                     id=get_uuid_from_seed("component_input_" + input_name),
                     name=input_name,
                     data_type=input_data_type,

@@ -213,7 +213,7 @@ class TransformationRevision(BaseModel):
             workflow_content, WorkflowContent
         )  # hint for mypy
 
-        io_interface.inputs = [
+        io_interface_inputs_match_workl = [
             inp.to_transformation_input() for inp in workflow_content.inputs
         ]
         io_interface.outputs = [
@@ -366,7 +366,7 @@ class TransformationRevision(BaseModel):
             )
             wf_inputs.append(wf_input)
             link = Link(
-                start=Vertex(operator=None, connector=wf_input.to_connector()),
+                start=Vertex(operator=None, connector=wf_input),
                 end=Vertex(operator=operator.id, connector=input_connector),
             )
             links.append(link)
@@ -377,7 +377,7 @@ class TransformationRevision(BaseModel):
             wf_outputs.append(wf_output)
             link = Link(
                 start=Vertex(operator=operator.id, connector=output_connector),
-                end=Vertex(operator=None, connector=wf_output.to_connector()),
+                end=Vertex(operator=None, connector=wf_output),
             )
             links.append(link)
 

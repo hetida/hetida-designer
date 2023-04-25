@@ -24,16 +24,13 @@ class IO(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
+
+class TransformationOutput(IO):
     def to_component_output(self) -> ComponentOutput:
         return ComponentOutput(id=self.id, type=self.data_type, name=self.name)
 
-
-class TransformationOutput(IO):
-    """Class for InterfaceIO outputs.
-
-    This class needs no attributes, it just improveses the structure logic.
-    """
-
+    def matches(self, other: IO) -> bool:
+        return (self.id == other.id and self.name == other.name and self.data_type == other.data_type)
 
 class InputType(str, Enum):
     REQUIRED = "REQUIRED"
@@ -65,6 +62,9 @@ class Flexibility(BaseModel):
 class TransformationInput(Flexibility, IO):
     def to_component_input(self) -> ComponentInput:
         return ComponentInput(id=self.id, type=self.data_type, name=self.name)
+    
+    def matches(self, other: "TransformationInput") -> bool:
+        return (self.id == other.id and self.name == other.name and self.data_type == other.data_type and self.type == other.type and self.value == other.value)
 
 
 class IOInterface(BaseModel):
@@ -77,9 +77,7 @@ class IOInterface(BaseModel):
     outputs: list[TransformationOutput] = []
 
     @validator("inputs", "outputs", each_item=False)
-    def io_names_unique(
-        cls, ios: list[TransformationOutput]
-    ) -> list[TransformationOutput]:
+    def io_names_unique(cls, ios: list[IO]) -> list[IO]:
         ios_with_name = [io for io in ios if not (io.name is None or io.name == "")]
 
         names_unique(cls, ios_with_name)
@@ -95,16 +93,13 @@ class Position(BaseModel):
 class Connector(IO):
     position: Position
 
-    def to_connector(self) -> "Connector":
-        """Transform inherited class object into connector.
-
-        Needed for transformation invariance in the Vertex of a Link.
-        """
-        return Connector(
-            id=self.id,
-            name=self.name,
-            data_type=self.data_type,
-            position=Position(x=0, y=0),
+    def matches(self, other: "Connector") -> bool:
+        return (
+            self.id == other.id
+            and self.name == other.name
+            and self.data_type == other.data_type
+            and self.position.x == other.position.x
+            and self.position.y == other.position.y
         )
 
 
@@ -165,7 +160,7 @@ class OperatorInput(Flexibility, Connector):
 class WorkflowContentIO(Connector):
     operator_id: UUID
     connector_id: UUID
-    operator_name: str
+    operator_name: str  # not needed in FE/BE/RT, kept for readability of jsons only
     connector_name: str
     position = Position(x=0, y=0)
 
@@ -198,19 +193,19 @@ class WorkflowContentOutput(WorkflowContentIO):
 
     @classmethod
     def from_operator_output(
-        cls, connector: OperatorOutput, operator_id: UUID, operator_name: str
+        cls, operator_output: OperatorOutput, operator_id: UUID, operator_name: str
     ) -> "WorkflowContentOutput":
         """Transform operator output into workflow output.
 
         Needed to wrap a component into a workflow for execution.
         """
         return WorkflowContentOutput(
-            name=connector.name,
-            data_type=connector.data_type,
+            name=operator_output.name,
+            data_type=operator_output.data_type,
             operator_id=operator_id,
-            connector_id=connector.id,
+            connector_id=operator_output.id,
             operator_name=operator_name,
-            connector_name=connector.name,
+            connector_name=operator_output.name,
             position=Position(x=0, y=0),
         )
 
@@ -252,7 +247,7 @@ class WorkflowContentDynamicInput(Flexibility, WorkflowContentIO):
     @classmethod
     def from_operator_input(
         cls,
-        operator_input_connector: OperatorInput,
+        operator_input: OperatorInput,
         operator_id: UUID,
         operator_name: str,
     ) -> "WorkflowContentDynamicInput":
@@ -261,14 +256,14 @@ class WorkflowContentDynamicInput(Flexibility, WorkflowContentIO):
         Needed to wrap a component into a workflow for execution.
         """
         return WorkflowContentDynamicInput(
-            name=operator_input_connector.name,
-            data_type=operator_input_connector.data_type,
-            type=operator_input_connector.type,
-            value=operator_input_connector.value,
+            name=operator_input.name,
+            data_type=operator_input.data_type,
+            type=operator_input.type,
+            value=operator_input.value,
             operator_id=operator_id,
-            connector_id=operator_input_connector.id,
+            connector_id=operator_input.id,
             operator_name=operator_name,
-            connector_name=operator_input_connector.name,
+            connector_name=operator_input.name,
             position=Position(x=0, y=0),
         )
 

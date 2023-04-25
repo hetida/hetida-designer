@@ -215,15 +215,22 @@ def test_operator_output_accepted() -> None:
 
 
 def test_operator_output_from_transformation_output() -> None:
-    connector_from_io = OperatorOutput.from_transformation_output(
-        transformation_output=TransformationOutput(**trafo_output), pos_x=23, pos_y=42
+    operator_output_from_transformation_output = (
+        OperatorOutput.from_transformation_output(
+            transformation_output=TransformationOutput(**trafo_output),
+            pos_x=23,
+            pos_y=42,
+        )
     )
 
-    assert str(connector_from_io.id) == trafo_output["id"]
-    assert connector_from_io.name == trafo_output["name"]
-    assert connector_from_io.data_type == trafo_output["data_type"]
-    assert connector_from_io.position.x == 23
-    assert connector_from_io.position.y == 42
+    assert str(operator_output_from_transformation_output.id) == trafo_output["id"]
+    assert operator_output_from_transformation_output.name == trafo_output["name"]
+    assert (
+        operator_output_from_transformation_output.data_type
+        == trafo_output["data_type"]
+    )
+    assert operator_output_from_transformation_output.position.x == 23
+    assert operator_output_from_transformation_output.position.y == 42
 
 
 def test_operator_input_accepted() -> None:
@@ -245,25 +252,6 @@ def test_operator_input_validator_required_inputs_exposed() -> None:
 
     unexposed_operator_input_object = OperatorInput(**unexposed_operator_input)
     assert unexposed_operator_input_object.exposed is False
-
-
-def test_operator_input_to_operator_io() -> None:
-    oic_req = OperatorInput(
-        **exposed_operator_input_connected_to_required_workflow_input
-    )
-    oc_from_oic_req = oic_req.to_connector()
-    assert (
-        str(oc_from_oic_req.id)
-        == exposed_operator_input_connected_to_required_workflow_input["id"]
-    )
-    assert (
-        oc_from_oic_req.name
-        == exposed_operator_input_connected_to_required_workflow_input["name"]
-    )
-    assert (
-        oc_from_oic_req.data_type
-        == exposed_operator_input_connected_to_required_workflow_input["data_type"]
-    )
 
 
 def test_operator_input_from_transformation_input() -> None:
@@ -335,19 +323,6 @@ def test_workflow_content_output_to_transformation_output() -> None:
     assert trafo_output_from_workflow_output == TransformationOutput(**trafo_output)
 
 
-def test_workflow_content_output_to_operator_io() -> None:
-    operator_output_from_workflow_output = WorkflowContentOutput(
-        **workflow_output
-    ).to_connector()
-    assert str(operator_output_from_workflow_output.id) == workflow_output["id"]
-    assert operator_output_from_workflow_output.name == workflow_output["name"]
-    assert (
-        operator_output_from_workflow_output.data_type == workflow_output["data_type"]
-    )
-    assert operator_output_from_workflow_output.position.x == 0
-    assert operator_output_from_workflow_output.position.y == 0
-
-
 def test_workflow_content_output_to_workflow_output() -> None:
     workflow_node_output: WorkflowOutput = WorkflowContentOutput(
         **workflow_output
@@ -362,7 +337,7 @@ def test_workflow_content_output_to_workflow_output() -> None:
 
 def test_workflow_content_output_from_operator_output() -> None:
     workflow_output_from_operator_output = WorkflowContentOutput.from_operator_output(
-        connector=OperatorOutput(**operator_output),
+        operator_output=OperatorOutput(**operator_output),
         operator_id=UUID(workflow_output["operator_id"]),
         operator_name=workflow_output["operator_name"],
     )
@@ -402,26 +377,6 @@ def test_workflow_content_dyanmic_input_to_transformation_input() -> None:
     )
 
 
-def test_workflow_content_dynamic_input_to_operator_input() -> None:
-    operator_input_from_required_workflow_input = WorkflowContentDynamicInput(
-        **required_workflow_input
-    ).to_connector()
-    assert (
-        str(operator_input_from_required_workflow_input.id)
-        == required_workflow_input["id"]
-    )
-    assert (
-        operator_input_from_required_workflow_input.name
-        == required_workflow_input["name"]
-    )
-    assert (
-        operator_input_from_required_workflow_input.data_type
-        == required_workflow_input["data_type"]
-    )
-    assert operator_input_from_required_workflow_input.position.x == 0
-    assert operator_input_from_required_workflow_input.position.x == 0
-
-
 def test_workflow_content_dynamic_input_to_workflow_input() -> None:
     workflow_node_input: WorkflowInput = WorkflowContentDynamicInput(
         **required_workflow_input
@@ -439,7 +394,7 @@ def test_workflow_content_dynamic_input_to_workflow_input() -> None:
 def test_workflow_content_dynamic_input_connector_from_operator_input() -> None:
     required_workflow_input_from_operator_input = (
         WorkflowContentDynamicInput.from_operator_input(
-            operator_input_connector=OperatorInput(
+            operator_input=OperatorInput(
                 **exposed_operator_input_connected_to_required_workflow_input
             ),
             operator_id=UUID(required_workflow_input["operator_id"]),

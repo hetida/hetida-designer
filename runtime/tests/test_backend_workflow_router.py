@@ -18,7 +18,6 @@ from hetdesrun.persistence.dbservice.revision import (
     read_single_transformation_revision,
     store_single_transformation_revision,
 )
-from hetdesrun.persistence.models.io import OperatorOutput
 from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.io.load import load_json
@@ -641,9 +640,7 @@ async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine)
                 Link(
                     start=Vertex(
                         operator=None,
-                        connector=OperatorOutput.from_transformation_output(
-                            tr_workflow_2.content.inputs[0]
-                        ),
+                        connector=tr_workflow_2.content.inputs[0],
                     ),
                     end=Vertex(
                         operator=tr_workflow_2.content.operators[0].id,
@@ -659,9 +656,7 @@ async def test_execute_for_workflow_dto(async_test_client, clean_test_db_engine)
                     ),
                     end=Vertex(
                         operator=None,
-                        connector=OperatorOutput.from_transformation_output(
-                            tr_workflow_2.content.outputs[0]
-                        ),
+                        connector=tr_workflow_2.content.outputs[0],
                     ),
                 )
             )
