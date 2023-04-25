@@ -89,6 +89,20 @@ sinks_json_objects: list[dict[str, Any]] = [
         "path": "Plant B",
         "type": ExternalType.DATAFRAME,
     },
+    {
+        "id": "root.plantA.anomalies",
+        "thingNodeId": "root.plantA",
+        "name": "Anomalies",
+        "path": "Plant A",
+        "type": ExternalType.MULTITSFRAME,
+    },
+    {
+        "id": "root.plantB.anomalies",
+        "thingNodeId": "root.plantB",
+        "name": "Anomalies",
+        "path": "Plant B",
+        "type": ExternalType.MULTITSFRAME,
+    },
 ]
 
 

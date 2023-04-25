@@ -2,8 +2,9 @@ import base64
 import datetime
 import json
 import logging
+from collections.abc import Callable
 from io import StringIO
-from typing import Any, Callable
+from typing import Any
 from urllib.parse import unquote
 
 import numpy as np
@@ -42,6 +43,8 @@ from demo_adapter_python.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
 
 middleware = [
     Middleware(
@@ -150,7 +153,6 @@ async def structure(parentId: str | None = None) -> StructureResponse:
 async def sources(
     filter_str: str | None = Query(None, alias="filter")
 ) -> MultipleSourcesResponse:
-
     return_sources = get_sources(filter_str=filter_str, include_sub_objects=True)
 
     return MultipleSourcesResponse(
@@ -195,7 +197,9 @@ async def get_all_metadata_source(sourceId: str) -> list[Metadatum]:
 @demo_adapter_main_router.get(
     "/sources/{sourceId}/metadata/{key}", response_model=Metadatum
 )
-async def get_metadata_source_by_key(sourceId: str, key: str) -> Metadatum:
+async def get_metadata_source_by_key(  # noqa: PLR0911, PLR0912
+    sourceId: str, key: str
+) -> Metadatum:
     key = unquote(key)
     if sourceId.endswith("temp") and "plantA" in sourceId:
         if key == "Max Value":
@@ -217,15 +221,9 @@ async def get_metadata_source_by_key(sourceId: str, key: str) -> Metadatum:
         if key == "Sensor Config":
             return get_metadatum_from_store(sourceId, "Sensor Config")
 
-    if sourceId.endswith("anomaly_score") and "plantA" in sourceId:
-        if key == "Max Value":
-            return Metadatum(key="Max Value", value=1.0, dataType="float")
-        if key == "Min Value":
-            return Metadatum(key="Min Value", value=0.0, dataType="float")
-        if key == "Overshooting Allowed":
-            return get_metadatum_from_store(sourceId, "Overshooting Allowed")
-
-    elif sourceId.endswith("anomaly_score") and "plantB" in sourceId:
+    if sourceId.endswith("anomaly_score") and (
+        "plantA" in sourceId or "plantB" in sourceId
+    ):
         if key == "Max Value":
             return Metadatum(key="Max Value", value=1.0, dataType="float")
         if key == "Min Value":
@@ -245,7 +243,6 @@ async def post_metadata_source_by_key(
 ) -> dict | HTTPException:
     key = unquote(key)
     if sourceId.endswith("temp") and key == "Sensor Config":
-
         old_metadatum = get_metadatum_from_store(sourceId, key)
 
         new_metadatum = Metadatum(
@@ -317,15 +314,7 @@ async def get_all_metadata_sink(sinkId: str) -> list[Metadatum]:
 async def get_metadata_sink_by_key(sinkId: str, key: str) -> Metadatum:
     key = unquote(key)
 
-    if sinkId.endswith("anomaly_score") and "plantA" in sinkId:
-        if key == "Max Value":
-            return Metadatum(key="Max Value", value=1.0, dataType="float")
-        if key == "Min Value":
-            return Metadatum(key="Min Value", value=0.0, dataType="float")
-        if key == "Overshooting Allowed":
-            return get_metadatum_from_store(sinkId, "Overshooting Allowed")
-
-    elif sinkId.endswith("anomaly_score") and "plantB" in sinkId:
+    if sinkId.endswith("anomaly_score") and ("plantA" in sinkId or "plantB" in sinkId):
         if key == "Max Value":
             return Metadatum(key="Max Value", value=1.0, dataType="float")
         if key == "Min Value":
@@ -346,7 +335,6 @@ async def post_metadata_sink_by_key(
 ) -> dict | HTTPException:
     key = unquote(key)
     if sinkId.endswith("anomaly_score") and key == "Overshooting Allowed":
-
         old_metadatum = get_metadatum_from_store(sinkId, key)
 
         new_metadatum = Metadatum(
@@ -425,7 +413,9 @@ def calculate_age(born: datetime.date) -> int:
 @demo_adapter_main_router.get(
     "/thingNodes/{thingNodeId}/metadata/{key}", response_model=Metadatum
 )
-async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> Metadatum:
+async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
+    thingNodeId: str, key: str
+) -> Metadatum:
     key = unquote(key)
     if thingNodeId == "root.plantA":
         if key == "Temperature Unit":
@@ -484,7 +474,6 @@ async def post_metadata_thingNode_by_key(
 ) -> dict | HTTPException:
     key = unquote(key)
     if thingNodeId in ["root.plantA", "root.plantB"]:
-
         old_metadatum = get_metadatum_from_store(thingNodeId, key)
 
         new_metadatum = Metadatum(
@@ -653,7 +642,6 @@ async def post_timeseries(
 async def dataframe(
     df_id: str = Query(..., alias="id"),
 ) -> StreamingResponse | HTTPException:
-
     if df_id.endswith("plantA.maintenance_events"):
         df = pd.DataFrame(
             {  # has timestamp column
@@ -748,6 +736,116 @@ async def post_dataframe(
         return {"message": "success"}
 
     raise HTTPException(404, f"No writable dataframe with id {df_id}")
+
+
+@demo_adapter_main_router.get("/multitsframe", response_model=None)
+async def multitsframe(
+    mtsf_id: str = Query(..., alias="id"),
+    from_timestamp: datetime.datetime = Query(
+        ..., alias="from", example=datetime.datetime.now(datetime.timezone.utc)
+    ),
+    to_timestamp: datetime.datetime = Query(
+        ..., alias="to", example=datetime.datetime.now(datetime.timezone.utc)
+    ),
+) -> StreamingResponse | HTTPException:
+    dt_range = pd.date_range(
+        start=from_timestamp, end=to_timestamp, freq="1h", tz=datetime.timezone.utc
+    )
+    mtsf = None
+    if mtsf_id.endswith("plantA.temperatures"):
+        offset = 100.0 if "plantA" in mtsf_id else 30.0
+        factor = 10.0 if "plantA" in mtsf_id else 5.0
+        mtsf_records = []
+        metrics = [
+            "Pickling Outfeed Temperature",
+            "Pickling Influx Temperature",
+            "Milling Outfeed Temperature",
+            "Milling Influx Temperature",
+        ]
+        for metric in metrics:
+            values = np.random.randn(len(dt_range)) * factor + offset
+            ts_records = [
+                {"timestamp": dt_range[idx], "metric": metric, "value": values[idx]}
+                for idx in range(len(dt_range))
+            ]
+        mtsf_records.extend(ts_records)
+        mtsf = pd.DataFrame.from_records(mtsf_records)
+    elif mtsf_id.endswith("anomalies"):
+        mtsf = get_value_from_store(mtsf_id)
+    else:
+        return HTTPException(
+            404, f"no multitsframe data available with provided id {mtsf_id}"
+        )
+
+    mtsf.attrs.update(
+        {
+            "from_timestamp": from_timestamp.isoformat(),
+            "to_timestamp": to_timestamp.isoformat(),
+        }
+    )
+    headers = {}
+    logger.debug("loading multitsframe %s", str(mtsf))
+    logger.debug("which has attributes %s", str(mtsf.attrs))
+    df_attrs = mtsf.attrs
+    if df_attrs is not None and len(df_attrs) != 0:
+        headers["Data-Attributes"] = encode_attributes(df_attrs)
+
+    io_stream = StringIO()
+    mtsf.to_json(io_stream, lines=True, orient="records", date_format="iso")
+    io_stream.seek(0)
+
+    return StreamingResponse(io_stream, media_type="application/json", headers=headers)
+
+
+@demo_adapter_main_router.post("/multitsframe", status_code=200)
+async def post_multitsframe(
+    mtsf_body: list[dict] = Body(
+        ...,
+        example=[
+            {
+                "metric": "Milling Influx Temperature",
+                "timestamp": "2020-03-11T13:45:18.194000000Z",
+                "value": 42.3,
+            },
+            {
+                "metric": "Milling Outfeed Temperature",
+                "timestamp": "2020-03-11T14:45:18.237000000Z",
+                "value": 41.7,
+            },
+            {
+                "metric": "Pickling Influx Temperature",
+                "timestamp": "2020-03-11T15:45:18.081000000Z",
+                "value": 18.4,
+            },
+            {
+                "metric": "Pickling Outfeed Temperature",
+                "timestamp": "2020-03-11T15:45:18.153000000Z",
+                "value": 18.3,
+            },
+        ],
+    ),
+    mtsf_id: str = Query(..., alias="id"),
+    data_attributes: str | None = Header(None),
+) -> dict:
+    if mtsf_id in ("root.plantA.anomalies", "root.plantB.anomalies"):
+        mtsf = pd.DataFrame.from_dict(mtsf_body, orient="columns")
+        if set(mtsf.columns) != set(MULTITSFRAME_COLUMN_NAMES):
+            column_names_string = ", ".join(mtsf.columns)
+            multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
+            raise ValueError(
+                f"Dataframe from storage has column names {column_names_string} that don't match "
+                f"the column names required for a MultiTSFrame {multitsframe_column_names_string}."
+            )
+        if data_attributes is not None and len(data_attributes) != 0:
+            df_from_store: pd.DataFrame = get_value_from_store(mtsf_id)
+            mtsf.attrs = df_from_store.attrs
+            mtsf.attrs.update(decode_attributes(data_attributes))
+        logger.debug("storing %s", json.dumps(mtsf_body))
+        logger.debug("which has attributes %s", str(mtsf.attrs))
+        set_value_in_store(mtsf_id, mtsf)
+        return {"message": "success"}
+
+    raise HTTPException(404, f"No writable multitsframe with id {mtsf_id}")
 
 
 @app.on_event("startup")

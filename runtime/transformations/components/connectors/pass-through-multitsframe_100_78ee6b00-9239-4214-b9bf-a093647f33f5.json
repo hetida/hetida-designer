@@ -1,0 +1,33 @@
+{
+  "category": "Connectors",
+  "content": "# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"input\": \"MULTITSFRAME\",\n    },\n    \"outputs\": {\n        \"output\": \"MULTITSFRAME\",\n    },\n    \"name\": \"Pass Through (MultiTsFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Just outputs its input value\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"78ee6b00-9239-4214-b9bf-a093647f33f5\",\n    \"revision_group_id\": \"4ff190e1-4555-4fa9-b076-671586802387\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-08T18:07:45.719821+00:00\",\n}\n\n\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"output\": input}",
+  "description": "Just outputs its input value",
+  "documentation": "# Pass Through (MultiTSFrame)\n\n## Description\nThis component just passes data through.\n\n## Inputs\n* **input** (Pandas DataFrame): The input DataFrame in the format of a MultiTSFrame: The DataFrame must consist of exactly three columns named \"timestamp\", \"metric\", and \"value\". The values in the \"timestamp\" column must have the UTC time zone and are parsed as timestamps in Pandas datetime64 format with nanosecond precision. The values in the \"metric\" column are parsed as strings.\n\n\n## Outputs\n* **output** (Pandas DataFrame): The output DataFrame in the format of a MultiTSFrame.\n\n## Details\nThis component just passes through data. It can be used to map a dynamic workflow input to multiple component inputs. Its input is of type MULTITSFRAME and can therefore be used to parse dynamic input data provided during execution or to parse a manual input attached to it correctly as a Pandas DataFrame if it meets the criteria of a MultiTSframe (see the input description above). Otherwise, an exception will be thrown.",
+  "id": "78ee6b00-9239-4214-b9bf-a093647f33f5",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "MULTITSFRAME",
+        "id": "5bcac752-1cac-486e-bec3-22faa8798897",
+        "name": "input"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "MULTITSFRAME",
+        "id": "1f3b4a65-a5b9-45c1-b544-9f0e81e6aa65",
+        "name": "output"
+      }
+    ]
+  },
+  "name": "Pass Through (MultiTSFrame)",
+  "released_timestamp": "2023-03-08T18:07:45.719821+00:00",
+  "revision_group_id": "4ff190e1-4555-4fa9-b076-671586802387",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}

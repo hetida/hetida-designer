@@ -74,9 +74,9 @@ async def load_framelike_data(  # noqa: PLR0915
     filtered_sources: list[FilteredSource],
     additional_params: list[
         tuple[str, str]
-    ],  # for timeseries: [("from", from_timestamp), ("to", to_timestamp)]
+    ],  # for timeseries and multitsframes: [("from", from_timestamp), ("to", to_timestamp)]
     adapter_key: str,
-    endpoint: Literal["timeseries", "dataframe"],  # "timeseries" or "dataframe"
+    endpoint: Literal["timeseries", "dataframe", "multitsframe"],
 ) -> pd.DataFrame:
     """Load framelike data from REST endpoint"""
 

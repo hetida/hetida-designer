@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
+import pytest
 from pandas.api.types import is_bool_dtype, is_datetime64_any_dtype, is_float_dtype
 from pydantic import BaseModel
 
 from hetdesrun.datatypes import (
     DataType,
+    PydanticMultiTimeseriesPandasDataFrame,
     PydanticPandasDataFrame,
     PydanticPandasSeries,
     parse_dynamically_from_datatypes,
@@ -68,6 +70,118 @@ def test_dataframe_parsing():
     assert len(df2) == 3
     # nan != nan so df1 == df2 is False once:
     assert (df2 == df1).sum().sum() == 5
+
+
+def test_multitsframe_parsing():
+    class MyMultiTsFrameModel(BaseModel):
+        mtsf: PydanticMultiTimeseriesPandasDataFrame
+
+    mtsf1 = MyMultiTsFrameModel(
+        mtsf=(
+            '{"value":[1.0,2,"x",1.9,null,"y"],'
+            '"metric":["a","b","c","a","b","c"],'
+            '"timestamp":["2019-08-01T15:45:36.000Z","2019-08-01T15:45:36.000Z","2019-08-01T15:45:36.000Z",'
+            '"2019-08-02T15:45:36.000Z","2019-08-02T15:45:36.000Z","2019-08-02T15:45:36.000Z"]}'
+        )
+    ).mtsf
+
+    assert len(mtsf1) == 6
+
+    mtsf2 = MyMultiTsFrameModel(
+        mtsf={
+            "value": [1.0, 2, "x", 1.9, None, "y"],
+            "metric": ["a", "b", "c", "a", "b", "c"],
+            "timestamp": [
+                "2019-08-01T15:45:36.000Z",
+                "2019-08-01T15:45:36.000Z",
+                "2019-08-01T15:45:36.000Z",
+                "2019-08-02T15:45:36.000Z",
+                "2019-08-02T15:45:36.000Z",
+                "2019-08-02T15:45:36.000Z",
+            ],
+        }
+    ).mtsf
+    assert len(mtsf2) == 6
+    # nan != nan so mtsf1 == mtsf2 is False once:
+    assert (mtsf2 == mtsf1).sum().sum() == 17
+
+    with pytest.raises(ValueError, match=r"column names.* don't match"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "foo": [1.0, 2, "x", 1.9, None, "y"],
+                "bar": ["a", "b", "c", "a", "b", "c"],
+                "xyz": [
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                ],
+            }
+        )
+
+    with pytest.raises(ValueError, match=r"No null values.*metric"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "value": [1.0, 2, "x", 1.9, None, "y"],
+                "metric": ["a", "b", "c", None, "b", "c"],
+                "timestamp": [
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                ],
+            }
+        )
+
+    with pytest.raises(ValueError, match=r"No null values.*timestamp"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "value": [1.0, 2, "x", 1.9, None, "y"],
+                "metric": ["a", "b", "c", "a", "b", "c"],
+                "timestamp": [
+                    "2019-08-01T15:45:36.000Z",
+                    None,
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                ],
+            }
+        )
+    with pytest.raises(ValueError, match="does not have datetime64tz dtype"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "value": [1.0, 2, "x", 1.9, None, "y"],
+                "metric": ["a", "b", "c", "a", "b", "c"],
+                "timestamp": [
+                    "2019-08-01T15:45:36.000",
+                    "2019-08-01T15:45:36.000",
+                    "2019-08-01T15:45:36.000",
+                    "2019-08-02T15:45:36.000",
+                    "2019-08-02T15:45:36.000",
+                    "2019-08-02T15:45:36.000",
+                ],
+            }
+        )
+    with pytest.raises(ValueError, match="does not have UTC timezone"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "value": [1.0, 2, "x", 1.9, None, "y"],
+                "metric": ["a", "b", "c", "a", "b", "c"],
+                "timestamp": [
+                    "2019-08-01T15:45:36.000+01:00",
+                    "2019-08-01T15:45:36.000+01:00",
+                    "2019-08-01T15:45:36.000+01:00",
+                    "2019-08-02T15:45:36.000+01:00",
+                    "2019-08-02T15:45:36.000+01:00",
+                    "2019-08-02T15:45:36.000+01:00",
+                ],
+            }
+        )
 
 
 def test_parsing_of_boolean_series():

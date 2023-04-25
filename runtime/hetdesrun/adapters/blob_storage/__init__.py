@@ -12,6 +12,7 @@ except FileNotFoundError:
 BUCKET_NAME_DIR_SEPARATOR: Final = "-"
 OBJECT_KEY_DIR_SEPARATOR: Final = "/"
 IDENTIFIER_SEPARATOR: Final = "_"
+FILE_EXTENSION_SEPARATOR: Final = "."
 HIERARCHY_END_NODE_NAME_SEPARATOR: Final = " - "
 GENERIC_SINK_ID_SUFFIX: Final = "generic_sink"
 GENERIC_SINK_NAME_SUFFIX: Final = "Next Object"

@@ -1,9 +1,15 @@
 import logging
 import pickle
+from io import BytesIO
 from typing import Any
 
+import h5py
+
+from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
+    FileExtension,
     IdString,
+    ObjectKey,
     get_structure_bucket_and_object_key_prefix_from_id,
 )
 from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
@@ -32,20 +38,26 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         thing_node_id,
         metadata_key,
     )
-    source = await get_source_by_thing_node_id_and_metadata_key(
-        IdString(thing_node_id), metadata_key
-    )
+    try:
+        source = await get_source_by_thing_node_id_and_metadata_key(
+            IdString(thing_node_id), metadata_key
+        )
+    except StructureObjectNotFound as error:
+        raise AdapterClientWiringInvalidError(error) from error
 
     logger.info("Get bucket name and object key from source with id %s", source.id)
     bucket, object_key_string = get_structure_bucket_and_object_key_prefix_from_id(
         source.id
     )
+    # This must work because otherwise get_source_by_thing_node_id_and_metadata_key
+    # would have raised a StructureObjectNotFound error already.
+    object_key = ObjectKey.from_string(object_key_string)
 
     logger.info(
         "Load data for source '%s' from storage in bucket '%s' under object key '%s'",
         source.id,
         bucket.name,
-        object_key_string,
+        object_key.string,
     )
     s3_client = await get_s3_client()
 
@@ -58,15 +70,38 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
             f"The bucket '{bucket.name}' contains no object "
-            f"with the key '{object_key_string}'!"
+            f"with the key '{object_key.string}'!"
         ) from error
 
-    try:
+    if object_key.file_extension == FileExtension.H5:
+        try:
+            import tensorflow as tf
+        except ModuleNotFoundError as error:
+            msg = (
+                "To load a model from a BLOB in the hdf5 format, "
+                f"add tensorflow to the runtime dependencies:\n{error}"
+            )
+            logger.error(msg)
+            raise AdapterHandlingException(msg) from error
+        else:
+            logger.info("Successfully imported tensorflow version %s", tf.__version__)
+            file_object = BytesIO(response["Body"].read())
+            custom_objects: dict[str, Any] | None = None
+            custom_objects_object_key = object_key.to_custom_objects_object_key()
+            try:
+                custom_objects_response = s3_client.get_object(
+                    Bucket=bucket.name,
+                    Key=custom_objects_object_key.string,
+                    ChecksumMode="ENABLED",
+                )
+            except s3_client.exceptions.NoSuchKey:
+                pass
+            else:
+                custom_objects = pickle.load(custom_objects_response["Body"])
+            with h5py.File(file_object, "r") as f:
+                data = tf.keras.saving.load_model(f, custom_objects=custom_objects)
+    else:
         data = pickle.load(response["Body"])
-    except ModuleNotFoundError as error:
-        msg = f"Cannot load module to unpickle file object:\n{error}"
-        logger.error(msg)
-        raise AdapterHandlingException(msg) from error
 
     return data
 

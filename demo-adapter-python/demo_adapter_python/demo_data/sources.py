@@ -78,6 +78,20 @@ sources_json_objects: list[dict[str, Any]] = [
         "type": ExternalType.DATAFRAME,
     },
     {
+        "id": "root.plantA.temperatures",
+        "thingNodeId": "root.plantA",
+        "name": "Temperatures",
+        "path": "Plant A",
+        "type": ExternalType.MULTITSFRAME,
+    },
+    {
+        "id": "root.plantB.temperatures",
+        "thingNodeId": "root.plantB",
+        "name": "Temperatures",
+        "path": "Plant B",
+        "type": ExternalType.MULTITSFRAME,
+    },
+    {
         "id": "root.plantA.picklingUnit.influx.temp",
         "thingNodeId": "root.plantA.picklingUnit.influx",
         "name": "Influx Temperature",
@@ -254,7 +268,7 @@ def get_sources(
     include_sub_objects: bool = False,
 ) -> list[dict[str, Any]]:
     if parent_id is None:
-        if include_sub_objects:  # noqa: SIM018
+        if include_sub_objects:  # noqa: SIM108
             selected_sources = sources_json_objects
         else:
             selected_sources = []
