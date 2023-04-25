@@ -296,7 +296,7 @@ class TransformationRevision(BaseModel):
                 "if attribute 'state' is missing!"
             ) from error
 
-        if state is not State.RELEASED:
+        if state is State.DRAFT:
             return io_interface
 
         for io in io_interface.inputs + io_interface.outputs:
