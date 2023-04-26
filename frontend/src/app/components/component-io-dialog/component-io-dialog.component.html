@@ -8,7 +8,7 @@
   <button
     (click)="_onCancel()"
     mat-icon-button
-    attr.data-testid="close-component-io-dialog"
+    [attr.data-testid]="'close-component-io-dialog'"
   >
     <mat-icon>close</mat-icon>
   </button>
@@ -22,7 +22,7 @@
         (click)="_inputAdd()"
         [disabled]="!data.editMode"
         mat-button
-        attr.data-testid="add-input-component-io-dialog"
+        [attr.data-testid]="'add-input-component-io-dialog'"
       >
         <mat-icon>add</mat-icon>
         <span>Add</span>
@@ -104,7 +104,7 @@
         (click)="_outputAdd()"
         [disabled]="!data.editMode"
         mat-button
-        attr.data-testid="add-output-component-io-dialog"
+        [attr.data-testid]="'add-output-component-io-dialog'"
       >
         <mat-icon>add</mat-icon>
         <span>Add</span>
