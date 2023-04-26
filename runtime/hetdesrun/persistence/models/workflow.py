@@ -172,6 +172,11 @@ class WorkflowContent(BaseModel):
 
     @validator("operators", each_item=False)
     def operator_names_unique(cls, operators: list[Operator]) -> list[Operator]:
+        """Ensure that operator names are unique.
+
+        This is important to enable the user in case of multiple operators of the same component
+        to identify in the IO-dialog the input/output of which component he/she is naming.
+        """
         operator_groups: dict[str, list[Operator]] = {}
 
         for operator in operators:
@@ -195,12 +200,33 @@ class WorkflowContent(BaseModel):
 
     @validator("links", each_item=False)
     def reduce_to_valid_links(cls, links: list[Link], values: dict) -> list[Link]:
+        """Reduce to valid links.
+
+        This validator deals only with links between operator inputs and operator outputs.
+        Links between workflow content inputs and operator inputs or between operator outputs and
+        workflow content outputs are not touched.
+
+        Only links for which
+        * an operator output with operator id and connector id matching the link start is found and
+        * an operator input with operator id and connector id matching the link end is found and
+        * the types of the operator output and the operator input match
+        are kept and their start and end connector are overwritten by the operator output and
+        operator input, respectively.
+
+        This is equivalent to deleting all links for which
+        * no operator output with operator id and connector id matching the link start is found or
+        * the found operator output does not match to the link start connector or
+        * no an operator input with operator id and connector id matching the link end is found or
+        * the found operator input does not match to the link end connector
+        except that links with non matching operator io and link connector would removed instead of
+        adjusted.
+        """
         try:
-            operators = values["operators"]
-        except KeyError as e:
+            operators: list[Operator] = values["operators"]
+        except KeyError as error:
             raise ValueError(
                 "Cannot reduce to valid links if attribute 'operators' is missing!"
-            ) from e
+            ) from error
 
         updated_links: list[Link] = []
 
@@ -232,6 +258,15 @@ class WorkflowContent(BaseModel):
 
     @validator("links", each_item=False)
     def links_acyclic_directed_graph(cls, links: list[Link]) -> list[Link]:
+        """Ensure the links correspond to an acylic directed graph.
+
+        Transform all links to edges and successively determine the indegrees of all vertices.
+        Remove the outgoing edges of vertices with indegree zero and update the other vertice's
+        indegrees as long as vertices with indegree zero exist.
+
+        In an acyclic graph finally all vertices will be removed. Thus, if vertices remain these
+        are part of a cycle and a validation error is raised.
+        """
         indegrees: dict[UUID, int] = {}
         edges: list[tuple[UUID, UUID]] = []
 
@@ -280,16 +315,26 @@ class WorkflowContent(BaseModel):
         return links
 
     @validator("inputs", each_item=False)
-    def keep_unnamed_inputs_and_determine_named_inputs_from_operators_and_links(
+    def determine_named_inputs_from_operators_and_links(
         cls, inputs: list[WorkflowContentDynamicInput], values: dict
     ) -> list[WorkflowContentDynamicInput]:
+        """Determine named inputs from operators and links.
+
+        For each input of each operator find the link that is ending at this input and if the
+        link starts at a dynamic workflow input, keep it in the inputs list.
+        This is equivalent to deleting all inputs which have a name but no link start referencing
+        them or a link start referencing them with a link end not referencing an operator input.
+
+        Create a new dynamic workflow content input without name for each input of each operator
+        that has no link connected to it.
+        """
         try:
-            operators = values["operators"]
-            links = values["links"]
-        except KeyError as e:
+            operators: list[Operator] = values["operators"]
+            links: list[Link] = values["links"]
+        except KeyError as error:
             raise ValueError(
                 "Cannot determine inputs if any of the attributes 'operators', 'links' is missing!"
-            ) from e
+            ) from error
 
         updated_inputs = []
 
@@ -319,16 +364,26 @@ class WorkflowContent(BaseModel):
         return updated_inputs
 
     @validator("outputs", each_item=False)
-    def determine_outputs_from_operators_and_links(
+    def determine_named_outputs_from_operators_and_links(
         cls, outputs: list[WorkflowContentOutput], values: dict
     ) -> list[WorkflowContentOutput]:
+        """Determine named inputs from operators and links.
+
+        For each input of each operator find the link that is ending at this input and if the
+        link starts at a dynamic workflow input, keep it in the inputs list.
+        This is equivalent to deleting all inputs which have a name but no link start referencing
+        them or a link start referencing them with a link end not referencing an operator input.
+
+        Create a new dynamic workflow content input without name for each input of each operator
+        that has no link connected to it.
+        """
         try:
-            operators = values["operators"]
-            links = values["links"]
-        except KeyError as e:
+            operators: list[Operator] = values["operators"]
+            links: list[Link] = values["links"]
+        except KeyError as error:
             raise ValueError(
                 "Cannot determine outputs if any of the attributes 'operators', 'links' is missing!"
-            ) from e
+            ) from error
 
         updated_outputs = []
 
@@ -359,22 +414,45 @@ class WorkflowContent(BaseModel):
 
     @validator("inputs", "outputs", each_item=False)
     def connector_names_empty_or_unique(
-        cls, io_connectors: list[WorkflowContentIO]
+        cls, workflow_ios: list[WorkflowContentIO]
     ) -> list[WorkflowContentIO]:
-        io_connectors_with_nonempty_name = [
-            io_connector
-            for io_connector in io_connectors
-            if not (io_connector.name is None or io_connector.name == "")
+        """Ensure the names of workflow inputs and outputs are unique, respectively.
+
+        Test separately for those workflow content inputs and those workflow content outputs, which
+        have a name (i.e. it is not None and not an empty string), that their names are unique.
+        Otherwise raise a value error.
+        """
+        workflow_ios_with_nonempty_name = [
+            workflow_io
+            for workflow_io in workflow_ios
+            if not (workflow_io.name is None or workflow_io.name == "")
         ]
 
-        names_unique(cls, io_connectors_with_nonempty_name)
+        names_unique(cls, workflow_ios_with_nonempty_name)
 
-        return io_connectors
+        return workflow_ios
 
     @root_validator()
     def clean_up_io_links(cls, values: dict) -> dict:
+        """Clean up io links.
+
+        This validator leaves links between operator outputs and operator inputs untouche.
+
+        Links from a dynamic/constant workflow content input to an operator input and for links
+        from an operator output to a workflow content output are only kept if
+        * for links from a workflow input to an operator input:
+            * a (named dynamic / constant) workflow input with the according id has been found for
+            the link start and
+            * the workflow input matches the link start and
+            * an operator output with the according id in the operator with the according id
+            has been found for the link end and
+            * the operator output matches the link end and
+        * analogously for links from an operator output to a workflow output
+
+        New links for named inputs are added by the frontend before sending the PUT-request.
+        """
         try:
-            operators = values["operators"]
+            operators: list[Operator] = values["operators"]
             links: list[Link] = values["links"]
             constants: list[WorkflowContentConstantInput] = values["constants"]
             inputs: list[WorkflowContentDynamicInput] = values["inputs"]
