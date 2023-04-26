@@ -21,6 +21,7 @@
     "noUnusedParameters": true,
     "target": "es5",
     "typeRoots": ["node_modules/@types", "types"],
-    "lib": ["es2018", "dom"]
+    "lib": ["es2018", "dom"],
+    "preserveSymlinks": true
   }
 }
