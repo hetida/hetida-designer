@@ -761,3 +761,4 @@ class WorkflowContent(BaseModel):
 
     class Config:
         validate_assignment = True
+        frozen = True
