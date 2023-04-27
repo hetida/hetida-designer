@@ -820,15 +820,34 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
     }
 
 
-def plotlyjson_to_html_div(name: str, plotly_json: Any) -> str:
+PLOT_TITLE_BAR_HEIGHT = 30
+PLOT_AUTO_LAYOUT_VERTICAL_GAP = 10
+PLOT_DEFAULT_HEIGHT = 200
+PLOT_INNER_SIDE_PADDING = 5
+
+
+def plotlyjson_to_html_div(name: str, plotly_json: Any, row: int = 0) -> str:
+    plotly_json["layout"]["autosize"] = True
+
     return f"""
-    <div class="resize-drag" style="position:absolute;top:0;left:0;padding:0px;margin:0px">
-        <div class="handle">{name}</div>
-        <div style="width:100%;height:calc(100% - 30px)">
-        <div id="{name}" style="width:100%;height:100%"></div>
-        <script>
-            Plotly.newPlot("{name}", {json.dumps(plotly_json)} )
-        </script>
+    <div class="resize-drag" style="position:absolute;top:{
+        str(row*(200 + PLOT_TITLE_BAR_HEIGHT + PLOT_AUTO_LAYOUT_VERTICAL_GAP + PLOT_INNER_SIDE_PADDING))+"px"
+        };left:0;padding:0px;margin:0px;
+        margin-top:0px;height:240px;width:100%
+        ;padding-left:10px;padding-right:10px;padding-bottom:5px">
+        <div class="handle" style="padding-left:{str(PLOT_INNER_SIDE_PADDING)}px;user-select:none">
+            {name}
+        </div>
+
+        <div style="width:100%;height:calc(100% - {str(PLOT_TITLE_BAR_HEIGHT + PLOT_INNER_SIDE_PADDING)}px)">
+            <div style="width:100%;height:100%">
+
+                <!-- the div on which Plotly works (which it somehow "rewrites"): -->
+                <div id="{name}" style="width:100%;height:100%"></div>
+                <script>
+                    Plotly.newPlot("{name}", {json.dumps(plotly_json)} )
+                </script>
+            </div>
         </div>
     </div>
     """
@@ -874,7 +893,7 @@ async def transformation_dashboard(
     dashboard_html = (
         r"""
     <!DOCTYPE html>
-    <html>
+    <html style="height:100%">
 
     <script src="https://cdn.plot.ly/plotly-2.18.2.min.js" charset="utf-8"></script>
     <script type="module">
@@ -928,7 +947,7 @@ async def transformation_dashboard(
     .resizable({
         // resize from all edges and corners
         edges: { left: true, right: true, bottom: true, top: true },
-
+        margin:4, // edge thickness for resizing, see https://github.com/taye/interact.js/issues/685
         listeners: {
         move (event) {
             var target = event.target
@@ -951,7 +970,7 @@ async def transformation_dashboard(
             //console.log(target.firstElementChild);
             // here plotly content should be triggered a redraw/adaption to new size?? Instead of setting textContent
     //target.firstElementChild.redraw()
-                Plotly.Plots.resize(target.getElementsByTagName('div')[1].firstElementChild)
+                Plotly.Plots.resize(target.getElementsByTagName('div')[1].firstElementChild.firstElementChild)
             
         }
         },
@@ -1011,7 +1030,7 @@ async def transformation_dashboard(
         // restrictions *don't* pay attention to the action's origin option
         // so using 'parent' for both origin and restrict.restriction works
         restriction: 'parent',
-        elementRect: {top: 0, left: 0, bottom: 1, right: 1}
+        elementRect: {top: 0, left: 0, bottom: 0, right: 1}
         },    
         listeners: { move: window.dragMoveListener },
         inertia: true,
@@ -1020,7 +1039,7 @@ async def transformation_dashboard(
         interact.modifiers.restrictRect({
             restriction: 'parent',
             //endOnly: true //instead of:
-            elementRect: {top: 0, left: 0, bottom: 1, right: 1}
+            elementRect: {top: 0, left: 0, bottom: 0, right: 1}
         })
         ]
         */
@@ -1048,17 +1067,19 @@ async def transformation_dashboard(
 
     </style>
     </head>
-    <body>
+    <body style="height:100%">
 
 
 
-    <div style="background-color:lightgrey;width:800px;height:600px;top:0;left:0;padding:0px;margin:30px">
+    <div style="background-color:lightgrey;width:100%;height:100%;
+        position:relative;top:0;left:0;padding:0px;margin:10px;
+        overflow-y:auto">
 
     """
         + "\n".join(
             (
-                plotlyjson_to_html_div(name, plotly_json)
-                for name, plotly_json in plotly_outputs.items()
+                plotlyjson_to_html_div(name, plotly_json, row=ind)
+                for ind, (name, plotly_json) in enumerate(plotly_outputs.items())
             )
         )
         + r"""
