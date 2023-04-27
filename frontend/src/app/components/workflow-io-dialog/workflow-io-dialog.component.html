@@ -22,109 +22,123 @@
         <h3 class="io-configuration__connector-type-operator text-strong m-0">
           Connector / Type / Operator
         </h3>
-        <h3 class="io-configuration__dynamic-fixed-toggle text-strong m-0">
-          Dynamic / Fixed
+        <h3 class="io-configuration__input-type-option text-strong m-0">
+          Option
         </h3>
         <h3 class="text-strong m-0 input-configuration-label-column">Label</h3>
         <span class="input-configuration-delete-icon-column"></span>
       </div>
       <mat-divider></mat-divider>
       <div
-        class="d-flex align-items-center mb-1"
         [formGroup]="ioItem"
         *ngFor="let ioItem of ioItemInputsArray.controls; let i = index"
       >
-        <div class="io-configuration__connector-type-operator overflow-hidden">
-          <div class="d-flex">
-            <span
-              [title]="ioItem.get('connector').value"
-              style="flex: 0 1 70%"
-              class="mat-body-strong text-ellipsis mr-1"
-              >{{ ioItem.get('connector').value }}</span
-            >
-            <div
-              style="flex: 0 0 100px"
-              class="d-flex align-items-end text-ellipsis"
-            >
+        <div class="d-flex align-items-center mb-1">
+          <div
+            class="io-configuration__connector-type-operator overflow-hidden"
+          >
+            <div class="d-flex">
               <span
-                [ngStyle]="{ color: getTypeColor(ioItem.get('type').value) }"
+                [title]="ioItem.get('connector').value"
+                style="flex: 0 1 70%"
+                class="mat-body-strong text-ellipsis mr-1"
+                >{{ ioItem.get('connector').value }}</span
               >
-                <mat-icon class="unselectable" [inline]="true">
-                  {{
-                    ioItem.get('isConstant').value
-                      ? 'panorama_fish_eye'
-                      : 'lens'
-                  }}
-                </mat-icon>
-              </span>
-              <span class="mat-body-strong">{{
-                ioItem.get('type').value
-              }}</span>
+              <div
+                style="flex: 0 0 100px"
+                class="d-flex align-items-end text-ellipsis"
+              >
+                <span
+                  [ngStyle]="{ color: getTypeColor(ioItem.get('type').value) }"
+                >
+                  <mat-icon class="unselectable" [inline]="true">
+                    {{ getIcon(ioItem) }}
+                  </mat-icon>
+                </span>
+                <span class="mat-body-strong">{{
+                  ioItem.get('type').value
+                }}</span>
+              </div>
             </div>
+            <span>{{ ioItem.get('operator').value }}</span>
           </div>
-          <span>{{ ioItem.get('operator').value }}</span>
-        </div>
-        <div
-          class="io-configuration__dynamic-fixed-toggle d-flex flex-direction-column align-self-start"
-        >
-          <label style="margin-top: -3px" class="mat-small">{{
-            ioItem.get('isConstant').value ? 'Fixed' : 'Dynamic'
-          }}</label>
-          <mat-slide-toggle
-            color="accent"
-            [checked]="ioItem.get('isConstant').value"
-            [disabled]="!data.editMode"
-            (change)="toggleConstant(ioItem)"
+          <div
+            class="io-configuration__input-type-option d-flex flex-direction-column"
           >
-          </mat-slide-toggle>
-        </div>
-        <mat-form-field
-          *ngIf="ioItem.get('isConstant').value; else variableInput"
-          class="input-no-fixed-width input-configuration-label-column"
-        >
-          <input
-            *ngIf="showEditorIcon(ioItem)"
-            formControlName="constant"
-            matInput
-            type="text"
-            readonly
-            class="clickable"
-            (click)="$event.preventDefault(); openJsonEditor(ioItem)"
-          />
-          <input
-            *ngIf="!showEditorIcon(ioItem)"
-            formControlName="constant"
-            matInput
-            type="text"
-          />
-          <mat-error [hdErrorVisual]="ioItem.get('constant')"></mat-error>
-          <mat-label>Input Data</mat-label>
-          <span
-            *ngIf="showEditorIcon(ioItem)"
-            class="clickable"
-            matSuffix
-            (click)="$event.preventDefault(); openJsonEditor(ioItem)"
-            ><mat-icon>create</mat-icon></span
-          >
-        </mat-form-field>
-        <ng-template #variableInput>
+            <mat-select
+              formControlName="typeOption"
+              (valueChange)="_ioTypeOptionChanged($event, ioItem)"
+            >
+              <mat-option
+                *ngFor="let ioTypeOption of _ioTypeOptions"
+                [value]="ioTypeOption"
+              >
+                {{ ioTypeOption }}
+              </mat-option>
+            </mat-select>
+          </div>
           <mat-form-field
+            *ngIf="ioItem.get('isConstant').value; else variableInput"
             class="input-no-fixed-width input-configuration-label-column"
           >
-            <input formControlName="name" matInput type="text" />
-            <mat-error [hdErrorVisual]="ioItem.get('name')"></mat-error>
-            <mat-label>Field Name</mat-label>
+            <input
+              *ngIf="showEditorIcon(ioItem)"
+              formControlName="constant"
+              matInput
+              type="text"
+              readonly
+              class="clickable"
+              (click)="$event.preventDefault(); openJsonEditor(ioItem)"
+            />
+            <input
+              *ngIf="!showEditorIcon(ioItem)"
+              formControlName="constant"
+              matInput
+              type="text"
+            />
+            <mat-error [hdErrorVisual]="ioItem.get('constant')"></mat-error>
+            <mat-label>Input Data</mat-label>
+            <span
+              *ngIf="showEditorIcon(ioItem)"
+              class="clickable"
+              matSuffix
+              (click)="$event.preventDefault(); openJsonEditor(ioItem)"
+              ><mat-icon>create</mat-icon></span
+            >
           </mat-form-field>
-        </ng-template>
-        <button
-          title="Clear Input"
-          class="input-configuration-delete-icon-column"
-          (click)="resetInputOrOutput(ioItem)"
-          mat-icon-button
-          [disabled]="!data.editMode"
-        >
-          <mat-icon>delete</mat-icon>
-        </button>
+          <ng-template #variableInput>
+            <mat-form-field
+              class="input-no-fixed-width input-configuration-label-column"
+            >
+              <input formControlName="name" matInput type="text" />
+              <mat-error [hdErrorVisual]="ioItem.get('name')"></mat-error>
+              <mat-label>Field Name</mat-label>
+            </mat-form-field>
+          </ng-template>
+          <button
+            title="Clear Input"
+            class="input-configuration-delete-icon-column"
+            (click)="resetInputOrOutput(ioItem)"
+            mat-icon-button
+            [disabled]="!data.editMode"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+        <div class="d-flex align-items-center mb-1">
+          <mat-form-field
+            *ngIf="_isDefaultParameter(ioItem)"
+            class="component-io_ mat-form-field--no-fixed-width pr-2"
+          >
+            <input
+              formControlName="value"
+              matInput
+              type="text"
+              placeholder="Default Value"
+            />
+            <mat-error [hdErrorVisual]="ioItem.get('value')"></mat-error>
+          </mat-form-field>
+        </div>
       </div>
     </form>
   </div>

@@ -1,5 +1,6 @@
 import { IOType } from 'hetida-flowchart';
 import { Position } from './position';
+import { IOTypeOption } from '../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
 
 export interface IOConnector {
   id: string;
@@ -10,5 +11,6 @@ export interface IOConnector {
   operator_name: string;
   connector_name: string;
   position: Position;
-  value: string;
+  value?: string;
+  type: IOTypeOption;
 }
