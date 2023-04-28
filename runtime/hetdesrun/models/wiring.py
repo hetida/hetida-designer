@@ -121,6 +121,7 @@ class InputWiring(BaseModel):
 class WorkflowWiring(BaseModel):
     input_wirings: list[InputWiring] = []
     output_wirings: list[OutputWiring] = []
+    dashboard: dict = {}
 
     @validator("input_wirings", each_item=False)
     def input_names_unique(cls, input_wirings: list[InputWiring]) -> list[InputWiring]:

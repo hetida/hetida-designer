@@ -828,6 +828,8 @@ PLOT_INNER_SIDE_PADDING = 5
 
 def plotlyjson_to_html_div(name: str, plotly_json: Any, row: int = 0) -> str:
     plotly_json["layout"]["autosize"] = True
+    plotly_json["layout"]["width"] = "100%"
+    plotly_json["layout"]["height"] = "100%"
 
     return f"""
     <div class="resize-drag" style="position:absolute;top:{
@@ -839,18 +841,24 @@ def plotlyjson_to_html_div(name: str, plotly_json: Any, row: int = 0) -> str:
             {name}
         </div>
 
-        <div style="width:100%;height:calc(100% - {str(PLOT_TITLE_BAR_HEIGHT + PLOT_INNER_SIDE_PADDING)}px)">
+        <div style="width:100%;height:calc(100% - {str(PLOT_TITLE_BAR_HEIGHT + PLOT_INNER_SIDE_PADDING*2)}px)">
             <div style="width:100%;height:100%">
 
                 <!-- the div on which Plotly works (which it somehow "rewrites"): -->
                 <div id="{name}" style="width:100%;height:100%"></div>
                 <script>
                     Plotly.newPlot("{name}", {json.dumps(plotly_json)} )
+                    //initial resize:
+                    Plotly.Plots.resize("{name}")
                 </script>
             </div>
         </div>
     </div>
     """
+
+
+def dashboard_title(trafo: TransformationRevision) -> str:
+    return trafo.name + " " + trafo.version_tag + " (" + trafo.state + ")"
 
 
 @transformation_router.get(
@@ -873,6 +881,16 @@ async def transformation_dashboard(
     Generates a html page containing the result plots in movable and resizable
     rectangles, i.e. an elementary dashboard.
     """
+
+    logger.info("get transformation revision %s", id)
+
+    try:
+        transformation_revision = read_single_transformation_revision(id)
+        logger.info("found transformation revision with id %s", id)
+    except DBNotFoundError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    logger.debug(transformation_revision.json())
 
     exec_by_id: ExecByIdInput = ExecByIdInput(
         id=id,
@@ -1067,12 +1085,15 @@ async def transformation_dashboard(
 
     </style>
     </head>
-    <body style="height:100%">
+    <body style="height:100%;padding=10px">
 
 
-
+    """  # noqa: ISC003
+        + """<div style="color:black;font-size:28px;font-family:sans-serif;text-align:center">"""
+        + f"""{dashboard_title(transformation_revision)}</div>"""
+        + r"""
     <div style="background-color:lightgrey;width:100%;height:100%;
-        position:relative;top:0;left:0;padding:0px;margin:10px;
+        position:relative;top:0;left:0;padding:0px;margin:0px;
         overflow-y:auto">
 
     """
