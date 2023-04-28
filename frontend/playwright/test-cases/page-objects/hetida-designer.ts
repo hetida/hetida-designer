@@ -1,4 +1,5 @@
 import { BrowserContext, Page } from '@playwright/test';
+import { Moment } from 'moment';
 
 export class HetidaDesigner {
   private readonly page: Page;
@@ -9,11 +10,12 @@ export class HetidaDesigner {
     this.browserContext = page.context();
   }
 
-  // run after every test
+  // Run after every test
   public async clearTest(): Promise<void> {
     await this.browserContext.clearCookies();
   }
 
+  // TODO use test ids
   public async clickTabInNavigation(tabPosition: number): Promise<void> {
     if (tabPosition < 0) {
       throw new Error(
@@ -25,22 +27,19 @@ export class HetidaDesigner {
   }
 
   // Left navigation
-  public async clickWorkflowsComponentsInNavigation(
-    buttonText: string
-  ): Promise<void> {
-    if (buttonText === '') {
-      throw new Error(`ERROR: Button text must not be empty`);
-    }
-
-    await this.page.locator(`button:has-text("${buttonText}")`).click();
+  public async clickWorkflowsInNavigation(): Promise<void> {
+    await this.page.locator(`button:has-text("Workflows")`).click();
     await this.page.waitForSelector('hd-navigation-category');
   }
 
-  public async clickAddWorkflowComponentInNavigation(
-    buttonText: string
-  ): Promise<void> {
+  public async clickComponentsInNavigation(): Promise<void> {
+    await this.page.locator(`button:has-text("Components")`).click();
+    await this.page.waitForSelector('hd-navigation-category');
+  }
+
+  public async clickAddButtonInNavigation(buttonText: string): Promise<void> {
     if (buttonText === '') {
-      throw new Error(`ERROR: Button text must not be empty`);
+      throw new Error('ERROR: Button text must not be empty');
     }
 
     await this.page.locator(`.add-button:has-text("${buttonText}")`).click();
@@ -49,7 +48,7 @@ export class HetidaDesigner {
 
   public async clickCategoryInNavigation(categoryName: string): Promise<void> {
     if (categoryName === '') {
-      throw new Error(`ERROR: Category name must not be empty`);
+      throw new Error('ERROR: Category name must not be empty');
     }
 
     await this.page.click(
@@ -62,12 +61,13 @@ export class HetidaDesigner {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      throw new Error(`ERROR: Category name and item name must not be empty`);
+      throw new Error('ERROR: Category name and item name must not be empty');
     }
 
     await this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
-      .locator(`.navigation-item:has-text("${itemName}") >> nth=0`)
+      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
+      .locator(`.navigation-item:has-text("${itemName}")`)
+      .first()
       .hover();
   }
 
@@ -76,12 +76,13 @@ export class HetidaDesigner {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      throw new Error(`ERROR: Category name and item name must not be empty`);
+      throw new Error('ERROR: Category name and item name must not be empty');
     }
 
     await this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
-      .locator(`.navigation-item:has-text("${itemName}") >> nth=0`)
+      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
+      .locator(`.navigation-item:has-text("${itemName}")`)
+      .first()
       .dblclick();
   }
 
@@ -90,18 +91,39 @@ export class HetidaDesigner {
     itemName: string
   ): Promise<void> {
     if (categoryName === '' || itemName === '') {
-      throw new Error(`ERROR: Category name and item name must not be empty`);
+      throw new Error('ERROR: Category name and item name must not be empty');
     }
 
     await this.page
-      .locator(`mat-expansion-panel:has-text("${categoryName}") >> nth=0`)
-      .locator(`.navigation-item:has-text("${itemName}") >> nth=0`)
+      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
+      .locator(`.navigation-item:has-text("${itemName}")`)
+      .first()
       .click({ button: 'right' });
+  }
+
+  public async dragAndDropItemFromNavigationToFlowchart(
+    categoryName: string,
+    itemName: string
+  ): Promise<void> {
+    if (categoryName === '' || itemName === '') {
+      throw new Error('ERROR: Category and item name must not be empty');
+    }
+
+    const source = this.page
+      .locator(`mat-expansion-panel:has-text("${categoryName}")`)
+      .locator(`.navigation-item:has-text("${itemName}")`)
+      .first();
+
+    const flowChartGrid = this.page.locator(
+      'svg:has-text(".svg-small-grid { stroke: #a9a9a9; } .svg-grid { stroke: #a9a9a9; }") >> nth=0'
+    );
+
+    await source.dragTo(flowChartGrid);
   }
 
   public async clickOnContextMenu(menuItem: string): Promise<void> {
     if (menuItem === '') {
-      throw new Error(`ERROR: Menu item must not be empty`);
+      throw new Error('ERROR: Menu item must not be empty');
     }
 
     await this.page
@@ -109,9 +131,9 @@ export class HetidaDesigner {
       .click();
   }
 
-  public async typeInSearchTerm(searchTerm: string): Promise<void> {
+  public async searchInNavigation(searchTerm: string): Promise<void> {
     if (searchTerm === '') {
-      throw new Error(`ERROR: Search term must not be empty`);
+      throw new Error('ERROR: Search term must not be empty');
     }
 
     await this.page
@@ -121,37 +143,176 @@ export class HetidaDesigner {
 
   public async clickIconInToolbar(iconTitle: string): Promise<void> {
     if (iconTitle === '') {
-      throw new Error(`ERROR: Icon title must not be empty`);
+      throw new Error('ERROR: Icon title must not be empty');
     }
 
     await this.page
-      .locator('hd-toolbar')
-      .locator(`mat-icon[title="${iconTitle}"]`)
+      .locator(`hd-toolbar >> mat-icon[title="${iconTitle}"]:not(.disabled)`)
       .click();
   }
 
-  public async clickButton(buttonText: string): Promise<void> {
-    if (buttonText === '') {
-      throw new Error(`ERROR: Button text must not be empty`);
+  public async clickByTestId(testId: string): Promise<void> {
+    if (testId === '') {
+      throw new Error(`ERROR: test id must not be empty`);
     }
 
-    await this.page.locator(`button:has-text("${buttonText}")`).click();
+    await this.page.getByTestId(testId).click();
   }
 
-  public async typeInInput(inputId: string, inputText: string): Promise<void> {
-    if (inputId === '' || inputText === '') {
-      throw new Error(`ERROR: Input id or text must not be empty`);
+  public async typeInInputByTestId(
+    testId: string,
+    inputText: string
+  ): Promise<void> {
+    if (testId === '' || inputText === '') {
+      throw new Error('ERROR: test id or input text must not be empty');
     }
 
     // Select default input text and overwrite it
-    await this.page.locator(`#${inputId}`).click();
-    await this.page.press(`#${inputId}`, 'Control+a');
-    await this.page.locator(`#${inputId}`).type(inputText);
+    const input = this.page.getByTestId(testId);
+    await input.click();
+    await input.press('Control+a');
+    await input.type(inputText);
+  }
 
-    // workaround for autocomplete in create component / workflow dialog
-    if (inputId === 'category') {
-      // tab out of input field to close suggested options
-      await this.page.press(`#${inputId}`, 'Tab');
+  public async typeInInputById(id: string, inputText: string): Promise<void> {
+    if (id === '' || inputText === '') {
+      throw new Error('ERROR: Id or input text must not be empty');
     }
+
+    // Select default input text and overwrite it
+    const input = this.page.locator(`input[id="${id}"]`);
+    await input.click();
+    await input.press('Control+a');
+    await input.type(inputText);
+
+    // Workaround for autocomplete in create component / workflow dialog
+    if (id === 'category') {
+      // Tab out of input field to close suggested options
+      await input.press('Tab');
+    }
+  }
+
+  public async typeInDocumentationEditor(textareaText: string): Promise<void> {
+    if (textareaText === '') {
+      throw new Error('ERROR: Textarea text must not be empty');
+    }
+
+    const textArea = this.page.locator('hd-documentation-editor >> textarea');
+    await textArea.click();
+    await textArea.press('Control+a');
+    await textArea.press('Delete');
+    await textArea.type(textareaText);
+  }
+
+  public async typeInJsonEditor(textareaText: string): Promise<void> {
+    if (textareaText === '') {
+      throw new Error('ERROR: Textarea text must not be empty');
+    }
+
+    const editorTextArea = this.page.locator('hd-json-editor >> .monaco-editor textarea').first();
+    await editorTextArea.press('Control+a');
+    await editorTextArea.press('Delete');
+    await editorTextArea.type(textareaText);
+  }
+
+  public async typeInComponentEditor(pythonCode: string, removeCharsFromEnd: number = 0): Promise<void> {
+    if (pythonCode === '') {
+      throw new Error('ERROR: Editor python code must not be empty');
+    }
+    if (removeCharsFromEnd < 0) {
+      throw new Error('ERROR: Cannot remove a negative number of chars from the end');
+    }
+
+    // Textarea gets focus, remove old code from the end and insert new python code
+    const editorTextArea = this.page.locator('hd-component-editor >> .monaco-editor textarea').first();
+    await editorTextArea.press('Control+a');
+    await editorTextArea.press('End');
+
+    for (let i = 0; i < removeCharsFromEnd; i++) {
+      await editorTextArea.press('Backspace');
+    }
+
+    await editorTextArea.type(pythonCode);
+  }
+
+  public async selectItemInDropdown(
+    testId: string,
+    itemText: string
+  ): Promise<void> {
+    if (testId === '' || itemText === '') {
+      throw new Error(`ERROR: Dropdown test id or item text must not be empty`);
+    }
+
+    await this.page.getByTestId(testId).click();
+    await this.page.locator(`mat-option:has-text("${itemText}")`).click();
+  }
+
+  public async selectSourceSearchResult(
+    SearchResultPosition: number
+  ): Promise<void> {
+    if (SearchResultPosition < 0) {
+      throw new Error(
+        `ERROR: Negative search result position, used search result position: ${SearchResultPosition}`
+      );
+    }
+
+    await this.page
+      .locator(
+        `hd-node-search >> cdk-virtual-scroll-viewport >> div >> .node-item >> nth=${SearchResultPosition}`
+      )
+      .click();
+  }
+
+  public async selectTimestampRange(from: Moment, to: Moment): Promise<void> {
+    if (from === undefined || to === undefined) {
+      throw new Error(`ERROR: From or to date must not be empty`);
+    }
+    if (to.isBefore(from)) {
+      throw new Error('To date must be after from date');
+    }
+
+    const timestampRange: Moment[] = [from, to];
+
+    for (const timestamp of timestampRange) {
+      // Choose year, month and day
+      await this.page
+        .locator('button[aria-label="Choose month and year"]')
+        .click();
+      await this.page.locator(`td[aria-label="${timestamp.year()}"]`).click();
+      await this.page
+        .locator(`td[aria-label="${timestamp.format('MMMM YYYY')}"]`)
+        .click();
+      await this.page
+        .locator(`td[aria-label="${timestamp.format('MMMM D, YYYY')}"]`)
+        .click();
+
+      // Choose hours
+      await this.page
+        .locator('input[class="owl-dt-timer-input"] >> nth=0')
+        .click();
+      await this.page.press(
+        'input[class="owl-dt-timer-input"] >> nth=0',
+        'Control+a'
+      );
+      await this.page
+        .locator('input[class="owl-dt-timer-input"] >> nth=0')
+        .type(timestamp.hours().toString());
+
+      // Choose minutes
+      await this.page
+        .locator('input[class="owl-dt-timer-input"] >> nth=1')
+        .click();
+      await this.page.press(
+        'input[class="owl-dt-timer-input"] >> nth=1',
+        'Control+a'
+      );
+      await this.page
+        .locator('input[class="owl-dt-timer-input"] >> nth=1')
+        .type(timestamp.minutes().toString());
+    }
+
+    await this.page
+      .locator('owl-date-time-container >> button:has-text("Set")')
+      .click();
   }
 }

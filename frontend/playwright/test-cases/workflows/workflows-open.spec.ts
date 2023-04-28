@@ -6,7 +6,7 @@ test('Open workflow on double-click', async ({ page, hetidaDesigner }) => {
   const workflowName = 'Volatility Detection Example';
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+  await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
   await hetidaDesigner.doubleClickItemInNavigation(categoryName, workflowName);

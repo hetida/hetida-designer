@@ -6,7 +6,7 @@ test('Open "execute component" dialog', async ({ page, hetidaDesigner }) => {
   const componentName = 'Pi';
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
   await hetidaDesigner.doubleClickItemInNavigation(categoryName, componentName);
 
