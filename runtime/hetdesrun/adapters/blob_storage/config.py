@@ -16,6 +16,11 @@ class BlobStorageAdapterConfig(BaseSettings):
         env="BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION",
         example="/mnt/blob_storage_adapter_hierarchy.json",
     )
+    anonymous: bool = Field(
+        False,
+        description="Skip requesting credentials via STS and make unsigned S3 requests",
+        env="BLOB_STORAGE_ADAPTER_ANONYMOUS",
+    )
     allow_bucket_creation: bool = Field(
         True,
         description=(
