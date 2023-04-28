@@ -5,6 +5,7 @@
       (click)="switchEdit()"
       mat-raised-button
       color="primary"
+      [attr.data-testid]="'save-edit-documentation-editor'"
     >
       <ng-container *ngIf="!editMode">Edit</ng-container>
       <ng-container *ngIf="editMode">Save</ng-container>
