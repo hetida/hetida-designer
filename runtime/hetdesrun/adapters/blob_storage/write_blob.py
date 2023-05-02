@@ -6,6 +6,7 @@ from typing import Any
 import h5py
 from botocore.exceptions import ClientError
 
+from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
@@ -198,14 +199,23 @@ async def write_blob_to_storage(
             logger.info(
                 "Dumped data of size %i into BLOB", file_object.getbuffer().nbytes
             )
+            check_sum_algorithm = get_blob_adapter_config().use_checksum_algorithm
             try:
-                s3_client.put_object(
-                    Bucket=structure_bucket.name,
-                    Key=object_key.string,
-                    Body=file_object,
-                    ChecksumAlgorithm="SHA1",
-                    ContentType="application/octet-stream",
-                )
+                if check_sum_algorithm == "":
+                    s3_client.put_object(
+                        Bucket=structure_bucket.name,
+                        Key=object_key.string,
+                        Body=file_object,
+                        ContentType="application/octet-stream",
+                    )
+                else:
+                    s3_client.put_object(
+                        Bucket=structure_bucket.name,
+                        Key=object_key.string,
+                        Body=file_object,
+                        ChecksumAlgorithm=check_sum_algorithm,
+                        ContentType="application/octet-stream",
+                    )
             except ClientError as error:
                 error_code = error.response["Error"]["Code"]
                 msg = (

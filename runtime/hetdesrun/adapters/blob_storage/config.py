@@ -78,6 +78,15 @@ class BlobStorageAdapterConfig(BaseSettings):
         description="The name of the region associated with the S3 client.",
         env="BLOB_STORAGE_REGION_NAME",
     )
+    use_checksum_algorithm: Literal["SHA1", "SHA256", "CRC32", "CRC32C", ""] = Field(
+        "SHA1",
+        description=(
+            "Set checksum algorithm to 'SHA1', 'SHA256', 'CRC32' or 'CRC32C' "
+            "for writing or loading objects with checkums. Per defaul it is set to 'SHA1'. "
+            "Set it to an empty string to deactivate the usage of checksums."
+        ),
+        env="BLOB_STORAGE_USE_CHECKSUM_ALGORITHM",
+    )
 
 
 environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)

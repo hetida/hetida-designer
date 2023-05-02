@@ -5,6 +5,7 @@ from typing import Any
 
 import h5py
 
+from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
     FileExtension,
@@ -64,9 +65,12 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     ensure_bucket_exists(s3_client=s3_client, bucket_name=bucket.name)
 
     try:
-        response = s3_client.get_object(
-            Bucket=bucket.name, Key=object_key_string, ChecksumMode="ENABLED"
-        )
+        if get_blob_adapter_config().use_checksum_algorithm == "":
+            response = s3_client.get_object(Bucket=bucket.name, Key=object_key_string)
+        else:
+            response = s3_client.get_object(
+                Bucket=bucket.name, Key=object_key_string, ChecksumMode="ENABLED"
+            )
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
             f"The bucket '{bucket.name}' contains no object "
