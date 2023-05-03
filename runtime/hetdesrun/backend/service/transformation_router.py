@@ -826,39 +826,43 @@ PLOT_DEFAULT_HEIGHT = 200
 PLOT_INNER_SIDE_PADDING = 5
 
 
-def plotlyjson_to_html_div(name: str, plotly_json: Any, row: int = 0) -> str:
-    plotly_json["layout"]["autosize"] = True
-    plotly_json["layout"]["width"] = "100%"
-    plotly_json["layout"]["height"] = "100%"
-
-    return f"""
-    <div class="resize-drag" style="position:absolute;top:{
-        str(row*(200 + PLOT_TITLE_BAR_HEIGHT + PLOT_AUTO_LAYOUT_VERTICAL_GAP + PLOT_INNER_SIDE_PADDING))+"px"
-        };left:0;padding:0px;margin:0px;
-        margin-top:0px;height:240px;width:100%
-        ;padding-left:10px;padding-right:10px;padding-bottom:5px">
-        <div class="handle" style="padding-left:{str(PLOT_INNER_SIDE_PADDING)}px;user-select:none">
-            {name}
-        </div>
-
-        <div style="width:100%;height:calc(100% - {str(PLOT_TITLE_BAR_HEIGHT + PLOT_INNER_SIDE_PADDING*2)}px)">
-            <div style="width:100%;height:100%">
-
-                <!-- the div on which Plotly works (which it somehow "rewrites"): -->
-                <div id="{name}" style="width:100%;height:100%"></div>
-                <script>
-                    Plotly.newPlot("{name}", {json.dumps(plotly_json)} )
-                    //initial resize:
-                    Plotly.Plots.resize("{name}")
-                </script>
-            </div>
-        </div>
-    </div>
-    """
-
-
 def dashboard_title(trafo: TransformationRevision) -> str:
     return trafo.name + " " + trafo.version_tag + " (" + trafo.state + ")"
+
+
+def ensure_working_plotly_json(plotly_json):
+    # plotly_json["layout"]["autosize"] = False
+    plotly_json["layout"]["width"] = "100%"
+    plotly_json["layout"]["height"] = "100%"
+    # plotly_json["layout"]["useResizeHandler"] = True
+    try:
+        plotly_json["config"]
+    except KeyError:
+        plotly_json["config"] = {}
+    # plotly_json["config"]["responsive"] = True
+    return plotly_json
+
+
+def plotlyjson_to_html_div(
+    name: str, plotly_json: Any, index: int = 0, header: str | None = None
+) -> str:
+    plotly_json = ensure_working_plotly_json(plotly_json)
+
+    return f"""
+    <div class="grid-stack-item" input_name="{name}" id="gs-item-{name}" gs-id="{name}"
+            gs-x="{str((index % 2) * 6)}" gs-y="{str((index // 2) *2)}" gs-w="6" gs-h="2">
+        <div class="grid-stack-item-content" id="container-{name}" style="
+                padding-left:10px;padding-right:10px">
+            <div class="panel-heading" id="heading-{name}" style="user-select:none;height:20;
+                color:#888888;font-size:18px;font-family:sans-serif;text-align:center;">
+                    {name if header is None else header}
+            </div>
+            
+            <div id="plot-container-{name}", style:"margin=0;padding=0">
+                <div id="{name}" style="width:100%;height:100%;margin:0;padding:0"></div>
+            </div>
+        </div>
+    </div>"""
 
 
 @transformation_router.get(
@@ -908,203 +912,121 @@ async def transformation_dashboard(
         if exec_resp.output_types_by_output_name[name] == "PLOTLYJSON"
     }
 
+    # Plotly.Plots.resize(target.getElementsByTagName('div')[1].firstElementChild.firstElementChild)
     dashboard_html = (
         r"""
     <!DOCTYPE html>
-    <html style="height:100%">
+    <html>
 
-    <script src="https://cdn.plot.ly/plotly-2.18.2.min.js" charset="utf-8"></script>
-    <script type="module">
-    import interact from 
-    'https://cdn.interactjs.io/v1.10.11/interactjs/index.js'
+    <script src="https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack-all.js" charset="utf-8"></script>
+    <!-- https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack-all.js -->
+    <link href=" https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack.min.css " rel="stylesheet">    
+    <script src="https://cdn.plot.ly/plotly-2.22.0.min.js" charset="utf-8"></script>
 
-    function dragMoveListener (event) {
-    var target = event.target
-    // keep the dragged position in the data-x/data-y attributes
-    var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
-    var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
-
-    // translate the element
-    target.style.transform = 'translate(' + x + 'px, ' + y + 'px)'
-
-    // update the posiion attributes
-    target.setAttribute('data-x', x)
-    target.setAttribute('data-y', y)
-    }
-
-    // this function is used later in the resizing and gesture demos
-    window.dragMoveListener = dragMoveListener
-
-    var gridTarget = interact.snappers.grid({
-    // can be a pair of x and y, left and top,
-    // right and bottom, or width, and height
-    x: 20,
-    y: 20,
-
-        offset: {x: 0, y: 0}
-
-    // optional
-    /*
-    range: 10,
-
-    // optional
-    offset: { x: 5, y: 10 },
-        
-    // optional
-    limits: {
-        top: 0,
-        left: 0,
-        bottom: 500,
-        height: 500
-    }
-    */
-    })
-
-
-    interact('.resize-drag')
-    .resizable({
-        // resize from all edges and corners
-        edges: { left: true, right: true, bottom: true, top: true },
-        margin:4, // edge thickness for resizing, see https://github.com/taye/interact.js/issues/685
-        listeners: {
-        move (event) {
-            var target = event.target
-            var x = (parseFloat(target.getAttribute('data-x')) || 0)
-            var y = (parseFloat(target.getAttribute('data-y')) || 0)
-
-            // update the element's style
-            target.style.width = event.rect.width + 'px'
-            target.style.height = event.rect.height + 'px'
-
-            // translate when resizing from top or left edges
-            x += event.deltaRect.left
-            y += event.deltaRect.top
-
-            target.style.transform = 'translate(' + x + 'px,' + y + 'px)'
-
-            target.setAttribute('data-x', x)
-            target.setAttribute('data-y', y)
-            //target.textContent = Math.round(event.rect.width) + '\u00D7' + Math.round(event.rect.height)
-            //console.log(target.firstElementChild);
-            // here plotly content should be triggered a redraw/adaption to new size?? Instead of setting textContent
-    //target.firstElementChild.redraw()
-                Plotly.Plots.resize(target.getElementsByTagName('div')[1].firstElementChild.firstElementChild)
-            
-        }
-        },
-        restrictEdges: {
-                outer: "parent"
-        },
-        restrictSize: {
-                min: { width: 100, height: 50 }
-        },
-        origin: 'parent',    
-        snap: {
-        // snap targets pay attention to the action's origin option
-        targets: [
-            interact.createSnapGrid({
-            x: 10,
-            y: 10,
-            })
-        ],
-        relativePoints: [
-            { x: 0, y: 0 }
-        ]
-        },    
-        /*
-        modifiers: [
-        // keep the edges inside the parent
-        interact.modifiers.restrictEdges({
-            outer: 'parent'
-        }),
-
-        // minimum size
-        interact.modifiers.restrictSize({
-            min: { width: 100, height: 50 }
-        }),
-        
-        //interact.modifiers.snap({ targets: [gridTarget] })
-        ],
-        */
-
-        inertia: true
-    })
-    .draggable({
-        allowFrom: ".handle",
-        origin: 'parent',    
-        snap: {
-        // snap targets pay attention to the action's origin option
-        targets: [
-            interact.createSnapGrid({
-            x: 10,
-            y: 10,
-            })
-        ],
-        relativePoints: [
-            { x: 0, y: 0 }
-        ]
-        },
-        restrict: {
-        // restrictions *don't* pay attention to the action's origin option
-        // so using 'parent' for both origin and restrict.restriction works
-        restriction: 'parent',
-        elementRect: {top: 0, left: 0, bottom: 0, right: 1}
-        },    
-        listeners: { move: window.dragMoveListener },
-        inertia: true,
-        /*
-        modifiers: [
-        interact.modifiers.restrictRect({
-            restriction: 'parent',
-            //endOnly: true //instead of:
-            elementRect: {top: 0, left: 0, bottom: 0, right: 1}
-        })
-        ]
-        */
-    })
-    </script>
     <head>
     <style>
-    .resize-drag {
-    width: 400px;
-    height: 150px;
-    border-radius: 4px;
-    padding: 5px;
-    margin: 3px;
-    background-color: #29e;
-    color: white;
-    font-size: 20px;
-    font-family: sans-serif;
-    opacity: .8;
-
-    touch-action: none;
-
-    /* This makes things *much* easier */
-    box-sizing: border-box;
+    .grid-stack {
+        background: #eeeeee;
+        padding: 0;
+        margin: 0;
     }
 
-    </style>
+    .panel-heading {
+        background: #f9f9f9;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+    }
+
+    </style>   
     </head>
-    <body style="height:100%;padding=10px">
-
-
-    """  # noqa: ISC003
-        + """<div style="color:black;font-size:28px;font-family:sans-serif;text-align:center">"""
-        + f"""{dashboard_title(transformation_revision)}</div>"""
+    <body>
+    <div style="color:#444444;font-size:20px;font-family:sans-serif;text-align:center">
+        """
+        + dashboard_title(transformation_revision)
         + r"""
-    <div style="background-color:lightgrey;width:100%;height:100%;
-        position:relative;top:0;left:0;padding:0px;margin:0px;
-        overflow-y:auto">
+    </div>
 
+    <div class="grid-stack">
     """
         + "\n".join(
             (
-                plotlyjson_to_html_div(name, plotly_json, row=ind)
+                plotlyjson_to_html_div(name, plotly_json, index=ind)
                 for ind, (name, plotly_json) in enumerate(plotly_outputs.items())
             )
         )
         + r"""
     </div>
+
+    <script>
+        var options = { // put in gridstack options here
+            //disableOneColumnMode: true, // for jfiddle small window size
+            float: true,
+            resizable: {
+                handles: 'e, se, s, sw, w'
+            },
+            draggable: {
+                handle: '.panel-heading',
+            },
+            animate: false            
+        };        
+        var grid = GridStack.init(options);
+
+        function resize_plot(name) {
+            // Plotly.Plots.resize(name);
+
+            console.log("Resizing: " + name);
+
+
+            Plotly.relayout(name, {
+               width: document.getElementById("container-" + name).clientWidth -20 ,
+               height: document.getElementById("container-" + name).clientHeight - 30                
+            });
+
+            saveGrid();
+        }
+
+
+        """
+        + "\n".join(
+            (
+                f"""plot = Plotly.newPlot("{name}", {json.dumps(ensure_working_plotly_json(plotly_json))}\n, {json.dumps({"width": "100%", "height": "100%", "useResizeHanlder": True})}, {json.dumps({"responsive": True})}); 
+                
+                resize_plot("{name}");                
+                """
+                for name, plotly_json in plotly_outputs.items()
+            )
+        )
+        + r"""
+
+        grid.on('resizestop', function(event, el) {
+            var inp_name = el.getAttribute("input_name");
+            console.log("Resizestop for: " + inp_name)
+
+            resize_plot(inp_name);
+        });
+
+        window.addEventListener('resize', function(event) {
+            console.log("Window resize event")
+        """
+        + "\n".join(
+            (
+                f"""
+                setTimeout(resize_plot, 500,"{name}");                
+                """
+                for name, plotly_json in plotly_outputs.items()
+            )
+        )
+        + r"""
+        }, true);
+
+
+        function saveGrid() {
+            var res = grid.save(false, false);
+            console.log(res)
+        }
+
+    </script>
+
     </body>
 
     """
