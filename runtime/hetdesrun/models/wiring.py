@@ -118,10 +118,24 @@ class InputWiring(BaseModel):
         return v
 
 
+class GridstackItemPositioning(BaseModel):
+    x: int | None = Field(None, ge=0)
+    y: int | None = Field(None, ge=0)
+    w: int | None = Field(None, ge=0)
+    h: int | None = Field(None, ge=0)
+    id: str = Field(
+        ...,
+        description=(
+            "gs-id of the .grid-stack-item which is extracted as id by "
+            "gridstacks save method"
+        ),
+    )
+
+
 class WorkflowWiring(BaseModel):
     input_wirings: list[InputWiring] = []
     output_wirings: list[OutputWiring] = []
-    dashboard: dict = {}
+    dashboard_positionings: list[GridstackItemPositioning] = []
 
     @validator("input_wirings", each_item=False)
     def input_names_unique(cls, input_wirings: list[InputWiring]) -> list[InputWiring]:

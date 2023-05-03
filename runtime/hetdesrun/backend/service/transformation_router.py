@@ -843,14 +843,44 @@ def ensure_working_plotly_json(plotly_json):
     return plotly_json
 
 
+from hetdesrun.models.wiring import GridstackItemPositioning
+
+
+def item_positioning_dict(
+    gridstack_item_positions: list[GridstackItemPositioning],
+) -> dict[str, GridstackItemPositioning]:
+    return {
+        item_positioning.id: item_positioning
+        for item_positioning in gridstack_item_positions
+    }
+
+
+def gs_div_attributes_from_item_positioning(
+    item_positioning: GridstackItemPositioning,
+) -> str:
+    return f"""
+
+    {' gs-x="' + str(item_positioning.x)+'"' if item_positioning.x is not None else ' '}
+    {' gs-y="' + str(item_positioning.y)+'"' if item_positioning.y is not None else ' '}
+    {' gs-w="' + str(item_positioning.w)+'"' if item_positioning.w is not None else ' '}
+    {' gs-h="' + str(item_positioning.h)+'"' if item_positioning.h is not None else ' '}
+
+    """
+
+
 def plotlyjson_to_html_div(
-    name: str, plotly_json: Any, index: int = 0, header: str | None = None
+    name: str,
+    plotly_json: Any,
+    item_positioning: GridstackItemPositioning,
+    index: int = 0,
+    header: str | None = None,
 ) -> str:
     plotly_json = ensure_working_plotly_json(plotly_json)
 
     return f"""
     <div class="grid-stack-item" input_name="{name}" id="gs-item-{name}" gs-id="{name}"
-            gs-x="{str((index % 2) * 6)}" gs-y="{str((index // 2) *2)}" gs-w="6" gs-h="2">
+            {gs_div_attributes_from_item_positioning(item_positioning)}
+            >
         <div class="grid-stack-item-content" id="container-{name}" style="
                 padding-left:10px;padding-right:10px">
             <div class="panel-heading" id="heading-{name}" style="user-select:none;height:20;
@@ -863,6 +893,58 @@ def plotlyjson_to_html_div(
             </div>
         </div>
     </div>"""
+
+
+@transformation_router.put(
+    "/{id}/dashboard/positioning",
+    summary="Update dashboard positions for a trafo revision",
+    status_code=status.HTTP_200_OK,
+    response_class=HTMLResponse,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully generated dashboard"},
+    },
+)
+async def update_transformation_dashboard_positioning(
+    gridstack_item_positions: list[GridstackItemPositioning],
+    id: UUID = Path(  # noqa: A002
+        ...,
+        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+    ),
+) -> None:
+    logger.info("get transformation revision %s", id)
+
+    try:
+        transformation_revision = read_single_transformation_revision(id)
+        logger.info("found transformation revision with id %s", id)
+    except DBNotFoundError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    transformation_revision.test_wiring.dashboard_positionings = (
+        gridstack_item_positions
+    )
+
+    try:
+        update_or_create_single_transformation_revision(
+            transformation_revision,
+            allow_overwrite_released=False,
+            update_component_code=False,
+            strip_wiring=False,
+        )
+    except DBIntegrityError as e:
+        logger.error(
+            "Integrity error in DB when trying to access entry for id %s\n%s", id, e
+        )
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+    except DBNotFoundError as e:
+        logger.error(
+            "Not found error in DB when trying to access entry for id %s\n%s", id, e
+        )
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except ModelConstraintViolation as e:
+        logger.error("Update forbidden for transformation with id %s\n%s", id, e)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
+
+    logger.debug(transformation_revision.json())
 
 
 @transformation_router.get(
@@ -893,6 +975,10 @@ async def transformation_dashboard(
         logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    item_positions = transformation_revision.test_wiring.dashboard_positionings
+
+    positioning_dict = item_positioning_dict(item_positions)
 
     logger.debug(transformation_revision.json())
 
@@ -950,7 +1036,17 @@ async def transformation_dashboard(
     """
         + "\n".join(
             (
-                plotlyjson_to_html_div(name, plotly_json, index=ind)
+                plotlyjson_to_html_div(
+                    name,
+                    plotly_json,
+                    positioning_dict.get(
+                        name,
+                        GridstackItemPositioning(
+                            id=name, x=(ind % 2) * 6, y=(ind // 2) * 2, w=6, h=2
+                        ),
+                    ),
+                    index=ind,
+                )
                 for ind, (name, plotly_json) in enumerate(plotly_outputs.items())
             )
         )
@@ -1005,13 +1101,28 @@ async def transformation_dashboard(
             resize_plot(inp_name);
         });
 
+        // autosave on actual positioning changes:
+        grid.on('change', function(event, items) {
+            console.log("Save positioning")
+            // items.forEach(function(item) {...});
+            var positionings = grid.save(false, false);
+            fetch("dashboard/positioning", {
+                method: "PUT",
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(positionings)
+            }).then(res => {
+                console.log("Request complete! response:", res);
+            });
+        });
+        
+
         window.addEventListener('resize', function(event) {
             console.log("Window resize event")
         """
         + "\n".join(
             (
                 f"""
-                setTimeout(resize_plot, 500,"{name}");                
+                setTimeout(resize_plot, 100,"{name}");                
                 """
                 for name, plotly_json in plotly_outputs.items()
             )
