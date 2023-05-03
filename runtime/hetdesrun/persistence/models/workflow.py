@@ -73,16 +73,15 @@ class WorkflowContent(BaseModel):
         for operator_name_seed, operator_group in operator_groups.items():
             if len(operator_group) > 1:
                 for index, operator in enumerate(operator_group):
-                    if index == 0 and operator.name != NonEmptyValidStr(
-                        operator_name_seed
-                    ):
-                        logger.debug(
-                            "Rename operator %s from %s to %s",
-                            str(operator.id),
-                            operator.name,
-                            operator_name_seed,
-                        )
-                        operator.name = NonEmptyValidStr(operator_name_seed)
+                    if index == 0:
+                        if operator.name != NonEmptyValidStr(operator_name_seed):
+                            logger.debug(
+                                "Rename operator %s from %s to %s",
+                                str(operator.id),
+                                operator.name,
+                                operator_name_seed,
+                            )
+                            operator.name = NonEmptyValidStr(operator_name_seed)
                     else:
                         new_name = NonEmptyValidStr(
                             operator_name_seed + " (" + str(index + 1) + ")"
@@ -794,3 +793,9 @@ class WorkflowContent(BaseModel):
 
     class Config:
         frozen = True
+        fields = {
+            "operator_output_by_id_tuple_dict": {"exclude": True},
+            "operator_input_by_id_tuple_dict": {"exclude": True},
+            "link_by_start_id_tuple_dict": {"exclude": True},
+            "link_by_end_id_tuple_dict": {"exclude": True},
+        }

@@ -112,12 +112,6 @@ class TransformationRevision(BaseModel):
             "Code as string in case of type COMPONENT, "
             "WorkflowContent in case of type WORKFLOW."
         ),
-        exclude={
-            "operator_output_by_id_tuple_dict",
-            "operator_input_by_id_tuple_dict",
-            "link_by_start_id_tuple_dict",
-            "link_by_end_id_tuple_dict",
-        },
     )
 
     io_interface: IOInterface = Field(
@@ -410,14 +404,7 @@ class TransformationRevision(BaseModel):
             state=self.state,
             type=self.type,
             documentation=self.documentation,
-            workflow_content=cast(WorkflowContent, self.content).dict(
-                exclude={
-                    "operator_output_by_id_tuple_dict",
-                    "operator_input_by_id_tuple_dict",
-                    "link_by_start_id_tuple_dict",
-                    "link_by_end_id_tuple_dict",
-                }
-            )
+            workflow_content=cast(WorkflowContent, self.content).dict()
             if self.type is Type.WORKFLOW
             else None,
             component_code=cast(str, self.content)
