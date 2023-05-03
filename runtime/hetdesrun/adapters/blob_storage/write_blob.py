@@ -98,14 +98,23 @@ async def write_custom_objects_to_storage(
         )
 
         s3_client = await get_s3_client()
+        check_sum_algorithm = get_blob_adapter_config().use_checksum_algorithm
         try:
-            s3_client.put_object(
-                Bucket=structure_bucket.name,
-                Key=custom_objects_object_key.string,
-                Body=file_object,
-                ChecksumAlgorithm="SHA1",
-                ContentType="application/octet-stream",
-            )
+            if check_sum_algorithm == "":
+                s3_client.put_object(
+                    Bucket=structure_bucket.name,
+                    Key=custom_objects_object_key.string,
+                    Body=file_object,
+                    ContentType="application/octet-stream",
+                )
+            else:
+                s3_client.put_object(
+                    Bucket=structure_bucket.name,
+                    Key=custom_objects_object_key.string,
+                    Body=file_object,
+                    ChecksumAlgorithm=check_sum_algorithm,
+                    ContentType="application/octet-stream",
+                )
         except ClientError as client_error:
             error_code = client_error.response["Error"]["Code"]
             msg = (

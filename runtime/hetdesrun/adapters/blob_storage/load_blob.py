@@ -93,11 +93,16 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             custom_objects: dict[str, Any] | None = None
             custom_objects_object_key = object_key.to_custom_objects_object_key()
             try:
-                custom_objects_response = s3_client.get_object(
-                    Bucket=bucket.name,
-                    Key=custom_objects_object_key.string,
-                    ChecksumMode="ENABLED",
-                )
+                if get_blob_adapter_config().use_checksum_algorithm == "":
+                    custom_objects_response = s3_client.get_object(
+                        Bucket=bucket.name, Key=custom_objects_object_key.string
+                    )
+                else:
+                    custom_objects_response = s3_client.get_object(
+                        Bucket=bucket.name,
+                        Key=custom_objects_object_key.string,
+                        ChecksumMode="ENABLED",
+                    )
             except s3_client.exceptions.NoSuchKey:
                 pass
             else:
