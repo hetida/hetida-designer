@@ -119,7 +119,7 @@ class OperatorOutput(Connector):
 class OperatorInput(Flexibility, Connector):
     exposed: bool = False
 
-    @validator("exposed")
+    @validator("exposed", always=True)
     def required_inputs_exposed(cls, exposed: bool, values: dict) -> bool:
         try:
             type = values["type"]  # noqa: A001

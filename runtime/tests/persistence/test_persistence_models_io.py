@@ -5,6 +5,7 @@ import pytest
 
 from hetdesrun.models.component import ComponentInput, ComponentOutput
 from hetdesrun.persistence.models.io import (
+    InputType,
     IOInterface,
     OperatorInput,
     OperatorOutput,
@@ -252,6 +253,28 @@ def test_operator_input_validator_required_inputs_exposed() -> None:
 
     unexposed_operator_input_object = OperatorInput(**unexposed_operator_input)
     assert unexposed_operator_input_object.exposed is False
+
+    operator_input_type_and_exposed_not_set_json = deepcopy(
+        exposed_operator_input_connected_to_optional_workflow_input
+    )
+    del operator_input_type_and_exposed_not_set_json["type"]
+    del operator_input_type_and_exposed_not_set_json["exposed"]
+    operator_input_type_and_exposed_not_set = OperatorInput(
+        **operator_input_type_and_exposed_not_set_json
+    )
+    assert operator_input_type_and_exposed_not_set.type == InputType.REQUIRED
+    assert operator_input_type_and_exposed_not_set.exposed is True
+
+    operator_input_type_optional_exposed_not_set_json = deepcopy(
+        exposed_operator_input_connected_to_optional_workflow_input
+    )
+    operator_input_type_optional_exposed_not_set_json["type"] = "OPTIONAL"
+    del operator_input_type_optional_exposed_not_set_json["exposed"]
+    operator_input_type_optional_exposed_not_set = OperatorInput(
+        **operator_input_type_optional_exposed_not_set_json
+    )
+    assert operator_input_type_optional_exposed_not_set.type == InputType.OPTIONAL
+    assert operator_input_type_optional_exposed_not_set.exposed is False
 
 
 def test_operator_input_from_transformation_input() -> None:
