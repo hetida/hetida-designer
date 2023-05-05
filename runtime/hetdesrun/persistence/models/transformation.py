@@ -197,7 +197,7 @@ class TransformationRevision(BaseModel):
         return v
 
     @validator("io_interface")
-    def io_interface_fits_to_content(
+    def io_interface_fits_to_content(  # noqa: PLR0912
         cls, io_interface: IOInterface, values: dict
     ) -> IOInterface:
         try:
@@ -230,24 +230,23 @@ class TransformationRevision(BaseModel):
                     str({trafo_input.id}),
                 )
                 io_interface.inputs.remove(trafo_input)
-            else:
-                if not workflow_input.matches_trafo_input(trafo_input):
-                    raise ValueError(
-                        f"For the io interface input '{trafo_input.id}' "
-                        "the workflow content input with the same id does not match!"
-                    )
+                continue
+            if not workflow_input.matches_trafo_input(trafo_input):
+                raise ValueError(
+                    f"For the io interface input '{trafo_input.id}' "
+                    "the workflow content input with the same id does not match!"
+                    "Thus, it will be removed from the io interface."
+                )
 
-                del wf_inputs_by_id[trafo_input.id]
+            del wf_inputs_by_id[trafo_input.id]
 
-        if len(wf_inputs_by_id) > 0:
+        for wf_input in wf_inputs_by_id.values():
             logger.warning(
-                "There are %i inputs in the workflow content "
-                "but not in the io interface. These will be added to the io interface.",
-                len(wf_inputs_by_id),
+                "Input '%s' is in the worklow content but not in the io interface. "
+                "It will be added to the io interface.",
+                str(wf_input.id),
             )
-
-            for wf_input in wf_inputs_by_id.values():
-                io_interface.inputs.append(wf_input.to_transformation_input())
+            io_interface.inputs.append(wf_input.to_transformation_input())
 
         wf_outputs_by_id: dict[UUID, WorkflowContentOutput] = {
             wf_output.id: wf_output for wf_output in workflow_content.outputs
@@ -263,24 +262,23 @@ class TransformationRevision(BaseModel):
                     str({trafo_output.id}),
                 )
                 io_interface.outputs.remove(trafo_output)
-            else:
-                if not workflow_output.matches_trafo_output(trafo_output):
-                    raise ValueError(
-                        f"For the io interface output '{trafo_output.id}' "
-                        "the workflow content output with the same id does not match!"
-                    )
+                continue
+            if not workflow_output.matches_trafo_output(trafo_output):
+                raise ValueError(
+                    f"For the io interface output '{trafo_output.id}' "
+                    "the workflow content output with the same id does not match!"
+                    "Thus, it will be removed from the io interface."
+                )
 
-                del wf_outputs_by_id[trafo_output.id]
+            del wf_outputs_by_id[trafo_output.id]
 
-        if len(wf_outputs_by_id) > 0:
+        for wf_output in wf_outputs_by_id.values():
             logger.warning(
-                "There are %i outputs in the workflow content "
-                "but not in the io interface. These will be added to the io interface.",
-                len(wf_outputs_by_id),
+                "Output '%s' is in the worklow content but not in the io interface. "
+                "It will be added to the io interface.",
+                str(wf_output.id),
             )
-
-            for wf_output in wf_outputs_by_id.values():
-                io_interface.outputs.append(wf_output.to_transformation_output())
+            io_interface.outputs.append(wf_output.to_transformation_output())
 
         return io_interface
 
