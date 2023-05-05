@@ -133,9 +133,7 @@ def test_transformation_io_validator_name_python_identifier_identifies_keyword_n
     None
 ):
     trafo_output_with_keyword_name = deepcopy(trafo_output)
-    print(trafo_output_with_keyword_name.keys())
     trafo_output_with_keyword_name["name"] = "pass"
-    print(trafo_output_with_keyword_name["name"])
 
     with pytest.raises(ValueError) as exc:  # noqa: PT011
         TransformationOutput(**trafo_output_with_keyword_name)

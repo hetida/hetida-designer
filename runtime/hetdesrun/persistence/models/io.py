@@ -159,6 +159,13 @@ class WorkflowContentIO(Connector):
     connector_name: str
     position = Position(x=0, y=0)
 
+    def matches_operator_io(self, other: Connector) -> bool:
+        return self.connector_id == other.id and (
+            self.data_type == DataType.Any
+            or other.data_type == DataType.Any
+            or self.data_type == other.data_type
+        )
+
 
 class WorkflowContentOutput(WorkflowContentIO):
     def matches_trafo_output(self, other: TransformationOutput) -> bool:
