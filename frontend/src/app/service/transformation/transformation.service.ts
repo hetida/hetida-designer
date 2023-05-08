@@ -122,7 +122,6 @@ export class TransformationService {
 
   deleteTransformation(id: string): Observable<void> {
     return this.transformationHttpService.deleteTransformation(id).pipe(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       tap(_ => {
         this.localStorageService.removeItemFromLastOpened(id);
         this.store.dispatch(removeTransformation(id));

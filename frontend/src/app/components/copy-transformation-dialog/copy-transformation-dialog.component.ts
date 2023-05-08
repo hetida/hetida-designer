@@ -77,7 +77,6 @@ export class CopyTransformationDialogComponent implements OnInit {
 
   public isAllDataPropertiesDisabled(): boolean {
     return Object.entries(this.infoForm.controls).every(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ([_, control]) => control.disabled
     );
   }
