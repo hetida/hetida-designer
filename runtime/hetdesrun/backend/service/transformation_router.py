@@ -1,10 +1,13 @@
+import datetime
 import json
 import logging
 import os
-from typing import Any
+from copy import deepcopy
+from typing import Any, Tuple
 from uuid import UUID, uuid4
 
 import httpx
+import pandas as pd
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -15,7 +18,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import HTMLResponse
-from pydantic import HttpUrl
+from pydantic import HttpUrl, ValidationError
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -883,7 +886,7 @@ def plotlyjson_to_html_div(
             >
         <div class="grid-stack-item-content" id="container-{name}" style="
                 padding-left:10px;padding-right:10px">
-            <div class="panel-heading" id="heading-{name}" style="user-select:none;height:20;
+             <div class="panel-heading" id="heading-{name}" style="user-select:none;height:20;
                 color:#888888;font-size:18px;font-family:sans-serif;text-align:center;">
                     {name if header is None else header}
             </div>
@@ -947,6 +950,53 @@ async def update_transformation_dashboard_positioning(
     logger.debug(transformation_revision.json())
 
 
+RELATIVE_RANGE_DESCRIPTIONS = [
+    "5s",
+    "1min",
+    "5min",
+    "15min",
+    "1h",
+    "2h",
+    "3h",
+    "6h",
+    "12h",
+    "24h",
+    "7d",
+    "30d",
+    "365d",
+]
+
+
+def get_override_timestamps(
+    fromTimestamp: datetime.datetime | None,
+    toTimestamp: datetime.datetime | None,
+    relNow: str | None,
+) -> Tuple[str, str]:
+    if fromTimestamp is None and toTimestamp is None and relNow is None:
+        raise ValueError("No override specified.")
+
+
+def override_timestamps_in_wiring(
+    mutable_wiring, from_ts: datetime.datetime, to_ts: datetime.datetime
+):
+    """Inplace-Override timestamps in giving wiring.
+
+    from_ts and to_ts are expected to be explicitely UTC timezoned!
+    """
+    for inp_wiring in mutable_wiring.input_wirings:
+        if inp_wiring.filters.get("timestampFrom", None) is not None:
+            # We excpect UTC!
+            inp_wiring.filters["timestampFrom"] = (
+                from_ts.isoformat(timespec="milliseconds").split("+")[0] + "Z"
+            )
+        if inp_wiring.filters.get("timestampTo", None) is not None:
+            # We expect UTC!
+            inp_wiring.filters["timestampTo"] = (
+                to_ts.isoformat(timespec="milliseconds").split("+")[0] + "Z"
+            )
+    return mutable_wiring
+
+
 @transformation_router.get(
     "/{id}/dashboard",
     summary="A dashboard generated from the transformation and its test wiring.",
@@ -961,12 +1011,49 @@ async def transformation_dashboard(
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
     ),
+    fromTimestamp: datetime.datetime
+    | None = Query(
+        None, description="Override from timestamp. Expected to be explicit UTC."
+    ),
+    toTimestamp: datetime.datetime
+    | None = Query(
+        None, description="Override to timestamp. Expected to be explicit UTC."
+    ),
+    relNow: str
+    | None = Query(
+        None,
+        description=(
+            'Override timerange relative to "now". '
+            'E.g. "5min" describes the timerange [now - 5 minutes, now].'
+        ),
+    ),
 ) -> str:
     """Dashboard fed by transformation revision plot outputs
 
     Generates a html page containing the result plots in movable and resizable
     rectangles, i.e. an elementary dashboard.
     """
+
+    # Validate
+    if int(fromTimestamp is None) + int(toTimestamp is None) == 1:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "Either none or both of fromTimestamp and toTimestamp must be set.",
+        )
+
+    if (
+        fromTimestamp is not None  # also toTimestamp not None by last check
+        and fromTimestamp > toTimestamp
+    ):
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY, "fromTimestamp must be <= toTimestamp"
+        )
+
+    if relNow is not None and fromTimestamp is not None:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "Cannot both specify absolute and relative timerange overrides!",
+        )
 
     logger.info("get transformation revision %s", id)
 
@@ -978,13 +1065,34 @@ async def transformation_dashboard(
 
     item_positions = transformation_revision.test_wiring.dashboard_positionings
 
+    wiring = deepcopy(transformation_revision.test_wiring)
+
+    # override time ranges
+    calculated_from_timestamp = None
+    calculated_to_timestamp = None
+
+    if fromTimestamp is not None:
+        calculated_from_timestamp = fromTimestamp
+        calculated_to_timestamp = toTimestamp
+
+    if relNow is not None:
+        requested_timedelta_to_now = pd.Timedelta(relNow).to_pytimedelta()
+
+        calculated_to_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
+        calculated_from_timestamp = calculated_to_timestamp - requested_timedelta_to_now
+
+    if calculated_from_timestamp is not None:
+        override_timestamps_in_wiring(
+            wiring, calculated_from_timestamp, calculated_to_timestamp
+        )
+
     positioning_dict = item_positioning_dict(item_positions)
 
     logger.debug(transformation_revision.json())
 
     exec_by_id: ExecByIdInput = ExecByIdInput(
         id=id,
-        wiring=None,  # so execution will default to the stored test wiring!
+        wiring=wiring,  # possibly edited wiring
         run_pure_plot_operators=True,
     )
 
@@ -1007,7 +1115,15 @@ async def transformation_dashboard(
     <script src="https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack-all.js" charset="utf-8"></script>
     <!-- https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack-all.js -->
     <link href=" https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack.min.css " rel="stylesheet">    
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.plot.ly/plotly-2.22.0.min.js" charset="utf-8"></script>
+
+    <!-- flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+
 
     <head>
     <style>
@@ -1023,14 +1139,181 @@ async def transformation_dashboard(
         border-top-right-radius: 4px;
     }
 
+    .hd-dashboard-timerange-picker {
+        width: 100%;
+        box-sizing: border-box;
+        margin-left: 2px;
+        margin-right: 2px;
+        flex-grow: 1;
+    }
+
     </style>   
     </head>
     <body>
-    <div style="color:#444444;font-size:20px;font-family:sans-serif;text-align:center">
-        """
+    <div style="display:flex">
+        <div style="width:30%"></div>
+        <div style="color:#444444;font-size:20px;font-family:sans-serif;text-align:center;width:40%">
+            """
         + dashboard_title(transformation_revision)
         + r"""
+        </div>
+        <div style="width:30%;display:flex;align-items:center">
+            <div style="float:left;width:6em">
+                <label for="override-timerange-select">Timerange</label>
+            </div>
+            <div style="float:left;display:inline-block;width:25%">
+            """
+        + f"""
+            <select name="override" id="override-timerange-select"
+                    onchange="on_override_select_change(this)"
+                    style="width:100%"
+                    >
+                <option value="absolute" {"selected" if fromTimestamp is not None else ""}>Absolute</option>                
+                <option value="none" {"selected" if (relNow is None and fromTimestamp is None) else ""}
+                    >wired timeranges</option>
+                """
+        + "\n".join(
+            (
+                f"""<option value="{rel_range_desc}"
+                    {"selected" if relNow==rel_range_desc else ""}
+                    >last {rel_range_desc}</option>"""
+                for rel_range_desc in RELATIVE_RANGE_DESCRIPTIONS
+            )
+        )
+        + r"""
+            </select>
+            </div>
+            <div id="picker-span" style="display:flex;align-items:center;width:calc(75% - 10em)" >
+                <div style="display:flex;align-items:center;width:100%">
+                    <input class="hd-dashboard-timerange-picker" id="datetimepicker-absolute" type="text" placeholder="Select range...">
+                    <i class="fa-solid fa-triangle-exclamation" id="datetime-picker-warning"
+                        title="Uncomplete daterange selected."
+                        style="color:#880000;display:none;heigt:100%"></i>                
+                </div>
+            </div>
+
+        <script>
+
+            function url_params_from_state() {
+                var param_dict = {};
+                override_selector = document.getElementById("override-timerange-select");
+                if (override_selector.value == "none") {
+                    return param_dict;
+                } else if (override_selector.value == "absolute") {
+                    selected_dates = flatpicker_abs_range.selectedDates;
+                    param_dict = {
+                        fromTimestamp: selected_dates[0].toISOString(),
+                        toTimestamp: selected_dates[1].toISOString()
+                    }
+                } else {
+                    param_dict = {
+                        relNow: override_selector.value
+                    }
+                }
+                return param_dict
+            };
+
+            function update_dashboard() {
+                url_param_dict = url_params_from_state();
+                
+                const url_param_data = new URLSearchParams(url_param_dict);
+                
+                window.location.replace('dashboard' + '?' + url_param_data.toString() );
+
+            };
+
+            function on_override_select_change(overrideSelect){
+                console.log(overrideSelect.value)
+
+                if (overrideSelect.value == "absolute") {
+                    flatpicker_abs_range.set("clickOpens", true);
+                    
+                    decide_warning_absolute_range_incomplete(update_complete_dashboard=true)
+                    return;
+                } else {
+                    flatpicker_abs_range.set("clickOpens", false);
+                }
+
+                if (overrideSelect.value == "none") {
+                    // simply use original wiring
+                    update_dashboard()
+                } else {
+                    // neither "absolute" nor "none", i.e. some of the timeranges relative
+                    // to "now"
+                    update_dashboard()
+                }
+
+            };
+
+            function decide_warning_absolute_range_incomplete(update_complete_dashboard = false) {
+                selectedDates = flatpicker_abs_range.selectedDates;
+
+                if (selectedDates.length == 1) {
+                    console.log("only one datetime!")
+                    document.getElementById("datetime-picker-warning").style.display = "inline-block";
+
+                
+                } else if (selectedDates.length == 2) {
+                    console.log("two datetimes. okay for updating");
+                    document.getElementById("datetime-picker-warning").style.display = "none";
+                    if (update_complete_dashboard) {
+                        update_dashboard();
+                    }
+
+                } else {
+                    console.log("no datetime or something unexpected")
+                    document.getElementById("datetime-picker-warning").style.display = "inline-block";
+                }                
+            };
+
+            const flatpicker_abs_range = flatpickr("#datetimepicker-absolute", {
+                enableTime: true,  // enabling this leads to incomplete ranges being possible :-(
+                mode: 'range',
+                dateFormat: 'Z',
+                time_24hr: true,
+                altInput: true,
+                altFormat: 'Y-m-d h:i',
+                clickOpens: (document.getElementById("override-timerange-select").value == "absolute"),
+                """
+        + f"""{ ('defaultDate: ["'
+                + calculated_from_timestamp.isoformat(timespec="milliseconds").split("+")[0]+ "Z"
+                + '", "'
+                + calculated_to_timestamp.isoformat(timespec="milliseconds").split("+")[0] + "Z"
+                + '"],'
+     ) if calculated_from_timestamp is not None else ""}"""
+        + r"""
+                
+                onClose: function(selectedDates, dateStr, instance){
+                    // ...
+                    console.log(selectedDates)
+                    console.log(dateStr)
+
+                    decide_warning_absolute_range_incomplete(update_complete_dashboard=true);
+
+                }
+            });
+            
+            // for access of the created input (altInput) hiding the original input
+            const created_input = flatpicker_abs_range.input.parentElement.lastElementChild;
+
+            
+            
+            const datetime_picker_absolute = document.getElementById("datetimepicker-absolute")
+            
+            
+        </script>
+            <div id="buttons-right" style="display:inline-block;width:4em;float:right" >        
+                <button class="btn" title="View/Hide dashboard configuration" onclick="toggle_config_visibility();" style="float:right;margin-left:2px;margin-right:2px">
+                    <i class="fa-solid fa-chevron-down" id="config-button-image"></i>
+                </button>        
+                <button class="btn" title="Reload" onclick="update_dashboard();" style="float:right;margin-left:2px;margin-right:2px">
+                    <i class="fa-solid fa-arrow-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+
     </div>
+    <div id="config-panel" style="display:none">config</div>
 
     <div class="grid-stack">
     """
@@ -1080,6 +1363,18 @@ async def transformation_dashboard(
 
             saveGrid();
         }
+
+
+        function toggle_config_visibility() {
+            targetDiv = document.getElementById("config-panel");
+            if (targetDiv.style.display !== "none") {
+                targetDiv.style.display = "none";
+                document.getElementById("config-button-image").className="fa-solid fa-chevron-down";
+            } else {
+                targetDiv.style.display = "block";
+                document.getElementById("config-button-image").className="fa-solid fa-chevron-up";
+            }
+        };
 
 
         """

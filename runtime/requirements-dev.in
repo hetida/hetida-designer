@@ -14,3 +14,4 @@ ipykernel
 moto
 ruff
 pytest-random-order
+watchfiles
