@@ -132,8 +132,8 @@ export class WorkflowIODialogComponent {
   }
 
   private setupFormControl(): void {
-    const workflowTransformation: WorkflowTransformation = this.data
-      .workflowTransformation;
+    const workflowTransformation: WorkflowTransformation =
+      this.data.workflowTransformation;
     const inputData: WorkflowIODefinition[] = [];
     const outputData: WorkflowIODefinition[] = [];
 
@@ -249,7 +249,9 @@ export class WorkflowIODialogComponent {
     const constantControl = workflowIODefinitionForm.get('constant');
     const nameControl = workflowIODefinitionForm.get('name');
 
-    const rawValue = (workflowIODefinitionForm as FormGroup).getRawValue() as WorkflowIODefinition;
+    const rawValue = (
+      workflowIODefinitionForm as FormGroup
+    ).getRawValue() as WorkflowIODefinition;
 
     if (isConstant) {
       nameControl.reset('');
@@ -357,14 +359,14 @@ export class WorkflowIODialogComponent {
     const foundInput = this.data.workflowTransformation.content.inputs.find(
       (ref: IOConnector) => ref.id === data.id
     );
-    const foundConstant = this.data.workflowTransformation.content.constants.find(
-      ref => ref.id === data.id
-    );
-    const foundOutput:
-      | IOConnector
-      | undefined = this.data.workflowTransformation.content.outputs.find(
-      (ref: IOConnector) => ref.id === data.id
-    );
+    const foundConstant =
+      this.data.workflowTransformation.content.constants.find(
+        ref => ref.id === data.id
+      );
+    const foundOutput: IOConnector | undefined =
+      this.data.workflowTransformation.content.outputs.find(
+        (ref: IOConnector) => ref.id === data.id
+      );
 
     if (foundConstant && data.isConstant) {
       foundConstant.value = data.constant;
@@ -372,9 +374,10 @@ export class WorkflowIODialogComponent {
       foundInput.name = data.name;
     } else if (foundInput && data.isConstant) {
       // move data from inputs to constants
-      this.data.workflowTransformation.content.inputs = this.data.workflowTransformation.content.inputs.filter(
-        input => input.id !== foundInput.id
-      );
+      this.data.workflowTransformation.content.inputs =
+        this.data.workflowTransformation.content.inputs.filter(
+          input => input.id !== foundInput.id
+        );
       const newConstant: Constant = {
         ...foundInput,
         name: null,
@@ -383,9 +386,10 @@ export class WorkflowIODialogComponent {
       this.data.workflowTransformation.content.constants.push(newConstant);
     } else if (foundConstant && !data.isConstant) {
       // move data from constants to inputs
-      this.data.workflowTransformation.content.constants = this.data.workflowTransformation.content.constants.filter(
-        constant => constant.id !== foundConstant.id
-      );
+      this.data.workflowTransformation.content.constants =
+        this.data.workflowTransformation.content.constants.filter(
+          constant => constant.id !== foundConstant.id
+        );
       const newInput: IOConnector = {
         ...foundConstant,
         name: data.name,

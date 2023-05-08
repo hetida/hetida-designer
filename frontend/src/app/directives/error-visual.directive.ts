@@ -37,9 +37,9 @@ export class ErrorVisualDirective implements OnInit {
             case 'maxlength':
               return `Too many characters (max. ${details.requiredLength})`;
             case 'noBooleanValue':
-              return `Enter a boolean value`;
+              return 'Enter a boolean value';
             case 'noIntegerValue':
-              return `Enter a integer value`;
+              return 'Enter a integer value';
             case 'noFloatValue':
               return 'Enter a float value';
             case 'notOnlyWhitespaces':

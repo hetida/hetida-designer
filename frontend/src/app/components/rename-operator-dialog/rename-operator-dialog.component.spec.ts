@@ -11,31 +11,29 @@ describe('RenameOperatorDialogComponent', () => {
   let component: RenameOperatorDialogComponent;
   let fixture: ComponentFixture<RenameOperatorDialogComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          MatFormFieldModule,
-          FormsModule,
-          ReactiveFormsModule,
-          MatInputModule,
-          BrowserAnimationsModule
-        ],
-        declarations: [RenameOperatorDialogComponent, ErrorVisualDirective],
-        providers: [
-          { provide: MatDialogRef, useValue: {} },
-          {
-            provide: MAT_DIALOG_DATA,
-            useValue: {
-              operator: {
-                name: 'Mock'
-              }
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        MatFormFieldModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatInputModule,
+        BrowserAnimationsModule
+      ],
+      declarations: [RenameOperatorDialogComponent, ErrorVisualDirective],
+      providers: [
+        { provide: MatDialogRef, useValue: {} },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            operator: {
+              name: 'Mock'
             }
           }
-        ]
-      }).compileComponents();
-    })
-  );
+        }
+      ]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(RenameOperatorDialogComponent);

@@ -11,34 +11,33 @@ describe('TransformationContextMenuComponent', () => {
   let component: TransformationContextMenuComponent;
   let fixture: ComponentFixture<TransformationContextMenuComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      const transformationActionService = jasmine.createSpyObj<TransformationActionService>(
+  beforeEach(waitForAsync(() => {
+    const transformationActionService =
+      jasmine.createSpyObj<TransformationActionService>(
         'TransformationActionService',
         ['isIncomplete']
       );
 
-      const tabItemService = jasmine.createSpyObj<TabItemService>(
-        'TabItemService',
-        ['addTransformationTab']
-      );
+    const tabItemService = jasmine.createSpyObj<TabItemService>(
+      'TabItemService',
+      ['addTransformationTab']
+    );
 
-      TestBed.configureTestingModule({
-        imports: [MaterialModule, NoopAnimationsModule],
-        declarations: [TransformationContextMenuComponent],
-        providers: [
-          {
-            provide: TransformationActionService,
-            useValue: transformationActionService
-          },
-          {
-            provide: TabItemService,
-            useValue: tabItemService
-          }
-        ]
-      }).compileComponents();
-    })
-  );
+    TestBed.configureTestingModule({
+      imports: [MaterialModule, NoopAnimationsModule],
+      declarations: [TransformationContextMenuComponent],
+      providers: [
+        {
+          provide: TransformationActionService,
+          useValue: transformationActionService
+        },
+        {
+          provide: TabItemService,
+          useValue: tabItemService
+        }
+      ]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(TransformationContextMenuComponent);
