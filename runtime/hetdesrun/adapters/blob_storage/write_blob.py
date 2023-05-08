@@ -98,9 +98,9 @@ async def write_custom_objects_to_storage(
         )
 
         s3_client = await get_s3_client()
-        check_sum_algorithm = get_blob_adapter_config().use_checksum_algorithm
+        checksum_algorithm = get_blob_adapter_config().checksum_algorithm
         try:
-            if check_sum_algorithm == "":
+            if checksum_algorithm == "":
                 s3_client.put_object(
                     Bucket=structure_bucket.name,
                     Key=custom_objects_object_key.string,
@@ -112,7 +112,7 @@ async def write_custom_objects_to_storage(
                     Bucket=structure_bucket.name,
                     Key=custom_objects_object_key.string,
                     Body=file_object,
-                    ChecksumAlgorithm=check_sum_algorithm,
+                    ChecksumAlgorithm=checksum_algorithm,
                     ContentType="application/octet-stream",
                 )
         except ClientError as client_error:
@@ -208,7 +208,7 @@ async def write_blob_to_storage(
             logger.info(
                 "Dumped data of size %i into BLOB", file_object.getbuffer().nbytes
             )
-            check_sum_algorithm = get_blob_adapter_config().use_checksum_algorithm
+            check_sum_algorithm = get_blob_adapter_config().checksum_algorithm
             try:
                 if check_sum_algorithm == "":
                     s3_client.put_object(
