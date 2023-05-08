@@ -966,6 +966,9 @@ RELATIVE_RANGE_DESCRIPTIONS = [
     "365d",
 ]
 
+# in seconds:
+AUTORELOAD_INTERVALS = [5, 15, 30, 60, 120, 300, 900, 3600]
+
 
 def get_override_timestamps(
     fromTimestamp: datetime.datetime | None,
@@ -1027,6 +1030,8 @@ async def transformation_dashboard(
             'E.g. "5min" describes the timerange [now - 5 minutes, now].'
         ),
     ),
+    autoreload: int
+    | None = Query(None, description=("Autoreload interval in seconds")),
 ) -> str:
     """Dashboard fed by transformation revision plot outputs
 
@@ -1210,6 +1215,13 @@ async def transformation_dashboard(
                         relNow: override_selector.value
                     }
                 }
+
+                autoreload_selector = document.getElementById("autoreload-select");
+
+                if (autoreload_selector.value != "none") {
+                    param_dict["autoreload"] = autoreload_selector.value;
+                }
+
                 return param_dict
             };
 
@@ -1302,7 +1314,27 @@ async def transformation_dashboard(
             
             
         </script>
-            <div id="buttons-right" style="display:inline-block;width:4em;float:right" >        
+            <div id="buttons-right" style="display:inline-block;width:9em;float:right" >
+                """
+        + f"""
+            <select name="autoreload" id="autoreload-select"
+                    onchange="on_autoreload_select_change(this)"
+                    style="width:5em"
+                    >
+                <option value="none" {"selected" if (autoreload is None) else ""}
+                    >no</option>
+                """
+        + "\n".join(
+            (
+                f"""<option value="{str(autoreload_interval_length)}"
+                    {"selected" if autoreload==autoreload_interval_length else ""}
+                    >{str(autoreload_interval_length) + "s"}</option>"""
+                for autoreload_interval_length in AUTORELOAD_INTERVALS
+            )
+        )
+        + r"""
+            </select>
+
                 <button class="btn" title="View/Hide dashboard configuration" onclick="toggle_config_visibility();" style="float:right;margin-left:2px;margin-right:2px">
                     <i class="fa-solid fa-chevron-down" id="config-button-image"></i>
                 </button>        
@@ -1375,6 +1407,19 @@ async def transformation_dashboard(
                 document.getElementById("config-button-image").className="fa-solid fa-chevron-up";
             }
         };
+
+        function on_autoreload_select_change(autoreload_selector_element) {
+            update_dashboard();
+        }
+
+        const autoreload_selector_element = document.getElementById("autoreload-select");
+
+        if (autoreload_selector_element.value != "none") {
+            setTimeout(function(){
+                update_dashboard();
+            }, parseInt(autoreload_selector_element.value) * 1000);            
+        }        
+
 
 
         """
