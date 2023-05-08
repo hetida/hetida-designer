@@ -66,37 +66,31 @@ const unsetActiveTabItemIfPointingToDeletedTabItem = (
 
 export const tabItemReducers = createReducer(
   initialTabItemState,
-  on(
-    addTabItem,
-    (state, action): ITabItemState => {
-      const tabItemToAdd: TabItem = {
-        id: `${action.payload.transformationId}-${action.payload.tabItemType}`,
-        ...action.payload
-      };
-      const updatedState = tabItemEntityAdapter.addOne(tabItemToAdd, state);
-      return {
-        ...updatedState,
-        // Whenever we add a new tab item it will be immediately activated.
-        activeTabItemId: tabItemToAdd.id
-      };
-    }
-  ),
-  on(
-    removeTabItem,
-    (state, action): ITabItemState => {
-      const tabItemIdToRemove = action.payload;
-      const updatedState = tabItemEntityAdapter.removeOne(
-        tabItemIdToRemove,
-        state
-      );
+  on(addTabItem, (state, action): ITabItemState => {
+    const tabItemToAdd: TabItem = {
+      id: `${action.payload.transformationId}-${action.payload.tabItemType}`,
+      ...action.payload
+    };
+    const updatedState = tabItemEntityAdapter.addOne(tabItemToAdd, state);
+    return {
+      ...updatedState,
+      // Whenever we add a new tab item it will be immediately activated.
+      activeTabItemId: tabItemToAdd.id
+    };
+  }),
+  on(removeTabItem, (state, action): ITabItemState => {
+    const tabItemIdToRemove = action.payload;
+    const updatedState = tabItemEntityAdapter.removeOne(
+      tabItemIdToRemove,
+      state
+    );
 
-      // Check whether the deleted tab was the active tab.
-      return unsetActiveTabItemIfPointingToDeletedTabItem(
-        updatedState,
-        tabItemIdToRemove
-      );
-    }
-  ),
+    // Check whether the deleted tab was the active tab.
+    return unsetActiveTabItemIfPointingToDeletedTabItem(
+      updatedState,
+      tabItemIdToRemove
+    );
+  }),
   on(updateTransformation, (state, action) => {
     if (action.payload.state === RevisionState.DISABLED) {
       const transformationIdToRemove = action.payload.id;
@@ -104,13 +98,10 @@ export const tabItemReducers = createReducer(
     }
     return state;
   }),
-  on(
-    removeTransformation,
-    (state, action): ITabItemState => {
-      const transformationIdToRemove = action.payload;
-      return closeAllTransformationRelatedTabs(transformationIdToRemove, state);
-    }
-  ),
+  on(removeTransformation, (state, action): ITabItemState => {
+    const transformationIdToRemove = action.payload;
+    return closeAllTransformationRelatedTabs(transformationIdToRemove, state);
+  }),
   on(
     setActiveTabItem,
     (state, action): ITabItemState => ({

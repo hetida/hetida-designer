@@ -366,9 +366,8 @@ describe('TransformationActionService', () => {
 
   it('IsIncomplete should return false if component fulfills all requirements', () => {
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeFalse();
   });
@@ -377,9 +376,8 @@ describe('TransformationActionService', () => {
     // Arrange
     mockTransformation.io_interface = { inputs: [], outputs: [] };
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -389,9 +387,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeFalse();
   });
@@ -402,9 +399,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content.operators = [];
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -415,9 +411,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content.inputs[0].name = '';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -428,9 +423,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content.outputs[0].name = '';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -441,9 +435,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content.inputs[0].name = '0input';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -454,9 +447,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content.outputs[0].name = '0output';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -467,9 +459,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content.inputs[0].name = 'break';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -480,9 +471,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content.outputs[0].name = 'break';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -495,9 +485,8 @@ describe('TransformationActionService', () => {
     );
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -510,9 +499,8 @@ describe('TransformationActionService', () => {
     );
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });

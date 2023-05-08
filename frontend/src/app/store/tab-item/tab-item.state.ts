@@ -8,9 +8,8 @@ export interface ITabItemState extends EntityState<TabItem> {
   activeTabItemId: string | null;
 }
 
-export const initialTabItemState: ITabItemState = tabItemEntityAdapter.getInitialState(
-  {
+export const initialTabItemState: ITabItemState =
+  tabItemEntityAdapter.getInitialState({
     ids: [],
     activeTabItemId: null
-  }
-);
+  });

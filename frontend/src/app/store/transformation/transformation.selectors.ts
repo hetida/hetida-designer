@@ -8,14 +8,11 @@ import {
   TransformationState
 } from './transformation.state';
 
-const {
-  selectAll,
-  selectEntities
-} = transformationEntityAdapter.getSelectors();
+const { selectAll, selectEntities } =
+  transformationEntityAdapter.getSelectors();
 
-export const selectTransformationState = createFeatureSelector<TransformationState>(
-  'transformations'
-);
+export const selectTransformationState =
+  createFeatureSelector<TransformationState>('transformations');
 
 export const selectAllTransformations = createSelector(
   selectTransformationState,

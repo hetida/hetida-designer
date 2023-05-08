@@ -42,7 +42,7 @@ export class TransformationHttpService {
 
   public deleteTransformation(id: string): Observable<void> {
     const url = `${this.apiEndpoint}/transformations/${id}`;
-    // tslint:disable-next-line:invalid-void
+    // eslint-disable-next-line
     return this.httpClient.delete<void>(url);
   }
 
