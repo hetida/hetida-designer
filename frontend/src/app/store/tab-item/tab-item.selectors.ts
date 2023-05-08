@@ -27,20 +27,18 @@ export const selectOrderedTabItemsWithTransformation = createSelector(
     orderedTabItems: TabItem[],
     transformations: Record<string, Transformation>
   ) =>
-    orderedTabItems.map(
-      (tabItem): TabItemWithTransformation => {
-        const transformation = transformations[tabItem.transformationId];
-        if (!transformation) {
-          throw Error(
-            'Inconsistent state: Found a tab item whose transformation is not in store.'
-          );
-        }
-        return {
-          ...tabItem,
-          transformation
-        };
+    orderedTabItems.map((tabItem): TabItemWithTransformation => {
+      const transformation = transformations[tabItem.transformationId];
+      if (!transformation) {
+        throw Error(
+          'Inconsistent state: Found a tab item whose transformation is not in store.'
+        );
       }
-    )
+      return {
+        ...tabItem,
+        transformation
+      };
+    })
 );
 
 const selectActiveTabItemId = createSelector(

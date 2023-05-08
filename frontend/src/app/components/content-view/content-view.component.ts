@@ -62,7 +62,8 @@ export class ContentViewComponent implements OnInit, OnDestroy {
   // ngrx State
   _tabItems: TabItemWithTransformation[] = [];
 
-  isComponentTransformation: typeof isComponentTransformation = isComponentTransformation;
+  isComponentTransformation: typeof isComponentTransformation =
+    isComponentTransformation;
 
   constructor(
     private readonly store: Store<IAppState>,

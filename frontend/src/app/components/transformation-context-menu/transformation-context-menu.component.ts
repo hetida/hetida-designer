@@ -24,7 +24,8 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransformationContextMenuComponent
-  implements AfterViewInit, OnDestroy {
+  implements AfterViewInit, OnDestroy
+{
   @ViewChild(MatMenuTrigger) readonly _trigger: MatMenuTrigger;
   @ViewChild(MatMenu) readonly _menu: MatMenu;
   @ViewChild('invisibleTrigger') _elementRef: ElementRef;
@@ -36,9 +37,8 @@ export class TransformationContextMenuComponent
   @Input()
   set transformation(transformation: Transformation) {
     // show or hide execute button
-    this._isIncomplete = this.transformationActionService.isIncomplete(
-      transformation
-    );
+    this._isIncomplete =
+      this.transformationActionService.isIncomplete(transformation);
     this._isNotPublished = transformation.state === RevisionState.DRAFT;
     // show or hide configureIO button in workflows
     this._isWorkflowWithoutIo =
