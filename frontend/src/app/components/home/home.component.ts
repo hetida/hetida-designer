@@ -47,6 +47,7 @@ export class HomeComponent implements OnInit {
       this.localStorageService.notifier,
       this.transformationStore.select(selectHashedTransformationLookupById)
     ]).pipe(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       map(([_, transformationsLookup]) => {
         const lastOpenedTransformationIds: string[] =
           this.localStorageService.getItem('last-opened') ?? [];

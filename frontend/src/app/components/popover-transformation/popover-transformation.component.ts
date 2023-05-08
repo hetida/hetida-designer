@@ -152,9 +152,8 @@ export class PopoverTransformationComponent implements OnInit {
   }
 
   private _createPreview(transformation: Transformation): void {
-    this.componentPreview = this.flowchartConverter.convertComponentToFlowchart(
-      transformation
-    );
+    this.componentPreview =
+      this.flowchartConverter.convertComponentToFlowchart(transformation);
   }
 
   _dragComponent(event: DragEvent): void {

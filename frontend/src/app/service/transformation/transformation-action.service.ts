@@ -379,7 +379,8 @@ export class TransformationActionService {
         title: 'Create new workflow',
         actionOk: 'Create Workflow',
         actionCancel: 'Cancel',
-        transformation: this.transformationService.getDefaultWorkflowTransformation(),
+        transformation:
+          this.transformationService.getDefaultWorkflowTransformation(),
         disabledState: {
           name: false,
           category: false,
@@ -408,7 +409,8 @@ export class TransformationActionService {
         title: 'Create new component',
         actionOk: 'Create Component',
         actionCancel: 'Cancel',
-        transformation: this.transformationService.getDefaultComponentTransformation(),
+        transformation:
+          this.transformationService.getDefaultComponentTransformation(),
         disabledState: {
           name: false,
           category: false,
@@ -666,24 +668,26 @@ export class TransformationActionService {
           .pipe(first())
           .subscribe(result => {
             if (result) {
-              const inputIoConnectors: IOConnector[] = this._updateIoItemPositions(
-                result.inputs,
-                true,
-                workflowTransformation
-              );
-              const outputIoConnectors: IOConnector[] = this._updateIoItemPositions(
-                result.outputs,
-                false,
-                workflowTransformation
-              );
+              const inputIoConnectors: IOConnector[] =
+                this._updateIoItemPositions(
+                  result.inputs,
+                  true,
+                  workflowTransformation
+                );
+              const outputIoConnectors: IOConnector[] =
+                this._updateIoItemPositions(
+                  result.outputs,
+                  false,
+                  workflowTransformation
+                );
 
               const ioConnectorIds = [...result.inputs, ...result.outputs].map(
                 ioConnector =>
                   `${ioConnector.operator_id}_${ioConnector.connector_id}`
               );
 
-              const innerLinks: Link[] = workflowTransformation.content.links.filter(
-                link => {
+              const innerLinks: Link[] =
+                workflowTransformation.content.links.filter(link => {
                   let isOuterLink: boolean;
                   if (
                     Utils.isNullOrUndefined(link.start.operator) ||
@@ -698,8 +702,7 @@ export class TransformationActionService {
                       ioConnectorIds.includes(toIoConnectorId);
                   }
                   return !isOuterLink;
-                }
-              );
+                });
 
               const links: Link[] = [
                 ...innerLinks,

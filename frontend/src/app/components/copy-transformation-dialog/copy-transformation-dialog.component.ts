@@ -77,6 +77,7 @@ export class CopyTransformationDialogComponent implements OnInit {
 
   public isAllDataPropertiesDisabled(): boolean {
     return Object.entries(this.infoForm.controls).every(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ([_, control]) => control.disabled
     );
   }
@@ -158,10 +159,13 @@ export class CopyTransformationDialogComponent implements OnInit {
           }
 
           const withDisabledAttributes = this.infoForm.getRawValue();
-          this.data.transformation.category = withDisabledAttributes.category.trim();
-          this.data.transformation.description = withDisabledAttributes.description.trim();
+          this.data.transformation.category =
+            withDisabledAttributes.category.trim();
+          this.data.transformation.description =
+            withDisabledAttributes.description.trim();
           this.data.transformation.name = withDisabledAttributes.name.trim();
-          this.data.transformation.version_tag = withDisabledAttributes.tag.trim();
+          this.data.transformation.version_tag =
+            withDisabledAttributes.tag.trim();
         });
 
         this.filteredCategories$ = combineLatest([
