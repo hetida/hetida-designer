@@ -1171,6 +1171,7 @@ async def transformation_dashboard(
         + f"""
             <select name="override" id="override-timerange-select"
                     onchange="on_override_select_change(this)"
+                    title="Override input timeranges"
                     style="width:100%"
                     >
                 <option value="absolute" {"selected" if fromTimestamp is not None else ""}>Absolute</option>                
@@ -1203,7 +1204,7 @@ async def transformation_dashboard(
                 var param_dict = {};
                 override_selector = document.getElementById("override-timerange-select");
                 if (override_selector.value == "none") {
-                    return param_dict;
+                    param_dict = {};
                 } else if (override_selector.value == "absolute") {
                     selected_dates = flatpicker_abs_range.selectedDates;
                     param_dict = {
@@ -1318,6 +1319,7 @@ async def transformation_dashboard(
                 """
         + f"""
             <select name="autoreload" id="autoreload-select"
+                    title="Autoreload"
                     onchange="on_autoreload_select_change(this)"
                     style="width:5em"
                     >
