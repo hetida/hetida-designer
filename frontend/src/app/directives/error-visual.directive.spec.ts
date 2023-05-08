@@ -35,9 +35,8 @@ describe('ErrorVisualDirective', () => {
       name: new FormControl('valid name', Validators.required)
     });
     fixture.detectChanges();
-    const errorElement: HTMLElement = fixture.debugElement.nativeElement.querySelector(
-      '#error'
-    );
+    const errorElement: HTMLElement =
+      fixture.debugElement.nativeElement.querySelector('#error');
     expect(errorElement.style.visibility).toBe('');
   });
 
@@ -46,9 +45,8 @@ describe('ErrorVisualDirective', () => {
       name: new FormControl('', Validators.required)
     });
     fixture.detectChanges();
-    const errorElement: HTMLElement = fixture.debugElement.nativeElement.querySelector(
-      '#error'
-    );
+    const errorElement: HTMLElement =
+      fixture.debugElement.nativeElement.querySelector('#error');
     expect(errorElement.style.visibility).toBe('visible');
   });
 
@@ -57,9 +55,8 @@ describe('ErrorVisualDirective', () => {
       name: new FormControl('', Validators.required)
     });
     fixture.detectChanges();
-    const errorElement: HTMLElement = fixture.debugElement.nativeElement.querySelector(
-      '#error'
-    );
+    const errorElement: HTMLElement =
+      fixture.debugElement.nativeElement.querySelector('#error');
     expect(errorElement.innerText).toBe('Cannot be empty');
   });
 });

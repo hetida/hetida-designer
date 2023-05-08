@@ -249,9 +249,8 @@ describe('Transformation selectors', () => {
 
     // Act
     const transformations = selectAllTransformations.projector(mockEntityState);
-    const hashedTransformationLookupById = selectHashedTransformationLookupById.projector(
-      transformations
-    );
+    const hashedTransformationLookupById =
+      selectHashedTransformationLookupById.projector(transformations);
 
     // Assert
     expect(hashedTransformationLookupById.mockId3.id).toBe(ids[0]);
@@ -264,9 +263,8 @@ describe('Transformation selectors', () => {
     const id = 'mockId3';
 
     // Act
-    const transformationById = selectTransformationById(id).projector(
-      mockEntityState
-    );
+    const transformationById =
+      selectTransformationById(id).projector(mockEntityState);
 
     // Assert
     expect(transformationById.id).toBe(id);

@@ -74,12 +74,14 @@ export class ComponentIODialogComponent implements OnInit {
   }
 
   private _setupFormControl(): void {
-    const inputIOControls = this.componentTransformation.io_interface.inputs.map(
-      this._createIOItemControl.bind(this)
-    );
-    const outputIOControls = this.componentTransformation.io_interface.outputs.map(
-      this._createIOItemControl.bind(this)
-    );
+    const inputIOControls =
+      this.componentTransformation.io_interface.inputs.map(
+        this._createIOItemControl.bind(this)
+      );
+    const outputIOControls =
+      this.componentTransformation.io_interface.outputs.map(
+        this._createIOItemControl.bind(this)
+      );
 
     this._ioItemForm = this._formBuilder.group({
       inputs: this._formBuilder.array(inputIOControls, {
@@ -101,17 +103,19 @@ export class ComponentIODialogComponent implements OnInit {
 
   _removeInput(index: number, ioId: string) {
     this._ioItemInputsFormArray.removeAt(index);
-    this.componentTransformation.io_interface.inputs = this.componentTransformation.io_interface.inputs.filter(
-      ioItem => ioItem.id !== ioId
-    );
+    this.componentTransformation.io_interface.inputs =
+      this.componentTransformation.io_interface.inputs.filter(
+        ioItem => ioItem.id !== ioId
+      );
     this._createPreview();
   }
 
   _removeOutput(index: number, ioId: string) {
     this._ioItemOutputsFormArray.removeAt(index);
-    this.componentTransformation.io_interface.outputs = this.componentTransformation.io_interface.outputs.filter(
-      ioItem => ioItem.id !== ioId
-    );
+    this.componentTransformation.io_interface.outputs =
+      this.componentTransformation.io_interface.outputs.filter(
+        ioItem => ioItem.id !== ioId
+      );
     this._createPreview();
   }
 

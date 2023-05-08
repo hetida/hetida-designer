@@ -51,6 +51,7 @@ import { HomeComponent } from './components/home/home.component';
 import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
+// eslint-disable-next-line max-len
 import { OperatorChangeRevisionDialogComponent } from './components/operator-change-revision-dialog/operator-change-revision-dialog.component';
 import { PopoverTransformationComponent } from './components/popover-transformation/popover-transformation.component';
 import { ProtocolViewerComponent } from './components/protocol-viewer/protocol-viewer.component';
@@ -134,7 +135,7 @@ const httpLoaderFactory = (configService: ConfigService) => {
     MaterialModule,
     HdWiringModule,
     MonacoEditorModule.forRoot({
-      baseUrl: `./assets`
+      baseUrl: './assets'
     }), // use forRoot() in main app module only.
     StoreModule.forRoot(appReducers, {
       runtimeChecks: {
