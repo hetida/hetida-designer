@@ -5,6 +5,8 @@ from typing import Any
 
 import h5py
 from botocore.exceptions import ClientError
+from mypy_boto3_s3 import S3Client
+from mypy_boto3_s3.type_defs import PutObjectOutputTypeDef
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
@@ -79,7 +81,28 @@ def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
     return sink, structure_bucket, object_key
 
 
+def put_object(
+    s3_client: S3Client, bucket_name: str, object_key_string: str, file_object: Any
+) -> PutObjectOutputTypeDef:
+    checksum_algorithm = get_blob_adapter_config().checksum_algorithm
+    if checksum_algorithm == "":
+        return s3_client.put_object(
+            Bucket=bucket_name,
+            Key=object_key_string,
+            Body=file_object,
+            ContentType="application/octet-stream",
+        )
+    return s3_client.put_object(
+        Bucket=bucket_name,
+        Key=object_key_string,
+        Body=file_object,
+        ChecksumAlgorithm=checksum_algorithm,
+        ContentType="application/octet-stream",
+    )
+
+
 async def write_custom_objects_to_storage(
+    s3_client: S3Client,
     custom_objects: dict[str, Any],
     structure_bucket: StructureBucket,
     object_key: ObjectKey,
@@ -97,24 +120,13 @@ async def write_custom_objects_to_storage(
             custom_objects_object_key,
         )
 
-        s3_client = await get_s3_client()
-        checksum_algorithm = get_blob_adapter_config().checksum_algorithm
         try:
-            if checksum_algorithm == "":
-                s3_client.put_object(
-                    Bucket=structure_bucket.name,
-                    Key=custom_objects_object_key.string,
-                    Body=file_object,
-                    ContentType="application/octet-stream",
-                )
-            else:
-                s3_client.put_object(
-                    Bucket=structure_bucket.name,
-                    Key=custom_objects_object_key.string,
-                    Body=file_object,
-                    ChecksumAlgorithm=checksum_algorithm,
-                    ContentType="application/octet-stream",
-                )
+            put_object(
+                s3_client=s3_client,
+                bucket_name=structure_bucket.name,
+                object_key_string=custom_objects_object_key.string,
+                file_object=file_object,
+            )
         except ClientError as client_error:
             error_code = client_error.response["Error"]["Code"]
             msg = (
@@ -208,23 +220,14 @@ async def write_blob_to_storage(
             logger.info(
                 "Dumped data of size %i into BLOB", file_object.getbuffer().nbytes
             )
-            check_sum_algorithm = get_blob_adapter_config().checksum_algorithm
+
             try:
-                if check_sum_algorithm == "":
-                    s3_client.put_object(
-                        Bucket=structure_bucket.name,
-                        Key=object_key.string,
-                        Body=file_object,
-                        ContentType="application/octet-stream",
-                    )
-                else:
-                    s3_client.put_object(
-                        Bucket=structure_bucket.name,
-                        Key=object_key.string,
-                        Body=file_object,
-                        ChecksumAlgorithm=check_sum_algorithm,
-                        ContentType="application/octet-stream",
-                    )
+                put_object(
+                    s3_client=s3_client,
+                    bucket_name=structure_bucket.name,
+                    object_key_string=object_key.string,
+                    file_object=file_object,
+                )
             except ClientError as error:
                 error_code = error.response["Error"]["Code"]
                 msg = (
@@ -235,6 +238,7 @@ async def write_blob_to_storage(
                 raise AdapterConnectionError(msg) from error
         if is_keras_model_with_custom_objects:
             await write_custom_objects_to_storage(
+                s3_client=s3_client,
                 custom_objects=data.custom_objects,
                 structure_bucket=structure_bucket,
                 object_key=object_key.to_custom_objects_object_key(),

@@ -4,6 +4,8 @@ from io import BytesIO
 from typing import Any
 
 import h5py
+from mypy_boto3_s3 import S3Client
+from mypy_boto3_s3.type_defs import GetObjectOutputTypeDef
 
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
@@ -25,6 +27,17 @@ from hetdesrun.adapters.exceptions import (
 from hetdesrun.models.data_selection import FilteredSource
 
 logger = logging.getLogger(__name__)
+
+
+def get_object(
+    s3_client: S3Client, bucket_name: str, object_key_string: str
+) -> GetObjectOutputTypeDef:
+    if get_blob_adapter_config().checksum_algorithm == "":
+        return s3_client.get_object(Bucket=bucket_name, Key=object_key_string)
+
+    return s3_client.get_object(
+        Bucket=bucket_name, Key=object_key_string, ChecksumMode="ENABLED"
+    )
 
 
 async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
@@ -65,12 +78,11 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     ensure_bucket_exists(s3_client=s3_client, bucket_name=bucket.name)
 
     try:
-        if get_blob_adapter_config().checksum_algorithm == "":
-            response = s3_client.get_object(Bucket=bucket.name, Key=object_key_string)
-        else:
-            response = s3_client.get_object(
-                Bucket=bucket.name, Key=object_key_string, ChecksumMode="ENABLED"
-            )
+        response = get_object(
+            s3_client=s3_client,
+            bucket_name=bucket.name,
+            object_key_string=object_key.string,
+        )
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
             f"The bucket '{bucket.name}' contains no object "
@@ -93,16 +105,11 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             custom_objects: dict[str, Any] | None = None
             custom_objects_object_key = object_key.to_custom_objects_object_key()
             try:
-                if get_blob_adapter_config().checksum_algorithm == "":
-                    custom_objects_response = s3_client.get_object(
-                        Bucket=bucket.name, Key=custom_objects_object_key.string
-                    )
-                else:
-                    custom_objects_response = s3_client.get_object(
-                        Bucket=bucket.name,
-                        Key=custom_objects_object_key.string,
-                        ChecksumMode="ENABLED",
-                    )
+                custom_objects_response = get_object(
+                    s3_client=s3_client,
+                    bucket_name=bucket.name,
+                    object_key_string=custom_objects_object_key.string,
+                )
             except s3_client.exceptions.NoSuchKey:
                 pass
             else:
