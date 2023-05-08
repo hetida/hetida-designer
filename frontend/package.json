@@ -85,7 +85,6 @@
     "@types/uuid": "^3.4.10",
     "@typescript-eslint/eslint-plugin": "5.27.1",
     "@typescript-eslint/parser": "5.27.1",
-    "codelyzer": "^6.0.2",
     "eslint": "^8.17.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
