@@ -778,10 +778,10 @@ async def multitsframe(
     upper_threshold: float = Query(None, example=107.9),
 ) -> StreamingResponse | HTTPException:
     dt_range = pd.date_range(
-        start=from_timestamp, end=to_timestamp, freq="1h", tz=datetime.timezone.utc
+        start=from_timestamp, end=to_timestamp, freq="H",tz=datetime.timezone.utc
     )
     mtsf = None
-    if mtsf_id.endswith("plantA.temperatures"):
+    if mtsf_id.endswith("temperatures"):
         offset = 100.0 if "plantA" in mtsf_id else 30.0
         factor = 10.0 if "plantA" in mtsf_id else 5.0
         mtsf_records = []
@@ -797,7 +797,7 @@ async def multitsframe(
                 {"timestamp": dt_range[idx], "metric": metric, "value": values[idx]}
                 for idx in range(len(dt_range))
             ]
-        mtsf_records.extend(ts_records)
+            mtsf_records.extend(ts_records)
         mtsf = pd.DataFrame.from_records(mtsf_records)
         if lower_threshold is not None:
             mtsf = mtsf[mtsf["value"] > lower_threshold]
