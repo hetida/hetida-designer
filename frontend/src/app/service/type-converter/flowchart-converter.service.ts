@@ -18,6 +18,7 @@ import { Operator } from 'src/app/model/operator';
 import { Constant } from 'src/app/model/constant';
 import { VertexIds } from 'src/app/components/workflow-editor/workflow-editor.component';
 import { Utils } from 'src/app/utils/utils';
+import { IOTypeOption } from '../../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
 
 @Injectable({
   providedIn: 'root'
@@ -36,6 +37,8 @@ export class FlowchartConverterService {
       transformation_id: transformation.id,
       inputs: transformation.io_interface.inputs.map(input => ({
         ...input,
+        exposed: input.exposed,
+        is_default_value: input.type === IOTypeOption.OPTIONAL,
         position: null
       })),
       outputs: transformation.io_interface.outputs.map(output => ({
@@ -173,7 +176,8 @@ export class FlowchartConverterService {
         pos_x: io.position.x,
         pos_y: io.position.y,
         constant: false,
-        value: ''
+        value: '',
+        is_default_value: io.type === IOTypeOption.OPTIONAL
       });
     }
 
@@ -348,6 +352,7 @@ export class FlowchartConverterService {
     };
 
     for (const io of operator.inputs) {
+      const isDefaultValue = io.type === IOTypeOption.OPTIONAL;
       component.inputs.push({
         uuid: `${uuid}_${io.id}`,
         data_type: io.data_type,
@@ -356,7 +361,9 @@ export class FlowchartConverterService {
         pos_x: null,
         pos_y: null,
         constant: false,
-        value: ''
+        exposed: io.exposed,
+        is_default_value: isDefaultValue,
+        value: isDefaultValue && io.value ? io.value : ''
       });
     }
     for (const io of operator.outputs) {

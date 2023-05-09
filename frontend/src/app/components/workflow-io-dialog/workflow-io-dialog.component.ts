@@ -223,7 +223,10 @@ export class WorkflowIODialogComponent {
       id: data.id,
       constant: constantControl,
       name: nameControl,
-      typeOption: data.typeOption,
+      typeOption: {
+        value: data.typeOption,
+        disabled: !this.data.editMode
+      },
       value: valueControl
     });
 

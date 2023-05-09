@@ -13,6 +13,7 @@ import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
 import { TransformationActionService } from './transformation-action.service';
 import { TransformationService } from './transformation.service';
+import { IOTypeOption } from '../../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
 
 class TransformationActionServiceExtended extends TransformationActionService {
   public copyTransformation(
@@ -53,14 +54,16 @@ describe('TransformationActionService', () => {
           {
             id: 'mockInputId0',
             name: 'mockInput',
-            data_type: IOType.ANY
+            data_type: IOType.ANY,
+            type: IOTypeOption.OPTIONAL
           }
         ],
         outputs: [
           {
             id: 'mockOutputId0',
             name: 'mockOutput',
-            data_type: IOType.ANY
+            data_type: IOType.ANY,
+            type: IOTypeOption.OPTIONAL
           }
         ]
       },
@@ -212,7 +215,8 @@ describe('TransformationActionService', () => {
           position: {
             x: 190,
             y: 375
-          }
+          },
+          type: IOTypeOption.OPTIONAL
         }
       ],
       outputs: [
@@ -227,7 +231,8 @@ describe('TransformationActionService', () => {
           position: {
             x: 890,
             y: 375
-          }
+          },
+          type: IOTypeOption.OPTIONAL
         }
       ],
       constants: [
@@ -242,7 +247,8 @@ describe('TransformationActionService', () => {
             x: 0,
             y: 0
           },
-          value: '1'
+          value: '1',
+          type: IOTypeOption.OPTIONAL
         }
       ]
     };

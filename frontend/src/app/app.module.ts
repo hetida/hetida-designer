@@ -67,6 +67,7 @@ import { LocalStorageService } from './service/local-storage/local-storage.servi
 import { NotificationService } from './service/notifications/notification.service';
 import { ThemeService } from './service/theme/theme.service';
 import { appReducers } from './store/app.reducers';
+import { OptionalFieldsDialogComponent } from './components/optional-fields-dialog/optional-fields-dialog.component';
 
 const httpLoaderFactory = (configService: ConfigService) => {
   // we need to first load the hetida designer config upon app initialization, then use its values to initialize the auth module
@@ -119,7 +120,8 @@ const httpLoaderFactory = (configService: ConfigService) => {
     CopyTransformationDialogComponent,
     RenameOperatorDialogComponent,
     ErrorVisualDirective,
-    TransformationContextMenuComponent
+    TransformationContextMenuComponent,
+    OptionalFieldsDialogComponent
   ],
 
   imports: [
