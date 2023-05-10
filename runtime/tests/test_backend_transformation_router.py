@@ -79,6 +79,7 @@ tr_json_component_1 = {
                 "adapter_id": "direct_provisioning",
             },
         ],
+        "dashboard_positionings": [],
     },
 }
 tr_json_component_1_new_revision = {
@@ -122,6 +123,7 @@ tr_json_component_1_new_revision = {
                 "adapter_id": "direct_provisioning",
             },
         ],
+        "dashboard_positionings": [],
     },
 }
 tr_json_component_2 = {
@@ -143,6 +145,7 @@ tr_json_component_2 = {
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
+        "dashboard_positionings": [],
     },
 }
 tr_json_component_2_update = {
@@ -164,6 +167,7 @@ tr_json_component_2_update = {
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
+        "dashboard_positionings": [],
     },
 }
 tr_json_component_2_deprecate = {
@@ -186,6 +190,7 @@ tr_json_component_2_deprecate = {
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
+        "dashboard_positionings": [],
     },
 }
 
@@ -216,7 +221,11 @@ tr_json_component_3 = {
             }
         ],
     },
-    "test_wiring": {"input_wirings": [], "output_wirings": []},
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+        "dashboard_positionings": [],
+    },
 }
 
 tr_json_component_3_publish = {
@@ -247,7 +256,11 @@ tr_json_component_3_publish = {
             }
         ],
     },
-    "test_wiring": {"input_wirings": [], "output_wirings": []},
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": [],
+        "dashboard_positionings": [],
+    },
 }
 
 tr_json_workflow_1 = {
@@ -274,6 +287,7 @@ tr_json_workflow_1 = {
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
+        "dashboard_positionings": [],
     },
 }
 
@@ -301,6 +315,7 @@ tr_json_workflow_2_no_operator = {
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
+        "dashboard_positionings": [],
     },
 }
 tr_json_workflow_2_added_operator = {
@@ -354,6 +369,7 @@ tr_json_workflow_2_added_operator = {
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
+        "dashboard_positionings": [],
     },
 }
 tr_json_workflow_2_added_io_for_operator = {
@@ -437,6 +453,7 @@ tr_json_workflow_2_added_io_for_operator = {
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
+        "dashboard_positionings": [],
     },
 }
 tr_json_workflow_2_with_named_io_for_operator = {
@@ -578,6 +595,7 @@ tr_json_workflow_2_with_named_io_for_operator = {
                 "adapter_id": "direct_provisioning",
             },
         ],
+        "dashboard_positionings": [],
     },
 }
 tr_json_workflow_2_update = deepcopy(tr_json_workflow_2_with_named_io_for_operator)

@@ -123,7 +123,7 @@ class GridstackItemPositioning(BaseModel):
     y: int | None = Field(None, ge=0)
     w: int | None = Field(None, ge=0)
     h: int | None = Field(None, ge=0)
-    id: str = Field(
+    id: str = Field(  # noqa: A003
         ...,
         description=(
             "gs-id of the .grid-stack-item which is extracted as id by "

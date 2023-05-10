@@ -3,7 +3,6 @@
 import json
 import logging
 from posixpath import join as posix_urljoin
-from typing import Optional
 from uuid import UUID, uuid4
 
 import httpx

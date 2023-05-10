@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
-from hetdesrun.models.wiring import GridstackItemPositioning
+from hetdesrun.models.wiring import GridstackItemPositioning, WorkflowWiring
 from hetdesrun.persistence.models.transformation import TransformationRevision
 
 
@@ -85,25 +85,16 @@ def plotlyjson_to_html_div(
     </div>"""
 
 
-def ensure_working_plotly_json(plotly_json):
+def ensure_working_plotly_json(plotly_json: dict[str, Any]) -> dict[str, Any]:
     plotly_json["layout"]["width"] = "100%"
     plotly_json["layout"]["height"] = "100%"
 
     return plotly_json
 
 
-def get_override_timestamps(
-    fromTimestamp: datetime.datetime | None,
-    toTimestamp: datetime.datetime | None,
-    relNow: str | None,
-) -> tuple[str, str]:
-    if fromTimestamp is None and toTimestamp is None and relNow is None:
-        raise ValueError("No override specified.")
-
-
 def override_timestamps_in_wiring(
-    mutable_wiring, from_ts: datetime.datetime, to_ts: datetime.datetime
-):
+    mutable_wiring: WorkflowWiring, from_ts: datetime.datetime, to_ts: datetime.datetime
+) -> WorkflowWiring:
     """Inplace-Override timestamps in giving wiring.
 
     from_ts and to_ts are expected to be explicitely UTC timezoned!
@@ -646,7 +637,8 @@ def generate_dashboard_html(
                 + '", "'
                 + calculated_to_timestamp.isoformat(timespec="milliseconds").split("+")[0] + "Z"
                 + '"],'
-     ) if calculated_from_timestamp is not None else ""}"""
+     ) if (calculated_from_timestamp is not None 
+           and calculated_to_timestamp is not None) else ""}"""
         + r"""
                 
                 onClose: function(selectedDates, dateStr, instance){

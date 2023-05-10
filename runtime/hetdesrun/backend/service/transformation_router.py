@@ -946,7 +946,8 @@ async def transformation_dashboard(
         )
 
     if (
-        fromTimestamp is not None  # also toTimestamp not None by last check
+        fromTimestamp is not None
+        and toTimestamp is not None
         and fromTimestamp > toTimestamp
     ):
         raise HTTPException(
@@ -988,7 +989,7 @@ async def transformation_dashboard(
     )
 
     # override timerange if requested:
-    if calculated_from_timestamp is not None:
+    if calculated_from_timestamp is not None and calculated_to_timestamp is not None:
         override_timestamps_in_wiring(
             wiring, calculated_from_timestamp, calculated_to_timestamp
         )
