@@ -3,11 +3,10 @@ import json
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Tuple
+from typing import Any
 from uuid import UUID, uuid4
 
 import httpx
-import pandas as pd
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -18,7 +17,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import HTMLResponse
-from pydantic import HttpUrl, ValidationError
+from pydantic import HttpUrl
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -29,6 +28,12 @@ from hetdesrun.backend.execution import (
     execute_transformation_revision,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.backend.service.dashboarding import (
+    OverrideMode,
+    calculate_timerange_timestamps,
+    generate_dashboard_html,
+    override_timestamps_in_wiring,
+)
 from hetdesrun.component.code import update_code
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
@@ -36,6 +41,7 @@ from hetdesrun.exportimport.importing import (
 )
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.run import PerformanceMeasuredStep
+from hetdesrun.models.wiring import GridstackItemPositioning
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -823,81 +829,6 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
     }
 
 
-PLOT_TITLE_BAR_HEIGHT = 30
-PLOT_AUTO_LAYOUT_VERTICAL_GAP = 10
-PLOT_DEFAULT_HEIGHT = 200
-PLOT_INNER_SIDE_PADDING = 5
-
-
-def dashboard_title(trafo: TransformationRevision) -> str:
-    return trafo.name + " " + trafo.version_tag + " (" + trafo.state + ")"
-
-
-def ensure_working_plotly_json(plotly_json):
-    # plotly_json["layout"]["autosize"] = False
-    plotly_json["layout"]["width"] = "100%"
-    plotly_json["layout"]["height"] = "100%"
-    # plotly_json["layout"]["useResizeHandler"] = True
-    try:
-        plotly_json["config"]
-    except KeyError:
-        plotly_json["config"] = {}
-    # plotly_json["config"]["responsive"] = True
-    return plotly_json
-
-
-from hetdesrun.models.wiring import GridstackItemPositioning
-
-
-def item_positioning_dict(
-    gridstack_item_positions: list[GridstackItemPositioning],
-) -> dict[str, GridstackItemPositioning]:
-    return {
-        item_positioning.id: item_positioning
-        for item_positioning in gridstack_item_positions
-    }
-
-
-def gs_div_attributes_from_item_positioning(
-    item_positioning: GridstackItemPositioning,
-) -> str:
-    return f"""
-
-    {' gs-x="' + str(item_positioning.x)+'"' if item_positioning.x is not None else ' '}
-    {' gs-y="' + str(item_positioning.y)+'"' if item_positioning.y is not None else ' '}
-    {' gs-w="' + str(item_positioning.w)+'"' if item_positioning.w is not None else ' '}
-    {' gs-h="' + str(item_positioning.h)+'"' if item_positioning.h is not None else ' '}
-
-    """
-
-
-def plotlyjson_to_html_div(
-    name: str,
-    plotly_json: Any,
-    item_positioning: GridstackItemPositioning,
-    index: int = 0,
-    header: str | None = None,
-) -> str:
-    plotly_json = ensure_working_plotly_json(plotly_json)
-
-    return f"""
-    <div class="grid-stack-item" input_name="{name}" id="gs-item-{name}" gs-id="{name}"
-            {gs_div_attributes_from_item_positioning(item_positioning)}
-            >
-        <div class="grid-stack-item-content" id="container-{name}" style="
-                padding-left:10px;padding-right:10px">
-             <div class="panel-heading" id="heading-{name}" style="user-select:none;height:20;
-                color:#888888;font-size:18px;font-family:sans-serif;text-align:center;">
-                    {name if header is None else header}
-            </div>
-            
-            <div id="plot-container-{name}", style:"margin=0;padding=0">
-                <div id="{name}" style="width:100%;height:100%;margin:0;padding:0"></div>
-            </div>
-        </div>
-    </div>"""
-
-
 @transformation_router.put(
     "/{id}/dashboard/positioning",
     summary="Update dashboard positions for a trafo revision",
@@ -950,56 +881,6 @@ async def update_transformation_dashboard_positioning(
     logger.debug(transformation_revision.json())
 
 
-RELATIVE_RANGE_DESCRIPTIONS = [
-    "5s",
-    "1min",
-    "5min",
-    "15min",
-    "1h",
-    "2h",
-    "3h",
-    "6h",
-    "12h",
-    "24h",
-    "7d",
-    "30d",
-    "365d",
-]
-
-# in seconds:
-AUTORELOAD_INTERVALS = [5, 15, 30, 60, 120, 300, 900, 3600]
-
-
-def get_override_timestamps(
-    fromTimestamp: datetime.datetime | None,
-    toTimestamp: datetime.datetime | None,
-    relNow: str | None,
-) -> Tuple[str, str]:
-    if fromTimestamp is None and toTimestamp is None and relNow is None:
-        raise ValueError("No override specified.")
-
-
-def override_timestamps_in_wiring(
-    mutable_wiring, from_ts: datetime.datetime, to_ts: datetime.datetime
-):
-    """Inplace-Override timestamps in giving wiring.
-
-    from_ts and to_ts are expected to be explicitely UTC timezoned!
-    """
-    for inp_wiring in mutable_wiring.input_wirings:
-        if inp_wiring.filters.get("timestampFrom", None) is not None:
-            # We excpect UTC!
-            inp_wiring.filters["timestampFrom"] = (
-                from_ts.isoformat(timespec="milliseconds").split("+")[0] + "Z"
-            )
-        if inp_wiring.filters.get("timestampTo", None) is not None:
-            # We expect UTC!
-            inp_wiring.filters["timestampTo"] = (
-                to_ts.isoformat(timespec="milliseconds").split("+")[0] + "Z"
-            )
-    return mutable_wiring
-
-
 @transformation_router.get(
     "/{id}/dashboard",
     summary="A dashboard generated from the transformation and its test wiring.",
@@ -1035,11 +916,29 @@ async def transformation_dashboard(
 ) -> str:
     """Dashboard fed by transformation revision plot outputs
 
+    WARNING: This is an experimental feature / prototype. It may not work as
+    expected. In particular authentication does not work at the moment.
+
     Generates a html page containing the result plots in movable and resizable
     rectangles, i.e. an elementary dashboard.
+
+    The dashboard uses this same endpoint to update itself when configuration is
+    changed or autoreload is active.
+
+    Note:
+    * The dashboard uses the stored test wiring of the transformation revision. In
+      particular after changing a trafo it must be executed at least once in order to
+      have a working test wiring as basis for the dashboard. Otherwise dashboarding will
+      fail to generate a working dashboard.
+    * Timeranges of the wiring can be overriden from the dashboard UI. For every other
+      aspect of the test wiring, the test wiring itself needs to be adapted by other means
+      (usually by executing the trafo from inside the designer UI)
+    * Positioning / Layout of the dashboard is automatically stored (autosave) as part of
+      the test wiring
+    * Timerange overrides / selections can be stored by copying the resulting URL.
     """
 
-    # Validate
+    # Validate query params
     if int(fromTimestamp is None) + int(toTimestamp is None) == 1:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -1060,6 +959,17 @@ async def transformation_dashboard(
             "Cannot both specify absolute and relative timerange overrides!",
         )
 
+    # Calculate override mode
+    override_mode: OverrideMode = (
+        OverrideMode.Absolute
+        if (fromTimestamp is not None)
+        else (
+            OverrideMode.RelativeNow if relNow is not None else OverrideMode.NoOverride
+        )
+    )
+
+    # obtain transformation revisions (including wiring)
+
     logger.info("get transformation revision %s", id)
 
     try:
@@ -1067,423 +977,41 @@ async def transformation_dashboard(
         logger.info("found transformation revision with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    logger.debug(transformation_revision.json())
 
-    item_positions = transformation_revision.test_wiring.dashboard_positionings
-
+    # obtain test wiring
     wiring = deepcopy(transformation_revision.test_wiring)
 
-    # override time ranges
-    calculated_from_timestamp = None
-    calculated_to_timestamp = None
+    # compute possible override time range setting
+    calculated_from_timestamp, calculated_to_timestamp = calculate_timerange_timestamps(
+        fromTimestamp, toTimestamp, relNow
+    )
 
-    if fromTimestamp is not None:
-        calculated_from_timestamp = fromTimestamp
-        calculated_to_timestamp = toTimestamp
-
-    if relNow is not None:
-        requested_timedelta_to_now = pd.Timedelta(relNow).to_pytimedelta()
-
-        calculated_to_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
-        calculated_from_timestamp = calculated_to_timestamp - requested_timedelta_to_now
-
+    # override timerange if requested:
     if calculated_from_timestamp is not None:
         override_timestamps_in_wiring(
             wiring, calculated_from_timestamp, calculated_to_timestamp
         )
 
-    positioning_dict = item_positioning_dict(item_positions)
-
-    logger.debug(transformation_revision.json())
-
+    # construct execution payload
     exec_by_id: ExecByIdInput = ExecByIdInput(
         id=id,
         wiring=wiring,  # possibly edited wiring
         run_pure_plot_operators=True,
     )
 
+    # execute
     exec_resp: ExecutionResponseFrontendDto = (
         await handle_trafo_revision_execution_request(exec_by_id)
     )
 
-    plotly_outputs = {
-        name: exec_resp.output_results_by_output_name[name]
-        for name in exec_resp.output_results_by_output_name
-        if exec_resp.output_types_by_output_name[name] == "PLOTLYJSON"
-    }
-
-    # Plotly.Plots.resize(target.getElementsByTagName('div')[1].firstElementChild.firstElementChild)
-    dashboard_html = (
-        r"""
-    <!DOCTYPE html>
-    <html>
-
-    <script src="https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack-all.js" charset="utf-8"></script>
-    <!-- https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack-all.js -->
-    <link href=" https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack.min.css " rel="stylesheet">    
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.plot.ly/plotly-2.22.0.min.js" charset="utf-8"></script>
-
-    <!-- flatpickr -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
-
-
-    <head>
-    <style>
-    .grid-stack {
-        background: #eeeeee;
-        padding: 0;
-        margin: 0;
-    }
-
-    .panel-heading {
-        background: #f9f9f9;
-        border-top-left-radius: 4px;
-        border-top-right-radius: 4px;
-    }
-
-    .hd-dashboard-timerange-picker {
-        width: 100%;
-        box-sizing: border-box;
-        margin-left: 2px;
-        margin-right: 2px;
-        flex-grow: 1;
-    }
-
-    </style>   
-    </head>
-    <body>
-    <div style="display:flex">
-        <div style="width:30%"></div>
-        <div style="color:#444444;font-size:20px;font-family:sans-serif;text-align:center;width:40%">
-            """
-        + dashboard_title(transformation_revision)
-        + r"""
-        </div>
-        <div style="width:30%;display:flex;align-items:center">
-            <div style="float:left;width:6em">
-                <label for="override-timerange-select">Timerange</label>
-            </div>
-            <div style="float:left;display:inline-block;width:25%">
-            """
-        + f"""
-            <select name="override" id="override-timerange-select"
-                    onchange="on_override_select_change(this)"
-                    title="Override input timeranges"
-                    style="width:100%"
-                    >
-                <option value="absolute" {"selected" if fromTimestamp is not None else ""}>Absolute</option>                
-                <option value="none" {"selected" if (relNow is None and fromTimestamp is None) else ""}
-                    >wired timeranges</option>
-                """
-        + "\n".join(
-            (
-                f"""<option value="{rel_range_desc}"
-                    {"selected" if relNow==rel_range_desc else ""}
-                    >last {rel_range_desc}</option>"""
-                for rel_range_desc in RELATIVE_RANGE_DESCRIPTIONS
-            )
-        )
-        + r"""
-            </select>
-            </div>
-            <div id="picker-span" style="display:flex;align-items:center;width:calc(75% - 10em)" >
-                <div style="display:flex;align-items:center;width:100%">
-                    <input class="hd-dashboard-timerange-picker" id="datetimepicker-absolute" type="text" placeholder="Select range...">
-                    <i class="fa-solid fa-triangle-exclamation" id="datetime-picker-warning"
-                        title="Uncomplete daterange selected."
-                        style="color:#880000;display:none;heigt:100%"></i>                
-                </div>
-            </div>
-
-        <script>
-
-            function url_params_from_state() {
-                var param_dict = {};
-                override_selector = document.getElementById("override-timerange-select");
-                if (override_selector.value == "none") {
-                    param_dict = {};
-                } else if (override_selector.value == "absolute") {
-                    selected_dates = flatpicker_abs_range.selectedDates;
-                    param_dict = {
-                        fromTimestamp: selected_dates[0].toISOString(),
-                        toTimestamp: selected_dates[1].toISOString()
-                    }
-                } else {
-                    param_dict = {
-                        relNow: override_selector.value
-                    }
-                }
-
-                autoreload_selector = document.getElementById("autoreload-select");
-
-                if (autoreload_selector.value != "none") {
-                    param_dict["autoreload"] = autoreload_selector.value;
-                }
-
-                return param_dict
-            };
-
-            function update_dashboard() {
-                url_param_dict = url_params_from_state();
-                
-                const url_param_data = new URLSearchParams(url_param_dict);
-                
-                window.location.replace('dashboard' + '?' + url_param_data.toString() );
-
-            };
-
-            function on_override_select_change(overrideSelect){
-                console.log(overrideSelect.value)
-
-                if (overrideSelect.value == "absolute") {
-                    flatpicker_abs_range.set("clickOpens", true);
-                    
-                    decide_warning_absolute_range_incomplete(update_complete_dashboard=true)
-                    return;
-                } else {
-                    flatpicker_abs_range.set("clickOpens", false);
-                }
-
-                if (overrideSelect.value == "none") {
-                    // simply use original wiring
-                    update_dashboard()
-                } else {
-                    // neither "absolute" nor "none", i.e. some of the timeranges relative
-                    // to "now"
-                    update_dashboard()
-                }
-
-            };
-
-            function decide_warning_absolute_range_incomplete(update_complete_dashboard = false) {
-                selectedDates = flatpicker_abs_range.selectedDates;
-
-                if (selectedDates.length == 1) {
-                    console.log("only one datetime!")
-                    document.getElementById("datetime-picker-warning").style.display = "inline-block";
-
-                
-                } else if (selectedDates.length == 2) {
-                    console.log("two datetimes. okay for updating");
-                    document.getElementById("datetime-picker-warning").style.display = "none";
-                    if (update_complete_dashboard) {
-                        update_dashboard();
-                    }
-
-                } else {
-                    console.log("no datetime or something unexpected")
-                    document.getElementById("datetime-picker-warning").style.display = "inline-block";
-                }                
-            };
-
-            const flatpicker_abs_range = flatpickr("#datetimepicker-absolute", {
-                enableTime: true,  // enabling this leads to incomplete ranges being possible :-(
-                mode: 'range',
-                dateFormat: 'Z',
-                time_24hr: true,
-                altInput: true,
-                altFormat: 'Y-m-d h:i',
-                clickOpens: (document.getElementById("override-timerange-select").value == "absolute"),
-                """
-        + f"""{ ('defaultDate: ["'
-                + calculated_from_timestamp.isoformat(timespec="milliseconds").split("+")[0]+ "Z"
-                + '", "'
-                + calculated_to_timestamp.isoformat(timespec="milliseconds").split("+")[0] + "Z"
-                + '"],'
-     ) if calculated_from_timestamp is not None else ""}"""
-        + r"""
-                
-                onClose: function(selectedDates, dateStr, instance){
-                    // ...
-                    console.log(selectedDates)
-                    console.log(dateStr)
-
-                    decide_warning_absolute_range_incomplete(update_complete_dashboard=true);
-
-                }
-            });
-            
-            // for access of the created input (altInput) hiding the original input
-            const created_input = flatpicker_abs_range.input.parentElement.lastElementChild;
-
-            
-            
-            const datetime_picker_absolute = document.getElementById("datetimepicker-absolute")
-            
-            
-        </script>
-            <div id="buttons-right" style="display:inline-block;width:9em;float:right" >
-                """
-        + f"""
-            <select name="autoreload" id="autoreload-select"
-                    title="Autoreload"
-                    onchange="on_autoreload_select_change(this)"
-                    style="width:5em"
-                    >
-                <option value="none" {"selected" if (autoreload is None) else ""}
-                    >no</option>
-                """
-        + "\n".join(
-            (
-                f"""<option value="{str(autoreload_interval_length)}"
-                    {"selected" if autoreload==autoreload_interval_length else ""}
-                    >{str(autoreload_interval_length) + "s"}</option>"""
-                for autoreload_interval_length in AUTORELOAD_INTERVALS
-            )
-        )
-        + r"""
-            </select>
-
-                <button class="btn" title="View/Hide dashboard configuration" onclick="toggle_config_visibility();" style="float:right;margin-left:2px;margin-right:2px">
-                    <i class="fa-solid fa-chevron-down" id="config-button-image"></i>
-                </button>        
-                <button class="btn" title="Reload" onclick="update_dashboard();" style="float:right;margin-left:2px;margin-right:2px">
-                    <i class="fa-solid fa-arrow-rotate-right"></i>
-                </button>
-            </div>
-        </div>
-
-    </div>
-    <div id="config-panel" style="display:none">config</div>
-
-    <div class="grid-stack">
-    """
-        + "\n".join(
-            (
-                plotlyjson_to_html_div(
-                    name,
-                    plotly_json,
-                    positioning_dict.get(
-                        name,
-                        GridstackItemPositioning(
-                            id=name, x=(ind % 2) * 6, y=(ind // 2) * 2, w=6, h=2
-                        ),
-                    ),
-                    index=ind,
-                )
-                for ind, (name, plotly_json) in enumerate(plotly_outputs.items())
-            )
-        )
-        + r"""
-    </div>
-
-    <script>
-        var options = { // put in gridstack options here
-            //disableOneColumnMode: true, // for jfiddle small window size
-            float: true,
-            resizable: {
-                handles: 'e, se, s, sw, w'
-            },
-            draggable: {
-                handle: '.panel-heading',
-            },
-            animate: false            
-        };        
-        var grid = GridStack.init(options);
-
-        function resize_plot(name) {
-            // Plotly.Plots.resize(name);
-
-            console.log("Resizing: " + name);
-
-
-            Plotly.relayout(name, {
-               width: document.getElementById("container-" + name).clientWidth -20 ,
-               height: document.getElementById("container-" + name).clientHeight - 30                
-            });
-
-            saveGrid();
-        }
-
-
-        function toggle_config_visibility() {
-            targetDiv = document.getElementById("config-panel");
-            if (targetDiv.style.display !== "none") {
-                targetDiv.style.display = "none";
-                document.getElementById("config-button-image").className="fa-solid fa-chevron-down";
-            } else {
-                targetDiv.style.display = "block";
-                document.getElementById("config-button-image").className="fa-solid fa-chevron-up";
-            }
-        };
-
-        function on_autoreload_select_change(autoreload_selector_element) {
-            update_dashboard();
-        }
-
-        const autoreload_selector_element = document.getElementById("autoreload-select");
-
-        if (autoreload_selector_element.value != "none") {
-            setTimeout(function(){
-                update_dashboard();
-            }, parseInt(autoreload_selector_element.value) * 1000);            
-        }        
-
-
-
-        """
-        + "\n".join(
-            (
-                f"""plot = Plotly.newPlot("{name}", {json.dumps(ensure_working_plotly_json(plotly_json))}\n, {json.dumps({"width": "100%", "height": "100%", "useResizeHanlder": True})}, {json.dumps({"responsive": True})}); 
-                
-                resize_plot("{name}");                
-                """
-                for name, plotly_json in plotly_outputs.items()
-            )
-        )
-        + r"""
-
-        grid.on('resizestop', function(event, el) {
-            var inp_name = el.getAttribute("input_name");
-            console.log("Resizestop for: " + inp_name)
-
-            resize_plot(inp_name);
-        });
-
-        // autosave on actual positioning changes:
-        grid.on('change', function(event, items) {
-            console.log("Save positioning")
-            // items.forEach(function(item) {...});
-            var positionings = grid.save(false, false);
-            fetch("dashboard/positioning", {
-                method: "PUT",
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(positionings)
-            }).then(res => {
-                console.log("Request complete! response:", res);
-            });
-        });
-        
-
-        window.addEventListener('resize', function(event) {
-            console.log("Window resize event")
-        """
-        + "\n".join(
-            (
-                f"""
-                setTimeout(resize_plot, 100,"{name}");                
-                """
-                for name, plotly_json in plotly_outputs.items()
-            )
-        )
-        + r"""
-        }, true);
-
-
-        function saveGrid() {
-            var res = grid.save(false, false);
-            console.log(res)
-        }
-
-    </script>
-
-    </body>
-
-    """
+    # construct dashboard html response
+    return generate_dashboard_html(
+        transformation_revision=transformation_revision,
+        exec_resp=exec_resp,
+        autoreload=autoreload,
+        override_mode=override_mode,
+        calculated_from_timestamp=calculated_from_timestamp,
+        calculated_to_timestamp=calculated_to_timestamp,
+        relNow=relNow,
     )
-    print(dashboard_html)
-    print(len(plotly_outputs))
-    return dashboard_html
