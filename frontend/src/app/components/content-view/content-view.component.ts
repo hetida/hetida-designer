@@ -70,7 +70,7 @@ export class ContentViewComponent implements OnInit, OnDestroy {
     private readonly popoverService: PopoverService
   ) {}
 
-  private readonly _ngOnDestroyNotify = new Subject();
+  private readonly _ngOnDestroyNotify = new Subject<void>();
 
   ngOnDestroy(): void {
     this._ngOnDestroyNotify.next();

@@ -6,7 +6,7 @@ import {
   ExecutionDialogData,
   WiringDialogComponent
 } from 'hd-wiring';
-import { Observable, of } from 'rxjs';
+import { Observable, lastValueFrom, of } from 'rxjs';
 import { finalize, first, map, switchMap, tap } from 'rxjs/operators';
 import {
   ComponentIODialogComponent,
@@ -81,9 +81,9 @@ export class TransformationActionService {
       title = 'Execute Unknown';
     }
 
-    const adapterList = await this.transformationHttpService
-      .getAdapterList()
-      .toPromise();
+    const adapterList = await lastValueFrom(
+      this.transformationHttpService.getAdapterList()
+    );
 
     const dialogRef = this.dialog.open<
       WiringDialogComponent,
