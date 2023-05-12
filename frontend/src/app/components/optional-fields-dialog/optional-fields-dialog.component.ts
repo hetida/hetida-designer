@@ -17,6 +17,7 @@ export interface OptionalFieldsDialogData {
 })
 export class OptionalFieldsDialogComponent {
   optionalFieldsForm: FormGroup;
+  workflowName: string;
 
   get optionalFieldsArray(): FormArray {
     return this.optionalFieldsForm.get('inputs') as FormArray;
@@ -27,20 +28,13 @@ export class OptionalFieldsDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: OptionalFieldsDialogData,
     private readonly formBuilder: FormBuilder
   ) {
+    this.workflowName = this.data.operator.name;
     this.optionalFieldsForm = this.formBuilder.group({
       inputs: this.formBuilder.array(
         this.data.operator.inputs
           .filter(input => input.type === IOTypeOption.OPTIONAL)
           .map(input => {
-            let exposed = input.exposed;
-            if (input.type === IOTypeOption.OPTIONAL && input.value) {
-              exposed = true;
-            }
-            const exposedControl = this.formBuilder.control({
-              value: exposed,
-              disabled: input.type === IOTypeOption.OPTIONAL && input.value
-            });
-
+            const exposedControl = this.formBuilder.control(input.exposed);
             exposedControl.valueChanges.subscribe(exposedValue => {
               this.data.operator.inputs.forEach(inp => {
                 if (inp.id === input.id) {
@@ -51,7 +45,8 @@ export class OptionalFieldsDialogComponent {
 
             return this.formBuilder.group({
               name: input.name,
-              exposed: exposedControl
+              exposed: exposedControl,
+              value: input.value
             });
           })
       )

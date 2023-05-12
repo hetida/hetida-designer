@@ -1,5 +1,5 @@
 <div mat-dialog-title>
-  <h4 class="m-0">Optional Fields Editor</h4>
+  <h4 class="m-0">Expose Inputs with Default value for ({{ workflowName }})</h4>
   <button (click)="onCancel()" mat-icon-button>
     <mat-icon>close</mat-icon>
   </button>
@@ -12,6 +12,9 @@
     >
       <mat-checkbox class="example-margin mb-1" formControlName="exposed">
         {{ optionalField.get('name').value }}
+        <span *ngIf="optionalField.get('value')?.value"
+          >({{ optionalField.get('value')?.value }})</span
+        >
       </mat-checkbox>
     </div>
   </form>

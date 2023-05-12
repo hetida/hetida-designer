@@ -49,3 +49,9 @@
 .input-configuration-delete-icon-column {
   flex: 0 0 40px;
 }
+
+.default-value-input{
+  flex: 0 1 42%;
+  padding-right: calc(2 * var(--spacing-2));
+  margin-left: auto;
+}

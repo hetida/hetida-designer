@@ -563,11 +563,25 @@ export class WorkflowEditorComponent {
         dialogRef
           .afterClosed()
           .pipe(first())
-          .subscribe((inputs: IOConnector[]) => {
+          .subscribe((inputs: Connector[]) => {
             if (inputs) {
               this.currentWorkflow.content.operators.filter(
                 op => op.id === event.detail.uuid
               )[0].inputs = inputs;
+              inputs
+                .filter(input => !input.exposed)
+                .forEach(input => {
+                  this.currentWorkflow.content.inputs
+                    .filter(
+                      contentInput =>
+                        contentInput.operator_id === event.detail.uuid
+                    )
+                    .filter(filterInput => {
+                      if (filterInput.connector_id === input.id) {
+                        filterInput.name = '';
+                      }
+                    });
+                });
               this.hasChanges = true;
               this._updateWorkflowIfNecessary();
             }

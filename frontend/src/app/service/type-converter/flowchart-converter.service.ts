@@ -19,6 +19,7 @@ import { Constant } from 'src/app/model/constant';
 import { VertexIds } from 'src/app/components/workflow-editor/workflow-editor.component';
 import { Utils } from 'src/app/utils/utils';
 import { IOTypeOption } from '../../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
+import { WorkflowContent } from '../../model/workflow-content';
 
 @Injectable({
   providedIn: 'root'
@@ -35,12 +36,37 @@ export class FlowchartConverterService {
     const operator = {
       ...transformation,
       transformation_id: transformation.id,
-      inputs: transformation.io_interface.inputs.map(input => ({
-        ...input,
-        exposed: input.exposed,
-        is_default_value: input.type === IOTypeOption.OPTIONAL,
-        position: null
-      })),
+      inputs: transformation.io_interface.inputs
+        .filter(input => {
+          let isInputExposed = true;
+          if (typeof transformation.content !== 'string') {
+            const inputConnector = (transformation.content as WorkflowContent).inputs.filter(
+              contentInput => contentInput.id === input.id
+            );
+            if (inputConnector.length > 0) {
+              const foundOperators = (transformation.content as WorkflowContent).operators.filter(
+                opt => opt.id === inputConnector[0].operator_id
+              );
+
+              if (foundOperators.length > 0) {
+                foundOperators[0].inputs.forEach(operatorInput => {
+                  if (operatorInput.id === inputConnector[0].connector_id) {
+                    isInputExposed = operatorInput.exposed;
+                  }
+                });
+              }
+            }
+          }
+          return isInputExposed;
+        })
+        .map(input => {
+          return {
+            ...input,
+            exposed: input.exposed,
+            is_default_value: input.type === IOTypeOption.OPTIONAL,
+            position: null
+          };
+        }),
       outputs: transformation.io_interface.outputs.map(output => ({
         ...output,
         position: null

@@ -40,7 +40,11 @@
   &__default-value {
     padding-right: var(--spacing-2);
   }
-
+  &__default-value-input {
+    width: 220px;
+    margin-left: auto;
+    padding-right: calc(40px + var(--spacing-2));
+  }
   &__action {
     flex: 0 0 40px;
   }

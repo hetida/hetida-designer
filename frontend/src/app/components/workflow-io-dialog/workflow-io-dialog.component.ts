@@ -190,7 +190,6 @@ export class WorkflowIODialogComponent {
         outputData
       );
     }
-
     const inputIOControlGroup = inputData.map(data =>
       this._createFormGroup(data)
     );
@@ -272,13 +271,14 @@ export class WorkflowIODialogComponent {
         `Could not find connector with id '${workflowContentIO.connector_id}'`
       );
     }
-
     const data = new WorkflowIODefinition(
       workflowContentIO,
       operator,
       connector
     );
-    dataArray.push(data);
+    if (connector.exposed) {
+      dataArray.push(data);
+    }
   }
 
   _isDefaultParameter(ioItem: AbstractControl): boolean {
@@ -389,13 +389,10 @@ export class WorkflowIODialogComponent {
   }
 
   private createValueControl(data: WorkflowIODefinition): FormControl {
-    return this.formBuilder.control(
-      {
-        value: data.value,
-        disabled: !this.data.editMode
-      },
-      !data.isConstant ? this.getValidators(data) : null
-    );
+    return this.formBuilder.control({
+      value: data.value,
+      disabled: !this.data.editMode
+    });
   }
 
   private getValidators(data: WorkflowIODefinition) {
