@@ -1,5 +1,4 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { IAppState } from '../app.state';
 import { ITabItemState, tabItemEntityAdapter } from './tab-item.state';
 import { TabItem } from '../../model/tab-item';
 import { selectHashedTransformationLookupById } from '../transformation/transformation.selectors';
@@ -11,9 +10,7 @@ export type TabItemWithTransformation = Omit<TabItem, 'transformationId'> & {
 
 const { selectEntities, selectAll } = tabItemEntityAdapter.getSelectors();
 
-const selectTabItemState = createFeatureSelector<IAppState, ITabItemState>(
-  'tabItems'
-);
+const selectTabItemState = createFeatureSelector<ITabItemState>('tabItems');
 
 export const selectOrderedTabItems = createSelector(
   selectTabItemState,
