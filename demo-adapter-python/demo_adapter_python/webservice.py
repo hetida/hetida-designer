@@ -778,7 +778,7 @@ async def multitsframe(
     upper_threshold: float = Query(None, example=107.9),
 ) -> StreamingResponse | HTTPException:
     dt_range = pd.date_range(
-        start=from_timestamp, end=to_timestamp, freq="H",tz=datetime.timezone.utc
+        start=from_timestamp, end=to_timestamp, freq="H", tz=datetime.timezone.utc
     )
     mtsf = None
     if mtsf_id.endswith("temperatures"):

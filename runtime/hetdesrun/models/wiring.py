@@ -1,7 +1,10 @@
+from typing import Any
+
 from pydantic import BaseModel, Field, StrictInt, StrictStr, validator
 
 from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
+from hetdesrun.models import RESERVED_FILTER_KEY, FilterKey
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.util import valid_python_identifier
 
@@ -88,7 +91,7 @@ class InputWiring(BaseModel):
         description="Type of data. If present then must be one of "
         + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),  # type: ignore
     )
-    filters: dict = {}
+    filters: dict[FilterKey, Any] = {}
 
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
@@ -116,6 +119,17 @@ class InputWiring(BaseModel):
                 '"ref_id_type" and "ref_key". At least one of them is missing.'
             )
         return v
+
+    @validator("filters")
+    def no_reserved_filter_keys(
+        cls, filters: dict[FilterKey, Any]
+    ) -> dict[FilterKey, Any]:
+        if any(reserved_key in filters for reserved_key in RESERVED_FILTER_KEY):
+            raise ValueError(
+                f"The strings {RESERVED_FILTER_KEY} are reserved filter keys!"
+            )
+
+        return filters
 
 
 class WorkflowWiring(BaseModel):

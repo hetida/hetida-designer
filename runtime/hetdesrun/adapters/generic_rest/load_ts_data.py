@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,8 +18,7 @@ logger = logging.getLogger(__name__)
 
 async def load_ts_data_from_adapter(
     filtered_sources: list[FilteredSource],
-    from_timestamp: str,
-    to_timestamp: str,
+    filter_params: frozenset[tuple[str, Any]],
     adapter_key: str,
 ) -> pd.DataFrame:
     """Load data from generic rest adapter timeseries endpoint
@@ -38,7 +38,7 @@ async def load_ts_data_from_adapter(
 
     df = await load_framelike_data(
         filtered_sources=filtered_sources,
-        additional_params=[("from", from_timestamp), ("to", to_timestamp)],
+        additional_params=list(filter_params),
         adapter_key=adapter_key,
         endpoint="timeseries",
     )
@@ -91,8 +91,8 @@ async def load_grouped_timeseries_data_together(
     loaded_data = {}
 
     # group by occuring timestamp pairs
-    group_by_timestamp_pair: dict[
-        tuple[str, str, ExternalType],
+    group_by_filters_and_external_type: dict[
+        tuple[frozenset[tuple[Any, Any]], ExternalType],
         dict[str, FilteredSource],
     ] = defaultdict(dict)
 
@@ -105,20 +105,20 @@ async def load_grouped_timeseries_data_together(
             )
 
     for key, filtered_source in data_to_load.items():
-        group_by_timestamp_pair[
+        filtered_source.filters["from"] = filtered_source.filters.pop("timestampFrom")
+        filtered_source.filters["to"] = filtered_source.filters.pop("timestampTo")
+        group_by_filters_and_external_type[
             (
-                filtered_source.filters["timestampFrom"],
-                filtered_source.filters["timestampTo"],
+                frozenset(filtered_source.filters.items()),
                 ExternalType(filtered_source.type),
             )
         ][key] = filtered_source
 
     # load each group together:
-    for group_tuple, grouped_source_dict in group_by_timestamp_pair.items():
+    for group_tuple, grouped_source_dict in group_by_filters_and_external_type.items():
         loaded_ts_data_from_adapter = await load_ts_data_from_adapter(
             list(grouped_source_dict.values()),
             group_tuple[0],
-            group_tuple[1],
             adapter_key=adapter_key,
         )
 

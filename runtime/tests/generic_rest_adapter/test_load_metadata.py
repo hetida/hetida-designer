@@ -64,7 +64,7 @@ async def test_load_metadata_request():
                 ref_id_type="SOURCE",
                 ref_key="serial",
                 type="metadata(int)",
-                filters={},
+                filters={"filter_key": "filter_value"},
             ),
         }
         with mock.patch(
@@ -77,9 +77,10 @@ async def test_load_metadata_request():
             )
 
             assert loaded_metadata["wf_input_1"] == 24567
-            func_name, args, kwargs = mocked_async_client_get.mock_calls[0]
+            _, args, kwargs = mocked_async_client_get.mock_calls[0]
 
             assert args[0] == "https://hetida.de/sources/id_1/metadata/serial"
+            assert kwargs["params"] == {"filter_key": "filter_value"}
 
             resp_mock.status_code = 400
             with pytest.raises(AdapterConnectionError):
@@ -98,10 +99,27 @@ async def test_load_metadata_request():
                     adapter_key="test_load_metadata_adapter_key",
                 )
             resp_mock.json = mock.Mock(
-                return_value=[
-                    {"key": "serial", "value": 24567, "dataType": "int"},
-                    {"key": "desc", "value": "some description", "dataType": "string"},
-                ]
+                return_value={"key": "desc", "value": 24567, "dataType": "int"},
+            )
+            with pytest.raises(AdapterHandlingException):
+                loaded_metadata = await load_multiple_metadata(
+                    data_to_load,
+                    adapter_key="test_load_metadata_adapter_key",
+                )
+            resp_mock.json = mock.Mock(
+                return_value={"key": "serial", "value": 24567, "dataType": "string"}
+            )
+            with pytest.raises(AdapterHandlingException):
+                loaded_metadata = await load_multiple_metadata(
+                    data_to_load,
+                    adapter_key="test_load_metadata_adapter_key",
+                )
+            resp_mock.json = mock.Mock(
+                return_value={
+                    "key": "serial",
+                    "value": "some string",
+                    "dataType": "int",
+                }
             )
             with pytest.raises(AdapterHandlingException):
                 loaded_metadata = await load_multiple_metadata(

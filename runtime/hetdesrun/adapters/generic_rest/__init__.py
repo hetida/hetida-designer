@@ -151,7 +151,7 @@ async def load_data(
     (
         loaded_ts_data,
         loaded_dataframes,
-        loaded_multitsfarmes,
+        loaded_multitsframes,
         loaded_metadata,
     ) = await asyncio.gather(
         load_grouped_timeseries_data_together(
@@ -167,7 +167,7 @@ async def load_data(
     return {
         **loaded_ts_data,
         **loaded_dataframes,
-        **loaded_multitsfarmes,
+        **loaded_multitsframes,
         **loaded_metadata,
     }
 
