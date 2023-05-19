@@ -1,6 +1,7 @@
 from typing import Any
 from unittest import mock
 
+import httpx
 import pytest
 
 from hetdesrun.adapters.exceptions import (
@@ -10,6 +11,7 @@ from hetdesrun.adapters.exceptions import (
 from hetdesrun.adapters.generic_rest import load_data
 from hetdesrun.adapters.generic_rest.load_metadata import load_multiple_metadata
 from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 
 
 async def detailed_mocked_async_client_get(self, url, *args, **kwargs):
@@ -83,7 +85,8 @@ async def test_load_metadata_request():
             assert kwargs["params"] == {"filter_key": "filter_value"}
 
             resp_mock.status_code = 400
-            with pytest.raises(AdapterConnectionError):
+            resp_mock.text = "my adapter error"
+            with pytest.raises(AdapterConnectionError, match="my adapter error"):
                 loaded_metadata = await load_multiple_metadata(
                     data_to_load,
                     adapter_key="test_load_metadata_adapter_key",
@@ -259,3 +262,43 @@ async def test_end_to_end_load_only_metadata():
 
         assert loaded_data["wf_inp_1"] == 42
         assert loaded_data["wf_inp_2"] == "some description"
+
+
+@pytest.mark.asyncio
+async def test_end_to_end_load_metadata_with_exception():
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_auth_headers",
+        side_effect=ServiceAuthenticationError("my service error"),
+    ), pytest.raises(AdapterHandlingException, match="my service error"):
+        await load_data(
+            {
+                "wf_inp_1": FilteredSource(
+                    ref_id="id_1",
+                    ref_id_type="SOURCE",
+                    type="metadata(int)",
+                    ref_key="number",
+                ),
+            },
+            adapter_key="end_to_end_only_dataframe_data",
+        )
+
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_base_url",
+        return_value="https://hetida.de",
+    ), mock.patch(
+        "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
+        side_effect=httpx.HTTPError("my http error"),
+    ), pytest.raises(
+        AdapterConnectionError, match="my http error"
+    ):
+        await load_data(
+            {
+                "wf_inp_1": FilteredSource(
+                    ref_id="id_1",
+                    ref_id_type="SOURCE",
+                    type="metadata(int)",
+                    ref_key="number",
+                ),
+            },
+            adapter_key="end_to_end_only_dataframe_data",
+        )

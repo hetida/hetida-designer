@@ -2,6 +2,7 @@ from unittest import mock
 
 import pandas as pd
 import pytest
+import requests
 
 from hetdesrun.adapters.exceptions import (
     AdapterClientWiringInvalidError,
@@ -71,8 +72,8 @@ async def test_load_ts_adapter_request():
             assert ("to", "2020-01-01T00:00:00Z") in kwargs["params"]
 
             resp_mock.status_code = 400
-
-            with pytest.raises(AdapterConnectionError):
+            resp_mock.text = "my adapter error"
+            with pytest.raises(AdapterConnectionError, match="my adapter error"):
                 await load_ts_data_from_adapter(
                     filtered_sources,
                     filter_params=filter_params,
@@ -361,3 +362,46 @@ async def test_end_to_end_load_empty_ts_data_with_attrs():
         assert isinstance(loaded_data["inp_1"], pd.Series)
         assert len(loaded_data["inp_1"].attrs) == 1
         assert loaded_data["inp_1"].attrs["c"] == 5
+
+
+@pytest.mark.asyncio
+async def test_end_to_end_load_ts_with_exception():
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_framelike.get_generic_rest_adapter_base_url",
+        return_value="https://hetida.de",
+    ):
+        with mock.patch(
+            "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
+            return_value=mock.Mock(status_code=406, text="my adapter error"),
+        ), pytest.raises(AdapterConnectionError, match="my adapter error"):
+            await load_data(
+                {
+                    "inp_1": FilteredSource(
+                        ref_id="id_1",
+                        type="timeseries(float)",
+                        filters={
+                            "timestampFrom": "2018-09-01T00:00:00Z",
+                            "timestampTo": "2020-01-01T00:00:00Z",
+                        },
+                    )
+                },
+                adapter_key="end_to_end_only_ts_data",
+            )
+
+        with mock.patch(
+            "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
+            side_effect=requests.HTTPError("my http error"),
+        ), pytest.raises(AdapterConnectionError, match="my http error"):
+            await load_data(
+                {
+                    "inp_1": FilteredSource(
+                        ref_id="id_1",
+                        type="timeseries(float)",
+                        filters={
+                            "timestampFrom": "2018-09-01T00:00:00Z",
+                            "timestampTo": "2020-01-01T00:00:00Z",
+                        },
+                    )
+                },
+                adapter_key="end_to_end_only_ts_data",
+            )

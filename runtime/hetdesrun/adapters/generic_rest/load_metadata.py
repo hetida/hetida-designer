@@ -52,13 +52,11 @@ async def load_single_metadatum_from_adapter(
     except httpx.HTTPError as e:
         msg = (
             f"Requesting metadata data from generic rest adapter endpoint {url}"
-            f" failed with Exception {str(e)}"
+            f" failed with Exception: {str(e)}"
         )
 
         logger.info(msg)
-        raise AdapterConnectionError(
-            f"Requesting metadata data from generic rest adapter endpoint {url} failed."
-        ) from e
+        raise AdapterConnectionError(msg) from e
 
     if resp.status_code != 200:
         msg = (
