@@ -74,26 +74,24 @@ const httpLoaderFactory = (configService: ConfigService) => {
   // since the auth module uses an APP_INITIALIZER token internally, we have to combine both calls
   // the calls can be split again once we migrate to v14 of the oidc library, see
   // https://github.com/damienbod/angular-auth-oidc-client/blob/main/docs/site/angular-auth-oidc-client/docs/migrations/v13-to-v14.md
-  const config$ = from(configService.loadConfig())
-    .pipe(
-      map(config => {
-        // unfortunately, the oidc library requires some config values upon initialization
-        // it throws an error if authority and clientId are undefined, which can be ignored if no auth is needed
-        // the error can be fixed by migrating to version 14, see above
-        return {
-          authority: config.authConfig?.authority,
-          redirectUrl: window.location.origin,
-          clientId: config.authConfig?.clientId,
-          responseType: 'code',
-          scope: 'openid',
-          postLogoutRedirectUri: window.location.origin,
-          silentRenew: true,
-          silentRenewUrl: `${window.location.origin}/silent-renew.html`,
-          ...config.authConfig
-        };
-      })
-    )
-    .toPromise();
+  const config$ = from(configService.loadConfig()).pipe(
+    map(config => {
+      // unfortunately, the oidc library requires some config values upon initialization
+      // it throws an error if authority and clientId are undefined, which can be ignored if no auth is needed
+      // the error can be fixed by migrating to version 14, see above
+      return {
+        authority: config.authConfig?.authority,
+        redirectUrl: window.location.origin,
+        clientId: config.authConfig?.clientId,
+        responseType: 'code',
+        scope: 'openid',
+        postLogoutRedirectUri: window.location.origin,
+        silentRenew: true,
+        silentRenewUrl: `${window.location.origin}/silent-renew.html`,
+        ...config.authConfig
+      };
+    })
+  );
 
   return new StsConfigHttpLoader(config$);
 };
