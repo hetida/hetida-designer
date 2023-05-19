@@ -114,6 +114,7 @@ Some details:
 
 - `filters` may request user interface filters. Currently this can either be an empty mapping object (`{}`) or a filter of type `free_text`. Note that for timeseries type sources, the frontend asks for the time interval automatically, so there is no need to specify this as a filter for now.
 These filters can be used by adding a corresponding key-value pair in the `filters` attribute of the input wiring. Such key-value pairs are sent as query parameters in the GET request and must therefore be implemented in the respective endpoint of the adapter to yield the desired behavior.
+For now the value of the `required` attribute has no effect, but all filters are considered as not required. Hence, the endpoints should be implemented with an appropriate default value for the filter query parameters.
 
 - `path` should be a human readable "breadcrumb"-like path to the source or sink. This attribute is used in the designer frontend for example when filtering.
 
