@@ -60,8 +60,8 @@ export class TransformationContextMenuComponent
   ngAfterViewInit(): void {
     this.changeDetector.detectChanges();
     this._menu.hasBackdrop = false;
+    this._menu.focusFirstItem(this._elementRef.nativeElement);
     this._trigger.openMenu();
-    (this._elementRef.nativeElement as HTMLButtonElement).focus();
     this.changeDetector.detectChanges();
   }
 

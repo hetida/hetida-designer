@@ -1,7 +1,7 @@
 import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
 import { Injectable } from '@angular/core';
-import { Renderer, setOptions, parse } from 'marked';
-import { renderToString } from 'katex';
+import { Renderer, marked } from 'marked';
+import katex from 'katex';
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +19,9 @@ export class MarkdownService {
       }
       return originalParagraph(text);
     };
-    setOptions({ renderer });
+    // marked options mangle and headerIds are deprecated since v5.0.0,
+    // set both to false to disable deprecated warnings.
+    marked.setOptions({ renderer, mangle: false, headerIds: false });
   }
 
   private renderMathExpression(expression: string): string {
@@ -29,7 +31,7 @@ export class MarkdownService {
       displayStyle ? 2 : 1,
       expression.length - (displayStyle ? 4 : 2)
     );
-    let html: string = renderToString(content);
+    let html: string = katex.renderToString(content);
     if (displayStyle) {
       html = html.replace(
         /class="katex"/g,
@@ -42,7 +44,7 @@ export class MarkdownService {
   public parseMarkdown(text: string): SafeHtml {
     let markdown: string;
     try {
-      markdown = parse(text);
+      markdown = marked.parse(text);
     } catch (error) {
       // incomplete markdown can and most likely will lead to a error during parsing
       // we catch them here so the error interceptor doesn't throw notifications
