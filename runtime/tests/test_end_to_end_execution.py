@@ -162,14 +162,13 @@ async def test_null_values_pass_any_pass_through(
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": {"a": 1.5, "b": None}},
+            {"input": '{"a": 1.5, "b": None}'},
             client,
         )
 
-        assert exec_result.output_results_by_output_name["output"] == {
-            "a": 1.5,
-            "b": None,
-        }
+        assert exec_result.output_results_by_output_name["output"] == (
+            '{"a": 1.5, "b": None}'
+        )
 
 
 @pytest.mark.asyncio
@@ -182,10 +181,10 @@ async def test_null_list_values_pass_any_pass_through(
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": [1.2, None]},
+            {"input": "[1.2, None]"},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == [1.2, None]
+        assert exec_result.output_results_by_output_name["output"] == "[1.2, None]"
 
 
 @pytest.mark.asyncio
@@ -198,23 +197,22 @@ async def test_null_values_pass_series_pass_through(
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": {"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}},
+            {"input": '{"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}'},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == {
-            "2020-01-01T00:00:00Z": 1.5,
-            "2020-01-02T00:00:00Z": None,
-        }
+        assert exec_result.output_results_by_output_name["output"] == (
+            '{"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}'
+        )
 
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": [1.2, 2.5, None]},
+            {"input": "[1.2, 2.5, None]"},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == [1.2, 2.5, None]
+        assert exec_result.output_results_by_output_name["output"] == "[1.2, 2.5, None]"
 
 
 @pytest.mark.asyncio
@@ -227,13 +225,12 @@ async def test_all_null_values_pass_series_pass_through(
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": {"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}},
+            {"input": '{"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}'},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == {
-            "2020-01-01T00:00:00Z": None,
-            "2020-01-02T00:00:00Z": None,
-        }
+        assert exec_result.output_results_by_output_name["output"] == (
+            '{"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}'
+        )
 
 
 @pytest.mark.asyncio

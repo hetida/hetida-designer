@@ -84,7 +84,7 @@ async def test_load_single_multitsframe_from_adapter_alone() -> None:
                 filters={
                     "from": "2019-08-01T15:45:30.000Z",
                     "to": "2019-08-01T15:46:00.000Z",
-                    "lower_threshold": 93.4,
+                    "lower_threshold": "93.4",
                 },
             ),
             adapter_key="load_multitsframe",
@@ -98,14 +98,14 @@ async def test_load_single_multitsframe_from_adapter_alone() -> None:
                     filters={
                         "from": "2019-08-01T15:45:30.000Z",
                         "to": "2019-08-01T15:46:00.000Z",
-                        "lower_threshold": 93.4,
+                        "lower_threshold": "93.4",
                     },
                 )
             ],
             additional_params=[
                 ("from", "2019-08-01T15:45:30.000Z"),
                 ("to", "2019-08-01T15:46:00.000Z"),
-                ("lower_threshold", 93.4),
+                ("lower_threshold", "93.4"),
             ],
             adapter_key="load_multitsframe",
             endpoint="multitsframe",
@@ -125,7 +125,7 @@ async def test_load_multitsframe_from_adapter() -> None:
                     filters={
                         "timestampFrom": "2019-08-01T15:45:30.000Z",
                         "timestampTo": "2019-08-01T15:46:00.000Z",
-                        "lower_threshold": 93.4,
+                        "lower_threshold": "93.4",
                     },
                 )
             },
@@ -138,7 +138,7 @@ async def test_load_multitsframe_from_adapter() -> None:
         assert isinstance(args[0], FilteredSource)
         assert args[0].ref_id == "id_1"
         assert args[0].type == "multitsframe"
-        assert args[0].filters["lower_threshold"] == 93.4
+        assert args[0].filters["lower_threshold"] == "93.4"
         assert args[0].filters["from"] == "2019-08-01T15:45:30.000Z"
         assert args[0].filters["to"] == "2019-08-01T15:46:00.000Z"
         assert args[1] == "load_multitsframe"

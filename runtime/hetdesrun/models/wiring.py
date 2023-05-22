@@ -1,5 +1,3 @@
-from typing import Any
-
 from pydantic import BaseModel, Field, StrictInt, StrictStr, validator
 
 from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
@@ -93,7 +91,7 @@ class InputWiring(BaseModel):
         description="Type of data. If present then must be one of "
         + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),  # type: ignore
     )
-    filters: dict[FilterKey, Any] = {}
+    filters: dict[FilterKey, str | None] = {}
 
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
@@ -126,13 +124,22 @@ class InputWiring(BaseModel):
 
     @validator("filters")
     def no_reserved_filter_keys(
-        cls, filters: dict[FilterKey, Any]
-    ) -> dict[FilterKey, Any]:
+        cls, filters: dict[FilterKey, str | None]
+    ) -> dict[FilterKey, str | None]:
         if any(reserved_key in filters for reserved_key in RESERVED_FILTER_KEY):
             raise ValueError(
                 f"The strings {RESERVED_FILTER_KEY} are reserved filter keys!"
             )
 
+        return filters
+
+    @validator("filters")
+    def none_filter_value_to_empty_string(
+        cls, filters: dict[FilterKey, str | None]
+    ) -> dict[FilterKey, str | None]:
+        for key, value in filters.items():
+            if value is None:
+                filters[key] = ""
         return filters
 
 

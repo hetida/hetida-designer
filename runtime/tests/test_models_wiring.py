@@ -127,6 +127,18 @@ def test_input_wiring_validator_no_reserved_filter_keys() -> None:
         InputWiring(**input_wiring_with_reserved_filter_keys_dict)
 
 
+def test_input_wiring_validator_none_filter_value_to_empty_string() -> None:
+    input_wiring_with_none_filter_value_dict = deepcopy(
+        direct_provisioning_input_wiring_dict
+    )
+    input_wiring_with_none_filter_value_dict["filters"] = {"key": None}
+    input_wiring_with_empty_string_filter_value = InputWiring(
+        **input_wiring_with_none_filter_value_dict
+    )
+
+    assert input_wiring_with_empty_string_filter_value.filters["key"] == ""
+
+
 def test_workflow_wiring_accepted() -> None:
     WorkflowWiring(**workflow_wiring_dict)
 
