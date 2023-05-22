@@ -73,7 +73,7 @@ async def test_load_ts_adapter_request():
 
             resp_mock.status_code = 400
             resp_mock.text = "my adapter error"
-            with pytest.raises(AdapterConnectionError, match="my adapter error"):
+            with pytest.raises(AdapterConnectionError, match= "my adapter error"):
                 await load_ts_data_from_adapter(
                     filtered_sources,
                     filter_params=filter_params,
@@ -164,7 +164,7 @@ async def test_load_grouped_timeseries_data_together():
 
     with mock.patch(
         "hetdesrun.adapters.generic_rest.load_ts_data.load_ts_data_from_adapter",
-        new=mock.AsyncMock(mock_load_generic_rest_ts_data),
+        new=mock.AsyncMock(return_value=await mock_load_generic_rest_ts_data()),
     ) as load_ts_from_adapter_mock:
         await load_grouped_timeseries_data_together(
             ts_data_to_load,
