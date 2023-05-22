@@ -60,9 +60,9 @@ def test_output_wiring_validator_adapter_id_known() -> None:
         direct_provisioning_output_wiring_dict
     )
     output_wiring_with_unknown_adapter_id_dict["adapter_id"] = 23
-    with mock.patch("hetdesrun.models.wiring.EXPORT_MODE", False), pytest.raises(
-        ValueError, match="not known"
-    ):
+    with mock.patch(
+        "hetdesrun.models.wiring.ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS", False
+    ), pytest.raises(ValueError, match="not known"):
         OutputWiring(**output_wiring_with_unknown_adapter_id_dict)
 
 
@@ -94,9 +94,9 @@ def test_input_wiring_validator_adapter_id_known() -> None:
         direct_provisioning_input_wiring_dict
     )
     input_wiring_with_unknown_adapter_id_dict["adapter_id"] = 23
-    with mock.patch("hetdesrun.models.wiring.EXPORT_MODE", False), pytest.raises(
-        ValueError, match="not known"
-    ):
+    with mock.patch(
+        "hetdesrun.models.wiring.ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS", False
+    ), pytest.raises(ValueError, match="not known"):
         InputWiring(**input_wiring_with_unknown_adapter_id_dict)
 
 
