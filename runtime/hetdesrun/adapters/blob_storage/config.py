@@ -16,17 +16,17 @@ class BlobStorageAdapterConfig(BaseSettings):
         env="BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION",
         example="/mnt/blob_storage_adapter_hierarchy.json",
     )
+    anonymous: bool = Field(
+        False,
+        description="Skip requesting credentials via STS and make unsigned S3 requests",
+        env="BLOB_STORAGE_ADAPTER_ANONYMOUS",
+    )
     allow_bucket_creation: bool = Field(
         True,
         description=(
             "Allow the creation of buckets which match the adapter hierarchy if they are missing"
         ),
         env="BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION",
-    )
-    anonymous: bool = Field(
-        False,
-        description="Skip requesting credentials via STS and make unsigned S3 requests",
-        env="BLOB_STORAGE_ADAPTER_ANONYMOUS",
     )
     endpoint_url: str = Field(
         "",
@@ -88,23 +88,18 @@ class BlobStorageAdapterConfig(BaseSettings):
         env="BLOB_STORAGE_CHECKSUM_ALGORITHM",
     )
 
-    @validator("anonymous")
-    def no_anonymous_bucket_creation(cls, anonymous: bool, values: dict) -> bool:
-        try:
-            allow_bucket_creation = values["allow_bucket_creation"]
-        except KeyError as error:
-            raise ValueError(
-                "Cannot deactivate anonymous bucket creation "
-                "if attribute 'allow_bucket_creation' is missing!"
-            ) from error
-
+    @validator("allow_bucket_creation")
+    def no_anonymous_bucket_creation(
+        cls, allow_bucket_creation: bool, values: dict
+    ) -> bool:
+        anonymous = values["anonymous"]
         if anonymous is True:
             allow_bucket_creation = False  # noqa: F841
 
-        return anonymous
+        return allow_bucket_creation
 
 
-environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
+environment_file = os.environ.get("HD_BLOB_STORAGE_ENVIRONMENT_FILE", None)
 blob_storage_adapter_config = BlobStorageAdapterConfig(_env_file=environment_file)
 
 
