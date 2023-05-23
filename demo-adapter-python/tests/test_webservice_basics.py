@@ -157,8 +157,8 @@ async def test_resources_offered_from_structure_hierarchy(
             assert response_obj["value"] == md.value
             assert response_obj["dataType"] == md.dataType
 
-            if md.isSink is not None and md.isSink:
-                assert response_obj["isSink"]
+            if md.isSink is not None and md.isSink is True:
+                assert response_obj["isSink"] is True
                 resp = await client.post(
                     f"/sources/{src_id}/metadata/{key}", json=md.dict()
                 )
@@ -171,8 +171,8 @@ async def test_resources_offered_from_structure_hierarchy(
             assert response_obj["value"] == md.value
             assert response_obj["dataType"] == md.dataType
 
-            if md.isSink is not None and md.isSink:
-                assert response_obj["isSink"]
+            if md.isSink is not None and md.isSink is True:
+                assert response_obj["isSink"] is True
                 resp = await client.post(
                     f"/sinks/{snk_id}/metadata/{key}", json=md.dict()
                 )
@@ -190,7 +190,7 @@ async def test_resources_offered_from_structure_hierarchy(
             if md.isSink is not None and md.isSink:
                 assert response_obj["isSink"]
                 resp = await client.post(
-                    f"/thingNodes/{snk_id}/metadata/{key}", json=md.dict()
+                    f"/thingNodes/{tn_id}/metadata/{key}", json=md.dict()
                 )
                 assert resp.status_code == 200
 
@@ -623,12 +623,32 @@ async def test_additional_query_parameter(
             "/dataframe",
             params={
                 "id": "root.plantA.alerts",
-                "column_names": ["b"],
+                "column_names": '["b"]',
             },
         )
         assert df_response.status_code == 200
         df: pd.DataFrame = pd.read_json(df_response.text, lines=True)
         assert df.columns == ["b"]
+
+        df_response_no_json_column_names = await client.get(
+            "/dataframe",
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": "['b']",
+            },
+        )
+        assert df_response_no_json_column_names.status_code == 406
+        assert "cannot be parsed" in df_response_no_json_column_names.text
+
+        df_response_no_list_column_names = await client.get(
+            "/dataframe",
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": '{"b":"c"}',
+            },
+        )
+        assert df_response_no_list_column_names.status_code == 406
+        assert "not a list" in df_response_no_list_column_names.text
 
         mtsf_response = await client.get(
             "/multitsframe",
@@ -636,8 +656,8 @@ async def test_additional_query_parameter(
                 "id": "root.plantA.temperatures",
                 "from": "2020-01-01T00:00:00.000000000Z",
                 "to": "2020-01-01T00:00:00.000000000Z",
-                "upper_threshold": 107.9,
-                "lower_threshold": 93.4,
+                "upper_threshold": "107.9",
+                "lower_threshold": "93.4",
             },
         )
         assert mtsf_response.status_code == 200
@@ -645,6 +665,20 @@ async def test_additional_query_parameter(
         if len(mtsf.index > 0):
             assert len(mtsf[mtsf["value"] > 107.9].index) == 0
             assert len(mtsf[mtsf["value"] < 93.4].index) == 0
+
+        mtsf_response_no_float = await client.get(
+            "/multitsframe",
+            params={
+                "id": "root.plantA.temperatures",
+                "from": "2020-01-01T00:00:00.000000000Z",
+                "to": "2020-01-01T00:00:00.000000000Z",
+                "upper_threshold": "some string",
+                "lower_threshold": "93.4",
+            },
+        )
+        assert mtsf_response_no_float.status_code == 406
+        assert "Cannot" in mtsf_response_no_float.text
+        assert "to float" in mtsf_response_no_float.text
 
         ts_response = await client.get(
             "/timeseries",
@@ -655,7 +689,18 @@ async def test_additional_query_parameter(
                 "frequency": "2H",
             },
         )
-        print(ts_response.text)
         assert ts_response.status_code == 200
         ts_df: pd.DataFrame = pd.read_json(ts_response.text, lines=True)
         assert len(ts_df.index) == 13
+
+        ts_response_no_frequency_string = await client.get(
+            "/timeseries",
+            params={
+                "id": "root.plantA.picklingUnit.influx.temp",
+                "from": "2020-01-01T00:00:00.000000000Z",
+                "to": "2020-01-02T00:00:00.000000000Z",
+                "frequency": "some string",
+            },
+        )
+        assert ts_response_no_frequency_string.status_code == 406
+        assert "no frequency string" in ts_response_no_frequency_string.text

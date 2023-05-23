@@ -257,7 +257,19 @@ async def post_metadata_source_by_key(
 
         set_metadatum_in_store(sourceId, key, new_metadatum)
         return {"message": "success"}
-    return HTTPException(
+    if sourceId.endswith("anomaly_score") and key == "Overshooting Allowed":
+        old_metadatum = get_metadatum_from_store(sourceId, key)
+
+        new_metadatum = Metadatum(
+            key=metadatum.key,
+            value=metadatum.value,
+            dataType=old_metadatum.dataType,
+            isSink=old_metadatum.isSink or True,  # noqa: SIM222
+        )
+
+        set_metadatum_in_store(sourceId, key, new_metadatum)
+        return {"message": "success"}
+    raise HTTPException(
         status.HTTP_404_NOT_FOUND,
         f"There is no writable metadatum at source '{sourceId}' with key '{key}'.",
     )
@@ -350,7 +362,7 @@ async def post_metadata_sink_by_key(
 
         set_metadatum_in_store(sinkId, key, new_metadatum)
         return {"message": "success"}
-    return HTTPException(
+    raise HTTPException(
         status.HTTP_404_NOT_FOUND,
         f"There is no writable metadatum at sink '{sinkId}' with key '{key}'.",
     )
@@ -418,7 +430,7 @@ def calculate_age(born: datetime.date) -> int:
     "/thingNodes/{thingNodeId}/metadata/{key}", response_model=Metadatum
 )
 async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
-    thingNodeId: str, key: str, latex_mode: str = Query(None, example="yes")
+    thingNodeId: str, key: str, latex_mode: str = Query("", example="yes")
 ) -> Metadatum:
     key = unquote(key)
     if thingNodeId == "root.plantA":
@@ -496,7 +508,7 @@ async def post_metadata_thingNode_by_key(
         set_metadatum_in_store(thingNodeId, key, new_metadatum)
         return {"message": "success"}
 
-    return HTTPException(
+    raise HTTPException(
         status.HTTP_404_NOT_FOUND,
         f"There is no writable metadatum at thingNode '{thingNodeId}' with key '{key}'.",
     )
@@ -532,6 +544,42 @@ def encode_attributes(data_attrs: Any) -> str:
     return base64_str
 
 
+def return_stored_anomaly_score(
+    ts_id: str, from_timestamp: datetime.datetime, to_timestamp: datetime.datetime
+) -> pd.DataFrame:
+    stored_df = get_value_from_store(ts_id).copy()
+    if "timestamp" in stored_df.columns:
+        stored_df.index = pd.to_datetime(stored_df["timestamp"])
+        stored_df = stored_df[
+            from_timestamp.isoformat() : to_timestamp.isoformat()  # type: ignore
+        ]
+        ts_df = pd.DataFrame(
+            {
+                "timestamp": stored_df.index,
+                "timeseriesId": ts_id,
+                "value": stored_df["value"],
+            }
+        )
+        ts_df.attrs = stored_df.attrs
+    else:
+        ts_df = pd.DataFrame(
+            {
+                "timestamp": [],
+                "timeseriesId": [],
+                "value": [],
+            }
+        )
+    # do not overwrite stored attributes!
+    ts_df.attrs.update(
+        {
+            "from_timestamp": from_timestamp.isoformat(),
+            "to_timestamp": to_timestamp.isoformat(),
+        }
+    )
+
+    return ts_df
+
+
 @demo_adapter_main_router.get("/timeseries")
 async def timeseries(
     ids: list[str] = Query(..., alias="id", min_length=1),
@@ -541,7 +589,7 @@ async def timeseries(
     to_timestamp: datetime.datetime = Query(
         ..., alias="to", example=datetime.datetime.now(datetime.timezone.utc)
     ),
-    frequency: str = Query(None, example="5min"),
+    frequency: str = Query("", example="5min"),
 ) -> StreamingResponse:
     collected_attrs = {}
     io_stream = StringIO()
@@ -559,36 +607,7 @@ async def timeseries(
             offset = 14.5 if "plantA" in ts_id else 1.0
             factor = 0.73 if "plantA" in ts_id else 0.05
         elif ts_id.endswith("anomaly_score"):
-            stored_df = get_value_from_store(ts_id).copy()
-            if "timestamp" in stored_df.columns:
-                stored_df.index = pd.to_datetime(stored_df["timestamp"])
-                stored_df = stored_df[
-                    from_timestamp.isoformat() : to_timestamp.isoformat()  # type: ignore
-                ]
-                ts_df = pd.DataFrame(
-                    {
-                        "timestamp": stored_df.index,
-                        "timeseriesId": ts_id,
-                        "value": stored_df["value"],
-                    }
-                )
-                ts_df.attrs = stored_df.attrs
-            else:
-                ts_df = pd.DataFrame(
-                    {
-                        "timestamp": [],
-                        "timeseriesId": [],
-                        "value": [],
-                    }
-                )
-            # do not overwrite stored attributes!
-            ts_df.attrs.update(
-                {
-                    "from_timestamp": from_timestamp.isoformat(),
-                    "to_timestamp": to_timestamp.isoformat(),
-                }
-            )
-
+            ts_df = return_stored_anomaly_score(ts_id, from_timestamp, to_timestamp)
         else:
             offset = 0.0
             factor = 1.0
@@ -601,9 +620,15 @@ async def timeseries(
                 }
             )
 
-        if frequency is not None and ts_id == "root.plantA.picklingUnit.influx.temp":
+        if frequency != "" and ts_id == "root.plantA.picklingUnit.influx.temp":
             ts_df.index = ts_df["timestamp"]
-            ts_df = ts_df.resample(frequency).first(numeric_only=False)
+            try:
+                ts_df = ts_df.resample(frequency).first(numeric_only=False)
+            except ValueError as error:
+                raise HTTPException(
+                    status.HTTP_406_NOT_ACCEPTABLE,
+                    f"Value of frequency '{frequency}' is no frequency string.",
+                ) from error
         # throws warning during pytest:
         ts_df.to_json(io_stream, lines=True, orient="records", date_format="iso")
 
@@ -655,9 +680,27 @@ async def post_timeseries(
     )
 
 
+def parse_string_to_list(input_string: str) -> tuple[list, str]:
+    try:
+        list_from_string = json.loads(input_string)
+    except json.decoder.JSONDecodeError:
+        return (
+            [],
+            f"Value of column_names '{input_string}' cannot be parsed as JSON.",
+        )
+    else:
+        if not isinstance(list_from_string, list):
+            return (
+                [],
+                f"Value of column_names '{input_string}' is not a list.",
+            )
+        return (list_from_string, "")
+
+
 @demo_adapter_main_router.get("/dataframe", response_model=None)
 async def dataframe(
-    df_id: str = Query(..., alias="id"), column_names: list[str] = Query(None)
+    df_id: str = Query(..., alias="id"),
+    column_names: str = Query("", example='["column_a", "column_b"]'),
 ) -> StreamingResponse | HTTPException:
     if df_id.endswith("plantA.maintenance_events"):
         df = pd.DataFrame(
@@ -709,16 +752,22 @@ async def dataframe(
         )
     elif df_id.endswith("alerts"):
         df = get_value_from_store(df_id)
-        if column_names is not None:
-            try:
-                df = df[column_names]
-            except KeyError:
-                return HTTPException(
+        if column_names != "":
+            column_name_list, error_msg = parse_string_to_list(column_names)
+            if error_msg != "":
+                raise HTTPException(
                     status.HTTP_406_NOT_ACCEPTABLE,
-                    f"dataframe with id {df_id} does not contain columns {column_names}",
+                    error_msg,
                 )
+            try:
+                df = df[column_name_list]
+            except KeyError as error:
+                raise HTTPException(
+                    status.HTTP_406_NOT_ACCEPTABLE,
+                    f"Dataframe with id {df_id} does not contain columns {column_names}.",
+                ) from error
     else:
-        return HTTPException(
+        raise HTTPException(
             status.HTTP_404_NOT_FOUND,
             f"No dataframe data available with provided id '{df_id}'.",
         )
@@ -774,8 +823,8 @@ async def multitsframe(
     to_timestamp: datetime.datetime = Query(
         ..., alias="to", example=datetime.datetime.now(datetime.timezone.utc)
     ),
-    lower_threshold: float = Query(None, example=93.4),
-    upper_threshold: float = Query(None, example=107.9),
+    lower_threshold: str = Query("", example="93.4"),
+    upper_threshold: str = Query("", example="107.9"),
 ) -> StreamingResponse | HTTPException:
     dt_range = pd.date_range(
         start=from_timestamp, end=to_timestamp, freq="H", tz=datetime.timezone.utc
@@ -799,14 +848,28 @@ async def multitsframe(
             ]
             mtsf_records.extend(ts_records)
         mtsf = pd.DataFrame.from_records(mtsf_records)
-        if lower_threshold is not None:
-            mtsf = mtsf[mtsf["value"] > lower_threshold]
-        if upper_threshold is not None:
-            mtsf = mtsf[mtsf["value"] < upper_threshold]
+        if lower_threshold != "":
+            try:
+                lower_threshold_value = float(lower_threshold)
+            except ValueError as error:
+                raise HTTPException(
+                    status.HTTP_406_NOT_ACCEPTABLE,
+                    f"Cannot cast lower threshold '{lower_threshold}' to float:\n{error}",
+                ) from error
+            mtsf = mtsf[mtsf["value"] > lower_threshold_value]
+        if upper_threshold != "":
+            try:
+                upper_threshold_value = float(upper_threshold)
+            except ValueError as error:
+                raise HTTPException(
+                    status.HTTP_406_NOT_ACCEPTABLE,
+                    f"Cannot cast lower threshold '{upper_threshold}' to float:\n{error}",
+                ) from error
+            mtsf = mtsf[mtsf["value"] < upper_threshold_value]
     elif mtsf_id.endswith("anomalies"):
         mtsf = get_value_from_store(mtsf_id)
     else:
-        return HTTPException(
+        raise HTTPException(
             status.HTTP_404_NOT_FOUND,
             f"No multitsframe data available with provided id '{mtsf_id}'.",
         )
