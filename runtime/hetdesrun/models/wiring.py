@@ -1,12 +1,14 @@
-from pydantic import BaseModel, Field, StrictInt, StrictStr, validator
+import re
+
+from pydantic import BaseModel, ConstrainedStr, Field, StrictInt, StrictStr, validator
 
 from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
-from hetdesrun.models import RESERVED_FILTER_KEY, FilterKey
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.util import valid_python_identifier
 
 ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = False
+RESERVED_FILTER_KEY = ["from", "to", "id"]
 
 
 class OutputWiring(BaseModel):
@@ -65,6 +67,11 @@ class OutputWiring(BaseModel):
                 '"ref_id_type" and "ref_key". At least one of them is missing.'
             )
         return v
+
+
+class FilterKey(ConstrainedStr):
+    min_length = 1
+    regex = re.compile(r"^[a-zA-Z]\w+$", flags=re.ASCII)
 
 
 class InputWiring(BaseModel):
