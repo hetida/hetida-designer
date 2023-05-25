@@ -1,6 +1,8 @@
 from logging import getLogger
 
 import boto3
+from botocore import UNSIGNED
+from botocore.client import Config
 from botocore.exceptions import ClientError
 from mypy_boto3_s3 import S3Client
 
@@ -34,9 +36,17 @@ async def get_s3_client() -> S3Client:
     A AdapterConnectionError raised in get_session may occur.
     """
     endpoint_url = get_blob_adapter_config().endpoint_url
-    session = await get_session()
+
     try:
-        client = session.client("s3", endpoint_url=endpoint_url)
+        if get_blob_adapter_config().anonymous is True:
+            client = boto3.client(
+                "s3",
+                endpoint_url=endpoint_url,
+                config=Config(signature_version=UNSIGNED),
+            )
+        else:
+            session = await get_session()
+            client = session.client("s3", endpoint_url=endpoint_url)
     except ValueError as error:
         msg = f"The string '{endpoint_url}' is no valid endpoint url!"
         logger.error(msg)

@@ -102,13 +102,17 @@ The blob storage adapter is configured by the following environment variables:
 * BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION
 * BLOB_STORAGE_ENDPOINT_URL
 * BLOB_STORAGE_STS_PARAMS
+* BLOB_STORAGE_ADAPTER_ANONYMOUS
 * BLOB_STORAGE_REGION_NAME
+* BLOB_STORAGE_CHECKSUM_ALGORITHM
 
 The location of the hierarchy JSON file within the runtime instance is specified with the environment variable `BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION`.
 Whether to automatically create buckets that are expected according to the hierarchy JSON file or to throw an error if they do not exist can be configured with the `BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION` environment variable.
 The environment variable `BLOB_STORAGE_STS_PRAMS` is supposed to be a JSON string that contains all parameters needed for the authentication via the STS REST API under the `BLOB_STORAGE_ENDPOINT_URL` besides `Action=AssumeRoleWithWebIdentity` and the `WebIdentityToken`.
+To send unsigned S3 requests set the `BLOB_STORAGE_ADAPTER_ANONYMOUS` environment variable to true. In that case automatic bucket creation will not be possible and the `BLOB_STORAGE_ADAPTER_ALLOW_BUCKET_CREATION` environment variable will be ignored.
 The environment variable `BLOB_STORAGE_REGION_NAME` should be set to the region name matching your blob storage setup.
-Its default value is "eu-central-1".
+The default value is "eu-central-1".
+Per default checksums created with the SHA1 algorithm are used to check the integrity of send and loaded objects. The `BLOB_STORAGE_CHECKSUM_ALGORITHM` environment variable can instead be set to one of the strings 'SHA256', 'CRC32' or 'CRC32C' to change the used algorithm or to an empty string to deactivate the usage of checksums. 
 
 An example using a minio instance as blob storage provider:
 
@@ -128,6 +132,12 @@ The blob storage adapter needs to be [registered](./adapter_registration.md) in 
 ```
 blob-storage-adapter|Blob-Storage-Adapter|http://localhost:8090/adapters/blob|http://hetida-designer-runtime:8090/adapters/blob
 ```
+
+### Configuring for an Azure Blob Storage
+
+Azure Blob Storage has its own API and currently does not directly support the S3 API. There are several proxy or gateway options to translate the S3 API requests into Azure Blob Storage API requests, e.g. S3Proxy. Depending on the proxy or gateway chosen, request authorization must be configured within that instance and authentication of the Blob storage adapter via an STS access token must be disabled by setting `BLOB_STORAGE_ADAPTER_ANONYMOUS` to true. In this case, make sure to provide security for your software through other means such as encapsulating the system.
+
+The transaction checksum algorithms supported by S3 and the algorithms supported by Azure Blob Storage have no common subset. Therefore, it is necessary to disable the use of transaction checksums by setting `BLOB_STORAGE_CHECKSUM_ALGORITHM` to an empty string.
 
 ## Usage
 All sources and sinks of the blob storage adapter are of type `Any`, thus only inputs and outputs of type `Any` can be wired to the blob storage adapter.
