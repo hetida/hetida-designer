@@ -192,11 +192,11 @@ def export_transformations(
     """
     import hetdesrun.models.wiring
 
-    hetdesrun.models.wiring.EXPORT_MODE = True
+    hetdesrun.models.wiring.ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = True
 
     import hetdesrun.backend.models.wiring
 
-    hetdesrun.backend.models.wiring.EXPORT_MODE = True
+    hetdesrun.backend.models.wiring.ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = True
 
     transformation_list: list[TransformationRevision] = []
     try:

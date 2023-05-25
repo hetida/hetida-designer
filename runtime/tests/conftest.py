@@ -235,7 +235,7 @@ def input_json_with_wiring_with_input() -> Any:
                 "workflow_input_name": "val_inp",
                 "adapter_id": 1,
                 "ref_id": "TEST-ID",
-                "filters": {"value": 32},
+                "filters": {"value": "32"},
             }
         ],
         "output_wirings": [

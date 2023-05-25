@@ -1,11 +1,14 @@
-from pydantic import BaseModel, Field, StrictInt, StrictStr, validator
+import re
+
+from pydantic import BaseModel, ConstrainedStr, Field, StrictInt, StrictStr, validator
 
 from hetdesrun.adapters import SINK_ADAPTERS, SOURCE_ADAPTERS
 from hetdesrun.adapters.generic_rest.external_types import ExternalType, GeneralType
 from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.util import valid_python_identifier
 
-EXPORT_MODE = False
+ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = False
+RESERVED_FILTER_KEYS = ["from", "to", "id"]
 
 
 class OutputWiring(BaseModel):
@@ -38,7 +41,9 @@ class OutputWiring(BaseModel):
 
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
-        if not EXPORT_MODE and (not v in SINK_ADAPTERS and not isinstance(v, str)):
+        if not ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS and (
+            not v in SINK_ADAPTERS and not isinstance(v, str)
+        ):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
             )
@@ -62,6 +67,11 @@ class OutputWiring(BaseModel):
                 '"ref_id_type" and "ref_key". At least one of them is missing.'
             )
         return v
+
+
+class FilterKey(ConstrainedStr):
+    min_length = 1
+    regex = re.compile(r"^[a-zA-Z]\w+$", flags=re.ASCII)
 
 
 class InputWiring(BaseModel):
@@ -88,11 +98,13 @@ class InputWiring(BaseModel):
         description="Type of data. If present then must be one of "
         + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),  # type: ignore
     )
-    filters: dict = {}
+    filters: dict[FilterKey, str | None] = {}
 
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
-        if not EXPORT_MODE and (not v in SOURCE_ADAPTERS and not isinstance(v, str)):
+        if not ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS and (
+            not v in SOURCE_ADAPTERS and not isinstance(v, str)
+        ):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."
             )
@@ -116,6 +128,26 @@ class InputWiring(BaseModel):
                 '"ref_id_type" and "ref_key". At least one of them is missing.'
             )
         return v
+
+    @validator("filters")
+    def no_reserved_filter_keys(
+        cls, filters: dict[FilterKey, str | None]
+    ) -> dict[FilterKey, str | None]:
+        if any(reserved_key in filters for reserved_key in RESERVED_FILTER_KEYS):
+            raise ValueError(
+                f"The strings {RESERVED_FILTER_KEYS} are reserved filter keys!"
+            )
+
+        return filters
+
+    @validator("filters")
+    def none_filter_value_to_empty_string(
+        cls, filters: dict[FilterKey, str | None]
+    ) -> dict[FilterKey, str | None]:
+        for key, value in filters.items():
+            if value is None:
+                filters[key] = ""
+        return filters
 
 
 class WorkflowWiring(BaseModel):

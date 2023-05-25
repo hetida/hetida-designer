@@ -257,7 +257,7 @@ dto_json_wiring = {
             "id": str(get_uuid_from_seed("input wiring")),
             "workflowInputName": "wf_input",
             "adapterId": "direct_provisioning",
-            "filters": {"value": 100},
+            "filters": {"value": "100"},
         },
     ],
     "outputWirings": [
@@ -785,7 +785,7 @@ async def test_execute_for_full_workflow_dto_with_nan(
                         InputWiring(
                             adapter_id="direct_provisioning",
                             workflow_input_name="positive_step_size",
-                            filters={"value": 0.2},
+                            filters={"value": "0.2"},
                         ),
                     ],
                     output_wirings=[],

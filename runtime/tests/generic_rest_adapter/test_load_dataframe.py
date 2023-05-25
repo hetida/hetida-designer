@@ -5,8 +5,51 @@ import pytest
 
 from hetdesrun.adapters.generic_rest import load_data
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
+from hetdesrun.adapters.generic_rest.load_dataframe import (
+    load_single_dataframe_from_adapter,
+)
 from hetdesrun.adapters.generic_rest.send_framelike import encode_attributes
 from hetdesrun.models.data_selection import FilteredSource
+
+
+@pytest.mark.asyncio
+async def test_load_single_dataframe_from_adapter() -> None:
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_dataframe.load_framelike_data",
+    ) as load_framelike_mock:
+        await load_single_dataframe_from_adapter(
+            FilteredSource(
+                ref_id="id_1",
+                type="dataframe",
+                filters={
+                    "from": "2019-08-01T15:45:30.000Z",
+                    "to": "2019-08-01T15:46:00.000Z",
+                    "filter_key": "filter_value",
+                },
+            ),
+            adapter_key="load_dataframe",
+        )
+
+        load_framelike_mock.assert_awaited_once_with(
+            [
+                FilteredSource(
+                    ref_id="id_1",
+                    type="dataframe",
+                    filters={
+                        "from": "2019-08-01T15:45:30.000Z",
+                        "to": "2019-08-01T15:46:00.000Z",
+                        "filter_key": "filter_value",
+                    },
+                )
+            ],
+            additional_params=[
+                ("from", "2019-08-01T15:45:30.000Z"),
+                ("to", "2019-08-01T15:46:00.000Z"),
+                ("filter_key", "filter_value"),
+            ],
+            adapter_key="load_dataframe",
+            endpoint="dataframe",
+        )
 
 
 async def mock_load_generic_rest_dataframe_data(*args, **kwargs):
