@@ -68,6 +68,7 @@ class WorkflowIoFrontendDto(BaseModel):
             data_type=self.type,
         )
 
+    # TODO: Check if this can be replaced by from_io_connector method!
     @classmethod
     def from_io(
         cls,

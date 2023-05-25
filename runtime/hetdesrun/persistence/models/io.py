@@ -153,11 +153,36 @@ class OperatorInput(Flexibility, Connector):
 
 
 class WorkflowContentIO(Connector):
-    operator_id: UUID
-    connector_id: UUID
-    operator_name: str  # not needed in FE/BE/RT, kept for readability of jsons only
-    connector_name: str
-    position = Position(x=0, y=0)
+    """Represents in- and outputs of WorkflowContent.
+
+    The attribute id inherited from IO will be used in a link connecting this in- or output to an
+    operator.
+    """
+
+    operator_id: UUID = Field(
+        ..., description="Id of the operator to which this IOConnector is connected"
+    )
+    connector_id: UUID = Field(
+        ...,
+        description="Id of the connector of the operator to which this IOConnector is connected",
+    )
+    operator_name: str = Field( # not needed in FE/BE/RT, kept for readability of jsons only
+        ...,
+        description=(
+            "Name of the operator to which this IOConnector is connected. "
+            "Is displayed in the IO dialog."
+        ),
+    )
+    connector_name: str = Field(
+        ...,
+        description=(
+            "Name of the connector of the operator to which this IOConnector is connected. "
+            "Is displayed in the IO dialog."
+        ),
+    )
+    position: Position = Field(
+        Position(x=0, y=0), description="Position of this IOConnector"
+    )
 
     def matches_operator_io(self, other: Connector) -> bool:
         return self.connector_id == other.id and (
@@ -187,6 +212,7 @@ class WorkflowContentOutput(WorkflowContentIO):
             data_type=self.data_type,
         )
 
+    # TODO: Check if attributes instead of input parameters can be used here!
     def to_workflow_output(self) -> WorkflowOutput:
         """Transform workflow output into workflow node output.
 
@@ -294,7 +320,7 @@ class WorkflowContentConstantInput(WorkflowContentIO):
 
     # the frontend requires a string for the constant value
     # the runtime will take care of the correct data type before execution
-    value: str
+    value: str = Field(..., description="Value of the Constant")
 
     @root_validator()
     def name_none(cls, values: dict) -> dict:
