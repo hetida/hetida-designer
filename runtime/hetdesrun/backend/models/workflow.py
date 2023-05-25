@@ -659,7 +659,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
     def to_workflow_content(self) -> WorkflowContent:
         return WorkflowContent(
             inputs=[
-                inp.to_io_connector(
+                inp.to_workflow_content_io(
                     *get_operator_and_connector_name(
                         inp.operator, inp.connector, self.operators
                     )
@@ -677,7 +677,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                 if inp.constant
             ],
             outputs=[
-                output.to_io_connector(
+                output.to_workflow_content_io(
                     *get_operator_and_connector_name(
                         output.operator, output.connector, self.operators
                     )
@@ -734,58 +734,22 @@ class WorkflowRevisionFrontendDto(BasicInformation):
             transformation_revision.content, WorkflowContent
         )  # hint for mypy
 
-        # TODO: Check if this is still the case!
-        # !!! If IO is not yet linked ambiguous which operator belongs to IO !!!
-        # !!! default values might cause problems !!!
         inputs: list[WorkflowIoFrontendDto] = []
 
-        for inp in transformation_revision.io_interface.inputs:
-            # TODO: It might be more efficient to use content.inputs instead of io_interface.inputs!
-            # the former have attributes operator_id and connector_id
-            operator_id, connector_id = opposite_link_end_by_connector_id(
-                inp.id, transformation_revision.content.links
-            )
-            if operator_id is None:
-                operator_id = transformation_revision.id
-            assert connector_id is not None  # hint for mypy # noqa: S101
-            pos_x, pos_y = position_from_input_connector_id(
-                inp.id, transformation_revision.content.inputs
-            )
+        for dynamic_wf_input in transformation_revision.content.inputs:
             inputs.append(
-                WorkflowIoFrontendDto.from_io(
-                    inp, operator_id, connector_id, pos_x, pos_y
+                WorkflowIoFrontendDto.from_workflow_content_io(dynamic_wf_input)
+            )
+        for constant_wf_input in transformation_revision.content.constants:
+            inputs.append(
+                WorkflowIoFrontendDto.from_workflow_content_constant_input(
+                    constant_wf_input
                 )
-            )
-        # TODO: Check if attributes operator_id and connector_id can be used here!
-        for constant in transformation_revision.content.constants:
-            operator_id, connector_id = opposite_link_end_by_connector_id(
-                constant.id, transformation_revision.content.links
-            )
-            if operator_id is None:
-                operator_id = transformation_revision.id
-            assert connector_id is not None  # hint for mypy # noqa: S101
-            inputs.append(
-                WorkflowIoFrontendDto.from_constant(constant, operator_id, connector_id)
             )
 
         outputs: list[WorkflowIoFrontendDto] = []
-        # TODO: It might be more efficient to use content.outputs instead of io_interface.outputs!
-        # the former have attributes operator_id and connector_id
-        for output in transformation_revision.io_interface.outputs:
-            operator_id, connector_id = opposite_link_end_by_connector_id(
-                output.id, transformation_revision.content.links
-            )
-            if operator_id is None:
-                operator_id = transformation_revision.id
-            assert connector_id is not None  # hint for mypy # noqa: S101
-            pos_x, pos_y = position_from_output_connector_id(
-                output.id, transformation_revision.content.outputs
-            )
-            outputs.append(
-                WorkflowIoFrontendDto.from_io(
-                    output, operator_id, connector_id, pos_x, pos_y
-                )
-            )
+        for output in transformation_revision.content.outputs:
+            outputs.append(WorkflowIoFrontendDto.from_workflow_content_io(output))
 
         return WorkflowRevisionFrontendDto(
             id=transformation_revision.id,

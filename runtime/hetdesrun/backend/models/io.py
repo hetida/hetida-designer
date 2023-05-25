@@ -31,7 +31,7 @@ class WorkflowIoFrontendDto(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_io_connector(
+    def to_workflow_content_io(
         self, operator_name: str, connector_name: str
     ) -> WorkflowContentIO:
         return WorkflowContentIO(
@@ -68,42 +68,35 @@ class WorkflowIoFrontendDto(BaseModel):
             data_type=self.type,
         )
 
-    # TODO: Check if this can be replaced by from_io_connector method!
     @classmethod
-    def from_io(
+    def from_workflow_content_io(
         cls,
-        io: IO,
-        operator_id: UUID,
-        connector_id: UUID,
-        pos_x: int,
-        pos_y: int,
+        workflow_content_io: WorkflowContentIO,
     ) -> "WorkflowIoFrontendDto":
         return WorkflowIoFrontendDto(
-            id=io.id,
-            name=io.name,
-            posX=pos_x,
-            posY=pos_y,
-            type=io.data_type,
-            operator=operator_id,
-            connector=connector_id,
+            id=workflow_content_io.id,
+            name=workflow_content_io.name,
+            posX=workflow_content_io.position.x,
+            posY=workflow_content_io.position.y,
+            type=workflow_content_io.data_type,
+            operator=workflow_content_io.operator_id,
+            connector=workflow_content_io.connector_id,
             constant=False,
             constantValue={"value": ""},
         )
 
     @classmethod
-    def from_constant(
+    def from_workflow_content_constant_input(
         cls,
         constant: WorkflowContentConstantInput,
-        operator_id: UUID,
-        connector_id: UUID,
     ) -> "WorkflowIoFrontendDto":
         return WorkflowIoFrontendDto(
             id=constant.id,
             posX=constant.position.x,
             posY=constant.position.y,
             type=constant.data_type,
-            operator=operator_id,
-            connector=connector_id,
+            operator=constant.operator_id,
+            connector=constant.connector_id,
             constant=True,
             constantValue={"value": constant.value},
         )

@@ -166,13 +166,13 @@ class WorkflowContentIO(Connector):
         ...,
         description="Id of the connector of the operator to which this IOConnector is connected",
     )
-    operator_name: str = Field( # not needed in FE/BE/RT, kept for readability of jsons only
+    operator_name: str = Field(
         ...,
         description=(
             "Name of the operator to which this IOConnector is connected. "
             "Is displayed in the IO dialog."
         ),
-    )
+    )  # not needed in FE/BE/RT, kept for readability of jsons only
     connector_name: str = Field(
         ...,
         description=(
@@ -212,7 +212,6 @@ class WorkflowContentOutput(WorkflowContentIO):
             data_type=self.data_type,
         )
 
-    # TODO: Check if attributes instead of input parameters can be used here!
     def to_workflow_output(self) -> WorkflowOutput:
         """Transform workflow output into workflow node output.
 

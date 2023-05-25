@@ -1164,7 +1164,9 @@ def test_io_to_io_connector_for_input():
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
     ]
-    io_connector = WorkflowIoFrontendDto(**valid_input_with_name).to_io_connector(
+    io_connector = WorkflowIoFrontendDto(
+        **valid_input_with_name
+    ).to_workflow_content_io(
         *get_operator_and_connector_name(
             UUID(valid_input_with_name["operator"]),
             UUID(valid_input_with_name["connector"]),
@@ -1188,7 +1190,9 @@ def test_io_to_io_connector_for_output():
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
     ]
-    io_connector = WorkflowIoFrontendDto(**valid_output_with_name).to_io_connector(
+    io_connector = WorkflowIoFrontendDto(
+        **valid_output_with_name
+    ).to_workflow_content_io(
         *get_operator_and_connector_name(
             UUID(valid_output_with_name["operator"]),
             UUID(valid_output_with_name["connector"]),
@@ -1233,7 +1237,7 @@ def test_to_constant():
     assert constant.value == valid_input_without_name["constantValue"]["value"]
 
 
-def test_from_constant():
+def test_from_workflow_content_constant_input():
     operators = [
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
@@ -1246,10 +1250,8 @@ def test_from_constant():
             operators,
         )
     )
-    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_constant(
-        constant,
-        operator_id=UUID(valid_input_without_name["operator"]),
-        connector_id=UUID(valid_input_without_name["connector"]),
+    io_dto: WorkflowIoFrontendDto = (
+        WorkflowIoFrontendDto.from_workflow_content_constant_input(constant)
     )
 
     assert str(io_dto.id) == valid_input_without_name["id"]
@@ -1318,16 +1320,20 @@ def test_to_workflow_content():
     )
 
 
-def test_io_from_io():
-    inp = WorkflowIoFrontendDto(**valid_input_with_name).to_io()
-    workflow_content = WorkflowRevisionFrontendDto(
-        **valid_workflow_example_iso_forest
-    ).to_workflow_content()
-    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_io(
-        inp,
-        valid_input_with_name["operator"],
-        valid_input_with_name["connector"],
-        *position_from_input_connector_id(inp.id, workflow_content.inputs),
+def test_io_from_workflow_content_io():
+    operators = [
+        WorkflowOperatorFrontendDto(**operator).to_operator()
+        for operator in valid_workflow_example_iso_forest["operators"]
+    ]
+    wf_input = WorkflowIoFrontendDto(**valid_input_with_name).to_workflow_content_io(
+        *get_operator_and_connector_name(
+            UUID(valid_input_with_name["operator"]),
+            UUID(valid_input_with_name["connector"]),
+            operators,
+        )
+    )
+    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_workflow_content_io(
+        wf_input
     )
 
     assert str(io_dto.id) == valid_input_with_name["id"]
@@ -1581,11 +1587,12 @@ def test_workflow_dto_to_transformation_revision_and_back_matches_with_ambiguous
         assert (
             workflow_dto.inputs[i].constant == returned_workflow_dto.inputs[i].constant
         )
-        assert (
-            workflow_dto.inputs[i].constant_value
-            == returned_workflow_dto.inputs[i].constant_value
-        )
-        if not workflow_dto.inputs[i].constant:
+        if workflow_dto.inputs[i].constant is True:
+            assert (
+                workflow_dto.inputs[i].constant_value
+                == returned_workflow_dto.inputs[i].constant_value
+            )
+        else:
             assert workflow_dto.inputs[i].name == returned_workflow_dto.inputs[i].name
     assert len(workflow_dto.outputs) == len(returned_workflow_dto.outputs)
     for i in range(len(workflow_dto.outputs)):
@@ -1603,10 +1610,6 @@ def test_workflow_dto_to_transformation_revision_and_back_matches_with_ambiguous
         assert (
             workflow_dto.outputs[i].constant
             == returned_workflow_dto.outputs[i].constant
-        )
-        assert (
-            workflow_dto.outputs[i].constant_value
-            == returned_workflow_dto.outputs[i].constant_value
         )
         if not workflow_dto.outputs[i].constant:
             assert workflow_dto.outputs[i].name == returned_workflow_dto.outputs[i].name
