@@ -105,7 +105,7 @@ dto_json_workflow_2_update = {
                     "id": "5021c197-3c38-4e66-b4dc-20e6b5a75bdc",
                     "workflowInputName": "operator_input",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": 100},
+                    "filters": {"value": "100"},
                 },
             ],
             "outputWirings": [
@@ -127,7 +127,7 @@ dto_json_wiring = {
             "id": "5021c197-3c38-4e66-b4dc-20e6b5a75bdc",
             "workflowInputName": "operator_input",
             "adapterId": "direct_provisioning",
-            "filters": {"value": 100},
+            "filters": {"value": "100"},
         },
     ],
     "outputWirings": [
