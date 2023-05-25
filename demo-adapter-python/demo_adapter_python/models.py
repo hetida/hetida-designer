@@ -20,8 +20,8 @@ class StructureThingNode(BaseModel):
     description: str
 
 
-class FilterType(Enum):
-    FreeText = "free_text"
+class FilterType(str, Enum):
+    free_text = "free_text"
 
 
 class StructureFilter(BaseModel):

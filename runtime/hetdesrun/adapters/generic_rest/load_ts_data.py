@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from collections.abc import Iterable
 from typing import Any
 
 import numpy as np
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 async def load_ts_data_from_adapter(
     filtered_sources: list[FilteredSource],
-    filter_params: frozenset[tuple[str, Any]],
+    filter_params: Iterable[tuple[str, Any]],
     adapter_key: str,
 ) -> pd.DataFrame:
     """Load data from generic rest adapter timeseries endpoint

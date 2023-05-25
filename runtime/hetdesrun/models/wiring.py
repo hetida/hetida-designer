@@ -8,7 +8,7 @@ from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.util import valid_python_identifier
 
 ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = False
-RESERVED_FILTER_KEY = ["from", "to", "id"]
+RESERVED_FILTER_KEYS = ["from", "to", "id"]
 
 
 class OutputWiring(BaseModel):
@@ -133,9 +133,9 @@ class InputWiring(BaseModel):
     def no_reserved_filter_keys(
         cls, filters: dict[FilterKey, str | None]
     ) -> dict[FilterKey, str | None]:
-        if any(reserved_key in filters for reserved_key in RESERVED_FILTER_KEY):
+        if any(reserved_key in filters for reserved_key in RESERVED_FILTER_KEYS):
             raise ValueError(
-                f"The strings {RESERVED_FILTER_KEY} are reserved filter keys!"
+                f"The strings {RESERVED_FILTER_KEYS} are reserved filter keys!"
             )
 
         return filters

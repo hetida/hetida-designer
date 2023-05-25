@@ -83,11 +83,10 @@ Response:
       "metadataKey": STRING, // optional/null if type not of form metadata(...)
       "visible": BOOL, // optional, default is true
       "path": STRING, // path to this element that is shown in frontend
-      "filters":{  // may be used to request additional UI filters in 
-                 // future versions. Should be an empty mapping for now
+      "filters":{  // may be used to request additional filters
         "<key>": {
           "name": STRING,
-          "type": STRING,
+          "type": FILTERTYPE, // enumeration, possible value: "free_text"
           "required": BOOLEAN
         },
         ...
@@ -112,10 +111,10 @@ Some details:
 
 - sources and sinks have an optional (default true) `visible` attribute. In future versions hetida designer might not show sources and sinks in the tree with visible being false.
 
-- `filters` may request user interface filters. Currently this can either be an empty mapping object (`{}`) or a filter of type `free_text`. Note that for timeseries type sources, the frontend asks for the time interval automatically, so there is no need to specify this as a filter for now.
-These filters can be used by adding a corresponding key-value pair in the `filters` attribute of the input wiring. Such key-value pairs are sent as query parameters in the GET request and must therefore be implemented in the respective endpoint of the adapter to yield the desired behavior.
+- `filters` may request additional filters. Currently this can either be an empty mapping object (`{}`) or a mapping with filters of type `free_text`. Note that for timeseries type sources, the frontend asks for the time interval automatically, so there is no need to specify this as a filter for now.  If additional filters are required, the user interface provides additional input fields where the value for each filter can be entered.
+Via the REST API these filters are used by adding a corresponding key-value pair in the `filters` attribute of the input wiring.
+**Note**: If the adapter requests filters for a source delivered via an GET endpoint it must handle the respective additional query parameters of form filterkey=filtervalue at that endpoint.
 The value is always sent as a string. If other data types are desired, the value must be parsed accordingly within the adapter. If no value is entered in the user interface, an empty string is sent.
-For now, the value of the `required` attribute has no effect, but all filters are considered as not required. Thus, the endpoints should be implemented with a suitable default value for the filter query parameters.
 
 - `path` should be a human readable "breadcrumb"-like path to the source or sink. This attribute is used in the designer frontend for example when filtering.
 
@@ -306,8 +305,6 @@ Payload (POST):
 }
 ```
 
-**Note:** All metadata is wirable to workflow inputs by convention. In a later version metadata will by default not be  wirable to workflow outputs unless `isSink` is set to `true`.
-
 #### /sinks/{id}/metadata/ (GET)
 
 Analogous to /sources/{id}/metadata/ (GET) but handles metadata attached to sinks.
@@ -324,8 +321,6 @@ Analogous to /sources/{id}/metadata/ (GET) but handles metadata attached to thin
 
 Analogous to /sources/{id}/metadata/{key} (GET, POST) but handles metadata attached to thingNodes. This includes metadata occurring directly in the hierarchy tree (they are considered attached to their parent thingNode).
 
-**Note:** If there are metadata sources occuring directly in the hierarchy tree with non-empty filters, the query parameters corresponding to the filter keys must be implemented for this GET endpoint.
-
 ## Data Endpoints
 
 #### /timeseries (GET)
@@ -337,7 +332,6 @@ Query parameters:
 * `id` (can occur multiple times, must occur at least once): The ids of the requested timeseries. These will be the source ids of the timeseries sources as they occur in the structure endpoint.
 * `from`: The timestamp from which on datapoints of the source are requested. The frontend will send a Zulu timestamp to nanosecond precision, e.g. "2020-03-11T13:45:18.194000000Z".
 * `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
-* If there are timeseries sources with non-empty filters, the query parameters corresponding to the filter keys must be implemented for this GET endpoint.
 
 Response (Line delimited Stream of Json records):
 
@@ -409,7 +403,6 @@ Metadata stored in the Pandas Series `attrs` attribute will be sent by the desig
 Query parameters:
 
 * `id`: required exactly once: This is a source id of a dataframe source occurring in the structure endpoint
-* If there are dataframe sources with non-empty filters, the query parameters corresponding to the filter keys must be implemented for this GET endpoint.
 
 Response (Line delimited Stream of Json records):
 
@@ -463,7 +456,6 @@ Query parameters:
 * `id`: required exactly once: This is a source id of a multitsframe source occurring in the structure endpoint
 * `from`: The timestamp from which on datapoints of the source are requested. The frontend will send a Zulu timestamp to nanosecond precision, e.g. "2020-03-11T13:45:18.194000000Z".
 * `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
-* If there are timeseries sources with non-empty filters, the query parameters corresponding to the filter keys must be implemented for this GET endpoint.
 
 Response (Line delimited Stream of Json records):
 

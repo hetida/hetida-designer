@@ -597,7 +597,7 @@ async def test_updating_and_keeping_existing_attrs_for_timeseries(
 
 
 @pytest.mark.asyncio
-async def test_additional_query_parameter(
+async def test_free_text_filters(
     async_test_client: AsyncClient,
 ) -> None:
     async with async_test_client as client:

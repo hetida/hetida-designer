@@ -10,7 +10,7 @@ class FilteredSource(BaseModel):
     ref_key: str | None = None
     type: str | None = None  # noqa: A003
 
-    filters: dict[str, str] = Field({}, description="actual set filters", example={})
+    filters: dict[str, str] = Field({}, description="actually set filters", example={})
 
 
 class FilteredSink(BaseModel):
@@ -19,4 +19,4 @@ class FilteredSink(BaseModel):
     ref_key: str | None = None
     type: str | None = None  # noqa: A003
 
-    filters: dict[str, str] = Field({}, description="actual set filters", example={})
+    filters: dict[str, str] = Field({}, description="actually set filters", example={})
