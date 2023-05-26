@@ -171,7 +171,7 @@ class PydanticMultiTimeseriesPandasDataFrame:
             raise ValueError(
                 "No null values are allowed for the column 'timestamp' of a MulitTSFrame."
             )
-        
+
         if len(df.index) == 0:
             df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
 
