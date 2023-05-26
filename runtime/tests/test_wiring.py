@@ -31,7 +31,7 @@ async def test_wiring_basics(input_json_with_wiring, async_test_client):
                 "workflow_input_name": "foo",
                 "adapter_id": 1,
                 "ref_id": "TEST-ID",
-                "filters": {"value": 42},
+                "filters": {"value": "42"},
             }
         ]
         status_code, output = await run_workflow_with_client(

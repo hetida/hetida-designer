@@ -70,7 +70,7 @@ tr_json_component_1 = {
             {
                 "workflow_input_name": "operator_input",
                 "adapter_id": "direct_provisioning",
-                "filters": {"value": 100},
+                "filters": {"value": "100"},
             },
         ],
         "output_wirings": [
@@ -113,7 +113,7 @@ tr_json_component_1_new_revision = {
             {
                 "workflow_input_name": "operator_input",
                 "adapter_id": "direct_provisioning",
-                "filters": {"value": 100},
+                "filters": {"value": "100"},
             },
         ],
         "output_wirings": [
@@ -569,7 +569,7 @@ tr_json_workflow_2_with_named_io_for_operator = {
             {
                 "workflow_input_name": "wf_input",
                 "adapter_id": "direct_provisioning",
-                "filters": {"value": 100},
+                "filters": {"value": "100"},
             },
         ],
         "output_wirings": [

@@ -66,13 +66,10 @@ async def send_single_metadatum_to_adapter(
     except httpx.HTTPError as e:
         msg = (
             f"Posting metadata to generic rest adapter endpoint {url}"
-            f" failed with Exception {str(e)}"
+            f" failed with Exception: {str(e)}"
         )
-
         logger.info(msg)
-        raise AdapterConnectionError(
-            f"Posting metadata from generic rest adapter endpoint {url} failed."
-        ) from e
+        raise AdapterConnectionError(msg) from e
 
     if resp.status_code not in (200, 201):
         msg = (
