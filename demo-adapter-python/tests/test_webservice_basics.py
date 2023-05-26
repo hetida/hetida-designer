@@ -97,7 +97,7 @@ async def walk_thing_nodes(  # noqa: PLR0913
 async def test_resources_offered_from_structure_hierarchy(
     async_test_client: AsyncClient,
 ) -> None:
-    """Walks through the structure-hierarchy providedand gets/posts offered resources"""
+    """Walks through the structure-hierarchy provided and gets/posts offered resources"""
     async with async_test_client as client:
         response_obj = (await client.get("/structure")).json()
 
@@ -633,7 +633,7 @@ async def test_free_text_filters(
             "/dataframe",
             params={
                 "id": "root.plantA.alerts",
-                "column_names": '[\\"b\\"]',
+                "column_names": """[\"b\"]""",
             },
         )
         assert df_response.status_code == 200
