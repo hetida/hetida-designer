@@ -149,13 +149,16 @@ class PydanticMultiTimeseriesPandasDataFrame:
                         "Could not parse provided input as Pandas DataFrame."
                     ) from read_json_exception
 
-            if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
-                column_names_string = ", ".join(df.columns)
-                multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
-                raise ValueError(
-                    f"The column names {column_names_string} don't match the column names "
-                    f"required for a MultiTSFrame {multitsframe_column_names_string}."
-                )
+        if len(df.columns) == 0:
+            df = pd.DataFrame(columns=MULTITSFRAME_COLUMN_NAMES)
+
+        if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
+            column_names_string = ", ".join(df.columns)
+            multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
+            raise ValueError(
+                f"The column names {column_names_string} don't match the column names "
+                f"required for a MultiTSFrame {multitsframe_column_names_string}."
+            )
 
         if df["metric"].isna().any():
             raise ValueError(
@@ -168,6 +171,9 @@ class PydanticMultiTimeseriesPandasDataFrame:
             raise ValueError(
                 "No null values are allowed for the column 'timestamp' of a MulitTSFrame."
             )
+        
+        if len(df.index) == 0:
+            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
 
         if not pd.api.types.is_datetime64tz_dtype(df["timestamp"]):
             raise ValueError(
