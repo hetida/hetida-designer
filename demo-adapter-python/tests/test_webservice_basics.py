@@ -605,11 +605,21 @@ async def test_free_text_filters(
             "/thingNodes/root.plantA/metadata/Temperature Unit",
             params={
                 "id": "root.plantA.alerts",
-                "latex_mode": "y",
+                "latex_mode": "Y",
             },
         )
         assert mk_response.status_code == 200
         assert mk_response.json()["value"] == "$^\\circ$F"
+
+        mk_response_empty_latex_mode = await client.get(
+            "/thingNodes/root.plantA/metadata/Temperature Unit",
+            params={
+                "id": "root.plantA.alerts",
+                "latex_mode": "",
+            },
+        )
+        assert mk_response_empty_latex_mode.status_code == 200
+        assert mk_response_empty_latex_mode.json()["value"] == "F"
 
         await client.post(
             "/dataframe",
@@ -623,7 +633,7 @@ async def test_free_text_filters(
             "/dataframe",
             params={
                 "id": "root.plantA.alerts",
-                "column_names": '["b"]',
+                "column_names": '[\\"b\\"]',
             },
         )
         assert df_response.status_code == 200

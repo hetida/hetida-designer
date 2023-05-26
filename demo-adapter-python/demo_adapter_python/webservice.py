@@ -438,8 +438,7 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
             return Metadatum(
                 key="Temperature Unit",
                 value="$^\\circ$F"
-                if latex_mode is not None
-                and latex_mode in ("yes", "y", "on", "true", "1")
+                if str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
                 else "F",
                 dataType="string",
             )
@@ -463,8 +462,8 @@ async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
             return Metadatum(
                 key="Temperature Unit",
                 value="$^\\circ$C"
-                if latex_mode is not None
-                and latex_mode in ("yes", "y", "on", "true", "1")
+                if latex_mode != ""
+                and str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
                 else "C",
                 dataType="string",
             )
@@ -681,18 +680,19 @@ async def post_timeseries(
 
 
 def parse_string_to_list(input_string: str) -> tuple[list, str]:
+    decoded_input_string = input_string.encode("utf-8").decode("unicode_escape")
     try:
-        list_from_string = json.loads(input_string)
+        list_from_string = json.loads(decoded_input_string)
     except json.decoder.JSONDecodeError:
         return (
             [],
-            f"Value of column_names '{input_string}' cannot be parsed as JSON.",
+            f"Value of column_names '{decoded_input_string}' cannot be parsed as JSON.",
         )
     else:
         if not isinstance(list_from_string, list):
             return (
                 [],
-                f"Value of column_names '{input_string}' is not a list.",
+                f"Value of column_names '{decoded_input_string}' is not a list.",
             )
         return (list_from_string, "")
 
@@ -700,7 +700,7 @@ def parse_string_to_list(input_string: str) -> tuple[list, str]:
 @demo_adapter_main_router.get("/dataframe", response_model=None)
 async def dataframe(
     df_id: str = Query(..., alias="id"),
-    column_names: str = Query("", example='["column_a", "column_b"]'),
+    column_names: str = Query("", example="""[\\\"column1\\\", \\\"column2\\\"]"""),
 ) -> StreamingResponse | HTTPException:
     if df_id.endswith("plantA.maintenance_events"):
         df = pd.DataFrame(
