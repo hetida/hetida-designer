@@ -108,6 +108,7 @@ def init_app() -> FastAPI:
     from hetdesrun.adapters.local_file.webservice import (
         local_file_adapter_router,
     )
+    from hetdesrun.adapters.sql_reader.webservice import sql_reader_adapter_router
 
     app = FastAPI(
         title="Hetida Designer " + app_desc_part() + " API",
@@ -129,6 +130,9 @@ def init_app() -> FastAPI:
     if get_config().is_runtime_service:
         app.include_router(
             local_file_adapter_router
+        )  # auth dependency set individually per endpoint
+        app.include_router(
+            sql_reader_adapter_router
         )  # auth dependency set individually per endpoint
         if get_blob_adapter_config().adapter_hierarchy_location != "":
             app.include_router(

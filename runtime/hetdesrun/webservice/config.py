@@ -290,7 +290,10 @@ class RuntimeConfig(BaseSettings):
         "|http://hetida-designer-demo-adapter-java:8091/adapter,"
         "local-file-adapter|Local-File-Adapter"
         "|http://localhost:8090/adapters/localfile"
-        "|http://hetida-designer-runtime:8090/adapters/localfile",
+        "|http://hetida-designer-runtime:8090/adapters/localfile,"
+        "sql-table-reader-adapter|SQL Reader Adapter"
+        "|http://localhost:8090/adapters/sqlreader"
+        "|http://localhost:8090/adapters/sqlreader",
         env="HETIDA_DESIGNER_ADAPTERS",
         description="list of the installed adapters",
     )
