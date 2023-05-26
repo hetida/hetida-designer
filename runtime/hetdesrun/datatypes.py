@@ -133,7 +133,9 @@ class PydanticMultiTimeseriesPandasDataFrame:
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
+    def validate(  # noqa:PLR0912
+        cls, v: pd.DataFrame | str | dict | list
+    ) -> pd.DataFrame:
         df: pd.DataFrame | None = None
         if isinstance(v, pd.DataFrame):
             df = v
