@@ -764,7 +764,8 @@ async def dataframe(
             except KeyError as error:
                 raise HTTPException(
                     status.HTTP_406_NOT_ACCEPTABLE,
-                    f"Dataframe with id {df_id} does not contain columns {column_names}.",
+                    f"Dataframe with id {df_id} contains columns {list(df)} "
+                    f"but does not contain all columns of {column_name_list}.",
                 ) from error
     else:
         raise HTTPException(

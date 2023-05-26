@@ -660,6 +660,16 @@ async def test_free_text_filters(
         assert df_response_no_list_column_names.status_code == 406
         assert "not a list" in df_response_no_list_column_names.text
 
+        df_response_wrong_key = await client.get(
+            "/dataframe",
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": """[\"b\",\"c\"]""",
+            },
+        )
+        assert df_response_wrong_key.status_code == 406
+        assert "does not contain" in df_response_wrong_key.text
+
         mtsf_response = await client.get(
             "/multitsframe",
             params={
