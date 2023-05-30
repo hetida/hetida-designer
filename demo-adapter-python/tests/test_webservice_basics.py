@@ -97,7 +97,7 @@ async def walk_thing_nodes(  # noqa: PLR0913
 async def test_resources_offered_from_structure_hierarchy(
     async_test_client: AsyncClient,
 ) -> None:
-    """Walks through the structure-hierarchy providedand gets/posts offered resources"""
+    """Walks through the structure-hierarchy provided and gets/posts offered resources"""
     async with async_test_client as client:
         response_obj = (await client.get("/structure")).json()
 
@@ -605,11 +605,21 @@ async def test_free_text_filters(
             "/thingNodes/root.plantA/metadata/Temperature Unit",
             params={
                 "id": "root.plantA.alerts",
-                "latex_mode": "y",
+                "latex_mode": "Y",
             },
         )
         assert mk_response.status_code == 200
         assert mk_response.json()["value"] == "$^\\circ$F"
+
+        mk_response_empty_latex_mode = await client.get(
+            "/thingNodes/root.plantA/metadata/Temperature Unit",
+            params={
+                "id": "root.plantA.alerts",
+                "latex_mode": "",
+            },
+        )
+        assert mk_response_empty_latex_mode.status_code == 200
+        assert mk_response_empty_latex_mode.json()["value"] == "F"
 
         await client.post(
             "/dataframe",
@@ -623,7 +633,7 @@ async def test_free_text_filters(
             "/dataframe",
             params={
                 "id": "root.plantA.alerts",
-                "column_names": '["b"]',
+                "column_names": """[\"b\"]""",
             },
         )
         assert df_response.status_code == 200
@@ -649,6 +659,16 @@ async def test_free_text_filters(
         )
         assert df_response_no_list_column_names.status_code == 406
         assert "not a list" in df_response_no_list_column_names.text
+
+        df_response_wrong_key = await client.get(
+            "/dataframe",
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": """[\"b\",\"c\"]""",
+            },
+        )
+        assert df_response_wrong_key.status_code == 406
+        assert "does not contain" in df_response_wrong_key.text
 
         mtsf_response = await client.get(
             "/multitsframe",
