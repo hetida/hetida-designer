@@ -13,66 +13,11 @@ from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.util import names_unique
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence.models.io import (
-    IOInterface,
-    WorkflowContentDynamicInput,
-    WorkflowContentOutput,
-)
+from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.link import Link
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
-
-
-# is unambiguous for inputs outputs
-def opposite_link_end_by_connector_id(
-    connector_id: UUID, links: list[Link]
-) -> list[UUID | None]:
-    link_ends: list[list[UUID | None]] = []
-
-    for link in links:
-        if link.start.connector.id == connector_id:
-            link_ends.append([link.end.operator, link.end.connector.id])
-        if link.end.connector.id == connector_id:
-            link_ends.append([link.start.operator, link.start.connector.id])
-
-    if len(link_ends) > 0:
-        return link_ends[0]
-
-    # default values in case no link is connected to the connector
-    return [connector_id, connector_id]
-
-
-def position_from_input_connector_id(
-    input_id: UUID, inputs: list[WorkflowContentDynamicInput]
-) -> list[int]:
-    positions: list[list[int]] = []
-
-    for inp in inputs:
-        if inp.id == input_id:
-            positions.append([inp.position.x, inp.position.y])
-
-    if len(positions) > 0:
-        return positions[0]
-
-    # default values in case no input connector matches the input_id
-    return [0, -200]
-
-
-def position_from_output_connector_id(
-    output_id: UUID, outputs: list[WorkflowContentOutput]
-) -> list[int]:
-    positions: list[list[int]] = []
-
-    for output in outputs:
-        if output.id == output_id:
-            positions.append([output.position.x, output.position.y])
-
-    if len(positions) > 0:
-        return positions[0]
-
-    # default values in case no input connector matches the output_id
-    return [0, -200]
 
 
 def get_operator_and_connector_name(

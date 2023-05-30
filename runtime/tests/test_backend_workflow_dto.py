@@ -11,7 +11,6 @@ from hetdesrun.backend.models.workflow import (
     WorkflowOperatorFrontendDto,
     WorkflowRevisionFrontendDto,
     get_operator_and_connector_name,
-    position_from_input_connector_id,
 )
 
 valid_workflow_example_iso_forest: dict = {
