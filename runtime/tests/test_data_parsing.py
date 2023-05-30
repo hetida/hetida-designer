@@ -76,6 +76,16 @@ def test_multitsframe_parsing():
     class MyMultiTsFrameModel(BaseModel):
         mtsf: PydanticMultiTimeseriesPandasDataFrame
 
+    empty_df_mtsf = MyMultiTsFrameModel(mtsf=("""{}""")).mtsf
+
+    assert len(empty_df_mtsf) == 0
+
+    empty_mtsf = MyMultiTsFrameModel(
+        mtsf=('{"value":[],"metric":[],"timestamp":[]}')
+    ).mtsf
+
+    assert len(empty_mtsf) == 0
+
     mtsf1 = MyMultiTsFrameModel(
         mtsf=(
             '{"value":[1.0,2,"x",1.9,null,"y"],'
