@@ -23,7 +23,6 @@
     "format:staged": "pretty-quick --staged",
     "e2e-all": "playwright test --config=./playwright/playwright.config.ts",
     "e2e-chromium": "playwright test --config=./playwright/playwright.config.ts --project=chromium",
-    "tslint-check": "tslint-config-prettier-check ./tslint.json",
     "test-headless": "ng test --watch=false --browsers=ChromeHeadless"
   },
   "husky": {

@@ -3,7 +3,7 @@
 @import 'src/app/components/navigation/navigation-container/navigation-container.component.theme';
 @import 'src/app/components/popover-transformation/popover-transformation.component.theme';
 @import 'src/app/components/protocol-viewer/protocol-viewer.component.theme';
-@import '~hd-wiring/_theme';
+@import 'hd-wiring/theme';
 // @import 'src/app/hd-wiring-module/node-search/node-search.component.theme';
 
 @mixin hd-material-theme($theme) {
