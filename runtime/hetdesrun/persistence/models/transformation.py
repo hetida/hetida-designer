@@ -237,7 +237,7 @@ class TransformationRevision(BaseModel):
             if not workflow_input.matches_trafo_input(trafo_input):
                 raise ValueError(
                     f"For the io interface input '{trafo_input.id}' "
-                    "the workflow content input with the same id does not match!"
+                    "the workflow content input with the same id does not match! "
                     "Thus, it will be removed from the io interface."
                 )
 
