@@ -12,6 +12,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from hetdesrun import VERSION
+from hetdesrun.adapters.sql_reader.config import get_sql_reader_config
 from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
@@ -131,9 +132,14 @@ def init_app() -> FastAPI:
         app.include_router(
             local_file_adapter_router
         )  # auth dependency set individually per endpoint
-        app.include_router(
-            sql_reader_adapter_router
-        )  # auth dependency set individually per endpoint
+
+        if (
+            get_sql_reader_config().active
+            and get_sql_reader_config().service_in_runtime
+        ):
+            app.include_router(
+                sql_reader_adapter_router
+            )  # auth dependency set individually per endpoint
         if get_blob_adapter_config().adapter_hierarchy_location != "":
             app.include_router(
                 blob_storage_adapter_router
@@ -143,6 +149,13 @@ def init_app() -> FastAPI:
         )  # auth dependency set individually per endpoint
 
     if get_config().is_backend_service:
+        if (
+            get_sql_reader_config().active
+            and not get_sql_reader_config().service_in_runtime
+        ):
+            app.include_router(
+                sql_reader_adapter_router
+            )  # auth dependency set individually per endpoint
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(
             base_item_router, prefix="/api", dependencies=get_auth_deps()

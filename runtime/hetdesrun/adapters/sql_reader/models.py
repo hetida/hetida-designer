@@ -29,6 +29,17 @@ class SQLReaderStructureSource(BaseModel):
     filters: dict[str, dict] | None = {}
 
 
+class SQLReaderStructureSink(BaseModel):
+    id: str  # noqa: A003
+    thingNodeId: str
+    name: str
+    type: ExternalType = ExternalType.DATAFRAME  # noqa: A003
+    visible: Literal[True] = True
+    path: str = Field(..., description="Display path used in Designer Frontend")
+    metadataKey: str | None = None
+    filters: dict[str, dict] | None = {}
+
+
 class MultipleSourcesResponse(BaseModel):
     resultCount: int
     sources: list[SQLReaderStructureSource]
@@ -36,7 +47,7 @@ class MultipleSourcesResponse(BaseModel):
 
 class MultipleSinksResponse(BaseModel):
     resultCount: int
-    sinks: list[object]  # always empty
+    sinks: list[SQLReaderStructureSink]
 
 
 class StructureResponse(BaseModel):

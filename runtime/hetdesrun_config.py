@@ -85,6 +85,13 @@ register_source_adapter(
     adapter_key="sql-table-reader-adapter", load_func=sql_table_reader_load_data
 )
 
+# noqa: E402
+from hetdesrun.adapters.sql_reader import send_data as sql_table_reader_send_data
+
+register_sink_adapter(
+    adapter_key="sql-table-reader-adapter", send_func=sql_table_reader_send_data
+)
+
 
 # Registering File Support Handlers for the local file adapter
 from hetdesrun.adapters.local_file.extensions import (  # noqa: E402

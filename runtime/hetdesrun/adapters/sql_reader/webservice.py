@@ -15,11 +15,13 @@ from hetdesrun.adapters.sql_reader.models import (
     InfoResponse,
     MultipleSinksResponse,
     MultipleSourcesResponse,
+    SQLReaderStructureSink,
     SQLReaderStructureSource,
     StructureResponse,
     StructureThingNode,
 )
 from hetdesrun.adapters.sql_reader.structure import (
+    get_sink_by_id,
     get_source_by_id,
     get_sources,
     get_structure,
@@ -131,6 +133,24 @@ async def get_sinks_metadata(sinkId: str) -> list:  # noqa: ARG001
     in an empty list!
     """
     return []
+
+
+@sql_reader_adapter_router.get(
+    "/sinks/{sink_id:path}",
+    response_model=SQLReaderStructureSink,
+    dependencies=get_auth_deps(),
+)
+async def get_single_sink(sink_id: str) -> SQLReaderStructureSink:
+    possible_sink = get_sink_by_id(sink_id)
+
+    if possible_sink is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Could not find writable sql table "
+            + from_url_representation(sink_id),
+        )
+
+    return possible_sink
 
 
 @sql_reader_adapter_router.get(

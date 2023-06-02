@@ -219,7 +219,7 @@ let
 
       cd ${runtimeDir}
       export HD_DATABASE_URL="postgresql+psycopg2://$(whoami):hetida_designer_dbpasswd@localhost:5432/hetida_designer_db"
-      export RUNTIME_SQL_READER_ADAPTER_SQL_DATABASES='[{"name": "sqlite example db", "key": "example_sqlite_db", "connection_url": "sqlite+pysqlite:///./tests/data/reader_adapter/example_sqlite.db"}]'
+      export RUNTIME_SQL_READER_ADAPTER_SQL_DATABASES='[{"name": "sqlite example db", "key": "example_sqlite_db", "connection_url": "sqlite+pysqlite:///./tests/data/reader_adapter/example_sqlite.db", "append_tables": ["append_alert_table", "model_run_stats"], "replace_tables" : ["model_config_params"]}]'
       export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092,local-file-adapter|Local-File-Adapter|http://localhost:8080/adapters/localfile|http://localhost:8080/adapters/localfile,sql-table-reader-adapter|SQL Reader Adapter|http://localhost:8080/adapters/sqlreader|http://localhost:8080/adapters/sqlreader"
       export HD_USE_AUTH=false
       export HD_MAINTENANCE_SECRET="maintenance"
