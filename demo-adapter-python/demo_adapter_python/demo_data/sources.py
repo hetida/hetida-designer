@@ -94,12 +94,12 @@ sources_json_objects: list[dict[str, Any]] = [
         "type": ExternalType.MULTITSFRAME,
         "filters": {
             "lower_threshold": {
-                "name": "above threshold",
+                "name": "lower threshold",
                 "type": "free_text",
                 "required": False,
             },
             "upper_threshold": {
-                "name": "below threshold",
+                "name": "upper threshold",
                 "type": "free_text",
                 "required": False,
             },
