@@ -14,10 +14,7 @@ import {
   BrowserAnimationsModule
 } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
-import {
-  OwlDateTimeModule,
-  OwlNativeDateTimeModule
-} from '@danielmoncada/angular-datetime-picker';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { OwlMomentDateTimeModule } from '@danielmoncada/angular-datetime-picker-moment-adapter';
 import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
@@ -130,7 +127,6 @@ const httpLoaderFactory = (configService: ConfigService) => {
     ReactiveFormsModule,
     HttpClientModule,
     OwlDateTimeModule,
-    OwlNativeDateTimeModule,
     OwlMomentDateTimeModule,
     MaterialModule,
     HdWiringModule,
