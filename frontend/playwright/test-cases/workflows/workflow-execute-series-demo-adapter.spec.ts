@@ -11,7 +11,7 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
   const workflowTag = '1.0.0';
   const workflowInputName = 'input_series';
   const adapter = 'Python-Demo-Adapter';
-  const source = 'Influx Temperature';
+  const source = 'Influx Pressure';
   const timestampRangeFrom = moment('2023-01-01T12:15Z', 'YYYY-MM-DD HH:mm');
   const timestampRangeTo = moment('2023-01-02T12:15Z', 'YYYY-MM-DD HH:mm');
 
