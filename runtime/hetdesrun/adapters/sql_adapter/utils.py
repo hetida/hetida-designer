@@ -1,8 +1,8 @@
 import functools
 
-from hetdesrun.adapters.sql_reader.config import (
-    SQLReaderDBConfig,
-    sql_reader_adapter_config,
+from hetdesrun.adapters.sql_adapter.config import (
+    SQLAdapterDBConfig,
+    get_sql_adapter_config,
 )
 
 
@@ -17,8 +17,8 @@ def from_url_representation(url_rep: str) -> str:
 
 
 @functools.cache
-def get_configured_dbs_by_key() -> dict[str, SQLReaderDBConfig]:
+def get_configured_dbs_by_key() -> dict[str, SQLAdapterDBConfig]:
     return {
         configured_db.key: configured_db
-        for configured_db in sql_reader_adapter_config.sql_databases
+        for configured_db in get_sql_adapter_config().sql_databases
     }

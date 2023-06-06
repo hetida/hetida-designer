@@ -1,6 +1,6 @@
-"""Web service endpoints for frontend for the sql reader adapter
+"""Web service endpoints for frontend for the sql adapter
 
-Note that the sql reader adapter is not a generic rest adapter, so these webendpoints
+Note that the sql adapter is not a generic rest adapter, so these webendpoints
 have the sole purpose to tell the frontend which data sources and sinks are available and
 can be wired.
 
@@ -10,45 +10,45 @@ Actual data ingestion/egestion happens in the corresponding Runtime-Python-Plugi
 
 from fastapi import HTTPException, Query
 
-from hetdesrun.adapters.sql_reader import VERSION
-from hetdesrun.adapters.sql_reader.models import (
+from hetdesrun.adapters.sql_adapter import VERSION
+from hetdesrun.adapters.sql_adapter.models import (
     InfoResponse,
     MultipleSinksResponse,
     MultipleSourcesResponse,
-    SQLReaderStructureSink,
-    SQLReaderStructureSource,
+    SQLAdapterStructureSink,
+    SQLAdapterStructureSource,
     StructureResponse,
     StructureThingNode,
 )
-from hetdesrun.adapters.sql_reader.structure import (
+from hetdesrun.adapters.sql_adapter.structure import (
     get_sink_by_id,
     get_source_by_id,
     get_sources,
     get_structure,
     get_thing_node_by_id,
 )
-from hetdesrun.adapters.sql_reader.utils import from_url_representation
+from hetdesrun.adapters.sql_adapter.utils import from_url_representation
 from hetdesrun.webservice.auth_dependency import get_auth_deps
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
 # Note: As CORS middleware the router employs the main FastAPI app's one
-sql_reader_adapter_router = HandleTrailingSlashAPIRouter(
-    prefix="/adapters/sqlreader", tags=["sql reader adapter"]
+sql_adapter_router = HandleTrailingSlashAPIRouter(
+    prefix="/adapters/sql", tags=["sql adapter"]
 )
 
 
-@sql_reader_adapter_router.get(
+@sql_adapter_router.get(
     "/info",
     response_model=InfoResponse,
     # no auth for info endpoint
 )
 async def get_info_endpoint() -> InfoResponse:
     return InfoResponse(
-        id="sql-table-reader-adapter", name="SQL Reader Adapter", version=VERSION
+        id="sql-adapter", name="SQL Adapter", version=VERSION
     )
 
 
-@sql_reader_adapter_router.get(
+@sql_adapter_router.get(
     "/structure",
     response_model=StructureResponse,
     dependencies=get_auth_deps(),
@@ -57,7 +57,7 @@ async def get_structure_endpoint(parentId: str | None = None) -> StructureRespon
     return get_structure(parent_id=parentId)
 
 
-@sql_reader_adapter_router.get(
+@sql_adapter_router.get(
     "/sources",
     response_model=MultipleSourcesResponse,
     dependencies=get_auth_deps(),
@@ -72,7 +72,7 @@ async def get_sources_endpoint(
     )
 
 
-@sql_reader_adapter_router.get(
+@sql_adapter_router.get(
     "/sinks",
     response_model=MultipleSinksResponse,
     dependencies=get_auth_deps(),
@@ -87,7 +87,7 @@ async def get_sinks_endpoint(
     )
 
 
-@sql_reader_adapter_router.get(
+@sql_adapter_router.get(
     "/sources/{sourceId}/metadata/",
     response_model=list,
     dependencies=get_auth_deps(),
@@ -103,12 +103,12 @@ async def get_sources_metadata(
     return []
 
 
-@sql_reader_adapter_router.get(
+@sql_adapter_router.get(
     "/sources/{source_id:path}",
-    response_model=SQLReaderStructureSource,
+    response_model=SQLAdapterStructureSource,
     dependencies=get_auth_deps(),
 )
-async def get_single_source(source_id: str) -> SQLReaderStructureSource:
+async def get_single_source(source_id: str) -> SQLAdapterStructureSource:
     possible_source = get_source_by_id(source_id)
 
     if possible_source is None:
@@ -121,7 +121,7 @@ async def get_single_source(source_id: str) -> SQLReaderStructureSource:
     return possible_source
 
 
-@sql_reader_adapter_router.get(
+@sql_adapter_router.get(
     "/sinks/{sinkId}/metadata/",
     response_model=list,
     dependencies=get_auth_deps(),
@@ -135,12 +135,12 @@ async def get_sinks_metadata(sinkId: str) -> list:  # noqa: ARG001
     return []
 
 
-@sql_reader_adapter_router.get(
+@sql_adapter_router.get(
     "/sinks/{sink_id:path}",
-    response_model=SQLReaderStructureSink,
+    response_model=SQLAdapterStructureSink,
     dependencies=get_auth_deps(),
 )
-async def get_single_sink(sink_id: str) -> SQLReaderStructureSink:
+async def get_single_sink(sink_id: str) -> SQLAdapterStructureSink:
     possible_sink = get_sink_by_id(sink_id)
 
     if possible_sink is None:
@@ -153,7 +153,7 @@ async def get_single_sink(sink_id: str) -> SQLReaderStructureSink:
     return possible_sink
 
 
-@sql_reader_adapter_router.get(
+@sql_adapter_router.get(
     "/thingNodes/{thingNodeId}/metadata/",
     response_model=list,
     dependencies=get_auth_deps(),
@@ -169,7 +169,7 @@ async def get_thing_nodes_metadata(
     return []
 
 
-@sql_reader_adapter_router.get(
+@sql_adapter_router.get(
     "/thingNodes/{id}",
     response_model=StructureThingNode,
     dependencies=get_auth_deps(),

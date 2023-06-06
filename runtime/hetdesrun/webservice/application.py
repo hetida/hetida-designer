@@ -12,7 +12,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from hetdesrun import VERSION
-from hetdesrun.adapters.sql_reader.config import get_sql_reader_config
+from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
 from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
@@ -109,7 +109,7 @@ def init_app() -> FastAPI:
     from hetdesrun.adapters.local_file.webservice import (
         local_file_adapter_router,
     )
-    from hetdesrun.adapters.sql_reader.webservice import sql_reader_adapter_router
+    from hetdesrun.adapters.sql_adapter.webservice import sql_adapter_router
 
     app = FastAPI(
         title="Hetida Designer " + app_desc_part() + " API",
@@ -134,11 +134,11 @@ def init_app() -> FastAPI:
         )  # auth dependency set individually per endpoint
 
         if (
-            get_sql_reader_config().active
-            and get_sql_reader_config().service_in_runtime
+            get_sql_adapter_config().active
+            and get_sql_adapter_config().service_in_runtime
         ):
             app.include_router(
-                sql_reader_adapter_router
+                sql_adapter_router
             )  # auth dependency set individually per endpoint
         if get_blob_adapter_config().adapter_hierarchy_location != "":
             app.include_router(
@@ -150,11 +150,11 @@ def init_app() -> FastAPI:
 
     if get_config().is_backend_service:
         if (
-            get_sql_reader_config().active
-            and not get_sql_reader_config().service_in_runtime
+            get_sql_adapter_config().active
+            and not get_sql_adapter_config().service_in_runtime
         ):
             app.include_router(
-                sql_reader_adapter_router
+                sql_adapter_router
             )  # auth dependency set individually per endpoint
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(

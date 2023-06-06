@@ -1,7 +1,7 @@
 from typing import Any
 
-from hetdesrun.adapters.sql_reader.load_table import load_table_from_provided_source_id
-from hetdesrun.adapters.sql_reader.write_table import write_table_to_provided_sink_id
+from hetdesrun.adapters.sql_adapter.load_table import load_table_from_provided_source_id
+from hetdesrun.adapters.sql_adapter.write_table import write_table_to_provided_sink_id
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 try:

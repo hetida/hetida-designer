@@ -4,8 +4,9 @@ import pandas as pd
 from sqlalchemy.exc import OperationalError as SQLOpsError
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
-from hetdesrun.adapters.sql_reader.config import SQLReaderDBConfig
-from hetdesrun.adapters.sql_reader.utils import get_configured_dbs_by_key
+from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
+from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
+from sqlalchemy import create_engine
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ def load_table_from_provided_source_id(
     db_key = id_split[0]
 
     if db_key not in configured_dbs_by_key or len(id_split) < 2:
-        msg = f"Invalid source id requested from sql reader adapter: {source_id}"
+        msg = f"Invalid source id requested from sql adapter: {source_id}"
         logger.info(msg)
         raise AdapterHandlingException(msg)
 
@@ -29,7 +30,7 @@ def load_table_from_provided_source_id(
         query = source_filters.get("sql_query", None)
         if query is None:
             msg = (
-                "Source of type query from sql reader adapter but no sql_query filter!\n"
+                "Source of type query from sql adapter but no sql_query filter!\n"
                 f"Source id: {source_id}\n"
                 f"source filters: {str(source_filters)}"
             )
@@ -49,19 +50,21 @@ def load_table_from_provided_source_id(
     raise AdapterHandlingException(msg)
 
 
-def load_sql_table(db_config: SQLReaderDBConfig, table_name: str):
+def load_sql_table(db_config: SQLAdapterDBConfig, table_name: str):
+    engine = create_engine(db_config.connection_url)
     try:
-        return pd.read_sql_table(table_name, db_config.connection_url)
+        return pd.read_sql_table(table_name, engine)
     except SQLOpsError as e:
-        msg = f"Sql Reader Adatper pandas sql reading error: {str(e)}"
+        msg = f"Sql adapter pandas sql reading error: {str(e)}"
         logger.info(msg)
         raise AdapterHandlingException(msg) from e
 
 
-def load_sql_query(db_config: SQLReaderDBConfig, query: str):
+def load_sql_query(db_config: SQLAdapterDBConfig, query: str):
+    engine = create_engine(db_config.connection_url)
     try:
-        return pd.read_sql_query(query, db_config.connection_url)
+        return pd.read_sql_query(query, engine)
     except SQLOpsError as e:
-        msg = f"Sql Reader Adatper pandas sql reading error: {str(e)}"
+        msg = f"Sql adapter pandas sql query error: {str(e)}"
         logger.info(msg)
         raise AdapterHandlingException(msg) from e

@@ -291,9 +291,9 @@ class RuntimeConfig(BaseSettings):
         "local-file-adapter|Local-File-Adapter"
         "|http://localhost:8090/adapters/localfile"
         "|http://hetida-designer-runtime:8090/adapters/localfile,"
-        "sql-table-reader-adapter|SQL Reader Adapter"
-        "|http://localhost:8090/adapters/sqlreader"
-        "|http://localhost:8090/adapters/sqlreader",
+        "sql-adapter|SQL Adapter"
+        "|http://localhost:8090/adapters/sql"
+        "|http://localhost:8090/adapters/sql",
         env="HETIDA_DESIGNER_ADAPTERS",
         description="list of the installed adapters",
     )

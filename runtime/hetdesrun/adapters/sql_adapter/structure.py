@@ -1,16 +1,16 @@
 from sqlalchemy import create_engine, inspect
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
-from hetdesrun.adapters.sql_reader.config import (
-    SQLReaderDBConfig,
+from hetdesrun.adapters.sql_adapter.config import (
+    SQLAdapterDBConfig,
 )
-from hetdesrun.adapters.sql_reader.models import (
-    SQLReaderStructureSink,
-    SQLReaderStructureSource,
+from hetdesrun.adapters.sql_adapter.models import (
+    SQLAdapterStructureSink,
+    SQLAdapterStructureSource,
     StructureResponse,
     StructureThingNode,
 )
-from hetdesrun.adapters.sql_reader.utils import get_configured_dbs_by_key
+from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
 
 
 def get_table_names(uri: str) -> list[str]:
@@ -19,9 +19,9 @@ def get_table_names(uri: str) -> list[str]:
     return inspection.get_table_names()
 
 
-def get_sources_of_db(db_config: SQLReaderDBConfig) -> list[SQLReaderStructureSource]:
+def get_sources_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructureSource]:
     return [
-        SQLReaderStructureSource(
+        SQLAdapterStructureSource(
             id=db_config.key + "/query",
             thingNodeId=db_config.key,
             name="SQL Query in " + db_config.name,
@@ -36,7 +36,7 @@ def get_sources_of_db(db_config: SQLReaderDBConfig) -> list[SQLReaderStructureSo
         )
     ] + [
         # query source
-        SQLReaderStructureSource(
+        SQLAdapterStructureSource(
             id=db_config.key + "/table/" + table_name,
             thingNodeId=db_config.key,
             name="Table " + table_name,
@@ -47,8 +47,8 @@ def get_sources_of_db(db_config: SQLReaderDBConfig) -> list[SQLReaderStructureSo
 
 
 def get_all_db_sources(
-    db_configs: list[SQLReaderDBConfig],
-) -> list[SQLReaderStructureSource]:
+    db_configs: list[SQLAdapterDBConfig],
+) -> list[SQLAdapterStructureSource]:
     sources = []
     for db_config in db_configs:
         sources.extend(get_sources_of_db(db_config))
@@ -56,8 +56,8 @@ def get_all_db_sources(
 
 
 def filter_sql_sources(
-    sql_sources: list[SQLReaderStructureSource], filter_str: str  # noqa: A002
-) -> list[SQLReaderStructureSource]:
+    sql_sources: list[SQLAdapterStructureSource], filter_str: str  # noqa: A002
+) -> list[SQLAdapterStructureSource]:
     filter_lower = filter_str.lower()
 
     return [
@@ -67,9 +67,9 @@ def filter_sql_sources(
     ]
 
 
-def get_sinks_of_db(db_config: SQLReaderDBConfig) -> list[SQLReaderStructureSink]:
+def get_sinks_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructureSink]:
     return [
-        SQLReaderStructureSink(
+        SQLAdapterStructureSink(
             id=db_config.key + "/append_table/" + append_table_name,
             thingNodeId=db_config.key,
             name="Append Table " + append_table_name,
@@ -81,7 +81,7 @@ def get_sinks_of_db(db_config: SQLReaderDBConfig) -> list[SQLReaderStructureSink
         )
         for append_table_name in db_config.append_tables
     ] + [
-        SQLReaderStructureSink(
+        SQLAdapterStructureSink(
             id=db_config.key + "/replace_table/" + replace_table_name,
             thingNodeId=db_config.key,
             name="Replace Table " + replace_table_name,
@@ -97,8 +97,8 @@ def get_sinks_of_db(db_config: SQLReaderDBConfig) -> list[SQLReaderStructureSink
 
 
 def get_all_db_sinks(
-    db_configs: list[SQLReaderDBConfig],
-) -> list[SQLReaderStructureSink]:
+    db_configs: list[SQLAdapterDBConfig],
+) -> list[SQLAdapterStructureSink]:
     sinks = []
     for db_config in db_configs:
         sinks.extend(get_sinks_of_db(db_config))
@@ -106,8 +106,8 @@ def get_all_db_sinks(
 
 
 def filter_sql_sinks(
-    sql_sinks: list[SQLReaderStructureSink], filter_str: str  # noqa: A002
-) -> list[SQLReaderStructureSink]:
+    sql_sinks: list[SQLAdapterStructureSink], filter_str: str  # noqa: A002
+) -> list[SQLAdapterStructureSink]:
     filter_lower = filter_str.lower()
 
     return [
@@ -123,8 +123,8 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
     if parent_id is None:
         # available databases
         return StructureResponse(
-            id="sql-table-reader-adapter",
-            name="SQL Reader Adapter",
+            id="sql-adapter",
+            name="SQL Adapter",
             thingNodes=[
                 StructureThingNode(
                     id=configured_db.key,
@@ -150,7 +150,7 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
     raise AdapterHandlingException("Unknown database key provided as parent_id")
 
 
-def get_source_by_id(source_id: str) -> SQLReaderStructureSource | None:
+def get_source_by_id(source_id: str) -> SQLAdapterStructureSource | None:
     """Get a specific sql source by id
 
     Returns None if source could not be found.
@@ -168,7 +168,7 @@ def get_source_by_id(source_id: str) -> SQLReaderStructureSource | None:
 
     if source_type == "query" and len(id_split) == 2:
         db_config = configured_dbs_by_key[db_key]
-        return SQLReaderStructureSource(
+        return SQLAdapterStructureSource(
             id=source_id,
             thingNodeId=db_key,
             name="SQL Query in " + db_config.name,
@@ -184,7 +184,7 @@ def get_source_by_id(source_id: str) -> SQLReaderStructureSource | None:
     if source_type == "table":
         db_config = configured_dbs_by_key[db_key]
         table_name = id_split[2]
-        return SQLReaderStructureSource(
+        return SQLAdapterStructureSource(
             id=source_id,
             thingNodeId=db_key,
             name="Table " + table_name,
@@ -193,7 +193,7 @@ def get_source_by_id(source_id: str) -> SQLReaderStructureSource | None:
     return None
 
 
-def get_sink_by_id(sink_id: str) -> SQLReaderStructureSink | None:
+def get_sink_by_id(sink_id: str) -> SQLAdapterStructureSink | None:
     """Get a specific sql sink by id
 
     Returns None if sink could not be found.
@@ -219,7 +219,7 @@ def get_sink_by_id(sink_id: str) -> SQLReaderStructureSink | None:
     if sink_type == "replace_table" and table_name not in db_config.replace_tables:
         return None
 
-    return SQLReaderStructureSink(
+    return SQLAdapterStructureSink(
         id=db_config.key + "/" + sink_type + "/" + table_name,
         thingNodeId=db_config.key,
         name=("Replace Table " if sink_type == "replace_table" else "Append Table ")
@@ -228,7 +228,7 @@ def get_sink_by_id(sink_id: str) -> SQLReaderStructureSink | None:
     )
 
 
-def get_sources(filter_str: str | None) -> list[SQLReaderStructureSource]:
+def get_sources(filter_str: str | None = None) -> list[SQLAdapterStructureSource]:
     configured_dbs_by_key = get_configured_dbs_by_key()
 
     all_sources = get_all_db_sources(configured_dbs_by_key.values())
@@ -239,7 +239,7 @@ def get_sources(filter_str: str | None) -> list[SQLReaderStructureSource]:
     return filter_sql_sources(all_sources, filter_str)
 
 
-def get_sinks(filter_str: str | None) -> list[SQLReaderStructureSink]:
+def get_sinks(filter_str: str | None = None) -> list[SQLAdapterStructureSink]:
     configured_dbs_by_key = get_configured_dbs_by_key()
 
     all_sinks = get_all_db_sinks(configured_dbs_by_key.values())
