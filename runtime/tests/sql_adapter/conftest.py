@@ -1,9 +1,9 @@
-import pytest
-
 import os
 import tempfile
-
 from unittest import mock
+
+import pytest
+
 from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
 
 

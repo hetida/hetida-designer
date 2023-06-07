@@ -1,11 +1,11 @@
-from typing import Literal
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field, validator
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
-from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
 from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
+from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
 
 
 class WriteTableMode(str, Enum):
@@ -19,19 +19,18 @@ class WriteTableMode(str, Enum):
         if table_type == "append_table":
             return cls.APPEND
 
-        if table_type == "replace_table":
+        if table_type == "replace_table":  # noqa: RET503
             return cls.REPLACE
 
-    """
-    def to_table_type_str(self):
-        if self is WriteTableMode.APPEND:
-            return "append_table"
 
-        if self is WriteTableMode.REPLACE:
-            return "replace_table"
+def to_table_type_str(write_table_mode: WriteTableMode):
+    if write_table_mode is WriteTableMode.APPEND:
+        return "append_table"
 
-        raise TypeError("Unhandled WriteTableMode")
-    """
+    if write_table_mode is WriteTableMode.REPLACE:
+        return "replace_table"
+
+    raise TypeError("Unhandled WriteTableMode")
 
 
 class WriteTable(BaseModel):
@@ -48,7 +47,7 @@ class WriteTable(BaseModel):
         return v
 
     @classmethod
-    def from_sink_id(cls, id: str):
+    def from_sink_id(cls, sink_id: str):
         """Create WriteTable from sink id
 
         Raises pydantic ValidationError if id is somehow invalid.
