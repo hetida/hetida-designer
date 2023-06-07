@@ -5,21 +5,26 @@ from unittest import mock
 import pytest
 
 from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
+from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
 
 
-@pytest.fixture(scope="function")
-def temporary_sqlite_file_path():
-    with tempfile.TemporaryDirectory() as tmp_dir_name:
-        yield os.path.join(tmp_dir_name, "temporary_sqlite.db")
+@pytest.fixture(scope="function")  # noqa: PT003
+def temporary_sqlite_file_path(tmpdir):
+    return os.path.join(tmpdir, "temporary_sqlite.db")
 
 
-@pytest.fixture(scope="function")
-def two_sqlite_dbs_configured(temporary_sqlite_file_path):
+@pytest.fixture(scope="function")  # noqa: PT003
+def _clean_configured_dbs_by_key():
+    get_configured_dbs_by_key.cache_clear()
+
+
+@pytest.fixture(scope="function")  # noqa: PT003
+def two_sqlite_dbs_configured(temporary_sqlite_file_path, _clean_configured_dbs_by_key):
     with mock.patch(
         "hetdesrun.adapters.sql_adapter.config.sql_adapter_config.sql_databases",
         new=[
             SQLAdapterDBConfig(
-                connection_url="sqlite+pysqlite:///./tests/data/sql_adapter/example_sqlite.db?mode=ro",
+                connection_url="sqlite+pysqlite:///./tests/data/sql_adapter/example_sqlite.db",
                 name="sqlite test example db",
                 key="test_example_sqlite_read_db",
             ),
