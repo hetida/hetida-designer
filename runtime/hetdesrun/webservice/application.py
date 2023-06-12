@@ -102,6 +102,16 @@ def init_app() -> FastAPI:
     except KeyError:
         pass
 
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.blob_storage.webservice"]
+    except KeyError:
+        pass
+
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.sql_adapter.webservice"]
+    except KeyError:
+        pass
+
     from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
     from hetdesrun.adapters.blob_storage.webservice import (
         blob_storage_adapter_router,
