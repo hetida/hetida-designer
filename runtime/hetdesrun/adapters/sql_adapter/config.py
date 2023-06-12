@@ -52,14 +52,12 @@ class SQLAdapterConfig(BaseSettings):
         env="SQL_ADAPTER_SERVICE_IN_RUNTIME",
     )
 
-    sql_databases: list[SQLAdapterDBConfig] = Field(
-        [], env="SQL_ADAPTER_SQL_DATABASES"
-    )
+    sql_databases: list[SQLAdapterDBConfig] = Field([], env="SQL_ADAPTER_SQL_DATABASES")
 
     @validator("sql_databases")
     def unique_db_keys(cls, v: list[SQLAdapterDBConfig]) -> list[SQLAdapterDBConfig]:
         if len({configured_db.key for configured_db in v}) != len(v):
-            return ValueError("Configured db keys not unique")
+            raise ValueError("Configured db keys not unique")
         return v
 
     @validator("sql_databases")
@@ -69,7 +67,7 @@ class SQLAdapterConfig(BaseSettings):
         if not all(
             valid_python_identifier(cls, configured_db.key) for configured_db in v
         ):
-            return ValueError(
+            raise ValueError(
                 "Some configured db key of the generic sql adapter contains invalid characters."
             )
         return v

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Literal
+from typing import Literal, cast
 
 from pydantic import BaseModel, Field, validator
 
@@ -23,12 +23,24 @@ class WriteTableMode(str, Enum):
             return cls.REPLACE
 
 
-def to_table_type_str(write_table_mode: WriteTableMode):
+def to_table_type_str(
+    write_table_mode: WriteTableMode,
+) -> Literal["append_table", "replace_table"]:
     if write_table_mode is WriteTableMode.APPEND:
         return "append_table"
 
     if write_table_mode is WriteTableMode.REPLACE:
         return "replace_table"
+
+    raise TypeError("Unhandled WriteTableMode")
+
+
+def to_if_exists_pandas_str(write_table_mode: WriteTableMode) -> str:
+    if write_table_mode is WriteTableMode.APPEND:
+        return "append"
+
+    if write_table_mode is WriteTableMode.REPLACE:
+        return "replace"
 
     raise TypeError("Unhandled WriteTableMode")
 
@@ -39,15 +51,15 @@ class WriteTable(BaseModel):
     table_name: str
 
     @validator("db_key")
-    def db_key_is_configured(cls, v):
+    def db_key_is_configured(cls, v: str) -> str:
         if v not in get_configured_dbs_by_key():
-            return ValueError(
+            raise ValueError(
                 f"DB key {v} is not configured in sql adapter configuration"
             )
         return v
 
     @classmethod
-    def from_sink_id(cls, sink_id: str):
+    def from_sink_id(cls, sink_id: str) -> "WriteTable":
         """Create WriteTable from sink id
 
         Raises pydantic ValidationError if id is somehow invalid.
@@ -57,7 +69,10 @@ class WriteTable(BaseModel):
 
         params["db_key"] = id_split[0]
         if len(id_split) > 1:
-            params["write_mode"] = WriteTableMode.from_table_type_str(id_split[1])
+            write_mode_str: Literal["append_table", "replace_table"] = cast(
+                Literal["append_table", "replace_table"], id_split[1]
+            )
+            params["write_mode"] = WriteTableMode.from_table_type_str(write_mode_str)
 
         if len(id_split) > 2:
             params["table_name"] = id_split[2]
@@ -69,14 +84,18 @@ class WriteTable(BaseModel):
         return (
             self.db_key
             + "/"
-            + self.write_mode.to_table_type_str()
+            + to_table_type_str(self.write_mode)
             + "/"
             + self.table_name
         )
 
     @property
-    def db_config(self):
-        return get_configured_dbs_by_key(self.db_key)
+    def db_config(self) -> SQLAdapterDBConfig:
+        return get_configured_dbs_by_key()[self.db_key]
+
+    @property
+    def pandas_if_exists_mode(self) -> str:
+        return to_if_exists_pandas_str(self.write_mode)
 
 
 class InfoResponse(BaseModel):

@@ -6,6 +6,22 @@ from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 
 @pytest.mark.asyncio
+async def test_load_query_table(two_sqlite_dbs_configured):
+    received_data = await load_data(
+        {
+            "inp": FilteredSource(
+                ref_id="test_example_sqlite_read_db/query",
+                ref_id_type="SOURCE",
+                filters={"sql_query": "SELECT a FROM data_table"},
+            )
+        },
+        adapter_key="sql-adapter",
+    )
+
+    assert received_data["inp"].columns == ["a"]
+
+
+@pytest.mark.asyncio
 async def test_roundtrip_append_table(two_sqlite_dbs_configured):
     received_data = await load_data(
         {
@@ -21,7 +37,7 @@ async def test_roundtrip_append_table(two_sqlite_dbs_configured):
     assert isinstance(dataframe, pd.DataFrame)
     assert len(dataframe) == 3
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         await load_data(
             {
                 "inp": FilteredSource(

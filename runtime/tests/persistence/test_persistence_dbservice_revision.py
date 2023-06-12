@@ -1,6 +1,5 @@
 from copy import deepcopy
 from sqlite3 import Connection as SQLite3Connection
-from unittest import mock
 from uuid import UUID, uuid4
 
 import pytest

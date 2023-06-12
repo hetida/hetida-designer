@@ -37,13 +37,13 @@ class PerformanceMeasuredStep(BaseModel):
     @validator("start")
     def start_utc_datetime(cls, start):  # type: ignore
         if not check_explicit_utc(start):
-            return ValueError("start datetime for measurement must be explicit utc")
+            raise ValueError("start datetime for measurement must be explicit utc")
         return start
 
     @validator("end")
     def end_utc_datetime(cls, end):  # type: ignore
         if not check_explicit_utc(end):
-            return ValueError("end datetime for measurement must be explicit utc")
+            raise ValueError("end datetime for measurement must be explicit utc")
         return end
 
     def begin(self) -> None:

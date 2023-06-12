@@ -22,6 +22,7 @@ from hetdesrun.adapters.sql_adapter.models import (
 )
 from hetdesrun.adapters.sql_adapter.structure import (
     get_sink_by_id,
+    get_sinks,
     get_source_by_id,
     get_sources,
     get_structure,
@@ -43,9 +44,7 @@ sql_adapter_router = HandleTrailingSlashAPIRouter(
     # no auth for info endpoint
 )
 async def get_info_endpoint() -> InfoResponse:
-    return InfoResponse(
-        id="sql-adapter", name="SQL Adapter", version=VERSION
-    )
+    return InfoResponse(id="sql-adapter", name="SQL Adapter", version=VERSION)
 
 
 @sql_adapter_router.get(
@@ -80,7 +79,7 @@ async def get_sources_endpoint(
 async def get_sinks_endpoint(
     filter_str: str | None = Query(None, alias="filter")  # noqa: ARG001
 ) -> MultipleSinksResponse:
-    found_sinks = []
+    found_sinks = get_sinks(filter_str=filter_str)
     return MultipleSinksResponse(
         resultCount=len(found_sinks),
         sinks=found_sinks,
@@ -88,7 +87,7 @@ async def get_sinks_endpoint(
 
 
 @sql_adapter_router.get(
-    "/sources/{sourceId}/metadata/",
+    "/sources/{sourceId:path}/metadata/",
     response_model=list,
     dependencies=get_auth_deps(),
 )
@@ -122,7 +121,7 @@ async def get_single_source(source_id: str) -> SQLAdapterStructureSource:
 
 
 @sql_adapter_router.get(
-    "/sinks/{sinkId}/metadata/",
+    "/sinks/{sinkId:path}/metadata/",
     response_model=list,
     dependencies=get_auth_deps(),
 )

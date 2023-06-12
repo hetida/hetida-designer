@@ -1,5 +1,3 @@
-from unittest import mock
-
 import pytest
 
 from hetdesrun.models.wiring import WorkflowWiring

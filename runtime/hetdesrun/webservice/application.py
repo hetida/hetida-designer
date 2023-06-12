@@ -84,7 +84,7 @@ def app_desc_part() -> str:
     return "Runtime"
 
 
-def init_app() -> FastAPI:
+def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     import sys
 
     # reimporting runtime_router and local_file router since they have

@@ -1,12 +1,12 @@
 import logging
 
 import pandas as pd
+from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError as SQLOpsError
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
 from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
-from sqlalchemy import create_engine
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def load_table_from_provided_source_id(
                 f"Source id: {source_id}\n"
                 f"source filters: {str(source_filters)}"
             )
-            logger.indo(msg)
+            logger.info(msg)
             raise AdapterHandlingException(msg)
         return load_sql_query(db_config, query)
 
@@ -50,7 +50,7 @@ def load_table_from_provided_source_id(
     raise AdapterHandlingException(msg)
 
 
-def load_sql_table(db_config: SQLAdapterDBConfig, table_name: str):
+def load_sql_table(db_config: SQLAdapterDBConfig, table_name: str) -> pd.DataFrame:
     engine = create_engine(db_config.connection_url)
     try:
         return pd.read_sql_table(table_name, engine)
@@ -60,7 +60,7 @@ def load_sql_table(db_config: SQLAdapterDBConfig, table_name: str):
         raise AdapterHandlingException(msg) from e
 
 
-def load_sql_query(db_config: SQLAdapterDBConfig, query: str):
+def load_sql_query(db_config: SQLAdapterDBConfig, query: str) -> pd.DataFrame:
     engine = create_engine(db_config.connection_url)
     try:
         return pd.read_sql_query(query, engine)

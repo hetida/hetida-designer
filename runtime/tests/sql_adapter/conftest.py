@@ -2,9 +2,12 @@ import os
 from unittest import mock
 
 import pytest
+from fastapi import FastAPI
+from httpx import AsyncClient
 
 from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
 from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
+from hetdesrun.webservice.application import init_app
 
 
 @pytest.fixture(scope="function")  # noqa: PT003
@@ -37,3 +40,17 @@ def two_sqlite_dbs_configured(temporary_sqlite_file_path, _clean_configured_dbs_
         ],
     ) as _fixture:
         yield _fixture
+
+
+@pytest.fixture(scope="session")
+def app_without_auth_with() -> FastAPI:
+    with mock.patch("hetdesrun.webservice.config.runtime_config.auth", False):
+        return init_app()
+
+
+@pytest.fixture
+def async_test_client_with_sql_adapter(
+    two_sqlite_dbs_configured,
+    app_without_auth_with: FastAPI,
+) -> AsyncClient:
+    return AsyncClient(app=app_without_auth_with, base_url="http://test")

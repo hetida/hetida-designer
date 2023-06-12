@@ -1,3 +1,7 @@
+import logging
+from collections.abc import Iterable
+
+from pydantic import ValidationError
 from sqlalchemy import create_engine, inspect
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
@@ -9,8 +13,13 @@ from hetdesrun.adapters.sql_adapter.models import (
     SQLAdapterStructureSource,
     StructureResponse,
     StructureThingNode,
+    WriteTable,
+    WriteTableMode,
+    to_table_type_str,
 )
 from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
+
+logger = logging.getLogger(__name__)
 
 
 def get_table_names(uri: str) -> list[str]:
@@ -47,7 +56,7 @@ def get_sources_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructure
 
 
 def get_all_db_sources(
-    db_configs: list[SQLAdapterDBConfig],
+    db_configs: Iterable[SQLAdapterDBConfig],
 ) -> list[SQLAdapterStructureSource]:
     sources = []
     for db_config in db_configs:
@@ -56,7 +65,7 @@ def get_all_db_sources(
 
 
 def filter_sql_sources(
-    sql_sources: list[SQLAdapterStructureSource], filter_str: str  # noqa: A002
+    sql_sources: Iterable[SQLAdapterStructureSource], filter_str: str  # noqa: A002
 ) -> list[SQLAdapterStructureSource]:
     filter_lower = filter_str.lower()
 
@@ -97,7 +106,7 @@ def get_sinks_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructureSi
 
 
 def get_all_db_sinks(
-    db_configs: list[SQLAdapterDBConfig],
+    db_configs: Iterable[SQLAdapterDBConfig],
 ) -> list[SQLAdapterStructureSink]:
     sinks = []
     for db_config in db_configs:
@@ -106,7 +115,7 @@ def get_all_db_sinks(
 
 
 def filter_sql_sinks(
-    sql_sinks: list[SQLAdapterStructureSink], filter_str: str  # noqa: A002
+    sql_sinks: Iterable[SQLAdapterStructureSink], filter_str: str  # noqa: A002
 ) -> list[SQLAdapterStructureSink]:
     filter_lower = filter_str.lower()
 
@@ -198,33 +207,43 @@ def get_sink_by_id(sink_id: str) -> SQLAdapterStructureSink | None:
 
     Returns None if sink could not be found.
     """
-    configured_dbs_by_key = get_configured_dbs_by_key()
 
-    id_split = sink_id.split("/", 2)
-    db_key = id_split[0]
-
-    if db_key not in configured_dbs_by_key or len(id_split) < 2:
+    # Parse sink_id
+    try:
+        write_table = WriteTable.from_sink_id(sink_id)
+    except ValidationError as e:
+        msg = "Could not parse and validate sink id."
+        logger.info(msg + f"Error was: {str(e)}")  # noqa: G003
         return None
 
-    sink_type = id_split[1]
-
-    if sink_type not in ("append_table", "replace_table") or len(id_split) < 3:
+    # Handle table not present
+    if (
+        write_table.write_mode is WriteTableMode.APPEND
+        and write_table.table_name not in write_table.db_config.append_tables
+    ):
         return None
-
-    db_config = configured_dbs_by_key[db_key]
-    table_name = id_split[2]
-
-    if sink_type == "append_table" and table_name not in db_config.append_tables:
-        return None
-    if sink_type == "replace_table" and table_name not in db_config.replace_tables:
+    if (
+        write_table.write_mode is WriteTableMode.REPLACE
+        and write_table.table_name not in write_table.db_config.replace_tables
+    ):
         return None
 
     return SQLAdapterStructureSink(
-        id=db_config.key + "/" + sink_type + "/" + table_name,
-        thingNodeId=db_config.key,
-        name=("Replace Table " if sink_type == "replace_table" else "Append Table ")
-        + table_name,
-        path=db_config.key + "|" + db_config.name + "/" + sink_type + "/" + table_name,
+        id=write_table.sink_id,
+        thingNodeId=write_table.db_config.key,
+        name=(
+            "Replace Table "
+            if write_table.write_mode is WriteTableMode.REPLACE
+            else "Append Table "
+        )
+        + write_table.table_name,
+        path=write_table.db_config.key
+        + "|"
+        + write_table.db_config.name
+        + "/"
+        + to_table_type_str(write_table.write_mode)
+        + "/"
+        + write_table.table_name,
     )
 
 

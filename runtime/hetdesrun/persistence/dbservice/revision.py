@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from hetdesrun.component.code import update_code
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence import Session, SQLAlchemySession, get_session
+from hetdesrun.persistence import SQLAlchemySession, get_session
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.nesting import (
@@ -494,7 +494,7 @@ def get_multiple_transformation_revisions(
 
 def nof_db_entries() -> int:
     with get_session()() as session, session.begin():
-        nof_rows = session.query(TransformationRevisionDBModel.id).count()
+        nof_rows: int = session.query(TransformationRevisionDBModel.id).count()
         logger.info("DB contains %s rows", str(nof_rows))
 
     return nof_rows

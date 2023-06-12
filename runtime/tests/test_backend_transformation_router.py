@@ -588,16 +588,9 @@ tr_json_workflow_2_update["name"] = "new name"
 async def test_get_all_transformation_revisions_with_valid_db_entries(
     async_test_client, mocked_clean_test_db_session
 ):
-
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_1)
-    )
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_2)
-    )
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_workflow_1)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_2))
+    store_single_transformation_revision(TransformationRevision(**tr_json_workflow_1))
     store_single_transformation_revision(
         TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
     )
@@ -649,9 +642,7 @@ async def test_get_all_transformation_revisions_with_specified_state(
         response_disabled = await ac.get(
             "/api/transformations/", params={"state": "DISABLED"}
         )
-        response_foo = await ac.get(
-            "/api/transformations/", params={"state": "FOO"}
-        )
+        response_foo = await ac.get("/api/transformations/", params={"state": "FOO"})
 
     assert response_draft.status_code == 200
     assert len(response_draft.json()) == 2
@@ -668,9 +659,7 @@ async def test_get_all_transformation_revisions_with_specified_state(
     )
     assert response_disabled.json()[0]["state"] == "DISABLED"
     assert response_foo.status_code == 422
-    assert (
-        "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
-    )
+    assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -687,9 +676,7 @@ async def test_get_all_transformation_revisions_with_specified_type(
         TransformationRevision(**tr_json_workflow_1)  # DRAFT
     )
     store_single_transformation_revision(
-        TransformationRevision(
-            **tr_json_workflow_2_with_named_io_for_operator
-        )  # DRAFT
+        TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)  # DRAFT
     )
 
     async with async_test_client as ac:
@@ -708,13 +695,9 @@ async def test_get_all_transformation_revisions_with_specified_type(
     assert response_workflow.status_code == 200
     assert len(response_workflow.json()) == 2
     assert response_workflow.json()[0] == tr_json_workflow_1
-    assert (
-        response_workflow.json()[1] == tr_json_workflow_2_with_named_io_for_operator
-    )
+    assert response_workflow.json()[1] == tr_json_workflow_2_with_named_io_for_operator
     assert response_foo.status_code == 422
-    assert (
-        "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
-    )
+    assert "not a valid enumeration member" in response_foo.json()["detail"][0]["msg"]
 
 
 @pytest.mark.asyncio
@@ -746,9 +729,7 @@ async def test_get_all_transformation_revisions_with_specified_category(
     assert len(response_category.json()) == 3
     assert response_category.json()[0] == tr_json_component_1
     assert response_category.json()[1] == tr_json_workflow_1
-    assert (
-        response_category.json()[2] == tr_json_workflow_2_with_named_io_for_operator
-    )
+    assert response_category.json()[2] == tr_json_workflow_2_with_named_io_for_operator
     assert response_aepfel.status_code == 200
     assert len(response_aepfel.json()) == 1
     assert response_aepfel.json()[0] == tr_json_component_3
@@ -993,9 +974,7 @@ async def test_get_all_transformation_revisions_with_combined_filters(
         TransformationRevision(**tr_json_workflow_1)  # DRAFT
     )
     store_single_transformation_revision(
-        TransformationRevision(
-            **tr_json_workflow_2_with_named_io_for_operator
-        )  # DRAFT
+        TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)  # DRAFT
     )
 
     url = "/api/transformations/"
@@ -1024,9 +1003,7 @@ async def test_get_all_transformation_revisions_with_combined_filters(
 async def test_get_transformation_revision_by_id_with_component(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_1)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
 
     async with async_test_client as ac:
         response = await ac.get(
@@ -1057,9 +1034,7 @@ async def test_get_transformation_revision_by_id_with_inexistent_component(
 async def test_get_transformation_revision_by_id_with_workflow(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_workflow_1)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_workflow_1))
 
     async with async_test_client as ac:
         response = await ac.get(
@@ -1090,9 +1065,7 @@ async def test_get_transformation_revision_by_id_with_inexistent_workflow(
 async def test_create_transformation_revision_with_workflow(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_1)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
 
     async with async_test_client as ac:
         response = await ac.post(
@@ -1102,8 +1075,7 @@ async def test_create_transformation_revision_with_workflow(
 
     assert response.status_code == 201
     assert (
-        response.json()["name"]
-        == tr_json_workflow_2_with_named_io_for_operator["name"]
+        response.json()["name"] == tr_json_workflow_2_with_named_io_for_operator["name"]
     )
 
 
@@ -1111,9 +1083,7 @@ async def test_create_transformation_revision_with_workflow(
 async def test_update_transformation_revision_with_workflow(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_1)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
     store_single_transformation_revision(
         TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
     )
@@ -1139,9 +1109,7 @@ async def test_update_transformation_revision_with_workflow(
 async def test_update_transformation_revision_with_invalid_name_workflow(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_1)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
     store_single_transformation_revision(
         TransformationRevision(**tr_json_workflow_2_with_named_io_for_operator)
     )
@@ -1167,9 +1135,7 @@ async def test_update_transformation_revision_with_invalid_name_workflow(
 async def test_update_transformation_revision_with_non_existing_workflow(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_1)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
 
     async with async_test_client as ac:
         response = await ac.put(
@@ -1192,9 +1158,7 @@ async def test_update_transformation_revision_with_non_existing_workflow(
 async def test_update_transformation_revision_with_released_component(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_2)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_2))
 
     async with async_test_client as ac:
         response = await ac.put(
@@ -1211,9 +1175,7 @@ async def test_update_transformation_revision_with_released_component(
 async def test_update_transformation_revision_with_released_component_and_allow_overwrite_flag(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_2)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_2))
 
     async with async_test_client as ac:
         response = await ac.put(
@@ -1233,9 +1195,7 @@ async def test_update_transformation_revision_with_released_component_and_allow_
 async def test_update_transformation_revision_by_adding_operator_to_workflow_followed_by_get(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_1)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_1))
     store_single_transformation_revision(
         TransformationRevision(**tr_json_workflow_2_no_operator)
     )
@@ -1265,16 +1225,11 @@ async def test_update_transformation_revision_by_adding_operator_to_workflow_fol
         tr_json_workflow_2_added_io_for_operator
     )
     del expected_put_response_json_without_io_ids["io_interface"]["inputs"][0]["id"]
-    del expected_put_response_json_without_io_ids["io_interface"]["outputs"][0][
-        "id"
-    ]
+    del expected_put_response_json_without_io_ids["io_interface"]["outputs"][0]["id"]
     del expected_put_response_json_without_io_ids["content"]["inputs"][0]["id"]
     del expected_put_response_json_without_io_ids["content"]["outputs"][0]["id"]
 
-    assert (
-        put_response_json_without_io_ids
-        == expected_put_response_json_without_io_ids
-    )
+    assert put_response_json_without_io_ids == expected_put_response_json_without_io_ids
 
     assert get_response.status_code == 200
 
@@ -1335,9 +1290,7 @@ async def test_delete_transformation_revision_with_component(
 async def test_publish_transformation_revision_with_component(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_3)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_3))
 
     async with async_test_client as ac:
         response = await ac.put(
@@ -1356,9 +1309,7 @@ async def test_publish_transformation_revision_with_component(
 async def test_deprecate_transformation_revision_with_component(
     async_test_client, mocked_clean_test_db_session
 ):
-    store_single_transformation_revision(
-        TransformationRevision(**tr_json_component_2)
-    )
+    store_single_transformation_revision(TransformationRevision(**tr_json_component_2))
 
     async with async_test_client as ac:
         response = await ac.put(
@@ -1404,9 +1355,7 @@ async def test_execute_for_transformation_revision(
     resp_data = response.json()
     assert "output_types_by_output_name" in resp_data
     assert "job_id" in resp_data
-    assert UUID(resp_data["job_id"]) == UUID(
-        "1270547c-b224-461d-9387-e9d9d465bbe1"
-    )
+    assert UUID(resp_data["job_id"]) == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
 
 
 @pytest.mark.asyncio
@@ -1444,7 +1393,7 @@ async def test_execute_for_transformation_revision_without_job_id(
 @pytest.mark.asyncio
 async def test_execute_for_separate_runtime_container(
     async_test_client, mocked_clean_test_db_session
-):       
+):
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config",
         is_runtime_service=False,
@@ -1498,7 +1447,6 @@ async def test_execute_for_separate_runtime_container(
 async def test_execute_asynchron_for_transformation_revision_works(
     async_test_client, mocked_clean_test_db_session
 ):
-       
     tr_component_1 = TransformationRevision(**tr_json_component_1)
     tr_component_1.content = update_code(tr_component_1)
     store_single_transformation_revision(tr_component_1)
@@ -1528,9 +1476,7 @@ async def test_execute_asynchron_for_transformation_revision_works(
 
         assert response.status_code == 202
         assert "message" in response.json()
-        assert (
-            "1270547c-b224-461d-9387-e9d9d465bbe1" in response.json()["message"]
-        )
+        assert "1270547c-b224-461d-9387-e9d9d465bbe1" in response.json()["message"]
         assert send_mock.called
         func_name, args, kwargs = send_mock.mock_calls[0]
         assert func_name == ""
@@ -1600,9 +1546,7 @@ async def test_execute_latest_for_transformation_revision_works(
     tr_component_1_new_revision = TransformationRevision(
         **tr_json_component_1_new_revision
     )
-    tr_component_1_new_revision.content = update_code(
-        tr_component_1_new_revision
-    )
+    tr_component_1_new_revision.content = update_code(tr_component_1_new_revision)
     tr_component_1_new_revision.release()
     store_single_transformation_revision(tr_component_1_new_revision)
 
@@ -1621,19 +1565,15 @@ async def test_execute_latest_for_transformation_revision_works(
     assert response.status_code == 200
     resp_data = response.json()
     assert "output_types_by_output_name" in resp_data
-    assert (
-        resp_data["output_types_by_output_name"]["operator_output"] == "STRING"
-    )
+    assert resp_data["output_types_by_output_name"]["operator_output"] == "STRING"
     assert "job_id" in resp_data
-    assert UUID(resp_data["job_id"]) == UUID(
-        "1270547c-b224-461d-9387-e9d9d465bbe1"
-    )
+    assert UUID(resp_data["job_id"]) == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
 
 
 @pytest.mark.asyncio
 async def test_execute_latest_for_transformation_revision_no_revision_in_db(
     async_test_client, mocked_clean_test_db_session
-):      
+):
     tr_component_1 = TransformationRevision(**tr_json_component_1)
     tr_component_1.content = update_code(tr_component_1)
 
@@ -1666,9 +1606,7 @@ async def test_execute_latest_async_for_transformation_revision_works(
     tr_component_1_new_revision = TransformationRevision(
         **tr_json_component_1_new_revision
     )
-    tr_component_1_new_revision.content = update_code(
-        tr_component_1_new_revision
-    )
+    tr_component_1_new_revision.content = update_code(tr_component_1_new_revision)
     tr_component_1_new_revision.release()
     store_single_transformation_revision(tr_component_1_new_revision)
 
@@ -1692,9 +1630,7 @@ async def test_execute_latest_async_for_transformation_revision_works(
 
         assert response.status_code == 202
         assert "message" in response.json()
-        assert (
-            "1270547c-b224-461d-9387-e9d9d465bbe1" in response.json()["message"]
-        )
+        assert "1270547c-b224-461d-9387-e9d9d465bbe1" in response.json()["message"]
         assert send_mock.called
         func_name, args, kwargs = send_mock.mock_calls[0]
         assert func_name == ""
@@ -1704,9 +1640,7 @@ async def test_execute_latest_async_for_transformation_revision_works(
 
         assert args[1].job_id == UUID("1270547c-b224-461d-9387-e9d9d465bbe1")
         assert args[1].output_results_by_output_name == {"operator_output": 100}
-        assert args[1].output_types_by_output_name == {
-            "operator_output": "STRING"
-        }
+        assert args[1].output_types_by_output_name == {"operator_output": "STRING"}
         assert str(args[1].result) == "ok"
 
 
@@ -1757,7 +1691,9 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
 
 
 @pytest.mark.asyncio
-async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_db_session):
+async def test_execute_for_nested_workflow(
+    async_test_client, mocked_clean_test_db_session
+):
     async with async_test_client as ac:
         json_files = [
             "./transformations/components/connectors/pass-through-integer_100_57eea09f-d28e-89af-4e81-2027697a3f0f.json",
@@ -1803,9 +1739,7 @@ async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_
         workflow_id = UUID("3d504361-e351-4d52-8734-391aa47e8f24")
         tr_workflow = read_single_transformation_revision(workflow_id)
 
-        exec_by_id_input = ExecByIdInput(
-            id=workflow_id, wiring=tr_workflow.test_wiring
-        )
+        exec_by_id_input = ExecByIdInput(id=workflow_id, wiring=tr_workflow.test_wiring)
 
         response = await ac.post(
             "/api/transformations/execute",
@@ -1816,17 +1750,11 @@ async def test_execute_for_nested_workflow(async_test_client, mocked_clean_test_
         assert "output_types_by_output_name" in response.json()
         assert response.json()["result"] == "ok"
         assert (
-            abs(
-                response.json()["output_results_by_output_name"]["intercept"]
-                - 2.88
-            )
+            abs(response.json()["output_results_by_output_name"]["intercept"] - 2.88)
             < 0.01
         )
         assert (
-            response.json()["output_results_by_output_name"][
-                "before_step_detect"
-            ]
-            == {}
+            response.json()["output_results_by_output_name"]["before_step_detect"] == {}
         )
         assert (
             response.json()["output_results_by_output_name"][
@@ -1957,7 +1885,9 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
 
 
 @pytest.mark.asyncio
-async def test_put_workflow_transformation(async_test_client, mocked_clean_test_db_session):
+async def test_put_workflow_transformation(
+    async_test_client, mocked_clean_test_db_session
+):
     json_files = [
         "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
         "./transformations/components/arithmetic/consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json",
@@ -1978,9 +1908,7 @@ async def test_put_workflow_transformation(async_test_client, mocked_clean_test_
 
     async with async_test_client as ac:
         response = await ac.put(
-            posix_urljoin(
-                "/api/transformations/", example_workflow_tr_json["id"]
-            ),
+            posix_urljoin("/api/transformations/", example_workflow_tr_json["id"]),
             json=example_workflow_tr_json,
         )
 
