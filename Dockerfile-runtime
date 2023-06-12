@@ -30,9 +30,6 @@ RUN chmod -R a+rw /mnt/obj_repo
 RUN mkdir -p /mnt/autoimport
 RUN chmod -R a+rw /mnt/autoimport
 
-COPY ./runtime/tests/data/reader_adapter/example_sqlite.db /example_data/example_sqlite.db
-RUN chmod -R a-w,a+r /example_data
-
 ##### Production stage
 # making prod stage available early allows to build it without building test stage
 # since test stage is only necessary on build system
