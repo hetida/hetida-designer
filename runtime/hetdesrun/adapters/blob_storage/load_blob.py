@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 def get_object(
     s3_client: S3Client, bucket_name: str, object_key_string: str
 ) -> GetObjectOutputTypeDef:
-    if get_blob_adapter_config().checksum_algorithm == "":
+    if get_blob_adapter_config().checksum_algorithm == "":  # noqa: PLC1901
         return s3_client.get_object(Bucket=bucket_name, Key=object_key_string)
 
     return s3_client.get_object(
@@ -113,11 +113,13 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             except s3_client.exceptions.NoSuchKey:
                 pass
             else:
-                custom_objects = pickle.load(custom_objects_response["Body"])
+                custom_objects = pickle.load(  # noqa: S301
+                    custom_objects_response["Body"]
+                )
             with h5py.File(file_object, "r") as f:
                 data = tf.keras.saving.load_model(f, custom_objects=custom_objects)
     else:
-        data = pickle.load(response["Body"])
+        data = pickle.load(response["Body"])  # noqa: S301
 
     return data
 

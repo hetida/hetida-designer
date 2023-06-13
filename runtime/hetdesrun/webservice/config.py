@@ -192,7 +192,7 @@ class RuntimeConfig(BaseSettings):
     )
 
     auth_public_key_reloading_minimum_age: datetime.timedelta = Field(
-        15,
+        datetime.timedelta(seconds=15),
         description="If auth fails and auth_reload_public_key is True "
         "public keys are only tried to load again if older than this timedelta."
         " Can be either seconds as int or float or an ISO 8601 timedelta string",  # 15 seconds
@@ -485,7 +485,9 @@ class RuntimeConfig(BaseSettings):
 
 environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
 
-runtime_config = RuntimeConfig(_env_file=environment_file if environment_file else None)
+runtime_config = RuntimeConfig(
+    _env_file=environment_file if environment_file else None  # type: ignore[call-arg]
+)
 
 
 def get_config() -> RuntimeConfig:

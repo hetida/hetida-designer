@@ -63,7 +63,7 @@ class TransformationRevision(BaseModel):
     name: NonEmptyValidStr
     description: ValidStr = ValidStr("")
     category: NonEmptyValidStr = Field(
-        "Other",
+        "Other",  # type: ignore[assignment]
         description=(
             'Category in which this is classified, i.e. the "drawer" in the User Interface.'
         ),

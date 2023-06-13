@@ -163,7 +163,7 @@ async def consume_execution_trigger_message(
                         msg.value.decode("utf8")
                     )
                 except ValidationError as validate_exec_latest_by_group_id_input_error:
-                    msg = (
+                    log_msg = (
                         f"Kafka consumer {kafka_ctx.consumer_id} failed to parse message"
                         f" payload for execution.\n"
                         f"Validation Error assuming ExecByIdInput was\n"
@@ -175,21 +175,21 @@ async def consume_execution_trigger_message(
                     kafka_ctx.last_unhandled_exception = (
                         validate_exec_latest_by_group_id_input_error
                     )
-                    logger.error(msg)
+                    logger.error(log_msg)
                     continue
                 try:
                     latest_id = get_latest_revision_id(
                         exec_latest_by_group_id_input.revision_group_id
                     )
                 except DBNotFoundError as e:
-                    msg = (
+                    log_msg = (
                         f"Kafka consumer {kafka_ctx.consumer_id} failed to receive"
                         f" id of latest revision of revision group "
                         f"{exec_latest_by_group_id_input.revision_group_id} from datatbase.\n"
                         f"Aborting."
                     )
                     kafka_ctx.last_unhandled_exception = e
-                    logger.error(msg)
+                    logger.error(log_msg)
                     continue
                 exec_by_id_input = ExecByIdInput(
                     id=latest_id,
@@ -206,12 +206,12 @@ async def consume_execution_trigger_message(
             try:
                 exec_result = await execute_transformation_revision(exec_by_id_input)
             except TrafoExecutionError as e:
-                msg = (
+                log_msg = (
                     f"Kafka consumer failed to execute trafo rev {exec_by_id_input.id}"
                     f" for job {exec_by_id_input.job_id}. Error Message: {str(e)}. Aborting."
                 )
                 kafka_ctx.last_unhandled_exception = e
-                logger.error(msg)
+                logger.error(log_msg)
                 continue
             logger.info(
                 "Kafka consumer %s finished execution for job %s with result status %s. Error: %s",

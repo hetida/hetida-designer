@@ -24,7 +24,7 @@ generic_rest_adapter_urls_lock = threading.Lock()
 # inititalize cache for adapter urls as global singleton
 try:
     with generic_rest_adapter_urls_lock:
-        generic_rest_adapter_urls  # type: ignore
+        generic_rest_adapter_urls  # type: ignore # noqa: B018
 except NameError:
     with generic_rest_adapter_urls_lock:
         generic_rest_adapter_urls: dict[str, str] = {}

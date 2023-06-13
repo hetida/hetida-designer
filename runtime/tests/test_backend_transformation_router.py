@@ -1523,7 +1523,7 @@ async def test_execute_async_for_transformation_revision_with_exception(
                 "handle_trafo_revision_execution_request",
                 side_effect=Exception,
             ):
-                with pytest.raises(Exception):  # noqa: PT011
+                with pytest.raises(Exception):  # noqa: PT011,B017
                     await ac.post(
                         "/api/transformations/execute-async",
                         json=json.loads(exec_by_id_input.json()),
@@ -1678,7 +1678,7 @@ async def test_execute_latest_async_for_transformation_revision_with_exception(
                 "handle_latest_trafo_revision_execution_request",
                 side_effect=Exception,
             ):
-                with pytest.raises(Exception):  # noqa: PT011
+                with pytest.raises(Exception):  # noqa: PT011,B017
                     await ac.post(
                         "/api/transformations/execute-latest-async",
                         json=json.loads(exec_latest_by_group_id_input.json()),

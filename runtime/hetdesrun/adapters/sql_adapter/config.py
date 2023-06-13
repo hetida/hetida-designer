@@ -76,7 +76,7 @@ class SQLAdapterConfig(BaseSettings):
 environment_file = os.environ.get("HD_GENERIC_SQL_ADAPTER_ENVIRONMENT_FILE", None)
 
 sql_adapter_config = SQLAdapterConfig(
-    _env_file=environment_file if environment_file else None
+    _env_file=environment_file if environment_file else None # type: ignore[call-arg]
 )
 
 

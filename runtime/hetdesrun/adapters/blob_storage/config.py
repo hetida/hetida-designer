@@ -100,7 +100,9 @@ class BlobStorageAdapterConfig(BaseSettings):
 
 
 environment_file = os.environ.get("HD_BLOB_STORAGE_ENVIRONMENT_FILE", None)
-blob_storage_adapter_config = BlobStorageAdapterConfig(_env_file=environment_file)
+blob_storage_adapter_config = BlobStorageAdapterConfig(
+    _env_file=environment_file  # type: ignore[call-arg]
+)
 
 
 def get_blob_adapter_config() -> BlobStorageAdapterConfig:
