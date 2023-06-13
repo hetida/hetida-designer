@@ -116,18 +116,17 @@ def get_sinks(
             selected_sinks = sinks_json_objects
         else:
             selected_sinks = []
+    elif include_sub_objects:
+        selected_sinks = [
+            snk
+            for snk in sinks_json_objects
+            if snk["id"].startswith(parent_id)
+            and len(snk["id"]) != len(parent_id)  # only true subnodes!
+        ]
     else:
-        if include_sub_objects:
-            selected_sinks = [
-                snk
-                for snk in sinks_json_objects
-                if snk["id"].startswith(parent_id)
-                and len(snk["id"]) != len(parent_id)  # only true subnodes!
-            ]
-        else:
-            selected_sinks = [
-                snk for snk in sinks_json_objects if snk["thingNodeId"] == parent_id
-            ]
+        selected_sinks = [
+            snk for snk in sinks_json_objects if snk["thingNodeId"] == parent_id
+        ]
 
     if filter_str is not None:
         selected_sinks = [

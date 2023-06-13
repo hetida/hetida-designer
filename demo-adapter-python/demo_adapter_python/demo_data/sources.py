@@ -296,18 +296,17 @@ def get_sources(
             selected_sources = sources_json_objects
         else:
             selected_sources = []
+    elif include_sub_objects:
+        selected_sources = [
+            src
+            for src in sources_json_objects
+            if src["id"].startswith(parent_id)
+            and len(src["id"]) != len(parent_id)  # only true subnodes!
+        ]
     else:
-        if include_sub_objects:
-            selected_sources = [
-                src
-                for src in sources_json_objects
-                if src["id"].startswith(parent_id)
-                and len(src["id"]) != len(parent_id)  # only true subnodes!
-            ]
-        else:
-            selected_sources = [
-                src for src in sources_json_objects if src["thingNodeId"] == parent_id
-            ]
+        selected_sources = [
+            src for src in sources_json_objects if src["thingNodeId"] == parent_id
+        ]
 
     if filter_str is not None:
         selected_sources = [
