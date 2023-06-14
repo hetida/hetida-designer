@@ -1,5 +1,5 @@
 ##### Build stage
-FROM --platform=linux/amd64 python:3.10.12-slim-bullseye as base
+FROM --platform=linux/amd64 python:3.11.4-slim-bullseye as base
 
 ENV TIMEOUT=60
 

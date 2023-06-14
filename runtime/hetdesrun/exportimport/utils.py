@@ -180,7 +180,7 @@ def update_or_create_transformation_revision(
                 )
             else:
                 msg = (
-                    f"COULD NOT PUT {tr.type} with id {tr.id}.\n"
+                    f"COULD NOT PUT {str(tr.type)} with id {tr.id}.\n"
                     f"Response status code {response.status_code} "
                     f"with response text:\n{response.text}"
                 )

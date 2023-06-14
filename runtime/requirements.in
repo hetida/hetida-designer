@@ -23,7 +23,7 @@ holidays
 plotly==4.9.0
 requests
 python-jose[cryptography]
-cached-property
+asyncstdlib
 odfpy
 openpyxl
 pyarrow

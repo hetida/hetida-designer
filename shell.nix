@@ -50,10 +50,20 @@
 
 
 # fix nixpkgs commit:
-with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/5b7cd5c39befee629be284970415b6eb3b0ff000.tar.gz") {};
+with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/75a5ebf473cd60148ba9aec0d219f72e5cf52519.tar.gz") {
+  config = {
+    permittedInsecurePackages = [
+                "nodejs-14.21.3"
+                # "openssl-1.1.1u"
+              ];
+  };
+};
+# 5b7cd5c39befee629be284970415b6eb3b0ff000
+# 23.05: 4ecab3273592f27479a583fb6d975d4aba3486fe
 
 let
-  pythonPackages = python310Packages; # Fix Python version from the used nixpkgs commit
+  nixpkgs_for_nodejs14 = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/5b7cd5c39befee629be284970415b6eb3b0ff000.tar.gz") {};
+  pythonPackages = python311Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
   venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
   venvDirPythonDemoAdapter = toString ./runtime/nix_venv_hd_dev_python_demo_adapter;
@@ -103,6 +113,7 @@ let
 
       mkdir -p $out/lib
       
+      ln -s "${postgresql.lib}"/lib/libpq.so.5 "$out"/lib/libpq.so.5
       ln -s "${zlib}"/lib/libz.so.1 "$out"/lib/libz.so.1
       ln -s "${glibc}"/lib/libc-2.33.so "$out"/lib/libc-2.33.so
       ln -s "${glibc}"/lib/libc-2.33.so.1 "$out"/lib/libc-2.33.so.1
@@ -279,7 +290,7 @@ in pkgs.mkShell rec {
   buildInputs = [
     # A Python interpreter including the 'venv' module is required to bootstrap
     # the environment (>36)
-    python310Packages.python
+    python311Packages.python
 
     # Some libraries that may be required by Python libraries we want to use.
     taglib
@@ -311,9 +322,9 @@ in pkgs.mkShell rec {
     # Postgres
     
     postgresql
-  
+    postgresql.lib  
     # Node
-    nodejs-14_x
+    nixpkgs_for_nodejs14.nodejs-14_x
     chromium # for tests
     #google-chrome 
     # you may use google-chrome for tests with chrome instead of chromium.
