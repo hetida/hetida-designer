@@ -6,6 +6,7 @@ to provide a very elementary support system to the designer code editor.
 
 from keyword import iskeyword
 
+from hetdesrun.persistence.models.io import InputType
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
 
@@ -52,7 +53,9 @@ def generate_function_header(
         if len(component.io_interface.inputs) == 0
         else "*, "
         + ", ".join(
-            inp.name for inp in component.io_interface.inputs if inp.name is not None
+            inp.name + ("=" + inp.value if inp.type == InputType.OPTIONAL else "")
+            for inp in component.io_interface.inputs
+            if inp.name is not None
         )
     )
 

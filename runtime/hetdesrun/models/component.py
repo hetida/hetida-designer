@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
@@ -31,6 +32,11 @@ class ComponentInput(UnnamedInput):
     """
 
     name: str = Field(..., example="x", description="must be a valid Python identifier")
+    default: bool = Field(False, description="Whether this input has a default value")
+    default_value: Any = Field(
+        None,
+        description=("The default value for this input if default is True."),
+    )
 
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:

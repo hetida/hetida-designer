@@ -752,8 +752,8 @@ class WorkflowContent(BaseModel):
         sub_nodes: list[WorkflowNode | ComponentNode],
     ) -> WorkflowNode:
         inputs = []
-        for input_connector in self.inputs:
-            inputs.append(input_connector.to_workflow_input())
+        for wf_input in self.inputs:
+            inputs.append(wf_input.to_workflow_input())
         for constant in self.constants:
             inputs.append(constant.to_workflow_input())
 

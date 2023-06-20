@@ -181,15 +181,24 @@ def apply_connections(
 
 def obtain_inputs_by_role(
     node: WorkflowNode,
-) -> tuple[list[WorkflowInput], list[WorkflowInput]]:
+) -> tuple[list[WorkflowInput], list[WorkflowInput], list[WorkflowInput]]:
     """
     returns a pair of Lists where the first list contains all dynamic inputs and the second
     consists of all constant inputs
     """
     wf_inputs = node.inputs
-    dynamic_inputs = [inp for inp in wf_inputs if not inp.constant]
+    dynamic_inputs_without_default_value = [
+        inp for inp in wf_inputs if not inp.constant and not inp.default
+    ]
+    dynamic_inputs_with_default_value = [
+        inp for inp in wf_inputs if not inp.constant and inp.default
+    ]
     constant_inputs = [inp for inp in wf_inputs if inp.constant]
-    return (dynamic_inputs, constant_inputs)
+    return (
+        dynamic_inputs_without_default_value,
+        dynamic_inputs_with_default_value,
+        constant_inputs,
+    )
 
 
 def generate_constant_input_name(inp: WorkflowInput) -> str:
@@ -197,7 +206,8 @@ def generate_constant_input_name(inp: WorkflowInput) -> str:
 
 
 def obtain_mappings(
-    dynamic_inputs: list[WorkflowInput],
+    dynamic_inputs_without_default_value: list[WorkflowInput],
+    dynamic_inputs_with_default_value: list[WorkflowInput],
     constant_inputs: list[WorkflowInput],
     outputs: list[WorkflowOutput],
     new_sub_nodes: dict[str, Node],
@@ -216,7 +226,7 @@ def obtain_mappings(
             new_sub_nodes[inp.id_of_sub_node],
             inp.name_in_subnode,
         )
-        for inp in dynamic_inputs
+        for inp in dynamic_inputs_without_default_value
     }
 
     constant_input_mappings = {
@@ -280,10 +290,18 @@ def recursively_parse_workflow_node(
     wf_outputs = node.outputs
     has_only_plot_outputs = only_plot_outputs(wf_outputs)
 
-    dynamic_inputs, constant_inputs = obtain_inputs_by_role(node)
+    (
+        dynamic_inputs_without_default_value,
+        dynamic_inputs_with_default_value,
+        constant_inputs,
+    ) = obtain_inputs_by_role(node)
 
     dynamic_input_mappings, constant_input_mappings, output_mappings = obtain_mappings(
-        dynamic_inputs, constant_inputs, wf_outputs, new_sub_nodes
+        dynamic_inputs_without_default_value,
+        dynamic_inputs_with_default_value,
+        constant_inputs,
+        wf_outputs,
+        new_sub_nodes,
     )
 
     input_mappings = {

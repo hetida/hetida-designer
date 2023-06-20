@@ -59,7 +59,13 @@ class Flexibility(BaseModel):
 
 class TransformationInput(Flexibility, IO):
     def to_component_input(self) -> ComponentInput:
-        return ComponentInput(id=self.id, type=self.data_type, name=self.name)
+        return ComponentInput(
+            id=self.id,
+            type=self.data_type,
+            name=self.name,
+            default=bool(self.type == InputType.OPTIONAL),
+            default_value=self.value,
+        )
 
 
 class IOInterface(BaseModel):
@@ -285,6 +291,8 @@ class WorkflowContentDynamicInput(Flexibility, WorkflowContentIO):
             name_in_subnode=self.connector_name,
             constantValue=None,
             constant=False,
+            default_value=self.value,
+            default=bool(self.type == InputType.OPTIONAL),
         )
 
     @classmethod
