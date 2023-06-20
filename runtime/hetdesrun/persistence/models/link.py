@@ -43,7 +43,7 @@ class Link(BaseModel):
 
     @validator("start")
     def check_start_connector_has_right_class(cls, start: Vertex) -> Vertex:
-        if isinstance(start.connector, (OperatorInput, WorkflowContentOutput)):
+        if isinstance(start.connector, OperatorInput | WorkflowContentOutput):
             raise ValueError(
                 "Instances of OperatorInput or WorkflowContentOutput "
                 "can only be the end connector of a link."
@@ -54,7 +54,7 @@ class Link(BaseModel):
     def check_end_connector_has_right_class(cls, end: Vertex) -> Vertex:
         if isinstance(
             end.connector,
-            (OperatorOutput, WorkflowContentConstantInput, WorkflowContentDynamicInput),
+            OperatorOutput | WorkflowContentConstantInput | WorkflowContentDynamicInput,
         ):
             raise ValueError(
                 "Instances of OperatorOutput, WorkflowContentConstantInput, or "

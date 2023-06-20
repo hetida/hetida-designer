@@ -68,7 +68,7 @@ class TransformationRevision(BaseModel):
     name: NonEmptyValidStr
     description: ValidStr = ValidStr("")
     category: NonEmptyValidStr = Field(
-        "Other",
+        "Other",  # type: ignore[assignment]
         description=(
             'Category in which this is classified, i.e. the "drawer" in the User Interface.'
         ),
@@ -88,11 +88,11 @@ class TransformationRevision(BaseModel):
     )
     state: State = Field(
         ...,
-        description="one of " + ", ".join(['"' + x.value + '"' for x in list(State)]),
+        description="one of " + ", ".join(['"' + str(x) + '"' for x in list(State)]),
     )
     type: Type = Field(  # noqa: A003
         ...,
-        description="one of " + ", ".join(['"' + x.value + '"' for x in list(Type)]),
+        description="one of " + ", ".join(['"' + str(x) + '"' for x in list(Type)]),
     )
 
     documentation: str = Field(

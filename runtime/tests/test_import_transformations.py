@@ -10,7 +10,6 @@ from hetdesrun.exportimport.importing import (
     import_transformations,
     update_or_create_transformation_revision,
 )
-from hetdesrun.persistence import sessionmaker
 from hetdesrun.persistence.dbservice.revision import read_single_transformation_revision
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.io.load import (
@@ -47,21 +46,17 @@ def test_tr_from_code_for_component_without_register_decorator():
     assert "COMPONENT_INFO" in tr.content
 
 
-def test_import_single_transformation(clean_test_db_engine):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        path = (
-            "./transformations/components/arithmetic/"
-            "consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json"
-        )
-        tr_json = load_json(path)
-        tr = TransformationRevision(**tr_json)
-        update_or_create_transformation_revision(tr, directly_in_db=True)
-        persisted_tr = read_single_transformation_revision(tr.id)
+def test_import_single_transformation(mocked_clean_test_db_session):
+    path = (
+        "./transformations/components/arithmetic/"
+        "consecutive-differences_100_ce801dcb-8ce1-14ad-029d-a14796dcac92.json"
+    )
+    tr_json = load_json(path)
+    tr = TransformationRevision(**tr_json)
+    update_or_create_transformation_revision(tr, directly_in_db=True)
+    persisted_tr = read_single_transformation_revision(tr.id)
 
-        assert persisted_tr == tr
+    assert persisted_tr == tr
 
 
 def test_component_import_via_rest_api(caplog):
@@ -113,32 +108,23 @@ def test_workflow_import_via_rest_api(caplog):
         assert "COULD NOT PUT WORKFLOW" in caplog.text
 
 
-def test_component_import_directly_into_db(caplog, clean_test_db_engine):
-    patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(  # noqa: SIM117
-        "hetdesrun.persistence.dbservice.nesting.Session",
-        patched_session,
-    ):
+def test_component_import_directly_into_db(caplog, mocked_clean_test_db_session):
+    response_mock = mock.Mock()
+    response_mock.status_code = 200
+
+    with caplog.at_level(logging.DEBUG):  # noqa: SIM117
         with mock.patch(
-            "hetdesrun.persistence.dbservice.revision.Session",
-            patched_session,
-        ):
-            response_mock = mock.Mock()
-            response_mock.status_code = 200
+            "hetdesrun.utils.requests.put", return_value=response_mock
+        ) as patched_put:
+            caplog.clear()
+            import_transformations(
+                "./transformations/components", directly_into_db=True
+            )
+            assert "1946d5f8-44a8-724c-176f-16f3e49963af" in caplog.text
+            # id of a component
 
-            with caplog.at_level(logging.DEBUG):  # noqa: SIM117
-                with mock.patch(
-                    "hetdesrun.utils.requests.put", return_value=response_mock
-                ) as patched_put:
-                    caplog.clear()
-                    import_transformations(
-                        "./transformations/components", directly_into_db=True
-                    )
-                    assert "1946d5f8-44a8-724c-176f-16f3e49963af" in caplog.text
-                    # id of a component
-
-            # did not try to upload via REST API
-            assert patched_put.call_count == 0
+    # did not try to upload via REST API
+    assert patched_put.call_count == 0
 
 
 def test_import_with_deprecate_older_versions():

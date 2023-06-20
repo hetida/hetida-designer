@@ -731,7 +731,7 @@ def test_blob_storage_class_adapter_hierarchy_with_non_positive_object_key_path(
         structure=(HierarchyNode(name="I", description=""),)
     )
     with pytest.raises(ValueError, match="Without an object key prefix"):
-        adapter_hierarchy.thing_nodes
+        adapter_hierarchy.thing_nodes  # noqa: B018
 
 
 def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error() -> None:
@@ -755,7 +755,7 @@ def test_blob_storage_class_adapter_hierarchy_with_name_invalid_error() -> None:
     adapter_hierarchy = AdapterHierarchy(structure=structure)
 
     with pytest.raises(ValueError, match="to BucketName"):
-        adapter_hierarchy.structure_buckets
+        adapter_hierarchy.structure_buckets  # noqa: B018
 
 
 def test_blob_storage_adapter_hierarchy_identify_second_last_node_as_bucket_end() -> (
@@ -807,7 +807,7 @@ def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
         ],
     )
     with pytest.raises(ValueError, match="Bucket names are not unique"):
-        adapter_hierarchy.structure_buckets
+        adapter_hierarchy.structure_buckets  # noqa: B018
 
     adapter_hierarchy = AdapterHierarchy(
         structure=[
@@ -829,4 +829,4 @@ def test_blob_storage_adapter_hierarchy_with_duplicates() -> None:
         ],
     )
     with pytest.raises(ValueError, match="Thing nodes are not unique"):
-        adapter_hierarchy.structure_buckets
+        adapter_hierarchy.structure_buckets  # noqa: B018

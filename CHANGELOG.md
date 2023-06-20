@@ -1,3 +1,14 @@
+## 0.8.9
+* free text filters for inputs (adapter system)
+* add blob storage configuration options
+* imporved blob storage adapter performance
+* type-specific blob storage serialization (keras models)
+* new data type: MultiTSFrames (collections of multiple timeseries with non-simultaneous timestamps)
+* api improvements / fixes
+* frontend adaption to new transformations endpoints.
+* NOTE: The endpoints deprecated since 0.7.* may be actually removed in one of the next releases
+* new workflows / components: When upgrading it is recommended to re-deploy the base components/workflows
+
 ## 0.8.8
 * add automatic bucket creation to blob storage adapter
 ## 0.8.7

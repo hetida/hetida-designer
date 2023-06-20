@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy.future.engine import Engine
 
-from hetdesrun.persistence import get_db_engine
+from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.application import init_app
@@ -29,6 +29,15 @@ def clean_test_db_engine(test_db_engine: Engine) -> Engine:
     Base.metadata.drop_all(test_db_engine)
     Base.metadata.create_all(test_db_engine)
     return test_db_engine
+
+
+@pytest.fixture()
+def mocked_clean_test_db_session(clean_test_db_engine):
+    with mock.patch(
+        "hetdesrun.persistence.Session",
+        sessionmaker(clean_test_db_engine),
+    ) as _fixture:
+        yield _fixture
 
 
 @pytest.fixture(scope="session")

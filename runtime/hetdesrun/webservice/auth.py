@@ -29,7 +29,9 @@ class BearerVerifierOptions(BaseModel):
     audience: str = Field("account")
 
     reload_public_key: bool = Field(True)
-    public_key_reloading_minimum_age: datetime.timedelta = Field(15)
+    public_key_reloading_minimum_age: datetime.timedelta = Field(
+        datetime.timedelta(seconds=15)
+    )
     default_decoding_options: dict = Field(
         DEFAULT_OPTIONS,
         description="default options for jwt decoding. These will be used"
@@ -61,7 +63,9 @@ class BearerVerifier:
         auth_url: str,
         audience: str = "account",
         reload_public_key: bool = True,
-        public_key_reloading_minimum_age: int = 15,
+        public_key_reloading_minimum_age: datetime.timedelta = datetime.timedelta(
+            seconds=15
+        ),
         default_decoding_options: dict = DEFAULT_OPTIONS,
         verify_ssl: bool = True,
     ) -> "BearerVerifier":

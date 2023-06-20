@@ -34,5 +34,5 @@ class LocalFileAdapterConfig(BaseSettings):
 environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
 
 local_file_adapter_config = LocalFileAdapterConfig(
-    _env_file=environment_file if environment_file else None
+    _env_file=environment_file if environment_file else None  # type: ignore[call-arg]
 )

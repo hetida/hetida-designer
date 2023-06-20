@@ -27,7 +27,7 @@ def json_serialize_dt(obj: datetime.datetime | datetime.date) -> str:
     usage: json.dumps(my_object, default=json_serialize_dt)
     """
 
-    if isinstance(obj, (datetime.datetime, datetime.date)):
+    if isinstance(obj, datetime.datetime | datetime.date):
         return obj.isoformat()
     raise TypeError(f"Type {str(type(obj))} not json serializable")
 
@@ -86,7 +86,7 @@ class TokenType(str, Enum):
         # first value is canonical value (e.g. what you get when calling TokenType.bearer.value)
         obj._value_ = values[0]
 
-        cls.parse_type: type  # for mypy
+        cls.parse_type: type  # for mypy # noqa: B032
         obj.parse_type = values[1]  # set parse_type to second tuple entry
 
         for other_value in values[2:]:

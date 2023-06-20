@@ -1,3 +1,5 @@
+from __future__ import annotations  # for type hinting the Session from sessionmaker
+
 import json
 import logging
 from functools import cache
@@ -53,3 +55,7 @@ def get_db_engine(override_db_url: SecretStr | str | URL | None = None) -> Engin
 
 
 Session = sessionmaker(get_db_engine())
+
+
+def get_session() -> sessionmaker[SQLAlchemySession]:
+    return Session
