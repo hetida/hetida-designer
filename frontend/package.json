@@ -60,7 +60,7 @@
     "monaco-editor": "^0.24.0",
     "ng-hetida-flowchart": "0.5.8",
     "ngx-monaco-editor": "^12.0.0",
-    "plotly.js": "^1.58.2",
+    "plotly.js": "^2.24.2",
     "rxjs": "^7.8.1",
     "tslib": "^2.5.0",
     "zone.js": "~0.11.4"
