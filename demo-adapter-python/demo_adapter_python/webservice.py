@@ -625,8 +625,9 @@ async def timeseries(
                 ts_df = ts_df.resample(frequency).first(numeric_only=False)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_406_NOT_ACCEPTABLE,
-                    f"Value of frequency '{frequency}' is no frequency string.",
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    f"Provided value '{frequency}' for frequency is invalid! "
+                    "Check the reference for pandas.DataFrame.resample for more information.",
                 ) from error
         # throws warning during pytest:
         ts_df.to_json(io_stream, lines=True, orient="records", date_format="iso")
@@ -756,14 +757,14 @@ async def dataframe(
             column_name_list, error_msg = parse_string_to_list(column_names)
             if error_msg != "":
                 raise HTTPException(
-                    status.HTTP_406_NOT_ACCEPTABLE,
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
                     error_msg,
                 )
             try:
                 df = df[column_name_list]
             except KeyError as error:
                 raise HTTPException(
-                    status.HTTP_406_NOT_ACCEPTABLE,
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
                     f"Dataframe with id {df_id} contains columns {list(df)} "
                     f"but does not contain all columns of {column_name_list}.",
                 ) from error
@@ -854,7 +855,7 @@ async def multitsframe(
                 lower_threshold_value = float(lower_threshold)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_406_NOT_ACCEPTABLE,
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
                     f"Cannot cast lower threshold '{lower_threshold}' to float:\n{error}",
                 ) from error
             mtsf = mtsf[mtsf["value"] > lower_threshold_value]
@@ -863,7 +864,7 @@ async def multitsframe(
                 upper_threshold_value = float(upper_threshold)
             except ValueError as error:
                 raise HTTPException(
-                    status.HTTP_406_NOT_ACCEPTABLE,
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
                     f"Cannot cast lower threshold '{upper_threshold}' to float:\n{error}",
                 ) from error
             mtsf = mtsf[mtsf["value"] < upper_threshold_value]
