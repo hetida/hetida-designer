@@ -190,6 +190,7 @@ def test_transformation_input_to_component_input() -> None:
         id=optional_trafo_input["id"],
         type=optional_trafo_input["data_type"],
         name=optional_trafo_input["name"],
+        default=True,
     )
 
 

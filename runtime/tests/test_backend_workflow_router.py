@@ -569,7 +569,7 @@ async def test_execute_for_workflow_dto(
         Link(
             start=Vertex(
                 operator=None,
-                connector=Connector.from_io(tr_workflow_2.content.inputs[0]),
+                connector=Connector(**tr_workflow_2.content.inputs[0].dict()),
             ),
             end=Vertex(
                 operator=tr_workflow_2.content.operators[0].id,
@@ -585,7 +585,7 @@ async def test_execute_for_workflow_dto(
             ),
             end=Vertex(
                 operator=None,
-                connector=Connector.from_io(tr_workflow_2.content.outputs[0]),
+                connector=Connector(**tr_workflow_2.content.outputs[0].dict()),
             ),
         )
     )

@@ -529,7 +529,9 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
                 )
             ],
         ),
-        io_interface=IOInterface(outputs=[output_connector_not_deprecated.to_io()]),
+        io_interface=IOInterface(
+            outputs=[TransformationOutput(**output_connector_not_deprecated.dict())]
+        ),
         test_wiring=WorkflowWiring(),
     )
 
