@@ -53,9 +53,18 @@ def generate_function_header(
         if len(component.io_interface.inputs) == 0
         else "*, "
         + ", ".join(
-            inp.name + ("=" + inp.value if inp.type == InputType.OPTIONAL else "")
-            for inp in component.io_interface.inputs
-            if inp.name is not None
+            [
+                inp.name
+                for inp in component.io_interface.inputs
+                if inp.type == InputType.REQUIRED
+                if inp.name is not None
+            ]
+            + [
+                inp.name + "=" + str(inp.value)
+                for inp in component.io_interface.inputs
+                if inp.type == InputType.OPTIONAL
+                if inp.name is not None
+            ]
         )
     )
 
