@@ -137,8 +137,8 @@ class WorkflowExecutionInput(BaseModel):
         """
 
         try:
-            wiring = values["workflow_wiring"]
-            workflow = values["workflow"]
+            wiring: WorkflowWiring = values["workflow_wiring"]
+            workflow: WorkflowNode = values["workflow"]
         except KeyError as e:
             raise ValueError(
                 "Cannot check if wiring is complete if "
@@ -150,14 +150,25 @@ class WorkflowExecutionInput(BaseModel):
             inp_wiring.workflow_input_name for inp_wiring in wiring.input_wirings
         }
 
-        non_constant_wf_inputs = [wfi for wfi in workflow.inputs if not wfi.constant]
-        for wf_input in non_constant_wf_inputs:
+        dynamic_required_wf_inputs = [
+            wfi
+            for wfi in workflow.inputs
+            if wfi.constant is False and wfi.default is False
+        ]
+        for wf_input in dynamic_required_wf_inputs:
             if not wf_input.name in wired_input_names:
                 raise ValueError(
                     f"Wiring Incomplete: Workflow Input {wf_input.name} has no wiring!"
                 )
 
-        if len(wired_input_names) > len(non_constant_wf_inputs):
+        dynamic_optional_wf_inputs = [
+            wfi
+            for wfi in workflow.inputs
+            if wfi.constant is False and wfi.default is True
+        ]
+        if len(wired_input_names) > len(dynamic_required_wf_inputs) + len(
+            dynamic_optional_wf_inputs
+        ):
             raise ValueError("Too many input wirings provided!")
 
         wired_output_names = {
