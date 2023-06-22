@@ -228,9 +228,9 @@ class TransformationRevision(BaseModel):
             except KeyError:
                 logger.warning(
                     "For the io interface input '%s' "
-                    "there is not workflow content input with the same id. "
+                    "there is no workflow content input with the same id. "
                     "Thus, it will be removed from the io interface.",
-                    str({trafo_input.id}),
+                    str(trafo_input.id),
                 )
                 io_interface.inputs.remove(trafo_input)
                 continue
@@ -260,7 +260,7 @@ class TransformationRevision(BaseModel):
             except KeyError:
                 logger.warning(
                     "For the io interface output '%s' "
-                    "there is not workflow content output with the same id. "
+                    "there is no workflow content output with the same id. "
                     "Thus, it will be removed from the io interface.",
                     str({trafo_output.id}),
                 )

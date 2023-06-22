@@ -145,16 +145,19 @@ class WorkflowContent(BaseModel):
         """Delete links with missing or not matching operator inputs or outputs.
 
         Delete links for which
-        * no operator output with operator id and connector id matching the link start is found or
-        * the found operator output does not match to the link start connector or
-        * no an operator input with operator id and connector id matching the link end is found or
-        * the found operator input does not match to the link end connector
+        * no operator output with operator id and connector id matching the link start is found,
+        * the found operator output does not match to the link start connector,
+        * no an operator input with operator id and connector id matching the link end is found,
+        * the found operator input does not match to the link end connector or
+        * the found operator input is not exposed.
         """
         try:
-            operator_input_by_id_tuple_dict = values["operator_input_by_id_tuple_dict"]
-            operator_output_by_id_tuple_dict = values[
-                "operator_output_by_id_tuple_dict"
-            ]
+            operator_input_by_id_tuple_dict: dict[
+                tuple[UUID, UUID], OperatorInput
+            ] = values["operator_input_by_id_tuple_dict"]
+            operator_output_by_id_tuple_dict: dict[
+                tuple[UUID, UUID], OperatorInput
+            ] = values["operator_output_by_id_tuple_dict"]
         except KeyError as error:
             raise ValueError(
                 "Cannot reduce to valid links if attribute 'operators' is missing!"
@@ -208,6 +211,16 @@ class WorkflowContent(BaseModel):
                     logger.warning(
                         "The link end connector %s and the referenced operator input %s "
                         "do not match for link '%s'! The link will be removed.",
+                        link.end.connector.json(),
+                        operator_input.json(),
+                        str(link.id),
+                    )
+                    links.remove(link)
+                    continue
+                if operator_input.exposed is False:
+                    logger.warning(
+                        "The link end connector %s references a not exposed operator input %s! "
+                        "The link '%s' will be removed.",
                         link.end.connector.json(),
                         operator_input.json(),
                         str(link.id),
@@ -318,9 +331,14 @@ class WorkflowContent(BaseModel):
     ) -> list[WorkflowContentDynamicInput]:
         """Cleanup unlinked (or wrongly linked named) dynamic workflow content inputs.
 
-        Delete inputs for which the referenced operator input does not exist or does not match.
-        Delete named inputs which have no link, a link with a start not matching them or
-        with a link end not referencing the operator input referenced by the input itself.
+        Delete inputs for which the referenced operator input
+        * does not exist,
+        * does not match or
+        * is not exposed.
+        Delete named inputs which have
+        * no link,
+        * a link with a start not matching them or
+        * a link with an end not referencing the operator input referenced by the input itself.
         """
         try:
             operator_input_by_id_tuple_dict: dict[
@@ -350,6 +368,14 @@ class WorkflowContent(BaseModel):
             if not wf_input.matches_operator_io(operator_input):
                 logger.warning(
                     "Operator input referenced by dynamic workflow input '%s' does not match! "
+                    "The input will be removed.",
+                    str(wf_input.id),
+                )
+                inputs.remove(wf_input)
+                continue
+            if operator_input.exposed is False:
+                logger.warning(
+                    "Operator input referenced by dynamic workflow input '%s' is not exposed! "
                     "The input will be removed.",
                     str(wf_input.id),
                 )
@@ -427,6 +453,8 @@ class WorkflowContent(BaseModel):
 
         for operator in operators:
             for operator_input in operator.inputs:
+                if operator_input.exposed is False:
+                    continue
                 try:
                     wf_input_by_operator_and_connector_id_dict[
                         (
@@ -479,9 +507,13 @@ class WorkflowContent(BaseModel):
     ) -> list[WorkflowContentOutput]:
         """Cleanup unlinked (or wrongly linked named) workflow content outputs.
 
-        Delete outputs for which the referenced operator output does not exist or does not match.
-        Delete named outputs which have no link, a link end not matching them or a with a link start
-        not referencing the operator input referenced by the output itself.
+        Delete outputs for which the referenced operator output
+        * does not exist or
+        * does not match.
+        Delete named outputs which have
+        * no link,
+        * a link end not matching them or
+        * a link with a start not referencing the operator input referenced by the output itself.
         """
         try:
             link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = values[
@@ -645,10 +677,13 @@ class WorkflowContent(BaseModel):
     def clean_up_outer_links(cls, values: dict) -> dict:
         """Clean up outer links.
 
-        For links from a dynamic/constant workflow content input to an operator input and for links
-        from an operator output to a workflow content output it is checked if the referenced
-        entities exist and match to the link start and end connector.
-        If they do not exist or do not match the link is removed and an according message is logged.
+        Delete links from a dynamic/constant workflow content input to an operator input if
+        * the referenced dynamic/constant workflow content input does not exist or
+        * the referenced dynamic/constant workflow content input has no name.
+
+        Delete links from an operator input to a workflow content output if
+        * the referenced workflow content output does not exist or
+        * the referenced workflow content output has no name.
 
         New links for named inputs are added by the frontend before sending the PUT-request.
         """
