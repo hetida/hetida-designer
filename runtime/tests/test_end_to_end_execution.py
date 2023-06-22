@@ -303,3 +303,33 @@ async def test_multitsframe_wf_execution(async_test_client: AsyncClient) -> None
                 "8": "2019-08-03T15:45:36.000Z",
             },
         }
+
+
+@pytest.mark.asyncio
+async def test_nested_optional_inputs_wf_execution(
+    async_test_client: AsyncClient,
+) -> None:
+    with open(
+        os.path.join("tests", "data", "nested_optional_inputs_wf_execution_input.json"),
+        encoding="utf8",
+    ) as f:
+        loaded_workflow_exe_input = json.load(f)
+
+    async with async_test_client as client:
+        response_status_code, response_json = await run_workflow_with_client(
+            loaded_workflow_exe_input, client
+        )
+
+    assert response_status_code == 200
+    assert response_json["result"] == "ok"
+    assert (
+        response_json["output_results_by_output_name"]["intercept"]
+        == 2.8778442676301292
+    )
+    assert (
+        response_json["output_results_by_output_name"]["limit_violation_timestamp"]
+        == "2020-06-25T16:33:23.934348+00:00"
+    )
+    assert response_json["output_results_by_output_name"]["slope"] == [
+        -3.700034733861136e-7
+    ]

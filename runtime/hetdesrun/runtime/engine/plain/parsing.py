@@ -60,8 +60,6 @@ def parse_workflow_input(
         workflow_node,
         component_dict,
         code_module_dict,
-        name_prefix="\\",
-        id_prefix="\\",
     )
 
     return workflow
@@ -215,6 +213,7 @@ def obtain_mappings(
     dict[str, tuple[Node, str]],
     dict[str, tuple[Node, str]],
     dict[str, tuple[Node, str]],
+    dict[str, tuple[Node, str]],
 ]:
     """
     Return Tripel consisting of dynamic input mappings, constant input mappings, output mappings
@@ -227,6 +226,16 @@ def obtain_mappings(
             inp.name_in_subnode,
         )
         for inp in dynamic_inputs_without_default_value
+    }
+
+    optional_input_mappings: dict[str, tuple[Node, str]] = {
+        cast(str, inp.name): (
+            # casting since mypy does not know that for non-constant inputs
+            # a name is mandatory
+            new_sub_nodes[inp.id_of_sub_node],
+            inp.name_in_subnode,
+        )
+        for inp in dynamic_inputs_with_default_value
     }
 
     constant_input_mappings = {
@@ -242,7 +251,12 @@ def obtain_mappings(
         for outp in outputs
     }
 
-    return (dynamic_input_mappings, constant_input_mappings, output_mappings)
+    return (
+        dynamic_input_mappings,
+        optional_input_mappings,
+        constant_input_mappings,
+        output_mappings,
+    )
 
 
 def recursively_parse_workflow_node(
@@ -296,7 +310,12 @@ def recursively_parse_workflow_node(
         constant_inputs,
     ) = obtain_inputs_by_role(node)
 
-    dynamic_input_mappings, constant_input_mappings, output_mappings = obtain_mappings(
+    (
+        dynamic_input_mappings,
+        optional_input_mappings,
+        constant_input_mappings,
+        output_mappings,
+    ) = obtain_mappings(
         dynamic_inputs_without_default_value,
         dynamic_inputs_with_default_value,
         constant_inputs,
@@ -306,6 +325,7 @@ def recursively_parse_workflow_node(
 
     input_mappings = {
         **dynamic_input_mappings,
+        **optional_input_mappings,
         **constant_input_mappings,
     }  # generated constant input name: (subnode, subnode_inp_name)
 
@@ -321,6 +341,23 @@ def recursively_parse_workflow_node(
         operator_hierarchical_id=id_prefix + node.id + "\\",
         operator_hierarchical_name=name_prefix + node_name + "\\",
     )
+
+    # provide default data
+    if len(dynamic_inputs_with_default_value) != 0:
+        # to keep number of nodes in test_plain_wf_parsing_and_execution
+        workflow.add_constant_providing_node(
+            values=[
+                NamedDataTypedValue(
+                    name=inp.name,
+                    type=inp.type,
+                    value=inp.default_value,
+                )
+                for inp in dynamic_inputs_with_default_value
+                if inp.name is not None
+            ],
+            add_new_provider_node_to_workflow=False,
+            id_suffix="workflow_default_values",
+        )
 
     # provide constant data
     workflow.add_constant_providing_node(
