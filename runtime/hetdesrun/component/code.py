@@ -6,6 +6,7 @@ to provide a very elementary support system to the designer code editor.
 
 from keyword import iskeyword
 
+from hetdesrun.datatypes import DataType
 from hetdesrun.persistence.models.io import InputType
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
@@ -60,7 +61,11 @@ def generate_function_header(
                 if inp.name is not None
             ]
             + [
-                inp.name + "=" + str(inp.value)
+                inp.name
+                + "="
+                + ('"' if inp.data_type == DataType.String else "")
+                + str(inp.value)
+                + ('"' if inp.data_type == DataType.String else "")
                 for inp in component.io_interface.inputs
                 if inp.type == InputType.OPTIONAL
                 if inp.name is not None
@@ -75,7 +80,20 @@ def generate_function_header(
         + ("\n    " if len(component.io_interface.inputs) != 0 else "")
         + "".join(
             [
-                '    "' + inp.name + '": "' + inp.data_type.value + '",\n    '
+                '    "'
+                + inp.name
+                + '": {"data_type": "'
+                + inp.data_type.value
+                + '"'
+                + (
+                    ', "default_value": '
+                    + ('"' if inp.data_type == DataType.String else "")
+                    + str(inp.value)
+                    + ('"' if inp.data_type == DataType.String else "")
+                    if inp.type == InputType.OPTIONAL
+                    else ""
+                )
+                + "},\n    "
                 for inp in component.io_interface.inputs
                 if inp.name is not None
             ]
@@ -88,7 +106,11 @@ def generate_function_header(
         + ("\n    " if len(component.io_interface.outputs) != 0 else "")
         + "".join(
             [
-                '    "' + output.name + '": "' + output.data_type.value + '",\n    '
+                '    "'
+                + output.name
+                + '": {"data_type": "'
+                + output.data_type.value
+                + '"},\n    '
                 for output in component.io_interface.outputs
                 if output.name is not None
             ]

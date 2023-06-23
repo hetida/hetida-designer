@@ -60,8 +60,8 @@ def test_function_header_multiple_inputs():
     assert (
         """
     "inputs": {
-        "x": "FLOAT",
-        "okay": "BOOLEAN",
+        "x": {"data_type": "FLOAT"},
+        "okay": {"data_type": "BOOLEAN"},
     },
     """
         in func_header
@@ -69,7 +69,7 @@ def test_function_header_multiple_inputs():
     assert (
         """
     "outputs": {
-        "output": "FLOAT",
+        "output": {"data_type": "FLOAT"},
     },
     """
         in func_header
@@ -87,7 +87,27 @@ def test_function_header_optional_inputs():
                     type=InputType.OPTIONAL,
                     value=1.2,
                 ),
-                TransformationInput(name="okay", data_type=DataType.Boolean),
+                TransformationInput(
+                    name="okay",
+                    data_type=DataType.Boolean,
+                    type=InputType.OPTIONAL,
+                    value=False,
+                ),
+                TransformationInput(
+                    name="text",
+                    data_type=DataType.String,
+                    type=InputType.OPTIONAL,
+                    value="some text",
+                ),
+                TransformationInput(
+                    name="series",
+                    data_type=DataType.Series,
+                    type=InputType.OPTIONAL,
+                    value=(
+                        '{\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": '
+                        '18.7,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'
+                    ),
+                ),
             ],
             outputs=[TransformationOutput(name="output", data_type=DataType.Float)],
         ),
@@ -103,7 +123,14 @@ def test_function_header_optional_inputs():
         test_wiring=[],
     )
     func_header = generate_function_header(component)
-    assert "main(*, okay, x=1.2)" in func_header
+    assert '"default_value": False' in func_header
+    assert '"default_value": 1.2' in func_header
+    assert '"default_value": "some text"' in func_header
+    assert (
+        'main(*, x=1.2, okay=False, text="some text", '
+        'series={\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": 18.7,'
+        '\n    "2020-01-03T08:20:04.000Z": 25.9\n})'
+    ) in func_header
 
 
 def test_check_parameter_names():

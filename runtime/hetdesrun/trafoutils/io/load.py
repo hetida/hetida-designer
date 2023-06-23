@@ -18,6 +18,7 @@ from hetdesrun.component.load import (
 )
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import (
+    InputType,
     IOInterface,
     TransformationInput,
     TransformationOutput,
@@ -170,17 +171,31 @@ def transformation_revision_from_python_code(code: str) -> Any:
                 TransformationInput(
                     id=get_uuid_from_seed("component_input_" + input_name),
                     name=input_name,
-                    data_type=input_data_type,
+                    data_type=input_info["data_type"]
+                    if isinstance(input_info, dict) and "data_type" in input_info
+                    else input_info,
+                    # input info maybe a datatype string (backwards compatibility)
+                    # or a dictionary containing the datatype as well as a potential default value
+                    value=input_info["default_value"]
+                    if isinstance(input_info, dict) and "default_value" in input_info
+                    else None,
+                    type=InputType.OPTIONAL
+                    if isinstance(input_info, dict) and "default_value" in input_info
+                    else InputType.REQUIRED,
                 )
-                for input_name, input_data_type in component_inputs.items()
+                for input_name, input_info in component_inputs.items()
             ],
             outputs=[
                 TransformationOutput(
                     id=get_uuid_from_seed("component_output_" + output_name),
                     name=output_name,
-                    data_type=output_data_type,
+                    data_type=output_info["data_type"]
+                    if isinstance(output_info, dict) and "data_type" in output_info
+                    else output_info,
+                    # input info maybe a datatype string (backwards compatibility)
+                    # or a dictionary containing the datatype
                 )
-                for output_name, output_data_type in component_outputs.items()
+                for output_name, output_info in component_outputs.items()
             ],
         ),
         content=code,
