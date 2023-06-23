@@ -30,7 +30,7 @@ This is based on the default docker-compose.yml setup — to start, make a copy 
 
 ### Configuring the runtime
 
-As a [general custom adapter](general_custom_adapter/instructions.md) the sql adapter is built into the runtime and needs to know to which databases it should
+As a [general custom adapter](general_custom_adapters/instructions.md) the sql adapter is built into the runtime and needs to know to which databases it should
 connect to. For each database an internal key, a human readable name and a sqlalchemy compatible database connection url must be provided.
 
 Furthermore the tables to be used as sinks can be configured:
