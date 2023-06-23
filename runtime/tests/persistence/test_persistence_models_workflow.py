@@ -367,6 +367,27 @@ def test_workflow_content_validator_link_connectors_match_operator_ios(caplog) -
             len(workflow_content_with_inner_link_non_matching_end_connector.links) == 4
         )
 
+        workflow_content_with_inner_link_to_not_exposed_operator_input_dict = deepcopy(
+            workfklow_content_dict
+        )
+        workflow_content_with_inner_link_to_not_exposed_operator_input_dict[
+            "operators"
+        ][1]["inputs"][1]["type"] = "OPTIONAL"
+        workflow_content_with_inner_link_to_not_exposed_operator_input_dict[
+            "operators"
+        ][1]["inputs"][1]["exposed"] = False
+        caplog.clear()
+        workflow_content_with_inner_link_to_not_exposed_operator_input = (
+            WorkflowContent(
+                **workflow_content_with_inner_link_to_not_exposed_operator_input_dict
+            )
+        )
+        assert "not exposed operator input" in caplog.text
+        assert (
+            len(workflow_content_with_inner_link_to_not_exposed_operator_input.links)
+            == 4
+        )
+
 
 def test_validator_links_acyclic_directed_graph() -> None:
     pass
@@ -397,6 +418,22 @@ def test_validator_clean_up_unlinked_workflow_content_inputs(caplog) -> None:
         )
         assert "Operator input" in caplog.text
         assert "does not match" in caplog.text
+
+        workflow_content_with_input_referencing_not_exposed_operator_input_dict = (
+            deepcopy(workfklow_content_dict)
+        )
+        caplog.clear()
+        workflow_content_with_input_referencing_not_exposed_operator_input_dict[
+            "operators"
+        ][0]["inputs"][0]["type"] = "OPTIONAL"
+        workflow_content_with_input_referencing_not_exposed_operator_input_dict[
+            "operators"
+        ][0]["inputs"][0]["exposed"] = False
+        WorkflowContent(
+            **workflow_content_with_input_referencing_not_exposed_operator_input_dict
+        )
+        assert "Operator input" in caplog.text
+        assert "is not exposed" in caplog.text
 
         workflow_content_with_unlinked_named_input_dict = deepcopy(
             workfklow_content_dict
@@ -509,6 +546,31 @@ def test_validator_clean_up_unlinked_workflow_content_outputs(caplog) -> None:
 def test_validator_add_workflow_content_inputs_for_unlinked_operator_inputs(
     caplog,
 ) -> None:
+    workflow_content_with_unlinked_not_exposed_operator_input_dict = deepcopy(
+        workfklow_content_dict
+    )
+    del workflow_content_with_unlinked_not_exposed_operator_input_dict["constants"][0]
+    del workflow_content_with_unlinked_not_exposed_operator_input_dict["links"][3]
+    workflow_content_with_unlinked_not_exposed_operator_input_dict["operators"][1][
+        "inputs"
+    ][0]["type"] = "OPTIONAL"
+    workflow_content_with_unlinked_not_exposed_operator_input_dict["operators"][1][
+        "inputs"
+    ][0]["exposed"] = False
+    caplog.clear()
+    workflow_content_with_unlinked_not_exposed_operator_input = WorkflowContent(
+        **workflow_content_with_unlinked_not_exposed_operator_input_dict
+    )
+    assert caplog.text == ""
+    assert len(workflow_content_with_unlinked_not_exposed_operator_input.inputs) == len(
+        workflow_content_with_unlinked_not_exposed_operator_input_dict["inputs"]
+    )
+    assert len(
+        workflow_content_with_unlinked_not_exposed_operator_input.constants
+    ) == len(
+        workflow_content_with_unlinked_not_exposed_operator_input_dict["constants"]
+    )
+
     workflow_content_with_unlinked_op_input_without_wf_input_dict = deepcopy(
         workfklow_content_dict
     )

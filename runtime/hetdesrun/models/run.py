@@ -149,7 +149,6 @@ class WorkflowExecutionInput(BaseModel):
         wired_input_names = {
             inp_wiring.workflow_input_name for inp_wiring in wiring.input_wirings
         }
-
         dynamic_required_wf_inputs = [
             wfi
             for wfi in workflow.inputs
