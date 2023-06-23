@@ -626,7 +626,7 @@ async def timeseries(
             except ValueError as error:
                 raise HTTPException(
                     status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    f"Provided value '{frequency}' for frequency is invalid! "
+                    f"Provided value '{frequency}' for the filter 'frequency' is invalid! "
                     "Check the reference for pandas.DataFrame.resample for more information.",
                 ) from error
         # throws warning during pytest:
