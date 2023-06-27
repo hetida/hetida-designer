@@ -82,6 +82,16 @@
       {{ data.transformation.revision_group_id }}</small
     >
   </div>
+  <div>
+    <small style="font-size: 0.8em; color: gray"
+      >{{ data.transformation.type | titlecase }} released timestamp:
+      {{
+        data.transformation.released_timestamp
+          ? data.transformation.released_timestamp
+          : '-'
+      }}</small
+    >
+  </div>
 </div>
 <div
   [ngClass]="{
