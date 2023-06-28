@@ -70,20 +70,20 @@
       <mat-error [hdErrorVisual]="infoForm.get('tag')"></mat-error>
     </mat-form-field>
   </form>
-  <div>
-    <small style="font-size: 0.8em; color: gray"
+  <div class="block">
+    <small class="block__small-info"
       >{{ data.transformation.type | titlecase }} revision ID:
       {{ data.transformation.id }}</small
     >
   </div>
-  <div>
-    <small style="font-size: 0.8em; color: gray"
+  <div class="block">
+    <small class="block__small-info"
       >{{ data.transformation.type | titlecase }} revision group ID:
       {{ data.transformation.revision_group_id }}</small
     >
   </div>
-  <div>
-    <small style="font-size: 0.8em; color: gray"
+  <div class="block">
+    <small class="block__small-info"
       >{{ data.transformation.type | titlecase }} released timestamp:
       {{
         data.transformation.released_timestamp
