@@ -9,7 +9,7 @@
   </button>
 </div>
 
-<div mat-dialog-content>
+<div class="block" mat-dialog-content>
   <form *ngIf="infoForm" [formGroup]="infoForm" autocomplete="off" novalidate>
     <mat-form-field>
       <mat-label>{{ data.transformation.type | titlecase }} name</mat-label>
@@ -70,18 +70,22 @@
       <mat-error [hdErrorVisual]="infoForm.get('tag')"></mat-error>
     </mat-form-field>
   </form>
-  <div>
-    <small style="font-size: 0.8em; color: gray"
-      >{{ data.transformation.type | titlecase }} revision ID:
-      {{ data.transformation.id }}</small
-    >
-  </div>
-  <div>
-    <small style="font-size: 0.8em; color: gray"
-      >{{ data.transformation.type | titlecase }} revision group ID:
-      {{ data.transformation.revision_group_id }}</small
-    >
-  </div>
+  <small class="block__small-info"
+    >{{ data.transformation.type | titlecase }} revision ID:
+    {{ data.transformation.id }}</small
+  >
+  <small class="block__small-info"
+    >{{ data.transformation.type | titlecase }} revision group ID:
+    {{ data.transformation.revision_group_id }}</small
+  >
+  <small class="block__small-info"
+    >{{ data.transformation.type | titlecase }} released timestamp:
+    {{
+      data.transformation.released_timestamp
+        ? data.transformation.released_timestamp
+        : '-'
+    }}</small
+  >
 </div>
 <div
   [ngClass]="{
