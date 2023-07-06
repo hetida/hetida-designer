@@ -831,7 +831,7 @@ async def test_get_all_transformation_revisions_with_specified_ids(
         response_two_ids = await ac.get(
             url,
             params={
-                "ids": [
+                "id": [
                     get_uuid_from_seed("component 1"),
                     get_uuid_from_seed("component 2"),
                 ]
@@ -867,9 +867,9 @@ async def test_get_all_transformation_revisions_with_specified_names(
     async with async_test_client as ac:
         response_names = await ac.get(
             url,
-            params={"names": ["component 0", "component 1"]},
+            params={"name": ["component 0", "component 1"]},
         )
-        response_empty_names = await ac.get(url, params={"names": []})
+        response_empty_names = await ac.get(url, params={"name": []})
 
     assert response_names.status_code == 200
     assert len(response_names.json()) == 2

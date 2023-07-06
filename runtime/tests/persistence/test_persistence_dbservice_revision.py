@@ -364,7 +364,7 @@ def test_multiple_select(mocked_clean_test_db_session):  # noqa: PLR0915
     assert len(results) == 0
 
     results = get_multiple_transformation_revisions(
-        FilterParams(category="Test category", include_dependencies=False)
+        FilterParams(categories=["Test category"], include_dependencies=False)
     )
     assert len(results) == 2
 
