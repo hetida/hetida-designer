@@ -235,12 +235,16 @@ class TransformationRevision(BaseModel):
                 io_interface.inputs.remove(trafo_input)
                 continue
             if not workflow_input.matches_trafo_input(trafo_input):
-                raise ValueError(
-                    f"For the io interface input '{trafo_input.id}' "
+                logger.warning(
+                    "For the io interface input '%s' "
                     "the workflow content input with the same id does not match! "
-                    "Thus, it will be removed from the io interface."
+                    "Thus, it will be adjusted in the io interface.",
+                    str(trafo_input.id),
                 )
-
+                # TODO: Delete instead of adjust once frontend is updated
+                io_interface.inputs[
+                    io_interface.inputs.index(trafo_input)
+                ] = workflow_input.to_transformation_input()
             del wf_inputs_by_id[trafo_input.id]
 
         for wf_input in wf_inputs_by_id.values():
@@ -267,12 +271,16 @@ class TransformationRevision(BaseModel):
                 io_interface.outputs.remove(trafo_output)
                 continue
             if not workflow_output.matches_trafo_output(trafo_output):
-                raise ValueError(
-                    f"For the io interface output '{trafo_output.id}' "
-                    "the workflow content output with the same id does not match!"
-                    "Thus, it will be removed from the io interface."
+                logger.warning(
+                    "For the io interface output '%s' "
+                    "the workflow content output with the same id does not match! "
+                    "Thus, it will be adjusted in the io interface.",
+                    str(trafo_output.id),
                 )
-
+                # TODO: Delete instead of adjust once frontend is updated
+                io_interface.outputs[
+                    io_interface.outputs.index(trafo_output)
+                ] = workflow_output.to_transformation_output()
             del wf_outputs_by_id[trafo_output.id]
 
         for wf_output in wf_outputs_by_id.values():
