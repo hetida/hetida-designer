@@ -127,6 +127,33 @@ def criterion_unset_or_matches_value(criterion: Any | None, actual_value: Any) -
     return bool(actual_value == criterion)
 
 
+def passes_all_filters(
+    trafo_json: Any,
+    type: Type | None = None,  # noqa: A002
+    categories: list[ValidStr] | None = None,
+    ids: list[UUID | str] | None = None,
+    names: list[NonEmptyValidStr] | None = None,
+    include_deprecated: bool = True,
+) -> bool:
+    filter_type = criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
+    filter_ids = selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
+    filter_names = selection_list_empty_or_contains_value(names, trafo_json["name"])
+    filter_categories = selection_list_empty_or_contains_value(
+        categories, trafo_json["category"]
+    )
+    filter_state = include_deprecated or trafo_json["state"] != State.DISABLED
+
+    combined_filter = (
+        filter_type
+        and filter_ids
+        and filter_names
+        and filter_categories
+        and filter_state
+    )
+
+    return combined_filter
+
+
 def convert_id_type_to_uuid(
     ids: list[UUID | str] | None,
 ) -> list[UUID | str] | None:
@@ -140,7 +167,8 @@ def export_transformations(
     download_path: str,
     type: Type | None = None,  # noqa: A002
     state: State | None = None,
-    category: ValidStr | None = None,
+    categories: list[ValidStr] | None = None,
+    category_prefix: ValidStr | None = None,
     ids: list[UUID | str] | None = None,
     names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
@@ -210,7 +238,10 @@ def export_transformations(
         raise Exception(msg) from e
 
     if java_backend:
-        ids = convert_id_type_to_uuid(ids)
+        if category_prefix is not None:
+            msg = 'For the java backend the filter option "categories_with_prefix" is not provided!'
+            logger.error(msg)
+            raise Exception(msg)
 
         url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
         response = requests.get(
@@ -231,12 +262,8 @@ def export_transformations(
 
         failed_exports: list[Any] = []
         for trafo_json in response.json():
-            if (
-                criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
-                and selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
-                and selection_list_empty_or_contains_value(names, trafo_json["name"])
-                and criterion_unset_or_matches_value(category, trafo_json["category"])
-                and (include_deprecated or trafo_json["state"] != State.DISABLED)
+            if passes_all_filters(
+                trafo_json, type, categories, ids, names, include_deprecated
             ):
                 try:
                     transformation = get_transformation_from_java_backend(
@@ -262,7 +289,8 @@ def export_transformations(
         params = FilterParams(
             type=type,
             state=state,
-            category=category,
+            categories=categories,
+            category_prefix=category_prefix,
             ids=ids,
             names=names,
             include_dependencies=True,
