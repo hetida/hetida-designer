@@ -1,17 +1,8 @@
+from collections.abc import Callable, Coroutine
 from inspect import Parameter, signature
-from typing import (
-    Any,
-    Callable,
-    Coroutine,
-    Dict,
-    List,
-    Optional,
-    Protocol,
-    Tuple,
-    Union,
-)
+from typing import Any, Protocol
 
-from cached_property import cached_property  # async compatible variant
+from asyncstdlib.functools import cached_property  # async compatible variant
 from pydantic import ValidationError
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
@@ -45,14 +36,14 @@ class Node(Protocol):
     operator_hierarchical_name: str = "UNKNOWN"
 
     @cached_property
-    async def result(self) -> Dict[str, Any]:  # Outputs can have any type
+    async def result(self) -> dict[str, Any]:  # Outputs can have any type
         ...
 
-    def add_inputs(self, new_inputs: Dict[str, Tuple["Node", str]]) -> None:
+    def add_inputs(self, new_inputs: dict[str, tuple["Node", str]]) -> None:
         ...
 
 
-class ComputationNode:  # pylint: disable=too-many-instance-attributes
+class ComputationNode:
     """Represents a function computation with multiple outputs together with input information
 
     Inputs and outputs are not made explicit here and the information where the inputs
@@ -72,8 +63,8 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
 
     def __init__(
         self,
-        func: Union[Coroutine, Callable],
-        inputs: Optional[Dict[str, Tuple[Node, str]]] = None,
+        func: Coroutine | Callable,
+        inputs: dict[str, tuple[Node, str]] | None = None,
         has_only_plot_outputs: bool = False,
         component_id: str = "UNKNOWN",
         component_name: str = "UNKNOWN",
@@ -102,7 +93,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         raised if inputs are missing.
 
         """
-        self.inputs: Dict[str, Tuple[Node, str]] = {}
+        self.inputs: dict[str, tuple[Node, str]] = {}
         if inputs is not None:
             self.add_inputs(inputs)
 
@@ -127,10 +118,10 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         )
         self._in_computation = False
 
-    def add_inputs(self, new_inputs: Dict[str, Tuple[Node, str]]) -> None:
+    def add_inputs(self, new_inputs: dict[str, tuple[Node, str]]) -> None:
         self.inputs.update(new_inputs)
 
-    def _infer_required_params(self) -> List[str]:
+    def _infer_required_params(self) -> list[str]:
         """Infer the function params which are actually required (i.e. no default value)"""
         kwargable_params = [
             param
@@ -155,15 +146,14 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 "Inputs of computation node are missing"
             ).set_context(self.context)
 
-    async def _gather_data_from_inputs(self) -> Dict[str, Any]:
+    async def _gather_data_from_inputs(self) -> dict[str, Any]:
         """Get data from inputs and handle possible cycles"""
 
-        input_value_dict: Dict[str, Any] = {}
+        input_value_dict: dict[str, Any] = {}
 
-        for (input_name, (another_node, output_name)) in self.inputs.items():
-
+        for input_name, (another_node, output_name) in self.inputs.items():
             # Cycle detection logic
-            if another_node._in_computation:  # pylint: disable=protected-access
+            if another_node._in_computation:
                 msg = (
                     f"Circular Dependency detected whith input '{input_name}' pointing to "
                     f"output '{output_name}' of operator {another_node.operator_hierarchical_id}"
@@ -185,21 +175,23 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
                 ).set_context(self.context) from e
         return input_value_dict
 
-    async def _run_comp_func(self, input_values: Dict[str, Any]) -> Dict[str, Any]:
+    async def _run_comp_func(self, input_values: dict[str, Any]) -> dict[str, Any]:
         """Running the component func with exception handling"""
         try:
-            function_result: Dict[str, Any] = await run_func_or_coroutine(
+            function_result: dict[str, Any] = await run_func_or_coroutine(
                 self.func, input_values  # type: ignore
             )
             function_result = function_result if function_result is not None else {}
-        except RuntimeExecutionError as e:  # user code may raise runtime execution errors
+        except (
+            RuntimeExecutionError
+        ) as e:  # user code may raise runtime execution errors
             e.set_context(self.context)
             runtime_execution_logger.warning(
                 "User raised RuntimeExecutionError!",
                 exc_info=True,
             )
             raise e
-        except Exception as e:  # uncaught exceptions from user code
+        except Exception as e:  # uncaught exceptions from user code  # noqa: BLE001
             msg = "Unexpected error from user code"
             runtime_execution_logger.warning(msg, exc_info=True)
             raise RuntimeExecutionError(msg).set_context(self.context) from e
@@ -207,7 +199,6 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         if not isinstance(
             function_result, dict
         ):  # user functions may return completely unknown type
-
             msg = (
                 f"Component function of component instance {self.operator_hierarchical_id} from "
                 f"component {self.operator_hierarchical_name} did not return an output dict!"
@@ -217,7 +208,7 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
 
         return function_result
 
-    async def _compute_result(self) -> Dict[str, Any]:
+    async def _compute_result(self) -> dict[str, Any]:
         # set filter for contextualized logging
         execution_context_filter.bind_context(**self.context.dict())
 
@@ -239,11 +230,11 @@ class ComputationNode:  # pylint: disable=too-many-instance-attributes
         return function_result
 
     @cached_property  # compute each nodes result only once
-    async def result(self) -> Dict[str, Any]:
+    async def result(self) -> dict[str, Any]:
         return await self._compute_result()
 
 
-class Workflow:  # pylint: disable=too-many-instance-attributes
+class Workflow:
     """Grouping computation nodes and other workflows and handling common input/output interface
 
     This class does not ensure that the interface actually handles all lose ends.
@@ -251,15 +242,15 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
 
     def __init__(
         self,
-        sub_nodes: List[Node],
-        input_mappings: Dict[str, Tuple[Node, str]],  # map wf input to sub_node
-        output_mappings: Dict[
-            str, Tuple[Node, str]
+        sub_nodes: list[Node],
+        input_mappings: dict[str, tuple[Node, str]],  # map wf input to sub_node
+        output_mappings: dict[
+            str, tuple[Node, str]
         ],  # map sub_node outputs to wf outputs
         tr_id: str,
         tr_name: str,
         tr_tag: str,
-        inputs: Optional[Dict[str, Tuple[Node, str]]] = None,
+        inputs: dict[str, tuple[Node, str]] | None = None,
         has_only_plot_outputs: bool = False,
         operator_hierarchical_id: str = "UNKNOWN",
         operator_hierarchical_name: str = "UNKNOWN",
@@ -293,7 +284,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
             output_mappings  # dict wf_output_name : (sub_node, sub_node_output_name)
         )
 
-        self.inputs: Dict[str, Tuple[Node, str]] = {}
+        self.inputs: dict[str, tuple[Node, str]] = {}
 
         if inputs is not None:
             self.add_inputs(inputs)
@@ -312,7 +303,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
             currently_executed_operator_hierarchical_name=self.operator_hierarchical_name,
         )
 
-    def add_inputs(self, new_inputs: Dict[str, Tuple[Node, str]]) -> None:
+    def add_inputs(self, new_inputs: dict[str, tuple[Node, str]]) -> None:
         self.inputs.update(new_inputs)
 
         # wire them to the subnodes, eventually overwriting existing wirings
@@ -322,7 +313,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
 
     def add_constant_providing_node(
         self,
-        values: List[NamedDataTypedValue],
+        values: list[NamedDataTypedValue],
         add_new_provider_node_to_workflow: bool = True,
         id_suffix: str = "",
     ) -> None:
@@ -346,7 +337,7 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
         )
         if add_new_provider_node_to_workflow:  # make it part of the workflow
             self.sub_nodes.append(Const_Node)
-        self.add_inputs({key: (Const_Node, key) for key in parsed_values.keys()})
+        self.add_inputs({key: (Const_Node, key) for key in parsed_values})
 
     def _wire_workflow_inputs(self) -> None:
         """Wire the current inputs via the current input mappings to the appropriate sub nodes"""
@@ -354,10 +345,19 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
             wf_inp_name,
             (sub_node, sub_node_input_name),
         ) in self.input_mappings.items():
-            sub_node.add_inputs({sub_node_input_name: self.inputs[wf_inp_name]})
+            try:
+                sub_node.add_inputs({sub_node_input_name: self.inputs[wf_inp_name]})
+            except KeyError as error:
+                inputs_string = ",".join(self.inputs.keys())
+                raise MissingInputSource(
+                    f"The input mapping with workflow input '{wf_inp_name}' to "
+                    f"subnode input '{sub_node_input_name}' of "
+                    f"subnode '{sub_node.operator_hierarchical_id}'"
+                    f"does not match the inputs of the workflow {inputs_string}."
+                ).set_context(self.context) from error
 
     @cached_property
-    async def result(self) -> Dict[str, Any]:
+    async def result(self) -> dict[str, Any]:
         self._wire_workflow_inputs()
 
         execution_context_filter.bind_context(**self.context.dict())
@@ -379,8 +379,8 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
                 results[wf_output_name] = (
                     (await sub_node.result)[sub_node_output_name]
                     if not (
-                        sub_node.has_only_plot_outputs
-                        and not exe_context_config.run_pure_plot_operators
+                        sub_node.has_only_plot_outputs is True
+                        and exe_context_config.run_pure_plot_operators is False
                     )
                     else {}
                 )
@@ -403,12 +403,12 @@ class Workflow:  # pylint: disable=too-many-instance-attributes
         return results
 
 
-def obtain_all_nodes(wf: Workflow) -> List[ComputationNode]:
-    all_nodes: List[ComputationNode] = []
+def obtain_all_nodes(wf: Workflow) -> list[ComputationNode]:
+    all_nodes: list[ComputationNode] = []
     for node in wf.sub_nodes:
         if isinstance(node, Workflow):
             all_nodes = all_nodes + obtain_all_nodes(node)
         else:
-            assert isinstance(node, ComputationNode)  # hint for mypy # nosec
+            assert isinstance(node, ComputationNode)  # hint for mypy  # noqa: S101
             all_nodes.append(node)
     return all_nodes

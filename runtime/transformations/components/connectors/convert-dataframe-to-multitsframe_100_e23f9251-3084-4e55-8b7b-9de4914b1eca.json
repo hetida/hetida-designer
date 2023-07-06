@@ -1,0 +1,41 @@
+{
+  "category": "Connectors",
+  "content": "import numpy as np\nimport pandas as pd\n\n\ndef flatten_list_of_sublists(list_of_sublists):\n    return [item for sublist in list_of_sublists for item in sublist]\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dataframe\": \"DATAFRAME\",\n    },\n    \"outputs\": {\n        \"multitsframe\": \"MULTITSFRAME\",\n    },\n    \"name\": \"Convert DataFrame to MultiTSFrame\",\n    \"category\": \"Connectors\",\n    \"description\": \"Convert a DataFrame into a MultiTSFrame\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"e23f9251-3084-4e55-8b7b-9de4914b1eca\",\n    \"revision_group_id\": \"c4430c24-81c0-46cc-afd3-4607d409b0a9\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-31T16:37:17.487439+00:00\",\n}\n\n\ndef main(*, dataframe):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    if \"timestamp\" in dataframe.columns:\n        dataframe.set_index(\"timestamp\",inplace=True)\n\n    nrows = len(dataframe.index)\n    ncols = len(dataframe.columns)\n\n    df_dict = dataframe.to_dict(orient=\"split\")\n\n    multitsframe_dict = {}\n    multitsframe_dict[\"timestamp\"] = np.repeat(df_dict[\"index\"],ncols)\n    multitsframe_dict[\"metric\"] = df_dict[\"columns\"]*nrows\n    multitsframe_dict[\"value\"] = flatten_list_of_sublists(df_dict[\"data\"])\n\n    return {\"multitsframe\": pd.DataFrame(multitsframe_dict)}\n",
+  "description": "Convert a DataFrame into a MultiTSFrame",
+  "documentation": "# Convert DataFrame into MultiTSFrame\n\n## Description\nConvert a DataFrame into a MultiTSFrame.\n\n## Inputs\n* **dataframe** (Pandas DataFrame): The input DataFrame must have an index with a datetime64 dtype and UTC time zone.\n\n## Outputs\n* **multitsframe** (Pandas DataFrame): The output MultiTSFrame constructed from the dataframe.\n\n## Details\nConvert a DataFrame with an index with a datetime64 dtype and UTC time zone into a MulitTSFrame.\n\n## Examples\nThe json input of a typical call of this component is\n```\n{\n    \"dataframe\": [\n        {\n            \"timestamp\": \"2019-08-01T15:42:36.000Z\",\n            \"a\":5.7,\n            \"b\":0.5,\n            \"c\":null\n        },\n        {\n            \"timestamp\":\"2019-08-01T15:48:36.000Z\",\n            \"a\":3.1,\n            \"b\":null,\n            \"c\":1.2\n        }\n    ]\n}\n```",
+  "id": "e23f9251-3084-4e55-8b7b-9de4914b1eca",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "DATAFRAME",
+        "id": "fd67cc76-8059-4ec5-8b25-efe928d97b76",
+        "name": "dataframe"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "MULTITSFRAME",
+        "id": "4b4797aa-357b-4539-8033-0fd1c84cad8a",
+        "name": "multitsframe"
+      }
+    ]
+  },
+  "name": "Convert DataFrame to MultiTSFrame",
+  "released_timestamp": "2023-03-31T16:37:17.487439+00:00",
+  "revision_group_id": "c4430c24-81c0-46cc-afd3-4607d409b0a9",
+  "state": "RELEASED",
+  "test_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "[\n    {\n        \"timestamp\": \"2019-08-01T15:42:36.000Z\",\n        \"a\":5.7,\n        \"b\":0.5,\n        \"c\":null\n    },\n    {\n        \"timestamp\":\"2019-08-01T15:48:36.000Z\",\n        \"a\":3.1,\n        \"b\":null,\n        \"c\":1.2\n    }\n]"
+        },
+        "workflow_input_name": "dataframe"
+      }
+    ],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
+}

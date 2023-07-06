@@ -1,7 +1,7 @@
 import asyncio
 import logging
+from collections.abc import Callable
 from functools import cache
-from typing import Callable, Optional
 from uuid import uuid4
 
 import aiokafka
@@ -23,7 +23,7 @@ from hetdesrun.webservice.config import get_config
 logger = logging.getLogger(__name__)
 
 
-class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
+class KafkaWorkerContext:
     """Bundles the per webservice-worker-process Kafka consumer and producer instances
 
     This class handles the typical scenario where a consumer consumes messages from
@@ -73,12 +73,11 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
         producer_topic: str,
         producer_options: dict,
     ):
-
         self.event_loop = asyncio.get_event_loop()
         self.consumer_topic = consumer_topic
         self.consumer_options = consumer_options
         self.msg_handling_coroutine = msg_handling_coroutine
-        self.last_unhandled_exception: Optional[Exception] = None
+        self.last_unhandled_exception: Exception | None = None
 
         self.producer_topic = producer_topic
         self.producer_options = producer_options
@@ -116,7 +115,8 @@ class KafkaWorkerContext:  # pylint: disable=too-many-instance-attributes
         await self._start_consumer()
 
     async def _stop_consumer(self) -> None:
-        assert self.consumer_task is not None
+        if self.consumer_task is None:
+            raise ValueError("No consumer_task active. Cannot stop non-existing task!")
         self.consumer_task.cancel()
         await self.consumer.stop()
 
@@ -163,7 +163,7 @@ async def consume_execution_trigger_message(
                         msg.value.decode("utf8")
                     )
                 except ValidationError as validate_exec_latest_by_group_id_input_error:
-                    msg = (
+                    log_msg = (
                         f"Kafka consumer {kafka_ctx.consumer_id} failed to parse message"
                         f" payload for execution.\n"
                         f"Validation Error assuming ExecByIdInput was\n"
@@ -175,21 +175,21 @@ async def consume_execution_trigger_message(
                     kafka_ctx.last_unhandled_exception = (
                         validate_exec_latest_by_group_id_input_error
                     )
-                    logger.error(msg)
+                    logger.error(log_msg)
                     continue
                 try:
                     latest_id = get_latest_revision_id(
                         exec_latest_by_group_id_input.revision_group_id
                     )
                 except DBNotFoundError as e:
-                    msg = (
+                    log_msg = (
                         f"Kafka consumer {kafka_ctx.consumer_id} failed to receive"
                         f" id of latest revision of revision group "
                         f"{exec_latest_by_group_id_input.revision_group_id} from datatbase.\n"
                         f"Aborting."
                     )
                     kafka_ctx.last_unhandled_exception = e
-                    logger.error(msg)
+                    logger.error(log_msg)
                     continue
                 exec_by_id_input = ExecByIdInput(
                     id=latest_id,
@@ -206,12 +206,12 @@ async def consume_execution_trigger_message(
             try:
                 exec_result = await execute_transformation_revision(exec_by_id_input)
             except TrafoExecutionError as e:
-                msg = (
+                log_msg = (
                     f"Kafka consumer failed to execute trafo rev {exec_by_id_input.id}"
                     f" for job {exec_by_id_input.job_id}. Error Message: {str(e)}. Aborting."
                 )
                 kafka_ctx.last_unhandled_exception = e
-                logger.error(msg)
+                logger.error(log_msg)
                 continue
             logger.info(
                 "Kafka consumer %s finished execution for job %s with result status %s. Error: %s",
@@ -222,7 +222,7 @@ async def consume_execution_trigger_message(
             )
             logger.debug("Kafka consumer execution result: \n%s", str(exec_result))
             await producer_send_result_msg(kafka_ctx, exec_result)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:  # noqa: BLE001
             kafka_ctx.last_unhandled_exception = e
             logger.error(
                 "Unexpected Error during Kafka execution: %s. Aborting.", str(e)

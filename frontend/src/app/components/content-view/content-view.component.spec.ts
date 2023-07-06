@@ -21,35 +21,33 @@ describe('ContentViewComponent', () => {
   let component: ContentViewComponent;
   let fixture: ComponentFixture<ContentViewComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          BasicTestModule,
-          FormsModule,
-          MonacoEditorModule.forRoot(),
-          NgHetidaFlowchartModule
-        ],
-        declarations: [
-          ContentViewComponent,
-          ToolbarComponent,
-          ComponentEditorComponent,
-          WorkflowEditorComponent,
-          HomeStubComponent
-        ],
-        providers: [provideMockStore()]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        BasicTestModule,
+        FormsModule,
+        MonacoEditorModule.forRoot(),
+        NgHetidaFlowchartModule
+      ],
+      declarations: [
+        ContentViewComponent,
+        ToolbarComponent,
+        ComponentEditorComponent,
+        WorkflowEditorComponent,
+        HomeStubComponent
+      ],
+      providers: [provideMockStore()]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     const mockStore = TestBed.inject(MockStore);
     mockStore.overrideSelector(selectContentViewStoreState, {
-      orderedTabItemsWithBaseItem: [],
+      orderedTabItemsWithTransformation: [],
       activeTabItem: {
-        baseItemId: 'test',
-        id: 'testId',
-        tabItemType: TabItemType.BASE_ITEM
+        transformationId: 'mockTransformationId',
+        id: 'mockId',
+        tabItemType: TabItemType.TRANSFORMATION
       }
     });
     fixture = TestBed.createComponent(ContentViewComponent);

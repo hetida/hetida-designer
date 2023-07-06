@@ -1,10 +1,11 @@
 import json
 import os
+from typing import Any
 from uuid import uuid4
 
 import pytest
+from httpx import AsyncClient
 
-from hetdesrun.exportimport.importing import load_json
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import (
     ComponentInput,
@@ -19,17 +20,22 @@ from hetdesrun.models.run import (
 )
 from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowInput, WorkflowNode, WorkflowOutput
+from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import get_uuid_from_seed
 
 
-async def run_workflow_with_client(workflow_json, open_async_test_client):
+async def run_workflow_with_client(
+    workflow_json: dict, open_async_test_client: AsyncClient
+) -> tuple[int, Any]:
     response = await open_async_test_client.post("engine/runtime", json=workflow_json)
     return response.status_code, response.json()
 
 
 def gen_execution_input_from_single_component(
-    component_json_path, direct_provisioning_data_dict=None, wf_wiring=None
-):
+    component_json_path: str,
+    direct_provisioning_data_dict: dict | None = None,
+    wf_wiring: WorkflowWiring | None = None,
+) -> WorkflowExecutionInput:
     """Wraps a single component into a workflow and generates the execution input json
 
     input data is provided directly
@@ -109,7 +115,9 @@ def gen_execution_input_from_single_component(
                 InputWiring(
                     workflow_input_name=comp_input.name,
                     adapter_id=1,
-                    filters={"value": direct_provisioning_data_dict[comp_input.name]},
+                    filters={"value": direct_provisioning_data_dict[comp_input.name]}
+                    if direct_provisioning_data_dict is not None
+                    else None,
                 )
                 for comp_input in comp_inputs
             ],
@@ -127,9 +135,10 @@ def gen_execution_input_from_single_component(
 
 
 async def run_single_component(
-    component_json_file_path, input_data_dict, open_async_test_client
-):
-
+    component_json_file_path: str,
+    input_data_dict: dict,
+    open_async_test_client: AsyncClient,
+) -> WorkflowExecutionResult:
     response = await open_async_test_client.post(
         "engine/runtime",
         json=json.loads(
@@ -144,89 +153,89 @@ async def run_single_component(
 
 
 @pytest.mark.asyncio
-async def test_null_values_pass_any_pass_through(async_test_client):
+async def test_null_values_pass_any_pass_through(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
-
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": {"a": 1.5, "b": None}},
+            {"input": '{"a": 1.5, "b": None}'},
             client,
         )
 
-        assert exec_result.output_results_by_output_name["output"] == {
-            "a": 1.5,
-            "b": None,
-        }
+        assert exec_result.output_results_by_output_name["output"] == (
+            '{"a": 1.5, "b": None}'
+        )
 
 
 @pytest.mark.asyncio
-async def test_null_list_values_pass_any_pass_through(async_test_client):
+async def test_null_list_values_pass_any_pass_through(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
-
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": [1.2, None]},
+            {"input": "[1.2, None]"},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == [1.2, None]
+        assert exec_result.output_results_by_output_name["output"] == "[1.2, None]"
 
 
 @pytest.mark.asyncio
-async def test_null_values_pass_series_pass_through(async_test_client):
+async def test_null_values_pass_series_pass_through(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+            ),
+            {"input": '{"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}'},
+            client,
+        )
+        assert exec_result.output_results_by_output_name["output"] == (
+            '{"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}'
+        )
 
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": {"2020-01-01T00:00:00Z": 1.5, "2020-01-02T00:00:00Z": None}},
+            {"input": "[1.2, 2.5, None]"},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == {
-            "2020-01-01T00:00:00Z": 1.5,
-            "2020-01-02T00:00:00Z": None,
-        }
-
-        exec_result = await run_single_component(
-            (
-                "./transformations/components/connectors/"
-                "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
-            ),
-            {"input": [1.2, 2.5, None]},
-            client,
-        )
-        assert exec_result.output_results_by_output_name["output"] == [1.2, 2.5, None]
+        assert exec_result.output_results_by_output_name["output"] == "[1.2, 2.5, None]"
 
 
 @pytest.mark.asyncio
-async def test_all_null_values_pass_series_pass_through(async_test_client):
+async def test_all_null_values_pass_series_pass_through(
+    async_test_client: AsyncClient,
+) -> None:
     async with async_test_client as client:
-
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
                 "pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
             ),
-            {"input": {"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}},
+            {"input": '{"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}'},
             client,
         )
-        assert exec_result.output_results_by_output_name["output"] == {
-            "2020-01-01T00:00:00Z": None,
-            "2020-01-02T00:00:00Z": None,
-        }
+        assert exec_result.output_results_by_output_name["output"] == (
+            '{"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}'
+        )
 
 
 @pytest.mark.asyncio
-async def test_nested_wf_execution(async_test_client):
+async def test_nested_wf_execution(async_test_client: AsyncClient) -> None:
     async with async_test_client as client:
-
         with open(
             os.path.join("tests", "data", "nested_wf_execution_input.json"),
             encoding="utf8",
@@ -241,3 +250,56 @@ async def test_nested_wf_execution(async_test_client):
         assert response_json["output_results_by_output_name"][
             "limit_violation_timestamp"
         ].startswith("2020-05-28T20:16:41")
+
+
+@pytest.mark.asyncio
+async def test_multitsframe_wf_execution(async_test_client: AsyncClient) -> None:
+    async with async_test_client as client:
+        with open(
+            os.path.join(
+                "tests", "data", "timeseries_dataframe_wf_execution_input.json"
+            ),
+            encoding="utf8",
+        ) as f:
+            loaded_workflow_exe_input = json.load(f)
+        response_status_code, response_json = await run_workflow_with_client(
+            loaded_workflow_exe_input, client
+        )
+
+        assert response_status_code == 200
+        assert response_json["result"] == "ok"
+        assert response_json["output_results_by_output_name"]["multitsframe"] == {
+            "value": {
+                "0": 1,
+                "1": 1.2,
+                "2": 1.9,
+                "3": 1.3,
+                "4": 1.5,
+                "5": 1.7,
+                "6": 0.5,
+                "7": 0.2,
+                "8": 0.1,
+            },
+            "metric": {
+                "0": "a",
+                "1": "b",
+                "2": "a",
+                "3": "b",
+                "4": "a",
+                "5": "b",
+                "6": "d",
+                "7": "d",
+                "8": "d",
+            },
+            "timestamp": {
+                "0": "2019-08-01T15:45:36.000Z",
+                "1": "2019-08-01T15:45:36.000Z",
+                "2": "2019-08-02T15:45:36.000Z",
+                "3": "2019-08-02T15:45:36.000Z",
+                "4": "2019-08-03T15:45:36.000Z",
+                "5": "2019-08-03T15:45:36.000Z",
+                "6": "2019-08-01T15:45:36.000Z",
+                "7": "2019-08-02T15:45:36.000Z",
+                "8": "2019-08-03T15:45:36.000Z",
+            },
+        }

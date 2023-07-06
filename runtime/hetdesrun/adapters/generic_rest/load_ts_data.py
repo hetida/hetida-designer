@@ -1,6 +1,7 @@
 import logging
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from collections.abc import Iterable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,9 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 async def load_ts_data_from_adapter(
-    filtered_sources: List[FilteredSource],
-    from_timestamp: str,
-    to_timestamp: str,
+    filtered_sources: list[FilteredSource],
+    filter_params: Iterable[tuple[str, Any]],
     adapter_key: str,
 ) -> pd.DataFrame:
     """Load data from generic rest adapter timeseries endpoint
@@ -39,7 +39,7 @@ async def load_ts_data_from_adapter(
 
     df = await load_framelike_data(
         filtered_sources=filtered_sources,
-        additional_params=[("from", from_timestamp), ("to", to_timestamp)],
+        additional_params=list(filter_params),
         adapter_key=adapter_key,
         endpoint="timeseries",
     )
@@ -77,8 +77,8 @@ def extract_one_channel_series_from_loaded_data(
 
 
 async def load_grouped_timeseries_data_together(
-    data_to_load: Dict[str, FilteredSource], adapter_key: str
-) -> Dict[str, pd.Series]:
+    data_to_load: dict[str, FilteredSource], adapter_key: str
+) -> dict[str, pd.Series]:
     """Reorganize query information by timestamp pairs and load timeseries data
 
     Generic Rest Adapter allows to query for multiple timeseries in one request but then only with
@@ -92,9 +92,9 @@ async def load_grouped_timeseries_data_together(
     loaded_data = {}
 
     # group by occuring timestamp pairs
-    group_by_timestamp_pair: Dict[
-        Tuple[str, str, ExternalType],
-        Dict[str, FilteredSource],
+    group_by_filters_and_external_type: dict[
+        tuple[frozenset[tuple[Any, Any]], ExternalType],
+        dict[str, FilteredSource],
     ] = defaultdict(dict)
 
     for filtered_source in data_to_load.values():
@@ -106,20 +106,20 @@ async def load_grouped_timeseries_data_together(
             )
 
     for key, filtered_source in data_to_load.items():
-        group_by_timestamp_pair[
+        filtered_source.filters["from"] = filtered_source.filters.pop("timestampFrom")
+        filtered_source.filters["to"] = filtered_source.filters.pop("timestampTo")
+        group_by_filters_and_external_type[
             (
-                filtered_source.filters["timestampFrom"],
-                filtered_source.filters["timestampTo"],
+                frozenset(filtered_source.filters.items()),
                 ExternalType(filtered_source.type),
             )
         ][key] = filtered_source
 
     # load each group together:
-    for (group_tuple, grouped_source_dict) in group_by_timestamp_pair.items():
+    for group_tuple, grouped_source_dict in group_by_filters_and_external_type.items():
         loaded_ts_data_from_adapter = await load_ts_data_from_adapter(
             list(grouped_source_dict.values()),
             group_tuple[0],
-            group_tuple[1],
             adapter_key=adapter_key,
         )
 

@@ -1,67 +1,73 @@
 import datetime
-from typing import Any, Dict, List, Optional
+from enum import Enum
+from typing import Any
 
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field
 
 from demo_adapter_python.external_types import ExternalType, ValueDataType
 
 
 class InfoResponse(BaseModel):
-    id: str
+    id: str  # noqa: A003
     name: str
     version: str
 
 
 class StructureThingNode(BaseModel):
-    id: str
-    parentId: Optional[str] = None
+    id: str  # noqa: A003
+    parentId: str | None = None
     name: str
     description: str
 
 
+class FilterType(str, Enum):
+    free_text = "free_text"
+
+
 class StructureFilter(BaseModel):
     name: str
+    type: FilterType  # noqa: A003
     required: bool
 
 
 class StructureSource(BaseModel):
-    id: str
+    id: str  # noqa: A003
     thingNodeId: str
     name: str
-    type: ExternalType
-    visible: Optional[bool] = True
+    type: ExternalType  # noqa: A003
+    visible: bool | None = True
     path: str
-    metadataKey: Optional[str] = None
-    filters: Optional[Dict[str, StructureFilter]] = {}
+    metadataKey: str | None = None
+    filters: dict[str, StructureFilter] | None = {}
 
 
 class StructureSink(BaseModel):
-    id: str
+    id: str  # noqa: A003
     thingNodeId: str
     name: str
-    type: ExternalType
-    visible: Optional[bool] = True
+    type: ExternalType  # noqa: A003
+    visible: bool | None = True
     path: str
-    metadataKey: Optional[str] = None
-    filters: Optional[Dict[str, StructureFilter]] = {}
+    metadataKey: str | None = None
+    filters: dict[str, StructureFilter] | None = {}
 
 
 class StructureResponse(BaseModel):
-    id: str
+    id: str  # noqa: A003
     name: str
-    thingNodes: List[StructureThingNode]
-    sources: List[StructureSource]
-    sinks: List[StructureSink]
+    thingNodes: list[StructureThingNode]
+    sources: list[StructureSource]
+    sinks: list[StructureSink]
 
 
 class MultipleSourcesResponse(BaseModel):
     resultCount: int
-    sources: List[StructureSource]
+    sources: list[StructureSource]
 
 
 class MultipleSinksResponse(BaseModel):
     resultCount: int
-    sinks: List[StructureSink]
+    sinks: list[StructureSink]
 
 
 class PostMetadatum(BaseModel):
@@ -71,9 +77,9 @@ class PostMetadatum(BaseModel):
 
 class Metadatum(BaseModel):
     key: str
-    value: Optional[Any] = None
+    value: Any | None = None
     dataType: ValueDataType
-    isSink: Optional[bool] = False
+    isSink: bool | None = False
 
 
 class TimeseriesRecord(BaseModel):

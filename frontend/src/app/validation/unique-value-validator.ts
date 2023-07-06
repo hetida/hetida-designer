@@ -47,7 +47,10 @@ export function UniqueValueValidator(formControlName: string): ValidatorFn {
       const controlHasUniqueValueError =
         currentFormControl.errors && 'uniqueValue' in currentFormControl.errors;
 
-      if (Utils.isNullOrUndefined(error) && controlHasUniqueValueError) {
+      if (
+        Utils.isNullOrUndefined(error) &&
+        (controlHasUniqueValueError ?? false)
+      ) {
         currentFormControl.setErrors(null);
       } else if (!Utils.isNullOrUndefined(error)) {
         currentFormControl.setErrors(error);

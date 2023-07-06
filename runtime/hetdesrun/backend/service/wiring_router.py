@@ -38,8 +38,7 @@ wiring_router = HandleTrailingSlashAPIRouter(
     deprecated=True,
 )
 async def update_wiring(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     updated_wiring_dto: WiringFrontendDto,
 ) -> WiringFrontendDto:
     """Store or update the test wiring of a transformation revision.

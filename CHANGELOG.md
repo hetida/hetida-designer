@@ -1,3 +1,31 @@
+## 0.8.9
+* free text filters for inputs (adapter system)
+* add blob storage configuration options
+* imporved blob storage adapter performance
+* type-specific blob storage serialization (keras models)
+* new data type: MultiTSFrames (collections of multiple timeseries with non-simultaneous timestamps)
+* api improvements / fixes
+* frontend adaption to new transformations endpoints.
+* NOTE: The endpoints deprecated since 0.7.* may be actually removed in one of the next releases
+* new workflows / components: When upgrading it is recommended to re-deploy the base components/workflows
+
+## 0.8.8
+* add automatic bucket creation to blob storage adapter
+## 0.8.7
+* add S3 compatible built-in blob storage adapter
+* add pickle persistence for ANY type to local file adapter
+* fix docker-compose reverse proxy config
+## 0.8.6
+* (frontend) add configurable user info text on main tab
+* fixes, in particular around validation
+* fixes around updating components
+* add maintenance backend endpoints (deactivated by default)
+* add hdctl command line bash script for maintenance / devops tasks via those endpoints
+## 0.8.5
+* fix NaN value serialization (should now be serialized to null json values)
+* fix broken pure plot execution config
+* more bug fixes
+* improvements for example workflows
 ## 0.8.4
 * fix outgoing auth config parsing
 ## 0.8.3

@@ -1,0 +1,14 @@
+.copy-transformation {
+  &__delete-button {
+    margin-right: auto;
+  }
+  &--with-delete-button {
+    justify-content: flex-start;
+  }
+}
+
+.block__small-info {
+  font-size: 0.8em;
+  color: gray;
+  display: block;
+}

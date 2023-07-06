@@ -2,13 +2,14 @@ import base64
 import datetime
 import json
 import logging
+from collections.abc import Callable
 from io import StringIO
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 from urllib.parse import unquote
 
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter, Body, FastAPI, Header, HTTPException, Query
+from fastapi import APIRouter, Body, FastAPI, Header, HTTPException, Query, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,6 +43,8 @@ from demo_adapter_python.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
 
 middleware = [
     Middleware(
@@ -91,9 +94,9 @@ class AdditionalLoggingRoute(APIRoute):
                 body = await request.body()
                 detail = {"errors": exc.errors(), "body": body.decode()}
                 logger.info("Request Validation Error: %s", str(exc))
-                raise HTTPException(  # pylint: disable=raise-missing-from
-                    status_code=422, detail=detail
-                )
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail
+                ) from exc
 
         return custom_route_handler
 
@@ -114,7 +117,7 @@ async def info() -> InfoResponse:
 
 
 @demo_adapter_main_router.get("/structure", response_model=StructureResponse)
-async def structure(parentId: Optional[str] = None) -> StructureResponse:
+async def structure(parentId: str | None = None) -> StructureResponse:
     """The hierarchical structure for easy assignment of sources/sinks in user interfaces
 
     This endpoint is required by the hetida designer UI to show and allow assignment of sources
@@ -150,9 +153,8 @@ async def structure(parentId: Optional[str] = None) -> StructureResponse:
 
 @demo_adapter_main_router.get("/sources", response_model=MultipleSourcesResponse)
 async def sources(
-    filter_str: Optional[str] = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter")
 ) -> MultipleSourcesResponse:
-
     return_sources = get_sources(filter_str=filter_str, include_sub_objects=True)
 
     return MultipleSourcesResponse(
@@ -161,9 +163,9 @@ async def sources(
 
 
 @demo_adapter_main_router.get(
-    "/sources/{sourceId}/metadata/", response_model=List[Metadatum]
+    "/sources/{sourceId}/metadata/", response_model=list[Metadatum]
 )
-async def get_all_metadata_source(sourceId: str) -> List[Metadatum]:
+async def get_all_metadata_source(sourceId: str) -> list[Metadatum]:
     if sourceId.endswith("temp") and "plantA" in sourceId:
         return [
             Metadatum(key="Max Value", value=300.0, dataType="float"),
@@ -197,8 +199,9 @@ async def get_all_metadata_source(sourceId: str) -> List[Metadatum]:
 @demo_adapter_main_router.get(
     "/sources/{sourceId}/metadata/{key}", response_model=Metadatum
 )
-async def get_metadata_source_by_key(sourceId: str, key: str) -> Metadatum:
-    # pylint: disable=too-many-return-statements,too-many-branches
+async def get_metadata_source_by_key(  # noqa: PLR0911, PLR0912
+    sourceId: str, key: str
+) -> Metadatum:
     key = unquote(key)
     if sourceId.endswith("temp") and "plantA" in sourceId:
         if key == "Max Value":
@@ -220,15 +223,9 @@ async def get_metadata_source_by_key(sourceId: str, key: str) -> Metadatum:
         if key == "Sensor Config":
             return get_metadatum_from_store(sourceId, "Sensor Config")
 
-    if sourceId.endswith("anomaly_score") and "plantA" in sourceId:
-        if key == "Max Value":
-            return Metadatum(key="Max Value", value=1.0, dataType="float")
-        if key == "Min Value":
-            return Metadatum(key="Min Value", value=0.0, dataType="float")
-        if key == "Overshooting Allowed":
-            return get_metadatum_from_store(sourceId, "Overshooting Allowed")
-
-    elif sourceId.endswith("anomaly_score") and "plantB" in sourceId:
+    if sourceId.endswith("anomaly_score") and (
+        "plantA" in sourceId or "plantB" in sourceId
+    ):
         if key == "Max Value":
             return Metadatum(key="Max Value", value=1.0, dataType="float")
         if key == "Min Value":
@@ -236,31 +233,45 @@ async def get_metadata_source_by_key(sourceId: str, key: str) -> Metadatum:
         if key == "Overshooting Allowed":
             return get_metadatum_from_store(sourceId, "Overshooting Allowed")
     raise HTTPException(
-        404, f"Could not find metadatum attached to source {sourceId} with key {key}"
+        status.HTTP_404_NOT_FOUND,
+        f"Could not find metadatum attached to source '{sourceId}' with key '{key}'.",
     )
 
 
-@demo_adapter_main_router.post("/sources/{sourceId}/metadata/{key}", status_code=200)
+@demo_adapter_main_router.post(
+    "/sources/{sourceId}/metadata/{key}", status_code=200, response_model=None
+)
 async def post_metadata_source_by_key(
     sourceId: str, key: str, metadatum: PostMetadatum
-) -> Union[dict, HTTPException]:
+) -> dict | HTTPException:
     key = unquote(key)
     if sourceId.endswith("temp") and key == "Sensor Config":
-
         old_metadatum = get_metadatum_from_store(sourceId, key)
 
         new_metadatum = Metadatum(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
-            isSink=old_metadatum.isSink or True,
+            isSink=old_metadatum.isSink or True,  # noqa: SIM222
         )
 
         set_metadatum_in_store(sourceId, key, new_metadatum)
         return {"message": "success"}
-    return HTTPException(
-        404,
-        f"There is no writable metadatum at source {sourceId} with key {key}",
+    if sourceId.endswith("anomaly_score") and key == "Overshooting Allowed":
+        old_metadatum = get_metadatum_from_store(sourceId, key)
+
+        new_metadatum = Metadatum(
+            key=metadatum.key,
+            value=metadatum.value,
+            dataType=old_metadatum.dataType,
+            isSink=old_metadatum.isSink or True,  # noqa: SIM222
+        )
+
+        set_metadatum_in_store(sourceId, key, new_metadatum)
+        return {"message": "success"}
+    raise HTTPException(
+        status.HTTP_404_NOT_FOUND,
+        f"There is no writable metadatum at source '{sourceId}' with key '{key}'.",
     )
 
 
@@ -273,20 +284,20 @@ async def source(source_id: str) -> StructureSource:
         src for src in get_sources(include_sub_objects=True) if src["id"] == source_id
     ]
     if len(requested_sources) > 1:
-        msg = f"Error: Multiple sources with same id {str(requested_sources)}"
+        msg = f"Error: Multiple sources with same id {str(requested_sources)}."
         logger.info(msg)
-        raise HTTPException(500, msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, msg)
 
     if len(requested_sources) < 1:
         msg = f"Requested source with id {source_id} not found."
         logger.info(msg)
-        raise HTTPException(404, msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
     return StructureSource.parse_obj(requested_sources[0])
 
 
 @demo_adapter_main_router.get("/sinks", response_model=MultipleSinksResponse)
 async def sinks(
-    filter_str: Optional[str] = Query(None, alias="filter")
+    filter_str: str | None = Query(None, alias="filter")
 ) -> MultipleSinksResponse:
     return_sinks = get_sinks(filter_str=filter_str, include_sub_objects=True)
 
@@ -294,9 +305,9 @@ async def sinks(
 
 
 @demo_adapter_main_router.get(
-    "/sinks/{sinkId}/metadata/", response_model=List[Metadatum]
+    "/sinks/{sinkId}/metadata/", response_model=list[Metadatum]
 )
-async def get_all_metadata_sink(sinkId: str) -> List[Metadatum]:
+async def get_all_metadata_sink(sinkId: str) -> list[Metadatum]:
     if sinkId.endswith("anomaly_score") and "plantA" in sinkId:
         return [
             Metadatum(key="Max Value", value=1.0, dataType="float"),
@@ -318,15 +329,7 @@ async def get_all_metadata_sink(sinkId: str) -> List[Metadatum]:
 async def get_metadata_sink_by_key(sinkId: str, key: str) -> Metadatum:
     key = unquote(key)
 
-    if sinkId.endswith("anomaly_score") and "plantA" in sinkId:
-        if key == "Max Value":
-            return Metadatum(key="Max Value", value=1.0, dataType="float")
-        if key == "Min Value":
-            return Metadatum(key="Min Value", value=0.0, dataType="float")
-        if key == "Overshooting Allowed":
-            return get_metadatum_from_store(sinkId, "Overshooting Allowed")
-
-    elif sinkId.endswith("anomaly_score") and "plantB" in sinkId:
+    if sinkId.endswith("anomaly_score") and ("plantA" in sinkId or "plantB" in sinkId):
         if key == "Max Value":
             return Metadatum(key="Max Value", value=1.0, dataType="float")
         if key == "Min Value":
@@ -335,31 +338,33 @@ async def get_metadata_sink_by_key(sinkId: str, key: str) -> Metadatum:
             return get_metadatum_from_store(sinkId, "Overshooting Allowed")
 
     raise HTTPException(
-        404, f"Could not find metadatum attached to sink {sinkId} with key {key}"
+        status.HTTP_404_NOT_FOUND,
+        f"Could not find metadatum attached to sink '{sinkId}' with key '{key}'.",
     )
 
 
-@demo_adapter_main_router.post("/sinks/{sinkId}/metadata/{key}", status_code=200)
+@demo_adapter_main_router.post(
+    "/sinks/{sinkId}/metadata/{key}", status_code=200, response_model=None
+)
 async def post_metadata_sink_by_key(
     sinkId: str, key: str, metadatum: PostMetadatum
-) -> Union[dict, HTTPException]:
+) -> dict | HTTPException:
     key = unquote(key)
     if sinkId.endswith("anomaly_score") and key == "Overshooting Allowed":
-
         old_metadatum = get_metadatum_from_store(sinkId, key)
 
         new_metadatum = Metadatum(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
-            isSink=old_metadatum.isSink or True,
+            isSink=old_metadatum.isSink or True,  # noqa: SIM222
         )
 
         set_metadatum_in_store(sinkId, key, new_metadatum)
         return {"message": "success"}
-    return HTTPException(
-        404,
-        f"There is no writable metadatum at sink {sinkId} with key {key}",
+    raise HTTPException(
+        status.HTTP_404_NOT_FOUND,
+        f"There is no writable metadatum at sink '{sinkId}' with key '{key}'.",
     )
 
 
@@ -370,21 +375,21 @@ async def sink(sink_id: str) -> StructureSink:
         snk for snk in get_sinks(include_sub_objects=True) if snk["id"] == sink_id
     ]
     if len(requested_sinks) > 1:
-        msg = f"Error: Multiple sinks with same id {str(requested_sinks)}"
+        msg = f"Error: Multiple sinks with same id {str(requested_sinks)}."
         logger.info(msg)
-        raise HTTPException(500, msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, msg)
 
     if len(requested_sinks) < 1:
         msg = f"Requested sink with id {sink_id} not found."
         logger.info(msg)
-        raise HTTPException(404, msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
     return StructureSink.parse_obj(requested_sinks[0])
 
 
 @demo_adapter_main_router.get(
-    "/thingNodes/{thingNodeId}/metadata/", response_model=List[Metadatum]
+    "/thingNodes/{thingNodeId}/metadata/", response_model=list[Metadatum]
 )
-async def get_all_metadata_thingNode(thingNodeId: str) -> List[Metadatum]:
+async def get_all_metadata_thingNode(thingNodeId: str) -> list[Metadatum]:
     if thingNodeId == "root.plantA":
         return [
             Metadatum(key="Temperature Unit", value="F", dataType="string"),
@@ -415,7 +420,7 @@ async def get_all_metadata_thingNode(thingNodeId: str) -> List[Metadatum]:
 
 
 def calculate_age(born: datetime.date) -> int:
-    today = datetime.date.today()
+    today = datetime.date.today()  # noqa: DTZ011
     return (
         today.year - born.year - int((today.month, today.day) < (born.month, born.day))
     )
@@ -424,14 +429,17 @@ def calculate_age(born: datetime.date) -> int:
 @demo_adapter_main_router.get(
     "/thingNodes/{thingNodeId}/metadata/{key}", response_model=Metadatum
 )
-async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> Metadatum:
-    # pylint: disable=too-many-return-statements
+async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
+    thingNodeId: str, key: str, latex_mode: str = Query("", example="yes")
+) -> Metadatum:
     key = unquote(key)
     if thingNodeId == "root.plantA":
         if key == "Temperature Unit":
             return Metadatum(
                 key="Temperature Unit",
-                value="F",
+                value="$^\\circ$F"
+                if str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
+                else "F",
                 dataType="string",
             )
         if key == "Pressure Unit":
@@ -453,7 +461,10 @@ async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> Metadatum
         if key == "Temperature Unit":
             return Metadatum(
                 key="Temperature Unit",
-                value="C",
+                value="$^\\circ$C"
+                if latex_mode != ""
+                and str.lower(latex_mode) in ("yes", "y", "on", "true", "1")
+                else "C",
                 dataType="string",
             )
         if key == "Pressure Unit":
@@ -471,55 +482,54 @@ async def get_metadata_thingNode_by_key(thingNodeId: str, key: str) -> Metadatum
         if key == "Anomaly State":
             return get_metadatum_from_store(thingNodeId, "Anomaly State")
     raise HTTPException(
-        404,
-        f"Could not find metadatum attached/at thingNode {thingNodeId} with key {key}",
+        status.HTTP_404_NOT_FOUND,
+        f"Could not find metadatum attached/at thingNode '{thingNodeId}' with key '{key}'.",
     )
 
 
 @demo_adapter_main_router.post(
-    "/thingNodes/{thingNodeId}/metadata/{key}", status_code=200
+    "/thingNodes/{thingNodeId}/metadata/{key}", status_code=200, response_model=None
 )
 async def post_metadata_thingNode_by_key(
     thingNodeId: str, key: str, metadatum: PostMetadatum
-) -> Union[dict, HTTPException]:
+) -> dict | HTTPException:
     key = unquote(key)
     if thingNodeId in ["root.plantA", "root.plantB"]:
-
         old_metadatum = get_metadatum_from_store(thingNodeId, key)
 
         new_metadatum = Metadatum(
             key=metadatum.key,
             value=metadatum.value,
             dataType=old_metadatum.dataType,
-            isSink=old_metadatum.isSink or True,
+            isSink=old_metadatum.isSink or True,  # noqa: SIM222
         )
 
         set_metadatum_in_store(thingNodeId, key, new_metadatum)
         return {"message": "success"}
 
-    return HTTPException(
-        404,
-        f"There is no writable metadatum at thingNode {thingNodeId} with key {key}",
+    raise HTTPException(
+        status.HTTP_404_NOT_FOUND,
+        f"There is no writable metadatum at thingNode '{thingNodeId}' with key '{key}'.",
     )
 
 
 @demo_adapter_main_router.get("/thingNodes/{id}", response_model=StructureThingNode)
 async def thing_node(
-    id: str,  # pylint: disable=redefined-builtin
-) -> StructureThingNode:  # pylint: disable=redefined-builtin
+    id: str,  # noqa: A002
+) -> StructureThingNode:
     """Get a single sink by id"""
     requested_thing_nodes = [
         tn for tn in get_thing_nodes(include_sub_objects=True) if tn["id"] == id
     ]
     if len(requested_thing_nodes) > 1:
-        msg = f"Error: Multiple ThingNodes with same id {str(requested_thing_nodes)}"
+        msg = f"Error: Multiple ThingNodes with same id {str(requested_thing_nodes)}."
         logger.info(msg)
-        raise HTTPException(500, msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, msg)
 
     if len(requested_thing_nodes) < 1:
         msg = f"Requested ThingNode with id {id} not found."
         logger.info(msg)
-        raise HTTPException(404, msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, msg)
     return StructureThingNode.parse_obj(requested_thing_nodes[0])
 
 
@@ -533,15 +543,52 @@ def encode_attributes(data_attrs: Any) -> str:
     return base64_str
 
 
+def return_stored_anomaly_score(
+    ts_id: str, from_timestamp: datetime.datetime, to_timestamp: datetime.datetime
+) -> pd.DataFrame:
+    stored_df = get_value_from_store(ts_id).copy()
+    if "timestamp" in stored_df.columns:
+        stored_df.index = pd.to_datetime(stored_df["timestamp"])
+        stored_df = stored_df[
+            from_timestamp.isoformat() : to_timestamp.isoformat()  # type: ignore
+        ]
+        ts_df = pd.DataFrame(
+            {
+                "timestamp": stored_df.index,
+                "timeseriesId": ts_id,
+                "value": stored_df["value"],
+            }
+        )
+        ts_df.attrs = stored_df.attrs
+    else:
+        ts_df = pd.DataFrame(
+            {
+                "timestamp": [],
+                "timeseriesId": [],
+                "value": [],
+            }
+        )
+    # do not overwrite stored attributes!
+    ts_df.attrs.update(
+        {
+            "from_timestamp": from_timestamp.isoformat(),
+            "to_timestamp": to_timestamp.isoformat(),
+        }
+    )
+
+    return ts_df
+
+
 @demo_adapter_main_router.get("/timeseries")
 async def timeseries(
-    ids: List[str] = Query(..., alias="id", min_length=1),
+    ids: list[str] = Query(..., alias="id", min_length=1),
     from_timestamp: datetime.datetime = Query(
         ..., alias="from", example=datetime.datetime.now(datetime.timezone.utc)
     ),
     to_timestamp: datetime.datetime = Query(
         ..., alias="to", example=datetime.datetime.now(datetime.timezone.utc)
     ),
+    frequency: str = Query("", example="5min"),
 ) -> StreamingResponse:
     collected_attrs = {}
     io_stream = StringIO()
@@ -559,36 +606,7 @@ async def timeseries(
             offset = 14.5 if "plantA" in ts_id else 1.0
             factor = 0.73 if "plantA" in ts_id else 0.05
         elif ts_id.endswith("anomaly_score"):
-            stored_df = get_value_from_store(ts_id).copy()
-            if "timestamp" in stored_df.columns:
-                stored_df.index = pd.to_datetime(stored_df["timestamp"])
-                stored_df = stored_df[
-                    from_timestamp.isoformat() : to_timestamp.isoformat()  # type: ignore
-                ]
-                ts_df = pd.DataFrame(
-                    {
-                        "timestamp": stored_df.index,
-                        "timeseriesId": ts_id,
-                        "value": stored_df["value"],
-                    }
-                )
-                ts_df.attrs = stored_df.attrs
-            else:
-                ts_df = pd.DataFrame(
-                    {
-                        "timestamp": [],
-                        "timeseriesId": [],
-                        "value": [],
-                    }
-                )
-            # do not overwrite stored attributes!
-            ts_df.attrs.update(
-                {
-                    "from_timestamp": from_timestamp.isoformat(),
-                    "to_timestamp": to_timestamp.isoformat(),
-                }
-            )
-
+            ts_df = return_stored_anomaly_score(ts_id, from_timestamp, to_timestamp)
         else:
             offset = 0.0
             factor = 1.0
@@ -600,6 +618,17 @@ async def timeseries(
                     "value": np.random.randn(len(dt_range)) * factor + offset,
                 }
             )
+
+        if frequency != "" and ts_id == "root.plantA.picklingUnit.influx.temp":
+            ts_df.index = ts_df["timestamp"]
+            try:
+                ts_df = ts_df.resample(frequency).first(numeric_only=False)
+            except ValueError as error:
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    f"Provided value '{frequency}' for the filter 'frequency' is invalid! "
+                    "Check the reference for pandas.DataFrame.resample for more information.",
+                ) from error
         # throws warning during pytest:
         ts_df.to_json(io_stream, lines=True, orient="records", date_format="iso")
 
@@ -626,10 +655,10 @@ def decode_attributes(data_attributes: str) -> Any:
 
 @demo_adapter_main_router.post("/timeseries", status_code=200)
 async def post_timeseries(
-    ts_body: List[TimeseriesRecord],
+    ts_body: list[TimeseriesRecord],
     ts_id: str = Query(..., alias="timeseriesId"),
-    data_attributes: Optional[str] = Header(None),
-) -> Dict:
+    data_attributes: str | None = Header(None),
+) -> dict:
     logger.info("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
     if ts_id.endswith("anomaly_score"):
         df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
@@ -646,14 +675,34 @@ async def post_timeseries(
         )
         return {"message": "success"}
 
-    raise HTTPException(404, f"No writable timeseries with id {ts_id}")
+    raise HTTPException(
+        status.HTTP_404_NOT_FOUND, f"No writable timeseries with id '{ts_id}'."
+    )
 
 
-@demo_adapter_main_router.get("/dataframe")
+def parse_string_to_list(input_string: str) -> tuple[list, str]:
+    decoded_input_string = input_string.encode("utf-8").decode("unicode_escape")
+    try:
+        list_from_string = json.loads(decoded_input_string)
+    except json.decoder.JSONDecodeError:
+        return (
+            [],
+            f"Value of column_names '{decoded_input_string}' cannot be parsed as JSON.",
+        )
+    else:
+        if not isinstance(list_from_string, list):
+            return (
+                [],
+                f"Value of column_names '{decoded_input_string}' is not a list.",
+            )
+        return (list_from_string, "")
+
+
+@demo_adapter_main_router.get("/dataframe", response_model=None)
 async def dataframe(
     df_id: str = Query(..., alias="id"),
-) -> Union[HTTPException, StreamingResponse]:
-
+    column_names: str = Query("", example="""[\\\"column1\\\", \\\"column2\\\"]"""),
+) -> StreamingResponse | HTTPException:
     if df_id.endswith("plantA.maintenance_events"):
         df = pd.DataFrame(
             {  # has timestamp column
@@ -704,10 +753,25 @@ async def dataframe(
         )
     elif df_id.endswith("alerts"):
         df = get_value_from_store(df_id)
-
+        if column_names != "":
+            column_name_list, error_msg = parse_string_to_list(column_names)
+            if error_msg != "":
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    error_msg,
+                )
+            try:
+                df = df[column_name_list]
+            except KeyError as error:
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    f"Dataframe with id {df_id} contains columns {list(df)} "
+                    f"but does not contain all columns of {column_name_list}.",
+                ) from error
     else:
-        return HTTPException(
-            404, f"no dataframe data available with provided id {df_id}"
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"No dataframe data available with provided id '{df_id}'.",
         )
 
     headers = {}
@@ -726,7 +790,7 @@ async def dataframe(
 
 @demo_adapter_main_router.post("/dataframe", status_code=200)
 async def post_dataframe(
-    df_body: List[Dict] = Body(
+    df_body: list[dict] = Body(
         ...,
         example=[
             {"column_A": 42.0, "column_B": "example"},
@@ -734,7 +798,7 @@ async def post_dataframe(
         ],
     ),
     df_id: str = Query(..., alias="id"),
-    data_attributes: Optional[str] = Header(None),
+    data_attributes: str | None = Header(None),
 ) -> dict:
     if df_id.endswith("alerts"):
         df = pd.DataFrame.from_dict(df_body, orient="columns")
@@ -747,7 +811,142 @@ async def post_dataframe(
         set_value_in_store(df_id, df)
         return {"message": "success"}
 
-    raise HTTPException(404, f"No writable dataframe with id {df_id}")
+    raise HTTPException(
+        status.HTTP_404_NOT_FOUND, f"No writable dataframe with id '{df_id}'."
+    )
+
+
+@demo_adapter_main_router.get("/multitsframe", response_model=None)
+async def multitsframe(
+    mtsf_id: str = Query(..., alias="id"),
+    from_timestamp: datetime.datetime = Query(
+        ..., alias="from", example=datetime.datetime.now(datetime.timezone.utc)
+    ),
+    to_timestamp: datetime.datetime = Query(
+        ..., alias="to", example=datetime.datetime.now(datetime.timezone.utc)
+    ),
+    lower_threshold: str = Query("", example="93.4"),
+    upper_threshold: str = Query("", example="107.9"),
+) -> StreamingResponse | HTTPException:
+    dt_range = pd.date_range(
+        start=from_timestamp, end=to_timestamp, freq="H", tz=datetime.timezone.utc
+    )
+    mtsf = None
+    if mtsf_id.endswith("temperatures"):
+        offset = 100.0 if "plantA" in mtsf_id else 30.0
+        factor = 10.0 if "plantA" in mtsf_id else 5.0
+        mtsf_records = []
+        metrics = [
+            "Pickling Outfeed Temperature",
+            "Pickling Influx Temperature",
+            "Milling Outfeed Temperature",
+            "Milling Influx Temperature",
+        ]
+        for metric in metrics:
+            values = np.random.randn(len(dt_range)) * factor + offset
+            ts_records = [
+                {"timestamp": dt_range[idx], "metric": metric, "value": values[idx]}
+                for idx in range(len(dt_range))
+            ]
+            mtsf_records.extend(ts_records)
+        mtsf = pd.DataFrame.from_records(mtsf_records)
+        if lower_threshold != "":
+            try:
+                lower_threshold_value = float(lower_threshold)
+            except ValueError as error:
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    f"Cannot cast lower threshold '{lower_threshold}' to float:\n{error}",
+                ) from error
+            mtsf = mtsf[mtsf["value"] > lower_threshold_value]
+        if upper_threshold != "":
+            try:
+                upper_threshold_value = float(upper_threshold)
+            except ValueError as error:
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    f"Cannot cast lower threshold '{upper_threshold}' to float:\n{error}",
+                ) from error
+            mtsf = mtsf[mtsf["value"] < upper_threshold_value]
+    elif mtsf_id.endswith("anomalies"):
+        mtsf = get_value_from_store(mtsf_id)
+    else:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"No multitsframe data available with provided id '{mtsf_id}'.",
+        )
+
+    mtsf.attrs.update(
+        {
+            "from_timestamp": from_timestamp.isoformat(),
+            "to_timestamp": to_timestamp.isoformat(),
+        }
+    )
+    headers = {}
+    logger.debug("loading multitsframe %s", str(mtsf))
+    logger.debug("which has attributes %s", str(mtsf.attrs))
+    df_attrs = mtsf.attrs
+    if df_attrs is not None and len(df_attrs) != 0:
+        headers["Data-Attributes"] = encode_attributes(df_attrs)
+
+    io_stream = StringIO()
+    mtsf.to_json(io_stream, lines=True, orient="records", date_format="iso")
+    io_stream.seek(0)
+
+    return StreamingResponse(io_stream, media_type="application/json", headers=headers)
+
+
+@demo_adapter_main_router.post("/multitsframe", status_code=200)
+async def post_multitsframe(
+    mtsf_body: list[dict] = Body(
+        ...,
+        example=[
+            {
+                "metric": "Milling Influx Temperature",
+                "timestamp": "2020-03-11T13:45:18.194000000Z",
+                "value": 42.3,
+            },
+            {
+                "metric": "Milling Outfeed Temperature",
+                "timestamp": "2020-03-11T14:45:18.237000000Z",
+                "value": 41.7,
+            },
+            {
+                "metric": "Pickling Influx Temperature",
+                "timestamp": "2020-03-11T15:45:18.081000000Z",
+                "value": 18.4,
+            },
+            {
+                "metric": "Pickling Outfeed Temperature",
+                "timestamp": "2020-03-11T15:45:18.153000000Z",
+                "value": 18.3,
+            },
+        ],
+    ),
+    mtsf_id: str = Query(..., alias="id"),
+    data_attributes: str | None = Header(None),
+) -> dict:
+    if mtsf_id in ("root.plantA.anomalies", "root.plantB.anomalies"):
+        mtsf = pd.DataFrame.from_dict(mtsf_body, orient="columns")
+        if set(mtsf.columns) != set(MULTITSFRAME_COLUMN_NAMES):
+            column_names_string = ", ".join(mtsf.columns)
+            multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
+            raise ValueError(
+                f"Dataframe from storage has column names {column_names_string} that don't match "
+                f"the column names required for a MultiTSFrame {multitsframe_column_names_string}."
+            )
+        if data_attributes is not None and len(data_attributes) != 0:
+            df_from_store: pd.DataFrame = get_value_from_store(mtsf_id)
+            mtsf.attrs = df_from_store.attrs
+            mtsf.attrs.update(decode_attributes(data_attributes))
+        logger.debug("storing %s", json.dumps(mtsf_body))
+        logger.debug("which has attributes %s", str(mtsf.attrs))
+        set_value_in_store(mtsf_id, mtsf)
+        return {"message": "success"}
+
+    raise HTTPException(
+        status.HTTP_404_NOT_FOUND, f"No writable multitsframe with id '{mtsf_id}'."
+    )
 
 
 @app.on_event("startup")

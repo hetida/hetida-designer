@@ -25,7 +25,7 @@ import {
   selectExecutionProtocolLoading
 } from 'src/app/store/execution-protocol/execution-protocol.selectors';
 
-interface ExecutionResponse {
+export interface ExecutionResponse {
   executionId: string;
   result: string;
   response: string;
@@ -145,9 +145,8 @@ export class ProtocolViewerComponent implements AfterViewInit {
   }
 
   outputIsPlotlyJson(outputKey: string): boolean {
-    const resultType = this.executionResponse.output_types_by_output_name[
-      outputKey
-    ];
+    const resultType =
+      this.executionResponse.output_types_by_output_name[outputKey];
     return resultType === IOType.PLOTLYJSON;
   }
 

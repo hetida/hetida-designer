@@ -9,7 +9,7 @@ import datetime
 import json
 import logging
 from posixpath import join as posix_urljoin
-from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
+from typing import Any, Literal
 
 import pandas as pd
 import requests
@@ -29,16 +29,16 @@ logger = logging.getLogger(__name__)
 
 
 def create_empty_ts_df(
-    data_type: ExternalType, attrs: Optional[Any] = None
+    data_type: ExternalType, attrs: Any | None = None
 ) -> pd.DataFrame:
     """Create empty timeseries dataframe with explicit dtypes"""
-    dtype_dict: Dict[str, Union[Type, str]] = {
+    dtype_dict: dict[str, type | str] = {
         "timeseriesId": str,
         "timestamp": "datetime64[ns, UTC]",
     }
 
     value_datatype = data_type.value_datatype
-    assert value_datatype is not None  # for mypy
+    assert value_datatype is not None  # for mypy   # noqa: S101
     dtype_dict["value"] = value_datatype.pandas_value_type
 
     if attrs is None:
@@ -56,7 +56,7 @@ def decode_attributes(data_attributes: str) -> Any:
     return df_attrs
 
 
-def are_valid_sources(filtered_sources: List[FilteredSource]) -> Tuple[bool, str]:
+def are_valid_sources(filtered_sources: list[FilteredSource]) -> tuple[bool, str]:
     if len({fs.type for fs in filtered_sources}) > 1:
         return False, "Got more than one datatype in same grouped data"
 
@@ -70,17 +70,16 @@ def are_valid_sources(filtered_sources: List[FilteredSource]) -> Tuple[bool, str
     return True, ""
 
 
-async def load_framelike_data(
-    filtered_sources: List[FilteredSource],
-    additional_params: List[
-        Tuple[str, str]
-    ],  # for timeseries: [("from", from_timestamp), ("to", to_timestamp)]
+async def load_framelike_data(  # noqa: PLR0915
+    filtered_sources: list[FilteredSource],
+    additional_params: list[
+        tuple[str, str]
+    ],  # for timeseries and multitsframes: [("from", from_timestamp), ("to", to_timestamp)]
     adapter_key: str,
-    endpoint: Literal["timeseries", "dataframe"],  # "timeseries" or "dataframe"
+    endpoint: Literal["timeseries", "dataframe", "multitsframe"],
 ) -> pd.DataFrame:
     """Load framelike data from REST endpoint"""
 
-    # pylint: disable=too-many-statements
     url = posix_urljoin(await get_generic_rest_adapter_base_url(adapter_key), endpoint)
 
     valid, msg = are_valid_sources(filtered_sources)
@@ -166,8 +165,8 @@ async def load_framelike_data(
                     " at %s. DataFrame shape is %s with columns %s"
                 ),
                 end_time.isoformat(),
-                str(df.shape),  # pylint: disable=no-member
-                str(df.columns),  # pylint: disable=no-member
+                str(df.shape),
+                str(df.columns),
             )
             logger.info(
                 (
@@ -183,7 +182,6 @@ async def load_framelike_data(
                 data_attributes = resp.headers["Data-Attributes"]
                 df.attrs = decode_attributes(data_attributes)
 
-            # pylint: disable=no-member
             logger.debug(
                 "Received dataframe of form %s:\n%s",
                 str(df.shape) if len(df) > 0 else "EMPTY RESULT",
@@ -196,9 +194,7 @@ async def load_framelike_data(
             )
 
             logger.info(msg)
-            raise AdapterConnectionError(
-                f"Requesting framelike from generic rest adapter endpoint {url} failed."
-            ) from e
+            raise AdapterConnectionError(msg) from e
     logger.info("Complete generic rest adapter %s framelike request", adapter_key)
     if len(df) == 0:
         if endpoint == "timeseries":
@@ -206,7 +202,6 @@ async def load_framelike_data(
         # must be dataframe:
         return df_empty({}, attrs=df.attrs)
 
-    # pylint: disable=no-member
     if "timestamp" in df.columns and endpoint == "dataframe":
         try:
             parsed_timestamps = pd.to_datetime(df["timestamp"])
@@ -218,7 +213,6 @@ async def load_framelike_data(
                 str(e),
             )
         else:
-            # pylint: disable=no-member
             df.index = parsed_timestamps
             df = df.sort_index()
 

@@ -1,6 +1,6 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, ReplaySubject } from 'rxjs';
+import { Observable, ReplaySubject, lastValueFrom } from 'rxjs';
 import { Utils } from 'src/app/utils/utils';
 import { BYPASS_AUTH } from '../../auth/auth.interceptor';
 
@@ -15,6 +15,7 @@ export interface Configuration {
   readonly apiEndpoint: string;
   authEnabled?: boolean;
   authConfig?: AuthConfig;
+  readonly userInfoText?: string;
 }
 
 @Injectable({
@@ -27,11 +28,11 @@ export class ConfigService {
   constructor(private readonly http: HttpClient) {}
 
   public async loadConfig(): Promise<Configuration> {
-    this.config = await this.http
-      .get<Configuration>('assets/hetida_designer_config.json', {
+    this.config = await lastValueFrom(
+      this.http.get<Configuration>('assets/hetida_designer_config.json', {
         context: new HttpContext().set(BYPASS_AUTH, true)
       })
-      .toPromise();
+    );
 
     // If no authEnabled property is present we will set it to false.
     if (Utils.isNullOrUndefined(this.config.authEnabled)) {

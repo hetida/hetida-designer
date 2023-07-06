@@ -1,0 +1,148 @@
+{
+  "code_modules": [
+    {
+      "code": "import pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"multitsframe\": \"MULTITSFRAME\",\n        \"timeseries_to_add\": \"SERIES\",\n        \"metric_of_timeseries\": \"STRING\",\n    },\n    \"outputs\": {\n        \"multitsframe\": \"MULTITSFRAME\",\n    },\n    \"name\": \"Add Timeseries to MultiTSFrame\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add a timeseries to a multi-timeseries-dataframe.\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"25cc7f0f-95a9-4fe0-9a37-36589ea2851e\",\n    \"revision_group_id\": \"96c469cb-ffa1-4891-a747-cc8dc65561b9\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-03-31T12:09:40.996894+00:00\",\n}\n\n\ndef main(*, multitsframe, timeseries_to_add, metric_of_timeseries):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    return {\n        \"multitsframe\": pd.concat(\n            [\n                multitsframe,\n                pd.DataFrame(\n                    {\n                        \"timestamp\": timeseries_to_add.index,\n                        \"value\": timeseries_to_add.values,\n                        \"metric\": metric_of_timeseries,\n                    }\n                ),\n            ],\n            ignore_index=True,\n        )\n    }\n",
+      "uuid": "25cc7f0f-95a9-4fe0-9a37-36589ea2851e"
+    }
+  ],
+  "components": [
+    {
+      "code_module_uuid": "25cc7f0f-95a9-4fe0-9a37-36589ea2851e",
+      "function_name": "main",
+      "inputs": [
+        {
+          "id": "c0af645e-5460-45e3-b593-5f2281498a24",
+          "name": "multitsframe",
+          "type": "MULTITSFRAME"
+        },
+        {
+          "id": "6de5af22-b27a-4768-8e14-572146d5a7db",
+          "name": "timeseries_to_add",
+          "type": "SERIES"
+        },
+        {
+          "id": "52dfd808-b5bb-494f-878b-f59bbc4964f7",
+          "name": "metric_of_timeseries",
+          "type": "STRING"
+        }
+      ],
+      "name": "Add Timeseries to MultiTSFrame",
+      "outputs": [
+        {
+          "id": "18d61bf2-f190-4252-9f53-9405270016d5",
+          "name": "multitsframe",
+          "type": "MULTITSFRAME"
+        }
+      ],
+      "tag": "1.0.0",
+      "uuid": "25cc7f0f-95a9-4fe0-9a37-36589ea2851e"
+    }
+  ],
+  "configuration": {
+    "engine": "plain",
+    "name": "a1370795-c89a-457c-a766-50275d4a3b66",
+    "return_individual_node_results": false,
+    "run_pure_plot_operators": true
+  },
+  "job_id": "bbaa8db6-bc11-4aa1-a09e-5ce8981a94ae",
+  "workflow": {
+    "connections": [],
+    "id": "6fbfb737-e7c7-4361-b457-07579c2160aa",
+    "inputs": [
+      {
+        "constant": false,
+        "constantValue": null,
+        "id": "5697a33e-225b-46e0-ad7c-22c77189646b",
+        "id_of_sub_node": "7a8a4c19-13a7-4782-b120-4fb27c2469b4",
+        "name": "multitsframe",
+        "name_in_subnode": "multitsframe",
+        "type": "MULTITSFRAME"
+      },
+      {
+        "constant": false,
+        "constantValue": null,
+        "id": "6422f0d3-c5ab-4f76-8ab6-71aa867a1caf",
+        "id_of_sub_node": "7a8a4c19-13a7-4782-b120-4fb27c2469b4",
+        "name": "timeseries_to_add",
+        "name_in_subnode": "timeseries_to_add",
+        "type": "SERIES"
+      },
+      {
+        "constant": false,
+        "constantValue": null,
+        "id": "a3b59d82-7caa-481d-944f-83befd0e9dbf",
+        "id_of_sub_node": "7a8a4c19-13a7-4782-b120-4fb27c2469b4",
+        "name": "metric_of_timeseries",
+        "name_in_subnode": "metric_of_timeseries",
+        "type": "STRING"
+      }
+    ],
+    "name": "Wrapper Workflow",
+    "outputs": [
+      {
+        "id": "5efdbeb5-2796-4f2d-9afb-5610e22e0f88",
+        "id_of_sub_node": "7a8a4c19-13a7-4782-b120-4fb27c2469b4",
+        "name": "multitsframe",
+        "name_in_subnode": "multitsframe",
+        "type": "MULTITSFRAME"
+      }
+    ],
+    "sub_nodes": [
+      {
+        "component_uuid": "25cc7f0f-95a9-4fe0-9a37-36589ea2851e",
+        "id": "7a8a4c19-13a7-4782-b120-4fb27c2469b4",
+        "name": "Add Timeseries to MultiTSFrame"
+      }
+    ],
+    "tr_id": "a1370795-c89a-457c-a766-50275d4a3b66",
+    "tr_name": "Wrapper Workflow",
+    "tr_tag": "1.0.0"
+  },
+  "workflow_wiring": {
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"value\": [\n        1.0,\n        1.2,\n        1.9,\n        1.3,\n        1.5,\n        1.7\n    ],\n    \"metric\": [\n        \"a\",\n        \"b\",\n        \"a\",\n        \"b\",\n        \"a\",\n        \"b\"\n    ],\n    \"timestamp\": [\n        \"2019-08-01T15:45:36.000Z\",\n        \"2019-08-01T15:45:36.000Z\",\n        \"2019-08-02T15:45:36.000Z\",\n        \"2019-08-02T15:45:36.000Z\",\n        \"2019-08-03T15:45:36.000Z\",\n        \"2019-08-03T15:45:36.000Z\"\n    ]\n}"
+        },
+        "ref_id": null,
+        "ref_id_type": "SOURCE",
+        "ref_key": null,
+        "type": "multitsframe",
+        "workflow_input_name": "multitsframe"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"2019-08-01T15:45:36.000Z\": 0.5,\n    \"2019-08-02T15:45:36.000Z\": 0.2,\n    \"2019-08-03T15:45:36.000Z\": 0.1\n}"
+        },
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "workflow_input_name": "timeseries_to_add"
+      },
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "d"
+        },
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "workflow_input_name": "metric_of_timeseries"
+      }
+    ],
+    "output_wirings": [
+      {
+        "adapter_id": 1,
+        "ref_id": null,
+        "ref_id_type": null,
+        "ref_key": null,
+        "type": null,
+        "workflow_output_name": "multitsframe"
+      }
+    ]
+  }
+}

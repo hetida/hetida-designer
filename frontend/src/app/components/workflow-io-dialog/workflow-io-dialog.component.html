@@ -1,9 +1,13 @@
 <div mat-dialog-title>
   <h4 class="m-0">
-    Configure Input / Output for Workflow {{ data.workflow.name }}
-    {{ data.workflow.tag }}
+    Configure Input / Output for Workflow {{ data.workflowTransformation.name }}
+    {{ data.workflowTransformation.version_tag }}
   </h4>
-  <button (click)="onCancel()" mat-icon-button>
+  <button
+    (click)="onCancel()"
+    mat-icon-button
+    attr.data-testid="close-workflow-io-dialog"
+  >
     <mat-icon>close</mat-icon>
   </button>
 </div>
@@ -75,6 +79,12 @@
             [checked]="ioItem.get('isConstant').value"
             [disabled]="!data.editMode"
             (change)="toggleConstant(ioItem)"
+            attr.data-testid="{{
+              ioItem.get('connector').value +
+                '-' +
+                ioItem.get('operator').value +
+                '-dynamic-fixed-workflow-io-dialog' | lowercase
+            }}"
           >
           </mat-slide-toggle>
         </div>
@@ -90,12 +100,24 @@
             readonly
             class="clickable"
             (click)="$event.preventDefault(); openJsonEditor(ioItem)"
+            attr.data-testid="{{
+              ioItem.get('connector').value +
+                '-' +
+                ioItem.get('operator').value +
+                '-input-data-workflow-io-dialog' | lowercase
+            }}"
           />
           <input
             *ngIf="!showEditorIcon(ioItem)"
             formControlName="constant"
             matInput
             type="text"
+            attr.data-testid="{{
+              ioItem.get('connector').value +
+                '-' +
+                ioItem.get('operator').value +
+                '-input-data-workflow-io-dialog' | lowercase
+            }}"
           />
           <mat-error [hdErrorVisual]="ioItem.get('constant')"></mat-error>
           <mat-label>Input Data</mat-label>
@@ -111,7 +133,17 @@
           <mat-form-field
             class="input-no-fixed-width input-configuration-label-column"
           >
-            <input formControlName="name" matInput type="text" />
+            <input
+              formControlName="name"
+              matInput
+              type="text"
+              attr.data-testid="{{
+                ioItem.get('connector').value +
+                  '-' +
+                  ioItem.get('operator').value +
+                  '-field-name-input-workflow-io-dialog' | lowercase
+              }}"
+            />
             <mat-error [hdErrorVisual]="ioItem.get('name')"></mat-error>
             <mat-label>Field Name</mat-label>
           </mat-form-field>
@@ -122,6 +154,12 @@
           (click)="resetInputOrOutput(ioItem)"
           mat-icon-button
           [disabled]="!data.editMode"
+          attr.data-testid="{{
+            ioItem.get('connector').value +
+              '-' +
+              ioItem.get('operator').value +
+              '-clear-input-workflow-io-dialog' | lowercase
+          }}"
         >
           <mat-icon>delete</mat-icon>
         </button>
@@ -193,7 +231,17 @@
         <mat-form-field
           class="input-no-fixed-width input-configuration-label-column"
         >
-          <input formControlName="name" matInput type="text" />
+          <input
+            formControlName="name"
+            matInput
+            type="text"
+            attr.data-testid="{{
+              ioItem.get('connector').value +
+                '-' +
+                ioItem.get('operator').value +
+                '-field-name-output-workflow-io-dialog' | lowercase
+            }}"
+          />
           <mat-error [hdErrorVisual]="ioItem.get('name')"></mat-error>
           <mat-label>Field Name</mat-label>
         </mat-form-field>
@@ -203,6 +251,12 @@
           (click)="resetInputOrOutput(ioItem)"
           mat-icon-button
           [disabled]="!data.editMode"
+          attr.data-testid="{{
+            ioItem.get('connector').value +
+              '-' +
+              ioItem.get('operator').value +
+              '-clear-output-workflow-io-dialog' | lowercase
+          }}"
         >
           <mat-icon>delete</mat-icon>
         </button>
@@ -212,7 +266,14 @@
 </div>
 
 <div mat-dialog-actions>
-  <button (click)="onCancel()" mat-raised-button color="primary">
+  <button
+    (click)="onCancel()"
+    mat-raised-button
+    color="primary"
+    attr.data-testid="{{
+      data.actionCancel + '-workflow-io-dialog' | lowercase
+    }}"
+  >
     {{ data.actionCancel }}
   </button>
   <button
@@ -220,6 +281,7 @@
     mat-raised-button
     color="primary"
     [disabled]="!valid"
+    attr.data-testid="{{ data.actionOk + '-workflow-io-dialog' | lowercase }}"
   >
     {{ data.actionOk }}
   </button>

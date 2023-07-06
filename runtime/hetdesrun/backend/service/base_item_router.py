@@ -1,17 +1,11 @@
 import logging
-from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, Path, Query, status
 from pydantic import ValidationError
 
 from hetdesrun.backend.models.transformation import TransformationRevisionFrontendDto
-from hetdesrun.backend.service.transformation_router import (
-    if_applicable_release_or_deprecate,
-    update_content,
-)
 from hetdesrun.component.code import update_code
-from hetdesrun.persistence.dbmodels import FilterParams
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
@@ -21,6 +15,7 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
 
@@ -41,7 +36,7 @@ base_item_router = HandleTrailingSlashAPIRouter(
 
 @base_item_router.get(
     "",
-    response_model=List[TransformationRevisionFrontendDto],
+    response_model=list[TransformationRevisionFrontendDto],
     response_model_exclude_unset=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Returns combined list of all base items (components and workflows)",
@@ -50,25 +45,24 @@ base_item_router = HandleTrailingSlashAPIRouter(
     deprecated=True,
 )
 async def get_all_transformation_revisions(
-    type: Optional[Type] = Query(  # pylint: disable=redefined-builtin
+    type: Type  # noqa: A002
+    | None = Query(
         None,
         description="Set to get only transformation revisions in the specified type",
     ),
-    state: Optional[State] = Query(
+    state: State
+    | None = Query(
         None,
         description="Set to get only transformation revisions in the specified state",
     ),
-) -> List[TransformationRevisionFrontendDto]:
+) -> list[TransformationRevisionFrontendDto]:
     """Get all transformation revisions without their content from the data base.
 
     This endpoint is deprecated and will be removed soon,
     use GET /api/transformations/ instead
     """
 
-    params = FilterParams(
-        type=type,
-        state=state,
-    )
+    params = FilterParams(type=type, state=state, include_dependencies=False)
     logger.info("get all transformation revisions with %s", repr(params))
 
     try:
@@ -98,8 +92,7 @@ async def get_all_transformation_revisions(
     deprecated=True,
 )
 async def get_transformation_revision_by_id(
-    # pylint: disable=redefined-builtin
-    id: UUID = Path(
+    id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
     ),
@@ -203,8 +196,7 @@ async def create_transformation_revision(
     deprecated=True,
 )
 async def update_transformation_revision(
-    # pylint: disable=redefined-builtin
-    id: UUID,
+    id: UUID,  # noqa: A002
     updated_transformation_revision_dto: TransformationRevisionFrontendDto,
 ) -> TransformationRevisionFrontendDto:
     """Update or store a transformation revision except for its content in the data base.
@@ -236,7 +228,7 @@ async def update_transformation_revision(
         logger.error("The following validation error occured:\n%s", str(e))
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
 
-    existing_transformation_revision: Optional[TransformationRevision] = None
+    existing_transformation_revision: TransformationRevision | None = None
 
     try:
         existing_transformation_revision = read_single_transformation_revision(
@@ -261,14 +253,6 @@ async def update_transformation_revision(
         updated_transformation_revision.content = (
             existing_transformation_revision.content
         )
-
-    updated_transformation_revision = if_applicable_release_or_deprecate(
-        existing_transformation_revision, updated_transformation_revision
-    )
-
-    updated_transformation_revision = update_content(
-        existing_transformation_revision, updated_transformation_revision
-    )
 
     try:
         persisted_transformation_revision = (

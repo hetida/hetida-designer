@@ -1,5 +1,4 @@
 import traceback
-from typing import Optional
 
 from fastapi.encoders import jsonable_encoder
 
@@ -29,7 +28,7 @@ from hetdesrun.wiring import (
 runtime_logger.addFilter(job_id_context_filter)
 
 
-async def runtime_service(  # pylint: disable=too-many-return-statements,too-many-statements
+async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     runtime_input: WorkflowExecutionInput,
 ) -> WorkflowExecutionResult:
     """Running stuff with appropriate error handling, serializing etc.
@@ -134,8 +133,14 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
         # to ensure that every node is run, even if in a part of the graph not leading
         # to a final output. This is necessary for example for the Store Model component.
         for computation_node in all_nodes:
-
-            res = await computation_node.result  # pylint: disable=unused-variable
+            _res = (
+                await computation_node.result
+                if not (
+                    computation_node.has_only_plot_outputs is True
+                    and runtime_input.configuration.run_pure_plot_operators is False
+                )
+                else {}
+            )
 
         pure_execution_measured_step.stop()
 
@@ -190,7 +195,7 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
             else (all_results_str[:50] + " ... " + all_results_str[-50:]),
         )
 
-        node_results: Optional[str] = all_results_str
+        node_results: str | None = all_results_str
     else:
         node_results = None
 
@@ -241,7 +246,7 @@ async def runtime_service(  # pylint: disable=too-many-return-statements,too-man
     # (because user can produce arbitrary non-serializable objects)
     try:
         jsonable_encoder(wf_exec_result)
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:  # noqa: BLE001
         runtime_logger.info(
             "Exception during workflow execution response serialisation: %s",
             str(e),

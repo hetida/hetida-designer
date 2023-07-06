@@ -1,13 +1,12 @@
 import os
-from typing import Set
 
-from pydantic import BaseSettings, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseSettings, Field
 
 
 class LocalFileAdapterConfig(BaseSettings):
     """Configuration for local file adapter"""
 
-    local_dirs: Set[str] = Field(
+    local_dirs: set[str] = Field(
         {"tests/data/local_files"},
         description=(
             "Root directory paths provided as JSON-List of Strings."
@@ -25,10 +24,15 @@ class LocalFileAdapterConfig(BaseSettings):
         env="RUNTIME_LOCAL_FILE_ADAPTER_ALLOWED_ORIGINS",
         example="http://exampledomain.com,http://anotherexampledomain.de",
     )
+    generic_any_sink: bool = Field(
+        True,
+        description="Whether a generic sink of type any is offered in each directory",
+        env="RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_ANY_SINKS",
+    )
 
 
 environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
 
 local_file_adapter_config = LocalFileAdapterConfig(
-    _env_file=environment_file if environment_file else None
+    _env_file=environment_file if environment_file else None  # type: ignore[call-arg]
 )

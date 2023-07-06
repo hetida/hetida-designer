@@ -1,47 +1,41 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { IAppState } from '../app.state';
 import { ITabItemState, tabItemEntityAdapter } from './tab-item.state';
 import { TabItem } from '../../model/tab-item';
-import { selectHashedAbstractBaseItemLookupById } from '../base-item/base-item.selectors';
-import { AbstractBaseItem, BaseItem } from '../../model/base-item';
-import { isBaseItem } from '../base-item/base-item-guards';
+import { selectHashedTransformationLookupById } from '../transformation/transformation.selectors';
+import { Transformation } from '../../model/transformation';
 
-export type TabItemWithBaseItem = Omit<TabItem, 'baseItemId'> & {
-  baseItem: BaseItem;
+export type TabItemWithTransformation = Omit<TabItem, 'transformationId'> & {
+  transformation: Transformation;
 };
 
 const { selectEntities, selectAll } = tabItemEntityAdapter.getSelectors();
 
-const selectTabItemState = createFeatureSelector<IAppState, ITabItemState>(
-  'tabItems'
-);
+const selectTabItemState = createFeatureSelector<ITabItemState>('tabItems');
 
 export const selectOrderedTabItems = createSelector(
   selectTabItemState,
   (tabItemState): TabItem[] => selectAll(tabItemState)
 );
 
-export const selectOrderedTabItemsWithBaseItem = createSelector(
+export const selectOrderedTabItemsWithTransformation = createSelector(
   selectOrderedTabItems,
-  selectHashedAbstractBaseItemLookupById,
+  selectHashedTransformationLookupById,
   (
     orderedTabItems: TabItem[],
-    abstractBaseItems: Record<string, AbstractBaseItem>
+    transformations: Record<string, Transformation>
   ) =>
-    orderedTabItems.map(
-      (tabItem): TabItemWithBaseItem => {
-        const abstractBaseItem = abstractBaseItems[tabItem.baseItemId];
-        if (!isBaseItem(abstractBaseItem)) {
-          throw Error(
-            'Inconsistent state: Found a tab item whose base item was not yet expanded.'
-          );
-        }
-        return {
-          ...tabItem,
-          baseItem: abstractBaseItem
-        };
+    orderedTabItems.map((tabItem): TabItemWithTransformation => {
+      const transformation = transformations[tabItem.transformationId];
+      if (!transformation) {
+        throw Error(
+          'Inconsistent state: Found a tab item whose transformation is not in store.'
+        );
       }
-    )
+      return {
+        ...tabItem,
+        transformation
+      };
+    })
 );
 
 const selectActiveTabItemId = createSelector(

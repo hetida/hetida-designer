@@ -14,10 +14,8 @@ import {
   BrowserAnimationsModule
 } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
-import {
-  OwlDateTimeModule,
-  OwlNativeDateTimeModule
-} from '@danielmoncada/angular-datetime-picker';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { OwlMomentDateTimeModule } from '@danielmoncada/angular-datetime-picker-moment-adapter';
 import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import {
@@ -40,19 +38,20 @@ import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
 import { AuthGuard } from './auth/auth.guard';
 import { AuthInterceptor } from './auth/auth.interceptor';
-import { BaseItemContextMenuComponent } from './components/base-item-context-menu/base-item-context-menu.component';
+import { TransformationContextMenuComponent } from './components/transformation-context-menu/transformation-context-menu.component';
 import { ComponentEditorComponent } from './components/component-editor/component-editor.component';
 import { ComponentIODialogComponent } from './components/component-io-dialog/component-io-dialog.component';
 import { ConfirmDialogComponent } from './components/confirmation-dialog/confirm-dialog.component';
 import { ContentViewComponent } from './components/content-view/content-view.component';
-import { CopyBaseItemDialogComponent } from './components/copy-base-item-dialog/copy-base-item-dialog.component';
+import { CopyTransformationDialogComponent } from './components/copy-transformation-dialog/copy-transformation-dialog.component';
 import { DocumentationEditorComponent } from './components/documentation-editor-dialog/documentation-editor.component';
 import { HomeComponent } from './components/home/home.component';
 import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
+// eslint-disable-next-line max-len
 import { OperatorChangeRevisionDialogComponent } from './components/operator-change-revision-dialog/operator-change-revision-dialog.component';
-import { PopoverBaseItemComponent } from './components/popover-base-item/popover-base-item.component';
+import { PopoverTransformationComponent } from './components/popover-transformation/popover-transformation.component';
 import { ProtocolViewerComponent } from './components/protocol-viewer/protocol-viewer.component';
 import { RenameOperatorDialogComponent } from './components/rename-operator-dialog/rename-operator-dialog.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -73,26 +72,24 @@ const httpLoaderFactory = (configService: ConfigService) => {
   // since the auth module uses an APP_INITIALIZER token internally, we have to combine both calls
   // the calls can be split again once we migrate to v14 of the oidc library, see
   // https://github.com/damienbod/angular-auth-oidc-client/blob/main/docs/site/angular-auth-oidc-client/docs/migrations/v13-to-v14.md
-  const config$ = from(configService.loadConfig())
-    .pipe(
-      map(config => {
-        // unfortunately, the oidc library requires some config values upon initialization
-        // it throws an error if authority and clientId are undefined, which can be ignored if no auth is needed
-        // the error can be fixed by migrating to version 14, see above
-        return {
-          authority: config.authConfig?.authority,
-          redirectUrl: window.location.origin,
-          clientId: config.authConfig?.clientId,
-          responseType: 'code',
-          scope: 'openid',
-          postLogoutRedirectUri: window.location.origin,
-          silentRenew: true,
-          silentRenewUrl: `${window.location.origin}/silent-renew.html`,
-          ...config.authConfig
-        };
-      })
-    )
-    .toPromise();
+  const config$ = from(configService.loadConfig()).pipe(
+    map(config => {
+      // unfortunately, the oidc library requires some config values upon initialization
+      // it throws an error if authority and clientId are undefined, which can be ignored if no auth is needed
+      // the error can be fixed by migrating to version 14, see above
+      return {
+        authority: config.authConfig?.authority,
+        redirectUrl: window.location.origin,
+        clientId: config.authConfig?.clientId,
+        responseType: 'code',
+        scope: 'openid',
+        postLogoutRedirectUri: window.location.origin,
+        silentRenew: true,
+        silentRenewUrl: `${window.location.origin}/silent-renew.html`,
+        ...config.authConfig
+      };
+    })
+  );
 
   return new StsConfigHttpLoader(config$);
 };
@@ -114,12 +111,12 @@ const httpLoaderFactory = (configService: ConfigService) => {
     OperatorChangeRevisionDialogComponent,
     ProtocolViewerComponent,
     ToolbarComponent,
-    PopoverBaseItemComponent,
+    PopoverTransformationComponent,
     NavigationItemComponent,
-    CopyBaseItemDialogComponent,
+    CopyTransformationDialogComponent,
     RenameOperatorDialogComponent,
     ErrorVisualDirective,
-    BaseItemContextMenuComponent
+    TransformationContextMenuComponent
   ],
 
   imports: [
@@ -130,11 +127,11 @@ const httpLoaderFactory = (configService: ConfigService) => {
     ReactiveFormsModule,
     HttpClientModule,
     OwlDateTimeModule,
-    OwlNativeDateTimeModule,
+    OwlMomentDateTimeModule,
     MaterialModule,
     HdWiringModule,
     MonacoEditorModule.forRoot({
-      baseUrl: `./assets`
+      baseUrl: './assets'
     }), // use forRoot() in main app module only.
     StoreModule.forRoot(appReducers, {
       runtimeChecks: {

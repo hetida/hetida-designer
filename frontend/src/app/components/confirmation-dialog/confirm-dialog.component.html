@@ -1,6 +1,10 @@
 <div class="d-flex content-space-between" mat-dialog-title>
   <h4 class="m-0">{{ data.title }}</h4>
-  <button (click)="onCancel()" mat-icon-button>
+  <button
+    (click)="onCancel()"
+    mat-icon-button
+    attr.data-testid="close-confirm-dialog"
+  >
     <mat-icon>close</mat-icon>
   </button>
 </div>
@@ -8,10 +12,20 @@
   {{ data.content }}
 </div>
 <div mat-dialog-actions>
-  <button (click)="onCancel()" color="primary" mat-raised-button>
+  <button
+    (click)="onCancel()"
+    color="primary"
+    mat-raised-button
+    attr.data-testid="{{ data.actionCancel + '-confirm-dialog' | lowercase }}"
+  >
     {{ data.actionCancel }}
   </button>
-  <button (click)="onOk()" color="primary" mat-raised-button>
+  <button
+    (click)="onOk()"
+    color="primary"
+    mat-raised-button
+    attr.data-testid="{{ data.actionOk + '-confirm-dialog' | lowercase }}"
+  >
     {{ data.actionOk }}
   </button>
 </div>

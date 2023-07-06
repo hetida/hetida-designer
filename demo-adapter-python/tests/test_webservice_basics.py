@@ -1,8 +1,8 @@
 import json
 from copy import deepcopy
-from typing import Any, Dict, List, Tuple
 from urllib.parse import quote
 
+import pandas as pd
 import pytest
 from httpx import AsyncClient
 from starlette.testclient import TestClient
@@ -29,14 +29,14 @@ async def test_swagger_ui_available(async_test_client: AsyncClient) -> None:
     assert "swagger-ui" in response.text.lower()
 
 
-async def walk_thing_nodes(
+async def walk_thing_nodes(  # noqa: PLR0913
     parent_id: str,
-    tn_append_list: List[StructureThingNode],
-    src_append_list: List[StructureSource],
-    snk_append_list: List[StructureSink],
-    src_attached_metadata_dict: Dict[Tuple[str, str], Metadatum],
-    snk_attached_metadata_dict: Dict[Tuple[str, str], Metadatum],
-    tn_attached_metadata_dict: Dict[Tuple[str, str], Metadatum],
+    tn_append_list: list[StructureThingNode],
+    src_append_list: list[StructureSource],
+    snk_append_list: list[StructureSink],
+    src_attached_metadata_dict: dict[tuple[str, str], Metadatum],
+    snk_attached_metadata_dict: dict[tuple[str, str], Metadatum],
+    tn_attached_metadata_dict: dict[tuple[str, str], Metadatum],
     open_async_test_client: AsyncClient,
 ) -> None:
     """Recursively walk thingnodes"""
@@ -97,9 +97,8 @@ async def walk_thing_nodes(
 async def test_resources_offered_from_structure_hierarchy(
     async_test_client: AsyncClient,
 ) -> None:
-    """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""
+    """Walks through the structure-hierarchy provided and gets/posts offered resources"""
     async with async_test_client as client:
-
         response_obj = (await client.get("/structure")).json()
 
         structure_response = StructureResponse(**response_obj)
@@ -111,12 +110,12 @@ async def test_resources_offered_from_structure_hierarchy(
 
         root = roots[0]
 
-        all_tns: List[StructureThingNode] = []
-        all_srcs: List[StructureSource] = []
-        all_snks: List[StructureSink] = []
-        tn_attached_metadata_dict: Dict[Tuple[str, str], Metadatum] = {}
-        src_attached_metadata_dict: Dict[Tuple[str, str], Metadatum] = {}
-        snk_attached_metadata_dict: Dict[Tuple[str, str], Metadatum] = {}
+        all_tns: list[StructureThingNode] = []
+        all_srcs: list[StructureSource] = []
+        all_snks: list[StructureSink] = []
+        tn_attached_metadata_dict: dict[tuple[str, str], Metadatum] = {}
+        src_attached_metadata_dict: dict[tuple[str, str], Metadatum] = {}
+        snk_attached_metadata_dict: dict[tuple[str, str], Metadatum] = {}
 
         await walk_thing_nodes(
             root.id,
@@ -130,8 +129,8 @@ async def test_resources_offered_from_structure_hierarchy(
         )
 
         assert len(all_tns) == 14
-        assert len(all_srcs) == 33
-        assert len(all_snks) == 12
+        assert len(all_srcs) == 35
+        assert len(all_snks) == 14
         assert len(src_attached_metadata_dict) == 52
         assert len(snk_attached_metadata_dict) == 24
         assert len(tn_attached_metadata_dict) == 8
@@ -149,7 +148,7 @@ async def test_resources_offered_from_structure_hierarchy(
             assert tn == StructureThingNode(**response_obj)
 
         # we actually get all metadata that is available as attached to something:
-        for ((src_id, key), md) in src_attached_metadata_dict.items():
+        for (src_id, key), md in src_attached_metadata_dict.items():
             response_obj = (
                 await client.get(f"/sources/{src_id}/metadata/{key}")
             ).json()
@@ -158,28 +157,28 @@ async def test_resources_offered_from_structure_hierarchy(
             assert response_obj["value"] == md.value
             assert response_obj["dataType"] == md.dataType
 
-            if md.isSink is not None and md.isSink:
-                assert response_obj["isSink"]
+            if md.isSink is not None and md.isSink is True:
+                assert response_obj["isSink"] is True
                 resp = await client.post(
                     f"/sources/{src_id}/metadata/{key}", json=md.dict()
                 )
                 assert resp.status_code == 200
 
-        for ((snk_id, key), md) in snk_attached_metadata_dict.items():
+        for (snk_id, key), md in snk_attached_metadata_dict.items():
             response_obj = (await client.get(f"/sinks/{snk_id}/metadata/{key}")).json()
             print(response_obj, "versus", md)
             assert response_obj["key"] == key
             assert response_obj["value"] == md.value
             assert response_obj["dataType"] == md.dataType
 
-            if md.isSink is not None and md.isSink:
-                assert response_obj["isSink"]
+            if md.isSink is not None and md.isSink is True:
+                assert response_obj["isSink"] is True
                 resp = await client.post(
                     f"/sinks/{snk_id}/metadata/{key}", json=md.dict()
                 )
                 assert resp.status_code == 200
 
-        for ((tn_id, key), md) in tn_attached_metadata_dict.items():
+        for (tn_id, key), md in tn_attached_metadata_dict.items():
             response_obj = (
                 await client.get(f"/thingNodes/{tn_id}/metadata/{key}")
             ).json()
@@ -191,7 +190,7 @@ async def test_resources_offered_from_structure_hierarchy(
             if md.isSink is not None and md.isSink:
                 assert response_obj["isSink"]
                 resp = await client.post(
-                    f"/thingNodes/{snk_id}/metadata/{key}", json=md.dict()
+                    f"/thingNodes/{tn_id}/metadata/{key}", json=md.dict()
                 )
                 assert resp.status_code == 200
 
@@ -209,8 +208,21 @@ async def test_resources_offered_from_structure_hierarchy(
                 value_datatype = ExternalType(src.type).value_datatype
                 assert value_datatype is not None
                 assert response_obj["dataType"] == (value_datatype.value)
+
             if src.type.startswith("dataframe"):
                 response = await client.get(f"/dataframe?id={src.id}")
+                lines = response.text.splitlines()
+                for line in lines:
+                    print(line)
+                    if len(line) > 0:
+                        json.loads(line)
+
+            if src.type.startswith("multitsframe"):
+                response = await client.get(
+                    f'/multitsframe?id={src.id}&from={quote("2020-01-01T00:00:00.000000000Z")}'
+                    f'&to={quote("2020-01-02T00:00:00.0000000Z")}'
+                )
+                assert response.status_code == 200
                 lines = response.text.splitlines()
                 for line in lines:
                     print(line)
@@ -258,6 +270,25 @@ async def test_resources_offered_from_structure_hierarchy(
                     json=[
                         {"a": 14.5, "b": 12.3},
                         {"a": 13.5, "b": 11.9},
+                    ],
+                )
+                assert response.status_code == 200
+
+            if snk.type.startswith("multitsframe"):
+                print("Posting something for multitsframe sink:", snk)
+                response = await client.post(
+                    f"/multitsframe?id={snk.id}",
+                    json=[
+                        {
+                            "metric": "b",
+                            "timestamp": "2020-01-01T00:00:00.000Z",
+                            "value": 12.3,
+                        },
+                        {
+                            "metric": "b",
+                            "timestamp": "2020-01-02T00:00:00.000Z",
+                            "value": 11.9,
+                        },
                     ],
                 )
                 assert response.status_code == 200
@@ -323,7 +354,7 @@ async def test_post_metadata_to_sink_get_metadata_from_source(
 @pytest.mark.asyncio
 async def test_sending_attrs_via_get_dataframe(async_test_client: AsyncClient) -> None:
     async with async_test_client as client:
-        response = await client.get(f"/dataframe?id=root.plantA.maintenance_events")
+        response = await client.get("/dataframe?id=root.plantA.maintenance_events")
 
         assert response.status_code == 200
         assert "Data-Attributes" in response.headers
@@ -402,6 +433,63 @@ async def test_updating_and_keeping_existing_attrs_for_dataframe(
         assert "test" in df_from_store_2.attrs
         for key, value in df_attrs.items():
             assert df_from_store_2.attrs[key] == value
+
+
+@pytest.mark.asyncio
+async def test_sending_attrs_via_get_multitsframe(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        response = await client.get(
+            f"/multitsframe?id=root.plantA.anomalies"
+            f'&from={quote("2020-01-01T00:00:00.000000000Z")}'
+            f'&to={quote("2020-01-01T00:00:00.000000000Z")}'
+        )
+
+        assert response.status_code == 200
+        assert "Data-Attributes" in response.headers
+        assert isinstance(response.headers["Data-Attributes"], str)
+
+        df_attrs = decode_attributes(response.headers["Data-Attributes"])
+
+        assert df_attrs["from_timestamp"] == "2020-01-01T00:00:00+00:00"
+        assert df_attrs["to_timestamp"] == "2020-01-01T00:00:00+00:00"
+
+
+@pytest.mark.asyncio
+async def test_receiving_attrs_via_post_multitsframe(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        df_attrs = {"test": "Hello world!", "answer": 42}
+        base64_str = encode_attributes(df_attrs)
+        mtsf_id = "root.plantA.anomalies"
+
+        response = await client.post(
+            f"/multitsframe?id={mtsf_id}",
+            json=[
+                {
+                    "metric": "b",
+                    "timestamp": "2020-01-01T00:00:00.000000000Z",
+                    "value": 12.3,
+                },
+                {
+                    "metric": "b",
+                    "timestamp": "2020-01-02T00:00:00.000000000Z",
+                    "value": 11.9,
+                },
+            ],
+            headers={"Data-Attributes": base64_str},
+        )
+
+        assert response.status_code == 200
+
+        df_from_store = get_value_from_store(mtsf_id)
+
+        assert len(df_from_store.attrs) != 0
+        assert "test" in df_from_store.attrs
+        for key, value in df_attrs.items():
+            assert df_from_store.attrs[key] == value
 
 
 @pytest.mark.asyncio
@@ -506,3 +594,133 @@ async def test_updating_and_keeping_existing_attrs_for_timeseries(
         assert "test" in df_from_store_2.attrs
         for key, value in df_attrs.items():
             assert df_from_store_2.attrs[key] == value
+
+
+@pytest.mark.asyncio
+async def test_free_text_filters(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        mk_response = await client.get(
+            "/thingNodes/root.plantA/metadata/Temperature Unit",
+            params={
+                "id": "root.plantA.alerts",
+                "latex_mode": "Y",
+            },
+        )
+        assert mk_response.status_code == 200
+        assert mk_response.json()["value"] == "$^\\circ$F"
+
+        mk_response_empty_latex_mode = await client.get(
+            "/thingNodes/root.plantA/metadata/Temperature Unit",
+            params={
+                "id": "root.plantA.alerts",
+                "latex_mode": "",
+            },
+        )
+        assert mk_response_empty_latex_mode.status_code == 200
+        assert mk_response_empty_latex_mode.json()["value"] == "F"
+
+        await client.post(
+            "/dataframe",
+            json=[
+                {"a": 14.5, "b": 12.3},
+                {"a": 13.5, "b": 11.9},
+            ],
+            params={"id": "root.plantA.alerts"},
+        )
+        df_response = await client.get(
+            "/dataframe",
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": """[\"b\"]""",
+            },
+        )
+        assert df_response.status_code == 200
+        df: pd.DataFrame = pd.read_json(df_response.text, lines=True)
+        assert df.columns == ["b"]
+
+        df_response_no_json_column_names = await client.get(
+            "/dataframe",
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": "['b']",
+            },
+        )
+        assert df_response_no_json_column_names.status_code == 422
+        assert "cannot be parsed" in df_response_no_json_column_names.text
+
+        df_response_no_list_column_names = await client.get(
+            "/dataframe",
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": '{"b":"c"}',
+            },
+        )
+        assert df_response_no_list_column_names.status_code == 422
+        assert "not a list" in df_response_no_list_column_names.text
+
+        df_response_wrong_key = await client.get(
+            "/dataframe",
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": """[\"b\",\"c\"]""",
+            },
+        )
+        assert df_response_wrong_key.status_code == 422
+        assert "does not contain" in df_response_wrong_key.text
+
+        mtsf_response = await client.get(
+            "/multitsframe",
+            params={
+                "id": "root.plantA.temperatures",
+                "from": "2020-01-01T00:00:00.000000000Z",
+                "to": "2020-01-01T00:00:00.000000000Z",
+                "upper_threshold": "107.9",
+                "lower_threshold": "93.4",
+            },
+        )
+        assert mtsf_response.status_code == 200
+        mtsf: pd.DataFrame = pd.read_json(mtsf_response.text, lines=True)
+        if len(mtsf.index > 0):
+            assert len(mtsf[mtsf["value"] > 107.9].index) == 0
+            assert len(mtsf[mtsf["value"] < 93.4].index) == 0
+
+        mtsf_response_no_float = await client.get(
+            "/multitsframe",
+            params={
+                "id": "root.plantA.temperatures",
+                "from": "2020-01-01T00:00:00.000000000Z",
+                "to": "2020-01-01T00:00:00.000000000Z",
+                "upper_threshold": "some string",
+                "lower_threshold": "93.4",
+            },
+        )
+        assert mtsf_response_no_float.status_code == 422
+        assert "Cannot" in mtsf_response_no_float.text
+        assert "to float" in mtsf_response_no_float.text
+
+        ts_response = await client.get(
+            "/timeseries",
+            params={
+                "id": "root.plantA.picklingUnit.influx.temp",
+                "from": "2020-01-01T00:00:00.000000000Z",
+                "to": "2020-01-02T00:00:00.000000000Z",
+                "frequency": "2h",
+            },
+        )
+        assert ts_response.status_code == 200
+        ts_df: pd.DataFrame = pd.read_json(ts_response.text, lines=True)
+        assert len(ts_df.index) == 13
+
+        ts_response_no_frequency_string = await client.get(
+            "/timeseries",
+            params={
+                "id": "root.plantA.picklingUnit.influx.temp",
+                "from": "2020-01-01T00:00:00.000000000Z",
+                "to": "2020-01-02T00:00:00.000000000Z",
+                "frequency": "some string",
+            },
+        )
+        assert ts_response_no_frequency_string.status_code == 422
+        assert "frequency is invalid" in ts_response_no_frequency_string.text

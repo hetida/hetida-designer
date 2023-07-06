@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
+import pytest
 from pandas.api.types import is_bool_dtype, is_datetime64_any_dtype, is_float_dtype
 from pydantic import BaseModel
 
 from hetdesrun.datatypes import (
     DataType,
+    PydanticMultiTimeseriesPandasDataFrame,
     PydanticPandasDataFrame,
     PydanticPandasSeries,
     parse_dynamically_from_datatypes,
@@ -59,8 +61,8 @@ def test_dataframe_parsing():
     df1 = MyDfModel(df='{"a":{"0":1.0,"1":2.0,"2":null},"b":{"0":1,"1":2,"2":3}}').df
 
     assert len(df1) == 3
-    assert df1.isnull()["a"].iloc[1] == False  # pylint: disable=singleton-compariosn
-    assert df1.isnull()["a"].iloc[2] == True  # pylint: disable=singleton-compariosn
+    assert df1.isna()["a"].iloc[1] == False  # noqa: E712
+    assert df1.isna()["a"].iloc[2] == True  # noqa: E712
     df2 = MyDfModel(
         df={"a": {"0": 1.0, "1": 2.0, "2": None}, "b": {"0": 1, "1": 2, "2": 3}}
     ).df
@@ -70,8 +72,129 @@ def test_dataframe_parsing():
     assert (df2 == df1).sum().sum() == 5
 
 
-def test_parsing_of_boolean_series():
+def test_multitsframe_parsing():
+    class MyMultiTsFrameModel(BaseModel):
+        mtsf: PydanticMultiTimeseriesPandasDataFrame
 
+    empty_df_mtsf = MyMultiTsFrameModel(mtsf=("""{}""")).mtsf
+
+    assert len(empty_df_mtsf) == 0
+
+    empty_mtsf = MyMultiTsFrameModel(
+        mtsf=('{"value":[],"metric":[],"timestamp":[]}')
+    ).mtsf
+
+    assert len(empty_mtsf) == 0
+
+    mtsf1 = MyMultiTsFrameModel(
+        mtsf=(
+            '{"value":[1.0,2,"x",1.9,null,"y"],'
+            '"metric":["a","b","c","a","b","c"],'
+            '"timestamp":["2019-08-01T15:45:36.000Z","2019-08-01T15:45:36.000Z","2019-08-01T15:45:36.000Z",'
+            '"2019-08-02T15:45:36.000Z","2019-08-02T15:45:36.000Z","2019-08-02T15:45:36.000Z"]}'
+        )
+    ).mtsf
+
+    assert len(mtsf1) == 6
+
+    mtsf2 = MyMultiTsFrameModel(
+        mtsf={
+            "value": [1.0, 2, "x", 1.9, None, "y"],
+            "metric": ["a", "b", "c", "a", "b", "c"],
+            "timestamp": [
+                "2019-08-01T15:45:36.000Z",
+                "2019-08-01T15:45:36.000Z",
+                "2019-08-01T15:45:36.000Z",
+                "2019-08-02T15:45:36.000Z",
+                "2019-08-02T15:45:36.000Z",
+                "2019-08-02T15:45:36.000Z",
+            ],
+        }
+    ).mtsf
+    assert len(mtsf2) == 6
+    # nan != nan so mtsf1 == mtsf2 is False once:
+    assert (mtsf2 == mtsf1).sum().sum() == 17
+
+    with pytest.raises(ValueError, match=r"column names.* don't match"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "foo": [1.0, 2, "x", 1.9, None, "y"],
+                "bar": ["a", "b", "c", "a", "b", "c"],
+                "xyz": [
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                ],
+            }
+        )
+
+    with pytest.raises(ValueError, match=r"No null values.*metric"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "value": [1.0, 2, "x", 1.9, None, "y"],
+                "metric": ["a", "b", "c", None, "b", "c"],
+                "timestamp": [
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                ],
+            }
+        )
+
+    with pytest.raises(ValueError, match=r"No null values.*timestamp"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "value": [1.0, 2, "x", 1.9, None, "y"],
+                "metric": ["a", "b", "c", "a", "b", "c"],
+                "timestamp": [
+                    "2019-08-01T15:45:36.000Z",
+                    None,
+                    "2019-08-01T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                    "2019-08-02T15:45:36.000Z",
+                ],
+            }
+        )
+    with pytest.raises(ValueError, match="does not have datetime64tz dtype"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "value": [1.0, 2, "x", 1.9, None, "y"],
+                "metric": ["a", "b", "c", "a", "b", "c"],
+                "timestamp": [
+                    "2019-08-01T15:45:36.000",
+                    "2019-08-01T15:45:36.000",
+                    "2019-08-01T15:45:36.000",
+                    "2019-08-02T15:45:36.000",
+                    "2019-08-02T15:45:36.000",
+                    "2019-08-02T15:45:36.000",
+                ],
+            }
+        )
+    with pytest.raises(ValueError, match="does not have UTC timezone"):
+        MyMultiTsFrameModel(
+            mtsf={
+                "value": [1.0, 2, "x", 1.9, None, "y"],
+                "metric": ["a", "b", "c", "a", "b", "c"],
+                "timestamp": [
+                    "2019-08-01T15:45:36.000+01:00",
+                    "2019-08-01T15:45:36.000+01:00",
+                    "2019-08-01T15:45:36.000+01:00",
+                    "2019-08-02T15:45:36.000+01:00",
+                    "2019-08-02T15:45:36.000+01:00",
+                    "2019-08-02T15:45:36.000+01:00",
+                ],
+            }
+        )
+
+
+def test_parsing_of_boolean_series():
     test_obj = ExampleObj(s="[true, true, false]")
 
     assert is_bool_dtype(test_obj.s.dtype)
@@ -81,28 +204,32 @@ def test_parsing_of_null_values():
     test_obj = ExampleObj(s="[null, 1.2, null]")
 
     assert is_float_dtype(test_obj.s.dtype)
-    assert np.isnan(test_obj.s.iloc[0]) and np.isnan(test_obj.s.iloc[2])
+    assert np.isnan(test_obj.s.iloc[0])
+    assert np.isnan(test_obj.s.iloc[2])
 
 
 def test_null_in_integers_parses_as_floats():
     test_obj = ExampleObj(s="[null, 1, null]")
 
     assert is_float_dtype(test_obj.s.dtype)
-    assert np.isnan(test_obj.s.iloc[0]) and np.isnan(test_obj.s.iloc[2])
+    assert np.isnan(test_obj.s.iloc[0])
+    assert np.isnan(test_obj.s.iloc[2])
 
 
 def test_null_in_bool_parses_as_floats():
     test_obj = ExampleObj(s="[null, true, null]")
 
     assert is_float_dtype(test_obj.s.dtype)
-    assert np.isnan(test_obj.s.iloc[0]) and np.isnan(test_obj.s.iloc[2])
+    assert np.isnan(test_obj.s.iloc[0])
+    assert np.isnan(test_obj.s.iloc[2])
 
 
 def test_null_in_timestamps_parses_as_datetimes():
     test_obj = ExampleObj(s='[null, "2020-02-03T14:55:12", null]')
 
     assert is_datetime64_any_dtype(test_obj.s.dtype)
-    assert pd.isnull(test_obj.s.iloc[0]) and pd.isnull(test_obj.s.iloc[2])
+    assert pd.isna(test_obj.s.iloc[0])
+    assert pd.isna(test_obj.s.iloc[2])
 
 
 def test_parse_series_from_dict_with_null():

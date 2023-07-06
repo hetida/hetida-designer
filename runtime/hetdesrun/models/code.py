@@ -1,16 +1,10 @@
 import re
 from uuid import UUID
 
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseModel,
-    ConstrainedStr,
-    Field,
-)
+from pydantic import BaseModel, ConstrainedStr, Field
 
 # allow only some special characters for category, description, name and version tag
-ALLOWED_CHARS_RAW_STRING = (
-    r"\w ,\.\-\(\)\&\+=/"  # pylint: disable=anomalous-backslash-in-string
-)
+ALLOWED_CHARS_RAW_STRING = r"\w ,\.\-\(\)\&\+=/"
 # The special sequence \w matches unicode word characters;
 # this includes most characters that can be part of a word in any language, as well as numbers
 # and the underscore. If the ASCII flag is used, only [a-zA-Z0-9_] is matched.

@@ -1,6 +1,6 @@
-from typing import Any, List, Optional, Union
+from typing import Any, Union
 
-from pydantic import BaseModel, Field, validator  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field, validator
 
 from hetdesrun.models.base import AbstractNode
 from hetdesrun.models.component import ComponentNode, ComponentOutput, UnnamedInput
@@ -8,7 +8,7 @@ from hetdesrun.models.util import valid_python_identifier
 
 
 class WorkflowInput(UnnamedInput):
-    name: Optional[str] = Field(
+    name: str | None = Field(
         None,
         example="x",
         description="Must be a valid Python identifier. Can be None if constant data is provided.",
@@ -28,16 +28,16 @@ class WorkflowInput(UnnamedInput):
     )
     name_in_subnode: str
 
-    # pylint: disable=no-self-argument
     @validator("name", always=True)
-    def name_valid_python_identifier(cls, name: Optional[str]) -> Optional[str]:
+    def name_valid_python_identifier(cls, name: str | None) -> str | None:
         if name is None:
             return name
         return valid_python_identifier(cls, name)
 
-    # pylint: disable=no-self-argument,unused-argument
     @validator("constant", always=True)
-    def name_or_constant_data_provided(cls, v, values, **kwargs):  # type: ignore
+    def name_or_constant_data_provided(  # type: ignore
+        cls, v, values, **kwargs  # noqa: ARG002
+    ):
         if values["name"] is None and ((not v) or values["constantValue"] is None):
             raise ValueError(
                 "Either name or constant data must be provided for Workflow input."
@@ -58,21 +58,19 @@ class WorkflowOutput(ComponentOutput):
 
 class WorkflowConnection(BaseModel):
     input_in_workflow_id: str
-    # input_id: UUID
     input_name: str
     output_in_workflow_id: str
-    # output_id: UUID
     output_name: str
 
 
 class WorkflowNode(AbstractNode):
-    sub_nodes: List[Union["WorkflowNode", ComponentNode]] = Field(
+    sub_nodes: list[Union["WorkflowNode", ComponentNode]] = Field(
         ..., example=[ComponentNode(component_uuid="1234", id="1000")]
     )
-    connections: List[WorkflowConnection]
-    inputs: List[WorkflowInput]
-    outputs: List[WorkflowOutput]
-    name: Optional[str] = Field(None, description="workflow node name")
+    connections: list[WorkflowConnection]
+    inputs: list[WorkflowInput]
+    outputs: list[WorkflowOutput]
+    name: str | None = Field(None, description="workflow node name")
     tr_id: str
     tr_name: str
     tr_tag: str

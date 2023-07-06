@@ -1,21 +1,21 @@
 import datetime
 import json
 import logging
+from collections.abc import Generator
 from enum import Enum
-from typing import Any, Dict, Generator, List, Optional, Tuple, Type, TypedDict, Union
+from typing import Any, TypedDict
 from uuid import UUID
 
 import numpy as np
 import pandas as pd
+import pytz
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
-from pydantic import (  # pylint: disable=no-name-in-module
-    BaseConfig,
-    BaseModel,
-    create_model,
-)
+from pydantic import BaseConfig, BaseModel, create_model
 
 logger = logging.getLogger(__name__)
+
+MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
 
 
 class DataType(str, Enum):
@@ -29,6 +29,7 @@ class DataType(str, Enum):
     String = "STRING"
     DataFrame = "DATAFRAME"
     Series = "SERIES"
+    MultiTSFrame = "MULTITSFRAME"
     Boolean = "BOOLEAN"
     Any = "ANY"
     PlotlyJson = "PLOTLYJSON"
@@ -53,7 +54,7 @@ class PydanticPandasSeries:
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: Union[pd.Series, str, dict, list]) -> pd.Series:
+    def validate(cls, v: pd.Series | str | dict | list) -> pd.Series:
         if isinstance(v, pd.Series):
             return v
         try:
@@ -63,12 +64,12 @@ class PydanticPandasSeries:
             try:
                 return pd.read_json(v, typ="series", convert_dates=False)
 
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception as e:  # noqa: BLE001
                 raise ValueError(
                     "Could not parse provided input as Pandas Series even with convert_dates=False"
                 ) from e
 
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # noqa: BLE001
             try:
                 return pd.read_json(json.dumps(v), typ="series")
 
@@ -77,13 +78,13 @@ class PydanticPandasSeries:
                     return pd.read_json(
                         json.dumps(v), typ="series", convert_dates=False
                     )
-                except Exception as read_json_with_type_error_exception:
+                except Exception as read_json_with_type_error_exception:  # noqa: BLE001
                     raise ValueError(
                         "Could not parse provided input as Pandas Series even with"
                         " convert_dates=False"
                     ) from read_json_with_type_error_exception
 
-            except Exception as read_json_exception:  # pylint: disable=broad-except
+            except Exception as read_json_exception:  # noqa: BLE001
                 raise ValueError(
                     "Could not parse provided input as Pandas Series"
                 ) from read_json_exception
@@ -103,19 +104,92 @@ class PydanticPandasDataFrame:
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: Union[pd.DataFrame, str, dict, list]) -> pd.DataFrame:
+    def validate(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
         if isinstance(v, pd.DataFrame):
             return v
         try:
             return pd.read_json(v, typ="frame")
-        # pylint: disable=broad-except
-        except Exception:
+
+        except Exception:  # noqa: BLE001
             try:
                 return pd.read_json(json.dumps(v), typ="frame")
-            except Exception as read_json_exception:
+            except Exception as read_json_exception:  # noqa: BLE001
                 raise ValueError(
                     "Could not parse provided input as Pandas DataFrame"
                 ) from read_json_exception
+
+
+class PydanticMultiTimeseriesPandasDataFrame:
+    """Custom pydantic Data Type for parsing Multi Timeseries Pandas DataFrames
+
+    Parses either a json string according to pandas.read_json
+    with typ="frame" and default arguments otherwise or
+    a Python dict-like data structure using the constructor
+    of the pandas.DataFrame class with default arguments
+    """
+
+    @classmethod
+    def __get_validators__(cls) -> Generator:
+        yield cls.validate
+
+    @classmethod
+    def validate(  # noqa:PLR0912
+        cls, v: pd.DataFrame | str | dict | list
+    ) -> pd.DataFrame:
+        df: pd.DataFrame | None = None
+        if isinstance(v, pd.DataFrame):
+            df = v
+        else:
+            try:
+                df = pd.read_json(v, typ="frame")
+
+            except Exception:  # noqa: BLE001
+                try:
+                    df = pd.read_json(json.dumps(v), typ="frame")
+                except Exception as read_json_exception:  # noqa: BLE001
+                    raise ValueError(
+                        "Could not parse provided input as Pandas DataFrame."
+                    ) from read_json_exception
+
+        if len(df.columns) == 0:
+            df = pd.DataFrame(columns=MULTITSFRAME_COLUMN_NAMES)
+
+        if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
+            column_names_string = ", ".join(df.columns)
+            multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
+            raise ValueError(
+                f"The column names {column_names_string} don't match the column names "
+                f"required for a MultiTSFrame {multitsframe_column_names_string}."
+            )
+
+        if df["metric"].isna().any():
+            raise ValueError(
+                "No null values are allowed for the column 'metric' of a MulitTSFrame."
+            )
+
+        df["metric"] = df["metric"].astype("string")
+
+        if df["timestamp"].isna().any():
+            raise ValueError(
+                "No null values are allowed for the column 'timestamp' of a MulitTSFrame."
+            )
+
+        if len(df.index) == 0:
+            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+
+        if not pd.api.types.is_datetime64tz_dtype(df["timestamp"]):
+            raise ValueError(
+                "Column 'timestamp' of MultiTSFrame does not have datetime64tz dtype. "
+                f'Got {str(df["timestamp"].dtype)} index dtype instead.'
+            )
+
+        if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
+            raise ValueError(
+                "Column 'timestamp' of MultiTSFrame does not have UTC timezone. "
+                f'Got {str(df["timestamp"].dt.tz)} timezone instead.'
+            )
+
+        return df
 
 
 class ParsedAny:
@@ -175,11 +249,12 @@ class ParsedAny:
         return v
 
 
-data_type_map: Dict[DataType, Type] = {
+data_type_map: dict[DataType, type] = {
     DataType.Integer: int,
     DataType.Float: float,
     DataType.String: str,
     DataType.Series: PydanticPandasSeries,
+    DataType.MultiTSFrame: PydanticMultiTimeseriesPandasDataFrame,
     DataType.DataFrame: PydanticPandasDataFrame,
     DataType.Boolean: bool,
     # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
@@ -203,9 +278,7 @@ class AdvancedTypesOutputSerializationConfig(BaseConfig):
         PydanticPandasDataFrame: lambda v: v.to_dict(),
         np.ndarray: lambda v: v.tolist(),
         datetime.datetime: lambda v: v.isoformat(),
-        UUID: lambda v: str(  # pylint: disable=unnecessary-lambda
-            v
-        ),  # alternatively: v.hex
+        UUID: lambda v: str(v),  # alternatively: v.hex
         Figure: lambda v: json.loads(
             json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)
         ),
@@ -214,13 +287,13 @@ class AdvancedTypesOutputSerializationConfig(BaseConfig):
 
 class NamedDataTypedValue(TypedDict):
     name: str
-    type: DataType
+    type: DataType  # noqa: A003
     value: Any
 
 
 def parse_via_pydantic(
-    entries: List[NamedDataTypedValue],
-    type_map: Optional[Dict[DataType, Type]] = None,
+    entries: list[NamedDataTypedValue],
+    type_map: dict[DataType, type] | None = None,
 ) -> BaseModel:
     """Parse data dynamically into a pydantic object
 
@@ -230,7 +303,7 @@ def parse_via_pydantic(
 
     May raise the typical exceptions of pydantic parsing.
     """
-    type_dict: Dict[str, Tuple[Type, "ellipsis"]] = {
+    type_dict: dict[str, tuple[type, "ellipsis"]] = {  # noqa: F821
         entry["name"]: (
             type_map[entry["type"]]
             if type_map is not None
@@ -245,7 +318,7 @@ def parse_via_pydantic(
     return DynamicModel(**{entry["name"]: entry["value"] for entry in entries})  # type: ignore
 
 
-def parse_dynamically_from_datatypes(entries: List[NamedDataTypedValue]) -> BaseModel:
+def parse_dynamically_from_datatypes(entries: list[NamedDataTypedValue]) -> BaseModel:
     return parse_via_pydantic(entries, type_map=data_type_map)
 
 

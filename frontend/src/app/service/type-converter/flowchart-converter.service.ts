@@ -3,42 +3,53 @@ import {
   FlowchartComponent,
   FlowchartComponentIO,
   FlowchartComponentLink,
-  FlowchartConfiguration,
-  IOType
+  FlowchartConfiguration
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
-import { AbstractBaseItem } from 'src/app/model/base-item';
-import { Point } from 'src/app/model/point';
-import { WorkflowBaseItem } from 'src/app/model/workflow-base-item';
+import { Connector } from 'src/app/model/connector';
+import { Position } from 'src/app/model/position';
 import { v4 as UUID } from 'uuid';
-import { IOItem } from '../../model/io-item';
+import {
+  Transformation,
+  WorkflowTransformation
+} from '../../model/transformation';
+import { Operator } from 'src/app/model/operator';
+import { Constant } from 'src/app/model/constant';
+import { VertexIds } from 'src/app/components/workflow-editor/workflow-editor.component';
+import { Utils } from 'src/app/utils/utils';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FlowchartConverterService {
+  // TODO rename to convertTransformationToFlowchartForPreview?
   /**
-   * converts the given base item to a flowchart configuration
-   * @param abstractBaseItem given base item
+   * converts the given transformation to a flowchart configuration
+   * @param transformation given transformation
    */
   public convertComponentToFlowchart(
-    abstractBaseItem: AbstractBaseItem
+    transformation: Transformation
   ): FlowchartConfiguration {
-    const cleanedComponent = { ...abstractBaseItem };
-    cleanedComponent.outputs = cleanedComponent.outputs.filter(
-      io => !io.constant
-    );
-    cleanedComponent.inputs = cleanedComponent.inputs.filter(
-      io => !io.constant
-    );
-    const operator = this.convertBaseItemToFlowchartOperator(
-      cleanedComponent,
+    const operator = {
+      ...transformation,
+      transformation_id: transformation.id,
+      inputs: transformation.io_interface.inputs.map(input => ({
+        ...input,
+        position: null
+      })),
+      outputs: transformation.io_interface.outputs.map(output => ({
+        ...output,
+        position: null
+      }))
+    };
+    const flowchartOperator = this.convertOperatorToFlowchartOperator(
+      operator,
       0,
       0
     );
     return {
       id: '',
-      components: [operator],
+      components: [flowchartOperator],
       io: [],
       links: []
     };
@@ -49,24 +60,21 @@ export class FlowchartConverterService {
    * @param workflow given workflow
    */
   public convertWorkflowToFlowchart(
-    workflow: WorkflowBaseItem
+    workflow: WorkflowTransformation
   ): FlowchartConfiguration {
     // don't show workflow io without a name
-    const workflowClean = { ...workflow };
-    workflowClean.inputs = workflowClean.inputs.filter(
-      io =>
-        io.constant === true ||
-        (io.name !== '' && io.name !== null && io.name !== undefined)
+    const workflowClean = Utils.deepCopy(workflow);
+    workflowClean.content.inputs = workflowClean.content.inputs.filter(
+      io => io.name !== '' && io.name !== null && io.name !== undefined
     );
-    workflowClean.outputs = workflowClean.outputs.filter(
+    workflowClean.content.outputs = workflowClean.content.outputs.filter(
       io => io.name !== '' && io.name !== null && io.name !== undefined
     );
 
     const flowchart = {
       id: workflow.id,
-      components: this.convertWorkflowOperatorsToFlowchartComponents(
-        workflowClean
-      ),
+      components:
+        this.convertWorkflowOperatorsToFlowchartComponents(workflowClean),
       io: this.convertWorkflowIOToFlowchartIO(workflowClean),
       links: this.convertWorkflowLinksToFlowchartLinks(workflowClean)
     } as FlowchartConfiguration;
@@ -77,43 +85,48 @@ export class FlowchartConverterService {
   }
 
   private convertWorkflowConstants(
-    workflow: WorkflowBaseItem,
+    workflow: WorkflowTransformation,
     flowchart: FlowchartConfiguration
   ): void {
-    const convertIoItem = (io: IOItem, isInput: boolean) => {
-      if (io.constant === undefined || io.constant === false) {
+    const convertConstant = (constant: Constant, isInput: boolean) => {
+      if (constant === undefined) {
         return;
       }
-      if (io.operator === undefined || io.connector === undefined) {
+      if (
+        constant.operator_id === undefined ||
+        constant.connector_id === undefined
+      ) {
         return;
       }
       const component = flowchart.components.find(
-        flowchartComponent => flowchartComponent.uuid === io.operator
+        flowchartComponent => flowchartComponent.uuid === constant.operator_id
       );
       if (component === undefined) {
         return;
       }
       const connector = (isInput ? component.inputs : component.outputs).find(
-        input => input.uuid === `${io.operator}_${io.connector}`
+        input =>
+          input.uuid === `${constant.operator_id}_${constant.connector_id}`
       );
       if (connector === undefined) {
         return;
       }
       connector.constant = true;
-      connector.value = io.constantValue.value;
+      connector.value = constant.value;
 
+      // TODO: Maybe links to constants can be removed from the API completely, since they are deleted here anyway, HDOS-487.
       flowchart.links = flowchart.links.filter(
         link =>
           (isInput ? link.to : link.from) !==
-          `link-${io.operator}_${io.connector}`
+          `link-${constant.operator_id}_${constant.connector_id}`
       );
     };
 
-    for (const input of workflow.inputs) {
-      convertIoItem(input, true);
+    for (const constant of workflow.content.constants) {
+      convertConstant(constant, true);
     }
-    for (const output of workflow.outputs) {
-      convertIoItem(output, false);
+    for (const constant of workflow.content.constants) {
+      convertConstant(constant, false);
     }
   }
 
@@ -122,16 +135,16 @@ export class FlowchartConverterService {
    * @param workflow given workflow
    */
   private convertWorkflowOperatorsToFlowchartComponents(
-    workflow: WorkflowBaseItem
+    workflow: WorkflowTransformation
   ): FlowchartComponent[] {
     const components: Array<FlowchartComponent> = [];
 
-    for (const operator of workflow.operators) {
+    for (const operator of workflow.content.operators) {
       components.push(
-        this.convertBaseItemToFlowchartOperator(
+        this.convertOperatorToFlowchartOperator(
           operator,
-          operator.posX,
-          operator.posY
+          operator.position.x,
+          operator.position.y
         )
       );
     }
@@ -145,39 +158,31 @@ export class FlowchartConverterService {
    * @param workflow given workflow
    */
   private convertWorkflowIOToFlowchartIO(
-    workflow: WorkflowBaseItem
+    workflow: WorkflowTransformation
   ): FlowchartComponentIO[] {
     // IO is reversed for a workflow, e.g. an output of a workflow takes a value in and transfers it to the world outside the workflow!
     const workflowIO: Array<FlowchartComponentIO> = [];
-    for (const io of workflow.inputs) {
-      // we skip constants as they are handled later on
-      if (io.constant !== undefined && io.constant === true) {
-        continue;
-      }
+    for (const io of workflow.content.inputs) {
       workflowIO.push({
         uuid: `${workflow.id}_${io.id}`,
-        data_type: io.type as IOType,
+        data_type: io.data_type,
         name: io.name === undefined ? '' : io.name,
         input: false,
-        pos_x: io.posX,
-        pos_y: io.posY,
+        pos_x: io.position.x,
+        pos_y: io.position.y,
         constant: false,
         value: ''
       });
     }
 
-    for (const io of workflow.outputs) {
-      // we skip constants as they are handled later on
-      if (io.constant !== undefined && io.constant === true) {
-        continue;
-      }
+    for (const io of workflow.content.outputs) {
       workflowIO.push({
         uuid: `${workflow.id}_${io.id}`,
-        data_type: io.type as IOType,
+        data_type: io.data_type,
         name: io.name === undefined ? '' : io.name,
         input: true,
-        pos_x: io.posX,
-        pos_y: io.posY,
+        pos_x: io.position.x,
+        pos_y: io.position.y,
         constant: false,
         value: ''
       });
@@ -191,16 +196,27 @@ export class FlowchartConverterService {
    * @param workflow given workflow
    */
   private convertWorkflowLinksToFlowchartLinks(
-    workflow: WorkflowBaseItem
+    workflow: WorkflowTransformation
   ): FlowchartComponentLink[] {
     const links: Array<FlowchartComponentLink> = [];
-    for (const link of workflow.links) {
-      const linkPath = link.path.map(point => [point.posX, point.posY]);
-      const linkIds = link.path.map(point => point.id);
+
+    for (const link of workflow.content.links) {
+      const linkPath = link.path.map(position => [position.x, position.y]);
+      const linkIds = link.path.map(() => UUID().toString());
+
+      /**
+       * Links which lead to an input / output of the workflow itself do not have a start / end operator id
+       * (since the operator is not part of the workflow content but it is the workflow itself).
+       * The flowchart however needs an operator id for every link,
+       * that is why we use the id of the workflow.
+       */
+      const linkStartOperator = link.start.operator ?? workflow.id;
+      const linkEndOperator = link.end.operator ?? workflow.id;
+
       links.push({
         uuid: link.id,
-        from: `link-${link.fromOperator}_${link.fromConnector}`,
-        to: `link-${link.toOperator}_${link.toConnector}`,
+        from: `link-${linkStartOperator}_${link.start.connector.id}`,
+        to: `link-${linkEndOperator}_${link.end.connector.id}`,
         path: linkPath.length === 0 ? null : linkPath,
         path_ids: linkIds.length === 0 ? null : linkIds
       });
@@ -209,10 +225,10 @@ export class FlowchartConverterService {
   }
 
   /**
-   * converts the svg path data and the id's of the points to a Point array
+   * converts the svg path data and the id's of the position to a position array
    * @param link svg link element
    */
-  public convertLinkPathToPoints(link: Element): Point[] {
+  public convertLinkPathToPositions(link: Element): Position[] {
     const linkPath = link.getAttribute('d');
     const linkIds = link.getAttribute('custom-path');
     if (linkPath === null || linkIds === null) {
@@ -226,18 +242,15 @@ export class FlowchartConverterService {
         .split(' ')
         .map(str => Number(str))
     );
+
     const newIds = linkIds
       .split(',')
       .map(id => (id === 'x' ? UUID().toString() : id));
     link.setAttribute('custom-path', newIds.join(','));
-    return coordinates.map(
-      (coords, index) =>
-        ({
-          posX: coords[0],
-          posY: coords[1],
-          id: newIds[index]
-        } as Point)
-    );
+    return coordinates.map(coords => ({
+      x: coords[0],
+      y: coords[1]
+    }));
   }
 
   /**
@@ -245,7 +258,7 @@ export class FlowchartConverterService {
    * @param link given link element
    * @param from if the start (true) or the end (false) operator and connectors should be extracted
    */
-  public getLinkOperatorAndConnector(
+  public getLinkOperatorAndConnectorId(
     link: Element,
     from: boolean
   ): { operatorId: string; connectorId: string } {
@@ -262,15 +275,55 @@ export class FlowchartConverterService {
     };
   }
 
+  /**
+   * Extract the connector from the operator or workflow given the vertex ids.
+   * @param vertexIds given linkSourceIds or linkTargetIds
+   * @param workflowTransformation current workflow
+   * @param searchInWorkflowIoInterface if true, search for the connector in the workflow io interface
+   * instead of the workflow content operators
+   */
+  public getConnectorFromOperatorById(
+    vertexIds: VertexIds,
+    workflowTransformation: WorkflowTransformation,
+    searchInWorkflowIoInterface: boolean
+  ): Connector {
+    let foundConnector: Connector;
+
+    if (searchInWorkflowIoInterface) {
+      const ios = [
+        ...workflowTransformation.io_interface.inputs,
+        ...workflowTransformation.io_interface.outputs
+      ];
+
+      const foundIo = ios.find(io => io.id === vertexIds.connectorId);
+
+      foundConnector = {
+        ...foundIo,
+        position: { x: 0, y: 0 }
+      };
+    } else {
+      const foundOperator = workflowTransformation.content.operators.find(
+        operator => operator.id === vertexIds.operatorId
+      );
+      const connectors = [...foundOperator.inputs, ...foundOperator.outputs];
+
+      foundConnector = connectors.find(
+        connector => connector.id === vertexIds.connectorId
+      );
+    }
+
+    return foundConnector;
+  }
+
   // noinspection JSMethodCanBeStatic
   /**
-   * converts a BaseItem to a flowchart operator, if no position is given, it will create a new operator
-   * @param baseItem BaseItem describing the Operator
+   * converts a operator to a flowchart operator, if no position is given, it will create a new operator
+   * @param operator given operator
    * @param posX x coordinate of the operator
    * @param posY y coordinate of the operator
    */
-  private convertBaseItemToFlowchartOperator(
-    baseItem: AbstractBaseItem,
+  private convertOperatorToFlowchartOperator(
+    operator: Omit<Operator, 'position'>,
     posX: number,
     posY: number
   ): FlowchartComponent {
@@ -278,23 +331,24 @@ export class FlowchartConverterService {
     if (posX === null && posY === null) {
       uuid = UUID().toString();
     } else {
-      uuid = baseItem.id;
+      uuid = operator.id;
     }
     const component: FlowchartComponent = {
       uuid,
-      name: baseItem.name,
-      revision: baseItem.tag,
+      name: operator.name,
+      revision: operator.version_tag,
       inputs: [],
       outputs: [],
       pos_x: posX,
       pos_y: posY,
-      type: baseItem.type,
-      disabled: baseItem.state === RevisionState.DISABLED
+      type: operator.type,
+      disabled: operator.state === RevisionState.DISABLED
     };
-    for (const io of baseItem.inputs) {
+
+    for (const io of operator.inputs) {
       component.inputs.push({
         uuid: `${uuid}_${io.id}`,
-        data_type: io.type as IOType,
+        data_type: io.data_type,
         name: io.name === undefined ? '' : io.name,
         input: true,
         pos_x: null,
@@ -303,10 +357,10 @@ export class FlowchartConverterService {
         value: ''
       });
     }
-    for (const io of baseItem.outputs) {
+    for (const io of operator.outputs) {
       component.outputs.push({
         uuid: `${uuid}_${io.id}`,
-        data_type: io.type as IOType,
+        data_type: io.data_type,
         name: io.name === undefined ? '' : io.name,
         input: false,
         pos_x: null,
@@ -315,7 +369,6 @@ export class FlowchartConverterService {
         value: ''
       });
     }
-
     return component;
   }
 }

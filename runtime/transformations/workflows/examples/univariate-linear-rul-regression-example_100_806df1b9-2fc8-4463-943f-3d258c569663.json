@@ -788,7 +788,7 @@
     "outputs": [
       {
         "connector_id": "71ddbbe3-1f57-1e37-5381-7af6af871e49",
-        "connector_name": "connector_name",
+        "connector_name": "output",
         "data_type": "STRING",
         "id": "aa7edab2-3da0-48b9-bbd0-ed6f3136f8ed",
         "name": "limit_violation_timestamp",
@@ -801,7 +801,7 @@
       },
       {
         "connector_id": "cf404526-75de-f1ff-f961-200e99dde8d6",
-        "connector_name": "connector_name",
+        "connector_name": "intercept",
         "data_type": "FLOAT",
         "id": "93cf92d4-4082-464e-bc21-724513e59d41",
         "name": "intercept",
@@ -814,7 +814,7 @@
       },
       {
         "connector_id": "1828c68d-c5c9-f31a-f2e9-3493409f53ed",
-        "connector_name": "connector_name",
+        "connector_name": "slope",
         "data_type": "FLOAT",
         "id": "02699d2d-865e-493a-bae2-7e79577d549c",
         "name": "slope",
@@ -827,7 +827,7 @@
       },
       {
         "connector_id": "aebbc55f-1e4a-c035-bbd0-2475307536c9",
-        "connector_name": "connector_name",
+        "connector_name": "rul_regression_result_plot",
         "data_type": "PLOTLYJSON",
         "id": "8a4a9698-5d7f-401a-b6f6-bc2f549d9395",
         "name": "rul_regression_result_plot",

@@ -13,7 +13,7 @@ import { HomeComponent } from './components/home/home.component';
 import { NavigationCategoryComponent } from './components/navigation/navigation-category/navigation-category.component';
 import { NavigationContainerComponent } from './components/navigation/navigation-container/navigation-container.component';
 import { NavigationItemComponent } from './components/navigation/navigation-item/navigation-item.component';
-import { PopoverBaseItemComponent } from './components/popover-base-item/popover-base-item.component';
+import { PopoverTransformationComponent } from './components/popover-transformation/popover-transformation.component';
 import { ProtocolViewerComponent } from './components/protocol-viewer/protocol-viewer.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
 import { WorkflowEditorComponent } from './components/workflow-editor/workflow-editor.component';
@@ -26,40 +26,38 @@ describe('AppComponent', () => {
     'logout'
   ]);
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          BasicTestModule,
-          FormsModule,
-          ReactiveFormsModule,
-          NgHetidaFlowchartModule,
-          MonacoEditorModule,
-          StoreModule.forRoot(appReducers),
-          HttpClientModule
-        ],
-        providers: [
-          {
-            provide: AuthService,
-            useValue: mockAuthService
-          }
-        ],
-        declarations: [
-          AppComponent,
-          HomeComponent,
-          ToolbarComponent,
-          NavigationContainerComponent,
-          NavigationCategoryComponent,
-          NavigationItemComponent,
-          ContentViewComponent,
-          ProtocolViewerComponent,
-          PopoverBaseItemComponent,
-          ComponentEditorComponent,
-          WorkflowEditorComponent
-        ]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        BasicTestModule,
+        FormsModule,
+        ReactiveFormsModule,
+        NgHetidaFlowchartModule,
+        MonacoEditorModule,
+        StoreModule.forRoot(appReducers),
+        HttpClientModule
+      ],
+      providers: [
+        {
+          provide: AuthService,
+          useValue: mockAuthService
+        }
+      ],
+      declarations: [
+        AppComponent,
+        HomeComponent,
+        ToolbarComponent,
+        NavigationContainerComponent,
+        NavigationCategoryComponent,
+        NavigationItemComponent,
+        ContentViewComponent,
+        ProtocolViewerComponent,
+        PopoverTransformationComponent,
+        ComponentEditorComponent,
+        WorkflowEditorComponent
+      ]
+    }).compileComponents();
+  }));
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);

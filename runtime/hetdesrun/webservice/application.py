@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 import json
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exception_handlers import request_validation_exception_handler
@@ -13,11 +12,13 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from hetdesrun import VERSION
+from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
 from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
 from hetdesrun.backend.service.documentation_router import documentation_router
 from hetdesrun.backend.service.info_router import info_router
+from hetdesrun.backend.service.maintenance_router import maintenance_router
 from hetdesrun.backend.service.transformation_router import transformation_router
 from hetdesrun.backend.service.wiring_router import wiring_router
 from hetdesrun.backend.service.workflow_router import workflow_router
@@ -59,9 +60,7 @@ class AdditionalLoggingRoute(APIRoute):
                 body = await request.body()
                 detail = {"errors": exc.errors(), "body": body.decode()}
                 logger.info("Request Validation Error: %s", str(exc))
-                raise HTTPException(  # pylint: disable=raise-missing-from
-                    status_code=422, detail=detail
-                )
+                raise HTTPException(status_code=422, detail=detail) from exc
 
         return custom_route_handler
 
@@ -85,29 +84,42 @@ def app_desc_part() -> str:
     return "Runtime"
 
 
-def init_app() -> FastAPI:
-    import sys  # pylint: disable=import-outside-toplevel
+def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
+    import sys
 
     # reimporting runtime_router and local_file router since they have
     # endpoint-individual auth settings and therefore load config during
     # module import. This enables (unit) testing with different configurations.
-    try:
+    try:  # noqa: SIM105
         del sys.modules["hetdesrun.service.runtime_router"]
     except KeyError:
         pass
 
-    from hetdesrun.service.runtime_router import (  # pylint: disable=import-outside-toplevel
-        runtime_router,
-    )
+    from hetdesrun.service.runtime_router import runtime_router
 
-    try:
+    try:  # noqa: SIM105
         del sys.modules["hetdesrun.adapters.local_file.webservice"]
     except KeyError:
         pass
 
-    from hetdesrun.adapters.local_file.webservice import (  # pylint: disable=import-outside-toplevel
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.blob_storage.webservice"]
+    except KeyError:
+        pass
+
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.sql_adapter.webservice"]
+    except KeyError:
+        pass
+
+    from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
+    from hetdesrun.adapters.blob_storage.webservice import (
+        blob_storage_adapter_router,
+    )
+    from hetdesrun.adapters.local_file.webservice import (
         local_file_adapter_router,
     )
+    from hetdesrun.adapters.sql_adapter.webservice import sql_adapter_router
 
     app = FastAPI(
         title="Hetida Designer " + app_desc_part() + " API",
@@ -130,11 +142,30 @@ def init_app() -> FastAPI:
         app.include_router(
             local_file_adapter_router
         )  # auth dependency set individually per endpoint
+
+        if (
+            get_sql_adapter_config().active
+            and get_sql_adapter_config().service_in_runtime
+        ):
+            app.include_router(
+                sql_adapter_router
+            )  # auth dependency set individually per endpoint
+        if get_blob_adapter_config().adapter_hierarchy_location != "":
+            app.include_router(
+                blob_storage_adapter_router
+            )  # auth dependency set individually per endpoint
         app.include_router(
             runtime_router, prefix="/engine"
         )  # auth dependency set individually per endpoint
 
     if get_config().is_backend_service:
+        if (
+            get_sql_adapter_config().active
+            and not get_sql_adapter_config().service_in_runtime
+        ):
+            app.include_router(
+                sql_adapter_router
+            )  # auth dependency set individually per endpoint
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(
             base_item_router, prefix="/api", dependencies=get_auth_deps()
@@ -153,6 +184,14 @@ def init_app() -> FastAPI:
         app.include_router(
             transformation_router, prefix="/api", dependencies=get_auth_deps()
         )
+        possible_maintenance_secret = get_config().maintenance_secret
+        if (
+            possible_maintenance_secret is not None
+            and len(possible_maintenance_secret.get_secret_value()) > 0
+        ):
+            app.include_router(
+                maintenance_router, prefix="/api", dependencies=get_auth_deps()
+            )
 
     @app.on_event("startup")
     async def startup_event() -> None:

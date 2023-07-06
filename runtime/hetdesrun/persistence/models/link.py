@@ -1,7 +1,5 @@
-from typing import List, Optional
 from uuid import UUID, uuid4
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseModel, Field, root_validator
 
 from hetdesrun.datatypes import DataType
@@ -12,7 +10,7 @@ from hetdesrun.persistence.models.io import Connector, Position
 class Vertex(BaseModel):
     """Represents start or end point of a link."""
 
-    operator: Optional[UUID]
+    operator: UUID | None
     connector: Connector = Field(
         ...,
         description=(
@@ -30,25 +28,20 @@ class Link(BaseModel):
     A link cannot start and end at the same connector.
     """
 
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID = Field(default_factory=uuid4)  # noqa: A003
     start: Vertex
     end: Vertex
-    path: List[Position] = []
+    path: list[Position] = []
 
-    # pylint: disable=no-self-argument
     @root_validator()
     def types_match(cls, values: dict) -> dict:
         try:
             start = values["start"]
-        except KeyError as e:
-            raise ValueError(
-                "Cannot validate that types of link ends match if attribute 'start' is missing"
-            ) from e
-        try:
             end = values["end"]
         except KeyError as e:
             raise ValueError(
-                "Cannot validate that data types of link ends match if attribute 'end' is missing"
+                "Cannot validate that types of link ends match if any of the attributes "
+                "'start', 'end' is missing!"
             ) from e
         if not (
             start.connector.data_type == end.connector.data_type
@@ -58,10 +51,17 @@ class Link(BaseModel):
             raise ValueError("data types of both link ends must be the same!")
         return values
 
-    # pylint: disable=no-self-argument
     @root_validator()
     def no_self_reference(cls, values: dict) -> dict:
-        if values["start"].operator == values["end"].operator:
+        try:
+            start = values["start"]
+            end = values["end"]
+        except KeyError as e:
+            raise ValueError(
+                "Cannot validate that link is no self reference if any of the attributes "
+                "'start', 'end' is missing!"
+            ) from e
+        if start.operator == end.operator:
             raise ValueError(
                 "Start and end of a connection must differ from each other."
             )

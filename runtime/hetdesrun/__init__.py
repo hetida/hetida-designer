@@ -1,6 +1,6 @@
 import logging
 
-import hetdesrun_config
+import hetdesrun_config  # noqa: F401
 from hetdesrun.runtime import runtime_execution_logger as logger
 from hetdesrun.runtime import runtime_logger as job_logger
 from hetdesrun.runtime.logging import execution_context_filter, job_id_context_filter
@@ -9,7 +9,7 @@ from hetdesrun.webservice.config import get_config
 migrations_invoked_from_py = False
 
 try:
-    with open("VERSION", "r", encoding="utf8") as version_file:
+    with open("VERSION", encoding="utf8") as version_file:
         VERSION = version_file.read().strip()
 except FileNotFoundError:
     VERSION = "dev snapshot"

@@ -1,6 +1,7 @@
-from typing import Any, Dict
+from typing import Any
 from unittest import mock
 
+import httpx
 import pytest
 
 from hetdesrun.adapters.exceptions import (
@@ -10,6 +11,7 @@ from hetdesrun.adapters.exceptions import (
 from hetdesrun.adapters.generic_rest import load_data
 from hetdesrun.adapters.generic_rest.load_metadata import load_multiple_metadata
 from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 
 
 async def detailed_mocked_async_client_get(self, url, *args, **kwargs):
@@ -43,6 +45,8 @@ async def detailed_mocked_async_client_get(self, url, *args, **kwargs):
         )
         return response_mock
 
+    raise ValueError("Could not produce mock")
+
 
 @pytest.mark.asyncio
 async def test_load_metadata_request():
@@ -62,7 +66,7 @@ async def test_load_metadata_request():
                 ref_id_type="SOURCE",
                 ref_key="serial",
                 type="metadata(int)",
-                filters={},
+                filters={"filter_key": "filter_value"},
             ),
         }
         with mock.patch(
@@ -75,12 +79,14 @@ async def test_load_metadata_request():
             )
 
             assert loaded_metadata["wf_input_1"] == 24567
-            func_name, args, kwargs = mocked_async_client_get.mock_calls[0]
+            _, args, kwargs = mocked_async_client_get.mock_calls[0]
 
             assert args[0] == "https://hetida.de/sources/id_1/metadata/serial"
+            assert kwargs["params"] == {"filter_key": "filter_value"}
 
             resp_mock.status_code = 400
-            with pytest.raises(AdapterConnectionError):
+            resp_mock.text = "my adapter error"
+            with pytest.raises(AdapterConnectionError, match="my adapter error"):
                 loaded_metadata = await load_multiple_metadata(
                     data_to_load,
                     adapter_key="test_load_metadata_adapter_key",
@@ -96,10 +102,27 @@ async def test_load_metadata_request():
                     adapter_key="test_load_metadata_adapter_key",
                 )
             resp_mock.json = mock.Mock(
-                return_value=[
-                    {"key": "serial", "value": 24567, "dataType": "int"},
-                    {"key": "desc", "value": "some description", "dataType": "string"},
-                ]
+                return_value={"key": "desc", "value": 24567, "dataType": "int"},
+            )
+            with pytest.raises(AdapterHandlingException):
+                loaded_metadata = await load_multiple_metadata(
+                    data_to_load,
+                    adapter_key="test_load_metadata_adapter_key",
+                )
+            resp_mock.json = mock.Mock(
+                return_value={"key": "serial", "value": 24567, "dataType": "string"}
+            )
+            with pytest.raises(AdapterHandlingException):
+                loaded_metadata = await load_multiple_metadata(
+                    data_to_load,
+                    adapter_key="test_load_metadata_adapter_key",
+                )
+            resp_mock.json = mock.Mock(
+                return_value={
+                    "key": "serial",
+                    "value": "some string",
+                    "dataType": "int",
+                }
             )
             with pytest.raises(AdapterHandlingException):
                 loaded_metadata = await load_multiple_metadata(
@@ -119,7 +142,6 @@ async def test_load_metadata_request():
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             new=detailed_mocked_async_client_get,
         ):
-
             loaded_metadata = await load_multiple_metadata(
                 {
                     "wf_input_1": FilteredSource(
@@ -169,7 +191,7 @@ async def test_load_metadata_any_from_string_response():
         with mock.patch(
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             return_value=resp_mock,
-        ) as mocked_async_client_get:
+        ) as _mocked_async_client_get:
             loaded_metadata = await load_multiple_metadata(
                 data_to_load,
                 adapter_key="test_load_metadata_adapter_key",
@@ -184,7 +206,7 @@ async def test_load_metadata_any_from_string_response():
         with mock.patch(
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             return_value=resp_mock,
-        ) as mocked_async_client_get:
+        ) as _mocked_async_client_get:
             loaded_metadata = await load_multiple_metadata(
                 data_to_load,
                 adapter_key="test_load_metadata_adapter_key",
@@ -199,7 +221,7 @@ async def test_load_metadata_any_from_string_response():
         with mock.patch(
             "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
             return_value=resp_mock,
-        ) as mocked_async_client_get:
+        ) as _mocked_async_client_get:
             loaded_metadata = await load_multiple_metadata(
                 data_to_load,
                 adapter_key="test_load_metadata_adapter_key",
@@ -209,8 +231,8 @@ async def test_load_metadata_any_from_string_response():
 
 
 async def mock_load_multiple_metadata(
-    data_to_load: Dict[str, FilteredSource], adapter_key: str
-) -> Dict[str, Any]:
+    data_to_load: dict[str, FilteredSource], adapter_key: str
+) -> dict[str, Any]:
     return {"wf_inp_1": 42, "wf_inp_2": "some description"}
 
 
@@ -240,3 +262,43 @@ async def test_end_to_end_load_only_metadata():
 
         assert loaded_data["wf_inp_1"] == 42
         assert loaded_data["wf_inp_2"] == "some description"
+
+
+@pytest.mark.asyncio
+async def test_end_to_end_load_metadata_with_exception():
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_auth_headers",
+        side_effect=ServiceAuthenticationError("my service error"),
+    ), pytest.raises(AdapterHandlingException, match="my service error"):
+        await load_data(
+            {
+                "wf_inp_1": FilteredSource(
+                    ref_id="id_1",
+                    ref_id_type="SOURCE",
+                    type="metadata(int)",
+                    ref_key="number",
+                ),
+            },
+            adapter_key="end_to_end_only_dataframe_data",
+        )
+
+    with mock.patch(
+        "hetdesrun.adapters.generic_rest.load_metadata.get_generic_rest_adapter_base_url",
+        return_value="https://hetida.de",
+    ), mock.patch(
+        "hetdesrun.adapters.generic_rest.load_metadata.httpx.AsyncClient.get",
+        side_effect=httpx.HTTPError("my http error"),
+    ), pytest.raises(
+        AdapterConnectionError, match="my http error"
+    ):
+        await load_data(
+            {
+                "wf_inp_1": FilteredSource(
+                    ref_id="id_1",
+                    ref_id_type="SOURCE",
+                    type="metadata(int)",
+                    ref_key="number",
+                ),
+            },
+            adapter_key="end_to_end_only_dataframe_data",
+        )

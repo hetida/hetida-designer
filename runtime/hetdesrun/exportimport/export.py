@@ -1,11 +1,6 @@
-import json
 import logging
-import os
-import re
-import unicodedata
-from pathlib import Path
 from posixpath import join as posix_urljoin
-from typing import Any, List, Optional, Union
+from typing import Any
 from uuid import UUID
 
 import requests
@@ -13,9 +8,11 @@ from pydantic import ValidationError
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-from hetdesrun.exportimport.utils import FilterParams, get_transformation_revisions
+from hetdesrun.exportimport.utils import get_transformation_revisions
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.filter.params import FilterParams
+from hetdesrun.trafoutils.io.save import save_transformation_into_directory
 from hetdesrun.utils import State, Type, get_backend_basic_auth
 from hetdesrun.webservice.auth_dependency import sync_wrapped_get_auth_headers
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
@@ -24,64 +21,11 @@ from hetdesrun.webservice.config import get_config
 logger = logging.getLogger(__name__)
 
 
-def slugify(value: str, allow_unicode: bool = False) -> str:
-    """Sanitize string to make it usable as a file name
-
-    Taken from https://github.com/django/django/blob/master/django/utils/text.py
-    Convert to ASCII if 'allow_unicode' is False. Convert spaces or repeated
-    dashes to single dashes. Remove characters that aren't alphanumerics,
-    underscores, or hyphens. Convert to lowercase. Also strip leading and
-    trailing whitespace, dashes, and underscores.
-    """
-    value = str(value)
-    if allow_unicode:
-        value = unicodedata.normalize("NFKC", value)
-    else:
-        value = (
-            unicodedata.normalize("NFKD", value)
-            .encode("ascii", "ignore")
-            .decode("ascii")
-        )
-    value = re.sub(r"[^\w\s-]", "", value.lower())
-    return re.sub(r"[-\s]+", "-", value).strip("-_")
-
-
-##Base function to save transformation
-def save_transformation(tr: TransformationRevision, download_path: str) -> None:
-    # Create directory on local system
-    cat_dir = os.path.join(download_path, tr.type.lower() + "s", slugify(tr.category))
-    Path(cat_dir).mkdir(parents=True, exist_ok=True)
-    path = os.path.join(
-        cat_dir,
-        slugify(tr.name)
-        + "_"
-        + slugify(tr.version_tag)
-        + "_"
-        + str(tr.id).lower()
-        + ".json",
-    )
-
-    # Save the transformation revision
-    with open(path, "w", encoding="utf8") as f:
-        try:
-            json.dump(
-                json.loads(tr.json(exclude_none=True)), f, indent=2, sort_keys=True
-            )
-            logger.info("exported %s '%s' to %s", tr.type, tr.name, path)
-        except KeyError:
-            logger.error(
-                "Could not safe the %s with id %s on the local system.",
-                tr.type,
-                str(tr.id),
-            )
-
-
-##Base function to get transformation via REST API from DB (old endpoints)
-# pylint: disable=redefined-builtin
 def get_transformation_from_java_backend(
-    id: UUID, type: Type
+    id: UUID, type: Type  # noqa: A002
 ) -> TransformationRevision:
-    """
+    """Get transformation via REST API from old backend (old endpoints)
+
     Loads a single transformation revision together with its documentation based on its id
     """
     try:
@@ -103,9 +47,7 @@ def get_transformation_from_java_backend(
     response = requests.get(
         url,
         verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()  # type: ignore
-        if get_config().hd_backend_use_basic_auth
-        else None,
+        auth=get_backend_basic_auth(),  # type: ignore
         headers=headers,
         timeout=get_config().external_request_timeout,
     )
@@ -131,9 +73,7 @@ def get_transformation_from_java_backend(
     doc_response = requests.get(
         posix_urljoin(get_config().hd_backend_api_url, "documentations", str(id)),
         verify=get_config().hd_backend_verify_certs,
-        auth=get_backend_basic_auth()  # type: ignore
-        if get_config().hd_backend_use_basic_auth
-        else None,
+        auth=get_backend_basic_auth(),  # type: ignore
         headers=headers,
         timeout=get_config().external_request_timeout,
     )
@@ -154,7 +94,7 @@ def get_transformation_from_java_backend(
 
     doc_text = doc_response.json().get("document", "")
 
-    frontend_dto: Union[ComponentRevisionFrontendDto, WorkflowRevisionFrontendDto]
+    frontend_dto: ComponentRevisionFrontendDto | WorkflowRevisionFrontendDto
 
     # Generate transformation revision
     if type == Type.COMPONENT:
@@ -174,16 +114,14 @@ def get_transformation_from_java_backend(
 
 
 def selection_list_empty_or_contains_value(
-    selection_list: Optional[List[Any]], actual_value: Any
+    selection_list: list[Any] | None, actual_value: Any
 ) -> bool:
     if selection_list is None:
         return True
     return actual_value in selection_list
 
 
-def criterion_unset_or_matches_value(
-    criterion: Optional[Any], actual_value: Any
-) -> bool:
+def criterion_unset_or_matches_value(criterion: Any | None, actual_value: Any) -> bool:
     if criterion is None:
         return True
     return bool(actual_value == criterion)
@@ -191,15 +129,12 @@ def criterion_unset_or_matches_value(
 
 def passes_all_filters(
     trafo_json: Any,
-    type: Optional[Type] = None,
-    categories: Optional[List[ValidStr]] = None,
-    ids: Optional[List[Union[UUID, str]]] = None,
-    names: Optional[List[NonEmptyValidStr]] = None,
+    type: Type | None = None,   # noqa: A002
+    categories: list[ValidStr] | None = None,
+    ids: list[UUID | str] | None = None,
+    names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
 ) -> bool:
-    if ids is not None:
-        ids = [UUID(id) for id in ids if isinstance(id, str)]
-
     filter_type = criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
     filter_ids = selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
     filter_names = selection_list_empty_or_contains_value(names, trafo_json["name"])
@@ -208,7 +143,7 @@ def passes_all_filters(
     )
     filter_state = include_deprecated or trafo_json["state"] != State.DISABLED
 
-    filter = (
+    combined_filter = (
         filter_type
         and filter_ids
         and filter_names
@@ -216,19 +151,26 @@ def passes_all_filters(
         and filter_state
     )
 
-    return filter
+    return combined_filter
+
+
+def convert_id_type_to_uuid(
+    ids: list[UUID | str] | None,
+) -> list[UUID | str] | None:
+    if ids is None:
+        return None
+    return [UUID(id_) for id_ in ids if isinstance(id_, str)]
 
 
 ##Export transformations based on type, id, name and category if provided
-# pylint: disable=redefined-builtin
 def export_transformations(
     download_path: str,
-    type: Optional[Type] = None,
-    state: Optional[State] = None,
-    categories: Optional[List[ValidStr]] = None,
-    categories_with_prefix: Optional[ValidStr] = None,
-    ids: Optional[List[Union[UUID, str]]] = None,
-    names: Optional[List[NonEmptyValidStr]] = None,
+    type: Type | None = None,  # noqa: A002
+    state: State | None = None,
+    categories: list[ValidStr] | None = None,
+    category_prefix: ValidStr | None = None,
+    ids: list[UUID | str] | None = None,
+    names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
     directly_from_db: bool = False,
     java_backend: bool = False,
@@ -276,15 +218,15 @@ def export_transformations(
         )
 
     """
-    import hetdesrun.models.wiring  # pylint: disable=import-outside-toplevel
+    import hetdesrun.models.wiring
 
-    hetdesrun.models.wiring.EXPORT_MODE = True
+    hetdesrun.models.wiring.ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = True
 
-    import hetdesrun.backend.models.wiring  # pylint: disable=import-outside-toplevel
+    import hetdesrun.backend.models.wiring
 
-    hetdesrun.backend.models.wiring.EXPORT_MODE = True
+    hetdesrun.backend.models.wiring.ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = True
 
-    transformation_list: List[TransformationRevision] = []
+    transformation_list: list[TransformationRevision] = []
     try:
         headers = sync_wrapped_get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
@@ -296,7 +238,7 @@ def export_transformations(
         raise Exception(msg) from e
 
     if java_backend:
-        if categories_with_prefix is not None:
+        if category_prefix is not None:
             msg = 'For the java backend the filter option "categories_with_prefix" is not provided!'
             logger.error(msg)
             raise Exception(msg)
@@ -305,9 +247,7 @@ def export_transformations(
         response = requests.get(
             url,
             verify=get_config().hd_backend_verify_certs,
-            auth=get_backend_basic_auth()  # type: ignore
-            if get_config().hd_backend_use_basic_auth
-            else None,
+            auth=get_backend_basic_auth(),  # type: ignore
             headers=headers,
             timeout=get_config().external_request_timeout,
         )
@@ -320,7 +260,7 @@ def export_transformations(
             )
             raise Exception(msg)
 
-        failed_exports: List[Any] = []
+        failed_exports: list[Any] = []
         for trafo_json in response.json():
             if passes_all_filters(
                 trafo_json, type, categories, ids, names, include_deprecated
@@ -332,7 +272,7 @@ def export_transformations(
                 except ValidationError as e:
                     failed_exports.append((trafo_json, e))
                 else:
-                    save_transformation(transformation, download_path)
+                    save_transformation_into_directory(transformation, download_path)
         for export in failed_exports:
             trafo_json = export[0]
             error = export[1]
@@ -350,7 +290,7 @@ def export_transformations(
             type=type,
             state=state,
             categories=categories,
-            categories_with_prefix=categories_with_prefix,
+            category_prefix=category_prefix,
             ids=ids,
             names=names,
             include_dependencies=True,
@@ -363,4 +303,4 @@ def export_transformations(
 
         # Export individual transformation
         for transformation in transformation_list:
-            save_transformation(transformation, download_path)
+            save_transformation_into_directory(transformation, download_path)

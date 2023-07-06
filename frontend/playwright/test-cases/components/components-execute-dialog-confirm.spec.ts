@@ -6,14 +6,14 @@ test('Confirm "execute component" dialog', async ({ page, hetidaDesigner }) => {
   const componentName = 'Pi';
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
+  await hetidaDesigner.clickComponentsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
   await hetidaDesigner.doubleClickItemInNavigation(categoryName, componentName);
 
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector('mat-dialog-container');
 
-  await hetidaDesigner.clickButton('Execute');
+  await hetidaDesigner.clickByTestId('execute-wiring-dialog');
   await page.waitForSelector('hd-protocol-viewer');
 
   // Assert

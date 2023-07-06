@@ -27,7 +27,7 @@ async def test_base_url_fetching_internally():
         )
     ]
 
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.baseurl.get_all_adapters",
         return_value=get_all_adapters_response_mock,
     ):
@@ -42,7 +42,7 @@ async def test_base_url_fetching_internally():
 
 
 @pytest.mark.asyncio
-async def test_base_url_fetching():
+async def test_base_url_fetching_externally():
     response_mock = mock.Mock()
     response_mock.status_code = 200
     response_mock.json = mock.Mock(
@@ -50,12 +50,12 @@ async def test_base_url_fetching():
             {
                 "id": "test_adapter_key",
                 "url": "http://hetida.de",
-                "internal_url": "http://hetida.de",
+                "internalUrl": "http://hetida.de",
                 "name": "test",
             }
         ]
     )
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.baseurl.httpx.AsyncClient.get",
         return_value=response_mock,
     ):
@@ -69,7 +69,7 @@ async def test_base_url_fetching():
             )
 
     response_mock.status_code = 400
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.baseurl.httpx.AsyncClient.get",
         return_value=response_mock,
     ):
@@ -80,19 +80,19 @@ async def test_base_url_fetching():
             with pytest.raises(AdapterConnectionError):
                 await update_generic_adapter_base_urls_cache()
 
+            response_mock.status_code = 200
+            # wrong json
+            response_mock.json = mock.Mock(
+                return_value=[
+                    {
+                        "key": "test_adapter_key",
+                        "url": "http://hetida.de",
+                        "internalUrl": "http://hetida.de",
+                        "name": "test",
+                    }
+                ]
+            )
             with pytest.raises(AdapterHandlingException):
-                response_mock.status_code = 200
-                # wrong json
-                response_mock.json = mock.Mock(
-                    return_value=[
-                        {
-                            "key": "test_adapter_key",
-                            "url": "http://hetida.de",
-                            "internal_url": "http://hetida.de",
-                            "name": "test",
-                        }
-                    ]
-                )
                 await update_generic_adapter_base_urls_cache()
 
 
@@ -101,7 +101,7 @@ async def test_adapter_key_not_found():
     response_mock = mock.Mock()
     response_mock.status_code = 200
     response_mock.json = mock.Mock(return_value=[])
-    with mock.patch(
+    with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.baseurl.httpx.AsyncClient.get",
         return_value=response_mock,
     ):

@@ -1,23 +1,22 @@
-"""Filter classes for adapter data selection"""
+"""Source and sink classes for adapter data selection"""
+from typing import Literal
 
-from typing import Literal, Optional
-
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field
 
 
 class FilteredSource(BaseModel):
-    ref_id: Optional[str] = None
-    ref_id_type: Optional[Literal["SOURCE", "SINK", "THINGNODE"]] = None
-    ref_key: Optional[str] = None
-    type: Optional[str] = None
+    ref_id: str | None = None
+    ref_id_type: Literal["SOURCE", "SINK", "THINGNODE"] | None = None
+    ref_key: str | None = None
+    type: str | None = None  # noqa: A003
 
-    filters: dict = Field({}, description="actual set filters", example={})
+    filters: dict[str, str] = Field({}, description="actually set filters", example={})
 
 
 class FilteredSink(BaseModel):
-    ref_id: Optional[str] = None
-    ref_id_type: Optional[Literal["SOURCE", "SINK", "THINGNODE"]] = None
-    ref_key: Optional[str] = None
-    type: Optional[str] = None
+    ref_id: str | None = None
+    ref_id_type: Literal["SOURCE", "SINK", "THINGNODE"] | None = None
+    ref_key: str | None = None
+    type: str | None = None  # noqa: A003
 
-    filters: dict = Field({}, description="actual set filters", example={})
+    filters: dict[str, str] = Field({}, description="actually set filters", example={})

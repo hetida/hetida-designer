@@ -112,7 +112,7 @@ You can expose the backend and runtime ports with
   hetida-designer-runtime:
     ...
     ports:
-      - 127.0.0.1:8090:8090      
+      - 127.0.0.1:8090:8090
 ```
 
 Changing the backend and/or runtime ports is quite a bit more involved. You'll have to also
@@ -191,6 +191,8 @@ ports in the docker-compose file as is described under [Modifying Ports](#modify
 docker-compose -f docker-compose-dev.yml up -d
 ```
 
+**Note:** The dockerfiles assume a linux/amd64 platform/architexture, you may have to turn on / [configure emulation](https://github.com/docker/roadmap/issues/384#issuecomment-1377337935) if you are building on another architecture, for example on ARM based environments such as Apple M1 based systems.
+
 Once you have the application running, only stop the container containing the submodule that you
 want to work on. We use a monorepo approach, so you already have the source code for all submodules on your machine by now.
 
@@ -199,7 +201,7 @@ instructions on setting up one of these modules for development below.
 
 #### Frontend
 
-Dependencies: Node 12.18.x and npm 6.14.x (other versions are not tested).
+Dependencies: Node 14.21.3 and npm 6.14.x (other versions are not tested).
 
 1. Navigate to the `frontend` folder.
 2. Run `npm install` to install application dependencies.
@@ -253,7 +255,7 @@ In the hetida designer web user interface, click on "Add Workflow" in the Workfl
 
 In the "Create new Workflow" dialog, enter a name (like "Demo") and for now leave everything else as it is. Click on "Create Workflow"
 
-![create_workflow_dialog](./docs/assets/first_workflow/create_workflow_dialog.png) 
+![create_workflow_dialog](./docs/assets/first_workflow/create_workflow_dialog.png)
 
 Next, you see the workflow editor which is empty. Switch to the component sidebar, open one of the category drawers, and drag and drop some components onto the workflow editor pane. Boxes appear indicating operators of your workflow (i.e. instances of the chosen components). 
 

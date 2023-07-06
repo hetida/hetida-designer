@@ -1,13 +1,14 @@
 import datetime
 import os
+import re
 from enum import Enum
-from typing import Optional, Union
 
-# pylint: disable=no-name-in-module
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
 from hetdesrun.webservice.auth_outgoing import ServiceCredentials
+
+maintenance_secret_pattern = re.compile("[a-zA-Z0-9]+")
 
 
 class LogLevel(str, Enum):
@@ -128,7 +129,7 @@ class RuntimeConfig(BaseSettings):
         SecretStr("hetida_designer_dbpasswd"), env="HD_DB_PASSWORD"
     )
 
-    sqlalchemy_connection_string: Optional[Union[SecretStr, SQLAlchemy_DB_URL]] = Field(
+    sqlalchemy_connection_string: SecretStr | SQLAlchemy_DB_URL | None = Field(
         None,
         description=(
             "Rfc 1738 database url. Not set by default."
@@ -158,7 +159,7 @@ class RuntimeConfig(BaseSettings):
     )
 
     auth_public_key_url: str = Field(
-        "http://hetida-designer-keycloak:8080/auth/realms/hetida-designer/protocol/openid-connect/certs",  # pylint: disable=line-too-long
+        "http://hetida-designer-keycloak:8080/auth/realms/hetida-designer/protocol/openid-connect/certs",  # noqa: E501
         description="URL to endpoint providing public keys for verifying bearer token signature",
         env="HD_AUTH_PUBLIC_KEY_URL",
     )
@@ -174,7 +175,7 @@ class RuntimeConfig(BaseSettings):
         env="HD_AUTH_ROLE_KEY",
     )
 
-    auth_allowed_role: Optional[str] = Field(
+    auth_allowed_role: str | None = Field(
         None,
         description=(
             "Role provided in bearer access token that is allowed access."
@@ -191,7 +192,7 @@ class RuntimeConfig(BaseSettings):
     )
 
     auth_public_key_reloading_minimum_age: datetime.timedelta = Field(
-        15,
+        datetime.timedelta(seconds=15),
         description="If auth fails and auth_reload_public_key is True "
         "public keys are only tried to load again if older than this timedelta."
         " Can be either seconds as int or float or an ISO 8601 timedelta string",  # 15 seconds
@@ -199,7 +200,7 @@ class RuntimeConfig(BaseSettings):
         example="P0DT00H00M15S",
     )
 
-    auth_bearer_token_for_outgoing_requests: Optional[str] = Field(
+    auth_bearer_token_for_outgoing_requests: str | None = Field(
         None,
         description=(
             "A string containing a bearer token for making outgoing requests. "
@@ -224,9 +225,9 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_INTERNAL_AUTH_MODE",
     )
-    internal_auth_client_credentials: Optional[
-        Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
-    ] = Field(
+    internal_auth_client_credentials: ServiceCredentials | Json[
+        ServiceCredentials
+    ] | None = Field(
         None,
         description=(
             "Client credentials as json encoded string."
@@ -251,9 +252,9 @@ class RuntimeConfig(BaseSettings):
         ),
         env="HD_EXTERNAL_AUTH_MODE",
     )
-    external_auth_client_credentials: Optional[
-        Json[ServiceCredentials]  # pylint: disable=unsubscriptable-object
-    ] = Field(
+    external_auth_client_credentials: ServiceCredentials | Json[
+        ServiceCredentials
+    ] | None = Field(
         None,
         description="Client credentials as json encoded string.",
         example=(
@@ -265,6 +266,21 @@ class RuntimeConfig(BaseSettings):
         env="HD_EXTERNAL_AUTH_CLIENT_SERVICE_CREDENTIALS",
     )
 
+    maintenance_secret: SecretStr | None = Field(
+        None,
+        description="Secret necessary to access maintenance endpoints of the backend."
+        " If this is set, the maintenance endpoints are activated."
+        " To use them this secret is required as part of the payload."
+        " Only alphanumeric characters are allowed",
+        env="HD_MAINTENANCE_SECRET",
+    )
+
+    autoimport_directory: str = Field(
+        "",
+        description="Path to directory where to look for import sources during autoimport",
+        env="HD_BACKEND_AUTOIMPORT_DIRECTORY",
+    )
+
     hd_adapters: str = Field(
         "demo-adapter-python|Python-Demo-Adapter"
         "|http://localhost:8092"
@@ -274,7 +290,10 @@ class RuntimeConfig(BaseSettings):
         "|http://hetida-designer-demo-adapter-java:8091/adapter,"
         "local-file-adapter|Local-File-Adapter"
         "|http://localhost:8090/adapters/localfile"
-        "|http://hetida-designer-runtime:8090/adapters/localfile",
+        "|http://hetida-designer-runtime:8090/adapters/localfile,"
+        "sql-adapter|SQL Adapter"
+        "|http://localhost:8090/adapters/sql"
+        "|http://localhost:8090/adapters/sql",
         env="HETIDA_DESIGNER_ADAPTERS",
         description="list of the installed adapters",
     )
@@ -308,12 +327,12 @@ class RuntimeConfig(BaseSettings):
             " use the corresponding environment variables!"
         ),
     )
-    hd_backend_basic_auth_user: Optional[str] = Field(
+    hd_backend_basic_auth_user: str | None = Field(
         None,
         env="HETIDA_DESIGNER_BASIC_AUTH_USER",
         description="Basic Auth User",
     )
-    hd_backend_basic_auth_password: Optional[str] = Field(
+    hd_backend_basic_auth_password: str | None = Field(
         None,
         env="HETIDA_DESIGNER_BASIC_AUTH_PASSWORD",
         description="Basic Auth User",
@@ -379,14 +398,12 @@ class RuntimeConfig(BaseSettings):
         env="HETIDA_DESIGNER_KAFKA_RESPONSE_TOPIC",
     )
 
-    # pylint: disable=no-self-argument
     @validator("internal_auth_client_credentials")
     def internal_auth_client_credentials_set_if_internal_auth_mode_is_client(
         cls,
-        v: Optional[Json[ServiceCredentials]],  # pylint: disable=unsubscriptable-object
+        v: Json[ServiceCredentials] | None,
         values: dict,
-    ) -> Optional[Json[ServiceCredentials]]:  # pylint: disable=unsubscriptable-object
-
+    ) -> Json[ServiceCredentials] | None:
         internal_auth_mode = values["internal_auth_mode"]
 
         if internal_auth_mode == InternalAuthMode.CLIENT and v is None:
@@ -397,14 +414,12 @@ class RuntimeConfig(BaseSettings):
             raise ValueError(msg)
         return v
 
-    # pylint: disable=no-self-argument
     @validator("external_auth_client_credentials")
     def external_auth_client_credentials_set_if_external_auth_mode_is_client(
         cls,
-        v: Optional[Json[ServiceCredentials]],  # pylint: disable=unsubscriptable-object
+        v: Json[ServiceCredentials] | None,
         values: dict,
-    ) -> Optional[Json[ServiceCredentials]]:  # pylint: disable=unsubscriptable-object
-
+    ) -> Json[ServiceCredentials] | None:
         external_auth_mode = values["external_auth_mode"]
 
         if external_auth_mode == ExternalAuthMode.CLIENT and v is None:
@@ -415,10 +430,21 @@ class RuntimeConfig(BaseSettings):
             raise ValueError(msg)
         return v
 
-    # pylint: disable=no-self-argument
+    @validator("maintenance_secret")
+    def maintenance_secret_allowed_characters(
+        cls, v: SecretStr | None
+    ) -> SecretStr | None:
+        if v is None:
+            return v
+        if not maintenance_secret_pattern.fullmatch(v.get_secret_value()):
+            raise ValueError(
+                "Only numbers and alphabet letters allowed for the maintenance secret"
+                " and it must have non-zero length."
+            )
+        return v
+
     @validator("is_runtime_service")
     def must_be_at_least_backend_or_runtime(cls, v: bool, values: dict) -> bool:
-
         is_backend_service = values["is_backend_service"]
 
         if not (v or is_backend_service):
@@ -429,7 +455,6 @@ class RuntimeConfig(BaseSettings):
             raise ValueError(msg)
         return v
 
-    # pylint: disable=no-self-argument
     @validator("hd_backend_api_url")
     def backend_api_url_ends_with_slash(cls, v: str) -> str:
         """make it end with a slash"""
@@ -437,12 +462,10 @@ class RuntimeConfig(BaseSettings):
             v += "/"
         return v
 
-    # pylint: disable=no-self-argument
     @validator("sqlalchemy_connection_string")
     def database_url(
-        cls, v: Optional[Union[SecretStr, SQLAlchemy_DB_URL]], values: dict
-    ) -> Optional[Union[SecretStr, SQLAlchemy_DB_URL]]:
-
+        cls, v: SecretStr | SQLAlchemy_DB_URL | None, values: dict
+    ) -> SecretStr | SQLAlchemy_DB_URL | None:
         if v is None:
             pw_secret = values["sqlalchemy_db_password"]
             return SQLAlchemy_DB_URL.create(
@@ -462,7 +485,9 @@ class RuntimeConfig(BaseSettings):
 
 environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
 
-runtime_config = RuntimeConfig(_env_file=environment_file if environment_file else None)
+runtime_config = RuntimeConfig(
+    _env_file=environment_file if environment_file else None  # type: ignore[call-arg]
+)
 
 
 def get_config() -> RuntimeConfig:

@@ -2,11 +2,10 @@ import datetime
 import json
 import logging
 import threading
-from typing import Optional
 
 import httpx
 from jose import JOSEError, jwt
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,9 @@ class BearerVerifierOptions(BaseModel):
     audience: str = Field("account")
 
     reload_public_key: bool = Field(True)
-    public_key_reloading_minimum_age: datetime.timedelta = Field(15)
+    public_key_reloading_minimum_age: datetime.timedelta = Field(
+        datetime.timedelta(seconds=15)
+    )
     default_decoding_options: dict = Field(
         DEFAULT_OPTIONS,
         description="default options for jwt decoding. These will be used"
@@ -52,17 +53,19 @@ class BearerVerifier:
 
     def __init__(self, verifier_options: BearerVerifierOptions):
         self.verifier_options = verifier_options
-        self._public_key_data: Optional[dict] = None
-        self._key_retrieved: Optional[datetime.datetime] = None
+        self._public_key_data: dict | None = None
+        self._key_retrieved: datetime.datetime | None = None
         self._public_key_lock = threading.Lock()
 
     @classmethod
-    def from_verifier_options(  # pylint: disable=dangerous-default-value,too-many-arguments
+    def from_verifier_options(
         cls,
         auth_url: str,
         audience: str = "account",
         reload_public_key: bool = True,
-        public_key_reloading_minimum_age: int = 15,
+        public_key_reloading_minimum_age: datetime.timedelta = datetime.timedelta(
+            seconds=15
+        ),
         default_decoding_options: dict = DEFAULT_OPTIONS,
         verify_ssl: bool = True,
     ) -> "BearerVerifier":
@@ -81,7 +84,7 @@ class BearerVerifier:
     def verify_token(
         self,
         access_token: str,
-        options: Optional[dict] = None,
+        options: dict | None = None,
         force_loading_keys: bool = False,
     ) -> dict:
         """Try to verifiy the given acces token.
@@ -125,7 +128,7 @@ class BearerVerifier:
             return True
 
         if (
-            datetime.datetime.utcnow() - self._key_retrieved
+            datetime.datetime.utcnow() - self._key_retrieved  # noqa: DTZ003
         ) > self.verifier_options.public_key_reloading_minimum_age:
             return True
 
@@ -144,9 +147,9 @@ class BearerVerifier:
                 "Request failed: %s",
                 str(e),
             )
-            raise AuthentificationError(  # pylint: disable=raise-missing-from
+            raise AuthentificationError(
                 "Error trying to get public key from auth service. Request failed."
-            )
+            ) from None
 
         try:
             key_data = resp.json()
@@ -156,10 +159,10 @@ class BearerVerifier:
                 "Failed to decode json: %s",
                 str(e),
             )
-            raise AuthentificationError(  # pylint: disable=raise-missing-from
+            raise AuthentificationError(
                 "Error trying to get public key from auth service. Failed to decode json."
-            )
+            ) from None
 
         with self._public_key_lock:
             self._public_key_data = key_data
-            self._key_retrieved = datetime.datetime.utcnow()
+            self._key_retrieved = datetime.datetime.utcnow()  # noqa: DTZ003

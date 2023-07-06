@@ -24,11 +24,13 @@ Possible values
 
 ### Enumeration "type"
 
-- `metadata({datatype})`(for example “metadata(string)” or “metadata(float)” )
+- `metadata({datatype})`(for example “metadata(string)” or “metadata(float)”)
 
-- `timeseries({datatype})` (for example "timeseries(float)" or "timeseries(int)"
+- `timeseries({datatype})` (for example "timeseries(float)" or "timeseries(int)")
 
 - `dataframe`
+
+- `multitsframe`
 
 ## Endpoints for browsing, filtering and wiring construction in UIs
 
@@ -81,10 +83,10 @@ Response:
       "metadataKey": STRING, // optional/null if type not of form metadata(...)
       "visible": BOOL, // optional, default is true
       "path": STRING, // path to this element that is shown in frontend
-      "filters":{  // may be used to request additional UI filters in 
-                 // future versions. Should be an empty mapping for now
+      "filters":{  // may be used to request additional filters
         "<key>": {
           "name": STRING,
+          "type": FILTERTYPE, // enumeration, possible value: "free_text"
           "required": BOOLEAN
         },
         ...
@@ -109,7 +111,10 @@ Some details:
 
 - sources and sinks have an optional (default true) `visible` attribute. In future versions hetida designer might not show sources and sinks in the tree with visible being false.
 
-- `filters` may request user interface filters in future versions of hetida designer. Currently this should be an empty mapping object (`{}`). Note that for timeseries type sources the frontend asks for time interval automatically so that there is no need to specify this as a filter for now.
+- `filters` may request additional filters. Currently this can either be an empty mapping object (`{}`) or a mapping with filters of type `free_text`. Note that for timeseries type sources, the frontend asks for the time interval automatically, so there is no need to specify this as a filter for now.  If additional filters are required, the user interface provides additional input fields where the value for each filter can be entered.
+Via the REST API these filters are used by adding a corresponding key-value pair in the `filters` attribute of the input wiring.
+**Note**: If the adapter requests filters for a source delivered via an GET endpoint it must handle the respective additional query parameters of form filterkey=filtervalue at that endpoint.
+The value is always sent as a string. If other data types are desired, the value must be parsed accordingly within the adapter. If no value is entered in the user interface, an empty string is sent.
 
 - `path` should be a human readable "breadcrumb"-like path to the source or sink. This attribute is used in the designer frontend for example when filtering.
 
@@ -150,10 +155,12 @@ Response of /sources/ (without id):
       "filters":{ 
         "<key>": {
           "name": STRING,
+          "type": STRING,
           "required": BOOLEAN
         },
         ...
       }
+    }
   ]
 }
 ```
@@ -171,9 +178,11 @@ Response of /sources/{id} (with id):
   "filters":{
     "<key>": {
       "name": STRING,
+      "type": STRING,
       "required": BOOLEAN
     },
     ...
+  }
 }
 ```
 
@@ -217,7 +226,7 @@ Response of /sinks/{id} (with id):
 }
 ```
 
-#### /thingNodes/{id} (GET
+#### /thingNodes/{id} (GET)
 
 This only needs to implement the endpoint with id, i.e. retrieval of a single thingNode. And there is no filter here.
 
@@ -236,7 +245,7 @@ Response:
 
 On the one side metadata endpoints tell which metadatum is available at every source / sink or thingNode to make it available in the user interface. This is necessary for the frontend to construct wirings which access metadata.
 
-On the other side these endpoints directly return metadata values and is accessed from the runtime-side generic rest adapter implementation to obtain wired metadata or to send them.
+On the other side these endpoints directly return metadata values and are accessed from the runtime-side generic rest adapter implementation to obtain wired metadata or to send them.
 
 **Note:** If you do not need metadata in your adapter, just implement these endpoints to return empty lists as response or NotFound HTTP errors for those endpoints accessing a single metadatum.
 
@@ -296,13 +305,11 @@ Payload (POST):
 }
 ```
 
-Notes: All metadata is wirable to workflow inputs by convention. In a later version metadata will by default not be  wirable to workflow outputs unless `isSink` is set to `true`.
-
 #### /sinks/{id}/metadata/ (GET)
 
 Analogous to /sources/{id}/metadata/ (GET) but handles metadata attached to sinks.
 
-#### /sources/{id}/metadata/{key} (GET, POST)
+#### /sinks/{id}/metadata/{key} (GET, POST)
 
 Analogous to /sources/{id}/metadata/{key} (GET, POST) but handles metadata attached to sinks.
 
@@ -322,7 +329,9 @@ This endpoint streams several timeseries together. This endpoint is only necessa
 
 Query parameters:
 
-* id (can occur multiple times, must occur at least once): The ids of the requested timeseries. These will be the source ids of the timeseries sources as they occur in the structure endpoint.
+* `id` (can occur multiple times, must occur at least once): The ids of the requested timeseries. These will be the source ids of the timeseries sources as they occur in the structure endpoint.
+* `from`: The timestamp from which on datapoints of the source are requested. The frontend will send a Zulu timestamp to nanosecond precision, e.g. "2020-03-11T13:45:18.194000000Z".
+* `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
 
 Response (Line delimited Stream of Json records):
 
@@ -336,7 +345,7 @@ The `timestamp` entries have to be ISO-8601 timestamps and should always have UT
 
 `timeseriesId` is always one of the ids provided by the id query parameter.
 
-Type of value must be the datatype of the timeseries source (i.e. if the timeseries source with that id has type `timeseries(int)`the value of a corresponding record must be a Json integer.
+Type of value must be the datatype of the timeseries source, i.e. if the timeseries source with that id has type `timeseries(int)` the value of a corresponding record must be a Json integer.
 
 ##### Attaching metadata to each timeseries
 Additionally, metadata in the form of (arbitrarily nested) JSON mappings can be provided that is then attached to the Pandas Series objects' `attrs` attribute in the designer runtime during component/workflow execution.
@@ -365,7 +374,7 @@ This endpoint accepts a single timeseries per POST request.
 
 Query parameters:
 
-* timeseriesId: required, must occur exactly once. This is a sink id of a timeseries sink occurring in the structure endpoint.
+* `timeseriesId`: required, must occur exactly once. This is a sink id of a timeseries sink occurring in the structure endpoint.
 
 Payload (List of timeseries records):
 
@@ -393,7 +402,7 @@ Metadata stored in the Pandas Series `attrs` attribute will be sent by the desig
 
 Query parameters:
 
-* id: required exactly once: This is a source id of a dataframe source occurring in the structure endpoint
+* `id`: required exactly once: This is a source id of a dataframe source occurring in the structure endpoint
 
 Response (Line delimited Stream of Json records):
 
@@ -426,19 +435,74 @@ For this the response is allowed to send a header `Data-Attributes` which must c
 
 Query parameters:
 
-* id: required exactly once: This is a sink id of a dataframe sink occurring in the structure endpoint
+* `id`: required exactly once: This is a sink id of a dataframe sink occurring in the structure endpoint
 
 Payload:
 
 ```
 [
-    {"columnA": "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3},
-    {"columnA": "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3},
-    {"columnA": "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
+  {"columnA": "UK", "timestamp": "2020-03-11T13:45:18.194000000Z", "column_B": 42.3},
+  {"columnA": "UK", "timestamp": "2020-03-11T14:45:18.194000000Z", "column_B": 41.3},
+  {"columnA": "Germany", "timestamp": "2020-03-11T15:45:18.194000000Z", "column_B": 19.5}
 ]
 ```
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
+
+#### /multitsframe (GET)
+
+Query parameters:
+
+* `id`: required exactly once: This is a source id of a multitsframe source occurring in the structure endpoint
+* `from`: The timestamp from which on datapoints of the source are requested. The frontend will send a Zulu timestamp to nanosecond precision, e.g. "2020-03-11T13:45:18.194000000Z".
+* `to`: Analogous to the `from` query parameter, the timestamp until which datapoints of the source are requested.
+
+Response (Line delimited Stream of Json records):
+
+```
+{"metric": "Milling Influx Temperature", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
+{"metric": "Milling Outfeed Temperature", "timestamp": "2020-03-11T14:45:18.237000000Z", "value": 41.7}
+{"metric": "Pickling Influx Temperature", "timestamp": "2020-03-11T15:45:18.081000000Z", "value": 18.4}
+{"metric": "Pickling Outfeed Temperature", "timestamp": "2020-03-11T15:45:18.153000000Z", "value": 18.3}
+```
+
+This response will always have the entries `metric`, `timestamp` and `value`. Neither `metric` nor `timestamp` may be `null`. The `timestamp` entries have to be ISO-8601 timestamps and should always have UTC timeszone and nanosecond resolution.
+
+
+##### Attaching metadata to the multitsframe
+Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution.
+
+For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata, e.g.:
+
+```json
+{
+  "column_units": {
+    "Milling Influx Temperature": "C",
+    "Milling Outfeed Temperature": "C",
+    "Pickling Influx Temperature": "C",
+    "Pickling Outfeed Temperature": "C",
+  },
+}
+```
+
+#### /multitsframe (POST)
+
+Query parameters:
+
+* `id`: required exactly once: This is a sink id of a multitsframe sink occurring in the structure endpoint
+
+Payload:
+
+```
+[
+  {"metric": "Milling Influx Temperature", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
+  {"metric": "Milling Outfeed Temperature", "timestamp": "2020-03-11T14:45:18.237000000Z", "value": 41.7}
+  {"metric": "Pickling Influx Temperature", "timestamp": "2020-03-11T15:45:18.081000000Z", "value": 18.4}
+  {"metric": "Pickling Outfeed Temperature", "timestamp": "2020-03-11T15:45:18.153000000Z", "value": 18.3}
+]
+```
+
+Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different.
 
 ##### Retrieving attached dataframe metadata
 Analogous to the corresponding GET endpoint, metadata stored in the Pandas DataFrame `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
@@ -468,6 +532,8 @@ In particular you do not need:
 * the /sources|sinks|thingNodes/metadata/{key} endpoints
 
 * the /timeseries endpoints
+
+* the /multitsframe endpoints
 
 * /dataframe (POST) endpoint
 

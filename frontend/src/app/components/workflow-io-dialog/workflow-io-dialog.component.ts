@@ -17,7 +17,7 @@ import {
   MatDialog,
   MatDialogRef
 } from '@angular/material/dialog';
-import { JsonEditorComponent, JsonEditorModalData } from 'hd-wiring';
+import { IO, JsonEditorComponent, JsonEditorModalData } from 'hd-wiring';
 import {
   createReadOnlyConfig,
   FlowchartConfiguration,
@@ -33,12 +33,14 @@ import {
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
 import { UniqueValueValidator } from 'src/app/validation/unique-value-validator';
-import { IOItem } from '../../model/io-item';
-import { WorkflowBaseItem } from '../../model/workflow-base-item';
-import { WorkflowOperator } from '../../model/workflow-operator';
+import { WorkflowTransformation } from '../../model/transformation';
+import { Operator } from 'src/app/model/operator';
+import { Connector } from 'src/app/model/connector';
+import { Constant } from 'src/app/model/constant';
+import { IOConnector } from 'src/app/model/io-connector';
 
 export interface WorkflowIODialogData {
-  workflow: WorkflowBaseItem;
+  workflowTransformation: WorkflowTransformation;
   editMode: boolean;
   actionOk: string;
   actionCancel: string;
@@ -54,25 +56,27 @@ export class WorkflowIODefinition {
   id: string;
 
   constructor(
-    workflowIO: IOItem,
-    operator: WorkflowOperator,
-    connector: IOItem
+    workflowIO: IO | Constant,
+    operator: Operator,
+    connector: Connector
   ) {
     this.operator = operator.name;
     this.connector = connector.name;
-    this.type = workflowIO.type;
-    this.isConstant = workflowIO.constant;
+    this.type = workflowIO.data_type;
     this.name = workflowIO.name;
-    if (
-      workflowIO.constantValue === undefined ||
-      workflowIO.constantValue.value === undefined
-    ) {
-      this.constant = '';
+    if (ioIsConstant(workflowIO)) {
+      this.isConstant = true;
+      this.constant = workflowIO.value ?? '';
     } else {
-      this.constant = workflowIO.constantValue.value;
+      this.isConstant = false;
+      this.constant = '';
     }
     this.id = workflowIO.id;
   }
+}
+
+function ioIsConstant(io: IO | Constant): io is Constant {
+  return 'value' in io;
 }
 
 @Component({
@@ -128,16 +132,33 @@ export class WorkflowIODialogComponent {
   }
 
   private setupFormControl(): void {
-    const workflow: WorkflowBaseItem = this.data.workflow;
+    const workflowTransformation: WorkflowTransformation =
+      this.data.workflowTransformation;
     const inputData: WorkflowIODefinition[] = [];
     const outputData: WorkflowIODefinition[] = [];
 
-    for (const input of workflow.inputs) {
-      this.generateWorkflowIODefinition(input, workflow, inputData);
+    for (const input of workflowTransformation.content.inputs) {
+      this.generateWorkflowIODefinition(
+        input,
+        workflowTransformation,
+        inputData
+      );
     }
 
-    for (const output of workflow.outputs) {
-      this.generateWorkflowIODefinition(output, workflow, outputData);
+    for (const constant of workflowTransformation.content.constants) {
+      this.generateWorkflowIODefinition(
+        constant,
+        workflowTransformation,
+        inputData
+      );
+    }
+
+    for (const output of workflowTransformation.content.outputs) {
+      this.generateWorkflowIODefinition(
+        output,
+        workflowTransformation,
+        outputData
+      );
     }
 
     const inputIOControlGroup = inputData.map(data =>
@@ -185,29 +206,38 @@ export class WorkflowIODialogComponent {
   }
 
   private generateWorkflowIODefinition(
-    workflowIO: IOItem,
-    workflow: WorkflowBaseItem,
+    workflowContentIO: IOConnector | Constant,
+    workflowTransformation: WorkflowTransformation,
     dataArray: WorkflowIODefinition[]
   ): void {
-    const operator = workflow.operators.find(
-      op => op.id === workflowIO.operator
+    const operator = workflowTransformation.content.operators.find(
+      op => op.id === workflowContentIO.operator_id
     );
     if (operator === undefined) {
       throw new Error(
-        `Could not find operator with id '${workflowIO.operator}'`
+        `Could not find operator with id '${workflowContentIO.operator_id}'`
       );
     }
-    let connector = operator.inputs.find(io => io.id === workflowIO.connector);
+
+    let connector = operator.inputs.find(
+      io => io.id === workflowContentIO.connector_id
+    );
     if (connector === undefined) {
-      connector = operator.outputs.find(io => io.id === workflowIO.connector);
+      connector = operator.outputs.find(
+        io => io.id === workflowContentIO.connector_id
+      );
     }
     if (connector === undefined) {
       throw new Error(
-        `Could not find connector with id '${workflowIO.connector}'`
+        `Could not find connector with id '${workflowContentIO.connector_id}'`
       );
     }
-    const data = new WorkflowIODefinition(workflowIO, operator, connector);
 
+    const data = new WorkflowIODefinition(
+      workflowContentIO,
+      operator,
+      connector
+    );
     dataArray.push(data);
   }
 
@@ -219,7 +249,9 @@ export class WorkflowIODialogComponent {
     const constantControl = workflowIODefinitionForm.get('constant');
     const nameControl = workflowIODefinitionForm.get('name');
 
-    const rawValue = (workflowIODefinitionForm as FormGroup).getRawValue() as WorkflowIODefinition;
+    const rawValue = (
+      workflowIODefinitionForm as FormGroup
+    ).getRawValue() as WorkflowIODefinition;
 
     if (isConstant) {
       nameControl.reset('');
@@ -324,22 +356,55 @@ export class WorkflowIODialogComponent {
 
   private updateWorkflowIO(data: WorkflowIODefinition): void {
     // TODO do not mutate the dialog data, take a copy from form control
-    const input: IOItem | undefined = this.data.workflow.inputs.find(
-      (ref: IOItem) => ref.id === data.id
+    const foundInput = this.data.workflowTransformation.content.inputs.find(
+      (ref: IOConnector) => ref.id === data.id
     );
-    const output: IOItem | undefined = this.data.workflow.outputs.find(
-      (ref: IOItem) => ref.id === data.id
-    );
-    if (input !== undefined) {
-      input.constantValue = { value: data.constant };
-      input.name = data.name;
-      input.constant = data.isConstant;
+    const foundConstant =
+      this.data.workflowTransformation.content.constants.find(
+        ref => ref.id === data.id
+      );
+    const foundOutput: IOConnector | undefined =
+      this.data.workflowTransformation.content.outputs.find(
+        (ref: IOConnector) => ref.id === data.id
+      );
+
+    if (foundConstant && data.isConstant) {
+      foundConstant.value = data.constant;
+    } else if (foundInput && !data.isConstant) {
+      foundInput.name = data.name;
+    } else if (foundInput && data.isConstant) {
+      // move data from inputs to constants
+      this.data.workflowTransformation.content.inputs =
+        this.data.workflowTransformation.content.inputs.filter(
+          input => input.id !== foundInput.id
+        );
+      const newConstant: Constant = {
+        ...foundInput,
+        name: null,
+        value: data.constant
+      };
+      this.data.workflowTransformation.content.constants.push(newConstant);
+    } else if (foundConstant && !data.isConstant) {
+      // move data from constants to inputs
+      this.data.workflowTransformation.content.constants =
+        this.data.workflowTransformation.content.constants.filter(
+          constant => constant.id !== foundConstant.id
+        );
+      const newInput: IOConnector = {
+        ...foundConstant,
+        name: data.name,
+        position: {
+          x: 0,
+          y: 0
+        }
+      };
+      this.data.workflowTransformation.content.inputs.push(newInput);
+    } else if (foundOutput) {
+      foundOutput.name = data.name;
+    } else {
+      throw new Error(`Could not find IO with id '${data.id}'`);
     }
-    if (output !== undefined) {
-      output.constantValue = { value: data.constant };
-      output.name = data.name;
-      output.constant = data.isConstant;
-    }
+
     this.createPreview();
   }
 
@@ -348,8 +413,9 @@ export class WorkflowIODialogComponent {
       this.dialogRef.close(false);
     } else {
       this.dialogRef.close({
-        inputs: this.data.workflow.inputs,
-        outputs: this.data.workflow.outputs
+        constants: this.data.workflowTransformation.content.constants,
+        inputs: this.data.workflowTransformation.content.inputs,
+        outputs: this.data.workflowTransformation.content.outputs
       });
     }
   }
@@ -359,11 +425,11 @@ export class WorkflowIODialogComponent {
   }
 
   private createPreview(): void {
-    if (this.data.workflow === undefined) {
+    if (this.data.workflowTransformation === undefined) {
       return;
     }
     this.preview = this.flowchartConverter.convertComponentToFlowchart(
-      this.data.workflow
+      this.data.workflowTransformation
     );
   }
 }

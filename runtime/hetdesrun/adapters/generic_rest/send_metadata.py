@@ -2,7 +2,7 @@ import asyncio
 import logging
 import urllib
 from posixpath import join as posix_urljoin
-from typing import Any, Dict
+from typing import Any
 
 import httpx
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 async def post_json_with_open_client(
-    open_client: httpx.AsyncClient, url: str, json_payload: Dict
+    open_client: httpx.AsyncClient, url: str, json_payload: dict
 ) -> httpx.Response:
     return await open_client.post(
         url,
@@ -48,8 +48,8 @@ async def send_single_metadatum_to_adapter(
         urllib.parse.quote(str(filtered_sink.ref_key)),
     )
 
-    value_datatype = ExternalType((filtered_sink.type)).value_datatype
-    assert value_datatype is not None  # for mypy
+    value_datatype = ExternalType(filtered_sink.type).value_datatype
+    assert value_datatype is not None  # for mypy   # noqa: S101
 
     try:
         resp = await post_json_with_open_client(
@@ -66,13 +66,10 @@ async def send_single_metadatum_to_adapter(
     except httpx.HTTPError as e:
         msg = (
             f"Posting metadata to generic rest adapter endpoint {url}"
-            f" failed with Exception {str(e)}"
+            f" failed with Exception: {str(e)}"
         )
-
         logger.info(msg)
-        raise AdapterConnectionError(
-            f"Posting metadata from generic rest adapter endpoint {url} failed."
-        ) from e
+        raise AdapterConnectionError(msg) from e
 
     if resp.status_code not in (200, 201):
         msg = (
@@ -87,8 +84,8 @@ async def send_single_metadatum_to_adapter(
 
 
 async def send_multiple_metadata_to_adapter(
-    filtered_sinks: Dict[str, FilteredSink],
-    data_to_send: Dict[str, Any],
+    filtered_sinks: dict[str, FilteredSink],
+    data_to_send: dict[str, Any],
     adapter_key: str,
 ) -> None:
     try:

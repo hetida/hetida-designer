@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, Field
 
 
 class Result(str, Enum):
@@ -9,7 +9,9 @@ class Result(str, Enum):
 
 
 class AbstractNode(BaseModel):
-    id: str = Field(..., title="Id of node", description="id in current layer")
+    id: str = Field(  # noqa: A003
+        ..., title="Id of node", description="id in current layer"
+    )
 
 
 class VersionInfo(BaseModel):

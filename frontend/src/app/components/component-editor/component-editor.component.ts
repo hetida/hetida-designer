@@ -1,11 +1,11 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
-import { debounceTime, takeUntil } from 'rxjs/operators';
+import { of, Subject } from 'rxjs';
+import { debounceTime, switchMap, takeUntil } from 'rxjs/operators';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { ThemeService } from 'src/app/service/theme/theme.service';
 import { environment } from '../../../environments/environment';
-import { ComponentBaseItem } from '../../model/component-base-item';
-import { ComponentEditorService } from '../../service/component-editor.service';
+import { ComponentTransformation } from '../../model/transformation';
+import { TransformationService } from '../../service/transformation/transformation.service';
 
 @Component({
   selector: 'hd-component-editor',
@@ -22,9 +22,9 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
 
   // only temporary
   public codeCopy: string;
-  public lastSaved: string;
+  public lastSavedCode: string;
 
-  private readonly _ngDestroyNotifier = new Subject();
+  private readonly _ngDestroyNotifier = new Subject<void>();
   private readonly _autoSave$ = new Subject<void>();
   private readonly _autoSaveTimer$ = this._autoSave$.pipe(
     debounceTime(environment.autosaveTimer)
@@ -35,14 +35,17 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     ['light-theme', 'vs']
   ]);
 
-  private _componentBaseItem: ComponentBaseItem;
-  @Input()
-  set componentBaseItem(componentBaseItem: ComponentBaseItem) {
-    this._componentBaseItem = componentBaseItem;
-    this.code = this.componentBaseItem.code;
-    this.lastSaved = this.componentBaseItem.code;
+  private _componentTransformation: ComponentTransformation;
 
-    if (this.componentBaseItem.state !== RevisionState.DRAFT) {
+  @Input()
+  set componentTransformation(
+    componentTransformation: ComponentTransformation
+  ) {
+    this._componentTransformation = componentTransformation;
+    this.code = this.componentTransformation.content;
+    this.lastSavedCode = this.componentTransformation.content;
+
+    if (this.componentTransformation.state !== RevisionState.DRAFT) {
       this.editorOptions = {
         ...this.editorOptions,
         readOnly: true
@@ -50,12 +53,12 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  get componentBaseItem(): ComponentBaseItem {
-    return this._componentBaseItem;
+  get componentTransformation(): ComponentTransformation {
+    return this._componentTransformation;
   }
 
   constructor(
-    private readonly componentService: ComponentEditorService,
+    private readonly transformationService: TransformationService,
     private readonly themeService: ThemeService
   ) {}
 
@@ -74,14 +77,19 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
         };
       });
 
-    this._autoSaveTimer$.subscribe(_ => {
-      if (this.lastSaved !== this.code) {
-        this.componentService.updateComponent({
-          ...this.componentBaseItem,
-          code: this.code
-        });
-      }
-    });
+    this._autoSaveTimer$
+      .pipe(
+        switchMap(() => {
+          if (this.lastSavedCode !== this.code) {
+            return this.transformationService.updateTransformation({
+              ...this.componentTransformation,
+              content: this.code
+            });
+          }
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   public get code(): string {

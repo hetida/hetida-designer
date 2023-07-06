@@ -1,11 +1,10 @@
 import json
-from unittest import mock
 
 import pytest
 
 from hetdesrun.backend.models.info import DocumentationFrontendDto
 from hetdesrun.models.wiring import WorkflowWiring
-from hetdesrun.persistence import get_db_engine, sessionmaker
+from hetdesrun.persistence import get_db_engine
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
@@ -15,7 +14,7 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type, get_uuid_from_seed
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def clean_test_db_engine(use_in_memory_db):
     if use_in_memory_db:
         in_memory_database_url = "sqlite+pysqlite:///:memory:"
@@ -44,102 +43,82 @@ component_tr_1 = TransformationRevision(
 
 
 @pytest.mark.asyncio
-async def test_get_documentation(async_test_client, clean_test_db_engine):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(component_tr_1)
+async def test_get_documentation(async_test_client, mocked_clean_test_db_session):
+    store_single_transformation_revision(component_tr_1)
 
-        async with async_test_client as ac:
-            response = await ac.get(
-                "/api/documentations/" + str(get_uuid_from_seed("component 1"))
-            )
-        assert response.status_code == 200
-        assert response.json()["document"] == "documentation"
+    async with async_test_client as ac:
+        response = await ac.get(
+            "/api/documentations/" + str(get_uuid_from_seed("component 1"))
+        )
+    assert response.status_code == 200
+    assert response.json()["document"] == "documentation"
 
 
 @pytest.mark.asyncio
 async def test_get_documentation_of_inexistent_component(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        async with async_test_client as ac:
-            response = await ac.get(
-                "/api/documentations/" + str(get_uuid_from_seed("inexistent component"))
-            )
-        assert response.status_code == 404
-        assert "Found no" in response.json()["detail"]
+    async with async_test_client as ac:
+        response = await ac.get(
+            "/api/documentations/" + str(get_uuid_from_seed("inexistent component"))
+        )
+    assert response.status_code == 404
+    assert "Found no" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
 async def test_update_documentation_of_component_dto_with_unmatching_ids(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(component_tr_1)
+    store_single_transformation_revision(component_tr_1)
 
-        new_documentation = DocumentationFrontendDto(
-            id=get_uuid_from_seed("documentation"), document="new documentation"
+    new_documentation = DocumentationFrontendDto(
+        id=get_uuid_from_seed("documentation"), document="new documentation"
+    )
+
+    json_of_new_documentation = json.loads(new_documentation.json(by_alias=True))
+
+    async with async_test_client as ac:
+        response = await ac.put(
+            "/api/documentations/" + str(get_uuid_from_seed("component 1")),
+            json=json_of_new_documentation,
         )
 
-        json_of_new_documentation = json.loads(new_documentation.json(by_alias=True))
-
-        async with async_test_client as ac:
-            response = await ac.put(
-                "/api/documentations/" + str(get_uuid_from_seed("component 1")),
-                json=json_of_new_documentation,
-            )
-
-        assert response.status_code == 409
-        assert "does not match" in response.json()["detail"]
+    assert response.status_code == 409
+    assert "does not match" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
 async def test_update_documentation_of_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(component_tr_1)
+    store_single_transformation_revision(component_tr_1)
 
-        new_documentation = DocumentationFrontendDto(
-            id=get_uuid_from_seed("component 1"), document="new documentation"
+    new_documentation = DocumentationFrontendDto(
+        id=get_uuid_from_seed("component 1"), document="new documentation"
+    )
+
+    json_of_new_documentation = json.loads(new_documentation.json(by_alias=True))
+
+    async with async_test_client as ac:
+        response = await ac.put(
+            "/api/documentations/" + str(get_uuid_from_seed("component 1")),
+            json=json_of_new_documentation,
         )
 
-        json_of_new_documentation = json.loads(new_documentation.json(by_alias=True))
-
-        async with async_test_client as ac:
-            response = await ac.put(
-                "/api/documentations/" + str(get_uuid_from_seed("component 1")),
-                json=json_of_new_documentation,
-            )
-
-        assert response.status_code == 201
-        assert response.json() == json_of_new_documentation
+    assert response.status_code == 201
+    assert response.json() == json_of_new_documentation
 
 
 @pytest.mark.asyncio
 async def test_delete_documentation_of_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(component_tr_1)
+    store_single_transformation_revision(component_tr_1)
 
-        async with async_test_client as ac:
-            response = await ac.delete(
-                "/api/documentations/" + str(get_uuid_from_seed("component 1")),
-            )
+    async with async_test_client as ac:
+        response = await ac.delete(
+            "/api/documentations/" + str(get_uuid_from_seed("component 1")),
+        )
 
-        assert response.status_code == 204
+    assert response.status_code == 204

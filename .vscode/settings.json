@@ -21,7 +21,8 @@
         ".tmp": true,
         "**/.mypy_cache": true,
         "**/.pytest_cache": true,
-        "**/.coverage": true
+        "**/.coverage": true,
+        "**/.ruff_cache": true
     },
     "files.exclude": {
         "**/__pycache__": true,
@@ -32,27 +33,32 @@
         ".tmp": true,
         "**/.mypy_cache": true,
         "**/.pytest_cache": true,
-        "**/.coverage": true
+        "**/.coverage": true,
+        "**/.ruff_cache": true
+    },
+    "python.linting.enabled": true,
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports.ruff": true,
+        }
     },
     "python.formatting.provider": "black",
-    "python.linting.pylintArgs": [
-        "--rcfile=.pylintrc"
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.args": [
+        "--config=runtime/pyproject.toml"
     ],
-    "mypy.configFile": "./runtime/mypy.ini",
-    "python.linting.mypyPath": "./runtime/venv/bin/mypy",
-    "python.linting.mypyEnabled": true,
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    "editor.formatOnSave": true,
-    "isort.args": [
-        "--profile",
-        "black",
-        "-p",
-        "hetdesrun"
+    "python.defaultInterpreterPath": "~/.pipt/venvs/hd-runtime-venv/bin/python",
+    "python.linting.mypyArgs": [
+        "--config-file=runtime/mypy.ini"
     ],
-    "[python]": {
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": true
-        }
-    }
+    "mypy.configFile": "runtime/mypy.ini",
+    "mypy.runUsingActiveInterpreter": true,
+    "mypy.targets": [
+        "runtime/hetdesrun",
+        "runtime/main.py",
+        "demo-adapter-python/demo_adapter_python",
+        "demo-adapter-python/main.py"
+    ]
 }
