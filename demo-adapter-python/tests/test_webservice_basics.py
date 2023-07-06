@@ -647,7 +647,7 @@ async def test_free_text_filters(
                 "column_names": "['b']",
             },
         )
-        assert df_response_no_json_column_names.status_code == 406
+        assert df_response_no_json_column_names.status_code == 422
         assert "cannot be parsed" in df_response_no_json_column_names.text
 
         df_response_no_list_column_names = await client.get(
@@ -657,7 +657,7 @@ async def test_free_text_filters(
                 "column_names": '{"b":"c"}',
             },
         )
-        assert df_response_no_list_column_names.status_code == 406
+        assert df_response_no_list_column_names.status_code == 422
         assert "not a list" in df_response_no_list_column_names.text
 
         df_response_wrong_key = await client.get(
@@ -667,7 +667,7 @@ async def test_free_text_filters(
                 "column_names": """[\"b\",\"c\"]""",
             },
         )
-        assert df_response_wrong_key.status_code == 406
+        assert df_response_wrong_key.status_code == 422
         assert "does not contain" in df_response_wrong_key.text
 
         mtsf_response = await client.get(
@@ -696,7 +696,7 @@ async def test_free_text_filters(
                 "lower_threshold": "93.4",
             },
         )
-        assert mtsf_response_no_float.status_code == 406
+        assert mtsf_response_no_float.status_code == 422
         assert "Cannot" in mtsf_response_no_float.text
         assert "to float" in mtsf_response_no_float.text
 
@@ -706,7 +706,7 @@ async def test_free_text_filters(
                 "id": "root.plantA.picklingUnit.influx.temp",
                 "from": "2020-01-01T00:00:00.000000000Z",
                 "to": "2020-01-02T00:00:00.000000000Z",
-                "frequency": "2H",
+                "frequency": "2h",
             },
         )
         assert ts_response.status_code == 200
@@ -722,5 +722,5 @@ async def test_free_text_filters(
                 "frequency": "some string",
             },
         )
-        assert ts_response_no_frequency_string.status_code == 406
-        assert "no frequency string" in ts_response_no_frequency_string.text
+        assert ts_response_no_frequency_string.status_code == 422
+        assert "frequency is invalid" in ts_response_no_frequency_string.text

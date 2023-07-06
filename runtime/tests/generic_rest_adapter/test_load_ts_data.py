@@ -372,7 +372,7 @@ async def test_end_to_end_load_ts_with_exception():
     ):
         with mock.patch(
             "hetdesrun.adapters.generic_rest.load_framelike.requests.Session.get",
-            return_value=mock.Mock(status_code=406, text="my adapter error"),
+            return_value=mock.Mock(status_code=422, text="my adapter error"),
         ), pytest.raises(AdapterConnectionError, match="my adapter error"):
             await load_data(
                 {
