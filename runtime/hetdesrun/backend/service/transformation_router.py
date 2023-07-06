@@ -138,40 +138,33 @@ async def get_all_transformation_revisions(
         None,
         description="Filter for specified state",
     ),
-    category: ValidStr
-    | None = Query(
-        None,
-        description="Filter for specified category",
-    ),
+    categories: list[ValidStr]
+    | None = Query(None, description="Filter for categories.", alias="category"),
     category_prefix: ValidStr
     | None = Query(
         None,
         description="Category prefix that must be matched exactly (case-sensitive).",
     ),
     revision_group_id: UUID
-    | None = Query(None, description="Filter for specified revision group id"),
+    | None = Query(None, description="Filter for specified revision group id."),
     ids: list[UUID]
-    | None = Query(
-        None,
-        description="Filter for specified list of ids",
-    ),
+    | None = Query(None, description="Filter for specified list of ids.", alias="id"),
     names: list[NonEmptyValidStr]
     | None = Query(
-        None,
-        description=("Filter for specified list of names"),
+        None, description=("Filter for specified list of names."), alias="name"
     ),
     include_dependencies: bool = Query(
         False,
         description=(
             "Set to True to additionally get those transformation revisions "
-            "that the selected ones depend on"
+            "that the selected/filtered ones depend on."
         ),
     ),
     include_deprecated: bool = Query(
         True,
         description=(
             "Set to False to omit transformation revisions with state DISABLED "
-            "this will not affect included dependent transformation revisions"
+            "this will not affect included dependent transformation revisions."
         ),
     ),
     unused: bool = Query(
@@ -191,7 +184,7 @@ async def get_all_transformation_revisions(
     filter_params = FilterParams(
         type=type,
         state=state,
-        category=category,
+        categories=categories,
         category_prefix=category_prefix,
         revision_group_id=revision_group_id,
         ids=ids,
