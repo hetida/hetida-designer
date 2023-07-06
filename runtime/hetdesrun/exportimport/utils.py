@@ -270,26 +270,24 @@ def deprecate_all_but_latest_in_group(
         directly_from_db=directly_in_db,
     )
 
-    if len(tr_list) > 0:
-        released_tr_by_release_timestamp_dict: dict[
-            datetime, TransformationRevision
-        ] = {}
-        for released_tr in tr_list:
-            assert (  # noqa: S101
-                released_tr.released_timestamp is not None  # hint for mypy
-            )
-            released_tr_by_release_timestamp_dict[
-                released_tr.released_timestamp
-            ] = released_tr
+    if len(tr_list) == 0:
+        return
 
-        latest_timestamp = max(released_tr_by_release_timestamp_dict.keys())
-        del released_tr_by_release_timestamp_dict[latest_timestamp]
+    released_tr_by_release_timestamp_dict: dict[datetime, TransformationRevision] = {}
+    for released_tr in tr_list:
+        assert released_tr.released_timestamp is not None  # noqa: S101  # hint for mypy
+        released_tr_by_release_timestamp_dict[
+            released_tr.released_timestamp
+        ] = released_tr
 
-        for released_timestamp, tr in released_tr_by_release_timestamp_dict.items():
-            tr.deprecate()
-            logger.info(
-                "Deprecated transformation revision %s with released timestamp %s",
-                tr.id,
-                released_timestamp,
-            )
-            update_or_create_transformation_revision(tr, directly_in_db=directly_in_db)
+    latest_timestamp = max(released_tr_by_release_timestamp_dict.keys())
+    del released_tr_by_release_timestamp_dict[latest_timestamp]
+
+    for released_timestamp, tr in released_tr_by_release_timestamp_dict.items():
+        tr.deprecate()
+        logger.info(
+            "Deprecated transformation revision %s with released timestamp %s",
+            tr.id,
+            released_timestamp,
+        )
+        update_or_create_transformation_revision(tr, directly_in_db=directly_in_db)
