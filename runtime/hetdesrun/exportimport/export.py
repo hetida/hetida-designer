@@ -22,22 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_transformation_from_java_backend(
-    id: UUID, type: Type  # noqa: A002
+    id: UUID, type: Type, headers: dict[str, str]  # noqa: A002
 ) -> TransformationRevision:
     """Get transformation via REST API from old backend (old endpoints)
 
     Loads a single transformation revision together with its documentation based on its id
     """
-    try:
-        headers = sync_wrapped_get_auth_headers(external=True)
-    except ServiceAuthenticationError as e:
-        msg = (
-            "Failed to get auth headers for external request to old java backend."
-            f" Error was:\n{str(e)}"
-        )
-        logger.error(msg)
-        raise Exception(msg) from e
-
     if type == Type.COMPONENT:
         url = posix_urljoin(get_config().hd_backend_api_url, "components", str(id))
     else:
@@ -111,6 +101,27 @@ def get_transformation_from_java_backend(
     )
 
     return transformation_revision
+
+
+def get_base_item_jsons_from_java_backend(headers: dict[str, str]) -> Any:
+    url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
+    response = requests.get(
+        url,
+        verify=get_config().hd_backend_verify_certs,
+        auth=get_backend_basic_auth(),  # type: ignore
+        headers=headers,
+        timeout=get_config().external_request_timeout,
+    )
+
+    if response.status_code != 200:
+        msg = (
+            f"COULD NOT GET transformation revisions from URL {url}.\n"
+            f"Response status code {str(response.status_code)} "
+            f"with response text: {str(response.text)}"
+        )
+        raise Exception(msg)
+
+    return response.json()
 
 
 def selection_list_empty_or_contains_value(
@@ -243,46 +254,33 @@ def export_transformations(
             logger.error(msg)
             raise Exception(msg)
 
-        url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
-        response = requests.get(
-            url,
-            verify=get_config().hd_backend_verify_certs,
-            auth=get_backend_basic_auth(),  # type: ignore
-            headers=headers,
-            timeout=get_config().external_request_timeout,
-        )
-
-        if response.status_code != 200:
-            msg = (
-                f"COULD NOT GET transformation revisions from URL {url}.\n"
-                f"Response status code {str(response.status_code)} "
-                f"with response text: {str(response.text)}"
-            )
-            raise Exception(msg)
+        base_item_jsons = get_base_item_jsons_from_java_backend(headers)
 
         failed_exports: list[Any] = []
-        for trafo_json in response.json():
+        for base_item_json in base_item_jsons:
             if passes_all_filters(
-                trafo_json, type, categories, ids, names, include_deprecated
+                base_item_json, type, categories, ids, names, include_deprecated
             ):
                 try:
                     transformation = get_transformation_from_java_backend(
-                        UUID(trafo_json["id"]), Type(trafo_json["type"])
+                        UUID(base_item_json["id"]),
+                        Type(base_item_json["type"]),
+                        headers,
                     )
                 except ValidationError as e:
-                    failed_exports.append((trafo_json, e))
+                    failed_exports.append((base_item_json, e))
                 else:
                     save_transformation_into_directory(transformation, download_path)
         for export in failed_exports:
-            trafo_json = export[0]
+            base_item_json = export[0]
             error = export[1]
             logger.error(
                 "Could not export %s with id %s in category '%s' with name '%s' and tag '%s':\n%s",
-                trafo_json["type"],
-                trafo_json["id"],
-                trafo_json["category"],
-                trafo_json["name"],
-                trafo_json["tag"],
+                base_item_json["type"],
+                base_item_json["id"],
+                base_item_json["category"],
+                base_item_json["name"],
+                base_item_json["tag"],
                 error,
             )
     else:

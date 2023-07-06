@@ -120,7 +120,7 @@ def test_get_transformation_from_java_backend():
         tr_id_str = "18260aab-bdd6-af5c-cac1-7bafde85188f"
         tr_json_from_dict = deepcopy(tr_json_dict[tr_id_str])
         tr_from_backend = get_transformation_from_java_backend(
-            UUID(tr_id_str), Type.COMPONENT
+            id=UUID(tr_id_str), type=Type.COMPONENT, headers={}
         )
         tr_json_from_backend = json.loads(tr_from_backend.json(exclude_none=True))
 
@@ -133,7 +133,7 @@ def test_get_transformation_from_java_backend():
         assert tr_json_from_backend == tr_json_from_dict
 
 
-def mock_get_trafo_from_java_backend(id, type):  # noqa: A002,
+def mock_get_trafo_from_java_backend(id, type, headers):  # noqa: A002,
     return TransformationRevision(**tr_json_dict[str(id)])
 
 
