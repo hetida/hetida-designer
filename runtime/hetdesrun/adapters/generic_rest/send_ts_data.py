@@ -81,6 +81,7 @@ def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> list[dict
 async def post_single_timeseries(
     series: pd.Series,
     ref_id: str,
+    additional_params: list[tuple[str, str]],
     sink_type: ExternalType,
     adapter_key: str,
     client: AsyncClient,
@@ -91,6 +92,7 @@ async def post_single_timeseries(
         records,
         attributes=series.attrs,
         ref_id=ref_id,
+        additional_params=additional_params,
         adapter_key=adapter_key,
         endpoint="timeseries",
         client=client,
@@ -100,6 +102,7 @@ async def post_single_timeseries(
 async def post_multiple_timeseries(
     timeseries_list: list[pd.Series],
     ref_ids: list[str],
+    sink_filters: list[dict[str, str]],
     sink_types: list[ExternalType],
     adapter_key: str,
 ) -> None:
@@ -110,10 +113,15 @@ async def post_multiple_timeseries(
         await asyncio.gather(
             *(
                 post_single_timeseries(
-                    series, ref_id, sink_type, adapter_key=adapter_key, client=client
+                    series,
+                    ref_id,
+                    additional_params=list(filters.items()),
+                    sink_type=sink_type,
+                    adapter_key=adapter_key,
+                    client=client,
                 )
-                for series, ref_id, sink_type in zip(
-                    timeseries_list, ref_ids, sink_types, strict=True
+                for series, ref_id, filters, sink_type in zip(
+                    timeseries_list, ref_ids, sink_filters, sink_types, strict=True
                 )
             )
         )
@@ -126,9 +134,10 @@ async def send_multiple_timeseries_to_adapter(
 ) -> None:
     keys = filtered_sinks.keys()
     ref_ids = [str(filtered_sinks[key].ref_id) for key in keys]
+    sink_filters = [filtered_sinks[key].filters for key in keys]
     sink_types = [ExternalType(filtered_sinks[key].type) for key in keys]
     series_list = [data_to_send[key] for key in keys]
 
     await post_multiple_timeseries(
-        series_list, ref_ids, sink_types, adapter_key=adapter_key
+        series_list, ref_ids, sink_filters, sink_types, adapter_key=adapter_key
     )
