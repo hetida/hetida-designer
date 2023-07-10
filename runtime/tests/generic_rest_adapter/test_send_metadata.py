@@ -114,8 +114,14 @@ async def test_end_to_end_send_only_metadata_data():
                     "dataType": "float",
                 }
             ) in [kwargs_1["json"], kwargs_2["json"]]
-            assert {"filter_key_1": "filter_value_1"} in [kwargs_1["params"], kwargs_2["params"]]
-            assert {"filter_key_2": "filter_value_2"} in [kwargs_1["params"], kwargs_2["params"]]
+            assert {"filter_key_1": "filter_value_1"} in [
+                kwargs_1["params"],
+                kwargs_2["params"],
+            ]
+            assert {"filter_key_2": "filter_value_2"} in [
+                kwargs_1["params"],
+                kwargs_2["params"],
+            ]
             assert "https://hetida.de/thingNodes/th_node_id/metadata/description" in [
                 args_1[0],
                 args_2[0],

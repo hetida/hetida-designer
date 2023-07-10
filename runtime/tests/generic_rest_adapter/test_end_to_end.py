@@ -64,7 +64,7 @@ async def test_wiring_with_generic_rest_input(
                         "ref_id_type": "THINGNODE",
                         "ref_key": "limit",
                         "type": "metadata(float)",
-                        "filters": {"filter_key": "filter_value"}
+                        "filters": {"filter_key": "filter_value"},
                     }
                 ]
                 with mock.patch(
