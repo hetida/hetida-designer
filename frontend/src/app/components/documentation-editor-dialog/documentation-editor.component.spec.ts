@@ -14,19 +14,17 @@ describe('DocumentationEditorComponent', () => {
   let component: DocumentationEditorComponent;
   let fixture: ComponentFixture<DocumentationEditorComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          FormsModule,
-          HttpClientModule,
-          StoreModule.forRoot(appReducers)
-        ],
-        declarations: [DocumentationEditorComponent],
-        providers: [provideMockStore()]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        FormsModule,
+        HttpClientModule,
+        StoreModule.forRoot(appReducers)
+      ],
+      declarations: [DocumentationEditorComponent],
+      providers: [provideMockStore()]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     const transformation: Transformation = {

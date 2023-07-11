@@ -4,7 +4,10 @@ from io import BytesIO
 from typing import Any
 
 import h5py
+from mypy_boto3_s3 import S3Client
+from mypy_boto3_s3.type_defs import GetObjectOutputTypeDef
 
+from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
     FileExtension,
@@ -24,6 +27,17 @@ from hetdesrun.adapters.exceptions import (
 from hetdesrun.models.data_selection import FilteredSource
 
 logger = logging.getLogger(__name__)
+
+
+def get_object(
+    s3_client: S3Client, bucket_name: str, object_key_string: str
+) -> GetObjectOutputTypeDef:
+    if get_blob_adapter_config().checksum_algorithm == "":  # noqa: PLC1901
+        return s3_client.get_object(Bucket=bucket_name, Key=object_key_string)
+
+    return s3_client.get_object(
+        Bucket=bucket_name, Key=object_key_string, ChecksumMode="ENABLED"
+    )
 
 
 async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
@@ -64,8 +78,10 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
     ensure_bucket_exists(s3_client=s3_client, bucket_name=bucket.name)
 
     try:
-        response = s3_client.get_object(
-            Bucket=bucket.name, Key=object_key_string, ChecksumMode="ENABLED"
+        response = get_object(
+            s3_client=s3_client,
+            bucket_name=bucket.name,
+            object_key_string=object_key.string,
         )
     except s3_client.exceptions.NoSuchKey as error:
         raise AdapterConnectionError(
@@ -89,19 +105,21 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
             custom_objects: dict[str, Any] | None = None
             custom_objects_object_key = object_key.to_custom_objects_object_key()
             try:
-                custom_objects_response = s3_client.get_object(
-                    Bucket=bucket.name,
-                    Key=custom_objects_object_key.string,
-                    ChecksumMode="ENABLED",
+                custom_objects_response = get_object(
+                    s3_client=s3_client,
+                    bucket_name=bucket.name,
+                    object_key_string=custom_objects_object_key.string,
                 )
             except s3_client.exceptions.NoSuchKey:
                 pass
             else:
-                custom_objects = pickle.load(custom_objects_response["Body"])
+                custom_objects = pickle.load(  # noqa: S301
+                    custom_objects_response["Body"]
+                )
             with h5py.File(file_object, "r") as f:
                 data = tf.keras.saving.load_model(f, custom_objects=custom_objects)
     else:
-        data = pickle.load(response["Body"])
+        data = pickle.load(response["Body"])  # noqa: S301
 
     return data
 

@@ -2,7 +2,7 @@ from collections.abc import Callable, Coroutine
 from inspect import Parameter, signature
 from typing import Any, Protocol
 
-from cached_property import cached_property  # async compatible variant
+from asyncstdlib.functools import cached_property  # async compatible variant
 from pydantic import ValidationError
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes

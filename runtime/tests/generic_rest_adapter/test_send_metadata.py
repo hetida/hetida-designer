@@ -43,8 +43,8 @@ async def test_end_to_end_send_only_single_metadata_data():
             assert args[0] == "https://hetida.de/sources/sink_id_1/metadata/number"
 
             response.status_code = 400
-
-            with pytest.raises(AdapterConnectionError):
+            response.text = "my http error"
+            with pytest.raises(AdapterConnectionError, match="my http error"):
                 await send_data(
                     {
                         "inp_1": FilteredSink(

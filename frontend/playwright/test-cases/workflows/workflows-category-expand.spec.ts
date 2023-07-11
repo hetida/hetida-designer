@@ -8,7 +8,7 @@ test('Category in workflows expands on click', async ({
   const categoryName = 'Examples';
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+  await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
   // Assert

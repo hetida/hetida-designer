@@ -6,14 +6,14 @@ test('Confirm "execute workflow" dialog', async ({ page, hetidaDesigner }) => {
   const workflowName = 'Volatility Detection Example';
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
+  await hetidaDesigner.clickWorkflowsInNavigation();
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
   await hetidaDesigner.doubleClickItemInNavigation(categoryName, workflowName);
 
   await hetidaDesigner.clickIconInToolbar('Execute');
   await page.waitForSelector('mat-dialog-container');
 
-  await hetidaDesigner.clickButton('Execute');
+  await hetidaDesigner.clickByTestId('execute-wiring-dialog');
   await page.waitForSelector('hd-protocol-viewer >> plotly-plot');
 
   // Assert

@@ -12,6 +12,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from hetdesrun import VERSION
+from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
 from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
@@ -83,7 +84,7 @@ def app_desc_part() -> str:
     return "Runtime"
 
 
-def init_app() -> FastAPI:
+def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     import sys
 
     # reimporting runtime_router and local_file router since they have
@@ -101,6 +102,16 @@ def init_app() -> FastAPI:
     except KeyError:
         pass
 
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.blob_storage.webservice"]
+    except KeyError:
+        pass
+
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.adapters.sql_adapter.webservice"]
+    except KeyError:
+        pass
+
     from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
     from hetdesrun.adapters.blob_storage.webservice import (
         blob_storage_adapter_router,
@@ -108,6 +119,7 @@ def init_app() -> FastAPI:
     from hetdesrun.adapters.local_file.webservice import (
         local_file_adapter_router,
     )
+    from hetdesrun.adapters.sql_adapter.webservice import sql_adapter_router
 
     app = FastAPI(
         title="Hetida Designer " + app_desc_part() + " API",
@@ -130,6 +142,14 @@ def init_app() -> FastAPI:
         app.include_router(
             local_file_adapter_router
         )  # auth dependency set individually per endpoint
+
+        if (
+            get_sql_adapter_config().active
+            and get_sql_adapter_config().service_in_runtime
+        ):
+            app.include_router(
+                sql_adapter_router
+            )  # auth dependency set individually per endpoint
         if get_blob_adapter_config().adapter_hierarchy_location != "":
             app.include_router(
                 blob_storage_adapter_router
@@ -139,6 +159,13 @@ def init_app() -> FastAPI:
         )  # auth dependency set individually per endpoint
 
     if get_config().is_backend_service:
+        if (
+            get_sql_adapter_config().active
+            and not get_sql_adapter_config().service_in_runtime
+        ):
+            app.include_router(
+                sql_adapter_router
+            )  # auth dependency set individually per endpoint
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(
             base_item_router, prefix="/api", dependencies=get_auth_deps()

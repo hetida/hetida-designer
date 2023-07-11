@@ -10,26 +10,24 @@ describe('OperatorChangeRevisionDialogComponent', () => {
   let component: OperatorChangeRevisionDialogComponent;
   let fixture: ComponentFixture<OperatorChangeRevisionDialogComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          MatFormFieldModule,
-          MatSelectModule,
-          MatOptionModule,
-          BrowserAnimationsModule
-        ],
-        declarations: [OperatorChangeRevisionDialogComponent],
-        providers: [
-          { provide: MatDialogRef, useValue: {} },
-          {
-            provide: MAT_DIALOG_DATA,
-            useValue: {}
-          }
-        ]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        MatFormFieldModule,
+        MatSelectModule,
+        MatOptionModule,
+        BrowserAnimationsModule
+      ],
+      declarations: [OperatorChangeRevisionDialogComponent],
+      providers: [
+        { provide: MatDialogRef, useValue: {} },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {}
+        }
+      ]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(OperatorChangeRevisionDialogComponent);

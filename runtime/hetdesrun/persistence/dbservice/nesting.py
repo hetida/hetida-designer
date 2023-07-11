@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import and_, delete, select
 from sqlalchemy.exc import IntegrityError
 
-from hetdesrun.persistence import Session, SQLAlchemySession
+from hetdesrun.persistence import SQLAlchemySession, get_session
 from hetdesrun.persistence.dbmodels import Descendant, NestingDBModel
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -136,7 +136,7 @@ def update_nesting(
 
 def update_or_create_nesting(transformation_revision: TransformationRevision) -> None:
     if transformation_revision.type == Type.WORKFLOW:
-        with Session() as session, session.begin():
+        with get_session()() as session, session.begin():
             assert isinstance(  # noqa: S101
                 transformation_revision.content, WorkflowContent
             )  # hint for mypy

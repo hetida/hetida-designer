@@ -720,7 +720,7 @@ valid_workflow_example_iso_forest: dict = {
                     "workflowInputName": "x_vals",
                     "adapterId": "direct_provisioning",
                     "filters": {
-                        "value": [
+                        "value": """[
                             1.1843789383694558,
                             1.4510047706096545,
                             1.2788758326875431,
@@ -751,7 +751,7 @@ valid_workflow_example_iso_forest: dict = {
                             0.2546865562237355,
                             -0.715008247735518,
                             -0.2621021415447864,
-                        ]
+                        ]"""
                     },
                 },
                 {
@@ -759,7 +759,7 @@ valid_workflow_example_iso_forest: dict = {
                     "workflowInputName": "y_vals",
                     "adapterId": "direct_provisioning",
                     "filters": {
-                        "value": [
+                        "value": """[
                             1.5986223975391751,
                             2.1774012998349765,
                             1.7434766038349168,
@@ -790,44 +790,44 @@ valid_workflow_example_iso_forest: dict = {
                             0.08514825206658988,
                             0.29330191199417466,
                             0.4601618524597455,
-                        ]
+                        ]"""
                     },
                 },
                 {
                     "id": "5021c197-3c38-4e66-b4dc-20e6b5a75bdc",
                     "workflowInputName": "n_estimators",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": 100},
+                    "filters": {"value": "100"},
                 },
                 {
                     "id": "93292699-90f1-41ec-b11c-4538521a64f0",
                     "workflowInputName": "n_grid",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": 30},
+                    "filters": {"value": "30"},
                 },
                 {
                     "id": "1aedec9f-9c37-4894-b462-c787c9ec8593",
                     "workflowInputName": "x_max",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": 3},
+                    "filters": {"value": "3"},
                 },
                 {
                     "id": "327ddb6a-f21c-4c2c-a3a0-cfd3105c3015",
                     "workflowInputName": "x_min",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": -3},
+                    "filters": {"value": "-3"},
                 },
                 {
                     "id": "0de8335d-b104-4ca4-b0fc-4066eb1f3ae6",
                     "workflowInputName": "y_max",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": 3},
+                    "filters": {"value": "3"},
                 },
                 {
                     "id": "552a8f95-9e8f-474b-b28c-652ae26ab1c2",
                     "workflowInputName": "y_min",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": -3},
+                    "filters": {"value": "-3"},
                 },
             ],
             "outputWirings": [

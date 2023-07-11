@@ -273,7 +273,7 @@ series_input_workflow_json = {
                 "workflow_input_name": "x",
                 "adapter_id": 1,
                 "ref_id": "TEST-ID",
-                "filters": {"value": [1.0, 2.0, 3.5]},
+                "filters": {"value": "[1.0, 2.0, 3.5]"},
             }
         ],
         "output_wirings": [
@@ -406,13 +406,13 @@ def main(*, x, y):
                 "workflow_input_name": "x",
                 "adapter_id": 1,
                 "ref_id": "TEST-ID",
-                "filters": {"value": {"a": [1.0, 2.0, 3.5]}},
+                "filters": {"value": '{"a": [1.0, 2.0, 3.5]}'},
             },
             {
                 "workflow_input_name": "y",
                 "adapter_id": 1,
                 "ref_id": "TEST-ID",
-                "filters": {"value": 2.0},
+                "filters": {"value": "2.0"},
             },
         ],
         "output_wirings": [

@@ -3,8 +3,7 @@ import {
   FlowchartComponent,
   FlowchartComponentIO,
   FlowchartComponentLink,
-  FlowchartConfiguration,
-  IOType
+  FlowchartConfiguration
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Connector } from 'src/app/model/connector';
@@ -103,9 +102,8 @@ export class FlowchartConverterService {
 
     const flowchart = {
       id: workflow.id,
-      components: this.convertWorkflowOperatorsToFlowchartComponents(
-        workflowClean
-      ),
+      components:
+        this.convertWorkflowOperatorsToFlowchartComponents(workflowClean),
       io: this.convertWorkflowIOToFlowchartIO(workflowClean),
       links: this.convertWorkflowLinksToFlowchartLinks(workflowClean)
     } as FlowchartConfiguration;
@@ -196,7 +194,7 @@ export class FlowchartConverterService {
     for (const io of workflow.content.inputs) {
       workflowIO.push({
         uuid: `${workflow.id}_${io.id}`,
-        data_type: io.data_type as IOType,
+        data_type: io.data_type,
         name: io.name === undefined ? '' : io.name,
         input: false,
         pos_x: io.position.x,
@@ -210,7 +208,7 @@ export class FlowchartConverterService {
     for (const io of workflow.content.outputs) {
       workflowIO.push({
         uuid: `${workflow.id}_${io.id}`,
-        data_type: io.data_type as IOType,
+        data_type: io.data_type,
         name: io.name === undefined ? '' : io.name,
         input: true,
         pos_x: io.position.x,

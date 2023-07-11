@@ -4,7 +4,7 @@ import datetime
 import json
 import logging
 import random
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -100,7 +100,7 @@ def load_data(
     return info, doc, code
 
 
-class State(str, Enum):
+class State(StrEnum):
     """Representing state of component/workflow"""
 
     DRAFT = "DRAFT"
@@ -108,7 +108,7 @@ class State(str, Enum):
     DISABLED = "DISABLED"
 
 
-class Type(str, Enum):
+class Type(StrEnum):
     COMPONENT = "COMPONENT"
     WORKFLOW = "WORKFLOW"
 

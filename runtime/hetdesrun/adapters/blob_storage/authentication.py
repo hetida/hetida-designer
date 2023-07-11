@@ -43,7 +43,7 @@ def parse_credential_info_from_xml_string(
 ) -> CredentialInfo:
     logger.debug("Parsing XML response to obtain credential info")
     try:
-        xml_response = ET.fromstring(xml_string)
+        xml_response = ET.fromstring(xml_string)  # noqa: S314
     except ET.ParseError as error:
         msg = f"Cannot parse authentication request response as XML:\n{error}"
         logger.error(msg)
@@ -101,7 +101,7 @@ def parse_credential_info_from_xml_string(
 
 def parse_xml_error_response(xml_string: str) -> str:
     try:
-        xml_response = ET.fromstring(xml_string)
+        xml_response = ET.fromstring(xml_string)  # noqa: S314
     except ET.ParseError as error:
         msg = f"Cannot parse authentication request response as XML:\n{error}"
         logger.error(msg)

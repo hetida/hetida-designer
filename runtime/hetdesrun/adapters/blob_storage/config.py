@@ -1,7 +1,7 @@
 import os
 from typing import Literal
 
-from pydantic import BaseSettings, Field
+from pydantic import BaseSettings, Field, validator
 
 
 class BlobStorageAdapterConfig(BaseSettings):
@@ -15,6 +15,11 @@ class BlobStorageAdapterConfig(BaseSettings):
         ),
         env="BLOB_STORAGE_ADAPTER_HIERARCHY_LOCATION",
         example="/mnt/blob_storage_adapter_hierarchy.json",
+    )
+    anonymous: bool = Field(
+        False,
+        description="Skip requesting credentials via STS and make unsigned S3 requests",
+        env="BLOB_STORAGE_ADAPTER_ANONYMOUS",
     )
     allow_bucket_creation: bool = Field(
         True,
@@ -73,10 +78,31 @@ class BlobStorageAdapterConfig(BaseSettings):
         description="The name of the region associated with the S3 client.",
         env="BLOB_STORAGE_REGION_NAME",
     )
+    checksum_algorithm: Literal["SHA1", "SHA256", "CRC32", "CRC32C", ""] = Field(
+        "SHA1",
+        description=(
+            "Set checksum algorithm to 'SHA1', 'SHA256', 'CRC32' or 'CRC32C' "
+            "for writing or loading objects with checkums. Per defaul it is set to 'SHA1'. "
+            "Set it to an empty string to deactivate the usage of checksums."
+        ),
+        env="BLOB_STORAGE_CHECKSUM_ALGORITHM",
+    )
+
+    @validator("allow_bucket_creation")
+    def no_anonymous_bucket_creation(
+        cls, allow_bucket_creation: bool, values: dict
+    ) -> bool:
+        anonymous = values["anonymous"]
+        if anonymous is True:
+            allow_bucket_creation = False  # noqa: F841
+
+        return allow_bucket_creation
 
 
-environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
-blob_storage_adapter_config = BlobStorageAdapterConfig(_env_file=environment_file)
+environment_file = os.environ.get("HD_BLOB_STORAGE_ENVIRONMENT_FILE", None)
+blob_storage_adapter_config = BlobStorageAdapterConfig(
+    _env_file=environment_file  # type: ignore[call-arg]
+)
 
 
 def get_blob_adapter_config() -> BlobStorageAdapterConfig:

@@ -60,7 +60,8 @@ export interface VertexIds {
 })
 export class WorkflowEditorComponent {
   flowchartConfiguration: FlowchartConfiguration | undefined = undefined;
-  flowchartManipulatorConfiguration: SVGManipulatorConfiguration = new SVGManipulatorConfiguration();
+  flowchartManipulatorConfiguration: SVGManipulatorConfiguration =
+    new SVGManipulatorConfiguration();
 
   private currentWorkflow: WorkflowTransformation;
   private hasChanges = false;
@@ -138,9 +139,8 @@ export class WorkflowEditorComponent {
     if (link === undefined) {
       return;
     }
-    const pathData = this.flowchartConverter.convertLinkPathToPositions(
-      element
-    );
+    const pathData =
+      this.flowchartConverter.convertLinkPathToPositions(element);
     if (link.path.length === 0 && pathData.length === 0) {
       return;
     }
@@ -201,9 +201,10 @@ export class WorkflowEditorComponent {
       this.currentWorkflow.content.links,
       removedElement.id
     );
-    this.currentWorkflow.content.constants = this.currentWorkflow.content.constants.filter(
-      constant => constant.operator_id !== removedElement.id
-    );
+    this.currentWorkflow.content.constants =
+      this.currentWorkflow.content.constants.filter(
+        constant => constant.operator_id !== removedElement.id
+      );
     this.hasChanges = true;
   }
 
@@ -284,34 +285,31 @@ export class WorkflowEditorComponent {
       return;
     }
 
-    const linkSourceIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
-      element,
-      true
-    );
-    const linkTargetIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
-      element,
-      false
-    );
+    const linkSourceIds: VertexIds =
+      this.flowchartConverter.getLinkOperatorAndConnectorId(element, true);
+    const linkTargetIds: VertexIds =
+      this.flowchartConverter.getLinkOperatorAndConnectorId(element, false);
 
     const sourceIsWorkflowInput =
       linkSourceIds.operatorId === this.currentWorkflow.id;
-    const startConnector: Connector = this.flowchartConverter.getConnectorFromOperatorById(
-      linkSourceIds,
-      this.currentWorkflow,
-      sourceIsWorkflowInput
-    );
+    const startConnector: Connector =
+      this.flowchartConverter.getConnectorFromOperatorById(
+        linkSourceIds,
+        this.currentWorkflow,
+        sourceIsWorkflowInput
+      );
 
     const targetIsWorkflowOutput =
       linkTargetIds.operatorId === this.currentWorkflow.id;
-    const endConnector: Connector = this.flowchartConverter.getConnectorFromOperatorById(
-      linkTargetIds,
-      this.currentWorkflow,
-      targetIsWorkflowOutput
-    );
+    const endConnector: Connector =
+      this.flowchartConverter.getConnectorFromOperatorById(
+        linkTargetIds,
+        this.currentWorkflow,
+        targetIsWorkflowOutput
+      );
 
-    const linkPath = this.flowchartConverter.convertLinkPathToPositions(
-      element
-    );
+    const linkPath =
+      this.flowchartConverter.convertLinkPathToPositions(element);
 
     const newLink: Link = {
       id: UUID().toString(),
@@ -388,8 +386,10 @@ export class WorkflowEditorComponent {
         return;
       }
       const bodyRect = document.body.getBoundingClientRect();
-      const openToRight = position.x + popoverWidth < bodyRect.right;
-      const openToTop = position.y + popoverMinHeight > bodyRect.bottom;
+      const openToRight =
+        (position.x as number) + popoverWidth < bodyRect.right;
+      const openToTop =
+        (position.y as number) + popoverMinHeight > bodyRect.bottom;
       this.popoverService.showPopover(
         this.currentWorkflow.id,
         position.x,
@@ -626,9 +626,8 @@ export class WorkflowEditorComponent {
       );
     }
     this.flowchartManipulatorConfiguration.dispatchContextMenuEvent = true;
-    this.flowchartConfiguration = this.flowchartConverter.convertWorkflowToFlowchart(
-      workflow
-    );
+    this.flowchartConfiguration =
+      this.flowchartConverter.convertWorkflowToFlowchart(workflow);
 
     this.currentWorkflow = workflow;
 

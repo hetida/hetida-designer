@@ -20,29 +20,27 @@ describe('NavigationItemComponent', () => {
   const mockTabItemService = jasmine.createSpy();
   const mockTransformationService = jasmine.createSpy();
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [BasicTestModule],
-        declarations: [NavigationItemComponent],
-        providers: [
-          provideMockStore(),
-          {
-            provide: TransformationService,
-            useValue: mockTransformationService
-          },
-          {
-            provide: ContextMenuService,
-            useValue: mockContextMenuService
-          },
-          {
-            provide: TabItemService,
-            useValue: mockTabItemService
-          }
-        ]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [BasicTestModule],
+      declarations: [NavigationItemComponent],
+      providers: [
+        provideMockStore(),
+        {
+          provide: TransformationService,
+          useValue: mockTransformationService
+        },
+        {
+          provide: ContextMenuService,
+          useValue: mockContextMenuService
+        },
+        {
+          provide: TabItemService,
+          useValue: mockTabItemService
+        }
+      ]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(NavigationItemComponent);

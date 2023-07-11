@@ -11,19 +11,17 @@ describe('NavigationCategoryComponent', () => {
   let component: NavigationCategoryComponent;
   let fixture: ComponentFixture<NavigationCategoryComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          MatExpansionModule,
-          MatIconModule,
-          StoreModule.forRoot(appReducers),
-          BrowserAnimationsModule
-        ],
-        declarations: [NavigationCategoryComponent, NavigationItemComponent]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        MatExpansionModule,
+        MatIconModule,
+        StoreModule.forRoot(appReducers),
+        BrowserAnimationsModule
+      ],
+      declarations: [NavigationCategoryComponent, NavigationItemComponent]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(NavigationCategoryComponent);
