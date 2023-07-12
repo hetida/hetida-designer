@@ -241,7 +241,7 @@ class TransformationRevision(BaseModel):
                     "Thus, it will be adjusted in the io interface.",
                     str(trafo_input.id),
                 )
-                # TODO: Delete instead of adjust once frontend is updated
+                # TODO: Delete instead of adjust once frontend has been updated
                 io_interface.inputs[
                     io_interface.inputs.index(trafo_input)
                 ] = workflow_input.to_transformation_input()
@@ -277,7 +277,7 @@ class TransformationRevision(BaseModel):
                     "Thus, it will be adjusted in the io interface.",
                     str(trafo_output.id),
                 )
-                # TODO: Delete instead of adjust once frontend is updated
+                # TODO: Delete instead of adjust once the frontend has been updated
                 io_interface.outputs[
                     io_interface.outputs.index(trafo_output)
                 ] = workflow_output.to_transformation_output()

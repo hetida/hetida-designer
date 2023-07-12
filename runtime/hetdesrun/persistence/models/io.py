@@ -94,13 +94,20 @@ class Position(BaseModel):
 class Connector(IO):
     position: Position
 
-    def matches(self, other: "Connector") -> bool:
+    def matches_connector(self, other: "Connector") -> bool:
         return (
             self.id == other.id
             and self.name == other.name
             and self.data_type == other.data_type
             and self.position.x == other.position.x
             and self.position.y == other.position.y
+        )
+
+    def matches_io(self, other: IO) -> bool:
+        return (
+            self.id == other.id
+            and self.name == other.name
+            and self.data_type == other.data_type
         )
 
 

@@ -393,7 +393,7 @@ def test_validator_links_acyclic_directed_graph() -> None:
     pass
 
 
-def test_validator_clean_up_unlinked_workflow_content_inputs(caplog) -> None:
+def test_validator_clean_up_workflow_content_inputs(caplog) -> None:
     with caplog.at_level(logging.WARNING):
         workflow_content_with_input_referencing_wrong_operator_dict = deepcopy(
             workfklow_content_dict
@@ -441,6 +441,7 @@ def test_validator_clean_up_unlinked_workflow_content_inputs(caplog) -> None:
         workflow_content_with_unlinked_named_input_dict["inputs"][0]["id"] = str(
             get_uuid_from_seed("wrong id")
         )
+        del workflow_content_with_unlinked_named_input_dict["links"][1]
         caplog.clear()
         WorkflowContent(**workflow_content_with_unlinked_named_input_dict)
         assert "Link" in caplog.text
@@ -459,6 +460,22 @@ def test_validator_clean_up_unlinked_workflow_content_inputs(caplog) -> None:
         assert "Link start connector" in caplog.text
         assert "does not match" in caplog.text
 
+        workflow_content_with_changed_input_position_dict = deepcopy(
+            workfklow_content_dict
+        )
+        workflow_content_with_changed_input_position_dict["inputs"][0]["position"] = {
+            "x": 20,
+            "y": 30,
+        }
+        caplog.clear()
+        workflow_content_with_changed_input_position = WorkflowContent(
+            **workflow_content_with_changed_input_position_dict
+        )
+        assert "position of the link start connector" in caplog.text
+        assert "does not match" in caplog.text
+        assert workflow_content_with_changed_input_position.inputs[0].position.x == 20
+        assert workflow_content_with_changed_input_position.inputs[0].position.y == 30
+
         workflow_content_with_input_linked_to_wrong_operator_input_dict = deepcopy(
             workfklow_content_dict
         )
@@ -468,6 +485,7 @@ def test_validator_clean_up_unlinked_workflow_content_inputs(caplog) -> None:
         workflow_content_with_input_linked_to_wrong_operator_input_dict["inputs"][0][
             "connector_id"
         ] = "15637612-6dc7-4f55-7b5b-83c9fdac8579"
+        del workflow_content_with_input_linked_to_wrong_operator_input_dict["links"][3]
         caplog.clear()
         WorkflowContent(
             **workflow_content_with_input_linked_to_wrong_operator_input_dict
@@ -476,7 +494,7 @@ def test_validator_clean_up_unlinked_workflow_content_inputs(caplog) -> None:
         assert "referencing different operator input" in caplog.text
 
 
-def test_validator_clean_up_unlinked_workflow_content_outputs(caplog) -> None:
+def test_validator_clean_up_workflow_content_outputs(caplog) -> None:
     with caplog.at_level(logging.WARNING):
         workflow_content_with_output_referencing_wrong_operator_dict = deepcopy(
             workfklow_content_dict
@@ -508,6 +526,7 @@ def test_validator_clean_up_unlinked_workflow_content_outputs(caplog) -> None:
         workflow_content_with_unlinked_named_output_dict["outputs"][0]["id"] = str(
             get_uuid_from_seed("wrong id")
         )
+        del workflow_content_with_unlinked_named_output_dict["links"][4]
         caplog.clear()
         WorkflowContent(**workflow_content_with_unlinked_named_output_dict)
         assert "Link" in caplog.text
@@ -526,6 +545,22 @@ def test_validator_clean_up_unlinked_workflow_content_outputs(caplog) -> None:
         assert "Link end connector" in caplog.text
         assert "does not match" in caplog.text
 
+        workflow_content_with_changed_output_position_dict = deepcopy(
+            workfklow_content_dict
+        )
+        workflow_content_with_changed_output_position_dict["outputs"][0]["position"] = {
+            "x": 20,
+            "y": 30,
+        }
+        caplog.clear()
+        workflow_content_with_changed_output_position = WorkflowContent(
+            **workflow_content_with_changed_output_position_dict
+        )
+        assert "position of the link end connector" in caplog.text
+        assert "does not match" in caplog.text
+        assert workflow_content_with_changed_output_position.outputs[0].position.x == 20
+        assert workflow_content_with_changed_output_position.outputs[0].position.y == 30
+
         workflow_content_with_output_linked_to_wrong_operator_output_dict = deepcopy(
             workfklow_content_dict
         )
@@ -535,6 +570,9 @@ def test_validator_clean_up_unlinked_workflow_content_outputs(caplog) -> None:
         workflow_content_with_output_linked_to_wrong_operator_output_dict["outputs"][0][
             "connector_id"
         ] = "cbf856b7-faf7-3079-d8e8-3b666d6f9d84"
+        del workflow_content_with_output_linked_to_wrong_operator_output_dict["links"][
+            0
+        ]
         caplog.clear()
         WorkflowContent(
             **workflow_content_with_output_linked_to_wrong_operator_output_dict
