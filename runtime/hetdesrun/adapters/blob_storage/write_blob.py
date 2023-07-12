@@ -138,7 +138,7 @@ async def write_custom_objects_to_storage(
 
 
 async def write_blob_to_storage(
-    data: Any, thing_node_id: str, metadata_key: str
+    data: Any, thing_node_id: str, metadata_key: str, filters: dict[str,str]
 ) -> None:
     """Write BLOB to storage.
 
@@ -276,5 +276,5 @@ async def send_data(
             raise AdapterClientWiringInvalidError(msg)
 
         blob = wf_output_name_to_value_mapping_dict[wf_output_name]
-        await write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key)
+        await write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key, filtered_sink.filters)
     return {}
