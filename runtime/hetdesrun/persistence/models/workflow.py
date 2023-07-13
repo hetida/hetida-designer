@@ -21,15 +21,146 @@ from hetdesrun.persistence.models.operator import NonEmptyValidStr, Operator
 logger = logging.getLogger(__name__)
 
 
+def named_wf_input_unnecessary(
+    wf_input: WorkflowContentDynamicInput,
+    links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]],
+) -> bool:
+    """Check if a named dynamic workflow content input is unnecessary.
+
+    Unnecessary named dynamic workflow content inputs have
+        * no link,
+        * a link with a start not matching them or
+        * a link with an end not referencing the operator input referenced by the input itself.
+    """
+    try:
+        links_starting_at_workflow_input = links_by_start_id_tuple_dict[
+            (None, wf_input.id)
+        ]
+    except KeyError:
+        logger.warning(
+            "Link with start connector referencing dynamic workflow content input '%s' "
+            "not found! The input will be removed.",
+            str(wf_input.id),
+        )
+        return True
+    if len(links_starting_at_workflow_input) > 1:
+        msg = (
+            "There is more than one link starting from "
+            f"dynamic workflow content input '{str(wf_input.id)}'."
+        )
+        logger.error(msg)
+        raise ValueError(msg)
+    link_at_workflow_input = links_starting_at_workflow_input[0]
+    if not wf_input.matches_io(link_at_workflow_input.start.connector):
+        # TODO: change to matches_connector once the frontend has been updated
+        logger.warning(
+            "Link start connector referencing dynamic workflow content input '%s' does "
+            "not match! The input will be removed.",
+            str(wf_input.id),
+        )
+        return True
+    if wf_input.position != link_at_workflow_input.start.connector.position:
+        # TODO: remove this check once the above one has changed to machtes_connector
+        logger.warning(
+            "The position of the link start connector referencing dynamic workflow "
+            "content input '%s' does not match the position of the dynamic workflow "
+            "content input! The link start connector position will be adjusted.",
+            str(wf_input.id),
+        )
+        link_at_workflow_input.start.connector.position = wf_input.position
+    # Operator input matches link end connector already checked
+    # in validator link_connectors_match_operator_ios.
+    if (
+        link_at_workflow_input.end.operator != wf_input.operator_id
+        or link_at_workflow_input.end.connector.id != wf_input.connector_id
+    ):
+        logger.warning(
+            "Link with start connector referencing dynamic workflow content input '%s' "
+            "has end connector referencing different operator input than the worfklow "
+            "input! The input will be removed.",
+            str(wf_input.id),
+        )
+        return True
+    return False
+
+
+def named_wf_output_unnecessary(
+    wf_output: WorkflowContentOutput,
+    link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link],
+) -> bool:
+    """Check if a named workflow content output is unnecessary.
+
+    Unnecessary named workflow content outputs have
+        * no link,
+        * a link end not matching them or
+        * a link with a start not referencing the operator input referenced by the output itself.
+    """
+    try:
+        link = link_by_end_id_tuple_dict[(None, wf_output.id)]
+    except KeyError:
+        logger.warning(
+            "Link with end connector referencing workflow output '%s' not found! "
+            "The output will be removed.",
+            str(wf_output.id),
+        )
+        return True
+    if not wf_output.matches_io(link.end.connector):
+        # TODO: change to matches_connector once the frontend has been updated
+        logger.warning(
+            "Link end connector referencing workflow content output '%s' does "
+            "not match! The output will be removed.",
+            str(wf_output.id),
+        )
+        return True
+    if wf_output.position != link.end.connector.position:
+        # TODO: remove this check once the above one has changed to machtes_connector
+        logger.warning(
+            "The position of the link end connector referencing workflow content "
+            "output '%s' does not match the workflow content output position! "
+            "The link end connector position will be adjusted.",
+            str(wf_output.id),
+        )
+        link.end.connector.position = wf_output.position
+    # Operator output matches link start connector already checked
+    # in validator link_connectors_match_operator_ios.
+    if (
+        link.start.operator != wf_output.operator_id
+        or link.start.connector.id != wf_output.connector_id
+    ):
+        logger.warning(
+            "Link with end connector referencing workflow content output '%s' "
+            "has start connector referencing different operator output than the "
+            "worfklow output! The output will be removed.",
+            str(wf_output.id),
+        )
+        return True
+    return False
+
+
 class WorkflowContent(BaseModel):
     operators: list[Operator] = []
-    operator_input_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorInput] = Field({})
+    operator_input_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorInput] = Field(
+        {}, description="This field is only used for validation and removed afterwards."
+    )
     operator_output_by_id_tuple_dict: dict[tuple[UUID, UUID], OperatorOutput] = Field(
-        {}
+        {}, description="This field is only used for validation and removed afterwards."
     )
     links: list[Link] = Field([], description="Links may not form loops.")
-    links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = Field({})
-    link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = Field({})
+    links_by_start_id_tuple_dict: dict[tuple[UUID | None, UUID], list[Link]] = Field(
+        {},
+        description=(
+            "This field is only used for validation and removed afterwards. "
+            "At dynamic workflow content inputs at most one link starts, "
+            "but at operator outputs more than one link may start."
+        ),
+    )
+    link_by_end_id_tuple_dict: dict[tuple[UUID | None, UUID], Link] = Field(
+        {},
+        description=(
+            "This field is only used for validation and removed afterwards. Both at workflow "
+            "content outputs and operator inputs at most one link ends."
+        ),
+    )
     constants: list[WorkflowContentConstantInput] = Field(
         [],
         description=(
@@ -341,15 +472,12 @@ class WorkflowContent(BaseModel):
     ) -> list[WorkflowContentDynamicInput]:
         """Cleanup unlinked (or wrongly linked named) dynamic workflow content inputs.
 
-        Delete inputs for which the referenced operator input
+        Delete dynamic workflow content inputs inputs for which the referenced operator input
         * does not exist,
         * does not match,
         * is not exposed or
         * has a link with a start not matching the workflow content input.
-        Delete named inputs which have
-        * no link,
-        * a link with a start not matching them or
-        * a link with an end not referencing the operator input referenced by the input itself.
+        Delete unnecessary named dynamic workflow content inputs.
         """
         try:
             operator_input_by_id_tuple_dict: dict[
@@ -413,60 +541,13 @@ class WorkflowContent(BaseModel):
                     )
                     inputs.remove(wf_input)
                     continue
-            if wf_input.name is not None and wf_input.name != "":
-                # Only named inputs are linked to the operator input.
-                try:
-                    links_starting_at_workflow_input = links_by_start_id_tuple_dict[
-                        (None, wf_input.id)
-                    ]
-                except KeyError:
-                    logger.warning(
-                        "Link with start connector referencing dynamic workflow content input '%s' "
-                        "not found! The input will be removed.",
-                        str(wf_input.id),
-                    )
-                    inputs.remove(wf_input)
-                    continue
-                if len(links_starting_at_workflow_input) > 1:
-                    msg = (
-                        "There is more than one link starting from "
-                        f"dynamic workflow content input '{str(wf_input.id)}'."
-                    )
-                    logger.error(msg)
-                    raise ValueError(msg)
-                link = links_starting_at_workflow_input[0]
-                if not wf_input.matches_io(link.start.connector):
-                    # TODO: change to matches_connector once the frontend has been updated
-                    logger.warning(
-                        "Link start connector referencing dynamic workflow content input '%s' does "
-                        "not match! The input will be removed.",
-                        str(wf_input.id),
-                    )
-                    inputs.remove(wf_input)
-                    continue
-                if wf_input.position != link.start.connector.position:
-                    # TODO: remove this check once the above one has changed to machtes_connector
-                    logger.warning(
-                        "The position of the link start connector referencing dynamic workflow "
-                        "content input '%s' does not match the position of the dynamic workflow "
-                        "content input! The link start connector position will be adjusted.",
-                        str(wf_input.id),
-                    )
-                    link.start.connector.position = wf_input.position
-                # Operator input matches link end connector already checked
-                # in validator link_connectors_match_operator_ios.
-                if (
-                    link.end.operator != wf_input.operator_id
-                    or link.end.connector.id != wf_input.connector_id
-                ):
-                    logger.warning(
-                        "Link with start connector referencing dynamic workflow content input '%s' "
-                        "has end connector referencing different operator input than the worfklow "
-                        "input! The input will be removed.",
-                        str(wf_input.id),
-                    )
-                    inputs.remove(wf_input)
-                    continue
+            if (
+                wf_input.name is not None
+                and wf_input.name != ""
+                and named_wf_input_unnecessary(wf_input, links_by_start_id_tuple_dict)
+                is True
+            ):
+                inputs.remove(wf_input)
         return inputs
 
     @validator("inputs", each_item=False)
@@ -563,10 +644,7 @@ class WorkflowContent(BaseModel):
         * does not exist,
         * does not match or
         * has a link with an end not matching the workflow content output.
-        Delete named outputs which have
-        * no link,
-        * a link end not matching them or
-        * a link with a start not referencing the operator input referenced by the output itself.
+        Delete unnecessary named outputs.
         """
         try:
             links_by_start_id_tuple_dict: dict[
@@ -625,50 +703,13 @@ class WorkflowContent(BaseModel):
                     )
                     outputs.remove(wf_output)
                     continue
-            if wf_output.name is not None and wf_output.name != "":
-                # Only named outputs are linked to the operator output.
-                try:
-                    link = link_by_end_id_tuple_dict[(None, wf_output.id)]
-                except KeyError:
-                    logger.warning(
-                        "Link with end connector referencing workflow output '%s' not found! "
-                        "The output will be removed.",
-                        str(wf_output.id),
-                    )
-                    outputs.remove(wf_output)
-                    continue
-                if not wf_output.matches_io(link.end.connector):
-                    # TODO: change to matches_connector once the frontend has been updated
-                    logger.warning(
-                        "Link end connector referencing workflow content output '%s' does "
-                        "not match! The output will be removed.",
-                        str(wf_output.id),
-                    )
-                    outputs.remove(wf_output)
-                    continue
-                if wf_output.position != link.end.connector.position:
-                    # TODO: remove this check once the above one has changed to machtes_connector
-                    logger.warning(
-                        "The position of the link end connector referencing workflow content "
-                        "output '%s' does not match the workflow content output position! "
-                        "The link end connector position will be adjusted.",
-                        str(wf_output.id),
-                    )
-                    link.end.connector.position = wf_output.position
-                # Operator output matches link start connector already checked
-                # in validator link_connectors_match_operator_ios.
-                if (
-                    link.start.operator != wf_output.operator_id
-                    or link.start.connector.id != wf_output.connector_id
-                ):
-                    logger.warning(
-                        "Link with end connector referencing workflow content output '%s' "
-                        "has start connector referencing different operator output than the "
-                        "worfklow output! The output will be removed.",
-                        str(wf_output.id),
-                    )
-                    outputs.remove(wf_output)
-                    continue
+            if (
+                wf_output.name is not None
+                and wf_output.name != ""
+                and named_wf_output_unnecessary(wf_output, link_by_end_id_tuple_dict)
+                is True
+            ):
+                outputs.remove(wf_output)
         return outputs
 
     @validator("outputs", each_item=False)
