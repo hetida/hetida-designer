@@ -419,6 +419,7 @@ export class WorkflowIODialogComponent {
   }
 
   private updateWorkflowIO(data: WorkflowIODefinition): void {
+    console.log('data IN->', data);
     // TODO do not mutate the dialog data, take a copy from form control
     const foundInput = this.data.workflowTransformation.content.inputs.find(
       (ref: IOConnector) => ref.id === data.id
@@ -431,7 +432,6 @@ export class WorkflowIODialogComponent {
       this.data.workflowTransformation.content.outputs.find(
         (ref: IOConnector) => ref.id === data.id
       );
-
     if (foundConstant && data.isConstant) {
       foundConstant.value = data.constant;
     } else if (foundInput && !data.isConstant) {
@@ -443,6 +443,11 @@ export class WorkflowIODialogComponent {
       if (data.typeOption === IOTypeOption.REQUIRED) {
         foundInput.value = null;
       }
+      this.data.workflowTransformation.io_interface.inputs.forEach(input => {
+        if (input.id === foundInput.id) {
+          input.name = foundInput.name;
+        }
+      });
     } else if (foundInput && data.isConstant) {
       // move data from inputs to constants
       this.data.workflowTransformation.content.inputs =
@@ -476,7 +481,7 @@ export class WorkflowIODialogComponent {
     } else {
       throw new Error(`Could not find IO with id '${data.id}'`);
     }
-
+    console.log('data to flochart', this.data.workflowTransformation);
     this.createPreview();
   }
 

@@ -138,7 +138,7 @@ export class ComponentIODialogComponent implements OnInit {
       ),
       data_type: IOType.ANY,
       type: IOTypeOption.REQUIRED,
-      value: '',
+      value: null,
       exposed: false
     };
     this.componentTransformation.io_interface.inputs.push(io);
