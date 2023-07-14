@@ -970,13 +970,8 @@ class WorkflowContent(BaseModel):
     def clean_up_outer_links(cls, values: dict) -> dict:
         """Clean up outer links.
 
-        Delete links from a dynamic/constant workflow content input to an operator input if
-        * the referenced dynamic/constant workflow content input does not exist or
-        * the referenced dynamic/constant workflow content input has no name.
-
-        Delete links from an operator input to a workflow content output if
-        * the referenced workflow content output does not exist or
-        * the referenced workflow content output has no name.
+        Delete links which are invalid due to the referenced workflow content input.
+        Delete links which are invalid due to the referenced workflow content output.
 
         New links for named inputs are added by the frontend before sending the PUT-request.
         """
