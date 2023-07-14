@@ -279,8 +279,6 @@ class WorkflowContentDynamicInput(Flexibility, WorkflowContentIO):
             data_type=self.data_type,
             type=self.type,
             value=self.value,
-            operator_id=self.operator_id,
-            connector_id=self.connector_id,
         )
 
     def to_workflow_input(
