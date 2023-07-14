@@ -283,6 +283,20 @@ def test_workflow_content_validator_operator_names_unique(
         != workflow_content_double_operator_name.operators[0].name
     )
 
+    workflow_content_single_operator_with_suffix_dict = deepcopy(workflow_content_dict)
+    del workflow_content_single_operator_with_suffix_dict["operators"][0]
+    del workflow_content_single_operator_with_suffix_dict["links"][2]
+    del workflow_content_single_operator_with_suffix_dict["links"][1]
+    del workflow_content_single_operator_with_suffix_dict["links"][0]
+    workflow_content_single_operator_with_suffix = WorkflowContent(
+        **workflow_content_single_operator_with_suffix_dict
+    )
+    assert len(workflow_content_single_operator_with_suffix.operators) == 1
+    assert (
+        workflow_content_single_operator_with_suffix.operators[0].name.endswith("(2)")
+        is False
+    )
+
 
 def test_workflow_content_validator_link_connectors_match_operator_ios(
     caplog: pytest.LogCaptureFixture, workflow_content_dict: dict
