@@ -493,6 +493,8 @@ class WorkflowContent(BaseModel):
                             new_name,
                         )
                         operator.name = new_name
+            else:
+                operator_group[0].name = NonEmptyValidStr(operator_name_seed)
 
         return operators
 
