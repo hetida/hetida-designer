@@ -222,6 +222,7 @@ class TransformationRevision(BaseModel):
         wf_inputs_by_id: dict[UUID, WorkflowContentDynamicInput] = {
             wf_input.id: wf_input for wf_input in workflow_content.inputs
         }
+        remove_trafo_inputs = []
         for trafo_input in io_interface.inputs:
             try:
                 workflow_input = wf_inputs_by_id[trafo_input.id]
@@ -232,7 +233,7 @@ class TransformationRevision(BaseModel):
                     "Thus, it will be removed from the io interface.",
                     str(trafo_input.id),
                 )
-                io_interface.inputs.remove(trafo_input)
+                remove_trafo_inputs.append(trafo_input)
                 continue
             if not workflow_input.matches_trafo_input(trafo_input):
                 logger.warning(
@@ -247,6 +248,9 @@ class TransformationRevision(BaseModel):
                 ] = workflow_input.to_transformation_input()
             del wf_inputs_by_id[trafo_input.id]
 
+        for trafo_input in remove_trafo_inputs:
+            io_interface.inputs.remove(trafo_input)
+
         for wf_input in wf_inputs_by_id.values():
             logger.warning(
                 "Input '%s' is in the worklow content but not in the io interface. "
@@ -258,6 +262,7 @@ class TransformationRevision(BaseModel):
         wf_outputs_by_id: dict[UUID, WorkflowContentOutput] = {
             wf_output.id: wf_output for wf_output in workflow_content.outputs
         }
+        remove_trafo_outputs = []
         for trafo_output in io_interface.outputs:
             try:
                 workflow_output = wf_outputs_by_id[trafo_output.id]
@@ -268,7 +273,7 @@ class TransformationRevision(BaseModel):
                     "Thus, it will be removed from the io interface.",
                     str({trafo_output.id}),
                 )
-                io_interface.outputs.remove(trafo_output)
+                remove_trafo_outputs.append(trafo_output)
                 continue
             if not workflow_output.matches_trafo_output(trafo_output):
                 logger.warning(
@@ -282,6 +287,9 @@ class TransformationRevision(BaseModel):
                     io_interface.outputs.index(trafo_output)
                 ] = workflow_output.to_transformation_output()
             del wf_outputs_by_id[trafo_output.id]
+
+        for trafo_output in remove_trafo_outputs:
+            io_interface.outputs.remove(trafo_output)
 
         for wf_output in wf_outputs_by_id.values():
             logger.warning(

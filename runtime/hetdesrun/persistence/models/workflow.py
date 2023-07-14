@@ -207,7 +207,7 @@ class WorkflowContent(BaseModel):
                     if index == 0:
                         if operator.name != NonEmptyValidStr(operator_name_seed):
                             logger.debug(
-                                "Rename operator %s from %s to %s",
+                                "Rename operator '%s' from '%s' to '%s'",
                                 str(operator.id),
                                 operator.name,
                                 operator_name_seed,
@@ -218,7 +218,7 @@ class WorkflowContent(BaseModel):
                             operator_name_seed + " (" + str(index + 1) + ")"
                         )
                         logger.debug(
-                            "Rename operator %s from %s to %s",
+                            "Rename operator '%s' from '%s' to '%s'",
                             str(operator.id),
                             operator.name,
                             new_name,
@@ -293,6 +293,8 @@ class WorkflowContent(BaseModel):
             raise ValueError(
                 "Cannot reduce to valid links if attribute 'operators' is missing!"
             ) from error
+
+        remove_links = []
         for link in links:
             # Since link start and end operators may not be the same, they cannot both be None
             if link.start.operator is not None:
@@ -304,23 +306,22 @@ class WorkflowContent(BaseModel):
                     ]
                 except KeyError:
                     logger.warning(
-                        "Operator output referenced by link start connector %s "
-                        "of link '%s' not found! The link will be removed.",
-                        link.start.connector.json(),
+                        "Operator output referenced by link '%s' start connector '%s' "
+                        "not found! The link will be removed.",
                         str(link.id),
+                        str(link.start.connector.id),
                     )
-                    links.remove(link)
+                    remove_links.append(link)
                     continue
                 if not link.start.connector.matches_connector(operator_output):
                     logger.warning(
-                        "The link start connector %s and "
-                        "the referenced operator output %s "
-                        "do not match for link '%s'! The link will be removed.",
-                        link.start.connector.json(),
-                        operator_output.json(),
+                        "The link '%s' start connector '%s' and "
+                        "the referenced operator output "
+                        "do not match! The link will be removed.",
                         str(link.id),
+                        str(link.start.connector.id),
                     )
-                    links.remove(link)
+                    remove_links.append(link)
                     continue
             if link.end.operator is not None:
                 # Link ends at an operator input, not at a workflow output
@@ -331,33 +332,35 @@ class WorkflowContent(BaseModel):
                     ]
                 except KeyError:
                     logger.warning(
-                        "Operator input referenced by link end connector %s "
-                        "of link '%s' not found! The link will be removed.",
-                        link.end.connector.json(),
+                        "Operator input referenced by link '%s' end connector '%s' "
+                        "not found! The link will be removed.",
                         str(link.id),
+                        str(link.end.connector.id),
                     )
-                    links.remove(link)
+                    remove_links.append(link)
                     continue
                 if not link.end.connector.matches_connector(operator_input):
                     logger.warning(
-                        "The link end connector %s and the referenced operator input %s "
-                        "do not match for link '%s'! The link will be removed.",
-                        link.end.connector.json(),
-                        operator_input.json(),
+                        "The link '%s' end connector '%s' and the referenced operator input "
+                        "do not match! The link will be removed.",
                         str(link.id),
+                        str(link.end.connector.id),
                     )
-                    links.remove(link)
+                    remove_links.append(link)
                     continue
                 if operator_input.exposed is False:
                     logger.warning(
-                        "The link end connector %s references a not exposed operator input %s! "
-                        "The link '%s' will be removed.",
-                        link.end.connector.json(),
-                        operator_input.json(),
+                        "The link '%s' end connector '%s' references a not exposed operator input! "
+                        "The link will be removed.",
                         str(link.id),
+                        str(link.end.connector.id),
                     )
-                    links.remove(link)
+                    remove_links.append(link)
                     continue
+
+        for link in remove_links:
+            links.remove(link)
+
         return links
 
     @validator("links", each_item=False)
@@ -494,6 +497,8 @@ class WorkflowContent(BaseModel):
                 "Cannot clean up unlinked inputs "
                 "if any of the attributes 'operators', 'links' is missing!"
             ) from error
+
+        remove_wf_inputs = []
         for wf_input in inputs:
             try:
                 operator_input = operator_input_by_id_tuple_dict[
@@ -505,7 +510,7 @@ class WorkflowContent(BaseModel):
                     "The input will be removed.",
                     str(wf_input.id),
                 )
-                inputs.remove(wf_input)
+                remove_wf_inputs.append(wf_input)
                 continue
             if not wf_input.matches_operator_io(operator_input):
                 logger.warning(
@@ -513,7 +518,7 @@ class WorkflowContent(BaseModel):
                     "The input will be removed.",
                     str(wf_input.id),
                 )
-                inputs.remove(wf_input)
+                remove_wf_inputs.append(wf_input)
                 continue
             if operator_input.exposed is False:
                 logger.warning(
@@ -521,7 +526,7 @@ class WorkflowContent(BaseModel):
                     "The input will be removed.",
                     str(wf_input.id),
                 )
-                inputs.remove(wf_input)
+                remove_wf_inputs.append(wf_input)
                 continue
             try:
                 link_to_operator_input = link_by_end_id_tuple_dict[
@@ -539,7 +544,7 @@ class WorkflowContent(BaseModel):
                         "with a start id not matching the input id! The input will be removed.",
                         str(wf_input.id),
                     )
-                    inputs.remove(wf_input)
+                    remove_wf_inputs.append(wf_input)
                     continue
             if (
                 wf_input.name is not None
@@ -547,7 +552,11 @@ class WorkflowContent(BaseModel):
                 and named_wf_input_unnecessary(wf_input, links_by_start_id_tuple_dict)
                 is True
             ):
-                inputs.remove(wf_input)
+                remove_wf_inputs.append(wf_input)
+
+        for wf_input in remove_wf_inputs:
+            inputs.remove(wf_input)
+
         return inputs
 
     @validator("inputs", each_item=False)
@@ -603,8 +612,9 @@ class WorkflowContent(BaseModel):
                     except KeyError:
                         logger.warning(
                             "Found no workflow content input and no link end connector for "
-                            "operator input %s! Add unnamed workflow content input.",
-                            operator_input.json(),
+                            "operator '%s' input '%s'! Add unnamed workflow content input.",
+                            str(operator.id),
+                            str(operator_input.id),
                         )
                         wf_input = WorkflowContentDynamicInput(
                             data_type=operator_input.data_type,
@@ -619,9 +629,10 @@ class WorkflowContent(BaseModel):
                     if link.start.operator is None:
                         logger.warning(
                             "Found no workflow content input but a link with start connector "
-                            "referencing a workflow content input for operator input %s! "
+                            "referencing a workflow content input for operator '%s' input '%s'! "
                             "Add unnamed workflow content input.",
-                            operator_input.json(),
+                            str(operator.id),
+                            str(operator_input.id),
                         )
                         wf_input = WorkflowContentDynamicInput(
                             data_type=operator_input.data_type,
@@ -661,6 +672,8 @@ class WorkflowContent(BaseModel):
                 "Cannot clean up unlinked inputs "
                 "if any of the attributes 'operators', 'links' is missing!"
             ) from error
+
+        remove_wf_outputs = []
         for wf_output in outputs:
             try:
                 operator_output = operator_output_by_id_tuple_dict[
@@ -672,7 +685,7 @@ class WorkflowContent(BaseModel):
                     "The output will be removed.",
                     str(wf_output.id),
                 )
-                outputs.remove(wf_output)
+                remove_wf_outputs.append(wf_output)
                 continue
             if not wf_output.matches_operator_io(operator_output):
                 logger.warning(
@@ -680,7 +693,7 @@ class WorkflowContent(BaseModel):
                     "The output will be removed.",
                     str(wf_output.id),
                 )
-                outputs.remove(wf_output)
+                remove_wf_outputs.append(wf_output)
                 continue
             try:
                 links_starting_at_operator_output = links_by_start_id_tuple_dict[
@@ -701,7 +714,7 @@ class WorkflowContent(BaseModel):
                         "end id not matching the output id! The output will be removed.",
                         str(wf_output.id),
                     )
-                    outputs.remove(wf_output)
+                    remove_wf_outputs.append(wf_output)
                     continue
             if (
                 wf_output.name is not None
@@ -709,7 +722,11 @@ class WorkflowContent(BaseModel):
                 and named_wf_output_unnecessary(wf_output, link_by_end_id_tuple_dict)
                 is True
             ):
-                outputs.remove(wf_output)
+                remove_wf_outputs.append(wf_output)
+
+        for wf_output in remove_wf_outputs:
+            outputs.remove(wf_output)
+
         return outputs
 
     @validator("outputs", each_item=False)
@@ -753,8 +770,9 @@ class WorkflowContent(BaseModel):
                     except KeyError:
                         logger.warning(
                             "Found no workflow content output and no link start connector for "
-                            "operator output %s! Add unnamed workflow content output.",
-                            operator_output.json(),
+                            "operator '%s' output '%s'! Add unnamed workflow content output.",
+                            str(operator.id),
+                            str(operator_output.id),
                         )
                         wf_output = WorkflowContentOutput(
                             data_type=operator_output.data_type,
@@ -771,9 +789,10 @@ class WorkflowContent(BaseModel):
                     ):
                         logger.warning(
                             "Found no workflow content output but a link with start connector "
-                            "referencing a workflow content output for operator outpput %s! "
+                            "referencing a workflow content output for operator '%s' output '%s'! "
                             "Add unnamed workflow content output.",
-                            operator_output.json(),
+                            str(operator.id),
+                            str(operator_output.id),
                         )
                         wf_output = WorkflowContentOutput(
                             data_type=operator_output.data_type,
@@ -840,6 +859,7 @@ class WorkflowContent(BaseModel):
             wf_output.id: wf_output for wf_output in outputs
         }
 
+        remove_links = []
         for link in links:
             if link.start.operator is None:
                 # thus the link is from a workflow content input to an operator output
@@ -849,11 +869,12 @@ class WorkflowContent(BaseModel):
                     ]
                 except KeyError:
                     logger.warning(
-                        "Workflow input referenced by start connector "
-                        "of link '%s' not found! The link will be removed.",
+                        "Workflow input referenced by link '%s' start connector '%s' "
+                        "not found! The link will be removed.",
                         str(link.id),
+                        str(link.start.connector.id),
                     )
-                    links.remove(link)
+                    remove_links.append(link)
                     continue
                 else:
                     # the workflow_content_input referenced by the link is found
@@ -864,12 +885,13 @@ class WorkflowContent(BaseModel):
                         or workflow_content_input.name == ""
                     ):
                         logger.warning(
-                            "Workflow input '%s' referenced by start connector "
-                            "of link '%s' has no name! The link will be removed.",
+                            "Workflow input '%s' referenced by link '%s' start connector '%s' "
+                            "has no name! The link will be removed.",
                             str(workflow_content_input.id),
                             str(link.id),
+                            str(link.start.connector.id),
                         )
-                        links.remove(link)
+                        remove_links.append(link)
                         continue
             elif link.end.operator is None:
                 # thus the link is from a workflow content input to an operator output
@@ -879,23 +901,29 @@ class WorkflowContent(BaseModel):
                     ]
                 except KeyError:
                     logger.warning(
-                        "Workflow output referenced by end connector "
-                        "of link '%s' not found! The link will be removed.",
+                        "Workflow output referenced by link '%s' end connector '%s' "
+                        "not found! The link will be removed.",
                         str(link.id),
+                        str(link.end.connector.id),
                     )
-                    links.remove(link)
+                    remove_links.append(link)
                     continue
                 if (
                     workflow_content_output.name is None
                     or workflow_content_output.name == ""
                 ):
                     logger.warning(
-                        "Workflow output '%s' referenced by end connector "
-                        "of link '%s' has no name! The link will be removed.",
+                        "Workflow output '%s' referenced by link  '%s' end connector '%s' "
+                        "has no name! The link will be removed.",
                         str(workflow_content_output.id),
                         str(link.id),
+                        str(link.end.connector.id),
                     )
-                    links.remove(link)
+                    remove_links.append(link)
+
+        for link in remove_links:
+            links.remove(link)
+
         return values
 
     @root_validator()
