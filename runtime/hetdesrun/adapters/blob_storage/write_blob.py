@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 from mypy_boto3_s3 import S3Client
 from mypy_boto3_s3.type_defs import PutObjectOutputTypeDef
 
+from hetdesrun.adapters.blob_storage import GENERIC_SINK_NAME_SUFFIX
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
@@ -138,7 +139,7 @@ async def write_custom_objects_to_storage(
 
 
 async def write_blob_to_storage(
-    data: Any, thing_node_id: str, metadata_key: str, filters: dict[str,str]
+    data: Any, thing_node_id: str, metadata_key: str, filters: dict[str, str]
 ) -> None:
     """Write BLOB to storage.
 
@@ -176,7 +177,11 @@ async def write_blob_to_storage(
         object_key,
     ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
         thing_node_id=thing_node_id,
-        metadata_key=metadata_key,
+        metadata_key=metadata_key
+        if metadata_key.endswith(GENERIC_SINK_NAME_SUFFIX) is False
+        or "object_key_suffix" not in filters
+        else metadata_key.strip(GENERIC_SINK_NAME_SUFFIX)
+        + filters["object_key_suffix"],
         file_extension=FileExtension.H5
         if is_keras_model or is_keras_model_with_custom_objects
         else FileExtension.Pickle,
@@ -276,5 +281,7 @@ async def send_data(
             raise AdapterClientWiringInvalidError(msg)
 
         blob = wf_output_name_to_value_mapping_dict[wf_output_name]
-        await write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key, filtered_sink.filters)
+        await write_blob_to_storage(
+            blob, filtered_sink.ref_id, filtered_sink.ref_key, filtered_sink.filters
+        )
     return {}
