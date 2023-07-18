@@ -18,7 +18,6 @@ import { Constant } from 'src/app/model/constant';
 import { VertexIds } from 'src/app/components/workflow-editor/workflow-editor.component';
 import { Utils } from 'src/app/utils/utils';
 import { IOTypeOption } from '../../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
-import { WorkflowContent } from '../../model/workflow-content';
 
 @Injectable({
   providedIn: 'root'
@@ -38,11 +37,11 @@ export class FlowchartConverterService {
       inputs: transformation.io_interface.inputs
         .map(input => {
           if (typeof transformation.content !== 'string') {
-            const inputConnector = (
-              transformation.content as WorkflowContent
-            ).inputs.filter(contentInput => contentInput.id === input.id);
+            const inputConnector = transformation.content.inputs.filter(
+              contentInput => contentInput.id === input.id
+            );
             if (inputConnector.length > 0) {
-              (transformation.content as WorkflowContent).operators
+              transformation.content.operators
                 .filter(opt => opt.id === inputConnector[0].operator_id)
                 .forEach(foundOperator => {
                   foundOperator.inputs.forEach(operatorInput => {
