@@ -129,6 +129,7 @@ async def test_blob_storage_write_blob_to_storage_works() -> None:
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/E",
                 metadata_key="E - Next Object",
+                filters={},
             )
 
             object_summaries_response = client_mock.list_objects_v2(Bucket=bucket_name)
@@ -177,6 +178,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
                 data=struct.pack(">i", 23),
                 thing_node_id=thing_node_id,
                 metadata_key=metadata_key,
+                filters={},
             )
 
             object_summaries_response = client_mock.list_objects_v2(Bucket=bucket_name)
@@ -202,6 +204,7 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_sink() -> No
                     data=struct.pack(">i", 23),
                     thing_node_id=thing_node_id,
                     metadata_key=non_utc_metadata_key,
+                    filters={},
                 )
 
 
@@ -237,12 +240,14 @@ async def test_blob_storage_write_blob_to_storage_with_non_existing_bucket() -> 
                     data=struct.pack(">i", 42),
                     thing_node_id="i-ii/A",
                     metadata_key="A - Next Object",
+                    filters={},
                 )
 
             await write_blob_to_storage(
                 data=struct.pack(">i", 42),
                 thing_node_id="i-ii/A",
                 metadata_key="A - Next Object",
+                filters={},
             )
             client_mock.head_bucket(Bucket="i-ii")
 
@@ -295,7 +300,55 @@ async def test_blob_storage_write_blob_to_storage_with_existing_object() -> None
                     data=struct.pack(">i", 42),
                     thing_node_id="i-ii/A",
                     metadata_key="A - Next Object",
+                    filters={},
                 )
+
+
+@pytest.mark.asyncio
+async def test_blob_storage_write_blob_to_storage_with_object_key_suffix_filter() -> None:
+    with mock_s3():
+        client_mock = boto3.client("s3", region_name="us-east-1")
+        bucket_name = "i-ii"
+        client_mock.create_bucket(Bucket=bucket_name)
+        with mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob.get_s3_client",
+            return_value=client_mock,
+        ), mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
+            return_value=BlobStorageStructureSink(
+                id="i-ii/E_generic_sink",
+                thingNodeId="i-ii/E",
+                name="E - Next Object",
+                path="i-ii/E",
+                metadataKey="E - Next Object",
+            ),
+        ), mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
+            return_value={
+                "currently_executed_job_id": UUID(
+                    "8c71d5e1-dbf7-4a18-9c94-930a51f0bdf4"
+                )
+            },
+        ):
+            await write_blob_to_storage(
+                data=struct.pack(">i", 42),
+                thing_node_id="i-ii/E",
+                metadata_key="E - Next Object",
+                filters={
+                    "object_key_suffix": (
+                        "1970-01-01 00:00:00+00:00 - e411fabb-50fd-4262-855e-7a59e13bbfa3"
+                    )
+                },
+            )
+
+            object_summaries_response = client_mock.list_objects_v2(Bucket=bucket_name)
+            assert object_summaries_response["KeyCount"] == 1
+            object_key = object_summaries_response["Contents"][0]["Key"]
+            assert object_key == "E_1970-01-01T00:00:00+00:00_e411fabb-50fd-4262-855e-7a59e13bbfa3"
+            object_response = client_mock.get_object(Bucket=bucket_name, Key=object_key)
+            pickled_data_bytes = object_response["Body"].read()
+            file_object = BytesIO(pickled_data_bytes)
+            assert struct.unpack(">i", joblib.load(file_object)) == (42,)
 
 
 @pytest.mark.asyncio
@@ -317,10 +370,11 @@ async def test_blob_storage_send_data_works() -> None:
         )
         assert mocked_write_blob_to_storage.call_count == 1
         _, args, _ = mocked_write_blob_to_storage.mock_calls[0]
-        assert len(args) == 3
+        assert len(args) == 4
         assert args[0] == data
         assert args[1] == filtered_sink.ref_id
         assert args[2] == filtered_sink.ref_key
+        assert args[3] == filtered_sink.filters
 
 
 @pytest.mark.asyncio

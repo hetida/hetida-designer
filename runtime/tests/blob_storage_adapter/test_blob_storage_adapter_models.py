@@ -13,10 +13,12 @@ from hetdesrun.adapters.blob_storage.models import (
     BlobStorageStructureSink,
     BlobStorageStructureSource,
     FileExtension,
+    FilterType,
     HierarchyNode,
     IdString,
     ObjectKey,
     StructureBucket,
+    StructureFilter,
     StructureThingNode,
     find_duplicates,
     get_structure_bucket_and_object_key_prefix_from_id,
@@ -427,7 +429,11 @@ def test_blob_storage_class_structure_sink() -> None:
     assert sink.metadataKey == "A - Next Object"
     assert sink.type == "metadata(any)"
     assert sink.visible is True
-    assert sink.filters == {}
+    assert sink.filters == {
+        "object_key_suffix": StructureFilter(
+            name="Object Key Suffix", type=FilterType.free_text, required=False
+        )
+    }
 
     snk_bucket, snk_object_key = sink.to_structure_bucket_and_object_key(
         job_id=UUID("4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f"),
