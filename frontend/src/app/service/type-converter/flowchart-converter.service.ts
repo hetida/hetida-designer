@@ -36,27 +36,24 @@ export class FlowchartConverterService {
       ...transformation,
       transformation_id: transformation.id,
       inputs: transformation.io_interface.inputs
-        .filter(input => {
-          let isInputExposed = true;
+        .map(input => {
           if (typeof transformation.content !== 'string') {
-            const inputConnector = (transformation.content as WorkflowContent).inputs.filter(
-              contentInput => contentInput.id === input.id
-            );
+            const inputConnector = (
+              transformation.content as WorkflowContent
+            ).inputs.filter(contentInput => contentInput.id === input.id);
             if (inputConnector.length > 0) {
-              const foundOperators = (transformation.content as WorkflowContent).operators.filter(
-                opt => opt.id === inputConnector[0].operator_id
-              );
-
-              if (foundOperators.length > 0) {
-                foundOperators[0].inputs.forEach(operatorInput => {
-                  if (operatorInput.id === inputConnector[0].connector_id) {
-                    isInputExposed = operatorInput.exposed;
-                  }
+              (transformation.content as WorkflowContent).operators
+                .filter(opt => opt.id === inputConnector[0].operator_id)
+                .forEach(foundOperator => {
+                  foundOperator.inputs.forEach(operatorInput => {
+                    if (operatorInput.id === inputConnector[0].connector_id) {
+                      input.exposed = operatorInput.exposed;
+                    }
+                  });
                 });
-              }
             }
           }
-          return isInputExposed;
+          return input;
         })
         .map(input => {
           return {

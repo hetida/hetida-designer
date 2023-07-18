@@ -419,7 +419,6 @@ export class WorkflowIODialogComponent {
   }
 
   private updateWorkflowIO(data: WorkflowIODefinition): void {
-    console.log('data IN->', data);
     // TODO do not mutate the dialog data, take a copy from form control
     const foundInput = this.data.workflowTransformation.content.inputs.find(
       (ref: IOConnector) => ref.id === data.id
@@ -481,7 +480,6 @@ export class WorkflowIODialogComponent {
     } else {
       throw new Error(`Could not find IO with id '${data.id}'`);
     }
-    console.log('data to flochart', this.data.workflowTransformation);
     this.createPreview();
   }
 
