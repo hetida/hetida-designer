@@ -315,12 +315,14 @@ async def test_blob_storage_write_blob_to_storage_with_object_key_suffix_filter(
             return_value=client_mock,
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.write_blob.get_sink_by_thing_node_id_and_metadata_key",
-            return_value=BlobStorageStructureSink(
-                id="i-ii/E_generic_sink",
-                thingNodeId="i-ii/E",
-                name="E - Next Object",
-                path="i-ii/E",
-                metadataKey="E - Next Object",
+            side_effect=StructureObjectNotFound,
+        ), mock.patch(
+            "hetdesrun.adapters.blob_storage.write_blob.get_thing_node_by_id",
+            return_value=StructureThingNode(
+                id="i-ii/E",
+                parentId="i-ii",
+                name="E",
+                description="",
             ),
         ), mock.patch(
             "hetdesrun.adapters.blob_storage.write_blob._get_job_id_context",
@@ -344,7 +346,10 @@ async def test_blob_storage_write_blob_to_storage_with_object_key_suffix_filter(
             object_summaries_response = client_mock.list_objects_v2(Bucket=bucket_name)
             assert object_summaries_response["KeyCount"] == 1
             object_key = object_summaries_response["Contents"][0]["Key"]
-            assert object_key == "E_1970-01-01T00:00:00+00:00_e411fabb-50fd-4262-855e-7a59e13bbfa3"
+            assert (
+                object_key
+                == "E_1970-01-01T00:00:00+00:00_e411fabb-50fd-4262-855e-7a59e13bbfa3.pkl"
+            )
             object_response = client_mock.get_object(Bucket=bucket_name, Key=object_key)
             pickled_data_bytes = object_response["Body"].read()
             file_object = BytesIO(pickled_data_bytes)

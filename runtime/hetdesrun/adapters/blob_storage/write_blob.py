@@ -8,7 +8,10 @@ from botocore.exceptions import ClientError
 from mypy_boto3_s3 import S3Client
 from mypy_boto3_s3.type_defs import PutObjectOutputTypeDef
 
-from hetdesrun.adapters.blob_storage import GENERIC_SINK_NAME_SUFFIX
+from hetdesrun.adapters.blob_storage import (
+    HIERARCHY_END_NODE_NAME_SEPARATOR,
+    OBJECT_KEY_DIR_SEPARATOR,
+)
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
@@ -171,17 +174,20 @@ async def write_blob_to_storage(
                 "Identified object as tensorflow keras model with custom objects"
             )
 
+    if "object_key_suffix" in filters:
+        logger.info("Apply 'object_key_suffix_filter'")
+        sink_name = thing_node_id.rsplit(OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
+        metadata_key = (
+            sink_name + HIERARCHY_END_NODE_NAME_SEPARATOR + filters["object_key_suffix"]
+        )
+
     (
         sink,
         structure_bucket,
         object_key,
     ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
         thing_node_id=thing_node_id,
-        metadata_key=metadata_key
-        if metadata_key.endswith(GENERIC_SINK_NAME_SUFFIX) is False
-        or "object_key_suffix" not in filters
-        else metadata_key.strip(GENERIC_SINK_NAME_SUFFIX)
-        + filters["object_key_suffix"],
+        metadata_key=metadata_key,
         file_extension=FileExtension.H5
         if is_keras_model or is_keras_model_with_custom_objects
         else FileExtension.Pickle,
