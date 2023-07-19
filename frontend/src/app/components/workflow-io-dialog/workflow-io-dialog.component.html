@@ -73,6 +73,12 @@
             <mat-select
               formControlName="typeOption"
               (valueChange)="_ioTypeOptionChanged($event, ioItem)"
+              attr.data-testid="{{
+                ioItem.get('connector').value +
+                  '-' +
+                  ioItem.get('operator').value +
+                  '-dynamic-fixed-workflow-io-dialog' | lowercase
+              }}"
             >
               <mat-option
                 *ngFor="let ioTypeOption of _ioTypeOptions"

@@ -257,7 +257,7 @@ export class WorkflowIODialogComponent {
         `Could not find operator with id '${workflowContentIO.operator_id}'`
       );
     }
-
+    let isOutput: boolean = false;
     let connector = operator.inputs.find(
       io => io.id === workflowContentIO.connector_id
     );
@@ -265,6 +265,9 @@ export class WorkflowIODialogComponent {
       connector = operator.outputs.find(
         io => io.id === workflowContentIO.connector_id
       );
+      if (connector) {
+        isOutput = true;
+      }
     }
     if (connector === undefined) {
       throw new Error(
@@ -276,7 +279,7 @@ export class WorkflowIODialogComponent {
       operator,
       connector
     );
-    if (connector.exposed) {
+    if (isOutput || connector.exposed) {
       dataArray.push(data);
     }
   }

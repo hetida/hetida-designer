@@ -46,8 +46,9 @@ test('Confirm execute workflow with a list as fixed any input', async ({
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Workflow ${workflowName} ${workflowTag}")`
   );
-  await hetidaDesigner.clickByTestId(
-    `${componentInputName}-${componentName}-dynamic-fixed-workflow-io-dialog`
+  await hetidaDesigner.selectItemInDropdown(
+    `${componentInputName}-${componentName}-dynamic-fixed-workflow-io-dialog`,
+    'FIXED'
   );
   await hetidaDesigner.clickByTestId(
     `${componentInputName}-${componentName}-input-data-workflow-io-dialog`
