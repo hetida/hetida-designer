@@ -257,7 +257,7 @@ export class WorkflowIODialogComponent {
         `Could not find operator with id '${workflowContentIO.operator_id}'`
       );
     }
-    let isOutput: boolean = false;
+    let isOutput = false;
     let connector = operator.inputs.find(
       io => io.id === workflowContentIO.connector_id
     );
