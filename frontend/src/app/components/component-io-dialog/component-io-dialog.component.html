@@ -114,6 +114,11 @@
               matInput
               type="text"
               placeholder="Default Value"
+              attr.data-testid="{{
+                ioItem.get('name').value +
+                  '-optional-input-default-value-component-io-dialog'
+                  | lowercase
+              }}"
             />
             <mat-error [hdErrorVisual]="ioItem.get('value')"></mat-error>
           </mat-form-field>
