@@ -141,6 +141,18 @@ async def write_custom_objects_to_storage(
             raise AdapterConnectionError(msg) from client_error
 
 
+def apply_filters_to_metadata_key(
+    thing_node_id: str, metadata_key: str, filters: dict[str, str]
+) -> str:
+    if "object_key_suffix" in filters:
+        logger.info("Apply 'object_key_suffix_filter'")
+        sink_name = thing_node_id.rsplit(OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
+        return (
+            sink_name + HIERARCHY_END_NODE_NAME_SEPARATOR + filters["object_key_suffix"]
+        )
+    return metadata_key
+
+
 async def write_blob_to_storage(
     data: Any, thing_node_id: str, metadata_key: str, filters: dict[str, str]
 ) -> None:
@@ -174,20 +186,15 @@ async def write_blob_to_storage(
                 "Identified object as tensorflow keras model with custom objects"
             )
 
-    if "object_key_suffix" in filters:
-        logger.info("Apply 'object_key_suffix_filter'")
-        sink_name = thing_node_id.rsplit(OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
-        metadata_key = (
-            sink_name + HIERARCHY_END_NODE_NAME_SEPARATOR + filters["object_key_suffix"]
-        )
-
     (
         sink,
         structure_bucket,
         object_key,
     ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
         thing_node_id=thing_node_id,
-        metadata_key=metadata_key,
+        metadata_key=apply_filters_to_metadata_key(
+            thing_node_id, metadata_key, filters
+        ),
         file_extension=FileExtension.H5
         if is_keras_model or is_keras_model_with_custom_objects
         else FileExtension.Pickle,
