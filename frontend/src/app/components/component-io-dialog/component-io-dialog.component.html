@@ -182,7 +182,7 @@
           class="component-io__type-parameter mat-form-field--no-fixed-width"
         >
           <mat-select
-            formControlName="type"
+            formControlName="data_type"
             attr.data-testid="{{
               ioItem.get('name').value + '-type-output-component-io-dialog'
                 | lowercase
@@ -192,7 +192,7 @@
               {{ ioType }}
             </mat-option>
           </mat-select>
-          <mat-error [hdErrorVisual]="ioItem.get('type')"></mat-error>
+          <mat-error [hdErrorVisual]="ioItem.get('data_type')"></mat-error>
         </mat-form-field>
         <button
           title="Remove Output"
