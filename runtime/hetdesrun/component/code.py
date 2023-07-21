@@ -63,9 +63,21 @@ def generate_function_header(
             + [
                 inp.name
                 + "="
-                + ('"' if inp.data_type == DataType.String else "")
-                + str(inp.value)
-                + ('"' if inp.data_type == DataType.String else "")
+                + (
+                    '"'
+                    if inp.data_type == DataType.String and inp.value is not None
+                    else ""
+                )
+                + (
+                    str(inp.value)
+                    if (inp.data_type == DataType.String or inp.value != "")
+                    else "None"
+                )
+                + (
+                    '"'
+                    if inp.data_type == DataType.String and inp.value is not None
+                    else ""
+                )
                 for inp in component.io_interface.inputs
                 if inp.type == InputType.OPTIONAL
                 if inp.name is not None
@@ -87,9 +99,21 @@ def generate_function_header(
                 + '"'
                 + (
                     ', "default_value": '
-                    + ('"' if inp.data_type == DataType.String else "")
-                    + str(inp.value)
-                    + ('"' if inp.data_type == DataType.String else "")
+                    + (
+                        '"'
+                        if inp.data_type == DataType.String and inp.value is not None
+                        else ""
+                    )
+                    + (
+                        str(inp.value)
+                        if (inp.data_type == DataType.String or inp.value != "")
+                        else "None"
+                    )
+                    + (
+                        '"'
+                        if inp.data_type == DataType.String and inp.value is not None
+                        else ""
+                    )
                     if inp.type == InputType.OPTIONAL
                     else ""
                 )

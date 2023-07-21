@@ -94,10 +94,28 @@ def test_function_header_optional_inputs():
                     value=False,
                 ),
                 TransformationInput(
+                    name="neither_nor_ok",
+                    data_type=DataType.Boolean,
+                    type=InputType.OPTIONAL,
+                    value="",
+                ),
+                TransformationInput(
                     name="text",
                     data_type=DataType.String,
                     type=InputType.OPTIONAL,
-                    value="some text",
+                    value="text",
+                ),
+                TransformationInput(
+                    name="no_text",
+                    data_type=DataType.String,
+                    type=InputType.OPTIONAL,
+                    value=None,
+                ),
+                TransformationInput(
+                    name="empty_text",
+                    data_type=DataType.String,
+                    type=InputType.OPTIONAL,
+                    value="",
                 ),
                 TransformationInput(
                     name="series",
@@ -124,10 +142,12 @@ def test_function_header_optional_inputs():
     )
     func_header = generate_function_header(component)
     assert '"default_value": False' in func_header
+    assert '"default_value": None' in func_header
     assert '"default_value": 1.2' in func_header
-    assert '"default_value": "some text"' in func_header
+    assert '"default_value": "text"' in func_header
+    assert '"default_value": "None"' not in func_header
     assert (
-        'main(*, x=1.2, okay=False, text="some text", '
+        'main(*, x=1.2, okay=False, neither_nor_ok=None, text="text", no_text=None, empty_text="", '
         'series={\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": 18.7,'
         '\n    "2020-01-03T08:20:04.000Z": 25.9\n})'
     ) in func_header
