@@ -11,8 +11,6 @@ from fastapi import HTTPException
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.component.code import update_code
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
-from hetdesrun.persistence import get_db_engine
-from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
@@ -24,19 +22,6 @@ from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
-
-
-@pytest.fixture()
-def clean_test_db_engine(use_in_memory_db):
-    if use_in_memory_db:
-        in_memory_database_url = "sqlite+pysqlite:///:memory:"
-        engine = get_db_engine(override_db_url=in_memory_database_url)
-    else:
-        engine = get_db_engine()
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    return engine
-
 
 tr_json_component_1 = {
     "id": str(get_uuid_from_seed("component 1")),
@@ -1455,6 +1440,45 @@ async def test_execute_for_separate_runtime_container(
                 "1270547c-b224-461d-9387-e9d9d465bbe1"
             )
             mocked_post.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_execute_for_transformation_revision_component_with_optional_inputs(
+    async_test_client, mocked_clean_test_db_session
+):
+    path = "tests/data/components/optional_error_raiser.json"
+    tr_json = load_json(path)
+    tr = TransformationRevision(**tr_json)
+    store_single_transformation_revision(tr)
+
+    test_wiring_json = {
+        "input_wirings": [
+            {
+                "workflow_input_name": "error_msg",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": "Default error message"},
+            },
+            {
+                "workflow_input_name": "raise_error",
+                "adapter_id": "direct_provisioning",
+                "filters": {"value": "True"},
+            },
+        ],
+        "output_wirings": [],
+    }
+
+    exec_by_id_input_json = {
+        "id": str(tr.id),
+        "wiring": test_wiring_json,
+    }
+
+    async with async_test_client as ac:
+        response = await ac.post(
+            "/api/transformations/execute",
+            json=exec_by_id_input_json,
+        )
+
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio

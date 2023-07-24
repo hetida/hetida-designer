@@ -162,6 +162,7 @@ class OperatorInput(Flexibility, Connector):
             type=input.type,
             value=input.value,
             position=Position(x=pos_x, y=pos_y),
+            exposed=True,
         )
 
 

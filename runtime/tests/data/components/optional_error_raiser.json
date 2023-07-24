@@ -1,0 +1,59 @@
+{
+    "id": "3d1ee3d8-09e2-4277-8f02-73a3060b4769",
+    "revision_group_id": "7be04a1b-9498-4abb-963e-dc0e2b6150f8",
+    "name": "Test Optional Input Parameters",
+    "description": "New created component",
+    "category": "Test",
+    "version_tag": "0.1.0 Copy",
+    "released_timestamp": "2023-07-21T11:42:00.544972+00:00",
+    "state": "DRAFT",
+    "type": "COMPONENT",
+    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+    "content": "# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"error_msg\": {\"data_type\": \"STRING\", \"default_value\": \"Default error message\"},\n        \"raise_error\": {\"data_type\": \"BOOLEAN\", \"default_value\": True},\n    },\n    \"outputs\": {\n        \"output\": {\"data_type\": \"STRING\"},\n    },\n    \"name\": \"Test Optional Input Parameters\",\n    \"category\": \"Test\",\n    \"description\": \"New created component\",\n    \"version_tag\": \"0.1.0 Copy\",\n    \"id\": \"3d1ee3d8-09e2-4277-8f02-73a3060b4769\",\n    \"revision_group_id\": \"7be04a1b-9498-4abb-963e-dc0e2b6150f8\",\n    \"state\": \"DRAFT\",\n}\n\n\ndef main(*, error_msg=\"Default error message\", raise_error=True):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    if raise_error is True:\n        return {\"output\": {\"msg\": error_msg}}\n    return {\"output\": {\"msg\": None}}",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "f655fc5a-a775-477c-9a00-6bb518ef9e7e",
+                "name": "error_msg",
+                "data_type": "STRING",
+                "type": "OPTIONAL",
+                "value": "Default error message"
+            },
+            {
+                "id": "8239b3a9-c5a1-48a6-a740-5ae26fd26576",
+                "name": "raise_error",
+                "data_type": "BOOLEAN",
+                "type": "OPTIONAL",
+                "value": "True"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "af5d7930-42b4-46ed-a4c8-1069425e28ed",
+                "name": "output",
+                "data_type": "STRING"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "error_msg",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": false,
+                "filters": {
+                    "value": "some text"
+                }
+            },
+            {
+                "workflow_input_name": "raise_error",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": false,
+                "filters": {
+                    "value": "True"
+                }
+            }
+        ],
+        "output_wirings": []
+    }
+}
