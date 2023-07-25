@@ -213,6 +213,7 @@ export class WorkflowIODialogComponent {
     const constantControl = this.createConstantControl(data);
     const nameControl = this.createNameControl(data);
     const valueControl = this.createValueControl(data);
+    const inputTypeControl = this.createInputTypeControl(data);
 
     const form = this.formBuilder.group({
       operator: data.operator,
@@ -222,10 +223,7 @@ export class WorkflowIODialogComponent {
       id: data.id,
       constant: constantControl,
       name: nameControl,
-      typeOption: {
-        value: data.typeOption,
-        disabled: !this.data.editMode
-      },
+      typeOption: inputTypeControl,
       value: valueControl
     });
 
@@ -238,6 +236,10 @@ export class WorkflowIODialogComponent {
     });
 
     valueControl.valueChanges.subscribe(() => {
+      this.updateWorkflowIO(form.getRawValue());
+    });
+
+    inputTypeControl.valueChanges.subscribe(() => {
       this.updateWorkflowIO(form.getRawValue());
     });
 
@@ -396,6 +398,13 @@ export class WorkflowIODialogComponent {
   private createValueControl(data: WorkflowIODefinition): FormControl {
     return this.formBuilder.control({
       value: data.value,
+      disabled: !this.data.editMode
+    });
+  }
+
+  private createInputTypeControl(data: WorkflowIODefinition): FormControl {
+    return this.formBuilder.control({
+      value: data.typeOption,
       disabled: !this.data.editMode
     });
   }

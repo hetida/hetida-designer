@@ -46,7 +46,8 @@ export class FlowchartConverterService {
                 .forEach(foundOperator => {
                   foundOperator.inputs.forEach(operatorInput => {
                     if (operatorInput.id === inputConnector[0].connector_id) {
-                      input.exposed = operatorInput.exposed;
+                      input.exposed = false;
+                      input.type = inputConnector[0].type;
                     }
                   });
                 });
