@@ -15,6 +15,7 @@ from hetdesrun.models.workflow import (
 )
 from hetdesrun.runtime import runtime_logger
 from hetdesrun.runtime.engine.plain.workflow import ComputationNode, Node, Workflow
+from hetdesrun.runtime.exceptions import WorkflowInputDataValidationError
 from hetdesrun.runtime.logging import job_id_context_filter
 
 runtime_logger.addFilter(job_id_context_filter)
@@ -345,31 +346,43 @@ def recursively_parse_workflow_node(
     # provide default data
     if len(dynamic_inputs_with_default_value) != 0:
         # to keep number of nodes in test_plain_wf_parsing_and_execution
+        try:
+            workflow.add_constant_providing_node(
+                values=[
+                    NamedDataTypedValue(
+                        name=inp.name,
+                        type=inp.type,
+                        value=inp.default_value,
+                    )
+                    for inp in dynamic_inputs_with_default_value
+                    if inp.name is not None
+                ],
+                add_new_provider_node_to_workflow=False,
+                id_suffix="workflow_default_values",
+            )
+        except WorkflowInputDataValidationError as error:
+            raise WorkflowInputDataValidationError(
+                "Some default values could not be parsed into the "
+                "respective workflow input datatypes."
+            ).set_context(workflow.context) from error
+
+    # provide constant data
+    try:
         workflow.add_constant_providing_node(
             values=[
                 NamedDataTypedValue(
-                    name=inp.name,
+                    name=generate_constant_input_name(inp),
                     type=inp.type,
-                    value=inp.default_value,
+                    value=inp.constantValue["value"],
                 )
-                for inp in dynamic_inputs_with_default_value
-                if inp.name is not None
+                for inp in constant_inputs
             ],
-            add_new_provider_node_to_workflow=False,
-            id_suffix="workflow_default_values",
+            id_suffix="workflow_constant_values",
         )
-
-    # provide constant data
-    workflow.add_constant_providing_node(
-        values=[
-            NamedDataTypedValue(
-                name=generate_constant_input_name(inp),
-                type=inp.type,
-                value=inp.constantValue["value"],
-            )
-            for inp in constant_inputs
-        ],
-        id_suffix="workflow_constant_values",
-    )
+    except WorkflowInputDataValidationError as error:
+        raise WorkflowInputDataValidationError(
+            "Some constant values could not be parsed into the "
+            "respective workflow input datatypes."
+        ).set_context(workflow.context) from error
 
     return workflow

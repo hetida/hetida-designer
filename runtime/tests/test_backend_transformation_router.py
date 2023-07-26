@@ -1446,30 +1446,14 @@ async def test_execute_for_separate_runtime_container(
 async def test_execute_for_transformation_revision_component_with_optional_inputs(
     async_test_client, mocked_clean_test_db_session
 ):
-    path = "tests/data/components/optional_error_raiser.json"
+    path = "tests/data/components/test_optional_default_params.json"
     tr_json = load_json(path)
     tr = TransformationRevision(**tr_json)
     store_single_transformation_revision(tr)
 
-    test_wiring_json = {
-        "input_wirings": [
-            {
-                "workflow_input_name": "error_msg",
-                "adapter_id": "direct_provisioning",
-                "filters": {"value": "Default error message"},
-            },
-            {
-                "workflow_input_name": "raise_error",
-                "adapter_id": "direct_provisioning",
-                "filters": {"value": "True"},
-            },
-        ],
-        "output_wirings": [],
-    }
-
     exec_by_id_input_json = {
-        "id": str(tr.id),
-        "wiring": test_wiring_json,
+        "id": tr_json["id"],
+        "wiring": tr_json["test_wiring"],
     }
 
     async with async_test_client as ac:
@@ -1479,6 +1463,46 @@ async def test_execute_for_transformation_revision_component_with_optional_input
         )
 
     assert response.status_code == 200
+    response_json = response.json()
+    assert "traceback" in response_json
+    assert (
+        tr_json["test_wiring"]["input_wirings"][0]["filters"]["value"]
+        in response_json["traceback"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_execute_for_transformation_revision_workflow_with_optional_inputs(
+    async_test_client, mocked_clean_test_db_session
+):
+    component_path = "tests/data/components/test_optional_default_params.json"
+    component_tr_json = load_json(component_path)
+    component_tr = TransformationRevision(**component_tr_json)
+    store_single_transformation_revision(component_tr)
+
+    workflow_path = "tests/data/workflows/test_optional_default_params.json"
+    workflow_tr_json = load_json(workflow_path)
+    workflow_tr = TransformationRevision(**workflow_tr_json)
+    store_single_transformation_revision(workflow_tr)
+
+    exec_by_id_input_json = {
+        "id": workflow_tr_json["id"],
+        "wiring": workflow_tr_json["test_wiring"],
+    }
+
+    async with async_test_client as ac:
+        response = await ac.post(
+            "/api/transformations/execute",
+            json=exec_by_id_input_json,
+        )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    assert "traceback" in response_json
+    assert (
+        workflow_tr_json["test_wiring"]["input_wirings"][2]["filters"]["value"]
+        in response_json["traceback"]
+    )
 
 
 @pytest.mark.asyncio

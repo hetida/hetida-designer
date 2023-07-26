@@ -1,0 +1,339 @@
+{
+    "id": "a65be914-e976-41c9-9e21-860c38f3b6a7",
+    "revision_group_id": "4d954016-5691-413b-9506-dccb07288dd6",
+    "name": "Test Optional Input Parameters",
+    "description": "New created workflow",
+    "category": "Test",
+    "version_tag": "0.1.0",
+    "state": "DRAFT",
+    "type": "WORKFLOW",
+    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+    "content": {
+        "operators": [
+            {
+                "id": "7c028311-1b7e-49f2-9d94-35487a3cb205",
+                "revision_group_id": "8a00d5c3-0458-4744-b266-33174a923960",
+                "name": "Test Optional Input Parameters",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "0.1.0",
+                "transformation_id": "74373d1f-7343-4a39-9af9-79833b8d7911",
+                "inputs": [
+                    {
+                        "id": "eb1a9732-c7bf-4442-8151-a548b3654db5",
+                        "name": "error_msg",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "Default error message.",
+                        "exposed": true
+                    },
+                    {
+                        "id": "074d6bcb-761b-4aeb-8b25-251ce5b5009f",
+                        "name": "raise_error",
+                        "data_type": "BOOLEAN",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "True",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [],
+                "position": {
+                    "x": 400,
+                    "y": 127
+                }
+            },
+            {
+                "id": "846d9d67-f7a1-4bf1-9068-96a0e26b838a",
+                "revision_group_id": "8a00d5c3-0458-4744-b266-33174a923960",
+                "name": "Test Optional Input Parameters (2)",
+                "type": "COMPONENT",
+                "state": "RELEASED",
+                "version_tag": "0.1.0",
+                "transformation_id": "74373d1f-7343-4a39-9af9-79833b8d7911",
+                "inputs": [
+                    {
+                        "id": "eb1a9732-c7bf-4442-8151-a548b3654db5",
+                        "name": "error_msg",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "Default error message.",
+                        "exposed": true
+                    },
+                    {
+                        "id": "074d6bcb-761b-4aeb-8b25-251ce5b5009f",
+                        "name": "raise_error",
+                        "data_type": "BOOLEAN",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "OPTIONAL",
+                        "value": "True",
+                        "exposed": true
+                    }
+                ],
+                "outputs": [],
+                "position": {
+                    "x": 395,
+                    "y": 310
+                }
+            }
+        ],
+        "links": [
+            {
+                "id": "64b8af0f-a44a-4ef0-99fa-bace15cd61f5",
+                "start": {
+                    "connector": {
+                        "id": "c74acbaa-e4b3-4a17-988b-2639366625d8",
+                        "name": "err_msg",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 150,
+                            "y": 187
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "7c028311-1b7e-49f2-9d94-35487a3cb205",
+                    "connector": {
+                        "id": "eb1a9732-c7bf-4442-8151-a548b3654db5",
+                        "name": "error_msg",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "85a413fe-bd85-43a5-81c0-c73d660f16df",
+                "start": {
+                    "connector": {
+                        "id": "f1956d90-108f-4887-ba3b-9255b6605d18",
+                        "name": "raise_err",
+                        "data_type": "BOOLEAN",
+                        "position": {
+                            "x": 150,
+                            "y": 217
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "7c028311-1b7e-49f2-9d94-35487a3cb205",
+                    "connector": {
+                        "id": "074d6bcb-761b-4aeb-8b25-251ce5b5009f",
+                        "name": "raise_error",
+                        "data_type": "BOOLEAN",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "89abb2ac-50ac-413d-b675-a7c0f3606c22",
+                "start": {
+                    "connector": {
+                        "id": "124107e2-b1d3-4248-ab37-0b6b76a779a9",
+                        "name": "err_msg_2",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 145,
+                            "y": 370
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "846d9d67-f7a1-4bf1-9068-96a0e26b838a",
+                    "connector": {
+                        "id": "eb1a9732-c7bf-4442-8151-a548b3654db5",
+                        "name": "error_msg",
+                        "data_type": "STRING",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            },
+            {
+                "id": "0dce4ed0-e98c-4265-a67c-b28a2a7f5407",
+                "start": {
+                    "connector": {
+                        "id": "ea71adca-e3b9-4d53-82c5-cc2f7b6a127e",
+                        "name": "raise_err_2",
+                        "data_type": "BOOLEAN",
+                        "position": {
+                            "x": 145,
+                            "y": 400
+                        }
+                    }
+                },
+                "end": {
+                    "operator": "846d9d67-f7a1-4bf1-9068-96a0e26b838a",
+                    "connector": {
+                        "id": "074d6bcb-761b-4aeb-8b25-251ce5b5009f",
+                        "name": "raise_error",
+                        "data_type": "BOOLEAN",
+                        "position": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                },
+                "path": []
+            }
+        ],
+        "constants": [],
+        "inputs": [
+            {
+                "id": "c74acbaa-e4b3-4a17-988b-2639366625d8",
+                "name": "err_msg",
+                "data_type": "STRING",
+                "position": {
+                    "x": 150,
+                    "y": 187
+                },
+                "operator_id": "7c028311-1b7e-49f2-9d94-35487a3cb205",
+                "connector_id": "eb1a9732-c7bf-4442-8151-a548b3654db5",
+                "operator_name": "Test Optional Input Parameters",
+                "connector_name": "error_msg",
+                "type": "OPTIONAL",
+                "value": "Default error message from workflow input."
+            },
+            {
+                "id": "f1956d90-108f-4887-ba3b-9255b6605d18",
+                "name": "raise_err",
+                "data_type": "BOOLEAN",
+                "position": {
+                    "x": 150,
+                    "y": 217
+                },
+                "operator_id": "7c028311-1b7e-49f2-9d94-35487a3cb205",
+                "connector_id": "074d6bcb-761b-4aeb-8b25-251ce5b5009f",
+                "operator_name": "Test Optional Input Parameters",
+                "connector_name": "raise_error",
+                "type": "OPTIONAL",
+                "value": "False"
+            },
+            {
+                "id": "124107e2-b1d3-4248-ab37-0b6b76a779a9",
+                "name": "err_msg_2",
+                "data_type": "STRING",
+                "position": {
+                    "x": 145,
+                    "y": 370
+                },
+                "operator_id": "846d9d67-f7a1-4bf1-9068-96a0e26b838a",
+                "connector_id": "eb1a9732-c7bf-4442-8151-a548b3654db5",
+                "operator_name": "Test Optional Input Parameters (2)",
+                "connector_name": "error_msg",
+                "type": "OPTIONAL",
+                "value": "Default error message from 2nd workflow input"
+            },
+            {
+                "id": "ea71adca-e3b9-4d53-82c5-cc2f7b6a127e",
+                "name": "raise_err_2",
+                "data_type": "BOOLEAN",
+                "position": {
+                    "x": 145,
+                    "y": 400
+                },
+                "operator_id": "846d9d67-f7a1-4bf1-9068-96a0e26b838a",
+                "connector_id": "074d6bcb-761b-4aeb-8b25-251ce5b5009f",
+                "operator_name": "Test Optional Input Parameters (2)",
+                "connector_name": "raise_error",
+                "type": "OPTIONAL",
+                "value": "False"
+            }
+        ],
+        "outputs": []
+    },
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "c74acbaa-e4b3-4a17-988b-2639366625d8",
+                "name": "err_msg",
+                "data_type": "STRING",
+                "type": "OPTIONAL",
+                "value": "Default error message from workflow input."
+            },
+            {
+                "id": "f1956d90-108f-4887-ba3b-9255b6605d18",
+                "name": "raise_err",
+                "data_type": "BOOLEAN",
+                "type": "OPTIONAL",
+                "value": "False"
+            },
+            {
+                "id": "124107e2-b1d3-4248-ab37-0b6b76a779a9",
+                "name": "err_msg_2",
+                "data_type": "STRING",
+                "type": "OPTIONAL",
+                "value": "Default error message from 2nd workflow input"
+            },
+            {
+                "id": "ea71adca-e3b9-4d53-82c5-cc2f7b6a127e",
+                "name": "raise_err_2",
+                "data_type": "BOOLEAN",
+                "type": "OPTIONAL",
+                "value": "False"
+            }
+        ],
+        "outputs": []
+    },
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "err_msg",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": true,
+                "filters": {
+                    "value": "Default error message from workflow input."
+                }
+            },
+            {
+                "workflow_input_name": "raise_err",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": true,
+                "filters": {
+                    "value": "False"
+                }
+            },
+            {
+                "workflow_input_name": "err_msg_2",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": true,
+                "filters": {
+                    "value": "Default error message from 2nd workflow input"
+                }
+            },
+            {
+                "workflow_input_name": "raise_err_2",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": false,
+                "filters": {
+                    "value": "True"
+                }
+            }
+        ],
+        "output_wirings": []
+    }
+}
