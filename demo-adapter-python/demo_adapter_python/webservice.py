@@ -657,11 +657,27 @@ def decode_attributes(data_attributes: str) -> Any:
 async def post_timeseries(
     ts_body: list[TimeseriesRecord],
     ts_id: str = Query(..., alias="timeseriesId"),
+    frequency: str = Query("", example="5min"),
     data_attributes: str | None = Header(None),
 ) -> dict:
     logger.info("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
     if ts_id.endswith("anomaly_score"):
         df = pd.DataFrame.from_dict((x.dict() for x in ts_body), orient="columns")
+        if "timestamp" not in df.columns:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "Timeseries records need timestamp values!",
+            )
+        df.index = df["timestamp"]
+        if frequency != "":
+            try:
+                df = df.resample(frequency).mean(numeric_only=False)
+            except ValueError as error:
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    f"Provided value '{frequency}' for the filter 'frequency' is invalid! "
+                    "Check the reference for pandas.DataFrame.resample for more information.",
+                ) from error
         if data_attributes is not None and len(data_attributes) != 0:
             df_from_store: pd.DataFrame = get_value_from_store(ts_id)
             df.attrs = df_from_store.attrs
@@ -798,10 +814,26 @@ async def post_dataframe(
         ],
     ),
     df_id: str = Query(..., alias="id"),
+    column_names: str = Query("", example="""[\\\"column1\\\", \\\"column2\\\"]"""),
     data_attributes: str | None = Header(None),
 ) -> dict:
     if df_id.endswith("alerts"):
         df = pd.DataFrame.from_dict(df_body, orient="columns")
+        if column_names != "":
+            column_name_list, error_msg = parse_string_to_list(column_names)
+            if error_msg != "":
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    error_msg,
+                )
+            try:
+                df = df[column_name_list]
+            except KeyError as error:
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    f"Dataframe with id {df_id} contains columns {list(df)} "
+                    f"but does not contain all columns of {column_name_list}.",
+                ) from error
         if data_attributes is not None and len(data_attributes) != 0:
             df_from_store: pd.DataFrame = get_value_from_store(df_id)
             df.attrs = df_from_store.attrs
@@ -924,10 +956,26 @@ async def post_multitsframe(
         ],
     ),
     mtsf_id: str = Query(..., alias="id"),
+    metric_names: str = Query("", example="""[\\\"metric1\\\", \\\"metric2\\\"]"""),
     data_attributes: str | None = Header(None),
 ) -> dict:
     if mtsf_id in ("root.plantA.anomalies", "root.plantB.anomalies"):
         mtsf = pd.DataFrame.from_dict(mtsf_body, orient="columns")
+        if metric_names != "":
+            metric_name_list, error_msg = parse_string_to_list(metric_names)
+            if error_msg != "":
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    error_msg,
+                )
+            try:
+                mtsf = mtsf.loc[mtsf["metric"].isin(metric_name_list)]
+            except KeyError as error:
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    f"Dataframe with id {mtsf_id} contains columns {list(mtsf)} "
+                    f"but does not contain all columns of {metric_name_list}.",
+                ) from error
         if set(mtsf.columns) != set(MULTITSFRAME_COLUMN_NAMES):
             column_names_string = ", ".join(mtsf.columns)
             multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)

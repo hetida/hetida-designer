@@ -597,7 +597,7 @@ async def test_updating_and_keeping_existing_attrs_for_timeseries(
 
 
 @pytest.mark.asyncio
-async def test_free_text_filters(
+async def test_input_wiring_free_text_filters(
     async_test_client: AsyncClient,
 ) -> None:
     async with async_test_client as client:
@@ -723,4 +723,149 @@ async def test_free_text_filters(
             },
         )
         assert ts_response_no_frequency_string.status_code == 422
-        assert "frequency is invalid" in ts_response_no_frequency_string.text
+        assert "'frequency' is invalid" in ts_response_no_frequency_string.text
+
+
+@pytest.mark.asyncio
+async def test_output_wiring_free_text_filters(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        df_post_response = await client.post(
+            "/dataframe",
+            json=[
+                {"a": 14.5, "b": 12.3},
+                {"a": 13.5, "b": 11.9},
+            ],
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": """[\"b\"]""",
+            },
+        )
+        assert df_post_response.status_code == 200
+        df_get_response = await client.get(
+            "/dataframe",
+            params={
+                "id": "root.plantA.alerts",
+            },
+        )
+        df: pd.DataFrame = pd.read_json(df_get_response.text, lines=True)
+        assert df.columns == ["b"]
+
+        df_post_response_no_json_column_names = await client.post(
+            "/dataframe",
+            json=[
+                {"a": 14.5, "b": 12.3},
+                {"a": 13.5, "b": 11.9},
+            ],
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": "['b']",
+            },
+        )
+        assert df_post_response_no_json_column_names.status_code == 422
+        assert "cannot be parsed" in df_post_response_no_json_column_names.text
+
+        df_post_response_no_list_column_names = await client.post(
+            "/dataframe",
+            json=[
+                {"a": 14.5, "b": 12.3},
+                {"a": 13.5, "b": 11.9},
+            ],
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": '{"b":"c"}',
+            },
+        )
+        assert df_post_response_no_list_column_names.status_code == 422
+        assert "not a list" in df_post_response_no_list_column_names.text
+
+        df_post_response_wrong_key = await client.post(
+            "/dataframe",
+            json=[
+                {"a": 14.5, "b": 12.3},
+                {"a": 13.5, "b": 11.9},
+            ],
+            params={
+                "id": "root.plantA.alerts",
+                "column_names": """[\"b\",\"c\"]""",
+            },
+        )
+        assert df_post_response_wrong_key.status_code == 422
+        assert "does not contain" in df_post_response_wrong_key.text
+
+        mtsf_post_response = await client.post(
+            "/multitsframe",
+            json=[
+                {
+                    "metric": "a",
+                    "timestamp": "2020-01-01T00:00:00.000Z",
+                    "value": 12.3,
+                },
+                {
+                    "metric": "b",
+                    "timestamp": "2020-01-02T00:00:00.000Z",
+                    "value": 11.9,
+                },
+            ],
+            params={
+                "id": "root.plantA.anomalies",
+                "metric_names": """[\"b\"]""",
+            },
+        )
+        assert mtsf_post_response.status_code == 200
+        mtsf_get_response = await client.get(
+            "/multitsframe",
+            params={
+                "id": "root.plantA.anomalies",
+                "from": "2020-01-01T00:00:00.000000000Z",
+                "to": "2020-02-01T00:00:00.000000000Z",
+            },
+        )
+        assert mtsf_post_response.status_code == 200
+        assert "metric" in mtsf_get_response.text
+        mtsf: pd.DataFrame = pd.read_json(mtsf_get_response.text, lines=True)
+        assert "metric" in mtsf
+        assert mtsf["metric"].unique() == ["b"]
+
+        ts_post_response = await client.post(
+            "/timeseries",
+            json=[
+                {"timestamp": "2020-01-01T00:00:00.000000000Z", "value": 12.3},
+                {"timestamp": "2020-01-01T01:00:00.000000000Z", "value": 11.9},
+                {"timestamp": "2020-01-01T02:00:00.000000000Z", "value": 11.3},
+                {"timestamp": "2020-01-01T03:00:00.000000000Z", "value": 10.9},
+            ],
+            params={
+                "timeseriesId": "root.plantA.picklingUnit.influx.anomaly_score",
+                "frequency": "2h",
+            },
+        )
+        assert ts_post_response.status_code == 200
+        ts_get_response = await client.get(
+            "/timeseries",
+            params={
+                "id": "root.plantA.picklingUnit.influx.anomaly_score",
+                "from": "2020-01-01T00:00:00.000000000Z",
+                "to": "2020-01-02T00:00:00.000000000Z",
+            },
+        )
+        assert ts_get_response.status_code == 200
+        ts_df: pd.DataFrame = pd.read_json(ts_get_response.text, lines=True)
+        assert len(ts_df.index) == 2
+
+        ts_response_no_frequency_string = await client.post(
+            "/timeseries",
+            json=[
+                {"timestamp": "2020-01-01T00:00:00.000000000Z", "value": 12.3},
+                {"timestamp": "2020-01-01T01:00:00.000000000Z", "value": 11.9},
+                {"timestamp": "2020-01-01T02:00:00.000000000Z", "value": 11.3},
+                {"timestamp": "2020-01-01T03:00:00.000000000Z", "value": 10.9},
+            ],
+            params={
+                "timeseriesId": "root.plantA.picklingUnit.influx.anomaly_score",
+                "frequency": "some string",
+            },
+        )
+        assert ts_response_no_frequency_string.status_code == 422
+        assert "'frequency' is invalid" in ts_response_no_frequency_string.text
