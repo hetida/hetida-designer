@@ -121,7 +121,7 @@ async def write_custom_objects_to_storage(
         custom_objects_object_key = object_key.to_custom_objects_object_key()
         logger.info(
             "Dumped custom objects dictionary into another BLOB with object key %s",
-            custom_objects_object_key,
+            custom_objects_object_key.string,
         )
 
         try:
@@ -134,7 +134,7 @@ async def write_custom_objects_to_storage(
         except ClientError as client_error:
             error_code = client_error.response["Error"]["Code"]
             msg = (
-                "Unexpected ClientError occured for head_object call with bucket "
+                "Unexpected ClientError occured for put_object call with bucket "
                 f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
             )
             logger.error(msg)
@@ -249,7 +249,7 @@ async def write_blob_to_storage(
             except ClientError as error:
                 error_code = error.response["Error"]["Code"]
                 msg = (
-                    "Unexpected ClientError occured for head_object call with bucket "
+                    "Unexpected ClientError occured for put_object call with bucket "
                     f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
                 )
                 logger.error(msg)
