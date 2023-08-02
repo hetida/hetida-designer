@@ -10,8 +10,10 @@ from hetdesrun.adapters.local_file.detect import (
     local_file_from_path,
 )
 from hetdesrun.adapters.local_file.models import (
+    FilterType,
     LocalFileStructureSink,
     LocalFileStructureSource,
+    StructureFilter,
     StructureResponse,
     StructureThingNode,
 )
@@ -90,6 +92,11 @@ def generic_any_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
         visible=True,
         path="Prepared Generic Sink",
         metadataKey=gneric_sink_id,
+        filters={
+            "file_name": StructureFilter(
+                name="File Name", type=FilterType.free_text, required=False
+            )
+        },
     )
 
 

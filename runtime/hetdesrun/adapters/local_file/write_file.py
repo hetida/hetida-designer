@@ -17,17 +17,23 @@ from hetdesrun.runtime.logging import _get_job_id_context
 logger = logging.getLogger(__name__)
 
 
-def obtain_possible_local_sink_file(sink_id: str) -> LocalFile | None:
+def obtain_possible_local_sink_file(
+    sink_id: str, filters: dict[str, str]
+) -> LocalFile | None:
     if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
         parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
         current_job_id = _get_job_id_context()["currently_executed_job_id"]
         local_file_path = (
             from_url_representation(parent_id)
             + os.sep
-            + datetime.datetime.now(datetime.timezone.utc).isoformat()
-            + "_"
-            + str(current_job_id)
-            + ".pkl"
+            + (
+                datetime.datetime.now(datetime.timezone.utc).isoformat()
+                + "_"
+                + str(current_job_id)
+                + ".pkl"
+                if "file_name" not in filters
+                else filters["file_name"]
+            )
         )
         possible_local_file = get_local_file_by_id(
             to_url_representation(local_file_path), verify_existence=False
@@ -44,12 +50,12 @@ def obtain_possible_local_sink_file(sink_id: str) -> LocalFile | None:
     return possible_local_file
 
 
-def write_to_file(data_obj: Any, sink_id: str) -> None:
-    possible_local_file = obtain_possible_local_sink_file(sink_id)
+def write_to_file(data_obj: Any, sink_id: str, filters: dict[str, str]) -> None:
+    possible_local_file = obtain_possible_local_sink_file(sink_id, filters)
 
     if possible_local_file is None:
         raise AdapterHandlingException(
-            f"Local file {from_url_representation(sink_id)} target could not be located or"
+            f"Local file {from_url_representation(sink_id)} target could not be located or "
             "does not lie in a configured local dir or does not exist / is not writable"
         )
 
