@@ -87,14 +87,36 @@ def generic_any_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
     return LocalFileStructureSink(
         id=gneric_sink_id,
         thingNodeId=parent_id,
-        name="New Pickle File",
+        name="New File",
         type=ExternalType.METADATA_ANY,
         visible=True,
         path="Prepared Generic Sink",
         metadataKey=gneric_sink_id,
         filters={
             "file_name": StructureFilter(
-                name="File Name", type=FilterType.free_text, required=False
+                name='File Name (must end with ".pkl" or ".h5")',
+                type=FilterType.free_text,
+                required=False,
+            )
+        },
+    )
+
+
+def generic_dataframe_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
+    gneric_sink_id = "GENERIC_DATAFRAME_SINK_AT_" + parent_id
+    return LocalFileStructureSink(
+        id=gneric_sink_id,
+        thingNodeId=parent_id,
+        name="New File",
+        type=ExternalType.DATAFRAME,
+        visible=True,
+        path="Prepared Generic Sink",
+        metadataKey=gneric_sink_id,
+        filters={
+            "file_name": StructureFilter(
+                name='File Name (must end with ".csv", ".xlsx" or ".parquet")',
+                type=FilterType.free_text,
+                required=False,
             )
         },
     )
@@ -164,6 +186,11 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
         + (
             [generic_any_sink_at_dir(parent_id)]
             if local_file_adapter_config.generic_any_sink
+            else []
+        )
+        + (
+            [generic_dataframe_sink_at_dir(parent_id)]
+            if local_file_adapter_config.generic_dataframe_sink
             else []
         ),
     )
@@ -321,6 +348,10 @@ def get_sink_by_id(sink_id: str) -> LocalFileStructureSink | None:
     if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
         parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
         return generic_any_sink_at_dir(parent_id)
+
+    if sink_id.startswith("GENERIC_DATAFRAME_SINK_AT_"):
+        parent_id = sink_id.removeprefix("GENERIC_DATAFRAME_SINK_AT_")
+        return generic_dataframe_sink_at_dir(parent_id)
 
     local_file = get_local_file_by_id(sink_id)
 

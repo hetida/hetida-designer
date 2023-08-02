@@ -5,7 +5,10 @@ from typing import Any
 
 import pandas as pd
 
-from hetdesrun.adapters.exceptions import AdapterHandlingException
+from hetdesrun.adapters.exceptions import (
+    AdapterClientWiringInvalidError,
+    AdapterHandlingException,
+)
 from hetdesrun.adapters.local_file.detect import LocalFile
 from hetdesrun.adapters.local_file.structure import get_local_file_by_id
 from hetdesrun.adapters.local_file.utils import (
@@ -20,21 +23,54 @@ logger = logging.getLogger(__name__)
 def obtain_possible_local_sink_file(
     sink_id: str, filters: dict[str, str]
 ) -> LocalFile | None:
-    if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
-        parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
-        current_job_id = _get_job_id_context()["currently_executed_job_id"]
-        local_file_path = (
-            from_url_representation(parent_id)
-            + os.sep
-            + (
-                datetime.datetime.now(datetime.timezone.utc).isoformat()
-                + "_"
-                + str(current_job_id)
-                + ".pkl"
-                if "file_name" not in filters
-                else filters["file_name"]
+    if sink_id.startswith("GENERIC_"):
+        if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
+            parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
+            current_job_id = _get_job_id_context()["currently_executed_job_id"]
+            if "file_name" in filters and not (
+                filters["file_name"].endswith(".pkl")
+                or filters["file_name"].endswith(".h5")
+            ):
+                raise AdapterClientWiringInvalidError(
+                    f'The file name must end with ".pkl" or ".h5" '
+                    f"for generic any sink at {parent_id}!"
+                )
+            local_file_path = (
+                from_url_representation(parent_id)
+                + os.sep
+                + (
+                    datetime.datetime.now(datetime.timezone.utc).isoformat()
+                    + "_"
+                    + str(current_job_id)
+                    + ".pkl"
+                    if "file_name" not in filters
+                    else filters["file_name"]
+                )
             )
-        )
+        if sink_id.startswith("GENERIC_DATAFRAME_SINK_AT_"):
+            parent_id = sink_id.removeprefix("GENERIC_DATAFRAME_SINK_AT_")
+            current_job_id = _get_job_id_context()["currently_executed_job_id"]
+            if "file_name" in filters and not (
+                filters["file_name"].endswith(".csv")
+                or filters["file_name"].endswith(".xlsx")
+                or filters["file_name"].endswith(".parquet")
+            ):
+                raise AdapterClientWiringInvalidError(
+                    'The file name must end with ".csv", ".xlsx" or ".parquet" '
+                    f"for generic dataframe sink at {parent_id}!"
+                )
+            local_file_path = (
+                from_url_representation(parent_id)
+                + os.sep
+                + (
+                    datetime.datetime.now(datetime.timezone.utc).isoformat()
+                    + "_"
+                    + str(current_job_id)
+                    + ".csv"
+                    if "file_name" not in filters
+                    else filters["file_name"]
+                )
+            )
         possible_local_file = get_local_file_by_id(
             to_url_representation(local_file_path), verify_existence=False
         )

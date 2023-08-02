@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from hetdesrun.adapters.local_file import load_data, send_data
+from hetdesrun.adapters.local_file.config import local_file_adapter_config
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 
@@ -103,7 +104,15 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
 
         assert len(all_tns) == 5
         assert len(all_srcs) == 8
-        assert len(all_snks) == 9
+        assert (
+            len(all_snks)
+            == 3
+            + (
+                int(local_file_adapter_config.generic_any_sink)
+                + int(local_file_adapter_config.generic_dataframe_sink)
+            )
+            * 6
+        )
         assert len(src_attached_metadata_dict) == 0
         assert len(snk_attached_metadata_dict) == 0
         assert len(tn_attached_metadata_dict) == 0
@@ -210,9 +219,32 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
 
         # metadata that is a sink in the tree is also always obtainable
         for snk in all_snks:
+            print()
+            print()
+            print()
             if snk["type"].startswith("metadata"):
-                continue  # we do not offer these in metadata endpoints
-
+                print(snk)
+                with mock.patch(
+                    "hetdesrun.adapters.local_file.write_file.LocalFile.file_support_handler"
+                ) as file_handler_mock, mock.patch(
+                    "hetdesrun.adapters.local_file.write_file._get_job_id_context",
+                    return_value={
+                        "currently_executed_job_id": "1681ea7e-c57f-469a-ac12-592e3e8665cf"
+                    },
+                ):
+                    await send_data(
+                        {
+                            "wf_output": FilteredSink(
+                                ref_id=snk["id"],
+                                ref_id_type="SINK",
+                                ref_key=None,
+                                type="metadata(any)",
+                            ),
+                        },
+                        {"wf_output": {"a": [1, 2, 3], "b": [12.2, 13.3, 14.4]}},
+                        adapter_key="local-file-adapter",
+                    )
+                assert file_handler_mock.called_once
             if snk["type"].startswith("dataframe"):
                 with mock.patch(  # noqa: SIM117
                     "hetdesrun.adapters.local_file.write_file.pd.DataFrame.to_csv"
@@ -220,22 +252,28 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                     with mock.patch(
                         "hetdesrun.adapters.local_file.write_file.pd.DataFrame.to_excel"
                     ) as to_excel_mock:
-                        await send_data(
-                            {
-                                "wf_output": FilteredSink(
-                                    ref_id=snk["id"],
-                                    ref_id_type="SINK",
-                                    ref_key=None,
-                                    type="dataframe",
-                                ),
+                        with mock.patch(
+                            "hetdesrun.adapters.local_file.write_file._get_job_id_context",
+                            return_value={
+                                "currently_executed_job_id": "1681ea7e-c57f-469a-ac12-592e3e8665cf"
                             },
-                            {
-                                "wf_output": pd.DataFrame(
-                                    {"a": [1, 2, 3], "b": [12.2, 13.3, 14.4]}
-                                )
-                            },
-                            adapter_key="local-file-adapter",
-                        )
+                        ):
+                            await send_data(
+                                {
+                                    "wf_output": FilteredSink(
+                                        ref_id=snk["id"],
+                                        ref_id_type="SINK",
+                                        ref_key=None,
+                                        type="dataframe",
+                                    ),
+                                },
+                                {
+                                    "wf_output": pd.DataFrame(
+                                        {"a": [1, 2, 3], "b": [12.2, 13.3, 14.4]}
+                                    )
+                                },
+                                adapter_key="local-file-adapter",
+                            )
 
             if snk["type"].startswith("timeseries"):
                 raise AssertionError(
