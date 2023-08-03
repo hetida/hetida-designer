@@ -545,7 +545,9 @@ class BlobStorageStructureSink(BaseModel):
     visible: Literal[True] = True
     filters: dict[str, StructureFilter] | None = {
         "object_key_suffix": StructureFilter(
-            name="Object Key Suffix", type=FilterType.free_text, required=False
+            name="Object Key Suffix (<UTC timestamp> - <UUID>)",
+            type=FilterType.free_text,
+            required=False,
         )
     }
 

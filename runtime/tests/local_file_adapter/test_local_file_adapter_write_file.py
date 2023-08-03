@@ -56,7 +56,7 @@ def test_local_file_adapter_write_to_file_non_existing_file_with_filters():
             # assert args[1] == "tests/data/local_files/dir1/test.pkl"
 
             with pytest.raises(
-                AdapterClientWiringInvalidError, match=r"must end with.*any sink"
+                AdapterClientWiringInvalidError, match=r"any sink.*must end with"
             ):
                 write_to_file(data_obj, any_sink_id, {"file_name": "test.xlsx"})
 
@@ -75,6 +75,6 @@ def test_local_file_adapter_write_to_file_non_existing_file_with_filters():
             assert args[0] == "tests/data/local_files/dir1/test.xlsx"
 
         with pytest.raises(
-            AdapterClientWiringInvalidError, match=r"must end with.*dataframe sink"
+            AdapterClientWiringInvalidError, match=r"dataframe sink.*must end with"
         ):
             write_to_file(data_obj, df_sink_id, {"file_name": "test.pkl"})

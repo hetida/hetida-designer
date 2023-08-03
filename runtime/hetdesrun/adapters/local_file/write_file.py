@@ -27,50 +27,61 @@ def obtain_possible_local_sink_file(
         if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
             parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
             current_job_id = _get_job_id_context()["currently_executed_job_id"]
-            if "file_name" in filters and not (
-                filters["file_name"].endswith(".pkl")
-                or filters["file_name"].endswith(".h5")
-            ):
-                raise AdapterClientWiringInvalidError(
-                    f'The file name must end with ".pkl" or ".h5" '
-                    f"for generic any sink at {parent_id}!"
+            try:
+                file_name = filters["file_name"]
+            except KeyError:
+                local_file_path = (
+                    from_url_representation(parent_id)
+                    + os.sep
+                    + (
+                        datetime.datetime.now(datetime.timezone.utc).isoformat()
+                        + "_"
+                        + str(current_job_id)
+                        + ".pkl"
+                    )
                 )
-            local_file_path = (
-                from_url_representation(parent_id)
-                + os.sep
-                + (
-                    datetime.datetime.now(datetime.timezone.utc).isoformat()
-                    + "_"
-                    + str(current_job_id)
-                    + ".pkl"
-                    if "file_name" not in filters
-                    else filters["file_name"]
+            else:
+                ext = os.path.splitext(file_name)[1]
+                if ext not in (".pkl", ".h5"):
+                    msg = (
+                        f"Provided value '{file_name}' for the filter 'file_name' "
+                        f"at generic any sink at {from_url_representation(parent_id)} invalid! "
+                        'The file name must end with ".pkl" or ".h5".'
+                    )
+                    logger.error(msg)
+                    raise AdapterClientWiringInvalidError(msg)
+                local_file_path = (
+                    from_url_representation(parent_id) + os.sep + file_name
                 )
-            )
         if sink_id.startswith("GENERIC_DATAFRAME_SINK_AT_"):
             parent_id = sink_id.removeprefix("GENERIC_DATAFRAME_SINK_AT_")
             current_job_id = _get_job_id_context()["currently_executed_job_id"]
-            if "file_name" in filters and not (
-                filters["file_name"].endswith(".csv")
-                or filters["file_name"].endswith(".xlsx")
-                or filters["file_name"].endswith(".parquet")
-            ):
-                raise AdapterClientWiringInvalidError(
-                    'The file name must end with ".csv", ".xlsx" or ".parquet" '
-                    f"for generic dataframe sink at {parent_id}!"
+            try:
+                file_name = filters["file_name"]
+            except KeyError:
+                local_file_path = (
+                    from_url_representation(parent_id)
+                    + os.sep
+                    + (
+                        datetime.datetime.now(datetime.timezone.utc).isoformat()
+                        + "_"
+                        + str(current_job_id)
+                        + ".csv"
+                    )
                 )
-            local_file_path = (
-                from_url_representation(parent_id)
-                + os.sep
-                + (
-                    datetime.datetime.now(datetime.timezone.utc).isoformat()
-                    + "_"
-                    + str(current_job_id)
-                    + ".csv"
-                    if "file_name" not in filters
-                    else filters["file_name"]
+            else:
+                ext = os.path.splitext(file_name)[1]
+                if ext not in (".csv", ".xlsx", ".parquet"):
+                    msg = (
+                        f"Provided value '{file_name}' for the filter 'file_name' at "
+                        f"generic dataframe sink at {from_url_representation(parent_id)} invalid! "
+                        'The file name must end with ".csv", ".xlsx" or ".parquet".'
+                    )
+                    logger.error(msg)
+                    raise AdapterClientWiringInvalidError(msg)
+                local_file_path = (
+                    from_url_representation(parent_id) + os.sep + file_name
                 )
-            )
         possible_local_file = get_local_file_by_id(
             to_url_representation(local_file_path), verify_existence=False
         )

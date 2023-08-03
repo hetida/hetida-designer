@@ -145,11 +145,25 @@ def apply_filters_to_metadata_key(
     thing_node_id: str, metadata_key: str, filters: dict[str, str]
 ) -> str:
     if "object_key_suffix" in filters:
-        logger.info("Apply 'object_key_suffix_filter'")
+        logger.debug("Apply 'object_key_suffix' filter.")
+        object_key_suffix = filters["object_key_suffix"]
         sink_name = thing_node_id.rsplit(OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
-        return (
-            sink_name + HIERARCHY_END_NODE_NAME_SEPARATOR + filters["object_key_suffix"]
-        )
+        metadata_key = sink_name + HIERARCHY_END_NODE_NAME_SEPARATOR + object_key_suffix
+        try:
+            ObjectKey.from_thing_node_id_and_metadata_key(
+                IdString(thing_node_id),
+                metadata_key,
+                file_extension=FileExtension.Pickle,
+            )
+        except ValueError as error:
+            msg = (
+                f"Provided value '{object_key_suffix}' for the filter 'object_key_suffix' "
+                f"at thingnode '{thing_node_id}' invalid! It must consist of a timestamp with "
+                f'UTC timezone followed by " - " and a UUID: "<UTC timestamp> - <UUID>"'
+            )
+            logger.error(msg)
+            raise AdapterClientWiringInvalidError(msg) from error
+        return metadata_key
     return metadata_key
 
 
