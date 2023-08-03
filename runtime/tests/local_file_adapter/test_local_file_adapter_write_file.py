@@ -37,23 +37,22 @@ def test_local_file_adapter_write_to_file_non_existing_file_with_filters():
             "currently_executed_job_id": "1681ea7e-c57f-469a-ac12-592e3e8665cf"
         },
     ):
+        write_handler_func_mock = mock.Mock()
         with mock.patch(
-            "hetdesrun.adapters.local_file.write_file.LocalFile.file_support_handler"
+            "hetdesrun.adapters.local_file.write_file.LocalFile.file_support_handler",
+            return_value=mock.Mock(write_handler_func=write_handler_func_mock),
         ) as file_handler_mock:
-            file_handler_mock.write_handler_func()
             data_obj = {"key": "value"}
             any_sink_id = "GENERIC_ANY_SINK_AT_" + to_url_representation(file_path)
 
             write_to_file(data_obj, any_sink_id, {"file_name": "test.pkl"})
 
             assert file_handler_mock.called_once
-            assert hasattr(file_handler_mock, "write_handler_func")
-            assert isinstance(file_handler_mock.write_handler_func, mock.Mock)
-            assert file_handler_mock.write_handler_func.called_once
-            _, args, kwargs = file_handler_mock.write_handler_func.mock_calls[0]
+            assert write_handler_func_mock.called_once
+            _, args, kwargs = write_handler_func_mock.mock_calls[0]
             assert kwargs == {}
-            # assert len(args) == 2
-            # assert args[1] == "tests/data/local_files/dir1/test.pkl"
+            assert len(args) == 2
+            assert args[1] == "tests/data/local_files/dir1/test.pkl"
 
             with pytest.raises(
                 AdapterClientWiringInvalidError, match=r"any sink.*must end with"

@@ -219,13 +219,11 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
 
         # metadata that is a sink in the tree is also always obtainable
         for snk in all_snks:
-            print()
-            print()
-            print()
             if snk["type"].startswith("metadata"):
-                print(snk)
+                write_handler_func_mock = mock.Mock()
                 with mock.patch(
-                    "hetdesrun.adapters.local_file.write_file.LocalFile.file_support_handler"
+                    "hetdesrun.adapters.local_file.write_file.LocalFile.file_support_handler",
+                    return_value=mock.Mock(write_handler_func=write_handler_func_mock),
                 ) as file_handler_mock, mock.patch(
                     "hetdesrun.adapters.local_file.write_file._get_job_id_context",
                     return_value={
@@ -245,6 +243,9 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                         adapter_key="local-file-adapter",
                     )
                 assert file_handler_mock.called_once
+                assert write_handler_func_mock.called_once
+                _, _, kwargs = write_handler_func_mock.mock_calls[0]
+                assert kwargs == {}
             if snk["type"].startswith("dataframe"):
                 with mock.patch(  # noqa: SIM117
                     "hetdesrun.adapters.local_file.write_file.pd.DataFrame.to_csv"
