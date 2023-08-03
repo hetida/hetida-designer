@@ -159,7 +159,7 @@ def apply_filters_to_metadata_key(
             msg = (
                 f"Provided value '{object_key_suffix}' for the filter 'object_key_suffix' "
                 f"at thingnode '{thing_node_id}' invalid! It must consist of a timestamp with "
-                f'UTC timezone followed by " - " and a UUID: "<UTC timestamp> - <UUID>"'
+                f'UTC timezone followed by " - " and a UUID: "<UTC timestamp> - <UUID>":\n{error}'
             )
             logger.error(msg)
             raise AdapterClientWiringInvalidError(msg) from error

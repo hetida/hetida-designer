@@ -500,6 +500,20 @@ async def test_blob_storage_write_blob_to_storage_with_object_key_suffix_filter(
             file_object = BytesIO(pickled_data_bytes)
             assert struct.unpack(">i", joblib.load(file_object)) == (42,)
 
+            with pytest.raises(
+                AdapterClientWiringInvalidError, match=r"object_key_suffix.*invalid"
+            ):
+                await write_blob_to_storage(
+                    data=struct.pack(">i", 42),
+                    thing_node_id="i-ii/E",
+                    metadata_key="E - Next Object",
+                    filters={
+                        "object_key_suffix": (
+                            "1970-01-01 00:00:00 - e411fabb-50fd-4262-855e-7a59e13bbfa3"
+                        )
+                    },
+                )
+
 
 @pytest.mark.asyncio
 async def test_blob_storage_send_data_works() -> None:
