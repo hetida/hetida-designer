@@ -416,7 +416,7 @@ def is_unused(transformation_id: UUID) -> bool:
 def select_multiple_transformation_revisions(
     type: Type | None = None,  # noqa: A002
     state: State | None = None,
-    category: ValidStr | None = None,
+    categories: list[ValidStr] | None = None,
     category_prefix: ValidStr | None = None,
     revision_group_id: UUID | None = None,
     ids: list[UUID] | None = None,
@@ -431,13 +431,15 @@ def select_multiple_transformation_revisions(
             selection = selection.where(TransformationRevisionDBModel.type == type)
         if state is not None:
             selection = selection.where(TransformationRevisionDBModel.state == state)
-        if category is not None:
+        if categories is not None:
             selection = selection.where(
-                TransformationRevisionDBModel.category == category
+                TransformationRevisionDBModel.category.in_(categories)
             )
         if category_prefix is not None:
             selection = selection.where(
-                TransformationRevisionDBModel.category.startswith(category_prefix)
+                TransformationRevisionDBModel.category.startswith(
+                    category_prefix, autoescape=True
+                )
             )
         if revision_group_id is not None:
             selection = selection.where(
@@ -465,11 +467,10 @@ def get_multiple_transformation_revisions(
     params: FilterParams,
 ) -> list[TransformationRevision]:
     """Filterable selection of transformation revisions from db"""
-
     tr_list = select_multiple_transformation_revisions(
         type=params.type,
         state=params.state,
-        category=params.category,
+        categories=params.categories,
         category_prefix=params.category_prefix,
         revision_group_id=params.revision_group_id,
         ids=params.ids,
