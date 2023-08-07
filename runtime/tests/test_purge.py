@@ -394,8 +394,9 @@ def test_deprecate_all_but_latest_in_group():
         - timedelta(weeks=1)
     )
     stored_wf = TransformationRevision(**stored_wf_json)
-    stored_wf.deprecate()
-    deprecated_stored_json = json.loads(stored_wf.json())
+    deprecated_version_of_stored_wf = deepcopy(stored_wf)
+    deprecated_version_of_stored_wf.deprecate()
+    deprecated_stored_json = json.loads(deprecated_version_of_stored_wf.json())
 
     with mock.patch(  # noqa: SIM117
         "hetdesrun.exportimport.utils.get_transformation_revisions",
@@ -418,6 +419,22 @@ def test_deprecate_all_but_latest_in_group():
             del update_json["disabled_timestamp"]
             del deprecated_stored_json["disabled_timestamp"]
             assert update_json == deprecated_stored_json
+
+    with mock.patch(  # noqa: SIM117
+        "hetdesrun.exportimport.utils.get_transformation_revisions",
+        return_value=[],  # no released transformations in group, only deprecated and draft ones
+    ) as patched_get:
+        with mock.patch(
+            "hetdesrun.exportimport.utils.update_or_create_transformation_revision",
+            return_value=None,
+        ) as patched_update:
+            deprecate_all_but_latest_in_group(
+                revision_group_id=stored_wf.revision_group_id
+            )
+
+            assert patched_get.call_count == 1
+
+            assert patched_update.call_count == 0
 
 
 def test_deprecate_all_but_latest_per_group():
