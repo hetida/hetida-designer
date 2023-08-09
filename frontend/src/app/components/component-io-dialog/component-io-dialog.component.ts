@@ -10,6 +10,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
   createReadOnlyConfig,
   FlowchartConfiguration,
+  IOTypeOption,
   SVGManipulatorConfiguration
 } from 'hetida-flowchart';
 import { IOType } from 'hetida-flowchart/types/IOType';
@@ -20,7 +21,6 @@ import { UniqueValueValidator } from 'src/app/validation/unique-value-validator'
 import { v4 as UUID } from 'uuid';
 import { ComponentTransformation } from '../../model/transformation';
 import { IO } from 'hd-wiring';
-import { IOTypeOption } from '../../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
 
 export interface ComponentIoDialogData {
   componentTransformation: ComponentTransformation;

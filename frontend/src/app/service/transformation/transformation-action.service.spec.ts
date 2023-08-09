@@ -2,7 +2,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { IOType } from 'hetida-flowchart';
+import { IOType, IOTypeOption } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { MaterialModule } from 'src/app/material.module';
@@ -13,7 +13,6 @@ import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
 import { TransformationActionService } from './transformation-action.service';
 import { TransformationService } from './transformation.service';
-import { IOTypeOption } from '../../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
 
 class TransformationActionServiceExtended extends TransformationActionService {
   public copyTransformation(

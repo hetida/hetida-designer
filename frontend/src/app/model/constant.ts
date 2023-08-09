@@ -1,6 +1,5 @@
-import { IOType } from 'hetida-flowchart';
+import { IOType, IOTypeOption } from 'hetida-flowchart';
 import { Position } from './position';
-import { IOTypeOption } from '../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
 
 export interface Constant {
   id: string;

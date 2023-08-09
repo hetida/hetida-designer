@@ -3,7 +3,8 @@ import {
   FlowchartComponent,
   FlowchartComponentIO,
   FlowchartComponentLink,
-  FlowchartConfiguration
+  FlowchartConfiguration,
+  IOTypeOption
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Connector } from 'src/app/model/connector';
@@ -17,7 +18,6 @@ import { Operator } from 'src/app/model/operator';
 import { Constant } from 'src/app/model/constant';
 import { VertexIds } from 'src/app/components/workflow-editor/workflow-editor.component';
 import { Utils } from 'src/app/utils/utils';
-import { IOTypeOption } from '../../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
 
 @Injectable({
   providedIn: 'root'

@@ -2,7 +2,7 @@ import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Operator } from '../../model/operator';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
-import { IOTypeOption } from '../../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
+import { IOTypeOption } from 'hetida-flowchart';
 
 export interface OptionalFieldsDialogData {
   operator: Operator;

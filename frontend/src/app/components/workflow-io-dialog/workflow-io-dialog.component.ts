@@ -22,6 +22,7 @@ import {
   createReadOnlyConfig,
   FlowchartConfiguration,
   IOType,
+  IOTypeOption,
   SVGManipulatorConfiguration
 } from 'hetida-flowchart';
 import { FlowchartConverterService } from 'src/app/service/type-converter/flowchart-converter.service';
@@ -38,7 +39,6 @@ import { Operator } from 'src/app/model/operator';
 import { Connector } from 'src/app/model/connector';
 import { Constant } from 'src/app/model/constant';
 import { IOConnector } from 'src/app/model/io-connector';
-import { IOTypeOption } from '../../../../../../../hetida-flowchart/packages/hetida-flowchart/dist';
 
 export interface WorkflowIODialogData {
   workflowTransformation: WorkflowTransformation;
