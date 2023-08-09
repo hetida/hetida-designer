@@ -1,6 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { OptionalFieldsDialogComponent } from './optional-fields-dialog.component';
+import { provideMockStore } from '@ngrx/store/testing';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 
 describe('OptionalFieldsDialogComponent', () => {
   let component: OptionalFieldsDialogComponent;
@@ -8,7 +12,25 @@ describe('OptionalFieldsDialogComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [OptionalFieldsDialogComponent]
+      imports: [ReactiveFormsModule, MatIconModule],
+      declarations: [OptionalFieldsDialogComponent],
+      providers: [
+        provideMockStore(),
+        {
+          provide: MatDialogRef,
+          useValue: {}
+        },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            operator: {
+              inputs: []
+            },
+            actionOk: 'ok',
+            actionCancel: 'cancel'
+          }
+        }
+      ]
     }).compileComponents();
   });
 
