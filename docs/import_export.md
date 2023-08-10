@@ -27,9 +27,10 @@ To export only selected components and workflows instead of all, the `export_tra
 
 - type: must be either "COMPONENT" or "WORKFLOW" (if specified)
 - state: must be either "DRAFT", "RELEASED" or "DISABLED" (if specified)
+- categories: a list of categories, only components/workflows whose catgeories are included in this list will be exported
+- category_prefix: the first part of category string, only components/workflows whose categories start with this string will be exported
 - ids: a list of ids, only components/workflows whose ids are included in this list will be exported
 - names: a list of names, only components/workflows whose names are included in this list will be exported
-- category: a category, only components/workflows in this category will be exported
 - include_deprecated: if set to false, deprecated components/workflows will **not** be exported (default: true)
 
 If more than one of these parameters is specified, only the components/workflows that pass all filters will be exported, which corresponds to a logical "and" connection of the filter criteria.

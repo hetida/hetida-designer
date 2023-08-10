@@ -270,15 +270,20 @@ def deprecate_all_but_latest_in_group(
         directly_from_db=directly_in_db,
     )
 
-    released_tr_dict: dict[datetime, TransformationRevision] = {}
+    if len(tr_list) == 0:
+        return
+
+    released_tr_by_release_timestamp_dict: dict[datetime, TransformationRevision] = {}
     for released_tr in tr_list:
-        assert released_tr.released_timestamp is not None  # hint for mypy # noqa: S101
-        released_tr_dict[released_tr.released_timestamp] = released_tr
+        assert released_tr.released_timestamp is not None  # noqa: S101  # hint for mypy
+        released_tr_by_release_timestamp_dict[
+            released_tr.released_timestamp
+        ] = released_tr
 
-    latest_timestamp = max(released_tr_dict.keys())
-    del released_tr_dict[latest_timestamp]
+    latest_timestamp = max(released_tr_by_release_timestamp_dict.keys())
+    del released_tr_by_release_timestamp_dict[latest_timestamp]
 
-    for released_timestamp, tr in released_tr_dict.items():
+    for released_timestamp, tr in released_tr_by_release_timestamp_dict.items():
         tr.deprecate()
         logger.info(
             "Deprecated transformation revision %s with released timestamp %s",
