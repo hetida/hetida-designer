@@ -35,7 +35,14 @@ class InputType(str, Enum):
     OPTIONAL = "OPTIONAL"
 
 
-class Flexibility(BaseModel):
+class InputTypeMixIn(BaseModel):
+    """MixIn for input classes.
+
+    The InputTypeMixIn provides the additional attributes required for inputs to differentiate
+    between optional inputs with default value and required inputs.
+    Furthermore, it validates that no default value is set for required inputs.
+    """
+
     type: InputType = InputType.REQUIRED  # noqa: A003
     value: Any | None = None
 
@@ -57,7 +64,7 @@ class Flexibility(BaseModel):
         return value
 
 
-class TransformationInput(Flexibility, IO):
+class TransformationInput(InputTypeMixIn, IO):
     def to_component_input(self) -> ComponentInput:
         return ComponentInput(
             id=self.id,
@@ -129,7 +136,7 @@ class OperatorOutput(Connector):
         )
 
 
-class OperatorInput(Flexibility, Connector):
+class OperatorInput(InputTypeMixIn, Connector):
     exposed: bool = False
 
     @validator("exposed", always=True)
@@ -258,7 +265,7 @@ class WorkflowContentOutput(WorkflowContentIO):
         )
 
 
-class WorkflowContentDynamicInput(Flexibility, WorkflowContentIO):
+class WorkflowContentDynamicInput(InputTypeMixIn, WorkflowContentIO):
     def matches_trafo_input(self, other: TransformationInput) -> bool:
         return (
             self.id == other.id
