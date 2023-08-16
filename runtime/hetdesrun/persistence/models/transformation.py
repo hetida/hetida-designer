@@ -21,6 +21,8 @@ from hetdesrun.persistence.models.io import (
     OperatorInput,
     OperatorOutput,
     Position,
+    TransformationInput,
+    TransformationOutput,
     WorkflowContentDynamicInput,
     WorkflowContentOutput,
 )
@@ -34,6 +36,97 @@ logger = logging.getLogger(__name__)
 
 def transform_to_utc_datetime(dt: datetime.datetime) -> datetime.datetime:
     return dt.astimezone(tz=datetime.timezone.utc)
+
+
+def adjust_tr_inputs_to_not_matching_wf_inputs_and_remove_surplus_tr_inputs(
+    tr_inputs: list[TransformationInput],
+    wf_inputs_by_id: dict[UUID, WorkflowContentDynamicInput],
+) -> None:
+    remove_tr_inputs = []
+    for tr_input in tr_inputs:
+        try:
+            wf_input = wf_inputs_by_id[tr_input.id]
+        except KeyError:
+            logger.warning(
+                "For the io interface input '%s' "
+                "there is no workflow content input with the same id. "
+                "Thus, it will be removed from the io interface.",
+                str(tr_input.id),
+            )
+            remove_tr_inputs.append(tr_input)
+            continue
+        if not wf_input.matches_trafo_input(tr_input):
+            logger.warning(
+                "For the io interface input '%s' "
+                "the workflow content input with the same id does not match! "
+                "Thus, it will be adjusted in the io interface.",
+                str(tr_input.id),
+            )
+            tr_inputs[tr_inputs.index(tr_input)] = wf_input.to_transformation_input()
+        del wf_inputs_by_id[tr_input.id]
+
+    for tr_input in remove_tr_inputs:
+        tr_inputs.remove(tr_input)
+
+
+def add_tr_inputs_for_surplus_wf_inputs(
+    tr_inputs: list[TransformationInput],
+    wf_inputs_by_id: dict[UUID, WorkflowContentDynamicInput],
+) -> None:
+    for wf_input in wf_inputs_by_id.values():
+        logger.warning(
+            "Input '%s' is in the worklow content but not in the io interface. "
+            "It will be added to the io interface.",
+            str(wf_input.id),
+        )
+        tr_inputs.append(wf_input.to_transformation_input())
+
+
+def adjust_tr_outputs_to_not_matching_wf_outputs_and_remove_surplus_tr_outputs(
+    tr_outputs: list[TransformationOutput],
+    wf_outputs_by_id: dict[UUID, WorkflowContentOutput],
+) -> None:
+    remove_tr_outputs = []
+    for tr_output in tr_outputs:
+        try:
+            wf_output = wf_outputs_by_id[tr_output.id]
+        except KeyError:
+            logger.warning(
+                "For the io interface output '%s' "
+                "there is no workflow content output with the same id. "
+                "Thus, it will be removed from the io interface.",
+                str({tr_output.id}),
+            )
+            remove_tr_outputs.append(tr_output)
+            continue
+        if not wf_output.matches_trafo_output(tr_output):
+            logger.warning(
+                "For the io interface output '%s' "
+                "the workflow content output with the same id does not match! "
+                "Thus, it will be adjusted in the io interface.",
+                str(tr_output.id),
+            )
+            # TODO: Delete instead of adjust once the frontend has been updated
+            tr_outputs[
+                tr_outputs.index(tr_output)
+            ] = wf_output.to_transformation_output()
+        del wf_outputs_by_id[tr_output.id]
+
+    for tr_output in remove_tr_outputs:
+        tr_outputs.remove(tr_output)
+
+
+def add_trafo_outputs_for_surplus_wf_outputs(
+    io_interface_outputs: list[TransformationOutput],
+    wf_outputs_by_id: dict[UUID, WorkflowContentOutput],
+) -> None:
+    for wf_output in wf_outputs_by_id.values():
+        logger.warning(
+            "Output '%s' is in the worklow content but not in the io interface. "
+            "It will be added to the io interface.",
+            str(wf_output.id),
+        )
+        io_interface_outputs.append(wf_output.to_transformation_output())
 
 
 class TransformationRevision(BaseModel):
@@ -222,82 +315,24 @@ class TransformationRevision(BaseModel):
         wf_inputs_by_id: dict[UUID, WorkflowContentDynamicInput] = {
             wf_input.id: wf_input for wf_input in workflow_content.inputs
         }
-        remove_trafo_inputs = []
-        for trafo_input in io_interface.inputs:
-            try:
-                workflow_input = wf_inputs_by_id[trafo_input.id]
-            except KeyError:
-                logger.warning(
-                    "For the io interface input '%s' "
-                    "there is no workflow content input with the same id. "
-                    "Thus, it will be removed from the io interface.",
-                    str(trafo_input.id),
-                )
-                remove_trafo_inputs.append(trafo_input)
-                continue
-            if not workflow_input.matches_trafo_input(trafo_input):
-                logger.warning(
-                    "For the io interface input '%s' "
-                    "the workflow content input with the same id does not match! "
-                    "Thus, it will be adjusted in the io interface.",
-                    str(trafo_input.id),
-                )
-                # TODO: Delete instead of adjust once frontend has been updated
-                io_interface.inputs[
-                    io_interface.inputs.index(trafo_input)
-                ] = workflow_input.to_transformation_input()
-            del wf_inputs_by_id[trafo_input.id]
-
-        for trafo_input in remove_trafo_inputs:
-            io_interface.inputs.remove(trafo_input)
-
-        for wf_input in wf_inputs_by_id.values():
-            logger.warning(
-                "Input '%s' is in the worklow content but not in the io interface. "
-                "It will be added to the io interface.",
-                str(wf_input.id),
-            )
-            io_interface.inputs.append(wf_input.to_transformation_input())
+        # TODO: Delete instead of adjust once frontend has been updated
+        adjust_tr_inputs_to_not_matching_wf_inputs_and_remove_surplus_tr_inputs(
+            io_interface.inputs, wf_inputs_by_id
+        )
+        add_tr_inputs_for_surplus_wf_inputs(io_interface.inputs, wf_inputs_by_id)
 
         wf_outputs_by_id: dict[UUID, WorkflowContentOutput] = {
             wf_output.id: wf_output for wf_output in workflow_content.outputs
         }
-        remove_trafo_outputs = []
-        for trafo_output in io_interface.outputs:
-            try:
-                workflow_output = wf_outputs_by_id[trafo_output.id]
-            except KeyError:
-                logger.warning(
-                    "For the io interface output '%s' "
-                    "there is no workflow content output with the same id. "
-                    "Thus, it will be removed from the io interface.",
-                    str({trafo_output.id}),
-                )
-                remove_trafo_outputs.append(trafo_output)
-                continue
-            if not workflow_output.matches_trafo_output(trafo_output):
-                logger.warning(
-                    "For the io interface output '%s' "
-                    "the workflow content output with the same id does not match! "
-                    "Thus, it will be adjusted in the io interface.",
-                    str(trafo_output.id),
-                )
-                # TODO: Delete instead of adjust once the frontend has been updated
-                io_interface.outputs[
-                    io_interface.outputs.index(trafo_output)
-                ] = workflow_output.to_transformation_output()
-            del wf_outputs_by_id[trafo_output.id]
-
-        for trafo_output in remove_trafo_outputs:
-            io_interface.outputs.remove(trafo_output)
-
-        for wf_output in wf_outputs_by_id.values():
-            logger.warning(
-                "Output '%s' is in the worklow content but not in the io interface. "
-                "It will be added to the io interface.",
-                str(wf_output.id),
-            )
-            io_interface.outputs.append(wf_output.to_transformation_output())
+        # TODO: Delete instead of adjust once frontend has been updated
+        adjust_tr_outputs_to_not_matching_wf_outputs_and_remove_surplus_tr_outputs(
+            io_interface.outputs,
+            wf_outputs_by_id,
+        )
+        add_trafo_outputs_for_surplus_wf_outputs(
+            io_interface.outputs,
+            wf_outputs_by_id,
+        )
 
         return io_interface
 
