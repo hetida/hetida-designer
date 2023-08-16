@@ -179,13 +179,12 @@ def apply_connections(
 
 
 def obtain_inputs_by_role(
-    node: WorkflowNode,
+    wf_inputs: list[WorkflowInput],
 ) -> tuple[list[WorkflowInput], list[WorkflowInput], list[WorkflowInput]]:
     """
     returns a pair of Lists where the first list contains all dynamic inputs and the second
     consists of all constant inputs
     """
-    wf_inputs = node.inputs
     dynamic_inputs_without_default_value = [
         inp for inp in wf_inputs if not inp.constant and not inp.default
     ]
@@ -309,7 +308,7 @@ def recursively_parse_workflow_node(
         dynamic_inputs_without_default_value,
         dynamic_inputs_with_default_value,
         constant_inputs,
-    ) = obtain_inputs_by_role(node)
+    ) = obtain_inputs_by_role(node.inputs)
 
     (
         dynamic_input_mappings,
@@ -344,27 +343,28 @@ def recursively_parse_workflow_node(
     )
 
     # provide default data
-    if len(dynamic_inputs_with_default_value) != 0:
-        # to keep number of nodes in test_plain_wf_parsing_and_execution
-        try:
-            workflow.add_constant_providing_node(
-                values=[
-                    NamedDataTypedValue(
-                        name=inp.name,
-                        type=inp.type,
-                        value=inp.default_value,
-                    )
-                    for inp in dynamic_inputs_with_default_value
-                    if inp.name is not None
-                ],
-                add_new_provider_node_to_workflow=False,
-                id_suffix="workflow_default_values",
-            )
-        except WorkflowInputDataValidationError as error:
-            raise WorkflowInputDataValidationError(
-                "Some default values could not be parsed into the "
-                "respective workflow input datatypes."
-            ).set_context(workflow.context) from error
+    try:
+        # The `add_constant_providing_node` method also ensures that ultimately the corresponding
+        # ComputationNode knows that the input values are to be obtained from this node.
+        # Where applicable, this information is overwritten when the node with the id_suffix
+        # "dynamic_data", which contains the data from the input wiring, is added.
+        workflow.add_constant_providing_node(
+            values=[
+                NamedDataTypedValue(
+                    name=inp.name,
+                    type=inp.type,
+                    value=inp.default_value,
+                )
+                for inp in dynamic_inputs_with_default_value
+                if inp.name is not None
+            ],
+            id_suffix="workflow_default_values",
+        )
+    except WorkflowInputDataValidationError as error:
+        raise WorkflowInputDataValidationError(
+            "Some default values could not be parsed into the "
+            "respective workflow input datatypes."
+        ).set_context(workflow.context) from error
 
     # provide constant data
     try:
