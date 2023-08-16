@@ -30,24 +30,7 @@
         "outputs": []
     },
     "test_wiring": {
-        "input_wirings": [
-            {
-                "workflow_input_name": "error_msg",
-                "adapter_id": "direct_provisioning",
-                "use_default_value": true,
-                "filters": {
-                    "value": "Default error message."
-                }
-            },
-            {
-                "workflow_input_name": "raise_error",
-                "adapter_id": "direct_provisioning",
-                "use_default_value": true,
-                "filters": {
-                    "value": "True"
-                }
-            }
-        ],
+        "input_wirings": [],
         "output_wirings": []
     }
 }

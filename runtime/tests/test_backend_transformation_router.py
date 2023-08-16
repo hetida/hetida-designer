@@ -1464,11 +1464,9 @@ async def test_execute_for_transformation_revision_component_with_optional_input
 
     assert response.status_code == 200
     response_json = response.json()
+    # The component is designed to raise an error with the provided error message
     assert "traceback" in response_json
-    assert (
-        tr_json["test_wiring"]["input_wirings"][0]["filters"]["value"]
-        in response_json["traceback"]
-    )
+    assert tr_json["io_interface"]["inputs"][0]["value"] in response_json["traceback"]
 
 
 @pytest.mark.asyncio
@@ -1498,9 +1496,10 @@ async def test_execute_for_transformation_revision_workflow_with_optional_inputs
 
     assert response.status_code == 200
     response_json = response.json()
+    # The component is designed to raise an error with the provided error message
     assert "traceback" in response_json
     assert (
-        workflow_tr_json["test_wiring"]["input_wirings"][2]["filters"]["value"]
+        workflow_tr_json["io_interface"]["inputs"][2]["value"]
         in response_json["traceback"]
     )
 

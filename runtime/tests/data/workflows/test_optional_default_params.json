@@ -302,30 +302,6 @@
     "test_wiring": {
         "input_wirings": [
             {
-                "workflow_input_name": "err_msg",
-                "adapter_id": "direct_provisioning",
-                "use_default_value": true,
-                "filters": {
-                    "value": "Default error message from workflow input."
-                }
-            },
-            {
-                "workflow_input_name": "raise_err",
-                "adapter_id": "direct_provisioning",
-                "use_default_value": true,
-                "filters": {
-                    "value": "False"
-                }
-            },
-            {
-                "workflow_input_name": "err_msg_2",
-                "adapter_id": "direct_provisioning",
-                "use_default_value": true,
-                "filters": {
-                    "value": "Default error message from 2nd workflow input"
-                }
-            },
-            {
                 "workflow_input_name": "raise_err_2",
                 "adapter_id": "direct_provisioning",
                 "use_default_value": false,
