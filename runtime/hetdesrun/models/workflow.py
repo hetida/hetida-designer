@@ -23,9 +23,14 @@ class WorkflowInput(UnnamedInput):
             """ in form of a single entry dictionary {"value": foo}"""
         ),
     )
+    default_value: Any = Field(
+        None,
+        description=("The default value for this input if default is True."),
+    )
     constant: bool = Field(
         False, description="Whether this input should be fed with a constant value"
     )
+    default: bool = Field(False, description="Whether this input has a default value")
     name_in_subnode: str
 
     @validator("name", always=True)

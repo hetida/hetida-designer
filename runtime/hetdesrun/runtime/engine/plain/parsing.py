@@ -15,6 +15,7 @@ from hetdesrun.models.workflow import (
 )
 from hetdesrun.runtime import runtime_logger
 from hetdesrun.runtime.engine.plain.workflow import ComputationNode, Node, Workflow
+from hetdesrun.runtime.exceptions import WorkflowInputDataValidationError
 from hetdesrun.runtime.logging import job_id_context_filter
 
 runtime_logger.addFilter(job_id_context_filter)
@@ -60,8 +61,6 @@ def parse_workflow_input(
         workflow_node,
         component_dict,
         code_module_dict,
-        name_prefix="\\",
-        id_prefix="\\",
     )
 
     return workflow
@@ -180,16 +179,24 @@ def apply_connections(
 
 
 def obtain_inputs_by_role(
-    node: WorkflowNode,
-) -> tuple[list[WorkflowInput], list[WorkflowInput]]:
+    wf_inputs: list[WorkflowInput],
+) -> tuple[list[WorkflowInput], list[WorkflowInput], list[WorkflowInput]]:
     """
     returns a pair of Lists where the first list contains all dynamic inputs and the second
     consists of all constant inputs
     """
-    wf_inputs = node.inputs
-    dynamic_inputs = [inp for inp in wf_inputs if not inp.constant]
+    dynamic_inputs_without_default_value = [
+        inp for inp in wf_inputs if not inp.constant and not inp.default
+    ]
+    dynamic_inputs_with_default_value = [
+        inp for inp in wf_inputs if not inp.constant and inp.default
+    ]
     constant_inputs = [inp for inp in wf_inputs if inp.constant]
-    return (dynamic_inputs, constant_inputs)
+    return (
+        dynamic_inputs_without_default_value,
+        dynamic_inputs_with_default_value,
+        constant_inputs,
+    )
 
 
 def generate_constant_input_name(inp: WorkflowInput) -> str:
@@ -197,11 +204,13 @@ def generate_constant_input_name(inp: WorkflowInput) -> str:
 
 
 def obtain_mappings(
-    dynamic_inputs: list[WorkflowInput],
+    dynamic_inputs_without_default_value: list[WorkflowInput],
+    dynamic_inputs_with_default_value: list[WorkflowInput],
     constant_inputs: list[WorkflowInput],
     outputs: list[WorkflowOutput],
     new_sub_nodes: dict[str, Node],
 ) -> tuple[
+    dict[str, tuple[Node, str]],
     dict[str, tuple[Node, str]],
     dict[str, tuple[Node, str]],
     dict[str, tuple[Node, str]],
@@ -216,7 +225,17 @@ def obtain_mappings(
             new_sub_nodes[inp.id_of_sub_node],
             inp.name_in_subnode,
         )
-        for inp in dynamic_inputs
+        for inp in dynamic_inputs_without_default_value
+    }
+
+    optional_input_mappings: dict[str, tuple[Node, str]] = {
+        cast(str, inp.name): (
+            # casting since mypy does not know that for non-constant inputs
+            # a name is mandatory
+            new_sub_nodes[inp.id_of_sub_node],
+            inp.name_in_subnode,
+        )
+        for inp in dynamic_inputs_with_default_value
     }
 
     constant_input_mappings = {
@@ -232,7 +251,12 @@ def obtain_mappings(
         for outp in outputs
     }
 
-    return (dynamic_input_mappings, constant_input_mappings, output_mappings)
+    return (
+        dynamic_input_mappings,
+        optional_input_mappings,
+        constant_input_mappings,
+        output_mappings,
+    )
 
 
 def recursively_parse_workflow_node(
@@ -280,14 +304,28 @@ def recursively_parse_workflow_node(
     wf_outputs = node.outputs
     has_only_plot_outputs = only_plot_outputs(wf_outputs)
 
-    dynamic_inputs, constant_inputs = obtain_inputs_by_role(node)
+    (
+        dynamic_inputs_without_default_value,
+        dynamic_inputs_with_default_value,
+        constant_inputs,
+    ) = obtain_inputs_by_role(node.inputs)
 
-    dynamic_input_mappings, constant_input_mappings, output_mappings = obtain_mappings(
-        dynamic_inputs, constant_inputs, wf_outputs, new_sub_nodes
+    (
+        dynamic_input_mappings,
+        optional_input_mappings,
+        constant_input_mappings,
+        output_mappings,
+    ) = obtain_mappings(
+        dynamic_inputs_without_default_value,
+        dynamic_inputs_with_default_value,
+        constant_inputs,
+        wf_outputs,
+        new_sub_nodes,
     )
 
     input_mappings = {
         **dynamic_input_mappings,
+        **optional_input_mappings,
         **constant_input_mappings,
     }  # generated constant input name: (subnode, subnode_inp_name)
 
@@ -304,17 +342,47 @@ def recursively_parse_workflow_node(
         operator_hierarchical_name=name_prefix + node_name + "\\",
     )
 
+    # provide default data
+    try:
+        # The `add_constant_providing_node` method also ensures that ultimately the corresponding
+        # ComputationNode knows that the input values are to be obtained from this node.
+        # Where applicable, this information is overwritten when the node with the id_suffix
+        # "dynamic_data", which contains the data from the input wiring, is added.
+        workflow.add_constant_providing_node(
+            values=[
+                NamedDataTypedValue(
+                    name=inp.name,
+                    type=inp.type,
+                    value=inp.default_value,
+                )
+                for inp in dynamic_inputs_with_default_value
+                if inp.name is not None
+            ],
+            id_suffix="workflow_default_values",
+        )
+    except WorkflowInputDataValidationError as error:
+        raise WorkflowInputDataValidationError(
+            "Some default values could not be parsed into the "
+            "respective workflow input datatypes."
+        ).set_context(workflow.context) from error
+
     # provide constant data
-    workflow.add_constant_providing_node(
-        values=[
-            NamedDataTypedValue(
-                name=generate_constant_input_name(inp),
-                type=inp.type,
-                value=inp.constantValue["value"],
-            )
-            for inp in constant_inputs
-        ],
-        id_suffix="workflow_constant_values",
-    )
+    try:
+        workflow.add_constant_providing_node(
+            values=[
+                NamedDataTypedValue(
+                    name=generate_constant_input_name(inp),
+                    type=inp.type,
+                    value=inp.constantValue["value"],
+                )
+                for inp in constant_inputs
+            ],
+            id_suffix="workflow_constant_values",
+        )
+    except WorkflowInputDataValidationError as error:
+        raise WorkflowInputDataValidationError(
+            "Some constant values could not be parsed into the "
+            "respective workflow input datatypes."
+        ).set_context(workflow.context) from error
 
     return workflow

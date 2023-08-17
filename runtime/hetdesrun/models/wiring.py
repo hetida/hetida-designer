@@ -98,6 +98,7 @@ class InputWiring(BaseModel):
         description="Type of data. If present then must be one of "
         + ", ".join(['"' + x.value + '"' for x in list(ExternalType)]),  # type: ignore
     )
+    use_default_value: bool = False
     filters: dict[FilterKey, str | None] = {}
 
     @validator("adapter_id")
