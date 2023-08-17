@@ -144,6 +144,12 @@ async def write_custom_objects_to_storage(
 def apply_filters_to_metadata_key(
     thing_node_id: str, metadata_key: str, filters: dict[str, str]
 ) -> str:
+    """Apply filters sent with the output wiring to the medatadata key if applicable.
+
+    The free text filter `object_key_suffix` requires that the metadata key is set to a
+    new value which contains the filter value.
+    An exception is raised if that metadata key does not yield a valid object key.
+    """
     if "object_key_suffix" in filters:
         logger.debug("Apply 'object_key_suffix' filter.")
         object_key_suffix = filters["object_key_suffix"]
