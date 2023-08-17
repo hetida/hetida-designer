@@ -113,6 +113,15 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
             )
             * 6
         )
+        filter_names = {
+            snk["filters"]["file_name"]["name"]
+            for snk in all_snks
+            if "file_name" in snk["filters"]
+        }
+        assert filter_names == {
+            'File Name (must end with ".pkl" or ".h5")',
+            'File Name (must end with ".csv", ".xlsx" or ".parquet")',
+        }
         assert len(src_attached_metadata_dict) == 0
         assert len(snk_attached_metadata_dict) == 0
         assert len(tn_attached_metadata_dict) == 0
@@ -275,6 +284,10 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
                                 },
                                 adapter_key="local-file-adapter",
                             )
+                assert file_handler_mock.called_once
+                assert write_handler_func_mock.called_once
+                _, _, kwargs = write_handler_func_mock.mock_calls[0]
+                assert kwargs == {}
 
             if snk["type"].startswith("timeseries"):
                 raise AssertionError(
