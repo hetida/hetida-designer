@@ -21,7 +21,7 @@
   }
 
   &__info-text {
-    margin-bottom: var(spacing-2);
+    margin-bottom: var(--spacing-2);
   }
 
   &__connector-type-operator {
@@ -29,8 +29,8 @@
     padding-right: var(--spacing-1);
   }
 
-  &__dynamic-fixed-toggle {
-    flex: 0 0 50px;
+  &__input-type-option {
+    flex: 0 0 90px;
     padding-right: var(--spacing-1);
   }
 }
@@ -48,4 +48,10 @@
 
 .input-configuration-delete-icon-column {
   flex: 0 0 40px;
+}
+
+.default-value-input{
+  flex: 0 1 42%;
+  padding-right: calc(2 * var(--spacing-2));
+  margin-left: auto;
 }

@@ -36,6 +36,8 @@ const config: PlaywrightTestConfig = {
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: process.env.PLAYWRIGHT_TARGET_URL ?? 'http://localhost',
+    /* LocalHost base URL for playwrite */
+    /*baseURL: process.env.PLAYWRIGHT_TARGET_URL ?? 'http://localhost:4200',*/
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry'

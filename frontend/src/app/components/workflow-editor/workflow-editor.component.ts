@@ -42,6 +42,7 @@ import { TransformationService } from 'src/app/service/transformation/transforma
 import { Connector } from 'src/app/model/connector';
 import { Utils } from 'src/app/utils/utils';
 import { Constant } from 'src/app/model/constant';
+import { OptionalFieldsDialogComponent } from '../optional-fields-dialog/optional-fields-dialog.component';
 
 interface IdentifiableEntity {
   id: string;
@@ -537,6 +538,58 @@ export class WorkflowEditorComponent {
           .updateTransformation(this.currentWorkflow)
           .subscribe();
       });
+  }
+
+  showOptionalFields(event: CustomEvent): void {
+    const uuid = event.detail.uuid;
+    if (uuid) {
+      const selected_op = this.currentWorkflow.content.operators.filter(
+        op => op.id === event.detail.uuid
+      )[0];
+      if (selected_op) {
+        const dialogRef = this.dialog.open<OptionalFieldsDialogComponent>(
+          OptionalFieldsDialogComponent,
+          {
+            width: '30%',
+            minHeight: '200px',
+            data: {
+              operator: selected_op,
+              actionOk: 'Save',
+              actionCancel: 'Cancel'
+            }
+          }
+        );
+
+        dialogRef
+          .afterClosed()
+          .pipe(first())
+          .subscribe((inputs: Connector[]) => {
+            if (inputs) {
+              this.currentWorkflow.content.operators.filter(
+                op => op.id === event.detail.uuid
+              )[0].inputs = inputs;
+              inputs
+                .filter(input => !input.exposed)
+                .forEach(input => {
+                  this.currentWorkflow.content.inputs
+                    .filter(
+                      contentInput =>
+                        contentInput.operator_id === event.detail.uuid
+                    )
+                    .filter(filterInput => {
+                      if (filterInput.connector_id === input.id) {
+                        filterInput.name = '';
+                      }
+                    });
+                });
+              this.hasChanges = true;
+              this._updateWorkflowIfNecessary();
+            }
+          });
+      }
+    } else {
+      console.error('No UUID send from flowchart event!');
+    }
   }
 
   private _extractCurrentOperatorFromEvent(event: Event): Operator | null {

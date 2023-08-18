@@ -3,7 +3,8 @@ import {
   FlowchartComponent,
   FlowchartComponentIO,
   FlowchartComponentLink,
-  FlowchartConfiguration
+  FlowchartConfiguration,
+  IOTypeOption
 } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Connector } from 'src/app/model/connector';
@@ -33,10 +34,35 @@ export class FlowchartConverterService {
     const operator = {
       ...transformation,
       transformation_id: transformation.id,
-      inputs: transformation.io_interface.inputs.map(input => ({
-        ...input,
-        position: null
-      })),
+      inputs: transformation.io_interface.inputs
+        .map(input => {
+          if (typeof transformation.content !== 'string') {
+            const inputConnector = transformation.content.inputs.filter(
+              contentInput => contentInput.id === input.id
+            );
+            if (inputConnector.length > 0) {
+              transformation.content.operators
+                .filter(opt => opt.id === inputConnector[0].operator_id)
+                .forEach(foundOperator => {
+                  foundOperator.inputs.forEach(operatorInput => {
+                    if (operatorInput.id === inputConnector[0].connector_id) {
+                      input.exposed = false;
+                      input.type = inputConnector[0].type;
+                    }
+                  });
+                });
+            }
+          }
+          return input;
+        })
+        .map(input => {
+          return {
+            ...input,
+            exposed: input.exposed,
+            is_default_value: input.type === IOTypeOption.OPTIONAL,
+            position: null
+          };
+        }),
       outputs: transformation.io_interface.outputs.map(output => ({
         ...output,
         position: null
@@ -171,7 +197,8 @@ export class FlowchartConverterService {
         pos_x: io.position.x,
         pos_y: io.position.y,
         constant: false,
-        value: ''
+        value: '',
+        is_default_value: io.type === IOTypeOption.OPTIONAL
       });
     }
 
@@ -346,6 +373,7 @@ export class FlowchartConverterService {
     };
 
     for (const io of operator.inputs) {
+      const isDefaultValue = io.type === IOTypeOption.OPTIONAL;
       component.inputs.push({
         uuid: `${uuid}_${io.id}`,
         data_type: io.data_type,
@@ -354,7 +382,9 @@ export class FlowchartConverterService {
         pos_x: null,
         pos_y: null,
         constant: false,
-        value: ''
+        exposed: io.exposed,
+        is_default_value: isDefaultValue,
+        value: isDefaultValue && io.value ? io.value : ''
       });
     }
     for (const io of operator.outputs) {
