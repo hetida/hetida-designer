@@ -91,15 +91,7 @@ def wrap_in_quotes(string: str) -> str:
 
 
 def string_list_to_string(string_list: list[str]) -> str:
-    if len(string_list) == 0:
-        return ""
-    if len(string_list) == 1:
-        return wrap_in_quotes(string_list[0])
-    return (
-        ", ".join(wrap_in_quotes(item) for item in string_list[:-1])
-        + " or "
-        + wrap_in_quotes(string_list[-1])
-    )
+    return ", ".join(wrap_in_quotes(item) for item in string_list)
 
 
 def generate_registered_extensions_string(
@@ -116,6 +108,8 @@ def generate_registered_extensions_string(
         )
         logger.error(msg)
         raise AdapterHandlingException(msg)
+    if "..." in allowed_extensions:
+        allowed_extensions_with_registered_file_handler.append("...")
     return string_list_to_string(allowed_extensions_with_registered_file_handler)
 
 
@@ -145,7 +139,8 @@ def generic_any_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
 def generic_dataframe_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
     generic_sink_id = "GENERIC_DATAFRAME_SINK_AT_" + parent_id
     registered_extensions_string = generate_registered_extensions_string(
-        allowed_extensions=[".csv", ".xlsx", ".parquet"], generic_sink_type="DATAFRAME"
+        allowed_extensions=[".csv", ".xlsx", ".parquet", "..."],
+        generic_sink_type="DATAFRAME",
     )
     return LocalFileStructureSink(
         id=generic_sink_id,

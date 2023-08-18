@@ -119,8 +119,8 @@ async def test_resources_offered_from_structure_hierarchy(async_test_client):
             if "file_name" in snk["filters"]
         }
         assert filter_names == {
-            'File Name (must end with ".pkl" or ".h5")',
-            'File Name (must end with ".csv", ".xlsx" or ".parquet")',
+            'File Name (must end with ".pkl", ".h5")',
+            'File Name (must end with ".csv", ".xlsx", ".parquet", "...")',
         }
         assert len(src_attached_metadata_dict) == 0
         assert len(snk_attached_metadata_dict) == 0
