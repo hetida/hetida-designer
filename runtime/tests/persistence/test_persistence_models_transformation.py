@@ -1,3 +1,5 @@
+import json
+import os
 from collections import namedtuple
 from copy import deepcopy
 from uuid import uuid4
@@ -313,3 +315,51 @@ def test_to_workflow_node():
     assert len(workflow_node.connections) == 0
     assert workflow_node.name == "Wrapper Workflow"
     assert workflow_node.tr_name == "Wrapper Workflow"
+
+
+def test_transformation_validation_for_change_dynamic_input_to_constant(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    with open(
+        os.path.join(
+            "transformations",
+            "workflows",
+            "connectors",
+            "combine-two-series-into-dataframe_100_09b29726-4373-4652-82c8-7aa3e3f91676.json",
+        ),
+        encoding="utf8",
+    ) as f:
+        wf_tr = json.load(f)
+
+    wf_tr_with_changed_dynamic_input_to_constant_dict = deepcopy(wf_tr)
+    wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["constants"] = [
+        wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["inputs"][0]
+    ]
+    del wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["inputs"][0]
+    del wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["constants"][0][
+        "name"
+    ]
+    wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["constants"][0][
+        "value"
+    ] = ""
+    # link from dynamic workflow input #0 b44 to operator #0 ea5 input 156
+    del wf_tr_with_changed_dynamic_input_to_constant_dict["content"]["links"][3][
+        "start"
+    ]["connector"]["name"]
+    assert (
+        len(wf_tr_with_changed_dynamic_input_to_constant_dict["io_interface"]["inputs"])
+        == 3
+    )
+    resulting_tr = TransformationRevision(
+        **wf_tr_with_changed_dynamic_input_to_constant_dict
+    )
+    # new link from constant workflow input b44 to operator #0 input 156
+    assert "For the io interface input 'b44" in caplog.text
+    assert "there is no workflow content input with the same id" in caplog.text
+    assert "Thus, it will be removed from the io interface." in caplog.text
+    assert "Input '9f4" not in caplog.text
+    assert "is in the worklow content but not in the io interface." not in caplog.text
+    assert "It will be added to the io interface." not in caplog.text
+    assert len(resulting_tr.content.constants) == 1
+    assert len(resulting_tr.content.inputs) == 2
+    assert len(resulting_tr.io_interface.inputs) == 2

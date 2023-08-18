@@ -6,6 +6,8 @@ to provide a very elementary support system to the designer code editor.
 
 from keyword import iskeyword
 
+from hetdesrun.datatypes import DataType
+from hetdesrun.persistence.models.io import InputType, TransformationInput
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
 
@@ -43,6 +45,21 @@ function_body_template: str = """\
 """
 
 
+def wrap_in_quotes_if_data_type_string(
+    default_value_string: str, data_type: DataType
+) -> str:
+    if data_type != DataType.String or default_value_string == "None":
+        return default_value_string
+    return '"' + default_value_string + '"'
+
+
+def default_value_string(inp: TransformationInput) -> str:
+    if inp.value == "" and inp.data_type != DataType.String:
+        return "None"
+
+    return wrap_in_quotes_if_data_type_string(str(inp.value), inp.data_type)
+
+
 def generate_function_header(
     component: TransformationRevision, is_coroutine: bool = False
 ) -> str:
@@ -52,7 +69,16 @@ def generate_function_header(
         if len(component.io_interface.inputs) == 0
         else "*, "
         + ", ".join(
-            inp.name for inp in component.io_interface.inputs if inp.name is not None
+            [
+                inp.name
+                for inp in component.io_interface.inputs
+                if inp.type == InputType.REQUIRED and inp.name is not None
+            ]
+            + [
+                inp.name + "=" + default_value_string(inp)
+                for inp in component.io_interface.inputs
+                if inp.type == InputType.OPTIONAL and inp.name is not None
+            ]
         )
     )
 
@@ -63,7 +89,32 @@ def generate_function_header(
         + ("\n    " if len(component.io_interface.inputs) != 0 else "")
         + "".join(
             [
-                '    "' + inp.name + '": "' + inp.data_type.value + '",\n    '
+                '    "'
+                + inp.name
+                + '": {"data_type": "'
+                + inp.data_type.value
+                + '"'
+                + (
+                    ', "default_value": '
+                    + (
+                        '"'
+                        if inp.data_type == DataType.String and inp.value is not None
+                        else ""
+                    )
+                    + (
+                        str(inp.value)
+                        if (inp.data_type == DataType.String or inp.value != "")
+                        else "None"
+                    )
+                    + (
+                        '"'
+                        if inp.data_type == DataType.String and inp.value is not None
+                        else ""
+                    )
+                    if inp.type == InputType.OPTIONAL
+                    else ""
+                )
+                + "},\n    "
                 for inp in component.io_interface.inputs
                 if inp.name is not None
             ]
@@ -76,7 +127,11 @@ def generate_function_header(
         + ("\n    " if len(component.io_interface.outputs) != 0 else "")
         + "".join(
             [
-                '    "' + output.name + '": "' + output.data_type.value + '",\n    '
+                '    "'
+                + output.name
+                + '": {"data_type": "'
+                + output.data_type.value
+                + '"},\n    '
                 for output in component.io_interface.outputs
                 if output.name is not None
             ]

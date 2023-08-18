@@ -8,9 +8,9 @@ from hetdesrun.models.util import valid_python_identifier
 from hetdesrun.persistence.models.io import (
     IO,
     Connector,
-    Constant,
-    IOConnector,
     Position,
+    WorkflowContentConstantInput,
+    WorkflowContentIO,
 )
 
 
@@ -31,8 +31,10 @@ class WorkflowIoFrontendDto(BaseModel):
             return name
         return valid_python_identifier(cls, name)
 
-    def to_io_connector(self, operator_name: str, connector_name: str) -> IOConnector:
-        return IOConnector(
+    def to_workflow_content_io(
+        self, operator_name: str, connector_name: str
+    ) -> WorkflowContentIO:
+        return WorkflowContentIO(
             id=self.id,
             name=self.name,
             data_type=self.type,
@@ -43,8 +45,10 @@ class WorkflowIoFrontendDto(BaseModel):
             position=Position(x=self.pos_x, y=self.pos_y),
         )
 
-    def to_constant(self, operator_name: str, connector_name: str) -> Constant:
-        return Constant(
+    def to_constant(
+        self, operator_name: str, connector_name: str
+    ) -> WorkflowContentConstantInput:
+        return WorkflowContentConstantInput(
             id=self.id,
             data_type=self.type,
             operator_id=self.operator,
@@ -65,32 +69,34 @@ class WorkflowIoFrontendDto(BaseModel):
         )
 
     @classmethod
-    def from_io(
-        cls, io: IO, operator_id: UUID, connector_id: UUID, pos_x: int, pos_y: int
+    def from_workflow_content_io(
+        cls,
+        workflow_content_io: WorkflowContentIO,
     ) -> "WorkflowIoFrontendDto":
         return WorkflowIoFrontendDto(
-            id=io.id,
-            name=io.name,
-            posX=pos_x,
-            posY=pos_y,
-            type=io.data_type,
-            operator=operator_id,
-            connector=connector_id,
+            id=workflow_content_io.id,
+            name=workflow_content_io.name,
+            posX=workflow_content_io.position.x,
+            posY=workflow_content_io.position.y,
+            type=workflow_content_io.data_type,
+            operator=workflow_content_io.operator_id,
+            connector=workflow_content_io.connector_id,
             constant=False,
             constantValue={"value": ""},
         )
 
     @classmethod
-    def from_constant(
-        cls, constant: Constant, operator_id: UUID, connector_id: UUID
+    def from_workflow_content_constant_input(
+        cls,
+        constant: WorkflowContentConstantInput,
     ) -> "WorkflowIoFrontendDto":
         return WorkflowIoFrontendDto(
             id=constant.id,
             posX=constant.position.x,
             posY=constant.position.y,
             type=constant.data_type,
-            operator=operator_id,
-            connector=connector_id,
+            operator=constant.operator_id,
+            connector=constant.connector_id,
             constant=True,
             constantValue={"value": constant.value},
         )

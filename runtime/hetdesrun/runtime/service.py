@@ -102,6 +102,10 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
     # Provide data as constants
     try:
+        # The `add_constant_providing_node` method also ensures that ultimately the corresponding
+        # ComputationNode knows that the input values are to be obtained from this node.
+        # Where applicable, the information from the previous addition of the node with the
+        # id_suffix "workflow_default_values" is overwritten.
         parsed_wf.add_constant_providing_node(
             constant_providing_data, id_suffix="dynamic_data"
         )

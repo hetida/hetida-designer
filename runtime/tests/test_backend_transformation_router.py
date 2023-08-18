@@ -11,8 +11,6 @@ from fastapi import HTTPException
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.component.code import update_code
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
-from hetdesrun.persistence import get_db_engine
-from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
     get_multiple_transformation_revisions,
@@ -24,19 +22,6 @@ from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
-
-
-@pytest.fixture()
-def clean_test_db_engine(use_in_memory_db):
-    if use_in_memory_db:
-        in_memory_database_url = "sqlite+pysqlite:///:memory:"
-        engine = get_db_engine(override_db_url=in_memory_database_url)
-    else:
-        engine = get_db_engine()
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    return engine
-
 
 tr_json_component_1 = {
     "id": str(get_uuid_from_seed("component 1")),
@@ -54,6 +39,7 @@ tr_json_component_1 = {
                 "id": str(get_uuid_from_seed("operator input")),
                 "name": "operator_input",
                 "data_type": "INT",
+                "type": "REQUIRED",
             }
         ],
         "outputs": [
@@ -70,6 +56,7 @@ tr_json_component_1 = {
             {
                 "workflow_input_name": "operator_input",
                 "adapter_id": "direct_provisioning",
+                "use_default_value": False,
                 "filters": {"value": "100"},
             },
         ],
@@ -97,6 +84,7 @@ tr_json_component_1_new_revision = {
                 "id": str(get_uuid_from_seed("operator input")),
                 "name": "operator_input",
                 "data_type": "INT",
+                "type": "REQUIRED",
             }
         ],
         "outputs": [
@@ -113,6 +101,7 @@ tr_json_component_1_new_revision = {
             {
                 "workflow_input_name": "operator_input",
                 "adapter_id": "direct_provisioning",
+                "use_default_value": False,
                 "filters": {"value": "100"},
             },
         ],
@@ -206,6 +195,7 @@ tr_json_component_3 = {
                 "id": "a980edcb-7ad3-49a2-a78d-bd8092fccb90",
                 "name": "new_input_1",
                 "data_type": "STRING",
+                "type": "REQUIRED",
             }
         ],
         "outputs": [
@@ -371,6 +361,7 @@ tr_json_workflow_2_added_io_for_operator = {
             {
                 "id": str(get_uuid_from_seed("input")),
                 "data_type": "INT",
+                "type": "REQUIRED",
             }
         ],
         "outputs": [
@@ -386,6 +377,7 @@ tr_json_workflow_2_added_io_for_operator = {
             {
                 "id": str(get_uuid_from_seed("input")),
                 "data_type": "INT",
+                "type": "REQUIRED",
                 "operator_id": str(get_uuid_from_seed("operator")),
                 "connector_id": str(get_uuid_from_seed("operator input")),
                 "operator_name": "operator",
@@ -418,7 +410,9 @@ tr_json_workflow_2_added_io_for_operator = {
                         "id": str(get_uuid_from_seed("operator input")),
                         "name": "operator_input",
                         "data_type": "INT",
+                        "type": "REQUIRED",
                         "position": {"x": 0, "y": 0},
+                        "exposed": True,
                     },
                 ],
                 "outputs": [
@@ -455,6 +449,7 @@ tr_json_workflow_2_with_named_io_for_operator = {
                 "id": str(get_uuid_from_seed("input")),
                 "name": "wf_input",
                 "data_type": "INT",
+                "type": "REQUIRED",
             }
         ],
         "outputs": [
@@ -472,6 +467,7 @@ tr_json_workflow_2_with_named_io_for_operator = {
                 "id": str(get_uuid_from_seed("input")),
                 "name": "wf_input",
                 "data_type": "INT",
+                "type": "REQUIRED",
                 "operator_id": str(get_uuid_from_seed("operator")),
                 "connector_id": str(get_uuid_from_seed("operator input")),
                 "operator_name": "operator",
@@ -505,7 +501,9 @@ tr_json_workflow_2_with_named_io_for_operator = {
                         "id": str(get_uuid_from_seed("operator input")),
                         "name": "operator_input",
                         "data_type": "INT",
+                        "type": "REQUIRED",
                         "position": {"x": 0, "y": 0},
+                        "exposed": True,
                     },
                 ],
                 "outputs": [
@@ -569,6 +567,7 @@ tr_json_workflow_2_with_named_io_for_operator = {
             {
                 "workflow_input_name": "wf_input",
                 "adapter_id": "direct_provisioning",
+                "use_default_value": False,
                 "filters": {"value": "100"},
             },
         ],
@@ -1441,6 +1440,68 @@ async def test_execute_for_separate_runtime_container(
                 "1270547c-b224-461d-9387-e9d9d465bbe1"
             )
             mocked_post.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_execute_for_transformation_revision_component_with_optional_inputs(
+    async_test_client, mocked_clean_test_db_session
+):
+    path = "tests/data/components/test_optional_default_params.json"
+    tr_json = load_json(path)
+    tr = TransformationRevision(**tr_json)
+    store_single_transformation_revision(tr)
+
+    exec_by_id_input_json = {
+        "id": tr_json["id"],
+        "wiring": tr_json["test_wiring"],
+    }
+
+    async with async_test_client as ac:
+        response = await ac.post(
+            "/api/transformations/execute",
+            json=exec_by_id_input_json,
+        )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    # The component is designed to raise an error with the provided error message
+    assert "traceback" in response_json
+    assert tr_json["io_interface"]["inputs"][0]["value"] in response_json["traceback"]
+
+
+@pytest.mark.asyncio
+async def test_execute_for_transformation_revision_workflow_with_optional_inputs(
+    async_test_client, mocked_clean_test_db_session
+):
+    component_path = "tests/data/components/test_optional_default_params.json"
+    component_tr_json = load_json(component_path)
+    component_tr = TransformationRevision(**component_tr_json)
+    store_single_transformation_revision(component_tr)
+
+    workflow_path = "tests/data/workflows/test_optional_default_params.json"
+    workflow_tr_json = load_json(workflow_path)
+    workflow_tr = TransformationRevision(**workflow_tr_json)
+    store_single_transformation_revision(workflow_tr)
+
+    exec_by_id_input_json = {
+        "id": workflow_tr_json["id"],
+        "wiring": workflow_tr_json["test_wiring"],
+    }
+
+    async with async_test_client as ac:
+        response = await ac.post(
+            "/api/transformations/execute",
+            json=exec_by_id_input_json,
+        )
+
+    assert response.status_code == 200
+    response_json = response.json()
+    # The component is designed to raise an error with the provided error message
+    assert "traceback" in response_json
+    assert (
+        workflow_tr_json["io_interface"]["inputs"][2]["value"]
+        in response_json["traceback"]
+    )
 
 
 @pytest.mark.asyncio

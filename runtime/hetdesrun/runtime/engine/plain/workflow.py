@@ -322,8 +322,8 @@ class Workflow:
             parsed_values = parse_dynamically_from_datatypes(values).dict()
         except ValidationError as e:
             raise WorkflowInputDataValidationError(
-                "The provided data or some constant values could not be parsed into the "
-                "respective workflow input datatypes"
+                "The provided data or some constant or default values could not be parsed into the "
+                "respective workflow input datatypes."
             ).set_context(self.context) from e
 
         Const_Node = ComputationNode(
