@@ -67,7 +67,11 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
 
 
 async def post_multitsframe(
-    df: pd.DataFrame, ref_id: str, adapter_key: str, client: AsyncClient
+    df: pd.DataFrame,
+    ref_id: str,
+    additional_params: list[tuple[str, str]],
+    adapter_key: str,
+    client: AsyncClient,
 ) -> None:
     records = multitsframe_to_list_of_dicts(df)
 
@@ -75,6 +79,7 @@ async def post_multitsframe(
         records,
         attributes=df.attrs,
         ref_id=ref_id,
+        additional_params=additional_params,
         adapter_key=adapter_key,
         endpoint="multitsframe",
         client=client,
@@ -82,7 +87,10 @@ async def post_multitsframe(
 
 
 async def post_multitsframes(
-    dfs: list[pd.DataFrame], ref_ids: list[str], adapter_key: str
+    dfs: list[pd.DataFrame],
+    ref_ids: list[str],
+    sink_filters: list[dict[str, str]],
+    adapter_key: str,
 ) -> None:
     async with AsyncClient(
         verify=get_config().hd_adapters_verify_certs,
@@ -90,8 +98,14 @@ async def post_multitsframes(
     ) as client:
         await asyncio.gather(
             *(
-                post_multitsframe(df, ref_id, adapter_key=adapter_key, client=client)
-                for df, ref_id in zip(dfs, ref_ids, strict=True)
+                post_multitsframe(
+                    df,
+                    ref_id,
+                    additional_params=list(filters.items()),
+                    adapter_key=adapter_key,
+                    client=client,
+                )
+                for df, ref_id, filters in zip(dfs, ref_ids, sink_filters, strict=True)
             )
         )
 
@@ -103,6 +117,9 @@ async def send_multitsframes_to_adapter(
 ) -> None:
     keys = filtered_sinks.keys()
     ref_ids: list[str] = [str(filtered_sinks[key].ref_id) for key in keys]
+    sink_filters: list[dict[str, str]] = [filtered_sinks[key].filters for key in keys]
     dfs = [data_to_send[key] for key in keys]
 
-    await post_multitsframes(dfs, ref_ids=ref_ids, adapter_key=adapter_key)
+    await post_multitsframes(
+        dfs, ref_ids=ref_ids, sink_filters=sink_filters, adapter_key=adapter_key
+    )

@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, Field, validator
@@ -18,6 +19,16 @@ class StructureThingNode(BaseModel):
     description: str
 
 
+class FilterType(str, Enum):
+    free_text = "free_text"
+
+
+class StructureFilter(BaseModel):
+    name: str
+    type: FilterType  # noqa: A003
+    required: bool
+
+
 class LocalFileStructureSource(BaseModel):
     id: str  # noqa: A003
     thingNodeId: str
@@ -26,7 +37,7 @@ class LocalFileStructureSource(BaseModel):
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
     metadataKey: str | None = None
-    filters: dict[str, dict] | None = {}
+    filters: dict[str, StructureFilter] | None = {}
 
     @validator("type")
     def restrict_to_supported_types(cls, v: ExternalType) -> ExternalType:
@@ -51,7 +62,7 @@ class LocalFileStructureSink(BaseModel):
     visible: Literal[True] = True
     path: str = Field(..., description="Display path used in Designer Frontend")
     metadataKey: str | None = None
-    filters: dict[str, dict] | None = {}
+    filters: dict[str, StructureFilter] | None = {}
 
     @validator("type")
     def restrict_to_supported_types(cls, v: ExternalType) -> ExternalType:

@@ -81,3 +81,25 @@ test('Execute workflow with Optional Input and Default Value', async ({
 
   expect(outputProtocol).toBe(inputDefaultValue);
 });
+
+test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
+  // Clear
+  const workflowCategory = 'Test';
+  const workflowName = `Test execute a workflow ${browserName}`;
+  const workflowTag = '0.1.0';
+
+  await hetidaDesigner.clickWorkflowsInNavigation();
+  await hetidaDesigner.clickCategoryInNavigation(workflowCategory);
+  await hetidaDesigner.rightClickItemInNavigation(
+    workflowCategory,
+    workflowName
+  );
+  await page.locator('.mat-menu-panel').hover();
+  await hetidaDesigner.clickOnContextMenu('Delete');
+  await page.waitForSelector(
+    `mat-dialog-container:has-text("Delete workflow ${workflowName} (${workflowTag})")`
+  );
+  await hetidaDesigner.clickByTestId('delete workflow-confirm-dialog');
+
+  await hetidaDesigner.clearTest();
+});

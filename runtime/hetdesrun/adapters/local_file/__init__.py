@@ -48,5 +48,5 @@ async def send_data(
             else filtered_sink.ref_id
         )
 
-        write_to_file(data, str(id_to_use))
+        write_to_file(data, str(id_to_use), filtered_sink.filters)
     return {}

@@ -10,7 +10,7 @@ class LocalFileAdapterConfig(BaseSettings):
         {"tests/data/local_files"},
         description=(
             "Root directory paths provided as JSON-List of Strings."
-            " These pathes will be made available by the local file adapter."
+            " These paths will be made available by the local file adapter."
             " Typically these are volume mounts in the runtime container."
         ),
         env="RUNTIME_LOCAL_FILE_ADAPTER_LOCAL_DIRECTORIES",
@@ -26,8 +26,13 @@ class LocalFileAdapterConfig(BaseSettings):
     )
     generic_any_sink: bool = Field(
         True,
-        description="Whether a generic sink of type any is offered in each directory",
+        description="Whether a generic sink of type ANY is offered in each directory",
         env="RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_ANY_SINKS",
+    )
+    generic_dataframe_sink: bool = Field(
+        True,
+        description="Whether a generic sink of type DATAFRAME is offered in each directory",
+        env="RUNTIME_LOCAL_FILE_ADAPTER_GENERIC_DATAFRAME_SINKS",
     )
 
 
