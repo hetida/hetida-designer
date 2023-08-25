@@ -1,3 +1,4 @@
+import logging
 import os
 from collections.abc import Callable
 
@@ -9,9 +10,12 @@ from hetdesrun.adapters.local_file.detect import (
     get_local_files_and_dirs,
     local_file_from_path,
 )
+from hetdesrun.adapters.local_file.extensions import handlers_by_extension
 from hetdesrun.adapters.local_file.models import (
+    FilterType,
     LocalFileStructureSink,
     LocalFileStructureSource,
+    StructureFilter,
     StructureResponse,
     StructureThingNode,
 )
@@ -19,6 +23,8 @@ from hetdesrun.adapters.local_file.utils import (
     from_url_representation,
     to_url_representation,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def source_from_local_file(local_file: LocalFile) -> LocalFileStructureSource:
@@ -80,16 +86,77 @@ def local_file_writable(local_file: LocalFile) -> bool:
     )
 
 
+def wrap_in_quotes(string: str) -> str:
+    return '"' + string + '"'
+
+
+def string_list_to_string(string_list: list[str]) -> str:
+    return ", ".join(wrap_in_quotes(item) for item in string_list)
+
+
+def generate_registered_extensions_string(
+    allowed_extensions: list[str], generic_sink_type: str
+) -> str:
+    allowed_extensions_with_registered_file_handler = []
+    for allowed_extension in allowed_extensions:
+        if allowed_extension in handlers_by_extension:
+            allowed_extensions_with_registered_file_handler.append(allowed_extension)
+    if len(allowed_extensions_with_registered_file_handler) == 0:
+        msg = (
+            f"Cannot offer generic {generic_sink_type} sinks, if for no file handler is registered "
+            f"for any of the allowed extensions {string_list_to_string(allowed_extensions)}."
+        )
+        logger.error(msg)
+        raise AdapterHandlingException(msg)
+    if "..." in allowed_extensions:
+        allowed_extensions_with_registered_file_handler.append("...")
+    return string_list_to_string(allowed_extensions_with_registered_file_handler)
+
+
 def generic_any_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
-    gneric_sink_id = "GENERIC_ANY_SINK_AT_" + parent_id
+    generic_sink_id = "GENERIC_ANY_SINK_AT_" + parent_id
+    registered_extensions_string = generate_registered_extensions_string(
+        allowed_extensions=[".pkl", ".h5"], generic_sink_type="ANY"
+    )
     return LocalFileStructureSink(
-        id=gneric_sink_id,
+        id=generic_sink_id,
         thingNodeId=parent_id,
-        name="New Pickle File",
+        name="New File",
         type=ExternalType.METADATA_ANY,
         visible=True,
         path="Prepared Generic Sink",
-        metadataKey=gneric_sink_id,
+        metadataKey=generic_sink_id,
+        filters={
+            "file_name": StructureFilter(
+                name=f"File Name (must end with {registered_extensions_string})",
+                type=FilterType.free_text,
+                required=False,
+            )
+        },
+    )
+
+
+def generic_dataframe_sink_at_dir(parent_id: str) -> LocalFileStructureSink:
+    generic_sink_id = "GENERIC_DATAFRAME_SINK_AT_" + parent_id
+    registered_extensions_string = generate_registered_extensions_string(
+        allowed_extensions=[".csv", ".xlsx", ".parquet", "..."],
+        generic_sink_type="DATAFRAME",
+    )
+    return LocalFileStructureSink(
+        id=generic_sink_id,
+        thingNodeId=parent_id,
+        name="New File",
+        type=ExternalType.DATAFRAME,
+        visible=True,
+        path="Prepared Generic Sink",
+        metadataKey=generic_sink_id,
+        filters={
+            "file_name": StructureFilter(
+                name=f"File Name (must end with {registered_extensions_string})",
+                type=FilterType.free_text,
+                required=False,
+            )
+        },
     )
 
 
@@ -157,6 +224,11 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
         + (
             [generic_any_sink_at_dir(parent_id)]
             if local_file_adapter_config.generic_any_sink
+            else []
+        )
+        + (
+            [generic_dataframe_sink_at_dir(parent_id)]
+            if local_file_adapter_config.generic_dataframe_sink
             else []
         ),
     )
@@ -314,6 +386,10 @@ def get_sink_by_id(sink_id: str) -> LocalFileStructureSink | None:
     if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
         parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
         return generic_any_sink_at_dir(parent_id)
+
+    if sink_id.startswith("GENERIC_DATAFRAME_SINK_AT_"):
+        parent_id = sink_id.removeprefix("GENERIC_DATAFRAME_SINK_AT_")
+        return generic_dataframe_sink_at_dir(parent_id)
 
     local_file = get_local_file_by_id(sink_id)
 

@@ -64,6 +64,7 @@ async def test_wiring_with_generic_rest_input(
                         "ref_id_type": "THINGNODE",
                         "ref_key": "limit",
                         "type": "metadata(float)",
+                        "filters": {"filter_key": "filter_value"},
                     }
                 ]
                 with mock.patch(
@@ -82,7 +83,7 @@ async def test_wiring_with_generic_rest_input(
                             json_with_wiring, client
                         )
                         # what gets into the post request sent from send_metadata:
-                        func_name, args, kwargs = send_metadata_post_mock.mock_calls[0]
+                        _, _, kwargs = send_metadata_post_mock.mock_calls[0]
 
                         assert kwargs["json_payload"] == (
                             {"key": "limit", "value": 64.0, "dataType": "float"}
@@ -91,3 +92,4 @@ async def test_wiring_with_generic_rest_input(
                             kwargs["url"]
                             == "https://hetida.de/thingNodes/thing_node_id/metadata/limit"
                         )
+                        assert kwargs["params"] == {"filter_key": "filter_value"}

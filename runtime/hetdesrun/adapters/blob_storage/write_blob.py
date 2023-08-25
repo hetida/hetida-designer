@@ -8,6 +8,10 @@ from botocore.exceptions import ClientError
 from mypy_boto3_s3 import S3Client
 from mypy_boto3_s3.type_defs import PutObjectOutputTypeDef
 
+from hetdesrun.adapters.blob_storage import (
+    HIERARCHY_END_NODE_NAME_SEPARATOR,
+    OBJECT_KEY_DIR_SEPARATOR,
+)
 from hetdesrun.adapters.blob_storage.config import get_blob_adapter_config
 from hetdesrun.adapters.blob_storage.exceptions import StructureObjectNotFound
 from hetdesrun.adapters.blob_storage.models import (
@@ -117,7 +121,7 @@ async def write_custom_objects_to_storage(
         custom_objects_object_key = object_key.to_custom_objects_object_key()
         logger.info(
             "Dumped custom objects dictionary into another BLOB with object key %s",
-            custom_objects_object_key,
+            custom_objects_object_key.string,
         )
 
         try:
@@ -130,15 +134,47 @@ async def write_custom_objects_to_storage(
         except ClientError as client_error:
             error_code = client_error.response["Error"]["Code"]
             msg = (
-                "Unexpected ClientError occured for head_object call with bucket "
+                "Unexpected ClientError occured for put_object call with bucket "
                 f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
             )
             logger.error(msg)
             raise AdapterConnectionError(msg) from client_error
 
 
+def apply_filters_to_metadata_key(
+    thing_node_id: str, metadata_key: str, filters: dict[str, str]
+) -> str:
+    """Apply filters sent with the output wiring to the medatadata key if applicable.
+
+    The free text filter `object_key_suffix` requires that the metadata key is set to a
+    new value which contains the filter value.
+    An exception is raised if that metadata key does not yield a valid object key.
+    """
+    if "object_key_suffix" in filters:
+        logger.debug("Apply 'object_key_suffix' filter.")
+        object_key_suffix = filters["object_key_suffix"]
+        sink_name = thing_node_id.rsplit(OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
+        metadata_key = sink_name + HIERARCHY_END_NODE_NAME_SEPARATOR + object_key_suffix
+        try:
+            ObjectKey.from_thing_node_id_and_metadata_key(
+                IdString(thing_node_id),
+                metadata_key,
+                file_extension=FileExtension.Pickle,
+            )
+        except ValueError as error:
+            msg = (
+                f"Provided value '{object_key_suffix}' for the filter 'object_key_suffix' "
+                f"at thingnode '{thing_node_id}' invalid! It must consist of a timestamp with "
+                f'UTC timezone followed by " - " and a UUID: "<UTC timestamp> - <UUID>":\n{error}'
+            )
+            logger.error(msg)
+            raise AdapterClientWiringInvalidError(msg) from error
+        return metadata_key
+    return metadata_key
+
+
 async def write_blob_to_storage(
-    data: Any, thing_node_id: str, metadata_key: str
+    data: Any, thing_node_id: str, metadata_key: str, filters: dict[str, str]
 ) -> None:
     """Write BLOB to storage.
 
@@ -176,7 +212,9 @@ async def write_blob_to_storage(
         object_key,
     ) = get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
         thing_node_id=thing_node_id,
-        metadata_key=metadata_key,
+        metadata_key=apply_filters_to_metadata_key(
+            thing_node_id, metadata_key, filters
+        ),
         file_extension=FileExtension.H5
         if is_keras_model or is_keras_model_with_custom_objects
         else FileExtension.Pickle,
@@ -231,7 +269,7 @@ async def write_blob_to_storage(
             except ClientError as error:
                 error_code = error.response["Error"]["Code"]
                 msg = (
-                    "Unexpected ClientError occured for head_object call with bucket "
+                    "Unexpected ClientError occured for put_object call with bucket "
                     f"{structure_bucket.name} and object key {object_key.string}:\n{error_code}"
                 )
                 logger.error(msg)
@@ -276,5 +314,7 @@ async def send_data(
             raise AdapterClientWiringInvalidError(msg)
 
         blob = wf_output_name_to_value_mapping_dict[wf_output_name]
-        await write_blob_to_storage(blob, filtered_sink.ref_id, filtered_sink.ref_key)
+        await write_blob_to_storage(
+            blob, filtered_sink.ref_id, filtered_sink.ref_key, filtered_sink.filters
+        )
     return {}

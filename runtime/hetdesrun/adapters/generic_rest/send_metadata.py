@@ -19,10 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 async def post_json_with_open_client(
-    open_client: httpx.AsyncClient, url: str, json_payload: dict
+    open_client: httpx.AsyncClient, url: str, params: dict[str, str], json_payload: dict
 ) -> httpx.Response:
     return await open_client.post(
         url,
+        params=params,
         json=json_payload,
     )
 
@@ -55,6 +56,7 @@ async def send_single_metadatum_to_adapter(
         resp = await post_json_with_open_client(
             open_client=client,
             url=url,
+            params=filtered_sink.filters,
             json_payload=(
                 {
                     "key": filtered_sink.ref_key,
