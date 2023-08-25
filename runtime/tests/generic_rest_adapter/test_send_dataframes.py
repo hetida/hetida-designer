@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from hetdesrun.adapters.exceptions import AdapterOutputDataError
 from hetdesrun.adapters.generic_rest import send_data
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.models.data_selection import FilteredSink
@@ -27,7 +28,9 @@ async def test_end_to_end_send_only_dataframe_data():
             await send_data(
                 {
                     "inp_1": FilteredSink(
-                        ref_id="sink_id_1", type="dataframe", filters={}
+                        ref_id="sink_id_1",
+                        type="dataframe",
+                        filters={"filter_key": "filter_value"},
                     )
                 },
                 {"inp_1": pd.DataFrame({"a": [1.2, 3.4, 5.9], "b": [2.9, 8.7, 2.2]})},
@@ -36,12 +39,36 @@ async def test_end_to_end_send_only_dataframe_data():
             assert post_mock.called  # we got through to actually posting!
 
             func_name, args, kwargs = post_mock.mock_calls[0]
-            assert kwargs["params"] == [("id", "sink_id_1")]
+            assert kwargs["params"] == [
+                ("id", "sink_id_1"),
+                ("filter_key", "filter_value"),
+            ]
             assert kwargs["json"] == [
                 {"a": 1.2, "b": 2.9},
                 {"a": 3.4, "b": 8.7},
                 {"a": 5.9, "b": 2.2},
             ]
+
+            # one empty frame
+            await send_data(
+                {
+                    "inp_1": FilteredSink(
+                        ref_id="sink_id_1",
+                        type="dataframe",
+                        filters={"filter_key": "filter_value"},
+                    )
+                },
+                {"inp_1": pd.DataFrame()},
+                adapter_key="test_end_to_end_send_only_dataframe_data_adapter_key",
+            )
+            assert post_mock.called  # we got through to actually posting!
+
+            func_name, args, kwargs = post_mock.mock_calls[1]
+            assert kwargs["params"] == [
+                ("id", "sink_id_1"),
+                ("filter_key", "filter_value"),
+            ]
+            assert kwargs["json"] == []
 
             # more than one frame
             await send_data(
@@ -52,7 +79,7 @@ async def test_end_to_end_send_only_dataframe_data():
                     "inp_2": FilteredSink(
                         ref_id="sink_id_2",
                         type=ExternalType.DATAFRAME,
-                        filters={},
+                        filters={"filter_key": "filter_value"},
                     ),
                 },
                 {
@@ -63,8 +90,8 @@ async def test_end_to_end_send_only_dataframe_data():
             )
 
             # note: can be async!
-            func_name_1, args_1, kwargs_1 = post_mock.mock_calls[1]
-            func_name_2, args_2, kwargs_2 = post_mock.mock_calls[2]
+            func_name_1, args_1, kwargs_1 = post_mock.mock_calls[2]
+            func_name_2, args_2, kwargs_2 = post_mock.mock_calls[3]
             assert (len(kwargs_1["json"]) == 3) or (len(kwargs_2["json"]) == 3)
             assert (len(kwargs_1["json"]) == 2) or (len(kwargs_2["json"]) == 2)
 
@@ -93,7 +120,7 @@ async def test_end_to_end_send_only_dataframe_data():
             )
             assert post_mock.called  # we got through to actually posting!
 
-            func_name, args, kwargs = post_mock.mock_calls[3]
+            func_name, args, kwargs = post_mock.mock_calls[4]
             assert kwargs["params"] == [("id", "sink_id_1")]
             assert kwargs["json"] == [
                 {"a": 1.2, "b": 2.9, "timestamp": "2020-08-03T15:30:00+00:00"},
@@ -101,3 +128,17 @@ async def test_end_to_end_send_only_dataframe_data():
                 {"a": 5.9, "b": 2.2, "timestamp": "2021-01-05T09:20:00+00:00"},
             ]
             assert "Data-Attributes" in kwargs["headers"]
+
+            # something else than a frame
+            with pytest.raises(AdapterOutputDataError):
+                await send_data(
+                    {
+                        "inp_1": FilteredSink(
+                            ref_id="sink_id_1",
+                            type="dataframe",
+                            filters={"filter_key": "filter_value"},
+                        )
+                    },
+                    {"inp_1": "this is no dataframe"},
+                    adapter_key="test_end_to_end_send_only_dataframe_data_adapter_key",
+                )

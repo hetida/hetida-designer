@@ -362,6 +362,16 @@ class StructureThingNode(BaseModel):
         return name
 
 
+class FilterType(str, Enum):
+    free_text = "free_text"
+
+
+class StructureFilter(BaseModel):
+    name: str
+    type: FilterType  # noqa: A003
+    required: bool
+
+
 class BlobStorageStructureSource(BaseModel):
     id: IdString  # noqa: A003
     thingNodeId: IdString
@@ -370,7 +380,7 @@ class BlobStorageStructureSource(BaseModel):
     metadataKey: str
     type: Literal["metadata(any)"] = "metadata(any)"  # noqa: A003
     visible: Literal[True] = True
-    filters: dict[str, dict] | None = {}
+    filters: dict[str, StructureFilter] | None = {}
 
     @validator("id")
     def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002
@@ -533,7 +543,13 @@ class BlobStorageStructureSink(BaseModel):
     metadataKey: str
     type: Literal["metadata(any)"] = "metadata(any)"  # noqa: A003
     visible: Literal[True] = True
-    filters: dict[str, dict] | None = {}
+    filters: dict[str, StructureFilter] | None = {
+        "object_key_suffix": StructureFilter(
+            name="Object Key Suffix (<UTC timestamp> - <UUID>)",
+            type=FilterType.free_text,
+            required=False,
+        )
+    }
 
     @validator("id")
     def id_matches_scheme(cls, id: IdString) -> IdString:  # noqa: A002

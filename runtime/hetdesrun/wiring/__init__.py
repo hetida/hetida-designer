@@ -67,7 +67,7 @@ async def resolve_and_send_data_from_wiring(
                     ref_id_type=output_wiring.ref_id_type,
                     ref_key=output_wiring.ref_key,
                     type=output_wiring.type,
-                    filters={},
+                    filters=output_wiring.filters,
                 )
                 for output_wiring in output_wirings_of_adapter
             },

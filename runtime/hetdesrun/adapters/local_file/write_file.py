@@ -5,7 +5,10 @@ from typing import Any
 
 import pandas as pd
 
-from hetdesrun.adapters.exceptions import AdapterHandlingException
+from hetdesrun.adapters.exceptions import (
+    AdapterClientWiringInvalidError,
+    AdapterHandlingException,
+)
 from hetdesrun.adapters.local_file.detect import LocalFile
 from hetdesrun.adapters.local_file.structure import get_local_file_by_id
 from hetdesrun.adapters.local_file.utils import (
@@ -17,18 +20,80 @@ from hetdesrun.runtime.logging import _get_job_id_context
 logger = logging.getLogger(__name__)
 
 
-def obtain_possible_local_sink_file(sink_id: str) -> LocalFile | None:
-    if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
-        parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
-        current_job_id = _get_job_id_context()["currently_executed_job_id"]
-        local_file_path = (
+def create_local_file_path_for_generic_any_sink(
+    sink_id: str, filters: dict[str, str]
+) -> str:
+    parent_id = sink_id.removeprefix("GENERIC_ANY_SINK_AT_")
+    current_job_id = _get_job_id_context()["currently_executed_job_id"]
+    try:
+        file_name = filters["file_name"]
+    except KeyError:
+        return (
             from_url_representation(parent_id)
             + os.sep
-            + datetime.datetime.now(datetime.timezone.utc).isoformat()
-            + "_"
-            + str(current_job_id)
-            + ".pkl"
+            + (
+                datetime.datetime.now(datetime.timezone.utc).isoformat()
+                + "_"
+                + str(current_job_id)
+                + ".pkl"
+            )
         )
+    else:
+        ext = os.path.splitext(file_name)[1]
+        if ext not in (".pkl", ".h5"):
+            msg = (
+                f"Provided value '{file_name}' for the filter 'file_name' "
+                f"at generic any sink at {from_url_representation(parent_id)} invalid! "
+                'The file name must end with ".pkl" or ".h5".'
+            )
+            logger.error(msg)
+            raise AdapterClientWiringInvalidError(msg)
+        return from_url_representation(parent_id) + os.sep + file_name
+
+
+def create_local_file_path_for_generic_dataframe_sink(
+    sink_id: str, filters: dict[str, str]
+) -> str:
+    parent_id = sink_id.removeprefix("GENERIC_DATAFRAME_SINK_AT_")
+    current_job_id = _get_job_id_context()["currently_executed_job_id"]
+    try:
+        file_name = filters["file_name"]
+    except KeyError:
+        return (
+            from_url_representation(parent_id)
+            + os.sep
+            + (
+                datetime.datetime.now(datetime.timezone.utc).isoformat()
+                + "_"
+                + str(current_job_id)
+                + ".csv"
+            )
+        )
+    else:
+        ext = os.path.splitext(file_name)[1]
+        if ext not in (".csv", ".xlsx", ".parquet"):
+            msg = (
+                f"Provided value '{file_name}' for the filter 'file_name' at "
+                f"generic dataframe sink at {from_url_representation(parent_id)} invalid! "
+                'The file name must end with ".csv", ".xlsx" or ".parquet".'
+            )
+            logger.error(msg)
+            raise AdapterClientWiringInvalidError(msg)
+        return from_url_representation(parent_id) + os.sep + file_name
+
+
+def obtain_possible_local_sink_file(
+    sink_id: str, filters: dict[str, str]
+) -> LocalFile | None:
+    if sink_id.startswith("GENERIC_"):
+        if sink_id.startswith("GENERIC_ANY_SINK_AT_"):
+            local_file_path = create_local_file_path_for_generic_any_sink(
+                sink_id, filters
+            )
+        if sink_id.startswith("GENERIC_DATAFRAME_SINK_AT_"):
+            local_file_path = create_local_file_path_for_generic_dataframe_sink(
+                sink_id, filters
+            )
         possible_local_file = get_local_file_by_id(
             to_url_representation(local_file_path), verify_existence=False
         )
@@ -44,12 +109,12 @@ def obtain_possible_local_sink_file(sink_id: str) -> LocalFile | None:
     return possible_local_file
 
 
-def write_to_file(data_obj: Any, sink_id: str) -> None:
-    possible_local_file = obtain_possible_local_sink_file(sink_id)
+def write_to_file(data_obj: Any, sink_id: str, filters: dict[str, str]) -> None:
+    possible_local_file = obtain_possible_local_sink_file(sink_id, filters)
 
     if possible_local_file is None:
         raise AdapterHandlingException(
-            f"Local file {from_url_representation(sink_id)} target could not be located or"
+            f"Local file {from_url_representation(sink_id)} target could not be located or "
             "does not lie in a configured local dir or does not exist / is not writable"
         )
 

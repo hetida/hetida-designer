@@ -84,6 +84,27 @@ def test_output_wiring_validator_metadata_type_includes_addtional_fields() -> No
         OutputWiring(**output_wiring_missing_additional_metadata_fields)
 
 
+def test_output_wiring_validator_no_reserved_filter_keys() -> None:
+    output_wiring_with_reserved_filter_keys_dict = deepcopy(
+        direct_provisioning_output_wiring_dict
+    )
+    output_wiring_with_reserved_filter_keys_dict["filters"] = {"to": "somewhere"}
+    with pytest.raises(ValueError, match="reserved filter keys"):
+        OutputWiring(**output_wiring_with_reserved_filter_keys_dict)
+
+
+def test_output_wiring_validator_none_filter_value_to_empty_string() -> None:
+    output_wiring_with_none_filter_value_dict = deepcopy(
+        direct_provisioning_output_wiring_dict
+    )
+    output_wiring_with_none_filter_value_dict["filters"] = {"key": None}
+    input_wiring_with_empty_string_filter_value = OutputWiring(
+        **output_wiring_with_none_filter_value_dict
+    )
+
+    assert input_wiring_with_empty_string_filter_value.filters["key"] == ""
+
+
 def test_input_wiring_accepted() -> None:
     InputWiring(**direct_provisioning_input_wiring_dict)
     InputWiring(**blob_adapter_input_wiring_dict)
