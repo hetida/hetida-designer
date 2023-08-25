@@ -46,6 +46,12 @@ class DAGProcessingError(RuntimeExecutionError):
     """
 
 
+class ComponentException(RuntimeExecutionError):
+    """Exception to be raised intentionally in component code"""
+
+    error_code: int | str
+
+
 class UncaughtComponentException(RuntimeExecutionError):
     """Exception to be re-raised in case of uncaught exceptions during component execution."""
 
@@ -63,7 +69,7 @@ class WorkflowOutputValidationError(RuntimeExecutionError):
 
 
 class WorkflowInputDataValidationError(RuntimeExecutionError):
-    """Workflow Output validation failed"""
+    """Workflow Input validation failed"""
 
 
 class CircularDependency(DAGProcessingError):
