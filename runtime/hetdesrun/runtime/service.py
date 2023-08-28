@@ -9,7 +9,7 @@ from hetdesrun.models.run import (
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-from hetdesrun.runtime import RuntimeExecutionError, runtime_logger
+from hetdesrun.runtime import ComponentException, RuntimeExecutionError, runtime_logger
 from hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.engine.plain import workflow_execution_plain
 from hetdesrun.runtime.engine.plain.parsing import (
@@ -156,6 +156,28 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         return WorkflowExecutionResult(
             result="failure",
             error=str(e),
+            traceback=traceback.format_exc(),
+            output_results_by_output_name={},
+            job_id=runtime_input.job_id,
+        )
+
+    except ComponentException as e:
+        runtime_logger.info(
+            "Component Exception during workflow execution",
+            exc_info=True,
+        )
+        return WorkflowExecutionResult(
+            result="failure",
+            error=(
+                f"Component Exception {e.error_code} during execution!\n"
+                f"                  tr type: {e.currently_executed_transformation_type},"
+                f" tr id: {e.currently_executed_transformation_id},"
+                f" tr name: {e.currently_executed_transformation_name},"
+                f" tr tag: {e.currently_executed_transformation_tag},\n"
+                f"                  op id(s): {e.currently_executed_hierarchical_operator_id},\n"
+                f"                  op name(s): {e.currently_executed_hierarchical_operator_name}\n"
+                f"                  reason: {e}"
+            ),
             traceback=traceback.format_exc(),
             output_results_by_output_name={},
             job_id=runtime_input.job_id,

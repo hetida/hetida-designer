@@ -1,3 +1,5 @@
+from typing import Any
+
 from hetdesrun.runtime.context import ExecutionContext
 
 
@@ -49,7 +51,13 @@ class DAGProcessingError(RuntimeExecutionError):
 class ComponentException(RuntimeExecutionError):
     """Exception to be raised intentionally in component code"""
 
-    error_code: int | str
+    def __init__(self, *args: Any, error_code: int | str = "", **kwargs: Any) -> None:
+        if not isinstance(error_code, int | str):
+            raise ValueError(
+                "The ComponentException.error_code must be int or string!"
+            )
+        self.error_code = error_code
+        super().__init__(*args, **kwargs)
 
 
 class UncaughtComponentException(RuntimeExecutionError):

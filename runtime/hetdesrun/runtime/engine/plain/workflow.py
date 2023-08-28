@@ -12,9 +12,11 @@ from hetdesrun.runtime.context import ExecutionContext
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
 from hetdesrun.runtime.exceptions import (
     CircularDependency,
+    ComponentException,
     MissingInputSource,
     MissingOutputException,
     RuntimeExecutionError,
+    UncaughtComponentException,
     WorkflowInputDataValidationError,
 )
 from hetdesrun.runtime.logging import execution_context_filter
@@ -182,12 +184,10 @@ class ComputationNode:
                 self.func, input_values  # type: ignore
             )
             function_result = function_result if function_result is not None else {}
-        except (
-            RuntimeExecutionError
-        ) as e:  # user code may raise runtime execution errors
+        except ComponentException as e:  # user code may raise runtime execution errors
             e.set_context(self.context)
             runtime_execution_logger.warning(
-                "User raised RuntimeExecutionError!",
+                "User raised ComponentException!",
                 exc_info=True,
             )
             raise e
@@ -204,7 +204,7 @@ class ComputationNode:
                 f"component {self.operator_hierarchical_name} did not return an output dict!"
             )
             runtime_execution_logger.warning(msg)
-            raise RuntimeExecutionError(msg).set_context(self.context)
+            raise UncaughtComponentException(msg).set_context(self.context)
 
         return function_result
 
