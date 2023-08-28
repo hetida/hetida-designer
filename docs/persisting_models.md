@@ -30,7 +30,7 @@ But the "management" part, i.e. selecting the current/prod model, fallback proce
 
 ### Note on custom classes
 Custom classes can be defined in components, which return the class via a component output. If it is only necessary to ensure that such a class has been imported it is sufficient to include the exact same component in the respective workflow. The output of the component may be routed to the "Forget" component.
-A minimal example is provided in the [Tips and Tricks](./faq.md).
+A minimal example is provided in the [Tips and Tricks](./tips_and_tricks.md).
 
 ## Persisting and Loading via General Custom Adapter
 ### Built in general custom adapters

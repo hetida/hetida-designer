@@ -102,6 +102,14 @@ Response:
       "type": STRING, // enumeration (see above)
       "visible": BOOL,
       "path": STRING, // path to this element that is shown in frontend
+      "filters":{  // may be used to request additional filters
+        "<key>": {
+          "name": STRING,
+          "type": FILTERTYPE, // enumeration, possible value: "free_text"
+          "required": BOOLEAN
+        },
+        ...
+      }
     }
   ]
 }
@@ -113,7 +121,7 @@ Some details:
 
 - `filters` may request additional filters. Currently this can either be an empty mapping object (`{}`) or a mapping with filters of type `free_text`. Note that for timeseries type sources, the frontend asks for the time interval automatically, so there is no need to specify this as a filter for now.  If additional filters are required, the user interface provides additional input fields where the value for each filter can be entered.
 Via the REST API these filters are used by adding a corresponding key-value pair in the `filters` attribute of the input wiring.
-**Note**: If the adapter requests filters for a source delivered via an GET endpoint it must handle the respective additional query parameters of form filterkey=filtervalue at that endpoint.
+**Note**: If the adapter requests filters it must handle the respective additional query parameters of form filterkey=filtervalue at the respective endpoint.
 The value is always sent as a string. If other data types are desired, the value must be parsed accordingly within the adapter. If no value is entered in the user interface, an empty string is sent.
 
 - `path` should be a human readable "breadcrumb"-like path to the source or sink. This attribute is used in the designer frontend for example when filtering.
@@ -198,18 +206,26 @@ Response of /sinks/ (without id):
 
 ```
 {
-    "resultCount": INTEGER
-    "sinks": [
-        {
-            "id": STRING,
-            "thingNodeId": STRING,
-            "name": STRING,
-            "visible": BOOL,
-            "path": STRING,
-            "type": TYPE
-         },
-         ...
-    ]
+  "resultCount": INTEGER
+  "sinks": [
+    {
+      "id": STRING,
+      "thingNodeId": STRING,
+      "name": STRING,
+      "visible": BOOL,
+      "path": STRING,
+      "type": TYPE
+      "filters":{
+        "<key>": {
+          "name": STRING,
+          "type": STRING,
+          "required": BOOLEAN
+        },
+        ...
+      }
+    },
+    ...
+  ]
 }
 ```
 
@@ -223,6 +239,14 @@ Response of /sinks/{id} (with id):
   "visible": BOOL,
   "path": STRING,
   "type": TYPE
+  "filters":{
+    "<key>": {
+      "name": STRING,
+      "type": STRING,
+      "required": BOOLEAN
+    },
+    ...
+  }
 }
 ```
 

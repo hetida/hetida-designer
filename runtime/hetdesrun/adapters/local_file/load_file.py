@@ -15,7 +15,7 @@ def load_file_from_id(source_id: str) -> Any:
 
     if possible_local_file is None:
         raise AdapterHandlingException(
-            f"Local file {from_url_representation(source_id)} could not be located or"
+            f"Local file {from_url_representation(source_id)} could not be located or "
             "does not lie in a configured local dir or does not exist"
         )
 

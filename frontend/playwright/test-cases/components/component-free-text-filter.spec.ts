@@ -44,7 +44,7 @@ test('Free text filter for component', async ({
 
   // Select Data Type
   await hetidaDesigner.selectItemInDropdown(
-    `${componentInputName}-type-input-component-io-dialog`,
+    `${componentInputName}-data-type-input-component-io-dialog`,
     dataType
   );
 
@@ -87,6 +87,8 @@ test('Free text filter for component', async ({
   );
 
   expect(freeTextInput).toBeTruthy();
+
+  await hetidaDesigner.clickByTestId('cancel-wiring-dialog');
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {

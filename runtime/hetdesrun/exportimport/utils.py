@@ -29,9 +29,9 @@ def get_transformation_revisions(
     directly_from_db: bool = False,
 ) -> list[TransformationRevision]:
     logger.info(
-        "Getting transformation revisions with " + repr(params) + " directly from db"
-        if directly_from_db
-        else ""
+        "Getting transformation revisions with "  # noqa: G003
+        + repr(params)
+        + (" directly from db" if directly_from_db else "")
     )
 
     tr_list: list[TransformationRevision] = []
@@ -50,7 +50,7 @@ def get_transformation_revisions(
             raise Exception(msg) from e
         get_response = requests.get(
             posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-            params=json.loads(params.json(exclude_none=True)),
+            params=json.loads(params.json(exclude_none=True, by_alias=True)),
             verify=get_config().hd_backend_verify_certs,
             auth=get_backend_basic_auth(),  # type: ignore
             headers=headers,
