@@ -6,22 +6,14 @@ from uuid import uuid4
 import pytest
 from httpx import AsyncClient
 
-from hetdesrun.models.code import CodeModule
-from hetdesrun.models.component import (
-    ComponentInput,
-    ComponentNode,
-    ComponentOutput,
-    ComponentRevision,
-)
 from hetdesrun.models.run import (
     ConfigurationInput,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
 from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
-from hetdesrun.models.workflow import WorkflowInput, WorkflowNode, WorkflowOutput
+from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.io.load import load_json
-from hetdesrun.utils import get_uuid_from_seed
 
 
 async def run_workflow_with_client(
@@ -47,67 +39,21 @@ def gen_execution_input_from_single_component(
         )
 
     tr_component_json = load_json(component_json_path)
-    code = tr_component_json["content"]
-
-    # Build up execution input Json
-    code_module_uuid = str(get_uuid_from_seed("code_module_uuid"))
-    component_uuid = str(get_uuid_from_seed("component_uuid"))
-
-    comp_inputs = [
-        ComponentInput(id=str(uuid4()), name=inp["name"], type=inp["data_type"])
-        for inp in tr_component_json["io_interface"]["inputs"]
-    ]
-
-    comp_outputs = [
-        ComponentOutput(id=str(uuid4()), name=outp["name"], type=outp["data_type"])
-        for outp in tr_component_json["io_interface"]["outputs"]
-    ]
-
-    component_node_id = "component_node_id"
+    tr_component = TransformationRevision(**tr_component_json)
+    wrapping_wf = tr_component.wrap_component_in_tr_workflow()
+    assert len(wrapping_wf.content.operators) != 0
 
     return WorkflowExecutionInput(
-        code_modules=[CodeModule(code=code, uuid=code_module_uuid)],
-        components=[
-            ComponentRevision(
-                uuid=component_uuid,
-                tag=tr_component_json["version_tag"],
-                name=tr_component_json["name"],
-                code_module_uuid=code_module_uuid,
-                function_name="main",
-                inputs=comp_inputs,
-                outputs=comp_outputs,
-            )
-        ],
-        workflow=WorkflowNode(
-            id="root_node",
+        code_modules=[tr_component.to_code_module()],
+        components=[tr_component.to_component_revision()],
+        workflow=wrapping_wf.to_workflow_node(
+            operator_id=uuid4(),
             sub_nodes=[
-                ComponentNode(component_uuid=component_uuid, id=component_node_id)
-            ],
-            connections=[],
-            inputs=[
-                WorkflowInput(
-                    id=str(get_uuid_from_seed(str(comp_input.id) + "_as_wf_input")),
-                    id_of_sub_node=component_node_id,
-                    name=comp_input.name,
-                    name_in_subnode=comp_input.name,
-                    type=comp_input.type,
+                tr_component.to_component_node(
+                    operator_id=wrapping_wf.content.operators[0].id,
+                    operator_name=tr_component.name,
                 )
-                for comp_input in comp_inputs
             ],
-            outputs=[
-                WorkflowOutput(
-                    id=str(get_uuid_from_seed(str(comp_output.id) + "_as_wf_output")),
-                    id_of_sub_node=component_node_id,
-                    name=comp_output.name,
-                    name_in_subnode=comp_output.name,
-                    type=comp_output.type,
-                )
-                for comp_output in comp_outputs
-            ],
-            name="root node",
-            tr_id="root_node",
-            tr_name="Wrapper Workflow",
-            tr_tag="1.0.0",
         ),
         configuration=ConfigurationInput(engine="plain", run_pure_plot_operators=True),
         workflow_wiring=WorkflowWiring(
@@ -119,14 +65,14 @@ def gen_execution_input_from_single_component(
                     if direct_provisioning_data_dict is not None
                     else None,
                 )
-                for comp_input in comp_inputs
+                for comp_input in tr_component.io_interface.inputs
             ],
             output_wirings=[
                 OutputWiring(
                     workflow_output_name=comp_output.name,
                     adapter_id=1,
                 )
-                for comp_output in comp_outputs
+                for comp_output in tr_component.io_interface.outputs
             ],
         )
         if wf_wiring is None
@@ -231,6 +177,24 @@ async def test_all_null_values_pass_series_pass_through(
         assert exec_result.output_results_by_output_name["output"] == (
             '{"2020-01-01T00:00:00Z": None, "2020-01-02T00:00:00Z": None}'
         )
+
+
+@pytest.mark.asyncio
+async def test_component_error_code_in_result_error(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        exec_result = await run_single_component(
+            (
+                "tests/data/components/"
+                "raise-exception_010_c4dbcc42-eaec-4587-a362-ce6567f21d92.json"
+            ),
+            {"dividend": 1, "divisor": 0},
+            client,
+        )
+
+        assert "Component Error 404" in exec_result.error
+        assert "tr id: c4dbcc42-eaec-4587-a362-ce6567f21d92" in exec_result.error
 
 
 @pytest.mark.asyncio

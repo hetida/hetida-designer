@@ -53,9 +53,7 @@ class ComponentException(RuntimeExecutionError):
 
     def __init__(self, *args: Any, error_code: int | str = "", **kwargs: Any) -> None:
         if not isinstance(error_code, int | str):
-            raise ValueError(
-                "The ComponentException.error_code must be int or string!"
-            )
+            raise ValueError("The ComponentException.error_code must be int or string!")
         self.error_code = error_code
         super().__init__(*args, **kwargs)
 

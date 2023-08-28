@@ -163,13 +163,13 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
     except ComponentException as e:
         runtime_logger.info(
-            "Component Exception during workflow execution",
+            "Component Error during workflow execution",
             exc_info=True,
         )
         return WorkflowExecutionResult(
             result="failure",
             error=(
-                f"Component Exception {e.error_code} during execution!\n"
+                f"Component Error {e.error_code} during execution!\n"
                 f"                  tr type: {e.currently_executed_transformation_type},"
                 f" tr id: {e.currently_executed_transformation_id},"
                 f" tr name: {e.currently_executed_transformation_name},"
