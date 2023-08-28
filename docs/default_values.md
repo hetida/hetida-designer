@@ -19,17 +19,16 @@ For components, the code is updated accordingly after saving the changes so that
 
 ## Use or overwrite default values during execution
 
-It is not necessary to provide and input wiring for optional inputs.
-If no input wiring is provided the respective default value will be used during execution.
+As you may expect, it is not necessary to provide an input wiring for optional inputs: If no input wiring is provided the respective default value will be used during execution.
 
-In the user interface, the execution dialog lists all inputs so that their wiring can be set.
-For optional inputs, there is a toggle switch to choose between using the respective default value or an adapter.
-
+In the execution dialog, for optional inputs, there is a toggle to switch between using the respective default value
 <img src="./assets/wire_to_default_value.png" height="85" width=625 data-align="center">
 
-To overwrite the default value of an optional operator input in a workflow, the respective input must be exposed.
-
+or a value from some adapter (e.g. manual input) to override it:
 <img src="./assets/wire_to_untoggled_default_value.png" height="85" width=625 data-align="center">
+
+Important Note: To overwrite the default value of an optional operator input in a workflow, the respective input must be exposed (see below!).
+
 
 ## Use or overwrite default values of operators in workflows
 
