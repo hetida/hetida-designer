@@ -12,7 +12,7 @@ class FilterParams(BaseModel):
     )
     state: State | None = Field(None, description="Filter for specified state.")
     categories: list[ValidStr] | None = Field(
-        None, description="Filter for specified list of categories."
+        None, alias="category", description="Filter for specified list of categories."
     )
     category_prefix: ValidStr | None = Field(
         None,
@@ -22,10 +22,10 @@ class FilterParams(BaseModel):
         None, description="Filter for specified revision group ids."
     )
     ids: list[UUID] | None = Field(
-        None, description="Filter for specified list of ids."
+        None, alias="id", description="Filter for specified list of ids."
     )
     names: list[NonEmptyValidStr] | None = Field(
-        None, description="Filter for specified list of names."
+        None, alias="name", description="Filter for specified list of names."
     )
     include_deprecated: bool = Field(
         True,
@@ -48,3 +48,6 @@ class FilterParams(BaseModel):
             "not contained in workflows that do not have the state DISABLED."
         ),
     )
+
+    class Config:
+        allow_population_by_field_name = True
