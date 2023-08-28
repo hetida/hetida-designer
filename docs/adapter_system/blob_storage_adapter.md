@@ -149,7 +149,7 @@ Since it is [not recommended to save Tensorflow Keras models via pickle](https:/
 
 ### Basic Usage
 
-The workflows "Get ExampleClass Object Attributes" and "Create ExampleClass Object" provide a minimal example of [how objects with a self defined class can be stored and loaded](../faq.md#storing-and-loading-objects-with-self-defined-classes).
+The workflows "Get ExampleClass Object Attributes" and "Create ExampleClass Object" provide a minimal example of [how objects with a self defined class can be stored and loaded](../tips_and_tricks.md#storing-and-loading-objects-with-self-defined-classes).
 
 Similarly, the workflows "Persist Wrapped Keras Model with Custom Layer" and "Load Keras Model with Custom Layer" demonstrate how to save and load a model which includes a self-defined class for a custom layer.
 The base component "Wrap Keras Model with Custom Classes" is used to combine the model with a dictionary including all self-defined classes (in this simple case just one) in a single object.
