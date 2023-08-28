@@ -6,6 +6,7 @@ from asyncstdlib.functools import cached_property  # async compatible variant
 from pydantic import ValidationError
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
+from hetdesrun.models.run import HIERARCHY_SEPARATOR
 from hetdesrun.runtime import runtime_execution_logger
 from hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.context import ExecutionContext
@@ -332,8 +333,10 @@ class Workflow:
             operator_hierarchical_name=self.operator_hierarchical_name
             + "constant_provider_"
             + id_suffix
-            + "\\",
-            operator_hierarchical_id=self.operator_hierarchical_id + "" + "\\",
+            + HIERARCHY_SEPARATOR,
+            operator_hierarchical_id=self.operator_hierarchical_id
+            + ""
+            + HIERARCHY_SEPARATOR,
         )
         if add_new_provider_node_to_workflow:  # make it part of the workflow
             self.sub_nodes.append(Const_Node)

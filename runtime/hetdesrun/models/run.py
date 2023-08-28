@@ -2,6 +2,7 @@
 
 
 import datetime
+import traceback
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -10,11 +11,14 @@ from pydantic import BaseModel, Field, root_validator, validator
 
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
 from hetdesrun.models.base import Result
-from hetdesrun.models.code import CodeModule
+from hetdesrun.models.code import CodeModule, NonEmptyValidStr, ShortNonEmptyValidStr
 from hetdesrun.models.component import ComponentRevision
 from hetdesrun.models.wiring import OutputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
-from hetdesrun.utils import check_explicit_utc
+from hetdesrun.runtime.exceptions import RuntimeExecutionError
+from hetdesrun.utils import Type, check_explicit_utc
+
+HIERARCHY_SEPARATOR = "\\"
 
 
 class ExecutionEngine(Enum):
@@ -192,6 +196,104 @@ class WorkflowExecutionInput(BaseModel):
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
 
 
+class TransformationInfo(BaseModel):
+    id: UUID  # noqa: A003
+    name: NonEmptyValidStr
+    tag: ShortNonEmptyValidStr
+    type: Type  # noqa: A003
+
+
+class HierarchyInWorkflow(BaseModel):
+    by_name: list[NonEmptyValidStr]
+    by_id: list[UUID]
+
+    @classmethod
+    def from_hierarchy_strings(
+        cls, hierarchical_name_string: str, hierarchical_id_string: str
+    ) -> "HierarchyInWorkflow":
+        if (
+            hierarchical_name_string.count(HIERARCHY_SEPARATOR) < 3
+            or hierarchical_id_string.count(HIERARCHY_SEPARATOR) < 3
+        ):
+            raise ValueError()
+        return HierarchyInWorkflow(
+            by_name=hierarchical_name_string.split(HIERARCHY_SEPARATOR)[1:-1],
+            by_id=[
+                UUID(operator_id)
+                for operator_id in hierarchical_id_string.split(HIERARCHY_SEPARATOR)[
+                    1:-1
+                ]
+            ],
+        )
+
+
+class OperatorInfo(BaseModel):
+    transformation_info: TransformationInfo
+    operator_hierarchy_in_workflow: HierarchyInWorkflow
+
+    @classmethod
+    def from_runtime_execution_error(
+        cls, error: RuntimeExecutionError
+    ) -> "OperatorInfo":
+        return OperatorInfo(
+            transformation_info=TransformationInfo(
+                id=error.currently_executed_transformation_id,
+                name=error.currently_executed_transformation_name,
+                tag=error.currently_executed_transformation_tag,
+                type=error.currently_executed_transformation_type,
+            ),
+            operator_hierarchy_in_workflow=HierarchyInWorkflow.from_hierarchy_strings(
+                hierarchical_name_string=error.currently_executed_hierarchical_operator_name,
+                hierarchical_id_string=error.currently_executed_hierarchical_operator_id,
+            ),
+        )
+
+
+class Trace(BaseModel):
+    file_name: str
+    function_name: str
+    line_number: int
+    line_of_code: str
+
+
+class ProcessStage(str, Enum):
+    """ "Stages of the execution process."""
+
+    TRANSFORMING_TRANSFORMATION_TO_RUNTIME_OBJECT = (
+        "TRANSFORMING_TRANSFORMATION_TO_RUNTIME_OBJECT"
+    )
+    PARSING_CONSTANT_AND_DEFAULT_INPUT_DATA = "PARSING_CONSTANT_AND_DEFAULT_INPUT_DATA"
+    LOADING_DATA_FROM_INPUT_WIRING = "LOADING_DATA_FROM_INPUT_WIRING"
+    PARSING_LOADED_INPUT_DATA = "PARSING_LOADED_INPUT_DATA"
+    EXECUTING_COMPONENT_CODE = "EXECUTING_COMPONENT_CODE"
+    SENDING_DATA_TO_OUTPUT_WIRING = "SENDING_DATA_TO_OUTPUT_WIRING"
+    ENCODING_RESULTS_TO_JSON = "ENCODING_RESULTS_TO_JSON"
+
+
+class WorkflowExecutionError(BaseModel):
+    type: str  # noqa: A003
+    message: str
+    error_code: int | str | None = None
+    process_stage: ProcessStage | None = None
+    operator_info: OperatorInfo | None = None
+
+
+def traces_from_exception(exception: Exception) -> list[Trace]:
+    traces = []
+    tb = exception.__traceback__
+    while tb is not None:
+        traces.append(
+            Trace(
+                file_name=tb.tb_frame.f_code.co_filename,
+                function_name=tb.tb_frame.f_code.co_name,
+                line_number=tb.tb_lineno,
+                line_of_code=tb.tb_frame.f_code.co_code,
+            )
+        )
+        tb = tb.tb_next
+    return traces
+
+
 class WorkflowExecutionResult(BaseModel):
     result: Result = Field(
         ...,
@@ -212,10 +314,31 @@ class WorkflowExecutionResult(BaseModel):
             " set to true."
         ),
     )
-    error: str | None = Field(None, description="error string")
+    error: WorkflowExecutionError | None = Field(None, description="error string")
     traceback: str | None = Field(None, description="traceback")
+    traces: list[Trace] | None = Field(None, description="traceback as formatted list")
     job_id: UUID
 
     measured_steps: AllMeasuredSteps = AllMeasuredSteps()
+
+    @classmethod
+    def from_exception(
+        cls, exception: Exception, process_stage: ProcessStage, job_id: UUID
+    ) -> "WorkflowExecutionResult":
+        return WorkflowExecutionResult(
+            result="failure",
+            error=WorkflowExecutionError(
+                type=type(exception).__name__,
+                message=str(exception),
+                process_stage=process_stage,
+                operator_info=OperatorInfo.from_runtime_execution_error(exception)
+                if isinstance(exception, RuntimeExecutionError)
+                else None,
+            ),
+            traceback=traceback.format_exc(),
+            traces=traces_from_exception(exception),
+            output_results_by_output_name={},
+            job_id=job_id,
+        )
 
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
