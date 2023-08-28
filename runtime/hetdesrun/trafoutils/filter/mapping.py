@@ -39,11 +39,6 @@ def basic_trafo_filter_map(
         if filter_params.state is not None and trafo.state != filter_params.state:
             allow = False
         if (
-            filter_params.category is not None
-            and trafo.category != filter_params.category
-        ):
-            allow = False
-        if (
             filter_params.categories is not None
             and trafo.category not in filter_params.categories
         ):

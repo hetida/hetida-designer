@@ -66,7 +66,7 @@ async def test_auth_internal_forward_without_explicit_bearer_token(
     unset_request_auth_context,
     auth_bearer_token_for_outgoing_requests_not_set,
 ):
-    # empty, since there is not request context
+    # empty, since there is no request context
     assert await get_auth_headers(external=False) == {}
 
 

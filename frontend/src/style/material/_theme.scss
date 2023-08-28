@@ -101,6 +101,9 @@
   }
 
   .dark-theme {
+    .mat-dialog-title {
+      color: $hd-black;
+    }
     .hetida-context-menu {
       ul {
         li:hover {

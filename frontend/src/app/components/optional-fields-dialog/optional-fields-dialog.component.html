@@ -1,0 +1,35 @@
+<div mat-dialog-title>
+  <h4 class="m-0">Expose Inputs with Default value for ({{ workflowName }})</h4>
+  <button (click)="onCancel()" mat-icon-button>
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<div mat-dialog-content class="dialog-content">
+  <form *ngIf="optionalFieldsForm" [formGroup]="optionalFieldsForm" class="p-1">
+    <div
+      [formGroup]="optionalField"
+      *ngFor="let optionalField of optionalFieldsArray.controls"
+    >
+      <mat-checkbox class="example-margin mb-1" formControlName="exposed">
+        {{ optionalField.get('name').value }}
+        <span *ngIf="optionalField.get('value')?.value"
+          >({{ optionalField.get('value')?.value }})</span
+        >
+      </mat-checkbox>
+    </div>
+  </form>
+</div>
+
+<div mat-dialog-actions>
+  <button (click)="onCancel()" mat-raised-button color="primary">
+    {{ data.actionCancel }}
+  </button>
+  <button
+    (click)="onOk()"
+    mat-raised-button
+    color="primary"
+    [disabled]="!valid"
+  >
+    {{ data.actionOk }}
+  </button>
+</div>

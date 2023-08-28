@@ -577,9 +577,16 @@ export class TransformationActionService {
               constant.connector_id === input.connector_id &&
               constant.operator_id === input.operator_id
           ) === undefined;
-        return (
-          isNotAConstant && hasValidNameAndLink(input.name, input.id) === false
-        );
+        let noValidNameAndLink = true;
+        const foundOperatorInput = workflowContent.operators
+          .find(operator => operator.id === input.operator_id)
+          .inputs.find(
+            operatorInput => operatorInput.id === input.connector_id
+          );
+        if (foundOperatorInput.exposed) {
+          noValidNameAndLink = hasValidNameAndLink(input.name, input.id);
+        }
+        return isNotAConstant && noValidNameAndLink === false;
       }) ||
       workflowContent.outputs.some(output => {
         const isNotAConstant =

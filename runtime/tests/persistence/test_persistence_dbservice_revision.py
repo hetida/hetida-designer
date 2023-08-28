@@ -20,7 +20,12 @@ from hetdesrun.persistence.dbservice.revision import (
     update_or_create_single_transformation_revision,
 )
 from hetdesrun.persistence.models.exceptions import StateConflict, TypeConflict
-from hetdesrun.persistence.models.io import IO, IOConnector, IOInterface
+from hetdesrun.persistence.models.io import (
+    IOInterface,
+    TransformationInput,
+    TransformationOutput,
+    WorkflowContentOutput,
+)
 from hetdesrun.persistence.models.link import Link, Vertex
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -177,7 +182,7 @@ def test_updating(mocked_clean_test_db_session):
     assert tr_object == received_tr_object
 
     tr_object.io_interface = IOInterface(
-        inputs=[IO(name="input", data_type=DataType.Integer)]
+        inputs=[TransformationInput(name="input", data_type=DataType.Integer)]
     )
     tr_object.test_wiring = WorkflowWiring(
         input_wirings=[
@@ -364,7 +369,7 @@ def test_multiple_select(mocked_clean_test_db_session):  # noqa: PLR0915
     assert len(results) == 0
 
     results = get_multiple_transformation_revisions(
-        FilterParams(category="Test category", include_dependencies=False)
+        FilterParams(categories=["Test category"], include_dependencies=False)
     )
     assert len(results) == 2
 
@@ -431,7 +436,7 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
     tr_component_contained_only_in_deprecated.id = uuid4()
     tr_component_contained_only_in_deprecated.revision_group_id = uuid4()
     tr_component_contained_only_in_deprecated.io_interface = IOInterface(
-        outputs=[IO(id=uuid4(), name="o", data_type=DataType.Any)]
+        outputs=[TransformationOutput(id=uuid4(), name="o", data_type=DataType.Any)]
     )
     tr_component_contained_only_in_deprecated.release()
 
@@ -451,7 +456,7 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
 
     operator_in_deprecated = tr_component_contained_only_in_deprecated.to_operator()
     assert isinstance(operator_in_deprecated.id, UUID)
-    output_connector_deprecated = IOConnector(
+    output_connector_deprecated = WorkflowContentOutput(
         id=uuid4(),
         name=operator_in_deprecated.outputs[0].name,
         operator_id=operator_in_deprecated.id,
@@ -490,7 +495,7 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
     operator_in_not_deprecated = (
         tr_component_contained_not_only_in_deprecated.to_operator()
     )
-    output_connector_not_deprecated = IOConnector(
+    output_connector_not_deprecated = WorkflowContentOutput(
         id=uuid4(),
         name=operator_in_not_deprecated.outputs[0].name,
         operator_id=operator_in_not_deprecated.id,
@@ -524,7 +529,9 @@ def test_multiple_select_unused(mocked_clean_test_db_session):
                 )
             ],
         ),
-        io_interface=IOInterface(outputs=[output_connector_not_deprecated.to_io()]),
+        io_interface=IOInterface(
+            outputs=[TransformationOutput(**output_connector_not_deprecated.dict())]
+        ),
         test_wiring=WorkflowWiring(),
     )
 
