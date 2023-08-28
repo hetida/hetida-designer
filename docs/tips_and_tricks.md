@@ -12,6 +12,8 @@ Here you can find some guidance for common issues that might occur:
 - [Debugging component revisions](#debugging-components)
 - [Debugging workflow revisions](#debugging-workflows)
 - [Specify data type to enable correct parsing](#data-type-parsing)
+- [Storing and loading objects with self defined classes](#self-defined-classes)
+- [Identifiy source for latest stored object via endpoints](#identify-source)
 
 ## <a name="debugging-components"></a> Debugging component revisions
 
@@ -68,7 +70,7 @@ One caveat of this behaviour is, that if the input is of type ANY the data will 
 
 If a component like "Add" uses ANY to allow e.g. both Series and DataFrames to be send to it and indeed expects one of these two options, it probably will error if provided with json input directly from the outside.
 
-E.g. A series provided as a json provided to a workflow input of type ANY will result in a dictionary instead of a Pandas Series object. This will cause an error message which starts e.g. (for the "Add" component) like
+E.g. A series provided as a json to a workflow input of type ANY will result in a dictionary instead of a Pandas Series object. This will cause an error message which starts e.g. (for the "Add" component) like
 
 ```
 {
@@ -84,8 +86,7 @@ This can be avoided by putting a "Pass through (Series)" component in front of i
 
 So the general tip is to avoid ANY as input that needs to be wired and instead to put the respective Pass Through component in front.
 
-
-## Storing and loading objects with self defined classes
+## <a name="self-defined-classes"></a> Storing and loading objects with self defined classes
 When combining self-defined classes with storing and loading objects, e.g. via the [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md), the classes must be defined in seperate components.
 The component that contains such a class, should just return the class as i.e. in the component "ExampleClass" from the category "Classes". 
 ```python
@@ -112,7 +113,7 @@ Usually the class is not needed explicitly so that the there is no reason to lin
 <img src="./assets/load_object_with_class.png" height="225" width=750 data-align="center">
 
 
-## Identifiy source for latest stored object via endpoints
+## <a name="self-defined-classes"></a> Identifiy source for latest stored object via endpoints
 The [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md) adds the storage timestamp and the execution job id to the name of each stored object and automatically creates a new source corresponding to that object.
 
 A request to the [/structure endpoint (GET)](./adapter_system/generic_rest_adapters/web_service_interface.md#structure-endpoint-get) with the `ref_id` as `parentId` path parameter will return a list of all thing nodes, sources and sinks below the thingnode with the id `parentId` as a response.
