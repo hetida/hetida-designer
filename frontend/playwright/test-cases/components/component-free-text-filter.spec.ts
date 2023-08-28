@@ -87,8 +87,6 @@ test('Free text filter for component', async ({
   );
 
   expect(freeTextInput).toBeTruthy();
-
-  await hetidaDesigner.clickByTestId('cancel-wiring-dialog');
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
