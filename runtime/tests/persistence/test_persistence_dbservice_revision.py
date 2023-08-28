@@ -402,7 +402,7 @@ def test_multiple_select(mocked_clean_test_db_session):  # noqa: PLR0915
 
     results = get_multiple_transformation_revisions(
         FilterParams(
-            category="Test category",
+            categories=["Test category"],
             state=State.RELEASED,
             include_dependencies=False,
         )

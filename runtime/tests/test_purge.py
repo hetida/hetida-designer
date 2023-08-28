@@ -105,12 +105,12 @@ def test_get_transformation_revisions(caplog):
             )
             assert kwargs["params"]["type"] == params.type.value
             assert kwargs["params"]["state"] == params.state.value
-            assert kwargs["params"]["categories"] == params.categories
+            assert kwargs["params"]["category"] == params.categories
             assert kwargs["params"]["revision_group_id"] == str(
                 params.revision_group_id
             )
-            assert kwargs["params"]["ids"] == [str(id_) for id_ in params.ids]
-            assert kwargs["params"]["names"] == params.names
+            assert kwargs["params"]["id"] == [str(id_) for id_ in params.ids]
+            assert kwargs["params"]["name"] == params.names
             assert kwargs["params"]["include_deprecated"] is True
             assert kwargs["params"]["unused"] is False
 
