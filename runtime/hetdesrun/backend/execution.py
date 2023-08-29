@@ -293,14 +293,8 @@ async def run_execution_input(
                 raise TrafoExecutionResultValidationError(msg) from e
 
     execution_response = ExecutionResponseFrontendDto(
-        error=execution_result.error,
-        output_results_by_output_name=execution_result.output_results_by_output_name,
+        **execution_result.dict(),
         output_types_by_output_name=output_types,
-        result=execution_result.result,
-        traceback=execution_result.traceback,
-        traces=execution_result.traces,
-        job_id=execution_result.job_id,
-        measured_steps=execution_result.measured_steps,
     )
 
     run_execution_input_measured_step.stop()

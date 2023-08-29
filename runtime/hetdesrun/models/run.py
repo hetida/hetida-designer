@@ -298,25 +298,11 @@ def traces_from_exception(exception: Exception) -> list[Trace]:
     return traces
 
 
-class WorkflowExecutionResult(BaseModel):
+class WorkflowExecutionInfo(BaseModel):
     error: WorkflowExecutionError | None = Field(None, description="error string")
     output_results_by_output_name: dict[str, Any] = Field(
         ...,
         description="Results at the workflow outputs as a dictionary by name of workflow output",
-    )
-    result: Result = Field(
-        ...,
-        description="one of " + ", ".join(['"' + x.value + '"' for x in list(Result)]),
-        example=Result.OK,
-    )
-    node_results: str | None = Field(
-        None,
-        description=(
-            "Individual results of all executed nodes as concatenated str."
-            " This uses str() on the Python objects which may be an abbreviated representation"
-            " (e.g. Pandas objects). Will only be used if the corresponding configuration flag is"
-            " set to true."
-        ),
     )
     traceback: str | None = Field(None, description="traceback")
     traces: list[Trace] | None = Field(None, description="traceback as formatted list")
@@ -327,9 +313,8 @@ class WorkflowExecutionResult(BaseModel):
     @classmethod
     def from_exception(
         cls, exception: Exception, process_stage: ProcessStage, job_id: UUID
-    ) -> "WorkflowExecutionResult":
-        return WorkflowExecutionResult(
-            result="failure",
+    ) -> "WorkflowExecutionInfo":
+        return WorkflowExecutionInfo(
             error=WorkflowExecutionError(
                 type=type(exception).__name__,
                 message=str(exception),
@@ -348,3 +333,34 @@ class WorkflowExecutionResult(BaseModel):
         )
 
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
+
+
+class WorkflowExecutionResult(WorkflowExecutionInfo):
+    result: Result = Field(
+        ...,
+        description="one of " + ", ".join(['"' + x.value + '"' for x in list(Result)]),
+        example=Result.OK,
+    )
+    node_results: str | None = Field(
+        None,
+        description=(
+            "Individual results of all executed nodes as concatenated str."
+            " This uses str() on the Python objects which may be an abbreviated representation"
+            " (e.g. Pandas objects). Will only be used if the corresponding configuration flag is"
+            " set to true."
+        ),
+    )
+
+    @classmethod
+    def from_exception(
+        cls,
+        exception: Exception,
+        process_stage: ProcessStage,
+        job_id: UUID,
+        node_results: str | None = None,
+    ) -> "WorkflowExecutionResult":
+        return WorkflowExecutionResult(
+            **super().from_exception(exception, process_stage, job_id).dict(),
+            result="failure",
+            node_results=node_results,
+        )
