@@ -193,8 +193,12 @@ async def test_component_error_code_in_result_error(
             client,
         )
 
-        assert "Component Error 404" in exec_result.error
-        assert "tr id: c4dbcc42-eaec-4587-a362-ce6567f21d92" in exec_result.error
+        assert exec_result.error.error_code == 404
+        assert exec_result.error.type == "ComponentException"
+        assert (
+            exec_result.error.operator_info.transformation_info.id
+            == "c4dbcc42-eaec-4587-a362-ce6567f21d92"
+        )
 
 
 @pytest.mark.asyncio

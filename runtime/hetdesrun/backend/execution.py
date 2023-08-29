@@ -298,7 +298,8 @@ async def run_execution_input(
         output_types_by_output_name=output_types,
         result=execution_result.result,
         traceback=execution_result.traceback,
-        job_id=execution_input.job_id,
+        traces=execution_result.traces,
+        job_id=execution_result.job_id,
         measured_steps=execution_result.measured_steps,
     )
 

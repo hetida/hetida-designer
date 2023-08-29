@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, validator
 
 from hetdesrun.backend.service.utils import to_camel
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
-from hetdesrun.models.run import AllMeasuredSteps
+from hetdesrun.models.run import AllMeasuredSteps, Trace, WorkflowExecutionError
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
 
@@ -44,13 +44,12 @@ class DocumentationFrontendDto(BaseModel):
 
 
 class ExecutionResponseFrontendDto(BaseModel):
-    error: str | None
-    execution_id: UUID | None
+    error: WorkflowExecutionError | None
     output_results_by_output_name: dict = {}
     output_types_by_output_name: dict = {}
-    response: str | None
     result: str
     traceback: str | None
+    traces: list[Trace] | None
     job_id: UUID
 
     measured_steps: AllMeasuredSteps = AllMeasuredSteps()
@@ -63,7 +62,3 @@ class ExecutionResponseFrontendDto(BaseModel):
     )
 
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
-
-
-class ExecutionResultReceived(BaseModel):
-    ok: bool

@@ -15,7 +15,7 @@ from hetdesrun.models.code import CodeModule, NonEmptyValidStr, ShortNonEmptyVal
 from hetdesrun.models.component import ComponentRevision
 from hetdesrun.models.wiring import OutputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
-from hetdesrun.runtime.exceptions import RuntimeExecutionError
+from hetdesrun.runtime.exceptions import ComponentException, RuntimeExecutionError
 from hetdesrun.utils import Type, check_explicit_utc
 
 HIERARCHY_SEPARATOR = "\\"
@@ -197,7 +197,7 @@ class WorkflowExecutionInput(BaseModel):
 
 
 class TransformationInfo(BaseModel):
-    id: UUID  # noqa: A003
+    id: str  # noqa: A003
     name: NonEmptyValidStr
     tag: ShortNonEmptyValidStr
     type: Type  # noqa: A003
@@ -212,10 +212,14 @@ class HierarchyInWorkflow(BaseModel):
         cls, hierarchical_name_string: str, hierarchical_id_string: str
     ) -> "HierarchyInWorkflow":
         if (
-            hierarchical_name_string.count(HIERARCHY_SEPARATOR) < 3
-            or hierarchical_id_string.count(HIERARCHY_SEPARATOR) < 3
+            hierarchical_name_string.count(HIERARCHY_SEPARATOR) < 2
+            or hierarchical_id_string.count(HIERARCHY_SEPARATOR) < 2
         ):
-            raise ValueError()
+            raise ValueError(
+                f'The number of "{HIERARCHY_SEPARATOR}" occurences in '
+                f'hierarchical name string "{hierarchical_name_string}" or '
+                f'hierarchical id string "{hierarchical_id_string}" is < 2 and thus too small!'
+            )
         return HierarchyInWorkflow(
             by_name=hierarchical_name_string.split(HIERARCHY_SEPARATOR)[1:-1],
             by_id=[
@@ -229,7 +233,7 @@ class HierarchyInWorkflow(BaseModel):
 
 class OperatorInfo(BaseModel):
     transformation_info: TransformationInfo
-    operator_hierarchy_in_workflow: HierarchyInWorkflow
+    hierarchy_in_workflow: HierarchyInWorkflow
 
     @classmethod
     def from_runtime_execution_error(
@@ -242,7 +246,7 @@ class OperatorInfo(BaseModel):
                 tag=error.currently_executed_transformation_tag,
                 type=error.currently_executed_transformation_type,
             ),
-            operator_hierarchy_in_workflow=HierarchyInWorkflow.from_hierarchy_strings(
+            hierarchy_in_workflow=HierarchyInWorkflow.from_hierarchy_strings(
                 hierarchical_name_string=error.currently_executed_hierarchical_operator_name,
                 hierarchical_id_string=error.currently_executed_hierarchical_operator_id,
             ),
@@ -287,7 +291,7 @@ def traces_from_exception(exception: Exception) -> list[Trace]:
                 file_name=tb.tb_frame.f_code.co_filename,
                 function_name=tb.tb_frame.f_code.co_name,
                 line_number=tb.tb_lineno,
-                line_of_code=tb.tb_frame.f_code.co_code,
+                line_of_code="",
             )
         )
         tb = tb.tb_next
@@ -295,15 +299,15 @@ def traces_from_exception(exception: Exception) -> list[Trace]:
 
 
 class WorkflowExecutionResult(BaseModel):
+    error: WorkflowExecutionError | None = Field(None, description="error string")
+    output_results_by_output_name: dict[str, Any] = Field(
+        ...,
+        description="Results at the workflow outputs as a dictionary by name of workflow output",
+    )
     result: Result = Field(
         ...,
         description="one of " + ", ".join(['"' + x.value + '"' for x in list(Result)]),
         example=Result.OK,
-    )
-
-    output_results_by_output_name: dict[str, Any] = Field(
-        ...,
-        description="Results at the workflow outputs as a dictionary by name of workflow output",
     )
     node_results: str | None = Field(
         None,
@@ -314,7 +318,6 @@ class WorkflowExecutionResult(BaseModel):
             " set to true."
         ),
     )
-    error: WorkflowExecutionError | None = Field(None, description="error string")
     traceback: str | None = Field(None, description="traceback")
     traces: list[Trace] | None = Field(None, description="traceback as formatted list")
     job_id: UUID
@@ -330,6 +333,9 @@ class WorkflowExecutionResult(BaseModel):
             error=WorkflowExecutionError(
                 type=type(exception).__name__,
                 message=str(exception),
+                error_code=exception.error_code
+                if isinstance(exception, ComponentException)
+                else None,
                 process_stage=process_stage,
                 operator_info=OperatorInfo.from_runtime_execution_error(exception)
                 if isinstance(exception, RuntimeExecutionError)
