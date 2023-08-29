@@ -2,7 +2,7 @@
 
 
 import datetime
-import traceback
+import traceback as tb
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -283,18 +283,16 @@ class WorkflowExecutionError(BaseModel):
 
 
 def traces_from_exception(exception: Exception) -> list[Trace]:
-    traces = []
-    tb = exception.__traceback__
-    while tb is not None:
-        traces.append(
-            Trace(
-                file_name=tb.tb_frame.f_code.co_filename,
-                function_name=tb.tb_frame.f_code.co_name,
-                line_number=tb.tb_lineno,
-                line_of_code="",
-            )
+    frames = tb.extract_tb(exception.__traceback__)
+    traces = [
+        Trace(
+            file_name=frame.filename,
+            function_name=frame.name,
+            line_number=frame.lineno,
+            line_of_code=frame.line,
         )
-        tb = tb.tb_next
+        for frame in frames
+    ]
     return traces
 
 
@@ -305,7 +303,9 @@ class WorkflowExecutionInfo(BaseModel):
         description="Results at the workflow outputs as a dictionary by name of workflow output",
     )
     traceback: str | None = Field(None, description="traceback")
-    traces: list[Trace] | None = Field(None, description="traceback as formatted list")
+    traces: list[Trace] | None = Field(
+        None, description="Trace stack as formatted list"
+    )
     job_id: UUID
 
     measured_steps: AllMeasuredSteps = AllMeasuredSteps()
@@ -326,7 +326,7 @@ class WorkflowExecutionInfo(BaseModel):
                 if isinstance(exception, RuntimeExecutionError)
                 else None,
             ),
-            traceback=traceback.format_exc(),
+            traceback=tb.format_exc(),
             traces=traces_from_exception(exception),
             output_results_by_output_name={},
             job_id=job_id,
