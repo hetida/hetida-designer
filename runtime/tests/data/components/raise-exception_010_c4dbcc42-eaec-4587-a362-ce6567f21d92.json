@@ -1,6 +1,6 @@
 {
   "category": "Exceptions",
-  "content": "from hetdesrun.runtime.exceptions import ComponentException\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dividend\": {\"data_type\": \"INT\"},\n        \"divisor\": {\"data_type\": \"INT\"},\n    },\n    \"outputs\": {\n        \"result\": {\"data_type\": \"FLOAT\"},\n    },\n    \"name\": \"Raise Exception\",\n    \"category\": \"Exceptions\",\n    \"description\": \"Calculate division or raise an exception if divisor equals zero.\",\n    \"version_tag\": \"0.1.0\",\n    \"id\": \"c4dbcc42-eaec-4587-a362-ce6567f21d92\",\n    \"revision_group_id\": \"0d513f1d-6c73-4411-85d4-bc2f02b541b5\",\n    \"state\": \"DRAFT\",\n}\n\n\ndef main(*, dividend, divisor):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    if divisor == 0:\n        raise ComponentException(\"The divisor must not equal zero!\", error_code=404)\n    return {\"result\": dividend/divisor}",
+  "content": "from hetdesrun.runtime.exceptions import ComponentException\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dividend\": {\"data_type\": \"INT\"},\n        \"divisor\": {\"data_type\": \"INT\"},\n    },\n    \"outputs\": {\n        \"result\": {\"data_type\": \"SERIES\"},\n    },\n    \"name\": \"Raise Exception\",\n    \"category\": \"Exceptions\",\n    \"description\": \"New created component\",\n    \"version_tag\": \"0.1.0\",\n    \"id\": \"c4dbcc42-eaec-4587-a362-ce6567f21d92\",\n    \"revision_group_id\": \"0d513f1d-6c73-4411-85d4-bc2f02b541b5\",\n    \"state\": \"DRAFT\",\n}\n\n\ndef main(*, dividend, divisor):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    pass\n",
   "description": "Calculate division or raise an exception if divisor equals zero.",
   "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
   "id": "c4dbcc42-eaec-4587-a362-ce6567f21d92",
@@ -21,7 +21,7 @@
     ],
     "outputs": [
       {
-        "data_type": "FLOAT",
+        "data_type": "SERIES",
         "id": "3d00bbe6-5b14-4857-8f28-64e13531d847",
         "name": "result"
       }
