@@ -1,5 +1,6 @@
 import json
 import os
+from copy import deepcopy
 from typing import Any
 from uuid import uuid4
 
@@ -80,22 +81,29 @@ def gen_execution_input_from_single_component(
     )
 
 
+async def execute_workflow_execution_input(
+    workflow_execution_input: WorkflowExecutionInput,
+    open_async_test_client: AsyncClient,
+) -> WorkflowExecutionResult:
+    response = await open_async_test_client.post(
+        "engine/runtime", json=json.loads(workflow_execution_input.json())
+    )
+
+    return WorkflowExecutionResult(**response.json())
+
+
 async def run_single_component(
     component_json_file_path: str,
     input_data_dict: dict,
     open_async_test_client: AsyncClient,
 ) -> WorkflowExecutionResult:
-    response = await open_async_test_client.post(
-        "engine/runtime",
-        json=json.loads(
-            gen_execution_input_from_single_component(
-                component_json_file_path,
-                input_data_dict,
-            ).json()
-        ),
+    return execute_workflow_execution_input(
+        gen_execution_input_from_single_component(
+            component_json_file_path,
+            input_data_dict,
+        ).json(),
+        open_async_test_client,
     )
-
-    return WorkflowExecutionResult(**response.json())
 
 
 @pytest.mark.asyncio
@@ -180,23 +188,70 @@ async def test_all_null_values_pass_series_pass_through(
 
 
 @pytest.mark.asyncio
-async def test_component_error_code_in_result_error(
+async def test_structured_error_messages(
     async_test_client: AsyncClient,
 ) -> None:
+    raise_exception_no_output_component = gen_execution_input_from_single_component(
+        (
+            "tests/data/components/"
+            "raise-exception_010_c4dbcc42-eaec-4587-a362-ce6567f21d92.json"
+        ),
+        {"dividend": 1, "divisor": 0},
+    )
+    raise_exception_in_code_intentionally_component = deepcopy(raise_exception_no_output_component)
+    raise_exception_in_code_intentionally_component.code_modules[
+        0
+    ].code = raise_exception_in_code_intentionally_component.code_modules[0].code.replace(
+        "pass",
+        (
+            """if divisor == 0:
+            raise ComponentException("The divisor must not equal zero!", error_code=404)
+            return {"result": dividend/divisor}
+            """
+        ),
+    )
+
+    raise_exception_in_code_unintentionally_component = deepcopy(raise_exception_no_output_component)
+    raise_exception_in_code_unintentionally_component.code_modules[
+        0
+    ].code = raise_exception_in_code_intentionally_component.code_modules[0].code.replace(
+        "pass",
+        'return {"result": dividend/divisor}',
+    )
+
+    raise_exception_in_sending_data_component = deepcopy(raise_exception_no_output_component)
+    raise_exception_in_sending_data_component.code_modules[
+        0
+    ].code = raise_exception_in_sending_data_component.code_modules[0].code.replace(
+        "pass",
+        'return {"result": "string instead of series"}',
+    )
+
+    raise_exception_in_json_encoding_component = deepcopy(raise_exception_no_output_component)
+    raise_exception_in_json_encoding_component.code_modules[
+        0
+    ].code = raise_exception_in_json_encoding_component.code_modules[0].code.replace(
+        "pass",
+        'return {"result": str}',
+    )
+
+    raise_exception_in_default_value_component = deepcopy(raise_exception_no_output_component)
+    raise_exception_in_default_value_component.code_modules[
+        0
+    ].code = raise_exception_in_default_value_component.code_modules[0].code.replace(
+        "def main(*, dividend, divisor):",
+        "def main(*, divisor, dividend=asdf):"
+    )
+
     async with async_test_client as client:
-        exec_result = await run_single_component(
-            (
-                "tests/data/components/"
-                "raise-exception_010_c4dbcc42-eaec-4587-a362-ce6567f21d92.json"
-            ),
-            {"dividend": 1, "divisor": 0},
-            client,
+        raise_exception_in_code_intentionally_result = await execute_workflow_execution_input(
+            raise_exception_in_code_intentionally_component, client
         )
 
-        assert exec_result.error.error_code == 404
-        assert exec_result.error.type == "ComponentException"
+        assert raise_exception_in_code_intentionally_result.error.error_code == 404
+        assert raise_exception_in_code_intentionally_result.error.type == "ComponentException"
         assert (
-            exec_result.error.operator_info.transformation_info.id
+            raise_exception_in_code_intentionally_result.error.operator_info.transformation_info.id
             == "c4dbcc42-eaec-4587-a362-ce6567f21d92"
         )
 
