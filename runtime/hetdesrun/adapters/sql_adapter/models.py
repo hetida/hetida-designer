@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Literal, cast
 
+import pandas as pd
 from pydantic import BaseModel, Field, validator
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
@@ -11,32 +12,42 @@ from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
 class WriteTableMode(str, Enum):
     APPEND = "APPEND"
     REPLACE = "REPLACE"
+    TIMSERIES_APPEND = "TIMESERIES_APPEND"
 
     @classmethod
     def from_table_type_str(
-        cls, table_type: Literal["append_table", "replace_table"]
+        cls, table_type: Literal["append_table", "replace_table", "appendable_ts_table"]
     ) -> "WriteTableMode":
         if table_type == "append_table":
             return cls.APPEND
 
-        if table_type == "replace_table":  # noqa: RET503
+        if table_type == "replace_table":
             return cls.REPLACE
+
+        if table_type == "appendable_ts_table":  # noqa: RET503
+            return cls.TIMSERIES_APPEND
 
 
 def to_table_type_str(
     write_table_mode: WriteTableMode,
-) -> Literal["append_table", "replace_table"]:
+) -> Literal["append_table", "replace_table", "appendable_ts_table"]:
     if write_table_mode is WriteTableMode.APPEND:
         return "append_table"
 
     if write_table_mode is WriteTableMode.REPLACE:
         return "replace_table"
 
+    if write_table_mode is WriteTableMode.TIMSERIES_APPEND:
+        return "appendable_ts_table"
+
     raise TypeError("Unhandled WriteTableMode")
 
 
 def to_if_exists_pandas_str(write_table_mode: WriteTableMode) -> str:
-    if write_table_mode is WriteTableMode.APPEND:
+    if (
+        write_table_mode is WriteTableMode.APPEND
+        or write_table_mode is WriteTableMode.TIMSERIES_APPEND
+    ):
         return "append"
 
     if write_table_mode is WriteTableMode.REPLACE:
@@ -69,8 +80,11 @@ class WriteTable(BaseModel):
 
         params["db_key"] = id_split[0]
         if len(id_split) > 1:
-            write_mode_str: Literal["append_table", "replace_table"] = cast(
-                Literal["append_table", "replace_table"], id_split[1]
+            write_mode_str: Literal[
+                "append_table", "replace_table", "appendable_ts_table"
+            ] = cast(
+                Literal["append_table", "replace_table", "appendable_ts_table"],
+                id_split[1],
             )
             params["write_mode"] = WriteTableMode.from_table_type_str(write_mode_str)
 

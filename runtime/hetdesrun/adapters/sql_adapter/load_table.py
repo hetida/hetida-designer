@@ -3,12 +3,19 @@ import logging
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError as SQLOpsError
+from sqlalchemy.sql import and_, column, select, table
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
 from hetdesrun.adapters.sql_adapter.utils import get_configured_dbs_by_key
 
 logger = logging.getLogger(__name__)
+
+
+def split_metric_ids(metric_ids_string: str | None) -> list[str]:
+    if metric_ids_string is None:
+        return []
+    return [x.strip() for x in metric_ids_string.split(",") if x != ""]
 
 
 def load_table_from_provided_source_id(
@@ -41,6 +48,71 @@ def load_table_from_provided_source_id(
     if id_split[1] == "table" and len(id_split) > 2:
         table_name = id_split[2]
         return load_sql_table(db_config, table_name)
+
+    if id_split[1] == "ts_table" and len(id_split) > 2:
+        ts_table_name = id_split[2]
+
+        metrics_list = split_metric_ids(source_filters.get("metrics", ""))
+
+        logger.debug(
+            "Parsed metric list %s from metrics filter %s",
+            str(metrics_list),
+            source_filters.get("metrics", ""),
+        )
+
+        from_timestamp = source_filters.get("timestampFrom", None)
+        to_timestamp = source_filters.get("timestampTo", None)
+
+        if from_timestamp is None or to_timestamp is None:
+            msg = "Missing timestamp filters for multitsframe timeseries table source"
+            logger.error(msg)
+            raise AdapterHandlingException(msg)
+
+        try:
+            from_datetime = pd.to_datetime(from_timestamp).to_pydatetime()
+            to_datetime = pd.to_datetime(to_timestamp).to_pydatetime()
+        except ValueError as e:
+            msg = (
+                "Could not parse one of multitsframe timestamp filters: "
+                f"(timestampFrom: {from_timestamp}), "
+                f"(timestampTo: {to_timestamp})."
+            )
+            raise AdapterHandlingException(msg) from e
+
+        ts_table_config = db_config.timeseries_tables[ts_table_name]
+
+        # ad hoc table object without data type specifications since
+        # corresponding to the fact that we want to employ pandas read_sql automatic
+        # flexible dtype inference.
+        ts_table = table(
+            ts_table_name,
+            column(
+                ts_table_config.timestamp_col_name,
+            ),
+            column(ts_table_config.metric_col_name),
+            *(
+                column(val_col_name)
+                for val_col_name in ts_table_config.fetchable_value_cols
+            ),
+        )
+
+        # ad hoc sqlalchemy expression construction
+        statement = select(ts_table).where(
+            and_(
+                ts_table.c[ts_table_config.timestamp_col_name] >= from_datetime,
+                ts_table.c[ts_table_config.timestamp_col_name] <= to_datetime,
+                ts_table.c[ts_table_config.metric_col_name].in_(metrics_list),
+            )
+        )
+
+        multits_frame = load_sql_query(db_config, statement)
+        multits_frame.attrs = {
+            "from": from_datetime.isoformat(),
+            "to": to_datetime.isoformat(),
+            "timeseries_query_interval_boundaries": "closed",
+            "queried_metrics": metrics_list,
+        }
+        return multits_frame
 
     msg = (
         "Invalid source id structure. Cannot find or identify source."

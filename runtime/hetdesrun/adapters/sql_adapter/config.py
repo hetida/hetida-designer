@@ -5,12 +5,24 @@ from pydantic import BaseModel, BaseSettings, Field, validator
 from hetdesrun.models.util import valid_python_identifier
 
 
+class TimeseriesTableConfig(BaseModel):
+    appendable: bool = Field(
+        True,
+        description="Whether writing into this table is offered as sink."
+        " Note that this is setting does not provide write protection. This has to be ensured "
+        "on the database via its security / access management features if necessary.",
+    )
+    metric_col_name: str = "metric"
+    timestamp_col_name: str = "timestamp"
+    fetchable_value_cols: list[str] = ["value"]
+
+
 class SQLAdapterDBConfig(BaseModel):
     """A config of a database for the sql adapter
 
-    All tables will be made available as sources and additionally an arbitrary query
-    source is offered. It is up to the database admin to restrict access for the user
-    configured in the connection url.
+    All tables will be made available as sources by default and additionally an arbitrary
+    query source is offered. It is up to the database admin to restrict access for the
+    user configured in the connection url.
 
     Only the tables configured in append_tables and replace_tables will be offered as
     fixed sinks.
@@ -31,6 +43,23 @@ class SQLAdapterDBConfig(BaseModel):
     replace_tables: list[str] = Field(
         [],
         description="names of tables that are offered as sinks for replacing the whole table",
+    )
+    ignore_tables: set[str] = Field(
+        {}, description="tables that should not be made accessable as sources"
+    )
+    timeseries_tables: dict[str, TimeseriesTableConfig] = Field(
+        [],
+        description="Mapping of table names to TimeseriesTableConfig objects."
+        " Timeseries tables are offered as timeseries sources. They are not "
+        " available as ordinary table sources of type DATAFRAME.",
+    )
+    explicit_source_tables: None | set[str] = Field(
+        None,
+        description=(
+            "If None, all tables (minus ignore tables) will be available as sources for reading."
+            " If set to a list of table names only these tables (minus ignore tables) will be"
+            " made available as sources."
+        ),
     )
 
 

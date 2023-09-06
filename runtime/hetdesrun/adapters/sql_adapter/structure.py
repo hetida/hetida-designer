@@ -5,6 +5,7 @@ from pydantic import ValidationError
 from sqlalchemy import create_engine, inspect
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.sql_adapter.config import (
     SQLAdapterDBConfig,
 )
@@ -28,31 +29,77 @@ def get_table_names(uri: str) -> list[str]:
     return inspection.get_table_names()
 
 
-def get_sources_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructureSource]:
+def is_allowed_dataframe_source_table(
+    table_name: str, db_config: SQLAdapterDBConfig
+) -> bool:
+    return (
+        (
+            db_config.explicit_source_tables is None
+            or table_name in db_config.explicit_source_tables
+        )
+        and not table_name in db_config.ignore_tables
+        and not table_name in db_config.timeseries_tables
+    )
+
+
+def get_allowed_dataframe_source_tables(db_config: SQLAdapterDBConfig) -> list[str]:
     return [
-        SQLAdapterStructureSource(
-            id=db_config.key + "/query",
-            thingNodeId=db_config.key,
-            name="SQL Query in " + db_config.name,
-            path=db_config.key + "|" + db_config.name + "/query/sql",
-            filters={
-                "sql_query": {
-                    "name": " SQL Query",
-                    "type": "free_text",
-                    "required": True,
-                }
-            },
-        )
-    ] + [
-        # query source
-        SQLAdapterStructureSource(
-            id=db_config.key + "/table/" + table_name,
-            thingNodeId=db_config.key,
-            name="Table " + table_name,
-            path=db_config.key + "|" + db_config.name + "/table/" + table_name,
-        )
+        table_name
         for table_name in get_table_names(db_config.connection_url)
+        if is_allowed_dataframe_source_table(table_name, db_config)
     ]
+
+
+def get_sources_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructureSource]:
+    return (
+        [
+            # query source
+            SQLAdapterStructureSource(
+                id=db_config.key + "/query",
+                thingNodeId=db_config.key,
+                name="SQL Query in " + db_config.name,
+                path=db_config.key + "|" + db_config.name + "/query/sql",
+                filters={
+                    "sql_query": {
+                        "name": " SQL Query",
+                        "type": "free_text",
+                        "required": True,
+                    }
+                },
+            )
+        ]
+        + [
+            # dataframe source tables
+            SQLAdapterStructureSource(
+                id=db_config.key + "/table/" + table_name,
+                thingNodeId=db_config.key,
+                name="Table " + table_name,
+                path=db_config.key + "|" + db_config.name + "/table/" + table_name,
+            )
+            for table_name in get_allowed_dataframe_source_tables(db_config)
+        ]
+        + [
+            SQLAdapterStructureSource(
+                id=db_config.key + "/ts_table/" + ts_table_name,
+                thingNodeId=db_config.key,
+                type=ExternalType.MULTITSFRAME,
+                name="Timeseries Table " + ts_table_name,
+                path=db_config.key
+                + "|"
+                + db_config.name
+                + "/ts_table/"
+                + ts_table_name,
+                filters={
+                    "metrics": {  # metric ids as comma separated string
+                        "name": "Metrics (comma separated)",
+                        "type": "free_text",
+                        "required": True,
+                    }
+                },
+            )
+            for ts_table_name in db_config.timeseries_tables
+        ]
+    )
 
 
 def get_all_db_sources(
@@ -77,32 +124,50 @@ def filter_sql_sources(
 
 
 def get_sinks_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructureSink]:
-    return [
-        SQLAdapterStructureSink(
-            id=db_config.key + "/append_table/" + append_table_name,
-            thingNodeId=db_config.key,
-            name="Append Table " + append_table_name,
-            path=db_config.key
-            + "|"
-            + db_config.name
-            + "/append_table/"
-            + append_table_name,
-        )
-        for append_table_name in db_config.append_tables
-    ] + [
-        SQLAdapterStructureSink(
-            id=db_config.key + "/replace_table/" + replace_table_name,
-            thingNodeId=db_config.key,
-            name="Replace Table " + replace_table_name,
-            path=db_config.key
-            + "|"
-            + db_config.name
-            + "/replace_table/"
-            + replace_table_name,
-        )
-        for replace_table_name in db_config.replace_tables
-    ]
-    raise NotImplementedError
+    return (
+        [
+            SQLAdapterStructureSink(
+                id=db_config.key + "/append_table/" + append_table_name,
+                thingNodeId=db_config.key,
+                name="Append Table " + append_table_name,
+                path=db_config.key
+                + "|"
+                + db_config.name
+                + "/append_table/"
+                + append_table_name,
+            )
+            for append_table_name in db_config.append_tables
+        ]
+        + [
+            SQLAdapterStructureSink(
+                id=db_config.key + "/replace_table/" + replace_table_name,
+                thingNodeId=db_config.key,
+                name="Replace Table " + replace_table_name,
+                path=db_config.key
+                + "|"
+                + db_config.name
+                + "/replace_table/"
+                + replace_table_name,
+            )
+            for replace_table_name in db_config.replace_tables
+        ]
+        + [
+            # appendable timeseries tables
+            SQLAdapterStructureSink(
+                id=db_config.key + "/appendable_ts_table/" + timeseries_table_name,
+                thingNodeId=db_config.key,
+                type=ExternalType.MULTITSFRAME,
+                name="Timeseries Table " + timeseries_table_name,
+                path=db_config.key
+                + "|"
+                + db_config.name
+                + "/appendable_ts_table/"
+                + timeseries_table_name,
+            )
+            for timeseries_table_name in db_config.timeseries_tables
+            if db_config.timeseries_tables[timeseries_table_name].appendable
+        ]
+    )
 
 
 def get_all_db_sinks(
@@ -199,6 +264,24 @@ def get_source_by_id(source_id: str) -> SQLAdapterStructureSource | None:
             name="Table " + table_name,
             path=db_key + "|" + db_config.name + "/table/" + table_name,
         )
+
+    if source_type == "ts_table":
+        db_config = configured_dbs_by_key[db_key]
+        ts_table_name = id_split[2]
+        return SQLAdapterStructureSource(
+            id=db_config.key + "/ts_table/" + ts_table_name,
+            thingNodeId=db_config.key,
+            type=ExternalType.MULTITSFRAME,
+            name="Timeseries Table " + ts_table_name,
+            path=db_config.key + "|" + db_config.name + "/ts_table/" + ts_table_name,
+            filters={
+                "metrics": {  # metric ids as comma separated string
+                    "name": "Metrics (comma separated)",
+                    "type": "free_text",
+                    "required": True,
+                }
+            },
+        )
     return None
 
 
@@ -212,8 +295,32 @@ def get_sink_by_id(sink_id: str) -> SQLAdapterStructureSink | None:
     try:
         write_table = WriteTable.from_sink_id(sink_id)
     except ValidationError as e:
-        msg = "Could not parse and validate sink id."
-        logger.info(msg + f"Error was: {str(e)}")  # noqa: G003
+        msg = f"Could not parse and validate sink id {sink_id}. Error was {str(e)}."
+        logger.info(msg)  # noqa: G003
+        return None
+
+    # Handle appendable ts tables
+    if write_table.write_mode is WriteTableMode.TIMSERIES_APPEND:
+        if write_table.db_config.timeseries_tables[write_table.table_name].appendable:
+            return SQLAdapterStructureSink(
+                id=write_table.sink_id,
+                thingNodeId=write_table.db_config.key,
+                type=ExternalType.MULTITSFRAME,
+                name="Timeseries Table " + write_table.table_name,
+                path=write_table.db_config.key
+                + "|"
+                + write_table.db_config.name
+                + "/"
+                + to_table_type_str(write_table.write_mode)
+                + "/"
+                + write_table.table_name,
+            )
+        logger.debug(
+            "Timeseries table %s is not appendable!",
+            str(
+                write_table.table_name,
+            ),
+        )
         return None
 
     # Handle table not present
