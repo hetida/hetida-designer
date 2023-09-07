@@ -1,6 +1,5 @@
 import json
 import os
-from copy import deepcopy
 from typing import Any
 from uuid import uuid4
 
@@ -9,6 +8,7 @@ from httpx import AsyncClient
 
 from hetdesrun.models.run import (
     ConfigurationInput,
+    ProcessStage,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
@@ -42,6 +42,7 @@ def gen_execution_input_from_single_component(
     tr_component_json = load_json(component_json_path)
     tr_component = TransformationRevision(**tr_component_json)
     wrapping_wf = tr_component.wrap_component_in_tr_workflow()
+    assert not isinstance(wrapping_wf.content, str)
     assert len(wrapping_wf.content.operators) != 0
 
     return WorkflowExecutionInput(
@@ -97,11 +98,11 @@ async def run_single_component(
     input_data_dict: dict,
     open_async_test_client: AsyncClient,
 ) -> WorkflowExecutionResult:
-    return execute_workflow_execution_input(
+    return await execute_workflow_execution_input(
         gen_execution_input_from_single_component(
             component_json_file_path,
             input_data_dict,
-        ).json(),
+        ),
         open_async_test_client,
     )
 
@@ -187,73 +188,256 @@ async def test_all_null_values_pass_series_pass_through(
         )
 
 
-@pytest.mark.asyncio
-async def test_structured_error_messages(
-    async_test_client: AsyncClient,
-) -> None:
-    raise_exception_no_output_component = gen_execution_input_from_single_component(
+def division_component_wf_exc_inp_replace(
+    function_code: str | None = None, function_header: str | None = None
+) -> WorkflowExecutionInput:
+    division_component_wf_exc_inp = gen_execution_input_from_single_component(
         (
             "tests/data/components/"
             "raise-exception_010_c4dbcc42-eaec-4587-a362-ce6567f21d92.json"
         ),
         {"dividend": 1, "divisor": 0},
     )
-    raise_exception_in_code_intentionally_component = deepcopy(raise_exception_no_output_component)
-    raise_exception_in_code_intentionally_component.code_modules[
-        0
-    ].code = raise_exception_in_code_intentionally_component.code_modules[0].code.replace(
-        "pass",
-        (
-            """if divisor == 0:
+
+    if function_code is not None:
+        division_component_wf_exc_inp.code_modules[
+            0
+        ].code = division_component_wf_exc_inp.code_modules[0].code.replace(
+            "pass",
+            function_code,
+        )
+
+    if function_header is not None:
+        division_component_wf_exc_inp.code_modules[
+            0
+        ].code = division_component_wf_exc_inp.code_modules[0].code.replace(
+            "def main(*, dividend, divisor):", function_header
+        )
+
+    return division_component_wf_exc_inp
+
+
+@pytest.mark.asyncio
+class TestSctructuredErrors:
+    async def test_raise_default_exception(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace(
+            function_header="def main(*, divisor, dividend=asdf):"
+        )
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.PARSING_WORKFLOW
+        assert result.error.type == "NodeFunctionLoadingError"  # cause: NameError
+        assert result.error.error_code is None
+        assert result.error.message == (  # cause: "name 'asdf' is not defined"
+            "Could not load node function "
+            "(Code module uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, "
+            "Component uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, function name: main)"
+        )
+        assert result.error.location is not None
+        assert result.error.location.file.endswith(
+            "/hetdesrun/runtime/engine/plain/parsing.py"
+        )
+        assert result.error.location.function_name == "load_func"
+
+    async def test_raise_wf_input_validation_exception(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        with open(
+            os.path.join("tests", "data", "workflows", "raise_exception_wf_dto.json"),
+            encoding="utf8",
+        ) as f:
+            loaded_workflow_exe_input = json.load(f)
+
+        wf_exc_input = WorkflowExecutionInput(**loaded_workflow_exe_input)
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.PARSING_WORKFLOW
+        # cause of cause type: pydantic.error_wrappers.ValidationError
+        assert result.error.type == "WorkflowInputDataValidationError"
+        assert result.error.error_code is None
+        # cause of cause message:
+        # 1 validation error for DynamicyModel\ndividend\n
+        #  value is not a valid integer (type=type_error.integer)
+        assert result.error.message == (
+            "Some default values could not be parsed into the respective workflow input datatypes."
+        )
+        assert result.error.location is not None
+        assert result.error.location.file.endswith(
+            "/hetdesrun/runtime/engine/plain/parsing.py"
+        )
+        assert result.error.location.function_name == "recursively_parse_workflow_node"
+
+    async def test_raise_component_exception_with_error_code(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace(
+            function_code=(
+                """if divisor == 0:
             raise ComponentException("The divisor must not equal zero!", error_code=404)
             return {"result": dividend/divisor}
             """
-        ),
-    )
-
-    raise_exception_in_code_unintentionally_component = deepcopy(raise_exception_no_output_component)
-    raise_exception_in_code_unintentionally_component.code_modules[
-        0
-    ].code = raise_exception_in_code_intentionally_component.code_modules[0].code.replace(
-        "pass",
-        'return {"result": dividend/divisor}',
-    )
-
-    raise_exception_in_sending_data_component = deepcopy(raise_exception_no_output_component)
-    raise_exception_in_sending_data_component.code_modules[
-        0
-    ].code = raise_exception_in_sending_data_component.code_modules[0].code.replace(
-        "pass",
-        'return {"result": "string instead of series"}',
-    )
-
-    raise_exception_in_json_encoding_component = deepcopy(raise_exception_no_output_component)
-    raise_exception_in_json_encoding_component.code_modules[
-        0
-    ].code = raise_exception_in_json_encoding_component.code_modules[0].code.replace(
-        "pass",
-        'return {"result": str}',
-    )
-
-    raise_exception_in_default_value_component = deepcopy(raise_exception_no_output_component)
-    raise_exception_in_default_value_component.code_modules[
-        0
-    ].code = raise_exception_in_default_value_component.code_modules[0].code.replace(
-        "def main(*, dividend, divisor):",
-        "def main(*, divisor, dividend=asdf):"
-    )
-
-    async with async_test_client as client:
-        raise_exception_in_code_intentionally_result = await execute_workflow_execution_input(
-            raise_exception_in_code_intentionally_component, client
+            )
         )
 
-        assert raise_exception_in_code_intentionally_result.error.error_code == 404
-        assert raise_exception_in_code_intentionally_result.error.type == "ComponentException"
-        assert (
-            raise_exception_in_code_intentionally_result.error.operator_info.transformation_info.id
-            == "c4dbcc42-eaec-4587-a362-ce6567f21d92"
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
+        assert result.error.message == "The divisor must not equal zero!"
+        assert result.error.error_code == 404
+        assert result.error.type == "ComponentException"
+        assert result.error.operator_info is not None
+        assert "c4dbcc" in result.error.operator_info.transformation_info.id
+        assert result.error.location is not None
+        assert result.error.location.file == "component code"
+        assert result.error.location.function_name == "main"
+        assert result.error.location.line_number == 28
+
+    async def test_raise_explicit_value_error(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace(
+            function_code=(
+                """if divisor == 0:
+                raise ValueError("The divisor must not equal zero!")
+                return {"result": dividend/divisor}
+                """
+            )
         )
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
+        assert result.error.type == "ValueError"
+        assert result.error.error_code is None
+        assert result.error.message == "The divisor must not equal zero!"
+        assert result.error.operator_info is not None
+        assert "c4dbcc" in result.error.operator_info.transformation_info.id
+        assert result.error.location is not None
+        assert result.error.location.file == "component code"
+        assert result.error.location.function_name == "main"
+        assert result.error.location.line_number == 28
+
+    async def test_raise_exception_implicitly(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace(
+            function_code='return {"result": dividend/divisor}',
+        )
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
+        assert result.error.type == "ZeroDivisionError"
+        assert result.error.error_code is None
+        assert result.error.message == "division by zero"
+        assert result.error.operator_info is not None
+        assert "c4dbcc" in result.error.operator_info.transformation_info.id
+        assert result.error.location is not None
+        assert result.error.location.file == "component code"
+        assert result.error.location.function_name == "main"
+        assert result.error.location.line_number == 27
+
+    async def test_raise_missing_outputs_exception(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace()
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
+        assert result.error.type == "KeyError"
+        assert result.error.error_code is None
+        assert result.error.message == "'result'"  # name of missing output
+        assert result.error.operator_info is not None
+        assert "c4dbcc" in result.error.operator_info.transformation_info.id
+        assert result.error.location.file.endswith(
+            "/hetida-designer/runtime/hetdesrun/runtime/engine/plain/workflow.py"
+        )
+        assert result.error.location.function_name == "result"
+
+    async def test_raise_parsing_output_exception(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace(
+            function_code='return {"result": "string instead of series"}',
+        )
+        wf_exc_input.workflow_wiring.output_wirings = [
+            OutputWiring(
+                adapter_id="demo-adapter-python",
+                filters={"frequency": ""},
+                ref_id="root.plantA.picklingUnit.influx.anomaly_score",
+                ref_id_type="SINK",
+                ref_key=None,
+                type="timeseries(float)",
+                workflow_output_name="result",
+            )
+        ]
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.SENDING_DATA_TO_ADAPTERS
+        assert result.error.type == "AdapterOutputDataError"
+        assert result.error.error_code is None
+        assert result.error.message == (
+            "Did not receive Pandas Series as expected from workflow output. "
+            "Got <class 'str'> instead."
+        )
+        assert result.error.operator_info is None
+        assert result.error.location is not None
+        assert result.error.location.file.endswith(
+            "/hetdesrun/adapters/generic_rest/send_ts_data.py"
+        )
+        assert result.error.location.function_name == "ts_to_list_of_dicts"
+
+    async def test_raise_json_encoding_exception(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace(
+            function_code='return {"result": str}',
+        )
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.ENCODING_RESULTS_TO_JSON
+        assert result.error.type == "ValueError"
+        assert result.error.error_code is None
+        assert result.error.message == (
+            '[TypeError("'
+            "'builtin_function_or_method'"
+            ' object is not iterable"), '
+            "TypeError('vars() argument must have __dict__ attribute')]"
+        )
+        assert result.error.location is not None
+        assert result.error.location.file.endswith("fastapi/encoders.py")
+        assert result.error.location.function_name == "jsonable_encoder"
 
 
 @pytest.mark.asyncio
