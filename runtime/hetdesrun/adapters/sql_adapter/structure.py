@@ -91,7 +91,7 @@ def get_sources_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructure
                 + ts_table_name,
                 filters={
                     "metrics": {  # metric ids as comma separated string
-                        "name": "Metrics (comma separated)",
+                        "name": "Metrics (json array or just comma separated)",
                         "type": "free_text",
                         "required": True,
                     }
@@ -276,7 +276,7 @@ def get_source_by_id(source_id: str) -> SQLAdapterStructureSource | None:
             path=db_config.key + "|" + db_config.name + "/ts_table/" + ts_table_name,
             filters={
                 "metrics": {  # metric ids as comma separated string
-                    "name": "Metrics (comma separated)",
+                    "name": "Metrics (json array or just comma separated)",
                     "type": "free_text",
                     "required": True,
                 }

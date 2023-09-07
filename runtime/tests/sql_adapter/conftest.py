@@ -74,7 +74,9 @@ def temporary_prefilled_sqlite_ts_db(temporary_sqlite_file_path_ts_db):
         index=False,
     )
 
-    ts_df.to_sql(
+    ts_df.rename(
+        columns={"metric": "tsid", "timestamp": "datetime", "value": "measurement_val"}
+    ).to_sql(
         "table3",
         engine,
         if_exists="replace",
@@ -141,6 +143,18 @@ def three_sqlite_dbs_configured(
                 timeseries_tables={
                     "ro_ts_table": TimeseriesTableConfig(appendable=False),
                     "ts_table": TimeseriesTableConfig(appendable=True),
+                    "table3": TimeseriesTableConfig(
+                        appendable=True,
+                        metric_col_name="tsid",
+                        timestamp_col_name="datetime",
+                        fetchable_value_cols=["measurement_val"],
+                        writable_value_cols=["measurement_val"],
+                        column_mapping_hd_to_db={
+                            "metric": "tsid",
+                            "timestamp": "datetime",
+                            "value": "measurement_val",
+                        },
+                    ),
                 },
             ),
         ],

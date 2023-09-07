@@ -1,6 +1,10 @@
 import os
+from functools import cached_property
+from typing import Any
 
 from pydantic import BaseModel, BaseSettings, Field, validator
+from sqlalchemy import create_engine
+from sqlalchemy.pool import NullPool, QueuePool
 
 from hetdesrun.models.util import valid_python_identifier
 
@@ -15,6 +19,38 @@ class TimeseriesTableConfig(BaseModel):
     metric_col_name: str = "metric"
     timestamp_col_name: str = "timestamp"
     fetchable_value_cols: list[str] = ["value"]
+    writable_value_cols: list[str] = ["value"]
+    column_mapping_hd_to_db: dict[str, str] = Field(
+        {},
+        description=(
+            " Mapping that will be applied to dataframe columns to match db columns"
+            " when writing."
+            " Must be invertible, the inverse mapping will be applied when loading data"
+            " from the db."
+            " A mapping is required at least for timestamp or metric column if their name"
+            " differs from the default, since on the hd side they are required to be"
+            ' "timestamp" and "mertic".'
+            " Note that mapped columns must not be present when the mapping is applied."
+            " It is for example possible to write a column, mapped to another name in the db"
+            " but not fetching it (and therefore not apply the inverse mapping) by excluding"
+            " it from fetachable_value_cols."
+        ),
+    )
+
+    @validator("column_mapping_hd_to_db")
+    def column_mapping_invertible(cls, v: dict[str, str]):
+        if len(v.values()) != len(set(v.values())):
+            raise ValueError(f"Column mapping must be invertible. Got {v}.")
+        return v
+
+    @cached_property
+    def column_mapping_db_to_hd(self):
+        """inverse mapping"""
+        return {v: k for k, v in self.column_mapping_hd_to_db.items()}
+
+    class Config:
+        arbitrary_types_allowed = True
+        keep_untouched = (cached_property,)
 
 
 class SQLAdapterDBConfig(BaseModel):
@@ -61,6 +97,23 @@ class SQLAdapterDBConfig(BaseModel):
             " made available as sources."
         ),
     )
+
+    create_engine_kwargs: dict[str, Any] = Field(
+        {},
+        description=(
+            "Additional keyword arguments to create_engine."
+            " E.g. you can set the connection pool size via pool_size."
+            " See sqlalchemy documentation for more options."
+        ),
+    )
+
+    @cached_property
+    def engine(self):
+        return create_engine(self.connection_url, **self.create_engine_kwargs)
+
+    class Config:
+        arbitrary_types_allowed = True
+        keep_untouched = (cached_property,)
 
 
 class SQLAdapterConfig(BaseSettings):
