@@ -253,47 +253,41 @@ class OperatorInfo(BaseModel):
         )
 
 
-class Trace(BaseModel):
-    file_name: str
+class ErrorLocation(BaseModel):
+    file: str
     function_name: str
     line_number: int
-    line_of_code: str
 
 
 class ProcessStage(str, Enum):
     """ "Stages of the execution process."""
 
-    TRANSFORMING_TRANSFORMATION_TO_RUNTIME_OBJECT = (
-        "TRANSFORMING_TRANSFORMATION_TO_RUNTIME_OBJECT"
-    )
-    PARSING_CONSTANT_AND_DEFAULT_INPUT_DATA = "PARSING_CONSTANT_AND_DEFAULT_INPUT_DATA"
-    LOADING_DATA_FROM_INPUT_WIRING = "LOADING_DATA_FROM_INPUT_WIRING"
-    PARSING_LOADED_INPUT_DATA = "PARSING_LOADED_INPUT_DATA"
+    PARSING_WORKFLOW = "PARSING_WORKFLOW"
+    LOADING_DATA_FROM_ADAPTERS = "LOADING_DATA_FROM_ADAPTERS"
+    PARSING_LOADED_DATA = "PARSING_LOADED_DATA"
     EXECUTING_COMPONENT_CODE = "EXECUTING_COMPONENT_CODE"
-    SENDING_DATA_TO_OUTPUT_WIRING = "SENDING_DATA_TO_OUTPUT_WIRING"
+    SENDING_DATA_TO_ADAPTERS = "SENDING_DATA_TO_ADAPTERS"
     ENCODING_RESULTS_TO_JSON = "ENCODING_RESULTS_TO_JSON"
 
 
 class WorkflowExecutionError(BaseModel):
     type: str  # noqa: A003
-    message: str
     error_code: int | str | None = None
+    message: str
     process_stage: ProcessStage | None = None
     operator_info: OperatorInfo | None = None
+    location: ErrorLocation
 
 
-def traces_from_exception(exception: Exception) -> list[Trace]:
-    frames = tb.extract_tb(exception.__traceback__)
-    traces = [
-        Trace(
-            file_name=frame.filename,
-            function_name=frame.name,
-            line_number=frame.lineno,
-            line_of_code=frame.line,
-        )
-        for frame in frames
-    ]
-    return traces
+def get_location_of_exception(exception: Exception | BaseException) -> ErrorLocation:
+    last_trace = tb.extract_tb(exception.__traceback__)[-1]
+    return ErrorLocation(
+        file=last_trace.filename
+        if last_trace.filename != "<string>"
+        else "component code",
+        function_name=last_trace.name,
+        line_number=last_trace.lineno,
+    )
 
 
 class WorkflowExecutionInfo(BaseModel):
@@ -303,21 +297,24 @@ class WorkflowExecutionInfo(BaseModel):
         description="Results at the workflow outputs as a dictionary by name of workflow output",
     )
     traceback: str | None = Field(None, description="traceback")
-    traces: list[Trace] | None = Field(
-        None, description="Trace stack as formatted list"
-    )
     job_id: UUID
 
     measured_steps: AllMeasuredSteps = AllMeasuredSteps()
 
     @classmethod
     def from_exception(
-        cls, exception: Exception, process_stage: ProcessStage, job_id: UUID
+        cls,
+        exception: Exception,
+        process_stage: ProcessStage,
+        job_id: UUID,
+        cause: BaseException | None,
     ) -> "WorkflowExecutionInfo":
         return WorkflowExecutionInfo(
             error=WorkflowExecutionError(
-                type=type(exception).__name__,
-                message=str(exception),
+                type=type(exception).__name__
+                if cause is None
+                else type(cause).__name__,
+                message=str(exception) if cause is None else str(cause),
                 error_code=exception.error_code
                 if isinstance(exception, ComponentException)
                 else None,
@@ -325,9 +322,11 @@ class WorkflowExecutionInfo(BaseModel):
                 operator_info=OperatorInfo.from_runtime_execution_error(exception)
                 if isinstance(exception, RuntimeExecutionError)
                 else None,
+                location=get_location_of_exception(exception)
+                if cause is None
+                else get_location_of_exception(cause),
             ),
             traceback=tb.format_exc(),
-            traces=traces_from_exception(exception),
             output_results_by_output_name={},
             job_id=job_id,
         )
@@ -357,10 +356,11 @@ class WorkflowExecutionResult(WorkflowExecutionInfo):
         exception: Exception,
         process_stage: ProcessStage,
         job_id: UUID,
+        cause: BaseException | None = None,
         node_results: str | None = None,
     ) -> "WorkflowExecutionResult":
         return WorkflowExecutionResult(
-            **super().from_exception(exception, process_stage, job_id).dict(),
+            **super().from_exception(exception, process_stage, job_id, cause).dict(),
             result="failure",
             node_results=node_results,
         )

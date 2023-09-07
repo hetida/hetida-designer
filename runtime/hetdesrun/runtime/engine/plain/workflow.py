@@ -37,6 +37,7 @@ class Node(Protocol):
     has_only_plot_outputs: bool = False
     operator_hierarchical_id: str = "UNKNOWN"
     operator_hierarchical_name: str = "UNKNOWN"
+    context: ExecutionContext
 
     @cached_property
     async def result(self) -> dict[str, Any]:  # Outputs can have any type
@@ -394,9 +395,9 @@ class Workflow:
                     exc_info=True,
                 )
                 raise MissingOutputException(
-                    "Could not obtain output result from another node while preparing to "
-                    "run operator"
-                ).set_context(self.context) from e
+                    "Could not obtain all declared output results while preparing to "
+                    "run outer workflow"
+                ).set_context(sub_node.context) from e
             except RuntimeExecutionError as e:
                 raise e
 
