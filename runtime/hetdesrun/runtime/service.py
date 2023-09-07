@@ -36,7 +36,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     """
 
     runtime_service_measured_step = PerformanceMeasuredStep.create_and_begin(
-        "runtime_service"
+        "RUNTIME_SERVICE"
     )
 
     execution_config.set(runtime_input.configuration)
@@ -51,6 +51,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     )
 
     # Parse Workflow
+    currently_executed_process_stage = ProcessStage.PARSING_WORKFLOW
     try:
         parsed_wf = parse_workflow_input(
             runtime_input.workflow, runtime_input.components, runtime_input.code_modules
@@ -62,7 +63,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         )
         return WorkflowExecutionResult.from_exception(
             exc,
-            ProcessStage.TRANSFORMING_TRANSFORMATION_TO_RUNTIME_OBJECT,
+            currently_executed_process_stage,
             runtime_input.job_id,
         )
     except WorkflowInputDataValidationError as exc:
@@ -72,13 +73,16 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         )
         return WorkflowExecutionResult.from_exception(
             exc,
-            ProcessStage.PARSING_CONSTANT_AND_DEFAULT_INPUT_DATA,
+            currently_executed_process_stage,
             runtime_input.job_id,
         )
 
     # Load data
+    currently_executed_process_stage = ProcessStage.LOADING_DATA_FROM_ADAPTERS
     try:
-        load_data_measured_step = PerformanceMeasuredStep.create_and_begin("load_data")
+        load_data_measured_step = PerformanceMeasuredStep.create_and_begin(
+            currently_executed_process_stage.value
+        )
 
         loaded_data = await resolve_and_load_data_from_wiring(
             runtime_input.workflow_wiring
@@ -91,7 +95,9 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             exc_info=True,
         )
         return WorkflowExecutionResult.from_exception(
-            exc, ProcessStage.LOADING_DATA_FROM_INPUT_WIRING, runtime_input.job_id
+            exc,
+            currently_executed_process_stage,
+            runtime_input.job_id,
         )
 
     wf_inputs_by_name = {inp.name: inp for inp in runtime_input.workflow.inputs}
@@ -104,6 +110,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     ]
 
     # Provide data as constants
+    currently_executed_process_stage = ProcessStage.PARSING_LOADED_DATA
     try:
         # The `add_constant_providing_node` method also ensures that ultimately the corresponding
         # ComputationNode knows that the input values are to be obtained from this node.
@@ -118,15 +125,15 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             exc_info=True,
         )
         WorkflowExecutionResult.from_exception(
-            exc, ProcessStage.PARSING_LOADED_INPUT_DATA, runtime_input.job_id
+            exc, currently_executed_process_stage, runtime_input.job_id
         )
 
     # run workflow
-
+    currently_executed_process_stage = ProcessStage.EXECUTING_COMPONENT_CODE
     all_nodes = obtain_all_nodes(parsed_wf)
 
     pure_execution_measured_step = PerformanceMeasuredStep.create_and_begin(
-        "pure_execution"
+        currently_executed_process_stage.value
     )
 
     try:
@@ -147,22 +154,13 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
         pure_execution_measured_step.stop()
 
-    except WorkflowParsingException as exc:
-        runtime_logger.info(
-            "Workflow Parsing Exception during workflow execution",
-            exc_info=True,
-        )
-        WorkflowExecutionResult.from_exception(
-            exc, ProcessStage.LOADING_DATA_FROM_INPUT_WIRING, runtime_input.job_id
-        )
-
     except ComponentException as exc:
         runtime_logger.info(
             "Component Error during workflow execution",
             exc_info=True,
         )
         return WorkflowExecutionResult.from_exception(
-            exc, ProcessStage.EXECUTING_COMPONENT_CODE, runtime_input.job_id
+            exc, currently_executed_process_stage, runtime_input.job_id
         )
 
     except RuntimeExecutionError as exc:
@@ -171,7 +169,10 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             exc_info=True,
         )
         return WorkflowExecutionResult.from_exception(
-            exc, ProcessStage.EXECUTING_COMPONENT_CODE, runtime_input.job_id
+            exc,
+            currently_executed_process_stage,
+            runtime_input.job_id,
+            cause=exc.__cause__,
         )
 
     if runtime_input.configuration.return_individual_node_results:
@@ -195,8 +196,11 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         node_results = None
 
     # Send data via wiring to sinks and gather data for direct returning
+    currently_executed_process_stage = ProcessStage.SENDING_DATA_TO_ADAPTERS
     try:
-        send_data_measured_step = PerformanceMeasuredStep.create_and_begin("send_data")
+        send_data_measured_step = PerformanceMeasuredStep.create_and_begin(
+            currently_executed_process_stage.value
+        )
 
         direct_return_data: dict = await resolve_and_send_data_from_wiring(
             runtime_input.workflow_wiring, workflow_result
@@ -213,7 +217,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             exc_info=True,
         )
         return WorkflowExecutionResult.from_exception(
-            exc, ProcessStage.SENDING_DATA_TO_OUTPUT_WIRING, runtime_input.job_id
+            exc, currently_executed_process_stage, runtime_input.job_id
         )
 
     wf_exec_result = WorkflowExecutionResult(
@@ -235,6 +239,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
     # catch arbitrary serialisation errors
     # (because user can produce arbitrary non-serializable objects)
+    currently_executed_process_stage = ProcessStage.ENCODING_RESULTS_TO_JSON
     try:
         jsonable_encoder(wf_exec_result)
     except Exception as exc:  # noqa: BLE001
@@ -244,7 +249,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             exc_info=True,
         )
         return WorkflowExecutionResult.from_exception(
-            exc, ProcessStage.LOADING_DATA_FROM_INPUT_WIRING, runtime_input.job_id
+            exc, currently_executed_process_stage, runtime_input.job_id
         )
 
     runtime_logger.info("Workflow Execution Result serialized successfully.")
