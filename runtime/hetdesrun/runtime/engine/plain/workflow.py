@@ -196,7 +196,7 @@ class ComputationNode:
         except Exception as e:  # uncaught exceptions from user code  # noqa: BLE001
             msg = "Unexpected error from user code"
             runtime_execution_logger.warning(msg, exc_info=True)
-            raise RuntimeExecutionError(msg).set_context(self.context) from e
+            raise UncaughtComponentException(msg).set_context(self.context) from e
 
         if not isinstance(
             function_result, dict
@@ -206,7 +206,7 @@ class ComputationNode:
                 f"component {self.operator_hierarchical_name} did not return an output dict!"
             )
             runtime_execution_logger.warning(msg)
-            raise UncaughtComponentException(msg).set_context(self.context)
+            raise RuntimeExecutionError(msg).set_context(self.context)
 
         return function_result
 
