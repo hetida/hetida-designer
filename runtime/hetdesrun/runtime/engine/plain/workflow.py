@@ -167,7 +167,7 @@ class ComputationNode:
             # actually get input data from other nodes
             try:
                 input_value_dict[input_name] = (await another_node.result)[output_name]
-            except KeyError as e:
+            except KeyError as exc:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
                 runtime_execution_logger.warning(
                     "Execution failed due to missing output of a node",
@@ -176,7 +176,7 @@ class ComputationNode:
                 raise MissingOutputException(
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
-                ).set_context(self.context) from e
+                ).set_context(self.context) from exc
         return input_value_dict
 
     async def _run_comp_func(self, input_values: dict[str, Any]) -> dict[str, Any]:
@@ -186,17 +186,18 @@ class ComputationNode:
                 self.func, input_values  # type: ignore
             )
             function_result = function_result if function_result is not None else {}
-        except ComponentException as e:  # user code may raise runtime execution errors
-            e.set_context(self.context)
-            runtime_execution_logger.warning(
-                "User raised ComponentException!",
-                exc_info=True,
-            )
-            raise e
-        except Exception as e:  # uncaught exceptions from user code  # noqa: BLE001
+        except Exception as exc:  # uncaught exceptions from user code  # noqa: BLE001
+            if hasattr(exc, "error_code") and isinstance(exc.error_code, int | str):
+                runtime_execution_logger.warning(
+                    "User raised in exception with error code in component code!",
+                    exc_info=True,
+                )
+                raise ComponentException(exc, error_code=exc.error_code).set_context(
+                    self.context
+                ) from exc
             msg = "Unexpected error from user code"
             runtime_execution_logger.warning(msg, exc_info=True)
-            raise UncaughtComponentException(msg).set_context(self.context) from e
+            raise UncaughtComponentException(msg).set_context(self.context) from exc
 
         if not isinstance(
             function_result, dict

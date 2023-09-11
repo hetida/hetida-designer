@@ -189,7 +189,9 @@ async def test_all_null_values_pass_series_pass_through(
 
 
 def division_component_wf_exc_inp_replace(
-    function_code: str | None = None, function_header: str | None = None
+    imports_and_definitions: str | None = None,
+    function_code: str | None = None,
+    function_header: str | None = None,
 ) -> WorkflowExecutionInput:
     division_component_wf_exc_inp = gen_execution_input_from_single_component(
         (
@@ -198,6 +200,14 @@ def division_component_wf_exc_inp_replace(
         ),
         {"dividend": 1, "divisor": 0},
     )
+
+    if imports_and_definitions is not None:
+        division_component_wf_exc_inp.code_modules[
+            0
+        ].code = division_component_wf_exc_inp.code_modules[0].code.replace(
+            "from hetdesrun.runtime.exceptions import ComponentException",
+            imports_and_definitions,
+        )
 
     if function_code is not None:
         division_component_wf_exc_inp.code_modules[
@@ -277,16 +287,16 @@ class TestSctructuredErrors:
         )
         assert result.error.location.function_name == "recursively_parse_workflow_node"
 
-    async def test_raise_component_exception_with_error_code(
+    async def test_raise_imported_component_exception_with_error_code(
         self,
         async_test_client: AsyncClient,
     ) -> None:
         wf_exc_input = division_component_wf_exc_inp_replace(
             function_code=(
                 """if divisor == 0:
-            raise ComponentException("The divisor must not equal zero!", error_code=404)
-            return {"result": dividend/divisor}
-            """
+                    raise ComponentException("The divisor must not equal zero!", error_code=404)
+                    return {"result": dividend/divisor}
+                """
             )
         )
 
@@ -304,6 +314,41 @@ class TestSctructuredErrors:
         assert result.error.location.file == "component code"
         assert result.error.location.function_name == "main"
         assert result.error.location.line_number == 28
+
+    async def test_raise_defined_component_exception_with_error_code(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace(
+            imports_and_definitions=(
+                """class ComponentException(Exception):
+                    def __init__(self, msg, error_code, **kwargs) -> None:
+                        self.error_code = error_code
+                        super().__init__(msg, **kwargs)
+                """
+            ),
+            function_code=(
+                """if divisor == 0:
+                    raise ComponentException("The divisor must not equal zero!", error_code=404)
+                    return {"result": dividend/divisor}
+                """
+            ),
+        )
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
+        assert result.error.message == "The divisor must not equal zero!"
+        assert result.error.error_code == 404
+        assert result.error.type == "ComponentException"
+        assert result.error.operator_info is not None
+        assert "c4dbcc" in result.error.operator_info.transformation_info.id
+        assert result.error.location is not None
+        assert result.error.location.file == "component code"
+        assert result.error.location.function_name == "main"
+        assert result.error.location.line_number == 32
 
     async def test_raise_explicit_value_error(
         self,
