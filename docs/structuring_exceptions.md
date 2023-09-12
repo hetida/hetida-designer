@@ -1,14 +1,14 @@
 # Structuring Exceptions
 
-Usually in python projects exceptions are structured by inheritance and can be imported where needed.
-Since code is capsulated in components in the hetida designer, importing definitions is more complicated.
-Re-defining exceptions in each component would be both tidious and error prone.
+Usually exceptions in Python projects are structured by inheritance and can be imported where needed.
+Since the code is capsulated in components in the hetida designer, importing is more complicated.
+Redefining exceptions in each component would be both cumbersome and error-prone.
 
-Therefore the `ComponentException` is defined in the hetida designer runtime, which can be enriched with an error code instead.
+Therefore, the `ComponentException` is defined in the hetida designer runtime, which can be enriched with an error code.
 The error code can be either an integer or a string.
-It is the responsibility of the authors of component code to use the error code in a way that structures the exceptions.
+It is the responsibility of component code authors to use the error code in a way that structures the exceptions.
 
-The following example shows how this exception can be used in the component code:
+The following example shows how this exception can be used in component code:
 
 ```python
 from hetdesrun.runtime.exceptions import ComponentException
@@ -24,7 +24,7 @@ def main(*, dividend, divisor):
     return {"result": dividend / divisor}
 ```
 
-Executing a component with the above code and the inputs `1` and `0` will yield a json such as the following for the attribute `error` in the response. 
+Executing a component with the above code and inputs `1` and `0` results in a json object like the following for the attribute `error` in the response.
 
 ```json
 "error": {
@@ -58,9 +58,9 @@ Executing a component with the above code and the inputs `1` and `0` will yield 
 }
 ```
 
-In such a case, where the exception is raised inside the component code the attribute `file` of the `location` will just be `component code` in all other cases it will be the path to the corresponding file.
+In such a case where the exception is raised within the component code, the `file` attribute of the `location` is just `component code`, in all other cases it is the path to the corresponding file.
 
-The attribute `process_stage` can take one of the following values:
+The `process_stage` attribute can take one of the following values:
 * PARSING_WORKFLOW
 * LOADING_DATA_FROM_ADAPTERS
 * PARSING_LOADED_DATA
@@ -68,10 +68,10 @@ The attribute `process_stage` can take one of the following values:
 * SENDING_DATA_TO_ADAPTERS 
 * ENCODING_RESULTS_TO_JSON
 
-Only exceptions raised in the process stage `EXECUTING_COMPONENT_CODE` result in errors with the attributes `operator_info`, for the other porcess stages that information is not accessible.
+Only exceptions raised in the process stage `EXECUTING_COMPONENT_CODE` cause errors with the `operator_info` attribute, for the other porcess stages this information is not accessible.
 
-Since the most frequent application for exceptions are about handling unexpected inputs, there is also the  `ComponentInputValidationException` inheriting from `ComponentException` defined in the hetida designer runtime.
-It is of course also possible to inherit again from this exception or from the `ComponentException` itself.
+Since the most common use case for exceptions is dealing with unexpected input, there is also `ComponentInputValidationException` defined in the hetida designer runtime, which inherits from `ComponentException`.
+It is of course also possible to inherit again from this exception or from `ComponentException` itself.
 
 ```python
 from hetdesrun.runtime.exceptions import ComponentInputValidationException
@@ -132,8 +132,8 @@ def main(*, series):
 ```
 
 Importing the `ComponentException` or `ComponentInputValidationException` means that the component code cannot be executed externally.
-To enable both, using the error code and executing the component code externally, an exception must be defined locally in the component code.
-This component must obviously allow initialization with a message and an error code.
+To enable both, the use of the error code and the external executn of the component code, an exception must be defined locally in the component code.
+This component must of course enable initialization with a message and an error code.
 The name can be chosen freely.
 
 ```python
@@ -143,19 +143,19 @@ class ComponentException(Exception):
         super().__init__(msg, **kwargs)
 ```
 
-The most common mistake to directly return the result instead of a dictionary with the component output names as keys
+The most common errors, namely the direct return of the result instead of a dictionary with the component output names as keys 
 
 ```python
 return series.mean()
 ```
 
-or a misspelled output name, e.g. due to a changed output name, which has not yet been updated in the output dictionary
+or a misspelled output name, e.g. due to a changed output name that has not yet been updated in the output dictionary,
 
 ```python
 return {"mean": series.mean()}
 ```
 
-will result in a `RuntimeExecutionError`:
+result in a `RuntimeExecutionError`:
 
 ```json
 "error": {
@@ -172,7 +172,7 @@ will result in a `RuntimeExecutionError`:
 }
 ```
 
-or `KeyError`, respectively:
+or `KeyError`:
 
 ```json
 "error": {
@@ -189,10 +189,11 @@ or `KeyError`, respectively:
 }
 ```
 
-If the data type of an output and the type of the provided data do not match, it depends on the type of adapter and expected data type the what happens.
-With the direct provisioning adapter the result will just be displayed without an exception.
-In case of a general custom adapter it depends on the implementation of that adapter if an exception is raised.
-In case of a generic REST adapter an exception will be raised in the generic rest adapter part of the runtime if the component output datatype is `SERIES`, `DATAFRAME` or `MULTITSFRAME`:
+If the data type of an output and the type of the provided data do not match, it depends on the type of adapter and the expected data type what happens.
+With the direct provisioning adapter, the result is just displayed without an exception.
+In the case of a general custom adapter, it depends on the implementation of that adapter whether an exception is raised.
+In the case of a generic REST adapter, an exception is raised in the generic rest adapter part of the runtime if the component output data type is `SERIES`, `DATAFRAME`, or `MULTITSFRAME`:
+
 ```json
 "error": {
     "type": "AdapterOutputDataError",
@@ -207,7 +208,9 @@ In case of a generic REST adapter an exception will be raised in the generic res
     }
 },
 ```
-All other data types can only be assigned to metadata sinks which are handled differently, i.e. the data is send to the adapter which then raises an exception:
+
+All other data types can only be assigned to metadata sinks which are handled differently, i.e. the data is sent to the adapter, which then raises an exception:
+
 ```json
 "error": {
     "type": "AdapterConnectionError",
@@ -223,7 +226,7 @@ All other data types can only be assigned to metadata sinks which are handled di
 },
 ```
 
-An error in the input wiring such as the wrong data type (`dataframe` instead of `timeseries(float)`) will lead to similar errors.
+An error in the input wiring such as an incorrect data type (`dataframe` instead of `timeseries(float)`) will result in similar errors in the `LOADING_DATA_FROM_ADAPTERS` process stage.
 
 ```json
 "error": {
