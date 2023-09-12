@@ -44,6 +44,7 @@ Further information about developing, deploying, connecting, using and running h
 
 - [Versioning in hetida designer](./versioning_in_hetida_designer.md)
 - [Using Default Values](./default_parameters.md)
+- [Structuring Exceptions](./structuring_exceptions.md)
 - [Tips and Tricks](./tips_and_tricks.md)
 - [DataFrames and Series with Metadata](./metadata_attrs.md)
 - [Asynchronous Components](./executing_asynchronous_functions.md)
