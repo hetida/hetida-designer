@@ -6,8 +6,9 @@ Re-defining exceptions in each component would be both tidious and error prone.
 
 Therefore the `ComponentException` is defined in the hetida designer runtime, which can be enriched with an error code instead.
 The error code can be either an integer or a string.
+It is the responsibility of the authors of component code to use the error code in a way that structures the exceptions.
 
-The following example shows how this exception can be used in the code:
+The following example shows how this exception can be used in the component code:
 
 ```python
 from hetdesrun.runtime.exceptions import ComponentException
@@ -66,6 +67,8 @@ The attribute `process_stage` can take one of the following values:
 * EXECUTING_COMPONENT_CODE
 * SENDING_DATA_TO_ADAPTERS 
 * ENCODING_RESULTS_TO_JSON
+
+Only exceptions raised in the process stage `EXECUTING_COMPONENT_CODE` result in errors with the attributes `operator_info`, for the other porcess stages that information is not accessible.
 
 Since the most frequent application for exceptions are about handling unexpected inputs, there is also the  `ComponentInputValidationException` inheriting from `ComponentException` defined in the hetida designer runtime.
 It is of course also possible to inherit again from this exception or from the `ComponentException` itself.
@@ -184,4 +187,55 @@ or `KeyError`, respectively:
         "line_number": 384
     }
 }
+```
+
+If the data type of an output and the type of the provided data do not match, it depends on the type of adapter and expected data type the what happens.
+With the direct provisioning adapter the result will just be displayed without an exception.
+In case of a general custom adapter it depends on the implementation of that adapter if an exception is raised.
+In case of a generic REST adapter an exception will be raised in the generic rest adapter part of the runtime if the component output datatype is `SERIES`, `DATAFRAME` or `MULTITSFRAME`:
+```json
+"error": {
+    "type": "AdapterOutputDataError",
+    "error_code": null,
+    "message": "Did not receive Pandas Series as expected from workflow output. Got <class 'numpy.float64'> instead.",
+    "process_stage": "SENDING_DATA_TO_ADAPTERS",
+    "operator_info": null,
+    "location": {
+        "file": "/app/hetdesrun/adapters/generic_rest/send_ts_data.py",
+        "function_name": "ts_to_list_of_dicts",
+        "line_number": 42
+    }
+},
+```
+All other data types can only be assigned to metadata sinks which are handled differently, i.e. the data is send to the adapter which then raises an exception:
+```json
+"error": {
+    "type": "AdapterConnectionError",
+    "error_code": null,
+    "message": "Posting metadata to generic rest adapter endpoint http://hetida-designer-demo-adapter-python:8092/thingNodes/root.plantA/metadata/Plant%20Age%20in%20Years failed. Status code: 500. Text: Internal Server Error",
+    "process_stage": "SENDING_DATA_TO_ADAPTERS",
+    "operator_info": null,
+    "location": {
+        "file": "/app/hetdesrun/adapters/generic_rest/send_metadata.py",
+        "function_name": "send_single_metadatum_to_adapter",
+        "line_number": 82
+    }
+},
+```
+
+An error in the input wiring such as the wrong data type (`dataframe` instead of `timeseries(float)`) will lead to similar errors.
+
+```json
+"error": {
+    "type": "AdapterConnectionError",
+    "error_code": null,
+    "message": "Requesting framelike data from generic rest adapter endpoint http://hetida-designer-demo-adapter-python:8092/dataframe failed. Status code: 404. Text: {\"detail\":\"No dataframe data available with provided id 'root.plantA.picklingUnit.influx.temp'.\"}",
+    "process_stage": "LOADING_DATA_FROM_ADAPTERS",
+    "operator_info": null,
+    "location": {
+        "file": "/app/hetdesrun/adapters/generic_rest/load_framelike.py",
+        "function_name": "load_framelike_data",
+        "line_number": 157
+    }
+},
 ```
