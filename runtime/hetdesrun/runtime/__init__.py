@@ -2,12 +2,12 @@ import logging
 
 from hetdesrun.component.load import base_module_path
 from hetdesrun.runtime.exceptions import (  # noqa: F401
-    ComponentDataValidationError,
     ComponentException,
+    ComponentInputValidationException,
     DAGProcessingError,
     MissingOutputDataError,
     RuntimeExecutionError,
-    UncaughtComponentException,
+    UnexpectedComponentException,
     WorkflowInputDataValidationError,
     WorkflowOutputValidationError,
 )

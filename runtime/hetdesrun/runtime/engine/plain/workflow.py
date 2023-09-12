@@ -17,7 +17,7 @@ from hetdesrun.runtime.exceptions import (
     MissingInputSource,
     MissingOutputException,
     RuntimeExecutionError,
-    UncaughtComponentException,
+    UnexpectedComponentException,
     WorkflowInputDataValidationError,
 )
 from hetdesrun.runtime.logging import execution_context_filter
@@ -197,7 +197,7 @@ class ComputationNode:
                 ) from exc
             msg = "Unexpected error from user code"
             runtime_execution_logger.warning(msg, exc_info=True)
-            raise UncaughtComponentException(msg).set_context(self.context) from exc
+            raise UnexpectedComponentException(msg).set_context(self.context) from exc
 
         if not isinstance(
             function_result, dict

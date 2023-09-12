@@ -49,7 +49,7 @@ class DAGProcessingError(RuntimeExecutionError):
 
 
 class ComponentException(RuntimeExecutionError):
-    """Exception to be raised intentionally in component code"""
+    """Exception to re-raise exceptions with error code raised in the component code."""
 
     def __init__(self, *args: Any, error_code: int | str = "", **kwargs: Any) -> None:
         if not isinstance(error_code, int | str):
@@ -58,16 +58,16 @@ class ComponentException(RuntimeExecutionError):
         super().__init__(*args, **kwargs)
 
 
-class UncaughtComponentException(RuntimeExecutionError):
+class ComponentInputValidationException(ComponentException):
+    """In code input validation failures"""
+
+
+class UnexpectedComponentException(RuntimeExecutionError):
     """Exception to be re-raised in case of uncaught exceptions during component execution."""
 
 
 class MissingOutputDataError(RuntimeExecutionError):
     """Exception in case of missing output data from other component"""
-
-
-class ComponentDataValidationError(RuntimeExecutionError):
-    """Input or Output validation failures"""
 
 
 class WorkflowOutputValidationError(RuntimeExecutionError):
