@@ -129,7 +129,7 @@ async def test_resources_offered_from_structure_hierarchy(
         )
 
         assert len(all_tns) == 14
-        assert len(all_srcs) == 35
+        assert len(all_srcs) == 37
         assert len(all_snks) == 14
         assert len(src_attached_metadata_dict) == 52
         assert len(snk_attached_metadata_dict) == 24
