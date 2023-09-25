@@ -10,7 +10,7 @@ from uuid import uuid4
 import pytest
 
 from hetdesrun.exportimport.purge import (
-    correct_output_connector_name,
+    correct_output_connector_names,
     delete_all_and_refill,
     delete_drafts,
     delete_unused_deprecated,
@@ -486,7 +486,7 @@ def test_correct_output_connector_name():
             )
         ],
     ) as mocked_get:
-        correct_output_connector_name()
+        correct_output_connector_names()
 
         assert mocked_get.call_count == 1
         _, _, kwargs = mocked_get.mock_calls[0]

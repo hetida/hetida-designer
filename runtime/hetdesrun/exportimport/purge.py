@@ -32,15 +32,7 @@ def deprecate_all_but_latest_per_group(directly_in_db: bool = False) -> None:
         )
 
 
-def correct_output_connector_name(directly_in_db: bool = False) -> None:
-    """Correct output connector name.
-
-    Update the connector_name attribute of outputs to the correct value if it was incorrectly set
-    to the default value "connector_name" due to a faulty implementation in the
-    get_operator_and_connector_name function. This function is used to transform
-    WorklfowRevisionFrontendDto instances to TransformationRevision instances. The incorrect
-    implementation existed from release 0.7.1 up to and including release 0.8.8.
-    """
+def correct_output_connector_names(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(
         params=FilterParams(type=Type.WORKFLOW, include_dependencies=False),
         directly_from_db=directly_in_db,
