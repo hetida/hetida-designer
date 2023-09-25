@@ -243,7 +243,7 @@ usage() {
     echo "  Mandatory arguments to long options are mandatory for short options too. Name of"
     echo "  corresponding environment variable with HDCTL_ prefix in parantheses."
     echo
-    echo "  -e, --env-file PATH                     (HDCTL_ENV_FILE)"
+    echo "  -e | --env-file PATH                     (HDCTL_ENV_FILE)"
     echo "      path to env file that will be sourced at startup. Defaults to ./hdctl.env."
     echo "      If set to non-default value it must exist."
     echo

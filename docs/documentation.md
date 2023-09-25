@@ -19,12 +19,14 @@ Further information about developing, deploying, connecting, using and running h
 
 - [Custom Python Dependencies](./custom_python_dependencies.md)
 - [R support](./r_support.md)
-- [Base Component/Workflow Deployment](./base_component_deployment.md)
-- [Backup](./backup.md)
-- [Export and Import](./import_export.md)
+- [Maintenance](./maintenance.md)
+  - [Backup](./backup.md)
+  - [Export and Import](./import_export.md)
+  - [Base Component/Workflow Deployment](./base_component_deployment.md)
+  - [Autoimport](./autoimport.md)
+  - [Clean up](./cleanup.md)
 - [Migration from 0.6 to 0.7](./migration_from_0.6_to_0.7.md)
 - [Migration from 0.6 to 0.8](./migration_from_0.6_to_0.8.md)
-- [Clean up](./cleanup.md)
 
 ## Authentication
 
