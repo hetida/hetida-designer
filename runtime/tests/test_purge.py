@@ -10,6 +10,7 @@ from uuid import uuid4
 import pytest
 
 from hetdesrun.exportimport.purge import (
+    correct_output_connector_name,
     delete_all_and_refill,
     delete_drafts,
     delete_unused_deprecated,
@@ -29,6 +30,7 @@ from hetdesrun.persistence.models.io import IOInterface
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
+from hetdesrun.trafoutils.io.load import load_json
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.config import get_config
 
@@ -470,6 +472,34 @@ def test_deprecate_all_but_latest_per_group():
             _, args, kwargs = patched_deprecate_old.mock_calls[0]
             assert args[0] == example_tr_released_old.revision_group_id
             assert kwargs["directly_in_db"] is False
+
+
+def test_correct_output_connector_name():
+    with mock.patch(
+        "hetdesrun.exportimport.purge.update_or_create_transformation_revision",
+        return_value=None,
+    ) as mocked_update, mock.patch(
+        "hetdesrun.exportimport.purge.get_transformation_revisions",
+        return_value=[
+            TransformationRevision(
+                **load_json("tests/data/workflows/tr_with_connector_name_issue.json")
+            )
+        ],
+    ) as mocked_get:
+        correct_output_connector_name()
+
+        assert mocked_get.call_count == 1
+        _, _, kwargs = mocked_get.mock_calls[0]
+        assert kwargs["params"].type == Type.WORKFLOW
+        assert kwargs["directly_from_db"] is False
+
+        assert mocked_update.call_count == 1
+        _, args, kwargs = mocked_update.mock_calls[0]
+        updated_tr = args[0]
+        assert isinstance(updated_tr, TransformationRevision)
+        assert isinstance(updated_tr.content, WorkflowContent)
+        for output in updated_tr.content.outputs:
+            assert output.connector_name != "connector_name"
 
 
 def test_delete_drafts():
