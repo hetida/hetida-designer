@@ -61,7 +61,7 @@ def test_workflow_execution_input_validator_check_wiring_complete(
             "filters": {"value": "23"},
         }
     )
-    with pytest.raises(ValueError, match="Too many input wirings"):
+    with pytest.raises(ValueError, match="Wiring does not match"):
         WorkflowExecutionInput(**input_json_with_too_many_input_wirings)
 
     input_json_with_too_many_output_wirings = deepcopy(
@@ -74,5 +74,5 @@ def test_workflow_execution_input_validator_check_wiring_complete(
             "ref_id": "TEST-ID",
         }
     )
-    with pytest.raises(ValueError, match="Too many output wirings"):
+    with pytest.raises(ValueError, match="Wiring does not match"):
         WorkflowExecutionInput(**input_json_with_too_many_output_wirings)

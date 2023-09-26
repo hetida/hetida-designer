@@ -4,6 +4,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from fastapi import HTTPException
 from httpx import AsyncClient
 
 from hetdesrun.models.run import (
@@ -89,7 +90,8 @@ async def execute_workflow_execution_input(
     response = await open_async_test_client.post(
         "engine/runtime", json=json.loads(workflow_execution_input.json())
     )
-
+    if response.status_code != 200:
+        raise HTTPException(response.status_code, detail=response.json()["detail"])
     return WorkflowExecutionResult(**response.json())
 
 
@@ -229,6 +231,40 @@ def division_component_wf_exc_inp_replace(
 
 @pytest.mark.asyncio
 class TestSctructuredErrors:
+    async def test_raise_missing_wiring_exception(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace()
+        wf_exc_input.workflow_wiring.input_wirings = []
+        async with async_test_client as client:
+            with pytest.raises(HTTPException) as exc_info:
+                await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert "Workflow Input 'dividend' has no wiring" in str(exc_info.value.detail)
+        assert exc_info.value.status_code == 422
+
+    async def test_raise_not_matching_wiring_exception(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace()
+        wf_exc_input.workflow_wiring.input_wirings.append(
+            InputWiring(
+                workflow_input_name="result",
+                adapter_id=1,
+                filters={"value": 0},
+            )
+        )
+        async with async_test_client as client:
+            with pytest.raises(HTTPException) as exc_info:
+                await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert "Wiring does not match: There is no workflow input" in str(
+            exc_info.value.detail
+        )
+        assert exc_info.value.status_code == 422
+
     async def test_raise_default_exception(
         self,
         async_test_client: AsyncClient,

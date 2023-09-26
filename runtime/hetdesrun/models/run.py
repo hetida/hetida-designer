@@ -134,10 +134,11 @@ class WorkflowExecutionInput(BaseModel):
 
     @root_validator(skip_on_failure=True)
     def check_wiring_complete(cls, values: dict) -> dict:
-        """Every (non-constant) Workflow input/output must be wired
+        """Every (non-constant) required Workflow input/output must be wired
 
-        Checks whether there is a wiring for every non-constant workflow input
-        and for every workflow output.
+        Checks whether there is a wiring for every non-constant required workflow input
+        and for every workflow output and whether there is a non-constant workflow input for each
+        input wiring and a workflow output for each output wiring.
         """
 
         try:
@@ -153,26 +154,30 @@ class WorkflowExecutionInput(BaseModel):
         wired_input_names = {
             inp_wiring.workflow_input_name for inp_wiring in wiring.input_wirings
         }
-        dynamic_required_wf_inputs = [
-            wfi
+        dynamic_required_wf_input_names = [
+            wfi.name
             for wfi in workflow.inputs
             if wfi.constant is False and wfi.default is False
         ]
-        for wf_input in dynamic_required_wf_inputs:
-            if not wf_input.name in wired_input_names:
+        for wf_input_name in dynamic_required_wf_input_names:
+            if not wf_input_name in wired_input_names:
                 raise ValueError(
-                    f"Wiring Incomplete: Workflow Input {wf_input.name} has no wiring!"
+                    f"Wiring Incomplete: Workflow Input '{wf_input_name}' has no wiring!"
                 )
 
-        dynamic_optional_wf_inputs = [
-            wfi
+        dynamic_optional_wf_input_names = [
+            wfi.name
             for wfi in workflow.inputs
             if wfi.constant is False and wfi.default is True
         ]
-        if len(wired_input_names) > len(dynamic_required_wf_inputs) + len(
-            dynamic_optional_wf_inputs
-        ):
-            raise ValueError("Too many input wirings provided!")
+        for wired_input_name in wired_input_names:
+            if (
+                wired_input_name
+                not in dynamic_required_wf_input_names + dynamic_optional_wf_input_names
+            ):
+                raise ValueError(
+                    f"Wiring does not match: There is no workflow input '{wired_input_name}'!"
+                )
 
         wired_output_names = {
             outp_wiring.workflow_output_name for outp_wiring in wiring.output_wirings
@@ -188,8 +193,12 @@ class WorkflowExecutionInput(BaseModel):
                     )
                 )
 
-        if len(wired_output_names) > len(workflow.outputs):
-            raise ValueError("Too many output wirings provided!")
+        wf_output_names = [wfo.name for wfo in workflow.outputs]
+        for wired_output_name in wired_output_names:
+            if wired_output_name not in wf_output_names:
+                raise ValueError(
+                    f"Wiring does not match: There is no workflow output '{wired_output_name}'!"
+                )
 
         return values
 
