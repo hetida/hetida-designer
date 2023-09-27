@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Literal, cast
 
-import pandas as pd
 from pydantic import BaseModel, Field, validator
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType

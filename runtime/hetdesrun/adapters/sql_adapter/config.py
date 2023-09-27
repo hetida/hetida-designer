@@ -4,7 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel, BaseSettings, Field, validator
 from sqlalchemy import create_engine
-from sqlalchemy.pool import NullPool, QueuePool
+from sqlalchemy.engine import Engine
 
 from hetdesrun.models.util import valid_python_identifier
 
@@ -38,13 +38,13 @@ class TimeseriesTableConfig(BaseModel):
     )
 
     @validator("column_mapping_hd_to_db")
-    def column_mapping_invertible(cls, v: dict[str, str]):
+    def column_mapping_invertible(cls, v: dict[str, str]) -> dict[str, str]:
         if len(v.values()) != len(set(v.values())):
             raise ValueError(f"Column mapping must be invertible. Got {v}.")
         return v
 
     @cached_property
-    def column_mapping_db_to_hd(self):
+    def column_mapping_db_to_hd(self) -> dict[str, str]:
         """inverse mapping"""
         return {v: k for k, v in self.column_mapping_hd_to_db.items()}
 
@@ -81,10 +81,10 @@ class SQLAdapterDBConfig(BaseModel):
         description="names of tables that are offered as sinks for replacing the whole table",
     )
     ignore_tables: set[str] = Field(
-        {}, description="tables that should not be made accessable as sources"
+        set(), description="tables that should not be made accessable as sources"
     )
     timeseries_tables: dict[str, TimeseriesTableConfig] = Field(
-        [],
+        {},
         description="Mapping of table names to TimeseriesTableConfig objects."
         " Timeseries tables are offered as timeseries sources. They are not "
         " available as ordinary table sources of type DATAFRAME.",
@@ -108,8 +108,8 @@ class SQLAdapterDBConfig(BaseModel):
     )
 
     @cached_property
-    def engine(self):
-        return create_engine(self.connection_url, **self.create_engine_kwargs)
+    def engine(self) -> Engine:
+        return create_engine(self.connection_url, **self.create_engine_kwargs)  # type: ignore
 
     class Config:
         arbitrary_types_allowed = True

@@ -3,12 +3,15 @@ import logging
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError
-from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError as SQLOpsError
 from sqlalchemy.sql import and_, column, select, table
+from sqlalchemy.sql.selectable import Select
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
-from hetdesrun.adapters.sql_adapter.config import SQLAdapterDBConfig
+from hetdesrun.adapters.sql_adapter.config import (
+    SQLAdapterDBConfig,
+    TimeseriesTableConfig,
+)
 from hetdesrun.adapters.sql_adapter.utils import (
     get_configured_dbs_by_key,
     validate_multits_frame,
@@ -28,12 +31,14 @@ def split_metric_ids(metric_ids_string: str | None) -> list[str]:
         return []
     try:
         return MetricList.parse_raw(metric_ids_string).__root__
-    except ValidationError as e:
+    except ValidationError:
         # handle as comma separated string
         return [x.strip() for x in metric_ids_string.split(",") if x != ""]
 
 
-def extract_time_range(source_filters) -> tuple[datetime.datetime, datetime.datetime]:
+def extract_time_range(
+    source_filters: dict[str, str]
+) -> tuple[datetime.datetime, datetime.datetime]:
     from_timestamp = source_filters.get("timestampFrom", None)
     to_timestamp = source_filters.get("timestampTo", None)
 
@@ -57,8 +62,12 @@ def extract_time_range(source_filters) -> tuple[datetime.datetime, datetime.date
 
 
 def prepare_sql_statement(
-    ts_table_name: str, ts_table_config, from_datetime, to_datetime, metrics_list
-):
+    ts_table_name: str,
+    ts_table_config: TimeseriesTableConfig,
+    from_datetime: datetime.datetime,
+    to_datetime: datetime.datetime,
+    metrics_list: list[str],
+) -> Select:
     # ad hoc table object without data type specifications since
     # corresponding to the fact that we want to employ pandas read_sql automatic
     # flexible dtype inference.
@@ -88,11 +97,11 @@ def prepare_sql_statement(
 
 def prepare_validate_loaded_raw_multitsframe(
     multits_frame: pd.DataFrame,
-    ts_table_config,
-    source_id,
-    metrics_list,
-    from_datetime,
-    to_datetime,
+    ts_table_config: TimeseriesTableConfig,
+    source_id: str,
+    metrics_list: list[str],
+    from_datetime: datetime.datetime,
+    to_datetime: datetime.datetime,
 ) -> pd.DataFrame:
     # Guarantee that we have utc timezoned timetsamp column (naive timestamps from db
     # will be assumed to be UTC, non-naive will be transformed into explicit UTC):
@@ -214,7 +223,7 @@ def load_sql_table(db_config: SQLAdapterDBConfig, table_name: str) -> pd.DataFra
     return result
 
 
-def load_sql_query(db_config: SQLAdapterDBConfig, query: str) -> pd.DataFrame:
+def load_sql_query(db_config: SQLAdapterDBConfig, query: Select) -> pd.DataFrame:
     engine = db_config.engine
     try:
         with engine.begin():

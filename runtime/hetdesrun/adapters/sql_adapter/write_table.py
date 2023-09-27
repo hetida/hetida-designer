@@ -5,6 +5,7 @@ from pydantic import ValidationError
 from sqlalchemy.exc import OperationalError as SQLOpsError
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
+from hetdesrun.adapters.sql_adapter.config import TimeseriesTableConfig
 from hetdesrun.adapters.sql_adapter.models import WriteTable, WriteTableMode
 from hetdesrun.adapters.sql_adapter.utils import (
     get_configured_dbs_by_key,
@@ -15,7 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 def prepare_validate_multitsframe(
-    data_to_send: pd.DataFrame, ts_table_config, sink_id: str, write_table
+    data_to_send: pd.DataFrame,
+    ts_table_config: TimeseriesTableConfig,
+    sink_id: str,
+    write_table: WriteTable,
 ) -> pd.DataFrame:
     """Make sure the dataframe is a multitsframe as expected and contains expected columns"""
 
