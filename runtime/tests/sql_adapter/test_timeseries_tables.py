@@ -83,6 +83,24 @@ async def test_load_ts_table(three_sqlite_dbs_configured):
     assert len(received_data["inp"]) == 2
     assert len(received_data["inp"].columns) == 3
 
+    # ALL metrics
+    received_data = await load_data(
+        {
+            "inp": FilteredSource(
+                ref_id="read_only_timeseries_sqlite_database/ts_table/ro_ts_table",
+                ref_id_type="SOURCE",
+                filters={
+                    "metrics": "ALL",
+                    "timestampFrom": "2023-08-01T11:58:02+00:00",
+                    "timestampTo": "2023-08-29T23:58:02+00:00",
+                },
+            )
+        },
+        adapter_key="sql-adapter",
+    )
+    assert len(received_data["inp"]) == 4
+    assert len(received_data["inp"].columns) == 3
+
     # TODO: test combinations of different filters
 
 

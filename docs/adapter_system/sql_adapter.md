@@ -154,5 +154,5 @@ As sources the selection dialog offers for each database
 
 As sinks it offers only the explicitely configured append and replace tables for each configured database.
 
-Similarly, for MULTITSFRAMEs you should be able to use the sql adapter's provided sources and sink for the configured timeseries tables. The example tables contain timeseries data for metrics `a`, `b` and `c` in august 2023.
+Similarly, for MULTITSFRAMEs you should be able to use the sql adapter's provided sources and sink for the configured timeseries tables. The example tables contain timeseries data for metrics `a`, `b` and `c` in august 2023. You can query all metrics by entering `ALL` into the filter.
 

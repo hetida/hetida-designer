@@ -66,8 +66,13 @@ def prepare_sql_statement(
     ts_table_config: TimeseriesTableConfig,
     from_datetime: datetime.datetime,
     to_datetime: datetime.datetime,
-    metrics_list: list[str],
+    metrics_list: list[str] | None,
 ) -> Select:
+    """Prepare the statement for fetching metrics
+
+    If metrics_list is None all metrics will be fetched.
+    """
+
     # ad hoc table object without data type specifications since
     # corresponding to the fact that we want to employ pandas read_sql automatic
     # flexible dtype inference.
@@ -83,14 +88,17 @@ def prepare_sql_statement(
         ),
     )
 
-    # ad hoc sqlalchemy expression construction
-    statement = select(ts_table).where(
-        and_(
-            ts_table.c[ts_table_config.timestamp_col_name] >= from_datetime,
-            ts_table.c[ts_table_config.timestamp_col_name] <= to_datetime,
-            ts_table.c[ts_table_config.metric_col_name].in_(metrics_list),
-        )
+    clauses = (
+        ts_table.c[ts_table_config.timestamp_col_name] >= from_datetime,
+        ts_table.c[ts_table_config.timestamp_col_name] <= to_datetime,
+    ) + (
+        ()
+        if metrics_list is None
+        else (ts_table.c[ts_table_config.metric_col_name].in_(metrics_list),)
     )
+
+    # ad hoc sqlalchemy expression construction
+    statement = select(ts_table).where(and_(*clauses))
 
     return statement
 
@@ -99,7 +107,7 @@ def prepare_validate_loaded_raw_multitsframe(
     multits_frame: pd.DataFrame,
     ts_table_config: TimeseriesTableConfig,
     source_id: str,
-    metrics_list: list[str],
+    metrics_list: list[str] | None,
     from_datetime: datetime.datetime,
     to_datetime: datetime.datetime,
 ) -> pd.DataFrame:
@@ -174,12 +182,17 @@ def load_table_from_provided_source_id(
     if id_split[1] == "ts_table" and len(id_split) > 2:
         ts_table_name = id_split[2]
 
-        metrics_list = split_metric_ids(source_filters.get("metrics", ""))
+        metric_ids_string = source_filters.get("metrics", "")
+
+        if metric_ids_string.upper() == "ALL":
+            metrics_list = None
+        else:
+            metrics_list = split_metric_ids(metric_ids_string)
 
         logger.debug(
             "Parsed metric list %s from metrics filter %s",
             str(metrics_list),
-            source_filters.get("metrics", ""),
+            metric_ids_string,
         )
 
         from_datetime, to_datetime = extract_time_range(source_filters)
