@@ -88,7 +88,15 @@ Here we give an example configuration for mounting and accessing two sqlite data
                 "fetchable_value_cols": ["value"],
                 "writable_value_cols": [],
                 "column_mapping_hd_to_db": {}
-              }
+              },
+              "ts_table": {
+                "appendable": true,
+                "metric_col_name": "metric",
+                "timestamp_col_name": "timestamp",
+                "fetchable_value_cols": ["value"],
+                "writable_value_cols": ["value"],
+                "column_mapping_hd_to_db": {}                
+              }              
             }
           },
           {
@@ -145,4 +153,6 @@ As sources the selection dialog offers for each database
 * A special "SQL Query" source which when selected allows to enter an arbitrary SQL query.
 
 As sinks it offers only the explicitely configured append and replace tables for each configured database.
+
+Similarly, for MULTITSFRAMEs you should be able to use the sql adapter's provided sources and sink for the configured timeseries tables. The example tables contain timeseries data for metrics `a`, `b` and `c` in august 2023.
 
