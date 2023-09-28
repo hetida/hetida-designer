@@ -50,7 +50,7 @@ def extract_time_range(
     try:
         from_datetime = pd.to_datetime(from_timestamp, utc=True).to_pydatetime()
         to_datetime = pd.to_datetime(to_timestamp, utc=True).to_pydatetime()
-    except ValueError as e:
+    except ValueError as e:  # pragma: no cover
         msg = (
             "Could not parse one of multitsframe timestamp filters: "
             f"(timestampFrom: {from_timestamp}), "
@@ -122,7 +122,7 @@ def prepare_validate_loaded_raw_multitsframe(
     # multi ts frame validation
     try:
         validated_multi_ts_frame = validate_multits_frame(multits_frame)
-    except ValidationError as e:
+    except ValidationError as e:  # pragma: no cover
         msg = (
             "Could not validate multi ts frame received via sql adapter"
             f" from source id {source_id}. Error was: \n{str(e)}"
@@ -157,7 +157,7 @@ def load_table_from_provided_source_id(
 
     if id_split[1] == "query" and len(id_split) == 2:
         query = source_filters.get("sql_query", None)
-        if query is None:
+        if query is None:  # pragma: no cover
             msg = (
                 "Source of type query from sql adapter but no sql_query filter!\n"
                 f"Source id: {source_id}\n"

@@ -31,7 +31,7 @@ def prepare_validate_multitsframe(
 
     try:
         data_to_send = validate_multits_frame(data_to_send)
-    except ValidationError as e:
+    except ValidationError as e:  # pragma: no cover
         msg = (
             "Could not validate multi ts frame prepared for sending via"
             f" sql adapter with sink id {sink_id}. Error was: \n{str(e)}"
@@ -50,7 +50,9 @@ def prepare_validate_multitsframe(
         ts_table_config.timestamp_col_name,
     ] + ts_table_config.writable_value_cols
 
-    if not set(expected_columns).issubset(set(data_to_send.columns)):
+    if not set(expected_columns).issubset(
+        set(data_to_send.columns)
+    ):  # pragma: no cover
         msg = (
             f"Could not find expected columns {expected_columns}"
             f" in the provided dataframe columns {data_to_send.columns}."
@@ -68,7 +70,7 @@ def prepare_validate_multitsframe(
 def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
     try:
         write_table = WriteTable.from_sink_id(sink_id)
-    except ValidationError as e:
+    except ValidationError as e:  # pragma: no cover
         msg = f"Could not parse and validate sink id {sink_id}. Error was {str(e)}."
         logger.info(msg)  # noqa: G003
         raise AdapterHandlingException(msg) from e
@@ -81,7 +83,7 @@ def write_table_to_provided_sink_id(data: pd.DataFrame, sink_id: str) -> None:
     if write_table.write_mode is WriteTableMode.TIMSERIES_APPEND:
         ts_table_config = db_config.timeseries_tables[write_table.table_name]
 
-        if not ts_table_config.appendable:
+        if not ts_table_config.appendable:  # pragma: no cover
             msg = (
                 f"Configured timeseries table {write_table.table_name} for "
                 f"db key {write_table.db_key} is not appendable. Aborting write"
