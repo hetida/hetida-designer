@@ -36,7 +36,7 @@ const config: PlaywrightTestConfig = {
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.PLAYWRIGHT_TARGET_URL ?? 'http://localhost:4200',
+    baseURL: process.env.PLAYWRIGHT_TARGET_URL ?? 'http://localhost',
     /* LocalHost base URL for playwrite */
     /*baseURL: process.env.PLAYWRIGHT_TARGET_URL ?? 'http://localhost:4200',*/
 
