@@ -5,7 +5,6 @@ timeseries (where the later can be understood as special dataframe/table)
 """
 import base64
 import datetime
-import io
 import json
 import logging
 from posixpath import join as posix_urljoin
@@ -157,7 +156,7 @@ async def load_framelike_data(  # noqa: PLR0915
                 raise AdapterConnectionError(msg)
             logger.info("Start reading in and parsing framelike data")
 
-            df: pd.DataFrame = pd.read_json(io.StringIO(resp.raw), lines=True)
+            df: pd.DataFrame = pd.read_json(resp.raw, lines=True)
             end_time = datetime.datetime.now(datetime.timezone.utc)
             logger.info(
                 (
