@@ -115,7 +115,7 @@ def test_multitsframe_parsing():
     # nan != nan so mtsf1 == mtsf2 is False once:
     assert (mtsf2 == mtsf1).sum().sum() == 17
 
-    with pytest.raises(ValueError, match=r"column names.* don't match"):
+    with pytest.raises(ValueError, match=r"don't contain required columns"):
         MyMultiTsFrameModel(
             mtsf={
                 "foo": [1.0, 2, "x", 1.9, None, "y"],

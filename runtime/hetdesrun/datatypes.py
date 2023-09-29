@@ -154,12 +154,17 @@ class PydanticMultiTimeseriesPandasDataFrame:
         if len(df.columns) == 0:
             df = pd.DataFrame(columns=MULTITSFRAME_COLUMN_NAMES)
 
-        if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
-            column_names_string = ", ".join(df.columns)
-            multitsframe_column_names_string = ", ".join(MULTITSFRAME_COLUMN_NAMES)
+        if len(df.columns) < 3:
             raise ValueError(
-                f"The column names {column_names_string} don't match the column names "
-                f"required for a MultiTSFrame {multitsframe_column_names_string}."
+                "MultiTSFrame requires at least 3 columns: metric, timestamp"
+                f" and at least one additional columns. Only found {str(df.columns)}"
+            )
+
+        if not ({"metric", "timestamp"}.issubset(set(df.columns))):
+            column_names_string = ", ".join(df.columns)
+            raise ValueError(
+                f"The column names {column_names_string} don't contain required columns"
+                ' "timestamp" and "metric" for a MultiTSFrame.'
             )
 
         if df["metric"].isna().any():

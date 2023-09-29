@@ -258,11 +258,28 @@ class TransformationRevision(BaseModel):
         return v
 
     @validator("state")
-    def timestamps_set_if_released_or_disabled(cls, v: State, values: dict) -> State:
+    def timestamps_set_corresponding_to_state(cls, v: State, values: dict) -> State:
+        if v is State.DRAFT and (
+            "released_timestamp" in values and values["released_timestamp"] is not None
+        ):
+            # TODO: Raise exception instead of adjust once frontend has been updated
+            logger.warning(
+                "The state is DRAFT, but a released_timestamp is set. "
+                "The released_timestamp will be set to None."
+            )
+            values["released_timestamp"] = None
+        if v is State.DRAFT and (
+            "disabled_timestamp" in values and values["disabled_timestamp"] is not None
+        ):
+            raise ValueError("disabled_timestamp must not be set if state is DRAFT")
         if v is State.RELEASED and (
             "released_timestamp" not in values or values["released_timestamp"] is None
         ):
             raise ValueError("released_timestamp must be set if state is RELEASED")
+        if v is State.RELEASED and (
+            "disabled_timestamp" in values and values["disabled_timestamp"] is not None
+        ):
+            raise ValueError("disabled_timestamp must not be set if state is RELEASED")
         if v is State.DISABLED and (
             "disabled_timestamp" not in values or values["disabled_timestamp"] is None
         ):

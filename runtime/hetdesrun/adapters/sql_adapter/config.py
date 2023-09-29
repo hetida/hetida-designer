@@ -1,16 +1,64 @@
 import os
+from functools import cached_property
+from typing import Any
 
 from pydantic import BaseModel, BaseSettings, Field, validator
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 
 from hetdesrun.models.util import valid_python_identifier
+
+
+class TimeseriesTableConfig(BaseModel):
+    appendable: bool = Field(
+        True,
+        description="Whether writing into this table is offered as sink."
+        " Note that this is setting does not provide write protection. This has to be ensured "
+        "on the database via its security / access management features if necessary.",
+    )
+    metric_col_name: str = "metric"
+    timestamp_col_name: str = "timestamp"
+    fetchable_value_cols: list[str] = ["value"]
+    writable_value_cols: list[str] = ["value"]
+    column_mapping_hd_to_db: dict[str, str] = Field(
+        {},
+        description=(
+            " Mapping that will be applied to dataframe columns to match db columns"
+            " when writing."
+            " Must be invertible, the inverse mapping will be applied when loading data"
+            " from the db."
+            " A mapping is required at least for timestamp or metric column if their name"
+            " differs from the default, since on the hd side they are required to be"
+            ' "timestamp" and "mertic".'
+            " Note that mapped columns must not be present when the mapping is applied."
+            " It is for example possible to write a column, mapped to another name in the db"
+            " but not fetching it (and therefore not apply the inverse mapping) by excluding"
+            " it from fetachable_value_cols."
+        ),
+    )
+
+    @validator("column_mapping_hd_to_db")
+    def column_mapping_invertible(cls, v: dict[str, str]) -> dict[str, str]:
+        if len(v.values()) != len(set(v.values())):
+            raise ValueError(f"Column mapping must be invertible. Got {v}.")
+        return v
+
+    @cached_property
+    def column_mapping_db_to_hd(self) -> dict[str, str]:
+        """inverse mapping"""
+        return {v: k for k, v in self.column_mapping_hd_to_db.items()}
+
+    class Config:
+        arbitrary_types_allowed = True
+        keep_untouched = (cached_property,)
 
 
 class SQLAdapterDBConfig(BaseModel):
     """A config of a database for the sql adapter
 
-    All tables will be made available as sources and additionally an arbitrary query
-    source is offered. It is up to the database admin to restrict access for the user
-    configured in the connection url.
+    All tables will be made available as sources by default and additionally an arbitrary
+    query source is offered. It is up to the database admin to restrict access for the
+    user configured in the connection url.
 
     Only the tables configured in append_tables and replace_tables will be offered as
     fixed sinks.
@@ -32,6 +80,40 @@ class SQLAdapterDBConfig(BaseModel):
         [],
         description="names of tables that are offered as sinks for replacing the whole table",
     )
+    ignore_tables: set[str] = Field(
+        set(), description="tables that should not be made accessable as sources"
+    )
+    timeseries_tables: dict[str, TimeseriesTableConfig] = Field(
+        {},
+        description="Mapping of table names to TimeseriesTableConfig objects."
+        " Timeseries tables are offered as timeseries sources. They are not "
+        " available as ordinary table sources of type DATAFRAME.",
+    )
+    explicit_source_tables: None | set[str] = Field(
+        None,
+        description=(
+            "If None, all tables (minus ignore tables) will be available as sources for reading."
+            " If set to a list of table names only these tables (minus ignore tables) will be"
+            " made available as sources."
+        ),
+    )
+
+    create_engine_kwargs: dict[str, Any] = Field(
+        {},
+        description=(
+            "Additional keyword arguments to create_engine."
+            " E.g. you can set the connection pool size via pool_size."
+            " See sqlalchemy documentation for more options."
+        ),
+    )
+
+    @cached_property
+    def engine(self) -> Engine:
+        return create_engine(self.connection_url, **self.create_engine_kwargs)  # type: ignore
+
+    class Config:
+        arbitrary_types_allowed = True
+        keep_untouched = (cached_property,)
 
 
 class SQLAdapterConfig(BaseSettings):
