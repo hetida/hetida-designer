@@ -191,7 +191,7 @@ async def test_blob_adapter_webservice_filtered(
 
 
 @pytest.mark.asyncio
-async def test_blob_adapter_webservice_exceptions(
+async def test_blob_adapter_webservice_exceptions(  # noqa: PLR0915
     async_test_client_with_blob_storage_adapter_with_mocked_structure: AsyncClient,
 ) -> None:
     async with async_test_client_with_blob_storage_adapter_with_mocked_structure as client:

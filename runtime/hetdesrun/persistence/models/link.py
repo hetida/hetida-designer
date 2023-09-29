@@ -73,7 +73,7 @@ class Link(BaseModel):
                 "'start', 'end' is missing!"
             ) from error
         if not (
-            start.connector.data_type == end.connector.data_type
+            start.connector.data_type == end.connector.data_type  # noqa: PLR1714
             or start.connector.data_type == DataType.Any
             or end.connector.data_type == DataType.Any
         ):

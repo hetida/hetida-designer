@@ -1,4 +1,5 @@
 import datetime
+import io
 import json
 import logging
 from collections.abc import Generator
@@ -54,14 +55,23 @@ class PydanticPandasSeries:
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: pd.Series | str | dict | list) -> pd.Series:
+    def validate(  # noqa: PLR0911,PLR0912
+        cls, v: pd.Series | str | dict | list
+    ) -> pd.Series:
         if isinstance(v, pd.Series):
             return v
         try:
+            if isinstance(v, str):
+                return pd.read_json(io.StringIO(v), typ="series")
+
             return pd.read_json(v, typ="series")
 
         except TypeError:  # https://github.com/pandas-dev/pandas/issues/31464
             try:
+                if isinstance(v, str):
+                    return pd.read_json(
+                        io.StringIO(v), typ="series", convert_dates=False
+                    )
                 return pd.read_json(v, typ="series", convert_dates=False)
 
             except Exception as e:  # noqa: BLE001
@@ -71,12 +81,12 @@ class PydanticPandasSeries:
 
         except Exception:  # noqa: BLE001
             try:
-                return pd.read_json(json.dumps(v), typ="series")
+                return pd.read_json(io.StringIO(json.dumps(v)), typ="series")
 
             except TypeError:  # https://github.com/pandas-dev/pandas/issues/31464
                 try:
                     return pd.read_json(
-                        json.dumps(v), typ="series", convert_dates=False
+                        io.StringIO(json.dumps(v)), typ="series", convert_dates=False
                     )
                 except Exception as read_json_with_type_error_exception:  # noqa: BLE001
                     raise ValueError(
@@ -108,11 +118,13 @@ class PydanticPandasDataFrame:
         if isinstance(v, pd.DataFrame):
             return v
         try:
+            if isinstance(v, str):
+                return pd.read_json(io.StringIO(v), typ="frame")
             return pd.read_json(v, typ="frame")
 
         except Exception:  # noqa: BLE001
             try:
-                return pd.read_json(json.dumps(v), typ="frame")
+                return pd.read_json(io.StringIO(json.dumps(v)), typ="frame")
             except Exception as read_json_exception:  # noqa: BLE001
                 raise ValueError(
                     "Could not parse provided input as Pandas DataFrame"
@@ -141,11 +153,14 @@ class PydanticMultiTimeseriesPandasDataFrame:
             df = v
         else:
             try:
-                df = pd.read_json(v, typ="frame")
+                if isinstance(v, str):
+                    df = pd.read_json(io.StringIO(v), typ="frame")
+                else:
+                    df = pd.read_json(v, typ="frame")
 
             except Exception:  # noqa: BLE001
                 try:
-                    df = pd.read_json(json.dumps(v), typ="frame")
+                    df = pd.read_json(io.StringIO(json.dumps(v)), typ="frame")
                 except Exception as read_json_exception:  # noqa: BLE001
                     raise ValueError(
                         "Could not parse provided input as Pandas DataFrame."
@@ -182,9 +197,9 @@ class PydanticMultiTimeseriesPandasDataFrame:
         if len(df.index) == 0:
             df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
 
-        if not pd.api.types.is_datetime64tz_dtype(df["timestamp"]):
+        if not isinstance(df["timestamp"].dtype, pd.DatetimeTZDtype):
             raise ValueError(
-                "Column 'timestamp' of MultiTSFrame does not have datetime64tz dtype. "
+                "Column 'timestamp' of MultiTSFrame does not have DatetimeTZDtype dtype. "
                 f'Got {str(df["timestamp"].dtype)} index dtype instead.'
             )
 

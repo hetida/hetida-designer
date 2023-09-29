@@ -430,7 +430,7 @@ def calculate_age(born: datetime.date) -> int:
     "/thingNodes/{thingNodeId}/metadata/{key}", response_model=Metadatum
 )
 async def get_metadata_thingNode_by_key(  # noqa: PLR0911, PLR0912
-    thingNodeId: str, key: str, latex_mode: str = Query("", example="yes")
+    thingNodeId: str, key: str, latex_mode: str = Query("", examples=["yes"])
 ) -> Metadatum:
     key = unquote(key)
     if thingNodeId == "root.plantA":
@@ -583,12 +583,12 @@ def return_stored_anomaly_score(
 async def timeseries(
     ids: list[str] = Query(..., alias="id", min_length=1),
     from_timestamp: datetime.datetime = Query(
-        ..., alias="from", example=datetime.datetime.now(datetime.timezone.utc)
+        ..., alias="from", examples=[datetime.datetime.now(datetime.timezone.utc)]
     ),
     to_timestamp: datetime.datetime = Query(
-        ..., alias="to", example=datetime.datetime.now(datetime.timezone.utc)
+        ..., alias="to", examples=[datetime.datetime.now(datetime.timezone.utc)]
     ),
-    frequency: str = Query("", example="5min"),
+    frequency: str = Query("", examples=["5min"]),
 ) -> StreamingResponse:
     collected_attrs = {}
     io_stream = StringIO()
@@ -657,7 +657,7 @@ def decode_attributes(data_attributes: str) -> Any:
 async def post_timeseries(
     ts_body: list[TimeseriesRecord],
     ts_id: str = Query(..., alias="timeseriesId"),
-    frequency: str = Query("", example="5min"),
+    frequency: str = Query("", examples=["5min"]),
     data_attributes: str | None = Header(None),
 ) -> dict:
     logger.info("Received ts_body for id %s:\n%s", ts_id, str(ts_body))
@@ -717,7 +717,7 @@ def parse_string_to_list(input_string: str) -> tuple[list, str]:
 @demo_adapter_main_router.get("/dataframe", response_model=None)
 async def dataframe(
     df_id: str = Query(..., alias="id"),
-    column_names: str = Query("", example="""[\\\"column1\\\", \\\"column2\\\"]"""),
+    column_names: str = Query("", examples=["""[\\\"column1\\\", \\\"column2\\\"]"""]),
 ) -> StreamingResponse | HTTPException:
     if df_id.endswith("plantA.maintenance_events"):
         df = pd.DataFrame(
@@ -808,13 +808,15 @@ async def dataframe(
 async def post_dataframe(
     df_body: list[dict] = Body(
         ...,
-        example=[
-            {"column_A": 42.0, "column_B": "example"},
-            {"column_A": 11.97, "column_B": "example"},
+        examples=[
+            [
+                {"column_A": 42.0, "column_B": "example"},
+                {"column_A": 11.97, "column_B": "example"},
+            ]
         ],
     ),
     df_id: str = Query(..., alias="id"),
-    column_names: str = Query("", example="""[\\\"column1\\\", \\\"column2\\\"]"""),
+    column_names: str = Query("", examples=["""[\\\"column1\\\", \\\"column2\\\"]"""]),
     data_attributes: str | None = Header(None),
 ) -> dict:
     if df_id.endswith("alerts"):
@@ -852,13 +854,13 @@ async def post_dataframe(
 async def multitsframe(
     mtsf_id: str = Query(..., alias="id"),
     from_timestamp: datetime.datetime = Query(
-        ..., alias="from", example=datetime.datetime.now(datetime.timezone.utc)
+        ..., alias="from", examples=[datetime.datetime.now(datetime.timezone.utc)]
     ),
     to_timestamp: datetime.datetime = Query(
-        ..., alias="to", example=datetime.datetime.now(datetime.timezone.utc)
+        ..., alias="to", examples=[datetime.datetime.now(datetime.timezone.utc)]
     ),
-    lower_threshold: str = Query("", example="93.4"),
-    upper_threshold: str = Query("", example="107.9"),
+    lower_threshold: str = Query("", examples=["93.4"]),
+    upper_threshold: str = Query("", examples=["107.9"]),
 ) -> StreamingResponse | HTTPException:
     dt_range = pd.date_range(
         start=from_timestamp, end=to_timestamp, freq="H", tz=datetime.timezone.utc
@@ -932,31 +934,33 @@ async def multitsframe(
 async def post_multitsframe(
     mtsf_body: list[dict] = Body(
         ...,
-        example=[
-            {
-                "metric": "Milling Influx Temperature",
-                "timestamp": "2020-03-11T13:45:18.194000000Z",
-                "value": 42.3,
-            },
-            {
-                "metric": "Milling Outfeed Temperature",
-                "timestamp": "2020-03-11T14:45:18.237000000Z",
-                "value": 41.7,
-            },
-            {
-                "metric": "Pickling Influx Temperature",
-                "timestamp": "2020-03-11T15:45:18.081000000Z",
-                "value": 18.4,
-            },
-            {
-                "metric": "Pickling Outfeed Temperature",
-                "timestamp": "2020-03-11T15:45:18.153000000Z",
-                "value": 18.3,
-            },
+        examples=[
+            [
+                {
+                    "metric": "Milling Influx Temperature",
+                    "timestamp": "2020-03-11T13:45:18.194000000Z",
+                    "value": 42.3,
+                },
+                {
+                    "metric": "Milling Outfeed Temperature",
+                    "timestamp": "2020-03-11T14:45:18.237000000Z",
+                    "value": 41.7,
+                },
+                {
+                    "metric": "Pickling Influx Temperature",
+                    "timestamp": "2020-03-11T15:45:18.081000000Z",
+                    "value": 18.4,
+                },
+                {
+                    "metric": "Pickling Outfeed Temperature",
+                    "timestamp": "2020-03-11T15:45:18.153000000Z",
+                    "value": 18.3,
+                },
+            ]
         ],
     ),
     mtsf_id: str = Query(..., alias="id"),
-    metric_names: str = Query("", example="""[\\\"metric1\\\", \\\"metric2\\\"]"""),
+    metric_names: str = Query("", examples=["""[\\\"metric1\\\", \\\"metric2\\\"]"""]),
     data_attributes: str | None = Header(None),
 ) -> dict:
     if mtsf_id in ("root.plantA.anomalies", "root.plantB.anomalies"):

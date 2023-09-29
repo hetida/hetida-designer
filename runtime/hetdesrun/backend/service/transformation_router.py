@@ -227,7 +227,7 @@ async def get_all_transformation_revisions(
 async def get_transformation_revision_by_id(
     id: UUID = Path(  # noqa: A002
         ...,
-        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
     ),
 ) -> TransformationRevision:
     logger.info("get transformation revision %s", id)

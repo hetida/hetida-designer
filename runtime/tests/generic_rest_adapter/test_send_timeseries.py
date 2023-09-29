@@ -158,7 +158,7 @@ async def test_end_to_end_send_only_timeseries_data_works():
 async def test_end_to_end_send_only_timeseries_data_exception_handling():
     ts_5 = pd.Series([1.0], index=["not a timestamp"])
     with pytest.raises(
-        AdapterOutputDataError, match="does not have datetime64tz dtype"
+        AdapterOutputDataError, match="does not have DatetimeTZDtype dtype"
     ):
         await send_data(
             {"outp_5": FilteredSink(ref_id="sink_id_5", type="timeseries(float)")},

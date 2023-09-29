@@ -71,7 +71,9 @@ async def walk_thing_nodes(
 @pytest.mark.filterwarnings(
     "ignore:an integer is required*"
 )  # pandas to_json currently throws a deprecation warning
-async def test_resources_offered_from_structure_hierarchy(async_test_client):
+async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915
+    async_test_client,
+):
     """Walks through the hierarchy provided by structure endpoint and gets/posts offered resources"""  # noqa: E501
     async with async_test_client as client:
         response_obj = (await client.get("/adapters/localfile/structure")).json()

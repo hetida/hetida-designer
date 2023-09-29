@@ -308,7 +308,7 @@ def generate_token(
         "nbf": str(
             datetime_to_unix_seconds(datetime.datetime.now()) - 30  # noqa: DTZ005
         ),  # not before
-        # "aud": ["account"], # audience (target domain)
+        # "aud": ["account"], # audience (target domain) # noqa: ERA001
         "jti": str(uuid4()),  # jwt ID (token identifier making replication improssible)
         "exp": str(datetime_to_unix_seconds(exp_dt))
         if exp_dt is not None
