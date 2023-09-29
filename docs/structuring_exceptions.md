@@ -41,8 +41,8 @@ Executing a component with the above code and inputs `1` and `0` results in a js
         },
         "hierarchy_in_workflow": {
             "by_name": [
-                "Wrapper Workflow",
-                "Raise Exception"
+                "COMPONENT EXECUTION WRAPPER WORKFLOW",
+                "Raise Exception Example Component"
             ],
             "by_id": [
                 "31d1979f-57c7-4fa8-82b4-2b6dec5f5265",
