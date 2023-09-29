@@ -39,6 +39,7 @@ Further information about developing, deploying, connecting, using and running h
 - [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md)
 - [Generic REST Adapters](./adapter_system/generic_rest_adapters/web_service_interface.md)
 - [General Custom Adapters](./adapter_system/general_custom_adapters/instructions.md)
+- [SQL Adapter](./adapter_system/sql_adapter.md)
 
 ## Creating Components and Workflows
 
