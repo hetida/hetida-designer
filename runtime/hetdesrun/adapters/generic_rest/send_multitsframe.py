@@ -41,10 +41,10 @@ def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
             "Received Pandas Dataframe with null values in the column 'timestamp'."
         )
 
-    if not pd.api.types.is_datetime64tz_dtype(df["timestamp"]):
+    if not isinstance(df["timestamp"].dtype, pd.DatetimeTZDtype):
         raise AdapterOutputDataError(
-            "Column 'timestamp' of the received Pandas Dataframe does not have datetime64tz dtype "
-            "index as expected for generic rest adapter multitsframe endpoints. "
+            "Column 'timestamp' of the received Pandas Dataframe does not have DatetimeTZDtype "
+            "dtype index as expected for generic rest adapter multitsframe endpoints. "
             f'Got {str(df["timestamp"].dtype)} index dtype instead.'
         )
 

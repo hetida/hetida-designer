@@ -238,7 +238,7 @@ async def test_end_to_end_send_only_multitsframe_data() -> None:
             {"metric": ["a"], "timestamp": ["not a timestamp"], "value": [1.0]}
         )
         with pytest.raises(
-            AdapterOutputDataError, match="does not have datetime64tz dtype"
+            AdapterOutputDataError, match="does not have DatetimeTZDtype dtype"
         ):
             await send_data(
                 {"outp_8": FilteredSink(ref_id="sink_id_8", type="multitsframe")},

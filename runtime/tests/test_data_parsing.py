@@ -162,7 +162,7 @@ def test_multitsframe_parsing():
                 ],
             }
         )
-    with pytest.raises(ValueError, match="does not have datetime64tz dtype"):
+    with pytest.raises(ValueError, match="does not have DatetimeTZDtype dtype"):
         MyMultiTsFrameModel(
             mtsf={
                 "value": [1.0, 2, "x", 1.9, None, "y"],

@@ -133,7 +133,7 @@ async def test_end_to_end_load_dataframe_data_with_timestamp_column():
             assert len(loaded_data) == 1
             assert isinstance(loaded_data["inp_1"], pd.DataFrame)
             assert loaded_data["inp_1"].shape == (3, 2)
-            assert pd.api.types.is_datetime64tz_dtype(loaded_data["inp_1"].index)
+            assert isinstance(loaded_data["inp_1"].index.dtype, pd.DatetimeTZDtype)
 
 
 @pytest.mark.asyncio

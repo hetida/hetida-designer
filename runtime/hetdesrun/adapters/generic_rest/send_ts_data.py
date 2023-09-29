@@ -45,9 +45,9 @@ def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> list[dict
             "Did not receive Pandas Series as expected from workflow output."
             f" Got {str(type(series))} instead."
         )
-    if not pd.api.types.is_datetime64tz_dtype(series.index):
+    if not isinstance(series.index.dtype, pd.DatetimeTZDtype):
         raise AdapterOutputDataError(
-            "Received Pandas Series does not have datetime64tz dtype index as expected for"
+            "Received Pandas Series does not have DatetimeTZDtype dtype index as expected for"
             f" generic rest adapter timeseries endpoints. Got {str(series.index.dtype)} "
             "index dtype instead."
         )
