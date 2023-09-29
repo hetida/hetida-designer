@@ -3,7 +3,7 @@
 
 import datetime
 import traceback as tb
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -268,7 +268,7 @@ class ErrorLocation(BaseModel):
     line_number: int
 
 
-class ProcessStage(str, Enum):
+class ProcessStage(StrEnum):
     """ "Stages of the execution process."""
 
     PARSING_WORKFLOW = "PARSING_WORKFLOW"
