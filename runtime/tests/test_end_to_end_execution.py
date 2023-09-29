@@ -359,6 +359,7 @@ class TestSctructuredErrors:
             imports_and_definitions=(
                 """class ComponentException(Exception):
                     def __init__(self, msg, error_code, **kwargs) -> None:
+                        self.__is_hetida_designer_exception__ = True
                         self.error_code = error_code
                         super().__init__(msg, **kwargs)
                 """
@@ -384,7 +385,7 @@ class TestSctructuredErrors:
         assert result.error.location is not None
         assert result.error.location.file == "component code"
         assert result.error.location.function_name == "main"
-        assert result.error.location.line_number == 32
+        assert result.error.location.line_number == 33
 
     async def test_raise_explicit_value_error(
         self,

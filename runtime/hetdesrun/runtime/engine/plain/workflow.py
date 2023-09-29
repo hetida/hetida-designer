@@ -187,7 +187,12 @@ class ComputationNode:
             )
             function_result = function_result if function_result is not None else {}
         except Exception as exc:  # uncaught exceptions from user code  # noqa: BLE001
-            if hasattr(exc, "error_code") and isinstance(exc.error_code, int | str):
+            if (
+                hasattr(exc, "__is_hetida_designer_exception__")
+                and exc.__is_hetida_designer_exception__ is True
+                and hasattr(exc, "error_code")
+                and isinstance(exc.error_code, int | str)
+            ):
                 runtime_execution_logger.warning(
                     "User raised in exception with error code in component code!",
                     exc_info=True,

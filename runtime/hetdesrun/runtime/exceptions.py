@@ -55,6 +55,7 @@ class ComponentException(RuntimeExecutionError):
         if not isinstance(error_code, int | str):
             raise ValueError("The ComponentException.error_code must be int or string!")
         self.error_code = error_code
+        self.__is_hetida_designer_exception__ = True
         super().__init__(*args, **kwargs)
 
 

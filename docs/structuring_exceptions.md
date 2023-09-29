@@ -131,14 +131,13 @@ def main(*, series):
 }
 ```
 
-Importing the `ComponentException` or `ComponentInputValidationException` means that the component code cannot be executed externally.
-To enable both, the use of the error code and the external executn of the component code, an exception must be defined locally in the component code.
-This component must of course enable initialization with a message and an error code.
-The name can be chosen freely.
+To develop the component code independently of the hetdesrun library, exceptions must be defined locally in the component code.
+This exception must of course enable initialization with a message and an error code.
 
 ```python
-class ComponentException(Exception):
+class SeriesTypeException(Exception):
     def __init__(self, msg, error_code, **kwargs) -> None:
+        self.__is_hetida_designer_exception__ = True
         self.error_code = error_code
         super().__init__(msg, **kwargs)
 ```
