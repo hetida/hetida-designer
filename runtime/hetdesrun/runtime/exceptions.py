@@ -104,7 +104,7 @@ class CircularDependency(DAGProcessingError):
     """During execution a circular dependency was detected"""
 
 
-class MissingOutputException(MissingOutputDataError):
+class MissingOutputException(RuntimeExecutionError):
     """During execution a referenced output is missing on another node's result"""
 
 

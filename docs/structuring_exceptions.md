@@ -165,32 +165,32 @@ result in a `RuntimeExecutionError`:
 "error": {
     "type": "RuntimeExecutionError",
     "error_code": null,
-    "message": "Component function of component instance \\f7c20ae9-5141-447c-8ae8-086edfc8d231\\76cf9d97-4007-48d8-8ca5-89320df9caab\\ from component \\Wrapper Workflow\\Raise Inherited Exception\\ did not return an output dict!",
+    "message": "Component did not return an output dict.",
     "extra_information": null,
     "process_stage": "EXECUTING_COMPONENT_CODE",
     "operator_info": {...},
     "location": {
         "file": "/app/hetdesrun/runtime/engine/plain/workflow.py",
         "function_name": "_run_comp_func",
-        "line_number": 209
+        "line_number": 216
     }
 }
 ```
 
-or `KeyError`:
+or `MissingOutputException`:
 
 ```json
 "error": {
-    "type": "KeyError",
+    "type": "MissingOutputException",
     "error_code": null,
-    "message": "'result'",
+    "message": "Declared output 'result' not contained in returned dictionary.",
     "extra_information": null,
     "process_stage": "EXECUTING_COMPONENT_CODE",
     "operator_info": {...},
     "location": {
         "file": "/app/hetdesrun/runtime/engine/plain/workflow.py",
         "function_name": "result",
-        "line_number": 384
+        "line_number": 403
     }
 }
 ```

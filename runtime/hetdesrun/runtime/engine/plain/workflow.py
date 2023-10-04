@@ -194,7 +194,7 @@ class ComputationNode:
                 and hasattr(exc, "extra_information")
             ):
                 runtime_execution_logger.warning(
-                    "User raised in exception with error code in component code!",
+                    "User raised a hetida designer exception in component code.",
                     exc_info=True,
                 )
                 raise ComponentException(
@@ -202,18 +202,15 @@ class ComputationNode:
                     error_code=exc.error_code,
                     extra_information=exc.extra_information,
                 ).set_context(self.context) from exc
-            msg = "Unexpected error from user code"
+            msg = "Unexpected error from user code."
             runtime_execution_logger.warning(msg, exc_info=True)
             raise UnexpectedComponentException(msg).set_context(self.context) from exc
 
         if not isinstance(
             function_result, dict
         ):  # user functions may return completely unknown type
-            msg = (
-                f"Component function of component instance {self.operator_hierarchical_id} from "
-                f"component {self.operator_hierarchical_name} did not return an output dict!"
-            )
-            runtime_execution_logger.warning(msg)
+            msg = f"Component did not return an output dict."
+            runtime_execution_logger.warning(msg, exc_info=True)
             raise RuntimeExecutionError(msg).set_context(self.context)
 
         return function_result
@@ -398,14 +395,12 @@ class Workflow:
                 )
             except KeyError as e:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
-                runtime_execution_logger.warning(
-                    "Execution failed due to missing output of a node",
-                    exc_info=True,
+                msg = (
+                    f"Declared output '{sub_node_output_name}' "
+                    "not contained in returned dictionary."
                 )
-                raise MissingOutputException(
-                    "Could not obtain all declared output results while preparing to "
-                    "run outer workflow"
-                ).set_context(sub_node.context) from e
+                runtime_execution_logger.warning(msg, exc_info=True)
+                raise MissingOutputException(msg).set_context(sub_node.context) from e
             except RuntimeExecutionError as e:
                 raise e
 

@@ -491,6 +491,31 @@ class TestSctructuredErrors:
         assert result.error.location.function_name == "main"
         assert result.error.location.line_number == 27
 
+    async def test_raise_no_output_dict_exception(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace(
+            function_code="return dividend",
+        )
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
+        assert result.error.type == "RuntimeExecutionError"
+        assert result.error.error_code is None
+        assert result.error.message == "Component did not return an output dict."
+        assert result.error.extra_information is None
+        assert result.error.operator_info is not None
+        assert "c4dbcc" in result.error.operator_info.transformation_info.id
+        assert result.error.location.file.endswith(
+            "/hetida-designer/runtime/hetdesrun/runtime/engine/plain/workflow.py"
+        )
+        assert result.error.location.function_name == "_run_comp_func"
+        assert result.error.location.line_number == 216
+
     async def test_raise_missing_outputs_exception(
         self,
         async_test_client: AsyncClient,
@@ -502,9 +527,12 @@ class TestSctructuredErrors:
 
         assert result.error is not None
         assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
-        assert result.error.type == "KeyError"
+        assert result.error.type == "MissingOutputException"
         assert result.error.error_code is None
-        assert result.error.message == "'result'"  # name of missing output
+        assert (
+            result.error.message
+            == "Declared output 'result' not contained in returned dictionary."
+        )
         assert result.error.extra_information is None
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
@@ -512,6 +540,7 @@ class TestSctructuredErrors:
             "/hetida-designer/runtime/hetdesrun/runtime/engine/plain/workflow.py"
         )
         assert result.error.location.function_name == "result"
+        assert result.error.location.line_number == 403
 
     async def test_raise_parsing_output_exception(
         self,

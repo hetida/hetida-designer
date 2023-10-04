@@ -175,7 +175,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             exc,
             currently_executed_process_stage,
             runtime_input.job_id,
-            cause=exc.__cause__,
+            cause=exc,
         )
 
     if runtime_input.configuration.return_individual_node_results:
