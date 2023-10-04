@@ -1,3 +1,4 @@
+import io
 import json
 from copy import deepcopy
 from urllib.parse import quote
@@ -94,7 +95,7 @@ async def walk_thing_nodes(  # noqa: PLR0913
     "ignore:an integer is required*"
 )  # pandas to_json currently throws a deprecation warning
 @pytest.mark.asyncio
-async def test_resources_offered_from_structure_hierarchy(
+async def test_resources_offered_from_structure_hierarchy(  # noqa: PLR0915
     async_test_client: AsyncClient,
 ) -> None:
     """Walks through the structure-hierarchy provided and gets/posts offered resources"""
@@ -129,7 +130,7 @@ async def test_resources_offered_from_structure_hierarchy(
         )
 
         assert len(all_tns) == 14
-        assert len(all_srcs) == 35
+        assert len(all_srcs) == 37
         assert len(all_snks) == 14
         assert len(src_attached_metadata_dict) == 52
         assert len(snk_attached_metadata_dict) == 24
@@ -637,7 +638,7 @@ async def test_input_wiring_free_text_filters(
             },
         )
         assert df_response.status_code == 200
-        df: pd.DataFrame = pd.read_json(df_response.text, lines=True)
+        df: pd.DataFrame = pd.read_json(io.StringIO(df_response.text), lines=True)
         assert df.columns == ["b"]
 
         df_response_no_json_column_names = await client.get(
@@ -681,7 +682,7 @@ async def test_input_wiring_free_text_filters(
             },
         )
         assert mtsf_response.status_code == 200
-        mtsf: pd.DataFrame = pd.read_json(mtsf_response.text, lines=True)
+        mtsf: pd.DataFrame = pd.read_json(io.StringIO(mtsf_response.text), lines=True)
         if len(mtsf.index > 0):
             assert len(mtsf[mtsf["value"] > 107.9].index) == 0
             assert len(mtsf[mtsf["value"] < 93.4].index) == 0
@@ -710,7 +711,7 @@ async def test_input_wiring_free_text_filters(
             },
         )
         assert ts_response.status_code == 200
-        ts_df: pd.DataFrame = pd.read_json(ts_response.text, lines=True)
+        ts_df: pd.DataFrame = pd.read_json(io.StringIO(ts_response.text), lines=True)
         assert len(ts_df.index) == 13
 
         ts_response_no_frequency_string = await client.get(
@@ -749,7 +750,7 @@ async def test_output_wiring_free_text_filters(
                 "id": "root.plantA.alerts",
             },
         )
-        df: pd.DataFrame = pd.read_json(df_get_response.text, lines=True)
+        df: pd.DataFrame = pd.read_json(io.StringIO(df_get_response.text), lines=True)
         assert df.columns == ["b"]
 
         df_post_response_no_json_column_names = await client.post(
@@ -824,7 +825,9 @@ async def test_output_wiring_free_text_filters(
         )
         assert mtsf_post_response.status_code == 200
         assert "metric" in mtsf_get_response.text
-        mtsf: pd.DataFrame = pd.read_json(mtsf_get_response.text, lines=True)
+        mtsf: pd.DataFrame = pd.read_json(
+            io.StringIO(mtsf_get_response.text), lines=True
+        )
         assert "metric" in mtsf
         assert mtsf["metric"].unique() == ["b"]
 
@@ -851,7 +854,9 @@ async def test_output_wiring_free_text_filters(
             },
         )
         assert ts_get_response.status_code == 200
-        ts_df: pd.DataFrame = pd.read_json(ts_get_response.text, lines=True)
+        ts_df: pd.DataFrame = pd.read_json(
+            io.StringIO(ts_get_response.text), lines=True
+        )
         assert len(ts_df.index) == 2
 
         ts_response_no_frequency_string = await client.post(

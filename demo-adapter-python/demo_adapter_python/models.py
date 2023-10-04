@@ -72,7 +72,7 @@ class MultipleSinksResponse(BaseModel):
 
 class PostMetadatum(BaseModel):
     key: str
-    value: Any = Field(..., example=True)
+    value: Any = Field(..., examples=[True])
 
 
 class Metadatum(BaseModel):
@@ -86,4 +86,4 @@ class TimeseriesRecord(BaseModel):
     timestamp: datetime.datetime = Field(
         ..., example=datetime.datetime.now(datetime.timezone.utc)
     )
-    value: Any = Field(..., example=0.25)
+    value: Any = Field(..., examples=[0.25])

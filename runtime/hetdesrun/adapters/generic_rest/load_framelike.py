@@ -3,7 +3,6 @@
 Common utilities for loading data that is frame-like (tabular), i.e. dataframes as well as
 timeseries (where the later can be understood as special dataframe/table)
 """
-
 import base64
 import datetime
 import json
