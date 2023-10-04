@@ -195,10 +195,10 @@ or `MissingOutputException`:
 }
 ```
 
-If the data type of an output and the type of the provided data do not match, it depends on the type of adapter and the expected data type what happens.
+If the data type of an output and the type of the provided data do not match, it depends on the type of adapter what happens.
 With the direct provisioning adapter, the result is just displayed without an exception.
 In the case of a general custom adapter, it depends on the implementation of that adapter whether an exception is raised.
-In the case of a generic REST adapter, an exception is raised in the generic rest adapter part of the runtime if the component output data type is `SERIES`, `DATAFRAME`, or `MULTITSFRAME`:
+In the case of a generic REST adapter, an exception is raised in the generic rest adapter part of the runtime:
 
 ```json
 "error": {
@@ -212,24 +212,6 @@ In the case of a generic REST adapter, an exception is raised in the generic res
         "file": "/app/hetdesrun/adapters/generic_rest/send_ts_data.py",
         "function_name": "ts_to_list_of_dicts",
         "line_number": 42
-    }
-},
-```
-
-All other data types can only be assigned to metadata sinks which are handled differently, i.e. the data is sent to the adapter, which then raises an exception:
-
-```json
-"error": {
-    "type": "AdapterConnectionError",
-    "error_code": null,
-    "message": "Posting metadata to generic rest adapter endpoint http://hetida-designer-demo-adapter-python:8092/thingNodes/root.plantA/metadata/Plant%20Age%20in%20Years failed. Status code: 500. Text: Internal Server Error",
-    "extra_information": null,
-    "process_stage": "SENDING_DATA_TO_ADAPTERS",
-    "operator_info": null,
-    "location": {
-        "file": "/app/hetdesrun/adapters/generic_rest/send_metadata.py",
-        "function_name": "send_single_metadatum_to_adapter",
-        "line_number": 82
     }
 },
 ```

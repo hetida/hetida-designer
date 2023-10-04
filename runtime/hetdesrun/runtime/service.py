@@ -8,7 +8,12 @@ from hetdesrun.models.run import (
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-from hetdesrun.runtime import ComponentException, RuntimeExecutionError, runtime_logger
+from hetdesrun.runtime import (
+    ComponentException,
+    RuntimeExecutionError,
+    UnexpectedComponentException,
+    runtime_logger,
+)
 from hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.engine.plain import workflow_execution_plain
 from hetdesrun.runtime.engine.plain.parsing import (
@@ -154,7 +159,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
         pure_execution_measured_step.stop()
 
-    except ComponentException as exc:
+    except (ComponentException, UnexpectedComponentException) as exc:
         runtime_logger.info(
             "Component Error during workflow execution",
             exc_info=True,

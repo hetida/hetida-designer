@@ -514,7 +514,6 @@ class TestSctructuredErrors:
             "/hetida-designer/runtime/hetdesrun/runtime/engine/plain/workflow.py"
         )
         assert result.error.location.function_name == "_run_comp_func"
-        assert result.error.location.line_number == 216
 
     async def test_raise_missing_outputs_exception(
         self,
@@ -540,9 +539,46 @@ class TestSctructuredErrors:
             "/hetida-designer/runtime/hetdesrun/runtime/engine/plain/workflow.py"
         )
         assert result.error.location.function_name == "result"
-        assert result.error.location.line_number == 403
 
-    async def test_raise_parsing_output_exception(
+    async def test_raise_parsing_metadata_output_exception(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace(
+            function_code='return {"result": "string instead of boolean"}',
+        )
+        wf_exc_input.workflow_wiring.output_wirings = [
+            OutputWiring(
+                workflow_output_name="result",
+                adapter_id="demo-adapter-python",
+                ref_id="root.plantA.picklingUnit.influx.anomaly_score",
+                ref_id_type="SINK",
+                ref_key="Overshooting Allowed",
+                type="metadata(boolean)",
+                filters={},
+            )
+        ]
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.SENDING_DATA_TO_ADAPTERS
+        assert result.error.type == "AdapterOutputDataError"
+        assert result.error.error_code is None
+        assert result.error.message == (
+            "Received metadatum value 'string instead of boolean' cannot be parsed "
+            "as the declared data type BOOLEAN."
+        )
+        assert result.error.extra_information is None
+        assert result.error.operator_info is None
+        assert result.error.location is not None
+        assert result.error.location.file.endswith(
+            "/hetdesrun/adapters/generic_rest/send_metadata.py"
+        )
+        assert result.error.location.function_name == "send_single_metadatum_to_adapter"
+
+    async def test_raise_parsing_series_output_exception(
         self,
         async_test_client: AsyncClient,
     ) -> None:

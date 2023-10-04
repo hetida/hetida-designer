@@ -209,7 +209,7 @@ class ComputationNode:
         if not isinstance(
             function_result, dict
         ):  # user functions may return completely unknown type
-            msg = f"Component did not return an output dict."
+            msg = "Component did not return an output dict."
             runtime_execution_logger.warning(msg, exc_info=True)
             raise RuntimeExecutionError(msg).set_context(self.context)
 
