@@ -109,38 +109,6 @@ async def maintenance_deprecate_all_but_latest_per_group(
 
 
 @maintenance_router.post(
-    "/correct_output_connector_names",
-    response_model=MaintenanceActionResult,
-    summary="Deprecate old transformation revision and keep only latest",
-)
-async def maintenance_correct_output_connector_names(
-    maintenance_payload: MaintenancePayload, response: Response
-) -> MaintenanceActionResult:
-    """Correct output connector names.
-
-    Update the connector_name attribute of outputs to the correct value if it was incorrectly set
-    to the default value "connector_name". This has been caused by a faulty implementation in the
-    get_operator_and_connector_name function.
-
-    This function is used to transform WorklfowRevisionFrontendDto instances (previous data model)
-    to TransformationRevision instances (current data model). The incorrect implementation existed
-    from release 0.7.1 up to and including release 0.8.8.
-
-    Workflows that were updated with release 0.8.9 are not affected. Workflows that were last
-    updated between release 0.7.1 and 0.8.9 are no longer valid as of release 0.9.0.
-    Workflows that are in the DRAFT state will have their outputs disappear with the next PUT
-    request and their execution will fail. The affected
-    workflows can be automatically repaired using this endpoint instead.
-    """
-    return handle_maintenance_operation_request(
-        "correct_output_connector_names",
-        maintenance_payload.maintenance_secret,
-        correct_output_connector_names,
-        response=response,
-    )
-
-
-@maintenance_router.post(
     "/delete_drafts",
     response_model=MaintenanceActionResult,
     summary="delete all transformation revisions with state DRAFT",

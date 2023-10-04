@@ -501,26 +501,6 @@ deprecate_all_but_latest_per_group() {
         "${REMAINING_ARGS[@]}"
 }
 
-# Correct output connector names falsely set to default value "connector_name"
-
-#     Note that this will overwrite released transformations.
-correct_output_connector_names() {
-    _setup "${@}"
-    _ensure_maintenance_secret
-    ensure_access_token
-
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
-    fi
-    curl "${curl_args[@]}" -X POST \
-        -H "Authorization: Bearer $ACCESS_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
-        "$HD_BACKEND_API_URL/maintenance/correct_output_connector_names$QUERY_URL_APPEND" \
-        "${REMAINING_ARGS[@]}"
-}
-
 # Delete all transformation revisions with state DRAFT
 delete_drafts() {
     _setup "${@}"

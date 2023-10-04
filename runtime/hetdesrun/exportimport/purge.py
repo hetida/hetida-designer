@@ -32,31 +32,6 @@ def deprecate_all_but_latest_per_group(directly_in_db: bool = False) -> None:
         )
 
 
-def correct_output_connector_names(directly_in_db: bool = False) -> None:
-    tr_list = get_transformation_revisions(
-        params=FilterParams(type=Type.WORKFLOW, include_dependencies=False),
-        directly_from_db=directly_in_db,
-    )
-
-    for tr in tr_list:
-        assert isinstance(tr.content, WorkflowContent)  # noqa: S101
-        applicable = False
-        if len(tr.content.outputs) != 0:
-            for output in tr.content.outputs:
-                if output.connector_name == "connector_name":
-                    applicable = True
-                    for operator in tr.content.operators:
-                        if operator.id == output.operator_id:
-                            for output_connector in operator.outputs:
-                                if output_connector.id == output.connector_id:
-                                    assert (  # noqa: S101
-                                        output_connector.name is not None
-                                    )
-                                    output.connector_name = output_connector.name
-        if applicable:
-            update_or_create_transformation_revision(tr, directly_in_db=directly_in_db)
-
-
 def delete_drafts(directly_in_db: bool = False) -> None:
     tr_list = get_transformation_revisions(
         params=FilterParams(state=State.DRAFT, include_dependencies=False),
