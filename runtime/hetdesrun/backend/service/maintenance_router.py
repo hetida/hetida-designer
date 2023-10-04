@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field, SecretStr
 
 from hetdesrun.exportimport.importing import import_importables, import_transformations
 from hetdesrun.exportimport.purge import (
-    correct_output_connector_names,
     delete_all_and_refill,
     delete_drafts,
     delete_unused_deprecated,

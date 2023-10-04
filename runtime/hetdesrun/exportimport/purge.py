@@ -6,11 +6,9 @@ from hetdesrun.exportimport.utils import (
     delete_transformation_revisions,
     deprecate_all_but_latest_in_group,
     get_transformation_revisions,
-    update_or_create_transformation_revision,
 )
-from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
-from hetdesrun.utils import State, Type
+from hetdesrun.utils import State
 
 logger = logging.getLogger(__name__)
 
