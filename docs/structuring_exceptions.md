@@ -1,11 +1,9 @@
 # Structuring Exceptions
 
-Usually exceptions in Python projects are structured by inheritance and can be imported where needed.
-Since the code is capsulated in components in the hetida designer, importing is more complicated.
-Redefining exceptions in each component would be both cumbersome and error-prone.
-
-Therefore, the `ComponentException` is defined in the hetida designer runtime, which can be enriched with an error code.
+In order to further progress errors in other instances, the `ComponentException` is defined in the hetida designer runtime, which can be enriched with an optional error code and optional extra information besides the error message itself.
 The error code can be either an integer or a string.
+The extra information must be a dictionary.
+The values of both of these attributes will then be accessible in the response.
 It is the responsibility of component code authors to use the error code in a way that structures the exceptions.
 
 The following example shows how this exception can be used in component code:
@@ -31,6 +29,7 @@ Executing a component with the above code and inputs `1` and `0` results in a js
     "type": "ComponentException",
     "error_code": 422,
     "message": "The divisor must not equal zero!",
+    "extra_information": null,
     "process_stage": "EXECUTING_COMPONENT_CODE",
     "operator_info": {
         "transformation_info": {
@@ -70,7 +69,8 @@ The `process_stage` attribute can take one of the following values:
 
 Only exceptions raised in the process stage `EXECUTING_COMPONENT_CODE` cause errors with the `operator_info` attribute, for the other porcess stages this information is not accessible.
 
-Since the most common use case for exceptions is dealing with unexpected input, there is also `ComponentInputValidationException` defined in the hetida designer runtime, which inherits from `ComponentException`.
+Since the most common use case for exceptions is dealing with unexpected input, there is also `ComponentInputValidationException` defined in the hetida designer runtime.
+This class inherits from `ComponentException` and has the additional input parameter `input_names`, which consumes a list of strings that is added to the `extra_information` dictionary under the key `input_names`.
 It is of course also possible to inherit again from this exception or from `ComponentException` itself.
 
 ```python
@@ -88,13 +88,16 @@ def main(*, series):
     # write your function code here.
     if len(series) == 0:
         raise ComponentInputValidationException(
-            "The divisor must not equal zero!", error_code="EmptySeries"
+            "The series must not be empty!",
+            error_code="EmptySeries",
+            input_names=["series"],
         )
     if series.values.dtype not in ("int64", "float64"):
         raise SeriesTypeException(
             "Excpeted series with values of type int or float, but got type "
             + str(series.values.dtype),
             error_code="WrongKindOfSeries",
+            input_names=["series"],
         )
     return {"result": series.mean()}
 ```
@@ -103,7 +106,8 @@ def main(*, series):
 "error": {
     "type": "ComponentInputValidationException",
     "error_code": "EmptySeries",
-    "message": "The divisor must not equal zero!",
+    "message": "The series must not be empty!",
+    "extra_information": {"input_names": ["series"]},
     "process_stage": "EXECUTING_COMPONENT_CODE",
     "operator_info": {
         "transformation_info": {
@@ -126,7 +130,7 @@ def main(*, series):
     "location": {
         "file": "component code",
         "function_name": "main",
-        "line_number": 32
+        "line_number": 34
     }
 }
 ```
@@ -136,9 +140,10 @@ This exception must of course enable initialization with a message and an error 
 
 ```python
 class SeriesTypeException(Exception):
-    def __init__(self, msg, error_code, **kwargs) -> None:
+    def __init__(self, msg, error_code, input_names, **kwargs) -> None:
         self.__is_hetida_designer_exception__ = True
         self.error_code = error_code
+        self.extra_information = {"input_names": input_names}
         super().__init__(msg, **kwargs)
 ```
 
@@ -161,6 +166,7 @@ result in a `RuntimeExecutionError`:
     "type": "RuntimeExecutionError",
     "error_code": null,
     "message": "Component function of component instance \\f7c20ae9-5141-447c-8ae8-086edfc8d231\\76cf9d97-4007-48d8-8ca5-89320df9caab\\ from component \\Wrapper Workflow\\Raise Inherited Exception\\ did not return an output dict!",
+    "extra_information": null,
     "process_stage": "EXECUTING_COMPONENT_CODE",
     "operator_info": {...},
     "location": {
@@ -178,6 +184,7 @@ or `KeyError`:
     "type": "KeyError",
     "error_code": null,
     "message": "'result'",
+    "extra_information": null,
     "process_stage": "EXECUTING_COMPONENT_CODE",
     "operator_info": {...},
     "location": {
@@ -198,6 +205,7 @@ In the case of a generic REST adapter, an exception is raised in the generic res
     "type": "AdapterOutputDataError",
     "error_code": null,
     "message": "Did not receive Pandas Series as expected from workflow output. Got <class 'numpy.float64'> instead.",
+    "extra_information": null,
     "process_stage": "SENDING_DATA_TO_ADAPTERS",
     "operator_info": null,
     "location": {
@@ -215,6 +223,7 @@ All other data types can only be assigned to metadata sinks which are handled di
     "type": "AdapterConnectionError",
     "error_code": null,
     "message": "Posting metadata to generic rest adapter endpoint http://hetida-designer-demo-adapter-python:8092/thingNodes/root.plantA/metadata/Plant%20Age%20in%20Years failed. Status code: 500. Text: Internal Server Error",
+    "extra_information": null,
     "process_stage": "SENDING_DATA_TO_ADAPTERS",
     "operator_info": null,
     "location": {
@@ -232,6 +241,7 @@ An error in the input wiring such as an incorrect data type (`dataframe` instead
     "type": "AdapterConnectionError",
     "error_code": null,
     "message": "Requesting framelike data from generic rest adapter endpoint http://hetida-designer-demo-adapter-python:8092/dataframe failed. Status code: 404. Text: {\"detail\":\"No dataframe data available with provided id 'root.plantA.picklingUnit.influx.temp'.\"}",
+    "extra_information": null,
     "process_stage": "LOADING_DATA_FROM_ADAPTERS",
     "operator_info": null,
     "location": {

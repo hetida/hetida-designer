@@ -285,6 +285,7 @@ class TestSctructuredErrors:
             "(Code module uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, "
             "Component uuid: c4dbcc42-eaec-4587-a362-ce6567f21d92, function name: main)"
         )
+        assert result.error.extra_information is None
         assert result.error.location is not None
         assert result.error.location.file.endswith(
             "/hetdesrun/runtime/engine/plain/parsing.py"
@@ -317,6 +318,7 @@ class TestSctructuredErrors:
         assert result.error.message == (
             "Some default values could not be parsed into the respective workflow input datatypes."
         )
+        assert result.error.extra_information is None
         assert result.error.location is not None
         assert result.error.location.file.endswith(
             "/hetdesrun/runtime/engine/plain/parsing.py"
@@ -330,7 +332,11 @@ class TestSctructuredErrors:
         wf_exc_input = division_component_wf_exc_inp_replace(
             function_code=(
                 """if divisor == 0:
-                    raise ComponentException("The divisor must not equal zero!", error_code=404)
+                    raise ComponentException(
+                        "The divisor must not equal zero!",
+                        error_code=404,
+                        extra_information={"dividend": dividend}
+                    )
                     return {"result": dividend/divisor}
                 """
             )
@@ -342,6 +348,7 @@ class TestSctructuredErrors:
         assert result.error is not None
         assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
         assert result.error.message == "The divisor must not equal zero!"
+        assert result.error.extra_information == {"dividend": 1}
         assert result.error.error_code == 404
         assert result.error.type == "ComponentException"
         assert result.error.operator_info is not None
@@ -358,15 +365,21 @@ class TestSctructuredErrors:
         wf_exc_input = division_component_wf_exc_inp_replace(
             imports_and_definitions=(
                 """class ComponentException(Exception):
-                    def __init__(self, msg, error_code, **kwargs) -> None:
+                    def __init__(self, msg, error_code, extra_information, **kwargs):
                         self.__is_hetida_designer_exception__ = True
                         self.error_code = error_code
+                        if extra_information is not None:
+                            self.extra_information = extra_information
                         super().__init__(msg, **kwargs)
                 """
             ),
             function_code=(
                 """if divisor == 0:
-                    raise ComponentException("The divisor must not equal zero!", error_code=404)
+                    raise ComponentException(
+                        "The divisor must not equal zero!",
+                        error_code=404,
+                        extra_information={"dividend": dividend}
+                    )
                     return {"result": dividend/divisor}
                 """
             ),
@@ -378,6 +391,7 @@ class TestSctructuredErrors:
         assert result.error is not None
         assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
         assert result.error.message == "The divisor must not equal zero!"
+        assert result.error.extra_information == {"dividend": 1}
         assert result.error.error_code == 404
         assert result.error.type == "ComponentException"
         assert result.error.operator_info is not None
@@ -385,7 +399,44 @@ class TestSctructuredErrors:
         assert result.error.location is not None
         assert result.error.location.file == "component code"
         assert result.error.location.function_name == "main"
-        assert result.error.location.line_number == 33
+        assert result.error.location.line_number == 35
+
+    async def test_raise_imported_component_input_validation_exception(
+        self,
+        async_test_client: AsyncClient,
+    ) -> None:
+        wf_exc_input = division_component_wf_exc_inp_replace(
+            imports_and_definitions=(
+                "from hetdesrun.runtime.exceptions import ComponentInputValidationException"
+            ),
+            function_code=(
+                """if divisor == 0:
+                    raise ComponentInputValidationException(
+                        "The divisor must not equal zero!",
+                        error_code=404,
+                        input_names=["divisor"]
+                    )
+                    return {"result": dividend/divisor}
+                """
+            ),
+        )
+        print(wf_exc_input.code_modules[0].code)
+
+        async with async_test_client as client:
+            result = await execute_workflow_execution_input(wf_exc_input, client)
+
+        assert result.error is not None
+        assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
+        assert result.error.message == "The divisor must not equal zero!"
+        assert result.error.extra_information == {"input_names": ["divisor"]}
+        assert result.error.error_code == 404
+        assert result.error.type == "ComponentInputValidationException"
+        assert result.error.operator_info is not None
+        assert "c4dbcc" in result.error.operator_info.transformation_info.id
+        assert result.error.location is not None
+        assert result.error.location.file == "component code"
+        assert result.error.location.function_name == "main"
+        assert result.error.location.line_number == 28
 
     async def test_raise_explicit_value_error(
         self,
@@ -408,6 +459,7 @@ class TestSctructuredErrors:
         assert result.error.type == "ValueError"
         assert result.error.error_code is None
         assert result.error.message == "The divisor must not equal zero!"
+        assert result.error.extra_information is None
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
         assert result.error.location is not None
@@ -431,6 +483,7 @@ class TestSctructuredErrors:
         assert result.error.type == "ZeroDivisionError"
         assert result.error.error_code is None
         assert result.error.message == "division by zero"
+        assert result.error.extra_information is None
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
         assert result.error.location is not None
@@ -452,6 +505,7 @@ class TestSctructuredErrors:
         assert result.error.type == "KeyError"
         assert result.error.error_code is None
         assert result.error.message == "'result'"  # name of missing output
+        assert result.error.extra_information is None
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
         assert result.error.location.file.endswith(
@@ -489,6 +543,7 @@ class TestSctructuredErrors:
             "Did not receive Pandas Series as expected from workflow output. "
             "Got <class 'str'> instead."
         )
+        assert result.error.extra_information is None
         assert result.error.operator_info is None
         assert result.error.location is not None
         assert result.error.location.file.endswith(
@@ -517,6 +572,7 @@ class TestSctructuredErrors:
             ' object is not iterable"), '
             "TypeError('vars() argument must have __dict__ attribute')]"
         )
+        assert result.error.extra_information is None
         assert result.error.location is not None
         assert result.error.location.file.endswith("fastapi/encoders.py")
         assert result.error.location.function_name == "jsonable_encoder"

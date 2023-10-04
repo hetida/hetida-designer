@@ -51,16 +51,37 @@ class DAGProcessingError(RuntimeExecutionError):
 class ComponentException(RuntimeExecutionError):
     """Exception to re-raise exceptions with error code raised in the component code."""
 
-    def __init__(self, *args: Any, error_code: int | str = "", **kwargs: Any) -> None:
+    def __init__(
+        self,
+        *args: Any,
+        error_code: int | str = "",
+        extra_information: dict | None = None,
+        **kwargs: Any
+    ) -> None:
         if not isinstance(error_code, int | str):
             raise ValueError("The ComponentException.error_code must be int or string!")
         self.error_code = error_code
         self.__is_hetida_designer_exception__ = True
+        self.extra_information = extra_information
         super().__init__(*args, **kwargs)
 
 
 class ComponentInputValidationException(ComponentException):
     """In code input validation failures"""
+
+    def __init__(
+        self,
+        *args: Any,
+        input_names: list[str],
+        error_code: int | str = "",
+        **kwargs: Any
+    ) -> None:
+        super().__init__(
+            *args,
+            error_code=error_code,
+            extra_information={"input_names": input_names},
+            **kwargs
+        )
 
 
 class UnexpectedComponentException(RuntimeExecutionError):

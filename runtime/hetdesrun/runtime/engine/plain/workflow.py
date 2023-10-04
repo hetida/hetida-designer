@@ -191,15 +191,17 @@ class ComputationNode:
                 hasattr(exc, "__is_hetida_designer_exception__")
                 and exc.__is_hetida_designer_exception__ is True
                 and hasattr(exc, "error_code")
-                and isinstance(exc.error_code, int | str)
+                and hasattr(exc, "extra_information")
             ):
                 runtime_execution_logger.warning(
                     "User raised in exception with error code in component code!",
                     exc_info=True,
                 )
-                raise ComponentException(exc, error_code=exc.error_code).set_context(
-                    self.context
-                ) from exc
+                raise ComponentException(
+                    exc,
+                    error_code=exc.error_code,
+                    extra_information=exc.extra_information,
+                ).set_context(self.context) from exc
             msg = "Unexpected error from user code"
             runtime_execution_logger.warning(msg, exc_info=True)
             raise UnexpectedComponentException(msg).set_context(self.context) from exc

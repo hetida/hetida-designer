@@ -283,6 +283,7 @@ class WorkflowExecutionError(BaseModel):
     type: str  # noqa: A003
     error_code: int | str | None = None
     message: str
+    extra_information: dict | None = None
     process_stage: ProcessStage | None = None
     operator_info: OperatorInfo | None = None
     location: ErrorLocation
@@ -324,6 +325,9 @@ class WorkflowExecutionInfo(BaseModel):
                 if cause is None
                 else type(cause).__name__,
                 message=str(exception) if cause is None else str(cause),
+                extra_information=exception.extra_information
+                if isinstance(exception, ComponentException)
+                else None,
                 error_code=exception.error_code
                 if isinstance(exception, ComponentException)
                 else None,
