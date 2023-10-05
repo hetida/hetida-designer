@@ -151,8 +151,9 @@ First, such an exception must of course enable initialization with a message and
 
 ```python
 class SeriesTypeException(Exception):
+    __is_hetida_designer_exception__ = True
+
     def __init__(self, msg, error_code, input_names, **kwargs) -> None:
-        self.__is_hetida_designer_exception__ = True
         self.error_code = error_code
         self.extra_information = {"input_names": input_names}
         super().__init__(msg, **kwargs)

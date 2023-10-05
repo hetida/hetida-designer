@@ -51,6 +51,8 @@ class DAGProcessingError(RuntimeExecutionError):
 class ComponentException(RuntimeExecutionError):
     """Exception to re-raise exceptions with error code raised in the component code."""
 
+    __is_hetida_designer_exception__ = True
+
     def __init__(
         self,
         *args: Any,
@@ -61,7 +63,6 @@ class ComponentException(RuntimeExecutionError):
         if not isinstance(error_code, int | str):
             raise ValueError("The ComponentException.error_code must be int or string!")
         self.error_code = error_code
-        self.__is_hetida_designer_exception__ = True
         self.extra_information = extra_information
         super().__init__(*args, **kwargs)
 
