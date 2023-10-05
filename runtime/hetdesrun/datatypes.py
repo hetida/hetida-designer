@@ -3,7 +3,7 @@ import io
 import json
 import logging
 from collections.abc import Generator
-from enum import Enum
+from enum import StrEnum
 from typing import Any, TypedDict
 from uuid import UUID
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
 
 
-class DataType(str, Enum):
+class DataType(StrEnum):
     """hetida designer data types
 
     These are the types available for component/workflow inputs/outputs.

@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -30,7 +30,7 @@ class TransformationOutput(IO):
         return ComponentOutput(id=self.id, type=self.data_type, name=self.name)
 
 
-class InputType(str, Enum):
+class InputType(StrEnum):
     REQUIRED = "REQUIRED"
     OPTIONAL = "OPTIONAL"
 
