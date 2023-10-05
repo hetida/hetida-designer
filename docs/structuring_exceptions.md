@@ -1,10 +1,15 @@
 # Structuring Exceptions
 
-In order to further progress errors in other instances, the `ComponentException` is defined in the hetida designer runtime, which can be enriched with an optional error code and optional extra information besides the error message itself.
-The error code can be either an integer or a string.
-The extra information must be a dictionary.
-The values of both of these attributes will then be accessible in the response.
-It is the responsibility of component code authors to use the error code in a way that structures the exceptions.
+When a workflow/component raises an exception during execution, this exception is captured by hetida designers and suitable information about the error (like its message) is attached to the execution response json.
+
+In production scenarios it is often necessary to react programmatically to certain situations / errors. For this, parsing the error message text for details is not optimal. The service/component triggering the execution often needs a more structured access to such details and component code authors need a way to provide this information.
+
+Therefore hetida designer provides the following ways to component code authors to raise their own exceptions explicitely enriched with information to pe propagated in a structured way into the execution json response.
+
+## ComponentException Class
+Generally, a `ComponentException` class is available, which can be enriched with an optional error code and optional extra information besides the error message itself.
+
+The error code can be either an integer or a string. The extra information must be a dictionary. Both will then be accessible in the response.
 
 The following example shows how this exception can be used in component code:
 
@@ -57,7 +62,7 @@ Executing a component with the above code and inputs `1` and `0` results in a js
 }
 ```
 
-In such a case where the exception is raised within the component code, the `file` attribute of the `location` is just `component code`, in all other cases it is the path to the corresponding file.
+Since the exception is raised within the component code, the `file` attribute of the `location` is just `component code` (in all other cases it is the path to the corresponding file).
 
 The `process_stage` attribute can take one of the following values:
 * PARSING_WORKFLOW
@@ -67,10 +72,14 @@ The `process_stage` attribute can take one of the following values:
 * SENDING_DATA_TO_ADAPTERS 
 * ENCODING_RESULTS_TO_JSON
 
-Only exceptions raised in the process stage `EXECUTING_COMPONENT_CODE` cause errors with the `operator_info` attribute, for the other porcess stages this information is not accessible.
+Of course, only exceptions raised in the process stage `EXECUTING_COMPONENT_CODE` cause errors with the `operator_info` attribute.
 
-Since the most common use case for exceptions is dealing with unexpected input, there is also `ComponentInputValidationException` defined in the hetida designer runtime.
-This class inherits from `ComponentException` and has the additional input parameter `input_names`, which consumes a list of strings that is added to the `extra_information` dictionary under the key `input_names`.
+### Raising Component Input Validation Errors
+
+One of the most frequent use cases for exceptions is dealing with unexpected input. For this there is a subclass of `ComponentException` called `ComponentInputValidationException`. Components should check their inputs and raise this exception if some of them are invalid.
+
+This exception has the additional input parameter `input_names`, which should be filled with the list of component input names that are invalid when raised. It is then added to the `extra_information` dictionary under the key `input_names`.
+
 It is of course also possible to inherit again from this exception or from `ComponentException` itself.
 
 ```python
@@ -135,8 +144,10 @@ def main(*, series):
 }
 ```
 
-To develop the component code independently of the hetdesrun library, exceptions must be defined locally in the component code.
-This exception must of course enable initialization with a message and an error code.
+## Not using the predefined classes
+To develop the component code independently of the hetdesrun library, exceptions that are handled similarly can be defined locally in the component code as follows.
+
+First, such an exception must of course enable initialization with a message and an error code (and possibly input_names).
 
 ```python
 class SeriesTypeException(Exception):
@@ -147,6 +158,9 @@ class SeriesTypeException(Exception):
         super().__init__(msg, **kwargs)
 ```
 
+... TODO ...
+
+## Typical errors and their handling behaviour
 The most common errors, namely the direct return of the result instead of a dictionary with the component output names as keys 
 
 ```python
@@ -196,8 +210,11 @@ or `MissingOutputException`:
 ```
 
 If the data type of an output and the type of the provided data do not match, it depends on the type of adapter what happens.
-With the direct provisioning adapter, the result is just displayed without an exception.
+With the direct provisioning adapter, the result is just displayed without an exception. TODO: depends on json parseability of the provided object?
+
+
 In the case of a general custom adapter, it depends on the implementation of that adapter whether an exception is raised.
+
 In the case of a generic REST adapter, an exception is raised in the generic rest adapter part of the runtime:
 
 ```json
