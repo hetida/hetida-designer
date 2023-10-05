@@ -294,7 +294,7 @@ def get_location_of_exception(exception: Exception | BaseException) -> ErrorLoca
     return ErrorLocation(
         file=last_trace.filename
         if last_trace.filename != "<string>"
-        else "component code",
+        else "COMPONENT CODE",
         function_name=last_trace.name,
         line_number=last_trace.lineno,
     )

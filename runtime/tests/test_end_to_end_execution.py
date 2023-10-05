@@ -354,7 +354,7 @@ class TestSctructuredErrors:
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
         assert result.error.location is not None
-        assert result.error.location.file == "component code"
+        assert result.error.location.file == "COMPONENT CODE"
         assert result.error.location.function_name == "main"
         assert result.error.location.line_number == 28
 
@@ -397,7 +397,7 @@ class TestSctructuredErrors:
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
         assert result.error.location is not None
-        assert result.error.location.file == "component code"
+        assert result.error.location.file == "COMPONENT CODE"
         assert result.error.location.function_name == "main"
         assert result.error.location.line_number == 35
 
@@ -436,7 +436,7 @@ class TestSctructuredErrors:
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
         assert result.error.location is not None
-        assert result.error.location.file == "component code"
+        assert result.error.location.file == "COMPONENT CODE"
         assert result.error.location.function_name == "main"
         assert result.error.location.line_number == 28
 
@@ -465,7 +465,7 @@ class TestSctructuredErrors:
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
         assert result.error.location is not None
-        assert result.error.location.file == "component code"
+        assert result.error.location.file == "COMPONENT CODE"
         assert result.error.location.function_name == "main"
         assert result.error.location.line_number == 28
 
@@ -489,7 +489,7 @@ class TestSctructuredErrors:
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
         assert result.error.location is not None
-        assert result.error.location.file == "component code"
+        assert result.error.location.file == "COMPONENT CODE"
         assert result.error.location.function_name == "main"
         assert result.error.location.line_number == 27
 

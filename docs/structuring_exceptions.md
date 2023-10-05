@@ -55,14 +55,14 @@ Executing a component with the above code and inputs `1` and `0` results in a js
         }
     },
     "location": {
-        "file": "component code",
+        "file": "COMPONENT CODE",
         "function_name": "main",
         "line_number": 29
     }
 }
 ```
 
-Since the exception is raised within the component code, the `file` attribute of the `location` is just `component code` (in all other cases it is the path to the corresponding file).
+Since the exception is raised within the component code, the `file` attribute of the `location` is just `COMPONENT CODE` (in all other cases it is the path to the corresponding file).
 
 The `process_stage` attribute can take one of the following values:
 * PARSING_WORKFLOW
@@ -137,7 +137,7 @@ def main(*, series):
         }
     },
     "location": {
-        "file": "component code",
+        "file": "COMPONENT CODE",
         "function_name": "main",
         "line_number": 34
     }
