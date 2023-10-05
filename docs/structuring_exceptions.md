@@ -78,7 +78,7 @@ Of course, only exceptions raised in the process stage `EXECUTING_COMPONENT_CODE
 
 One of the most frequent use cases for exceptions is dealing with unexpected input. For this there is a subclass of `ComponentException` called `ComponentInputValidationException`. Components should check their inputs and raise this exception if some of them are invalid.
 
-This exception has the additional input parameter `input_names`, which should be filled with the list of component input names that are invalid when raised. It is then added to the `extra_information` dictionary under the key `input_names`.
+This exception has the additional input parameter `invalid_component_inputs`, which should be filled with the list of component input names that are invalid when raised. It is then added to the `extra_information` dictionary under the key `invalid_component_inputs`.
 
 It is of course also possible to inherit again from this exception or from `ComponentException` itself.
 
@@ -99,14 +99,14 @@ def main(*, series):
         raise ComponentInputValidationException(
             "The series must not be empty!",
             error_code="EmptySeries",
-            input_names=["series"],
+            invalid_component_inputs=["series"],
         )
     if series.values.dtype not in ("int64", "float64"):
         raise SeriesTypeException(
             "Excpeted series with values of type int or float, but got type "
             + str(series.values.dtype),
             error_code="WrongKindOfSeries",
-            input_names=["series"],
+            invalid_component_inputs=["series"],
         )
     return {"result": series.mean()}
 ```
@@ -116,7 +116,7 @@ def main(*, series):
     "type": "ComponentInputValidationException",
     "error_code": "EmptySeries",
     "message": "The series must not be empty!",
-    "extra_information": {"input_names": ["series"]},
+    "extra_information": {"invalid_component_inputs": ["series"]},
     "process_stage": "EXECUTING_COMPONENT_CODE",
     "operator_info": {
         "transformation_info": {
@@ -147,15 +147,15 @@ def main(*, series):
 ## Not using the predefined classes
 To develop the component code independently of the hetdesrun library, exceptions that are handled similarly can be defined locally in the component code as follows.
 
-First, such an exception must of course enable initialization with a message and an error code (and possibly input_names).
+First, such an exception must of course enable initialization with a message and an error code (and possibly invalid_component_inputs).
 
 ```python
 class SeriesTypeException(Exception):
     __is_hetida_designer_exception__ = True
 
-    def __init__(self, msg, error_code, input_names, **kwargs) -> None:
+    def __init__(self, msg, error_code, invalid_component_inputs, **kwargs) -> None:
         self.error_code = error_code
-        self.extra_information = {"input_names": input_names}
+        self.extra_information = {"invalid_component_inputs": invalid_component_inputs}
         super().__init__(msg, **kwargs)
 ```
 

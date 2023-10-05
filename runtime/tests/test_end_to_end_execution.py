@@ -414,7 +414,7 @@ class TestSctructuredErrors:
                     raise ComponentInputValidationException(
                         "The divisor must not equal zero!",
                         error_code=404,
-                        input_names=["divisor"]
+                        invalid_component_inputs=["divisor"]
                     )
                     return {"result": dividend/divisor}
                 """
@@ -428,7 +428,9 @@ class TestSctructuredErrors:
         assert result.error is not None
         assert result.error.process_stage == ProcessStage.EXECUTING_COMPONENT_CODE
         assert result.error.message == "The divisor must not equal zero!"
-        assert result.error.extra_information == {"input_names": ["divisor"]}
+        assert result.error.extra_information == {
+            "invalid_component_inputs": ["divisor"]
+        }
         assert result.error.error_code == 404
         assert result.error.type == "ComponentInputValidationException"
         assert result.error.operator_info is not None

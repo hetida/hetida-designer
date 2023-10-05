@@ -73,14 +73,14 @@ class ComponentInputValidationException(ComponentException):
     def __init__(
         self,
         *args: Any,
-        input_names: list[str],
+        invalid_component_inputs: list[str],
         error_code: int | str = "",
         **kwargs: Any
     ) -> None:
         super().__init__(
             *args,
             error_code=error_code,
-            extra_information={"input_names": input_names},
+            extra_information={"invalid_component_inputs": invalid_component_inputs},
             **kwargs
         )
 
