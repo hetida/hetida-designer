@@ -51,7 +51,9 @@ def upgrade() -> None:
                                     )
                                     output.connector_name = output_connector.name
         if applicable:
-            update_or_create_single_transformation_revision(tr)
+            update_or_create_single_transformation_revision(
+                tr, allow_overwrite_released=True
+            )
 
 
 def downgrade() -> None:
