@@ -7,9 +7,10 @@ In production scenarios it is often necessary to react programmatically to certa
 Therefore hetida designer provides the following ways to component code authors to raise their own exceptions explicitely enriched with information to pe propagated in a structured way into the execution json response.
 
 ## ComponentException Class
+
 Generally, a `ComponentException` class is available, which can be enriched with an optional error code and optional extra information besides the error message itself.
 
-The error code can be either an integer or a string. The extra information must be a dictionary. Both will then be accessible in the response.
+The error code can be either an integer or a string. The extra information must be a JSON serializable dictionary. Both will then be accessible in the response.
 
 The following example shows how this exception can be used in component code:
 
@@ -147,7 +148,10 @@ def main(*, series):
 ## Not using the predefined classes
 To develop the component code independently of the hetdesrun library, exceptions that are handled similarly can be defined locally in the component code as follows.
 
-First, such an exception must of course enable initialization with a message and an error code (and possibly invalid_component_inputs).
+First, such an exception must of course enable initialization with a message and an error code.
+By convention, to identify the exception as a hetida designer exception as opposed to an exception from another external package, the class attribute `__is_hetida_designer_exception__` must exist and be set to `True`.
+
+If extra information is needed in the response, the exception must have a corresponding JSON serializable value of type dictionary in the `extra_information` attribute. The initialization function may of course have differently named input parameters from which the `extra_information` value is composed, as shown in the following example:
 
 ```python
 class SeriesTypeException(Exception):
@@ -158,5 +162,3 @@ class SeriesTypeException(Exception):
         self.extra_information = {"invalid_component_inputs": invalid_component_inputs}
         super().__init__(msg, **kwargs)
 ```
-
-... TODO ...

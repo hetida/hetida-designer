@@ -187,11 +187,8 @@ class ComputationNode:
             )
             function_result = function_result if function_result is not None else {}
         except Exception as exc:  # uncaught exceptions from user code  # noqa: BLE001
-            if (
-                hasattr(exc, "__is_hetida_designer_exception__")
-                and exc.__is_hetida_designer_exception__ is True
-                and hasattr(exc, "error_code")
-                and hasattr(exc, "extra_information")
+            if hasattr(exc, "__is_hetida_designer_exception__") and hasattr(
+                exc, "error_code"
             ):
                 runtime_execution_logger.warning(
                     "User raised a hetida designer exception in component code.",
@@ -200,7 +197,9 @@ class ComputationNode:
                 raise ComponentException(
                     exc,
                     error_code=exc.error_code,
-                    extra_information=exc.extra_information,
+                    extra_information=exc.extra_information
+                    if hasattr(exc, "extra_information")
+                    else None,
                 ).set_context(self.context) from exc
             msg = "Unexpected error from user code."
             runtime_execution_logger.warning(msg, exc_info=True)
