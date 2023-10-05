@@ -16,7 +16,7 @@ Workflows that were updated with release 0.8.9 are not affected. Workflows that 
 updated between release 0.7.1 and 0.8.9 are no longer valid as of release 0.9.0.
 Workflows that are in the DRAFT state will have their outputs disappear with the next PUT
 request and their execution will fail. The affected
-workflows can be automatically repaired using this endpoint instead.
+workflows are automatically repaired by this migration script.
 """
 
 from hetdesrun.persistence.dbservice.revision import (
