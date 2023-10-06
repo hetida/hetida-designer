@@ -3,12 +3,15 @@
 * add [structured exception handling](./docs/structuring_exceptions.md)
   :warning: *Breaking change:* The attribute `error` in the response JSON of the execute endpoint is no longer a string but a mapping/dictionary 
 * add [free text filters for outputs (adapter system)](./docs/adapter_system/)
-* add blob storage config options
+* add blob storage adapter config options
+* add general [sql adapter](./docs/adapter_system/sql_adapter.md) with timeseries table support
+* add [improved metadata attrs handling](./docs/metadata_attrs.md) - in particular a manual input method
 * add python demo adapter sources and output free text filters
-* add validations
+* add additional validations
 * fix workflow validation issues via db migration
 * fix filter for categories in export
 * upgrade to python 3.11
+* upgrade dependencies
 
 ## 0.8.9
 * free text filters for inputs (adapter system)
