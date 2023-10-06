@@ -2,7 +2,8 @@
 
 
 import datetime
-from enum import Enum
+import traceback as tb
+from enum import Enum, StrEnum
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -10,11 +11,14 @@ from pydantic import BaseModel, Field, root_validator, validator
 
 from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
 from hetdesrun.models.base import Result
-from hetdesrun.models.code import CodeModule
+from hetdesrun.models.code import CodeModule, NonEmptyValidStr, ShortNonEmptyValidStr
 from hetdesrun.models.component import ComponentRevision
 from hetdesrun.models.wiring import OutputWiring, WorkflowWiring
 from hetdesrun.models.workflow import WorkflowNode
-from hetdesrun.utils import check_explicit_utc
+from hetdesrun.runtime.exceptions import ComponentException, RuntimeExecutionError
+from hetdesrun.utils import Type, check_explicit_utc
+
+HIERARCHY_SEPARATOR = "\\"
 
 
 class ExecutionEngine(Enum):
@@ -130,10 +134,11 @@ class WorkflowExecutionInput(BaseModel):
 
     @root_validator(skip_on_failure=True)
     def check_wiring_complete(cls, values: dict) -> dict:
-        """Every (non-constant) Workflow input/output must be wired
+        """Every (non-constant) required Workflow input/output must be wired
 
-        Checks whether there is a wiring for every non-constant workflow input
-        and for every workflow output.
+        Checks whether there is a wiring for every non-constant required workflow input
+        and for every workflow output and whether there is a non-constant workflow input for each
+        input wiring and a workflow output for each output wiring.
         """
 
         try:
@@ -149,26 +154,30 @@ class WorkflowExecutionInput(BaseModel):
         wired_input_names = {
             inp_wiring.workflow_input_name for inp_wiring in wiring.input_wirings
         }
-        dynamic_required_wf_inputs = [
-            wfi
+        dynamic_required_wf_input_names = [
+            wfi.name
             for wfi in workflow.inputs
             if wfi.constant is False and wfi.default is False
         ]
-        for wf_input in dynamic_required_wf_inputs:
-            if not wf_input.name in wired_input_names:
+        for wf_input_name in dynamic_required_wf_input_names:
+            if not wf_input_name in wired_input_names:
                 raise ValueError(
-                    f"Wiring Incomplete: Workflow Input {wf_input.name} has no wiring!"
+                    f"Wiring Incomplete: Workflow Input '{wf_input_name}' has no wiring!"
                 )
 
-        dynamic_optional_wf_inputs = [
-            wfi
+        dynamic_optional_wf_input_names = [
+            wfi.name
             for wfi in workflow.inputs
             if wfi.constant is False and wfi.default is True
         ]
-        if len(wired_input_names) > len(dynamic_required_wf_inputs) + len(
-            dynamic_optional_wf_inputs
-        ):
-            raise ValueError("Too many input wirings provided!")
+        for wired_input_name in wired_input_names:
+            if (
+                wired_input_name
+                not in dynamic_required_wf_input_names + dynamic_optional_wf_input_names
+            ):
+                raise ValueError(
+                    f"Wiring does not match: There is no workflow input '{wired_input_name}'!"
+                )
 
         wired_output_names = {
             outp_wiring.workflow_output_name for outp_wiring in wiring.output_wirings
@@ -184,24 +193,165 @@ class WorkflowExecutionInput(BaseModel):
                     )
                 )
 
-        if len(wired_output_names) > len(workflow.outputs):
-            raise ValueError("Too many output wirings provided!")
+        wf_output_names = [wfo.name for wfo in workflow.outputs]
+        for wired_output_name in wired_output_names:
+            if wired_output_name not in wf_output_names:
+                raise ValueError(
+                    f"Wiring does not match: There is no workflow output '{wired_output_name}'!"
+                )
 
         return values
 
     Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
 
 
-class WorkflowExecutionResult(BaseModel):
+class TransformationInfo(BaseModel):
+    id: str  # noqa: A003
+    name: NonEmptyValidStr
+    tag: ShortNonEmptyValidStr
+    type: Type  # noqa: A003
+
+
+class HierarchyInWorkflow(BaseModel):
+    by_name: list[NonEmptyValidStr]
+    by_id: list[UUID]
+
+    @classmethod
+    def from_hierarchy_strings(
+        cls, hierarchical_name_string: str, hierarchical_id_string: str
+    ) -> "HierarchyInWorkflow":
+        if (
+            hierarchical_name_string.count(HIERARCHY_SEPARATOR) < 2
+            or hierarchical_id_string.count(HIERARCHY_SEPARATOR) < 2
+        ):
+            raise ValueError(
+                f'The number of "{HIERARCHY_SEPARATOR}" occurences in '
+                f'hierarchical name string "{hierarchical_name_string}" or '
+                f'hierarchical id string "{hierarchical_id_string}" is < 2 and thus too small!'
+            )
+        return HierarchyInWorkflow(
+            by_name=hierarchical_name_string.split(HIERARCHY_SEPARATOR)[1:-1],
+            by_id=[
+                UUID(operator_id)
+                for operator_id in hierarchical_id_string.split(HIERARCHY_SEPARATOR)[
+                    1:-1
+                ]
+            ],
+        )
+
+
+class OperatorInfo(BaseModel):
+    transformation_info: TransformationInfo
+    hierarchy_in_workflow: HierarchyInWorkflow
+
+    @classmethod
+    def from_runtime_execution_error(
+        cls, error: RuntimeExecutionError
+    ) -> "OperatorInfo":
+        return OperatorInfo(
+            transformation_info=TransformationInfo(
+                id=error.currently_executed_transformation_id,
+                name=error.currently_executed_transformation_name,
+                tag=error.currently_executed_transformation_tag,
+                type=error.currently_executed_transformation_type,
+            ),
+            hierarchy_in_workflow=HierarchyInWorkflow.from_hierarchy_strings(
+                hierarchical_name_string=error.currently_executed_hierarchical_operator_name,
+                hierarchical_id_string=error.currently_executed_hierarchical_operator_id,
+            ),
+        )
+
+
+class ErrorLocation(BaseModel):
+    file: str
+    function_name: str
+    line_number: int
+
+
+class ProcessStage(StrEnum):
+    """ "Stages of the execution process."""
+
+    PARSING_WORKFLOW = "PARSING_WORKFLOW"
+    LOADING_DATA_FROM_ADAPTERS = "LOADING_DATA_FROM_ADAPTERS"
+    PARSING_LOADED_DATA = "PARSING_LOADED_DATA"
+    EXECUTING_COMPONENT_CODE = "EXECUTING_COMPONENT_CODE"
+    SENDING_DATA_TO_ADAPTERS = "SENDING_DATA_TO_ADAPTERS"
+    ENCODING_RESULTS_TO_JSON = "ENCODING_RESULTS_TO_JSON"
+
+
+class WorkflowExecutionError(BaseModel):
+    type: str  # noqa: A003
+    error_code: int | str | None = None
+    message: str
+    extra_information: dict | None = None
+    process_stage: ProcessStage | None = None
+    operator_info: OperatorInfo | None = None
+    location: ErrorLocation
+
+
+def get_location_of_exception(exception: Exception | BaseException) -> ErrorLocation:
+    last_trace = tb.extract_tb(exception.__traceback__)[-1]
+    return ErrorLocation(
+        file=last_trace.filename
+        if last_trace.filename != "<string>"
+        else "COMPONENT CODE",
+        function_name=last_trace.name,
+        line_number=last_trace.lineno,
+    )
+
+
+class WorkflowExecutionInfo(BaseModel):
+    error: WorkflowExecutionError | None = Field(None, description="error string")
+    output_results_by_output_name: dict[str, Any] = Field(
+        ...,
+        description="Results at the workflow outputs as a dictionary by name of workflow output",
+    )
+    traceback: str | None = Field(None, description="traceback")
+    job_id: UUID
+
+    measured_steps: AllMeasuredSteps = AllMeasuredSteps()
+
+    @classmethod
+    def from_exception(
+        cls,
+        exception: Exception,
+        process_stage: ProcessStage,
+        job_id: UUID,
+        cause: BaseException | None,
+    ) -> "WorkflowExecutionInfo":
+        return WorkflowExecutionInfo(
+            error=WorkflowExecutionError(
+                type=type(exception).__name__
+                if cause is None
+                else type(cause).__name__,
+                message=str(exception) if cause is None else str(cause),
+                extra_information=exception.extra_information
+                if isinstance(exception, ComponentException)
+                else None,
+                error_code=exception.error_code
+                if isinstance(exception, ComponentException)
+                else None,
+                process_stage=process_stage,
+                operator_info=OperatorInfo.from_runtime_execution_error(exception)
+                if isinstance(exception, RuntimeExecutionError)
+                else None,
+                location=get_location_of_exception(exception)
+                if cause is None
+                else get_location_of_exception(cause),
+            ),
+            traceback=tb.format_exc(),
+            output_results_by_output_name={},
+            job_id=job_id,
+        )
+
+    Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
+
+
+class WorkflowExecutionResult(WorkflowExecutionInfo):
     result: Result = Field(
         ...,
         description="one of " + ", ".join(['"' + x.value + '"' for x in list(Result)]),
         example=Result.OK,
-    )
-
-    output_results_by_output_name: dict[str, Any] = Field(
-        ...,
-        description="Results at the workflow outputs as a dictionary by name of workflow output",
     )
     node_results: str | None = Field(
         None,
@@ -212,10 +362,18 @@ class WorkflowExecutionResult(BaseModel):
             " set to true."
         ),
     )
-    error: str | None = Field(None, description="error string")
-    traceback: str | None = Field(None, description="traceback")
-    job_id: UUID
 
-    measured_steps: AllMeasuredSteps = AllMeasuredSteps()
-
-    Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
+    @classmethod
+    def from_exception(
+        cls,
+        exception: Exception,
+        process_stage: ProcessStage,
+        job_id: UUID,
+        cause: BaseException | None = None,
+        node_results: str | None = None,
+    ) -> "WorkflowExecutionResult":
+        return WorkflowExecutionResult(
+            **super().from_exception(exception, process_stage, job_id, cause).dict(),
+            result="failure",
+            node_results=node_results,
+        )

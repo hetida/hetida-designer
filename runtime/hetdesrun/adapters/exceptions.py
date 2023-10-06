@@ -11,7 +11,7 @@ class AdapterConnectionError(AdapterHandlingException):
 
 
 class AdapterOutputDataError(AdapterHandlingException):
-    """Raise if the adapter cannot handle the data coming from the worklfow output"""
+    """Raise if the adapter cannot handle the data coming from the workflow output"""
 
 
 class AdapterClientWiringInvalidError(AdapterHandlingException):

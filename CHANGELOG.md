@@ -1,7 +1,19 @@
+## 0.9.0
+* add [optional inputs with default parameters](./docs/default_values.md)
+* add [structured exception handling](./docs/structuring_exceptions.md)
+  :warning: *Breaking change:* The attribute `error` in the response JSON of the execute endpoint is no longer a string but a mapping/dictionary 
+* add [free text filters for outputs (adapter system)](./docs/adapter_system/)
+* add blob storage config options
+* add python demo adapter sources and output free text filters
+* add validations
+* fix workflow validation issues via db migration
+* fix filter for categories in export
+* upgrade to python 3.11
+
 ## 0.8.9
 * free text filters for inputs (adapter system)
 * add blob storage configuration options
-* imporved blob storage adapter performance
+* improved blob storage adapter performance
 * type-specific blob storage serialization (keras models)
 * new data type: MultiTSFrames (collections of multiple timeseries with non-simultaneous timestamps)
 * api improvements / fixes

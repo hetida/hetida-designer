@@ -14,14 +14,14 @@ from hetdesrun.webservice.config import get_config
 
 
 def multitsframe_to_list_of_dicts(df: pd.DataFrame) -> list[dict]:
-    if len(df) == 0:
-        return []
-
     if not isinstance(df, pd.DataFrame):
         raise AdapterOutputDataError(
             "Did not receive Pandas DataFrame as expected from workflow output."
             f" Got {str(type(df))} instead."
         )
+
+    if len(df) == 0:
+        return []
 
     if set(df.columns) != set(MULTITSFRAME_COLUMN_NAMES):
         column_names_string = ", ".join(df.columns)
