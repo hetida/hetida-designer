@@ -117,7 +117,7 @@ async def test_direct_provisioning_series_metadata(
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
-                "extract-attributes-series_100_9b160d5b-f821-4b7a-b314-b2c94e54c.json"
+                "extract-attributes-series_100_9b160d5b-f821-4b7a-b314-b2c94e54c983.json"
             ),
             {
                 "series": (
@@ -165,7 +165,7 @@ async def test_direct_provisioning_dataframe_metadata(
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
-                "extract-attributes-dataframe_100_816436b2-f303-48af-857c-6c4d7c7a0.json"
+                "extract-attributes-dataframe_100_816436b2-f303-48af-857c-6c4d7c7a0f4b.json"
             ),
             {
                 "dataframe": (
@@ -657,8 +657,9 @@ class TestSctructuredErrors:
         assert result.error.extra_information is None
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
+
         assert result.error.location.file.endswith(
-            "/hetida-designer/runtime/hetdesrun/runtime/engine/plain/workflow.py"
+            "/runtime/hetdesrun/runtime/engine/plain/workflow.py"
         )
         assert result.error.location.function_name == "_run_comp_func"
 
@@ -683,7 +684,7 @@ class TestSctructuredErrors:
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
         assert result.error.location.file.endswith(
-            "/hetida-designer/runtime/hetdesrun/runtime/engine/plain/workflow.py"
+            "/runtime/hetdesrun/runtime/engine/plain/workflow.py"
         )
         assert result.error.location.function_name == "result"
 
