@@ -6,15 +6,18 @@ from asyncstdlib.functools import cached_property  # async compatible variant
 from pydantic import ValidationError
 
 from hetdesrun.datatypes import NamedDataTypedValue, parse_dynamically_from_datatypes
+from hetdesrun.models.run import HIERARCHY_SEPARATOR
 from hetdesrun.runtime import runtime_execution_logger
 from hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.context import ExecutionContext
 from hetdesrun.runtime.engine.plain.execution import run_func_or_coroutine
 from hetdesrun.runtime.exceptions import (
     CircularDependency,
+    ComponentException,
     MissingInputSource,
     MissingOutputException,
     RuntimeExecutionError,
+    UnexpectedComponentException,
     WorkflowInputDataValidationError,
 )
 from hetdesrun.runtime.logging import execution_context_filter
@@ -34,6 +37,7 @@ class Node(Protocol):
     has_only_plot_outputs: bool = False
     operator_hierarchical_id: str = "UNKNOWN"
     operator_hierarchical_name: str = "UNKNOWN"
+    context: ExecutionContext
 
     @cached_property
     async def result(self) -> dict[str, Any]:  # Outputs can have any type
@@ -163,7 +167,7 @@ class ComputationNode:
             # actually get input data from other nodes
             try:
                 input_value_dict[input_name] = (await another_node.result)[output_name]
-            except KeyError as e:
+            except KeyError as exc:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
                 runtime_execution_logger.warning(
                     "Execution failed due to missing output of a node",
@@ -172,7 +176,7 @@ class ComputationNode:
                 raise MissingOutputException(
                     "Could not obtain output result from another node while preparing to "
                     "run operator"
-                ).set_context(self.context) from e
+                ).set_context(self.context) from exc
         return input_value_dict
 
     async def _run_comp_func(self, input_values: dict[str, Any]) -> dict[str, Any]:
@@ -182,28 +186,30 @@ class ComputationNode:
                 self.func, input_values  # type: ignore
             )
             function_result = function_result if function_result is not None else {}
-        except (
-            RuntimeExecutionError
-        ) as e:  # user code may raise runtime execution errors
-            e.set_context(self.context)
-            runtime_execution_logger.warning(
-                "User raised RuntimeExecutionError!",
-                exc_info=True,
-            )
-            raise e
-        except Exception as e:  # uncaught exceptions from user code  # noqa: BLE001
-            msg = "Unexpected error from user code"
+        except Exception as exc:  # uncaught exceptions from user code  # noqa: BLE001
+            if hasattr(exc, "__is_hetida_designer_exception__") and hasattr(
+                exc, "error_code"
+            ):
+                runtime_execution_logger.warning(
+                    "User raised a hetida designer exception in component code.",
+                    exc_info=True,
+                )
+                raise ComponentException(
+                    exc,
+                    error_code=exc.error_code,
+                    extra_information=exc.extra_information
+                    if hasattr(exc, "extra_information")
+                    else None,
+                ).set_context(self.context) from exc
+            msg = "Unexpected error from user code."
             runtime_execution_logger.warning(msg, exc_info=True)
-            raise RuntimeExecutionError(msg).set_context(self.context) from e
+            raise UnexpectedComponentException(msg).set_context(self.context) from exc
 
         if not isinstance(
             function_result, dict
         ):  # user functions may return completely unknown type
-            msg = (
-                f"Component function of component instance {self.operator_hierarchical_id} from "
-                f"component {self.operator_hierarchical_name} did not return an output dict!"
-            )
-            runtime_execution_logger.warning(msg)
+            msg = "Component did not return an output dict."
+            runtime_execution_logger.warning(msg, exc_info=True)
             raise RuntimeExecutionError(msg).set_context(self.context)
 
         return function_result
@@ -332,8 +338,10 @@ class Workflow:
             operator_hierarchical_name=self.operator_hierarchical_name
             + "constant_provider_"
             + id_suffix
-            + "\\",
-            operator_hierarchical_id=self.operator_hierarchical_id + "" + "\\",
+            + HIERARCHY_SEPARATOR,
+            operator_hierarchical_id=self.operator_hierarchical_id
+            + ""
+            + HIERARCHY_SEPARATOR,
         )
         if add_new_provider_node_to_workflow:  # make it part of the workflow
             self.sub_nodes.append(Const_Node)
@@ -386,14 +394,12 @@ class Workflow:
                 )
             except KeyError as e:
                 # possibly an output_name missing in the result dict of one of the providing nodes!
-                runtime_execution_logger.warning(
-                    "Execution failed due to missing output of a node",
-                    exc_info=True,
+                msg = (
+                    f"Declared output '{sub_node_output_name}' "
+                    "not contained in returned dictionary."
                 )
-                raise MissingOutputException(
-                    "Could not obtain output result from another node while preparing to "
-                    "run operator"
-                ).set_context(self.context) from e
+                runtime_execution_logger.warning(msg, exc_info=True)
+                raise MissingOutputException(msg).set_context(sub_node.context) from e
             except RuntimeExecutionError as e:
                 raise e
 

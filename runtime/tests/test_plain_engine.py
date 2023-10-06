@@ -5,6 +5,7 @@ import pytest
 from hetdesrun.runtime.engine.plain.workflow import ComputationNode, Workflow
 from hetdesrun.runtime.exceptions import (
     CircularDependency,
+    ComponentException,
     MissingInputSource,
     MissingOutputException,
     RuntimeExecutionError,
@@ -102,7 +103,7 @@ async def test_computation_nodes_user_raised_runtime_error_and_logging(caplog):
         return {"a": 1.2, "b": 2.5}
 
     def add_two_values(*, c, d):
-        raise RuntimeExecutionError("Error in user code!")
+        raise ComponentException("Error in user code!")
         return {"sum": c + d}
 
     source_node = ComputationNode(

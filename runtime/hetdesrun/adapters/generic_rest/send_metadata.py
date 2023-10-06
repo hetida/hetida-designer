@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 
-from hetdesrun.adapters.exceptions import AdapterConnectionError
+from hetdesrun.adapters.exceptions import AdapterConnectionError, AdapterOutputDataError
 from hetdesrun.adapters.generic_rest.auth import get_generic_rest_adapter_auth_headers
 from hetdesrun.adapters.generic_rest.baseurl import get_generic_rest_adapter_base_url
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
@@ -51,6 +51,14 @@ async def send_single_metadatum_to_adapter(
 
     value_datatype = ExternalType(filtered_sink.type).value_datatype
     assert value_datatype is not None  # for mypy   # noqa: S101
+
+    try:
+        value_datatype.parse_object(metadatum_value)
+    except ValueError as error:
+        raise AdapterOutputDataError(
+            f"Received metadatum value '{metadatum_value}' cannot be parsed "
+            f"as the declared data type {value_datatype.name}."
+        ) from error
 
     try:
         resp = await post_json_with_open_client(
