@@ -261,7 +261,8 @@ async def test_direct_provisioning_multitsframe_metadata(
                 "multitsframe": (
                     '{"__hd_wrapped_data_object__": "DATAFRAME",'
                     ' "__metadata__": {"test": 44},'
-                    ' "__data__": {"timestamp": ["2023-01-01T00:00:00+00:00"], "metric": ["mymetric"], "value": [1.7]} }'
+                    ' "__data__": {"timestamp": ["2023-01-01T00:00:00+00:00"],'
+                    ' "metric": ["mymetric"], "value": [1.7]} }'
                 )
             },
             client,
@@ -278,7 +279,8 @@ async def test_direct_provisioning_multitsframe_metadata(
                 "input": (
                     '{"__hd_wrapped_data_object__": "DATAFRAME",'
                     ' "__metadata__": {"test": 44},'
-                    ' "__data__": {"timestamp": ["2023-01-01T00:00:00+00:00"], "metric": ["mymetric"], "value": [1.7]} }'
+                    ' "__data__": {"timestamp": ["2023-01-01T00:00:00+00:00"],'
+                    ' "metric": ["mymetric"], "value": [1.7]} }'
                 )
             },
             client,
