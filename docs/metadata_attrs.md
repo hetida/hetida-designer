@@ -45,28 +45,39 @@ Note that the unwrapped format (i.e. sending only the content of the `__data__` 
 ## Metadata field conventions
 
 The following metadata fields should be attached to timeseries objects (typically MULTITSFRAME or SERIES inputs/outputs). I.e.
-* we recommend that custom adapter implementations send
-* some base components may expect these metadata fields in the `.attrs` dictionary of input dataframes (or multitsframes) or series.
-* some base components may send these metadata fields in the `.attrs` dictionary of output dataframes (or multitsframes) or series objects.
+* We strongly recommend that custom adapter implementations provide them!
+* Some base components may expect these metadata fields in the `.attrs` dictionary of input dataframes (or multitsframes) or series.
+* Some base components may provide these metadata fields in the `.attrs` dictionary of output dataframes (or multitsframes) or series objects.
 
 ```
 {
     # Start / End timestamps of the queried time interval in explicit UTC isoformat:
+
     "ref_interval_start_timestamp": "2023-01-01T00:00:00+00:00", 
     "ref_interval_end_timestamp": "2023-01-01T00:00:00+00:00",
 
+
     # Type of queried time interval (one of
     # "left_closed", "right_open", "right_closed", "left_open", "closed", or "open"):
+
     "ref_interval_type": "closed",
+
 
     # Queried metrics as array/list (List with exactly one entry for a 
     # single timeseries)
+
     "ref_metrics": ["sensor_a", "sensor_b"],
 }
 ```
 
+Some remarks:
+* `ref_interval_start_timestamp`, `ref_interval_end_timestamp` together with `ref_interval_type` carry all information necessary for the "gap detection" use case described at the beginning of this page.
+* `ref_metrics` is additionally necessary for this use case if one wants to implement it for a bundle of timeseries received as multitsframe: If there is no datapoint at all for a certain metric, you need to know that you should return an interval sized gap for that metric.
+* `ref_metrics` can even be helpful for a single (time)series when organizing data / results. Therefore we recommend to always attach it.
+
 ## Adapter support
-Some of the builtin adapters support sending and receiving metadata:
-* The direct provisioning adapter's special format is mentioned above.
-* See [here](./adapter_system/generic_rest_adapters/web_service_interface.md), like direct provisioning
+Several builtin adapters support sending and receiving metadata:
+* The direct provisioning adapter's special format was mentioned above.
+* See [here](./adapter_system/generic_rest_adapters/web_service_interface.md) for how to provide and receive `.attrs` metadata for your own generic rest adapters.
+* The [sql adapter](./adapter_system/sql_adapter.md) timeseries table feature provides the metadata from the above convention for its MULTITSFRAME source(s).
 
