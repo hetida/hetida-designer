@@ -298,7 +298,7 @@ async def test_workflow_with_series_input_and_dataframe_output(
     assert status_code == 200
     assert output["result"] == "ok"
 
-    assert output["output_results_by_output_name"]["z"]["0"] == {
+    assert output["output_results_by_output_name"]["z"]["__data__"]["0"] == {
         "0": 3.0,
         "1": 4.0,
         "2": 5.5,
@@ -438,7 +438,7 @@ async def test_single_node_workflow_with_dataframe_input_and_series_output(
 
     assert output["result"] == "ok"
 
-    assert output["output_results_by_output_name"]["z"] == {
+    assert output["output_results_by_output_name"]["z"]["__data__"] == {
         "0": 3.0,
         "1": 4.0,
         "2": 5.5,

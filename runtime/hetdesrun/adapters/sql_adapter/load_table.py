@@ -139,10 +139,10 @@ def prepare_validate_loaded_raw_multitsframe(
 
     # setting meta data (attrs)
     validated_multi_ts_frame.attrs = {
-        "from": from_datetime.isoformat(),
-        "to": to_datetime.isoformat(),
-        "timeseries_query_interval_boundaries": "closed",
-        "queried_metrics": metrics_list,
+        "ref_interval_start_timestamp": from_datetime.isoformat(),
+        "ref_interval_end_timestamp": to_datetime.isoformat(),
+        "ref_interval_type": "closed",
+        "ref_metrics": metrics_list,
     }
 
     return validated_multi_ts_frame

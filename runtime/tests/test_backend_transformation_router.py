@@ -1902,9 +1902,11 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
             "output_results_by_output_name"
         ]
         assert "output" in output_results_by_output_name
-        assert len(output_results_by_output_name["output"]) == 2
+        assert len(output_results_by_output_name["output"]["__data__"]) == 2
         assert (
-            output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
+            output_results_by_output_name["output"]["__data__"][
+                "2020-05-01T02:00:00.000Z"
+            ]
             == None  # noqa: E711
         )
 
@@ -1941,9 +1943,11 @@ async def test_execute_for_transformation_revision_with_nan_and_nat_input(
             "output_results_by_output_name"
         ]
         assert "output" in output_results_by_output_name
-        assert len(output_results_by_output_name["output"]) == 2
+        assert len(output_results_by_output_name["output"]["__data__"]) == 2
         assert (
-            output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
+            output_results_by_output_name["output"]["__data__"][
+                "2020-05-01T02:00:00.000Z"
+            ]
             == None  # noqa: E711
         )
 

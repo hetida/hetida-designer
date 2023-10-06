@@ -153,6 +153,149 @@ async def run_single_component(
 
 
 @pytest.mark.asyncio
+async def test_direct_provisioning_series_metadata(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "extract-attributes-series_100_9b160d5b-f821-4b7a-b314-b2c94e54c.json"
+            ),
+            {
+                "series": (
+                    '{"__hd_wrapped_data_object__": "SERIES",'
+                    ' "__metadata__": {"test": 42},'
+                    ' "__data__": [2.3, 2.4, 2.5] }'
+                )
+            },
+            client,
+        )
+
+        assert exec_result.output_results_by_output_name["attributes"] == {"test": 42}
+
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json"
+            ),
+            {
+                "input": (
+                    '{"__hd_wrapped_data_object__": "SERIES",'
+                    ' "__metadata__": {"test": 42},'
+                    ' "__data__": [2.3, 2.4, 2.5] }'
+                )
+            },
+            client,
+        )
+
+        assert exec_result.output_results_by_output_name["output"] == {
+            "__hd_wrapped_data_object__": "SERIES",
+            "__metadata__": {"test": 42},
+            "__data__": {
+                "0": 2.3,
+                "1": 2.4,
+                "2": 2.5,
+            },
+        }
+
+
+@pytest.mark.asyncio
+async def test_direct_provisioning_dataframe_metadata(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "extract-attributes-dataframe_100_816436b2-f303-48af-857c-6c4d7c7a0.json"
+            ),
+            {
+                "dataframe": (
+                    '{"__hd_wrapped_data_object__": "DATAFRAME",'
+                    ' "__metadata__": {"test": 43},'
+                    ' "__data__": {"a": [2.3, 2.4, 2.5], "b": ["t", "t", "k"]} }'
+                )
+            },
+            client,
+        )
+
+        assert exec_result.output_results_by_output_name["attributes"] == {"test": 43}
+
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "pass-through-dataframe_100_7a1a818f-fa89-6062-1e0e-fc80539bbe0a.json"
+            ),
+            {
+                "input": (
+                    '{"__hd_wrapped_data_object__": "DATAFRAME",'
+                    ' "__metadata__": {"test": 43},'
+                    ' "__data__": {"a": [2.3, 2.4, 2.5], "b": ["t", "t", "k"]} }'
+                )
+            },
+            client,
+        )
+
+        assert exec_result.output_results_by_output_name["output"] == {
+            "__hd_wrapped_data_object__": "DATAFRAME",
+            "__metadata__": {"test": 43},
+            "__data__": {
+                "a": {"0": 2.3, "1": 2.4, "2": 2.5},
+                "b": {"0": "t", "1": "t", "2": "k"},
+            },
+        }
+
+
+@pytest.mark.asyncio
+async def test_direct_provisioning_multitsframe_metadata(
+    async_test_client: AsyncClient,
+) -> None:
+    async with async_test_client as client:
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "extract-attributes-multitsframe_100_f711106f-3ee1-46a6-a70b-ba12d92fe5be"
+            ),
+            {
+                "multitsframe": (
+                    '{"__hd_wrapped_data_object__": "DATAFRAME",'
+                    ' "__metadata__": {"test": 44},'
+                    ' "__data__": {"timestamp": ["2023-01-01T00:00:00+00:00"], "metric": ["mymetric"], "value": [1.7]} }'
+                )
+            },
+            client,
+        )
+
+        assert exec_result.output_results_by_output_name["attributes"] == {"test": 44}
+
+        exec_result = await run_single_component(
+            (
+                "./transformations/components/connectors/"
+                "pass-through-multitsframe_100_78ee6b00-9239-4214-b9bf-a093647f33f5.json"
+            ),
+            {
+                "input": (
+                    '{"__hd_wrapped_data_object__": "DATAFRAME",'
+                    ' "__metadata__": {"test": 44},'
+                    ' "__data__": {"timestamp": ["2023-01-01T00:00:00+00:00"], "metric": ["mymetric"], "value": [1.7]} }'
+                )
+            },
+            client,
+        )
+
+        assert exec_result.output_results_by_output_name["output"] == {
+            "__hd_wrapped_data_object__": "DATAFRAME",
+            "__metadata__": {"test": 44},
+            "__data__": {
+                "metric": {"0": "mymetric"},
+                "timestamp": {"0": "2023-01-01T00:00:00.000Z"},
+                "value": {"0": 1.7},
+            },
+        }
+
+
+@pytest.mark.asyncio
 async def test_null_values_pass_any_pass_through(
     async_test_client: AsyncClient,
 ) -> None:
@@ -268,7 +411,9 @@ async def test_multitsframe_wf_execution(async_test_client: AsyncClient) -> None
 
         assert response_status_code == 200
         assert response_json["result"] == "ok"
-        assert response_json["output_results_by_output_name"]["multitsframe"] == {
+        assert response_json["output_results_by_output_name"]["multitsframe"][
+            "__data__"
+        ] == {
             "value": {
                 "0": 1,
                 "1": 1.2,
