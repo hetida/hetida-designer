@@ -114,12 +114,10 @@ General custom adapters can use arbitrary code to access data and therefore can 
 
 [Python Demo Adapter source code](https://github.com/hetida/hetida-designer/tree/release/demo-adapter-python)
 
-[Java Demo Adapter source code](https://github.com/hetida/hetida-designer/tree/release/demo-adapter-java)
-
 ##### General Custom adapters
 
 [Instructions on general custom adapters](./general_custom_adapters/instructions.md)
 
 direct link to the [hetdesrun_config.py](https://github.com/hetida/hetida-designer/blob/release/runtime/hetdesrun_config.py) which explains the runtime-side implementation.
 
-The built-in [local file adapter](./local_file_adapter.md) is an example of a general custom adapter.
+The built-in [local file adapter](./local_file_adapter.md) and [sql adapter](./sql_adapter.md) are examples of general custom adapters.
