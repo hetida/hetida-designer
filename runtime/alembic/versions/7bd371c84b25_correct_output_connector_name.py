@@ -19,10 +19,12 @@ request and their execution will fail. The affected
 workflows are automatically repaired by this migration script.
 """
 
-from hetdesrun.persistence.dbservice.revision import (
-    select_multiple_transformation_revisions,
-    update_or_create_single_transformation_revision,
-)
+from sqlalchemy import orm, select
+
+from alembic import op
+from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
+from hetdesrun.persistence.dbservice.revision import update_tr
+from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import Type
 
@@ -34,26 +36,33 @@ depends_on = None
 
 
 def upgrade() -> None:
-    tr_list = select_multiple_transformation_revisions(type=Type.WORKFLOW)
+    bind = op.get_bind()
 
-    for tr in tr_list:
-        applicable = False
-        if isinstance(tr.content, WorkflowContent) and len(tr.content.outputs) != 0:
-            for output in tr.content.outputs:
-                if output.connector_name == "connector_name":
-                    applicable = True
-                    for operator in tr.content.operators:
-                        if operator.id == output.operator_id:
-                            for output_connector in operator.outputs:
-                                if output_connector.id == output.connector_id:
-                                    assert (  # noqa: S101
-                                        output_connector.name is not None
-                                    )
-                                    output.connector_name = output_connector.name
-        if applicable:
-            update_or_create_single_transformation_revision(
-                tr, allow_overwrite_released=True
-            )
+    with orm.Session(bind=bind) as session:
+        selection = select(TransformationRevisionDBModel).where(
+            TransformationRevisionDBModel.type == Type.WORKFLOW
+        )
+
+        results = session.execute(selection).scalars().all()
+
+        tr_list = [TransformationRevision.from_orm_model(result) for result in results]
+
+        for tr in tr_list:
+            applicable = False
+            if isinstance(tr.content, WorkflowContent) and len(tr.content.outputs) != 0:
+                for output in tr.content.outputs:
+                    if output.connector_name == "connector_name":
+                        applicable = True
+                        for operator in tr.content.operators:
+                            if operator.id == output.operator_id:
+                                for output_connector in operator.outputs:
+                                    if output_connector.id == output.connector_id:
+                                        assert (  # noqa: S101
+                                            output_connector.name is not None
+                                        )
+                                        output.connector_name = output_connector.name
+            if applicable:
+                update_tr(session, tr)
 
 
 def downgrade() -> None:
