@@ -515,7 +515,7 @@ class TransformationRevision(BaseModel):
         return TransformationRevision(
             id=uuid4(),
             revision_group_id=uuid4(),
-            name="Wrapper Workflow",
+            name="COMPONENT EXECUTION WRAPPER WORKFLOW",
             category=self.category,
             version_tag=self.version_tag,
             released_timestamp=self.released_timestamp,

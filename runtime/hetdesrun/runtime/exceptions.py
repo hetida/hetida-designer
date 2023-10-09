@@ -1,3 +1,5 @@
+from typing import Any
+
 from hetdesrun.runtime.context import ExecutionContext
 
 
@@ -46,7 +48,44 @@ class DAGProcessingError(RuntimeExecutionError):
     """
 
 
-class UncaughtComponentException(RuntimeExecutionError):
+class ComponentException(RuntimeExecutionError):
+    """Exception to re-raise exceptions with error code raised in the component code."""
+
+    __is_hetida_designer_exception__ = True
+
+    def __init__(
+        self,
+        *args: Any,
+        error_code: int | str = "",
+        extra_information: dict | None = None,
+        **kwargs: Any
+    ) -> None:
+        if not isinstance(error_code, int | str):
+            raise ValueError("The ComponentException.error_code must be int or string!")
+        self.error_code = error_code
+        self.extra_information = extra_information
+        super().__init__(*args, **kwargs)
+
+
+class ComponentInputValidationException(ComponentException):
+    """In code input validation failures"""
+
+    def __init__(
+        self,
+        *args: Any,
+        invalid_component_inputs: list[str],
+        error_code: int | str = "",
+        **kwargs: Any
+    ) -> None:
+        super().__init__(
+            *args,
+            error_code=error_code,
+            extra_information={"invalid_component_inputs": invalid_component_inputs},
+            **kwargs
+        )
+
+
+class UnexpectedComponentException(RuntimeExecutionError):
     """Exception to be re-raised in case of uncaught exceptions during component execution."""
 
 
@@ -54,23 +93,19 @@ class MissingOutputDataError(RuntimeExecutionError):
     """Exception in case of missing output data from other component"""
 
 
-class ComponentDataValidationError(RuntimeExecutionError):
-    """Input or Output validation failures"""
-
-
 class WorkflowOutputValidationError(RuntimeExecutionError):
     """Workflow Output validation failed"""
 
 
 class WorkflowInputDataValidationError(RuntimeExecutionError):
-    """Workflow Output validation failed"""
+    """Workflow Input validation failed"""
 
 
 class CircularDependency(DAGProcessingError):
     """During execution a circular dependency was detected"""
 
 
-class MissingOutputException(MissingOutputDataError):
+class MissingOutputException(RuntimeExecutionError):
     """During execution a referenced output is missing on another node's result"""
 
 

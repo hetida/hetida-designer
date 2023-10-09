@@ -38,14 +38,16 @@ def validate_series_dtype(series: pd.Series, sink_type: ExternalType) -> None:
 
 
 def ts_to_list_of_dicts(series: pd.Series, sink_type: ExternalType) -> list[dict]:
-    if len(series) == 0:
-        return []
     if not isinstance(series, pd.Series):
         raise AdapterOutputDataError(
             "Did not receive Pandas Series as expected from workflow output."
             f" Got {str(type(series))} instead."
         )
-    if not isinstance(series.index.dtype, pd.DatetimeTZDtype):
+
+    if len(series) == 0:
+        return []
+
+    if not pd.api.types.is_datetime64_any_dtype(series.index):
         raise AdapterOutputDataError(
             "Received Pandas Series does not have DatetimeTZDtype dtype index as expected for"
             f" generic rest adapter timeseries endpoints. Got {str(series.index.dtype)} "

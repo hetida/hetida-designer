@@ -1,10 +1,11 @@
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, validator
 
 from hetdesrun.backend.service.utils import to_camel
-from hetdesrun.datatypes import AdvancedTypesOutputSerializationConfig
-from hetdesrun.models.run import AllMeasuredSteps
+from hetdesrun.datatypes import DataType
+from hetdesrun.models.run import WorkflowExecutionInfo
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
 
@@ -43,17 +44,10 @@ class DocumentationFrontendDto(BaseModel):
         )
 
 
-class ExecutionResponseFrontendDto(BaseModel):
-    error: str | None
-    execution_id: UUID | None
-    output_results_by_output_name: dict = {}
-    output_types_by_output_name: dict = {}
-    response: str | None
+class ExecutionResponseFrontendDto(WorkflowExecutionInfo):
     result: str
-    traceback: str | None
-    job_id: UUID
-
-    measured_steps: AllMeasuredSteps = AllMeasuredSteps()
+    output_results_by_output_name: dict[str, Any] = {}
+    output_types_by_output_name: dict[str, DataType] = {}
     process_id: int | None = Field(
         None,
         description=(
@@ -61,9 +55,3 @@ class ExecutionResponseFrontendDto(BaseModel):
             "if advanced performance measuring is configured."
         ),
     )
-
-    Config = AdvancedTypesOutputSerializationConfig  # enable Serialization of some advanced types
-
-
-class ExecutionResultReceived(BaseModel):
-    ok: bool
