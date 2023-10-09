@@ -23,7 +23,19 @@ You can provide such metadata when manual inputting data by entering
     "__data__": {"a": [2.3, 2.4, 2.5], "b": ["t", "t", "k"]}
 }
 ```
-for a DATAFRAME or MULTITSFRAME input or
+for a DATAFRAME input,
+```json
+{
+    "__hd_wrapped_data_object__": "DATAFRAME",
+    "__metadata__": {"test": 43},
+    "__data__": {
+        "metric":["a","b"],
+        "timestamp": ["2023-01-01T00:00:00.000Z","2023-01-01T00:00:00.000Z"],
+        "value": [2.3, "t"]
+    }
+}
+```
+for a MULTITSFRAME input or
 ```json
 {
     "__hd_wrapped_data_object__": "SERIES",
