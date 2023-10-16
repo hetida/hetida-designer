@@ -109,6 +109,8 @@ export class ToolbarComponent implements OnInit {
   }
 
   copy() {
+    this.transformation.released_timestamp = '';
+    console.log('this.transformation', this.transformation);
     this.transformationActionService.copy(this.transformation);
   }
 
