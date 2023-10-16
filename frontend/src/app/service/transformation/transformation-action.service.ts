@@ -541,6 +541,9 @@ export class TransformationActionService {
     if (transformation === undefined) {
       return;
     }
+
+    // by copy the released_timestamp must be emptied
+    transformation.released_timestamp = null;
     this.tabItemService.createTransformationAndOpenInNewTab(transformation);
   }
 
