@@ -267,12 +267,56 @@ def test_tr_validator_disabled_requires_released_timestamp():
     )
 
 
+def test_tr_validator_timestampsset_corresponding_to_state():
+    tr_json_draft_with_released_timestamp = deepcopy(tr_json_valid_released_example)
+    tr_json_draft_with_released_timestamp["state"] = "DRAFT"
+    tr_draft_with_released_timestamp = TransformationRevision(
+        **tr_json_draft_with_released_timestamp
+    )
+
+    assert tr_draft_with_released_timestamp.released_timestamp is None
+
+    tr_json_draft_with_disabled_timestamp = deepcopy(tr_json_valid_released_example)
+    tr_json_draft_with_disabled_timestamp["state"] = "DRAFT"
+    tr_json_draft_with_disabled_timestamp[
+        "disabled_timestamp"
+    ] = tr_json_draft_with_disabled_timestamp["released_timestamp"]
+    tr_json_draft_with_disabled_timestamp["released_timestamp"] = None
+
+    with pytest.raises(ValueError, match="disabled_timestamp must not be set"):
+        TransformationRevision(**tr_json_draft_with_disabled_timestamp)
+
+    tr_json_released_without_released_timestamp = deepcopy(
+        tr_json_valid_released_example
+    )
+    tr_json_released_without_released_timestamp["released_timestamp"] = None
+
+    with pytest.raises(ValueError, match="released_timestamp must be set"):
+        TransformationRevision(**tr_json_released_without_released_timestamp)
+
+    tr_json_released_with_disabled_timestamp = deepcopy(tr_json_valid_released_example)
+    tr_json_released_with_disabled_timestamp[
+        "disabled_timestamp"
+    ] = tr_json_released_with_disabled_timestamp["released_timestamp"]
+
+    with pytest.raises(ValueError, match="disabled_timestamp must not be set"):
+        TransformationRevision(**tr_json_released_with_disabled_timestamp)
+
+    tr_json_disabled_without_disabled_timestamp = deepcopy(
+        tr_json_valid_released_example
+    )
+    tr_json_disabled_without_disabled_timestamp["state"] = "DISABLED"
+
+    with pytest.raises(ValueError, match="disabled_timestamp must be set"):
+        TransformationRevision(**tr_json_disabled_without_disabled_timestamp)
+
+
 def test_wrap_component_in_tr_workflow():
     tr_component = TransformationRevision(**valid_component_tr_dict)
 
     tr_workflow = tr_component.wrap_component_in_tr_workflow()
 
-    assert tr_workflow.name == "Wrapper Workflow"
+    assert tr_workflow.name == "COMPONENT EXECUTION WRAPPER WORKFLOW"
     assert valid_component_tr_dict["category"] == tr_workflow.category
     assert valid_component_tr_dict["version_tag"] == tr_workflow.version_tag
     assert valid_component_tr_dict["state"] == tr_workflow.state
@@ -313,8 +357,8 @@ def test_to_workflow_node():
     )
     assert len(workflow_node.sub_nodes) == 1
     assert len(workflow_node.connections) == 0
-    assert workflow_node.name == "Wrapper Workflow"
-    assert workflow_node.tr_name == "Wrapper Workflow"
+    assert workflow_node.name == "COMPONENT EXECUTION WRAPPER WORKFLOW"
+    assert workflow_node.tr_name == "COMPONENT EXECUTION WRAPPER WORKFLOW"
 
 
 def test_transformation_validation_for_change_dynamic_input_to_constant(

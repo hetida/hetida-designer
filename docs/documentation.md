@@ -39,11 +39,13 @@ Further information about developing, deploying, connecting, using and running h
 - [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md)
 - [Generic REST Adapters](./adapter_system/generic_rest_adapters/web_service_interface.md)
 - [General Custom Adapters](./adapter_system/general_custom_adapters/instructions.md)
+- [SQL Adapter](./adapter_system/sql_adapter.md)
 
 ## Creating Components and Workflows
 
 - [Versioning in hetida designer](./versioning_in_hetida_designer.md)
 - [Using Default Values](./default_parameters.md)
+- [Structuring Exceptions](./structuring_exceptions.md)
 - [Tips and Tricks](./tips_and_tricks.md)
 - [DataFrames and Series with Metadata](./metadata_attrs.md)
 - [Asynchronous Components](./executing_asynchronous_functions.md)

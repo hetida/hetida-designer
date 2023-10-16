@@ -1,3 +1,4 @@
+import io
 from unittest import mock
 
 import pandas as pd
@@ -26,7 +27,8 @@ async def test_load_single_multitsframe_from_adapter_end_to_end() -> None:
                 }
             )
         },
-        raw="""
+        raw=io.StringIO(
+            """
         {"timestamp": "2019-08-01T15:45:36.000Z", "metric": "a", "value": 1.0}
         {"timestamp": "2019-08-01T15:45:37.000Z", "metric": "b", "value": 1.2}
         {"timestamp": "2019-08-01T15:45:37.000Z", "metric": "c", "value": 0.5}
@@ -36,7 +38,8 @@ async def test_load_single_multitsframe_from_adapter_end_to_end() -> None:
         {"timestamp": "2019-08-01T15:45:56.000Z", "metric": "a", "value": 1.5}
         {"timestamp": "2019-08-01T15:45:57.000Z", "metric": "b", "value": 1.7}
         {"timestamp": "2019-08-01T15:45:56.000Z", "metric": "c", "value": 0.1}
-        """,
+        """
+        ),
     )
     with mock.patch(  # noqa: SIM117
         "hetdesrun.adapters.generic_rest.load_framelike.get_generic_rest_adapter_base_url",

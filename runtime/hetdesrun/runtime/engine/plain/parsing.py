@@ -6,6 +6,7 @@ from hetdesrun.component.load import ComponentCodeImportError, import_func_from_
 from hetdesrun.datatypes import DataType, NamedDataTypedValue
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import ComponentOutput, ComponentRevision
+from hetdesrun.models.run import HIERARCHY_SEPARATOR
 from hetdesrun.models.workflow import (
     ComponentNode,
     WorkflowConnection,
@@ -134,12 +135,14 @@ def parse_component_node(
         component_id=component_node.component_uuid,
         component_name=comp_rev.name if comp_rev.name is not None else "UNKNOWN",
         component_tag=comp_rev.tag,
-        operator_hierarchical_name=name_prefix + component_node_name + "\\"
+        operator_hierarchical_name=name_prefix
+        + component_node_name
+        + HIERARCHY_SEPARATOR
         if name_prefix != ""
         else component_node_name,
         inputs=None,  # inputs are added later by the surrounding workflow
         has_only_plot_outputs=only_plot_outputs(comp_rev.outputs),
-        operator_hierarchical_id=id_prefix + component_node.id + "\\",
+        operator_hierarchical_id=id_prefix + component_node.id + HIERARCHY_SEPARATOR,
     )
 
 
@@ -263,8 +266,8 @@ def recursively_parse_workflow_node(
     node: WorkflowNode,
     component_dict: dict[str, ComponentRevision],
     code_module_dict: dict[str, CodeModule],
-    name_prefix: str = "\\",
-    id_prefix: str = "\\",
+    name_prefix: str = HIERARCHY_SEPARATOR,
+    id_prefix: str = HIERARCHY_SEPARATOR,
 ) -> Workflow:
     """Depth first recursive parsing of workflow nodes
 
@@ -280,8 +283,8 @@ def recursively_parse_workflow_node(
                 sub_input_node,
                 component_dict,
                 code_module_dict,
-                name_prefix=name_prefix + node_name + "\\",
-                id_prefix=id_prefix + node.id + "\\",
+                name_prefix=name_prefix + node_name + HIERARCHY_SEPARATOR,
+                id_prefix=id_prefix + node.id + HIERARCHY_SEPARATOR,
             )
         else:  # ComponentNode
             assert isinstance(  # noqa: S101
@@ -291,8 +294,8 @@ def recursively_parse_workflow_node(
                 sub_input_node,
                 component_dict,
                 code_module_dict,
-                name_prefix + node_name + "\\",
-                id_prefix + node.id + "\\",
+                name_prefix + node_name + HIERARCHY_SEPARATOR,
+                id_prefix + node.id + HIERARCHY_SEPARATOR,
             )
         new_sub_nodes[str(sub_input_node.id)] = new_sub_node
 
@@ -338,8 +341,8 @@ def recursively_parse_workflow_node(
         tr_name=node.tr_name,
         tr_tag=node.tr_tag,
         has_only_plot_outputs=has_only_plot_outputs,
-        operator_hierarchical_id=id_prefix + node.id + "\\",
-        operator_hierarchical_name=name_prefix + node_name + "\\",
+        operator_hierarchical_id=id_prefix + node.id + HIERARCHY_SEPARATOR,
+        operator_hierarchical_name=name_prefix + node_name + HIERARCHY_SEPARATOR,
     )
 
     # provide default data

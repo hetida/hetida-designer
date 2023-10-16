@@ -272,7 +272,7 @@ class WorkflowRevisionFrontendDto(BasicInformation):
                     link_start_type is not None
                     and link_end_type is not None
                     and (
-                        link_start_type == link_end_type
+                        link_start_type == link_end_type  # noqa: PLR1714
                         or link_start_type == DataType.Any
                         or link_end_type == DataType.Any
                     )

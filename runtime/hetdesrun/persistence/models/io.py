@@ -207,7 +207,7 @@ class WorkflowContentIO(Connector):
 
     def matches_operator_io(self, other: Connector) -> bool:
         return self.connector_id == other.id and (
-            self.data_type == DataType.Any
+            self.data_type == DataType.Any  # noqa: PLR1714
             or other.data_type == DataType.Any
             or self.data_type == other.data_type
         )

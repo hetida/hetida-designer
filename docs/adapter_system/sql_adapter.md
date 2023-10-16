@@ -4,6 +4,7 @@ The built-in sql adapter allows to access data from and write data to arbitrary 
 More specifically, it enables
 * Reading tables / arbitrary queries from sql databases thereby retrieving results as dataframes
 * Writing dataframes to tables, either replacing the complete target table or appending to it. Tables are created in both cases if necessary.
+* Reading and writing timeseries data from sql databases (e.g. timescale db).
 
 Multiple sql databases can be configured at the same time. For configuration of each database a [sqlalchemy compatible connection uri](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) is required and the necessary sql driver Python libraries must [be installed](../custom_python_dependencies.md). Sqlite support as well as postgres support via [psycopg2](https://pypi.org/project/psycopg2/) are preinstalled.
 
@@ -71,7 +72,32 @@ Here we give an example configuration for mounting and accessing two sqlite data
             "key": "temp_sqlite_db",
             "connection_url": "sqlite+pysqlite:////mnt/sql_adapter_data/writable_sqlite.db",
             "append_tables": ["append_alert_table", "model_run_stats"],
-            "replace_tables" : ["model_config_params"]            
+            "replace_tables" : ["model_config_params"]
+          },
+          {
+            "name": "timeseries sqlite db",
+            "key": "timeseries_sqlite_db",
+            "connection_url": "sqlite+pysqlite:////mnt/sql_adapter_data/sqlite_with_tstables.db",
+            "append_tables": [],
+            "replace_tables" : [],
+            "timeseries_tables": {
+              "ro_ts_table": {
+                "appendable": false,
+                "metric_col_name": "metric",
+                "timestamp_col_name": "timestamp",
+                "fetchable_value_cols": ["value"],
+                "writable_value_cols": [],
+                "column_mapping_hd_to_db": {}
+              },
+              "ts_table": {
+                "appendable": true,
+                "metric_col_name": "metric",
+                "timestamp_col_name": "timestamp",
+                "fetchable_value_cols": ["value"],
+                "writable_value_cols": ["value"],
+                "column_mapping_hd_to_db": {}                
+              }              
+            }
           },
           {
             "name": "hd postgres",
@@ -127,4 +153,6 @@ As sources the selection dialog offers for each database
 * A special "SQL Query" source which when selected allows to enter an arbitrary SQL query.
 
 As sinks it offers only the explicitely configured append and replace tables for each configured database.
+
+Similarly, for MULTITSFRAMEs you should be able to use the sql adapter's provided sources and sink for the configured timeseries tables. The example tables contain timeseries data for metrics `a`, `b` and `c` in august 2023. You can query all metrics by entering `ALL` into the filter.
 

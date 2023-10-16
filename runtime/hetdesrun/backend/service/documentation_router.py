@@ -39,7 +39,7 @@ documentation_router = HandleTrailingSlashAPIRouter(
 async def get_component_revision_by_id(
     id: UUID = Path(  # noqa: A002
         ...,
-        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
     ),
 ) -> DocumentationFrontendDto:
     """Get the documentation of a transformation revision by its id from the data base.

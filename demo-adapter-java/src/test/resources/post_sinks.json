@@ -1,6 +1,0 @@
-{
-  "key": "root.plantB.millingUnit.influx.anomaly_score|Overshooting Allowed",
-  "value": true,
-  "dataType": "METADATA_BOOLEAN_TYPE",
-  "isSink": true
-}

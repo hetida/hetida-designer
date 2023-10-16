@@ -1,3 +1,4 @@
+import io
 from unittest import mock
 
 import pandas as pd
@@ -25,11 +26,13 @@ async def test_load_ts_adapter_request():
     ):
         resp_mock = mock.Mock()
         resp_mock.status_code = 200
-        resp_mock.raw = """\n
+        resp_mock.raw = io.StringIO(
+            """\n
             {"timeseriesId": "1", "timestamp": "2020-03-11T13:45:18.194000000Z", "value": 42.3}
             {"timeseriesId": "1", "timestamp": "2020-03-11T14:45:18.194000000Z", "value": 41.7}
             {"timeseriesId": "1", "timestamp": "2020-03-11T15:45:18.194000000Z", "value": 15.89922333}
             """
+        )
         resp_mock.headers = {}
 
         filtered_sources = [
@@ -93,7 +96,7 @@ async def test_load_ts_adapter_request():
             assert df.shape == (0, 3)
 
             resp_mock.status_code = 200
-            resp_mock.raw = ""
+            resp_mock.raw = io.StringIO("")
             df = await load_ts_data_from_adapter(
                 filtered_sources,
                 filter_params=filter_params,
