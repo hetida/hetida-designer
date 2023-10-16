@@ -109,8 +109,8 @@ export class ToolbarComponent implements OnInit {
   }
 
   copy() {
+    // released_timestamp must be emptied before copy
     this.transformation.released_timestamp = '';
-    console.log('this.transformation', this.transformation);
     this.transformationActionService.copy(this.transformation);
   }
 
