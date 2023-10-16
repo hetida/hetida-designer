@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 export class Utils {
   static string = {
     isEmpty(s: string, trim: boolean = true): boolean {
@@ -51,7 +52,6 @@ export class Utils {
   }
 
   static deepCopy<T>(source: T): T {
-    // TODO replace with structuredClone once there is better support
-    return JSON.parse(JSON.stringify(source)) as typeof source;
+    return _.cloneDeep(source) as typeof source;
   }
 }
