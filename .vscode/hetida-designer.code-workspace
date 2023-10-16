@@ -14,10 +14,6 @@
       "name": "Hetida Backend"
     },
     {
-      "path": "../demo-adapter-java",
-      "name": "Demo Adapter Java"
-    },
-    {
       "path": "../demo-adapter-python",
       "name": "Demo Adapter Python"
     },
@@ -39,7 +35,6 @@
         "username": "hetida_designer_dbuser",
         "password": "hetida_designer_dbpasswd"
       }
-    ],
-    "java.configuration.updateBuildConfiguration": "automatic"
+    ]
   }
 }

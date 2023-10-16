@@ -98,7 +98,6 @@ build_and_push() {
 build_and_push frontend $VERSION
 build_and_push runtime $VERSION
 build_and_push backend $VERSION "runtime" # uses runtime image
-build_and_push demo-adapter-java $VERSION
 build_and_push demo-adapter-python $VERSION
 
 echo "Check out source branch $SOURCE_BRANCH"
