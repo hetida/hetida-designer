@@ -52,6 +52,6 @@ export class Utils {
   }
 
   static deepCopy<T>(source: T): T {
-    return _.cloneDeep(source) as typeof source;
+    return _.cloneDeep(source);
   }
 }
