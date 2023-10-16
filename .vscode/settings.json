@@ -1,5 +1,4 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic",
     "sqltools.connections": [
         {
             "database": "hetida_designer_db",
