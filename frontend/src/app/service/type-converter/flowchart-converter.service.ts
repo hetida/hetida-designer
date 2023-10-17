@@ -34,7 +34,7 @@ export class FlowchartConverterService {
   ): FlowchartConfiguration {
     const inputs: IO[] =
       typeof transformation.content !== 'string'
-        ? (<WorkflowTransformation>transformation).content.inputs.map(
+        ? (transformation as WorkflowTransformation).content.inputs.map(
             ioConnector => ({ ...ioConnector })
           )
         : transformation.io_interface.inputs;
