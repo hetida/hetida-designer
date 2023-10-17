@@ -6,6 +6,7 @@ import {
   FlowchartConfiguration,
   IOTypeOption
 } from 'hetida-flowchart';
+import { IO } from 'hd-wiring';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Connector } from 'src/app/model/connector';
 import { Position } from 'src/app/model/position';
@@ -31,10 +32,17 @@ export class FlowchartConverterService {
   public convertComponentToFlowchart(
     transformation: Transformation
   ): FlowchartConfiguration {
+    const inputs: IO[] =
+      typeof transformation.content !== 'string'
+        ? (<WorkflowTransformation>transformation).content.inputs.map(
+            ioConnector => ({ ...ioConnector })
+          )
+        : transformation.io_interface.inputs;
+
     const operator = {
       ...transformation,
       transformation_id: transformation.id,
-      inputs: transformation.io_interface.inputs
+      inputs: inputs
         .map(input => {
           if (typeof transformation.content !== 'string') {
             const inputConnector = transformation.content.inputs.filter(
