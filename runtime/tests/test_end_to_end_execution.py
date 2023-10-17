@@ -212,7 +212,7 @@ async def test_direct_provisioning_multitsframe_metadata(
         exec_result = await run_single_component(
             (
                 "./transformations/components/connectors/"
-                "extract-attributes-multitsframe_100_f711106f-3ee1-46a6-a70b-ba12d92fe5be"
+                "extract-attributes-multitsframe_100_f711106f-3ee1-46a6-a70b-ba12d92fe5be.json"
             ),
             {
                 "multitsframe": (
