@@ -63,10 +63,28 @@ export class FlowchartConverterService {
             position: null
           };
         }),
-      outputs: transformation.io_interface.outputs.map(output => ({
-        ...output,
-        position: null
-      }))
+      outputs: transformation.io_interface.outputs.map(output => {
+        if (typeof transformation.content !== 'string') {
+          const outputConnector = transformation.content.outputs.filter(
+            contentOutput => contentOutput.id === output.id
+          );
+          if (outputConnector.length > 0) {
+            transformation.content.operators
+              .filter(opt => opt.id === outputConnector[0].operator_id)
+              .forEach(foundOperator => {
+                foundOperator.outputs.forEach(operatorOutput => {
+                  if (operatorOutput.id === outputConnector[0].connector_id) {
+                    output.name = outputConnector[0].name;
+                  }
+                });
+              });
+          }
+        }
+        return {
+          ...output,
+          position: null
+        };
+      })
     };
     const flowchartOperator = this.convertOperatorToFlowchartOperator(
       operator,
