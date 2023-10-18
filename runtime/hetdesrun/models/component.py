@@ -19,8 +19,7 @@ class UnnamedInput(BaseModel):
     id: UUID  # noqa: A003
     type: DataType = Field(  # noqa: A003
         ...,
-        description="one of "
-        + ", ".join(['"' + x.value + '"' for x in list(DataType)]),
+        description="one of " + ", ".join(['"' + x + '"' for x in list(DataType)]),
         example=DataType.Float,
     )
 
@@ -49,8 +48,7 @@ class ComponentOutput(BaseModel):
     name: str = Field(..., example="z", description="must be a valid Python identifier")
     type: DataType = Field(  # noqa: A003
         ...,
-        description="one of "
-        + ", ".join(['"' + x.value + '"' for x in list(DataType)]),
+        description="one of " + ", ".join(['"' + x + '"' for x in list(DataType)]),
         example=DataType.Integer,
     )
 

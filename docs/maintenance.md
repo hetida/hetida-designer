@@ -17,7 +17,7 @@ This page gives an overview over these tasks and provides recommendations and li
 
 ## How to invoke maintenance actions
 
-### Via running docker images
+### via running docker images
 The documentation typically shows how to invoke actions by running docker containers. See for example
 * [Import / Export](import_export.md) documentation.
 * [Cleanup](cleanup.md) documentation.
