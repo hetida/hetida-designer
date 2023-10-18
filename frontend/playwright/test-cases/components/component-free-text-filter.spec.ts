@@ -79,15 +79,14 @@ test('Free text filter for component', async ({
     `${componentInputName}-node-wiring-context-menu`
   );
   await page.mouse.click(0, 0); // Close context menu
-  await hetidaDesigner.clickByTestId('done-tree-node-modal');
+  await hetidaDesigner.clickByTestId('done-tree-node-modal'); // Close Source Dialog
+  await hetidaDesigner.clickByTestId('cancel-wiring-dialog'); // Close Execute Dialog
 
   const freeTextInput = await page.getByTestId(
     `${componentInputName}-free-text-filter-input-wiring-dialog`
   );
 
   expect(freeTextInput).toBeTruthy();
-
-  await hetidaDesigner.clickByTestId('cancel-wiring-dialog');
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
