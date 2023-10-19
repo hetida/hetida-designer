@@ -3,7 +3,7 @@ import io
 import json
 import logging
 from collections.abc import Generator
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal, TypedDict
 from uuid import UUID
 
@@ -111,7 +111,7 @@ def parse_pandas_data_content(
     return parsed_pandas_object
 
 
-class DataType(str, Enum):
+class DataType(StrEnum):
     """hetida designer data types
 
     These are the types available for component/workflow inputs/outputs.

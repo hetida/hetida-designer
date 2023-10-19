@@ -27,6 +27,12 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
     `mat-dialog-container:has-text("Execute Workflow ${workflowName} ${workflowTag}")`
   );
 
+  // Reset values for adapter for second pass with other Browsers
+  await hetidaDesigner.selectItemInDropdown(
+    `${workflowInputName}-adapter-list-input-wiring-dialog`,
+    'manual input'
+  );
+
   // Select adapter
   await hetidaDesigner.selectItemInDropdown(
     `${workflowInputName}-adapter-list-input-wiring-dialog`,
@@ -39,7 +45,8 @@ test('Confirm execute workflow with type SERIES input and Python-Demo-Adapter se
   );
   await page.waitForSelector('mat-dialog-container:has-text("Search Sources")');
   await hetidaDesigner.typeInInputByTestId('search-tree-node', source);
-  await hetidaDesigner.selectSourceSearchResult(0);
+  await hetidaDesigner.selectSourceSearchResult(2);
+
   await hetidaDesigner.clickByTestId(
     `${workflowInputName}-node-wiring-context-menu`
   );

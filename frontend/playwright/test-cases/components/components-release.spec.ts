@@ -106,12 +106,12 @@ ${componentInputData}
   await page.waitForSelector(
     `mat-dialog-container:has-text("Configure Input / Output for Component ${componentName} ${componentTag}")`
   );
-  const componentInputReleased = await page.getByTestId(
-    `${componentInputName}-label-input-component-io-dialog`
-  ).inputValue();
-  const componentOutputReleased = await page.getByTestId(
-    `${componentOutputName}-label-output-component-io-dialog`
-  ).inputValue();
+  const componentInputReleased = await page
+    .getByTestId(`${componentInputName}-label-input-component-io-dialog`)
+    .inputValue();
+  const componentOutputReleased = await page
+    .getByTestId(`${componentOutputName}-label-output-component-io-dialog`)
+    .inputValue();
   await hetidaDesigner.clickByTestId('cancel-component-io-dialog');
 
   // Get released component input data
@@ -173,11 +173,24 @@ test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
     componentName
   );
   await page.locator('.mat-menu-panel').hover();
-  await hetidaDesigner.clickOnContextMenu('Deprecate');
-  await page.waitForSelector(
-    `mat-dialog-container:has-text("Deprecate component ${componentName} (${componentTag})")`
-  );
-  await hetidaDesigner.clickByTestId('deprecate component-confirm-dialog');
+
+  if (
+    await page
+      .locator(`.mat-menu-content >> button:has-text("Deprecate")`)
+      .isVisible()
+  ) {
+    await hetidaDesigner.clickOnContextMenu('Deprecate');
+    await page.waitForSelector(
+      `mat-dialog-container:has-text("Deprecate component ${componentName} (${componentTag})")`
+    );
+    await hetidaDesigner.clickByTestId('deprecate component-confirm-dialog');
+  } else {
+    await hetidaDesigner.clickOnContextMenu('Delete');
+    await page.waitForSelector(
+      `mat-dialog-container:has-text("Delete component ${componentName} (${componentTag})")`
+    );
+    await hetidaDesigner.clickByTestId('delete component-confirm-dialog');
+  }
 
   await hetidaDesigner.clearTest();
 });
