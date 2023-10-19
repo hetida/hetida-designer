@@ -6,6 +6,7 @@ import {
   FlowchartConfiguration,
   IOTypeOption
 } from 'hetida-flowchart';
+import { IO } from 'hd-wiring';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Connector } from 'src/app/model/connector';
 import { Position } from 'src/app/model/position';
@@ -31,10 +32,17 @@ export class FlowchartConverterService {
   public convertComponentToFlowchart(
     transformation: Transformation
   ): FlowchartConfiguration {
+    const inputs: IO[] =
+      typeof transformation.content !== 'string'
+        ? (transformation as WorkflowTransformation).content.inputs.map(
+            ioConnector => ({ ...ioConnector })
+          )
+        : transformation.io_interface.inputs;
+
     const operator = {
       ...transformation,
       transformation_id: transformation.id,
-      inputs: transformation.io_interface.inputs
+      inputs: inputs
         .map(input => {
           if (typeof transformation.content !== 'string') {
             const inputConnector = transformation.content.inputs.filter(
@@ -63,10 +71,28 @@ export class FlowchartConverterService {
             position: null
           };
         }),
-      outputs: transformation.io_interface.outputs.map(output => ({
-        ...output,
-        position: null
-      }))
+      outputs: transformation.io_interface.outputs.map(output => {
+        if (typeof transformation.content !== 'string') {
+          const outputConnector = transformation.content.outputs.filter(
+            contentOutput => contentOutput.id === output.id
+          );
+          if (outputConnector.length > 0) {
+            transformation.content.operators
+              .filter(opt => opt.id === outputConnector[0].operator_id)
+              .forEach(foundOperator => {
+                foundOperator.outputs.forEach(operatorOutput => {
+                  if (operatorOutput.id === outputConnector[0].connector_id) {
+                    output.name = outputConnector[0].name;
+                  }
+                });
+              });
+          }
+        }
+        return {
+          ...output,
+          position: null
+        };
+      })
     };
     const flowchartOperator = this.convertOperatorToFlowchartOperator(
       operator,
