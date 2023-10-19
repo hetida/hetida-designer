@@ -659,7 +659,7 @@ class TestSctructuredErrors:
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
 
         assert result.error.location.file.endswith(
-            "/runtime/hetdesrun/runtime/engine/plain/workflow.py"
+            "/hetdesrun/runtime/engine/plain/workflow.py"
         )
         assert result.error.location.function_name == "_run_comp_func"
 
@@ -684,7 +684,7 @@ class TestSctructuredErrors:
         assert result.error.operator_info is not None
         assert "c4dbcc" in result.error.operator_info.transformation_info.id
         assert result.error.location.file.endswith(
-            "/runtime/hetdesrun/runtime/engine/plain/workflow.py"
+            "/hetdesrun/runtime/engine/plain/workflow.py"
         )
         assert result.error.location.function_name == "result"
 
