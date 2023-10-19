@@ -571,8 +571,10 @@ def return_stored_anomaly_score(
     # do not overwrite stored attributes!
     ts_df.attrs.update(
         {
-            "from_timestamp": from_timestamp.isoformat(),
-            "to_timestamp": to_timestamp.isoformat(),
+            "ref_interval_start_timestamp": from_timestamp.isoformat(),
+            "ref_interval_stop_timestamp": to_timestamp.isoformat(),
+            "ref_interval_type": "closed",
+            "ref_metrics": [ts_id],
         }
     )
 
@@ -635,6 +637,14 @@ async def timeseries(
         if len(ts_df.attrs) != 0:
             logger.debug("which has attributes %s", str(ts_df.attrs))
             collected_attrs[ts_id] = ts_df.attrs
+            collected_attrs[ts_id].update(
+                {
+                    "ref_interval_start_timestamp": from_timestamp.isoformat(),
+                    "ref_interval_stop_timestamp": to_timestamp.isoformat(),
+                    "ref_interval_type": "closed",
+                    "ref_metrics": [ts_id],
+                }
+            )
 
     io_stream.seek(0)
     headers = {}
@@ -732,7 +742,19 @@ async def dataframe(
                 ],
             }
         )
-        df.attrs = {"since_date": "2020-01-01T00:00:00.000Z"}
+        df.attrs = {
+            "ref_interval_start_timestamp": "2020-01-01T00:00:00+00:00",
+            "ref_interval_stop_timestamp": datetime.datetime.now(
+                tz=datetime.UTC
+            ).isoformat(),
+            "ref_interval_type": "closed",
+            "ref_metrics": [
+                "component_id",
+                "component_name",
+                "maintenance_type",
+                "timestamp",
+            ],
+        }
     elif df_id.endswith("plantB.maintenance_events"):
         df = pd.DataFrame(
             {  # has timestamp column
@@ -744,7 +766,19 @@ async def dataframe(
                 ],
             }
         )
-        df.attrs = {"since_date": "2020-01-01T00:00:00.000Z"}
+        df.attrs = {
+            "ref_interval_start_timestamp": "2020-01-01T00:00:00+00:00",
+            "ref_interval_stop_timestamp": datetime.datetime.now(
+                tz=datetime.UTC
+            ).isoformat(),
+            "ref_interval_type": "closed",
+            "ref_metrics": [
+                "component_id",
+                "component_name",
+                "maintenance_type",
+                "timestamp",
+            ],
+        }
     elif df_id.endswith("plantA.masterdata"):
         df = pd.DataFrame(
             {
@@ -756,6 +790,7 @@ async def dataframe(
                 "value": ["2012-12-07T00:00:00.000Z", "US", 17],
             }
         )
+        df.attrs.update({"ref_metrics": ["name", "value"]})
     elif df_id.endswith("plantB.masterdata"):
         df = pd.DataFrame(
             {
@@ -767,6 +802,7 @@ async def dataframe(
                 "value": ["2017-08-22T00:00:00.000Z", "DE", 13],
             }
         )
+        df.attrs.update({"ref_metrics": ["name", "value"]})
     elif df_id.endswith("alerts"):
         df = get_value_from_store(df_id)
         if column_names != "":
@@ -784,6 +820,7 @@ async def dataframe(
                     f"Dataframe with id {df_id} contains columns {list(df)} "
                     f"but does not contain all columns of {column_name_list}.",
                 ) from error
+        df.attrs.update({"ref_metrics": df.columns.tolist()})
     else:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,
@@ -902,20 +939,35 @@ async def multitsframe(
                     f"Cannot cast lower threshold '{upper_threshold}' to float:\n{error}",
                 ) from error
             mtsf = mtsf[mtsf["value"] < upper_threshold_value]
+        mtsf.attrs.update(
+            {
+                "ref_interval_start_timestamp": from_timestamp.isoformat(),
+                "ref_interval_stop_timestamp": to_timestamp.isoformat(),
+                "ref_interval_type": "closed",
+                "ref_metrics": metrics,
+            }
+        )
     elif mtsf_id.endswith("anomalies"):
-        mtsf = get_value_from_store(mtsf_id)
+        stored_mtsf = get_value_from_store(mtsf_id)
+        stored_mtsf["timestamp"] = pd.to_datetime(stored_mtsf["timestamp"])
+        mtsf = stored_mtsf[
+            (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) > from_timestamp)
+            & (np.array(stored_mtsf["timestamp"].dt.to_pydatetime()) < to_timestamp)
+        ]
+        mtsf.attrs.update(
+            {
+                "ref_interval_start_timestamp": from_timestamp.isoformat(),
+                "ref_interval_stop_timestamp": to_timestamp.isoformat(),
+                "ref_interval_type": "closed",
+                "ref_metrics": mtsf["metric"].unique().tolist(),
+            }
+        )
     else:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,
             f"No multitsframe data available with provided id '{mtsf_id}'.",
         )
 
-    mtsf.attrs.update(
-        {
-            "from_timestamp": from_timestamp.isoformat(),
-            "to_timestamp": to_timestamp.isoformat(),
-        }
-    )
     headers = {}
     logger.debug("loading multitsframe %s", str(mtsf))
     logger.debug("which has attributes %s", str(mtsf.attrs))

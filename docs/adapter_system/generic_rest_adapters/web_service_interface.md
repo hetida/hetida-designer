@@ -372,19 +372,21 @@ The `timestamp` entries have to be ISO-8601 timestamps and should always have UT
 Type of value must be the datatype of the timeseries source, i.e. if the timeseries source with that id has type `timeseries(int)` the value of a corresponding record must be a Json integer.
 
 ##### Attaching metadata to each timeseries
-Additionally, metadata in the form of (arbitrarily nested) JSON mappings can be provided that is then attached to the Pandas Series objects' `attrs` attribute in the designer runtime during component/workflow execution.
+Additionally, metadata in the form of (arbitrarily nested) JSON mappings can be provided that is then attached to the Pandas Series objects' `attrs` attribute in the designer runtime during component/workflow execution. See [metadata attrs documentation](../../metadata_attrs.md) for details and the conventions for fields that an adapter should provide. We strongly recommend to send at least the metadata fields described there!
 
 For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing a mapping from timeseries ids to their metadata, e.g.:
 
 ```json
 {
   "id_1": {
-    "requested_start_time": "2020-03-11T13:00:00.000000000Z",
-    "requested_end_time": "2020-03-11T16:00:00.000000000Z",
-    "type": "signal"
+    "ref_interval_start_timestamp": "2020-03-11T13:00:00.000000000Z",
+    "ref_interval_end_timestamp": "2020-03-11T16:00:00.000000000Z",
+    "ref_interval_type": "closed"
   },
   "id_2": {
-    "type": "noise",
+    "ref_interval_start_timestamp": "2020-03-11T13:00:00.000000000Z",
+    "ref_interval_end_timestamp": "2020-03-11T16:00:00.000000000Z",
+    "ref_interval_type": "closed",
     "anomalies": ["2020-03-11T14:45:00.000000000Z", "2020-03-11T14:48:00.000000000Z"]
   }
 }
@@ -413,14 +415,11 @@ Payload (List of timeseries records):
 The same rules as described in the corresponding GET apply to `timestamp` and `value`
 
 ##### Retrieving attached timeseries metadata
-Metadata stored in the Pandas Series `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string. E.g.
-```json
-{
-  "requested_start_time": "2020-03-11T13:00:00.000000000Z",
-  "requested_end_time": "2020-03-11T16:00:00.000000000Z",
-  "type": "signal"
-}
-```
+Metadata stored in the Pandas Series `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string. 
+
+See [metadata attrs documentation](../../metadata_attrs.md) for details and conventions.
+
+It is up to your adapter implementation what you do with that metadata.
 
 #### /dataframe (GET)
 
@@ -441,7 +440,7 @@ This response can have arbitrary entries in the record which then correspond to 
 There is a special convention on "timestamp" columns: If a timestamp column exists the runtime will try to parse this column as datetimes and if this is successful will set the index of the Pandas DataFrame to this column and sort by it. If that does not work the index of the resulting Pandas DataFrame will be the default RangeIndex. In every case the column timestamp will also be available as column in the resulting Pandas DataFrame.
 
 ##### Attaching metadata to the dataframe
-Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution.
+Additionally, [metadata](../../metadata_attrs.md) in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution.
 
 For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata, e.g.:
 
@@ -473,6 +472,13 @@ Payload:
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different. The runtime will not try to convert a DateTimeIndex of the Pandas DataFrame to send into a timestamp column. Actually when Posting results, the index will be completely ignored. If index data should be send it should be converted into a column as part of the workflow.
 
+##### Retrieving attached timeseries metadata
+Again, metadata stored in the Pandas DataFrame `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
+
+See [metadata attrs documentation](../../metadata_attrs.md) for details and conventions.
+
+It is up to your adapter implementation what you do with that metadata.
+
 #### /multitsframe (GET)
 
 Query parameters:
@@ -494,12 +500,21 @@ This response will always have the entries `metric`, `timestamp` and `value`. Ne
 
 
 ##### Attaching metadata to the multitsframe
-Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution.
+Additionally, metadata in the form of an (arbitrarily nested) JSON mapping can be provided that is then attached to the Pandas DataFrame objects' `attrs` attribute in the designer runtime during component/workflow execution. See [metadata attrs documentation](../../metadata_attrs.md) for details and the conventions for fields that an adapter should provide. We strongly recommend to send at least the metadata fields described there!
 
 For this the response is allowed to send a header `Data-Attributes` which must contain a base64 encoded UTF8-encoded JSON String representing the metadata, e.g.:
 
 ```json
 {
+  "ref_interval_start_timestamp": "2020-03-11T13:00:00.000000000Z",
+  "ref_interval_end_timestamp": "2020-03-11T16:00:00.000000000Z",
+  "ref_interval_type": "closed",
+  "ref_metrics": [
+      "Milling Influx Temperature",
+      "Milling Outfeed Temperature",
+      "Pickling Influx Temperature",
+      "Pickling Outfeed Temperature"
+    ],
   "column_units": {
     "Milling Influx Temperature": "C",
     "Milling Outfeed Temperature": "C",
@@ -528,8 +543,12 @@ Payload:
 
 Same rules as in the corresponding GET endpoint apply here, only timestamp handling is different.
 
-##### Retrieving attached dataframe metadata
-Analogous to the corresponding GET endpoint, metadata stored in the Pandas DataFrame `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
+##### Retrieving attached multitsframe metadata
+Analogous to the corresponding GET endpoint, metadata stored in the underlying Pandas DataFrame `attrs` attribute will be sent by the designer runtime in a header `Data-Attributes` as a base64-encoded UTF8-encoded JSON string.
+
+See [metadata attrs documentation](../../metadata_attrs.md) for details and conventions.
+
+It is up to your adapter implementation what you do with that metadata.
 
 ## A minimal Generic Rest adapter
 

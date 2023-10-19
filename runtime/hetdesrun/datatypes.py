@@ -4,7 +4,7 @@ import json
 import logging
 from collections.abc import Generator
 from enum import StrEnum
-from typing import Any, TypedDict
+from typing import Any, Literal, TypedDict
 from uuid import UUID
 
 import numpy as np
@@ -12,11 +12,103 @@ import pandas as pd
 import pytz
 from plotly.graph_objects import Figure
 from plotly.utils import PlotlyJSONEncoder
-from pydantic import BaseConfig, BaseModel, create_model
+from pydantic import BaseConfig, BaseModel, Field, ValidationError, create_model
 
 logger = logging.getLogger(__name__)
 
 MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
+
+
+class MetaDataWrapped(BaseModel):
+    """Allows to wrap pandas object data with metadata"""
+
+    hd_wrapped_data_object__: Literal["SERIES", "DATAFRAME"] = Field(
+        ..., alias="__hd_wrapped_data_object__"
+    )
+    metadata__: dict[str, Any] = Field(
+        ...,
+        alias="__metadata__",
+        description="Json serializable dictionary of metadata. Will be written"
+        "to the resulting pandas object's attrs attribute.",
+    )
+    data__: dict | list = Field(
+        ...,
+        alias="__data__",
+        description="The actual data which constitutes the pandas object.",
+    )
+
+
+def try_parse_wrapped(
+    data: str | dict | list,
+    hd_wrapped_data_object: Literal["SERIES", "DATAFRAME"],
+) -> MetaDataWrapped:
+    if isinstance(data, str):
+        wrapped_data = MetaDataWrapped.parse_raw(
+            data
+        )  # model_validate_json in pydantic 2.0
+
+        if wrapped_data.hd_wrapped_data_object__ != hd_wrapped_data_object:
+            msg = (
+                f"Unexpected hd model type: {wrapped_data.hd_wrapped_data_object__}."
+                f" Expected {hd_wrapped_data_object}"
+            )
+            logger.warning(msg)
+            raise TypeError(msg)
+    else:
+        wrapped_data = MetaDataWrapped.parse_obj(data)  # model_validate in pydantic 2.0
+
+    return wrapped_data
+
+
+def parse_wrapped_content(
+    v: str | dict | list,
+    wrapped_data_objec: Literal["SERIES", "DATAFRAME"],
+) -> tuple[str | dict | list, None | dict[str, Any]]:
+    data_content: str | dict | list
+    try:
+        wrapped_object = try_parse_wrapped(v, wrapped_data_objec)
+        parsed_metadata = wrapped_object.metadata__
+        data_content = wrapped_object.data__
+    except (ValidationError, TypeError) as e:
+        logger.debug("Data object is not wrapped: %s", str(e))
+        data_content = v
+        parsed_metadata = None
+
+    return data_content, parsed_metadata
+
+
+def wrap_metadata_as_attrs(
+    data_object: pd.Series | pd.DataFrame, metadata: None | dict[str, Any]
+) -> pd.Series | pd.DataFrame:  # TODO: make generic: input type = output type
+    if metadata is not None:
+        data_object.attrs = metadata
+    else:
+        data_object.attrs = {}
+    return data_object
+
+
+def parse_pandas_data_content(
+    data_content: str | dict | list, typ: Literal["series", "frame"]
+) -> pd.DataFrame | pd.Series:
+    try:
+        if isinstance(data_content, str):
+            parsed_pandas_object = pd.read_json(io.StringIO(data_content), typ=typ)
+        else:
+            parsed_pandas_object = pd.read_json(data_content, typ=typ)
+
+    except Exception:  # noqa: BLE001
+        try:
+            parsed_pandas_object = pd.read_json(
+                io.StringIO(json.dumps(data_content)), typ=typ
+            )
+
+        except Exception as read_json_exception:  # noqa: BLE001
+            raise ValueError(
+                "Could not parse provided input as Pandas "
+                + ("Series" if type == "series" else "DataFrame")
+            ) from read_json_exception
+
+    return parsed_pandas_object
 
 
 class DataType(StrEnum):
@@ -42,11 +134,15 @@ class PydanticPandasSeries:
     Parses either a json string according to pandas.read_json
     with typ="series" and default arguments otherwise or
     a Python dict-like data structure using the constructor
-    of the pandas.Series class with default arguments
+    of the pandas.Series class with default arguments.
+
+    Also allows a wrapped variant where metadata can be provided.
 
     Examples of valid input:
         '{"0":1.0,"1":2.1,"2":3.2}'
         {"0":1.0,"1":2.1,"2":3.2}
+        [1.2, 3.5, 2.9]
+        '[1.2, 3.5, 2.9]'
 
     """
 
@@ -60,44 +156,19 @@ class PydanticPandasSeries:
     ) -> pd.Series:
         if isinstance(v, pd.Series):
             return v
-        try:
-            if isinstance(v, str):
-                return pd.read_json(io.StringIO(v), typ="series")
 
-            return pd.read_json(v, typ="series")
+        if not isinstance(
+            v, str | dict | list
+        ):  # need to check at runtime since we get objects from user code
+            msg = f"Got unexpected type at runtime when parsing Series: {str(type(v))}"
+            logger.error(msg)
+            raise ValueError(msg)
 
-        except TypeError:  # https://github.com/pandas-dev/pandas/issues/31464
-            try:
-                if isinstance(v, str):
-                    return pd.read_json(
-                        io.StringIO(v), typ="series", convert_dates=False
-                    )
-                return pd.read_json(v, typ="series", convert_dates=False)
+        data_content, metadata = parse_wrapped_content(v, "SERIES")
 
-            except Exception as e:  # noqa: BLE001
-                raise ValueError(
-                    "Could not parse provided input as Pandas Series even with convert_dates=False"
-                ) from e
-
-        except Exception:  # noqa: BLE001
-            try:
-                return pd.read_json(io.StringIO(json.dumps(v)), typ="series")
-
-            except TypeError:  # https://github.com/pandas-dev/pandas/issues/31464
-                try:
-                    return pd.read_json(
-                        io.StringIO(json.dumps(v)), typ="series", convert_dates=False
-                    )
-                except Exception as read_json_with_type_error_exception:  # noqa: BLE001
-                    raise ValueError(
-                        "Could not parse provided input as Pandas Series even with"
-                        " convert_dates=False"
-                    ) from read_json_with_type_error_exception
-
-            except Exception as read_json_exception:  # noqa: BLE001
-                raise ValueError(
-                    "Could not parse provided input as Pandas Series"
-                ) from read_json_exception
+        return wrap_metadata_as_attrs(
+            parse_pandas_data_content(data_content, "series"), metadata
+        )
 
 
 class PydanticPandasDataFrame:
@@ -106,7 +177,11 @@ class PydanticPandasDataFrame:
     Parses either a json string according to pandas.read_json
     with typ="frame" and default arguments otherwise or
     a Python dict-like data structure using the constructor
-    of the pandas.DataFrame class with default arguments
+    of the pandas.DataFrame class with default arguments.
+
+    Additionally a MetaDataWrapped variant of these can be parsed
+    and then is equipped with the provided metadata in the `attrs`
+    attribute (https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.attrs.html
     """
 
     @classmethod
@@ -117,55 +192,58 @@ class PydanticPandasDataFrame:
     def validate(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
         if isinstance(v, pd.DataFrame):
             return v
-        try:
-            if isinstance(v, str):
-                return pd.read_json(io.StringIO(v), typ="frame")
-            return pd.read_json(v, typ="frame")
 
-        except Exception:  # noqa: BLE001
-            try:
-                return pd.read_json(io.StringIO(json.dumps(v)), typ="frame")
-            except Exception as read_json_exception:  # noqa: BLE001
-                raise ValueError(
-                    "Could not parse provided input as Pandas DataFrame"
-                ) from read_json_exception
+        if not isinstance(
+            v, str | dict | list
+        ):  # need to check at runtime since we get objects from user code
+            msg = (
+                f"Got unexpected type at runtime when parsing DataFrame: {str(type(v))}"
+            )
+            logger.error(msg)
+            raise ValueError(msg)
+
+        data_content, metadata = parse_wrapped_content(v, "DATAFRAME")
+
+        return wrap_metadata_as_attrs(
+            parse_pandas_data_content(data_content, "frame"), metadata
+        )
 
 
 class PydanticMultiTimeseriesPandasDataFrame:
     """Custom pydantic Data Type for parsing Multi Timeseries Pandas DataFrames
 
-    Parses either a json string according to pandas.read_json
-    with typ="frame" and default arguments otherwise or
-    a Python dict-like data structure using the constructor
-    of the pandas.DataFrame class with default arguments
+    Parses data as a dataframe similarly to PydanticPandasDataFrame but
+    additionally checks the column layout and types to match the conventions
+    for a multitsframe.
     """
 
     @classmethod
     def __get_validators__(cls) -> Generator:
-        yield cls.validate
+        yield cls.validate_df
+        yield cls.validate_multits_properties
 
     @classmethod
-    def validate(  # noqa:PLR0912
-        cls, v: pd.DataFrame | str | dict | list
-    ) -> pd.DataFrame:
-        df: pd.DataFrame | None = None
+    def validate_df(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
         if isinstance(v, pd.DataFrame):
-            df = v
-        else:
-            try:
-                if isinstance(v, str):
-                    df = pd.read_json(io.StringIO(v), typ="frame")
-                else:
-                    df = pd.read_json(v, typ="frame")
+            return v
 
-            except Exception:  # noqa: BLE001
-                try:
-                    df = pd.read_json(io.StringIO(json.dumps(v)), typ="frame")
-                except Exception as read_json_exception:  # noqa: BLE001
-                    raise ValueError(
-                        "Could not parse provided input as Pandas DataFrame."
-                    ) from read_json_exception
+        if not isinstance(
+            v, str | dict | list
+        ):  # need to check at runtime since we get objects from user code
+            msg = f"Got unexpected type at runtime when parsing MultiTsFrame: {str(type(v))}"
+            logger.error(msg)
+            raise ValueError(msg)
 
+        data_content, metadata = parse_wrapped_content(v, "DATAFRAME")
+
+        return wrap_metadata_as_attrs(
+            parse_pandas_data_content(data_content, "frame"), metadata
+        )
+
+    @classmethod
+    def validate_multits_properties(  # noqa:PLR0912
+        cls, df: pd.DataFrame
+    ) -> pd.DataFrame:
         if len(df.columns) == 0:
             df = pd.DataFrame(columns=MULTITSFRAME_COLUMN_NAMES)
 
@@ -288,14 +366,45 @@ class AdvancedTypesOutputSerializationConfig(BaseConfig):
 
     # Unfortunately there is no good way to get None for NaN or NaT:
     json_encoders = {
-        pd.Series: lambda v: json.loads(
-            v.to_json(date_format="iso")
-        ),  # in order to serialize both NaN and NaT to null
-        pd.DataFrame: lambda v: json.loads(
-            v.to_json(date_format="iso")
-        ),  # in order to serialize both NaN and NaT to null
-        PydanticPandasSeries: lambda v: v.to_dict(),
-        PydanticPandasDataFrame: lambda v: v.to_dict(),
+        pd.Series: lambda v: {
+            "__hd_wrapped_data_object__": "SERIES",
+            "__metadata__": v.attrs,
+            "__data__": json.loads(
+                v.to_json(
+                    date_format="iso"
+                )  # in order to serialize both NaN and NaT to null,
+            ),
+        },
+        pd.DataFrame: lambda v: {
+            "__hd_wrapped_data_object__": "DATAFRAME",
+            "__metadata__": v.attrs,
+            "__data__": json.loads(
+                v.to_json(
+                    date_format="iso"
+                )  # in order to serialize both NaN and NaT to null
+            ),
+        },
+        PydanticPandasSeries: lambda v: {
+            "__hd_wrapped_data_object__": "SERIES",
+            "__metadata__": v.attrs,
+            "__data__": v.to_dict(),
+        },
+        PydanticPandasDataFrame: lambda v: {
+            "__hd_wrapped_data_object__": "DATAFRAME",
+            "__metadata__": v.attrs,
+            "__data__": json.loads(
+                v.to_json(
+                    date_format="iso"
+                )  # in order to serialize both NaN and NaT to null
+            ),
+        },
+        PydanticMultiTimeseriesPandasDataFrame: lambda v: {
+            "__hd_wrapped_data_object__": "DATAFRAME",
+            "__metadata__": v.attrs,
+            "__data__": v.to_dict(
+                date_format="iso"
+            ),  # in order to serialize both NaN and NaT to null
+        },
         np.ndarray: lambda v: v.tolist(),
         datetime.datetime: lambda v: v.isoformat(),
         UUID: lambda v: str(v),  # alternatively: v.hex

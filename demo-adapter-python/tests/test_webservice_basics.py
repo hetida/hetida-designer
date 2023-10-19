@@ -363,8 +363,8 @@ async def test_sending_attrs_via_get_dataframe(async_test_client: AsyncClient) -
 
         df_attrs = decode_attributes(response.headers["Data-Attributes"])
 
-        assert "since_date" in df_attrs
-        assert df_attrs["since_date"] == "2020-01-01T00:00:00.000Z"
+        assert "ref_interval_start_timestamp" in df_attrs
+        assert df_attrs["ref_interval_start_timestamp"] == "2020-01-01T00:00:00+00:00"
 
 
 @pytest.mark.asyncio
@@ -453,8 +453,10 @@ async def test_sending_attrs_via_get_multitsframe(
 
         df_attrs = decode_attributes(response.headers["Data-Attributes"])
 
-        assert df_attrs["from_timestamp"] == "2020-01-01T00:00:00+00:00"
-        assert df_attrs["to_timestamp"] == "2020-01-01T00:00:00+00:00"
+        assert df_attrs["ref_interval_start_timestamp"] == "2020-01-01T00:00:00+00:00"
+        assert df_attrs["ref_interval_start_timestamp"] == "2020-01-01T00:00:00+00:00"
+        assert df_attrs["ref_interval_type"] == "closed"
+        assert df_attrs["ref_metrics"] == []
 
 
 @pytest.mark.asyncio
@@ -511,9 +513,15 @@ async def test_sending_attrs_via_get_timeseries(async_test_client: AsyncClient) 
         df_attrs = decode_attributes(response.headers["Data-Attributes"])
 
         assert ts_id in df_attrs
-        assert "to_timestamp" in df_attrs[ts_id]
-        assert df_attrs[ts_id]["to_timestamp"] != "2020-01-01T00:00:00.000000000Z"
-        assert df_attrs[ts_id]["to_timestamp"] == "2020-01-01T00:00:00+00:00"
+        assert "ref_interval_stop_timestamp" in df_attrs[ts_id]
+        assert (
+            df_attrs[ts_id]["ref_interval_stop_timestamp"]
+            != "2020-01-01T00:00:00.000000000Z"
+        )
+        assert (
+            df_attrs[ts_id]["ref_interval_stop_timestamp"]
+            == "2020-01-01T00:00:00+00:00"
+        )
 
 
 @pytest.mark.asyncio

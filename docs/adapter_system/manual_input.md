@@ -2,7 +2,9 @@
 
 When selecting "manual input" in the test execution dialog you have several options to insert and upload data directly without the need of a specific adapter.
 
-For simple types (like STRING, FLOAT, INT) you can enter data directly in the input field. For SERIES, DATAFRAME or ANY inputs clicking on the input field opens an editor dialog where json-data can be entered.
+For simple types (like STRING, FLOAT, INT) you can enter data directly in the input field. For SERIES, DATAFRAME, MULTITSFRAME or ANY inputs clicking on the input field opens an editor dialog where json-data can be entered (a template is provided in the input text field).
+
+Note that for SERIES, DATAFRAME and MULTITSFRAME you can add metadata (which is attached to pandas `.attrs` attribute) by using the wrapped json format described [here](../metadata_attrs.md).
 
 This dialog additionally allows to import a json or csv file from disk via clicking on "Import JSON/CSV". For json files the required format agrees with the format for entering data into the dialogs editor. This format and the format required for CSVs is described below.
 
