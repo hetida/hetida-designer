@@ -116,6 +116,31 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
                 custom_objects = pickle.load(custom_objects_response["Body"])
             with h5py.File(file_object, "r") as f:
                 data = tf.keras.saving.load_model(f, custom_objects=custom_objects)
+    elif object_key.file_extension == FileExtension.PT:
+        try:
+            import torch.jit as tjit
+        except ModuleNotFoundError as error:
+            msg = (
+                "To load a model from a BLOB in the pt format, "
+                f"add torch to the runtime dependencies:\n{error}"
+            )
+            logger.error(msg)
+            raise AdapterHandlingException(msg) from error
+        else:
+            logger.info("Successfully imported torch")
+            file_object = BytesIO(response["Body"].read())
+            custom_objects: dict[str, Any] | None = None
+            custom_objects_object_key = object_key.to_custom_objects_object_key()
+            try:
+                custom_objects_response = get_object(
+                    s3_client=s3_client,
+                    bucket_name=bucket.name,
+                    object_key_string=custom_objects_object_key.string,
+                )
+            except s3_client.exceptions.NoSuchKey:
+                pass
+            else:
+                data = tjit.load(file_object)  # TODO wrap in try block?
     else:
         data = pickle.load(response["Body"])
 
