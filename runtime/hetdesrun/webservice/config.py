@@ -2,6 +2,7 @@ import datetime
 import os
 import re
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
@@ -88,6 +89,20 @@ class RuntimeConfig(BaseSettings):
         True,
         env="HD_IS_RUNTIME_SERVICE",
         description="Whether runtime service endpoints should be active.",
+    )
+
+    restrict_to_trafo_exec_service: list[UUID] = Field(
+        [],
+        description=(
+            "Setting this to a non-empty list of UUIDs will surpress all backend "
+            "and runtime endpoints and offer only the execution of the configured "
+            "transformations. This can be used to scale execution of one or more "
+            "transformations as a separate webservice, which also can be exposed to "
+            "3rd parties without allowing manipulations. Often this is combined with "
+            "setting is_runtime_service to true in order to have the full trafo "
+            "execution happen in one sacalable container service."
+        ),
+        env="HD_RESTRICT_TO_TRAFO_EXEC_SERVICE",
     )
 
     ensure_db_schema: bool = Field(

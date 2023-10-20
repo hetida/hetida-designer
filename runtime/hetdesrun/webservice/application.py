@@ -17,6 +17,7 @@ from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
 from hetdesrun.backend.service.documentation_router import documentation_router
+from hetdesrun.backend.service.exec_only_router import restricted_transformation_router
 from hetdesrun.backend.service.info_router import info_router
 from hetdesrun.backend.service.maintenance_router import maintenance_router
 from hetdesrun.backend.service.transformation_router import transformation_router
@@ -138,7 +139,10 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         logger.info("Request validation failed:\n%s", str(exc))
         return await request_validation_exception_handler(request, exc)
 
-    if get_config().is_runtime_service:
+    if (
+        get_config().is_runtime_service
+        and len(get_config().restrict_to_trafo_exec_service) == 0
+    ):
         app.include_router(
             local_file_adapter_router
         )  # auth dependency set individually per endpoint
@@ -158,7 +162,10 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             runtime_router, prefix="/engine"
         )  # auth dependency set individually per endpoint
 
-    if get_config().is_backend_service:
+    if (
+        get_config().is_backend_service
+        and len(get_config().restrict_to_trafo_exec_service) == 0
+    ):
         if (
             get_sql_adapter_config().active
             and not get_sql_adapter_config().service_in_runtime
@@ -192,6 +199,15 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             app.include_router(
                 maintenance_router, prefix="/api", dependencies=get_auth_deps()
             )
+    if len(get_config().restrict_to_trafo_exec_service) != 0:
+        app.include_router(
+            info_router, prefix="/api"
+        )  # reachable without authorization
+        app.include_router(
+            restricted_transformation_router,
+            prefix="/api",
+            dependencies=get_auth_deps(),
+        )
 
     @app.on_event("startup")
     async def startup_event() -> None:
