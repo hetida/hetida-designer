@@ -293,9 +293,9 @@ usage() {
     echo "   -q | --quiet                          (HDCTL_SILENT)"
     echo "       suppress some output"
     echo
-    echo "   -v | --verbose VERBOSITY              (HDCTL_VERBOSITY)"
-    echo '       The default is "info". Setting it to "debug" will send some additional debug output to'
-    echo "       stderr"
+    echo "   -v | --verbose                        (HDCTL_VERBOSITY)"
+    echo '       The default is "info". Setting it will switch to "debug" and send some additional debug'
+    echo "       output to stderr"
     echo
     echo "    --"
     echo "       All command line arguments following -- will be gathered and for curl-invoking"
@@ -405,6 +405,7 @@ get_token_response() {
         _debug "Using client credential grant mode"
         curl_args+=("-d" 'grant_type=client_credentials' "-d" "client_secret=$CLIENT_SECRET")
     fi
+
     curl -s "${curl_args[@]}" "$AUTH_URL/realms/$REALM/protocol/openid-connect/token"
 }
 
