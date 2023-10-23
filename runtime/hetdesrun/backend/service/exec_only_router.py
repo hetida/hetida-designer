@@ -49,10 +49,11 @@ async def restricted_execute_transformation_revision_endpoint(
     """
 
     # TODO: Maybe this endpoint should cache at least released trafos?
+
     if exec_by_id.id not in get_config().restrict_to_trafo_exec_service:
         msg = (
             f"Restricted execution called with a trafo id {str(exec_by_id.id)} which "
-            "is not in the configured set of allowed UUIDs. Aborting."
+            f"is not in the configured set of allowed UUIDs. Aborting."
         )
         logger.warning(msg)
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail=msg)

@@ -17,7 +17,6 @@ from hetdesrun.backend.service.adapter_router import adapter_router
 from hetdesrun.backend.service.base_item_router import base_item_router
 from hetdesrun.backend.service.component_router import component_router
 from hetdesrun.backend.service.documentation_router import documentation_router
-from hetdesrun.backend.service.exec_only_router import restricted_transformation_router
 from hetdesrun.backend.service.info_router import info_router
 from hetdesrun.backend.service.maintenance_router import maintenance_router
 from hetdesrun.backend.service.transformation_router import transformation_router
@@ -78,11 +77,16 @@ middleware = [
 
 
 def app_desc_part() -> str:
+    if len(get_config().restrict_to_trafo_exec_service) > 0:
+        restriced_exec_suffix = " (restricted execution service mode)"
+    else:
+        restriced_exec_suffix = ""
+
     if get_config().is_backend_service and get_config().is_runtime_service:
-        return "Runtime + Backend"
+        return "Runtime + Backend" + restriced_exec_suffix
     if get_config().is_backend_service and not get_config().is_runtime_service:
-        return "Backend"
-    return "Runtime"
+        return "Backend" + restriced_exec_suffix
+    return "Runtime" + restriced_exec_suffix
 
 
 def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
@@ -95,8 +99,16 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         del sys.modules["hetdesrun.service.runtime_router"]
     except KeyError:
         pass
-
     from hetdesrun.service.runtime_router import runtime_router
+
+    # same for restricted_transformation_router
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.backend.service.exec_only_router"]
+    except KeyError:
+        pass
+    from hetdesrun.backend.service.exec_only_router import (
+        restricted_transformation_router,
+    )
 
     try:  # noqa: SIM105
         del sys.modules["hetdesrun.adapters.local_file.webservice"]
