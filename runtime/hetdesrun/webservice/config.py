@@ -2,7 +2,6 @@ import datetime
 import os
 import re
 from enum import Enum
-from typing import List
 from uuid import UUID
 
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
