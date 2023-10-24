@@ -1,3 +1,6 @@
+## 0.9.1
+* add [restricted-to-execution-of-preselected trafos webservice mode](./docs/execution/restricted_webservice.md)
+
 ## 0.9.0
 * add [optional inputs with default parameters](./docs/default_values.md)
 * add [structured exception handling](./docs/structuring_exceptions.md)
