@@ -312,7 +312,7 @@ class RuntimeConfig(BaseSettings):
 
     hd_runtime_engine_url: str = Field(
         "http://hetida-designer-runtime:8090/engine/",
-        env="HETIDA_DESIGNER_RUNTIME_EGINE_URL",
+        env="HETIDA_DESIGNER_RUNTIME_ENGINE_URL",
         description="URL to runtime",
     )
 

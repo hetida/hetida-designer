@@ -1,3 +1,6 @@
+## 0.9.2
+* BREAKING CHANGE: Fixed environment variable name `HETIDA_DESIGNER_RUNTIME_ENGINE_URL` (from mispelled `HETIDA_DESIGNER_RUNTIME_EGINE_URL`)
+
 ## 0.9.1
 * add [restricted-to-execution-of-preselected trafos webservice mode](./docs/execution/restricted_webservice.md)
 
