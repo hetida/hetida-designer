@@ -91,16 +91,16 @@ class RuntimeConfig(BaseSettings):
         description="Whether runtime service endpoints should be active.",
     )
 
-    restrict_to_trafo_exec_service: list[UUID] = Field(
-        [],
+    restrict_to_trafo_exec_service: set[UUID] = Field(
+        set(),
         description=(
-            "Setting this to a non-empty list of UUIDs will surpress all backend "
+            "Setting this to a non-empty set of UUIDs will surpress all backend "
             "and runtime endpoints and offer only the execution of the configured "
             "transformations. This can be used to scale execution of one or more "
             "transformations as a separate webservice, which also can be exposed to "
             "3rd parties without allowing manipulations. Often this is combined with "
             "setting is_runtime_service to true in order to have the full trafo "
-            "execution happen in one sacalable container service."
+            "execution happen in one sacalable containerized service."
         ),
         env="HD_RESTRICT_TO_TRAFO_EXEC_SERVICE",
     )

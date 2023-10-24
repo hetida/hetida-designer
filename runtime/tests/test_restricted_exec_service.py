@@ -17,7 +17,7 @@ from hetdesrun.webservice.application import init_app
 def restricted_webservice_mode_pass_through_string_component():
     with mock.patch(
         "hetdesrun.webservice.config.runtime_config.restrict_to_trafo_exec_service",
-        [UUID("2b1b474f-ddf5-1f4d-fec4-17ef9122112b")],
+        {UUID("2b1b474f-ddf5-1f4d-fec4-17ef9122112b")},
     ) as _fixture:
         yield _fixture
 
