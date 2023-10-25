@@ -129,18 +129,7 @@ async def load_blob_from_storage(thing_node_id: str, metadata_key: str) -> Any:
         else:
             logger.info("Successfully imported torch")
             file_object = BytesIO(response["Body"].read())
-            custom_objects: dict[str, Any] | None = None
-            custom_objects_object_key = object_key.to_custom_objects_object_key()
-            try:
-                custom_objects_response = get_object(
-                    s3_client=s3_client,
-                    bucket_name=bucket.name,
-                    object_key_string=custom_objects_object_key.string,
-                )
-            except s3_client.exceptions.NoSuchKey:
-                pass
-            else:
-                data = tjit.load(file_object)  # TODO wrap in try block?
+            data = tjit.load(file_object, map_location="cpu")
     else:
         data = pickle.load(response["Body"])
 
