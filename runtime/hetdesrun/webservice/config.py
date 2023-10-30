@@ -2,6 +2,7 @@ import datetime
 import os
 import re
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
@@ -88,6 +89,20 @@ class RuntimeConfig(BaseSettings):
         True,
         env="HD_IS_RUNTIME_SERVICE",
         description="Whether runtime service endpoints should be active.",
+    )
+
+    restrict_to_trafo_exec_service: set[UUID] = Field(
+        set(),
+        description=(
+            "Setting this to a non-empty set of UUIDs will surpress all backend "
+            "and runtime endpoints and offer only the execution of the configured "
+            "transformations. This can be used to scale execution of one or more "
+            "transformations as a separate webservice, which also can be exposed to "
+            "3rd parties without allowing manipulations. Often this is combined with "
+            "setting is_runtime_service to true in order to have the full trafo "
+            "execution happen in one sacalable containerized service."
+        ),
+        env="HD_RESTRICT_TO_TRAFO_EXEC_SERVICE",
     )
 
     ensure_db_schema: bool = Field(
@@ -192,7 +207,7 @@ class RuntimeConfig(BaseSettings):
     )
 
     auth_public_key_reloading_minimum_age: datetime.timedelta = Field(
-        15,
+        datetime.timedelta(seconds=15),
         description="If auth fails and auth_reload_public_key is True "
         "public keys are only tried to load again if older than this timedelta."
         " Can be either seconds as int or float or an ISO 8601 timedelta string",  # 15 seconds
@@ -285,19 +300,19 @@ class RuntimeConfig(BaseSettings):
         "demo-adapter-python|Python-Demo-Adapter"
         "|http://localhost:8092"
         "|http://hetida-designer-demo-adapter-python:8092,"
-        "demo-adapter-java|Java-Demo-Adapter"
-        "|http://localhost:8091/adapter"
-        "|http://hetida-designer-demo-adapter-java:8091/adapter,"
         "local-file-adapter|Local-File-Adapter"
         "|http://localhost:8090/adapters/localfile"
-        "|http://hetida-designer-runtime:8090/adapters/localfile",
+        "|http://hetida-designer-runtime:8090/adapters/localfile,"
+        "sql-adapter|SQL Adapter"
+        "|http://localhost:8090/adapters/sql"
+        "|http://localhost:8090/adapters/sql",
         env="HETIDA_DESIGNER_ADAPTERS",
         description="list of the installed adapters",
     )
 
     hd_runtime_engine_url: str = Field(
         "http://hetida-designer-runtime:8090/engine/",
-        env="HETIDA_DESIGNER_RUNTIME_EGINE_URL",
+        env="HETIDA_DESIGNER_RUNTIME_ENGINE_URL",
         description="URL to runtime",
     )
 
@@ -482,7 +497,9 @@ class RuntimeConfig(BaseSettings):
 
 environment_file = os.environ.get("HD_RUNTIME_ENVIRONMENT_FILE", None)
 
-runtime_config = RuntimeConfig(_env_file=environment_file if environment_file else None)
+runtime_config = RuntimeConfig(
+    _env_file=environment_file if environment_file else None  # type: ignore[call-arg]
+)
 
 
 def get_config() -> RuntimeConfig:

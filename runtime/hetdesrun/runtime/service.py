@@ -1,15 +1,19 @@
-import traceback
-
 from fastapi.encoders import jsonable_encoder
 
 from hetdesrun.adapters import AdapterHandlingException
 from hetdesrun.datatypes import NamedDataTypedValue
 from hetdesrun.models.run import (
     PerformanceMeasuredStep,
+    ProcessStage,
     WorkflowExecutionInput,
     WorkflowExecutionResult,
 )
-from hetdesrun.runtime import RuntimeExecutionError, runtime_logger
+from hetdesrun.runtime import (
+    ComponentException,
+    RuntimeExecutionError,
+    UnexpectedComponentException,
+    runtime_logger,
+)
 from hetdesrun.runtime.configuration import execution_config
 from hetdesrun.runtime.engine.plain import workflow_execution_plain
 from hetdesrun.runtime.engine.plain.parsing import (
@@ -37,7 +41,7 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     """
 
     runtime_service_measured_step = PerformanceMeasuredStep.create_and_begin(
-        "runtime_service"
+        "RUNTIME_SERVICE"
     )
 
     execution_config.set(runtime_input.configuration)
@@ -52,26 +56,38 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     )
 
     # Parse Workflow
+    currently_executed_process_stage = ProcessStage.PARSING_WORKFLOW
     try:
         parsed_wf = parse_workflow_input(
             runtime_input.workflow, runtime_input.components, runtime_input.code_modules
         )
-    except (WorkflowParsingException, WorkflowInputDataValidationError) as e:
+    except WorkflowParsingException as exc:
         runtime_logger.info(
             "Workflow Parsing Exception during workflow execution",
             exc_info=True,
         )
-        return WorkflowExecutionResult(
-            result="failure",
-            error=str(e),
-            traceback=traceback.format_exc(),
-            output_results_by_output_name={},
-            job_id=runtime_input.job_id,
+        return WorkflowExecutionResult.from_exception(
+            exc,
+            currently_executed_process_stage,
+            runtime_input.job_id,
+        )
+    except WorkflowInputDataValidationError as exc:
+        runtime_logger.info(
+            "Workflow Input Data Validation Exception during workflow execution",
+            exc_info=True,
+        )
+        return WorkflowExecutionResult.from_exception(
+            exc,
+            currently_executed_process_stage,
+            runtime_input.job_id,
         )
 
     # Load data
+    currently_executed_process_stage = ProcessStage.LOADING_DATA_FROM_ADAPTERS
     try:
-        load_data_measured_step = PerformanceMeasuredStep.create_and_begin("load_data")
+        load_data_measured_step = PerformanceMeasuredStep.create_and_begin(
+            currently_executed_process_stage.value
+        )
 
         loaded_data = await resolve_and_load_data_from_wiring(
             runtime_input.workflow_wiring
@@ -83,12 +99,10 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             "Adapter Handling Exception during data loading",
             exc_info=True,
         )
-        return WorkflowExecutionResult(
-            result="failure",
-            error=str(exc),
-            traceback=traceback.format_exc(),
-            output_results_by_output_name={},
-            job_id=runtime_input.job_id,
+        return WorkflowExecutionResult.from_exception(
+            exc,
+            currently_executed_process_stage,
+            runtime_input.job_id,
         )
 
     wf_inputs_by_name = {inp.name: inp for inp in runtime_input.workflow.inputs}
@@ -101,7 +115,12 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
     ]
 
     # Provide data as constants
+    currently_executed_process_stage = ProcessStage.PARSING_LOADED_DATA
     try:
+        # The `add_constant_providing_node` method also ensures that ultimately the corresponding
+        # ComputationNode knows that the input values are to be obtained from this node.
+        # Where applicable, the information from the previous addition of the node with the
+        # id_suffix "workflow_default_values" is overwritten.
         parsed_wf.add_constant_providing_node(
             constant_providing_data, id_suffix="dynamic_data"
         )
@@ -110,20 +129,16 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             "Input Data Validation Error during data provision",
             exc_info=True,
         )
-        return WorkflowExecutionResult(
-            result="failure",
-            error=str(exc),
-            traceback=traceback.format_exc(),
-            output_results_by_output_name={},
-            job_id=runtime_input.job_id,
+        WorkflowExecutionResult.from_exception(
+            exc, currently_executed_process_stage, runtime_input.job_id
         )
 
     # run workflow
-
+    currently_executed_process_stage = ProcessStage.EXECUTING_COMPONENT_CODE
     all_nodes = obtain_all_nodes(parsed_wf)
 
     pure_execution_measured_step = PerformanceMeasuredStep.create_and_begin(
-        "pure_execution"
+        currently_executed_process_stage.value
     )
 
     try:
@@ -144,39 +159,28 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
         pure_execution_measured_step.stop()
 
-    except WorkflowParsingException as e:
+    except (ComponentException, UnexpectedComponentException) as exc:
         runtime_logger.info(
-            "Workflow Parsing Exception during workflow execution",
+            "Component Error during workflow execution",
             exc_info=True,
         )
-        return WorkflowExecutionResult(
-            result="failure",
-            error=str(e),
-            traceback=traceback.format_exc(),
-            output_results_by_output_name={},
-            job_id=runtime_input.job_id,
+        return WorkflowExecutionResult.from_exception(
+            exc,
+            currently_executed_process_stage,
+            runtime_input.job_id,
+            cause=exc.__cause__,
         )
 
-    except RuntimeExecutionError as e:
+    except RuntimeExecutionError as exc:
         runtime_logger.info(
             "Runtime Execution Error during workflow execution",
             exc_info=True,
         )
-        return WorkflowExecutionResult(
-            result="failure",
-            error=(
-                "Exception during execution!\n"
-                f"                  tr type: {e.currently_executed_transformation_type},"
-                f" tr id: {e.currently_executed_transformation_id},"
-                f" tr name: {e.currently_executed_transformation_name},"
-                f" tr tag: {e.currently_executed_transformation_tag},\n"
-                f"                  op id(s): {e.currently_executed_hierarchical_operator_id},\n"
-                f"                  op name(s): {e.currently_executed_hierarchical_operator_name}\n"
-                f"                  reason: {e}"
-            ),
-            traceback=traceback.format_exc(),
-            output_results_by_output_name={},
-            job_id=runtime_input.job_id,
+        return WorkflowExecutionResult.from_exception(
+            exc,
+            currently_executed_process_stage,
+            runtime_input.job_id,
+            cause=exc,
         )
 
     if runtime_input.configuration.return_individual_node_results:
@@ -200,8 +204,11 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
         node_results = None
 
     # Send data via wiring to sinks and gather data for direct returning
+    currently_executed_process_stage = ProcessStage.SENDING_DATA_TO_ADAPTERS
     try:
-        send_data_measured_step = PerformanceMeasuredStep.create_and_begin("send_data")
+        send_data_measured_step = PerformanceMeasuredStep.create_and_begin(
+            currently_executed_process_stage.value
+        )
 
         direct_return_data: dict = await resolve_and_send_data_from_wiring(
             runtime_input.workflow_wiring, workflow_result
@@ -217,12 +224,8 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
             ),
             exc_info=True,
         )
-        return WorkflowExecutionResult(
-            result="failure",
-            error=str(exc),
-            traceback=traceback.format_exc(),
-            output_results_by_output_name={},
-            job_id=runtime_input.job_id,
+        return WorkflowExecutionResult.from_exception(
+            exc, currently_executed_process_stage, runtime_input.job_id
         )
 
     wf_exec_result = WorkflowExecutionResult(
@@ -244,23 +247,17 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
     # catch arbitrary serialisation errors
     # (because user can produce arbitrary non-serializable objects)
+    currently_executed_process_stage = ProcessStage.ENCODING_RESULTS_TO_JSON
     try:
         jsonable_encoder(wf_exec_result)
-    except Exception as e:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         runtime_logger.info(
             "Exception during workflow execution response serialisation: %s",
-            str(e),
+            str(exc),
             exc_info=True,
         )
-        return WorkflowExecutionResult(
-            result="failure",
-            error=(
-                f"Exception during workflow execution response serialisation: {str(e)}"
-            ),
-            traceback=traceback.format_exc(),
-            output_results_by_output_id={},
-            output_results_by_output_name={},
-            job_id=runtime_input.job_id,
+        return WorkflowExecutionResult.from_exception(
+            exc, currently_executed_process_stage, runtime_input.job_id
         )
 
     runtime_logger.info("Workflow Execution Result serialized successfully.")

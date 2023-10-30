@@ -45,10 +45,10 @@ class ValueDataType(str, Enum):
         # first value is canonical value (e.g. what you get when calling ValueDataType.INT.value)
         obj._value_ = values[0]
 
-        cls.parse_type: type  # for mypy
+        cls.parse_type: type  # for mypy # noqa: B032
         obj.parse_type = values[1]  # set parse_type to second tuple entry
 
-        cls.pandas_value_type: type  # for mypy
+        cls.pandas_value_type: type  # for mypy # noqa: B032
         obj.pandas_value_type = values[2]
 
         for other_value in values[3:]:
@@ -142,8 +142,8 @@ class ExternalType(str, Enum):
         # first value is canonical value
         obj._value_ = values[0]
 
-        cls.general_type: GeneralType  # for mypy
-        cls.value_datatype: ValueDataType | None  # for mypy
+        cls.general_type: GeneralType  # for mypy # noqa: B032
+        cls.value_datatype: ValueDataType | None  # for mypy # noqa: B032
 
         cls.store_value_datatypes(obj)
         cls.store_general_type(obj)

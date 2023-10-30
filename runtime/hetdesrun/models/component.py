@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
@@ -18,8 +19,7 @@ class UnnamedInput(BaseModel):
     id: UUID  # noqa: A003
     type: DataType = Field(  # noqa: A003
         ...,
-        description="one of "
-        + ", ".join(['"' + x.value + '"' for x in list(DataType)]),
+        description="one of " + ", ".join(['"' + x + '"' for x in list(DataType)]),
         example=DataType.Float,
     )
 
@@ -31,6 +31,11 @@ class ComponentInput(UnnamedInput):
     """
 
     name: str = Field(..., example="x", description="must be a valid Python identifier")
+    default: bool = Field(False, description="Whether this input has a default value")
+    default_value: Any = Field(
+        None,
+        description=("The default value for this input if default is True."),
+    )
 
     @validator("name")
     def name_valid_python_identifier(cls, name: str) -> str:
@@ -43,8 +48,7 @@ class ComponentOutput(BaseModel):
     name: str = Field(..., example="z", description="must be a valid Python identifier")
     type: DataType = Field(  # noqa: A003
         ...,
-        description="one of "
-        + ", ".join(['"' + x.value + '"' for x in list(DataType)]),
+        description="one of " + ", ".join(['"' + x + '"' for x in list(DataType)]),
         example=DataType.Integer,
     )
 

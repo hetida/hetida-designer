@@ -6,7 +6,7 @@ import {
   ExecutionDialogData,
   WiringDialogComponent
 } from 'hd-wiring';
-import { Observable, of } from 'rxjs';
+import { Observable, lastValueFrom, of } from 'rxjs';
 import { finalize, first, map, switchMap, tap } from 'rxjs/operators';
 import {
   ComponentIODialogComponent,
@@ -25,7 +25,7 @@ import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { PythonIdentifierValidator } from 'src/app/validation/python-identifier-validator';
 import { PythonKeywordBlacklistValidator } from 'src/app/validation/python-keyword-validator';
-import * as uuid from 'uuid';
+import { v4 as uuid } from 'uuid';
 import { TransformationDialogData } from '../../model/transformation-dialog-data';
 import { NotificationService } from '../notifications/notification.service';
 import { TabItemService } from '../tab-item/tab-item.service';
@@ -81,9 +81,9 @@ export class TransformationActionService {
       title = 'Execute Unknown';
     }
 
-    const adapterList = await this.transformationHttpService
-      .getAdapterList()
-      .toPromise();
+    const adapterList = await lastValueFrom(
+      this.transformationHttpService.getAdapterList()
+    );
 
     const dialogRef = this.dialog.open<
       WiringDialogComponent,
@@ -379,7 +379,8 @@ export class TransformationActionService {
         title: 'Create new workflow',
         actionOk: 'Create Workflow',
         actionCancel: 'Cancel',
-        transformation: this.transformationService.getDefaultWorkflowTransformation(),
+        transformation:
+          this.transformationService.getDefaultWorkflowTransformation(),
         disabledState: {
           name: false,
           category: false,
@@ -408,7 +409,8 @@ export class TransformationActionService {
         title: 'Create new component',
         actionOk: 'Create Component',
         actionCancel: 'Cancel',
-        transformation: this.transformationService.getDefaultComponentTransformation(),
+        transformation:
+          this.transformationService.getDefaultComponentTransformation(),
         disabledState: {
           name: false,
           category: false,
@@ -539,6 +541,9 @@ export class TransformationActionService {
     if (transformation === undefined) {
       return;
     }
+
+    // by copy the released_timestamp must be emptied
+    transformation.released_timestamp = null;
     this.tabItemService.createTransformationAndOpenInNewTab(transformation);
   }
 
@@ -575,9 +580,16 @@ export class TransformationActionService {
               constant.connector_id === input.connector_id &&
               constant.operator_id === input.operator_id
           ) === undefined;
-        return (
-          isNotAConstant && hasValidNameAndLink(input.name, input.id) === false
-        );
+        let noValidNameAndLink = true;
+        const foundOperatorInput = workflowContent.operators
+          .find(operator => operator.id === input.operator_id)
+          .inputs.find(
+            operatorInput => operatorInput.id === input.connector_id
+          );
+        if (foundOperatorInput.exposed) {
+          noValidNameAndLink = hasValidNameAndLink(input.name, input.id);
+        }
+        return isNotAConstant && noValidNameAndLink === false;
       }) ||
       workflowContent.outputs.some(output => {
         const isNotAConstant =
@@ -666,24 +678,26 @@ export class TransformationActionService {
           .pipe(first())
           .subscribe(result => {
             if (result) {
-              const inputIoConnectors: IOConnector[] = this._updateIoItemPositions(
-                result.inputs,
-                true,
-                workflowTransformation
-              );
-              const outputIoConnectors: IOConnector[] = this._updateIoItemPositions(
-                result.outputs,
-                false,
-                workflowTransformation
-              );
+              const inputIoConnectors: IOConnector[] =
+                this._updateIoItemPositions(
+                  result.inputs,
+                  true,
+                  workflowTransformation
+                );
+              const outputIoConnectors: IOConnector[] =
+                this._updateIoItemPositions(
+                  result.outputs,
+                  false,
+                  workflowTransformation
+                );
 
               const ioConnectorIds = [...result.inputs, ...result.outputs].map(
                 ioConnector =>
                   `${ioConnector.operator_id}_${ioConnector.connector_id}`
               );
 
-              const innerLinks: Link[] = workflowTransformation.content.links.filter(
-                link => {
+              const innerLinks: Link[] =
+                workflowTransformation.content.links.filter(link => {
                   let isOuterLink: boolean;
                   if (
                     Utils.isNullOrUndefined(link.start.operator) ||
@@ -698,8 +712,7 @@ export class TransformationActionService {
                       ioConnectorIds.includes(toIoConnectorId);
                   }
                   return !isOuterLink;
-                }
-              );
+                });
 
               const links: Link[] = [
                 ...innerLinks,

@@ -29,9 +29,9 @@ def get_transformation_revisions(
     directly_from_db: bool = False,
 ) -> list[TransformationRevision]:
     logger.info(
-        "Getting transformation revisions with " + repr(params) + " directly from db"
-        if directly_from_db
-        else ""
+        "Getting transformation revisions with "  # noqa: G003
+        + repr(params)
+        + (" directly from db" if directly_from_db else "")
     )
 
     tr_list: list[TransformationRevision] = []
@@ -50,7 +50,7 @@ def get_transformation_revisions(
             raise Exception(msg) from e
         get_response = requests.get(
             posix_urljoin(get_config().hd_backend_api_url, "transformations"),
-            params=json.loads(params.json(exclude_none=True)),
+            params=json.loads(params.json(exclude_none=True, by_alias=True)),
             verify=get_config().hd_backend_verify_certs,
             auth=get_backend_basic_auth(),  # type: ignore
             headers=headers,
@@ -180,7 +180,7 @@ def update_or_create_transformation_revision(
                 )
             else:
                 msg = (
-                    f"COULD NOT PUT {tr.type} with id {tr.id}.\n"
+                    f"COULD NOT PUT {str(tr.type)} with id {tr.id}.\n"
                     f"Response status code {response.status_code} "
                     f"with response text:\n{response.text}"
                 )
@@ -270,15 +270,20 @@ def deprecate_all_but_latest_in_group(
         directly_from_db=directly_in_db,
     )
 
-    released_tr_dict: dict[datetime, TransformationRevision] = {}
+    if len(tr_list) == 0:
+        return
+
+    released_tr_by_release_timestamp_dict: dict[datetime, TransformationRevision] = {}
     for released_tr in tr_list:
-        assert released_tr.released_timestamp is not None  # hint for mypy # noqa: S101
-        released_tr_dict[released_tr.released_timestamp] = released_tr
+        assert released_tr.released_timestamp is not None  # noqa: S101  # hint for mypy
+        released_tr_by_release_timestamp_dict[
+            released_tr.released_timestamp
+        ] = released_tr
 
-    latest_timestamp = max(released_tr_dict.keys())
-    del released_tr_dict[latest_timestamp]
+    latest_timestamp = max(released_tr_by_release_timestamp_dict.keys())
+    del released_tr_by_release_timestamp_dict[latest_timestamp]
 
-    for released_timestamp, tr in released_tr_dict.items():
+    for released_timestamp, tr in released_tr_by_release_timestamp_dict.items():
         tr.deprecate()
         logger.info(
             "Deprecated transformation revision %s with released timestamp %s",

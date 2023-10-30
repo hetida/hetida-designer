@@ -1,0 +1,36 @@
+{
+    "id": "74373d1f-7343-4a39-9af9-79833b8d7911",
+    "revision_group_id": "8a00d5c3-0458-4744-b266-33174a923960",
+    "name": "Test Optional Input Parameters",
+    "description": "New created component",
+    "category": "Test",
+    "version_tag": "0.1.0",
+    "released_timestamp": "2023-07-25T09:18:37.123152+00:00",
+    "state": "RELEASED",
+    "type": "COMPONENT",
+    "documentation": "# New Component/Workflow\n## Description\n## Inputs\n## Outputs\n## Details\n## Examples\n",
+    "content": "# add your own imports here, e.g.\n# import pandas as pd\n# import numpy as np\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"error_msg\": {\"data_type\": \"STRING\", \"default_value\": \"Default error message.\"},\n        \"raise_error\": {\"data_type\": \"BOOLEAN\", \"default_value\": True},\n    },\n    \"outputs\": {},\n    \"name\": \"Test Optional Input Parameters\",\n    \"category\": \"Test\",\n    \"description\": \"New created component\",\n    \"version_tag\": \"0.1.0\",\n    \"id\": \"74373d1f-7343-4a39-9af9-79833b8d7911\",\n    \"revision_group_id\": \"8a00d5c3-0458-4744-b266-33174a923960\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-07-25T09:18:37.123152+00:00\",\n}\n\n\ndef main(*, error_msg=\"Default error message.\", raise_error=True):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    if raise_error is True:\n        raise ValueError(error_msg)",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "eb1a9732-c7bf-4442-8151-a548b3654db5",
+                "name": "error_msg",
+                "data_type": "STRING",
+                "type": "OPTIONAL",
+                "value": "Default error message."
+            },
+            {
+                "id": "074d6bcb-761b-4aeb-8b25-251ce5b5009f",
+                "name": "raise_error",
+                "data_type": "BOOLEAN",
+                "type": "OPTIONAL",
+                "value": "True"
+            }
+        ],
+        "outputs": []
+    },
+    "test_wiring": {
+        "input_wirings": [],
+        "output_wirings": []
+    }
+}

@@ -11,7 +11,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from httpx import AsyncClient
 from jose import constants, jwk, jwt
 
-from hetdesrun.persistence import sessionmaker
 from hetdesrun.webservice.application import init_app
 from hetdesrun.webservice.auth_dependency import ExternalAuthMode, InternalAuthMode
 from hetdesrun.webservice.auth_outgoing import (
@@ -231,15 +230,6 @@ def wrong_key_access_token(wrong_key_pair):
     return generate_token(algorithm="RS256", key=wrong_key_pair[0])
 
 
-@pytest.fixture()
-def mocked_clean_test_db_session(clean_test_db_engine):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ) as _fixture:
-        yield _fixture
-
-
 @pytest.fixture(scope="session")
 def mocked_pre_loaded_public_key(key_pair):
     with mock.patch(
@@ -318,7 +308,7 @@ def generate_token(
         "nbf": str(
             datetime_to_unix_seconds(datetime.datetime.now()) - 30  # noqa: DTZ005
         ),  # not before
-        # "aud": ["account"], # audience (target domain)
+        # "aud": ["account"], # audience (target domain) # noqa: ERA001
         "jti": str(uuid4()),  # jwt ID (token identifier making replication improssible)
         "exp": str(datetime_to_unix_seconds(exp_dt))
         if exp_dt is not None

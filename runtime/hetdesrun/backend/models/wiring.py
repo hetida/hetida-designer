@@ -9,7 +9,7 @@ from hetdesrun.models.adapter_data import RefIdType
 from hetdesrun.models.util import valid_python_identifier
 from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
 
-EXPORT_MODE = False
+ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = False
 
 
 class IoWiringFrontendDto(BaseModel):
@@ -56,7 +56,9 @@ class OutputWiringFrontendDto(IoWiringFrontendDto):
 
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
-        if not EXPORT_MODE and (not v in SINK_ADAPTERS and not isinstance(v, str)):
+        if not ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS and (
+            not v in SINK_ADAPTERS and not isinstance(v, str)
+        ):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as sink adapter."
             )
@@ -101,7 +103,9 @@ class InputWiringFrontendDto(IoWiringFrontendDto):
 
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
-        if not EXPORT_MODE and (not v in SOURCE_ADAPTERS and not isinstance(v, str)):
+        if not ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS and (
+            not v in SOURCE_ADAPTERS and not isinstance(v, str)
+        ):
             raise ValueError(
                 f"Adapter with id {str(v)} is not known / not registered as source adapter."
             )

@@ -14,24 +14,22 @@ describe('PopoverTransformationComponent', () => {
   let component: PopoverTransformationComponent;
   let fixture: ComponentFixture<PopoverTransformationComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          MatIconModule,
-          NgHetidaFlowchartModule,
-          MatDividerModule,
-          MatFormFieldModule,
-          FormsModule,
-          ReactiveFormsModule,
-          MatAutocompleteModule,
-          StoreModule.forRoot(appReducers),
-          HttpClientModule
-        ],
-        declarations: [PopoverTransformationComponent]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        MatIconModule,
+        NgHetidaFlowchartModule,
+        MatDividerModule,
+        MatFormFieldModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatAutocompleteModule,
+        StoreModule.forRoot(appReducers),
+        HttpClientModule
+      ],
+      declarations: [PopoverTransformationComponent]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PopoverTransformationComponent);

@@ -1,6 +1,6 @@
 # Adding custom Python dependencies
 
-The hetida designer runtime is equipped with a good selection of standard Python libraries from the Python Data Science Stack like numpy, pandas, scikit-learn, scipy or tensorflow and more. 
+The hetida designer runtime is equipped with a good selection of standard Python libraries from the Python Data Science Stack like numpy, pandas, scikit-learn or scipy and more. 
 
 While these may be sufficient for many use cases it is often necessary to use more and specialised libraries.
 
@@ -70,6 +70,17 @@ RUN pip-compile --generate-hashes ./requirements-custom.in
 RUN pip-sync ./requirements-base.txt ./requirements.txt ./requirements-custom.txt
 
 USER hdrt_app
+```
+
+Now save the `docker-compose.yml` file as a new file with name `docker-compose-custom-dependencies.yml` and edit the hetida designer runtime service section as follows:
+
+```yml
+...
+    hetida-designer-runtime:
+    build:
+        context: .
+        dockerfile: Dockerfile-runtime-custom-python-deps
+...
 ```
 
 After that build the modified runtime image with

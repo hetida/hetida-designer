@@ -62,14 +62,15 @@ export class ContentViewComponent implements OnInit, OnDestroy {
   // ngrx State
   _tabItems: TabItemWithTransformation[] = [];
 
-  isComponentTransformation: typeof isComponentTransformation = isComponentTransformation;
+  isComponentTransformation: typeof isComponentTransformation =
+    isComponentTransformation;
 
   constructor(
     private readonly store: Store<IAppState>,
     private readonly popoverService: PopoverService
   ) {}
 
-  private readonly _ngOnDestroyNotify = new Subject();
+  private readonly _ngOnDestroyNotify = new Subject<void>();
 
   ngOnDestroy(): void {
     this._ngOnDestroyNotify.next();

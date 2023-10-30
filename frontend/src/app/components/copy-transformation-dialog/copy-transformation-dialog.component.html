@@ -1,11 +1,15 @@
 <div class="d-flex content-space-between" mat-dialog-title>
   <h4 class="m-0">{{ data.title }}</h4>
-  <button (click)="onCancel()" mat-icon-button>
+  <button
+    (click)="onCancel()"
+    mat-icon-button
+    attr.data-testid="close-copy-transformation-dialog"
+  >
     <mat-icon>close</mat-icon>
   </button>
 </div>
 
-<div mat-dialog-content>
+<div class="block" mat-dialog-content>
   <form *ngIf="infoForm" [formGroup]="infoForm" autocomplete="off" novalidate>
     <mat-form-field>
       <mat-label>{{ data.transformation.type | titlecase }} name</mat-label>
@@ -66,18 +70,22 @@
       <mat-error [hdErrorVisual]="infoForm.get('tag')"></mat-error>
     </mat-form-field>
   </form>
-  <div>
-    <small style="font-size: 0.8em; color: gray"
-      >{{ data.transformation.type | titlecase }} revision ID:
-      {{ data.transformation.id }}</small
-    >
-  </div>
-  <div>
-    <small style="font-size: 0.8em; color: gray"
-      >{{ data.transformation.type | titlecase }} revision group ID:
-      {{ data.transformation.revision_group_id }}</small
-    >
-  </div>
+  <small class="block__small-info"
+    >{{ data.transformation.type | titlecase }} revision ID:
+    {{ data.transformation.id }}</small
+  >
+  <small class="block__small-info"
+    >{{ data.transformation.type | titlecase }} revision group ID:
+    {{ data.transformation.revision_group_id }}</small
+  >
+  <small class="block__small-info"
+    >{{ data.transformation.type | titlecase }} released timestamp:
+    {{
+      data.transformation.released_timestamp
+        ? data.transformation.released_timestamp
+        : '-'
+    }}</small
+  >
 </div>
 <div
   [ngClass]="{
@@ -91,10 +99,20 @@
     (click)="_onDelete()"
     color="warn"
     mat-raised-button
+    attr.data-testid="{{
+      data.deleteButtonText + '-copy-transformation-dialog' | lowercase
+    }}"
   >
     {{ data.deleteButtonText }}
   </button>
-  <button (click)="onCancel()" color="primary" mat-raised-button>
+  <button
+    (click)="onCancel()"
+    color="primary"
+    mat-raised-button
+    attr.data-testid="{{
+      data.actionCancel + '-copy-transformation-dialog' | lowercase
+    }}"
+  >
     {{ data.actionCancel }}
   </button>
   <button
@@ -102,6 +120,9 @@
     color="primary"
     (click)="onOk()"
     [disabled]="isAllDataPropertiesDisabled()"
+    attr.data-testid="{{
+      data.actionOk + '-copy-transformation-dialog' | lowercase
+    }}"
   >
     {{ data.actionOk }}
   </button>

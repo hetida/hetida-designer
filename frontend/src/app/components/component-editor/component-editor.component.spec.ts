@@ -10,19 +10,17 @@ describe('ComponentEditorComponent', () => {
   let component: ComponentEditorComponent;
   let fixture: ComponentFixture<ComponentEditorComponent>;
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          FormsModule,
-          MonacoEditorModule.forRoot(),
-          StoreModule.forRoot(appReducers),
-          HttpClientModule
-        ],
-        declarations: [ComponentEditorComponent]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        FormsModule,
+        MonacoEditorModule.forRoot(),
+        StoreModule.forRoot(appReducers),
+        HttpClientModule
+      ],
+      declarations: [ComponentEditorComponent]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(ComponentEditorComponent);

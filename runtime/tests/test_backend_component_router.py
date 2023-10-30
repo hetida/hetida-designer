@@ -1,6 +1,5 @@
 import json
 from posixpath import join as posix_urljoin
-from unittest import mock
 from uuid import UUID
 
 import pytest
@@ -9,7 +8,7 @@ from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.wiring import WiringFrontendDto
 from hetdesrun.component.code import update_code
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
-from hetdesrun.persistence import get_db_engine, sessionmaker
+from hetdesrun.persistence import get_db_engine
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
@@ -145,7 +144,7 @@ dto_json_wiring = {
             "id": "5021c197-3c38-4e66-b4dc-20e6b5a75bdc",
             "workflowInputName": "new_input",
             "adapterId": "direct_provisioning",
-            "filters": {"value": 100},
+            "filters": {"value": "100"},
         },
     ],
     "outputWirings": [],
@@ -212,421 +211,362 @@ valid_component_dto_dict = {
 
 @pytest.mark.asyncio
 async def test_get_component_revision_by_id_with_valid_component(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(
-            ComponentRevisionFrontendDto(
-                **dto_json_component_1
-            ).to_transformation_revision()
-        )
+    store_single_transformation_revision(
+        ComponentRevisionFrontendDto(
+            **dto_json_component_1
+        ).to_transformation_revision()
+    )
 
-        async with async_test_client as ac:
-            response = await ac.get(
-                "/api/components/" + str(get_uuid_from_seed("component 1"))
-            )
-        assert response.status_code == 200
-        assert response.json() == dto_json_component_1
+    async with async_test_client as ac:
+        response = await ac.get(
+            "/api/components/" + str(get_uuid_from_seed("component 1"))
+        )
+    assert response.status_code == 200
+    assert response.json() == dto_json_component_1
 
 
 @pytest.mark.asyncio
 async def test_get_component_revision_by_id_with_inexistent_component(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        async with async_test_client as ac:
-            response = await ac.get(
-                "/api/components/" + str(get_uuid_from_seed("inexistent component"))
-            )
-        assert response.status_code == 404
-        assert "Found no" in response.json()["detail"]
+    async with async_test_client as ac:
+        response = await ac.get(
+            "/api/components/" + str(get_uuid_from_seed("inexistent component"))
+        )
+    assert response.status_code == 404
+    assert "Found no" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
 async def test_create_transformation_revision_from_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        async with async_test_client as ac:
-            response = await ac.post("/api/components/", json=dto_json_component_1)
+    async with async_test_client as ac:
+        response = await ac.post("/api/components/", json=dto_json_component_1)
 
-        assert response.status_code == 201
-        assert response.json()["name"] == dto_json_component_1["name"]
+    assert response.status_code == 201
+    assert response.json()["name"] == dto_json_component_1["name"]
 
 
 @pytest.mark.asyncio
 async def test_update_transformation_revision_from_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(
-            ComponentRevisionFrontendDto(
-                **dto_json_component_1
-            ).to_transformation_revision()
+    store_single_transformation_revision(
+        ComponentRevisionFrontendDto(
+            **dto_json_component_1
+        ).to_transformation_revision()
+    )
+
+    async with async_test_client as ac:
+        response = await ac.put(
+            "/api/components/" + str(get_uuid_from_seed("component 1")),
+            json=dto_json_component_1_update,
         )
 
-        async with async_test_client as ac:
-            response = await ac.put(
-                "/api/components/" + str(get_uuid_from_seed("component 1")),
-                json=dto_json_component_1_update,
-            )
-
-        assert response.status_code == 201
-        assert response.json()["name"] == "new name"
-        assert response.json()["category"] == "Test"
-        assert response.json()["inputs"][0]["id"] == str(
-            get_uuid_from_seed("new input")
-        )
-        print(response.json()["code"])
-        assert "new_input" in response.json()["code"]
+    assert response.status_code == 201
+    assert response.json()["name"] == "new name"
+    assert response.json()["category"] == "Test"
+    assert response.json()["inputs"][0]["id"] == str(get_uuid_from_seed("new input"))
+    print(response.json()["code"])
+    assert "new_input" in response.json()["code"]
 
 
 @pytest.mark.asyncio
 async def test_update_transformation_revision_from_non_existing_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        async with async_test_client as ac:
-            response = await ac.put(
-                "/api/components/" + str(get_uuid_from_seed("component 1")),
-                json=dto_json_component_1_update,
-            )
-
-        assert response.status_code == 201
-        assert response.json()["name"] == "new name"
-        assert response.json()["category"] == "Test"
-        assert response.json()["inputs"][0]["id"] == str(
-            get_uuid_from_seed("new input")
+    async with async_test_client as ac:
+        response = await ac.put(
+            "/api/components/" + str(get_uuid_from_seed("component 1")),
+            json=dto_json_component_1_update,
         )
-        assert "new comment" in response.json()["code"]
-        assert "revision_group_id" in response.json()["code"]
+
+    assert response.status_code == 201
+    assert response.json()["name"] == "new name"
+    assert response.json()["category"] == "Test"
+    assert response.json()["inputs"][0]["id"] == str(get_uuid_from_seed("new input"))
+    assert "new comment" in response.json()["code"]
+    assert "revision_group_id" in response.json()["code"]
 
 
 @pytest.mark.asyncio
 async def test_update_transformation_revision_from_released_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(
-            ComponentRevisionFrontendDto(
-                **dto_json_component_2
-            ).to_transformation_revision()
+    store_single_transformation_revision(
+        ComponentRevisionFrontendDto(
+            **dto_json_component_2
+        ).to_transformation_revision()
+    )
+
+    async with async_test_client as ac:
+        response = await ac.put(
+            "/api/components/" + str(get_uuid_from_seed("component 2")),
+            json=dto_json_component_2_update,
         )
 
-        async with async_test_client as ac:
-            response = await ac.put(
-                "/api/components/" + str(get_uuid_from_seed("component 2")),
-                json=dto_json_component_2_update,
-            )
-
-        assert response.status_code == 409
+    assert response.status_code == 409
 
 
 @pytest.mark.asyncio
 async def test_publish_transformation_revision_from_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(
-            ComponentRevisionFrontendDto(
-                **dto_json_component_1
-            ).to_transformation_revision()
+    store_single_transformation_revision(
+        ComponentRevisionFrontendDto(
+            **dto_json_component_1
+        ).to_transformation_revision()
+    )
+
+    async with async_test_client as ac:
+        response = await ac.put(
+            "/api/components/" + str(get_uuid_from_seed("component 1")),
+            json=dto_json_component_1_publish,
         )
 
-        async with async_test_client as ac:
-            response = await ac.put(
-                "/api/components/" + str(get_uuid_from_seed("component 1")),
-                json=dto_json_component_1_publish,
-            )
-
-        assert response.status_code == 201
-        assert response.json()["state"] == "RELEASED"
-        assert "released_timestamp" in response.json()["code"]
+    assert response.status_code == 201
+    assert response.json()["state"] == "RELEASED"
+    assert "released_timestamp" in response.json()["code"]
 
 
 @pytest.mark.asyncio
 async def test_put_transformation_revision_from_released_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        async with async_test_client as ac:
-            response = await ac.put(
-                "/api/components/" + str(get_uuid_from_seed("component 1")),
-                json=dto_json_component_1_publish,
-            )
+    async with async_test_client as ac:
+        response = await ac.put(
+            "/api/components/" + str(get_uuid_from_seed("component 1")),
+            json=dto_json_component_1_publish,
+        )
 
-        assert response.status_code == 201
-        assert response.json()["state"] == "RELEASED"
-        assert "released_timestamp" in response.json()["code"]
+    assert response.status_code == 201
+    assert response.json()["state"] == "RELEASED"
+    assert "released_timestamp" in response.json()["code"]
 
 
 @pytest.mark.asyncio
 async def test_deprecate_transformation_revision_from_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(
-            ComponentRevisionFrontendDto(
-                **dto_json_component_2
-            ).to_transformation_revision()
+    store_single_transformation_revision(
+        ComponentRevisionFrontendDto(
+            **dto_json_component_2
+        ).to_transformation_revision()
+    )
+
+    async with async_test_client as ac:
+        response = await ac.put(
+            "/api/components/" + str(get_uuid_from_seed("component 2")),
+            json=dto_json_component_2_deprecate,
         )
 
-        async with async_test_client as ac:
-            response = await ac.put(
-                "/api/components/" + str(get_uuid_from_seed("component 2")),
-                json=dto_json_component_2_deprecate,
-            )
-
-        assert response.status_code == 201
-        assert response.json()["state"] == "DISABLED"
-        assert response.json()["name"] != "new name"
-        assert response.json()["category"] != "Test"
-        assert len(response.json()["inputs"]) == 0
-        assert "new comment" not in response.json()["code"]
-        assert "disabled_timestamp" in response.json()["code"]
-        assert "released_timestamp" in response.json()["code"]
+    assert response.status_code == 201
+    assert response.json()["state"] == "DISABLED"
+    assert response.json()["name"] != "new name"
+    assert response.json()["category"] != "Test"
+    assert len(response.json()["inputs"]) == 0
+    assert "new comment" not in response.json()["code"]
+    assert "disabled_timestamp" in response.json()["code"]
+    assert "released_timestamp" in response.json()["code"]
 
 
 @pytest.mark.asyncio
 async def test_delete_transformation_revision_from_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(
-            ComponentRevisionFrontendDto(
-                **dto_json_component_1
-            ).to_transformation_revision()
+    store_single_transformation_revision(
+        ComponentRevisionFrontendDto(
+            **dto_json_component_1
+        ).to_transformation_revision()
+    )
+
+    async with async_test_client as ac:
+        response = await ac.delete(
+            "/api/components/" + str(get_uuid_from_seed("component 1")),
         )
 
-        async with async_test_client as ac:
-            response = await ac.delete(
-                "/api/components/" + str(get_uuid_from_seed("component 1")),
-            )
-
-        assert response.status_code == 204
+    assert response.status_code == 204
 
 
 @pytest.mark.asyncio
 async def test_set_test_wiring_for_component_dto(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(
-            ComponentRevisionFrontendDto(
-                **dto_json_component_1_update
-            ).to_transformation_revision()
+    store_single_transformation_revision(
+        ComponentRevisionFrontendDto(
+            **dto_json_component_1_update
+        ).to_transformation_revision()
+    )
+
+    async with async_test_client as ac:
+        response = await ac.post(
+            "/api/components/" + str(get_uuid_from_seed("component 1")) + "/wirings",
+            json=dto_json_wiring,
         )
 
-        async with async_test_client as ac:
-            response = await ac.post(
-                "/api/components/"
-                + str(get_uuid_from_seed("component 1"))
-                + "/wirings",
-                json=dto_json_wiring,
-            )
-
-        assert response.status_code == 200
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio
-async def test_execute_for_component_dto(async_test_client, clean_test_db_engine):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(
-            ComponentRevisionFrontendDto(
-                **valid_component_dto_dict
-            ).to_transformation_revision()
+async def test_execute_for_component_dto(
+    async_test_client, mocked_clean_test_db_session
+):
+    store_single_transformation_revision(
+        ComponentRevisionFrontendDto(
+            **valid_component_dto_dict
+        ).to_transformation_revision()
+    )
+
+    async with async_test_client as ac:
+        response = await ac.post(
+            "/api/components/" + valid_component_dto_dict["id"] + "/execute",
+            json=valid_component_dto_dict["wirings"][0],
         )
 
-        async with async_test_client as ac:
-            response = await ac.post(
-                "/api/components/" + valid_component_dto_dict["id"] + "/execute",
-                json=valid_component_dto_dict["wirings"][0],
-            )
-
-        assert response.status_code == 200
-        assert "output_types_by_output_name" in response.json()
+    assert response.status_code == 200
+    assert "output_types_by_output_name" in response.json()
 
 
 @pytest.mark.asyncio
 async def test_execute_for_component_without_hetdesrun_imports(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        path = (
-            "./tests/data/components/"
-            "alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d"
-            ".json"
+    path = (
+        "./tests/data/components/"
+        "alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d"
+        ".json"
+    )
+    component_tr_json = load_json(path)
+    wiring_json = {
+        "id": "38f168ef-cb06-d89c-79b3-0cd823f32e9d",
+        "name": "STANDARD-WIRING",
+        "inputWirings": [
+            {
+                "id": "8c249f92-4b81-457e-9371-24204d6b373b",
+                "workflowInputName": "scores",
+                "adapterId": "direct_provisioning",
+                "filters": {
+                    "value": (
+                        "{\n"
+                        '    "2020-01-03T08:20:03.000Z": 18.7,\n'
+                        '    "2020-01-01T01:15:27.000Z": 42.2,\n'
+                        '    "2020-01-03T08:20:04.000Z": 25.9\n'
+                        "}"
+                    )
+                },
+            },
+            {
+                "id": "0f0f97f7-1f5d-4f5d-be11-7c7b78d02129",
+                "workflowInputName": "threshold",
+                "adapterId": "direct_provisioning",
+                "filters": {"value": "30"},
+            },
+        ],
+        "outputWirings": [],
+    }
+
+    tr = TransformationRevision(**component_tr_json)
+    tr.content = update_code(tr)
+    assert "COMPONENT_INFO" in tr.content
+
+    store_single_transformation_revision(tr)
+
+    async with async_test_client as ac:
+        response = await ac.post(
+            "/api/components/" + component_tr_json["id"] + "/execute",
+            json=wiring_json,
         )
-        component_tr_json = load_json(path)
-        wiring_json = {
-            "id": "38f168ef-cb06-d89c-79b3-0cd823f32e9d",
-            "name": "STANDARD-WIRING",
-            "inputWirings": [
-                {
-                    "id": "8c249f92-4b81-457e-9371-24204d6b373b",
-                    "workflowInputName": "scores",
-                    "adapterId": "direct_provisioning",
-                    "filters": {
-                        "value": (
-                            "{\n"
-                            '    "2020-01-03T08:20:03.000Z": 18.7,\n'
-                            '    "2020-01-01T01:15:27.000Z": 42.2,\n'
-                            '    "2020-01-03T08:20:04.000Z": 25.9\n'
-                            "}"
-                        )
-                    },
-                },
-                {
-                    "id": "0f0f97f7-1f5d-4f5d-be11-7c7b78d02129",
-                    "workflowInputName": "threshold",
-                    "adapterId": "direct_provisioning",
-                    "filters": {"value": "30"},
-                },
-            ],
-            "outputWirings": [],
-        }
 
-        tr = TransformationRevision(**component_tr_json)
-        tr.content = update_code(tr)
-        assert "COMPONENT_INFO" in tr.content
-
-        store_single_transformation_revision(tr)
-
-        async with async_test_client as ac:
-            response = await ac.post(
-                "/api/components/" + component_tr_json["id"] + "/execute",
-                json=wiring_json,
-            )
-
-        assert response.status_code == 200
-        assert "output_types_by_output_name" in response.json()
+    assert response.status_code == 200
+    assert "output_types_by_output_name" in response.json()
 
 
 @pytest.mark.asyncio
 async def test_execute_for_component_with_nan_and_nat_input(
-    async_test_client, clean_test_db_engine
+    async_test_client, mocked_clean_test_db_session
 ):
-    patched_session = sessionmaker(clean_test_db_engine)
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        patched_session,
-    ):
-        async with async_test_client as ac:
-            json_files = [
-                "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
-                "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
-            ]
+    async with async_test_client as ac:
+        json_files = [
+            "./transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json",
+            "./transformations/components/connectors/pass-through-series_100_bfa27afc-dea8-b8aa-4b15-94402f0739b6.json",
+        ]
 
-            for file in json_files:
-                tr_json = load_json(file)
+        for file in json_files:
+            tr_json = load_json(file)
 
-                response_nan = await ac.put(
-                    posix_urljoin(
-                        get_config().hd_backend_api_url,
-                        "transformations",
-                        tr_json["id"],
+            response_nan = await ac.put(
+                posix_urljoin(
+                    get_config().hd_backend_api_url,
+                    "transformations",
+                    tr_json["id"],
+                ),
+                params={"allow_overwrite_released": True},
+                json=tr_json,
+            )
+
+        component_id_any = UUID("1946d5f8-44a8-724c-176f-16f3e49963af")
+        component_id_series = UUID("bfa27afc-dea8-b8aa-4b15-94402f0739b6")
+        wiring_dto_nan = WiringFrontendDto.from_wiring(
+            WorkflowWiring(
+                input_wirings=[
+                    InputWiring(
+                        adapter_id="direct_provisioning",
+                        workflow_input_name="input",
+                        filters={"value": '{"0":1.2,"1":null, "2":5}'},
                     ),
-                    params={"allow_overwrite_released": True},
-                    json=tr_json,
-                )
+                ],
+                output_wirings=[],
+            ),
+            component_id_any,
+        )
+        wiring_dto_nat = WiringFrontendDto.from_wiring(
+            WorkflowWiring(
+                input_wirings=[
+                    InputWiring(
+                        adapter_id="direct_provisioning",
+                        workflow_input_name="input",
+                        filters={
+                            "value": '{"2020-05-01T00:00:00.000Z": "2020-05-01T01:00:00.000Z", "2020-05-01T02:00:00.000Z": null}'  # noqa: E501
+                        },
+                    ),
+                ],
+                output_wirings=[],
+            ),
+            component_id_series,
+        )
 
-            component_id_any = UUID("1946d5f8-44a8-724c-176f-16f3e49963af")
-            component_id_series = UUID("bfa27afc-dea8-b8aa-4b15-94402f0739b6")
-            wiring_dto_nan = WiringFrontendDto.from_wiring(
-                WorkflowWiring(
-                    input_wirings=[
-                        InputWiring(
-                            adapter_id="direct_provisioning",
-                            workflow_input_name="input",
-                            filters={"value": '{"0":1.2,"1":null, "2":5}'},
-                        ),
-                    ],
-                    output_wirings=[],
-                ),
-                component_id_any,
-            )
-            wiring_dto_nat = WiringFrontendDto.from_wiring(
-                WorkflowWiring(
-                    input_wirings=[
-                        InputWiring(
-                            adapter_id="direct_provisioning",
-                            workflow_input_name="input",
-                            filters={
-                                "value": '{"2020-05-01T00:00:00.000Z": "2020-05-01T01:00:00.000Z", "2020-05-01T02:00:00.000Z": null}'  # noqa: E501
-                            },
-                        ),
-                    ],
-                    output_wirings=[],
-                ),
-                component_id_series,
-            )
+        response_nan = await ac.post(
+            "/api/components/" + str(component_id_any) + "/execute",
+            json=json.loads(wiring_dto_nan.json(by_alias=True)),
+        )
 
-            response_nan = await ac.post(
-                "/api/components/" + str(component_id_any) + "/execute",
-                json=json.loads(wiring_dto_nan.json(by_alias=True)),
-            )
+        assert response_nan.status_code == 200
+        assert "output_results_by_output_name" in response_nan.json()
+        output_results_by_output_name = response_nan.json()[
+            "output_results_by_output_name"
+        ]
+        assert "output" in output_results_by_output_name
+        assert len(output_results_by_output_name["output"]) == 3
+        assert output_results_by_output_name["output"]["1"] == None  # noqa: E711
 
-            assert response_nan.status_code == 200
-            assert "output_results_by_output_name" in response_nan.json()
-            output_results_by_output_name = response_nan.json()[
-                "output_results_by_output_name"
+        response_nat = await ac.post(
+            "/api/components/" + str(component_id_series) + "/execute",
+            json=json.loads(wiring_dto_nat.json(by_alias=True)),
+        )
+
+        assert response_nat.status_code == 200
+        assert "output_results_by_output_name" in response_nat.json()
+        output_results_by_output_name = response_nat.json()[
+            "output_results_by_output_name"
+        ]
+        assert "output" in output_results_by_output_name
+        assert len(output_results_by_output_name["output"]["__data__"]) == 2
+        assert (
+            output_results_by_output_name["output"]["__data__"][
+                "2020-05-01T02:00:00.000Z"
             ]
-            assert "output" in output_results_by_output_name
-            assert len(output_results_by_output_name["output"]) == 3
-            assert output_results_by_output_name["output"]["1"] == None  # noqa: E711
-
-            response_nat = await ac.post(
-                "/api/components/" + str(component_id_series) + "/execute",
-                json=json.loads(wiring_dto_nat.json(by_alias=True)),
-            )
-
-            assert response_nat.status_code == 200
-            assert "output_results_by_output_name" in response_nat.json()
-            output_results_by_output_name = response_nat.json()[
-                "output_results_by_output_name"
-            ]
-            assert "output" in output_results_by_output_name
-            assert len(output_results_by_output_name["output"]) == 2
-            assert (
-                output_results_by_output_name["output"]["2020-05-01T02:00:00.000Z"]
-                == None  # noqa: E711
-            )
+            == None  # noqa: E711
+        )

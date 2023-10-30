@@ -42,7 +42,7 @@ shell() {
 }
 
 test() {
-    python -m pytest --cov=hetdesrun --cov-report=term-missing tests "$@"
+    python -m pytest --cov=hetdesrun --no-cov-on-fail --cov-report=term-missing tests "$@"
 }
 
 # test_components() {

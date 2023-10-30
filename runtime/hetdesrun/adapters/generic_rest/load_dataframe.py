@@ -11,7 +11,7 @@ async def load_single_dataframe_from_adapter(
 ) -> pd.DataFrame:
     return await load_framelike_data(
         [filtered_source],
-        additional_params=[],
+        additional_params=list(filtered_source.filters.items()),
         adapter_key=adapter_key,
         endpoint="dataframe",
     )

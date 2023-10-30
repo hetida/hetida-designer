@@ -29,7 +29,9 @@ class Metadatum(BaseModel):
 
 
 async def load_single_metadatum_from_adapter(
-    filtered_source: FilteredSource, adapter_key: str, client: httpx.AsyncClient
+    filtered_source: FilteredSource,
+    adapter_key: str,
+    client: httpx.AsyncClient,
 ) -> Any:
     if filtered_source.ref_id_type == RefIdType.SOURCE:
         endpoint = "sources"
@@ -46,17 +48,15 @@ async def load_single_metadatum_from_adapter(
         urllib.parse.quote(str(filtered_source.ref_key)),
     )
     try:
-        resp = await client.get(url)
+        resp = await client.get(url, params=filtered_source.filters)
     except httpx.HTTPError as e:
         msg = (
             f"Requesting metadata data from generic rest adapter endpoint {url}"
-            f" failed with Exception {str(e)}"
+            f" failed with Exception: {str(e)}"
         )
 
         logger.info(msg)
-        raise AdapterConnectionError(
-            f"Requesting metadata from generic rest adapter endpoint {url} failed."
-        ) from e
+        raise AdapterConnectionError(msg) from e
 
     if resp.status_code != 200:
         msg = (
@@ -133,7 +133,11 @@ async def load_multiple_metadata(
     ) as client:
         loaded_metadata = await asyncio.gather(
             *(
-                load_single_metadatum_from_adapter(filtered_source, adapter_key, client)
+                load_single_metadatum_from_adapter(
+                    filtered_source,
+                    adapter_key,
+                    client,
+                )
                 for filtered_source in data_to_load.values()
             )
         )

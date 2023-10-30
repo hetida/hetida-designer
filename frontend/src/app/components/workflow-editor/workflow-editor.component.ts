@@ -42,6 +42,7 @@ import { TransformationService } from 'src/app/service/transformation/transforma
 import { Connector } from 'src/app/model/connector';
 import { Utils } from 'src/app/utils/utils';
 import { Constant } from 'src/app/model/constant';
+import { OptionalFieldsDialogComponent } from '../optional-fields-dialog/optional-fields-dialog.component';
 
 interface IdentifiableEntity {
   id: string;
@@ -59,7 +60,8 @@ export interface VertexIds {
 })
 export class WorkflowEditorComponent {
   flowchartConfiguration: FlowchartConfiguration | undefined = undefined;
-  flowchartManipulatorConfiguration: SVGManipulatorConfiguration = new SVGManipulatorConfiguration();
+  flowchartManipulatorConfiguration: SVGManipulatorConfiguration =
+    new SVGManipulatorConfiguration();
 
   private currentWorkflow: WorkflowTransformation;
   private hasChanges = false;
@@ -137,9 +139,8 @@ export class WorkflowEditorComponent {
     if (link === undefined) {
       return;
     }
-    const pathData = this.flowchartConverter.convertLinkPathToPositions(
-      element
-    );
+    const pathData =
+      this.flowchartConverter.convertLinkPathToPositions(element);
     if (link.path.length === 0 && pathData.length === 0) {
       return;
     }
@@ -200,9 +201,10 @@ export class WorkflowEditorComponent {
       this.currentWorkflow.content.links,
       removedElement.id
     );
-    this.currentWorkflow.content.constants = this.currentWorkflow.content.constants.filter(
-      constant => constant.operator_id !== removedElement.id
-    );
+    this.currentWorkflow.content.constants =
+      this.currentWorkflow.content.constants.filter(
+        constant => constant.operator_id !== removedElement.id
+      );
     this.hasChanges = true;
   }
 
@@ -283,34 +285,31 @@ export class WorkflowEditorComponent {
       return;
     }
 
-    const linkSourceIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
-      element,
-      true
-    );
-    const linkTargetIds: VertexIds = this.flowchartConverter.getLinkOperatorAndConnectorId(
-      element,
-      false
-    );
+    const linkSourceIds: VertexIds =
+      this.flowchartConverter.getLinkOperatorAndConnectorId(element, true);
+    const linkTargetIds: VertexIds =
+      this.flowchartConverter.getLinkOperatorAndConnectorId(element, false);
 
     const sourceIsWorkflowInput =
       linkSourceIds.operatorId === this.currentWorkflow.id;
-    const startConnector: Connector = this.flowchartConverter.getConnectorFromOperatorById(
-      linkSourceIds,
-      this.currentWorkflow,
-      sourceIsWorkflowInput
-    );
+    const startConnector: Connector =
+      this.flowchartConverter.getConnectorFromOperatorById(
+        linkSourceIds,
+        this.currentWorkflow,
+        sourceIsWorkflowInput
+      );
 
     const targetIsWorkflowOutput =
       linkTargetIds.operatorId === this.currentWorkflow.id;
-    const endConnector: Connector = this.flowchartConverter.getConnectorFromOperatorById(
-      linkTargetIds,
-      this.currentWorkflow,
-      targetIsWorkflowOutput
-    );
+    const endConnector: Connector =
+      this.flowchartConverter.getConnectorFromOperatorById(
+        linkTargetIds,
+        this.currentWorkflow,
+        targetIsWorkflowOutput
+      );
 
-    const linkPath = this.flowchartConverter.convertLinkPathToPositions(
-      element
-    );
+    const linkPath =
+      this.flowchartConverter.convertLinkPathToPositions(element);
 
     const newLink: Link = {
       id: UUID().toString(),
@@ -387,8 +386,10 @@ export class WorkflowEditorComponent {
         return;
       }
       const bodyRect = document.body.getBoundingClientRect();
-      const openToRight = position.x + popoverWidth < bodyRect.right;
-      const openToTop = position.y + popoverMinHeight > bodyRect.bottom;
+      const openToRight =
+        (position.x as number) + popoverWidth < bodyRect.right;
+      const openToTop =
+        (position.y as number) + popoverMinHeight > bodyRect.bottom;
       this.popoverService.showPopover(
         this.currentWorkflow.id,
         position.x,
@@ -539,6 +540,58 @@ export class WorkflowEditorComponent {
       });
   }
 
+  showOptionalFields(event: CustomEvent): void {
+    const uuid = event.detail.uuid;
+    if (uuid) {
+      const selected_op = this.currentWorkflow.content.operators.filter(
+        op => op.id === event.detail.uuid
+      )[0];
+      if (selected_op) {
+        const dialogRef = this.dialog.open<OptionalFieldsDialogComponent>(
+          OptionalFieldsDialogComponent,
+          {
+            width: '30%',
+            minHeight: '200px',
+            data: {
+              operator: selected_op,
+              actionOk: 'Save',
+              actionCancel: 'Cancel'
+            }
+          }
+        );
+
+        dialogRef
+          .afterClosed()
+          .pipe(first())
+          .subscribe((inputs: Connector[]) => {
+            if (inputs) {
+              this.currentWorkflow.content.operators.filter(
+                op => op.id === event.detail.uuid
+              )[0].inputs = inputs;
+              inputs
+                .filter(input => !input.exposed)
+                .forEach(input => {
+                  this.currentWorkflow.content.inputs
+                    .filter(
+                      contentInput =>
+                        contentInput.operator_id === event.detail.uuid
+                    )
+                    .filter(filterInput => {
+                      if (filterInput.connector_id === input.id) {
+                        filterInput.name = '';
+                      }
+                    });
+                });
+              this.hasChanges = true;
+              this._updateWorkflowIfNecessary();
+            }
+          });
+      }
+    } else {
+      console.error('No UUID send from flowchart event!');
+    }
+  }
+
   private _extractCurrentOperatorFromEvent(event: Event): Operator | null {
     const element = event.target as HTMLElement;
     if (element === null) {
@@ -573,9 +626,8 @@ export class WorkflowEditorComponent {
       );
     }
     this.flowchartManipulatorConfiguration.dispatchContextMenuEvent = true;
-    this.flowchartConfiguration = this.flowchartConverter.convertWorkflowToFlowchart(
-      workflow
-    );
+    this.flowchartConfiguration =
+      this.flowchartConverter.convertWorkflowToFlowchart(workflow);
 
     this.currentWorkflow = workflow;
 

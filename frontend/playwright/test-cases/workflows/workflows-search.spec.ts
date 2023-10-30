@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/fixture';
+import { expect, test } from '../fixtures/fixture';
 
 test('Search for workflows', async ({ page, hetidaDesigner }) => {
   // Arrange
@@ -6,8 +6,8 @@ test('Search for workflows', async ({ page, hetidaDesigner }) => {
   const workflowName = 'Volatility Detection Example'; // Search term
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Workflows');
-  await hetidaDesigner.typeInSearchTerm(workflowName);
+  await hetidaDesigner.clickWorkflowsInNavigation();
+  await hetidaDesigner.searchInNavigation(workflowName);
   // Expansion-panel expands on click, to render and locat workflows
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
 

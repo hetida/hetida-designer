@@ -33,38 +33,36 @@ describe('NavigationContainerComponent', () => {
 
   const mockTransformationActionService = jasmine.createSpy();
 
-  beforeEach(
-    waitForAsync(() => {
-      TestBed.configureTestingModule({
-        imports: [
-          FormsModule,
-          ReactiveFormsModule,
-          BasicTestModule,
-          BrowserAnimationsModule
-        ],
-        declarations: [
-          NavigationContainerComponent,
-          NavigationCategoryComponent,
-          NavigationItemComponent
-        ],
-        providers: [
-          provideMockStore(),
-          {
-            provide: TransformationService,
-            useValue: mockTransformationService
-          },
-          {
-            provide: TransformationActionService,
-            useValue: mockTransformationActionService
-          },
-          {
-            provide: AuthService,
-            useValue: mockAuthService
-          }
-        ]
-      }).compileComponents();
-    })
-  );
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        BasicTestModule,
+        BrowserAnimationsModule
+      ],
+      declarations: [
+        NavigationContainerComponent,
+        NavigationCategoryComponent,
+        NavigationItemComponent
+      ],
+      providers: [
+        provideMockStore(),
+        {
+          provide: TransformationService,
+          useValue: mockTransformationService
+        },
+        {
+          provide: TransformationActionService,
+          useValue: mockTransformationActionService
+        },
+        {
+          provide: AuthService,
+          useValue: mockAuthService
+        }
+      ]
+    }).compileComponents();
+  }));
 
   beforeEach(() => {
     const mockStore = TestBed.inject(MockStore);

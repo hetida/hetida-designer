@@ -1,4 +1,4 @@
-import { IOType } from 'hetida-flowchart';
+import { IOType, IOTypeOption } from 'hetida-flowchart';
 import { Position } from './position';
 
 export interface Connector {
@@ -6,4 +6,7 @@ export interface Connector {
   name: string;
   data_type: IOType;
   position: Position;
+  exposed?: boolean;
+  type?: IOTypeOption;
+  value?: string;
 }

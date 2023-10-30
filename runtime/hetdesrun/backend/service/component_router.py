@@ -111,7 +111,7 @@ async def create_component_revision(
 async def get_component_revision_by_id(
     id: UUID = Path(  # noqa: A002
         ...,
-        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
     ),
 ) -> ComponentRevisionFrontendDto:
     """Get a single transformation revision of type component from the data base.

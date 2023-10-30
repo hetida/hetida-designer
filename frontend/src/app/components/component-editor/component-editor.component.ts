@@ -24,7 +24,7 @@ export class ComponentEditorComponent implements OnInit, OnDestroy {
   public codeCopy: string;
   public lastSavedCode: string;
 
-  private readonly _ngDestroyNotifier = new Subject();
+  private readonly _ngDestroyNotifier = new Subject<void>();
   private readonly _autoSave$ = new Subject<void>();
   private readonly _autoSaveTimer$ = this._autoSave$.pipe(
     debounceTime(environment.autosaveTimer)

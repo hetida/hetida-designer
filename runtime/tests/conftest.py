@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy.future.engine import Engine
 
-from hetdesrun.persistence import get_db_engine
+from hetdesrun.persistence import get_db_engine, sessionmaker
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.utils import get_uuid_from_seed
 from hetdesrun.webservice.application import init_app
@@ -31,10 +31,19 @@ def clean_test_db_engine(test_db_engine: Engine) -> Engine:
     return test_db_engine
 
 
+@pytest.fixture()
+def mocked_clean_test_db_session(clean_test_db_engine):
+    with mock.patch(
+        "hetdesrun.persistence.Session",
+        sessionmaker(clean_test_db_engine),
+    ) as _fixture:
+        yield _fixture
+
+
 @pytest.fixture(scope="session")
 def deactivate_auth() -> Generator:
     with mock.patch(
-        "hetdesrun.webservice.config.runtime_config.auth", False
+        "hetdesrun.webservice.config.runtime_config.auth", new=False
     ) as _fixture:
         yield _fixture
 
@@ -235,7 +244,7 @@ def input_json_with_wiring_with_input() -> Any:
                 "workflow_input_name": "val_inp",
                 "adapter_id": 1,
                 "ref_id": "TEST-ID",
-                "filters": {"value": 32},
+                "filters": {"value": "32"},
             }
         ],
         "output_wirings": [

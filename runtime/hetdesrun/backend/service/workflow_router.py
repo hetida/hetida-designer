@@ -146,7 +146,7 @@ async def get_all_workflow_revisions() -> list[WorkflowRevisionFrontendDto]:
 async def get_workflow_revision_by_id(
     id: UUID = Path(  # noqa: A002
         ...,
-        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
     ),
 ) -> WorkflowRevisionFrontendDto:
     """Get a single transformation revision of type workflow from the data base.

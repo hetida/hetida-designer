@@ -12,6 +12,7 @@ describe('AllowedCharsValidator', () => {
     formBuilder = TestBed.inject(FormBuilder);
   });
 
+  // eslint-disable-next-line max-len
   it('AllowedCharsValidator should return valid if only letters, numbers, whitespace and "_", "-", "+", "&", ".", ",", "(", ")", "/", "=" are used in given value', () => {
     const group1 = formBuilder.group({
       value: ['draft', AllowedCharsValidator()]

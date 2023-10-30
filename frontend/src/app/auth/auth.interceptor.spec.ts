@@ -96,7 +96,7 @@ describe('AuthInterceptor', () => {
       const testRequest = httpMock.expectOne(
         request =>
           request.headers.has('Authorization') &&
-          request.headers.get('Authorization') === `Bearer test-token`
+          request.headers.get('Authorization') === 'Bearer test-token'
       );
 
       testRequest.flush({ hello: 'world' });

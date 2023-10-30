@@ -10,6 +10,9 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant A",
         "metadataKey": "Temperature Unit",
         "type": ExternalType.METADATA_STR,
+        "filters": {
+            "latex_mode": {"name": "Latex", "type": "free_text", "required": False}
+        },
     },
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantA.plant_pressure_unit",
@@ -26,6 +29,9 @@ sources_json_objects: list[dict[str, Any]] = [
         "path": "Plant B",
         "metadataKey": "Temperature Unit",
         "type": ExternalType.METADATA_STR,
+        "filters": {
+            "latex_mode": {"name": "Latex", "type": "free_text", "required": False}
+        },
     },
     {  # metadatum that appears as its own point in the tree and is filterable
         "id": "root.plantB.plant_pressure_unit",
@@ -55,6 +61,9 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Alerts",
         "path": "Plant A",
         "type": ExternalType.DATAFRAME,
+        "filters": {
+            "column_names": {"name": "columns", "type": "free_text", "required": False}
+        },
     },
     {
         "id": "root.plantB.alerts",
@@ -78,11 +87,37 @@ sources_json_objects: list[dict[str, Any]] = [
         "type": ExternalType.DATAFRAME,
     },
     {
+        "id": "root.plantA.anomalies",
+        "thingNodeId": "root.plantA",
+        "name": "Anomalies",
+        "path": "Plant A",
+        "type": ExternalType.MULTITSFRAME,
+    },
+    {
+        "id": "root.plantB.anomalies",
+        "thingNodeId": "root.plantB",
+        "name": "Anomalies",
+        "path": "Plant B",
+        "type": ExternalType.MULTITSFRAME,
+    },
+    {
         "id": "root.plantA.temperatures",
         "thingNodeId": "root.plantA",
         "name": "Temperatures",
         "path": "Plant A",
         "type": ExternalType.MULTITSFRAME,
+        "filters": {
+            "lower_threshold": {
+                "name": "lower threshold",
+                "type": "free_text",
+                "required": False,
+            },
+            "upper_threshold": {
+                "name": "upper threshold",
+                "type": "free_text",
+                "required": False,
+            },
+        },
     },
     {
         "id": "root.plantB.temperatures",
@@ -97,6 +132,9 @@ sources_json_objects: list[dict[str, Any]] = [
         "name": "Influx Temperature",
         "path": "Plant A / Pickling Unit / Influx",
         "type": ExternalType.TIMESERIES_FLOAT,
+        "filters": {
+            "frequency": {"name": "frequency", "type": "free_text", "required": False}
+        },
     },
     {
         "id": "root.plantA.picklingUnit.influx.press",
@@ -272,18 +310,17 @@ def get_sources(
             selected_sources = sources_json_objects
         else:
             selected_sources = []
+    elif include_sub_objects:
+        selected_sources = [
+            src
+            for src in sources_json_objects
+            if src["id"].startswith(parent_id)
+            and len(src["id"]) != len(parent_id)  # only true subnodes!
+        ]
     else:
-        if include_sub_objects:
-            selected_sources = [
-                src
-                for src in sources_json_objects
-                if src["id"].startswith(parent_id)
-                and len(src["id"]) != len(parent_id)  # only true subnodes!
-            ]
-        else:
-            selected_sources = [
-                src for src in sources_json_objects if src["thingNodeId"] == parent_id
-            ]
+        selected_sources = [
+            src for src in sources_json_objects if src["thingNodeId"] == parent_id
+        ]
 
     if filter_str is not None:
         selected_sources = [

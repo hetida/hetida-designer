@@ -141,42 +141,42 @@ async def get_all_transformation_revisions(
     type: Type  # noqa: A002
     | None = Query(
         None,
-        description="Filter for specified type",
+        description="Filter for specified type.",
     ),
     state: State
     | None = Query(
         None,
-        description="Filter for specified state",
+        description="Filter for specified state.",
     ),
-    category: ValidStr
+    categories: list[ValidStr]
+    | None = Query(
+        None, description="Filter for specified list of categories.", alias="category"
+    ),
+    category_prefix: ValidStr
     | None = Query(
         None,
-        description="Filter for specified category",
+        description="Category prefix that must be matched exactly (case-sensitive).",
     ),
     revision_group_id: UUID
-    | None = Query(None, description="Filter for specified revision group id"),
+    | None = Query(None, description="Filter for specified revision group id."),
     ids: list[UUID]
-    | None = Query(
-        None,
-        description="Filter for specified list of ids",
-    ),
+    | None = Query(None, description="Filter for specified list of ids.", alias="id"),
     names: list[NonEmptyValidStr]
     | None = Query(
-        None,
-        description=("Filter for specified list of names"),
+        None, description=("Filter for specified list of names."), alias="name"
     ),
     include_dependencies: bool = Query(
         False,
         description=(
             "Set to True to additionally get those transformation revisions "
-            "that the selected ones depend on"
+            "that the selected/filtered ones depend on."
         ),
     ),
     include_deprecated: bool = Query(
         True,
         description=(
             "Set to False to omit transformation revisions with state DISABLED "
-            "this will not affect included dependent transformation revisions"
+            "this will not affect included dependent transformation revisions."
         ),
     ),
     unused: bool = Query(
@@ -196,7 +196,8 @@ async def get_all_transformation_revisions(
     filter_params = FilterParams(
         type=type,
         state=state,
-        category=category,
+        categories=categories,
+        category_prefix=category_prefix,
         revision_group_id=revision_group_id,
         ids=ids,
         names=names,
@@ -236,7 +237,7 @@ async def get_all_transformation_revisions(
 async def get_transformation_revision_by_id(
     id: UUID = Path(  # noqa: A002
         ...,
-        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
     ),
 ) -> TransformationRevision:
     logger.info("get transformation revision %s", id)
@@ -299,27 +300,29 @@ async def update_transformation_revisions(
     type: Type  # noqa: A002
     | None = Query(
         None,
-        description="Filter for specified type",
+        description="Filter for specified type.",
     ),
     state: State
     | None = Query(
         None,
-        description="Filter for specified state",
+        description="Filter for specified state.",
     ),
     categories: list[ValidStr]
-    | None = Query(None, description="Filter for categories", alias="category"),
+    | None = Query(
+        None, description="Filter for specified list of categories.", alias="category"
+    ),
     category_prefix: str
     | None = Query(
         None,
         description="Category prefix that must be matched exactly (case-sensitive).",
     ),
     revision_group_id: UUID
-    | None = Query(None, description="Filter for specified revision group id"),
+    | None = Query(None, description="Filter for specified revision group id."),
     ids: list[UUID]
-    | None = Query(None, description="Filter for specified list of ids", alias="id"),
+    | None = Query(None, description="Filter for specified list of ids.", alias="id"),
     names: list[NonEmptyValidStr]
     | None = Query(
-        None, description=("Filter for specified list of names"), alias="name"
+        None, description=("Filter for specified list of names."), alias="name"
     ),
     include_deprecated: bool = Query(
         True,
@@ -336,10 +339,10 @@ async def update_transformation_revisions(
         ),
     ),
     allow_overwrite_released: bool = Query(
-        False, description="Only set to True for deployment"
+        False, description="Only set to True for deployment."
     ),
     update_component_code: bool = Query(
-        True, description="Only set to False for deployment"
+        True, description="Only set to False for deployment."
     ),
     strip_wirings: bool = Query(
         False,

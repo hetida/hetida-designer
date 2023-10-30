@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/fixture';
+import { expect, test } from '../fixtures/fixture';
 
 test('Search for components', async ({ page, hetidaDesigner }) => {
   // Arrange
@@ -6,9 +6,9 @@ test('Search for components', async ({ page, hetidaDesigner }) => {
   const componentName = 'Pi'; // Search term
 
   // Act
-  await hetidaDesigner.clickWorkflowsComponentsInNavigation('Components');
-  await hetidaDesigner.typeInSearchTerm(componentName);
-  // Expansion-panel expands on click, to render and locat components
+  await hetidaDesigner.clickComponentsInNavigation();
+  await hetidaDesigner.searchInNavigation(componentName);
+  // Expansion-panel expands on click, to render and locate components
   await hetidaDesigner.clickCategoryInNavigation(categoryName);
 
   // Assert

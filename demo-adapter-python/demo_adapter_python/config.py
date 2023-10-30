@@ -39,6 +39,6 @@ class PythonDemoAdapterConfig(BaseSettings):
 
 environment_file = os.environ.get("HD_DEMO_ADAPTER_PYTHON_ENVIRONMENT_FILE", None)
 
-demo_adapter_config = PythonDemoAdapterConfig(
+demo_adapter_config = PythonDemoAdapterConfig(  # type: ignore[call-arg]
     _env_file=environment_file if environment_file else None
 )

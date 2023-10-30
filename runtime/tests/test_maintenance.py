@@ -8,7 +8,6 @@ from hetdesrun.backend.service.maintenance_router import (
     delete_all_and_refill,
     handle_maintenance_operation_request,
 )
-from hetdesrun.persistence import sessionmaker
 
 
 @pytest.fixture()
@@ -28,14 +27,10 @@ def test_maintenance_incorrect_secret(maintenance_secret_set):
     assert exc_info.value.status_code == 403
 
 
-def test_maintenance_working(maintenance_secret_set, clean_test_db_engine):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        maint_response = handle_maintenance_operation_request(
-            "purge", SecretStr("testsecret"), delete_all_and_refill, mock.Mock
-        )
+def test_maintenance_working(maintenance_secret_set, mocked_clean_test_db_session):
+    maint_response = handle_maintenance_operation_request(
+        "purge", SecretStr("testsecret"), delete_all_and_refill, mock.Mock
+    )
     assert maint_response.success
     assert maint_response.error is None
 

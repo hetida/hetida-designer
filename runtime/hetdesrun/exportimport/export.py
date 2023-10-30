@@ -22,22 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 def get_transformation_from_java_backend(
-    id: UUID, type: Type  # noqa: A002
+    id: UUID, type: Type, headers: dict[str, str]  # noqa: A002
 ) -> TransformationRevision:
     """Get transformation via REST API from old backend (old endpoints)
 
     Loads a single transformation revision together with its documentation based on its id
     """
-    try:
-        headers = sync_wrapped_get_auth_headers(external=True)
-    except ServiceAuthenticationError as e:
-        msg = (
-            "Failed to get auth headers for external request to old java backend."
-            f" Error was:\n{str(e)}"
-        )
-        logger.error(msg)
-        raise Exception(msg) from e
-
     if type == Type.COMPONENT:
         url = posix_urljoin(get_config().hd_backend_api_url, "components", str(id))
     else:
@@ -113,6 +103,27 @@ def get_transformation_from_java_backend(
     return transformation_revision
 
 
+def get_base_item_jsons_from_java_backend(headers: dict[str, str]) -> Any:
+    url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
+    response = requests.get(
+        url,
+        verify=get_config().hd_backend_verify_certs,
+        auth=get_backend_basic_auth(),  # type: ignore
+        headers=headers,
+        timeout=get_config().external_request_timeout,
+    )
+
+    if response.status_code != 200:
+        msg = (
+            f"COULD NOT GET transformation revisions from URL {url}.\n"
+            f"Response status code {str(response.status_code)} "
+            f"with response text: {str(response.text)}"
+        )
+        raise Exception(msg)
+
+    return response.json()
+
+
 def selection_list_empty_or_contains_value(
     selection_list: list[Any] | None, actual_value: Any
 ) -> bool:
@@ -125,6 +136,33 @@ def criterion_unset_or_matches_value(criterion: Any | None, actual_value: Any) -
     if criterion is None:
         return True
     return bool(actual_value == criterion)
+
+
+def passes_all_filters(
+    trafo_json: Any,
+    type: Type | None = None,  # noqa: A002
+    categories: list[ValidStr] | None = None,
+    ids: list[UUID | str] | None = None,
+    names: list[NonEmptyValidStr] | None = None,
+    include_deprecated: bool = True,
+) -> bool:
+    filter_type = criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
+    filter_ids = selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
+    filter_names = selection_list_empty_or_contains_value(names, trafo_json["name"])
+    filter_categories = selection_list_empty_or_contains_value(
+        categories, trafo_json["category"]
+    )
+    filter_state = include_deprecated or trafo_json["state"] != State.DISABLED
+
+    combined_filter = (
+        filter_type
+        and filter_ids
+        and filter_names
+        and filter_categories
+        and filter_state
+    )
+
+    return combined_filter
 
 
 def convert_id_type_to_uuid(
@@ -140,7 +178,8 @@ def export_transformations(
     download_path: str,
     type: Type | None = None,  # noqa: A002
     state: State | None = None,
-    category: ValidStr | None = None,
+    categories: list[ValidStr] | None = None,
+    category_prefix: ValidStr | None = None,
     ids: list[UUID | str] | None = None,
     names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
@@ -192,11 +231,11 @@ def export_transformations(
     """
     import hetdesrun.models.wiring
 
-    hetdesrun.models.wiring.EXPORT_MODE = True
+    hetdesrun.models.wiring.ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = True
 
     import hetdesrun.backend.models.wiring
 
-    hetdesrun.backend.models.wiring.EXPORT_MODE = True
+    hetdesrun.backend.models.wiring.ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS = True
 
     transformation_list: list[TransformationRevision] = []
     try:
@@ -210,59 +249,46 @@ def export_transformations(
         raise Exception(msg) from e
 
     if java_backend:
-        ids = convert_id_type_to_uuid(ids)
-
-        url = posix_urljoin(get_config().hd_backend_api_url, "base-items")
-        response = requests.get(
-            url,
-            verify=get_config().hd_backend_verify_certs,
-            auth=get_backend_basic_auth(),  # type: ignore
-            headers=headers,
-            timeout=get_config().external_request_timeout,
-        )
-
-        if response.status_code != 200:
-            msg = (
-                f"COULD NOT GET transformation revisions from URL {url}.\n"
-                f"Response status code {str(response.status_code)} "
-                f"with response text: {str(response.text)}"
-            )
+        if category_prefix is not None:
+            msg = 'For the java backend the filter option "categories_with_prefix" is not provided!'
+            logger.error(msg)
             raise Exception(msg)
 
+        base_item_jsons = get_base_item_jsons_from_java_backend(headers)
+
         failed_exports: list[Any] = []
-        for trafo_json in response.json():
-            if (
-                criterion_unset_or_matches_value(type, Type(trafo_json["type"]))
-                and selection_list_empty_or_contains_value(ids, UUID(trafo_json["id"]))
-                and selection_list_empty_or_contains_value(names, trafo_json["name"])
-                and criterion_unset_or_matches_value(category, trafo_json["category"])
-                and (include_deprecated or trafo_json["state"] != State.DISABLED)
+        for base_item_json in base_item_jsons:
+            if passes_all_filters(
+                base_item_json, type, categories, ids, names, include_deprecated
             ):
                 try:
                     transformation = get_transformation_from_java_backend(
-                        UUID(trafo_json["id"]), Type(trafo_json["type"])
+                        UUID(base_item_json["id"]),
+                        Type(base_item_json["type"]),
+                        headers,
                     )
                 except ValidationError as e:
-                    failed_exports.append((trafo_json, e))
+                    failed_exports.append((base_item_json, e))
                 else:
                     save_transformation_into_directory(transformation, download_path)
         for export in failed_exports:
-            trafo_json = export[0]
+            base_item_json = export[0]
             error = export[1]
             logger.error(
                 "Could not export %s with id %s in category '%s' with name '%s' and tag '%s':\n%s",
-                trafo_json["type"],
-                trafo_json["id"],
-                trafo_json["category"],
-                trafo_json["name"],
-                trafo_json["tag"],
+                base_item_json["type"],
+                base_item_json["id"],
+                base_item_json["category"],
+                base_item_json["name"],
+                base_item_json["tag"],
                 error,
             )
     else:
         params = FilterParams(
             type=type,
             state=state,
-            category=category,
+            categories=categories,
+            category_prefix=category_prefix,
             ids=ids,
             names=names,
             include_dependencies=True,

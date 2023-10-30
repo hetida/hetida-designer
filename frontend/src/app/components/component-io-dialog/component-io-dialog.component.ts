@@ -1,9 +1,16 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  Validators
+} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
   createReadOnlyConfig,
   FlowchartConfiguration,
+  IOTypeOption,
   SVGManipulatorConfiguration
 } from 'hetida-flowchart';
 import { IOType } from 'hetida-flowchart/types/IOType';
@@ -40,6 +47,7 @@ export class ComponentIODialogComponent implements OnInit {
   _svgConfiguration: SVGManipulatorConfiguration;
 
   readonly _ioTypes = Object.keys(IOType);
+  readonly _ioTypeOptions = Object.keys(IOTypeOption);
 
   _ioItemForm: FormGroup;
 
@@ -74,12 +82,14 @@ export class ComponentIODialogComponent implements OnInit {
   }
 
   private _setupFormControl(): void {
-    const inputIOControls = this.componentTransformation.io_interface.inputs.map(
-      this._createIOItemControl.bind(this)
-    );
-    const outputIOControls = this.componentTransformation.io_interface.outputs.map(
-      this._createIOItemControl.bind(this)
-    );
+    const inputIOControls =
+      this.componentTransformation.io_interface.inputs.map(
+        this._createIOItemControl.bind(this)
+      );
+    const outputIOControls =
+      this.componentTransformation.io_interface.outputs.map(
+        this._createIOItemControl.bind(this)
+      );
 
     this._ioItemForm = this._formBuilder.group({
       inputs: this._formBuilder.array(inputIOControls, {
@@ -94,24 +104,28 @@ export class ComponentIODialogComponent implements OnInit {
   private _createIOItemControl(input: IO): FormGroup {
     return this._formBuilder.group({
       name: this._createNameControl(input),
+      data_type: this._createDataTypeControl(input),
       type: this._createTypeControl(input),
+      value: this._createValueControl(input),
       id: this._formBuilder.control({ value: input.id, disabled: true })
     });
   }
 
   _removeInput(index: number, ioId: string) {
     this._ioItemInputsFormArray.removeAt(index);
-    this.componentTransformation.io_interface.inputs = this.componentTransformation.io_interface.inputs.filter(
-      ioItem => ioItem.id !== ioId
-    );
+    this.componentTransformation.io_interface.inputs =
+      this.componentTransformation.io_interface.inputs.filter(
+        ioItem => ioItem.id !== ioId
+      );
     this._createPreview();
   }
 
   _removeOutput(index: number, ioId: string) {
     this._ioItemOutputsFormArray.removeAt(index);
-    this.componentTransformation.io_interface.outputs = this.componentTransformation.io_interface.outputs.filter(
-      ioItem => ioItem.id !== ioId
-    );
+    this.componentTransformation.io_interface.outputs =
+      this.componentTransformation.io_interface.outputs.filter(
+        ioItem => ioItem.id !== ioId
+      );
     this._createPreview();
   }
 
@@ -122,7 +136,10 @@ export class ComponentIODialogComponent implements OnInit {
         'new_input',
         this.componentTransformation.io_interface.inputs
       ),
-      data_type: IOType.ANY
+      data_type: IOType.ANY,
+      type: IOTypeOption.REQUIRED,
+      value: null,
+      exposed: false
     };
     this.componentTransformation.io_interface.inputs.push(io);
     this._createPreview();
@@ -136,7 +153,9 @@ export class ComponentIODialogComponent implements OnInit {
         'new_output',
         this.componentTransformation.io_interface.outputs
       ),
-      data_type: IOType.ANY
+      data_type: IOType.ANY,
+      type: IOTypeOption.REQUIRED,
+      value: ''
     };
     this.componentTransformation.io_interface.outputs.push(io);
     this._createPreview();
@@ -153,6 +172,18 @@ export class ComponentIODialogComponent implements OnInit {
 
   _onCancel(): void {
     this.dialogRef.close();
+  }
+
+  _isDefaultParameter(ioItem: AbstractControl): boolean {
+    return ioItem.get('type').value === IOTypeOption.OPTIONAL;
+  }
+
+  _ioTypeOptionChanged(event: IOTypeOption, ioItem: AbstractControl) {
+    if (event === IOTypeOption.REQUIRED) {
+      ioItem.patchValue({
+        value: null
+      });
+    }
   }
 
   private _createPreview(): void {
@@ -196,7 +227,7 @@ export class ComponentIODialogComponent implements OnInit {
     return control;
   }
 
-  private _createTypeControl(io: IO) {
+  private _createDataTypeControl(io: IO) {
     const control = this._formBuilder.control(
       {
         value: io.data_type,
@@ -206,6 +237,30 @@ export class ComponentIODialogComponent implements OnInit {
     );
     control.valueChanges.subscribe(changes => {
       io.data_type = changes;
+      this._createPreview();
+    });
+    return control;
+  }
+
+  private _createTypeControl(io: IO) {
+    const control = this._formBuilder.control({
+      value: io.type ?? IOTypeOption.REQUIRED,
+      disabled: !this.data.editMode
+    });
+    control.valueChanges.subscribe(changes => {
+      io.type = changes;
+      this._createPreview();
+    });
+    return control;
+  }
+
+  private _createValueControl(io: IO) {
+    const control = this._formBuilder.control({
+      value: io.value,
+      disabled: !this.data.editMode
+    });
+    control.valueChanges.subscribe(changes => {
+      io.value = changes;
       this._createPreview();
     });
     return control;

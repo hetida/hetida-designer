@@ -18,7 +18,7 @@ I.e. the format is
 FirstAdapterId|FirstAdapterName|FirstAdapterUrl|FirstAdapterInternalUrl,SecondAdapterIdAdapter2|SecondAdapterName|SecondAdapterUrl|SecondAdapterInternalUrl...
 ```
 
-Example with both demo adapters from the docker-compose:
+Example with two adapters:
 
 ```
 demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://hetida-designer-demo-adapter-python:8092,demo-adapter-java|Java-Demo-Adapter|http://localhost:8091/adapter|http://hetida-designer-demo-adapter-java:8091/adapter    

@@ -11,7 +11,6 @@ from hetdesrun.backend.models.workflow import (
     WorkflowOperatorFrontendDto,
     WorkflowRevisionFrontendDto,
     get_operator_and_connector_name,
-    position_from_input_connector_id,
 )
 
 valid_workflow_example_iso_forest: dict = {
@@ -720,7 +719,7 @@ valid_workflow_example_iso_forest: dict = {
                     "workflowInputName": "x_vals",
                     "adapterId": "direct_provisioning",
                     "filters": {
-                        "value": [
+                        "value": """[
                             1.1843789383694558,
                             1.4510047706096545,
                             1.2788758326875431,
@@ -751,7 +750,7 @@ valid_workflow_example_iso_forest: dict = {
                             0.2546865562237355,
                             -0.715008247735518,
                             -0.2621021415447864,
-                        ]
+                        ]"""
                     },
                 },
                 {
@@ -759,7 +758,7 @@ valid_workflow_example_iso_forest: dict = {
                     "workflowInputName": "y_vals",
                     "adapterId": "direct_provisioning",
                     "filters": {
-                        "value": [
+                        "value": """[
                             1.5986223975391751,
                             2.1774012998349765,
                             1.7434766038349168,
@@ -790,44 +789,44 @@ valid_workflow_example_iso_forest: dict = {
                             0.08514825206658988,
                             0.29330191199417466,
                             0.4601618524597455,
-                        ]
+                        ]"""
                     },
                 },
                 {
                     "id": "5021c197-3c38-4e66-b4dc-20e6b5a75bdc",
                     "workflowInputName": "n_estimators",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": 100},
+                    "filters": {"value": "100"},
                 },
                 {
                     "id": "93292699-90f1-41ec-b11c-4538521a64f0",
                     "workflowInputName": "n_grid",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": 30},
+                    "filters": {"value": "30"},
                 },
                 {
                     "id": "1aedec9f-9c37-4894-b462-c787c9ec8593",
                     "workflowInputName": "x_max",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": 3},
+                    "filters": {"value": "3"},
                 },
                 {
                     "id": "327ddb6a-f21c-4c2c-a3a0-cfd3105c3015",
                     "workflowInputName": "x_min",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": -3},
+                    "filters": {"value": "-3"},
                 },
                 {
                     "id": "0de8335d-b104-4ca4-b0fc-4066eb1f3ae6",
                     "workflowInputName": "y_max",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": 3},
+                    "filters": {"value": "3"},
                 },
                 {
                     "id": "552a8f95-9e8f-474b-b28c-652ae26ab1c2",
                     "workflowInputName": "y_min",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": -3},
+                    "filters": {"value": "-3"},
                 },
             ],
             "outputWirings": [
@@ -1164,7 +1163,9 @@ def test_io_to_io_connector_for_input():
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
     ]
-    io_connector = WorkflowIoFrontendDto(**valid_input_with_name).to_io_connector(
+    io_connector = WorkflowIoFrontendDto(
+        **valid_input_with_name
+    ).to_workflow_content_io(
         *get_operator_and_connector_name(
             UUID(valid_input_with_name["operator"]),
             UUID(valid_input_with_name["connector"]),
@@ -1188,7 +1189,9 @@ def test_io_to_io_connector_for_output():
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
     ]
-    io_connector = WorkflowIoFrontendDto(**valid_output_with_name).to_io_connector(
+    io_connector = WorkflowIoFrontendDto(
+        **valid_output_with_name
+    ).to_workflow_content_io(
         *get_operator_and_connector_name(
             UUID(valid_output_with_name["operator"]),
             UUID(valid_output_with_name["connector"]),
@@ -1233,7 +1236,7 @@ def test_to_constant():
     assert constant.value == valid_input_without_name["constantValue"]["value"]
 
 
-def test_from_constant():
+def test_from_workflow_content_constant_input():
     operators = [
         WorkflowOperatorFrontendDto(**operator).to_operator()
         for operator in valid_workflow_example_iso_forest["operators"]
@@ -1246,10 +1249,8 @@ def test_from_constant():
             operators,
         )
     )
-    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_constant(
-        constant,
-        operator_id=UUID(valid_input_without_name["operator"]),
-        connector_id=UUID(valid_input_without_name["connector"]),
+    io_dto: WorkflowIoFrontendDto = (
+        WorkflowIoFrontendDto.from_workflow_content_constant_input(constant)
     )
 
     assert str(io_dto.id) == valid_input_without_name["id"]
@@ -1318,16 +1319,20 @@ def test_to_workflow_content():
     )
 
 
-def test_io_from_io():
-    inp = WorkflowIoFrontendDto(**valid_input_with_name).to_io()
-    workflow_content = WorkflowRevisionFrontendDto(
-        **valid_workflow_example_iso_forest
-    ).to_workflow_content()
-    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_io(
-        inp,
-        valid_input_with_name["operator"],
-        valid_input_with_name["connector"],
-        *position_from_input_connector_id(inp.id, workflow_content.inputs),
+def test_io_from_workflow_content_io():
+    operators = [
+        WorkflowOperatorFrontendDto(**operator).to_operator()
+        for operator in valid_workflow_example_iso_forest["operators"]
+    ]
+    wf_input = WorkflowIoFrontendDto(**valid_input_with_name).to_workflow_content_io(
+        *get_operator_and_connector_name(
+            UUID(valid_input_with_name["operator"]),
+            UUID(valid_input_with_name["connector"]),
+            operators,
+        )
+    )
+    io_dto: WorkflowIoFrontendDto = WorkflowIoFrontendDto.from_workflow_content_io(
+        wf_input
     )
 
     assert str(io_dto.id) == valid_input_with_name["id"]
@@ -1581,11 +1586,12 @@ def test_workflow_dto_to_transformation_revision_and_back_matches_with_ambiguous
         assert (
             workflow_dto.inputs[i].constant == returned_workflow_dto.inputs[i].constant
         )
-        assert (
-            workflow_dto.inputs[i].constant_value
-            == returned_workflow_dto.inputs[i].constant_value
-        )
-        if not workflow_dto.inputs[i].constant:
+        if workflow_dto.inputs[i].constant is True:
+            assert (
+                workflow_dto.inputs[i].constant_value
+                == returned_workflow_dto.inputs[i].constant_value
+            )
+        else:
             assert workflow_dto.inputs[i].name == returned_workflow_dto.inputs[i].name
     assert len(workflow_dto.outputs) == len(returned_workflow_dto.outputs)
     for i in range(len(workflow_dto.outputs)):
@@ -1603,10 +1609,6 @@ def test_workflow_dto_to_transformation_revision_and_back_matches_with_ambiguous
         assert (
             workflow_dto.outputs[i].constant
             == returned_workflow_dto.outputs[i].constant
-        )
-        assert (
-            workflow_dto.outputs[i].constant_value
-            == returned_workflow_dto.outputs[i].constant_value
         )
         if not workflow_dto.outputs[i].constant:
             assert workflow_dto.outputs[i].name == returned_workflow_dto.outputs[i].name

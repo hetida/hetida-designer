@@ -26,14 +26,25 @@
 
   &__label-parameter {
     padding-right: var(--spacing-2);
-    flex: 1 1 50%;
+    flex: 1 1 40%;
   }
 
   &__type-parameter {
     padding-right: var(--spacing-2);
-    flex: 1 1 50%;
+    flex: 1 1 40%;
   }
-
+  &__default-parameter {
+    padding-right: var(--spacing-2);
+    flex: 1 1 20%;
+  }
+  &__default-value {
+    padding-right: var(--spacing-2);
+  }
+  &__default-value-input {
+    width: 220px;
+    margin-left: auto;
+    padding-right: calc(40px + var(--spacing-2));
+  }
   &__action {
     flex: 0 0 40px;
   }

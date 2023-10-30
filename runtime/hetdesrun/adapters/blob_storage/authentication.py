@@ -41,8 +41,9 @@ def extract_namespace_from_root_tag(root_tag: str) -> str:
 def parse_credential_info_from_xml_string(
     xml_string: str, utc_now: datetime
 ) -> CredentialInfo:
+    logger.debug("Parsing XML response to obtain credential info")
     try:
-        xml_response = ET.fromstring(xml_string)
+        xml_response = ET.fromstring(xml_string)  # noqa: S314
     except ET.ParseError as error:
         msg = f"Cannot parse authentication request response as XML:\n{error}"
         logger.error(msg)
@@ -100,7 +101,7 @@ def parse_credential_info_from_xml_string(
 
 def parse_xml_error_response(xml_string: str) -> str:
     try:
-        xml_response = ET.fromstring(xml_string)
+        xml_response = ET.fromstring(xml_string)  # noqa: S314
     except ET.ParseError as error:
         msg = f"Cannot parse authentication request response as XML:\n{error}"
         logger.error(msg)
@@ -128,6 +129,7 @@ def parse_xml_error_response(xml_string: str) -> str:
 
 async def obtain_credential_info_from_sts_rest_api() -> CredentialInfo:
     """Obtain credential info from STS REST API."""
+    logger.debug("Obtaining credential info from STS REST API")
     utc_now = datetime.now(timezone.utc)
     access_token = await get_access_token()
     params = {
@@ -166,6 +168,11 @@ def credentials_still_valid_enough(credential_info: CredentialInfo) -> bool:
     time_since_issue_in_seconds = (
         now - credential_info.issue_timestamp
     ).total_seconds()
+    logger.debug(
+        "%ss since last credentials were issued. Credentials expire after %ss.",
+        time_since_issue_in_seconds,
+        credential_info.expiration_time_in_seconds,
+    )
 
     return (
         time_since_issue_in_seconds <= credential_info.expiration_time_in_seconds * 0.9
@@ -181,6 +188,7 @@ async def obtain_or_refresh_credential_info(
     """
     if existing_credential_info is not None:
         if credentials_still_valid_enough(existing_credential_info):
+            logger.debug("Existing credentials still valid")
             return existing_credential_info
         logger.debug("Credentials will soon expire. Trying to get new credentials.")
 
@@ -206,6 +214,7 @@ class CredentialManager:
             self._current_credential_info = credential_info
 
     async def get_credentials(self) -> Credentials:
+        logger.debug("Waiting for credential info")
         await self._obtain_or_refresh_credential_info()
         if self._current_credential_info is None:
             msg = "Obtained credentials are None"
@@ -223,6 +232,7 @@ def create_or_get_named_credential_manager(key: str) -> CredentialManager:
     manager_dict = global_credential_manager_dict()
 
     if key in manager_dict:
+        logger.debug("Returning existing credential manager for key %s", key)
         return manager_dict[key]
 
     logger.info("Creating new credential manager for key %s", key)

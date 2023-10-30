@@ -42,7 +42,9 @@ for plant in ("plantA", "plantB"):
         isSink=True,
     )
     store[f"root.{plant}.alerts"] = pd.DataFrame()
-    store[f"root.{plant}.anomalies"] = pd.DataFrame()
+    store[f"root.{plant}.anomalies"] = pd.DataFrame(
+        [], columns=["timestamp", "metric", "value"]
+    )
 
 
 def get_store() -> MutableMapping[Any, Any]:

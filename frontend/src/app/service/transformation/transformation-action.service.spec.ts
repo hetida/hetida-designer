@@ -2,7 +2,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { IOType } from 'hetida-flowchart';
+import { IOType, IOTypeOption } from 'hetida-flowchart';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { TransformationType } from 'src/app/enums/transformation-type';
 import { MaterialModule } from 'src/app/material.module';
@@ -53,14 +53,16 @@ describe('TransformationActionService', () => {
           {
             id: 'mockInputId0',
             name: 'mockInput',
-            data_type: IOType.ANY
+            data_type: IOType.ANY,
+            type: IOTypeOption.REQUIRED
           }
         ],
         outputs: [
           {
             id: 'mockOutputId0',
             name: 'mockOutput',
-            data_type: IOType.ANY
+            data_type: IOType.ANY,
+            type: IOTypeOption.REQUIRED
           }
         ]
       },
@@ -212,7 +214,8 @@ describe('TransformationActionService', () => {
           position: {
             x: 190,
             y: 375
-          }
+          },
+          type: IOTypeOption.REQUIRED
         }
       ],
       outputs: [
@@ -227,7 +230,8 @@ describe('TransformationActionService', () => {
           position: {
             x: 890,
             y: 375
-          }
+          },
+          type: IOTypeOption.REQUIRED
         }
       ],
       constants: [
@@ -242,7 +246,8 @@ describe('TransformationActionService', () => {
             x: 0,
             y: 0
           },
-          value: '1'
+          value: '1',
+          type: IOTypeOption.REQUIRED
         }
       ]
     };
@@ -366,9 +371,8 @@ describe('TransformationActionService', () => {
 
   it('IsIncomplete should return false if component fulfills all requirements', () => {
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeFalse();
   });
@@ -377,9 +381,8 @@ describe('TransformationActionService', () => {
     // Arrange
     mockTransformation.io_interface = { inputs: [], outputs: [] };
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -389,9 +392,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeFalse();
   });
@@ -402,9 +404,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content.operators = [];
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -415,11 +416,10 @@ describe('TransformationActionService', () => {
     mockTransformation.content.inputs[0].name = '';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
-    expect(isIncomplete).toBeTrue();
+    expect(isIncomplete).toBe(false);
   });
 
   it('IsIncomplete should return false if any workflow output name is empty', () => {
@@ -428,9 +428,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content.outputs[0].name = '';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -441,24 +440,22 @@ describe('TransformationActionService', () => {
     mockTransformation.content.inputs[0].name = '0input';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
-    expect(isIncomplete).toBeTrue();
+    expect(isIncomplete).toBe(false);
   });
 
-  it('IsIncomplete should return false if any workflow output name is not a valid python identifier', () => {
+  it('IsIncomplete should return true if any workflow output name is not a valid python identifier', () => {
     // Arrange
     mockTransformation.content = mockWorkflowContent;
     mockTransformation.content.outputs[0].name = '0output';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
-    expect(isIncomplete).toBeTrue();
+    expect(isIncomplete).toBe(true);
   });
 
   it('IsIncomplete should return false if any workflow input name is a python keyword', () => {
@@ -467,11 +464,10 @@ describe('TransformationActionService', () => {
     mockTransformation.content.inputs[0].name = 'break';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
-    expect(isIncomplete).toBeTrue();
+    expect(isIncomplete).toBe(false);
   });
 
   it('IsIncomplete should return false if any workflow output name is a python keyword', () => {
@@ -480,9 +476,8 @@ describe('TransformationActionService', () => {
     mockTransformation.content.outputs[0].name = 'break';
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });
@@ -495,11 +490,10 @@ describe('TransformationActionService', () => {
     );
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
-    expect(isIncomplete).toBeTrue();
+    expect(isIncomplete).toBe(false);
   });
 
   it('IsIncomplete should return false if workflow does not have a link to every output', () => {
@@ -510,9 +504,8 @@ describe('TransformationActionService', () => {
     );
     mockTransformation.type = TransformationType.WORKFLOW;
     // Act
-    const isIncomplete = transformationActionService.isIncomplete(
-      mockTransformation
-    );
+    const isIncomplete =
+      transformationActionService.isIncomplete(mockTransformation);
     // Assert
     expect(isIncomplete).toBeTrue();
   });

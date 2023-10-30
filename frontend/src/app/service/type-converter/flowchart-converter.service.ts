@@ -4,8 +4,9 @@ import {
   FlowchartComponentIO,
   FlowchartComponentLink,
   FlowchartConfiguration,
-  IOType
+  IOTypeOption
 } from 'hetida-flowchart';
+import { IO } from 'hd-wiring';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { Connector } from 'src/app/model/connector';
 import { Position } from 'src/app/model/position';
@@ -31,17 +32,67 @@ export class FlowchartConverterService {
   public convertComponentToFlowchart(
     transformation: Transformation
   ): FlowchartConfiguration {
+    const inputs: IO[] =
+      typeof transformation.content !== 'string'
+        ? (transformation as WorkflowTransformation).content.inputs.map(
+            ioConnector => ({ ...ioConnector })
+          )
+        : transformation.io_interface.inputs;
+
     const operator = {
       ...transformation,
       transformation_id: transformation.id,
-      inputs: transformation.io_interface.inputs.map(input => ({
-        ...input,
-        position: null
-      })),
-      outputs: transformation.io_interface.outputs.map(output => ({
-        ...output,
-        position: null
-      }))
+      inputs: inputs
+        .map(input => {
+          if (typeof transformation.content !== 'string') {
+            const inputConnector = transformation.content.inputs.filter(
+              contentInput => contentInput.id === input.id
+            );
+            if (inputConnector.length > 0) {
+              transformation.content.operators
+                .filter(opt => opt.id === inputConnector[0].operator_id)
+                .forEach(foundOperator => {
+                  foundOperator.inputs.forEach(operatorInput => {
+                    if (operatorInput.id === inputConnector[0].connector_id) {
+                      input.exposed = false;
+                      input.type = inputConnector[0].type;
+                    }
+                  });
+                });
+            }
+          }
+          return input;
+        })
+        .map(input => {
+          return {
+            ...input,
+            exposed: input.exposed,
+            is_default_value: input.type === IOTypeOption.OPTIONAL,
+            position: null
+          };
+        }),
+      outputs: transformation.io_interface.outputs.map(output => {
+        if (typeof transformation.content !== 'string') {
+          const outputConnector = transformation.content.outputs.filter(
+            contentOutput => contentOutput.id === output.id
+          );
+          if (outputConnector.length > 0) {
+            transformation.content.operators
+              .filter(opt => opt.id === outputConnector[0].operator_id)
+              .forEach(foundOperator => {
+                foundOperator.outputs.forEach(operatorOutput => {
+                  if (operatorOutput.id === outputConnector[0].connector_id) {
+                    output.name = outputConnector[0].name;
+                  }
+                });
+              });
+          }
+        }
+        return {
+          ...output,
+          position: null
+        };
+      })
     };
     const flowchartOperator = this.convertOperatorToFlowchartOperator(
       operator,
@@ -74,9 +125,8 @@ export class FlowchartConverterService {
 
     const flowchart = {
       id: workflow.id,
-      components: this.convertWorkflowOperatorsToFlowchartComponents(
-        workflowClean
-      ),
+      components:
+        this.convertWorkflowOperatorsToFlowchartComponents(workflowClean),
       io: this.convertWorkflowIOToFlowchartIO(workflowClean),
       links: this.convertWorkflowLinksToFlowchartLinks(workflowClean)
     } as FlowchartConfiguration;
@@ -167,20 +217,21 @@ export class FlowchartConverterService {
     for (const io of workflow.content.inputs) {
       workflowIO.push({
         uuid: `${workflow.id}_${io.id}`,
-        data_type: io.data_type as IOType,
+        data_type: io.data_type,
         name: io.name === undefined ? '' : io.name,
         input: false,
         pos_x: io.position.x,
         pos_y: io.position.y,
         constant: false,
-        value: ''
+        value: '',
+        is_default_value: io.type === IOTypeOption.OPTIONAL
       });
     }
 
     for (const io of workflow.content.outputs) {
       workflowIO.push({
         uuid: `${workflow.id}_${io.id}`,
-        data_type: io.data_type as IOType,
+        data_type: io.data_type,
         name: io.name === undefined ? '' : io.name,
         input: true,
         pos_x: io.position.x,
@@ -348,6 +399,7 @@ export class FlowchartConverterService {
     };
 
     for (const io of operator.inputs) {
+      const isDefaultValue = io.type === IOTypeOption.OPTIONAL;
       component.inputs.push({
         uuid: `${uuid}_${io.id}`,
         data_type: io.data_type,
@@ -356,7 +408,9 @@ export class FlowchartConverterService {
         pos_x: null,
         pos_y: null,
         constant: false,
-        value: ''
+        exposed: io.exposed,
+        is_default_value: isDefaultValue,
+        value: isDefaultValue && io.value ? io.value : ''
       });
     }
     for (const io of operator.outputs) {

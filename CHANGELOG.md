@@ -1,3 +1,37 @@
+## 0.9.2
+* BREAKING CHANGE: Fixed environment variable name `HETIDA_DESIGNER_RUNTIME_ENGINE_URL` (from mispelled `HETIDA_DESIGNER_RUNTIME_EGINE_URL`)
+
+## 0.9.1
+* add [restricted-to-execution-of-preselected trafos webservice mode](./docs/execution/restricted_webservice.md)
+
+## 0.9.0
+* add [optional inputs with default parameters](./docs/default_values.md)
+* add [structured exception handling](./docs/structuring_exceptions.md)
+  :warning: **BREAKING CHANGE**: The attribute `error` in the response JSON of the execute endpoint is no longer a string but a mapping/dictionary 
+* add [free text filters for outputs (adapter system)](./docs/adapter_system/)
+* add blob storage adapter config options
+* add general [sql adapter](./docs/adapter_system/sql_adapter.md) with timeseries table support
+* add [improved metadata attrs handling](./docs/metadata_attrs.md) - in particular a manual input method
+  * **BREAKING CHANGE**: Consequently the output json format for direct provisioning has changed to include metadata for dataframes, multitsframes and (time)series objects.
+* add python demo adapter sources and output free text filters
+* add additional validations
+* fix workflow validation issues via db migration
+* fix filter for categories in export
+* upgrade to python 3.11
+* upgrade dependencies
+* **WARNING/BREAKING CHANGE**: One of the introduced bugfixes includes a database migration fixing affected workflows. However if you export(ed) transformations with an earlier version than 0.9 and afterwards import them into a version >=0.9 the transforamtions may again include the bug. We therefore strongly recommend that you **make a backup and/or export both before and after upgrading**.
+
+## 0.8.9
+* free text filters for inputs (adapter system)
+* add blob storage configuration options
+* improved blob storage adapter performance
+* type-specific blob storage serialization (keras models)
+* new data type: MultiTSFrames (collections of multiple timeseries with non-simultaneous timestamps)
+* api improvements / fixes
+* frontend adaption to new transformations endpoints.
+* NOTE: The endpoints deprecated since 0.7.* may be actually removed in one of the next releases
+* new workflows / components: When upgrading it is recommended to re-deploy the base components/workflows
+
 ## 0.8.8
 * add automatic bucket creation to blob storage adapter
 ## 0.8.7

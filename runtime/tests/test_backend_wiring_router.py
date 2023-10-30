@@ -1,10 +1,8 @@
-from unittest import mock
-
 import pytest
 
 from hetdesrun.backend.models.component import ComponentRevisionFrontendDto
 from hetdesrun.backend.models.workflow import WorkflowRevisionFrontendDto
-from hetdesrun.persistence import get_db_engine, sessionmaker
+from hetdesrun.persistence import get_db_engine
 from hetdesrun.persistence.dbmodels import Base
 from hetdesrun.persistence.dbservice.revision import (
     store_single_transformation_revision,
@@ -105,7 +103,7 @@ dto_json_workflow_2_update = {
                     "id": "5021c197-3c38-4e66-b4dc-20e6b5a75bdc",
                     "workflowInputName": "operator_input",
                     "adapterId": "direct_provisioning",
-                    "filters": {"value": 100},
+                    "filters": {"value": "100"},
                 },
             ],
             "outputWirings": [
@@ -127,7 +125,7 @@ dto_json_wiring = {
             "id": "5021c197-3c38-4e66-b4dc-20e6b5a75bdc",
             "workflowInputName": "operator_input",
             "adapterId": "direct_provisioning",
-            "filters": {"value": 100},
+            "filters": {"value": "100"},
         },
     ],
     "outputWirings": [
@@ -141,32 +139,26 @@ dto_json_wiring = {
 
 
 @pytest.mark.asyncio
-async def test_update_wiring(async_test_client, clean_test_db_engine):
-    with mock.patch(
-        "hetdesrun.persistence.dbservice.revision.Session",
-        sessionmaker(clean_test_db_engine),
-    ):
-        store_single_transformation_revision(
-            ComponentRevisionFrontendDto(
-                **dto_json_component_1
-            ).to_transformation_revision()
-        )
-        store_single_transformation_revision(
-            WorkflowRevisionFrontendDto(
-                **dto_json_workflow_2_update
-            ).to_transformation_revision()
+async def test_update_wiring(async_test_client, mocked_clean_test_db_session):
+    store_single_transformation_revision(
+        ComponentRevisionFrontendDto(
+            **dto_json_component_1
+        ).to_transformation_revision()
+    )
+    store_single_transformation_revision(
+        WorkflowRevisionFrontendDto(
+            **dto_json_workflow_2_update
+        ).to_transformation_revision()
+    )
+
+    async with async_test_client as ac:
+        response = await ac.put(
+            "/api/wirings/" + str(get_uuid_from_seed("workflow 2")),
+            json=dto_json_wiring,
         )
 
-        async with async_test_client as ac:
-            response = await ac.put(
-                "/api/wirings/" + str(get_uuid_from_seed("workflow 2")),
-                json=dto_json_wiring,
-            )
-
-        assert response.status_code == 200
-        assert len(response.json()["inputWirings"]) == len(
-            dto_json_wiring["inputWirings"]
-        )
-        assert len(response.json()["outputWirings"]) == len(
-            dto_json_wiring["outputWirings"]
-        )
+    assert response.status_code == 200
+    assert len(response.json()["inputWirings"]) == len(dto_json_wiring["inputWirings"])
+    assert len(response.json()["outputWirings"]) == len(
+        dto_json_wiring["outputWirings"]
+    )

@@ -10,11 +10,7 @@ from hetdesrun.adapters.blob_storage.exceptions import (
     StorageAuthenticationError,
     StructureObjectNotFound,
 )
-from hetdesrun.adapters.blob_storage.models import (
-    AdapterHierarchy,
-    BlobStorageStructureSource,
-    IdString,
-)
+from hetdesrun.adapters.blob_storage.models import AdapterHierarchy
 from hetdesrun.adapters.exceptions import AdapterConnectionError
 
 nest_asyncio.apply()
@@ -47,7 +43,9 @@ async def walk_thing_nodes(
             f"/adapters/blob/structure?parentId={parent_id}"
         )
     ).json()
+
     src_append_list += response_obj["sources"]
+
     snk_append_list += response_obj["sinks"]
 
     for src in response_obj["sources"]:
@@ -91,160 +89,76 @@ async def walk_thing_nodes(
         )
 
 
-source_list = [
-    BlobStorageStructureSource(
-        id="i-i/A_2022-01-02T14:23:18+00:00_4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
-        thingNodeId="i-i/A",
-        name="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
-        path="i-i/A",
-        metadataKey="A - 2022-01-02 14:23:18+00:00 - 4ec1c6fd-03cc-4c21-8a74-23f3dd841a1f",
-    ),
-    BlobStorageStructureSource(
-        id="i-i/A_2022-01-02T14:57:31+00:00_0788f303-61ce-47a9-b5f9-ec7b0de3be43",
-        thingNodeId="i-i/A",
-        name="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
-        path="i-i/A",
-        metadataKey="A - 2022-01-02 14:57:31+00:00 - 0788f303-61ce-47a9-b5f9-ec7b0de3be43",
-    ),
-    BlobStorageStructureSource(
-        id="i-i/B_2022-01-02T14:25:56+00:00_f1a16db0-c075-4ed9-8953-f97c2dc3ae51",
-        thingNodeId="i-i/B",
-        name="B - 2022-01-02 14:25:56+00:00 - f1a16db0-c075-4ed9-8953-f97c2dc3ae51",
-        path="i-i/B",
-        metadataKey="B - 2022-01-02 14:25:56+00:00 - f1a16db0-c075-4ed9-8953-f97c2dc3ae51",
-    ),
-    BlobStorageStructureSource(
-        id="i-i/D_2022-03-08T17:23:18+00:00_94726ca0-9b4d-4b72-97be-d3ef085e16fa",
-        thingNodeId="i-i/D",
-        name="D - 2022-03-08 17:23:18+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa",
-        path="i-i/D",
-        metadataKey="D - 2022-03-08 17:23:18+00:00 - 94726ca0-9b4d-4b72-97be-d3ef085e16fa",
-    ),
-    BlobStorageStructureSource(
-        id="i-i/D_2022-04-02T13:28:29+00:00_af77087b-a064-4ff9-9c4a-d23b2c503ade",
-        thingNodeId="i-i/D",
-        name="D - 2022-04-02 13:28:29+00:00 - af77087b-a064-4ff9-9c4a-d23b2c503ade",
-        path="i-i/D",
-        metadataKey="D - 2022-04-02 13:28:29+00:00 - af77087b-a064-4ff9-9c4a-d23b2c503ade",
-    ),
-    BlobStorageStructureSource(
-        id="i-ii/E_2022-01-02T14:23:18+00:00_3bd049f4-1d0e-4993-ac4c-306ebe320144",
-        thingNodeId="i-ii/E",
-        name="E - 2022-01-02 14:23:18+00:00 - 3bd049f4-1d0e-4993-ac4c-306ebe320144",
-        path="i-ii/E",
-        metadataKey="E - 2022-01-02 14:23:18+00:00 - 3bd049f4-1d0e-4993-ac4c-306ebe320144",
-    ),
-]
-
-source_dict = {src.id: src for src in source_list}
-
-
-async def mocked_get_source_by_id(
-    id: IdString,  # noqa: A002
-) -> BlobStorageStructureSource:
-    return source_dict[id]
-
-
-source_by_thing_node_id_dict: dict[IdString, list[BlobStorageStructureSource]] = {}
-for src in source_list:
-    if src.thingNodeId not in source_by_thing_node_id_dict:
-        source_by_thing_node_id_dict[src.thingNodeId] = [src]
-    else:
-        source_by_thing_node_id_dict[src.thingNodeId].append(src)
-
-
-async def mocked_get_source_by_parent_id(
-    parent_id: IdString,
-) -> list[BlobStorageStructureSource]:
-    if parent_id not in source_by_thing_node_id_dict:
-        return []
-    return source_by_thing_node_id_dict[parent_id]
-
-
 @pytest.mark.asyncio
 async def test_resources_offered_from_blob_storage_webservice(
-    async_test_client_with_blob_storage_adapter: AsyncClient,
+    async_test_client_with_blob_storage_adapter_with_mocked_structure: AsyncClient,
 ) -> None:
-    with mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
-        return_value=AdapterHierarchy.from_file(
-            "tests/data/blob_storage/blob_storage_adapter_hierarchy.json"
-        ),
-    ), mock.patch(
-        "hetdesrun.adapters.blob_storage.structure.get_all_sources",
-        return_value=source_list,
-    ), mock.patch(
-        "hetdesrun.adapters.blob_storage.webservice.get_source_by_id",
-        new=mocked_get_source_by_id,
-    ), mock.patch(
-        "hetdesrun.adapters.blob_storage.webservice.get_sources_by_parent_id",
-        new=mocked_get_source_by_parent_id,
-    ):
-        async with async_test_client_with_blob_storage_adapter as client:
-            response = await client.get("/adapters/blob/structure")
-            assert response.status_code == 200
+    async with async_test_client_with_blob_storage_adapter_with_mocked_structure as client:
+        response = await client.get("/adapters/blob/structure")
+        assert response.status_code == 200
 
-            response_obj = response.json()
-            assert len(response_obj["sources"]) == 0
-            assert len(response_obj["sinks"]) == 0
+        response_obj = response.json()
+        assert len(response_obj["sources"]) == 0
+        assert len(response_obj["sinks"]) == 0
 
-            roots = response_obj["thingNodes"]
-            assert len(roots) == 2
+        roots = response_obj["thingNodes"]
+        assert len(roots) == 2
 
-            all_tns: list[dict] = deepcopy(roots)
-            all_srcs: list[dict] = []
-            all_snks: list[dict] = []
-            tn_attached_metadata_dict: dict = {}
-            src_attached_metadata_dict: dict = {}
-            snk_attached_metadata_dict: dict = {}
+        all_tns: list[dict] = deepcopy(roots)
+        all_srcs: list[dict] = []
+        all_snks: list[dict] = []
+        tn_attached_metadata_dict: dict = {}
+        src_attached_metadata_dict: dict = {}
+        snk_attached_metadata_dict: dict = {}
 
-            for root in roots:
-                await walk_thing_nodes(
-                    root["id"],
-                    tn_append_list=all_tns,
-                    src_append_list=all_srcs,
-                    snk_append_list=all_snks,
-                    src_attached_metadata_dict=src_attached_metadata_dict,
-                    snk_attached_metadata_dict=snk_attached_metadata_dict,
-                    tn_attached_metadata_dict=tn_attached_metadata_dict,
-                    open_async_test_client_with_blob_storage_adapter=client,
-                )
-            print("all_tns")
-            for tn in all_tns:
-                print(tn["id"])
-            assert len(all_tns) == 14
-            assert len(all_srcs) == 6
-            assert len(all_snks) == 8
+        for root in roots:
+            await walk_thing_nodes(
+                root["id"],
+                tn_append_list=all_tns,
+                src_append_list=all_srcs,
+                snk_append_list=all_snks,
+                src_attached_metadata_dict=src_attached_metadata_dict,
+                snk_attached_metadata_dict=snk_attached_metadata_dict,
+                tn_attached_metadata_dict=tn_attached_metadata_dict,
+                open_async_test_client_with_blob_storage_adapter=client,
+            )
+        print("all_tns")
+        for tn in all_tns:
+            print(tn["id"])
+        assert len(all_tns) == 14
+        assert len(all_srcs) == 6
+        assert len(all_snks) == 8
 
-            assert len(src_attached_metadata_dict) == 0
-            assert len(snk_attached_metadata_dict) == 0
-            assert len(tn_attached_metadata_dict) == 0
+        assert len(src_attached_metadata_dict) == 0
+        assert len(snk_attached_metadata_dict) == 0
+        assert len(tn_attached_metadata_dict) == 0
 
-            for src in all_srcs:
-                response_obj = (
-                    await client.get(f'/adapters/blob/sources/{src["id"]}')
-                ).json()
-                for key in src:
-                    assert response_obj[key] == src[key]
+        for src in all_srcs:
+            response_obj = (
+                await client.get(f'/adapters/blob/sources/{src["id"]}')
+            ).json()
+            for key in src:
+                assert response_obj[key] == src[key]
 
-            for snk in all_snks:
-                response_obj = (
-                    await client.get(f'/adapters/blob/sinks/{snk["id"]}')
-                ).json()
-                for key in snk:
-                    assert response_obj[key] == snk[key]
+        for snk in all_snks:
+            response_obj = (
+                await client.get(f'/adapters/blob/sinks/{snk["id"]}')
+            ).json()
+            for key in snk:
+                assert response_obj[key] == snk[key]
 
-            for tn in all_tns:
-                response_obj = (
-                    await client.get(f'/adapters/blob/thingNodes/{tn["id"]}')
-                ).json()
-                for key in tn:
-                    assert response_obj[key] == tn[key]
+        for tn in all_tns:
+            response_obj = (
+                await client.get(f'/adapters/blob/thingNodes/{tn["id"]}')
+            ).json()
+            for key in tn:
+                assert response_obj[key] == tn[key]
 
 
 @pytest.mark.asyncio
 async def test_blob_adapter_webservice_filtered(
     async_test_client_with_blob_storage_adapter: AsyncClient,
+    mocked_blob_storage_sources,
 ) -> None:
     with mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_adapter_structure",
@@ -253,7 +167,7 @@ async def test_blob_adapter_webservice_filtered(
         ),
     ), mock.patch(
         "hetdesrun.adapters.blob_storage.structure.get_all_sources",
-        return_value=source_list,
+        return_value=mocked_blob_storage_sources,
     ):
         async with async_test_client_with_blob_storage_adapter as client:
             sink_response = await client.get(
@@ -272,15 +186,15 @@ async def test_blob_adapter_webservice_filtered(
 
         assert source_response.status_code == 200
         assert source_response.json()["resultCount"] == 4
-        assert source_response.json()["sources"][:3] == source_list[:3]
-        assert source_response.json()["sources"][3] == source_list[5]
+        assert source_response.json()["sources"][:3] == mocked_blob_storage_sources[:3]
+        assert source_response.json()["sources"][3] == mocked_blob_storage_sources[5]
 
 
 @pytest.mark.asyncio
-async def test_blob_adapter_webservice_exceptions(
-    async_test_client_with_blob_storage_adapter: AsyncClient,
+async def test_blob_adapter_webservice_exceptions(  # noqa: PLR0915
+    async_test_client_with_blob_storage_adapter_with_mocked_structure: AsyncClient,
 ) -> None:
-    async with async_test_client_with_blob_storage_adapter as client:
+    async with async_test_client_with_blob_storage_adapter_with_mocked_structure as client:
         with mock.patch(
             "hetdesrun.adapters.blob_storage.webservice.get_thing_nodes_by_parent_id",
             side_effect=MissingHierarchyError,

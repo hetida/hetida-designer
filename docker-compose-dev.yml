@@ -73,14 +73,6 @@ services:
       timeout: 5s
       retries: 5
 
-  hetida-designer-demo-adapter-java:
-    build:
-      context: .
-      dockerfile: Dockerfile-demo-adapter-java
-    image: hetida/designer-demo-adapter-java
-    ports:
-      - 8091:8091
-
   hetida-designer-demo-adapter-python:
     build:
       context: .

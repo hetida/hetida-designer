@@ -17,13 +17,13 @@ scipy
 keras
 statsmodels
 dateparser
-pydantic[dotenv]>=1.8.2
+pydantic[dotenv]>=1.8.2,<2
 joblib
 holidays
-plotly==4.9.0
+plotly==5.15.0
 requests
 python-jose[cryptography]
-cached-property
+asyncstdlib
 odfpy
 openpyxl
 pyarrow

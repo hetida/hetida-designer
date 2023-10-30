@@ -19,12 +19,14 @@ Further information about developing, deploying, connecting, using and running h
 
 - [Custom Python Dependencies](./custom_python_dependencies.md)
 - [R support](./r_support.md)
-- [Base Component/Workflow Deployment](./base_component_deployment.md)
-- [Backup](./backup.md)
-- [Export and Import](./import_export.md)
+- [Maintenance](./maintenance.md)
+  - [Backup](./backup.md)
+  - [Export and Import](./import_export.md)
+  - [Base Component/Workflow Deployment](./base_component_deployment.md)
+  - [Autoimport](./autoimport.md)
+  - [Clean up](./cleanup.md)
 - [Migration from 0.6 to 0.7](./migration_from_0.6_to_0.7.md)
 - [Migration from 0.6 to 0.8](./migration_from_0.6_to_0.8.md)
-- [Clean up](./cleanup.md)
 
 ## Authentication
 
@@ -39,11 +41,14 @@ Further information about developing, deploying, connecting, using and running h
 - [Blob Storage Adapter](./adapter_system/blob_storage_adapter.md)
 - [Generic REST Adapters](./adapter_system/generic_rest_adapters/web_service_interface.md)
 - [General Custom Adapters](./adapter_system/general_custom_adapters/instructions.md)
+- [SQL Adapter](./adapter_system/sql_adapter.md)
 
 ## Creating Components and Workflows
 
 - [Versioning in hetida designer](./versioning_in_hetida_designer.md)
-- [Tips and Tricks](./faq.md)
+- [Using Default Values](./default_parameters.md)
+- [Structuring Exceptions](./structuring_exceptions.md)
+- [Tips and Tricks](./tips_and_tricks.md)
 - [DataFrames and Series with Metadata](./metadata_attrs.md)
 - [Asynchronous Components](./executing_asynchronous_functions.md)
 - [Persisting Models](./persisting_models.md)
@@ -52,5 +57,6 @@ Further information about developing, deploying, connecting, using and running h
 
 - [Execution via Kafka](./execution/execution_via_kafka.md)
 - [Execution via REST API](./execution/running_transformation_revisions.md)
+- [Separate execution services](./execution/restricted_webservice.md)
 - [Timeouts](./execution/timeouts.md)
 - [Scaling](./execution/scaling.md)

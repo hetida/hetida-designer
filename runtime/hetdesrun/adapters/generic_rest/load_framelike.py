@@ -3,7 +3,6 @@
 Common utilities for loading data that is frame-like (tabular), i.e. dataframes as well as
 timeseries (where the later can be understood as special dataframe/table)
 """
-
 import base64
 import datetime
 import json
@@ -194,9 +193,7 @@ async def load_framelike_data(  # noqa: PLR0915
             )
 
             logger.info(msg)
-            raise AdapterConnectionError(
-                f"Requesting framelike from generic rest adapter endpoint {url} failed."
-            ) from e
+            raise AdapterConnectionError(msg) from e
     logger.info("Complete generic rest adapter %s framelike request", adapter_key)
     if len(df) == 0:
         if endpoint == "timeseries":
