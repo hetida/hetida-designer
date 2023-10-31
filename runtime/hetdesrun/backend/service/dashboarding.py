@@ -9,6 +9,7 @@ import pandas as pd
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.wiring import GridstackItemPositioning, WorkflowWiring
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.webservice.config import get_config
 
 
 class OverrideMode(str, Enum):
@@ -149,14 +150,19 @@ DASHBOARD_HEAD = r"""
     <!DOCTYPE html>
     <html>
 
-    <script 
+    <script
+        src="https://cdn.jsdelivr.net/npm/keycloak-js@22.0.5/dist/keycloak.min.js"
+        >
+    </script>
+
+    <script
         src="https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack-all.js" charset="utf-8">
     </script>
 
-    <link 
+    <link
         href=" https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack.min.css "
         rel="stylesheet"
-    >    
+    >
 
     <link
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -393,6 +399,95 @@ def generate_gridstack_div(
     )
 
 
+def generate_login_dashboard_stub() -> str:
+
+
+    dashboard_login_stub = ( #noqa: ISC003
+        r"""
+    <!DOCTYPE html>
+    <html>
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/keycloak-js@22.0.5/dist/keycloak.min.js"
+        >
+    </script>
+
+
+    <script>
+       const Keycloak = window["Keycloak"];
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function updateAuthCookies() {
+            console.log("Keycloak TOKEN", keycloak.token);
+            if (keycloak.token !=  null) {
+                document.cookie = "access_token="+keycloak.token;
+                console.log("Updated access token cookie");
+            }
+
+        }
+
+        function getAuthCookies() {
+            access_token = getCookie("access_token");
+            refresh_token = getCookie("refresh_token");
+            return [access_token, refresh_token]
+        }
+
+        async function init_keycloak() {
+            try {
+                const authenticated = await keycloak.init(
+                    {token: access_token, refreshToken: refresh_token,
+                onLoad: 'login-required', checkLoginIframe:false,
+                pkceMethod:"S256"
+                 }
+                );
+                console.log(`User is ${authenticated ? 'authenticated' : 'not authenticated'}`);
+            } catch (error) {
+                console.error('Failed to initialize auth adapter:', error);
+            }
+            updateAuthCookies();
+            window.location.reload();
+        }
+
+        """ +
+        f'auth_active={"true" if get_config().auth else "false"};'
+
+        + r"""
+
+        console.log("Auth active:", auth_active);
+
+        [access_token, refresh_token] = getAuthCookies();
+
+        console.log("ACCESS TOKEN FROM COOKIE", access_token);
+        console.log("REFRESH TOKEN FROM COOKIE", refresh_token);
+
+        const keycloak = new Keycloak({
+        """
+        + f"url: '{get_config().dashboarding_frontend_auth_settings.auth_url}',"
+        + f"realm: '{get_config().dashboarding_frontend_auth_settings.realm}',"
+        + f"clientId: '{get_config().dashboarding_frontend_auth_settings.client_id}'"
+        + r"""
+        });
+
+        if (auth_active) {
+            console.log("Initializing keycloak")
+            init_keycloak();
+        }
+
+
+        //
+    </script>
+
+    """)
+
+    return dashboard_login_stub
+
+
 def generate_dashboard_html(
     transformation_revision: TransformationRevision,
     exec_resp: ExecutionResponseFrontendDto,
@@ -430,6 +525,80 @@ def generate_dashboard_html(
         + r"""
 
     <script>
+       const Keycloak = window["Keycloak"];
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function updateAuthCookies() {
+            console.log("Keycloak TOKEN", keycloak.token);
+            if (keycloak.token !=  null) {
+                document.cookie = "access_token="+keycloak.token;
+                console.log("Updated access token cookie");
+            }
+
+        }
+
+        function getAuthCookies() {
+            access_token = getCookie("access_token");
+            refresh_token = getCookie("refresh_token");
+            return [access_token, refresh_token]
+        }
+
+        async function init_keycloak() {
+            try {
+                const authenticated = await keycloak.init(
+                    {token: access_token, refreshToken: refresh_token,
+                onLoad: 'login-required', checkLoginIframe:false,
+                pkceMethod:"S256" }
+                );
+                console.log(`User is ${authenticated ? 'authenticated' : 'not authenticated'}`);
+            } catch (error) {
+                console.error('Failed to initialize auth adapter:', error);
+            }
+            updateAuthCookies();
+            //window.location.reload();
+        }
+
+        """ +
+        f'auth_active={"true" if get_config().auth else "false"};'
+
+        + r"""
+
+        console.log("Auth active:", auth_active);
+
+        [access_token, refresh_token] = getAuthCookies();
+
+        console.log("ACCESS TOKEN FROM COOKIE", access_token);
+        console.log("REFRESH TOKEN FROM COOKIE", refresh_token);
+
+        const keycloak = new Keycloak({
+        """
+        + f"url: '{get_config().dashboarding_frontend_auth_settings.auth_url}',"
+        + f"realm: '{get_config().dashboarding_frontend_auth_settings.realm}',"
+        + f"clientId: '{get_config().dashboarding_frontend_auth_settings.client_id}'"
+        + r"""
+        });
+
+        async function refresh_token_and_update_cookies() {
+            refreshed = await keycloak.updateToken();
+            updateAuthCookies();
+        }
+
+        if (auth_active) {
+            console.log("Initializing keycloak")
+            init_keycloak();
+            keycloak.onTokenExpired = () => {
+                refresh_token_and_update_cookies();
+            }
+        }
+
+
+
         var options = { // put in gridstack options here
             //disableOneColumnMode: true, // for jfiddle small window size
             float: true,
@@ -439,8 +608,8 @@ def generate_dashboard_html(
             draggable: {
                 handle: '.panel-heading',
             },
-            animate: false            
-        };        
+            animate: false
+        };
         var grid = GridStack.init(options);
 
         function resize_plot(name) {
@@ -510,9 +679,16 @@ def generate_dashboard_html(
             console.log("Save positioning")
             // items.forEach(function(item) {...});
             var positionings = grid.save(false, false);
+
+            headers =  {'Content-Type': 'application/json'}
+            if (auth_active) {
+                refresh_token_and_update_cookies();
+                headers["Authorization"] = "Bearer " + keycloak.token;
+            }
+
             fetch("dashboard/positioning", {
                 method: "PUT",
-                headers: {'Content-Type': 'application/json'}, 
+                headers: headers, 
                 body: JSON.stringify(positionings)
             }).then(res => {
                 console.log("Request complete! response:", res);
@@ -571,7 +747,9 @@ def generate_dashboard_html(
                 url_param_dict = url_params_from_state();
                 
                 const url_param_data = new URLSearchParams(url_param_dict);
-                
+                if (auth_active) {
+                    refresh_token_and_update_cookies();
+                }
                 window.location.replace('dashboard' + '?' + url_param_data.toString() );
 
             };

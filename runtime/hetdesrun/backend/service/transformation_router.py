@@ -3,13 +3,14 @@ import json
 import logging
 import os
 from copy import deepcopy
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 import httpx
 from fastapi import (
     APIRouter,
     BackgroundTasks,
+    Depends,
     HTTPException,
     Path,
     Query,
@@ -32,6 +33,7 @@ from hetdesrun.backend.service.dashboarding import (
     OverrideMode,
     calculate_timerange_timestamps,
     generate_dashboard_html,
+    generate_login_dashboard_stub,
     override_timestamps_in_wiring,
 )
 from hetdesrun.component.code import update_code
@@ -61,7 +63,7 @@ from hetdesrun.trafoutils.io.load import (
     MultipleTrafosUpdateConfig,
 )
 from hetdesrun.utils import State, Type
-from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_dependency import get_auth_headers, is_authenticated_check_no_abort
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
@@ -70,6 +72,19 @@ logger = logging.getLogger(__name__)
 
 
 transformation_router = HandleTrailingSlashAPIRouter(
+    prefix="/transformations",
+    tags=["transformations"],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"description": "Bad Request"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
+        status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
+    },
+)
+
+
+dashboard_router = HandleTrailingSlashAPIRouter(
     prefix="/transformations",
     tags=["transformations"],
     responses={
@@ -848,7 +863,8 @@ async def update_transformation_dashboard_positioning(
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
     ),
 ) -> None:
-    logger.info("get transformation revision %s", id)
+
+    logger.debug("put transformation revision %s positions", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
@@ -884,7 +900,7 @@ async def update_transformation_dashboard_positioning(
     logger.debug(transformation_revision.json())
 
 
-@transformation_router.get(
+@dashboard_router.get(
     "/{id}/dashboard",
     summary="A dashboard generated from the transformation and its test wiring.",
     status_code=status.HTTP_200_OK,
@@ -894,6 +910,7 @@ async def update_transformation_dashboard_positioning(
     },
 )
 async def transformation_dashboard(
+    authenticated : Annotated[bool, Depends(is_authenticated_check_no_abort)],
     id: UUID = Path(  # noqa: A002
         ...,
         example=UUID("123e4567-e89b-12d3-a456-426614174000"),
@@ -915,7 +932,7 @@ async def transformation_dashboard(
         ),
     ),
     autoreload: int
-    | None = Query(None, description=("Autoreload interval in seconds")),
+    | None = Query(None, description=("Autoreload interval in seconds")), 
 ) -> str:
     """Dashboard fed by transformation revision plot outputs
 
@@ -940,6 +957,12 @@ async def transformation_dashboard(
       the test wiring
     * Timerange overrides / selections can be stored by copying the resulting URL.
     """
+
+    logger.debug("Authenticated dashboarding endpoint authenticated: " + str(authenticated))
+    if not authenticated:
+        return generate_login_dashboard_stub()
+
+
 
     # Validate query params
     if int(fromTimestamp is None) + int(toTimestamp is None) == 1:

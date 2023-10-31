@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
+from hetdesrun.webservice.auth import FrontendAuthOptions
 from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
 maintenance_secret_pattern = re.compile("[a-zA-Z0-9]+")
@@ -171,6 +172,18 @@ class RuntimeConfig(BaseSettings):
             " ingoing auth, i.e. whether bearer tokens are checked."
         ),
         env="HD_USE_AUTH",
+    )
+
+    dashboarding_frontend_auth_settings: FrontendAuthOptions = Field(
+        FrontendAuthOptions(
+            auth_url="http://localhost:8081/auth/",
+            client_id="hetida-designer",
+            realm="hetida-designer",
+        ),
+        description=(
+            "Settings that will be provided to keycloak-js instance in dashboards."
+            "Must be set there"
+        ),
     )
 
     auth_public_key_url: str = Field(
