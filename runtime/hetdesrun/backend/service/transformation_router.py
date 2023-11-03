@@ -63,7 +63,10 @@ from hetdesrun.trafoutils.io.load import (
     MultipleTrafosUpdateConfig,
 )
 from hetdesrun.utils import State, Type
-from hetdesrun.webservice.auth_dependency import get_auth_headers, is_authenticated_check_no_abort
+from hetdesrun.webservice.auth_dependency import (
+    get_auth_headers,
+    is_authenticated_check_no_abort,
+)
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
@@ -860,10 +863,9 @@ async def update_transformation_dashboard_positioning(
     gridstack_item_positions: list[GridstackItemPositioning],
     id: UUID = Path(  # noqa: A002
         ...,
-        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
     ),
 ) -> None:
-
     logger.debug("put transformation revision %s positions", id)
 
     try:
@@ -910,10 +912,10 @@ async def update_transformation_dashboard_positioning(
     },
 )
 async def transformation_dashboard(
-    authenticated : Annotated[bool, Depends(is_authenticated_check_no_abort)],
+    authenticated: Annotated[bool, Depends(is_authenticated_check_no_abort)],
     id: UUID = Path(  # noqa: A002
         ...,
-        example=UUID("123e4567-e89b-12d3-a456-426614174000"),
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
     ),
     fromTimestamp: datetime.datetime
     | None = Query(
@@ -932,12 +934,12 @@ async def transformation_dashboard(
         ),
     ),
     autoreload: int
-    | None = Query(None, description=("Autoreload interval in seconds")), 
+    | None = Query(None, description=("Autoreload interval in seconds")),
 ) -> str:
     """Dashboard fed by transformation revision plot outputs
 
     WARNING: This is an experimental feature / prototype. It may not work as
-    expected. In particular authentication does not work at the moment.
+    expected.
 
     Generates a html page containing the result plots in movable and resizable
     rectangles, i.e. an elementary dashboard.
@@ -945,7 +947,7 @@ async def transformation_dashboard(
     The dashboard uses this same endpoint to update itself when configuration is
     changed or autoreload is active.
 
-    Note:
+    Notes:
     * The dashboard uses the stored test wiring of the transformation revision. In
       particular after changing a trafo it must be executed at least once in order to
       have a working test wiring as basis for the dashboard. Otherwise dashboarding will
@@ -958,11 +960,9 @@ async def transformation_dashboard(
     * Timerange overrides / selections can be stored by copying the resulting URL.
     """
 
-    logger.debug("Authenticated dashboarding endpoint authenticated: " + str(authenticated))
     if not authenticated:
+        logger.debug("Not authenticated. Providing Login page instead.")
         return generate_login_dashboard_stub()
-
-
 
     # Validate query params
     if int(fromTimestamp is None) + int(toTimestamp is None) == 1:
@@ -996,12 +996,11 @@ async def transformation_dashboard(
     )
 
     # obtain transformation revisions (including wiring)
-
-    logger.info("get transformation revision %s", id)
+    logger.info("Get transformation revision %s", id)
 
     try:
         transformation_revision = read_single_transformation_revision(id)
-        logger.info("found transformation revision with id %s", id)
+        logger.info("Found transformation revision with id %s", id)
     except DBNotFoundError as e:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     logger.debug(transformation_revision.json())

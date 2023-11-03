@@ -178,12 +178,12 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
     logger.debug("Auth token check successful.")
 
 
-async def is_authenticated_check_no_abort(
+async def is_authenticated_check_no_abort(  # noqa: PLR0911, PLR0912
     Authorization: Annotated[str | None, Header()] = None,
     access_token: Annotated[str | None, Cookie()] = None,
 ) -> bool:
     """Validate access from header or cookie and allow to react to auth checking
-    
+
     This does two things:
     * allow access token to come in either header (preferred) or in an "access_token"
       cookie (necessary for auth in dashboarding endpoint)
@@ -205,7 +205,7 @@ async def is_authenticated_check_no_abort(
                 " Handling this request as unauthorized even if cookies are provided."
             )
             return False
-    else: # noqa: PLR5501
+    else:  # noqa: PLR5501
         if access_token is None:
             logger.info(
                 "Neither Authorization header and access_token cookie are provided."
@@ -217,7 +217,7 @@ async def is_authenticated_check_no_abort(
         else:
             access_token_to_check = access_token
 
-    assert access_token_to_check is not None # noqa: S101
+    assert access_token_to_check is not None  # noqa: S101
 
     # Actually checking
     try:

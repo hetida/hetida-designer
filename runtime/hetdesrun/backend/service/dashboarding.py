@@ -1,3 +1,9 @@
+"""Dashboarding
+
+Generate HTML / Styles / Javascript for the experimental dashboarding feature.
+"""
+
+
 import datetime
 import json
 import os
@@ -13,6 +19,12 @@ from hetdesrun.webservice.config import get_config
 
 
 class OverrideMode(str, Enum):
+    """Dashboard time range override mode
+
+    Determines how time range filters in the wiring are overriden by dashboard
+    settings.
+    """
+
     Absolute = "ABSOLUTE"
     NoOverride = "NO_OVERRIDE"
     RelativeNow = "RELATIVE_NOW"
@@ -78,7 +90,7 @@ def plotlyjson_to_html_div(
                 color:#888888;font-size:18px;font-family:sans-serif;text-align:center;">
                     {name if header is None else header}
             </div>
-            
+
             <div id="plot-container-{name}" style="margin:0;padding:0;width:100%">
                 <div id="{name}" style="width:100%;height:100%;margin:0;padding:0"></div>
             </div>
@@ -101,14 +113,14 @@ def override_timestamps_in_wiring(
     from_ts and to_ts are expected to be explicitely UTC timezoned!
     """
     for inp_wiring in mutable_wiring.input_wirings:
-        if inp_wiring.filters.get("timestampFrom", None) is not None:
+        if inp_wiring.filters.get("timestampFrom", None) is not None:  # type: ignore
             # We excpect UTC!
-            inp_wiring.filters["timestampFrom"] = (
+            inp_wiring.filters["timestampFrom"] = (  # type: ignore
                 from_ts.isoformat(timespec="milliseconds").split("+")[0] + "Z"
             )
-        if inp_wiring.filters.get("timestampTo", None) is not None:
+        if inp_wiring.filters.get("timestampTo", None) is not None:  # type: ignore
             # We expect UTC!
-            inp_wiring.filters["timestampTo"] = (
+            inp_wiring.filters["timestampTo"] = (  # type: ignore
                 to_ts.isoformat(timespec="milliseconds").split("+")[0] + "Z"
             )
     return mutable_wiring
@@ -156,29 +168,29 @@ DASHBOARD_HEAD = r"""
     </script>
 
     <script
-        src="https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack-all.js" charset="utf-8">
+        src="https://cdn.jsdelivr.net/npm/gridstack@9.5.0/dist/gridstack-all.js" charset="utf-8">
     </script>
 
     <link
-        href=" https://cdn.jsdelivr.net/npm/gridstack@8.0.1/dist/gridstack.min.css "
+        href=" https://cdn.jsdelivr.net/npm/gridstack@9.5.0/dist/gridstack.min.css "
         rel="stylesheet"
     >
-
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
     <link
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
         rel="stylesheet"
     >
-    <script src="https://cdn.plot.ly/plotly-2.22.0.min.js" charset="utf-8"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
 
     <!-- flatpickr -->
     <link
-        href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+        href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css"
         rel="stylesheet"
     >
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
 
-    <link rel="stylesheet" href="https://unpkg.com/boltcss/bolt.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/boltcss@0.6.0/bolt.min.css">
 
     <head>
     <style>
@@ -202,7 +214,149 @@ DASHBOARD_HEAD = r"""
             flex-grow: 1;
             max-width: inherit;
         }
-    </style>   
+
+        .gs-24 > .grid-stack-item {
+        width: 4.167%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="1"] {
+        left: 4.167%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="2"] {
+        width: 8.333%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="2"] {
+        left: 8.333%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="3"] {
+        width: 12.5%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="3"] {
+        left: 12.5%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="4"] {
+        width: 16.667%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="4"] {
+        left: 16.667%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="5"] {
+        width: 20.833%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="5"] {
+        left: 20.833%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="6"] {
+        width: 25%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="6"] {
+        left: 25%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="7"] {
+        width: 29.167%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="7"] {
+        left: 29.167%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="8"] {
+        width: 33.333%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="8"] {
+        left: 33.333%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="9"] {
+        width: 37.5%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="9"] {
+        left: 37.5%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="10"] {
+        width: 41.667%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="10"] {
+        left: 41.667%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="11"] {
+        width: 45.833%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="11"] {
+        left: 45.833%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="12"] {
+        width: 50%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="12"] {
+        left: 50%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="13"] {
+        width: 54.167%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="13"] {
+        left: 54.167%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="14"] {
+        width: 58.333%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="14"] {
+        left: 58.333%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="15"] {
+        width: 62.5%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="15"] {
+        left: 62.5%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="16"] {
+        width: 66.667%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="16"] {
+        left: 66.667%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="17"] {
+        width: 70.833%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="17"] {
+        left: 70.833%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="18"] {
+        width: 75%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="18"] {
+        left: 75%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="19"] {
+        width: 79.167%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="19"] {
+        left: 79.167%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="20"] {
+        width: 83.333%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="20"] {
+        left: 83.333%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="21"] {
+        width: 87.5%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="21"] {
+        left: 87.5%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="22"] {
+        width: 91.667%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="22"] {
+        left: 91.667%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="23"] {
+        width: 95.833%;
+        }
+        .gs-24 > .grid-stack-item[gs-x="23"] {
+        left: 95.833%;
+        }
+        .gs-24 > .grid-stack-item[gs-w="24"] {
+        width: 100%;
+        }
+    </style>
     </head>
     """
 
@@ -214,7 +368,7 @@ def generate_dashboard_title_div(
         <div style="color:#666666;
                 margin-left:1em;
                 text-align:left;
-                width:60%;
+                width:50%;
                 align-items:center">
             <h4 style="color:#555555;padding-bottom:0px;margin-bottom:0px"
                 title="{transformation_revision.description}">
@@ -237,7 +391,7 @@ def generate_timerange_overriding_controls_div(
 ) -> str:
     return (
         f"""
-         <div style="width:40%;display:flex;align-items:center">
+         <div style="width:50%;display:flex;align-items:center">
             <div style="max-width:30em;min-width:11em;margin-right:4px">
 
             <select name="override" id="override-timerange-select"
@@ -245,16 +399,16 @@ def generate_timerange_overriding_controls_div(
                     title="Override input timeranges"
                     style="width:100%;max-width:inherit"
                     >
-                <option value="absolute" 
-                    {"selected" if 
+                <option value="absolute"
+                    {"selected" if
                         override_mode is OverrideMode.Absolute else ""}
-                >Absolute</option>                
+                >Absolute</option>
                 <option value="none"
                      {"selected" if (override_mode is OverrideMode.NoOverride) else ""}
                 >do not override</option>
                 """
         + "\n".join(
-            f"""<option 
+            f"""<option
                     value="{rel_range_desc}"
                     {"selected" if (override_mode is OverrideMode.RelativeNow
                                     and relNow==rel_range_desc) else ""}
@@ -264,15 +418,15 @@ def generate_timerange_overriding_controls_div(
         + r"""
             </select>
             </div>
-            <div id="picker-span" 
-                style="display:flex;align-items:center;width:100%;margin-right:4px" >
+            <div id="picker-span"
+                style="display:flex;align-items:center;width:100%;min-width:10em;margin-right:4px" >
                     <input class="hd-dashboard-timerange-picker"
                         id="datetimepicker-absolute"
                         type="text"
                         placeholder="Select range...">
                     <i class="fa-solid fa-triangle-exclamation" id="datetime-picker-warning"
                         title="Uncomplete daterange selected."
-                        style="color:#880000;display:none;heigt:100%"></i>                
+                        style="color:#880000;display:none;heigt:100%"></i>
             </div>
         </div>
 
@@ -284,12 +438,12 @@ def generate_reload_and_config_buttons_div(autoreload: int | None) -> str:
     return (
         f"""
         <div id="buttons-right" style="display:flex;align-items:center;
-            width:content;margin-left:4px" >
+            width:fit-content;margin-left:4px" >
 
             <select name="autoreload" id="autoreload-select"
                     title="Autoreload"
                     onchange="on_autoreload_select_change(this)"
-                    style="width:10em;margin-right:2px"
+                    style="width:10em;max-width:10em;margin-right:2px"
                     >
                 <option value="none" {"selected" if (autoreload is None) else ""}
                     >no</option>
@@ -307,16 +461,30 @@ def generate_reload_and_config_buttons_div(autoreload: int | None) -> str:
                     style="margin-left:2px">
                 <i class="fa-solid fa-arrow-rotate-right"></i>
             </button>
-            
+
             <button class="btn" title="View/Hide dashboard configuration"
                     onclick="toggle_config_visibility();"
                     style="margin-left:8px;margin-right:4px">
                 <i class="fa-solid fa-chevron-down" id="config-button-image"></i>
-            </button>        
+            </button>
 
-        </div>    
+            """
+        + (
+            r"""
+            <button class="btn" title="Logout" id="logout_button"
+                    onclick="logout_user();"
+                    style="margin-left:2px;margin-right:4px">
+                <i class="fa-solid fa-right-from-bracket" id="logout_button_image"></i>
+            </button>
+            """
+            if get_config().auth
+            else ""
+        )
+        + r"""
 
-    """
+        </div>
+
+    """  # noqa: ISC003
     )
 
 
@@ -334,22 +502,25 @@ def generate_config_panel_div(transformation_revision: TransformationRevision) -
             <b>type</b>: {transformation_revision.type} <br>
             <b>category</b>: {transformation_revision.category} <br>
             <b>description</b>: {transformation_revision.description} <br>
-            <b>id</b>: <a 
+            <b>id</b>: <a
                 href="../{str(transformation_revision.id)}">{str(transformation_revision.id)}
             </a>
             <br>
             <b>revision group id</b>: {str(transformation_revision.revision_group_id)} <br>
-            
+
             </details>
 
-            <script type="module" src="https://md-block.verou.me/md-block.js"></script>
+
 
             <details style="margin-bottom: 6px">
             <summary>
             Documentation
             </summary>
-            <div>       
-            <md-block>{transformation_revision.documentation}</md-block>
+            <div>
+
+            <pre style="width:100%;max-width:inherit">{transformation_revision.documentation}</pre>
+            </div>
+
             </div>
             </details>
 
@@ -357,11 +528,11 @@ def generate_config_panel_div(transformation_revision: TransformationRevision) -
             <summary>
             Test Wiring
             </summary>
-            <div>       
+            <div>
             <pre style="width:100%;max-width:inherit">{transformation_revision.test_wiring.json(
                 indent=2)}</pre>
             </div>
-            </details>        
+            </details>
 
         </div>
 
@@ -385,7 +556,7 @@ def generate_gridstack_div(
                     positioning_dict.get(
                         name,
                         GridstackItemPositioning(
-                            id=name, x=(ind % 2) * 6, y=(ind // 2) * 2, w=6, h=2
+                            id=name, x=(ind % 2) * 12, y=(ind // 2) * 3, w=12, h=3
                         ),
                     ),
                 )
@@ -393,16 +564,18 @@ def generate_gridstack_div(
             )
         )
         + r"""
-    </div>    
-    
+    </div>
     """
     )
 
 
 def generate_login_dashboard_stub() -> str:
+    """Login Stub page
 
-
-    dashboard_login_stub = ( #noqa: ISC003
+    Generates a page only containing what is necessary to trigger a login
+    using the keycloak-js library.
+    """
+    dashboard_login_stub = (
         r"""
     <!DOCTYPE html>
     <html>
@@ -426,7 +599,7 @@ def generate_login_dashboard_stub() -> str:
         function updateAuthCookies() {
             console.log("Keycloak TOKEN", keycloak.token);
             if (keycloak.token !=  null) {
-                document.cookie = "access_token="+keycloak.token;
+                document.cookie = "access_token="+keycloak.token + ";SameSite=Strict";
                 console.log("Updated access token cookie");
             }
 
@@ -439,8 +612,9 @@ def generate_login_dashboard_stub() -> str:
         }
 
         async function init_keycloak() {
+            let authenticated=false;
             try {
-                const authenticated = await keycloak.init(
+                authenticated = await keycloak.init(
                     {token: access_token, refreshToken: refresh_token,
                 onLoad: 'login-required', checkLoginIframe:false,
                 pkceMethod:"S256"
@@ -451,12 +625,16 @@ def generate_login_dashboard_stub() -> str:
                 console.error('Failed to initialize auth adapter:', error);
             }
             updateAuthCookies();
-            window.location.reload();
+            if (authenticated) {
+                window.location.reload();
+            }
+            else {
+                alert("Authentication failed. Maybe a configuration problem?")
+            }
         }
 
-        """ +
-        f'auth_active={"true" if get_config().auth else "false"};'
-
+        """  # noqa: ISC003
+        + f'auth_active={"true" if get_config().auth else "false"};'  # noqa: ISC003
         + r"""
 
         console.log("Auth active:", auth_active);
@@ -479,11 +657,10 @@ def generate_login_dashboard_stub() -> str:
             init_keycloak();
         }
 
-
-        //
     </script>
 
-    """)
+    """
+    )
 
     return dashboard_login_stub
 
@@ -497,6 +674,8 @@ def generate_dashboard_html(
     calculated_to_timestamp: datetime.datetime | None,
     relNow: str | None,
 ) -> str:
+    """Generate full dashboard html page"""
+
     # obtain dashboard layout
     item_positions = transformation_revision.test_wiring.dashboard_positionings
     positioning_dict = item_positioning_dict(item_positions)
@@ -508,13 +687,13 @@ def generate_dashboard_html(
         if exec_resp.output_types_by_output_name[name] == "PLOTLYJSON"
     }
 
-    # generate dashboard
+    # construct the html from its parts
 
     dashboard_html = (
         DASHBOARD_HEAD
         + f"""
     <body>
-    <div style="display:flex;margin-bottom:2px">
+    <div style="display:flex;margin-bottom:4px;">
         {generate_dashboard_title_div(transformation_revision)}
         {generate_timerange_overriding_controls_div(override_mode, relNow)}
         {generate_reload_and_config_buttons_div(autoreload)}
@@ -525,7 +704,7 @@ def generate_dashboard_html(
         + r"""
 
     <script>
-       const Keycloak = window["Keycloak"];
+        const Keycloak = window["Keycloak"];
 
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -537,10 +716,14 @@ def generate_dashboard_html(
         function updateAuthCookies() {
             console.log("Keycloak TOKEN", keycloak.token);
             if (keycloak.token !=  null) {
-                document.cookie = "access_token="+keycloak.token;
+                document.cookie = "access_token="+keycloak.token + ";SameSite=Strict";
                 console.log("Updated access token cookie");
             }
 
+        }
+
+        function deleteCookie(name) {
+            document.cookie = name + "= ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
         }
 
         function getAuthCookies() {
@@ -549,11 +732,18 @@ def generate_dashboard_html(
             return [access_token, refresh_token]
         }
 
+
+        async function logout_user(){
+            deleteCookie("access_token");
+            await keycloak.logout(); // will reload page
+        }
+
         async function init_keycloak() {
             try {
                 const authenticated = await keycloak.init(
                     {token: access_token, refreshToken: refresh_token,
-                onLoad: 'login-required', checkLoginIframe:false,
+                    onLoad: 'login-required',
+                 checkLoginIframe:false,
                 pkceMethod:"S256" }
                 );
                 console.log(`User is ${authenticated ? 'authenticated' : 'not authenticated'}`);
@@ -561,12 +751,14 @@ def generate_dashboard_html(
                 console.error('Failed to initialize auth adapter:', error);
             }
             updateAuthCookies();
+            document.getElementById("logout_button").title=(
+                "Logout " + keycloak.idTokenParsed.preferred_username
+            );
             //window.location.reload();
         }
 
-        """ +
-        f'auth_active={"true" if get_config().auth else "false"};'
-
+        """
+        + f'auth_active={"true" if get_config().auth else "false"};'
         + r"""
 
         console.log("Auth active:", auth_active);
@@ -600,7 +792,8 @@ def generate_dashboard_html(
 
 
         var options = { // put in gridstack options here
-            //disableOneColumnMode: true, // for jfiddle small window size
+            disableOneColumnMode: true, // for jfiddle small window size
+            column: 24,
             float: true,
             resizable: {
                 handles: 'e, se, s, sw, w'
@@ -647,8 +840,8 @@ def generate_dashboard_html(
         if (autoreload_selector_element.value != "none") {
             setTimeout(function(){
                 update_dashboard();
-            }, parseInt(autoreload_selector_element.value) * 1000);            
-        }        
+            }, parseInt(autoreload_selector_element.value) * 1000);
+        }
 
 
 
@@ -656,9 +849,9 @@ def generate_dashboard_html(
         + "\n".join(
             (
                 f"""plot = Plotly.newPlot("{name}",
-                        {json.dumps(ensure_working_plotly_json(plotly_json))}\n); 
-                
-                resize_plot("{name}");                
+                        {json.dumps(ensure_working_plotly_json(plotly_json))}\n);
+
+                resize_plot("{name}");
                 resize_plot("{name}");  // second time, otherwise width is not correct in chrome
                 """
                 for name, plotly_json in plotly_outputs.items()
@@ -688,13 +881,13 @@ def generate_dashboard_html(
 
             fetch("dashboard/positioning", {
                 method: "PUT",
-                headers: headers, 
+                headers: headers,
                 body: JSON.stringify(positionings)
             }).then(res => {
                 console.log("Request complete! response:", res);
             });
         });
-        
+
 
         window.addEventListener('resize', function(event) {
             console.log("Window resize event")
@@ -703,7 +896,7 @@ def generate_dashboard_html(
             (
                 f"""
                 setTimeout(resize_plot, 100,"{name}");
-                // second time, otherwise width is not correct in chrome:                
+                // second time, otherwise width is not correct in chrome:
                 setTimeout(resize_plot, 110,"{name}");
                 """
                 for name, plotly_json in plotly_outputs.items()
@@ -745,7 +938,7 @@ def generate_dashboard_html(
 
             function update_dashboard() {
                 url_param_dict = url_params_from_state();
-                
+
                 const url_param_data = new URLSearchParams(url_param_dict);
                 if (auth_active) {
                     refresh_token_and_update_cookies();
@@ -759,7 +952,7 @@ def generate_dashboard_html(
 
                 if (overrideSelect.value == "absolute") {
                     flatpicker_abs_range.set("clickOpens", true);
-                    
+
                     decide_warning_absolute_range_incomplete(update_complete_dashboard=true)
                     return;
                 } else {
@@ -785,7 +978,7 @@ def generate_dashboard_html(
                     document.getElementById("datetime-picker-warning"
                         ).style.display = "inline-block";
 
-                
+
                 } else if (selectedDates.length == 2) {
                     console.log("two datetimes. okay for updating");
                     document.getElementById("datetime-picker-warning").style.display = "none";
@@ -797,7 +990,7 @@ def generate_dashboard_html(
                     console.log("no datetime or something unexpected")
                     document.getElementById("datetime-picker-warning"
                         ).style.display = "inline-block";
-                }                
+                }
             };
 
             const flatpicker_abs_range = flatpickr("#datetimepicker-absolute", {
@@ -815,10 +1008,10 @@ def generate_dashboard_html(
                 + '", "'
                 + calculated_to_timestamp.isoformat(timespec="milliseconds").split("+")[0] + "Z"
                 + '"],'
-     ) if (calculated_from_timestamp is not None 
+     ) if (calculated_from_timestamp is not None
            and calculated_to_timestamp is not None) else ""}"""
         + r"""
-                
+
                 onClose: function(selectedDates, dateStr, instance){
                     // ...
                     console.log(selectedDates)
@@ -828,15 +1021,12 @@ def generate_dashboard_html(
 
                 }
             });
-            
+
             // for access of the created input (altInput) hiding the original input
             const created_input = flatpicker_abs_range.input.parentElement.lastElementChild;
 
-            
-            
             const datetime_picker_absolute = document.getElementById("datetimepicker-absolute")
-            
-            
+
     </script>
 
     </body>
