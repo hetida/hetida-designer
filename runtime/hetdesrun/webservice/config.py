@@ -184,6 +184,7 @@ class RuntimeConfig(BaseSettings):
             "Settings that will be provided to keycloak-js instance in dashboards."
             "Must be set there"
         ),
+        env="HD_DASHBOARDING_FRONTEND_AUTH_SETTINGS"
     )
 
     auth_public_key_url: str = Field(
