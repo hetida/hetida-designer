@@ -597,10 +597,8 @@ def generate_login_dashboard_stub() -> str:
         }
 
         function updateAuthCookies() {
-            console.log("Keycloak TOKEN", keycloak.token);
             if (keycloak.token !=  null) {
                 document.cookie = "access_token="+keycloak.token + ";SameSite=Strict";
-                console.log("Updated access token cookie");
             }
 
         }
@@ -640,9 +638,6 @@ def generate_login_dashboard_stub() -> str:
         console.log("Auth active:", auth_active);
 
         [access_token, refresh_token] = getAuthCookies();
-
-        console.log("ACCESS TOKEN FROM COOKIE", access_token);
-        console.log("REFRESH TOKEN FROM COOKIE", refresh_token);
 
         const keycloak = new Keycloak({
         """
@@ -714,10 +709,8 @@ def generate_dashboard_html(
         }
 
         function updateAuthCookies() {
-            console.log("Keycloak TOKEN", keycloak.token);
             if (keycloak.token !=  null) {
                 document.cookie = "access_token="+keycloak.token + ";SameSite=Strict";
-                console.log("Updated access token cookie");
             }
 
         }
@@ -765,8 +758,6 @@ def generate_dashboard_html(
 
         [access_token, refresh_token] = getAuthCookies();
 
-        console.log("ACCESS TOKEN FROM COOKIE", access_token);
-        console.log("REFRESH TOKEN FROM COOKIE", refresh_token);
 
         const keycloak = new Keycloak({
         """
