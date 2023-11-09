@@ -1,3 +1,7 @@
+## 0.9.3
+* improve dashboarding token refresh
+* minor fixes and documentation improvements
+
 ## 0.9.2
 * BREAKING CHANGE: Fixed environment variable name `HETIDA_DESIGNER_RUNTIME_ENGINE_URL` (from mispelled `HETIDA_DESIGNER_RUNTIME_EGINE_URL`)
 * Add experimental [dashboarding](./docs/dashboarding.md) feature
