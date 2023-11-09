@@ -799,9 +799,6 @@ def generate_dashboard_html(
         function resize_plot(name) {
             // Plotly.Plots.resize(name);
 
-            console.log("Resizing: " + name);
-
-
             Plotly.relayout(name, {
                width: document.getElementById("container-" + name).clientWidth ,
                height: document.getElementById("container-" + name).clientHeight - 30
@@ -859,14 +856,14 @@ def generate_dashboard_html(
         });
 
         // autosave on actual positioning changes:
-        grid.on('change', function(event, items) {
+        grid.on('change', async function(event, items) {
             console.log("Save positioning")
             // items.forEach(function(item) {...});
             var positionings = grid.save(false, false);
 
             headers =  {'Content-Type': 'application/json'}
             if (auth_active) {
-                refresh_token_and_update_cookies();
+                await refresh_token_and_update_cookies();
                 headers["Authorization"] = "Bearer " + keycloak.token;
             }
 
@@ -881,7 +878,6 @@ def generate_dashboard_html(
 
 
         window.addEventListener('resize', function(event) {
-            console.log("Window resize event")
         """
         + "\n".join(
             (
@@ -899,7 +895,6 @@ def generate_dashboard_html(
 
         function saveGrid() {
             var res = grid.save(false, false);
-            console.log(res)
         }
             function url_params_from_state() {
                 var param_dict = {};
@@ -927,20 +922,18 @@ def generate_dashboard_html(
                 return param_dict
             };
 
-            function update_dashboard() {
+            async function update_dashboard() {
                 url_param_dict = url_params_from_state();
 
                 const url_param_data = new URLSearchParams(url_param_dict);
                 if (auth_active) {
-                    refresh_token_and_update_cookies();
+                    await refresh_token_and_update_cookies();
                 }
                 window.location.replace('dashboard' + '?' + url_param_data.toString() );
 
             };
 
-            function on_override_select_change(overrideSelect){
-                console.log(overrideSelect.value)
-
+            async function on_override_select_change(overrideSelect){
                 if (overrideSelect.value == "absolute") {
                     flatpicker_abs_range.set("clickOpens", true);
 
@@ -952,16 +945,18 @@ def generate_dashboard_html(
 
                 if (overrideSelect.value == "none") {
                     // simply use original wiring
-                    update_dashboard()
+                    await update_dashboard()
                 } else {
                     // neither "absolute" nor "none", i.e. some of the timeranges relative
                     // to "now"
-                    update_dashboard()
+                    await update_dashboard()
                 }
 
             };
 
-            function decide_warning_absolute_range_incomplete(update_complete_dashboard = false) {
+            async function decide_warning_absolute_range_incomplete(
+                    update_complete_dashboard = false)
+                {
                 selectedDates = flatpicker_abs_range.selectedDates;
 
                 if (selectedDates.length == 1) {
@@ -974,7 +969,7 @@ def generate_dashboard_html(
                     console.log("two datetimes. okay for updating");
                     document.getElementById("datetime-picker-warning").style.display = "none";
                     if (update_complete_dashboard) {
-                        update_dashboard();
+                        await update_dashboard();
                     }
 
                 } else {
@@ -1003,12 +998,10 @@ def generate_dashboard_html(
            and calculated_to_timestamp is not None) else ""}"""
         + r"""
 
-                onClose: function(selectedDates, dateStr, instance){
+                onClose: async function(selectedDates, dateStr, instance){
                     // ...
-                    console.log(selectedDates)
-                    console.log(dateStr)
 
-                    decide_warning_absolute_range_incomplete(update_complete_dashboard=true);
+                    await decide_warning_absolute_range_incomplete(update_complete_dashboard=true);
 
                 }
             });
