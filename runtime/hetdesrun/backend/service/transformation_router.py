@@ -1,19 +1,23 @@
+import datetime
 import json
 import logging
 import os
-from typing import Any
+from copy import deepcopy
+from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 import httpx
 from fastapi import (
     APIRouter,
     BackgroundTasks,
+    Depends,
     HTTPException,
     Path,
     Query,
     Response,
     status,
 )
+from fastapi.responses import HTMLResponse
 from pydantic import HttpUrl
 
 from hetdesrun.backend.execution import (
@@ -25,6 +29,13 @@ from hetdesrun.backend.execution import (
     execute_transformation_revision,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.backend.service.dashboarding import (
+    OverrideMode,
+    calculate_timerange_timestamps,
+    generate_dashboard_html,
+    generate_login_dashboard_stub,
+    override_timestamps_in_wiring,
+)
 from hetdesrun.component.code import update_code
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
@@ -32,6 +43,7 @@ from hetdesrun.exportimport.importing import (
 )
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.run import PerformanceMeasuredStep
+from hetdesrun.models.wiring import GridstackItemPositioning
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     delete_single_transformation_revision,
@@ -51,7 +63,10 @@ from hetdesrun.trafoutils.io.load import (
     MultipleTrafosUpdateConfig,
 )
 from hetdesrun.utils import State, Type
-from hetdesrun.webservice.auth_dependency import get_auth_headers
+from hetdesrun.webservice.auth_dependency import (
+    get_auth_headers,
+    is_authenticated_check_no_abort,
+)
 from hetdesrun.webservice.auth_outgoing import ServiceAuthenticationError
 from hetdesrun.webservice.config import get_config
 from hetdesrun.webservice.router import HandleTrailingSlashAPIRouter
@@ -60,6 +75,19 @@ logger = logging.getLogger(__name__)
 
 
 transformation_router = HandleTrailingSlashAPIRouter(
+    prefix="/transformations",
+    tags=["transformations"],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"description": "Bad Request"},
+        status.HTTP_401_UNAUTHORIZED: {"description": "Unauthorized"},
+        status.HTTP_404_NOT_FOUND: {"description": "Not Found"},
+        status.HTTP_409_CONFLICT: {"description": "Conflict"},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
+    },
+)
+
+
+dashboard_router = HandleTrailingSlashAPIRouter(
     prefix="/transformations",
     tags=["transformations"],
     responses={
@@ -820,3 +848,196 @@ async def execute_asynchronous_latest_transformation_revision_endpoint(
         "message": "Execution request for latest revision with "
         f"job id {exec_latest_by_group_id_input.job_id} accepted"
     }
+
+
+@transformation_router.put(
+    "/{id}/dashboard/positioning",
+    summary="Update dashboard positions for a trafo revision",
+    status_code=status.HTTP_200_OK,
+    response_class=HTMLResponse,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully generated dashboard"},
+    },
+)
+async def update_transformation_dashboard_positioning(
+    gridstack_item_positions: list[GridstackItemPositioning],
+    id: UUID = Path(  # noqa: A002
+        ...,
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
+    ),
+) -> None:
+    logger.debug("put transformation revision %s positions", id)
+
+    try:
+        transformation_revision = read_single_transformation_revision(id)
+        logger.info("found transformation revision with id %s", id)
+    except DBNotFoundError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+    transformation_revision.test_wiring.dashboard_positionings = (
+        gridstack_item_positions
+    )
+
+    try:
+        update_or_create_single_transformation_revision(
+            transformation_revision,
+            allow_overwrite_released=False,
+            update_component_code=False,
+            strip_wiring=False,
+        )
+    except DBIntegrityError as e:
+        logger.error(
+            "Integrity error in DB when trying to access entry for id %s\n%s", id, e
+        )
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+    except DBNotFoundError as e:
+        logger.error(
+            "Not found error in DB when trying to access entry for id %s\n%s", id, e
+        )
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except ModelConstraintViolation as e:
+        logger.error("Update forbidden for transformation with id %s\n%s", id, e)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
+
+    logger.debug(transformation_revision.json())
+
+
+@dashboard_router.get(
+    "/{id}/dashboard",
+    summary="A dashboard generated from the transformation and its test wiring.",
+    status_code=status.HTTP_200_OK,
+    response_class=HTMLResponse,
+    responses={
+        status.HTTP_200_OK: {"description": "Successfully generated dashboard"},
+    },
+)
+async def transformation_dashboard(
+    authenticated: Annotated[bool, Depends(is_authenticated_check_no_abort)],
+    id: UUID = Path(  # noqa: A002
+        ...,
+        examples=[UUID("123e4567-e89b-12d3-a456-426614174000")],
+    ),
+    fromTimestamp: datetime.datetime
+    | None = Query(
+        None, description="Override from timestamp. Expected to be explicit UTC."
+    ),
+    toTimestamp: datetime.datetime
+    | None = Query(
+        None, description="Override to timestamp. Expected to be explicit UTC."
+    ),
+    relNow: str
+    | None = Query(
+        None,
+        description=(
+            'Override timerange relative to "now". '
+            'E.g. "5min" describes the timerange [now - 5 minutes, now].'
+        ),
+    ),
+    autoreload: int
+    | None = Query(None, description=("Autoreload interval in seconds")),
+) -> str:
+    """Dashboard fed by transformation revision plot outputs
+
+    WARNING: This is an experimental feature / prototype. It may not work as
+    expected.
+
+    Generates a html page containing the result plots in movable and resizable
+    rectangles, i.e. an elementary dashboard.
+
+    The dashboard uses this same endpoint to update itself when configuration is
+    changed or autoreload is active.
+
+    Notes:
+    * The dashboard uses the stored test wiring of the transformation revision. In
+      particular after changing a trafo it must be executed at least once in order to
+      have a working test wiring as basis for the dashboard. Otherwise dashboarding will
+      fail to generate a working dashboard.
+    * Timeranges of the wiring can be overriden from the dashboard UI. For every other
+      aspect of the test wiring, the test wiring itself needs to be adapted by other means
+      (usually by executing the trafo from inside the designer UI)
+    * Positioning / Layout of the dashboard is automatically stored (autosave) as part of
+      the test wiring
+    * Timerange overrides / selections can be stored by copying the resulting URL.
+    """
+
+    if not authenticated:
+        logger.debug("Not authenticated. Providing Login page instead.")
+        return generate_login_dashboard_stub()
+
+    # Validate query params
+    if int(fromTimestamp is None) + int(toTimestamp is None) == 1:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "Either none or both of fromTimestamp and toTimestamp must be set.",
+        )
+
+    if (
+        fromTimestamp is not None
+        and toTimestamp is not None
+        and fromTimestamp > toTimestamp
+    ):
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY, "fromTimestamp must be <= toTimestamp"
+        )
+
+    if relNow is not None and fromTimestamp is not None:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "Cannot both specify absolute and relative timerange overrides!",
+        )
+
+    # Calculate override mode
+    override_mode: OverrideMode = (
+        OverrideMode.Absolute
+        if (fromTimestamp is not None)
+        else (
+            OverrideMode.RelativeNow if relNow is not None else OverrideMode.NoOverride
+        )
+    )
+
+    # obtain transformation revisions (including wiring)
+    logger.info("Get transformation revision %s", id)
+
+    try:
+        transformation_revision = read_single_transformation_revision(id)
+        logger.info("Found transformation revision with id %s", id)
+    except DBNotFoundError as e:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    logger.debug(transformation_revision.json())
+
+    # obtain test wiring
+    wiring = deepcopy(transformation_revision.test_wiring)
+
+    # compute possible override time range setting
+    calculated_from_timestamp, calculated_to_timestamp = calculate_timerange_timestamps(
+        fromTimestamp, toTimestamp, relNow
+    )
+
+    # override timerange if requested:
+    if calculated_from_timestamp is not None and calculated_to_timestamp is not None:
+        override_timestamps_in_wiring(
+            wiring, calculated_from_timestamp, calculated_to_timestamp
+        )
+
+    # construct execution payload
+    exec_by_id: ExecByIdInput = ExecByIdInput(
+        id=id,
+        wiring=wiring,  # possibly edited wiring
+        run_pure_plot_operators=True,
+    )
+
+    # execute
+    exec_resp: ExecutionResponseFrontendDto = (
+        await handle_trafo_revision_execution_request(exec_by_id)
+    )
+
+    # construct dashboard html response
+    return generate_dashboard_html(
+        transformation_revision=transformation_revision,
+        exec_resp=exec_resp,
+        autoreload=autoreload,
+        override_mode=override_mode,
+        calculated_from_timestamp=calculated_from_timestamp,
+        calculated_to_timestamp=calculated_to_timestamp,
+        relNow=relNow,
+    )

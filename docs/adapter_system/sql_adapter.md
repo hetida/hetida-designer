@@ -110,6 +110,11 @@ Here we give an example configuration for mounting and accessing two sqlite data
   ...
 ```
 
+**Hint**: It is not possible to configure a postgres schema in a sqlalchemy connection url directly. We recommend to add all relevant schemas to the db user's search_path. E.g. if in the example above the timeseries table ts_table is in schema "timeseries", you can add that schema to the user's search path besides "public" by running the following SQL (with a sufficiently privileged user):
+```sql
+alter role hetida_designer_dbuser set search_path = timeseries, public
+```
+
 ### Configuring the backend
 
 Additionally, the sql adapter itself needs to be [registered](./adapter_registration.md) in the designer backend. In the default docker-compose setup the sql adapter is already configured. It's part of the environment variable `HETIDA_DESIGNER_ADAPTERS` is:

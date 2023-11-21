@@ -144,7 +144,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
             else None,
         )
         component_disabled_timestamp = info_dict.get(
-            "released_timestamp",
+            "disabled_timestamp",
             datetime.now(timezone.utc).isoformat()
             if component_state == "DISABLED"
             else None,

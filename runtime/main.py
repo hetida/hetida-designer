@@ -67,11 +67,12 @@ def run_migrations(
 
     migrations_invoked_from_py = True
 
+    from pydantic import SecretStr
+
     import hetdesrun.persistence.dbmodels
     from alembic import command
     from alembic.config import Config
     from hetdesrun.persistence import get_db_engine
-    from pydantic import SecretStr
 
     engine = get_db_engine()
 
@@ -119,7 +120,6 @@ if in_memory_db:
         run_trafo_rev_deployment()
 
 if __name__ == "__main__":
-
     if not in_memory_db:
         logger.info(
             "Running migrations from main.py since main.py was invoked directly."
@@ -144,6 +144,7 @@ if __name__ == "__main__":
         "main:app",
         log_level="debug",
         reload=True,
+        app_dir="hetdesrun",
         host=host,
         port=port,
     )

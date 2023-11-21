@@ -24,6 +24,18 @@ DEFAULT_OPTIONS = {
 }
 
 
+class FrontendAuthOptions(BaseModel):
+    """For html backends using keycloak-js
+
+    These options may be injected into a html website generated including
+    keycloak-js setup.
+    """
+
+    auth_url: str = Field("", description="Base auth url as required by keycloak-js.")
+    realm: str = ""
+    client_id: str = ""
+
+
 class BearerVerifierOptions(BaseModel):
     auth_url: str
     audience: str = Field("account")

@@ -2,10 +2,12 @@ import datetime
 import os
 import re
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
+from hetdesrun.webservice.auth import FrontendAuthOptions
 from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
 maintenance_secret_pattern = re.compile("[a-zA-Z0-9]+")
@@ -90,6 +92,20 @@ class RuntimeConfig(BaseSettings):
         description="Whether runtime service endpoints should be active.",
     )
 
+    restrict_to_trafo_exec_service: set[UUID] = Field(
+        set(),
+        description=(
+            "Setting this to a non-empty set of UUIDs will surpress all backend "
+            "and runtime endpoints and offer only the execution of the configured "
+            "transformations. This can be used to scale execution of one or more "
+            "transformations as a separate webservice, which also can be exposed to "
+            "3rd parties without allowing manipulations. Often this is combined with "
+            "setting is_runtime_service to true in order to have the full trafo "
+            "execution happen in one sacalable containerized service."
+        ),
+        env="HD_RESTRICT_TO_TRAFO_EXEC_SERVICE",
+    )
+
     ensure_db_schema: bool = Field(
         True,
         env="HD_ENSURE_DB_SCHEMA",
@@ -156,6 +172,19 @@ class RuntimeConfig(BaseSettings):
             " ingoing auth, i.e. whether bearer tokens are checked."
         ),
         env="HD_USE_AUTH",
+    )
+
+    dashboarding_frontend_auth_settings: FrontendAuthOptions = Field(
+        FrontendAuthOptions(
+            auth_url="http://localhost:8081/auth/",
+            client_id="hetida-designer",
+            realm="hetida-designer",
+        ),
+        description=(
+            "Settings that will be provided to keycloak-js instance in dashboards."
+            "Must be set there"
+        ),
+        env="HD_DASHBOARDING_FRONTEND_AUTH_SETTINGS",
     )
 
     auth_public_key_url: str = Field(
@@ -297,7 +326,7 @@ class RuntimeConfig(BaseSettings):
 
     hd_runtime_engine_url: str = Field(
         "http://hetida-designer-runtime:8090/engine/",
-        env="HETIDA_DESIGNER_RUNTIME_EGINE_URL",
+        env="HETIDA_DESIGNER_RUNTIME_ENGINE_URL",
         description="URL to runtime",
     )
 
