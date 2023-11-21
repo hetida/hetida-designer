@@ -320,12 +320,13 @@ class Workflow:
     def add_constant_providing_node(
         self,
         values: list[NamedDataTypedValue],
+        optional: bool = False,
         add_new_provider_node_to_workflow: bool = True,
         id_suffix: str = "",
     ) -> None:
         """Add a node with no inputs providing workflow input data"""
         try:
-            parsed_values = parse_dynamically_from_datatypes(values).dict()
+            parsed_values = parse_dynamically_from_datatypes(values, optional).dict()
         except ValidationError as e:
             raise WorkflowInputDataValidationError(
                 "The provided data or some constant or default values could not be parsed into the "
