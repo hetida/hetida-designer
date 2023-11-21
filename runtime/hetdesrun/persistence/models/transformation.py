@@ -267,12 +267,6 @@ class TransformationRevision(BaseModel):
             "released_timestamp" in values and values["released_timestamp"] is not None
         ):
             raise ValueError("released_timestamp must not be set if state is DRAFT")
-        if v is State.DRAFT and (
-            "disabled_timestamp" in values and values["disabled_timestamp"] is not None
-        ):
-            # This code is never executed to disabled_timestamp_requires_released_timestamp
-            # and exception above
-            raise ValueError("disabled_timestamp must not be set if state is DRAFT")
         if v is State.RELEASED and (
             "released_timestamp" not in values or values["released_timestamp"] is None
         ):
