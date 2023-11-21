@@ -103,7 +103,39 @@ Attributes that are not provided will be set to the following default values:
 
 If present, the module docstring (starting from its third line) is used as documentation. 
 
-**Note:** There is no possibility to include the test wiring of the component in `.py` files. The test wiring can only be included in the `.json` export format.
+An initial test wiring can be provided via another dictionary called `INITIAL_TEST_WIRING`.
+We recommend to define this dictionary below the main function, but the location does not influence the import.
+This initial test wiring in the component code will not be updated when the actual test wiring is changed.
+
+The same rules apply for the initial test wiring as for the wiring of the JSON payload for an [execution request via REST API](/execution/running_transformation_revisions.md).
+A valid initial test wiring dictionary is for example
+
+```python
+INITIAL_TEST_WIRING = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "scores",
+            "adapter_id": "direct_provisioning",
+            "use_default_value": False,
+            "filters": {
+                "value": (
+                    "{\n"
+                    '    "2020-01-01T01:15:27.000Z": 42.2,\n'
+                    '    "2020-01-03T08:20:03.000Z": 18.7,\n'
+                    '    "2020-01-03T08:20:04.000Z": 25.9\n'
+                    "}"
+                )
+            },
+        },
+        {
+            "workflow_input_name": "threshold",
+            "adapter_id": "direct_provisioning",
+            "use_default_value": False,
+            "filters": {"value": "30"},
+        },
+    ],
+}
+```
 
 ## Remove test wirings when importing
 
