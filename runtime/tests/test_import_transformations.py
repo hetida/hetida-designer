@@ -46,6 +46,8 @@ def test_tr_from_code_for_component_without_register_decorator():
     assert len(tr.io_interface.outputs) == 1
     assert tr.type == "COMPONENT"
     assert "COMPONENT_INFO" in tr.content
+    assert "INITIAL_TEST_WIRING" in tr.content
+    assert len(tr.test_wiring.input_wirings) == 2
 
 
 def test_tr_from_code_for_component_with_optional_inputs():
