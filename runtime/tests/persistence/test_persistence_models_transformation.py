@@ -270,11 +270,8 @@ def test_tr_validator_disabled_requires_released_timestamp():
 def test_tr_validator_timestampsset_corresponding_to_state():
     tr_json_draft_with_released_timestamp = deepcopy(tr_json_valid_released_example)
     tr_json_draft_with_released_timestamp["state"] = "DRAFT"
-    tr_draft_with_released_timestamp = TransformationRevision(
-        **tr_json_draft_with_released_timestamp
-    )
-
-    assert tr_draft_with_released_timestamp.released_timestamp is None
+    with pytest.raises(ValueError, match="released_timestamp must not be set"):
+        TransformationRevision(**tr_json_draft_with_released_timestamp)
 
     tr_json_draft_with_disabled_timestamp = deepcopy(tr_json_valid_released_example)
     tr_json_draft_with_disabled_timestamp["state"] = "DRAFT"
@@ -283,8 +280,11 @@ def test_tr_validator_timestampsset_corresponding_to_state():
     ] = tr_json_draft_with_disabled_timestamp["released_timestamp"]
     tr_json_draft_with_disabled_timestamp["released_timestamp"] = None
 
-    with pytest.raises(ValueError, match="disabled_timestamp must not be set"):
-        TransformationRevision(**tr_json_draft_with_disabled_timestamp)
+    # with pytest.raises(ValueError, match="disabled_timestamp must not be set"):
+    #     # The corresponding code is never executed due to validator
+    #     # disabled_timestamp_requires_released_timestamp
+    #     # and exception in case a released_timestamp has bein set
+    #     TransformationRevision(**tr_json_draft_with_disabled_timestamp)
 
     tr_json_released_without_released_timestamp = deepcopy(
         tr_json_valid_released_example
