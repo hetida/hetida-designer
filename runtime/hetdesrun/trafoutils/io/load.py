@@ -5,6 +5,7 @@ import json
 import logging
 import os
 from collections.abc import Iterable
+from contextlib import suppress
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
@@ -152,6 +153,12 @@ def transformation_revision_from_python_code(code: str) -> Any:
     else:
         raise ComponentCodeImportError
 
+    test_wiring = WorkflowWiring()
+    if hasattr(mod, "INITIAL_TEST_WIRING"):
+        logger.info("Get test wiring from dictionary in code")
+        with suppress(ValueError):
+            test_wiring = WorkflowWiring(**mod.INITIAL_TEST_WIRING)
+
     component_documentation = "\n".join(mod_docstring_lines[2:])
 
     transformation_revision = TransformationRevision(
@@ -199,7 +206,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
             ],
         ),
         content=code,
-        test_wiring=WorkflowWiring(),
+        test_wiring=test_wiring,
     )
 
     tr_json = json.loads(transformation_revision.json())
