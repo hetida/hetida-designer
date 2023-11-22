@@ -5,7 +5,6 @@ import json
 import logging
 import os
 from collections.abc import Iterable
-from contextlib import suppress
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
@@ -156,8 +155,12 @@ def transformation_revision_from_python_code(code: str) -> Any:
     test_wiring = WorkflowWiring()
     if hasattr(mod, "TEST_WIRING_FROM_PY_FILE_IMPORT"):
         logger.info("Get test wiring from dictionary in code")
-        with suppress(ValueError):
+        try:
             test_wiring = WorkflowWiring(**mod.TEST_WIRING_FROM_PY_FILE_IMPORT)
+        except ValueError as error:
+            logger.warning(
+                "The dictionary cannot be parsed as WorkflowWiring:\n%s", str(error)
+            )
 
     component_documentation = "\n".join(mod_docstring_lines[2:])
 
