@@ -154,10 +154,10 @@ def transformation_revision_from_python_code(code: str) -> Any:
         raise ComponentCodeImportError
 
     test_wiring = WorkflowWiring()
-    if hasattr(mod, "INITIAL_TEST_WIRING"):
+    if hasattr(mod, "TEST_WIRING_FROM_PY_FILE_IMPORT"):
         logger.info("Get test wiring from dictionary in code")
         with suppress(ValueError):
-            test_wiring = WorkflowWiring(**mod.INITIAL_TEST_WIRING)
+            test_wiring = WorkflowWiring(**mod.TEST_WIRING_FROM_PY_FILE_IMPORT)
 
     component_documentation = "\n".join(mod_docstring_lines[2:])
 

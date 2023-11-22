@@ -29,7 +29,7 @@ def main(*, scores, threshold):
     return {"alerts": alerts}
 
 
-INITIAL_TEST_WIRING = {
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "scores",
