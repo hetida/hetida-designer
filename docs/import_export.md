@@ -101,17 +101,23 @@ Attributes that are not provided will be set to the following default values:
 * inputs: `{}`
 * outputs: `{}`
 
+### Documentation
 If present, the module docstring (starting from its third line) is used as documentation. 
 
-An initial test wiring can be provided via another dictionary called `INITIAL_TEST_WIRING`.
-We recommend to define this dictionary below the main function, but the location does not influence the import.
-This initial test wiring in the component code will not be updated when the actual test wiring is changed.
+### Test wiring
+For the import from a `.py` file, the initial test wiring can be provided as part of the Python code.
+
+**Important:** This only applies to the import from `.py` files and no other type of import!
+Futhermore, this initial test wiring in the component code will not be updated if the actual test wiring is changed.
+
+For this purpose, add another dictionary named `TEST_WIRING_FROM_PY_FILE_IMPORT`.
+Defining this dictionary below the main function is recommended, but the position does not influence the import.
 
 The same rules apply for the initial test wiring as for the wiring of the JSON payload for an [execution request via REST API](/execution/running_transformation_revisions.md).
 A valid initial test wiring dictionary is for example
 
 ```python
-INITIAL_TEST_WIRING = {
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "scores",
