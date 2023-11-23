@@ -21,6 +21,7 @@
   .mat-expansion-panel-header-title {
     font-weight: 500;
     font-size: 13px !important;
+    flex-basis: max-content !important;
   }
 
   .mat-expansion-panel-content {

@@ -1,7 +1,7 @@
 import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
 import { Injectable } from '@angular/core';
 import { Renderer, marked } from 'marked';
-import katex from 'katex';
+import { renderToString } from 'katex';
 
 @Injectable({
   providedIn: 'root'
@@ -31,7 +31,7 @@ export class MarkdownService {
       displayStyle ? 2 : 1,
       expression.length - (displayStyle ? 4 : 2)
     );
-    let html: string = katex.renderToString(content);
+    let html: string = renderToString(content);
     if (displayStyle) {
       html = html.replace(
         /class="katex"/g,
