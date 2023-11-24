@@ -5,12 +5,10 @@ Revises: 7bd371c84b25
 Create Date: 2023-11-24 10:06:25.437487
 
 """
-from sqlalchemy import orm, select
+from sqlalchemy import orm, select, update
 
 from alembic import op
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
-from hetdesrun.persistence.dbservice.revision import update_tr
-from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State
 
 
@@ -32,10 +30,28 @@ def upgrade() -> None:
 
         results = session.execute(selection).scalars().all()
 
-        for orm_model in results:
-            if orm_model.released_timestamp is not None:
-                orm_model.released_timestamp = None
-                update_tr(session, TransformationRevision.from_orm_model(orm_model))
+        for db_model in results:
+            if db_model.released_timestamp is not None:
+                session.execute(
+                    update(TransformationRevisionDBModel)
+                    .where(TransformationRevisionDBModel.id == db_model.id)
+                    .values(
+                        revision_group_id=db_model.revision_group_id,
+                        name=db_model.name,
+                        description=db_model.description,
+                        category=db_model.category,
+                        version_tag=db_model.version_tag,
+                        state=db_model.state,
+                        type=db_model.type,
+                        documentation=db_model.documentation,
+                        workflow_content=db_model.workflow_content,
+                        component_code=db_model.component_code,
+                        io_interface=db_model.io_interface,
+                        test_wiring=db_model.test_wiring,
+                        released_timestamp=None,
+                        disabled_timestamp=db_model.disabled_timestamp,
+                    )
+                )
 
 
 def downgrade():
