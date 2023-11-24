@@ -17,6 +17,7 @@ scipy
 keras
 statsmodels
 dateparser
+black
 pydantic[dotenv]>=1.8.2,<2
 joblib
 holidays

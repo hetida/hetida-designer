@@ -36,7 +36,7 @@ from hetdesrun.backend.service.dashboarding import (
     generate_login_dashboard_stub,
     override_timestamps_in_wiring,
 )
-from hetdesrun.component.code import update_code
+from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
     import_importable,
@@ -237,6 +237,106 @@ async def get_all_transformation_revisions(
         ) from e
 
     return transformation_revision_list
+
+
+@transformation_router.get(
+    "/components-as-code",
+    response_model=list[str],
+    response_model_exclude_none=True,  # needed because:
+    # frontend handles attributes with value null in a different way than missing attributes
+    summary="Returns combined list of all components as python code",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successfully got all components as python code"
+        }
+    },
+)
+async def get_all_components_as_code(
+    state: State
+    | None = Query(
+        None,
+        description="Filter for specified state.",
+    ),
+    categories: list[ValidStr]
+    | None = Query(
+        None, description="Filter for specified list of categories.", alias="category"
+    ),
+    category_prefix: ValidStr
+    | None = Query(
+        None,
+        description="Category prefix that must be matched exactly (case-sensitive).",
+    ),
+    revision_group_id: UUID
+    | None = Query(None, description="Filter for specified revision group id."),
+    ids: list[UUID]
+    | None = Query(None, description="Filter for specified list of ids.", alias="id"),
+    names: list[NonEmptyValidStr]
+    | None = Query(
+        None, description=("Filter for specified list of names."), alias="name"
+    ),
+    include_dependencies: bool = Query(
+        False,
+        description=(
+            "Set to True to additionally get those transformation revisions "
+            "that the selected/filtered ones depend on."
+        ),
+    ),
+    include_deprecated: bool = Query(
+        True,
+        description=(
+            "Set to False to omit transformation revisions with state DISABLED "
+            "this will not affect included dependent transformation revisions."
+        ),
+    ),
+    unused: bool = Query(
+        False,
+        description=(
+            "Set to True to obtain only those transformation revisions that are "
+            "not contained in workflows that do not have the state DISABLED."
+        ),
+    ),
+) -> list[str]:
+    """Get all components as python code from the data base.
+
+    Used to export selected components as python code.
+    """
+
+    filter_params = FilterParams(
+        type=Type.COMPONENT,
+        state=state,
+        categories=categories,
+        category_prefix=category_prefix,
+        revision_group_id=revision_group_id,
+        ids=ids,
+        names=names,
+        include_dependencies=include_dependencies,
+        include_deprecated=include_deprecated,
+        unused=unused,
+    )
+
+    logger.info("get all components with %s", repr(filter_params))
+
+    try:
+        transformation_revision_list = get_multiple_transformation_revisions(
+            filter_params
+        )
+    except DBIntegrityError as error:
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=(
+                f"At least one entry in the DB is no valid transformation revision:\n{str(error)}"
+            ),
+        ) from error
+
+    try:
+        code_list = [expand_code(tr) for tr in transformation_revision_list]
+    except TypeError as error:
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)
+        ) from error
+
+    return code_list
 
 
 @transformation_router.get(

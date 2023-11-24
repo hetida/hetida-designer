@@ -3,8 +3,9 @@
 This module contains functions for generating and updating component code modules
 to provide a very elementary support system to the designer code editor.
 """
-
 from keyword import iskeyword
+
+import black
 
 from hetdesrun.datatypes import DataType
 from hetdesrun.persistence.models.io import InputType, TransformationInput
@@ -248,6 +249,108 @@ def update_code(
     new_function_header = generate_function_header(tr, is_coroutine)
 
     return start + new_function_header + end
+
+
+def remove_module_doc_string(code: str) -> str:
+    if code.startswith('"""') and code.count('"""') > 1:
+        _, _, remaining_code = code.split('"""', 2)
+
+        code = remaining_code.strip()
+
+    return code
+
+
+def add_documentation_as_module_doc_string(
+    code: str, tr: TransformationRevision
+) -> str:
+    code = remove_module_doc_string(code)
+
+    mod_doc_string = (
+        '""" Documentation for ' + tr.name + "\n\n" + tr.documentation + '"""\n\n'
+    )
+
+    return mod_doc_string + code
+
+
+def remove_test_wiring_dictionary(code: str) -> str:
+    if "\nTEST_WIRING_FROM_PY_FILE_IMPORT" in code:
+        preceding_code, test_wiring_and_subsequent_code = code.split(
+            "\nTEST_WIRING_FROM_PY_FILE_IMPORT"
+        )
+        if "\n}\n" in test_wiring_and_subsequent_code:
+            _, subsequent_code = test_wiring_and_subsequent_code.split("\n}\n", 1)
+            code = preceding_code + "\n" + subsequent_code
+
+    return code
+
+
+def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
+    code = remove_test_wiring_dictionary(code)
+
+    test_wiring_dictionary_string = (
+        "\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = "
+        + tr.test_wiring.json(exclude_unset=True, exclude_defaults=True)
+        + "\n"
+    )
+
+    return code + test_wiring_dictionary_string
+
+
+def format_code_with_black(code: str) -> str:
+    try:
+        code = black.format_file_contents(
+            code,
+            fast=False,
+            mode=black.Mode(
+                target_versions={black.TargetVersion.PY311}, line_length=100
+            ),
+        )
+    except black.NothingChanged:
+        pass
+    finally:
+        # Make sure there's a newline after the content
+        if len(code) != 0 and code[-1] != "\n":
+            code += "\n"
+    return code
+
+
+def reduce_code(code: str) -> str:
+    code = format_code_with_black(code)
+    remove_module_doc_string(code)
+    remove_test_wiring_dictionary(code)
+    return code
+
+
+def expand_code(
+    tr: TransformationRevision,
+) -> str:
+    """Add documentation and test wiring to component code
+
+    Add the documentation as module docstring at the top of the component code.
+
+    Add test_wiring as dictionary at the end of the component code.
+    """
+
+    if tr.type != Type.COMPONENT:
+        raise ValueError(
+            f"will not update code of transformation revision {tr.id}"
+            f"since its type is not COMPONENT"
+        )
+
+    if not isinstance(tr.content, str):
+        raise TypeError(
+            "Transformation revision %s has content that is not a string!", str(tr.id)
+        )
+    existing_code = tr.content
+
+    if existing_code == "":
+        existing_code = generate_complete_component_module(tr)
+
+    existing_code = format_code_with_black(existing_code)
+
+    return add_test_wiring_dictionary(
+        add_documentation_as_module_doc_string(existing_code.strip(), tr), tr
+    )
 
 
 def check_parameter_names(names: list[str]) -> bool:

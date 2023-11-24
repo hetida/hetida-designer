@@ -3,7 +3,6 @@
 pytest
 coverage
 pytest-cov
-black
 pytest-asyncio
 rope
 mypy
