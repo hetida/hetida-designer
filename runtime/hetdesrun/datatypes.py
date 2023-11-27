@@ -287,7 +287,7 @@ class PydanticMultiTimeseriesPandasDataFrame:
                 f'Got {str(df["timestamp"].dt.tz)} timezone instead.'
             )
 
-        return df
+        return df.sort_values("timestamp")
 
 
 class ParsedAny:

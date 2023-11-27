@@ -1122,7 +1122,8 @@
         "workflow_input_name": "plotting_mode"
       }
     ],
-    "output_wirings": []
+    "output_wirings": [],
+    "dashboard_positionings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

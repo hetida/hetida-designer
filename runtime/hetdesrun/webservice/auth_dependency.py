@@ -1,9 +1,9 @@
 import asyncio
 import logging
 from contextvars import ContextVar
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import Depends, HTTPException
+from fastapi import Cookie, Depends, Header, HTTPException
 from fastapi.security import HTTPBasicCredentials, HTTPBearer
 from starlette.status import HTTP_403_FORBIDDEN
 
@@ -176,6 +176,73 @@ async def has_access(credentials: HTTPBasicCredentials = Depends(security)) -> N
     set_request_auth_context(auth_context_dict)
 
     logger.debug("Auth token check successful.")
+
+
+async def is_authenticated_check_no_abort(  # noqa: PLR0911, PLR0912
+    Authorization: Annotated[str | None, Header()] = None,
+    access_token: Annotated[str | None, Cookie()] = None,
+) -> bool:
+    """Validate access from header or cookie and allow to react to auth checking
+
+    This does two things:
+    * allow access token to come in either header (preferred) or in an "access_token"
+      cookie (necessary for auth in dashboarding endpoint)
+    * not just throw exceptions but return authentication status (bool) in order
+      to allow to react to it in endpoint code. This is also necessary for the dashboard
+      endpoint
+    """
+
+    if not get_config().auth:
+        return True
+
+    # Sort out what to actually check
+    if Authorization is not None:
+        if Authorization.startswith("Bearer "):
+            access_token_to_check = Authorization[7:]
+        else:
+            logger.warning(
+                "Got Authorization header but scheme is different from Bearer."
+                " Handling this request as unauthorized even if cookies are provided."
+            )
+            return False
+    else:  # noqa: PLR5501
+        if access_token is None:
+            logger.info(
+                "Neither Authorization header and access_token cookie are provided."
+                " Neglecting access."
+            )
+            return False
+        if access_token.startswith("Bearer "):
+            access_token_to_check = access_token[7:]
+        else:
+            access_token_to_check = access_token
+
+    assert access_token_to_check is not None  # noqa: S101
+
+    # Actually checking
+    try:
+        payload: dict = bearer_verifier.verify_token(access_token_to_check)
+        logger.debug("Bearer token payload => %s", payload)
+    except AuthentificationError as e:
+        logger.debug("Token verification Error: %s", str(e))
+        return False
+
+    # Check role
+    try:
+        if get_config().auth_allowed_role is not None and (
+            not get_config().auth_allowed_role in payload[get_config().auth_role_key]
+        ):
+            # roles are expected in "groups" key in payload
+            logger.info("Unauthorized: Roles not allowed")
+            return False
+    except KeyError:
+        logger.info("Unauthorized: No role information in token")
+        return False
+
+    # Passed all checks
+    auth_context_dict = {"token": access_token_to_check, "creds": None}
+    set_request_auth_context(auth_context_dict)
+    return True
 
 
 def get_auth_deps() -> list[Any]:
