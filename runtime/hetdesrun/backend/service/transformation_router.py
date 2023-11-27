@@ -39,6 +39,7 @@ from hetdesrun.backend.service.dashboarding import (
 from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
+    UpdateProcessStatus,
     import_importable,
 )
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
@@ -58,9 +59,11 @@ from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
+    ComponentCodeImportError,
     Importable,
     ImportSourceConfig,
     MultipleTrafosUpdateConfig,
+    transformation_revision_from_python_code,
 )
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import (
@@ -493,7 +496,7 @@ async def update_transformation_revisions(
             " an error anywhere."
         ),
     ),
-) -> dict[UUID, TrafoUpdateProcessSummary]:
+) -> dict[UUID | str, TrafoUpdateProcessSummary]:
     """Update/store multiple transformation revisions
 
     This updates or creates the given transformation revisions. Automatically
@@ -534,6 +537,159 @@ async def update_transformation_revisions(
     )
 
     success_per_trafo = import_importable(importable)
+    response.status_code = status.HTTP_207_MULTI_STATUS
+
+    return success_per_trafo
+
+
+@transformation_router.put(
+    "",
+    status_code=status.HTTP_207_MULTI_STATUS,
+    summary="Update (import) a list of component code strings",
+    responses={
+        status.HTTP_207_MULTI_STATUS: {
+            "description": (
+                "Processed request to update multiple transformation revisions. "
+                "See response for details."
+            )
+        }
+    },
+)
+async def update_transformation_revisions_from_component_code_strings(
+    updated_component_code_strings: list[str],
+    response: Response,
+    state: State
+    | None = Query(
+        None,
+        description="Filter for specified state.",
+    ),
+    categories: list[ValidStr]
+    | None = Query(
+        None, description="Filter for specified list of categories.", alias="category"
+    ),
+    category_prefix: str
+    | None = Query(
+        None,
+        description="Category prefix that must be matched exactly (case-sensitive).",
+    ),
+    revision_group_id: UUID
+    | None = Query(None, description="Filter for specified revision group id."),
+    ids: list[UUID]
+    | None = Query(None, description="Filter for specified list of ids.", alias="id"),
+    names: list[NonEmptyValidStr]
+    | None = Query(
+        None, description=("Filter for specified list of names."), alias="name"
+    ),
+    include_deprecated: bool = Query(
+        True,
+        description=(
+            "Set to False to omit transformation revisions with state DISABLED "
+            "this will not affect included dependent transformation revisions"
+        ),
+    ),
+    include_dependencies: bool = Query(
+        True,
+        description=(
+            "Set to True to additionally import those transformation revisions "
+            "of the provided trafos that the selected/filtered ones depend on."
+        ),
+    ),
+    allow_overwrite_released: bool = Query(
+        False, description="Only set to True for deployment."
+    ),
+    update_component_code: bool = Query(
+        True, description="Only set to False for deployment."
+    ),
+    strip_wirings: bool = Query(
+        False,
+        description=(
+            "Whether test wirings should be removed before importing."
+            "This can be necessary if an adapter used in a test wiring is not "
+            "available on this system."
+        ),
+    ),
+    abort_on_error: bool = Query(
+        False,
+        description=(
+            "If updating/creating fails for some trafo revisions and this setting is true,"
+            " no attempt will be made to update/create the remaining trafo revs."
+            " Note that the order in which updating/creating happens may differ from"
+            " the ordering of the provided list since they are ordered by dependency"
+            " relation before trying to process them. So it may be difficult to determine."
+            " which trafos have been skipped / are missing and which have been successfully"
+            " processed. Note that already processed actions will not be reversed."
+        ),
+    ),
+    deprecate_older_revisions: bool = Query(
+        False,
+        description=(
+            "Whether older revisions in the same trafo revision group should be deprecated."
+            " If this is True, this is done for every revision group for which any trafo"
+            " rev passes the filters and even for those that are included as dependencies"
+            " via the include_dependencies property of the filter params!"
+            " Note that this might not be done if abort_on_error is True and there is"
+            " an error anywhere."
+        ),
+    ),
+) -> dict[UUID | str, TrafoUpdateProcessSummary]:
+    """Update/store multiple transformation revisions
+
+    This updates or creates the given transformation revisions. Automatically
+    determines correct order (by dependency / nesting) so that depending trafo
+    revisions can be provided in arbitrary order to this endpoint.
+
+    Returns detailed info about success/failure for each transformation revision.
+
+    This endpoint can be used to import related sets of transformation revisions.
+    Such a set does not have to be closed under dependency relation, e.g. elements
+    of it can refer base components.
+    """
+    filter_params = FilterParams(
+        type=Type.COMPONENT,
+        state=state,
+        categories=categories,
+        category_prefix=category_prefix,
+        revision_group_id=revision_group_id,
+        ids=ids,
+        names=names,
+        include_deprecated=include_deprecated,
+        include_dependencies=include_dependencies,
+    )
+
+    multi_import_config = MultipleTrafosUpdateConfig(
+        allow_overwrite_released=allow_overwrite_released,
+        update_component_code=update_component_code,
+        strip_wirings=strip_wirings,
+        abort_on_error=abort_on_error,
+        deprecate_older_revisions=deprecate_older_revisions,
+    )
+
+    updated_transformation_revisions: list[TransformationRevision] = []
+    broken_component_codes: list[tuple[str, str]] = []
+    for ccs in updated_component_code_strings:
+        try:
+            tr = transformation_revision_from_python_code(ccs)
+        except ComponentCodeImportError as error:
+            broken_component_codes.append((str(error), ccs))
+        else:
+            updated_transformation_revisions.append(tr)
+
+    importable = Importable(
+        transformation_revisions=updated_transformation_revisions,
+        import_config=ImportSourceConfig(
+            filter_params=filter_params, update_config=multi_import_config
+        ),
+    )
+
+    success_per_trafo = import_importable(importable)
+    for msg, ccs in broken_component_codes:
+        success_per_trafo[ccs] = TrafoUpdateProcessSummary(
+            status=UpdateProcessStatus.FAILED,
+            msg=msg,
+            name="UNKNOWN",
+            version_tag="UNKNOWN",
+        )
+
     response.status_code = status.HTTP_207_MULTI_STATUS
 
     return success_per_trafo
