@@ -24,8 +24,6 @@ The payload for the execute endpoint looks as follows:
 {
   "id": "string", // the id of the respective transformation revision
   "wiring": {
-    "id": "string", // the wiring id (if coming from a stored wiring)
-                    // can be an arbitrary uuid.
     "input_wirings": [
       {
         "adapter_id": "string", // e.g. "direct_provisioning" or
