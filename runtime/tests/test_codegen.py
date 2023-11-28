@@ -1,6 +1,13 @@
 from hetdesrun.component.code import (
+    add_documentation_as_module_doc_string,
+    add_test_wiring_dictionary,
     check_parameter_names,
+    expand_code,
+    format_code_with_black,
     generate_function_header,
+    reduce_code,
+    remove_module_doc_string,
+    remove_test_wiring_dictionary,
     update_code,
 )
 from hetdesrun.datatypes import DataType
@@ -12,6 +19,7 @@ from hetdesrun.persistence.models.io import (
     TransformationOutput,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.io.load import load_json, load_python_file
 
 
 def test_function_header_no_params():
@@ -199,8 +207,152 @@ def test_update_code():
     # test input without only stop marker
     component.content = "# ***** DO NOT EDIT LINES BELOW *****"
     new_code = update_code(component)
+    assert "pass" in new_code
 
     # test with async def in function header
     component.content = example_code_async
     new_code = update_code(component)
     assert "async def" in new_code
+
+
+def test_remove_module_doc_string():
+    component_code_path = "tests/data/components/expanded_code.py"
+    component_code_with_module_doc_string = load_python_file(component_code_path)
+    assert component_code_with_module_doc_string.startswith('"""')
+    code_without_module_doc_string = remove_module_doc_string(
+        component_code_with_module_doc_string
+    )
+    assert '"""' not in code_without_module_doc_string
+
+
+def test_add_documentation_as_module_docstring():
+    component_tr_path = "tests/data/components/expanded_code.json"
+    component_tr = TransformationRevision(**load_json(component_tr_path))
+    assert "test" not in component_tr.content
+
+    component_tr.documentation = "test"
+    code_with_updated_module_doc_string = add_documentation_as_module_doc_string(
+        component_tr.content, component_tr
+    )
+    assert 'test\n"""' in code_with_updated_module_doc_string
+
+    component_tr.documentation = "test\n"
+    code_with_updated_module_doc_string = add_documentation_as_module_doc_string(
+        component_tr.content, component_tr
+    )
+    assert 'test\n"""' in code_with_updated_module_doc_string
+
+
+def test_remove_test_wiring_dictionary():
+    component_code_path = "tests/data/components/expanded_code.py"
+    component_code_with_test_wiring_dictionary = load_python_file(component_code_path)
+    assert (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT" in component_code_with_test_wiring_dictionary
+    )
+    component_code_with_removed_test_wiring_dictionary = remove_test_wiring_dictionary(
+        component_code_with_test_wiring_dictionary
+    )
+    assert (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT"
+        not in component_code_with_removed_test_wiring_dictionary
+    )
+
+    component_code_path = "tests/data/components/reduced_code.py"
+    component_code_without_test_wiring_dictionary = load_python_file(
+        component_code_path
+    )
+    component_code_with_test_wiring_dictionary_on_top = (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT = {\n"
+        '    "input_wirings": [\n'
+        "        {\n"
+        '            "workflow_input_name": "scores",\n'
+        '            "adapter_id": "direct_provisioning",\n'
+        '            "use_default_value": False,\n'
+        '            "filters": {\n'
+        '                "value": (\n'
+        '                    "{\\n"\n'
+        "                    '    \"2020-01-01T01:15:27.000Z\": 42.2,\\n'\n"
+        "                    '    \"2020-01-03T08:20:03.000Z\": 18.7,\\n'\n"
+        "                    '    \"2020-01-03T08:20:04.000Z\": 25.9\\n'\n"
+        '                    "}"\n'
+        "                )\n"
+        "            },\n"
+        "        },\n"
+        "        {\n"
+        '            "workflow_input_name": "threshold",\n'
+        '            "adapter_id": "direct_provisioning",\n'
+        '            "use_default_value": False,\n'
+        '            "filters": {"value": "42"},\n'
+        "        },\n"
+        "    ],\n"
+        "}\n"
+    ) + component_code_without_test_wiring_dictionary
+    component_code_with_test_wiring_dictionary_removed_from_top = (
+        remove_test_wiring_dictionary(component_code_with_test_wiring_dictionary_on_top)
+    )
+    assert not component_code_with_test_wiring_dictionary_removed_from_top.startswith(
+        "TEST_WIRING_FROM_PY_FILE_IMPORT"
+    )
+
+
+def test_add_test_wiring_dictionary():
+    component_tr_path = "tests/data/components/reduced_code.json"
+    component_tr = TransformationRevision(**load_json(component_tr_path))
+    component_code_path = "tests/data/components/reduced_code.py"
+    component_code_without_test_wiring_dictionary = load_python_file(
+        component_code_path
+    )
+
+    assert (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT"
+        not in component_code_without_test_wiring_dictionary
+    )
+    component_code_with_new_test_wiring_dictionary = add_test_wiring_dictionary(
+        component_code_without_test_wiring_dictionary, component_tr
+    )
+    assert (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT"
+        in component_code_with_new_test_wiring_dictionary
+    )
+
+    assert "24" not in component_code_without_test_wiring_dictionary
+    component_tr.test_wiring.input_wirings[1].filters["value"] = 24
+    component_code_with_updated_test_wiring_dictionary = add_test_wiring_dictionary(
+        component_code_without_test_wiring_dictionary, component_tr
+    )
+    assert "24" in component_code_with_updated_test_wiring_dictionary
+
+
+def test_format_code_with_black():
+    component_code_path = "tests/data/components/reduced_code.py"
+    component_code = load_python_file(component_code_path)
+    unformatted_component_code = component_code.replace(" = ", "=")
+    assert unformatted_component_code != component_code
+
+    formatted_code = format_code_with_black(unformatted_component_code)
+    assert formatted_code != unformatted_component_code
+    assert formatted_code == component_code
+
+
+def test_reduce_code():
+    reduced_component_code_path = "tests/data/components/reduced_code.py"
+    reduced_component_code = load_python_file(reduced_component_code_path)
+    expanded_component_code_path = "tests/data/components/expanded_code.py"
+    expanded_component_code = load_python_file(expanded_component_code_path)
+
+    reduced_expanded_code = reduce_code(expanded_component_code)
+    assert reduced_expanded_code != expanded_component_code
+    assert reduced_expanded_code == reduced_component_code
+
+
+def test_expand_code():
+    reduced_component_tr_path = "tests/data/components/reduced_code.json"
+    reduced_component_tr = TransformationRevision(
+        **load_json(reduced_component_tr_path)
+    )
+
+    expanded_component_code_path = "tests/data/components/expanded_code.py"
+    expanded_component_code = load_python_file(expanded_component_code_path)
+
+    expand_code(reduced_component_tr)
+    assert reduced_component_tr.content == expanded_component_code

@@ -3,6 +3,8 @@
 This module contains functions for generating and updating component code modules
 to provide a very elementary support system to the designer code editor.
 """
+
+import re
 from keyword import iskeyword
 
 import black
@@ -266,17 +268,34 @@ def add_documentation_as_module_doc_string(
     code = remove_module_doc_string(code)
 
     mod_doc_string = (
-        '""" Documentation for ' + tr.name + "\n\n" + tr.documentation + '"""\n\n'
+        '"""Documentation for '
+        + tr.name
+        + "\n\n"
+        + tr.documentation.strip()
+        + '\n"""\n\n'
     )
 
     return mod_doc_string + code
 
 
 def remove_test_wiring_dictionary(code: str) -> str:
-    if "\nTEST_WIRING_FROM_PY_FILE_IMPORT" in code:
-        preceding_code, test_wiring_and_subsequent_code = code.split(
-            "\nTEST_WIRING_FROM_PY_FILE_IMPORT"
+    if re.match(
+        pattern=r".*^TEST_WIRING_FROM_PY_FILE_IMPORT",
+        string=code,
+        flags=re.DOTALL | re.MULTILINE,
+    ):
+        split_string = re.split(
+            pattern=r"^TEST_WIRING_FROM_PY_FILE_IMPORT",
+            string=code,
+            flags=re.DOTALL | re.MULTILINE,
         )
+        if len(split_string) != 2:
+            raise ValueError(
+                "Apparently there is more than one occurence of 'TEST_WIRING_FROM_PY_FILE_IMPORT' "
+                "at the beginning of a line, resulting in the split string:\n%s",
+                ".\n".join(split_string),
+            )
+        preceding_code, test_wiring_and_subsequent_code = split_string
         if "\n}\n" in test_wiring_and_subsequent_code:
             _, subsequent_code = test_wiring_and_subsequent_code.split("\n}\n", 1)
             code = preceding_code + "\n" + subsequent_code
@@ -315,10 +334,10 @@ def format_code_with_black(code: str) -> str:
 
 
 def reduce_code(code: str) -> str:
-    code = format_code_with_black(code)
-    remove_module_doc_string(code)
-    remove_test_wiring_dictionary(code)
-    return code
+    updated_code = format_code_with_black(code)
+    updated_code = remove_module_doc_string(updated_code)
+    updated_code = remove_test_wiring_dictionary(updated_code)
+    return updated_code
 
 
 def expand_code(
