@@ -187,6 +187,84 @@ async def test_workflow_with_inputs_via_constant_node():
 
 
 @pytest.mark.asyncio
+async def test_workflow_with_optional_float_inputs_via_constant_node():
+    def add_two_values(*, c, d):
+        if d is None:
+            return {"sum": c}
+        return {"sum": c + d}
+
+    target_node = ComputationNode(
+        func=add_two_values,
+        operator_hierarchical_name="sum node",
+        operator_hierarchical_id="sum node",
+    )
+
+    wf = Workflow(
+        sub_nodes=[target_node],
+        input_mappings={"first": (target_node, "c"), "second": (target_node, "d")},
+        output_mappings={"sum_result": (target_node, "sum")},
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
+        operator_hierarchical_name="Workflow",
+        operator_hierarchical_id="Workflow",
+    )
+
+    wf.add_constant_providing_node(
+        values=[
+            {"name": "first", "value": 1.9, "type": "FLOAT"},
+            {"name": "second", "value": None, "type": "FLOAT"},
+        ],
+        optional=True,
+        id_suffix="workflow_default_values",
+    )
+
+    res = await wf.result
+    assert res["sum_result"] == 1.9
+
+
+@pytest.mark.asyncio
+async def test_workflow_with_optional_string_inputs_via_constant_node():
+    def add_three_words(*, c, d, e):
+        words = [c, d, e]
+        return {"sum": ",".join(word for word in words if word is not None)}
+
+    target_node = ComputationNode(
+        func=add_three_words,
+        operator_hierarchical_name="sum node",
+        operator_hierarchical_id="sum node",
+    )
+
+    wf = Workflow(
+        sub_nodes=[target_node],
+        input_mappings={
+            "first": (target_node, "c"),
+            "second": (target_node, "d"),
+            "third": (target_node, "e"),
+        },
+        output_mappings={"sum_result": (target_node, "sum")},
+        tr_id="UNKNOWN",
+        tr_name="UNKNOWN",
+        tr_tag="UNKNOWN",
+        operator_hierarchical_name="Workflow",
+        operator_hierarchical_id="Workflow",
+    )
+
+    wf.add_constant_providing_node(
+        values=[
+            {"name": "first", "value": "", "type": "STRING"},
+            {"name": "second", "value": "null", "type": "STRING"},
+            {"name": "third", "value": None, "type": "STRING"},
+        ],
+        optional=True,
+        id_suffix="workflow_default_values",
+    )
+
+    res = await wf.result
+    assert res["sum_result"] == ",null"
+
+
+@pytest.mark.asyncio
 async def test_nested_workflow():
     def provide_two_values():
         return {"a": 1.2, "b": 2.5}
