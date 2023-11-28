@@ -4,6 +4,7 @@ import json
 import logging
 from collections.abc import Generator
 from enum import StrEnum
+from types import UnionType
 from typing import Any, Literal, TypedDict
 from uuid import UUID
 
@@ -360,6 +361,19 @@ data_type_map: dict[DataType, type] = {
     DataType.PlotlyJson: dict,
 }
 
+optional_data_type_map: dict[DataType, UnionType] = {
+    DataType.Integer: int | None,
+    DataType.Float: float | None,
+    DataType.String: str | None,
+    DataType.Series: PydanticPandasSeries | None,
+    DataType.MultiTSFrame: PydanticMultiTimeseriesPandasDataFrame | None,
+    DataType.DataFrame: PydanticPandasDataFrame | None,
+    DataType.Boolean: bool | None,
+    # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
+    DataType.Any: ParsedAny | None,
+    DataType.PlotlyJson: dict | None,
+}
+
 
 class AdvancedTypesOutputSerializationConfig(BaseConfig):
     """Enable Pydantic Models to serialize Pandas obejcts with this config class"""
@@ -422,7 +436,7 @@ class NamedDataTypedValue(TypedDict):
 
 def parse_via_pydantic(
     entries: list[NamedDataTypedValue],
-    type_map: dict[DataType, type] | None = None,
+    type_map: dict[DataType, type] | dict[DataType, UnionType] | None = None,
 ) -> BaseModel:
     """Parse data dynamically into a pydantic object
 
@@ -432,7 +446,7 @@ def parse_via_pydantic(
 
     May raise the typical exceptions of pydantic parsing.
     """
-    type_dict: dict[str, tuple[type, "ellipsis"]] = {  # noqa: F821
+    type_dict: dict[str, tuple[type | UnionType, "ellipsis"]] = {  # noqa: F821
         entry["name"]: (
             type_map[entry["type"]]
             if type_map is not None
@@ -447,8 +461,12 @@ def parse_via_pydantic(
     return DynamicModel(**{entry["name"]: entry["value"] for entry in entries})  # type: ignore
 
 
-def parse_dynamically_from_datatypes(entries: list[NamedDataTypedValue]) -> BaseModel:
-    return parse_via_pydantic(entries, type_map=data_type_map)
+def parse_dynamically_from_datatypes(
+    entries: list[NamedDataTypedValue], optional: bool = False
+) -> BaseModel:
+    if optional is False:
+        return parse_via_pydantic(entries, type_map=data_type_map)
+    return parse_via_pydantic(entries, type_map=optional_data_type_map)
 
 
 def parse_dynamically_single_value(value: Any, data_type: DataType) -> BaseModel:
