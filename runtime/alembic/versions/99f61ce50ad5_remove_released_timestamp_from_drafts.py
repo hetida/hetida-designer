@@ -1,9 +1,22 @@
-"""remove released timestamp from drafts
+"""Remove released timestamp from drafts
 
 Revision ID: 99f61ce50ad5
 Revises: 7bd371c84b25
 Create Date: 2023-11-24 10:06:25.437487
 
+Remove the released_timestamp attribute from transformation revisions that are in the DRAFT state,
+because from revision 0.9.4, DRAFT transformation revisions with a released_timestamp cause a
+ValidationError.
+
+Such transformation revisions are caused by an error in the frontend implementation, where the
+released_timestamp was copied from the original transformation revision when copying a
+transformation revision or creating a new revision.
+The incorrect implementation existed in release 0.8.9.
+
+Draft workflows and components that were updated with release 0.9.0 up to and including release
+0.9.3 are not affected, since the backend removed the released_timestamp from DRAFT
+transformation revisions as part of their validation.
+The affected workflows are automatically repaired by this migration script.
 """
 from sqlalchemy import orm, select, update
 

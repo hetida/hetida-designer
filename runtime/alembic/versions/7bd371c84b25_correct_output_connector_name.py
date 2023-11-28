@@ -15,8 +15,8 @@ from release 0.7.1 up to and including release 0.8.8.
 Workflows that were updated with release 0.8.9 are not affected. Workflows that were last
 updated between release 0.7.1 and 0.8.9 are no longer valid as of release 0.9.0.
 Workflows that are in the DRAFT state will have their outputs disappear with the next PUT
-request and their execution will fail. The affected
-workflows are automatically repaired by this migration script.
+request and their execution will fail.
+The affected workflows are automatically repaired by this migration script.
 """
 from copy import deepcopy
 
