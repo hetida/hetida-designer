@@ -84,22 +84,14 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "scores",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
-                "value": (
-                    "{\n"
-                    '    "2020-01-01T01:15:27.000Z": 42.2,\n'
-                    '    "2020-01-03T08:20:03.000Z": 18.7,\n'
-                    '    "2020-01-03T08:20:04.000Z": 25.9\n'
-                    "}"
-                )
+                "value": '{\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": 18.7,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'
             },
         },
         {
             "workflow_input_name": "threshold",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {"value": "42"},
         },
-    ],
+    ]
 }

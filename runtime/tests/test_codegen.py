@@ -354,5 +354,6 @@ def test_expand_code():
     expanded_component_code_path = "tests/data/components/expanded_code.py"
     expanded_component_code = load_python_file(expanded_component_code_path)
 
-    expand_code(reduced_component_tr)
-    assert reduced_component_tr.content == expanded_component_code
+    expanded_reduced_code = expand_code(reduced_component_tr)
+    assert expanded_reduced_code != reduced_component_tr.content
+    assert expanded_reduced_code == expanded_component_code

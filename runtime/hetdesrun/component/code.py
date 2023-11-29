@@ -253,11 +253,29 @@ def update_code(
     return start + new_function_header + end
 
 
+def format_code_with_black(code: str) -> str:
+    try:
+        code = black.format_file_contents(
+            code,
+            fast=False,
+            mode=black.Mode(
+                target_versions={black.TargetVersion.PY311}, line_length=100
+            ),
+        )
+    except black.NothingChanged:
+        pass
+    finally:
+        # Make sure there's a newline after the content
+        if len(code) != 0 and code[-1] != "\n":
+            code += "\n"
+    return code
+
+
 def remove_module_doc_string(code: str) -> str:
     if code.startswith('"""') and code.count('"""') > 1:
         _, _, remaining_code = code.split('"""', 2)
 
-        code = remaining_code.strip()
+        code = format_code_with_black(remaining_code)
 
     return code
 
@@ -279,6 +297,7 @@ def add_documentation_as_module_doc_string(
 
 
 def remove_test_wiring_dictionary(code: str) -> str:
+    code = format_code_with_black(code)
     if re.match(
         pattern=r".*^TEST_WIRING_FROM_PY_FILE_IMPORT",
         string=code,
@@ -296,11 +315,20 @@ def remove_test_wiring_dictionary(code: str) -> str:
                 ".\n".join(split_string),
             )
         preceding_code, test_wiring_and_subsequent_code = split_string
-        if "\n}\n" in test_wiring_and_subsequent_code:
-            _, subsequent_code = test_wiring_and_subsequent_code.split("\n}\n", 1)
-            code = preceding_code + "\n" + subsequent_code
+        if re.match(
+            pattern=r".*^\}\n",
+            string=test_wiring_and_subsequent_code,
+            flags=re.DOTALL | re.MULTILINE,
+        ):
+            _, subsequent_code = re.split(
+                pattern=r"^\}\n",
+                string=test_wiring_and_subsequent_code,
+                maxsplit=1,
+                flags=re.DOTALL | re.MULTILINE,
+            )
+            code = preceding_code + subsequent_code
 
-    return code
+    return format_code_with_black(code)
 
 
 def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
@@ -312,32 +340,15 @@ def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
         + "\n"
     )
 
-    return code + test_wiring_dictionary_string
+    expanded_code = format_code_with_black(code + test_wiring_dictionary_string)
 
-
-def format_code_with_black(code: str) -> str:
-    try:
-        code = black.format_file_contents(
-            code,
-            fast=False,
-            mode=black.Mode(
-                target_versions={black.TargetVersion.PY311}, line_length=100
-            ),
-        )
-    except black.NothingChanged:
-        pass
-    finally:
-        # Make sure there's a newline after the content
-        if len(code) != 0 and code[-1] != "\n":
-            code += "\n"
-    return code
+    return expanded_code
 
 
 def reduce_code(code: str) -> str:
-    updated_code = format_code_with_black(code)
-    updated_code = remove_module_doc_string(updated_code)
-    updated_code = remove_test_wiring_dictionary(updated_code)
-    return updated_code
+    reduced_code = remove_module_doc_string(code)
+    reduced_code = remove_test_wiring_dictionary(reduced_code)
+    return reduced_code
 
 
 def expand_code(
@@ -365,11 +376,10 @@ def expand_code(
     if existing_code == "":
         existing_code = generate_complete_component_module(tr)
 
-    existing_code = format_code_with_black(existing_code)
+    expanded_code = add_documentation_as_module_doc_string(existing_code, tr)
+    expanded_code = add_test_wiring_dictionary(expanded_code, tr)
 
-    return add_test_wiring_dictionary(
-        add_documentation_as_module_doc_string(existing_code.strip(), tr), tr
-    )
+    return expanded_code
 
 
 def check_parameter_names(names: list[str]) -> bool:
