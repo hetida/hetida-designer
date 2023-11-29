@@ -79,7 +79,7 @@ def upgrade() -> None:
                         component_code=db_model.component_code,
                         io_interface=db_model.io_interface,
                         test_wiring=db_model.test_wiring,
-                        released_timestamp=None,
+                        released_timestamp=db_model.released_timestamp,
                         disabled_timestamp=db_model.disabled_timestamp,
                     )
                 )
