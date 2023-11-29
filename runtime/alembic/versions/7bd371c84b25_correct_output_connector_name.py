@@ -18,6 +18,7 @@ Workflows that are in the DRAFT state will have their outputs disappear with the
 request and their execution will fail.
 The affected workflows are automatically repaired by this migration script.
 """
+
 from copy import deepcopy
 
 from sqlalchemy import orm, select, update
@@ -46,7 +47,10 @@ def upgrade() -> None:
         for db_model in results:
             applicable = False
             updated_workflow_content = None
-            if db_model.workflow_content is not None and len(db_model.workflow_content["outputs"]) != 0:
+            if (
+                db_model.workflow_content is not None
+                and len(db_model.workflow_content["outputs"]) != 0
+            ):
                 updated_workflow_content = deepcopy(db_model.workflow_content)
                 for output in updated_workflow_content["outputs"]:
                     if output["connector_name"] == "connector_name":
@@ -55,7 +59,9 @@ def upgrade() -> None:
                             if operator["id"] == output["operator_id"]:
                                 for output_connector in operator["outputs"]:
                                     if output_connector["id"] == output["connector_id"]:
-                                        output["connector_name"] = output_connector["name"]
+                                        output["connector_name"] = output_connector[
+                                            "name"
+                                        ]
             if applicable:
                 session.execute(
                     update(TransformationRevisionDBModel)

@@ -18,17 +18,16 @@ Draft workflows and components that were updated with release 0.9.0 up to and in
 transformation revisions as part of their validation.
 The affected workflows are automatically repaired by this migration script.
 """
+
 from sqlalchemy import orm, select, update
 
 from alembic import op
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
 from hetdesrun.utils import State
 
-
-
 # revision identifiers, used by Alembic.
-revision = '99f61ce50ad5'
-down_revision = '7bd371c84b25'
+revision = "99f61ce50ad5"
+down_revision = "7bd371c84b25"
 branch_labels = None
 depends_on = None
 
@@ -67,5 +66,5 @@ def upgrade() -> None:
                 )
 
 
-def downgrade():
+def downgrade() -> None:
     pass
