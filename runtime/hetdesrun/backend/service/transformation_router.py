@@ -127,15 +127,19 @@ async def create_transformation_revision(
     try:
         store_single_transformation_revision(transformation_revision)
         logger.info("created transformation revision")
-    except DBIntegrityError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+    except DBIntegrityError as err:
+        msg = f"Could not store transformation revision {transformation_revision.id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
 
     try:
         persisted_transformation_revision = read_single_transformation_revision(
             transformation_revision.id
         )
-    except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBNotFoundError as err:
+        msg = f"Could not find transformation revision {transformation_revision.id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
     logger.debug(persisted_transformation_revision.json())
 
@@ -230,11 +234,10 @@ async def get_all_transformation_revisions(
         transformation_revision_list = get_multiple_transformation_revisions(
             filter_params
         )
-    except DBIntegrityError as e:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"At least one entry in the DB is no valid transformation revision:\n{str(e)}",
-        ) from e
+    except DBIntegrityError as err:
+        msg = f"At least one entry in the DB is no valid transformation revision:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
 
     return transformation_revision_list
 
@@ -263,8 +266,10 @@ async def get_transformation_revision_by_id(
     try:
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found transformation revision with id %s", id)
-    except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBNotFoundError as err:
+        msg = f"Could not find transformation revision {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
     logger.debug(transformation_revision.json())
 
@@ -279,7 +284,7 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     transformation_revision = read_single_transformation_revision(transformation_id)
 
     if transformation_revision.type is not Type.WORKFLOW:
-        msg = f"transformation revision {id} is not a workflow!"
+        msg = f"Transformation revision {transformation_revision.id} is not a workflow!"
         logger.error(msg)
         raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
 
@@ -500,19 +505,18 @@ async def update_transformation_revision(
             )
         )
         logger.info("updated transformation revision %s", id)
-    except DBIntegrityError as e:
-        logger.error(
-            "Integrity error in DB when trying to access entry for id %s\n%s", id, e
-        )
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
-    except DBNotFoundError as e:
-        logger.error(
-            "Not found error in DB when trying to access entry for id %s\n%s", id, e
-        )
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except ModelConstraintViolation as e:
-        logger.error("Update forbidden for transformation with id %s\n%s", id, e)
-        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
+    except DBIntegrityError as err:
+        msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNotFoundError as err:
+        msg = f"Not found error in DB when trying to access entry for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+    except ModelConstraintViolation as err:
+        msg = f"Update forbidden for transformation with id {id}:\n{str(err)}s"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
     logger.debug(persisted_transformation_revision.json())
 
@@ -552,11 +556,15 @@ async def delete_transformation_revision(
         delete_single_transformation_revision(id, ignore_state=ignore_state)
         logger.info("deleted transformation revision %s", id)
 
-    except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBNotFoundError as err:
+        msg = f"Could not find transformation revision {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    except (ModelConstraintViolation, DBIntegrityError) as e:
-        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
+    except (ModelConstraintViolation, DBIntegrityError) as err:
+        msg = f"Could not delete transformation revision {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
 
 async def handle_trafo_revision_execution_request(
@@ -571,14 +579,20 @@ async def handle_trafo_revision_execution_request(
     try:
         exec_response = await execute_transformation_revision(exec_by_id)
 
-    except TrafoExecutionNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except TrafoExecutionNotFoundError as err:
+        msg = f"Could not find transformation revision {exec_by_id.id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
-    except TrafoExecutionRuntimeConnectionError as e:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+    except TrafoExecutionRuntimeConnectionError as err:
+        msg = f"Could not connect to runtime to execute transformation {exec_by_id.id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
 
-    except TrafoExecutionResultValidationError as e:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    except TrafoExecutionResultValidationError as err:
+        msg = f"Could not validate execution result for transformation {exec_by_id.id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=msg) from err
 
     internal_full_measured_step.stop()
     exec_response.measured_steps.internal_full = internal_full_measured_step
@@ -721,8 +735,13 @@ async def handle_latest_trafo_revision_execution_request(
 ) -> ExecutionResponseFrontendDto:
     try:
         id_ = get_latest_revision_id(exec_latest_by_group_id_input.revision_group_id)
-    except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBNotFoundError as err:
+        msg = (
+            "Could not find any transformation revision with "
+            f"revision group id {exec_latest_by_group_id_input.revision_group_id}:\n{str(err)}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
     exec_by_id_input = exec_latest_by_group_id_input.to_exec_by_id(id_)
 
@@ -871,8 +890,10 @@ async def update_transformation_dashboard_positioning(
     try:
         transformation_revision = read_single_transformation_revision(id)
         logger.info("found transformation revision with id %s", id)
-    except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBNotFoundError as err:
+        msg = f"Could not find transformation revision with {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
     transformation_revision.test_wiring.dashboard_positionings = (
         gridstack_item_positions
@@ -885,19 +906,18 @@ async def update_transformation_dashboard_positioning(
             update_component_code=False,
             strip_wiring=False,
         )
-    except DBIntegrityError as e:
-        logger.error(
-            "Integrity error in DB when trying to access entry for id %s\n%s", id, e
-        )
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
-    except DBNotFoundError as e:
-        logger.error(
-            "Not found error in DB when trying to access entry for id %s\n%s", id, e
-        )
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
-    except ModelConstraintViolation as e:
-        logger.error("Update forbidden for transformation with id %s\n%s", id, e)
-        raise HTTPException(status.HTTP_409_CONFLICT, detail=str(e)) from e
+    except DBIntegrityError as err:
+        msg = f"Integrity error in DB when trying to access entry for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+    except DBNotFoundError as err:
+        msg = f"Not found error in DB when trying to access entry for id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+    except ModelConstraintViolation as err:
+        msg = f"Update forbidden for transformation with id {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg) from err
 
     logger.debug(transformation_revision.json())
 
@@ -966,25 +986,23 @@ async def transformation_dashboard(
 
     # Validate query params
     if int(fromTimestamp is None) + int(toTimestamp is None) == 1:
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-            "Either none or both of fromTimestamp and toTimestamp must be set.",
-        )
+        msg = "Either none or both of fromTimestamp and toTimestamp must be set."
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
     if (
         fromTimestamp is not None
         and toTimestamp is not None
         and fromTimestamp > toTimestamp
     ):
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY, "fromTimestamp must be <= toTimestamp"
-        )
+        msg = "fromTimestamp must be <= toTimestamp"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
     if relNow is not None and fromTimestamp is not None:
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-            "Cannot both specify absolute and relative timerange overrides!",
-        )
+        msg = "Cannot both specify absolute and relative timerange overrides!"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg)
 
     # Calculate override mode
     override_mode: OverrideMode = (
@@ -1001,8 +1019,10 @@ async def transformation_dashboard(
     try:
         transformation_revision = read_single_transformation_revision(id)
         logger.info("Found transformation revision with id %s", id)
-    except DBNotFoundError as e:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except DBNotFoundError as err:
+        msg = f"Could not find transformation revision {id}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
     logger.debug(transformation_revision.json())
 
     # obtain test wiring
