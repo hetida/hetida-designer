@@ -316,7 +316,7 @@ def test_add_test_wiring_dictionary():
     )
 
     assert "24" not in component_code_without_test_wiring_dictionary
-    component_tr.test_wiring.input_wirings[1].filters["value"] = 24
+    component_tr.test_wiring.input_wirings[1].filters["value"] = "24"
     component_code_with_updated_test_wiring_dictionary = add_test_wiring_dictionary(
         component_code_without_test_wiring_dictionary, component_tr
     )
