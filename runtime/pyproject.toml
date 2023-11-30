@@ -10,6 +10,8 @@ select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP", "YTT", "S", "BLE", "A
 
 ignore = ["E713", "E714", "B008", "PLR2004", "COM812", "RET504", "PD901", "PLR0913", "UP017"]
 
+extend-exclude = ["tests/data"]
+
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
