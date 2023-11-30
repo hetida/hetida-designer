@@ -147,7 +147,7 @@ async def create_transformation_revision(
 
 @transformation_router.get(
     "",
-    response_model=list[TransformationRevision],
+    response_model=list[TransformationRevision | str],
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Returns combined list of all transformation revisions (components and workflows)",
@@ -207,7 +207,21 @@ async def get_all_transformation_revisions(
             "not contained in workflows that do not have the state DISABLED."
         ),
     ),
-) -> list[TransformationRevision]:
+    components_as_code: bool = Query(
+        False,
+        description=(
+            "Set to True to obtain transformation revisions of type COMPOPNENT "
+            "as a string of their python code instead of as JSON."
+        ),
+    ),
+    expand_component_code: bool = Query(
+        False,
+        description=(
+            "Set to True to add the documentation as module docstring and "
+            "the test wiring as dicitionary to the component code."
+        ),
+    ),
+) -> list[TransformationRevision | str]:
     """Get all transformation revisions from the data base.
 
     Used by frontend for initial loading of all transformations to populate the sidebar
@@ -230,116 +244,51 @@ async def get_all_transformation_revisions(
     logger.info("get all transformation revisions with %s", repr(filter_params))
 
     try:
-        transformation_revision_list = get_multiple_transformation_revisions(
-            filter_params
-        )
+        transformation_revision_list: list[
+            TransformationRevision
+        ] = get_multiple_transformation_revisions(filter_params)
     except DBIntegrityError as e:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"At least one entry in the DB is no valid transformation revision:\n{str(e)}",
         ) from e
 
-    return transformation_revision_list
+    code_list: list[str] = []
+    component_indices: list[int] = []
 
+    if expand_component_code or components_as_code is True:
+        component_indices = [
+            index
+            for index, tr in enumerate(transformation_revision_list)
+            if tr.type == Type.COMPONENT
+        ]
 
-@transformation_router.get(
-    "/components-as-code",
-    response_model=list[str],
-    response_model_exclude_none=True,  # needed because:
-    # frontend handles attributes with value null in a different way than missing attributes
-    summary="Returns combined list of all components as python code",
-    status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {
-            "description": "Successfully got all components as python code"
-        }
-    },
-)
-async def get_all_components_as_code(
-    state: State
-    | None = Query(
-        None,
-        description="Filter for specified state.",
-    ),
-    categories: list[ValidStr]
-    | None = Query(
-        None, description="Filter for specified list of categories.", alias="category"
-    ),
-    category_prefix: ValidStr
-    | None = Query(
-        None,
-        description="Category prefix that must be matched exactly (case-sensitive).",
-    ),
-    revision_group_id: UUID
-    | None = Query(None, description="Filter for specified revision group id."),
-    ids: list[UUID]
-    | None = Query(None, description="Filter for specified list of ids.", alias="id"),
-    names: list[NonEmptyValidStr]
-    | None = Query(
-        None, description=("Filter for specified list of names."), alias="name"
-    ),
-    include_dependencies: bool = Query(
-        False,
-        description=(
-            "Set to True to additionally get those transformation revisions "
-            "that the selected/filtered ones depend on."
-        ),
-    ),
-    include_deprecated: bool = Query(
-        True,
-        description=(
-            "Set to False to omit transformation revisions with state DISABLED "
-            "this will not affect included dependent transformation revisions."
-        ),
-    ),
-    unused: bool = Query(
-        False,
-        description=(
-            "Set to True to obtain only those transformation revisions that are "
-            "not contained in workflows that do not have the state DISABLED."
-        ),
-    ),
-) -> list[str]:
-    """Get all components as python code from the data base.
+    if components_as_code is True:
+        for index in component_indices:
+            component_tr = transformation_revision_list.pop(index)
+            if expand_component_code is True:
+                try:
+                    code_list.append(expand_code(component_tr))
+                except TypeError as error:
+                    msg = f":\n{str(error)}"
+                    logger.error(msg)
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+                    ) from error
+            else:
+                if not isinstance(component_tr.content, str):
+                    msg = ""
+                    logger.error(msg)
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
+                    )
+                code_list.append(component_tr.content)
+    elif expand_component_code is True:
+        for index in component_indices:
+            component_tr = transformation_revision_list[index]
+            component_tr.content = expand_code(component_tr)
 
-    Used to export selected components as python code.
-    """
-
-    filter_params = FilterParams(
-        type=Type.COMPONENT,
-        state=state,
-        categories=categories,
-        category_prefix=category_prefix,
-        revision_group_id=revision_group_id,
-        ids=ids,
-        names=names,
-        include_dependencies=include_dependencies,
-        include_deprecated=include_deprecated,
-        unused=unused,
-    )
-
-    logger.info("get all components with %s", repr(filter_params))
-
-    try:
-        transformation_revision_list = get_multiple_transformation_revisions(
-            filter_params
-        )
-    except DBIntegrityError as error:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=(
-                f"At least one entry in the DB is no valid transformation revision:\n{str(error)}"
-            ),
-        ) from error
-
-    try:
-        code_list = [expand_code(tr) for tr in transformation_revision_list]
-    except TypeError as error:
-        raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)
-        ) from error
-
-    return code_list
+    return transformation_revision_list + code_list
 
 
 @transformation_router.get(
