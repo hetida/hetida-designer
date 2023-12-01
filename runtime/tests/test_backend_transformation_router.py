@@ -50,7 +50,7 @@ tr_json_component_1 = {
             }
         ],
     },
-    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',  # noqa: E501
+    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0",\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',  # noqa: E501
     "test_wiring": {
         "input_wirings": [
             {
@@ -1017,6 +1017,59 @@ async def test_get_all_transformation_revisions_with_combined_filters(
         response_draft_workflow.json()[1]
         == tr_json_workflow_2_with_named_io_for_operator
     )
+
+
+@pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_components_as_code(
+    async_test_client, mocked_clean_test_db_session
+):
+    store_single_transformation_revision(
+        TransformationRevision(**tr_json_component_1)  # DRAFT
+    )
+    store_single_transformation_revision(
+        TransformationRevision(**tr_json_workflow_1)  # DRAFT
+    )
+
+    async with async_test_client as ac:
+        response_components_as_code = await ac.get(
+            "/api/transformations/", params={"components_as_code": True}
+        )
+        response_expand_component_code = await ac.get(
+            "/api/transformations/", params={"expand_component_code": True}
+        )
+        response_both = await ac.get(
+            "/api/transformations/",
+            params={"components_as_code": True, "expand_component_code": True},
+        )
+
+    assert response_components_as_code.status_code == 200
+    assert len(response_components_as_code.json()) == 2
+    assert response_components_as_code.json()[0] == tr_json_workflow_1
+    assert response_components_as_code.json()[1] == tr_json_component_1["content"]
+
+    assert response_expand_component_code.status_code == 200
+    assert len(response_expand_component_code.json()) == 2
+    assert response_expand_component_code.json()[1] == tr_json_workflow_1
+    assert (
+        tr_json_component_1["content"]
+        in response_expand_component_code.json()[0]["content"]
+    )
+    assert (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT"
+        in response_expand_component_code.json()[0]["content"]
+    )
+    assert (
+        '"""Documentation for component 0\n\ndocumentation\n"""\n\n'
+        in response_expand_component_code.json()[0]["content"]
+    )
+
+    assert response_both.status_code == 200
+    assert len(response_both.json()) == 2
+    assert response_both.json()[0] == tr_json_workflow_1
+    assert tr_json_component_1["content"] in response_both.json()[1]
+    assert "TEST_WIRING_FROM_PY_FILE_IMPORT" in response_both.json()[1]
+
+    assert '"""Documentation for component 0\n\ndocumentation\n"""\n\n' in response_both.json()[1]
 
 
 @pytest.mark.asyncio

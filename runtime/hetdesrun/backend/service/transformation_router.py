@@ -256,17 +256,18 @@ async def get_all_transformation_revisions(
     code_list: list[str] = []
     component_indices: list[int] = []
 
-    if expand_component_code or components_as_code is True:
+    if expand_component_code or components_as_code:
         component_indices = [
             index
             for index, tr in enumerate(transformation_revision_list)
             if tr.type == Type.COMPONENT
         ]
+        component_indices.sort(reverse=True)
 
-    if components_as_code is True:
+    if components_as_code:
         for index in component_indices:
             component_tr = transformation_revision_list.pop(index)
-            if expand_component_code is True:
+            if expand_component_code:
                 try:
                     code_list.append(expand_code(component_tr))
                 except TypeError as error:
@@ -277,7 +278,10 @@ async def get_all_transformation_revisions(
                     ) from error
             else:
                 if not isinstance(component_tr.content, str):
-                    msg = ""
+                    msg = (
+                        f"Transformation revision {component_tr.id} is of type COMPONENT "
+                        "with content that is not of type string!"
+                    )
                     logger.error(msg)
                     raise HTTPException(
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
