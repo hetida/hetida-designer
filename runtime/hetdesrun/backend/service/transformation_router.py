@@ -268,24 +268,11 @@ async def get_all_transformation_revisions(
         for index in component_indices:
             component_tr = transformation_revision_list.pop(index)
             if expand_component_code:
-                try:
-                    code_list.append(expand_code(component_tr))
-                except TypeError as error:
-                    msg = f":\n{str(error)}"
-                    logger.error(msg)
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-                    ) from error
+                code_list.append(expand_code(component_tr))
             else:
-                if not isinstance(component_tr.content, str):
-                    msg = (
-                        f"Transformation revision {component_tr.id} is of type COMPONENT "
-                        "with content that is not of type string!"
-                    )
-                    logger.error(msg)
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg
-                    )
+                assert isinstance(  # hint for mypy #noqa: S101
+                    component_tr.content, str
+                )
                 code_list.append(component_tr.content)
     elif expand_component_code is True:
         for index in component_indices:

@@ -1069,7 +1069,10 @@ async def test_get_all_transformation_revisions_with_components_as_code(
     assert tr_json_component_1["content"] in response_both.json()[1]
     assert "TEST_WIRING_FROM_PY_FILE_IMPORT" in response_both.json()[1]
 
-    assert '"""Documentation for component 0\n\ndocumentation\n"""\n\n' in response_both.json()[1]
+    assert (
+        '"""Documentation for component 0\n\ndocumentation\n"""\n\n'
+        in response_both.json()[1]
+    )
 
 
 @pytest.mark.asyncio

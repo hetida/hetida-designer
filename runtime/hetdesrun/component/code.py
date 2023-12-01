@@ -367,11 +367,8 @@ def expand_code(
             f"since its type is not COMPONENT"
         )
 
-    if not isinstance(tr.content, str):
-        raise TypeError(
-            "Transformation revision %s has content that is not a string!", str(tr.id)
-        )
     existing_code = tr.content
+    assert isinstance(existing_code, str)  # hint for mypy #noqa: S101
 
     if existing_code == "":
         existing_code = generate_complete_component_module(tr)
