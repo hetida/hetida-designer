@@ -1323,6 +1323,10 @@ async def test_update_transformation_revision_from_component_code(
     tr_component_2 = TransformationRevision(**tr_json_component_2_draft)
     store_single_transformation_revision(tr_component_2)
 
+    tr_json_component_2_draft["content"] = "code"
+    tr_component_2_invalid_code = TransformationRevision(**tr_json_component_2_draft)
+    tr_component_2_invalid_code.content = update_code(tr_component_2_invalid_code)
+
     tr_json_component_2_update_draft = deepcopy(tr_json_component_2_update)
     tr_json_component_2_update_draft["state"] = "DRAFT"
     del tr_json_component_2_update_draft["released_timestamp"]
@@ -1335,6 +1339,10 @@ async def test_update_transformation_revision_from_component_code(
     assert '"category": "Test"' in tr_component_2_update.content
 
     async with async_test_client as ac:
+        put_response_with_failure = await ac.put(
+            "/api/transformations/",
+            json=[tr_component_2_invalid_code.content],
+        )
         put_response = await ac.put(
             "/api/transformations/",
             json=[tr_component_2_update.content],
@@ -1344,6 +1352,13 @@ async def test_update_transformation_revision_from_component_code(
                 "/api/transformations/", str(get_uuid_from_seed("component 2"))
             ),
         )
+
+    assert put_response_with_failure.status_code == 207
+    assert tr_component_2_invalid_code.content in put_response_with_failure.json()
+    trafo_update_process_summary = put_response_with_failure.json()[
+        tr_component_2_invalid_code.content
+    ]
+    assert trafo_update_process_summary["status"] == "FAILED"
 
     assert put_response.status_code == 207
     assert str(tr_component_2_update.id) in put_response.json()
