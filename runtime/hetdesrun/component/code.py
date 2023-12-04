@@ -368,7 +368,7 @@ def expand_code(
         )
 
     existing_code = tr.content
-    assert isinstance(existing_code, str)  # hint for mypy #noqa: S101
+    assert isinstance(existing_code, str)  # hint for mypy # noqa: S101
 
     if existing_code == "":
         existing_code = generate_complete_component_module(tr)

@@ -32,6 +32,8 @@ To export only selected components and workflows instead of all, the `export_tra
 - ids: a list of ids, only components/workflows whose ids are included in this list will be exported
 - names: a list of names, only components/workflows whose names are included in this list will be exported
 - include_deprecated: if set to false, deprecated components/workflows will **not** be exported (default: true)
+- components_as_code: if set to true, components will be exported as `.py` files (default: false)
+- expand_component_code: if set to true, documentation as module docstring and test wiring as dict will be added to the component code (default: false)
 
 If more than one of these parameters is specified, only the components/workflows that pass all filters will be exported, which corresponds to a logical "and" connection of the filter criteria.
 

@@ -217,7 +217,7 @@ async def get_all_transformation_revisions(
         False,
         description=(
             "Set to True to add the documentation as module docstring and "
-            "the test wiring as dicitionary to the component code."
+            "the test wiring as dictionary to the component code."
         ),
     ),
 ) -> list[TransformationRevision | str]:
@@ -269,7 +269,7 @@ async def get_all_transformation_revisions(
             if expand_component_code:
                 code_list.append(expand_code(component_tr))
             else:
-                assert isinstance(  # hint for mypy #noqa: S101
+                assert isinstance(  # hint for mypy # noqa: S101
                     component_tr.content, str
                 )
                 code_list.append(component_tr.content)
