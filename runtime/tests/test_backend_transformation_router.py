@@ -9,7 +9,7 @@ import pytest
 from fastapi import HTTPException
 
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
-from hetdesrun.component.code import update_code
+from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
@@ -132,7 +132,7 @@ tr_json_component_2 = {
         "inputs": [],
         "outputs": [],
     },
-    "content": "code",
+    "content": 'code="code"',
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
@@ -154,7 +154,7 @@ tr_json_component_2_update = {
         "inputs": [],
         "outputs": [],
     },
-    "content": "code",
+    "content": 'code="code"',
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
@@ -177,7 +177,7 @@ tr_json_component_2_deprecate = {
         "inputs": [],
         "outputs": [],
     },
-    "content": "code",
+    "content": 'code="code"',
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
@@ -1310,6 +1310,48 @@ async def test_update_transformation_revision_by_adding_operator_to_workflow_fol
     assert get_response.status_code == 200
 
     assert get_response.json() == put_response.json()
+
+
+@pytest.mark.asyncio
+async def test_update_transformation_revision_from_component_code(
+    async_test_client, mocked_clean_test_db_session
+):
+    tr_json_component_2_draft = deepcopy(tr_json_component_2)
+    tr_json_component_2_draft["state"] = "DRAFT"
+    del tr_json_component_2_draft["released_timestamp"]
+
+    tr_component_2 = TransformationRevision(**tr_json_component_2_draft)
+    store_single_transformation_revision(tr_component_2)
+
+    tr_json_component_2_update_draft = deepcopy(tr_json_component_2_update)
+    tr_json_component_2_update_draft["state"] = "DRAFT"
+    del tr_json_component_2_update_draft["released_timestamp"]
+
+    tr_component_2_update = TransformationRevision(**tr_json_component_2_update_draft)
+    assert tr_component_2_update.content == 'code="code"'
+    tr_component_2_update.content = update_code(tr_component_2_update)
+    tr_component_2_update.content = expand_code(tr_component_2_update)
+
+    assert '"category": "Test"' in tr_component_2_update.content
+
+    async with async_test_client as ac:
+        put_response = await ac.put(
+            "/api/transformations/",
+            json=[tr_component_2_update.content],
+        )
+        get_response = await ac.get(
+            posix_urljoin(
+                "/api/transformations/", str(get_uuid_from_seed("component 2"))
+            ),
+        )
+
+    assert put_response.status_code == 207
+    assert str(tr_component_2_update.id) in put_response.json()
+    trafo_update_process_summary = put_response.json()[str(tr_component_2_update.id)]
+    assert trafo_update_process_summary["status"] == "SUCCESS"
+
+    assert get_response.status_code == 200
+    assert get_response.json()["category"] == "Test"
 
 
 @pytest.mark.asyncio
