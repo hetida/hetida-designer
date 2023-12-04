@@ -56,7 +56,6 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
     ComponentCodeImportError,
@@ -312,34 +311,6 @@ async def get_transformation_revision_by_id(
     logger.debug(transformation_revision.json())
 
     return transformation_revision
-
-
-def contains_deprecated(transformation_id: UUID) -> bool:
-    logger.info(
-        "check if transformation revision %s contains deprecated operators",
-        str(transformation_id),
-    )
-    transformation_revision = read_single_transformation_revision(transformation_id)
-
-    if transformation_revision.type is not Type.WORKFLOW:
-        msg = f"transformation revision {id} is not a workflow!"
-        logger.error(msg)
-        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
-
-    assert isinstance(  # noqa: S101
-        transformation_revision.content, WorkflowContent
-    )  # hint for mypy
-
-    is_disabled = []
-    for operator in transformation_revision.content.operators:
-        logger.info(
-            "operator with transformation id %s has status %s",
-            str(operator.transformation_id),
-            operator.state,
-        )
-        is_disabled.append(operator.state == State.DISABLED)
-
-    return any(is_disabled)
 
 
 @transformation_router.put(
