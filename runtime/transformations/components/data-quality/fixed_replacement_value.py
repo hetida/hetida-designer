@@ -6,14 +6,14 @@
 Create a time series with the provided fixed value for all gap timestamps.
 
 ## Inputs
-- **gap_timestamps**:
+- **gap_timestamps** (Pandas Series):
     Either the values or the index must be of a datetime64 dtype.
 
-- **replacement_value**:
+- **replacement_value** (float):
     The value which is used for generating the new data points in replacement_value_series.
 
 ## Outputs
-- **replacement_value_series**:
+- **replacement_value_series** (Pandas Series):
     Series with index chosen from `gap_timestamps` and values identical to `replacement_value`.
 
 ## Details

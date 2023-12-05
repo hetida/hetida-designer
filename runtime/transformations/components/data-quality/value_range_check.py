@@ -22,11 +22,11 @@ For each data point of the series, it is checked for all value ranges whether it
             ...
         }
 ```
-    The names of the value ranges must neither be "_violates_any", "_violates_all" or "timestamp"
+    The names of the value ranges must neither be "_violates_any", "_violates_all" or "_timestamp"
     nor end with "_IS_ABOVE" or "_IS_BELOW".
 
 ## Outputs
-- **is_included_frame**:
+- **is_included_frame** (Pandas DataFrame):
     Data frame with a boolean table. Column names are the range names taken from
     `value_range_dict`. For each range name, there are two additional columns with names
     "[range name]_IS_ABOVE" and "[range name]_IS_BELOW". Entries show whether the condition of
@@ -39,7 +39,7 @@ For each data point of the series, it is checked for all value ranges whether it
     - If at least one value of a value range is not inclusive and min_value >= max_value
     - If the input dictionary doesn't match input of ValueRange constructor
     - If at least one name of a value range ends with "_IS_BELOW" or "_IS_ABOVE"
-    - If at least one name of a value range is "_violates_all", "_violates_any", or "timestamp"
+    - If at least one name of a value range is "_violates_all", "_violates_any", or "_timestamp"
 
 ## Examples
 
@@ -114,7 +114,7 @@ Expected output of the above call is:
                 "2020-01-02T16:20:00.000Z":false,
                 "2020-01-03T08:20:04.000Z":true
             },
-            "timestamp":{
+            "_timestamp":{
                 "2020-01-01T01:15:27.000Z":"2020-01-01T01:15:27.000Z",
                 "2020-01-02T16:20:00.000Z":"2020-01-02T16:20:00.000Z",
                 "2020-01-03T08:20:04.000Z":"2020-01-03T08:20:04.000Z"
@@ -214,7 +214,7 @@ def check_value_ranges(
         ~is_included_frame[list(value_range_dict.keys())]
     ).any(axis=1)
 
-    is_included_frame["timestamp"] = is_included_frame.index
+    is_included_frame["_timestamp"] = is_included_frame.index
 
     return is_included_frame
 
@@ -264,10 +264,10 @@ def main(*, timeseries_data, value_range_dict):
             error_dict[
                 range_name
             ] = "Range names must not end with '_IS_BELOW' or '_IS_ABOVE'! "
-        if range_name in ("_violates_all", "_violates_any", "timestamp"):
+        if range_name in ("_violates_all", "_violates_any", "_timestamp"):
             error_dict[range_name] = (
                 "Range names must not be '_violates_all', '_violates_any', or"
-                " 'timestamp'!"
+                " '_timestamp'!"
             )
         try:
             value_ranges[range_name] = ValueRange(**value_range)
