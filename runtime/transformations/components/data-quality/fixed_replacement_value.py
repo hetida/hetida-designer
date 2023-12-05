@@ -1,4 +1,6 @@
-"""# Fixed Replacement Value
+"""Create a time series with the provided fixed value for all gap timestamps.
+
+# Fixed Replacement Value
 
 ## Description
 Create a time series with the provided fixed value for all gap timestamps.
@@ -12,12 +14,13 @@ Create a time series with the provided fixed value for all gap timestamps.
 
 ## Outputs
 - **replacement_value_series**:
-    Series with index chosen from `gap_timestamps` and values equal to `replacement_value`.
+    Series with index chosen from `gap_timestamps` and values identical to `replacement_value`.
 
 ## Details
 - Raises `ComponentInputValidationException`:
-    - If neither the values and the index of `gap_timestamps` are of a datetime64 dtype.
-    - If both the values and the index of `gap_timestamps` are of a datetime64 dtype, but not equal.
+    - If neither the values nor the index of `gap_timestamps` are of a datetime64 dtype.
+    - If both the values and the index of `gap_timestamps` are of a datetime64 dtype, but not
+    identical.
 
 ## Examples
 The index of `replacement_value_series` can be retrieved from the index of the input series.
@@ -89,9 +92,11 @@ def main(*, gap_timestamps, replacement_value):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
-    """Checks, if `gap_timestamps.index` or `gap_timestamps.to_numpy()` contain non conflicting
+    """Create a time series with the provided fixed value for all gap timestamps.
+
+    Checks, if `gap_timestamps.index` or `gap_timestamps.to_numpy()` contain non conflicting
     DateTimeIndex like data. Returns a series of data points with index chosen from
-    `gap_timestamps` and values = replacement_value.
+    `gap_timestamps` and values identical to the replacement_value.
     """
 
     index_of_expected_dtype = pd.api.types.is_datetime64_any_dtype(

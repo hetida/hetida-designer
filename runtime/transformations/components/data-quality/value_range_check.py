@@ -1,14 +1,16 @@
-"""# Value Range Check
+"""Check if the data points of the series lie within the value ranges.
+
+# Value Range Check
 
 ## Description
 For each data point of the series, it is checked for all value ranges whether it lies within them.
 
 ## Inputs
-- **timeseries_data**(Pandas Series):
-        Series to perform the value range check for.
+- **timeseries_data** (Pandas Series):
+    Series to perform the value range check for. Expects values to be of dtype float or int.
 
-- **value_range_dict**(dict):
-        Dictionary of value ranges to check. Expected input shape is:
+- **value_range_dict** (dict):
+    Dictionary of value ranges to check. Expected input shape is:
 ```
         {
            "value_range_name_1": {
@@ -20,24 +22,24 @@ For each data point of the series, it is checked for all value ranges whether it
             ...
         }
 ```
-        Value range names must not be "_violates_any", "_violates_all" oder "timestamp" nor end
-        with "_IS_ABOVE" or "_IS_BELOW".
+    The names of the value ranges must neither be "_violates_any", "_violates_all" or "timestamp"
+    nor end with "_IS_ABOVE" or "_IS_BELOW".
 
 ## Outputs
 - **is_included_frame**:
-        Data frame with a boolean table. Column names are the range names taken from
-        `value_range_dict`. For each range name, there are two additional columns with names
-        "[range name]_IS_ABOVE" and "[range name]_IS_BELOW". Entries show whether the condition of
-        the column are fulfilled by the value corresponding to the index of the row.
+    Data frame with a boolean table. Column names are the range names taken from
+    `value_range_dict`. For each range name, there are two additional columns with names
+    "[range name]_IS_ABOVE" and "[range name]_IS_BELOW". Entries show whether the condition of
+    the column are fulfilled by the value corresponding to the index of the row.
 
 ## Details
 - Raises `ComponentInputValidationException`:
-        - If timeseries_data.dtype is neither int nor float
-        - If both values of a value range are inclusive and min_value > max_value
-        - If at least one value of a value range is not inclusive and min_value >= max_value
-        - If the input dictionary doesn't match input of ValueRange constructor
-        - If at least one name of a value range ends with "_IS_BELOW" or "_IS_ABOVE"
-        - If at least one name of a value range is "_violates_all", "_violates_any", or "timestamp"
+    - If timeseries_data.dtype is neither int nor float
+    - If both values of a value range are inclusive and min_value > max_value
+    - If at least one value of a value range is not inclusive and min_value >= max_value
+    - If the input dictionary doesn't match input of ValueRange constructor
+    - If at least one name of a value range ends with "_IS_BELOW" or "_IS_ABOVE"
+    - If at least one name of a value range is "_violates_all", "_violates_any", or "timestamp"
 
 ## Examples
 
