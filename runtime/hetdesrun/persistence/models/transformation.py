@@ -254,6 +254,10 @@ class TransformationRevision(BaseModel):
             and values["disabled_timestamp"] is not None
             and v is None
         ):
+            logger.warning(
+                "Set released_timestamp to disabled_timestamp for "
+                "disabled transformation without released_timestamp."
+            )
             return values["disabled_timestamp"]
         return v
 
@@ -262,16 +266,7 @@ class TransformationRevision(BaseModel):
         if v is State.DRAFT and (
             "released_timestamp" in values and values["released_timestamp"] is not None
         ):
-            # TODO: Raise exception instead of adjust once frontend has been updated
-            logger.warning(
-                "The state is DRAFT, but a released_timestamp is set. "
-                "The released_timestamp will be set to None."
-            )
-            values["released_timestamp"] = None
-        if v is State.DRAFT and (
-            "disabled_timestamp" in values and values["disabled_timestamp"] is not None
-        ):
-            raise ValueError("disabled_timestamp must not be set if state is DRAFT")
+            raise ValueError("released_timestamp must not be set if state is DRAFT")
         if v is State.RELEASED and (
             "released_timestamp" not in values or values["released_timestamp"] is None
         ):
