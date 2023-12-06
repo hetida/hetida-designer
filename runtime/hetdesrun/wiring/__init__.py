@@ -17,7 +17,8 @@ async def resolve_and_load_data_from_wiring(
     wirings_by_adapter = defaultdict(list)
 
     for input_wiring in workflow_wiring.input_wirings:
-        wirings_by_adapter[input_wiring.adapter_id].append(input_wiring)
+        if input_wiring.use_default_value is False:
+            wirings_by_adapter[input_wiring.adapter_id].append(input_wiring)
 
     loaded_data = {}
 
