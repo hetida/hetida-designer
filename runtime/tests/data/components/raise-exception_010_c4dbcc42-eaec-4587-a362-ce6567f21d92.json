@@ -28,7 +28,6 @@
     ]
   },
   "name": "Raise Exception",
-  "released_timestamp": "2023-08-24T14:27:09.095346+00:00",
   "revision_group_id": "0d513f1d-6c73-4411-85d4-bc2f02b541b5",
   "state": "DRAFT",
   "test_wiring": {

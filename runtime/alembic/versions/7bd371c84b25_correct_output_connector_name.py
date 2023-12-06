@@ -15,17 +15,16 @@ from release 0.7.1 up to and including release 0.8.8.
 Workflows that were updated with release 0.8.9 are not affected. Workflows that were last
 updated between release 0.7.1 and 0.8.9 are no longer valid as of release 0.9.0.
 Workflows that are in the DRAFT state will have their outputs disappear with the next PUT
-request and their execution will fail. The affected
-workflows are automatically repaired by this migration script.
+request and their execution will fail.
+The affected workflows are automatically repaired by this migration script.
 """
 
-from sqlalchemy import orm, select
+from copy import deepcopy
+
+from sqlalchemy import orm, select, update
 
 from alembic import op
 from hetdesrun.persistence.dbmodels import TransformationRevisionDBModel
-from hetdesrun.persistence.dbservice.revision import update_tr
-from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import Type
 
 # revision identifiers, used by Alembic.
@@ -45,24 +44,45 @@ def upgrade() -> None:
 
         results = session.execute(selection).scalars().all()
 
-        tr_list = [TransformationRevision.from_orm_model(result) for result in results]
-
-        for tr in tr_list:
+        for db_model in results:
             applicable = False
-            if isinstance(tr.content, WorkflowContent) and len(tr.content.outputs) != 0:
-                for output in tr.content.outputs:
-                    if output.connector_name == "connector_name":
+            updated_workflow_content = None
+            if (
+                db_model.workflow_content is not None
+                and len(db_model.workflow_content["outputs"]) != 0
+            ):
+                updated_workflow_content = deepcopy(db_model.workflow_content)
+                for output in updated_workflow_content["outputs"]:
+                    if output["connector_name"] == "connector_name":
                         applicable = True
-                        for operator in tr.content.operators:
-                            if operator.id == output.operator_id:
-                                for output_connector in operator.outputs:
-                                    if output_connector.id == output.connector_id:
-                                        assert (  # noqa: S101
-                                            output_connector.name is not None
-                                        )
-                                        output.connector_name = output_connector.name
+                        for operator in updated_workflow_content["operators"]:
+                            if operator["id"] == output["operator_id"]:
+                                for output_connector in operator["outputs"]:
+                                    if output_connector["id"] == output["connector_id"]:
+                                        output["connector_name"] = output_connector[
+                                            "name"
+                                        ]
             if applicable:
-                update_tr(session, tr)
+                session.execute(
+                    update(TransformationRevisionDBModel)
+                    .where(TransformationRevisionDBModel.id == db_model.id)
+                    .values(
+                        revision_group_id=db_model.revision_group_id,
+                        name=db_model.name,
+                        description=db_model.description,
+                        category=db_model.category,
+                        version_tag=db_model.version_tag,
+                        state=db_model.state,
+                        type=db_model.type,
+                        documentation=db_model.documentation,
+                        workflow_content=updated_workflow_content,
+                        component_code=db_model.component_code,
+                        io_interface=db_model.io_interface,
+                        test_wiring=db_model.test_wiring,
+                        released_timestamp=db_model.released_timestamp,
+                        disabled_timestamp=db_model.disabled_timestamp,
+                    )
+                )
 
 
 def downgrade() -> None:
