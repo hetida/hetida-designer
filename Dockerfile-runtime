@@ -1,7 +1,7 @@
 ##### Build stage
 FROM --platform=linux/amd64 python:3.10.8-slim-bullseye as base
 
-ENV TIMEOUT=900
+ENV TIMEOUT=4500
 
 # Copy relevant files
 COPY ./runtime/pipt_locks.env /app/pipt_locks.env
