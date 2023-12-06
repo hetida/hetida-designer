@@ -357,12 +357,12 @@ class Workflow:
             try:
                 sub_node.add_inputs({sub_node_input_name: self.inputs[wf_inp_name]})
             except KeyError as error:
-                inputs_string = ",".join(self.inputs.keys())
+                inputs_string = "', '".join(self.inputs.keys())
                 raise MissingInputSource(
                     f"The input mapping with workflow input '{wf_inp_name}' to "
                     f"subnode input '{sub_node_input_name}' of "
-                    f"subnode '{sub_node.operator_hierarchical_id}'"
-                    f"does not match the inputs of the workflow {inputs_string}."
+                    f"subnode '{sub_node.operator_hierarchical_id}' "
+                    f"does not match the inputs of the workflow '{inputs_string}'."
                 ).set_context(self.context) from error
 
     @cached_property
