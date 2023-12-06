@@ -40,6 +40,7 @@ class FileExtension(str, Enum):
 
     H5 = "h5"
     Pickle = "pkl"
+    PT = "pt"
     CustomObjectsPkl = "custom_objects_pkl"
 
 
