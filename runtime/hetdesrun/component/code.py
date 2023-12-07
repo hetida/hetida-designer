@@ -4,12 +4,17 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
+import logging
 from keyword import iskeyword
+
+import black
 
 from hetdesrun.datatypes import DataType, parse_single_value_dynamically
 from hetdesrun.persistence.models.io import InputType, TransformationInput
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
+
+logger = logging.getLogger(__name__)
 
 imports_template: str = """\
 # add your own imports here, e.g.
@@ -54,6 +59,41 @@ def default_value_string(inp: TransformationInput) -> str:
             inp.value, inp.data_type, inp.type == InputType.OPTIONAL
         )
     )
+
+
+def format_code_with_black(code: str) -> str:
+    # based on https://stackoverflow.com/a/76052629
+    # `format_file_contents`currently best candidate to become the official Python API according to
+    # https://github.com/psf/black/issues/779
+    try:
+        code = black.format_file_contents(
+            code,
+            fast=False,
+            mode=black.Mode(
+                target_versions={black.TargetVersion.PY311}, line_length=100
+            ),
+        )
+    except black.NothingChanged:
+        pass
+    finally:
+        # Make sure there's a newline after the content
+        if len(code) != 0 and code[-1] != "\n":
+            code += "\n"
+    return code
+
+
+def format_function_header(function_header: str) -> str:
+    # add function_body_template to fulfill indented block expectation after function definition
+    formatted_function_header_with_body_template = format_code_with_black(
+        function_header + function_body_template
+    )
+    # remove function_body_template again
+    formatted_function_header = (
+        formatted_function_header_with_body_template.removesuffix(
+            function_body_template
+        )
+    )
+    return formatted_function_header
 
 
 def generate_function_header(
@@ -141,7 +181,7 @@ def generate_function_header(
         timestamp_str = timestamp_str + component.disabled_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
 
-    return function_definition_template.format(
+    function_header = function_definition_template.format(
         input_dict_content=input_dict_str,
         output_dict_content=output_dict_str,
         name='"' + component.name + '"',
@@ -155,6 +195,18 @@ def generate_function_header(
         params_list=param_list_str,
         main_func_declaration_start=main_func_declaration_start,
     )
+
+    try:
+        return format_function_header(function_header)
+    except black.InvalidInput as error:
+        logger.warning(
+            "Error while generating function header for compoent %s:\n%s",
+            str(component.id),
+            str(error),
+        )
+        return function_header
+
+    return format_code_with_black(function_header)
 
 
 def generate_complete_component_module(
