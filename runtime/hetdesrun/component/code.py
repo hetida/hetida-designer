@@ -254,6 +254,9 @@ def update_code(
 
 
 def format_code_with_black(code: str) -> str:
+    # based on https://stackoverflow.com/a/76052629
+    # `format_file_contents`currently best candidate to become the official Python API according to
+    # https://github.com/psf/black/issues/779
     try:
         code = black.format_file_contents(
             code,
