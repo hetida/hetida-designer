@@ -1,4 +1,5 @@
 ## 0.9.4
+* bug fixes around default value handling
 * **BREAKING CHANGE**: DRAFT transformation revisions with a released timestamp will no longer be accepted but cause a ValueError. A database migration fixing affected components and workflows is added. However if you export(ed) transformations with an earlier version than 0.9 and afterwards import them into a version >=0.9.4 the transformations may again include the bug. We therefore strongly recommend that you **make a backup and/or export both before and after upgrading**.
 
 ## 0.9.3
