@@ -271,19 +271,11 @@ def format_code_with_black(code: str) -> str:
     return code
 
 
-def remove_module_doc_string(code: str) -> str:
-    if code.startswith('"""') and code.count('"""') > 1:
-        _, _, remaining_code = code.split('"""', 2)
-
-        code = format_code_with_black(remaining_code)
-
-    return code
-
-
 def add_documentation_as_module_doc_string(
     code: str, tr: TransformationRevision
 ) -> str:
-    code = remove_module_doc_string(code)
+    if code.startswith('"""'):
+        return code
 
     mod_doc_string = (
         '"""Documentation for '
@@ -296,59 +288,25 @@ def add_documentation_as_module_doc_string(
     return mod_doc_string + code
 
 
-def remove_test_wiring_dictionary(code: str) -> str:
-    code = format_code_with_black(code)
+def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
     if re.match(
         pattern=r".*^TEST_WIRING_FROM_PY_FILE_IMPORT",
         string=code,
         flags=re.DOTALL | re.MULTILINE,
     ):
-        split_string = re.split(
-            pattern=r"^TEST_WIRING_FROM_PY_FILE_IMPORT",
-            string=code,
-            flags=re.DOTALL | re.MULTILINE,
-        )
-        if len(split_string) != 2:
-            raise ValueError(
-                "Apparently there is more than one occurence of 'TEST_WIRING_FROM_PY_FILE_IMPORT' "
-                "at the beginning of a line, resulting in the split string:\n%s",
-                ".\n".join(split_string),
-            )
-        preceding_code, test_wiring_and_subsequent_code = split_string
-        if re.match(
-            pattern=r".*^\}\n",
-            string=test_wiring_and_subsequent_code,
-            flags=re.DOTALL | re.MULTILINE,
-        ):
-            _, subsequent_code = re.split(
-                pattern=r"^\}\n",
-                string=test_wiring_and_subsequent_code,
-                maxsplit=1,
-                flags=re.DOTALL | re.MULTILINE,
-            )
-            code = preceding_code + subsequent_code
-
-    return format_code_with_black(code)
-
-
-def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
-    code = remove_test_wiring_dictionary(code)
+        return code
 
     test_wiring_dictionary_string = (
-        "\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = "
+        "TEST_WIRING_FROM_PY_FILE_IMPORT = "
         + tr.test_wiring.json(exclude_unset=True, exclude_defaults=True)
         + "\n"
     )
 
-    expanded_code = format_code_with_black(code + test_wiring_dictionary_string)
+    expanded_code = (
+        code + "\n\n" + format_code_with_black(test_wiring_dictionary_string)
+    )
 
     return expanded_code
-
-
-def reduce_code(code: str) -> str:
-    reduced_code = remove_module_doc_string(code)
-    reduced_code = remove_test_wiring_dictionary(reduced_code)
-    return reduced_code
 
 
 def expand_code(
