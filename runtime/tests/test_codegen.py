@@ -85,13 +85,13 @@ def test_function_header_optional_inputs():
                     name="x",
                     data_type=DataType.Float,
                     type=InputType.OPTIONAL,
-                    value=1.2,
+                    value="1.2",
                 ),
                 TransformationInput(
                     name="okay",
                     data_type=DataType.Boolean,
                     type=InputType.OPTIONAL,
-                    value=False,
+                    value="false",
                 ),
                 TransformationInput(
                     name="neither_nor_ok",
@@ -109,7 +109,6 @@ def test_function_header_optional_inputs():
                     name="no_text",
                     data_type=DataType.String,
                     type=InputType.OPTIONAL,
-                    value=None,
                 ),
                 TransformationInput(
                     name="empty_text",
@@ -118,13 +117,39 @@ def test_function_header_optional_inputs():
                     value="",
                 ),
                 TransformationInput(
-                    name="series",
-                    data_type=DataType.Series,
+                    name="no_any",
+                    data_type=DataType.Any,
                     type=InputType.OPTIONAL,
-                    value=(
-                        '{\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": '
-                        '18.7,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'
-                    ),
+                ),
+                TransformationInput(
+                    name="null_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                    value="null",
+                ),
+                TransformationInput(
+                    name="empty_string_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                    value="",
+                ),
+                TransformationInput(
+                    name="some_string_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                    value="any",
+                ),
+                TransformationInput(
+                    name="some_number_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                    value="23",
+                ),
+                TransformationInput(
+                    name="some_json_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                    value='{"test": true, "content": null, "sub_structure": {"relevant": false}}',
                 ),
             ],
             outputs=[TransformationOutput(name="output", data_type=DataType.Float)],
@@ -146,10 +171,29 @@ def test_function_header_optional_inputs():
     assert '"default_value": 1.2' in func_header
     assert '"default_value": "text"' in func_header
     assert '"default_value": "None"' not in func_header
+    assert '"default_value": ""' in func_header
+    assert '"default_value": "any"' in func_header
+    assert '"default_value": 23' in func_header
     assert (
-        'main(*, x=1.2, okay=False, neither_nor_ok=None, text="text", no_text=None, empty_text="", '
-        'series={\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": 18.7,'
-        '\n    "2020-01-03T08:20:04.000Z": 25.9\n})'
+        '"default_value": {"test": True, "content": None, "sub_structure": {"relevant": False}}'
+        in func_header
+    )
+    assert (
+        "def main(\n"
+        "    *,\n"
+        "    x=1.2,\n"
+        "    okay=False,\n"
+        "    neither_nor_ok=None,\n"
+        '    text="text",\n'
+        "    no_text=None,\n"
+        '    empty_text="",\n'
+        "    no_any=None,\n"
+        "    null_any=None,\n"
+        '    empty_string_any="",\n'
+        '    some_string_any="any",\n'
+        "    some_number_any=23,\n"
+        '    some_json_any={"test": True, "content": None, "sub_structure": {"relevant": False}},\n'
+        "):"
     ) in func_header
 
 
