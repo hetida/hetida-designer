@@ -239,7 +239,6 @@ def test_add_test_wiring_dictionary():
     )
 
     assert (
-        
         "TEST_WIRING_FROM_PY_FILE_IMPORT"
         not in component_code_without_test_wiring_dictionary
     )
