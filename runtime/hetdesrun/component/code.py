@@ -6,7 +6,7 @@ to provide a very elementary support system to the designer code editor.
 
 from keyword import iskeyword
 
-from hetdesrun.datatypes import DataType
+from hetdesrun.datatypes import DataType, parse_single_value_dynamically
 from hetdesrun.persistence.models.io import InputType, TransformationInput
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
@@ -45,19 +45,15 @@ function_body_template: str = """\
 """
 
 
-def wrap_in_quotes_if_data_type_string(
-    default_value_string: str, data_type: DataType
-) -> str:
-    if data_type != DataType.String or default_value_string == "None":
-        return default_value_string
-    return '"' + default_value_string + '"'
-
-
 def default_value_string(inp: TransformationInput) -> str:
-    if inp.value == "" and inp.data_type != DataType.String:
-        return "None"
+    if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
+        return repr(None)
 
-    return wrap_in_quotes_if_data_type_string(str(inp.value), inp.data_type)
+    return repr(
+        parse_single_value_dynamically(
+            inp.value, inp.data_type, inp.type == InputType.OPTIONAL
+        )
+    )
 
 
 def generate_function_header(
@@ -95,22 +91,7 @@ def generate_function_header(
                 + inp.data_type.value
                 + '"'
                 + (
-                    ', "default_value": '
-                    + (
-                        '"'
-                        if inp.data_type == DataType.String and inp.value is not None
-                        else ""
-                    )
-                    + (
-                        str(inp.value)
-                        if (inp.data_type == DataType.String or inp.value != "")
-                        else "None"
-                    )
-                    + (
-                        '"'
-                        if inp.data_type == DataType.String and inp.value is not None
-                        else ""
-                    )
+                    ', "default_value": ' + default_value_string(inp)
                     if inp.type == InputType.OPTIONAL
                     else ""
                 )

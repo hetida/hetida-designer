@@ -462,12 +462,16 @@ def parse_via_pydantic(
 
 
 def parse_dynamically_from_datatypes(
-    entries: list[NamedDataTypedValue], optional: bool = False
+    entries: list[NamedDataTypedValue], nullable: bool = False
 ) -> BaseModel:
-    if optional is False:
-        return parse_via_pydantic(entries, type_map=data_type_map)
-    return parse_via_pydantic(entries, type_map=optional_data_type_map)
+    return parse_via_pydantic(
+        entries, type_map=data_type_map if nullable is False else optional_data_type_map
+    )
 
 
-def parse_dynamically_single_value(value: Any, data_type: DataType) -> BaseModel:
-    return parse_via_pydantic([{"name": "value", "type": data_type, "value": value}])
+def parse_single_value_dynamically(
+    value: Any, data_type: DataType, nullable: bool
+) -> Any:
+    return parse_dynamically_from_datatypes(
+        [{"name": "value", "type": data_type, "value": value}], nullable
+    ).dict()["value"]
