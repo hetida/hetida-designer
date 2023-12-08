@@ -21,6 +21,7 @@ imports_template: str = """\
 # import pandas as pd
 # import numpy as np
 
+
 """
 
 function_definition_template: str = """\
@@ -41,18 +42,25 @@ COMPONENT_INFO = {{
 
 {main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
-    # ***** DO NOT EDIT LINES ABOVE *****\
+    # ***** DO NOT EDIT LINES ABOVE *****
 """
 
-function_body_template: str = """\
+function_body_template: str = """
     # write your function code here.
-    pass\
+    pass
 """
 
 
 def default_value_string(inp: TransformationInput) -> str:
     if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
         return repr(None)
+
+    if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
+        return (
+            "pd.read_json(io.StringIO("
+            + repr(inp.value)
+            + ("), typ='series')" if inp.data_type == DataType.Series else "))")
+        )
 
     try:
         return repr(
@@ -225,9 +233,7 @@ def generate_complete_component_module(
 ) -> str:
     return (
         imports_template
-        + "\n"
         + generate_function_header(component, is_coroutine)
-        + "\n"
         + function_body_template
     )
 
@@ -269,19 +275,19 @@ def update_code(
     except ValueError:
         # Cannot find func def, therefore append it (assuming necessary imports are present):
         # This may secretely add a second main entrypoint function!
-        return (
-            existing_code + "\n\n" + new_function_header + "\n" + function_body_template
-        )
+        return existing_code + "\n\n" + new_function_header + function_body_template
 
-    if "    # ***** DO NOT EDIT LINES ABOVE *****" not in remaining:
+    if "    # ***** DO NOT EDIT LINES ABOVE *****\n" not in remaining:
         # Cannot find end of function definition.
         # Therefore replace all code starting from the detected beginning of the function
         # definition. This deletes all user code below!
-        return start + new_function_header + "\n" + function_body_template
+        return start + new_function_header + function_body_template
 
     # we now are quite sure that we find a complete existing function definition
 
-    old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****", 1)
+    old_func_def, end = remaining.split(
+        "    # ***** DO NOT EDIT LINES ABOVE *****\n", 1
+    )
 
     old_func_def_lines = old_func_def.split("\n")
     use_async_def = (len(old_func_def_lines) >= 3) and old_func_def_lines[

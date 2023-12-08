@@ -31,10 +31,30 @@ def test_function_header_no_params():
         test_wiring=[],
     )
     func_header = generate_function_header(component)
-    assert "main()" in func_header
-    assert '"inputs": {' + "}" in func_header  # noqa: ISC003
-    assert '"outputs": {' + "}" in func_header  # noqa: ISC003
-    assert '"id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565"' in func_header
+
+    assert (
+        func_header
+        == """\
+# ***** DO NOT EDIT LINES BELOW *****
+# These lines may be overwritten if component details or inputs/outputs change.
+COMPONENT_INFO = {
+    "inputs": {},
+    "outputs": {},
+    "name": "Test Component",
+    "category": "Tests",
+    "description": "A test component",
+    "version_tag": "1.0.0",
+    "id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+    "revision_group_id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+    "state": "DRAFT",
+}
+
+
+def main():
+    # entrypoint function for this component
+    # ***** DO NOT EDIT LINES ABOVE *****
+"""
+    )
 
 
 def test_function_header_multiple_inputs():
@@ -153,6 +173,15 @@ def test_function_header_optional_inputs():
                     type=InputType.OPTIONAL,
                     value='{"test": true, "content": null, "sub_structure": {"relevant": false}}',
                 ),
+                TransformationInput(
+                    name="series",
+                    data_type=DataType.Series,
+                    type=InputType.OPTIONAL,
+                    value=(
+                        '{"2020-01-01T01:15:27.000Z": 42.2, "2020-01-03T08:20:03.000Z": 18.7, '
+                        '"2020-01-03T08:20:04.000Z": 25.9}'
+                    ),
+                ),
             ],
             outputs=[TransformationOutput(name="output", data_type=DataType.Float)],
         ),
@@ -195,6 +224,13 @@ def test_function_header_optional_inputs():
         '    some_string_any="any",\n'
         "    some_number_any=23,\n"
         '    some_json_any={"test": True, "content": None, "sub_structure": {"relevant": False}},\n'
+        "    series=pd.read_json(\n"
+        "        io.StringIO(\n"
+        '            \'{"2020-01-01T01:15:27.000Z": 42.2, "2020-01-03T08:20:03.000Z": 18.7, '
+        '"2020-01-03T08:20:04.000Z": 25.9}\'\n'
+        "        ),\n"
+        '        typ="series",\n'
+        "    ),\n"
         "):"
     ) in func_header
 
