@@ -470,8 +470,8 @@ def parse_dynamically_from_datatypes(
 
 
 def parse_single_value_dynamically(
-    value: Any, data_type: DataType, nullable: bool
+    name: str, value: Any, data_type: DataType, nullable: bool
 ) -> Any:
     return parse_dynamically_from_datatypes(
-        [{"name": "value", "type": data_type, "value": value}], nullable
-    ).dict()["value"]
+        [{"name": name, "type": data_type, "value": value}], nullable
+    ).dict()[name]

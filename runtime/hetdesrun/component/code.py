@@ -54,11 +54,22 @@ def default_value_string(inp: TransformationInput) -> str:
     if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
         return repr(None)
 
-    return repr(
-        parse_single_value_dynamically(
-            inp.value, inp.data_type, inp.type == InputType.OPTIONAL
+    try:
+        return repr(
+            parse_single_value_dynamically(
+                name=inp.name if inp.name is not None else "UNKNOWN",
+                value=inp.value,
+                data_type=inp.data_type,
+                nullable=True,
+            )
         )
-    )
+    except ValueError as error:
+        msg = (
+            f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type.value}"
+            + (f":\n{str(error)}" if inp.value != "None" else ". Enter 'null' instead.")
+        )
+        logger.error(msg)
+        raise TypeError(msg) from error
 
 
 def format_code_with_black(code: str) -> str:

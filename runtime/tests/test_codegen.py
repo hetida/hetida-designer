@@ -1,3 +1,5 @@
+import pytest
+
 from hetdesrun.component.code import (
     check_parameter_names,
     generate_function_header,
@@ -195,6 +197,35 @@ def test_function_header_optional_inputs():
         '    some_json_any={"test": True, "content": None, "sub_structure": {"relevant": False}},\n'
         "):"
     ) in func_header
+
+    component_with_none = TransformationRevision(
+        io_interface=IOInterface(
+            inputs=[
+                TransformationInput(
+                    name="none",
+                    data_type=DataType.Float,
+                    type=InputType.OPTIONAL,
+                    value="None",
+                ),
+            ],
+            outputs=[TransformationOutput(name="output", data_type=DataType.Float)],
+        ),
+        name="Test Component",
+        description="A test component",
+        category="Tests",
+        id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        version_tag="1.0.0",
+        state="DRAFT",
+        type="COMPONENT",
+        content="",
+        test_wiring=[],
+    )
+    with pytest.raises(
+        TypeError,
+        match="Parsing Error for value 'None' of input 'none' as FLOAT. Enter 'null' instead.",
+    ):
+        generate_function_header(component_with_none)
 
 
 def test_check_parameter_names():
