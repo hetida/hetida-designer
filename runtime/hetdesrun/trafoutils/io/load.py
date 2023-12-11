@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
 
+import pandas as pd
 from pydantic import BaseModel, Field, parse_file_as
 
 from hetdesrun.component.load import (
@@ -54,6 +55,29 @@ def load_python_file(path: str) -> str | None:
         logger.error("Could not find python file at path %s", path)
         python_code = None
     return python_code
+
+
+def get_json_default_value_from_python_object(input_info: dict) -> str | None:
+    if "default_value" not in input_info or input_info["default_value"] is None:
+        return None
+
+    if "data_type" not in input_info:
+        raise ValueError(
+            "For optional inputs a data type must be provided in the COMPONENT_INFO!"
+        )
+
+    if isinstance(input_info["default_value"], str) and input_info["data_type"] in (
+        "STRING",
+        "ANY",
+    ):
+        return input_info["default_value"]
+
+    if isinstance(input_info["default_value"], pd.Series | pd.DataFrame) and input_info[
+        "data_type"
+    ] in ("SERIES", "DATAFRAME", "MULTITSFRAME"):
+        return str(input_info["default_value"].to_json(date_format="iso"))
+
+    return json.dumps(input_info["default_value"])
 
 
 def transformation_revision_from_python_code(code: str) -> Any:
@@ -150,7 +174,9 @@ def transformation_revision_from_python_code(code: str) -> Any:
             else None,
         )
     else:
-        raise ComponentCodeImportError
+        raise ComponentCodeImportError(
+            "The code does neither contain registered meta data nor a component dictionary."
+        )
 
     test_wiring = WorkflowWiring()
     if hasattr(mod, "TEST_WIRING_FROM_PY_FILE_IMPORT"):
@@ -186,9 +212,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
                     else input_info,
                     # input info maybe a datatype string (backwards compatibility)
                     # or a dictionary containing the datatype as well as a potential default value
-                    value=input_info["default_value"]
-                    if isinstance(input_info, dict) and "default_value" in input_info
-                    else None,
+                    value=get_json_default_value_from_python_object(input_info),
                     type=InputType.OPTIONAL
                     if isinstance(input_info, dict) and "default_value" in input_info
                     else InputType.REQUIRED,

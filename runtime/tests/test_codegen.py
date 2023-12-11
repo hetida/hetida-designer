@@ -1,3 +1,6 @@
+import json
+import os
+
 import pytest
 
 from hetdesrun.component.code import (
@@ -206,8 +209,11 @@ def test_function_header_optional_inputs():
     assert '"default_value": "any"' in func_header
     assert '"default_value": 23' in func_header
     assert (
-        '"default_value": {"test": True, "content": None, "sub_structure": {"relevant": False}}'
-        in func_header
+        '"default_value": {\n'
+        '                "test": True,\n'
+        '                "content": None,\n'
+        '                "sub_structure": {"relevant": False},\n'
+        "            }" in func_header
     )
     assert (
         "def main(\n"
@@ -269,7 +275,7 @@ def test_check_parameter_names():
     assert not check_parameter_names(["1", "x"])
 
 
-def test_update_code():
+def test_update_code_without_io():
     component = TransformationRevision(
         io_interface=IOInterface(inputs=[], outputs=[]),
         name="Test Component",
@@ -315,3 +321,29 @@ def test_update_code():
     component.content = example_code_async
     new_code = update_code(component)
     assert "async def" in new_code
+
+
+def test_update_code_with_optional_inputs():
+    json_path = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "test_optional_inputs_component.json",
+    )
+    with open(json_path) as f:
+        tr_json = json.load(f)
+
+    tr = TransformationRevision(**tr_json)
+
+    updated_code = update_code(tr)
+
+    py_path = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "test_optional_inputs_component.py",
+    )
+    with open(py_path) as f:
+        code_from_file = f.read()
+
+    assert updated_code == code_from_file

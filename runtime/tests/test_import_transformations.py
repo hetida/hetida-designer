@@ -50,7 +50,7 @@ def test_tr_from_code_for_component_without_register_decorator():
     assert len(tr.test_wiring.input_wirings) == 2
 
 
-def test_tr_from_code_for_component_with_optional_inputs():
+def test_tr_from_code_for_component_with_usual_optional_inputs():
     path = os.path.join(
         "tests",
         "data",
@@ -74,7 +74,7 @@ def test_tr_from_code_for_component_with_optional_inputs():
     assert tr.io_interface.inputs[0].name == "num_pred_series_future_days"
     assert tr.io_interface.inputs[0].data_type == DataType.Integer
     assert tr.io_interface.inputs[0].type == InputType.OPTIONAL
-    assert tr.io_interface.inputs[0].value == 3
+    assert tr.io_interface.inputs[0].value == "3"
     assert tr.io_interface.inputs[1].name == "pred_series_frequency"
     assert tr.io_interface.inputs[1].data_type == DataType.String
     assert tr.io_interface.inputs[1].type == InputType.OPTIONAL
@@ -96,6 +96,58 @@ def test_tr_from_code_for_component_with_optional_inputs():
     assert tr.io_interface.outputs[3].data_type == DataType.String
     assert tr.type == "COMPONENT"
     assert "COMPONENT_INFO" in tr.content
+
+
+def test_tr_from_code_for_component_with_edge_case_optional_inputs():
+    py_path = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "test_optional_inputs_component.py",
+    )
+    with open(py_path) as f:
+        code = f.read()
+
+    tr_from_py_json = transformation_revision_from_python_code(code)
+    tr_from_py = TransformationRevision(**tr_from_py_json)
+
+    json_path = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "test_optional_inputs_component.json",
+    )
+
+    tr_from_json_json = load_json(json_path)
+    tr_from_json = TransformationRevision(**tr_from_json_json)
+
+    assert len(tr_from_py.io_interface.inputs) == len(tr_from_json.io_interface.inputs)
+    nof_inputs = len(tr_from_py.io_interface.inputs)
+
+    for input_index in range(nof_inputs):
+        assert (
+            tr_from_py.io_interface.inputs[input_index].name
+            == tr_from_json.io_interface.inputs[input_index].name
+        )
+        assert (
+            tr_from_py.io_interface.inputs[input_index].data_type
+            == tr_from_json.io_interface.inputs[input_index].data_type
+        )
+        if input_index == 6:
+            assert tr_from_py.io_interface.inputs[input_index].value is None
+            assert tr_from_json.io_interface.inputs[input_index].value == "null"
+            continue
+        if input_index == 11:
+            assert tr_from_py.io_interface.inputs[
+                input_index
+            ].value == tr_from_json.io_interface.inputs[input_index].value.replace(
+                " ", ""
+            )
+            continue
+        assert (
+            tr_from_py.io_interface.inputs[input_index].value
+            == tr_from_json.io_interface.inputs[input_index].value
+        )
 
 
 def test_import_single_transformation(mocked_clean_test_db_session):
