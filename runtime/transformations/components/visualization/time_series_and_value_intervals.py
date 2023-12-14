@@ -14,11 +14,12 @@ Plots the `series` and each value interval in `value_interval_dict`.
     distinct line and fill colors can be entered. Supported dict properties:
     - **min_value**: Integer
     - **max_value**: Integer
-    - **min_value_inclusive**: Boolean
-    - **max_value_inclusive**: Boolean
-    - **line_color**: String, see Details for further specifications
-    - **line_color**: String, see Details for further specifications
-    - **display_name**: String
+    - *(optional)* **min_value_inclusive**: Boolean
+    - *(optional)* **max_value_inclusive**: Boolean
+    - *(optional)* **line_color**: String, see Details for further specifications
+    - *(optional)* **line_color**: String, see Details for further specifications
+    - *(optional)* **display_name**: String
+
 
 - **line_color** (String):
     RGB color for the margins of the value intervals. Will be applied for each interval without
@@ -45,11 +46,15 @@ value interval is labeled with its name.
     - An rgb/rgba string (e.g. 'rgb(255,0,0)')
     - An hsl/hsla string (e.g. 'hsl(0,100%,50%,15%)')
     - A named CSS color (e.g. 'indigo')
-For fill colors, the use of either RGBA or HSLA colors with a low opacity, e.g. a value of
+
+- For fill colors, the use of either RGBA or HSLA colors with a low opacity, e.g. a value of
 0.15 for the Alpha Channel, is strongly recommended, to allow visibility of the data points inside
 the value intervals.
 
 - Raises `ComponentInputValidationException`:
+    - If `series` has no entries or its dtype is neither int nor float.
+    - If any of the `line_color` or `fill_color` strings is not a valid color input.
+    - If any value interval in `value_interval_dict` contains invalid inputs.
 
 
 ## Examples
