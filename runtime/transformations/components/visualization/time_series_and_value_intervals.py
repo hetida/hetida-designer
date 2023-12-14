@@ -264,7 +264,7 @@ def main(
 
     if series.dtype not in [int, float]:
         raise ComponentInputValidationException(
-            "To determine whether time series entries are in a value interval,"
+            "To display the time series entries,"
             f" their dtype must be float or int, while it is {series.dtype}",
             error_code=422,
             invalid_component_inputs=["series"],
@@ -274,8 +274,7 @@ def main(
 
     if series_no_nan.empty is True:
         raise ComponentInputValidationException(
-            "To determine whether time series entries are in a value interval,"
-            "the input series must not be empty.",
+            "To display the time series entries the input series must not be empty.",
             error_code=422,
             invalid_component_inputs=["series"],
         )
