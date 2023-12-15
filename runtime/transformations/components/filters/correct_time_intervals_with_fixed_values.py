@@ -132,7 +132,7 @@ COMPONENT_INFO = {
         "Correct all data points in provided time intervals from a time series with a "
         "correction value for each time interval."
     ),
-    "version_tag": "0.1.0",
+    "version_tag": "0.1.4",
     "id": "504a01aa-12a2-472b-995c-0676af66b07c",
     "revision_group_id": "92d2ded2-c6ca-42a1-a15b-a8e9cf6ca635",
     "state": "RELEASED",
