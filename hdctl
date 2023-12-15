@@ -718,7 +718,9 @@ _export_to_dir() {
 
     mkdir -p "$EXPORT_DIRECTORY"
 
+    # echo curl "${curl_args[@]}" -X GET -G -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${REMAINING_ARGS[@]}"
     # write each trafo revision to its respective directory
+
     for row in $(curl "${curl_args[@]}" -X GET -G -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${REMAINING_ARGS[@]}" | jq -r '.[] | @base64'); do
         decoded_row="$(echo ${row} | base64 --decode)"
 
@@ -748,11 +750,85 @@ fetch() {
 
 ###############################################################################
 #                                                                             #
+#                                Sync commands                                #
+#                                                                             #
+###############################################################################
+
+sync() {
+    local sync_command="$1"
+
+    if [[ "$sync_command" != "push" ]] && [[ "$sync_command" != "pull" ]]; then
+        _log_error "Only allowed sync actions are pull and push. Got $sync_command instead. Aborting"
+        exit 1
+    fi
+
+    local sync_instance="$2"
+
+    if [[ -z "$sync_instance" ]]; then
+        _log_error "no hd instance specified. Aborting."
+        exit 1
+    fi
+
+    shift
+    shift
+
+    local instance_file="${sync_instance}.hd-instance"
+    local instance_creds_file="${sync_instance}.hd-creds"
+
+    source "$instance_file"
+    source "$instance_creds_file"
+
+    _initialize_variables
+
+    local additional_arguments=()
+    if [[ "$sync_command" == "pull" ]]; then
+        if [[ -n "$PULL_QUERY_URL_APPEND" ]]; then
+            QUERY_URL_APPEND="$PULL_QUERY_URL_APPEND"
+        fi
+        if [[ -n "$PULL_ADDITIONAL_ARGUMENTS" ]]; then
+            additional_arguments=("${PULL_ADDITIONAL_ARGUMENTS[@]}")
+        fi
+    fi
+
+    if [[ "$sync_command" == "push" ]]; then
+        if [[ -n "$PUSH_QUERY_URL_APPEND" ]]; then
+            QUERY_URL_APPEND="$PUSH_QUERY_URL_APPEND"
+        fi
+        if [[ -n "$PUSH_ADDITIONAL_ARGUMENTS" ]]; then
+            additional_arguments=("${PUSH_ADDITIONAL_ARGUMENTS[@]}")
+        fi
+    fi
+
+    _parse_global_options "${additional_arguments[@]}" "${@}"
+    _validate_global_parameters
+
+    # Additionally required validations for syncing
+
+    if [[ -z "$EXPORT_DIRECTORY" ]]; then
+        _log_error "No export directory specified. Aborting."
+        exit 1
+    fi
+
+    # Now we are ready to actually run the requested sync command
+
+    if [[ "$sync_command" == "pull" ]]; then
+        # clear up directory first
+        rm -Rf "$EXPORT_DIRECTORY"
+
+        _export_to_dir
+    elif [[ "$sync_command" == "push" ]]; then
+        _import_from_dir
+    fi
+
+}
+
+###############################################################################
+#                                                                             #
 #             Setup/handle params, environment variables, env file            #
 #                                                                             #
 ###############################################################################
 
-REMAINING_ARGS=""
+REMAINING_ARGS=()
 
 # must be called with all command line arguments
 _obtain_env_file_config() {
@@ -809,7 +885,7 @@ _initialize_variables() {
 
     HD_BACKEND_API_URL="${HDCTL_HD_BACKEND_API_URL:-"${HD_BACKEND_API_URL:-"http://localhost/api"}"}"
     VERIFY_BACKEND_API_URL="${HDCTL_VERIFY_BACKEND_API_URL:-"${VERIFY_BACKEND_API_URL:-true}"}"
-    QUERY_URL_APPEND=""
+    QUERY_URL_APPEND="${HDCTL_QUERY_URL_APPEND:-"${QUERY_URL_APPEND:-""}"}"
 
     ##### Authentication
     DIRECT_ACCESS_TOKEN="${HDCTL_DIRECT_ACCESS_TOKEN:-"${DIRECT_ACCES_TOKEN:-""}"}"
