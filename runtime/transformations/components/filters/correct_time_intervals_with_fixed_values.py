@@ -7,10 +7,12 @@ Correct all data points in provided time intervals from a time series with a cor
 each time interval.
 
 ## Inputs
-- **series_or_multitsframe** (Pandas Series):
-    Expects DateTimeIndex, or if a Data Frame has been entered, a column named "timestamp".
-- **list_of_time_intervals** (Any):
-    List of time intervals, that specify wh Supported dict properties:
+- **series** (Pandas Series):
+    Expects DateTimeIndex. Expects dtype to be float or int.
+
+- **list_of_time_intervals** (dict):
+    List of time intervals, that specify when each interval begins and ends, and which correction
+    value to use. Supported dict properties:
     - **start**: Timestamp
     - **end**: Timestamp
     - **correction_value**: Float
@@ -19,23 +21,21 @@ each time interval.
 
 ## Outputs
 - **corrected** (Pandas Series):
-    The Series or Data Frame with corrected values.
-
+    The Series with corrected values.
 
 ## Details
 - If a data point lies within multiple time intervals, it will be changed to the `correction_value`
 of the last time interval in `time_interval_dict`.
 - Raises `ComponentInputValidationException`:
-    - If the index of `series_or_multitsframe` is not a DateTimeIndex and, if
-     `series_or_multitsframe` is a Data Frame, there is no column named "timestamp".
-    - If `series_or_multitsframe` does not contain any valid entries.
+    - If the index of `series` is not a DateTimeIndex.
+    - If `series` does not contain any valid entries.
     - If `list_of_time_intervals` contains any invalid entries.
 
 ## Examples
 
 Example json input for a call of this component is:
 ```
-{   "series_or_multitsframe": {
+{   "series": {
         "2020-01-01T01:15:27.000Z": 42.2,
         "2020-01-03T08:20:03.000Z": 18.7,
         "2020-01-03T08:20:04.000Z": 25.9
@@ -120,7 +120,7 @@ class TimeInterval(BaseModel):
 # These lines may be overwritten if component details or inputs/outputs change.
 COMPONENT_INFO = {
     "inputs": {
-        "series_or_multitsframe": {"data_type": "SERIES"},
+        "series": {"data_type": "SERIES"},
         "list_of_time_intervals": {"data_type": "ANY"},
     },
     "outputs": {
@@ -141,33 +141,29 @@ COMPONENT_INFO = {
 }
 
 
-def main(*, series_or_multitsframe: pd.Series, list_of_time_intervals):
+def main(*, series: pd.Series, list_of_time_intervals):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
 
-    series_or_multitsframe_no_nan = series_or_multitsframe.dropna()
+    series_or_multitsframe_no_nan = series.dropna()
     if series_or_multitsframe_no_nan.empty is True:
         raise ComponentInputValidationException(
             "To determine whether time series entries are in a value interval,"
             "the input series must not be empty.",
             error_code="not a time-series like object",
-            invalid_component_inputs=["series_or_multitsframe"],
+            invalid_component_inputs=["series"],
         )
-    if (
-        isinstance(series_or_multitsframe_no_nan, pd.DataFrame)
-        and "timestamp" in series_or_multitsframe_no_nan.columns
+
+    if isinstance(series_or_multitsframe_no_nan, pd.Series) and isinstance(
+        series_or_multitsframe_no_nan.index, pd.DatetimeIndex
     ):
-        timestamps = series_or_multitsframe_no_nan["timestamp"]
-    elif isinstance(
-        series_or_multitsframe_no_nan, pd.Series | pd.DataFrame
-    ) and isinstance(series_or_multitsframe_no_nan.index, pd.DatetimeIndex):
         timestamps = series_or_multitsframe_no_nan.index
     else:
         raise ComponentInputValidationException(
             "Could not find timestamps in provided object",
             error_code="not a time-series like object",
-            invalid_component_inputs=["series_or_multitsframe"],
+            invalid_component_inputs=["series"],
         )
 
     in_intervals = pd.Series(False, index=timestamps)
@@ -221,7 +217,7 @@ def main(*, series_or_multitsframe: pd.Series, list_of_time_intervals):
 TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
-            "workflow_input_name": "series_or_multitsframe",
+            "workflow_input_name": "series",
             "adapter_id": "direct_provisioning",
             "use_default_value": False,
             "filters": {
