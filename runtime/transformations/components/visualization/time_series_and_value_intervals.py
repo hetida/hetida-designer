@@ -14,8 +14,8 @@ Plots the `series` and each value interval in `value_interval_dict`.
     distinct line and fill colors can be entered. Supported dict properties:
     - **min_value**: Integer
     - **max_value**: Integer
-    - *(optional)* **min_value_inclusive**: Boolean
-    - *(optional)* **max_value_inclusive**: Boolean
+    - *(optional)* **min_value_inclusive**: Boolean, default value: True
+    - *(optional)* **max_value_inclusive**: Boolean, default value: True
     - *(optional)* **line_color**: String, see Details for further specifications
     - *(optional)* **fill_color**: String, see Details for further specifications
     - *(optional)* **display_name**: String
@@ -46,6 +46,7 @@ value interval is labeled with its name.
     - An rgb/rgba string (e.g. 'rgb(255,0,0)')
     - An hsl/hsla string (e.g. 'hsl(0,100%,50%,15%)')
     - A named CSS color (e.g. 'indigo')
+    #   TODO nicht validieren: an plotly weitergeben
 
 - For fill colors, the use of either RGBA or HSLA colors with a low opacity, e.g. a value of
 0.15 for the Alpha Channel, is strongly recommended, to allow visibility of the data points inside
@@ -55,7 +56,6 @@ the value intervals.
     - If `series` has no entries or its dtype is neither int nor float.
     - If any of the `line_color` or `fill_color` strings is not a valid color input.
     - If any value interval in `value_interval_dict` contains invalid inputs.
-
 
 ## Examples
 
@@ -99,10 +99,14 @@ import logging
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
-from pydantic import BaseModel, ColorError, ValidationError, color, root_validator
+from pydantic import BaseModel, ValidationError, root_validator
 
 from hetdesrun.runtime.exceptions import ComponentInputValidationException
 from hetdesrun.utils import plotly_fig_to_json_dict
+
+pio.templates.default = None
+
+logger = logging.getLogger(__name__)
 
 
 class ValueInterval(BaseModel):
@@ -116,21 +120,10 @@ class ValueInterval(BaseModel):
 
     @root_validator()
     def verify_value_ranges(cls, values: dict) -> dict:
-        try:
-            min_value = values["min_value"]
-            min_value_inclusive = values["min_value_inclusive"]
-            max_value = values["max_value"]
-            max_value_inclusive = values["max_value_inclusive"]
-            fill_color_str = values.get("fill_color")
-            if fill_color_str is not None:
-                fill_color = color.Color(fill_color_str).as_rgb()
-            line_color_str = values.get("line_color")
-            if line_color_str is not None:
-                line_color = color.Color(line_color_str).as_rgb()
-            display_name = values.get("display_name")
-
-        except (KeyError, ColorError) as error:
-            raise ValueError("") from error
+        min_value = values["min_value"]
+        min_value_inclusive = values["min_value_inclusive"]
+        max_value = values["max_value"]
+        max_value_inclusive = values["max_value_inclusive"]
         if max_value < min_value:
             raise ValueError(
                 "To be valid, a value interval must be non-empty, i.e. min_value may not "
@@ -145,11 +138,6 @@ class ValueInterval(BaseModel):
                 "be smaller than max_value."
             )
         return values
-
-
-pio.templates.default = None
-
-logger = logging.getLogger(__name__)
 
 
 def plot_series_and_ranges(
@@ -243,7 +231,7 @@ COMPONENT_INFO = {
     "name": "Time Series and Value Intervals",
     "category": "Visualization",
     "description": "Plots the series and each value interval in value_interval_dict.",
-    "version_tag": "0.1.4",
+    "version_tag": "1.0.0",
     "id": "9b4ca94e-0e20-4341-bb23-abe73d33c7ab",
     "revision_group_id": "b2c8fc6a-c550-4b4c-94f1-7cec0d87a081",
     "state": "RELEASED",
@@ -270,14 +258,9 @@ def main(
             invalid_component_inputs=["series"],
         )
 
-    series_no_nan = series.dropna()
+    series_no_nan = series.dropna()  # wichtig für den Plot?
 
-    if series_no_nan.empty is True:
-        raise ComponentInputValidationException(
-            "To display the time series entries the input series must not be empty.",
-            error_code=422,
-            invalid_component_inputs=["series"],
-        )
+    # TODO leerer plot prüfen
 
     error_dict = {}
 
@@ -299,27 +282,11 @@ def main(
             error_code=422,
             invalid_component_inputs=["value_interval_dict"],
         )
-    try:
-        line_color_rgb = color.Color(line_color).as_rgb()
-    except ColorError as error:
-        raise ComponentInputValidationException(  # noqa: B904
-            "There was an input validation error for the line_color:\n" + str(error),
-            error_code=422,
-            invalid_component_inputs=["line_color"],
-        )
-    try:
-        fill_color_rgb = color.Color(fill_color).as_rgb()
-    except ColorError as error:
-        raise ComponentInputValidationException(  # noqa: B904
-            "There was an input validation error for the fill_color:\n" + str(error),
-            error_code=422,
-            invalid_component_inputs=["fill_color"],
-        )
 
     return {
         "series_with_intervals": plotly_fig_to_json_dict(
             plot_series_and_ranges(
-                series_no_nan, value_intervals, line_color_rgb, fill_color_rgb
+                series_no_nan, value_intervals, line_color, fill_color
             )
         )
     }
