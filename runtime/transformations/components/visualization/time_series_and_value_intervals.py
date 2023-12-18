@@ -17,7 +17,7 @@ Plots the `series` and each value interval in `value_interval_dict`.
     - *(optional)* **min_value_inclusive**: Boolean
     - *(optional)* **max_value_inclusive**: Boolean
     - *(optional)* **line_color**: String, see Details for further specifications
-    - *(optional)* **line_color**: String, see Details for further specifications
+    - *(optional)* **fill_color**: String, see Details for further specifications
     - *(optional)* **display_name**: String
 
 
