@@ -10,14 +10,14 @@ each time interval.
 - **series** (Pandas Series):
     Expects DateTimeIndex. Expects dtype to be float or int.
 
-- **list_of_time_intervals** (dict):
+- **list_of_time_intervals** (List):
     List of time intervals, that specify when each interval begins and ends, and which correction
     value to use. Supported dict properties:
     - **start**: Timestamp
     - **end**: Timestamp
     - **correction_value**: Float
-    - *(optional)* **start_inclusive**: Boolean
-    - *(optional)* **end_inclusive**: Boolean
+    - *(optional)* **start_inclusive**: Boolean, default value: True
+    - *(optional)* **end_inclusive**: Boolean, default value: True
 
 ## Outputs
 - **corrected** (Pandas Series):
@@ -28,7 +28,6 @@ each time interval.
 of the last time interval in `time_interval_dict`.
 - Raises `ComponentInputValidationException`:
     - If the index of `series` is not a DateTimeIndex.
-    - If `series` does not contain any valid entries.
     - If `list_of_time_intervals` contains any invalid entries.
 
 ## Examples
@@ -89,25 +88,15 @@ class TimeInterval(BaseModel):
 
     @root_validator()
     def verify_value_ranges(cls, values: dict) -> dict:
-        try:
-            start = values["start"]
-            start_inclusive = values["start_inclusive"]
-            end = values["end"]
-            end_inclusive = values["end_inclusive"]
-            correction_value = values["correction_value"]
-        except KeyError as error:
-            raise ValueError("") from error
-        if pd.isna(correction_value) is True:
-            raise ValueError(
-                "The correction_value must be a valid number, "
-                f"while it is: {correction_value}"
-            )
+        start = values["start"]
+        start_inclusive = values["start_inclusive"]
+        end = values["end"]
+        end_inclusive = values["end_inclusive"]
         if end < start:
             raise ValueError(
                 "To be valid, a time interval must be non-empty, i.e. the start timestamp "
                 "may not be bigger than the end timestamp."
             )
-
         if (start_inclusive is False or end_inclusive is False) and not (start < end):
             raise ValueError(
                 "To be valid, a time interval must be non-empty, i.e the start timestamp must be "
@@ -132,7 +121,7 @@ COMPONENT_INFO = {
         "Correct all data points in provided time intervals from a time series with a "
         "correction value for each time interval."
     ),
-    "version_tag": "0.1.4",
+    "version_tag": "1.0.0",
     "id": "504a01aa-12a2-472b-995c-0676af66b07c",
     "revision_group_id": "92d2ded2-c6ca-42a1-a15b-a8e9cf6ca635",
     "state": "RELEASED",
@@ -146,19 +135,8 @@ def main(*, series: pd.Series, list_of_time_intervals):
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
 
-    series_or_multitsframe_no_nan = series.dropna()
-    if series_or_multitsframe_no_nan.empty is True:
-        raise ComponentInputValidationException(
-            "To determine whether time series entries are in a value interval,"
-            "the input series must not be empty.",
-            error_code="not a time-series like object",
-            invalid_component_inputs=["series"],
-        )
-
-    if isinstance(series_or_multitsframe_no_nan, pd.Series) and isinstance(
-        series_or_multitsframe_no_nan.index, pd.DatetimeIndex
-    ):
-        timestamps = series_or_multitsframe_no_nan.index
+    if isinstance(series, pd.Series) and isinstance(series.index, pd.DatetimeIndex):
+        timestamps = series.index
     else:
         raise ComponentInputValidationException(
             "Could not find timestamps in provided object",
@@ -168,7 +146,7 @@ def main(*, series: pd.Series, list_of_time_intervals):
 
     in_intervals = pd.Series(False, index=timestamps)
 
-    corrected = series_or_multitsframe_no_nan.copy(deep=True)
+    corrected = series.copy(deep=True)
 
     error_dict = {}
 
