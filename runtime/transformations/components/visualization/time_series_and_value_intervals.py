@@ -22,14 +22,15 @@ Plots the `series` and each value interval in `value_interval_dict`.
 
 
 - **line_color** (String):
-    RGB color for the margins of the value intervals. Will be applied for each interval without
+    Color for the margins of the value intervals. Will be applied for each interval without
     individual "line_color" set in `value_interval_dict`.
 
 - **fill_color** (String):
-    RGBA color for the area of the value intervals. Will be applied for each interval without
-    individual "fill_color" set in `value_interval_dict`. The use of either RGBA or HSLA colors
-    with a low opacity, e.g. a value of 0.15 for the Alpha Channel, is strongly recommended,
-    to allow visibility of the data points inside the value intervals.
+    Color for the area of the value intervals. Will be applied for each interval without
+    individual "fill_color" set in `value_interval_dict`. The use of colors
+    with a low opacity, i.e. value for the Alpha Channel, is strongly recommended,
+    to allow visibility of the data points inside the value intervals (e.g. 'rgba(255,0,0,0.15)',
+    'hsl(0,100%,50%,15%)').
 
 ## Outputs
 - **series_with_intervals** (Plotly Json): The generated Plotly Json. This is used by the hetida
@@ -38,23 +39,17 @@ designer frontend for plotting the results.
 ## Details
 
 - Plots the data points of the `series` as line chart and the value intervals as rectangles reaching
-from the first to the last data point. Each
-value interval is labeled with its name.
+from the first to the last data point. Each value interval is labeled with its name.
 
-- Accepted color inputs are:
-    - A hex string (e.g. '#ff0000')
-    - An rgb/rgba string (e.g. 'rgb(255,0,0)')
-    - An hsl/hsla string (e.g. 'hsl(0,100%,50%,15%)')
-    - A named CSS color (e.g. 'indigo')
-    #   TODO nicht validieren: an plotly weitergeben
+- Color inputs are passed to plotly. Please refer to plotly documentation for accepted input
+strings.
 
-- For fill colors, the use of either RGBA or HSLA colors with a low opacity, e.g. a value of
-0.15 for the Alpha Channel, is strongly recommended, to allow visibility of the data points inside
-the value intervals.
+- For fill colors, the use of colors with a low opacity, i.e. value for the Alpha Channel, is
+strongly recommended, to allow visibility of the data points inside the value intervals (e.g.
+'rgba(255,0,0,0.15)', 'hsl(0,100%,50%,15%)').
 
 - Raises `ComponentInputValidationException`:
     - If `series` has no entries or its dtype is neither int nor float.
-    - If any of the `line_color` or `fill_color` strings is not a valid color input.
     - If any value interval in `value_interval_dict` contains invalid inputs.
 
 ## Examples
@@ -258,10 +253,6 @@ def main(
             invalid_component_inputs=["series"],
         )
 
-    series_no_nan = series.dropna()  # wichtig für den Plot?
-
-    # TODO leerer plot prüfen
-
     error_dict = {}
 
     value_intervals: dict[str, ValueInterval] = {}
@@ -285,9 +276,7 @@ def main(
 
     return {
         "series_with_intervals": plotly_fig_to_json_dict(
-            plot_series_and_ranges(
-                series_no_nan, value_intervals, line_color, fill_color
-            )
+            plot_series_and_ranges(series, value_intervals, line_color, fill_color)
         )
     }
 
