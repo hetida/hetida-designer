@@ -139,13 +139,11 @@ class ValueRange(BaseModel):
 
     @root_validator()
     def verify_value_ranges(cls, values: dict) -> dict:
-        try:
-            min_value = values["min_value"]
-            min_value_inclusive = values["min_value_inclusive"]
-            max_value = values["max_value"]
-            max_value_inclusive = values["max_value_inclusive"]
-        except KeyError as error:
-            raise ValueError("") from error
+        min_value = values["min_value"]
+        min_value_inclusive = values["min_value_inclusive"]
+        max_value = values["max_value"]
+        max_value_inclusive = values["max_value_inclusive"]
+
         if max_value < min_value:
             raise ValueError(
                 "To be valid, a value range must be non-empty, i.e. min_value may not "
