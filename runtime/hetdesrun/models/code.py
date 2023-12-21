@@ -35,7 +35,7 @@ from hetdesrun.datatypes import DataType
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-@register(
+COMPONENT_INFO=dict(
     inputs={"x": DataType.Float, "y": DataType.Float},
     outputs={"z": DataType.Float},
     name="Example Component",
@@ -61,7 +61,7 @@ from hetdesrun.datatypes import DataType
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-@register(
+COMPONENT_INFO=dict(
     inputs={"x": DataType.Float, "y": DataType.Float},
     outputs={"z": DataType.Float},
     name="Example Component",

@@ -1323,7 +1323,7 @@ async def test_update_transformation_revision_from_component_code(
     tr_component_2 = TransformationRevision(**tr_json_component_2_draft)
     store_single_transformation_revision(tr_component_2)
 
-    tr_json_component_2_draft["content"] = "code"
+    tr_json_component_2_draft["content"] = "{"
     tr_component_2_invalid_code = TransformationRevision(**tr_json_component_2_draft)
     tr_component_2_invalid_code.content = update_code(tr_component_2_invalid_code)
 

@@ -19,11 +19,8 @@ This component may be useful if
 
 """
 
-from hetdesrun.component.registration import register
-from hetdesrun.datatypes import DataType
-
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def cumsum_resetting_at_nan(orig):
@@ -45,23 +42,15 @@ def cumsum_resetting_at_nan(orig):
 
 def dupl_count_at_duplicated_positions(orig, dupl_counts):
     """A series where the total number of duplicates in a sequence is written at every duplicate position"""
-    last_duplicated_position = orig.duplicated() & (
-        ~orig.duplicated().shift(-1).fillna(False)
-    )
-    return dupl_counts.where(
-        last_duplicated_position | (dupl_counts == 0), np.nan
-    ).backfill()
+    last_duplicated_position = orig.duplicated() & (~orig.duplicated().shift(-1).fillna(False))
+    return dupl_counts.where(last_duplicated_position | (dupl_counts == 0), np.nan).backfill()
 
 
 def dupl_delta_to_next(orig):
     """Delta to next different timestamp at every position"""
-    last_duplicated_position = orig.duplicated() & (
-        ~orig.duplicated().shift(-1).fillna(False)
-    )
+    last_duplicated_position = orig.duplicated() & (~orig.duplicated().shift(-1).fillna(False))
     timestamps_after = (
-        (orig.shift(-1))
-        .where(last_duplicated_position, orig.where(~orig.duplicated()))
-        .bfill()
+        (orig.shift(-1)).where(last_duplicated_position, orig.where(~orig.duplicated())).bfill()
     )
     delta_to = (timestamps_after - orig).fillna(pd.Timedelta(0))
     return delta_to
@@ -142,20 +131,26 @@ def merge_with_deduplicated_timestamps(
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-@register(
-    inputs={
-        "timeseries_df": DataType.DataFrame,
-        "max_distribution_delta": DataType.String,
-        "new_name": DataType.String,
+COMPONENT_INFO = {
+    "inputs": {
+        "timeseries_df": {"data_type": "DATAFRAME"},
+        "max_distribution_delta": {"data_type": "STRING"},
+        "new_name": {"data_type": "STRING"},
     },
-    outputs={"timeseries": DataType.Series},
-    name="Merge timeseries deduplicating timestamps",
-    description="Combine multiple timeseries from a timeseries dataframe into one, avoiding duplicate timestamps.",
-    category="Time length operations",
-    id="b1dba357-b6d5-43cd-ac3e-7b6cd829be37",
-    revision_group_id="79de1ec7-b629-4360-a5e2-4eba19e60bd0",
-    version_tag="1.0.0",
-)
+    "outputs": {
+        "timeseries": {"data_type": "SERIES"},
+    },
+    "name": "Merge timeseries deduplicating timestamps",
+    "category": "Time length operations",
+    "description": "Combine multiple timeseries from a timeseries dataframe into one, avoiding duplicate timestamps.",
+    "version_tag": "1.0.0",
+    "id": "b1dba357-b6d5-43cd-ac3e-7b6cd829be37",
+    "revision_group_id": "79de1ec7-b629-4360-a5e2-4eba19e60bd0",
+    "state": "RELEASED",
+    "released_timestamp": "2023-09-25T09:57:52.580730+00:00",
+}
+
+
 def main(*, timeseries_df, max_distribution_delta, new_name):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****

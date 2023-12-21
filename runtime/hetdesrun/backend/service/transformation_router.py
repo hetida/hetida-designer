@@ -276,7 +276,7 @@ async def get_all_transformation_revisions(
                     component_tr.content, str
                 )
                 code_list.append(component_tr.content)
-    elif expand_component_code is True:
+    elif expand_component_code:
         for index in component_indices:
             component_tr = transformation_revision_list[index]
             component_tr.content = expand_code(component_tr)

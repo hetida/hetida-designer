@@ -43,6 +43,29 @@ class LiteralEvalError(CodeParsingException):
     pass
 
 
+def get_module_doc_string(code: str) -> str | None:
+    """Extracts docstring from module code
+
+    Returns None if there is no module docstring.
+    """
+    try:
+        parsed_ast = ast.parse(code)
+    except Exception as e:  # noqa: BLE001
+        msg = f"Could not extract docstring - failed parsing code: {str(e)}"
+        raise CodeParsingException(msg) from e
+
+    module_body = parsed_ast.body
+    if len(module_body) > 0:
+        first_element = module_body[0]
+        if (
+            isinstance(first_element, ast.Expr)
+            and isinstance(first_element.value, ast.Constant)
+            and isinstance(first_element.value.value, str)
+        ):
+            return first_element.value.value
+    return None
+
+
 def get_global_from_code(
     code: str, variable_name: str, default_value: Any = None
 ) -> Any:

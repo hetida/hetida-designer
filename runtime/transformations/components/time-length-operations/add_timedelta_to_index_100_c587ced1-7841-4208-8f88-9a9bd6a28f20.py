@@ -58,31 +58,40 @@ The expected output is
 
 """
 
+import numpy as np
+import pandas as pd
+
 from hetdesrun.component.registration import register
 from hetdesrun.datatypes import DataType
 
-import pandas as pd
-import numpy as np
-
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-@register(
-    inputs={"df_or_series": DataType.Any, "timedelta": DataType.String},
-    outputs={"df_or_series": DataType.Any},
-    name="Add Timedelta to Index",
-    description="Add a timedelta to the index of a frame or series",
-    category="Time length operations",
-    id="c587ced1-7841-4208-8f88-9a9bd6a28f20",
-    revision_group_id="3b838621-8d8e-493a-a91a-5a7680385ed9",
-    version_tag="1.0.0"
-)
+COMPONENT_INFO = {
+    "inputs": {
+        "df_or_series": {"data_type": "ANY"},
+        "timedelta": {"data_type": "STRING"},
+    },
+    "outputs": {
+        "df_or_series": {"data_type": "ANY"},
+    },
+    "name": "Add Timedelta to Index",
+    "category": "Time length operations",
+    "description": "Add a timedelta to the index of a frame or series",
+    "version_tag": "1.0.0",
+    "id": "c587ced1-7841-4208-8f88-9a9bd6a28f20",
+    "revision_group_id": "3b838621-8d8e-493a-a91a-5a7680385ed9",
+    "state": "RELEASED",
+    "released_timestamp": "2023-09-25T09:57:52.577013+00:00",
+}
+
+
 def main(*, df_or_series, timedelta):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
-    """ Usage example:
+    """Usage example:
     >>> main(
     ...     df_or_series=pd.Series(
-    ...             [10.0, 22.0, 18.0, 2.0],   
+    ...             [10.0, 22.0, 18.0, 2.0],
     ...             index=pd.to_datetime(["2019-08-01T15:20:10", "2019-08-01T15:20:11", "2019-08-01T15:20:14", "2019-08-01T15:20:16"])
     ...     ),
     ...     timedelta = "-4s",
