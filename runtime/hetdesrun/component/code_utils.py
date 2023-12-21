@@ -1,0 +1,237 @@
+"""Utils for code parsing and transforming using black, ast and libcst
+
+We use libcst (https://libcst.readthedocs.io) for code manipulation
+instead of Python's builtin ast capabilities because we want to produce
+and preserve readable source code. E.g. we want to keep comments, newlines
+etc.
+"""
+
+import ast
+from typing import Any
+
+import black
+import libcst as cst
+
+
+def format_code_with_black(code: str) -> str:
+    # based on https://stackoverflow.com/a/76052629
+    # `format_file_contents`currently best candidate to become the official Python API according to
+    # https://github.com/psf/black/issues/779
+    try:
+        code = black.format_file_contents(
+            code,
+            fast=False,
+            mode=black.Mode(
+                target_versions={black.TargetVersion.PY311},  # python3.11
+                line_length=100,
+            ),
+        )
+    except black.NothingChanged:
+        pass
+    finally:
+        # Make sure there's a newline after the content
+        if len(code) != 0 and code[-1] != "\n":
+            code += "\n"
+    return code
+
+
+class CodeParsingException(Exception):
+    pass
+
+
+class LiteralEvalError(CodeParsingException):
+    pass
+
+
+def get_global_from_code(
+    code: str, variable_name: str, default_value: Any = None
+) -> Any:
+    """Extracts content from a global assignment in the provided code
+
+    Using ast.literal_eval allows to store metadata directly in Python code
+    and extract it from there securly, see
+    https://stackoverflow.com/questions/15197673/using-pythons-eval-vs-ast-literal-eval
+
+    * The assignment must be a single target assignment
+    * it must be on the highest code level
+    * The value is parsed using ast.literal_eval,
+      see (https://docs.python.org/3/library/ast.html#ast.literal_eval)
+      for the restrictions coming from that.
+
+    Returns the provided default_value if nothing is found.
+
+    Raises CodeParsingException or LiteralEvalError.
+    """
+    try:
+        parsed_ast = ast.parse(code)
+    except Exception as e:  # noqa: BLE001
+        msg = f"Could not parse provided Python Code into AST. Error was: {str(e)}"
+        raise CodeParsingException(msg) from e
+
+    for element in parsed_ast.body:
+        if isinstance(element, ast.Assign):
+            if len(element.targets) != 1:  # only consider single target assignments
+                continue
+            assign_target = element.targets[0]
+
+            if assign_target.id == variable_name:  # type: ignore
+                try:
+                    return ast.literal_eval(element.value)
+                except Exception as e:  # noqa: BLE001
+                    msg = (
+                        f"Could not literal_eval the assignment value for {variable_name}. "
+                        f"Error was: {str(e)}"
+                    )
+                    raise LiteralEvalError(msg) from e
+    # not found
+    return default_value
+
+
+def cst_from_python_value(
+    value: Any, format_with_black: bool = False
+) -> cst.BaseExpression:
+    """Get CST representation for a constant Python expression
+
+    libcst hast no Constant class like ast.
+
+    In ast one would use ast.Constant(value=value).
+
+    Of course a naive approach is to use
+        cst.parse_expression(repr(value))
+
+    but that depends too much on repr implementation for the given object being
+    complete and actually representative of the object construction.
+
+    So we take an additional step through code combining ast.Constant,
+    ast.unparse and cst.parse_expression.
+    """
+
+    constant_code = ast.unparse(ast.Constant(value=value))
+    if format_with_black:
+        return cst.parse_expression(format_code_with_black(constant_code))
+    return cst.parse_expression(constant_code)
+
+
+class GlobalAssignValueTransformer(cst.CSTTransformer):
+    """Add/Update the value of a module-level variable assignment
+
+    If not present, the assignment will be added to the module's end.
+
+    This can be used to store and update information in a Python code module
+    in a module-level variable.
+    """
+
+    def __init__(
+        self,
+        variable_name: str,
+        value: Any,
+        replace_all: bool = False,
+        remove_repetitions: bool = True,
+    ):
+        self.variable_name = variable_name
+        self.value = value
+        self.found_once = False
+        self.replace_all = replace_all
+
+        # If True, and not replace_all: Keep only first Assignment statement.
+        self.remove_repetitions = remove_repetitions
+
+        self.assigns: set = set()
+
+    def visit_Module(self, node: cst.Module) -> bool:
+        self.module = node
+        gathered_assigns = []
+        for element in node.body:
+            if isinstance(element, cst.SimpleStatementLine):
+                for subelement in element.body:
+                    if isinstance(subelement, cst.Assign):
+                        if (
+                            len(subelement.targets) != 1
+                        ):  # only consider single target assignments
+                            continue
+                        assign_target = subelement.targets[0]  # cst.AssignTarget
+
+                        actual_assign_target = assign_target.target
+                        if (
+                            isinstance(actual_assign_target, cst.Name)
+                            and actual_assign_target.value == self.variable_name
+                        ):
+                            gathered_assigns.append(subelement)
+
+        self.assigns = set(gathered_assigns)
+        return True
+
+    def leave_Module(
+        self,
+        original_node: cst.Module,  # noqa: ARG002
+        updated_node: cst.Module,
+    ) -> cst.Module:
+        if not self.found_once:
+            # append to module
+            module_body = list(updated_node.body)
+            module_body.append(
+                cst.SimpleStatementLine(
+                    body=[
+                        cst.Assign(
+                            targets=[
+                                cst.AssignTarget(
+                                    target=cst.Name(value=self.variable_name)
+                                )
+                            ],
+                            value=cst_from_python_value(
+                                self.value, format_with_black=True
+                            ),
+                        )
+                    ]
+                )
+            )
+            return updated_node.with_changes(body=module_body)
+        return updated_node
+
+    def leave_Assign(
+        self, original_node: cst.Assign, updated_node: cst.Assign
+    ) -> cst.Assign | cst.RemovalSentinel:
+        # replace value only on module level!
+
+        if self.found_once and not self.replace_all:
+            if self.remove_repetitions:
+                return cst.RemoveFromParent()
+            return updated_node
+
+        if not original_node in self.assigns:
+            return updated_node
+
+        if len(original_node.targets) != 1:
+            return updated_node
+
+        assign_target = original_node.targets[0]  # cst.AssignTarget
+        assign_target_target = assign_target.target  # cst.Name
+
+        if assign_target_target.value == self.variable_name:  # type: ignore
+            self.found_once = True
+            return updated_node.with_changes(
+                # Instead of value = ast.literal_eval({"99": 98.7})
+                value=cst_from_python_value(self.value, format_with_black=True)
+            )
+
+        return updated_node
+
+
+def update_module_level_variable(code: str, variable_name: str, value: Any) -> str:
+    """Updates or adds the module-level variable"""
+
+    try:
+        parsed_cst = cst.parse_module(code)
+    except Exception as e:  # noqa: BLE001
+        msg = f"Failure parsing code module using cst: {str(e)}"
+        raise CodeParsingException(msg) from e
+
+    transformer = GlobalAssignValueTransformer(variable_name, value)
+
+    try:
+        new_cst = parsed_cst.visit(transformer)
+    except Exception as e:  # noqa: BLE001
+        msg = f"Failure updating code {str(e)}"
+        raise CodeParsingException(e) from e
+
+    return new_cst.code

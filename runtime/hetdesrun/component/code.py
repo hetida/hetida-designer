@@ -4,15 +4,20 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
-import re
+import logging
 from keyword import iskeyword
 
-import black
-
+from hetdesrun.component.code_utils import (
+    CodeParsingException,
+    format_code_with_black,
+    update_module_level_variable,
+)
 from hetdesrun.datatypes import DataType
 from hetdesrun.persistence.models.io import InputType, TransformationInput
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
+
+logger = logging.getLogger(__name__)
 
 imports_template: str = """\
 # add your own imports here, e.g.
@@ -253,28 +258,6 @@ def update_code(
     return start + new_function_header + end
 
 
-def format_code_with_black(code: str) -> str:
-    # based on https://stackoverflow.com/a/76052629
-    # `format_file_contents`currently best candidate to become the official Python API according to
-    # https://github.com/psf/black/issues/779
-    try:
-        code = black.format_file_contents(
-            code,
-            fast=False,
-            mode=black.Mode(
-                target_versions={black.TargetVersion.PY311},  # python3.11
-                line_length=100,
-            ),
-        )
-    except black.NothingChanged:
-        pass
-    finally:
-        # Make sure there's a newline after the content
-        if len(code) != 0 and code[-1] != "\n":
-            code += "\n"
-    return code
-
-
 def add_documentation_as_module_doc_string(
     code: str, tr: TransformationRevision
 ) -> str:
@@ -293,6 +276,21 @@ def add_documentation_as_module_doc_string(
 
 
 def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
+    try:
+        expanded_code = update_module_level_variable(
+            code=code,
+            variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
+            value=tr.test_wiring.dict(exclude_unset=True, exclude_defaults=True),
+        )
+    except CodeParsingException:
+        msg = (
+            f"Failed to update test wiring in code for trafo {tr.name} ({tr.version_tag})"
+            f"(id: {str(tr.id)}). Returning non-updated code."
+        )
+        logger.warning(msg)
+        return code
+
+    """
     if re.match(
         pattern=r".*^TEST_WIRING_FROM_PY_FILE_IMPORT",
         string=code,
@@ -306,10 +304,8 @@ def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
         + "\n"
     )
 
-    expanded_code = (
-        code + "\n\n" + format_code_with_black(test_wiring_dictionary_string)
-    )
-
+    expanded_code = code + "\n\n" + format_code_with_black(test_wiring_dictionary_string)
+    """
     return expanded_code
 
 
@@ -338,7 +334,13 @@ def expand_code(
     expanded_code = add_documentation_as_module_doc_string(existing_code, tr)
     expanded_code = add_test_wiring_dictionary(expanded_code, tr)
 
-    return expanded_code
+    try:
+        return format_code_with_black(expanded_code)
+    except Exception:  # noqa: BLE001
+        logger.warning(
+            "Could not format code with black ({tr.name} ({tr.version_tag}), id: {tr.id})."
+        )
+        return expanded_code
 
 
 def check_parameter_names(names: list[str]) -> bool:
