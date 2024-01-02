@@ -321,8 +321,8 @@ def expand_code(
 
     if tr.type != Type.COMPONENT:
         raise ValueError(
-            f"will not update code of transformation revision {tr.id}"
-            f"since its type is not COMPONENT"
+            f"Will not update code of transformation revision {tr.id} "
+            f"since its type is not COMPONENT."
         )
 
     existing_code = tr.content
