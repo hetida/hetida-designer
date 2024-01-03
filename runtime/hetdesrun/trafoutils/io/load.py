@@ -109,27 +109,16 @@ def transformation_revision_from_python_code(code: str) -> Any:
     new_dict.update(component_info_dict)
     component_info_dict = new_dict
 
-    component_inputs = component_info_dict.get("inputs", {})
-    component_outputs = component_info_dict.get("outputs", {})
-    component_name = component_info_dict.get("name", "Unnamed Component")
-    component_description = component_info_dict.get(
-        "description", "No description provided"
-    )
-    component_category = component_info_dict.get("category", "Other")
-    component_tag = component_info_dict.get("version_tag", "1.0.0")
-    component_id = component_info_dict.get("id", uuid4())
-    component_group_id = component_info_dict.get("revision_group_id", uuid4())
-    component_state = str(component_info_dict.get("state", "RELEASED"))
-    component_released_timestamp = component_info_dict.get(
+    component_info_dict["released_timestamp"] = component_info_dict.get(
         "released_timestamp",
         datetime.now(timezone.utc).isoformat()
-        if component_state == "RELEASED"
+        if component_info_dict["state"] != "DRAFT"
         else None,
     )
-    component_disabled_timestamp = component_info_dict.get(
+    component_info_dict["disabled_timestamp"] = component_info_dict.get(
         "disabled_timestamp",
         datetime.now(timezone.utc).isoformat()
-        if component_state == "DISABLED"
+        if component_info_dict["state"] == "DISABLED"
         else None,
     )
 
@@ -156,16 +145,8 @@ def transformation_revision_from_python_code(code: str) -> Any:
         test_wiring = WorkflowWiring()
 
     transformation_revision = TransformationRevision(
-        id=component_id,
-        revision_group_id=component_group_id,
-        name=component_name,
-        description=component_description,
-        category=component_category,
-        version_tag=component_tag,
+        **component_info_dict,
         type=Type.COMPONENT,
-        state=component_state,
-        released_timestamp=component_released_timestamp,
-        disabled_timestamp=component_disabled_timestamp,
         documentation=component_documentation,
         io_interface=IOInterface(
             inputs=[
@@ -184,7 +165,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
                     if isinstance(input_info, dict) and "default_value" in input_info
                     else InputType.REQUIRED,
                 )
-                for input_name, input_info in component_inputs.items()
+                for input_name, input_info in component_info_dict["inputs"].items()
             ],
             outputs=[
                 TransformationOutput(
@@ -196,7 +177,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
                     # input info maybe a datatype string (backwards compatibility)
                     # or a dictionary containing the datatype
                 )
-                for output_name, output_info in component_outputs.items()
+                for output_name, output_info in component_info_dict["outputs"].items()
             ],
         ),
         content=code,
