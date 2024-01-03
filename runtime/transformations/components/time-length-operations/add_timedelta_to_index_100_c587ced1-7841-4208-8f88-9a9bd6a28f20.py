@@ -58,11 +58,7 @@ The expected output is
 
 """
 
-import numpy as np
 import pandas as pd
-
-from hetdesrun.component.registration import register
-from hetdesrun.datatypes import DataType
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
