@@ -11,9 +11,22 @@ from typing import Any
 
 import black
 import libcst as cst
+from black.parsing import InvalidInput as BlackInvalidInput
+
+
+class CodeParsingException(Exception):
+    pass
+
+
+class LiteralEvalError(CodeParsingException):
+    pass
 
 
 def format_code_with_black(code: str) -> str:
+    """Format code with black
+
+    Raises CodeParsingException if there are SyntaxErrors in the code.
+    """
     # based on https://stackoverflow.com/a/76052629
     # `format_file_contents`currently best candidate to become the official Python API according to
     # https://github.com/psf/black/issues/779
@@ -28,19 +41,14 @@ def format_code_with_black(code: str) -> str:
         )
     except black.NothingChanged:
         pass
+    except BlackInvalidInput as exc:
+        msg = f"Could not format code with black: {str(exc)}"
+        raise CodeParsingException(msg) from exc
     finally:
         # Make sure there's a newline after the content
         if len(code) != 0 and code[-1] != "\n":
             code += "\n"
     return code
-
-
-class CodeParsingException(Exception):
-    pass
-
-
-class LiteralEvalError(CodeParsingException):
-    pass
 
 
 def get_module_doc_string(code: str) -> str | None:
@@ -253,7 +261,7 @@ def update_module_level_variable(code: str, variable_name: str, value: Any) -> s
 
     try:
         new_cst = parsed_cst.visit(transformer)
-    except (cst.ParserSyntaxError, Exception) as exc:  # noqa: BLE001
+    except (cst.ParserSyntaxError, CodeParsingException, Exception) as exc:  # noqa: BLE001
         msg = f"Failure updating code: {str(exc)}"
         raise CodeParsingException(exc) from exc
 

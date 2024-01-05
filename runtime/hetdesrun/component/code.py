@@ -336,7 +336,7 @@ def expand_code(
 
     try:
         return format_code_with_black(expanded_code)
-    except Exception:  # noqa: BLE001
+    except CodeParsingException:
         logger.warning(
             "Could not format code with black ({tr.name} ({tr.version_tag}), id: {tr.id})."
         )
