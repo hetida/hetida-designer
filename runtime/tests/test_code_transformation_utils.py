@@ -17,6 +17,15 @@ def expanded_component_code() -> str:
 
 
 @pytest.fixture()
+def expanded_component_code_with_second_test_wiring() -> str:
+    component_code_path = "tests/data/components/expanded_code.py"
+    second_test_wiring = """TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n"""
+    updated_code = load_python_file(component_code_path) + second_test_wiring
+    print(updated_code)
+    return updated_code
+
+
+@pytest.fixture()
 def reduced_component_code() -> str:
     component_code_path = "tests/data/components/reduced_code.py"
     return load_python_file(component_code_path)
@@ -95,15 +104,42 @@ def test_add_module_level_variable(reduced_component_code: str):
     assert "TEST = None" in updated_code
 
 
-def test_update_module_level_variable(reduced_component_code: str):
+def test_update_module_level_variable(expanded_component_code: str):
+    assert '"adapter_id": "direct_provisioning"' in expanded_component_code
+
     updated_code = update_module_level_variable(
-        code=reduced_component_code,
+        code=expanded_component_code,
         variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
         value={"input_wirings": []},
     )
 
     assert '"adapter_id": "direct_provisioning"' not in updated_code
     assert 'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n' in updated_code
+
+
+def test_update_one_of_two_module_level_variable_assignments(
+    expanded_component_code_with_second_test_wiring: str,
+):
+    assert (
+        '"adapter_id": "direct_provisioning"'
+        in expanded_component_code_with_second_test_wiring
+    )
+    assert (
+        'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n'
+        in expanded_component_code_with_second_test_wiring
+    )
+
+    updated_code = update_module_level_variable(
+        code=expanded_component_code_with_second_test_wiring,
+        variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
+        value={},
+    )
+
+    assert '"adapter_id": "direct_provisioning"' not in updated_code
+    assert (
+        'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n' not in updated_code
+    )
+    assert "TEST_WIRING_FROM_PY_FILE_IMPORT = {" + "}\n" in updated_code
 
 
 def test_update_module_level_variable_in_code_with_syntax_error(
