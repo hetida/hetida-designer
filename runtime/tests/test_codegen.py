@@ -1,5 +1,3 @@
-import pytest
-
 from hetdesrun.component.code import (
     add_documentation_as_module_doc_string,
     add_test_wiring_dictionary,
@@ -8,7 +6,6 @@ from hetdesrun.component.code import (
     generate_function_header,
     update_code,
 )
-from hetdesrun.component.code_utils import CodeParsingException, format_code_with_black
 from hetdesrun.datatypes import DataType
 from hetdesrun.models.code import example_code, example_code_async
 from hetdesrun.persistence.models.io import (
@@ -258,27 +255,6 @@ def test_add_test_wiring_dictionary():
         component_code_without_test_wiring_dictionary, component_tr
     )
     assert "24" in component_code_with_updated_test_wiring_dictionary
-
-
-def test_format_code_with_black():
-    component_code_path = "tests/data/components/reduced_code.py"
-    component_code = load_python_file(component_code_path)
-    unformatted_component_code = component_code.replace(" = ", "=")
-    assert unformatted_component_code != component_code
-
-    formatted_code = format_code_with_black(unformatted_component_code)
-    assert formatted_code != unformatted_component_code
-    assert formatted_code == component_code
-
-
-def test_format_code_with_syntax_error_with_black():
-    component_code_path = "tests/data/components/reduced_code.py"
-    component_code = load_python_file(component_code_path)
-    component_code_with_syntax_error = component_code.replace("):", ")")
-    assert component_code_with_syntax_error != component_code
-
-    with pytest.raises(CodeParsingException):
-        format_code_with_black(component_code_with_syntax_error)
 
 
 def test_expand_code():

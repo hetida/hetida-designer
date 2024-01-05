@@ -261,7 +261,11 @@ def update_module_level_variable(code: str, variable_name: str, value: Any) -> s
 
     try:
         new_cst = parsed_cst.visit(transformer)
-    except (cst.ParserSyntaxError, CodeParsingException, Exception) as exc:  # noqa: BLE001
+    except (
+        cst.ParserSyntaxError,
+        CodeParsingException,
+        Exception,
+    ) as exc:  # noqa: BLE001
         msg = f"Failure updating code: {str(exc)}"
         raise CodeParsingException(exc) from exc
 
