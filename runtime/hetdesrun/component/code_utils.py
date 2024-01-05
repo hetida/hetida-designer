@@ -275,6 +275,6 @@ def update_module_level_variable(code: str, variable_name: str, value: Any) -> s
         CodeParsingException,
     ) as exc:
         msg = f"Failure updating code: {str(exc)}"
-        raise CodeParsingException(exc) from exc
+        raise CodeParsingException(msg) from exc
 
     return new_cst.code

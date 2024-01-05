@@ -17,15 +17,6 @@ def expanded_component_code() -> str:
 
 
 @pytest.fixture()
-def expanded_component_code_with_second_test_wiring() -> str:
-    component_code_path = "tests/data/components/expanded_code.py"
-    second_test_wiring = """TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n"""
-    updated_code = load_python_file(component_code_path) + second_test_wiring
-    print(updated_code)
-    return updated_code
-
-
-@pytest.fixture()
 def reduced_component_code() -> str:
     component_code_path = "tests/data/components/reduced_code.py"
     return load_python_file(component_code_path)
@@ -118,8 +109,12 @@ def test_update_module_level_variable(expanded_component_code: str):
 
 
 def test_update_one_of_two_module_level_variable_assignments(
-    expanded_component_code_with_second_test_wiring: str,
+    expanded_component_code: str,
 ):
+    second_test_wiring = """TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n"""
+    expanded_component_code_with_second_test_wiring = (
+        expanded_component_code + second_test_wiring
+    )
     assert (
         '"adapter_id": "direct_provisioning"'
         in expanded_component_code_with_second_test_wiring
@@ -142,12 +137,53 @@ def test_update_one_of_two_module_level_variable_assignments(
     assert "TEST_WIRING_FROM_PY_FILE_IMPORT = {" + "}\n" in updated_code
 
 
+def test_update_module_level_variable_with_same_variable_in_function_scope(
+    expanded_component_code: str,
+):
+    second_test_wiring = """TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n"""
+    expanded_component_code_with_second_test_wiring_in_function_scope = (
+        expanded_component_code.replace(
+            'alerts.name = "alerts"',
+            'alerts.name = "alerts"\n    ' + second_test_wiring,
+        )
+    )
+    assert (
+        '"adapter_id": "direct_provisioning"'
+        in expanded_component_code_with_second_test_wiring_in_function_scope
+    )
+    assert (
+        'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n'
+        in expanded_component_code_with_second_test_wiring_in_function_scope
+    )
+
+    updated_code = update_module_level_variable(
+        code=expanded_component_code_with_second_test_wiring_in_function_scope,
+        variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
+        value={},
+    )
+
+    assert '"adapter_id": "direct_provisioning"' not in updated_code
+    assert 'TEST_WIRING_FROM_PY_FILE_IMPORT = {"input_wirings": []}\n' in updated_code
+    assert "TEST_WIRING_FROM_PY_FILE_IMPORT = {" + "}\n" in updated_code
+
+
 def test_update_module_level_variable_in_code_with_syntax_error(
     component_code_with_syntax_error: str,
 ):
-    with pytest.raises(CodeParsingException):
+    with pytest.raises(CodeParsingException, match="Failure parsing code"):
         update_module_level_variable(
             code=component_code_with_syntax_error,
             variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
             value={"input_wirings": []},
+        )
+
+
+def test_update_module_level_variable_with_unsuitable_value(
+    expanded_component_code: str,
+):
+    with pytest.raises(CodeParsingException, match="Failure updating code"):
+        update_module_level_variable(
+            code=expanded_component_code,
+            variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
+            value=str,
         )
