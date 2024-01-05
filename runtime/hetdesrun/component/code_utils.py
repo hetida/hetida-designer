@@ -245,16 +245,16 @@ def update_module_level_variable(code: str, variable_name: str, value: Any) -> s
 
     try:
         parsed_cst = cst.parse_module(code)
-    except Exception as e:  # noqa: BLE001
-        msg = f"Failure parsing code module using cst: {str(e)}"
-        raise CodeParsingException(msg) from e
+    except cst.ParserSyntaxError as exc:
+        msg = f"Failure parsing code module using cst: {str(exc)}"
+        raise CodeParsingException(msg) from exc
 
     transformer = GlobalAssignValueTransformer(variable_name, value)
 
     try:
         new_cst = parsed_cst.visit(transformer)
-    except Exception as e:  # noqa: BLE001
-        msg = f"Failure updating code {str(e)}"
-        raise CodeParsingException(e) from e
+    except (cst.ParserSyntaxError, Exception) as exc:  # noqa: BLE001
+        msg = f"Failure updating code: {str(exc)}"
+        raise CodeParsingException(exc) from exc
 
     return new_cst.code
