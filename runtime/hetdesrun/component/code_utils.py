@@ -11,7 +11,6 @@ from typing import Any
 
 import black
 import libcst as cst
-from black.parsing import InvalidInput as BlackInvalidInput
 
 
 class CodeParsingException(Exception):
@@ -41,7 +40,7 @@ def format_code_with_black(code: str) -> str:
         )
     except black.NothingChanged:
         pass
-    except BlackInvalidInput as exc:
+    except black.InvalidInput as exc:
         msg = f"Could not format code with black: {str(exc)}"
         raise CodeParsingException(msg) from exc
     finally:
@@ -58,7 +57,7 @@ def get_module_doc_string(code: str) -> str | None:
     """
     try:
         parsed_ast = ast.parse(code)
-    except Exception as e:  # noqa: BLE001
+    except (SyntaxError, ValueError) as e:
         msg = f"Could not extract docstring - failed parsing code: {str(e)}"
         raise CodeParsingException(msg) from e
 
@@ -95,9 +94,9 @@ def get_global_from_code(
     """
     try:
         parsed_ast = ast.parse(code)
-    except Exception as e:  # noqa: BLE001
-        msg = f"Could not parse provided Python Code into AST. Error was: {str(e)}"
-        raise CodeParsingException(msg) from e
+    except (SyntaxError, ValueError) as exc:
+        msg = f"Could not parse provided Python Code into AST. Error was: {str(exc)}"
+        raise CodeParsingException(msg) from exc
 
     for element in parsed_ast.body:
         if isinstance(element, ast.Assign):
@@ -108,12 +107,18 @@ def get_global_from_code(
             if assign_target.id == variable_name:  # type: ignore
                 try:
                     return ast.literal_eval(element.value)
-                except Exception as e:  # noqa: BLE001
+                except (
+                    ValueError,
+                    TypeError,
+                    SyntaxError,
+                    MemoryError,
+                    RecursionError,
+                ) as exc:
                     msg = (
                         f"Could not literal_eval the assignment value for {variable_name}. "
-                        f"Error was: {str(e)}"
+                        f"Error was: {str(exc)}"
                     )
-                    raise LiteralEvalError(msg) from e
+                    raise LiteralEvalError(msg) from exc
     # not found
     return default_value
 
@@ -137,7 +142,11 @@ def cst_from_python_value(
     ast.unparse and cst.parse_expression.
     """
 
-    constant_code = ast.unparse(ast.Constant(value=value))
+    try:
+        constant_code = ast.unparse(ast.Constant(value=value))
+    except RecursionError as exc:
+        msg = f"The expression {value} is too complex and cannot be unparsed."
+        raise LiteralEvalError(msg) from exc
     if format_with_black:
         return cst.parse_expression(format_code_with_black(constant_code))
     return cst.parse_expression(constant_code)
@@ -264,8 +273,7 @@ def update_module_level_variable(code: str, variable_name: str, value: Any) -> s
     except (
         cst.ParserSyntaxError,
         CodeParsingException,
-        Exception,
-    ) as exc:  # noqa: BLE001
+    ) as exc:
         msg = f"Failure updating code: {str(exc)}"
         raise CodeParsingException(exc) from exc
 
