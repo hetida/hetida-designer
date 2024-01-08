@@ -11,6 +11,7 @@ from typing import Any
 
 import black
 import libcst as cst
+import libcst.matchers as m
 
 
 class CodeParsingException(Exception):
@@ -178,27 +179,21 @@ class GlobalAssignValueTransformer(cst.CSTTransformer):
 
         self.assigns: set = set()
 
-    def visit_Module(self, node: cst.Module) -> bool:
+    def visit_Module(self, node: cst.Module) -> None:
         gathered_assigns = []
         for element in node.body:
-            if isinstance(element, cst.SimpleStatementLine):
-                for subelement in element.body:
-                    if isinstance(subelement, cst.Assign):
-                        if (
-                            len(subelement.targets) != 1
-                        ):  # only consider single target assignments
-                            continue
-                        assign_target = subelement.targets[0]  # cst.AssignTarget
-
-                        actual_assign_target = assign_target.target
-                        if (
-                            isinstance(actual_assign_target, cst.Name)
-                            and actual_assign_target.value == self.variable_name
-                        ):
-                            gathered_assigns.append(subelement)
-
+            if m.matches(element, m.SimpleStatementLine()):
+                for stmt in cst.ensure_type(element, cst.SimpleStatementLine).body:
+                    if m.matches(
+                        stmt,
+                        m.Assign(
+                            targets=[
+                                m.AssignTarget(target=m.Name(value=self.variable_name))
+                            ]
+                        ),
+                    ):
+                        gathered_assigns.append(stmt)
         self.assigns = set(gathered_assigns)
-        return True
 
     def leave_Module(
         self,
