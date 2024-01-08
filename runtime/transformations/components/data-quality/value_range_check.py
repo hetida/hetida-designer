@@ -290,7 +290,7 @@ def main(*, timeseries_data, value_range_dict):
     }
 
 
-INITIAL_TEST_WIRING = {
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "timeseries_data",
