@@ -179,7 +179,6 @@ class GlobalAssignValueTransformer(cst.CSTTransformer):
         self.assigns: set = set()
 
     def visit_Module(self, node: cst.Module) -> bool:
-        self.module = node
         gathered_assigns = []
         for element in node.body:
             if isinstance(element, cst.SimpleStatementLine):
