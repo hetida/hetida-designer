@@ -57,21 +57,12 @@ def get_module_doc_string(code: str) -> str | None:
     Returns None if there is no module docstring.
     """
     try:
-        parsed_ast = ast.parse(code)
-    except (SyntaxError, ValueError) as e:
-        msg = f"Could not extract docstring - failed parsing code: {str(e)}"
-        raise CodeParsingException(msg) from e
+        parsed_cst = cst.parse_module(code)
+    except cst.ParserSyntaxError as exc:
+        msg = f"Could not extract module docstring - failed parsing code: {str(exc)}"
+        raise CodeParsingException(msg) from exc
 
-    module_body = parsed_ast.body
-    if len(module_body) > 0:
-        first_element = module_body[0]
-        if (
-            isinstance(first_element, ast.Expr)
-            and isinstance(first_element.value, ast.Constant)
-            and isinstance(first_element.value.value, str)
-        ):
-            return first_element.value.value
-    return None
+    return parsed_cst.get_docstring()
 
 
 def get_global_from_code(
