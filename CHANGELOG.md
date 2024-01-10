@@ -1,3 +1,11 @@
+## 0.9.5
+* add query parameters to the /transformations GET and PUT endpoints to enable the export and import of components as python code
+* **BREAKING CHANGE**: Importing components from python code with the @register decorator will no longer work. Use a COMPONENT_INFO dictionary instead!
+* **BREAKING CHANGE**: All transformations in the open source repo have changed insignificantly:
+  In components, the @register decorater has been replaced by COMPONENT_INFO dictionaries.
+  In addition, attributes that have already been added to the respective classes in previous releases are now added to the JSONs as well.
+  Objects that have been serialized via pickle with the Blob Storage adapter using components with modified code can no longer be deserialized, as the import paths based on hashes based on the code have changed and are no longer available when unpickeling.
+
 ## 0.9.4
 * bug fixes around default value handling
 * **BREAKING CHANGE**: DRAFT transformation revisions with a released timestamp will no longer be accepted but cause a ValueError. A database migration fixing affected components and workflows is added. However if you export(ed) transformations with an earlier version than 0.9 and afterwards import them into a version >=0.9.4 the transformations may again include the bug. We therefore strongly recommend that you **make a backup and/or export both before and after upgrading**.
