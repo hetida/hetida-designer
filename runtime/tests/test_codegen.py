@@ -39,6 +39,26 @@ def test_function_header_no_params():
     assert '"id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565"' in func_header
 
 
+def test_function_header_description_line_too_long():
+    component = TransformationRevision(
+        io_interface=IOInterface(inputs=[], outputs=[]),
+        name="Test Component",
+        description=(
+            "A very long test component description so that the line is longer than allowed"
+        ),
+        category="Tests",
+        id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        version_tag="1.0.0",
+        state="DRAFT",
+        type="COMPONENT",
+        content="",
+        test_wiring=[],
+    )
+    func_header = generate_function_header(component)
+    assert "# noqa: E501" in func_header
+
+
 def test_function_header_multiple_inputs():
     component = TransformationRevision(
         io_interface=IOInterface(

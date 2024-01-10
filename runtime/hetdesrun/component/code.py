@@ -34,7 +34,7 @@ COMPONENT_INFO = {{
     "outputs": {output_dict_content},
     "name": {name},
     "category": {category},
-    "description": {description},
+    "description": {description},{description_too_long_noqa}
     "version_tag": {version_tag},
     "id": {id},
     "revision_group_id": {revision_group_id},
@@ -66,6 +66,13 @@ def default_value_string(inp: TransformationInput) -> str:
         return "None"
 
     return wrap_in_quotes_if_data_type_string(str(inp.value), inp.data_type)
+
+
+def description_too_long(description: str) -> bool:
+    # max_line length = 100
+    # overhead length = len('    "description": "",')
+    # max description length = max line length - overhead length = 77
+    return len(description) > 77
 
 
 def generate_function_header(
@@ -173,6 +180,9 @@ def generate_function_header(
         output_dict_content=output_dict_str,
         name='"' + component.name + '"',
         description='"' + component.description + '"',
+        description_too_long_noqa="  # noqa: E501"
+        if description_too_long(component.description)
+        else "",
         category='"' + component.category + '"',
         version_tag='"' + component.version_tag + '"',
         id='"' + str(component.id) + '"',
