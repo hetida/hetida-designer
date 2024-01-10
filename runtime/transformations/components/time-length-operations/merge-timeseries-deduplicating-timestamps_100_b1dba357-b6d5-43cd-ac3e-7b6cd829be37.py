@@ -138,7 +138,9 @@ def merge_with_deduplicated_timestamps(
         sorted_timeseries_df["timestamp"], max_distribution_delta
     )
 
-    return pd.Series(sorted_timeseries_df["value"].values, index=new_timestamps, name=name)
+    return pd.Series(
+        sorted_timeseries_df["value"].values, index=new_timestamps, name=name
+    )
 
 
 # ***** DO NOT EDIT LINES BELOW *****
