@@ -32,7 +32,7 @@ import numpy as np
 def single_cpu_bound(n=10000000):
     start = datetime.datetime.now(datetime.timezone.utc)
     for _ in range(n):
-        random.random()
+        random.random()  # noqa: S311
     end = datetime.datetime.now(datetime.timezone.utc)
     duration = end - start
     return start, end, duration
@@ -42,7 +42,7 @@ def multi_cpu_bound(n=10000):
     start = datetime.datetime.now(datetime.timezone.utc)
     A = np.random.random_sample((n, n))
     B = np.random.random_sample((n, n))
-    res = np.dot(A, B)
+    np.dot(A, B)
     end = datetime.datetime.now(datetime.timezone.utc)
     duration = end - start
     return start, end, duration
@@ -82,16 +82,15 @@ def main(*, rounds, bind):
             "start": start.isoformat(),
             "end": end.isoformat(),
         }
-    elif bind.lower() == "multi":
+    if bind.lower() == "multi":
         start, end, duration = multi_cpu_bound(rounds)
         return {
             "duration": duration.total_seconds(),
             "start": start.isoformat(),
             "end": end.isoformat(),
         }
-    else:
-        raise ValueError(
-            'Unknown value of "bind" mode: '
-            + bind
-            + '. Allowed values are "single" and "multi".'
-        )
+    raise ValueError(
+        'Unknown value of "bind" mode: '
+        + bind
+        + '. Allowed values are "single" and "multi".'
+    )

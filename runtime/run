@@ -50,11 +50,11 @@ test() {
 # }
 
 lint() {
-    ruff hetdesrun tests "${@}"
+    ruff hetdesrun transformations/components tests "${@}"
 }
 
 imsort() {
-    ruff --select I hetdesrun tests --fix "${@}"
+    ruff --select I hetdesrun transformations/components tests --fix "${@}"
 }
 
 typecheck() {
@@ -62,17 +62,17 @@ typecheck() {
 }
 
 format() {
-    ruff --select I hetdesrun tests --fix "${@}" && echo "--> Ruff import sorting run."
-    black hetdesrun tests "${@}" && echo "--> Black run."
+    ruff --select I hetdesrun transformations/components tests --fix "${@}" && echo "--> Ruff import sorting run."
+    black hetdesrun transformations/components tests "${@}" && echo "--> Black run."
 }
 
 check() {
     # Will fail with non-zero exit status if any tool has some complaint.
     # If everything is okay this will have 0 exits status
-    echo "--> Running black in check mode" && black hetdesrun tests --check &&
+    echo "--> Running black in check mode" && black hetdesrun transformations/components tests --check &&
         echo "--> Running tests" && python -m pytest --cov=hetdesrun --cov-report=term-missing tests &&
         echo "--> Running mypy" && mypy hetdesrun &&
-        echo "--> Running ruff" && ruff hetdesrun tests &&
+        echo "--> Running ruff" && ruff hetdesrun transformations/components tests &&
         echo "CHECKS EXECUTION RESULTS: All checks were successful!"
 }
 

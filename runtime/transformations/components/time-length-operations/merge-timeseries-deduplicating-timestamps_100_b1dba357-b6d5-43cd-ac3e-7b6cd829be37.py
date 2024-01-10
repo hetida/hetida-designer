@@ -3,15 +3,15 @@
 # Merge timeseries deduplicating timestamps
 
 This components merges all timeseries in a multiple timeseries dataframe
-of the form provided by the Timeseries Dataframe component. Thereby it avoids 
+of the form provided by the Timeseries Dataframe component. Thereby it avoids
 duplicates by moving duplicate timestamps into the future, distributing them
 evenly with respect to the next differing timestamp, bounded by a maximum timedelta
 providable as paramter.
 
-This component may be useful if 
+This component may be useful if
 * a signal is measured by multiple sensors
 * which may lead to duplicate timestamps (but possibly different values)
-* you want to keep all values (e.g. to detect outliers) and methods like 
+* you want to keep all values (e.g. to detect outliers) and methods like
   mean / median aggregation are not suitable
 * moving duplicate timestamps into the future does not affect your analysis
   too much.
@@ -33,31 +33,43 @@ def cumsum_resetting_at_nan(orig):
     # Edge case: After the first portion the diff is null, here we can
     # simply fill with the cumsum value itself (".fillna(cumsum)")
     # The negative of this can be used adapt the cumsum.
-    reset = -(cumsum[orig.isnull()].diff().fillna(cumsum))
+    reset = -(cumsum[orig.isna()].diff().fillna(cumsum))
 
-    result = orig.where(orig.notnull(), reset).cumsum()
+    result = orig.where(orig.notna(), reset).cumsum()
 
     return result.fillna(0)
 
 
 def dupl_count_at_duplicated_positions(orig, dupl_counts):
-    """A series where the total number of duplicates in a sequence is written at every duplicate position"""
-    last_duplicated_position = orig.duplicated() & (~orig.duplicated().shift(-1).fillna(False))
-    return dupl_counts.where(last_duplicated_position | (dupl_counts == 0), np.nan).backfill()
+    """Count duplicates
+
+    Return a series where the total number of duplicates in a sequence is written at every duplicate
+    position.
+    """
+    last_duplicated_position = orig.duplicated() & (
+        ~orig.duplicated().shift(-1).fillna(False)
+    )
+    return dupl_counts.where(
+        last_duplicated_position | (dupl_counts == 0), np.nan
+    ).backfill()
 
 
 def dupl_delta_to_next(orig):
     """Delta to next different timestamp at every position"""
-    last_duplicated_position = orig.duplicated() & (~orig.duplicated().shift(-1).fillna(False))
+    last_duplicated_position = orig.duplicated() & (
+        ~orig.duplicated().shift(-1).fillna(False)
+    )
     timestamps_after = (
-        (orig.shift(-1)).where(last_duplicated_position, orig.where(~orig.duplicated())).bfill()
+        (orig.shift(-1))
+        .where(last_duplicated_position, orig.where(~orig.duplicated()))
+        .bfill()
     )
     delta_to = (timestamps_after - orig).fillna(pd.Timedelta(0))
     return delta_to
 
 
 def distribute_duplicated_timestamps(timestamp_series, max_distribution_delta: str):
-    """distribute duplicated timestamps to get unique timestamps
+    """Distribute duplicated timestamps to get unique timestamps
 
     This is useful if you want to "merge" two timeseries without throwing
     away values or aggregating and if you need unique timestamps in the end result.
@@ -69,8 +81,8 @@ def distribute_duplicated_timestamps(timestamp_series, max_distribution_delta: s
         Should be sorted by these timestamp values. Will be sorted here nevertheless.
         Index is ignored.
 
-    max_distribution_delta (str for pd.Timedelta): If the next timestamp after some duplicated timestamps
-        is further away than this delta, the duplicated timestamps will be distributed
+    max_distribution_delta (str for pd.Timedelta): If the next timestamp after some duplicated
+        timestamps is further away than this delta, the duplicated timestamps will be distributed
         uniformly in the time interval starting at the duplicated value and ending after
         this delta beginning from the duplicated value and continuing in
             1/(number of duplicates +1) * max_distribution_delta
@@ -116,17 +128,17 @@ def distribute_duplicated_timestamps(timestamp_series, max_distribution_delta: s
 def merge_with_deduplicated_timestamps(
     timeseries_df, max_distribution_delta: str, name="merged_timeseries"
 ):
-    """Merges multiple timeseries into one, deduplicating timestamps by moving them into the future a bit
+    """Merge multiple timeseries into one
 
-    timeseries_df should be sorted
+    Timestamps ar deduplicated by moving them into the future a bit.
     """
-    timeseries_df.sort_values("timestamp", inplace=True)
+    sorted_timeseries_df = timeseries_df.sort_values("timestamp")
 
     new_timestamps = distribute_duplicated_timestamps(
-        timeseries_df["timestamp"], max_distribution_delta
+        sorted_timeseries_df["timestamp"], max_distribution_delta
     )
 
-    return pd.Series(timeseries_df["value"].values, index=new_timestamps, name=name)
+    return pd.Series(sorted_timeseries_df["value"].values, index=new_timestamps, name=name)
 
 
 # ***** DO NOT EDIT LINES BELOW *****
@@ -142,7 +154,7 @@ COMPONENT_INFO = {
     },
     "name": "Merge timeseries deduplicating timestamps",
     "category": "Time length operations",
-    "description": "Combine multiple timeseries from a timeseries dataframe into one, avoiding duplicate timestamps.",
+    "description": "Combine multiple timeseries from a timeseries dataframe into one, avoiding duplicate timestamps.",  # noqa: E501
     "version_tag": "1.0.0",
     "id": "b1dba357-b6d5-43cd-ac3e-7b6cd829be37",
     "revision_group_id": "79de1ec7-b629-4360-a5e2-4eba19e60bd0",

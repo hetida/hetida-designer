@@ -231,7 +231,7 @@ COMPONENT_INFO = {
     },
     "name": "Value Range Check",
     "category": "Data Quality",
-    "description": "For each data point of the series, it is checked for all value ranges whether it lies within them.",
+    "description": "For each data point of the series, it is checked for all value ranges whether it lies within them.",  # noqa: E501
     "version_tag": "1.0.0",
     "id": "3cf8e12d-2fea-40d9-bc4b-015bddf66828",
     "revision_group_id": "83dabdfc-2d34-4e72-8010-4d61db8a9d6a",

@@ -32,7 +32,8 @@ src = [".", "runtime", "demo-adapter-python"]
 "**/tests/**/*.py" = ["S101", "PT023", "T201", "INP001", "PT001", "ARG001"]
 "**/tests/test_backend_kafka_consumer.py" = ["E501"]
 "**/tests/**/test_load_ts_data.py" = ["E501"]
-"**tests/auth/test_outgoing_auth.py" = ["S106"]
+"**/tests/auth/test_outgoing_auth.py" = ["S106"]
+"**/transformations/components/*/*.py" = ["INP001"]
 
 
 [tool.ruff.isort]
