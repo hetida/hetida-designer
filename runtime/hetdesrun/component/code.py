@@ -299,23 +299,6 @@ def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
         )
         logger.warning(msg)
         return code
-
-    """
-    if re.match(
-        pattern=r".*^TEST_WIRING_FROM_PY_FILE_IMPORT",
-        string=code,
-        flags=re.DOTALL | re.MULTILINE,
-    ):
-        return code
-
-    test_wiring_dictionary_string = (
-        "TEST_WIRING_FROM_PY_FILE_IMPORT = "
-        + tr.test_wiring.json(exclude_unset=True, exclude_defaults=True)
-        + "\n"
-    )
-
-    expanded_code = code + "\n\n" + format_code_with_black(test_wiring_dictionary_string)
-    """
     return expanded_code
 
 
