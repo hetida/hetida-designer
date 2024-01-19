@@ -1379,6 +1379,37 @@ async def test_execute_for_transformation_revision(
 
 
 @pytest.mark.asyncio
+async def test_execute_for_transformation_revision_with_missing_input_wiring(
+    async_test_client, mocked_clean_test_db_session
+):
+    tr_component_1 = TransformationRevision(**tr_json_component_1)
+    tr_component_1.content = update_code(tr_component_1)
+    store_single_transformation_revision(tr_component_1)
+    tr_workflow_2 = TransformationRevision(**tr_json_workflow_2_update)
+
+    store_single_transformation_revision(tr_workflow_2)
+
+    update_or_create_nesting(tr_workflow_2)
+
+    wiring_with_missing_input = deepcopy(tr_workflow_2.test_wiring)
+    wiring_with_missing_input.input_wirings.pop(0)
+
+    exec_by_id_input = ExecByIdInput(
+        id=tr_workflow_2.id,
+        wiring=wiring_with_missing_input,
+        job_id=UUID("1270547c-b224-461d-9387-e9d9d465bbe1"),
+    )
+
+    async with async_test_client as ac:
+        response = await ac.post(
+            "/api/transformations/execute",
+            json=json.loads(exec_by_id_input.json()),
+        )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_execute_for_transformation_revision_without_job_id(
     async_test_client, mocked_clean_test_db_session
 ):
