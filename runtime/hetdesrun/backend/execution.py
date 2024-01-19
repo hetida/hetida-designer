@@ -95,6 +95,10 @@ class TrafoExecutionError(Exception):
     pass
 
 
+class TrafoExecutionInputValidationError(TrafoExecutionError):
+    pass
+
+
 class TrafoExecutionNotFoundError(TrafoExecutionError):
     pass
 
@@ -210,24 +214,29 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         sub_nodes=nested_nodes(tr_workflow, nested_transformations),
     )
 
-    execution_input = WorkflowExecutionInput(
-        code_modules=[
-            tr_component.to_code_module() for tr_component in nested_components.values()
-        ],
-        components=[
-            component.to_component_revision()
-            for component in nested_components.values()
-        ],
-        workflow=workflow_node,
-        configuration=ConfigurationInput(
-            name=str(tr_workflow.id),
-            run_pure_plot_operators=exec_by_id_input.run_pure_plot_operators,
-        ),
-        workflow_wiring=exec_by_id_input.wiring
-        if exec_by_id_input.wiring is not None
-        else transformation_revision.test_wiring,
-        job_id=exec_by_id_input.job_id,
-    )
+    try:
+        execution_input = WorkflowExecutionInput(
+            code_modules=[
+                tr_component.to_code_module()
+                for tr_component in nested_components.values()
+            ],
+            components=[
+                component.to_component_revision()
+                for component in nested_components.values()
+            ],
+            workflow=workflow_node,
+            configuration=ConfigurationInput(
+                name=str(tr_workflow.id),
+                run_pure_plot_operators=exec_by_id_input.run_pure_plot_operators,
+            ),
+            workflow_wiring=exec_by_id_input.wiring
+            if exec_by_id_input.wiring is not None
+            else transformation_revision.test_wiring,
+            job_id=exec_by_id_input.job_id,
+        )
+    except ValidationError as e:
+        raise TrafoExecutionInputValidationError() from e
+
     return execution_input
 
 
