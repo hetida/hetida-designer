@@ -10,7 +10,7 @@
 ###############################################################################
 #
 # LICENSE
-#   Copyright © 2023 neusta analytics & insights GmbH
+#   Copyright © 2024 neusta analytics & insights GmbH
 #
 #   MIT License
 #   see https://github.com/hetida/hetida-designer/blob/release/LICENSE
@@ -108,10 +108,18 @@ _detect_jq() {
     fi
 }
 
+JQ_ENSURED=false
 _ensure_jq() {
     if ! command -v jq 1>/dev/null; then
         _log_error "Called command needs jq command line tool, which was not found. Aborting."
         exit 127
+    fi
+    JQ_ENSURED=true
+}
+
+_ensure_jq_once() {
+    if ! "$JQ_ENSURED"; then
+        ensure_jq
     fi
 }
 
@@ -628,13 +636,38 @@ _import_multi_trafo_json_file() {
     curl "${curl_args[@]}" -X PUT -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" -d @"$_file_path" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${@}"
 }
 
+
+# encodes as json string, outputs result with "" around
+_json_encode_str(){
+    printf -- "$1" | jq -R -s '.'
+}
+
 _import_from_dir() {
     # load all trafos into one big json
     _all_trafos_json='[  ' # 2 extra spaces, see comma + newline removal below
-    for f in $(find "$EXPORT_DIRECTORY" -name '*.json'); do
-        _all_trafos_json+="$(cat "$f")"
-        _all_trafos_json+=","$'\n' # add comma and newline
-    done
+    
+        # trafos from json files
+        for f in $(find "$EXPORT_DIRECTORY" -name '*.json'); do
+            _all_trafos_json+="$(cat "$f")"
+            _all_trafos_json+=","$'\n' # add comma and newline
+        done
+        
+        # from py files
+        for f in $(find "$EXPORT_DIRECTORY" -name '*.py'); do
+            if [[ "$(basename "$f")" != "__init__.py" ]]; then
+                _debug "handle py file $f"
+                
+                # only ensure jq if it is needed, i.e. only if py files need
+                # to be handled:
+                _ensure_jq_once        
+
+                local py_file_content
+                py_file_content="$(cat "$f")"
+                _all_trafos_json+="$(_json_encode_str "$py_file_content")"
+                _all_trafos_json+=","$'\n' # add comma and newline
+            fi
+        done
+
     _all_trafos_json="${_all_trafos_json::-2}" # remove last comma and newline
     _all_trafos_json+=']'
 
@@ -698,14 +731,15 @@ _slugify_arg() {
     printf "%s" "$1" | _slugify
 }
 
-_subpath() {
+_subpath_no_slugify() {
     _id="$1"
     _name="$2"
     _category="$3"
     _type="$4"
     _version_tag="$5"
+    _extension="${6:-json}"
 
-    printf "%s" "${_type,,}"s/"$(_slugify_arg "$_category")"/"$(_slugify_arg "$_name")"_"$(_slugify_arg "$_version_tag")"_"$_id".json
+    printf "%s" "$_type"s/"$_category"/"$_name"_"$_version_tag"_"$_id"."$_extension"
 }
 
 _export_to_dir() {
@@ -721,21 +755,47 @@ _export_to_dir() {
     # echo curl "${curl_args[@]}" -X GET -G -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${REMAINING_ARGS[@]}"
     # write each trafo revision to its respective directory
 
+    file_no=0
+    
     for row in $(curl "${curl_args[@]}" -X GET -G -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${REMAINING_ARGS[@]}" | jq -r '.[] | @base64'); do
+        file_no=$(( $file_no + 1 ))
+        start=`date +%s%N`
         decoded_row="$(echo ${row} | base64 --decode)"
 
-        _id="$(echo "$decoded_row" | jq -r '.id')"
-        _name="$(echo "$decoded_row" | jq -r '.name')"
-        _category="$(echo "$decoded_row" | jq -r '.category')"
-        _type="$(echo "$decoded_row" | jq -r '.type')"
-        _version_tag="$(echo "$decoded_row" | jq -r '.version_tag')"
+        read _id _name _category _type _version_tag < <(echo $(echo "$decoded_row" | jq -r '.id, .name, .category, .type, .version_tag' | _slugify ) )
 
-        _file_path="$EXPORT_DIRECTORY"/"$(_subpath "$_id" "$_name" "$_category" "$_type" "$_version_tag")"
+        #_id="$(echo "$decoded_row" | jq -r '.id')"
+        #_name="$(echo "$decoded_row" | jq -r '.name')"
+        # _category="$(echo "$decoded_row" | jq -r '.category')"
+        #_type="$(echo "$decoded_row" | jq -r '.type')"
+        #_version_tag="$(echo "$decoded_row" | jq -r '.version_tag')"
+
+        local extension
+        if $EXPORT_COMPONENTS_AS_PY_FILES && [[ "$_type" == "component" ]]; then 
+            extension="py"
+        else
+            extension="json"
+        fi
+        _file_path="$EXPORT_DIRECTORY"/"$(_subpath_no_slugify "$_id" "$_name" "$_category" "$_type" "$_version_tag" "$extension")"
+
+        echo "Extracting $_file_path"
 
         _debug "Writing file to $_file_path"
         mkdir -p "$(dirname "$_file_path")"
-        echo "${row}" | base64 --decode | jq >"$_file_path"
+
+        # actual extraction into file
+        if [[ "$extension" == "json" ]]; then
+            echo "$decoded_row" | jq >"$_file_path"
+        elif [[ "$extension" == "py" ]]; then
+            echo "$decoded_row" | jq -r '.content' >"$_file_path"
+        fi
+
+        end=`date +%s%N`
+
+        runtime=$(( (end-start)/1000000))
+        _debug $runtime
     done
+    echo "Extracted $file_no files."
 
 }
 
@@ -880,6 +940,7 @@ _initialize_variables() {
 
     ##### Content
     EXPORT_DIRECTORY="${HDCTL_EXPORT_DIRECTORY:-"${EXPORT_DIRECTORY:-""}"}"
+    EXPORT_COMPONENTS_AS_PY_FILES="${HDCTL_EXPORT_COMPONENTS_AS_PY_FILES:-"${EXPORT_COMPONENTS_AS_PY_FILES:-"true"}"}"
 
     ##### HD backend
 
