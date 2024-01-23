@@ -148,6 +148,23 @@ async def create_transformation_revision(
     return persisted_transformation_revision
 
 
+def change_code(
+    tr: TransformationRevision,
+    expand_component_code: bool = False,
+    update_component_code: bool = False,
+) -> str:
+    """Handle desired code changes"""
+    tr_copy = tr.copy(deep=True)
+    assert isinstance(tr_copy.content, str)  # for mypy # noqa: S101
+
+    if update_component_code:
+        tr_copy.content = update_code(tr_copy)
+    if expand_component_code:
+        tr_copy.content = expand_code(tr_copy)
+
+    return tr_copy.content
+
+
 @transformation_router.get(
     "",
     response_model=list[TransformationRevision | str],
@@ -221,7 +238,33 @@ async def get_all_transformation_revisions(
         False,
         description=(
             "Set to True to add the documentation as module docstring and "
-            "the test wiring as dictionary to the component code."
+            "the test wiring as dictionary to component code."
+            ""
+            "Note: "
+            "Enabling this option leads to changed component code in the output of this request."
+            " In particular the component code hash changes which in turn is used in the Python"
+            " import module path. This affects serialized objects (e.g. trained models) based on"
+            " this component: They cannot be deserialized in runtime containers / processes where"
+            " the old component is not present anymore. When putting such components to hetida"
+            " designer instances it is necessary to recreate such serialized objects."
+        ),
+    ),
+    update_component_code: bool = Query(
+        False,
+        description=(
+            "Set to true to update the component code, in particular the main function "
+            "definition and the COMPONENT_INFO in the response of this. For example this "
+            "can be used to update old, deprecated and since 0.9.5 from code non-importable"
+            " @register decorator style components to the new more flexible  components with"
+            " a COMPONENT_INFO dict."
+            ""
+            "Note: "
+            "Enabling this option leads to changed component code in the output of this request."
+            " In particular the component code hash changes which in turn is used in the Python"
+            " import module path. This affects serialized objects (e.g. trained models) based on"
+            " this component: They cannot be deserialized in runtime containers / processes where"
+            " the old component is not present anymore. When putting such components to hetida"
+            " designer instances it is necessary to recreate such serialized objects."
         ),
     ),
 ) -> list[TransformationRevision | str]:
@@ -258,28 +301,25 @@ async def get_all_transformation_revisions(
     code_list: list[str] = []
     component_indices: list[int] = []
 
-    if expand_component_code or components_as_code:
-        component_indices = [
-            index
-            for index, tr in enumerate(transformation_revision_list)
-            if tr.type == Type.COMPONENT
-        ]
-        component_indices.sort(reverse=True)
+    component_indices = [
+        index
+        for index, tr in enumerate(transformation_revision_list)
+        if tr.type == Type.COMPONENT
+    ]
+    component_indices.sort(reverse=True)
 
     if components_as_code:
         for index in component_indices:
             component_tr = transformation_revision_list.pop(index)
-            if expand_component_code:
-                code_list.append(expand_code(component_tr))
-            else:
-                assert isinstance(  # hint for mypy # noqa: S101
-                    component_tr.content, str
-                )
-                code_list.append(component_tr.content)
-    elif expand_component_code:
+            code_list.append(
+                change_code(component_tr, expand_component_code, update_component_code)
+            )
+    else:
         for index in component_indices:
             component_tr = transformation_revision_list[index]
-            component_tr.content = expand_code(component_tr)
+            component_tr.content = change_code(
+                component_tr, expand_component_code, update_component_code
+            )
 
     return transformation_revision_list + code_list
 
