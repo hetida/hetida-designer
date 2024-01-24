@@ -19,7 +19,9 @@ Apart from these two, you can write your completely own general custom adapters 
 
 Another solution consist of using serialization/deserialization components directly from within the workflows. This is not recommended as its thwarts hetida designer's principles like reproducibility and separation of analytics from data in/egestion. Nevertheless it is explained below.
 
-**General warning on deserialization**: Deserializing executes code and therefore is a security risk - you should only load objects from trusted sources!
+**General warnings on deserialization**: 
+* Deserializing executes code and therefore is a security risk - you should only load objects from trusted sources!
+* If code or Python environments change, deserialization may fail at some point. See [notes on deserialization pitfalls](./repr_pitfalls.md) for details
 
 ### Note on model management
 As well as it does not provide scheduling, hetida designer is not a model management framework. It treats models as data that is put out from workflows and read into workflow inputs.

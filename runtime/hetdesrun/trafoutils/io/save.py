@@ -5,7 +5,9 @@ import re
 import unicodedata
 from pathlib import Path
 
+from hetdesrun.component.code import expand_code
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.utils import Type
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +35,10 @@ def slugify(value: str, allow_unicode: bool = False) -> str:
 
 
 def save_transformation_into_directory(
-    transformation_revision: TransformationRevision, directory_path: str
+    transformation_revision: TransformationRevision,
+    directory_path: str,
+    components_as_code: bool = False,
+    expand_component_code: bool = False,
 ) -> str:
     """Save single trafo as json file at the appropriate place in a directory structure
 
@@ -49,7 +54,7 @@ def save_transformation_into_directory(
 
     where SLUGIFIEDTAG is somthing like 101 for a tag 1.0.1
 
-    Returns the path of the saved file
+    Returns the path of the saved file.
     """
     # Create directory on local system
     category_directory = os.path.join(
@@ -59,6 +64,12 @@ def save_transformation_into_directory(
     )
     Path(category_directory).mkdir(parents=True, exist_ok=True)
 
+    file_extension = (
+        ".json"
+        if components_as_code is False or transformation_revision.type == Type.WORKFLOW
+        else ".py"
+    )
+
     # infer file path
     path = os.path.join(
         category_directory,
@@ -67,24 +78,33 @@ def save_transformation_into_directory(
         + slugify(transformation_revision.version_tag)
         + "_"
         + str(transformation_revision.id).lower()
-        + ".json",
+        + file_extension,
     )
+
+    if expand_component_code and transformation_revision.type == Type.COMPONENT:
+        transformation_revision.content = expand_code(transformation_revision)
 
     # Save the transformation revision
     with open(path, "w", encoding="utf8") as f:
         try:
-            json.dump(
-                json.loads(transformation_revision.json(exclude_none=True)),
-                f,
-                indent=2,
-                sort_keys=True,
-            )
-            logger.info(
-                "exported %s '%s' to %s",
-                transformation_revision.type,
-                transformation_revision.name,
-                path,
-            )
+            if file_extension == ".json":
+                json.dump(
+                    json.loads(transformation_revision.json(exclude_none=True)),
+                    f,
+                    indent=2,
+                    sort_keys=True,
+                )
+                logger.info(
+                    "exported %s '%s' to %s",
+                    transformation_revision.type,
+                    transformation_revision.name,
+                    path,
+                )
+            else:
+                assert isinstance(  # hint for mypy # noqa: S101
+                    transformation_revision.content, str
+                )
+                f.write(transformation_revision.content)
         except KeyError:
             logger.error(
                 "Could not safe the %s with id %s on the local system.",

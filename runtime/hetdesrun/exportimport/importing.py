@@ -42,7 +42,7 @@ class TrafoUpdateProcessSummary(BaseModel):
 def import_importable(
     importable: Importable,
     raise_on_missing_dependency: bool = False,
-) -> dict[UUID, TrafoUpdateProcessSummary]:
+) -> dict[UUID | str, TrafoUpdateProcessSummary]:
     """Imports trafo revs from a single importable into the database
 
     An importable contains transformation revisions (for example loaded from
@@ -70,7 +70,7 @@ def import_importable(
         trafo_rev.id: trafo_rev for trafo_rev in trafos_to_process
     }
 
-    success_per_trafo = {
+    success_per_trafo: dict[UUID | str, TrafoUpdateProcessSummary] = {
         trafo.id: TrafoUpdateProcessSummary(
             status=UpdateProcessStatus.NOT_TRIED,
             msg="",
@@ -150,7 +150,7 @@ def import_importable(
 
 def import_importables(
     importables: Iterable[Importable],
-) -> list[dict[UUID, TrafoUpdateProcessSummary]]:
+) -> list[dict[UUID | str, TrafoUpdateProcessSummary]]:
     """Import all trafo rev sets from multiple importables"""
     return [import_importable(importable) for importable in importables]
 
