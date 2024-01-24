@@ -1,10 +1,10 @@
 ## 0.9.5
-* add query parameters to the /transformations GET and PUT endpoints to enable the export and import of components as python code
-* **BREAKING CHANGE**: Importing components from python code with the @register decorator will no longer work. Use a COMPONENT_INFO dictionary instead!
+* Allow /transformations GET and PUT endpoints to emit / receive components as python code instead of json objects
+* **BREAKING CHANGE**: Importing components from python code which only contain the old @register decorator will no longer work. Component code must contain the new COMPONENT_INFO dictionary  from now on instead in order to be importable from code via the various [importing means](./docs/import_export.md). Importing from json files is not affected.
 * **BREAKING CHANGE**: All transformations in the open source repo have changed insignificantly:
-  In components, the @register decorater has been replaced by COMPONENT_INFO dictionaries.
-  In addition, attributes that have already been added to the respective classes in previous releases are now added to the JSONs as well.
-  Objects that have been serialized via pickle with the Blob Storage adapter using components with modified code can no longer be deserialized, as the import paths based on hashes based on the code have changed and are no longer available when unpickeling.
+  In component code, the @register decorater has been replaced by COMPONENT_INFO dictionaries.
+  In addition, attributes that have already been added to the respective classes in previous releases are now added to the transformation JSONs as well.
+  If you re-import them (note: this is not done automatically when updating the docker image) into an existing hd instance where you have [persisted models](./docs/persisting_models.md) you may be affected by [deserialization problems](./docs/repr_pitfalls.md) and need to re-create those persisted models.
 
 ## 0.9.4
 * bug fixes around default value handling
