@@ -17,13 +17,7 @@ Run `./hdctl usage` for usage details and examples.
 
 ## hdctl sync usage
 
-Sync allows configuration and credentials of the underlying requests against the hetida designer api to reside in local files. In combination with version control, e.g. git,
-this enables:
-
-* external version control of workflows/components
-* editing locally / hybrid working and frequent switching between local work
-and work in the hetida designer user interface
-* scripting CD/CI and GitOps
+Sync allows configuration and credentials of the underlying requests against the hetida designer api to reside in local files.
 
 The configuration and credential files for a remote hetida designer instance
 you want to name "my-hd-instance" can be pregenerated via
@@ -39,7 +33,7 @@ you should have at least a `my-hd-instance.hd-instance` file and a
 
 Additionally a `my-hd-instance.hd-creds.stub` file is present that can be checked into
 version control together with the .hd-instance file. You should of course never
-put the `my-hd-instance.hd-creds` into version control since you have entered actual passwords and secrets there. Put `*.hd-creds` into your `.gitignore` instead! 
+put the `my-hd-instance.hd-creds` into version control since you have entered actual passwords and secrets there. Put `*.hd-creds` into your `.gitignore` instead!
 
 You can now transfer transformations from/to the configured local directory via
 
@@ -50,7 +44,7 @@ hdctl sync push my-hd-instance
 
 Note that pulling overwrites the local directory completely. 
 > It is strongly
-recommended to use version control and commit before and after puling and
+recommended to use version control and commit before and after pulling and
 pushing.
 
 Note that what is pulled and pushed depends on the settings in your .hd-instance
@@ -69,7 +63,7 @@ hdctl sync pull my-other-hd-instance to my-hd-instance
 This pushes / pulls with the settings of my-other-hd-instance but uses the
 export directory configured for my-hd-instance as source / target.
 
-## Frequently used settings
+## Frequently used parameters and settings
 
 Typically filter settings are configured for pulling only and pushing just pushes everything
 available as local file to the hd instance. Let's start with an example in the .hd-instance file
@@ -101,9 +95,6 @@ Filter options for pushing are analogous.
 
 Pushing has an additional option `allow_overwrite_released` and also `update_component_code`. You should be especially careful with `allow_overwrite_released` and both these options have the same pitfalls mentioned above!
 
-
-
-
 ## Hybrid working using sync features
 "hybrid working" means editing components both via the hetida designer user interface and as local files and switching frequently between both editing "modes".
 
@@ -133,8 +124,7 @@ PULL_QUERY_URL_APPEND=?include_dependencies=true&include_deprecated=false&catego
     * do some test executions
 * sync pull && git commit
 * ... repeat, then finish your work session with:
-* git commit
-* sync push
+* git commit && sync push
 
 
 ## Run unit tests in component code locally
