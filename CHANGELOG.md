@@ -1,5 +1,6 @@
 ## 0.9.5
 * Allow /transformations GET and PUT endpoints to emit / receive components as python code instead of json objects
+* new (possibly code-changing!) parameters to the /api/transformations GET endpoint that when set to true make sure that the component code contains everything (test wiring, documentation as module docstring, COMPONENT_INFO dict containing metadata)
 * **BREAKING CHANGE**: Importing components from python code which only contain the old @register decorator will no longer work. Component code must contain the new COMPONENT_INFO dictionary  from now on instead in order to be importable from code via the various [importing means](./docs/import_export.md). Importing from json files is not affected.
 * **BREAKING CHANGE**: All transformations in the open source repo have changed insignificantly:
   In component code, the @register decorater has been replaced by COMPONENT_INFO dictionaries.
