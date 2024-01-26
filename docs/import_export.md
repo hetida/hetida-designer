@@ -5,15 +5,19 @@ Besides [backups](./backup.md), components and workflows can be exported and imp
 Use Case examples:
 * Backup only certain collection of workflows / components (e.g. certain categories) and their dependencies
 * Keep a selection versioned in a git repository
-* export some trafos => work on them locally => import them, overwriting the existing trafos (Note: This has some [pitfalls concerning reproducibility and deserializability](./repr_pitfalls.md))
+* [Syncing and hybrid working](./sync.md); I.e. export some trafos => work on them locally => import them, overwriting the existing trafos (Note: This has some [pitfalls concerning reproducibility and deserializability](./repr_pitfalls.md))
 * transfer a subset of components/workflows from one hetida designer instance to another, e.g. from a test environment to a production environment.
 
 This guide assumes the default docker-compose setup described in the project README.
 
 ## Export / Import via hdctl bash tool
-The hdctl Bash tool's `fetch` and `push` subcommands can be used for this purpose and does not require docker. See the [hdctl script file](../hdctl) for installation instructions and run `./hdctl usage` for usage details and examples.
+The hdctl Bash tool provides a comfortable [sync](./sync) subcommand, that can be used for many purposes and should be your preferred option for fine-granular export / import. 
 
-hdctl supports the same parameters as the Pythons cript variant discussed below.
+The underlying hdctl Bash tool's `fetch` and `push` subcommands can be used directly for this purpose.
+
+Using hdctl has the advantage that it does not require docker. See the [hdctl script file](../hdctl) for installation instructions and run `./hdctl usage` for usage details and examples.
+
+hdctl supports the same parameters as the Pythons script variant discussed below.
 
 
 ## Export / Import via Python script (in runtime container environment)
