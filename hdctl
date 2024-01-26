@@ -730,12 +730,14 @@ _import_from_dir() {
     _all_trafos_json='[  ' # 2 extra spaces, see comma + newline removal below
     
         # trafos from json files
+        # shellcheck disable=SC2044
         for f in $(find "$EXPORT_DIRECTORY" -name '*.json'); do
             _all_trafos_json+="$(cat "$f")"
             _all_trafos_json+=","$'\n' # add comma and newline
         done
         
         # from py files
+        # shellcheck disable=SC2044
         for f in $(find "$EXPORT_DIRECTORY" -name '*.py'); do
             if [[ "$(basename "$f")" != "__init__.py" ]]; then
                 _debug "handle py file $f"
@@ -846,6 +848,7 @@ _export_to_dir() {
         start=$(date +%s%N)
         decoded_row="$(echo ${row} | base64 --decode)"
 
+        # shellcheck disable=SC2046,SC2005
         read _id _name _category _type _version_tag < <(echo $(echo "$decoded_row" | jq -r '.id, .name, .category, .type, .version_tag' | _slugify ) )
 
         #_id="$(echo "$decoded_row" | jq -r '.id')"
@@ -876,7 +879,7 @@ _export_to_dir() {
             echo "$decoded_row" | jq -r '.content' >"$_file_path"
         fi
 
-        end=`date +%s%N`
+        end=$(date +%s%N)
 
         runtime=$(( (end-start)/1000000))
         _debug $runtime
@@ -917,7 +920,8 @@ _init_sync_instance(){
         exit 1
     fi
 
-    local instance_file_content=$(
+    local instance_file_content
+    instance_file_content=$(
     cat <<END_HEREDOC
 HD_BACKEND_API_URL=
 VERIFY_BACKEND_API_URL=true
@@ -951,7 +955,8 @@ END_HEREDOC
 )
     echo "$instance_file_content" > "$instance_file"
 
-    local cred_stub_file_content=$(
+    local cred_stub_file_content
+    cred_stub_file_content=$(
     cat <<END_HEREDOC
 MAINTENANCE_SECRET=
 USERNAME=
