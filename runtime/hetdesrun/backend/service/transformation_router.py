@@ -272,6 +272,10 @@ async def get_all_transformation_revisions(
 
     Used by frontend for initial loading of all transformations to populate the sidebar
     and to export selected transformation revisions.
+
+    The parameters filtering the transformation revisions are logically combined as follows
+    * OR for the same filter, e.g. providing two ids will yield both trafos.
+    * AND between different filters.
     """
 
     filter_params = FilterParams(
@@ -466,6 +470,15 @@ async def update_transformation_revisions(
     This endpoint can be used to import related sets of transformation revisions.
     Such a set does not have to be closed under dependency relation, e.g. elements
     of it can refer base components.
+
+    This endpoint allows for filltering transformation revisions like the corresponding
+    get endpoint. This means of all provided trafos in the payload only those matching the
+    filter parameters will be updated/stored. Transformation revisions that where excluded
+    will be marked as ignored in the response.
+
+    The parameters filtering the transformation revisions are logically combined as follows
+    * OR for the same filter, e.g. providing two ids will store both trafos.
+    * AND between different filters.    
     """
     filter_params = FilterParams(
         type=type,
