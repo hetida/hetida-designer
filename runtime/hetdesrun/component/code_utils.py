@@ -96,6 +96,9 @@ def get_global_from_code(
                 continue
             assign_target = element.targets[0]
 
+            if not hasattr(assign_target, "id"):
+                continue
+
             if assign_target.id == variable_name:  # type: ignore
                 try:
                     return ast.literal_eval(element.value)
