@@ -137,7 +137,7 @@ class ValueRange(BaseModel):
     max_value: float
     max_value_inclusive: bool = True
 
-    @root_validator()
+    @root_validator(skip_on_failure=True)
     def verify_value_ranges(cls, values: dict) -> dict:
         try:
             min_value = values["min_value"]
@@ -295,7 +295,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "timeseries_data",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "{\n"
@@ -309,7 +308,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "value_range_dict",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "{\n"
