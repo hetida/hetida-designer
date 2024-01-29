@@ -58,3 +58,6 @@ Note:
 ### Cleanup operations
 * See [cleanup docs](cleanup.md)
 * If maintenance endpoints are available, [hdctl](../hdctl) can trigger each cleanup action as well.
+
+## Maintenance Risks
+Some maintenance operations naturally are affecting reproducibility and deserialization. See [here](./repr_pitfalls.md) for typical pitfalls and how to avoid them.

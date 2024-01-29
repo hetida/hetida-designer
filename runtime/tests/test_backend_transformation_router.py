@@ -9,7 +9,7 @@ import pytest
 from fastapi import HTTPException
 
 from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
-from hetdesrun.component.code import update_code
+from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (
@@ -50,7 +50,7 @@ tr_json_component_1 = {
             }
         ],
     },
-    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',  # noqa: E501
+    "content": 'from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={"operator_input": DataType.Integer},\n    outputs={"operator_output": DataType.Integer},\n    component_name="Pass Through Integer",\n    description="Just outputs its input value",\n    category="Connectors",\n    uuid="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    group_id="57eea09f-d28e-89af-4e81-2027697a3f0f",\n    tag="1.0.0",\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {"operator_output": operator_input}\n',  # noqa: E501
     "test_wiring": {
         "input_wirings": [
             {
@@ -132,7 +132,7 @@ tr_json_component_2 = {
         "inputs": [],
         "outputs": [],
     },
-    "content": "code",
+    "content": 'code="code"',
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
@@ -154,7 +154,7 @@ tr_json_component_2_update = {
         "inputs": [],
         "outputs": [],
     },
-    "content": "code",
+    "content": 'code="code"',
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
@@ -177,7 +177,7 @@ tr_json_component_2_deprecate = {
         "inputs": [],
         "outputs": [],
     },
-    "content": "code",
+    "content": 'code="code"',
     "test_wiring": {
         "input_wirings": [],
         "output_wirings": [],
@@ -1020,6 +1020,62 @@ async def test_get_all_transformation_revisions_with_combined_filters(
 
 
 @pytest.mark.asyncio
+async def test_get_all_transformation_revisions_with_components_as_code(
+    async_test_client, mocked_clean_test_db_session
+):
+    store_single_transformation_revision(
+        TransformationRevision(**tr_json_component_1)  # DRAFT
+    )
+    store_single_transformation_revision(
+        TransformationRevision(**tr_json_workflow_1)  # DRAFT
+    )
+
+    async with async_test_client as ac:
+        response_components_as_code = await ac.get(
+            "/api/transformations/", params={"components_as_code": True}
+        )
+        response_expand_component_code = await ac.get(
+            "/api/transformations/", params={"expand_component_code": True}
+        )
+        response_both = await ac.get(
+            "/api/transformations/",
+            params={"components_as_code": True, "expand_component_code": True},
+        )
+
+    assert response_components_as_code.status_code == 200
+    assert len(response_components_as_code.json()) == 2
+    assert response_components_as_code.json()[0] == tr_json_workflow_1
+    assert response_components_as_code.json()[1] == tr_json_component_1["content"]
+
+    assert response_expand_component_code.status_code == 200
+    assert len(response_expand_component_code.json()) == 2
+    assert response_expand_component_code.json()[1] == tr_json_workflow_1
+    assert (
+        tr_json_component_1["content"]
+        in response_expand_component_code.json()[0]["content"]
+    )
+    assert (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT"
+        in response_expand_component_code.json()[0]["content"]
+    )
+    assert (
+        '"""Documentation for component 0\n\ndocumentation\n"""\n\n'
+        in response_expand_component_code.json()[0]["content"]
+    )
+
+    assert response_both.status_code == 200
+    assert len(response_both.json()) == 2
+    assert response_both.json()[0] == tr_json_workflow_1
+    assert tr_json_component_1["content"] in response_both.json()[1]
+    assert "TEST_WIRING_FROM_PY_FILE_IMPORT" in response_both.json()[1]
+
+    assert (
+        '"""Documentation for component 0\n\ndocumentation\n"""\n\n'
+        in response_both.json()[1]
+    )
+
+
+@pytest.mark.asyncio
 async def test_get_transformation_revision_by_id_with_component(
     async_test_client, mocked_clean_test_db_session
 ):
@@ -1254,6 +1310,63 @@ async def test_update_transformation_revision_by_adding_operator_to_workflow_fol
     assert get_response.status_code == 200
 
     assert get_response.json() == put_response.json()
+
+
+@pytest.mark.asyncio
+async def test_update_transformation_revision_from_component_code(
+    async_test_client, mocked_clean_test_db_session
+):
+    tr_json_component_2_draft = deepcopy(tr_json_component_2)
+    tr_json_component_2_draft["state"] = "DRAFT"
+    del tr_json_component_2_draft["released_timestamp"]
+
+    tr_component_2 = TransformationRevision(**tr_json_component_2_draft)
+    store_single_transformation_revision(tr_component_2)
+
+    tr_json_component_2_draft["content"] = "{"
+    tr_component_2_invalid_code = TransformationRevision(**tr_json_component_2_draft)
+    tr_component_2_invalid_code.content = update_code(tr_component_2_invalid_code)
+
+    tr_json_component_2_update_draft = deepcopy(tr_json_component_2_update)
+    tr_json_component_2_update_draft["state"] = "DRAFT"
+    del tr_json_component_2_update_draft["released_timestamp"]
+
+    tr_component_2_update = TransformationRevision(**tr_json_component_2_update_draft)
+    assert tr_component_2_update.content == 'code="code"'
+    tr_component_2_update.content = update_code(tr_component_2_update)
+    tr_component_2_update.content = expand_code(tr_component_2_update)
+
+    assert '"category": "Test"' in tr_component_2_update.content
+
+    async with async_test_client as ac:
+        put_response_with_failure = await ac.put(
+            "/api/transformations/",
+            json=[tr_component_2_invalid_code.content],
+        )
+        put_response = await ac.put(
+            "/api/transformations/",
+            json=[tr_component_2_update.content],
+        )
+        get_response = await ac.get(
+            posix_urljoin(
+                "/api/transformations/", str(get_uuid_from_seed("component 2"))
+            ),
+        )
+
+    assert put_response_with_failure.status_code == 207
+    assert tr_component_2_invalid_code.content in put_response_with_failure.json()
+    trafo_update_process_summary = put_response_with_failure.json()[
+        tr_component_2_invalid_code.content
+    ]
+    assert trafo_update_process_summary["status"] == "FAILED"
+
+    assert put_response.status_code == 207
+    assert str(tr_component_2_update.id) in put_response.json()
+    trafo_update_process_summary = put_response.json()[str(tr_component_2_update.id)]
+    assert trafo_update_process_summary["status"] == "SUCCESS"
+
+    assert get_response.status_code == 200
+    assert get_response.json()["category"] == "Test"
 
 
 @pytest.mark.asyncio
