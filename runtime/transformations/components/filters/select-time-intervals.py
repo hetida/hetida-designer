@@ -11,8 +11,8 @@ Select all data points in provided time intervals from a time series. Returns a 
     Expects DateTimeIndex.
 
 - **list_of_time_intervals** (Any):
-    List of time intervals, that specify when each interval begins and ends, and which correction
-    value to use. An example JSON input for a time interval is:
+    List of time intervals, that specify when the respective interval begins and ends, and which
+    correction value to use. An example of a JSON input for a time interval is:
     [
         {
             "start": "2020-01-01T01:15:27.000Z",
@@ -21,9 +21,9 @@ Select all data points in provided time intervals from a time series. Returns a 
             "end_inclusive": true
         }
     ]
-    The start and end attributes set the boundary timestamps of each time interval. The
-    corresponding `_inclusive` boolean sets whether each boundary is inclusive or not. The two
-    latter entries are optional, the example represents their default values.
+    The `start` and `end` attributes set the boundary timestamps for the respective time interval.
+    The corresponding `_inclusive` boolean sets whether each boundary is inclusive or not. The two
+    latter entries are optional, the example displays their default values.
 
 
 ## Outputs
@@ -102,12 +102,12 @@ class TimeInterval(BaseModel):
         if end < start:
             raise ValueError(
                 "To be valid, a time interval must be non-empty, i.e. the start timestamp "
-                "may not be bigger than the end timestamp."
+                "may not be later than the end timestamp."
             )
         if (start_inclusive is False or end_inclusive is False) and not (start < end):
             raise ValueError(
                 "To be valid, a time interval must be non-empty, i.e the start timestamp must be "
-                "smaller than the end timestamp."
+                "earlier than the end timestamp."
             )
         return values
 
@@ -140,8 +140,8 @@ def main(*, series, list_of_time_intervals):
 
     if not isinstance(series.index, pd.DatetimeIndex):
         raise ComponentInputValidationException(
-            "Could not find timestamps in provided object",
-            error_code="not a time-series like object",
+            "Provided series does not have DateTimeIndex.",
+            error_code=422,
             invalid_component_inputs=["series"],
         )
 
