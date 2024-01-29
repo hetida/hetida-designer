@@ -235,7 +235,7 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
             job_id=exec_by_id_input.job_id,
         )
     except ValidationError as e:
-        raise TrafoExecutionInputValidationError() from e
+        raise TrafoExecutionInputValidationError(e) from e
 
     return execution_input
 
