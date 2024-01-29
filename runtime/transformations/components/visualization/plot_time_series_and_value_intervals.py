@@ -10,9 +10,9 @@ Plots the `series` and each value interval in `value_interval_dict`.
     Series to be visualized. Expects dtype to be float or int.
 
 - **value_interval_dict** (Any):
-    Dictionary of key-value pairs where each key is the name for a value interval and each value is
-    a dictionary of key-value pairs containing information about the value interval to be
-    visualized. An example JSON input for a value interval is:
+    A dictionary of key-value pairs, where each key is the name for a value interval and each value
+    is a dictionary containing information about the value interval to be visualized. An example of
+    a JSON input for a value interval dictionary is:
     ```
     {
         "[10,20]": {
@@ -26,14 +26,14 @@ Plots the `series` and each value interval in `value_interval_dict`.
         }
     }
     ```
-    The minimum and maximum values set the boundary values of each value interval. The corresponding
-    `_inclusive` boolean sets whether each boundary is inclusive or not. The two values shown in the
-    example represent the default values. For each interval, distinct line and fill colors can be
-    entered with the corresponding color properties. All entries except `min_value` and `max_value`
-    are optional. If no line color (or fill color respectively) string is entered as a property, the
-    line color (or fill color respectively) is set to the `line_color` (or `fill_color`
-    respectively) input. If no display name is entered, the key of the higher order key value pair
-    will be used instead.
+    The minimum and maximum values set the boundary values of the respective value interval. The
+    corresponding `_inclusive` boolean sets whether the respective boundary is inclusive or not.
+    The two values shown in the example represent the default values. For each interval, different
+    line and fill colors can be specified with the corresponding color properties. All
+    specifications except `min_value` and `max_value` are optional. If no line color (or fill color)
+    string is specified as a property, the line color (or fill color) is set to the value of the
+    input `line_color` (or `fill_color`). If no display name is specified, the key of the value
+    interval dictionary is used instead.
 
 - **line_color** (String):
     Color for the margins of the value intervals. Will be applied for each interval without
