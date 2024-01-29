@@ -1,6 +1,6 @@
 {
   "category": "Data Sinks",
-  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType  # add your own imports here\nimport hetdesrun.serialization\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"name\": DataType.String, \"tag\": DataType.String, \"obj\": DataType.Any},\n    outputs={},\n    name=\"Store Object\",\n    description=\"Serialize an Object and store it in the object Repository\",\n    category=\"Data Sinks\",\n    version_tag=\"1.0.0\",\n    id=\"26d99461-38a9-5e92-df4f-d0fd2752879e\",\n    revision_group_id=\"26d99461-38a9-5e92-df4f-d0fd2752879e\",\n    state=\"RELEASED\",\n    released_timestamp=\"2022-02-09T17:33:31.590724+00:00\"\n)\ndef main(*, name, tag, obj):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    hetdesrun.serialization.dump_obj(obj, name, tag)\n    return {}\n",
+  "content": "from hetdesrun.component.registration import register\n# add your own imports here\nimport hetdesrun.serialization\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"name\": {\"data_type\": \"STRING\"},\n        \"tag\": {\"data_type\": \"STRING\"},\n        \"obj\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {},\n    \"name\": \"Store Object\",\n    \"category\": \"Data Sinks\",\n    \"description\": \"Serialize an Object and store it in the object Repository\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"26d99461-38a9-5e92-df4f-d0fd2752879e\",\n    \"revision_group_id\": \"26d99461-38a9-5e92-df4f-d0fd2752879e\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:31.590724+00:00\",\n}\n\n\ndef main(*, name, tag, obj):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    hetdesrun.serialization.dump_obj(obj, name, tag)\n    return {}\n",
   "description": "Serialize an Object and store it in the object Repository",
   "documentation": "# Store an Object in the object Repository\n\n## Description\nSerialize an Object and store it in the object Repository.\n\n## Inputs\n* **name** (String): The name for the Object.\n* **tag** (String): The tag for the Object.\n* **obt** (Integer, Float, Pandas Series or Pandas DataFrame): The object to store. \n\n## Outputs\n\n## Description\nHetida Designer comes with a simple object store to allow serialization and persistence of Python objects between Workflows and Workflow Executions. A typical use case is storing of a trained machine learning model in a training workflow and loading it in a prediction workflow.\n\nTechnically joblib is used for serialization in order to efficiently store numpy arrays and Pandas objects.\n\nThe serialized object is stored using the name and a tag. It can be retrieved using the provided loading functionality with the same name and tag combination. Additionally there is a magic \"latest\" tag which retrieves the last stored object with that name.\n",
   "id": "26d99461-38a9-5e92-df4f-d0fd2752879e",
@@ -9,17 +9,20 @@
       {
         "data_type": "STRING",
         "id": "2e5bffed-ec7e-2963-9078-2c3e8cba8b43",
-        "name": "name"
+        "name": "name",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "688b1939-8be0-0469-f35d-24a6fb76eb97",
-        "name": "tag"
+        "name": "tag",
+        "type": "REQUIRED"
       },
       {
         "data_type": "ANY",
         "id": "71c4887d-96b2-320d-7a2b-3868a6759990",
-        "name": "obj"
+        "name": "obj",
+        "type": "REQUIRED"
       }
     ],
     "outputs": []
@@ -29,9 +32,9 @@
   "revision_group_id": "26d99461-38a9-5e92-df4f-d0fd2752879e",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "COMPONENT",
   "version_tag": "1.0.0"

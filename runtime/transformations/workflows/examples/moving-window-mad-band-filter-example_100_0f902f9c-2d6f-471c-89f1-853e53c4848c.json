@@ -14,7 +14,8 @@
         "position": {
           "x": -555,
           "y": 432
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "d7ee8fb5-c52b-431a-2a80-c11ca727d9ce",
@@ -27,7 +28,8 @@
         "position": {
           "x": -555,
           "y": 557
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "57af13c4-c4be-4cc0-9d49-098154bc23bc",
@@ -40,7 +42,8 @@
         "position": {
           "x": -45,
           "y": 267
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "3fbf12d9-e297-4e19-94a2-2b7ed3cba32f",
@@ -53,7 +56,8 @@
         "position": {
           "x": 430,
           "y": 522
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "258ed00c-589a-4191-bf9b-9ba2d91986db",
@@ -66,7 +70,8 @@
         "position": {
           "x": 430,
           "y": 552
-        }
+        },
+        "type": "REQUIRED"
       }
     ],
     "links": [
@@ -600,12 +605,14 @@
         "inputs": [
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "f103c395-92b6-444d-320a-93950ed6d857",
             "name": "input",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Pass Through (Series)",
@@ -635,12 +642,14 @@
         "inputs": [
           {
             "data_type": "INT",
+            "exposed": true,
             "id": "d7ee8fb5-c52b-431a-2a80-c11ca727d9ce",
             "name": "input",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Pass Through (Integer)",
@@ -670,21 +679,25 @@
         "inputs": [
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "ad0fb04c-fa46-f59d-5d59-054e6fc7b766",
             "name": "data",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "c84b0db5-bbe6-c5ef-a30d-79015134c4cf",
             "name": "filter_series",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Filter",
@@ -714,30 +727,36 @@
         "inputs": [
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "c85c22fe-6e56-4f3e-a969-552847ac013f",
             "name": "series",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "INT",
+            "exposed": true,
             "id": "861001bc-7d9e-4315-8290-3af665a98417",
             "name": "min_num_desired_datapoints_in_window",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "FLOAT",
+            "exposed": true,
             "id": "57af13c4-c4be-4cc0-9d49-098154bc23bc",
             "name": "buffer_factor",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Infer Window Size",
@@ -767,12 +786,14 @@
         "inputs": [
           {
             "data_type": "DATAFRAME",
+            "exposed": true,
             "id": "1393fcf7-0562-4b47-b655-144e3dac4106",
             "name": "band_filter_dataframe",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Band Filter Plot",
@@ -802,48 +823,58 @@
         "inputs": [
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "228b2073-8946-47d7-9bc5-e3f606413291",
             "name": "series",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "2890da86-d4dd-4ece-a917-8574da4692ef",
             "name": "window_size",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "INT",
+            "exposed": true,
             "id": "77ec0e96-81ee-4a4d-a2a6-99ad0ab71bdf",
             "name": "min_num_datapoints_in_window",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "FLOAT",
+            "exposed": true,
             "id": "3fbf12d9-e297-4e19-94a2-2b7ed3cba32f",
             "name": "mad_scaling_factor",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "FLOAT",
+            "exposed": true,
             "id": "258ed00c-589a-4191-bf9b-9ba2d91986db",
             "name": "min_band_width_factor",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Moving Window MAD Band Filter",
@@ -915,27 +946,32 @@
       {
         "data_type": "SERIES",
         "id": "ebfc029c-f71e-4938-8252-d30711d5c556",
-        "name": "series"
+        "name": "series",
+        "type": "REQUIRED"
       },
       {
         "data_type": "INT",
         "id": "11cacbef-ce5b-419e-bcca-b70c92a935aa",
-        "name": "min_num_datapoints_in_window"
+        "name": "min_num_datapoints_in_window",
+        "type": "REQUIRED"
       },
       {
         "data_type": "FLOAT",
         "id": "835a3e98-d05e-49e4-a56e-fc3e18c0cb61",
-        "name": "buffer_factor"
+        "name": "buffer_factor",
+        "type": "REQUIRED"
       },
       {
         "data_type": "FLOAT",
         "id": "c6f6805b-4dcf-4621-a213-9a3fe7d2b3d9",
-        "name": "mad_scaling_factor"
+        "name": "mad_scaling_factor",
+        "type": "REQUIRED"
       },
       {
         "data_type": "FLOAT",
         "id": "26a6b9f1-8832-416c-9f87-7106905cbca5",
-        "name": "min_band_width_factor"
+        "name": "min_band_width_factor",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -956,12 +992,14 @@
   "revision_group_id": "916b006f-6fde-4ec6-aa5e-22c658c534e0",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [
       {
         "adapter_id": "direct_provisioning",
         "filters": {
           "value": "{\n    \"2022-01-01T00:00:00Z\": 1.058,\n    \"2022-01-01T00:20:48Z\": 0.699,\n    \"2022-01-01T00:41:37Z\": 1.08,\n    \"2022-01-01T01:02:26Z\": 1.054,\n    \"2022-01-01T01:23:15Z\": 0.763,\n    \"2022-01-01T01:44:04Z\": 1.034,\n    \"2022-01-01T02:04:53Z\": 0.965,\n    \"2022-01-01T02:25:42Z\": 0.601,\n    \"2022-01-01T02:46:31Z\": 0.933,\n    \"2022-01-01T03:07:20Z\": 1.081,\n    \"2022-01-01T03:28:09Z\": 2.1,\n    \"2022-01-01T03:48:58Z\": 0.988,\n    \"2022-01-01T04:09:47Z\": 0.741,\n    \"2022-01-01T04:30:36Z\": 0.647,\n    \"2022-01-01T04:51:25Z\": 0.556,\n    \"2022-01-01T05:12:14Z\": 0.453,\n    \"2022-01-01T05:33:03Z\": 1.009,\n    \"2022-01-01T05:53:52Z\": 1.72,\n    \"2022-01-01T06:14:41Z\": 1.002,\n    \"2022-01-01T06:56:19Z\": 0.857,\n    \"2022-01-01T07:17:08Z\": 0.864,\n    \"2022-01-01T07:37:57Z\": 0.606,\n    \"2022-01-01T07:58:46Z\": 0.899,\n    \"2022-01-01T08:40:24Z\": 0.62,\n    \"2022-01-01T10:03:40Z\": 0.721,\n    \"2022-01-01T10:24:29Z\": 1.193,\n    \"2022-01-01T10:45:18Z\": 0.833,\n    \"2022-01-01T11:06:07Z\": 2.06,\n    \"2022-01-01T11:26:56Z\": 0.68,\n    \"2022-01-01T11:47:45Z\": 1.136,\n    \"2022-01-01T12:08:34Z\": 0.62,\n    \"2022-01-01T12:29:23Z\": 0.946,\n    \"2022-01-01T12:50:12Z\": 0.746,\n    \"2022-01-01T13:11:01Z\": 0.833,\n    \"2022-01-01T13:31:50Z\": 0.857,\n    \"2022-01-01T14:13:28Z\": 0.947,\n    \"2022-01-01T14:34:17Z\": 0.841,\n    \"2022-01-01T14:55:06Z\": 0.668,\n    \"2022-01-01T15:15:55Z\": 0.675,\n    \"2022-01-01T15:36:44Z\": 0.84,\n    \"2022-01-01T15:57:33Z\": 0.821,\n    \"2022-01-01T16:18:22Z\": 0.625,\n    \"2022-01-01T16:39:11Z\": 1.155,\n    \"2022-01-01T17:00:00Z\": 0.968\n}"
         },
+        "use_default_value": false,
         "workflow_input_name": "series"
       },
       {
@@ -969,6 +1007,7 @@
         "filters": {
           "value": "10"
         },
+        "use_default_value": false,
         "workflow_input_name": "min_num_datapoints_in_window"
       },
       {
@@ -976,6 +1015,7 @@
         "filters": {
           "value": "1.4"
         },
+        "use_default_value": false,
         "workflow_input_name": "buffer_factor"
       },
       {
@@ -983,6 +1023,7 @@
         "filters": {
           "value": "4.4478"
         },
+        "use_default_value": false,
         "workflow_input_name": "mad_scaling_factor"
       },
       {
@@ -990,11 +1031,11 @@
         "filters": {
           "value": "1"
         },
+        "use_default_value": false,
         "workflow_input_name": "min_band_width_factor"
       }
     ],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

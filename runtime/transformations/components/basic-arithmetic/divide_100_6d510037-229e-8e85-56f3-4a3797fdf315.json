@@ -1,6 +1,6 @@
 {
   "category": "Basic Arithmetic",
-  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\nimport pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"a\": DataType.Any, \"b\": DataType.Any},\n    outputs={\"quotient\": DataType.Any},\n    name=\"Divide\",\n    description=\"Divides a by b\",\n    category=\"Basic Arithmetic\",\n    version_tag=\"1.0.0\",\n    id=\"6d510037-229e-8e85-56f3-4a3797fdf315\",\n    revision_group_id=\"6d510037-229e-8e85-56f3-4a3797fdf315\",\n    state=\"RELEASED\",\n    released_timestamp=\"2022-02-09T17:33:32.545293+00:00\"\n)\ndef main(*, a, b):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"quotient\": a / b}\n",
+  "content": "from hetdesrun.component.registration import register\nimport pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"a\": {\"data_type\": \"ANY\"},\n        \"b\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"quotient\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Divide\",\n    \"category\": \"Basic Arithmetic\",\n    \"description\": \"Divides a by b\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"6d510037-229e-8e85-56f3-4a3797fdf315\",\n    \"revision_group_id\": \"6d510037-229e-8e85-56f3-4a3797fdf315\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:32.545293+00:00\",\n}\n\n\ndef main(*, a, b):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    return {\"quotient\": a / b}\n",
   "description": "Divides a by b",
   "documentation": "# Divide\n\n## Description\nThis component divides numeric values, Pandas Series and Pandas DataFrames.\n\n## Inputs\n* **a** (Integer, Float, Pandas Series or Pandas DataFrame): Entries must be numeric.\n* **b** (Integer, Float, Pandas Series or Pandas DataFrame): Entries must be numeric.\n\n## Outputs\n* **quotient** (Integer, Float, Pandas Series or Pandas DataFrame): The quotient of a and b. \n\n## Details\nThe component divides a by b. \n\n## Examples\nThe json input of a typical call of this component with two Pandas Series is\n```\n{\n\t\"a\": {\n\t\t\t\t\"2019-08-01T15:20:12\": 1.2,\n\t\t\t\t\"2019-08-01T15:44:12\": 0.0,\n\t\t\t\t\"2019-08-03T16:20:15\": 0.3,\n\t\t\t\t\"2019-08-05T12:00:34\": 0.5,\n                               \"2019-08-07T11:01:00\": 7.8\n\t},\n\t\"b\": {\n\t\t\t\t\"2019-08-01T15:20:12\": 0.5,\n\t\t\t\t\"2019-08-01T15:44:12\": 2.6,\n\t\t\t\t\"2019-08-03T16:20:15\": 2.0,\n\t\t\t\t\"2019-08-05T12:00:34\": 1.0    \n\t}\n}\n```\nThe expected output is\n```\n\t\"quotient\": {\n\t\t\t\"2019-08-01T15:20:12\": 2.4,\n\t\t\t\"2019-08-01T15:44:12\": 0.0,\n\t\t\t\"2019-08-03T16:20:15\": 0.15,\n\t\t\t\"2019-08-05T12:00:34\": 0.5,\n                       \"2019-08-07T11:01:00\": null  \n\t}\n\n```\n\nThe json input of a typical call of this component with a Pandas DataFrame and a float is\n```\n{\n    \"a\": {\n\t\t\t\"first\": {\n                               \"2019-08-01T15:20:12\": 1.2,\n\t\t\t\t\"2019-08-01T15:44:12\": null,\n\t\t\t\t\"2019-08-03T16:20:15\": 0.3,\n\t\t\t\t\"2019-08-05T12:00:34\": 0.5\n             },\n            \"second\": {\n                                \"2019-08-01T15:20:12\": 54.4,\n\t\t\t\t \"2019-08-01T15:44:12\": 4.3,\n\t\t\t\t \"2019-08-03T16:20:15\": 21.0,\n\t\t\t\t \"2019-08-05T12:00:34\": 7.5\n             }\n\t},\n\t\"b\": 2.0\n}\n```\nThe expected output is\n```\n\t\"quotient\": {\n\t\t\t\"first\": {\n                               \"2019-08-01T15:20:12\": 0.6,\n\t\t\t\t\"2019-08-01T15:44:12\": null,\n\t\t\t\t\"2019-08-03T16:20:15\": 0.15,\n\t\t\t\t\"2019-08-05T12:00:34\": 0.25\n             },\n            \"second\": {\n                                \"2019-08-01T15:20:12\": 27.2,\n\t\t\t\t \"2019-08-01T15:44:12\": 2.15,\n\t\t\t\t \"2019-08-03T16:20:15\": 10.5,\n\t\t\t\t \"2019-08-05T12:00:34\": 3.75\n             }\n\t}\n```\n",
   "id": "6d510037-229e-8e85-56f3-4a3797fdf315",
@@ -9,12 +9,14 @@
       {
         "data_type": "ANY",
         "id": "5833be27-ac97-e5cd-3f88-7fa2312401df",
-        "name": "a"
+        "name": "a",
+        "type": "REQUIRED"
       },
       {
         "data_type": "ANY",
         "id": "8b0c3cdf-0eef-967a-8674-ace724adb24a",
-        "name": "b"
+        "name": "b",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -30,9 +32,9 @@
   "revision_group_id": "6d510037-229e-8e85-56f3-4a3797fdf315",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "COMPONENT",
   "version_tag": "1.0.0"
