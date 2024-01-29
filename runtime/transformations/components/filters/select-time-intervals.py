@@ -10,13 +10,20 @@ Select all data points in provided time intervals from a time series. Returns a 
 - **series** (Pandas Series):
     Expects DateTimeIndex.
 
-- **list_of_time_intervals** (List):
+- **list_of_time_intervals** (Any):
     List of time intervals, that specify when each interval begins and ends, and which correction
-    value to use. Supported dict properties:
-    - **start**: Timestamp
-    - **end**: Timestamp
-    - *(optional)* **start_inclusive**: Boolean, default value: True
-    - *(optional)* **end_inclusive**: Boolean, default value: True
+    value to use. An example JSON input for a time interval is:
+    [
+        {
+            "start": "2020-01-01T01:15:27.000Z",
+            "end": "2020-01-01T01:15:27.000Z",
+            "start_inclusive": true,
+            "end_inclusive": true
+        }
+    ]
+    The start and end attributes set the boundary timestamps of each time interval. The
+    corresponding `_inclusive` boolean sets whether each boundary is inclusive or not. The two
+    latter entries are optional, the example represents their default values.
 
 
 ## Outputs
@@ -33,9 +40,10 @@ Select all data points in provided time intervals from a time series. Returns a 
 
 ## Examples
 
-Expected json input is of shape:
+An example JSON input for a call of this component is:
 ```
-{   "series": {
+{
+    "series": {
         "2020-01-01T01:15:27.000Z": 42.2,
         "2020-01-03T08:20:03.000Z": 18.7,
         "2020-01-03T08:20:04.000Z": 25.9
@@ -56,7 +64,7 @@ Expected json input is of shape:
     ]
 }
 ```
-Output of the above call is:
+The expected output of the above call is:
 ```
 {
     "filter_series":{
@@ -85,7 +93,7 @@ class TimeInterval(BaseModel):
     start_inclusive: bool = True
     end_inclusive: bool = True
 
-    @root_validator()
+    @root_validator(skip_on_failure=True)
     def verify_value_ranges(cls, values: dict) -> dict:
         start = values["start"]
         start_inclusive = values["start_inclusive"]
@@ -130,15 +138,14 @@ def main(*, series, list_of_time_intervals):
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
 
-    if isinstance(series, pd.Series) and isinstance(series.index, pd.DatetimeIndex):
-        timestamps = series.index
-    else:
+    if not isinstance(series.index, pd.DatetimeIndex):
         raise ComponentInputValidationException(
             "Could not find timestamps in provided object",
             error_code="not a time-series like object",
             invalid_component_inputs=["series"],
         )
 
+    timestamps = series.index
     error_dict = {}
 
     time_intervals: list[TimeInterval] = []
@@ -187,7 +194,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "series",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "{\n"
@@ -201,7 +207,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "list_of_time_intervals",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "[\n"
