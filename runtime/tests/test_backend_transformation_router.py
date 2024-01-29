@@ -1407,6 +1407,7 @@ async def test_execute_for_transformation_revision_with_missing_input_wiring(
         )
 
     assert response.status_code == 422
+    assert "Workflow Input 'wf_input' has no wiring!" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
