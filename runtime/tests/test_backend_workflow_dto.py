@@ -1032,8 +1032,8 @@ def test_workflow_validator_links_acyclic_directed_graph_identifies_cyclic_links
 
 
 def test_to_link():
-    from_connector = ConnectorFrontendDto(
-        **{  # noqa: PIE804
+    from_connector = ConnectorFrontendDto(  # noqa: PIE804
+        **{
             "id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
             "type": "SERIES",
             "name": "output",
@@ -1041,8 +1041,8 @@ def test_to_link():
             "posX": 0,
         }
     )
-    to_connector = ConnectorFrontendDto(
-        **{  # noqa: PIE804
+    to_connector = ConnectorFrontendDto(  # noqa: PIE804
+        **{
             "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
             "type": "ANY",
             "name": "series_or_dataframe",
@@ -1062,8 +1062,8 @@ def test_to_link():
 
 
 def test_from_link():
-    from_connector = ConnectorFrontendDto(
-        **{  # noqa: PIE804
+    from_connector = ConnectorFrontendDto(  # noqa: PIE804
+        **{
             "id": "44dc198e-d6b6-535f-f2c8-c8bae74acdf1",
             "type": "SERIES",
             "name": "output",
@@ -1071,8 +1071,8 @@ def test_from_link():
             "posX": 0,
         }
     )
-    to_connector = ConnectorFrontendDto(
-        **{  # noqa: PIE804
+    to_connector = ConnectorFrontendDto(  # noqa: PIE804
+        **{
             "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
             "type": "ANY",
             "name": "series_or_dataframe",
