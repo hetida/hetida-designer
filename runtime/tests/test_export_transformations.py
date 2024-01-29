@@ -74,6 +74,43 @@ def test_export_all_transformations(tmp_path):
             assert str(tmp_path.joinpath(file_path)) in exported_paths
 
 
+def test_export_all_transformations_components_as_code(tmp_path):
+    resp_mock = mock.Mock()
+    resp_mock.status_code = 200
+    resp_mock.json = mock.Mock(return_value=tr_json_list)
+
+    with mock.patch(
+        "hetdesrun.exportimport.export.requests.get",
+        return_value=resp_mock,
+    ) as mocked_get:
+        export_transformations(
+            tmp_path, components_as_code=True, expand_component_code=True
+        )
+
+        assert mocked_get.call_count == 1
+        _, args, _ = mocked_get.mock_calls[0]
+        assert "transformations" in args[0]
+
+        exported_paths = []
+        for root, _, files in os.walk(tmp_path):
+            for file in files:
+                ext = os.path.splitext(file)[1]
+                if ext == ".json":
+                    exported_paths.append(os.path.join(root, file))
+                if ext == ".py":
+                    exported_paths.append(os.path.join(root, file))
+
+        assert len(exported_paths) == len(json_files)
+
+        for file_path in json_files[:-3]:
+            assert (
+                str(tmp_path.joinpath(file_path)).replace(".json", ".py")
+                in exported_paths
+            )
+        for file_path in json_files[-3:]:
+            assert str(tmp_path.joinpath(file_path)) in exported_paths
+
+
 bi_list = []
 
 for file_path in json_files:

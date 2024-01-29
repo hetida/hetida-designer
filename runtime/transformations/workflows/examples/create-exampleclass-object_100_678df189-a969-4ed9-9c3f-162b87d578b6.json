@@ -14,7 +14,8 @@
         "position": {
           "x": 625,
           "y": 290
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "cff50eea-8660-4e8a-8648-e381ab482a68",
@@ -27,7 +28,8 @@
         "position": {
           "x": 625,
           "y": 320
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "9b8a1514-1756-4944-aec0-78abc2669367",
@@ -40,7 +42,8 @@
         "position": {
           "x": 625,
           "y": 350
-        }
+        },
+        "type": "REQUIRED"
       }
     ],
     "links": [
@@ -187,39 +190,47 @@
         "inputs": [
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "18a6c776-bd73-48e7-814a-d86cbf3e87cc",
             "name": "ExampleClass",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "c53cec03-7ec0-4e69-92d1-7868ff26f4df",
             "name": "name",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "INT",
+            "exposed": true,
             "id": "cff50eea-8660-4e8a-8648-e381ab482a68",
             "name": "amount",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "FLOAT",
+            "exposed": true,
             "id": "9b8a1514-1756-4944-aec0-78abc2669367",
             "name": "value",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Create ExampleClass Object",
@@ -294,17 +305,20 @@
       {
         "data_type": "STRING",
         "id": "c92e34ae-c170-47e5-a811-86960b1abae3",
-        "name": "name"
+        "name": "name",
+        "type": "REQUIRED"
       },
       {
         "data_type": "INT",
         "id": "94d18342-d7f4-40b2-8d6f-23b1e04b20fc",
-        "name": "amount"
+        "name": "amount",
+        "type": "REQUIRED"
       },
       {
         "data_type": "FLOAT",
         "id": "633d031d-069e-45d1-aaf3-95936e060814",
-        "name": "value"
+        "name": "value",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -320,12 +334,14 @@
   "revision_group_id": "039f8445-93e8-4006-a5b2-47f60ee240e8",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [
       {
         "adapter_id": "direct_provisioning",
         "filters": {
           "value": "name"
         },
+        "use_default_value": false,
         "workflow_input_name": "name"
       },
       {
@@ -333,6 +349,7 @@
         "filters": {
           "value": "1"
         },
+        "use_default_value": false,
         "workflow_input_name": "amount"
       },
       {
@@ -340,11 +357,11 @@
         "filters": {
           "value": "0.5"
         },
+        "use_default_value": false,
         "workflow_input_name": "value"
       }
     ],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

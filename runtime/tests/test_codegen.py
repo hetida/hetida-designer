@@ -1,5 +1,8 @@
 from hetdesrun.component.code import (
+    add_documentation_as_module_doc_string,
+    add_test_wiring_dictionary,
     check_parameter_names,
+    expand_code,
     generate_function_header,
     update_code,
 )
@@ -12,6 +15,7 @@ from hetdesrun.persistence.models.io import (
     TransformationOutput,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.io.load import load_json, load_python_file
 
 
 def test_function_header_no_params():
@@ -33,6 +37,26 @@ def test_function_header_no_params():
     assert '"inputs": {' + "}" in func_header  # noqa: ISC003
     assert '"outputs": {' + "}" in func_header  # noqa: ISC003
     assert '"id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565"' in func_header
+
+
+def test_function_header_description_line_too_long():
+    component = TransformationRevision(
+        io_interface=IOInterface(inputs=[], outputs=[]),
+        name="Test Component",
+        description=(
+            "A very long test component description so that the line is longer than allowed"
+        ),
+        category="Tests",
+        id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        version_tag="1.0.0",
+        state="DRAFT",
+        type="COMPONENT",
+        content="",
+        test_wiring=[],
+    )
+    func_header = generate_function_header(component)
+    assert "# noqa: E501" in func_header
 
 
 def test_function_header_multiple_inputs():
@@ -199,8 +223,69 @@ def test_update_code():
     # test input without only stop marker
     component.content = "# ***** DO NOT EDIT LINES BELOW *****"
     new_code = update_code(component)
+    assert "pass" in new_code
 
     # test with async def in function header
     component.content = example_code_async
     new_code = update_code(component)
     assert "async def" in new_code
+
+
+def test_add_documentation_as_module_docstring():
+    component_tr_path = "tests/data/components/reduced_code.json"
+    component_tr = TransformationRevision(**load_json(component_tr_path))
+    assert "test" not in component_tr.content
+
+    component_tr.documentation = "test"
+    code_with_updated_module_doc_string = add_documentation_as_module_doc_string(
+        component_tr.content, component_tr
+    )
+    assert 'test\n"""' in code_with_updated_module_doc_string
+
+    component_tr.documentation = "test\n"
+    code_with_updated_module_doc_string = add_documentation_as_module_doc_string(
+        component_tr.content, component_tr
+    )
+    assert 'test\n"""' in code_with_updated_module_doc_string
+
+
+def test_add_test_wiring_dictionary():
+    component_tr_path = "tests/data/components/reduced_code.json"
+    component_tr = TransformationRevision(**load_json(component_tr_path))
+    component_code_path = "tests/data/components/reduced_code.py"
+    component_code_without_test_wiring_dictionary = load_python_file(
+        component_code_path
+    )
+
+    assert (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT"
+        not in component_code_without_test_wiring_dictionary
+    )
+    component_code_with_new_test_wiring_dictionary = add_test_wiring_dictionary(
+        component_code_without_test_wiring_dictionary, component_tr
+    )
+    assert (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT"
+        in component_code_with_new_test_wiring_dictionary
+    )
+
+    assert "24" not in component_code_without_test_wiring_dictionary
+    component_tr.test_wiring.input_wirings[1].filters["value"] = "24"
+    component_code_with_updated_test_wiring_dictionary = add_test_wiring_dictionary(
+        component_code_without_test_wiring_dictionary, component_tr
+    )
+    assert "24" in component_code_with_updated_test_wiring_dictionary
+
+
+def test_expand_code():
+    reduced_component_tr_path = "tests/data/components/reduced_code.json"
+    reduced_component_tr = TransformationRevision(
+        **load_json(reduced_component_tr_path)
+    )
+
+    expanded_component_code_path = "tests/data/components/expanded_code.py"
+    expanded_component_code = load_python_file(expanded_component_code_path)
+
+    expanded_reduced_code = expand_code(reduced_component_tr)
+    assert expanded_reduced_code != reduced_component_tr.content
+    assert expanded_reduced_code == expanded_component_code

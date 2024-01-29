@@ -14,7 +14,8 @@
         "position": {
           "x": 510,
           "y": 60
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "15637612-6dc7-4f55-7b5b-83c9fdac8579",
@@ -27,7 +28,8 @@
         "position": {
           "x": 0,
           "y": 190
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "3e68b069-390e-cf1f-5916-101b7fe4cf4a",
@@ -40,7 +42,8 @@
         "position": {
           "x": 0,
           "y": 220
-        }
+        },
+        "type": "REQUIRED"
       }
     ],
     "links": [
@@ -183,30 +186,32 @@
     ],
     "operators": [
       {
-        "category": "Connectors",
-        "description": "Combine data into a DataFrame.",
         "id": "ea5479cb-a8df-4f8c-8165-86c21d0fd8e8",
         "inputs": [
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "15637612-6dc7-4f55-7b5b-83c9fdac8579",
             "name": "series",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "3e68b069-390e-cf1f-5916-101b7fe4cf4a",
             "name": "series_or_dataframe",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
-        "name": "Combine into DataFrame (2)",
+        "name": "Combine into DataFrame",
         "outputs": [
           {
             "data_type": "DATAFRAME",
@@ -229,30 +234,32 @@
         "version_tag": "1.0.0"
       },
       {
-        "category": "Connectors",
-        "description": "Combine data into a DataFrame.",
         "id": "f2e74579-6058-474a-bb9e-ae2d9a059b6d",
         "inputs": [
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "15637612-6dc7-4f55-7b5b-83c9fdac8579",
             "name": "series",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "3e68b069-390e-cf1f-5916-101b7fe4cf4a",
             "name": "series_or_dataframe",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
-        "name": "Combine into DataFrame",
+        "name": "Combine into DataFrame (2)",
         "outputs": [
           {
             "data_type": "DATAFRAME",
@@ -299,17 +306,20 @@
       {
         "data_type": "SERIES",
         "id": "b44f8d11-73c2-4f52-bc56-ff738618fdbb",
-        "name": "series_2"
+        "name": "series_2",
+        "type": "REQUIRED"
       },
       {
         "data_type": "SERIES",
         "id": "9f4b9299-867b-41fa-86f8-29069574c991",
-        "name": "series_1"
+        "name": "series_1",
+        "type": "REQUIRED"
       },
       {
         "data_type": "ANY",
         "id": "d36314d1-d09c-4af2-b472-bb46ce30b2ba",
-        "name": "series_or_dataframe"
+        "name": "series_or_dataframe",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -325,9 +335,9 @@
   "revision_group_id": "aa55faf1-7321-40ee-b41c-ab7267ef6468",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

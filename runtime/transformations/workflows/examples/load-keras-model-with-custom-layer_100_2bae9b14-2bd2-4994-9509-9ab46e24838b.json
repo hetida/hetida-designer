@@ -14,7 +14,8 @@
         "position": {
           "x": 650,
           "y": 572
-        }
+        },
+        "type": "REQUIRED"
       }
     ],
     "links": [
@@ -107,12 +108,14 @@
         "inputs": [
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "b7803aec-db20-6bea-970f-0566ded49a7c",
             "name": "input",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Forget",
@@ -132,12 +135,14 @@
         "inputs": [
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "caeec8a9-7486-49e1-a031-99f1154b8721",
             "name": "trained_model",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Test Keras Model",
@@ -212,7 +217,8 @@
       {
         "data_type": "ANY",
         "id": "29c577f4-829c-4a38-a1b7-1b8e10638903",
-        "name": "trained_model"
+        "name": "trained_model",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -228,6 +234,7 @@
   "revision_group_id": "1f2f8ca0-133a-4ab1-b874-7f03cd9f75c0",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [],
     "output_wirings": []
   },
