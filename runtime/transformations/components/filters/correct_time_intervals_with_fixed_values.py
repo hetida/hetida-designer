@@ -1,6 +1,6 @@
-"""Documentation for component "Correct time intervals with fixed values"
+"""Documentation for component "Correct Time Intervals With Fixed Values"
 
-# Correct time intervals with fixed values
+# Correct Time Intervals With Fixed Values
 
 ## Description
 Correct all data points in provided time intervals from a time series with a correction value for
@@ -10,31 +10,44 @@ each time interval.
 - **series** (Pandas Series):
     Expects DateTimeIndex. Expects dtype to be float or int.
 
-- **list_of_time_intervals** (List):
+- **list_of_time_intervals** (Any):
     List of time intervals, that specify when each interval begins and ends, and which correction
-    value to use. Supported dict properties:
-    - **start**: Timestamp
-    - **end**: Timestamp
-    - **correction_value**: Float
-    - *(optional)* **start_inclusive**: Boolean, default value: True
-    - *(optional)* **end_inclusive**: Boolean, default value: True
+    value to use. An example JSON input for a time interval is:
+    ```
+    [
+        {
+            "start": "2020-01-01T01:15:27.000Z",
+            "end": "2020-01-01T01:15:27.000Z",
+            "start_inclusive": true,
+            "end_inclusive": true,
+            "correction_value": 37.0
+        }
+    ]
+    ```
+    The start and end attributes set the boundary timestamps of each time interval. The
+    corresponding `start_inclusive` and `end_inclusive booleans set whether each boundary is
+    inclusive or not. These entries are optional. Their values in the example represent the default
+    values. All entries of `series` that lie within the time interval are replaced by the correction
+    value.
 
 ## Outputs
 - **corrected** (Pandas Series):
     The Series with corrected values.
 
 ## Details
-- If a data point lies within multiple time intervals, it will be changed to the `correction_value`
+If a data point lies within multiple time intervals, it will be changed to the `correction_value`
 of the last time interval in `time_interval_dict`.
+
 - Raises `ComponentInputValidationException`:
     - If the index of `series` is not a DateTimeIndex.
     - If `list_of_time_intervals` contains any invalid entries.
 
 ## Examples
 
-Example json input for a call of this component is:
+An example JSON input for a call of this component is:
 ```
-{   "series": {
+{
+    "series": {
         "2020-01-01T01:15:27.000Z": 42.2,
         "2020-01-03T08:20:03.000Z": 18.7,
         "2020-01-03T08:20:04.000Z": 25.9
@@ -57,7 +70,7 @@ Example json input for a call of this component is:
     ]
 }
 ```
-Output of the above call is:
+The expected output of the above call is:
 ```
 {
     "corrected":{
@@ -86,7 +99,7 @@ class TimeInterval(BaseModel):
     start_inclusive: bool = True
     end_inclusive: bool = True
 
-    @root_validator()
+    @root_validator(skip_on_failure=True)
     def verify_value_ranges(cls, values: dict) -> dict:
         start = values["start"]
         start_inclusive = values["start_inclusive"]
@@ -95,12 +108,12 @@ class TimeInterval(BaseModel):
         if end < start:
             raise ValueError(
                 "To be valid, a time interval must be non-empty, i.e. the start timestamp "
-                "may not be bigger than the end timestamp."
+                "may not be later than the end timestamp."
             )
-        if (start_inclusive is False or end_inclusive is False) and not (start < end):
+        if (start_inclusive is False or end_inclusive is False) and (start == end):
             raise ValueError(
                 "To be valid, a time interval must be non-empty, i.e the start timestamp must be "
-                "smaller than the end timestamp."
+                "not equal to the end timestamp, when at least one boundary is not inclusive."
             )
         return values
 
@@ -115,7 +128,7 @@ COMPONENT_INFO = {
     "outputs": {
         "corrected": {"data_type": "SERIES"},
     },
-    "name": "Correct time intervals with fixed values",
+    "name": "Correct Time Intervals With Fixed Values",
     "category": "Filters",
     "description": (
         "Correct all data points in provided time intervals from a time series with a "
@@ -135,14 +148,14 @@ def main(*, series: pd.Series, list_of_time_intervals):
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
 
-    if isinstance(series, pd.Series) and isinstance(series.index, pd.DatetimeIndex):
-        timestamps = series.index
-    else:
+    if not isinstance(series.index, pd.DatetimeIndex):
         raise ComponentInputValidationException(
-            "Could not find timestamps in provided object",
+            "The index of the provided series does not have the datatype DatetimeIndex.",
             error_code="not a time-series like object",
             invalid_component_inputs=["series"],
         )
+
+    timestamps = series.index
 
     in_intervals = pd.Series(False, index=timestamps)
 
@@ -156,35 +169,33 @@ def main(*, series: pd.Series, list_of_time_intervals):
         try:
             time_intervals.append(TimeInterval(**interval))
         except (ValueError, ValidationError) as error:
-            error_dict[f"TimeInterval {count}"] = str(error)
+            error_dict[count] = str(error)
 
     if len(error_dict) != 0:
         raise ComponentInputValidationException(
             "There were input validation errors for the list_of_time_intervals:\n"
             + "\n".join(
-                interval_name + ": " + error_string
-                for interval_name, error_string in error_dict.items()
+                f"TimeInterval {interval_index}" + ": " + error_string
+                for interval_index, error_string in error_dict.items()
             ),
             error_code=422,
             invalid_component_inputs=["list_of_time_intervals"],
         )
 
     for interval in time_intervals:
-        start_inclusive = interval.start_inclusive
-        end_inclusive = interval.end_inclusive
+        after_start = (
+            timestamps >= interval.start
+            if interval.start_inclusive is True
+            else timestamps > interval.start
+        )
 
-        if start_inclusive is True:
-            above_start = timestamps >= interval.start
-        else:
-            above_start = timestamps > interval.start
-
-        below_end = (
+        before_end = (
             timestamps <= interval.end
-            if end_inclusive is True
+            if interval.end_inclusive is True
             else timestamps < interval.end
         )
 
-        in_interval = pd.Series(above_start & below_end, index=timestamps)
+        in_interval = pd.Series(after_start & before_end, index=timestamps)
         in_intervals = in_intervals | in_interval
 
         corrected[in_interval] = interval.correction_value
@@ -197,7 +208,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "series",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "{\n"
@@ -211,7 +221,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "list_of_time_intervals",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "[\n"
