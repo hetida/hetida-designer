@@ -22,8 +22,8 @@ Select all data points in provided time intervals from a time series. Returns a 
         }
     ]
     The `start` and `end` attributes set the boundary timestamps for the respective time interval.
-    The corresponding `_inclusive` boolean sets whether each boundary is inclusive or not. The two
-    latter entries are optional, the example displays their default values.
+    The corresponding boolean value `_inclusive` sets whether the respective boundary is inclusive
+    or not. The two latter entries are optional, the example displays their default values.
 
 
 ## Outputs
@@ -140,7 +140,7 @@ def main(*, series, list_of_time_intervals):
 
     if not isinstance(series.index, pd.DatetimeIndex):
         raise ComponentInputValidationException(
-            "Provided series does not have DateTimeIndex.",
+            "The index of the provided series does not have data type DateTimeIndex.",
             error_code=422,
             invalid_component_inputs=["series"],
         )
