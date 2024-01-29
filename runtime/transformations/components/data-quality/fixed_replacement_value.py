@@ -136,7 +136,7 @@ def main(*, gap_timestamps, replacement_value):
     }
 
 
-INITIAL_TEST_WIRING = {
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "gap_timestamps",

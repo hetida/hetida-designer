@@ -1,43 +1,44 @@
 {
-    "id": "f711106f-3ee1-46a6-a70b-ba12d92fe5be",
-    "revision_group_id": "88bb368a-5ff4-4bb2-a24c-b597ca0af2a1",
-    "name": "Extract Attributes (MultiTSFrame)",
-    "description": "Extract attributes from a multitsframe",
-    "category": "Connectors",
-    "version_tag": "1.0.0",
-    "released_timestamp": "2023-10-06T15:38:12.698666+00:00",
-    "state": "RELEASED",
-    "type": "COMPONENT",
-    "documentation": "# Extract Attributes\n\n## Description\nExtract attributes from a multitsframe.\n\n## Inputs\n* **multitsframe** (Pandas DataFrame): The input MultiTSFrame.\n\n## Outputs\n* **attributes** (Any): A dictionary containing the attributes of the multitsframe.\n\n## Details \n\n**Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
-    "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"multitsframe\": {\"data_type\": \"MULTITSFRAME\"},\n    },\n    \"outputs\": {\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Extract Attributes (MultiTSFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Extract attributes from a multitsframe\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"f711106f-3ee1-46a6-a70b-ba12d92fe5be\",\n    \"revision_group_id\": \"88bb368a-5ff4-4bb2-a24c-b597ca0af2a1\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-10-06T13:38:12.698666+00:00\",\n}\n\n\ndef main(*, multitsframe):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    \n    return {\"attributes\": multitsframe.attrs}\n",
-    "io_interface": {
-        "inputs": [
-            {
-                "id": "c9e0a531-4c93-46e5-aae4-0426e7a28d9c",
-                "name": "multitsframe",
-                "data_type": "MULTITSFRAME",
-                "type": "REQUIRED"
-            }
-        ],
-        "outputs": [
-            {
-                "id": "422a8d71-a24b-4926-a4e3-e6cab9d27830",
-                "name": "attributes",
-                "data_type": "ANY"
-            }
-        ]
-    },
-    "test_wiring": {
-        "input_wirings": [
-            {
-                "workflow_input_name": "multitsframe",
-                "adapter_id": "direct_provisioning",
-                "use_default_value": false,
-                "filters": {
-                    "value": "{\n    \"value\": [\n        1,\n        1.2,\n        0.5\n    ],\n    \"metric\": [\n        \"a\",\n        \"b\",\n        \"c\"\n    ],\n    \"timestamp\": [\n        \"2019-08-01T15:45:36.000Z\",\n        \"2019-08-01T15:48:36.000Z\",\n        \"2019-08-01T15:42:36.000Z\"\n    ]\n}"
-                }
-            }
-        ],
-        "output_wirings": []
-    }
+  "category": "Connectors",
+  "content": "from hetdesrun.component.registration import register\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"multitsframe\": {\"data_type\": \"MULTITSFRAME\"},\n    },\n    \"outputs\": {\n        \"attributes\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Extract Attributes (MultiTSFrame)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Extract attributes from a multitsframe\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"f711106f-3ee1-46a6-a70b-ba12d92fe5be\",\n    \"revision_group_id\": \"88bb368a-5ff4-4bb2-a24c-b597ca0af2a1\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-10-06T15:38:12.698666+00:00\",\n}\n\n\ndef main(*, multitsframe):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    \n    return {\"attributes\": multitsframe.attrs}\n",
+  "description": "Extract attributes from a multitsframe",
+  "documentation": "# Extract Attributes\n\n## Description\nExtract attributes from a multitsframe.\n\n## Inputs\n* **multitsframe** (Pandas DataFrame): The input MultiTSFrame.\n\n## Outputs\n* **attributes** (Any): A dictionary containing the attributes of the multitsframe.\n\n## Details \n\n**Note:** When wired to a generic REST adapter, attributes are expected to be sent base64-encoded with the key \"Data-Attributes\" in the header. To process the attributes, the adapter should be implemented accordingly.",
+  "id": "f711106f-3ee1-46a6-a70b-ba12d92fe5be",
+  "io_interface": {
+    "inputs": [
+      {
+        "data_type": "MULTITSFRAME",
+        "id": "c9e0a531-4c93-46e5-aae4-0426e7a28d9c",
+        "name": "multitsframe",
+        "type": "REQUIRED"
+      }
+    ],
+    "outputs": [
+      {
+        "data_type": "ANY",
+        "id": "422a8d71-a24b-4926-a4e3-e6cab9d27830",
+        "name": "attributes"
+      }
+    ]
+  },
+  "name": "Extract Attributes (MultiTSFrame)",
+  "released_timestamp": "2023-10-06T15:38:12.698666+00:00",
+  "revision_group_id": "88bb368a-5ff4-4bb2-a24c-b597ca0af2a1",
+  "state": "RELEASED",
+  "test_wiring": {
+    "dashboard_positionings": [],
+    "input_wirings": [
+      {
+        "adapter_id": "direct_provisioning",
+        "filters": {
+          "value": "{\n    \"value\": [\n        1,\n        1.2,\n        0.5\n    ],\n    \"metric\": [\n        \"a\",\n        \"b\",\n        \"c\"\n    ],\n    \"timestamp\": [\n        \"2019-08-01T15:45:36.000Z\",\n        \"2019-08-01T15:48:36.000Z\",\n        \"2019-08-01T15:42:36.000Z\"\n    ]\n}"
+        },
+        "use_default_value": false,
+        "workflow_input_name": "multitsframe"
+      }
+    ],
+    "output_wirings": []
+  },
+  "type": "COMPONENT",
+  "version_tag": "1.0.0"
 }

@@ -1,10 +1,28 @@
 # Export and Import of Components/Workflows
 
-Components and Workflows can be exported and imported via the backend API endpoints. To make that easier, scripts are available that can be run from the runtime Docker image. This can be used to keep local file copies as backup or to get components/workflows from one designer installation to another.
+Besides [backups](./backup.md), components and workflows can be exported and imported much more flexibly and with a finer granularity via the backend API `/api/transformations` GET and PUT endpoints. To make that easier, scripts are available that can be run from any Bash environment or from the runtime Docker image.
+
+Use Case examples:
+* Backup only certain collection of workflows / components (e.g. certain categories) and their dependencies
+* Keep a selection versioned in a git repository
+* [Syncing and hybrid working](./sync.md); I.e. export some trafos => work on them locally => import them, overwriting the existing trafos (Note: This has some [pitfalls concerning reproducibility and deserializability](./repr_pitfalls.md))
+* transfer a subset of components/workflows from one hetida designer instance to another, e.g. from a test environment to a production environment.
 
 This guide assumes the default docker-compose setup described in the project README.
 
-## Exporting all components and workflows
+## Export / Import via hdctl bash tool
+The hdctl Bash tool provides a comfortable [sync](./sync) subcommand, that can be used for many purposes and should be your preferred option for fine-granular export / import. 
+
+The underlying hdctl Bash tool's `fetch` and `push` subcommands can be used directly for this purpose.
+
+Using hdctl has the advantage that it does not require docker. See the [hdctl script file](../hdctl) for installation instructions and run `./hdctl usage` for usage details and examples.
+
+hdctl supports the same parameters as the Pythons script variant discussed below.
+
+
+## Export / Import via Python script (in runtime container environment)
+
+### Exporting all components and workflows
 
 Go to a directory where you want to store the exported components and workflows.
 Now run 
@@ -21,7 +39,7 @@ docker run --rm \
 
 The command will create a subdirectory `exported_data` in your current directory with subfolders `components` and `workflows` each of which contains subfolders corresponding to the categories in which the components and workflows are stored in individual json files.
 
-## Exporting selected components and workflows
+### Exporting selected components and workflows
 
 To export only selected components and workflows instead of all, the `export_transformations` accepts several optional input parameters to filter for the desired components and workflows.
 
@@ -32,6 +50,9 @@ To export only selected components and workflows instead of all, the `export_tra
 - ids: a list of ids, only components/workflows whose ids are included in this list will be exported
 - names: a list of names, only components/workflows whose names are included in this list will be exported
 - include_deprecated: if set to false, deprecated components/workflows will **not** be exported (default: true)
+- components_as_code: if set to true, components will be exported as `.py` files (default: false)
+- expand_component_code: if set to true, documentation as module docstring and test wiring as dict will be added to the component code (default: false)
+- update_component_code: if set to true this recreates the main function definition inclusing the COMPONENT_INFO dictionary in component source code. Use this for example to ensure that exported components have code that is importable from the code only.
 
 If more than one of these parameters is specified, only the components/workflows that pass all filters will be exported, which corresponds to a logical "and" connection of the filter criteria.
 
@@ -52,7 +73,7 @@ docker run --rm \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.export import export_transformations; export_transformations("/mnt/obj_repo/exported_data/", type="COMPONENT", category="Arithmetic", names=["E", "Pi"]);'
 ```
 
-## <a name="import"></a> Importing all components and workflows
+### <a name="import"></a> Importing all components and workflows
 
 > :warning: IMPORTANT: If you have existing workflows/components in your installation you should do a complete database backup as is described in [backup](./backup.md), just in case something bad happens! Note that importing overwrites possibly existing revisions with the same id.
 
@@ -74,7 +95,7 @@ The input parameter `update_component_code` of the `import_transformations` func
 This has the advantage that the automatically generated part of the code corresponds to the latest schema and contains all relevant information about the component.
 Setting the parameter to `False` ensures that the code is not changed, but remains exactly as it has been exported.
 
-## Importing directly into the database
+### Importing directly into the database
 
 If you run the command in the same environment as your instance is running, you can bypass the REST API and more directly access the database by setting the optional input paramter `directly_into_db` to true, which is most likely faster:
 
@@ -85,7 +106,7 @@ docker run --rm \
   hetida/designer-runtime -c 'from hetdesrun.exportimport.importing import import_transformations; import_transformations("/mnt/obj_repo/exported_data/"", directly_into_db=True);'
 ```
 
-## Importing components from python files
+### Importing components from python files
 
 Components can be imported not only from `.json` files, but also from `.py` files. Such Python files should contain the code itself defining a main function as well as a dictionary called `COMPONENT_INFO` containing the attributes of the corresponding component, just like the components created in the web application.
 
@@ -101,10 +122,10 @@ Attributes that are not provided will be set to the following default values:
 * inputs: `{}`
 * outputs: `{}`
 
-### Documentation
+#### Documentation
 If present, the module docstring (starting from its third line) is used as documentation. 
 
-### Test wiring
+#### Test wiring
 For the import from a `.py` file, the initial test wiring can be provided as part of the Python code.
 
 **Important:** This only applies to the import from `.py` files and no other type of import!
@@ -143,18 +164,18 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
 }
 ```
 
-## Remove test wirings when importing
+### Remove test wirings when importing
 
 You may want to ignore the test wirings stored in the component/workflow files during import. One reason may be that the target backend validates incoming test wirings of the imported workflows and components: Adapters present in a test wiring must be registered under the same adapter key in the target backend.
 
 To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_transformations` function in the commands documented above.
 
-## Deprecate older revisions when importing new ones
+### Deprecate older revisions when importing new ones
 
 To ensure that only the latest revision of a revision group can be used, you can deprecate all other revisions of the same revision group during import by setting the parameter `deprecate_older_revisions=True` in the `import_transformations` function call.
 If the latest revision of a revision group is stored in the database, all imported transformation revisions of this group will be deprecated.
 
-## Generate file with paths to json files in import order
+### Generate file with paths to json files in import order
 
 When importing transformation revisions, the order is important to avoid problems caused by nested revisions that have not yet been imported.
 The `import_transformation` function takes care of this problem, but there may be reasons why you cannot use it.
@@ -170,7 +191,7 @@ docker run --rm \
 
 In case this directory contains also component code as `.py` files that you want to import as `.json` files, set the option `transform_py_to_json` to `True` and the corresponding `.json` files will be generated and added to the list of paths in the generated newly file.
 
-## Import new components and workflows added to the git repository
+### Import new components and workflows added to the git repository
 
 If you (re-)start the backend container, you can use the [autodeployment feature](./base_component_deployment.md).
 For a running backend container you can use the function `import_transformations`.

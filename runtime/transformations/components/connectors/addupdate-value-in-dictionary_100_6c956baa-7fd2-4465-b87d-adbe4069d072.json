@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dictionary\": \"ANY\",\n        \"key\": \"STRING\",\n        \"value\": \"ANY\",\n    },\n    \"outputs\": {\n        \"dictionary\": \"ANY\",\n    },\n    \"name\": \"Add/Update Value in Dictionary\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add/Update a value in a dictionary\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"6c956baa-7fd2-4465-b87d-adbe4069d072\",\n    \"revision_group_id\": \"634d8d15-15ee-4ef8-be3f-85553e0002c9\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-04-05T17:28:14.248221+00:00\",\n}\n\n\ndef main(*, dictionary, key, value):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    dictionary |= {key: value}\n    return {\"dictionary\": dictionary}",
+  "content": "# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dictionary\": {\"data_type\": \"ANY\"},\n        \"key\": {\"data_type\": \"STRING\"},\n        \"value\": {\"data_type\": \"ANY\"},\n    },\n    \"outputs\": {\n        \"dictionary\": {\"data_type\": \"ANY\"},\n    },\n    \"name\": \"Add/Update Value in Dictionary\",\n    \"category\": \"Connectors\",\n    \"description\": \"Add/Update a value in a dictionary\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"6c956baa-7fd2-4465-b87d-adbe4069d072\",\n    \"revision_group_id\": \"634d8d15-15ee-4ef8-be3f-85553e0002c9\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2023-04-05T17:28:14.248221+00:00\",\n}\n\n\ndef main(*, dictionary, key, value):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    dictionary |= {key: value}\n    return {\"dictionary\": dictionary}",
   "description": "Add/Update a value in a dictionary",
   "documentation": "# Add/Update Value in Dictionary\n\n## Description\nAdd/Update the value for a key in the dictionary.\n\n## Inputs\n* **dictionary** (Dict): A dictionary, it may be empty.\n* **key** (String): A string for the key to be updated.\n* **value** (Any): The value to which the key in the dictionary shall be updated.\n\n## Outputs\n* **dictionary** (Dict): Updated dictionary.\n\n## Details\nIf the key already existed in the input dictionary, its value will be overwritten and the updated dictionary will be returned in the output.",
   "id": "6c956baa-7fd2-4465-b87d-adbe4069d072",
@@ -9,17 +9,20 @@
       {
         "data_type": "ANY",
         "id": "e383d251-acc0-4927-bc2e-7b2ae5f064fe",
-        "name": "dictionary"
+        "name": "dictionary",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "9df3a469-e5a7-4c6d-aa09-94296995d939",
-        "name": "key"
+        "name": "key",
+        "type": "REQUIRED"
       },
       {
         "data_type": "ANY",
         "id": "1d63a0ef-1f4a-411d-944f-2539a2fc4dee",
-        "name": "value"
+        "name": "value",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -35,12 +38,14 @@
   "revision_group_id": "634d8d15-15ee-4ef8-be3f-85553e0002c9",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [
       {
         "adapter_id": "direct_provisioning",
         "filters": {
           "value": "{\n    \"a\": true,\n    \"b\": 31.56\n}"
         },
+        "use_default_value": false,
         "workflow_input_name": "dictionary"
       },
       {
@@ -48,6 +53,7 @@
         "filters": {
           "value": "c"
         },
+        "use_default_value": false,
         "workflow_input_name": "key"
       },
       {
@@ -55,6 +61,7 @@
         "filters": {
           "value": "1"
         },
+        "use_default_value": false,
         "workflow_input_name": "value"
       }
     ],

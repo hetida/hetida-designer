@@ -17,6 +17,7 @@ scipy
 keras
 statsmodels
 dateparser
+black
 pydantic[dotenv]>=1.8.2,<2
 joblib
 holidays
@@ -41,3 +42,4 @@ kaleido
 numba!=0.56.2 # due to setuptools dependency resolution problems
 boto3
 boto3-stubs[essential]
+libcst

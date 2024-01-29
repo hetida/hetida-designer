@@ -32,6 +32,7 @@
   "revision_group_id": "38ecd7c8-4ece-418e-91db-336f8d1d4090",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [
       {
         "adapter_id": "direct_provisioning",
