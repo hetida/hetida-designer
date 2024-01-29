@@ -393,6 +393,10 @@ usage() {
     echo "    This pushes / pulls with the settings of my-other-hd-instance but uses the"
     echo "    export directory configured for my-hd-instance as source / target."
     echo
+    echo "    Finally you can explicitely override the directory to use, e.g.:"
+    echo 
+    echo "       $0 sync push my-prod-instance -d /mounted/volume/dir"
+    echo
     echo "  FETCH / EXPORT / DOWNLOAD"
     echo "    The fetch subcommand downloads / exports transformation revisions from the hetida"
     echo "    designer backends using curl, handling auth if necessary. If an export directory"

@@ -1,6 +1,6 @@
 # Sync with local files and hybrid working
 
-The [hdctl](../hdctl) Bash command line tool provides a useful `sync` feature that allows to bidirectionally sync fine-granular selections from a hetida designer instance to a local directory. 
+The [hdctl](../hdctl) Bash command line tool provides a useful `sync` feature that allows to sync fine-granular selections from a hetida designer instance to a local directory and vice-versa. 
 
 This enables:
 
@@ -81,9 +81,15 @@ The result consists of the two transformation revisions (but not if they are dep
 
 If you want to filter for certain categories you may add `category=Category1&category=Category2`.
 
-Note that filter conditions of different type are combined with logical and.
+Note that filter conditions of different type are combined with logical AND and filter conditions of the same kind are combined with OR..
 
-Other filter conditions are `category_prefix`, `name`, `type`, `state`,  and `revision_group_id`.
+Other filters are `category_prefix`, `name`, `type`, `state`,  and `revision_group_id`.
+
+`include_dependencies` is recommended
+* for backups
+* for transfering to other instances to guarantee that all dependencies are included
+
+`include_dependencies` is not necessary for hybrid  working on component code.
 
 There are several other relevant parameters:
 * `update_component_code`: Makes sure component code contains correct COMPONENT_INFO and main signature
@@ -94,6 +100,71 @@ Since these options actually edit the component code during export you may be af
 Filter options for pushing are analogous.
 
 Pushing has an additional option `allow_overwrite_released` and also `update_component_code`. You should be especially careful with `allow_overwrite_released` and both these options have the same pitfalls mentioned above!
+
+Let's describe some typical combinations of settings by providing examples:
+
+### Hybrid working on a component draft
+To work safely on draft components. See below for details on hybrid working. Allows to add inputs or outputs directly in the `COMPONENT_INFO`
+part of the code or change the description there.
+
+```
+EXPORT_COMPONENTS_AS_PY_FILES=true
+
+PULL_QUERY_URL_APPEND='?id=ec15e0c4-a6f3-4031-8f74-71d33b0420c6&update_component_code=true&expand_component_code=true'
+PUSH_QUERY_URL_APPEND='?allow_overwrite_released=false&update_component_code=true'
+```
+
+### Hybrid working on a released component
+See below for details on hybrid working.
+> **Warning:** Overwriting released components is dangerous: For example it may destroy workflows depending on them! In particular if inputs or ouputs are added/removed. It circumvents reproducibility.
+
+```
+EXPORT_COMPONENTS_AS_PY_FILES=true
+
+PULL_QUERY_URL_APPEND='?id=ec15e0c3-a6f3-4031-8f74-71223b0b20c6&update_component_code=true&expand_component_code=true'
+PUSH_QUERY_URL_APPEND='?allow_overwrite_released=true&update_component_code=true'
+```
+
+### Backup
+The example backups two categories and all their dependencies when pulling. Note that pushing (i.e. restoring the backup) is allowed to overwrite released transformations.
+```
+EXPORT_COMPONENTS_AS_PY_FILES=false # export everything as json file
+
+PULL_QUERY_URL_APPEND='?category=Smoothing&category=Preparation&include_dependencies=true&update_component_code=false&expand_component_code=false'
+PUSH_QUERY_URL_APPEND='?allow_overwrite_released=true&update_component_code=false'
+```
+
+To backup everything on your instance simply remove all filters (here both category filters).
+
+Restore is done via pushing.
+
+### Transfer between instances
+You need 2 instances, lets call them `staging` and `prod`. Settings are basically the same as for backup for both instances. You can then use a hdctl sync subcommand feature for transfering, which comes in two variants:
+
+```
+hdctl sync pull staging
+
+# recommended: git commit before pushing
+
+# pushes from local directory of staging to the prod instance
+hdctl sync push prod from staging 
+```
+or
+```
+# pull from staging but save in local directory of prod
+hdctl sync pull staging to prod
+
+# recommended: git commit before pushing
+
+hdctl push prod
+```
+
+You also can specify the export directory that should be used directly using the `-d` command line parameter:
+
+```
+hdctl sync push prod -d /path/to/trafo/directory
+```
+
 
 ## Hybrid working using sync features
 "hybrid working" means editing components both via the hetida designer user interface and as local files and switching frequently between both editing "modes".
