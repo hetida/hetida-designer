@@ -478,7 +478,7 @@ async def update_transformation_revisions(
 
     The parameters filtering the transformation revisions are logically combined as follows
     * OR for the same filter, e.g. providing two ids will store both trafos.
-    * AND between different filters.    
+    * AND between different filters.
     """
     filter_params = FilterParams(
         type=type,
