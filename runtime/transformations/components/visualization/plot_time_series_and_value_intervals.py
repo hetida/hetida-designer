@@ -1,6 +1,6 @@
-"""Documentation for component "Time Series and Value Intervals"
+"""Documentation for component "Plot Time Series and Value Intervals"
 
-# Time Series and Value Intervals
+# Plot Time Series and Value Intervals
 
 ## Description
 Plots the `series` and each value interval in `value_interval_dict`.
@@ -9,17 +9,31 @@ Plots the `series` and each value interval in `value_interval_dict`.
 - **series** (Pandas Series):
     Series to be visualized. Expects dtype to be float or int.
 
-- **value_interval_dict** (dict):
-    List of dictionaries containing the value intervals to be visualized. For each interval,
-    distinct line and fill colors can be entered. Supported dict properties:
-    - **min_value**: Integer
-    - **max_value**: Integer
-    - *(optional)* **min_value_inclusive**: Boolean, default value: True
-    - *(optional)* **max_value_inclusive**: Boolean, default value: True
-    - *(optional)* **line_color**: String, see Details for further specifications
-    - *(optional)* **fill_color**: String, see Details for further specifications
-    - *(optional)* **display_name**: String
-
+- **value_interval_dict** (Any):
+    Dictionary of key-value pairs where each key is the name for a value interval and each value is
+    a dictionary of key-value pairs containing information about the value interval to be
+    visualized. An example JSON input for a value interval is:
+    ```
+    {
+        "[10,20]": {
+            "min_value": 10.0,
+            "max_value": 20.0,
+            "min_value_inclusive": true,
+            "max_value_inclusive": true,
+            "display_name": "Intv. 1",
+            "line_color": "rgb(40,20,250)",
+            "fill_color": "rgba(40,20,250,0.15)"
+        }
+    }
+    ```
+    The minimum and maximum values set the boundary values of each value interval. The corresponding
+    `_inclusive` boolean sets whether each boundary is inclusive or not. The two values shown in the
+    example represent the default values. For each interval, distinct line and fill colors can be
+    entered with the corresponding color properties. All entries except `min_value` and `max_value`
+    are optional. If no line color (or fill color respectively) string is entered as a property, the
+    line color (or fill color respectively) is set to the `line_color` (or `fill_color`
+    respectively) input. If no display name is entered, the key of the higher order key value pair
+    will be used instead.
 
 - **line_color** (String):
     Color for the margins of the value intervals. Will be applied for each interval without
@@ -38,23 +52,25 @@ designer frontend for plotting the results.
 
 ## Details
 
-- Plots the data points of the `series` as line chart and the value intervals as rectangles reaching
-from the first to the last data point. Each value interval is labeled with its name.
+Plots the data points of the `series` as line chart and the value intervals as rectangles reaching
+from the first to the last data point. Each value interval is labeled with its `display_name` or
+the corresponding key from `value_interval_dict` if no `display_name` is set.
 
-- Color inputs are passed to plotly. Please refer to plotly documentation for accepted input
-strings.
+- Color inputs are passed to plotly. Please refer to plotly documentation (e.g.
+https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.html) for accepted
+input strings.
 
-- For fill colors, the use of colors with a low opacity, i.e. value for the Alpha Channel, is
-strongly recommended, to allow visibility of the data points inside the value intervals (e.g.
-'rgba(255,0,0,0.15)', 'hsl(0,100%,50%,15%)').
+- For fill colors, the use of colors with a low opacity, i.e. a low value for the Alpha Channel, is
+strongly recommended. This measure enables visibility of the data points within the value intervals
+(e.g. 'rgba(255,0,0,0.15)', 'hsl(0,100%,50%,15%)').
 
 - Raises `ComponentInputValidationException`:
     - If `series` has no entries or its dtype is neither int nor float.
-    - If any value interval in `value_interval_dict` contains invalid inputs.
+    - If any value interval in `value_interval_dict` contains invalid values.
 
 ## Examples
 
-Example json input for a call of this component is:
+An example JSON input for a call of this component is:
 ```
 {
     "series": {
@@ -113,7 +129,7 @@ class ValueInterval(BaseModel):
     line_color: str | None
     display_name: str | None
 
-    @root_validator()
+    @root_validator(skip_on_failure=True)
     def verify_value_ranges(cls, values: dict) -> dict:
         min_value = values["min_value"]
         min_value_inclusive = values["min_value_inclusive"]
@@ -149,46 +165,49 @@ def plot_series_and_ranges(
     time_delta = series_to_plot.index.max() - series_to_plot.index.min()
     num_intervals = len(interval_dict)
 
-    for interval_key in interval_dict:
+    # adds a colored rectangle for each value interval
+    for _, interval_value in interval_dict.items():
         fig.add_shape(
             type="rect",
             x0=series_to_plot.index.min(),
-            y0=interval_dict[interval_key].min_value,
+            y0=interval_value.min_value,
             x1=series_to_plot.index.max(),
-            y1=interval_dict[interval_key].max_value,
+            y1=interval_value.max_value,
             line={
-                "color": interval_dict[interval_key].line_color
-                or interval_dict[interval_key].fill_color
+                "color": interval_value.line_color
+                or interval_value.fill_color
                 or line_color,
                 "width": 1,
             },
-            fillcolor=interval_dict[interval_key].fill_color or fill_color,
+            fillcolor=interval_value.fill_color or fill_color,
         )
 
-    int_i = 0
-
-    for interval_key in interval_dict:
-        x = series_to_plot.index.min() + (int_i + 1) * time_delta / (num_intervals * 12)
+    # adds a colored vertical line and a label for each value interval
+    for interval_index, (interval_key, interval_value) in enumerate(
+        interval_dict.items()
+    ):
+        x = series_to_plot.index.min() + (interval_index + 1) * time_delta / (
+            num_intervals * 12
+        )
 
         fig.add_shape(
             type="line",
             x0=x,
-            y0=interval_dict[interval_key].min_value,
+            y0=interval_value.min_value,
             x1=x,
-            y1=interval_dict[interval_key].max_value,
+            y1=interval_value.max_value,
             line={
-                "color": interval_dict[interval_key].line_color
-                or interval_dict[interval_key].fill_color
+                "color": interval_value.line_color
+                or interval_value.fill_color
                 or line_color,
                 "width": 2,
             },
             label={
-                "text": interval_dict[interval_key].display_name or interval_key,
+                "text": interval_value.display_name or interval_key,
                 "textangle": -90,
                 "font": {"size": 10},
             },
         )
-        int_i = int_i + 1
 
     layout_opts: dict = {
         "xaxis_title": "Time",
@@ -223,7 +242,7 @@ COMPONENT_INFO = {
     "outputs": {
         "series_with_intervals": {"data_type": "PLOTLYJSON"},
     },
-    "name": "Time Series and Value Intervals",
+    "name": "Plot Time Series and Value Intervals",
     "category": "Visualization",
     "description": "Plots the series and each value interval in value_interval_dict.",
     "version_tag": "1.0.0",
@@ -286,7 +305,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "series",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "{\n"
@@ -302,7 +320,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "value_interval_dict",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "{\n"
