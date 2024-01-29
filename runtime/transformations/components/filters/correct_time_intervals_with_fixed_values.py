@@ -12,7 +12,7 @@ each time interval.
 
 - **list_of_time_intervals** (Any):
     List of time intervals, that specify when each interval begins and ends, and which correction
-    value to use. An example JSON input for a time interval is:
+    value to use. An example of a JSON input for a time interval is:
     ```
     [
         {
@@ -24,11 +24,11 @@ each time interval.
         }
     ]
     ```
-    The start and end attributes set the boundary timestamps of each time interval. The
-    corresponding `start_inclusive` and `end_inclusive booleans set whether each boundary is
-    inclusive or not. These entries are optional. Their values in the example represent the default
-    values. All entries of `series` that lie within the time interval are replaced by the correction
-    value.
+    The `start` and `end` attributes set the boundary timestamps for the respective time interval.
+    The corresponding boolean attributes `start_inclusive` and `end_inclusive` define whether the
+    respective boundary is inclusive or not. These attributes are optional. Their values in the
+    example represent the default values. All entries of `series` that lie within the time interval
+    are replaced by the `correction_value`.
 
 ## Outputs
 - **corrected** (Pandas Series):
