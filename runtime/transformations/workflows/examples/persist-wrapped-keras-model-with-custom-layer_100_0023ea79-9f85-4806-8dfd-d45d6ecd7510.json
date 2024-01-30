@@ -288,30 +288,36 @@
         "inputs": [
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "e383d251-acc0-4927-bc2e-7b2ae5f064fe",
             "name": "dictionary",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "9df3a469-e5a7-4c6d-aa09-94296995d939",
             "name": "key",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "1d63a0ef-1f4a-411d-944f-2539a2fc4dee",
             "name": "value",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Add/Update Value in Dictionary",
@@ -341,12 +347,14 @@
         "inputs": [
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "8891fc29-bb60-4cb3-8eed-7288c58a2777",
             "name": "AntirectifierLayer",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Train Keras Model with Custom Layer",
@@ -376,21 +384,25 @@
         "inputs": [
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "e57d0548-4f98-4245-8ebd-e03cd8daba81",
             "name": "model",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "dc636b7c-086a-417d-9dd5-b6304eda4d68",
             "name": "custom_objects",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Wrap Keras Model with Custom Classes",
@@ -450,6 +462,7 @@
   "revision_group_id": "534aff4b-2a51-4272-93c8-35ab9236e908",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [],
     "output_wirings": []
   },

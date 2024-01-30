@@ -27,23 +27,21 @@ class ValidStr(ConstrainedStr):
 
 
 example_code: str = """\
-from hetdesrun.component.registration import register
-from hetdesrun.datatypes import DataType
 # add your own imports here, e.g.
 #     import pandas as pd
 #     import numpy as np
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-@register(
-    inputs={"x": DataType.Float, "y": DataType.Float},
-    outputs={"z": DataType.Float},
-    name="Example Component",
-    description="An example for code generation",
-    category="Examples",
-    id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-    revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-    version_tag="1.0.0"
+COMPONENT_INFO = {
+    "inputs": {"x": "FLOAT", "y": "FLOAT"},
+    "outputs": {"z": "FLOAT"},
+    "name": "Example Component",
+    "description": "An example for code generation",
+    "category": "Examples",
+    "id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+    "revision_group_id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+    "version_tag": "1.0.0"
 )
 def main(*, x, y):
     # entrypoint function for this component
@@ -53,24 +51,22 @@ def main(*, x, y):
 """
 
 example_code_async: str = """\
-from hetdesrun.component.registration import register
-from hetdesrun.datatypes import DataType
 # add your own imports here, e.g.
 #     import pandas as pd
 #     import numpy as np
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-@register(
-    inputs={"x": DataType.Float, "y": DataType.Float},
-    outputs={"z": DataType.Float},
-    name="Example Component",
-    description="An example for code generation",
-    category="Examples",
-    id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-    revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
-    version_tag="1.0.0"
-)
+COMPONENT_INFO = {
+    "inputs": {"x": "FLOAT", "y": "FLOAT"},
+    "outputs": {"z": "FLOAT"},
+    "name": "Example Component",
+    "description": "An example for code generation",
+    "category": "Examples",
+    "id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+    "revision_group_id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+    "version_tag": "1.0.0"
+}
 async def main(*, x, y):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****

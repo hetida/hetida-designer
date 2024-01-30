@@ -1,6 +1,7 @@
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exception_handlers import request_validation_exception_handler
@@ -79,6 +80,21 @@ middleware = [
 ]
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:  # noqa: ARG001
+    logger.info("Initializing application ...")
+    if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
+        logger.info("Initializing Kafka consumer...")
+        kakfa_worker_context = get_kafka_worker_context()
+        await kakfa_worker_context.start()
+    yield
+    logger.info("Shutting down application...")
+    if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
+        logger.info("Shutting down Kafka consumer...")
+        kakfa_worker_context = get_kafka_worker_context()
+        await kakfa_worker_context.stop()
+
+
 def app_desc_part() -> str:
     if len(get_config().restrict_to_trafo_exec_service) > 0:
         restriced_exec_suffix = " (restricted execution service mode)"
@@ -141,6 +157,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         title="Hetida Designer " + app_desc_part() + " API",
         description="Hetida Designer " + app_desc_part() + " Web Services API",
         version=VERSION,
+        lifespan=lifespan,
         root_path=get_config().swagger_prefix,
         middleware=middleware,
     )
@@ -226,21 +243,5 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             prefix="/api",
             dependencies=get_auth_deps(),
         )
-
-    @app.on_event("startup")
-    async def startup_event() -> None:
-        logger.info("Initializing application ...")
-        if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
-            logger.info("Initializing Kafka consumer...")
-            kakfa_worker_context = get_kafka_worker_context()
-            await kakfa_worker_context.start()
-
-    @app.on_event("shutdown")
-    async def shutdown_event() -> None:
-        logger.info("Shutting down application...")
-        if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
-            logger.info("Shutting down Kafka consumer...")
-            kakfa_worker_context = get_kafka_worker_context()
-            await kakfa_worker_context.stop()
 
     return app

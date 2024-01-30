@@ -141,7 +141,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "gap_timestamps",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "{\n"
@@ -155,7 +154,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         {
             "workflow_input_name": "replacement_value",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {"value": "37.0"},
         },
     ],

@@ -1,10 +1,10 @@
 """Utilities for loading ensembles of transformation revisions from disk"""
 
-import importlib
 import json
 import logging
 import os
 from collections.abc import Iterable
+from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
@@ -12,10 +12,13 @@ from uuid import UUID, uuid4
 import pandas as pd
 from pydantic import BaseModel, Field, parse_file_as
 
+from hetdesrun.component.code_utils import (
+    CodeParsingException,
+    get_global_from_code,
+    get_module_doc_string,
+)
 from hetdesrun.component.load import (
     ComponentCodeImportError,
-    import_func_from_code,
-    module_path_from_code,
 )
 from hetdesrun.models.wiring import WorkflowWiring
 from hetdesrun.persistence.models.io import (
@@ -89,147 +92,125 @@ def transformation_revision_from_python_code(code: str) -> Any:
     Note: This needs to import the provided code, which may have arbitrary side effects
     and security implications.
     """
-
     try:
-        main_func = import_func_from_code(code, "main")
-    except ComponentCodeImportError as e:
-        logging.debug(
-            "Could not load main function due to error during import of component code:\n%s",
-            str(e),
-        )
-        raise e
+        mod_docstring = get_module_doc_string(code) or ""
+    except CodeParsingException as e:
+        msg = f"Could not parse component code:\n{str(e)}"
+        logging.debug(msg)
+        raise ComponentCodeImportError(msg) from e
 
-    module_path = module_path_from_code(code)
-    mod = importlib.import_module(module_path)
-
-    mod_docstring = mod.__doc__ or ""
     mod_docstring_lines = mod_docstring.splitlines()
-
-    if hasattr(main_func, "registered_metadata"):
-        logger.info("Get component info from registered metadata")
-        component_name = main_func.registered_metadata["name"] or (  # type: ignore
-            "Unnamed Component"
-        )
-
-        component_description = main_func.registered_metadata["description"] or (  # type: ignore
-            "No description provided"
-        )
-
-        component_category = main_func.registered_metadata["category"] or (  # type: ignore
-            "Other"
-        )
-
-        component_id = main_func.registered_metadata["id"] or (uuid4())  # type: ignore
-
-        component_group_id = main_func.registered_metadata["revision_group_id"] or (  # type: ignore
-            uuid4()
-        )
-
-        component_tag = main_func.registered_metadata["version_tag"] or ("1.0.0")  # type: ignore
-
-        component_inputs = main_func.registered_metadata["inputs"]  # type: ignore
-
-        component_outputs = main_func.registered_metadata["outputs"]  # type: ignore
-
-        component_state = main_func.registered_metadata["state"] or "RELEASED"  # type: ignore
-
-        component_released_timestamp = main_func.registered_metadata[  # type: ignore
-            "released_timestamp"
-        ] or (
-            datetime.now(timezone.utc).isoformat()
-            if component_state == "RELEASED"
-            else None
-        )
-
-        component_disabled_timestamp = main_func.registered_metadata[  # type: ignore
-            "disabled_timestamp"
-        ] or (
-            datetime.now(timezone.utc).isoformat()
-            if component_state == "DISABLED"
-            else None
-        )
-
-    elif hasattr(mod, "COMPONENT_INFO"):
-        logger.info("Get component info from dictionary in code")
-        info_dict = mod.COMPONENT_INFO
-        component_inputs = info_dict.get("inputs", {})
-        component_outputs = info_dict.get("outputs", {})
-        component_name = info_dict.get("name", "Unnamed Component")
-        component_description = info_dict.get("description", "No description provided")
-        component_category = info_dict.get("category", "Other")
-        component_tag = info_dict.get("version_tag", "1.0.0")
-        component_id = info_dict.get("id", uuid4())
-        component_group_id = info_dict.get("revision_group_id", uuid4())
-        component_state = info_dict.get("state", "RELEASED")
-        component_released_timestamp = info_dict.get(
-            "released_timestamp",
-            datetime.now(timezone.utc).isoformat()
-            if component_state == "RELEASED"
-            else None,
-        )
-        component_disabled_timestamp = info_dict.get(
-            "disabled_timestamp",
-            datetime.now(timezone.utc).isoformat()
-            if component_state == "DISABLED"
-            else None,
-        )
-    else:
-        raise ComponentCodeImportError(
-            "The code does neither contain registered meta data nor a component dictionary."
-        )
-
-    test_wiring = WorkflowWiring()
-    if hasattr(mod, "TEST_WIRING_FROM_PY_FILE_IMPORT"):
-        logger.info("Get test wiring from dictionary in code")
-        try:
-            test_wiring = WorkflowWiring(**mod.TEST_WIRING_FROM_PY_FILE_IMPORT)
-        except ValueError as error:
-            logger.warning(
-                "The dictionary cannot be parsed as WorkflowWiring:\n%s", str(error)
-            )
-
     component_documentation = "\n".join(mod_docstring_lines[2:])
 
+    default_dict = {
+        "inputs": {},
+        "outputs": {},
+        "name": "Unnamed Component",
+        "description": "No description provided",
+        "category": "Other",
+        "version_tag": "1.0.0",
+        "id": uuid4(),
+        "revision_group_id": uuid4(),
+        "state": "RELEASED",
+    }
+
+    try:
+        component_info_dict = get_global_from_code(
+            code,
+            "COMPONENT_INFO",
+            default_value=default_dict,
+        )
+    except CodeParsingException as e:
+        msg = (
+            f"Could not parse component code for extracting component info:\n{str(e)}."
+            " Proceeding with default values."
+        )
+        logging.debug(msg)
+        component_info_dict = default_dict
+        raise ComponentCodeImportError(msg) from e
+
+    new_dict = deepcopy(default_dict)
+    new_dict.update(component_info_dict)
+    component_info_dict = new_dict
+
+    component_info_dict["released_timestamp"] = component_info_dict.get(
+        "released_timestamp",
+        (
+            datetime.now(timezone.utc).isoformat()
+            if component_info_dict["state"] != "DRAFT"
+            else None
+        ),
+    )
+    component_info_dict["disabled_timestamp"] = component_info_dict.get(
+        "disabled_timestamp",
+        (
+            datetime.now(timezone.utc).isoformat()
+            if component_info_dict["state"] == "DISABLED"
+            else None
+        ),
+    )
+
+    try:
+        test_wiring_dict = get_global_from_code(
+            code, "TEST_WIRING_FROM_PY_FILE_IMPORT", default_value={}
+        )
+    except CodeParsingException as e:
+        msg = (
+            f"Could not parse component code for extracting test wiring:\n{str(e)}."
+            " Defaulting to empty wiring"
+        )
+        logging.warning(msg)
+        test_wiring_dict = {}
+    if len(test_wiring_dict) == 0:
+        logger.debug("Test wiring extraction result is an empty test wiring.")
+
+    try:
+        test_wiring = WorkflowWiring(**test_wiring_dict)
+    except ValueError as error:
+        logger.warning(
+            "The dictionary cannot be parsed as WorkflowWiring:\n%s", str(error)
+        )
+        test_wiring = WorkflowWiring()
+
     transformation_revision = TransformationRevision(
-        id=component_id,
-        revision_group_id=component_group_id,
-        name=component_name,
-        description=component_description,
-        category=component_category,
-        version_tag=component_tag,
+        **component_info_dict,
         type=Type.COMPONENT,
-        state=component_state,
-        released_timestamp=component_released_timestamp,
-        disabled_timestamp=component_disabled_timestamp,
         documentation=component_documentation,
         io_interface=IOInterface(
             inputs=[
                 TransformationInput(
                     id=get_uuid_from_seed("component_input_" + input_name),
                     name=input_name,
-                    data_type=input_info["data_type"]
-                    if isinstance(input_info, dict) and "data_type" in input_info
-                    else input_info,
+                    data_type=(
+                        input_info["data_type"]
+                        if isinstance(input_info, dict) and "data_type" in input_info
+                        else input_info
+                    ),
                     # input info maybe a datatype string (backwards compatibility)
                     # or a dictionary containing the datatype as well as a potential default value
                     value=get_json_default_value_from_python_object(input_info),
-                    type=InputType.OPTIONAL
-                    if isinstance(input_info, dict) and "default_value" in input_info
-                    else InputType.REQUIRED,
+                    type=(
+                        InputType.OPTIONAL
+                        if isinstance(input_info, dict)
+                        and "default_value" in input_info
+                        else InputType.REQUIRED
+                    ),
                 )
-                for input_name, input_info in component_inputs.items()
+                for input_name, input_info in component_info_dict["inputs"].items()
             ],
             outputs=[
                 TransformationOutput(
                     id=get_uuid_from_seed("component_output_" + output_name),
                     name=output_name,
-                    data_type=output_info["data_type"]
-                    if isinstance(output_info, dict) and "data_type" in output_info
-                    else output_info,
+                    data_type=(
+                        output_info["data_type"]
+                        if isinstance(output_info, dict) and "data_type" in output_info
+                        else output_info
+                    ),
                     # input info maybe a datatype string (backwards compatibility)
                     # or a dictionary containing the datatype
                 )
-                for output_name, output_info in component_outputs.items()
+                for output_name, output_info in component_info_dict["outputs"].items()
             ],
         ),
         content=code,

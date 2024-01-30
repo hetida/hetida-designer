@@ -9,6 +9,11 @@ from keyword import iskeyword
 
 import black
 
+from hetdesrun.component.code_utils import (
+    CodeParsingException,
+    format_code_with_black,
+    update_module_level_variable,
+)
 from hetdesrun.datatypes import DataType, parse_single_value_dynamically
 from hetdesrun.persistence.models.io import InputType, TransformationInput
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -32,7 +37,7 @@ COMPONENT_INFO = {{
     "outputs": {output_dict_content},
     "name": {name},
     "category": {category},
-    "description": {description},
+    "description": {description},{description_too_long_noqa}
     "version_tag": {version_tag},
     "id": {id},
     "revision_group_id": {revision_group_id},
@@ -80,27 +85,6 @@ def default_value_string(inp: TransformationInput) -> str:
         raise TypeError(msg) from error
 
 
-def format_code_with_black(code: str) -> str:
-    # based on https://stackoverflow.com/a/76052629
-    # `format_file_contents`currently best candidate to become the official Python API according to
-    # https://github.com/psf/black/issues/779
-    try:
-        code = black.format_file_contents(
-            code,
-            fast=False,
-            mode=black.Mode(
-                target_versions={black.TargetVersion.PY311},
-            ),
-        )
-    except black.NothingChanged:
-        pass
-    finally:
-        # Make sure there's a newline after the content
-        if len(code) != 0 and code[-1] != "\n":
-            code += "\n"
-    return code
-
-
 def format_function_header(function_header: str) -> str:
     # add function_body_template to fulfill indented block expectation after function definition
     formatted_function_header_with_body_template = format_code_with_black(
@@ -113,6 +97,13 @@ def format_function_header(function_header: str) -> str:
         )
     )
     return formatted_function_header
+
+
+def description_too_long(description: str) -> bool:
+    # max_line length = 100
+    # overhead length = len('    "description": "",')
+    # max description length = max line length - overhead length = 77
+    return len(description) > 77
 
 
 def generate_function_header(
@@ -205,6 +196,9 @@ def generate_function_header(
         output_dict_content=output_dict_str,
         name='"' + component.name + '"',
         description='"' + component.description + '"',
+        description_too_long_noqa=(
+            "  # noqa: E501" if description_too_long(component.description) else ""
+        ),
         category='"' + component.category + '"',
         version_tag='"' + component.version_tag + '"',
         id='"' + str(component.id) + '"',
@@ -298,6 +292,74 @@ def update_code(
     new_function_header = generate_function_header(tr, is_coroutine)
 
     return start + new_function_header + end
+
+
+def add_documentation_as_module_doc_string(
+    code: str, tr: TransformationRevision
+) -> str:
+    if code.startswith('"""'):
+        return code
+
+    mod_doc_string = (
+        '"""Documentation for '
+        + tr.name
+        + "\n\n"
+        + tr.documentation.strip()
+        + '\n"""\n\n'
+    )
+
+    return mod_doc_string + code
+
+
+def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
+    try:
+        expanded_code = update_module_level_variable(
+            code=code,
+            variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
+            value=tr.test_wiring.dict(exclude_unset=True, exclude_defaults=True),
+        )
+    except CodeParsingException:
+        msg = (
+            f"Failed to update test wiring in code for trafo {tr.name} ({tr.version_tag})"
+            f"(id: {str(tr.id)}). Returning non-updated code."
+        )
+        logger.warning(msg)
+        return code
+    return expanded_code
+
+
+def expand_code(
+    tr: TransformationRevision,
+) -> str:
+    """Add documentation and test wiring to component code
+
+    Add the documentation as module docstring at the top of the component code.
+
+    Add test_wiring as dictionary at the end of the component code.
+    """
+
+    if tr.type != Type.COMPONENT:
+        raise ValueError(
+            f"Will not update code of transformation revision {tr.id} "
+            f"since its type is not COMPONENT."
+        )
+
+    existing_code = tr.content
+    assert isinstance(existing_code, str)  # hint for mypy # noqa: S101
+
+    if existing_code == "":
+        existing_code = generate_complete_component_module(tr)
+
+    expanded_code = add_documentation_as_module_doc_string(existing_code, tr)
+    expanded_code = add_test_wiring_dictionary(expanded_code, tr)
+
+    try:
+        return format_code_with_black(expanded_code)
+    except CodeParsingException:
+        logger.warning(
+            "Could not format code with black ({tr.name} ({tr.version_tag}), id: {tr.id})."
+        )
+        return expanded_code
 
 
 def check_parameter_names(names: list[str]) -> bool:
