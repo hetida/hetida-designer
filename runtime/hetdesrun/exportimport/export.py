@@ -183,6 +183,8 @@ def export_transformations(
     ids: list[UUID | str] | None = None,
     names: list[NonEmptyValidStr] | None = None,
     include_deprecated: bool = True,
+    components_as_code: bool = False,
+    expand_component_code: bool = False,
     directly_from_db: bool = False,
     java_backend: bool = False,
 ) -> None:
@@ -206,6 +208,10 @@ def export_transformations(
         names (List[str]): The names of the transformations.
         include_deprecated (bool = True): Set to False to export only transformation revisions
             with state DRAFT or RELEASED.
+        components_as_code (bool = False): Set to True to obtain python files instead of json files
+            for components.
+        expand_component_code (bool = False): Set to True to add the documentation as module
+            docstring and the test wiring as dictionary to the component code.
         directly_from_db (bool = False): Set to True to export directly from the databse.
         java_backend (bool = False): Set to True to export from a hetida designer instance with a
             version smaller than 0.7.
@@ -301,4 +307,6 @@ def export_transformations(
 
         # Export individual transformation
         for transformation in transformation_list:
-            save_transformation_into_directory(transformation, download_path)
+            save_transformation_into_directory(
+                transformation, download_path, components_as_code, expand_component_code
+            )

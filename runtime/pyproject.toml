@@ -10,6 +10,8 @@ select = ["E", "F", "B", "W", "PL", "ERA", "G", "I", "UP", "YTT", "S", "BLE", "A
 
 ignore = ["E713", "E714", "B008", "PLR2004", "COM812", "RET504", "PD901", "PLR0913", "UP017"]
 
+extend-exclude = ["tests/data"]
+
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
@@ -30,7 +32,8 @@ src = [".", "runtime", "demo-adapter-python"]
 "**/tests/**/*.py" = ["S101", "PT023", "T201", "INP001", "PT001", "ARG001"]
 "**/tests/test_backend_kafka_consumer.py" = ["E501"]
 "**/tests/**/test_load_ts_data.py" = ["E501"]
-"**tests/auth/test_outgoing_auth.py" = ["S106"]
+"**/tests/auth/test_outgoing_auth.py" = ["S106"]
+"**/transformations/components/*/*.py" = ["INP001"]
 
 
 [tool.ruff.isort]

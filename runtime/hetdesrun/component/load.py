@@ -89,7 +89,7 @@ def import_func_from_code(
                 str(exec_exception),
             )
             raise ComponentCodeImportError(
-                "Could not import code due to Exception"
+                "Could not import code due to Exception %s", str(exec_exception)
             ) from exec_exception
 
         func = getattr(mod, func_name)
