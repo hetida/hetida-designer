@@ -138,10 +138,8 @@ def test_tr_from_code_for_component_with_edge_case_optional_inputs():
             assert tr_from_json.io_interface.inputs[input_index].value == "null"
             continue
         if input_index == 11:
-            assert tr_from_py.io_interface.inputs[
-                input_index
-            ].value == tr_from_json.io_interface.inputs[input_index].value.replace(
-                " ", ""
+            assert tr_from_py.io_interface.inputs[input_index].value == (
+                tr_from_json.io_interface.inputs[input_index].value
             )
             continue
         assert (

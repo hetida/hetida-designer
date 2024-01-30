@@ -56,7 +56,39 @@ function_body_template: str = """
 """
 
 
-def default_value_string(inp: TransformationInput) -> str:
+def component_info_default_value_string(inp: TransformationInput) -> str:
+    if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
+        return repr(None)
+
+    if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
+        return repr(
+            parse_single_value_dynamically(
+                name=inp.name if inp.name is not None else "UNKNOWN",
+                value=inp.value,
+                data_type=DataType.Any,
+                nullable=True,
+            )
+        )
+
+    try:
+        return repr(
+            parse_single_value_dynamically(
+                name=inp.name if inp.name is not None else "UNKNOWN",
+                value=inp.value,
+                data_type=inp.data_type,
+                nullable=True,
+            )
+        )
+    except ValueError as error:
+        msg = (
+            f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type.value}"
+            + (f":\n{str(error)}" if inp.value != "None" else ". Enter 'null' instead.")
+        )
+        logger.error(msg)
+        raise TypeError(msg) from error
+
+
+def function_signature_default_value_string(inp: TransformationInput) -> str:
     if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
         return repr(None)
 
@@ -121,7 +153,7 @@ def generate_function_header(
                 if inp.type == InputType.REQUIRED and inp.name is not None
             ]
             + [
-                inp.name + "=" + default_value_string(inp)
+                inp.name + "=" + function_signature_default_value_string(inp)
                 for inp in component.io_interface.inputs
                 if inp.type == InputType.OPTIONAL and inp.name is not None
             ]
@@ -141,7 +173,7 @@ def generate_function_header(
                 + inp.data_type.value
                 + '"'
                 + (
-                    ', "default_value": ' + default_value_string(inp)
+                    ', "default_value": ' + component_info_default_value_string(inp)
                     if inp.type == InputType.OPTIONAL
                     else ""
                 )
