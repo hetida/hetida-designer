@@ -7,60 +7,61 @@ Detects gaps in the given series that are larger than the step size and returns 
 information about the gaps.
 
 ## Inputs
-- **timeseries** (Pandas Series):
-    Expects datetime index.
+- **timeseries** (Series):
+    Expects index of data type DateTimeIndex.
 
 - **start_date_str** (String):
-    Desired start date of the processing range. Expexcts iso format. Alternatively the `timeseries`
-    can have a attribute "start_date" that will be used instead. If neither is defined, the
-    processing range begins with the first data point in `timeseries`.
+    Desired start date of the processing range. Expexcts ISO 8601 format. Alternatively, the
+    `timeseries` can have an attribute "start_date" that will be used instead. If neither is
+    defined, the processing range begins with the first data point in `timeseries`. The start date
+    must not be later than the end date.
 
 - **end_date_str** (String):
-    Desired end date of the processing range. Expexcts iso format. Alternatively the `timeseries`
-    can have a attribute "end_date" that will be used instead. If neither is defined, the
-    processing range ends with the last data point in `timeseries`.
+    Desired end date of the processing range. Expexcts ISO 8601 format. Alternatively, the
+    `timeseries` can have an attribute "end_date" that will be used instead. If neither is defined,
+    the processing range ends with the last data point in `timeseries`. The start date must not be
+    later than the end date.
 
 **step_size** (String):
-    The expected time step unit between consecutive timestamps in the time series.
+    The expected time step between consecutive timestamps in the time series. Must be a frequency
+    string, e.g. "D" or "2h".
 
 **step_size_factor** (Float):
-    Expects value >= 0. The value is used to define when a step between two consecutive data points
-    is recognized as a gap. I.e. a value of 1.0 means that all steps larger than the specified
-    `step_size` are recognized as gaps, while a value of 2.0 means that steps are only recognized as
-    gaps if they are more than twice as large as the specified `step_size`.
+    Expects a positive value. The value is used to define when a step between two consecutive data
+    points is recognized as a gap. I.e. a value of 1.0 means that all steps larger than the
+    specified `step_size` are recognized as gaps, while a value of 2.0 means that steps are only
+    recognized as gaps if they are more than twice as large as the specified `step_size`.
 
 
 ## Outputs
-**gap_boundaries** (Pandas DataFrame) :
+**gap_info** (DataFrame) :
     A DataFrame containing the beginning and end timestamps of gaps larger than the determined or
     given step size.
     Columns are:
     - "start" (Timestamp): Start index of the gap.
-    - "end"(Timestamp): End index of the gap.
+    - "end" (Timestamp): End index of the gap.
     - "start_inclusive" (Boolean):
     - "end_inclusive" (Boolean):
-    - "gap_size": Size of the gap
-    - "value_to_left": If existing, last value before the gap, otherwise None
-    - "value_to_right": If existing, first value after the gap, otherwise None
-    - "mean_left_right": The mean value of the `value_to_left` and `value_to_right`, None, if at
-    least one of these values is None
-
-## Raises
-
-ComponentInputValidationException:
-    - If start_date is greater than end_date.
+    - "gap_size" (Timedelta): Size of the gap
+    - "value_to_left" (Float/Int): If existing, last value before the gap, otherwise None
+    - "value_to_right" (Float/Int): If existing, first value after the gap, otherwise None
+    - "mean_left_right" (Float/Int): The mean value of the `value_to_left` and `value_to_right`.
+      None, if at least one of these values is None.
 
 ## Details
 
-The function follows these steps:
-1. Validate input.
-2. Constrict the timeseries to start_date and end_date, where defined.
+The component follows these steps:
+2. Constrict the timeseries to start_date and end_date, if defined.
 3. Ensure that start_date and end_date are present in the constricted timeseries.
 4. Detect gaps in the timeseries and determine their boundaries.
+If the `start_date` (`end_date`) is defined, the component checks that it is present in the
+`series` and removes any data points with an earlier (later) index from the processing range.
+To detect gaps the time steps between consecutive data points are calculated. When a time step is
+larger than the product of the `step_size_factor` and the step size defined by `step_size_str`, it
+is considered to be a gap.
 """
 
 
-import contextlib
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -78,8 +79,6 @@ class GapDetectionParameters(BaseModel):
     step_size_factor: float = 1.0
     fill_value: Any = None
 
-    # TODO was ist mit dem Fall Attribut der Zeitreihe?
-
     @validator("end_date")
     def verify_dates(cls, end_date, values: dict):
         start_date = values["start_date"]
@@ -96,7 +95,7 @@ class GapDetectionParameters(BaseModel):
     def verify_step_size_factor(cls, factor) -> float:
         if factor < 0:
             raise ComponentInputValidationException(
-                "The gap size factor has to be a non-negative float less or equal to 1.",  # TODO Fehlermeldung anpassen
+                "The gap size factor has to be a non-negative float.",
                 error_code=422,
                 invalid_component_inputs=["step_size_factor"],
             )
@@ -219,7 +218,9 @@ COMPONENT_INFO = {
         "step_size_factor": {"data_type": "FLOAT", "default_value": 1.0},
         "fill_value": {"data_type": "ANY", "default_value": None},
     },
-    "outputs": {},
+    "outputs": {
+        "gap_info": {"data_type": "DATAFRAME"},
+    },
     "name": "Gap Detection Intervals",
     "category": "Data Quality",
     "description": "Detects gaps in the given series that are larger than the step size and returns a DataFrame with information about the gaps.",  # noqa: E501
@@ -253,17 +254,19 @@ def main(
         step_size_str=step_size_str,
         fill_value=fill_value,
     )
-    constricted_series = constrict_series_to_dates(
+    series_with_bounds = check_add_boundary_dates(
         timeseries, input_params.start_date, input_params.end_date
+    )
+    constricted_series = constrict_series_to_dates(
+        series_with_bounds, input_params.start_date, input_params.end_date
     )
 
     step_size = freqstr2timedelta(step_size_str)
-    series_with_bounds = check_add_boundary_dates(
-        constricted_series, input_params.start_date, input_params.end_date
-    )
 
-    df_with_gaps = determine_gap_length(series_with_bounds, step_size)
+    df_with_gaps = determine_gap_length(constricted_series, step_size)
 
-    return return_gap_boundary_timestamps(
-        df_with_gaps, series_with_bounds, step_size_factor
-    )
+    return {
+        "gap_info": return_gap_boundary_timestamps(
+            df_with_gaps, constricted_series, step_size_factor
+        )
+    }
