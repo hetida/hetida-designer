@@ -22,11 +22,11 @@ information about the gaps.
     the processing range ends with the last data point in `timeseries`. The start date must not be
     later than the end date.
 
-**step_size** (String):
+- **step_size** (String):
     The expected time step between consecutive timestamps in the time series. Must be a frequency
     string, e.g. "D" or "2h".
 
-**step_size_factor** (Float):
+- **step_size_factor** (Float):
     Expects a positive value. The value is used to define when a step between two consecutive data
     points is recognized as a gap. I.e. a value of 1.0 means that all steps larger than the
     specified `step_size` are recognized as gaps, while a value of 2.0 means that steps are only
@@ -34,7 +34,7 @@ information about the gaps.
 
 
 ## Outputs
-**gap_info** (DataFrame) :
+- **gap_info** (DataFrame) :
     A DataFrame containing the beginning and end timestamps of gaps larger than the determined or
     given step size.
     Columns are:
@@ -56,8 +56,10 @@ The component follows these steps:
 4. Detect gaps in the timeseries and determine their boundaries.
 If the `start_date` (`end_date`) is defined, the component checks that it is present in the
 `series` and removes any data points with an earlier (later) index from the processing range.
-To detect gaps the time steps between consecutive data points are calculated. When a time step is
-larger than the product of the `step_size_factor` and the step size defined by `step_size_str`, it
+To detect gaps the time steps between consecutive data points are calculated. If `auto_stepsize` is
+set to `True` the component determines the `step_size`
+ When a time step is
+larger than the product of the `step_size_factor` and the step size defined by `step_size`, it
 is considered to be a gap.
 """
 
@@ -75,21 +77,14 @@ from hetdesrun.runtime.exceptions import ComponentInputValidationException
 class GapDetectionParameters(BaseModel):
     start_date: pd.Timestamp | None  # pydantic kann auch direkt datetime, muss aber getestet werden
     end_date: pd.Timestamp | None
-    auto_stepsize: bool = True
-    history_end_date: pd.Timestamp = None
+    auto_stepsize: bool
+    history_end_date: pd.Timestamp | None
     step_size_str: str
-    percentil: float = 0.5
-    step_size_factor: float = 1.0
+    percentil: float
+    step_size_factor: float
     min_amount_datapoints: int
-    interpolation_method: str = "nearest"
-    fill_value: Any = None
-
-    # @validator(
-    #     "start_date", "end_date"
-    # )  # TODO was ist mit dem Fall Attribut der Zeitreihe?
-    # def verify_date_strings(cls, date) -> datetime:
-    #     date = datetime.fromisoformat(date).replace(tzinfo=timezone.utc)
-    #     return date
+    interpolation_method: str
+    fill_value: Any
 
     @validator("end_date")
     def verify_dates(cls, end_date, values: dict):
@@ -192,21 +187,6 @@ def timestamp_str_to_pd_timestamp(timestamp: str) -> datetime:
     return date
 
 
-def constrict_series_to_dates(
-    timeseries_data: pd.Series | pd.DataFrame,
-    start_date: pd.Timestamp | None,
-    end_date: pd.Timestamp | None,
-) -> pd.Series | pd.DataFrame:
-    true_array = np.ones(shape=len(timeseries_data), dtype=bool)
-    series_after_start = (
-        timeseries_data.index >= start_date if start_date is not None else true_array
-    )
-    series_before_end = (
-        timeseries_data.index <= end_date if start_date is not None else true_array
-    )
-    return timeseries_data[series_after_start & series_before_end]
-
-
 def freqstr2dateoffset(freqstr: str) -> pd.DateOffset:
     """Transform frequency string to Pandas DateOffset."""
     return pd.tseries.frequencies.to_offset(freqstr)
@@ -234,6 +214,42 @@ def check_add_boundary_dates(
     return timeseries
 
 
+def constrict_series_to_dates(
+    timeseries_data: pd.Series | pd.DataFrame,
+    start_date: pd.Timestamp | None,
+    end_date: pd.Timestamp | None,
+) -> pd.Series | pd.DataFrame:
+    true_array = np.ones(shape=len(timeseries_data), dtype=bool)
+    series_after_start = (
+        timeseries_data.index >= start_date if start_date is not None else true_array
+    )
+    series_before_end = (
+        timeseries_data.index <= end_date if start_date is not None else true_array
+    )
+    return timeseries_data[series_after_start & series_before_end]
+
+
+def check_amount_datapoints(series: pd.Series, min_amount_datapoints: int):
+    if len(series) < min_amount_datapoints:
+        raise ComponentInputValidationException(
+            f"The timeseries must contain at least {min_amount_datapoints} datapoints.",
+            error_code=422,
+            invalid_component_inputs=["timeseries"],
+        )
+
+
+def determine_timestep_gapsize_percentile(
+    timeseries_data: pd.Series | pd.DataFrame,
+    percentil: float,
+    interpolation_method: str,
+) -> pd.Timedelta:
+    gaps = timeseries_data.index.to_series().diff().dropna()
+
+    percentile_gapsize = gaps.quantile(percentil, interpolation=interpolation_method)
+
+    return percentile_gapsize
+
+
 def determine_gap_length(
     timeseries: pd.Series, stepsize=timedelta(minutes=1)
 ) -> pd.DataFrame:
@@ -244,7 +260,7 @@ def determine_gap_length(
     normalized_gaps = [
         pd.Timedelta(gap).total_seconds() / stepsize_seconds if pd.notna(gap) else None
         for gap in gaps
-    ]  # TODO in Doku erklären was eine Gap sein soll
+    ]
 
     result_df = pd.DataFrame(
         {"value": timeseries.to_numpy(), "gap": normalized_gaps}, index=timeseries.index
@@ -280,7 +296,9 @@ def return_gap_boundary_timestamps(
             "gap_size": large_gap_indices - gap_starts,
             "value_to_left": left_values,
             "value_to_right": right_values,
-            "mean_left_right": (left_values + right_values) / 2,
+            "mean_left_right": np.mean((left_values, right_values), axis=0)
+            if pd.api.types.is_numeric_dtype(series) is True
+            else None,
         }
     )
 
@@ -298,7 +316,7 @@ COMPONENT_INFO = {
         "history_end_date_str": {"data_type": "STRING", "default_value": None},
         "percentil": {"data_type": "FLOAT", "default_value": 0.5},
         "interpolation_method": {"data_type": "STRING", "default_value": "nearest"},
-        "step_size_str": {"data_type": "STRING"},
+        "step_size_str": {"data_type": "STRING", "default_value": None},
         "step_size_factor": {"data_type": "FLOAT", "default_value": 1.0},
         "fill_value": {"data_type": "ANY", "default_value": None},
         "min_amount_datapoints": {"data_type": "INT", "default_value": 21},
@@ -319,8 +337,8 @@ COMPONENT_INFO = {
 def main(
     *,
     timeseries,
-    step_size_str,
     auto_stepsize,
+    step_size_str=None,
     start_date_str=None,
     end_date_str=None,
     step_size_factor=1,
@@ -335,10 +353,19 @@ def main(
     # write your function code here.
     timeseries = timeseries.sort_index().dropna()
 
-    if start_date_str is None and "start_date" in timeseries.attrs:
-        start_date_str = timeseries.attrs["start_date"]
-    if end_date_str is None and "end_date" in timeseries.attrs:
-        end_date_str = timeseries.attrs["end_date"]
+    if start_date_str is None:
+        if "ref_interval_start_timestamp" in timeseries.attrs:
+            start_date_str = timeseries.attrs["ref_interval_start_timestamp"]
+        elif "from" in timeseries.attrs:
+            start_date_str = timeseries.attrs["from"]
+    if end_date_str is None:
+        if "ref_interval_end_timestamp" in timeseries.attrs:
+            end_date_str = timeseries.attrs["ref_interval_end_timestamp"]
+        elif "to" in timeseries.attrs:
+            end_date_str = timeseries.attrs["to"]
+
+    if step_size_str is None and "ref_frequency" in timeseries.attrs:
+        step_size_str = timeseries.attrs["ref_frequency"]
 
     start_date = timestamp_str_to_pd_timestamp(start_date_str)
     end_date = timestamp_str_to_pd_timestamp(end_date_str)
