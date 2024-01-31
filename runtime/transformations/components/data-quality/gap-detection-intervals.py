@@ -8,52 +8,76 @@ information about the gaps.
 
 ## Inputs
 - **timeseries** (Series):
-    Expects index of data type DateTimeIndex.
+  Expects index of data type DateTimeIndex.
 
-- **start_date_str** (String):
-    Desired start date of the processing range. Expexcts ISO 8601 format. Alternatively, the
-    `timeseries` can have an attribute "start_date" that will be used instead. If neither is
-    defined, the processing range begins with the first data point in `timeseries`. The start date
-    must not be later than the end date.
+- **start_date_str** (String, default value: null):
+  Desired start date of the processing range. Expexcts ISO 8601 format. Alternatively, the
+  `timeseries` can have an attribute "start_date" that will be used instead. If neither is
+  defined, the processing range begins with the first data point in `timeseries`. The start date
+  must not be later than the end date.
 
-- **end_date_str** (String):
-    Desired end date of the processing range. Expexcts ISO 8601 format. Alternatively, the
-    `timeseries` can have an attribute "end_date" that will be used instead. If neither is defined,
-    the processing range ends with the last data point in `timeseries`. The start date must not be
-    later than the end date.
+- **end_date_str** (String, default value: null):
+  Desired end date of the processing range. Expexcts ISO 8601 format. Alternatively, the
+  `timeseries` can have an attribute "end_date" that will be used instead. If neither is defined,
+  the processing range ends with the last data point in `timeseries`. The start date must not be
+  later than the end date.
 
-- **step_size** (String):
-    The expected time step between consecutive timestamps in the time series. Must be a frequency
-    string, e.g. "D" or "2h".
+- **auto_stepsize** (Boolean):
+  If True, the function will automatically determine the step unit based on the timeseries data. If
+  False, a `step_size_str` must be set.
 
-- **step_size_factor** (Float):
-    Expects a positive value. The value is used to define when a step between two consecutive data
-    points is recognized as a gap. I.e. a value of 1.0 means that all steps larger than the
-    specified `step_size` are recognized as gaps, while a value of 2.0 means that steps are only
-    recognized as gaps if they are more than twice as large as the specified `step_size`.
+- **history_end_date_str** (String, default value: null):
+  Expects a date between start_date and end_date in iso format.
+  The desired end date for the training data used to determine the step unit.
+  This is only relevant when auto_stepsize is True. If not specified, the entire
+  processing range is used as training data.
+
+- **percentil** (Float, default value: 0.5):
+  Expects a positive value smaller than or equal to 1. The percentile value to use for automatic
+  determination of the expected gapsize between two consecutive data points. The value should be
+  selected according to the expected ratio of gaps to regular steps. I.e. if it is to be expected
+  that more than 50% of the time steps are gaps, the value should be reduced; if fewer gaps are to
+  be expected, the value can be adjusted upwards accordingly. This is only relevant when
+  auto_stepsize is True.
+
+- **min_amount_datapoints** (Int, default value: 21):
+  Expects a positive value. Minimum amount of datapoints required for a feasible result. Depends on
+  the `percentil` value. This is only relevant when auto_stepsize is True.
+  Some examples for the value pairs are:
+  - `percentil` = 0.5, `min_amount_datapoints` = 3
+  - `percentil` = 0.1, `min_amount_datapoints` = 11
+  - `percentil` = 0.55, `min_amount_datapoints` = 21
+  - `percentil` = 0.51, `min_amount_datapoints` = 101
+
+- **step_size_str** (String, default value: null):
+  The expected time step between consecutive timestamps in the time series. Must be a frequency
+  string, e.g. "D" or "60s".
+
+- **step_size_factor** (Float, default value: 1.0):
+  Expects a positive value. The value is used to define when a step between two consecutive data
+  points is recognized as a gap. I.e. a value of 1.0 means that all steps larger than the
+  specified `step_size` are recognized as gaps, while a value of 2.0 means that steps are only
+  recognized as gaps if they are more than twice as large as the specified `step_size`.
 
 
 ## Outputs
 - **gap_info** (DataFrame) :
-    A DataFrame containing the beginning and end timestamps of gaps larger than the determined or
-    given step size.
-    Columns are:
-    - "start" (Timestamp): Start index of the gap.
-    - "end" (Timestamp): End index of the gap.
-    - "start_inclusive" (Boolean):
-    - "end_inclusive" (Boolean):
-    - "gap_size" (Timedelta): Size of the gap
-    - "value_to_left" (Float/Int): If existing, last value before the gap, otherwise None
-    - "value_to_right" (Float/Int): If existing, first value after the gap, otherwise None
-    - "mean_left_right" (Float/Int): The mean value of the `value_to_left` and `value_to_right`.
-      None, if at least one of these values is None.
+  A DataFrame containing the beginning and end timestamps of gaps larger than the determined or
+  given step size.
+  Columns are:
+  - "start" (Timestamp): Start index of the gap.
+  - "end" (Timestamp): End index of the gap.
+  - "start_inclusive" (Boolean):
+  - "end_inclusive" (Boolean):
+  - "gap_size" (Timedelta): Size of the gap
+  - "value_to_left" (Float/Int): If existing, last value before the gap, otherwise None
+  - "value_to_right" (Float/Int): If existing, first value after the gap, otherwise None
+  - "mean_left_right" (Float/Int): The mean value of the `value_to_left` and `value_to_right`.
+    None, if at least one of these values is None.
 
 ## Details
 
 The component follows these steps:
-2. Constrict the timeseries to start_date and end_date, if defined.
-3. Ensure that start_date and end_date are present in the constricted timeseries.
-4. Detect gaps in the timeseries and determine their boundaries.
 If the `start_date` (`end_date`) is defined, the component checks that it is present in the
 `series` and removes any data points with an earlier (later) index from the processing range.
 To detect gaps the time steps between consecutive data points are calculated. If `auto_stepsize` is
@@ -330,7 +354,8 @@ COMPONENT_INFO = {
     "version_tag": "1.0.0",
     "id": "58c5b077-13b2-4e0d-8882-c5526d9d55a6",
     "revision_group_id": "e3efbd08-9d0e-45c4-8330-01f3b856a6e6",
-    "state": "DRAFT",
+    "state": "RELEASED",
+    "released_timestamp": "2024-01-31T17:34:56.654831+00:00",
 }
 
 
@@ -381,6 +406,7 @@ def main(
         min_amount_datapoints=min_amount_datapoints,
         interpolation_method=interpolation_method,
         fill_value=fill_value,
+        step_size_factor=step_size_factor,
     )
     series_with_bounds = check_add_boundary_dates(
         timeseries, input_params.start_date, input_params.end_date
@@ -413,3 +439,45 @@ def main(
             df_with_gaps, constricted_series, step_size_factor
         )
     }
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "timeseries",
+            "adapter_id": "direct_provisioning",
+            "filters": {
+                "value": (
+                    "{\n"
+                    '    "2020-01-01T01:15:00.000Z": 10.0,\n'
+                    '    "2020-01-01T01:16:00.000Z": 10.0,\n'
+                    '    "2020-01-01T01:17:00.000Z": 10.0,\n'
+                    '    "2020-01-01T01:18:00.000Z": 10.0,\n'
+                    '    "2020-01-01T01:19:00.000Z": 10.0,\n'
+                    '    "2020-01-01T01:20:00.000Z": 10.0,\n'
+                    '    "2020-01-01T01:21:00.000Z": 10.0,\n'
+                    '    "2020-01-02T16:20:00.000Z": 20.0,\n'
+                    '    "2020-01-02T16:21:00.000Z": 20.0,\n'
+                    '    "2020-01-02T16:22:00.000Z": 20.0,\n'
+                    '    "2020-01-02T16:23:00.000Z": 20.0,\n'
+                    '    "2020-01-02T16:24:00.000Z": 20.0,\n'
+                    '    "2020-01-02T16:25:00.000Z": 20.0,\n'
+                    '    "2020-01-02T16:26:00.000Z": 20.0,\n'
+                    '    "2020-01-03T08:20:00.000Z": 30.0,\n'
+                    '    "2020-01-03T08:21:04.000Z": 30.0,\n'
+                    '    "2020-01-03T08:22:00.000Z": 30.0,\n'
+                    '    "2020-01-03T08:23:04.000Z": 30.0,\n'
+                    '    "2020-01-03T08:24:00.000Z": 30.0,\n'
+                    '    "2020-01-03T08:25:04.000Z": 30.0,\n'
+                    '    "2020-01-03T08:26:06.000Z": 30.0\n'
+                    "}"
+                )
+            },
+        },
+        {
+            "workflow_input_name": "auto_stepsize",
+            "adapter_id": "direct_provisioning",
+            "filters": {"value": "True"},
+        },
+    ],
+}
