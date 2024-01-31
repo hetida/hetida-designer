@@ -4,8 +4,10 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
+import json
 import logging
 from keyword import iskeyword
+from typing import Any, Literal
 
 import black
 
@@ -14,7 +16,11 @@ from hetdesrun.component.code_utils import (
     format_code_with_black,
     update_module_level_variable,
 )
-from hetdesrun.datatypes import DataType, parse_single_value_dynamically
+from hetdesrun.datatypes import (
+    DataType,
+    parse_single_value_dynamically,
+    try_parse_wrapped,
+)
 from hetdesrun.persistence.models.io import InputType, TransformationInput
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
@@ -93,11 +99,36 @@ def function_signature_default_value_string(inp: TransformationInput) -> str:
         return repr(None)
 
     if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
-        return (
-            "pd.read_json(io.StringIO("
-            + repr(inp.value)
-            + ("), typ='series')" if inp.data_type == DataType.Series else "))")
+        pd_type: Literal["SERIES", "DATAFRAME"] = (
+            "SERIES" if inp.data_type == DataType.Series else "DATAFRAME"
         )
+
+        if not isinstance(inp.value, str | dict[Any, Any] | list[Any]):
+            msg = (
+                f"Default value '{inp.value}' of input '{inp.name}' "
+                f"has wrong type for a {inp.data_type}."
+            )
+            logger.error(msg)
+            raise TypeError(msg)
+
+        try:
+            wrapped_data_object = try_parse_wrapped(inp.value, pd_type)
+        except TypeError as error:
+            msg = f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type}."
+            logger.error(msg)
+            raise TypeError(msg) from error
+        except ValueError:
+            return (
+                "pd.read_json(io.StringIO("
+                + repr(inp.value)
+                + ("), typ='series')" if inp.data_type == DataType.Series else "))")
+            )
+        else:
+            return (
+                "pd.read_json(io.StringIO("
+                + repr(json.dumps(wrapped_data_object.data__))
+                + ("), typ='series')" if inp.data_type == DataType.Series else "))")
+            )
 
     try:
         return repr(

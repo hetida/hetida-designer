@@ -32,6 +32,21 @@ COMPONENT_INFO = {
                 "2020-01-03T08:20:04.000Z": 25.9,
             },
         },
+        "multitsframe": {
+            "data_type": "MULTITSFRAME",
+            "default_value": {
+                "__hd_wrapped_data_object__": "DATAFRAME",
+                "__metadata__": {"test": 43},
+                "__data__": {
+                    "metric": ["a", "b"],
+                    "timestamp": [
+                        "2023-01-01T00:00:00.000Z",
+                        "2023-01-01T00:00:00.000Z",
+                    ],
+                    "value": [2.3, "t"],
+                },
+            },
+        },
     },
     "outputs": {
         "x": {"data_type": "FLOAT"},
@@ -46,6 +61,7 @@ COMPONENT_INFO = {
         "some_number_any": {"data_type": "ANY"},
         "some_json_any": {"data_type": "ANY"},
         "series": {"data_type": "SERIES"},
+        "multitsframe": {"data_type": "MULTITSFRAME"},
     },
     "name": "Test Optional Input Parsing",
     "category": "Test",
@@ -76,6 +92,11 @@ def main(
         ),
         typ="series",
     ),
+    multitsframe=pd.read_json(
+        io.StringIO(
+            '{"metric": ["a", "b"], "timestamp": ["2023-01-01T00:00:00.000Z", "2023-01-01T00:00:00.000Z"], "value": [2.3, "t"]}'
+        )
+    ),
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
@@ -94,4 +115,5 @@ def main(
         "some_number_any": some_number_any,
         "some_json_any": some_json_any,
         "series": series,
+        "multitsframe": multitsframe,
     }

@@ -8,7 +8,7 @@
     "state": "DRAFT",
     "type": "COMPONENT",
     "documentation": "# Pass Through\n\n## Description\nThis component just passes data through.\n\n## Inputs\n* **input** (Any): The input.\n\n## Outputs\n* **output** (Any): The output.\n\n## Details\nThis component just passes data through. It can be used to map one dynamic workflow input to multiple component inputs.",
-    "content": "import io\n\nimport pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {},\n    \"name\": \"Test Optional Input Parsing\",\n    \"category\": \"Test\",\n    \"description\": \"Just outputs its input value\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"21cb6a1a-d409-4bb7-87a7-ee3d97940dfb\",\n    \"revision_group_id\": \"d414eb7d-3954-4c96-a329-fd0cefe0613a\",\n    \"state\": \"DRAFT\",\n}\n\n\ndef main(\n    *,\n    x=1.2,\n    ok=False,\n    neither_nor_ok=None,\n    text=\"text\",\n    null_text=\"null\",\n    empty_text=\"\",\n    null_any=None,\n    empty_string_any=\"\",\n    some_string_any=\"text\",\n    some_number_any=23,\n    some_json_any={\"test\": True, \"content\": None, \"sub_structure\": {\"relevant\": False}},\n    series=pd.read_json(\n        '{\\\\n    \"2020-01-01T01:15:27.000Z\": 42.2,\\\\n    \"2020-01-03T08:20:03.000Z\": 18.7,\\\\n    \"2020-01-03T08:20:04.000Z\": 25.9\\\\n}'\n    ),\n):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\n        \"x\": x,\n        \"ok\": ok,\n        \"neither_nor_ok\": neither_nor_ok,\n        \"text\": text,\n        \"null_text\": null_text,\n        \"empty_text\": empty_text,\n        \"null_any\": null_any,\n        \"empty_string_any\": empty_string_any,\n        \"some_string_any\": some_string_any,\n        \"some_number_any\": some_number_any,\n        \"some_json_any\": some_json_any,\n        \"series\": series,\n    }\n",
+    "content": "import io\n\nimport pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {},\n    \"name\": \"Test Optional Input Parsing\",\n    \"category\": \"Test\",\n    \"description\": \"Just outputs its input value\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"21cb6a1a-d409-4bb7-87a7-ee3d97940dfb\",\n    \"revision_group_id\": \"d414eb7d-3954-4c96-a329-fd0cefe0613a\",\n    \"state\": \"DRAFT\",\n}\n\n\ndef main(\n    *,\n    x=1.2,\n    ok=False,\n    neither_nor_ok=None,\n    text=\"text\",\n    null_text=\"null\",\n    empty_text=\"\",\n    null_any=None,\n    empty_string_any=\"\",\n    some_string_any=\"text\",\n    some_number_any=23,\n    some_json_any={\"test\": True, \"content\": None, \"sub_structure\": {\"relevant\": False}},\n    series=pd.read_json(\n        '{\\\\n    \"2020-01-01T01:15:27.000Z\": 42.2,\\\\n    \"2020-01-03T08:20:03.000Z\": 18.7,\\\\n    \"2020-01-03T08:20:04.000Z\": 25.9\\\\n}'\n    ),\n):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\n        \"x\": x,\n        \"ok\": ok,\n        \"neither_nor_ok\": neither_nor_ok,\n        \"text\": text,\n        \"null_text\": null_text,\n        \"empty_text\": empty_text,\n        \"null_any\": null_any,\n        \"empty_string_any\": empty_string_any,\n        \"some_string_any\": some_string_any,\n        \"some_number_any\": some_number_any,\n        \"some_json_any\": some_json_any,\n        \"series\": series,\n        \"multitsframe\": multitsframe,\n    }\n",
     "io_interface": {
         "inputs": [
             {
@@ -93,6 +93,13 @@
                 "data_type": "SERIES",
                 "type": "OPTIONAL",
                 "value": "{\"2020-01-01T01:15:27.000Z\": 42.2, \"2020-01-03T08:20:03.000Z\": 18.7, \"2020-01-03T08:20:04.000Z\": 25.9}"
+            },
+            {
+                "id": "215f42ac-61ab-4abd-aee7-768f6c483420",
+                "name": "multitsframe",
+                "data_type": "MULTITSFRAME",
+                "type": "OPTIONAL",
+                "value": "{\"__hd_wrapped_data_object__\": \"DATAFRAME\", \"__metadata__\": {\"test\": 43}, \"__data__\": {\"metric\": [\"a\", \"b\"], \"timestamp\": [\"2023-01-01T00:00:00.000Z\", \"2023-01-01T00:00:00.000Z\"], \"value\": [2.3, \"t\"]}}"
             }
         ],
         "outputs": [
@@ -155,6 +162,11 @@
                 "id": "d6cc45ff-a2db-4f98-ba17-045cdac10000",
                 "name": "series",
                 "data_type": "SERIES"
+            },
+            {
+                "id": "215f42ac-61ab-4abd-aee7-768f6c483420",
+                "name": "multitsframe",
+                "data_type": "MULTITSFRAME"
             }
         ]
     },
