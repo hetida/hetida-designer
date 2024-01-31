@@ -950,7 +950,7 @@ EXPORT_COMPONENTS_AS_PY_FILES=true
 # url query params to filter which transformations to sync.
 
 PULL_QUERY_URL_APPEND='?include_dependencies=true&include_deprecated=false&update_component_code=true&expand_component_code=true'
-PUSH_QUERY_URL_APPEND='?include_dependencies=true&allow_overwrite_released=false&'
+PUSH_QUERY_URL_APPEND='?include_dependencies=true&allow_overwrite_released=false'
 
 PUSH_ADDITIONAL_ARGUMENTS=()
 PULL_ADDITIONAL_ARGUMENTS=()

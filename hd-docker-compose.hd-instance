@@ -1,0 +1,30 @@
+# For docker-compose.yml setup, but
+# also works for the docker-compose-dev.yaml setup!
+
+HD_BACKEND_API_URL=http://localhost:8080/api
+VERIFY_BACKEND_API_URL=true
+
+
+# Auth settings. Actual credentials should be configured in the 
+# accompanying .hd-creds file.
+
+AUTH_URL=
+VERIFY_AUTH_URL=true
+REALM=
+CLIENT_ID=
+
+
+EXPORT_DIRECTORY="./hd-docker-compose-trafos"
+EXPORT_COMPONENTS_AS_PY_FILES=true
+
+
+# Options controlling sync behaviour.
+# for example you may add
+# id=... or category=... or category_prefix=... 
+# url query params to filter which transformations to sync.
+
+PULL_QUERY_URL_APPEND='?include_dependencies=true&include_deprecated=false&update_component_code=true&expand_component_code=true'
+PUSH_QUERY_URL_APPEND='?include_dependencies=true&allow_overwrite_released=true'
+
+PUSH_ADDITIONAL_ARGUMENTS=()
+PULL_ADDITIONAL_ARGUMENTS=()
