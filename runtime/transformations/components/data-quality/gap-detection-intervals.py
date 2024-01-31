@@ -73,11 +73,23 @@ from hetdesrun.runtime.exceptions import ComponentInputValidationException
 
 
 class GapDetectionParameters(BaseModel):
-    start_date: pd.Timestamp | None
+    start_date: pd.Timestamp | None  # pydantic kann auch direkt datetime, muss aber getestet werden
     end_date: pd.Timestamp | None
+    auto_stepsize: bool = True
+    history_end_date: pd.Timestamp = None
     step_size_str: str
+    percentil: float = 0.5
     step_size_factor: float = 1.0
+    min_amount_datapoints: int
+    interpolation_method: str = "nearest"
     fill_value: Any = None
+
+    # @validator(
+    #     "start_date", "end_date"
+    # )  # TODO was ist mit dem Fall Attribut der Zeitreihe?
+    # def verify_date_strings(cls, date) -> datetime:
+    #     date = datetime.fromisoformat(date).replace(tzinfo=timezone.utc)
+    #     return date
 
     @validator("end_date")
     def verify_dates(cls, end_date, values: dict):
@@ -91,6 +103,64 @@ class GapDetectionParameters(BaseModel):
             )
         return end_date
 
+    @validator("history_end_date")
+    def verify_history_end_date(cls, history_end_date, values: dict) -> datetime | None:
+        start_date = values["start_date"]
+        end_date = values["end_date"]
+        if history_end_date is not None:
+            if start_date > history_end_date:
+                raise ComponentInputValidationException(
+                    "The value history_end_date has to be inbetween start_date and end_date, while "
+                    f"it is {history_end_date} < {start_date}.",
+                    error_code=422,
+                    invalid_component_inputs=["history_end_date_str"],
+                )
+            if end_date < history_end_date:
+                raise ComponentInputValidationException(
+                    "The value history_end_date has to be inbetween start_date and end_date, while "
+                    f"it is {history_end_date} > {end_date}.",
+                    error_code=422,
+                    invalid_component_inputs=["history_end_date_str"],
+                )
+        else:
+            history_end_date = None
+        return history_end_date
+
+    @validator("step_size_str")
+    def verify_step_size(cls, step_size, values: dict) -> str:
+        auto_stepsize = values["auto_stepsize"]
+        if auto_stepsize is False:
+            if step_size is None:
+                raise ComponentInputValidationException(
+                    "A step_size is required for gap detection, "
+                    "if it is not automatically determined.",
+                    error_code=422,
+                    invalid_component_inputs=["step_size_str"],
+                )
+            try:
+                try:
+                    _ = pd.to_timedelta(step_size)
+                except ValueError:
+                    _ = pd.to_timedelta(pd.tseries.frequencies.to_offset(step_size))
+            except ValueError as err:
+                raise ComponentInputValidationException(
+                    "A step_size is required for gap detection, "
+                    "if it is not automatically determined.",
+                    error_code=422,
+                    invalid_component_inputs=["step_size_str"],
+                ) from err
+        return step_size
+
+    @validator("percentil")
+    def verify_percentile(cls, percentil) -> float:
+        if (percentil < 0) or (percentil > 1):
+            raise ComponentInputValidationException(
+                "The percentil value has to be a non-negative float less or equal to 1.",
+                error_code=422,
+                invalid_component_inputs=["percentil"],
+            )
+        return percentil
+
     @validator("step_size_factor")
     def verify_step_size_factor(cls, factor) -> float:
         if factor < 0:
@@ -100,6 +170,16 @@ class GapDetectionParameters(BaseModel):
                 invalid_component_inputs=["step_size_factor"],
             )
         return factor
+
+    @validator("min_amount_datapoints")
+    def verify_min_amount_datapoints(cls, min_amount) -> int:
+        if min_amount < 0:
+            raise ComponentInputValidationException(
+                "The minimum amount of datapoints has to be a non-negative integer.",
+                error_code=422,
+                invalid_component_inputs=["min_amount_datapoints"],
+            )
+        return min_amount
 
 
 def timestamp_str_to_pd_timestamp(timestamp: str) -> datetime:
@@ -282,7 +362,22 @@ def main(
         series_with_bounds, input_params.start_date, input_params.end_date
     )
 
-    step_size = freqstr2timedelta(step_size_str)
+    if auto_stepsize:
+        check_amount_datapoints(
+            series=constricted_series,
+            min_amount_datapoints=input_params.min_amount_datapoints,
+        )
+        if input_params.history_end_date is not None:
+            training_series = constrict_series_to_dates(
+                timeseries, input_params.start_date, input_params.history_end_date
+            )
+        else:
+            training_series = constricted_series
+        step_size = determine_timestep_gapsize_percentile(
+            training_series, percentil, interpolation_method
+        )
+    else:
+        step_size = freqstr2timedelta(step_size_str)
 
     df_with_gaps = determine_gap_length(constricted_series, step_size)
 
