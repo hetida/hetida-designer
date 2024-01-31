@@ -214,9 +214,14 @@ COMPONENT_INFO = {
         "timeseries": {"data_type": "SERIES"},
         "start_date_str": {"data_type": "STRING", "default_value": None},
         "end_date_str": {"data_type": "STRING", "default_value": None},
+        "auto_stepsize": {"data_type": "BOOLEAN"},
+        "history_end_date_str": {"data_type": "STRING", "default_value": None},
+        "percentil": {"data_type": "FLOAT", "default_value": 0.5},
+        "interpolation_method": {"data_type": "STRING", "default_value": "nearest"},
         "step_size_str": {"data_type": "STRING"},
         "step_size_factor": {"data_type": "FLOAT", "default_value": 1.0},
         "fill_value": {"data_type": "ANY", "default_value": None},
+        "min_amount_datapoints": {"data_type": "INT", "default_value": 21},
     },
     "outputs": {
         "gap_info": {"data_type": "DATAFRAME"},
@@ -235,23 +240,39 @@ def main(
     *,
     timeseries,
     step_size_str,
+    auto_stepsize,
     start_date_str=None,
     end_date_str=None,
-    step_size_factor=1.0,
+    step_size_factor=1,
     fill_value=None,
+    percentil=0.5,
+    history_end_date_str=None,
+    min_amount_datapoints=21,
+    interpolation_method="nearest",
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
     timeseries = timeseries.sort_index().dropna()
 
+    if start_date_str is None and "start_date" in timeseries.attrs:
+        start_date_str = timeseries.attrs["start_date"]
+    if end_date_str is None and "end_date" in timeseries.attrs:
+        end_date_str = timeseries.attrs["end_date"]
+
     start_date = timestamp_str_to_pd_timestamp(start_date_str)
     end_date = timestamp_str_to_pd_timestamp(end_date_str)
+    history_end_date = timestamp_str_to_pd_timestamp(history_end_date_str)
 
     input_params = GapDetectionParameters(
         start_date=start_date,
         end_date=end_date,
+        auto_stepsize=auto_stepsize,
+        history_end_date_str=history_end_date,
         step_size_str=step_size_str,
+        percentil=percentil,
+        min_amount_datapoints=min_amount_datapoints,
+        interpolation_method=interpolation_method,
         fill_value=fill_value,
     )
     series_with_bounds = check_add_boundary_dates(
