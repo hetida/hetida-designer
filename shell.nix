@@ -50,7 +50,7 @@
 
 
 # fix nixpkgs commit:
-with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/75a5ebf473cd60148ba9aec0d219f72e5cf52519.tar.gz") {
+with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/f4a8d6d5324c327dcc2d863eb7f3cc06ad630df4.tar.gz") {
   config = {
     permittedInsecurePackages = [
                 "nodejs-14.21.3"
@@ -117,6 +117,7 @@ let
       ln -s "${zlib}"/lib/libz.so.1 "$out"/lib/libz.so.1
       ln -s "${glibc}"/lib/libc-2.33.so "$out"/lib/libc-2.33.so
       ln -s "${glibc}"/lib/libc-2.33.so.1 "$out"/lib/libc-2.33.so.1
+      ln -s "${glibc}"/lib/libc-2.38.so.1 "$out"/lib/libc-2.38.so.1
     '';
 
   prepare-venv = writeShellScriptBin "prepare-venv" ''
