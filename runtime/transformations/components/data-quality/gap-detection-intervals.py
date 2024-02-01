@@ -356,10 +356,9 @@ COMPONENT_INFO = {
     "category": "Data Quality",
     "description": "Detects gaps in the given series that are larger than the step size and returns a DataFrame with information about the gaps.",  # noqa: E501
     "version_tag": "1.0.0",
-    "id": "58c5b077-13b2-4e0d-8882-c5526d9d55a6",
-    "revision_group_id": "e3efbd08-9d0e-45c4-8330-01f3b856a6e6",
-    "state": "RELEASED",
-    "released_timestamp": "2024-01-31T17:34:56.654831+00:00",
+    "id": "cd2a8b7f-a1af-4630-89a5-738af595472a",
+    "revision_group_id": "415662ab-e4fb-4084-b752-80433d0df291",
+    "state": "DRAFT",
 }
 
 
@@ -367,15 +366,15 @@ def main(
     *,
     timeseries,
     auto_stepsize,
-    step_size_str=None,
     start_date_str=None,
     end_date_str=None,
-    step_size_factor=1,
-    fill_value=None,
-    percentil=0.5,
     history_end_date_str=None,
-    min_amount_datapoints=21,
+    percentil=0.5,
     interpolation_method="nearest",
+    step_size_str=None,
+    step_size_factor=1.0,
+    fill_value=None,
+    min_amount_datapoints=21,
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
