@@ -88,7 +88,7 @@ def test_tr_from_code_for_component_with_optional_inputs():
     assert tr.io_interface.inputs[4].name == "some_flag"
     assert tr.io_interface.inputs[4].data_type == DataType.Boolean
     assert tr.io_interface.inputs[4].type == InputType.OPTIONAL
-    assert tr.io_interface.inputs[4].value == "true"
+    assert tr.io_interface.inputs[4].value == "True"
     assert len(tr.io_interface.outputs) == 4
     assert tr.io_interface.outputs[0].name == "intercept"
     assert tr.io_interface.outputs[0].data_type == DataType.Float
