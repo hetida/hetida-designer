@@ -8,16 +8,29 @@
 ## Inputs
 - **timeseries** (Series):
   Expects a series with an index of data type DateTimeIndex.
-* **data_frequency** (String): Time span between data points. Can be either a Pandas frequency
+
+- **start_date_str** (String, default value: null):
+  Desired start date of the processing range. Expexcts ISO 8601 format. Alternatively, the
+  `timeseries` can have an attribute "start_date" that will be used instead. If neither is
+  defined, the processing range begins with the first data point in `timeseries`. The start date
+  must not be later than the end date.
+
+- **end_date_str** (String, default value: null):
+  Desired end date of the processing range. Expexcts ISO 8601 format. Alternatively, the
+  `timeseries` can have an attribute "end_date" that will be used instead. If neither is defined,
+  the processing range ends with the last data point in `timeseries`. The start date must not be
+  later than the end date.
+
+- **data_frequency** (String): Time span between data points. Can be either a Pandas frequency
   string based on [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
   ) or a timedelta string.
-* **frequency_offset** (String): Offset of the window starts compared to 1970-01-01 00:00:00.
+
+- **frequency_offset** (String): Offset of the window starts compared to 1970-01-01 00:00:00.
   Can be either a Pandas frequency string based on [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
   ) or a timedelta string.
   In most cases no offset is necessary, so this can be set to zero, i.e. "0".
-
 
 - **gaps** (DataFrame) :
   A DataFrame containing the beginning and end timestamps of gaps larger than the determined or
@@ -30,7 +43,7 @@
   - "end_inclusive" (Boolean)
 
 ## Outputs
-
+- **replacement_value_locations** (Series):
 
 ## Details
 
@@ -50,4 +63,3 @@ def freqstr2timedelta(freqstr: str) -> pd.Timedelta:
         return pd.to_timedelta(freqstr)
     except ValueError:
         return pd.to_timedelta(freqstr2dateoffset(freqstr))
-
