@@ -67,8 +67,8 @@ information about the gaps.
   Columns are:
   - "start" (Timestamp): Start index of the gap.
   - "end" (Timestamp): End index of the gap.
-  - "start_inclusive" (Boolean):
-  - "end_inclusive" (Boolean):
+  - "start_inclusive" (Boolean): Defines whether the start boundary is inclusive or not.
+  - "end_inclusive" (Boolean): Defines whether the start boundary is inclusive or not.
   - "gap_size" (Timedelta): Size of the gap
   - "value_to_left" (Float/Int): If existing, last value before the gap, otherwise None
   - "value_to_right" (Float/Int): If existing, first value after the gap, otherwise None
@@ -77,14 +77,18 @@ information about the gaps.
 
 ## Details
 
-The component follows these steps:
-If the `start_date` (`end_date`) is defined, the component checks that it is present in the
+If the `start_date_str` (`end_date_str`) is defined, the component checks that it is present in the
 `series` and removes any data points with an earlier (later) index from the processing range.
 To detect gaps the time steps between consecutive data points are calculated. If `auto_stepsize` is
-set to `True` the component determines the `step_size`
- When a time step is
-larger than the product of the `step_size_factor` and the step size defined by `step_size`, it
-is considered to be a gap.
+set to `True` the component determines the `step_size` using the `percentil`th quantile of time
+steps in the training range. The training range is determined by the `start_date_str` and the
+`history_end_date_str`. If latter is not defined, the processing range is used as training range. If
+`auto_step_size` is set to `False` the `step_size` is defined by the `step_size_str`. When a time
+step is larger than the product of the `step_size_factor` and the `step_size`, it is considered to
+be a gap. For each gap the index of the previous (subsequent) data point is output for each gap. In
+addition, the information as to whether the indices belong to the gap and, if available, the
+corresponding values. If both the value to the left and right of the gap are defined and are of data
+type float or int, the arithmetic mean of the two values is also output.
 """
 
 
