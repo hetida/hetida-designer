@@ -69,6 +69,7 @@ COMPONENT_INFO = {
         "pred_series_frequency": {"data_type": "STRING", "default_value": "5min"},
         "timeseries": {"data_type": "SERIES"},
         "limit": {"data_type": "FLOAT"},
+        "some_flag": {"data_type": "BOOLEAN", "default_value": True},
     },
     "outputs": {
         "intercept": {"data_type": "FLOAT"},
@@ -87,7 +88,12 @@ COMPONENT_INFO = {
 
 
 def main(
-    *, timeseries, limit, num_pred_series_future_days=3, pred_series_frequency="5min"
+    *,
+    timeseries,
+    limit,
+    num_pred_series_future_days=3,
+    pred_series_frequency="5min",
+    some_flag=True
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
