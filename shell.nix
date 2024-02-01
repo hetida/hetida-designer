@@ -7,7 +7,7 @@
 # This nix script provides an isolated and reproducible environment for local development
 # with live reload / restart functionality enabling fast-paced development without docker.
 # This includes the main hetida designer application submodules (frontend, backend, runtime) and
-# a postgres database. It uses overmind to orchestrate/manage the services instead of 
+# a postgres database. It uses overmind to orchestrate/manage the services instead of
 # docker-compose.
 #
 # Prerequisites:
@@ -23,7 +23,7 @@
 #     to get into the development environment shell. This may take a long time on first invocation
 #     since it downloads and installs all programming languages and the necessary development tools
 #     (including overmind) and configures them. Subsequent evocations will be much faster.
-#     
+#
 #     After that run
 #
 #         overmind start
@@ -36,11 +36,11 @@
 #       runtime: http://localhost:8090/docs
 #
 #     You can now edit source code: Changes of frontend or runtime code should automatically restart
-#     the corresponding service. For the Java backend you need to invoke 
+#     the corresponding service. For the Java backend you need to invoke
 #         mvn compile
 #     in the ./backend subdirectory to trigger a restart. We recommend to setup your Java IDE
 #     accordingly.
-#    
+#
 # Notes:
 #     * Occasionally you may need to stop everything and re-enter the development environment. To do
 #       so press Ctrl+c to stop overmind and Ctrl-d to leave the nix-shell environment. After that
@@ -71,7 +71,7 @@ let
   pythonDemoAdapterDir = toString ./demo-adapter-python;
   backendDir = toString ./backend;
   frontendDir = toString ./frontend;
-  JUPYTER_CONFIG_DIR =  toString ./.jupyter;  
+  JUPYTER_CONFIG_DIR =  toString ./.jupyter;
 
   waitfor = stdenv.mkDerivation {
     name = "waitfor";
@@ -80,7 +80,7 @@ let
         url = "https://raw.githubusercontent.com/eficode/wait-for/019516781dcca428cb0ee372e008e251e333f1ac/wait-for";
         # Hashes must be specified so that the build is purely functional
         # Simplest method to get the hash: add a false hash, try it out, copy the right one
-        # from the error message and insert it.        
+        # from the error message and insert it.
         sha256 = "1gwysdigrcmbq3rj59h10w20cipl75g8jdf8bhvkncssl9lz0i54";
     };
     unpackPhase = ''
@@ -93,15 +93,15 @@ let
     '';
   };
 
-  library_join = pkgs.symlinkJoin { 
+  library_join = pkgs.symlinkJoin {
       name = "system_libraries_symlinked";
-      paths = [ pkgs.zlib pkgs.glibc ]; postBuild = "echo 'links added'; ls ."; 
+      paths = [ pkgs.zlib pkgs.glibc ]; postBuild = "echo 'links added'; ls .";
   };
 
   symlinks_to_libs = runCommand "symlinks_to_some_libs" { } ''
       # Gather explicit symlinks to certain library pathes.
       # This is a simple workaround for Python imports not finding necessary libraries.
-      # It allows to add the lib path of the result explicitely 
+      # It allows to add the lib path of the result explicitely
       # to LD_LIBRARY_PATH in nix shell environments etc.
       #
       # Usage in nix shell / scripts:
@@ -112,7 +112,7 @@ let
       set -e
 
       mkdir -p $out/lib
-      
+
       ln -s "${postgresql.lib}"/lib/libpq.so.5 "$out"/lib/libpq.so.5
       ln -s "${zlib}"/lib/libz.so.1 "$out"/lib/libz.so.1
       ln -s "${glibc}"/lib/libc-2.33.so "$out"/lib/libc-2.33.so
@@ -121,7 +121,7 @@ let
 
   prepare-venv = writeShellScriptBin "prepare-venv" ''
     set -e
-    SOURCE_DATE_EPOCH=$(date +%s)    
+    SOURCE_DATE_EPOCH=$(date +%s)
 
     prepare_venv() {
         local sub_project_dir=$1
@@ -143,12 +143,12 @@ let
         local OLD_PYTHONPATH="$PYTHONPATH"
         export PYTHONPATH="$PWD"/"$venv_target_dir"/${pythonPackages.python.sitePackages}/:"$OLD_PYTHONPATH"
         export LD_LIBRARY_PATH=${lib.makeLibraryPath [stdenv.cc.cc (toString "${symlinks_to_libs}") ]}
-        
+
         export JUPYTER_CONFIG_DIR="$venv_target_dir"/.auto_created_jupyter_config
-        
+
         local current_dir="$PWD"
         cd "$sub_project_dir"
-        
+
         ./pipt sync
 
         cd "$current_dir"
@@ -201,14 +201,14 @@ let
   '';
 
   start-postgres = writeShellScriptBin "start-hd-postgres" ''
-    
+
     echo "Stop possible running postgres server"
     pg_ctl -D .tmp/pg_dev_db stop || true
-    echo "Clean up postgres data dir and recreate"    
+    echo "Clean up postgres data dir and recreate"
 
     # Note: Alternatively db encoding can be set in the initdb command with -E ... here.
     rm -fR ${projectDir}/.tmp/pg_dev_db && initdb -E UTF8 -D ${projectDir}/.tmp/pg_dev_db
-    
+
     echo "Starting postgres"
 
     # This starts postgres with the current user as db user and without password
@@ -246,7 +246,7 @@ let
             "key": "temp_sqlite_db",
             "connection_url": "sqlite+pysqlite:///'"$WRITABLE_SQLITE_TMP_DIR"'/writable_sqlite.db",
             "append_tables": ["append_alert_table", "model_run_stats"],
-            "replace_tables" : ["model_config_params"]            
+            "replace_tables" : ["model_config_params"]
           }
         ]
       '
@@ -264,7 +264,7 @@ let
 
       echo "CREATING DB SCHEMA"
       python -c "from sqlalchemy_utils import create_database; from hetdesrun.persistence import get_db_engine; create_database(get_db_engine().url);"
-      
+
       echo "STARTING RUNTIME"
       PORT=8080 python ./main.py
   '';
@@ -279,9 +279,9 @@ let
       frontend: ${start-frontend}/bin/start-hd-frontend
       postgres: ${start-postgres}/bin/start-hd-postgres
       pythondemoadapter: ${start-python-demo-adapter}/bin/start-python-demo-adapter
-      
+
   '';
-  
+
 in pkgs.mkShell rec {
   name = "hetida-desiger-local-dev-environment";
 
@@ -310,7 +310,7 @@ in pkgs.mkShell rec {
     coreutils
     which
     sudo
-    
+
     # additional libraries/packages necessary for typical data science Python libraries
     blas
     lapack
@@ -320,13 +320,13 @@ in pkgs.mkShell rec {
     clangStdenv
 
     # Postgres
-    
+
     postgresql
-    postgresql.lib  
+    postgresql.lib
     # Node
     nixpkgs_for_nodejs14.nodejs-14_x
     chromium # for tests
-    #google-chrome 
+    #google-chrome
     # you may use google-chrome for tests with chrome instead of chromium.
     # Requires NIXPKGS_ALLOW_UNFREE=1 when running nix-shell
 
@@ -362,17 +362,17 @@ in pkgs.mkShell rec {
 
     if [[ -d ./frontend/node_modules ]] && [[ -e ./frontend/node_modules/package-lock.json.hash ]] && [[ "$PACKAGE_JSON_HASH" == "$(cat ./frontend/node_modules/package-lock.json.hash)" ]] ; then
         echo "$PACKAGE_JSON_HASH"
-        echo "$(cat ./frontend/node_modules/package-lock.json.hash)"    
+        echo "$(cat ./frontend/node_modules/package-lock.json.hash)"
         echo "--> Node modules probably still in sync. Not syncing again."
         echo "--> If you are not sure, simply delete ./frontend/node_modules subdir"
         echo "    and restart nix shell."
     else
         current_dir=$(pwd)
-        cd ./frontend && npm ci 
+        cd ./frontend && npm ci
         # npm-ci = sync with package-lock.json. Could be improved:
         # Does not intelligently check by using
         # hashes
-        cd $current_dir        
+        cd $current_dir
         ./runtime/pipt _hash_multiple ./frontend/package-lock.json > ./frontend/node_modules/package-lock.json.hash
     fi
 
