@@ -74,7 +74,7 @@ def test_tr_from_code_for_component_with_optional_inputs():
     assert tr.io_interface.inputs[0].name == "num_pred_series_future_days"
     assert tr.io_interface.inputs[0].data_type == DataType.Integer
     assert tr.io_interface.inputs[0].type == InputType.OPTIONAL
-    assert tr.io_interface.inputs[0].value == 3
+    assert tr.io_interface.inputs[0].value == "3"
     assert tr.io_interface.inputs[1].name == "pred_series_frequency"
     assert tr.io_interface.inputs[1].data_type == DataType.String
     assert tr.io_interface.inputs[1].type == InputType.OPTIONAL
