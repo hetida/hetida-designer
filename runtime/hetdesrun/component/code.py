@@ -4,15 +4,23 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
+import json
 import logging
 from keyword import iskeyword
+from typing import Any, Literal
+
+import black
 
 from hetdesrun.component.code_utils import (
     CodeParsingException,
     format_code_with_black,
     update_module_level_variable,
 )
-from hetdesrun.datatypes import DataType
+from hetdesrun.datatypes import (
+    DataType,
+    parse_single_value_dynamically,
+    try_parse_wrapped,
+)
 from hetdesrun.persistence.models.io import InputType, TransformationInput
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
@@ -23,6 +31,7 @@ imports_template: str = """\
 # add your own imports here, e.g.
 # import pandas as pd
 # import numpy as np
+
 
 """
 
@@ -44,28 +53,113 @@ COMPONENT_INFO = {{
 
 {main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
-    # ***** DO NOT EDIT LINES ABOVE *****\
+    # ***** DO NOT EDIT LINES ABOVE *****
 """
 
-function_body_template: str = """\
+function_body_template: str = """
     # write your function code here.
-    pass\
+    pass
 """
 
 
-def wrap_in_quotes_if_data_type_string(
-    default_value_string: str, data_type: DataType
-) -> str:
-    if data_type != DataType.String or default_value_string == "None":
-        return default_value_string
-    return '"' + default_value_string + '"'
+def component_info_default_value_string(inp: TransformationInput) -> str:
+    if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
+        return repr(None)
+
+    if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
+        return repr(
+            parse_single_value_dynamically(
+                name=inp.name if inp.name is not None else "UNKNOWN",
+                value=inp.value,
+                data_type=DataType.Any,
+                nullable=True,
+            )
+        )
+
+    try:
+        return repr(
+            parse_single_value_dynamically(
+                name=inp.name if inp.name is not None else "UNKNOWN",
+                value=inp.value,
+                data_type=inp.data_type,
+                nullable=True,
+            )
+        )
+    except ValueError as error:
+        msg = (
+            f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type.value}"
+            + (f":\n{str(error)}" if inp.value != "None" else ". Enter 'null' instead.")
+        )
+        logger.error(msg)
+        raise TypeError(msg) from error
 
 
-def default_value_string(inp: TransformationInput) -> str:
-    if inp.value == "" and inp.data_type != DataType.String:
-        return "None"
+def function_signature_default_value_string(inp: TransformationInput) -> str:
+    if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
+        return repr(None)
 
-    return wrap_in_quotes_if_data_type_string(str(inp.value), inp.data_type)
+    if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
+        pd_type: Literal["SERIES", "DATAFRAME"] = (
+            "SERIES" if inp.data_type == DataType.Series else "DATAFRAME"
+        )
+
+        if not isinstance(inp.value, str | dict[Any, Any] | list[Any]):
+            msg = (
+                f"Default value '{inp.value}' of input '{inp.name}' "
+                f"has wrong type for a {inp.data_type}."
+            )
+            logger.error(msg)
+            raise TypeError(msg)
+
+        try:
+            wrapped_data_object = try_parse_wrapped(inp.value, pd_type)
+        except TypeError as error:
+            msg = f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type}."
+            logger.error(msg)
+            raise TypeError(msg) from error
+        except ValueError:
+            return (
+                "pd.read_json(io.StringIO("
+                + repr(inp.value)
+                + ("), typ='series')" if inp.data_type == DataType.Series else "))")
+            )
+        else:
+            return (
+                "pd.read_json(io.StringIO("
+                + repr(json.dumps(wrapped_data_object.data__))
+                + ("), typ='series')" if inp.data_type == DataType.Series else "))")
+            )
+
+    try:
+        return repr(
+            parse_single_value_dynamically(
+                name=inp.name if inp.name is not None else "UNKNOWN",
+                value=inp.value,
+                data_type=inp.data_type,
+                nullable=True,
+            )
+        )
+    except ValueError as error:
+        msg = (
+            f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type.value}"
+            + (f":\n{str(error)}" if inp.value != "None" else ". Enter 'null' instead.")
+        )
+        logger.error(msg)
+        raise TypeError(msg) from error
+
+
+def format_function_header(function_header: str) -> str:
+    # add function_body_template to fulfill indented block expectation after function definition
+    formatted_function_header_with_body_template = format_code_with_black(
+        function_header + function_body_template
+    )
+    # remove function_body_template again
+    formatted_function_header = (
+        formatted_function_header_with_body_template.removesuffix(
+            function_body_template
+        )
+    )
+    return formatted_function_header
 
 
 def description_too_long(description: str) -> bool:
@@ -90,7 +184,7 @@ def generate_function_header(
                 if inp.type == InputType.REQUIRED and inp.name is not None
             ]
             + [
-                inp.name + "=" + default_value_string(inp)
+                inp.name + "=" + function_signature_default_value_string(inp)
                 for inp in component.io_interface.inputs
                 if inp.type == InputType.OPTIONAL and inp.name is not None
             ]
@@ -110,22 +204,7 @@ def generate_function_header(
                 + inp.data_type.value
                 + '"'
                 + (
-                    ', "default_value": '
-                    + (
-                        '"'
-                        if inp.data_type == DataType.String and inp.value is not None
-                        else ""
-                    )
-                    + (
-                        str(inp.value)
-                        if (inp.data_type == DataType.String or inp.value != "")
-                        else "None"
-                    )
-                    + (
-                        '"'
-                        if inp.data_type == DataType.String and inp.value is not None
-                        else ""
-                    )
+                    ', "default_value": ' + component_info_default_value_string(inp)
                     if inp.type == InputType.OPTIONAL
                     else ""
                 )
@@ -175,14 +254,14 @@ def generate_function_header(
         timestamp_str = timestamp_str + component.disabled_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
 
-    return function_definition_template.format(
+    function_header = function_definition_template.format(
         input_dict_content=input_dict_str,
         output_dict_content=output_dict_str,
         name='"' + component.name + '"',
         description='"' + component.description + '"',
-        description_too_long_noqa="  # noqa: E501"
-        if description_too_long(component.description)
-        else "",
+        description_too_long_noqa=(
+            "  # noqa: E501" if description_too_long(component.description) else ""
+        ),
         category='"' + component.category + '"',
         version_tag='"' + component.version_tag + '"',
         id='"' + str(component.id) + '"',
@@ -193,15 +272,25 @@ def generate_function_header(
         main_func_declaration_start=main_func_declaration_start,
     )
 
+    try:
+        return format_function_header(function_header)
+    except black.InvalidInput as error:
+        logger.warning(
+            "Error while generating function header for compoent %s:\n%s",
+            str(component.id),
+            str(error),
+        )
+        return function_header
+
+    return format_code_with_black(function_header)
+
 
 def generate_complete_component_module(
     component: TransformationRevision, is_coroutine: bool = False
 ) -> str:
     return (
         imports_template
-        + "\n"
         + generate_function_header(component, is_coroutine)
-        + "\n"
         + function_body_template
     )
 
@@ -243,19 +332,19 @@ def update_code(
     except ValueError:
         # Cannot find func def, therefore append it (assuming necessary imports are present):
         # This may secretely add a second main entrypoint function!
-        return (
-            existing_code + "\n\n" + new_function_header + "\n" + function_body_template
-        )
+        return existing_code + "\n\n" + new_function_header + function_body_template
 
-    if "    # ***** DO NOT EDIT LINES ABOVE *****" not in remaining:
+    if "    # ***** DO NOT EDIT LINES ABOVE *****\n" not in remaining:
         # Cannot find end of function definition.
         # Therefore replace all code starting from the detected beginning of the function
         # definition. This deletes all user code below!
-        return start + new_function_header + "\n" + function_body_template
+        return start + new_function_header + function_body_template
 
     # we now are quite sure that we find a complete existing function definition
 
-    old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****", 1)
+    old_func_def, end = remaining.split(
+        "    # ***** DO NOT EDIT LINES ABOVE *****\n", 1
+    )
 
     old_func_def_lines = old_func_def.split("\n")
     use_async_def = (len(old_func_def_lines) >= 3) and old_func_def_lines[
