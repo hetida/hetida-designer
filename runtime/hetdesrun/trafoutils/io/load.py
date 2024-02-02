@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
 
+import pandas as pd
 from pydantic import BaseModel, Field, parse_file_as
 
 from hetdesrun.component.code_utils import (
@@ -57,6 +58,29 @@ def load_python_file(path: str) -> str | None:
         logger.error("Could not find python file at path %s", path)
         python_code = None
     return python_code
+
+
+def get_json_default_value_from_python_object(input_info: dict) -> str | None:
+    if "default_value" not in input_info or input_info["default_value"] is None:
+        return None
+
+    if "data_type" not in input_info:
+        raise ValueError(
+            "For optional inputs a data type must be provided in the COMPONENT_INFO!"
+        )
+
+    if isinstance(input_info["default_value"], str) and input_info["data_type"] in (
+        "STRING",
+        "ANY",
+    ):
+        return input_info["default_value"]
+
+    if isinstance(input_info["default_value"], pd.Series | pd.DataFrame) and input_info[
+        "data_type"
+    ] in ("SERIES", "DATAFRAME", "MULTITSFRAME"):
+        return str(input_info["default_value"].to_json(date_format="iso"))
+
+    return json.dumps(input_info["default_value"])
 
 
 def transformation_revision_from_python_code(code: str) -> Any:
@@ -111,15 +135,19 @@ def transformation_revision_from_python_code(code: str) -> Any:
 
     component_info_dict["released_timestamp"] = component_info_dict.get(
         "released_timestamp",
-        datetime.now(timezone.utc).isoformat()
-        if component_info_dict["state"] != "DRAFT"
-        else None,
+        (
+            datetime.now(timezone.utc).isoformat()
+            if component_info_dict["state"] != "DRAFT"
+            else None
+        ),
     )
     component_info_dict["disabled_timestamp"] = component_info_dict.get(
         "disabled_timestamp",
-        datetime.now(timezone.utc).isoformat()
-        if component_info_dict["state"] == "DISABLED"
-        else None,
+        (
+            datetime.now(timezone.utc).isoformat()
+            if component_info_dict["state"] == "DISABLED"
+            else None
+        ),
     )
 
     try:
@@ -153,17 +181,20 @@ def transformation_revision_from_python_code(code: str) -> Any:
                 TransformationInput(
                     id=get_uuid_from_seed("component_input_" + input_name),
                     name=input_name,
-                    data_type=input_info["data_type"]
-                    if isinstance(input_info, dict) and "data_type" in input_info
-                    else input_info,
+                    data_type=(
+                        input_info["data_type"]
+                        if isinstance(input_info, dict) and "data_type" in input_info
+                        else input_info
+                    ),
                     # input info maybe a datatype string (backwards compatibility)
                     # or a dictionary containing the datatype as well as a potential default value
-                    value=input_info["default_value"]
-                    if isinstance(input_info, dict) and "default_value" in input_info
-                    else None,
-                    type=InputType.OPTIONAL
-                    if isinstance(input_info, dict) and "default_value" in input_info
-                    else InputType.REQUIRED,
+                    value=get_json_default_value_from_python_object(input_info),
+                    type=(
+                        InputType.OPTIONAL
+                        if isinstance(input_info, dict)
+                        and "default_value" in input_info
+                        else InputType.REQUIRED
+                    ),
                 )
                 for input_name, input_info in component_info_dict["inputs"].items()
             ],
@@ -171,9 +202,11 @@ def transformation_revision_from_python_code(code: str) -> Any:
                 TransformationOutput(
                     id=get_uuid_from_seed("component_output_" + output_name),
                     name=output_name,
-                    data_type=output_info["data_type"]
-                    if isinstance(output_info, dict) and "data_type" in output_info
-                    else output_info,
+                    data_type=(
+                        output_info["data_type"]
+                        if isinstance(output_info, dict) and "data_type" in output_info
+                        else output_info
+                    ),
                     # input info maybe a datatype string (backwards compatibility)
                     # or a dictionary containing the datatype
                 )

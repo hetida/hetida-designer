@@ -104,7 +104,6 @@ An example JSON input for a call of this component is:
 
 """
 
-
 import logging
 
 import pandas as pd
