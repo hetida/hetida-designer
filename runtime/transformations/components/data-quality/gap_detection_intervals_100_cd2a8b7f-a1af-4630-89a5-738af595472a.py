@@ -112,6 +112,203 @@ respectively) data point, the information as to whether the indices belong to th
 present, the corresponding values.
 If both the value to the left and the value to the right of the gap are of the float or int data
 type, the arithmetic mean of the two values is also provided.
+
+
+## Examples
+
+The input may be as minimalistic as just a timeseries:
+```
+{
+    "timeseries": {
+        "2020-01-01T01:16:00.000Z": 10.0,
+        "2020-01-01T01:18:00.000Z": 10.0,
+        "2020-01-01T01:19:00.000Z": 10.0,
+        "2020-01-01T01:20:00.000Z": 10.0,
+        "2020-01-01T01:22:00.000Z": 20.0,
+        "2020-01-01T01:23:00.000Z": 20.0,
+        "2020-01-01T01:25:00.000Z": 20.0,
+        "2020-01-01T08:28:00.000Z": 20.0,
+        "2020-01-01T08:30:00.000Z": 30.0,
+        "2020-01-01T08:31:00.000Z": 30.0,
+        "2020-01-01T16:34:00.000Z": 30.0
+    }
+}
+```
+The smallest intervals between subsequent timestamps is a minute, but because there are so many gaps
+a percentile of 0.5 (corresponding to the median of the interval distribution) will result in a
+2 minute interval as the lower limit for a gap and thus only identify the two larger gaps.
+Such issues can be tackled by choosing a smaller **percentile** or **step_size_factor**.
+Thus the corresponding result is
+```
+{
+    "__hd_wrapped_data_object__": "DATAFRAME",
+    "__metadata__": {},
+    "__data__": {
+        "start": {
+            "0": "2020-01-01T01:25:00.000Z",
+            "1": "2020-01-01T08:31:00.000Z"
+        },
+        "end": {
+            "0": "2020-01-01T08:28:00.000Z",
+            "1": "2020-01-01T16:34:00.000Z"
+        },
+        "start_inclusive": {
+            "0": false,
+            "1": false
+        },
+        "end_inclusive": {
+            "0": false,
+            "1": false
+        },
+        "gap_size": {
+            "0": "P0DT7H3M0S",
+            "1": "P0DT8H3M0S"
+        },
+        "value_to_left": {
+            "0": 20,
+            "1": 30
+        },
+        "value_to_right": {
+            "0": 20,
+            "1": 30
+        },
+        "mean_left_right": {
+            "0": 20,
+            "1": 30
+        }
+    }
+}
+```
+
+If the timeseres is enriched with metadata as in the following example JSON input a gap before the
+first datapoint in the timeseries can be determined and the correct frequency is used
+```
+{
+    "timeseries": {
+        "__hd_wrapped_data_object__": "SERIES",
+        "__metadata__": {
+            "ref_interval_start_timestamp": "2020-01-01T00:16:00.000Z",
+            "ref_interval_end_timestamp": "2020-01-01T16:34:00.000Z",
+            "ref_interval_frequency": "1min"
+        },
+        "__data__": {
+            "2020-01-01T01:16:00.000Z": 10.0,
+            "2020-01-01T01:18:00.000Z": 10.0,
+            "2020-01-01T01:19:00.000Z": 10.0,
+            "2020-01-01T01:20:00.000Z": 10.0,
+            "2020-01-01T01:22:00.000Z": 20.0,
+            "2020-01-01T01:23:00.000Z": 20.0,
+            "2020-01-01T01:25:00.000Z": 20.0,
+            "2020-01-01T08:28:00.000Z": 20.0,
+            "2020-01-01T08:30:00.000Z": 30.0,
+            "2020-01-01T08:31:00.000Z": 30.0,
+            "2020-01-01T16:34:00.000Z": 30.0
+        }
+    }
+}
+```
+The same result is obtained without using metadata by the JSON input
+```
+{
+    "timeseries": {
+        "2020-01-01T01:16:00.000Z": 10.0,
+        "2020-01-01T01:18:00.000Z": 10.0,
+        "2020-01-01T01:19:00.000Z": 10.0,
+        "2020-01-01T01:20:00.000Z": 10.0,
+        "2020-01-01T01:22:00.000Z": 20.0,
+        "2020-01-01T01:23:00.000Z": 20.0,
+        "2020-01-01T01:25:00.000Z": 20.0,
+        "2020-01-01T08:28:00.000Z": 20.0,
+        "2020-01-01T08:30:00.000Z": 30.0,
+        "2020-01-01T08:31:00.000Z": 30.0,
+        "2020-01-01T16:34:00.000Z": 30.0
+    },
+    "start_date_str": "2020-01-01T00:16:00.000Z",
+    "end_date_str": "2020-01-01T16:34:00.000Z",
+    "auto_stepsize": false,
+    "step_size": "1min"
+}
+```
+The result of either of these inputs is then
+```
+{
+    "__hd_wrapped_data_object__": "DATAFRAME",
+    "__metadata__": {},
+    "__data__": {
+        "start": {
+            "0": "2020-01-01T00:16:00.000Z",
+            "1": "2020-01-01T01:16:00.000Z",
+            "2": "2020-01-01T01:20:00.000Z",
+            "3": "2020-01-01T01:23:00.000Z",
+            "4": "2020-01-01T01:25:00.000Z",
+            "5": "2020-01-01T08:28:00.000Z",
+            "6": "2020-01-01T08:31:00.000Z"
+        },
+        "end": {
+            "0": "2020-01-01T01:16:00.000Z",
+            "1": "2020-01-01T01:18:00.000Z",
+            "2": "2020-01-01T01:22:00.000Z",
+            "3": "2020-01-01T01:25:00.000Z",
+            "4": "2020-01-01T08:28:00.000Z",
+            "5": "2020-01-01T08:30:00.000Z",
+            "6": "2020-01-01T16:34:00.000Z"
+        },
+        "start_inclusive": {
+            "0": false,
+            "1": false,
+            "2": false,
+            "3": false,
+            "4": false,
+            "5": false,
+            "6": false
+        },
+        "end_inclusive": {
+            "0": false,
+            "1": false,
+            "2": false,
+            "3": false,
+            "4": false,
+            "5": false,
+            "6": false
+        },
+        "gap_size": {
+            "0": "P0DT1H0M0S",
+            "1": "P0DT0H2M0S",
+            "2": "P0DT0H2M0S",
+            "3": "P0DT0H2M0S",
+            "4": "P0DT7H3M0S",
+            "5": "P0DT0H2M0S",
+            "6": "P0DT8H3M0S"
+        },
+        "value_to_left": {
+            "0": null,
+            "1": 10,
+            "2": 10,
+            "3": 20,
+            "4": 20,
+            "5": 20,
+            "6": 30
+        },
+        "value_to_right": {
+            "0": 10,
+            "1": 10,
+            "2": 20,
+            "3": 20,
+            "4": 20,
+            "5": 30,
+            "6": 30
+        },
+        "mean_left_right": {
+            "0": null,
+            "1": 10,
+            "2": 15,
+            "3": 20,
+            "4": 20,
+            "5": 25,
+            "6": 30
+        }
+    }
+}```
 """
 
 from typing import Any
@@ -169,7 +366,7 @@ class GapDetectionParameters(BaseModel):
     step_size_factor: float
     fill_value: Any
 
-    @validator("start_date")
+    @validator("start_date", always=True)
     def get_start_date_from_start_date_str(
         cls, start_date: pd.Timestamp | None, values: dict  # noqa: ARG002
     ) -> pd.Timestamp | None:
@@ -178,7 +375,7 @@ class GapDetectionParameters(BaseModel):
 
         return timestamp_str_to_pd_timestamp(values["start_date_str"], "start_date_str")
 
-    @validator("end_date")
+    @validator("end_date", always=True)
     def get_end_date_from_end_date_str(
         cls, end_date: pd.Timestamp | None, values: dict  # noqa: ARG002
     ) -> pd.Timestamp | None:
@@ -201,7 +398,7 @@ class GapDetectionParameters(BaseModel):
             )
         return end_date
 
-    @validator("history_end_date")
+    @validator("history_end_date", always=True)
     def get_history_end_date_from_history_end_date_str(
         cls, history_end_date: pd.Timestamp | None, values: dict  # noqa: ARG002
     ) -> pd.Timestamp | None:
@@ -294,7 +491,7 @@ class GapDetectionParameters(BaseModel):
             )
         return step_size_str
 
-    @validator("step_size")
+    @validator("step_size", always=True)
     def get_step_size(
         cls, step_size: pd.Timedelta | None, values: dict  # noqa: ARG002
     ) -> pd.Timedelta | None:
@@ -348,7 +545,7 @@ def constrict_series_to_dates(
 def check_amount_datapoints(series: pd.Series, min_amount_datapoints: int) -> None:
     if len(series) < min_amount_datapoints:
         raise ComponentInputValidationException(
-            f"The timeseries must contain at least {min_amount_datapoints} datapoints.",
+            f"The timeseries\n{series.to_json(indent=2)}\ndoes not contain at least {min_amount_datapoints} datapoints.",
             error_code=422,
             invalid_component_inputs=["timeseries"],
         )
@@ -455,10 +652,10 @@ def main(
     timeseries: pd.Series,
     start_date_str: str | None = None,
     end_date_str: str | None = None,
-    auto_stepsize=True,
+    auto_stepsize: bool | None = True,
     history_end_date_str: str | None = None,
     percentile: float = 0.5,
-    interpolation_method="nearest",
+    interpolation_method: str | None = "nearest",
     min_amount_datapoints: int = 11,
     step_size_str: str | None = None,
     step_size_factor: float = 1.0,
@@ -540,27 +737,17 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "filters": {
                 "value": (
                     "{\n"
-                    '    "2020-01-01T01:15:00.000Z": 10.0,\n'
                     '    "2020-01-01T01:16:00.000Z": 10.0,\n'
-                    '    "2020-01-01T01:17:00.000Z": 10.0,\n'
                     '    "2020-01-01T01:18:00.000Z": 10.0,\n'
                     '    "2020-01-01T01:19:00.000Z": 10.0,\n'
                     '    "2020-01-01T01:20:00.000Z": 10.0,\n'
-                    '    "2020-01-01T01:21:00.000Z": 10.0,\n'
-                    '    "2020-01-02T16:20:00.000Z": 20.0,\n'
-                    '    "2020-01-02T16:21:00.000Z": 20.0,\n'
-                    '    "2020-01-02T16:22:00.000Z": 20.0,\n'
-                    '    "2020-01-02T16:23:00.000Z": 20.0,\n'
-                    '    "2020-01-02T16:24:00.000Z": 20.0,\n'
-                    '    "2020-01-02T16:25:00.000Z": 20.0,\n'
-                    '    "2020-01-02T16:26:00.000Z": 20.0,\n'
-                    '    "2020-01-03T08:20:00.000Z": 30.0,\n'
-                    '    "2020-01-03T08:21:04.000Z": 30.0,\n'
-                    '    "2020-01-03T08:22:00.000Z": 30.0,\n'
-                    '    "2020-01-03T08:23:04.000Z": 30.0,\n'
-                    '    "2020-01-03T08:24:00.000Z": 30.0,\n'
-                    '    "2020-01-03T08:25:04.000Z": 30.0,\n'
-                    '    "2020-01-03T08:26:06.000Z": 30.0\n'
+                    '    "2020-01-01T01:22:00.000Z": 20.0,\n'
+                    '    "2020-01-01T01:23:00.000Z": 20.0,\n'
+                    '    "2020-01-01T01:25:00.000Z": 20.0,\n'
+                    '    "2020-01-01T08:28:00.000Z": 20.0,\n'
+                    '    "2020-01-01T08:30:00.000Z": 30.0,\n'
+                    '    "2020-01-01T08:31:00.000Z": 30.0,\n'
+                    '    "2020-01-01T16:34:00.000Z": 30.0\n'
                     "}"
                 )
             },
