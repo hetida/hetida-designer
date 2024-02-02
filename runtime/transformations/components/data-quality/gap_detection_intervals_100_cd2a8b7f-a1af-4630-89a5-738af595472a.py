@@ -189,7 +189,7 @@ first datapoint in the timeseries can be determined and the correct frequency is
         "__metadata__": {
             "ref_interval_start_timestamp": "2020-01-01T00:16:00.000Z",
             "ref_interval_end_timestamp": "2020-01-01T16:34:00.000Z",
-            "ref_interval_frequency": "1min"
+            "ref_frequency": "1min"
         },
         "__data__": {
             "2020-01-01T01:16:00.000Z": 10.0,
@@ -677,11 +677,7 @@ def main(
         elif "to" in timeseries.attrs:
             end_date_str = timeseries.attrs["to"]
 
-    if (
-        step_size_str is None
-        and not auto_stepsize
-        and "ref_frequency" in timeseries.attrs
-    ):
+    if step_size_str is None and "ref_frequency" in timeseries.attrs:
         step_size_str = timeseries.attrs["ref_frequency"]
         freqstr2timedelta(step_size_str, 'timeseries.attrs["ref_frequency"]')
         auto_stepsize = False
