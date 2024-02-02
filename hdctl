@@ -771,7 +771,6 @@ _import_from_dir() {
         curl_args+=("--insecure")
     fi
 
-    echo "$_all_trafos_json"
     curl "${curl_args[@]}" -X PUT -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" -d @"$_temp_file" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${@}"
 
     rm "$_temp_file"

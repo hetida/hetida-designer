@@ -36,7 +36,6 @@ def format_code_with_black(code: str) -> str:
             fast=False,
             mode=black.Mode(
                 target_versions={black.TargetVersion.PY311},  # python3.11
-                line_length=100,
             ),
         )
     except black.NothingChanged:

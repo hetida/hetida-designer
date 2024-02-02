@@ -71,18 +71,20 @@ def import_importable(
     }
 
     success_per_trafo: dict[UUID | str, TrafoUpdateProcessSummary] = {
-        trafo.id: TrafoUpdateProcessSummary(
-            status=UpdateProcessStatus.NOT_TRIED,
-            msg="",
-            name=trafo.name,
-            version_tag=trafo.version_tag,
-        )
-        if trafo.id in trafos_to_process_dict
-        else TrafoUpdateProcessSummary(
-            status=UpdateProcessStatus.IGNORED,
-            msg="filtered out",
-            name=trafo.name,
-            version_tag=trafo.version_tag,
+        trafo.id: (
+            TrafoUpdateProcessSummary(
+                status=UpdateProcessStatus.NOT_TRIED,
+                msg="",
+                name=trafo.name,
+                version_tag=trafo.version_tag,
+            )
+            if trafo.id in trafos_to_process_dict
+            else TrafoUpdateProcessSummary(
+                status=UpdateProcessStatus.IGNORED,
+                msg="filtered out",
+                name=trafo.name,
+                version_tag=trafo.version_tag,
+            )
         )
         for trafo in trafo_revs
     }
