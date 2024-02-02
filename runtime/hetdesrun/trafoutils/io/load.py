@@ -159,7 +159,9 @@ def transformation_revision_from_python_code(code: str) -> Any:
                     # input info maybe a datatype string (backwards compatibility)
                     # or a dictionary containing the datatype as well as a potential default value
                     value=str(input_info["default_value"])
-                    if isinstance(input_info, dict) and "default_value" in input_info
+                    if isinstance(input_info, dict)
+                    and "default_value" in input_info
+                    and input_info["default_value"] is not None
                     else None,
                     type=InputType.OPTIONAL
                     if isinstance(input_info, dict) and "default_value" in input_info

@@ -70,7 +70,7 @@ def test_tr_from_code_for_component_with_optional_inputs():
     assert tr.version_tag == "1.1.0 Copy"
     assert str(tr.id) == "e8ab3aa4-103c-4515-b690-8fd07e294711"
     assert str(tr.revision_group_id) == "6c73f83b-19f0-4caf-b97b-a25e21b93ed5"
-    assert len(tr.io_interface.inputs) == 5
+    assert len(tr.io_interface.inputs) == 7
     assert tr.io_interface.inputs[0].name == "num_pred_series_future_days"
     assert tr.io_interface.inputs[0].data_type == DataType.Integer
     assert tr.io_interface.inputs[0].type == InputType.OPTIONAL
@@ -89,6 +89,14 @@ def test_tr_from_code_for_component_with_optional_inputs():
     assert tr.io_interface.inputs[4].data_type == DataType.Boolean
     assert tr.io_interface.inputs[4].type == InputType.OPTIONAL
     assert tr.io_interface.inputs[4].value == "True"
+    assert tr.io_interface.inputs[5].name == "nullable_string"
+    assert tr.io_interface.inputs[5].data_type == DataType.String
+    assert tr.io_interface.inputs[5].type == InputType.OPTIONAL
+    assert tr.io_interface.inputs[5].value is None
+    assert tr.io_interface.inputs[6].name == "nullable_any"
+    assert tr.io_interface.inputs[6].data_type == DataType.Any
+    assert tr.io_interface.inputs[6].type == InputType.OPTIONAL
+    assert tr.io_interface.inputs[6].value is None
     assert len(tr.io_interface.outputs) == 4
     assert tr.io_interface.outputs[0].name == "intercept"
     assert tr.io_interface.outputs[0].data_type == DataType.Float

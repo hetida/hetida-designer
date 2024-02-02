@@ -70,6 +70,8 @@ COMPONENT_INFO = {
         "timeseries": {"data_type": "SERIES"},
         "limit": {"data_type": "FLOAT"},
         "some_flag": {"data_type": "BOOLEAN", "default_value": True},
+        "nullable_string": {"data_type": "STRING", "default_value": None},
+        "nullable_any": {"data_type": "ANY", "default_value": None},
     },
     "outputs": {
         "intercept": {"data_type": "FLOAT"},
@@ -93,7 +95,9 @@ def main(
     limit,
     num_pred_series_future_days=3,
     pred_series_frequency="5min",
-    some_flag=True
+    some_flag=True,
+    nullable_string=None,
+    nullable_any=None,
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
