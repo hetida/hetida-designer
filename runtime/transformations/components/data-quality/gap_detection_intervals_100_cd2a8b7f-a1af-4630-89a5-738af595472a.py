@@ -14,34 +14,34 @@ information about the gaps.
 
 - **start_date_str** (String, default value: null):
   Desired start date of the processing range. Expexcts ISO 8601 format.
-  Alternatively, the `timeseries` can have an attribute `ref_interval_start_timestamp` (or `from`)
+  Alternatively, the **timeseries** can have an attribute "ref_interval_start_timestamp" (or "from")
   that will be used instead.
-  If neither is defined, the processing range begins with the first data point in `timeseries`.
+  If neither is defined, the processing range begins with the first data point in **timeseries**.
   The start date must not be later than the end date.
 
 - **end_date_str** (String, default value: null):
   Desired end date of the processing range. Expexcts ISO 8601 format.
-  Alternatively, the `timeseries` can have an attribute `ref_interval_end_timestamp` (or `to`) that
-  will be used instead.
-  If neither is defined, the processing range ends with the last data point in `timeseries`.
+  Alternatively, the **timeseries** can have an attribute "ref_interval_end_timestamp" (or "to")
+  that will be used instead.
+  If neither is defined, the processing range ends with the last data point in **timeseries**.
   The start date must not be later than the end date.
 
 - **auto_stepsize** (Boolean, default value: true):
-  If true, the function will automatically determine the step size based on the `timeseries` index
-  and `step_size_str` must not be set.
-  If false, a `step_size_str` must be set.
-  If `ref_frequency` is contained in the attributes of `timeseries` this value will be used for the
-  `step_size_str` and `auto_stepsize` will be set to false.
+  If true, the function will automatically determine the step size based on the **timeseries** index
+  and **step_size_str** must not be set.
+  If false, a *step_size_str** must be set.
+  If "ref_frequency" is contained in the attributes of **timeseries** this value will be used for
+  the **step_size_str** and **auto_stepsize** will be set to false.
 
 - **history_end_date_str** (String, default value: null):
-  Only relevant when `auto_stepsize` is true.
+  Only relevant when **auto_stepsize** is true.
   Expects a date string  between start_date and end_date in ISO 8601 format.
   The desired end date for the training data used to determine the step unit.
   If not specified, the entire
   processing range is used as training data.
 
 - **percentile** (Float, default value: 0.5):
-  Only relevant when `auto_stepsize` is true.
+  Only relevant when **auto_stepsize** is true.
   Expects a positive value smaller than or equal to 1. The percentile value to use for automatic
   determination of the expected gapsize between two consecutive data points. The value should be
   selected according to the expected ratio of gaps to regular steps. I.e. if it is to be expected
@@ -49,17 +49,17 @@ information about the gaps.
   be expected, the value can be adjusted upwards accordingly.
 
 - **interpolation_method** (String, default value: nearest):
-  Only relevant when `auto_stepsize` is true.
-  Is used to determine the percentile value via the Pandas `quantile` method.
-  Thus, must be one of `linear`, `lower`, `higher`, `midpoint`, `nearest`.
+  Only relevant when **auto_stepsize** is true.
+  Is used to determine the percentile value via the Pandas method `quantile`.
+  Thus, must be one of "linear", "lower", "higher", "midpoint", "nearest".
 
 - **min_amount_datapoints** (Int, default value: 11):
-  Only relevant when `auto_stepsize` is True.
+  Only relevant when **auto_stepsize** is True.
   Expects a positive value. Minimum amount of datapoints required. Effects the expectable precision
-  of the `percentile` value.
+  of the automatically determined step size.
 
 - **step_size_str** (String, default value: null):
-  Must not be set if `auto_stepsize` is true, but must be set if `auto_stepsize` is false.
+  Must not be set if **auto_stepsize** is true, but must be set if **auto_stepsize** is false.
   The expected time step between consecutive timestamps in the time series. Must be a frequency
   string, e.g. "D" or "60s".
 
@@ -69,6 +69,12 @@ information about the gaps.
   specified or determined step size are recognized as gaps, while a value of 2.0 means that steps
   are only recognized as gaps if they are more than twice as large as the specified or determined
   step size.
+
+- **fill_value** (Any, default value: None):
+  Is used as value if the start date (end date, respectively) is not contained in the **timeseries**
+  and must be added.
+  In this case, this value appears in the column "value_to_left" ("value_to_right", respectively)
+  in the DataFrame output **gap_info** if there is a gap at the start or end of the **timeseries**.
 
 ## Outputs
 
@@ -311,7 +317,7 @@ def check_add_boundary_dates(
     timeseries: pd.Series,
     start_date: pd.Timestamp,
     end_date: pd.Timestamp,
-    fill_value: Any | None = None,
+    fill_value: Any | None,
 ) -> pd.Series:
     if start_date not in timeseries.index:
         timeseries[start_date] = fill_value
@@ -496,7 +502,7 @@ def main(
         fill_value=fill_value,
     )
     series_with_bounds = check_add_boundary_dates(
-        timeseries, input_params.start_date, input_params.end_date
+        timeseries, input_params.start_date, input_params.end_date, fill_value
     )
     constricted_series = constrict_series_to_dates(
         series_with_bounds, input_params.start_date, input_params.end_date
