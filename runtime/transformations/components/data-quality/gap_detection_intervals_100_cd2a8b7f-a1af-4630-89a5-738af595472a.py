@@ -101,9 +101,9 @@ If **auto_stepsize` is set to false, the step size is defined by the **step_size
 If a time interval is greater than the product of the **step_size_factor** and the step size, it is
 considered a gap.
 
-For each gap, the output DataFrame contains the index of the preceding (following, respectively)
-data point, the information as to whether the indices belong to the gap and, if present,
-the corresponding values.
+For each gap, the output DataFrame **gap_info** contains the index of the preceding (following,
+respectively) data point, the information as to whether the indices belong to the gap and, if
+present, the corresponding values.
 If both the value to the left and the value to the right of the gap are of the float or int data
 type, the arithmetic mean of the two values is also provided.
 """
@@ -453,7 +453,7 @@ def main(
     history_end_date_str: str | None = None,
     percentile: float = 0.5,
     interpolation_method="nearest",
-    min_amount_datapoints: int = 21,
+    min_amount_datapoints: int = 11,
     step_size_str: str | None = None,
     step_size_factor: float = 1.0,
     fill_value: Any | None = None,
