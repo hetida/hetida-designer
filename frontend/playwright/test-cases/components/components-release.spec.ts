@@ -165,36 +165,39 @@ ${componentInputData}
 });
 
 test.afterEach(async ({ page, hetidaDesigner, browserName }) => {
-  // Clear
-  const componentCategory = 'Test';
-  const componentName = `Test release a component ${browserName}`;
-  const componentTag = '0.1.0';
+  if (browserName !== "firefox") {
+    // Clear
+    const componentCategory = 'Test';
+    const componentName = `Test release a component ${browserName}`;
+    const componentTag = '0.1.0';
 
-  await hetidaDesigner.clickComponentsInNavigation();
-  await hetidaDesigner.clickCategoryInNavigation(componentCategory);
-  await hetidaDesigner.rightClickItemInNavigation(
-    componentCategory,
-    componentName
-  );
-  await page.locator('.mat-menu-panel').hover();
+    await hetidaDesigner.clickComponentsInNavigation();
+    await hetidaDesigner.clickCategoryInNavigation(componentCategory);
+    await hetidaDesigner.rightClickItemInNavigation(
+      componentCategory,
+      componentName
+    );
+    await page.locator('.mat-menu-panel').hover();
 
-  if (
-    await page
-      .locator(`.mat-menu-content >> button:has-text("Deprecate")`)
-      .isVisible()
-  ) {
-    await hetidaDesigner.clickOnContextMenu('Deprecate');
-    await page.waitForSelector(
-      `mat-dialog-container:has-text("Deprecate component ${componentName} (${componentTag})")`
-    );
-    await hetidaDesigner.clickByTestId('deprecate component-confirm-dialog');
-  } else {
-    await hetidaDesigner.clickOnContextMenu('Delete');
-    await page.waitForSelector(
-      `mat-dialog-container:has-text("Delete component ${componentName} (${componentTag})")`
-    );
-    await hetidaDesigner.clickByTestId('delete component-confirm-dialog');
+    if (
+      await page
+        .locator(`.mat-menu-content >> button:has-text("Deprecate")`)
+        .isVisible()
+    ) {
+      await hetidaDesigner.clickOnContextMenu('Deprecate');
+      await page.waitForSelector(
+        `mat-dialog-container:has-text("Deprecate component ${componentName} (${componentTag})")`
+      );
+      await hetidaDesigner.clickByTestId('deprecate component-confirm-dialog');
+    } else {
+      await hetidaDesigner.clickOnContextMenu('Delete');
+      await page.waitForSelector(
+        `mat-dialog-container:has-text("Delete component ${componentName} (${componentTag})")`
+      );
+      await hetidaDesigner.clickByTestId('delete component-confirm-dialog');
+    }
+
   }
-
   await hetidaDesigner.clearTest();
+
 });
