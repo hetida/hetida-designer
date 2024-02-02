@@ -3,39 +3,45 @@
 # Gap Detection Intervals
 
 ## Description
+
 Detects gaps in the given series that are larger than the step size and returns a DataFrame with
 information about the gaps.
 
 ## Inputs
+
 - **timeseries** (Series):
   Expects index of data type DateTimeIndex.
 
 - **start_date_str** (String, default value: null):
-  Desired start date of the processing range. Expexcts ISO 8601 format. Alternatively, the
-  `timeseries` can have an attribute "start_date" that will be used instead. If neither is
-  defined, the processing range begins with the first data point in `timeseries`. The start date
-  must not be later than the end date.
+  Desired start date of the processing range. Expexcts ISO 8601 format.
+  Alternatively, the `timeseries` can have an attribute `ref_interval_start_timestamp` (or `from`)
+  that will be used instead.
+  If neither is defined, the processing range begins with the first data point in `timeseries`.
+  The start date must not be later than the end date.
 
 - **end_date_str** (String, default value: null):
-  Desired end date of the processing range. Expexcts ISO 8601 format. Alternatively, the
-  `timeseries` can have an attribute "end_date" that will be used instead. If neither is defined,
-  the processing range ends with the last data point in `timeseries`. The start date must not be
-  later than the end date.
+  Desired end date of the processing range. Expexcts ISO 8601 format.
+  Alternatively, the `timeseries` can have an attribute `ref_interval_end_timestamp` (or `to`) that
+  will be used instead.
+  If neither is defined, the processing range ends with the last data point in `timeseries`.
+  The start date must not be later than the end date.
 
 - **auto_stepsize** (Boolean, default value: true):
-  If True, the function will automatically determine the step size based on the `timeseries` index
-  and no `step_size_str` may be set.
-  If False, a `step_size_str` must be set.
+  If true, the function will automatically determine the step size based on the `timeseries` index
+  and `step_size_str` must not be set.
+  If false, a `step_size_str` must be set.
+  If `ref_frequency` is contained in the attributes of `timeseries` this value will be used for the
+  `step_size_str` and `auto_stepsize` will be set to false.
 
 - **history_end_date_str** (String, default value: null):
-  Only relevant when `auto_stepsize` is True.
-  Expects a date between start_date and end_date in ISO 8601 format.
+  Only relevant when `auto_stepsize` is true.
+  Expects a date string  between start_date and end_date in ISO 8601 format.
   The desired end date for the training data used to determine the step unit.
   If not specified, the entire
   processing range is used as training data.
 
 - **percentile** (Float, default value: 0.5):
-  Only relevant when `auto_stepsize` is True.
+  Only relevant when `auto_stepsize` is true.
   Expects a positive value smaller than or equal to 1. The percentile value to use for automatic
   determination of the expected gapsize between two consecutive data points. The value should be
   selected according to the expected ratio of gaps to regular steps. I.e. if it is to be expected
@@ -43,7 +49,7 @@ information about the gaps.
   be expected, the value can be adjusted upwards accordingly.
 
 - **interpolation_method** (String, default value: nearest):
-  Only relevant when `auto_stepsize` is True.
+  Only relevant when `auto_stepsize` is true.
   Is used to determine the percentile value via the Pandas `quantile` method.
   Thus, must be one of `linear`, `lower`, `higher`, `midpoint`, `nearest`.
 
@@ -53,7 +59,7 @@ information about the gaps.
   of the `percentile` value.
 
 - **step_size_str** (String, default value: null):
-  Must not be set if `auto_stepsize` is True, but must be set if `auto_stepsize` is False.
+  Must not be set if `auto_stepsize` is true, but must be set if `auto_stepsize` is false.
   The expected time step between consecutive timestamps in the time series. Must be a frequency
   string, e.g. "D" or "60s".
 
@@ -64,9 +70,9 @@ information about the gaps.
   are only recognized as gaps if they are more than twice as large as the specified or determined
   step size.
 
-
 ## Outputs
-- **gap_info** (DataFrame) :
+
+- **gap_info** (DataFrame):
   A DataFrame containing the beginning and end timestamps of gaps larger than the determined or
   given step size.
   Columns are:
@@ -82,18 +88,24 @@ information about the gaps.
 
 ## Details
 
-If the `start_date_str` (`end_date_str`) is defined, the component checks that it is present in the
-`series` and removes any data points with an earlier (later) index from the processing range.
-To detect gaps the time steps between consecutive data points are calculated. If `auto_stepsize` is
-set to `True` the component determines the `step_size` using the `percentile`th quantile of time
-steps in the training range. The training range is determined by the `start_date_str` and the
-`history_end_date_str`. If latter is not defined, the processing range is used as training range. If
-`auto_step_size` is set to `False` the `step_size` is defined by the `step_size_str`. When a time
-step is larger than the product of the `step_size_factor` and the `step_size`, it is considered to
-be a gap. For each gap the index of the previous (subsequent) data point is output for each gap. In
-addition, the information as to whether the indices belong to the gap and, if available, the
-corresponding values. If both the value to the left and right of the gap are defined and are of data
-type float or int, the arithmetic mean of the two values is also output.
+If **start_date_str** (or **end_date_str**) is not zero, check whether it is contained in the
+**time series** and add it if necessary, and remove all data points with an earlier (or later)
+index in order to reduce the **time series** to the processing range.
+
+To detect gaps, the time intervals between consecutive data points are determined.
+If **auto_stepsize** is set to true, determine the step size using the **percentile**-th quantile of
+the time intervals in the training range.
+The training range is determined by the **start_date_str** and the **history_end_date_str**.
+If the latter is not defined, the full processing range is used as the training range.
+If **auto_stepsize` is set to false, the step size is defined by the **step_size_str**.
+If a time interval is greater than the product of the **step_size_factor** and the step size, it is
+considered a gap.
+
+For each gap, the output DataFrame contains the index of the preceding (following, respectively)
+data point, the information as to whether the indices belong to the gap and, if present,
+the corresponding values.
+If both the value to the left and the value to the right of the gap are of the float or int data
+type, the arithmetic mean of the two values is also provided.
 """
 
 from typing import Any
@@ -103,6 +115,16 @@ import pandas as pd
 from pydantic import BaseModel, validator
 
 from hetdesrun.runtime.exceptions import ComponentInputValidationException
+
+
+def timestamp_str_to_pd_timestamp(timestamp: str, input_name: str) -> pd.Timestamp:
+    try:
+        date = pd.to_datetime(timestamp, utc=True)
+    except ValueError as error:
+        raise ComponentInputValidationException(
+            str(error), error_code=422, invalid_component_inputs=[input_name]
+        ) from error
+    return date
 
 
 def freqstr2dateoffset(freqstr: str) -> pd.DateOffset:
@@ -126,19 +148,41 @@ def freqstr2timedelta(freqstr: str, input_name: str) -> pd.Timedelta:
 
 
 class GapDetectionParameters(BaseModel):
-    start_date: pd.Timestamp | None
-    end_date: pd.Timestamp | None
+    start_date_str: str | None
+    start_date: pd.Timestamp | None = None
+    end_date_str: str | None
+    end_date: pd.Timestamp | None = None
     auto_stepsize: bool
-    history_end_date: pd.Timestamp | None
+    history_end_date_str: str | None
+    history_end_date: pd.Timestamp | None = None
     percentile: float
     interpolation_method: str
     min_amount_datapoints: int
     step_size_str: str | None
+    step_size: pd.Timedelta | None = None
     step_size_factor: float
     fill_value: Any
 
+    @validator("start_date")
+    def get_start_date_from_start_date_str(
+        cls, start_date: pd.Timestamp | None, values: dict  # noqa: ARG002
+    ) -> pd.Timestamp | None:
+        if values["start_date_str"] is None:
+            return None
+
+        return timestamp_str_to_pd_timestamp(values["start_date_str"], "start_date_str")
+
     @validator("end_date")
-    def verify_dates(
+    def get_end_date_from_end_date_str(
+        cls, end_date: pd.Timestamp | None, values: dict  # noqa: ARG002
+    ) -> pd.Timestamp | None:
+        if values["end_date_str"] is None:
+            return None
+
+        return timestamp_str_to_pd_timestamp(values["end_date_str"], "end_date_str")
+
+    @validator("end_date")
+    def verify_end_date_later_than_start_date(
         cls, end_date: pd.Timestamp | None, values: dict
     ) -> pd.Timestamp | None:
         start_date = values["start_date"]
@@ -152,7 +196,18 @@ class GapDetectionParameters(BaseModel):
         return end_date
 
     @validator("history_end_date")
-    def verify_history_end_date(
+    def get_history_end_date_from_history_end_date_str(
+        cls, history_end_date: pd.Timestamp | None, values: dict  # noqa: ARG002
+    ) -> pd.Timestamp | None:
+        if values["history_end_date_str"] is None:
+            return None
+
+        return timestamp_str_to_pd_timestamp(
+            values["history_end_date_str"], "history_end_date_str"
+        )
+
+    @validator("history_end_date")
+    def verify_history_end_date_between_start_date_and_end_date(
         cls, history_end_date: pd.Timestamp | None, values: dict
     ) -> pd.Timestamp | None:
         start_date = values["start_date"]
@@ -224,7 +279,6 @@ class GapDetectionParameters(BaseModel):
                     error_code=422,
                     invalid_component_inputs=["step_size_str"],
                 )
-            freqstr2timedelta(step_size_str, "step_size_str")
         elif step_size_str is not None:
             raise ComponentInputValidationException(
                 "The step_size must not be set, "
@@ -233,6 +287,14 @@ class GapDetectionParameters(BaseModel):
                 invalid_component_inputs=["step_size_str"],
             )
         return step_size_str
+
+    @validator("step_size")
+    def get_step_size(
+        cls, step_size: pd.Timedelta | None, values: dict  # noqa: ARG002
+    ) -> pd.Timedelta | None:
+        if values["step_size_str"] is None:
+            return None
+        return freqstr2timedelta(values["step_size_str"], "step_size_str")
 
     @validator("step_size_factor")
     def verify_step_size_factor(cls, factor: float) -> float:
@@ -243,16 +305,6 @@ class GapDetectionParameters(BaseModel):
                 invalid_component_inputs=["step_size_factor"],
             )
         return factor
-
-
-def timestamp_str_to_pd_timestamp(timestamp: str, input_name: str) -> pd.Timestamp:
-    try:
-        date = pd.to_datetime(timestamp, utc=True)
-    except ValueError as error:
-        raise ComponentInputValidationException(
-            str(error), error_code=422, invalid_component_inputs=[input_name]
-        ) from error
-    return date
 
 
 def check_add_boundary_dates(
@@ -394,18 +446,18 @@ COMPONENT_INFO = {
 
 def main(
     *,
-    timeseries,
-    start_date_str=None,
-    end_date_str=None,
+    timeseries: pd.Series,
+    start_date_str: str | None = None,
+    end_date_str: str | None = None,
     auto_stepsize=True,
-    history_end_date_str=None,
-    percentile=0.5,
+    history_end_date_str: str | None = None,
+    percentile: float = 0.5,
     interpolation_method="nearest",
-    min_amount_datapoints=21,
-    step_size_str=None,
-    step_size_factor=1.0,
-    fill_value=None,
-):
+    min_amount_datapoints: int = 21,
+    step_size_str: str | None = None,
+    step_size_factor: float = 1.0,
+    fill_value: Any | None = None,
+) -> dict:
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
@@ -422,27 +474,26 @@ def main(
         elif "to" in timeseries.attrs:
             end_date_str = timeseries.attrs["to"]
 
-    if step_size_str is None and not auto_stepsize and "ref_frequency" in timeseries.attrs:
+    if (
+        step_size_str is None
+        and not auto_stepsize
+        and "ref_frequency" in timeseries.attrs
+    ):
         step_size_str = timeseries.attrs["ref_frequency"]
+        freqstr2timedelta(step_size_str, 'timeseries.attrs["ref_frequency"]')
         auto_stepsize = False
 
-    start_date = timestamp_str_to_pd_timestamp(start_date_str, "start_date_str")
-    end_date = timestamp_str_to_pd_timestamp(end_date_str, "end_date_str")
-    history_end_date = timestamp_str_to_pd_timestamp(
-        history_end_date_str, "history_end_date_str"
-    )
-
     input_params = GapDetectionParameters(
-        start_date=start_date,
-        end_date=end_date,
+        start_date_str=start_date_str,
+        end_date_str=end_date_str,
         auto_stepsize=auto_stepsize,
-        history_end_date_str=history_end_date,
-        step_size_str=step_size_str,
+        history_end_date_str=history_end_date_str,
         percentile=percentile,
         min_amount_datapoints=min_amount_datapoints,
         interpolation_method=interpolation_method,
-        fill_value=fill_value,
+        step_size_str=step_size_str,
         step_size_factor=step_size_factor,
+        fill_value=fill_value,
     )
     series_with_bounds = check_add_boundary_dates(
         timeseries, input_params.start_date, input_params.end_date
@@ -462,13 +513,11 @@ def main(
             )
         else:
             training_series = constricted_series
-        step_size = determine_timestep_gapsize_percentile(
+        input_params.step_size = determine_timestep_gapsize_percentile(
             training_series, percentile, interpolation_method
         )
-    else:
-        step_size = freqstr2timedelta(step_size_str)
 
-    df_with_gaps = determine_gap_length(constricted_series, step_size)
+    df_with_gaps = determine_gap_length(constricted_series, input_params.step_size)
 
     return {
         "gap_info": return_gap_boundary_timestamps(
@@ -509,11 +558,6 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
                     "}"
                 )
             },
-        },
-        {
-            "workflow_input_name": "auto_stepsize",
-            "adapter_id": "direct_provisioning",
-            "filters": {"value": "True"},
         },
     ],
 }
