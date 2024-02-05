@@ -22,7 +22,7 @@ describe('AuthInterceptor', () => {
 
   const mockSecurityService = jasmine.createSpyObj<OidcSecurityService>(
     'OidcSecurityService',
-    { getAccessToken: 'test-token' }
+    { getAccessToken: of('test-token') }
   );
 
   beforeEach(() => {
