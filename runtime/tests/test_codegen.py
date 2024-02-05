@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 
 import pytest
 
@@ -391,21 +392,13 @@ def test_add_test_wiring_dictionary():
     component_tr_path = "tests/data/components/reduced_code.json"
     component_tr = TransformationRevision(**load_json(component_tr_path))
     component_code_path = "tests/data/components/reduced_code.py"
-    component_code_without_test_wiring_dictionary = load_python_file(
-        component_code_path
-    )
+    component_code_without_test_wiring_dictionary = load_python_file(component_code_path)
 
-    assert (
-        "TEST_WIRING_FROM_PY_FILE_IMPORT"
-        not in component_code_without_test_wiring_dictionary
-    )
+    assert "TEST_WIRING_FROM_PY_FILE_IMPORT" not in component_code_without_test_wiring_dictionary
     component_code_with_new_test_wiring_dictionary = add_test_wiring_dictionary(
         component_code_without_test_wiring_dictionary, component_tr
     )
-    assert (
-        "TEST_WIRING_FROM_PY_FILE_IMPORT"
-        in component_code_with_new_test_wiring_dictionary
-    )
+    assert "TEST_WIRING_FROM_PY_FILE_IMPORT" in component_code_with_new_test_wiring_dictionary
 
     assert "24" not in component_code_without_test_wiring_dictionary
     component_tr.test_wiring.input_wirings[1].filters["value"] = "24"
@@ -417,9 +410,7 @@ def test_add_test_wiring_dictionary():
 
 def test_expand_code():
     reduced_component_tr_path = "tests/data/components/reduced_code.json"
-    reduced_component_tr = TransformationRevision(
-        **load_json(reduced_component_tr_path)
-    )
+    reduced_component_tr = TransformationRevision(**load_json(reduced_component_tr_path))
 
     expanded_component_code_path = "tests/data/components/expanded_code.py"
     expanded_component_code = load_python_file(expanded_component_code_path)
@@ -427,3 +418,22 @@ def test_expand_code():
     expanded_reduced_code = expand_code(reduced_component_tr)
     assert expanded_reduced_code != reduced_component_tr.content
     assert expanded_reduced_code == expanded_component_code
+
+
+def test_hdctl_contains_correct_hdutils_py_file():
+    """hdctls version of hdutils should always be identica
+
+    This checks whether the version of hdutils.py included inside hdctl
+    agrees with the one in this repository.
+
+    hdctl includes this file to be easily distributable as a single bash script
+    file. It needs it to create hdutils.py file for example when syncing to make
+    components as py files runnable directly.
+    """
+    with open("hdutils.py", "r") as f:  # noqa: UP015
+        hdutils_py_content = f.read()
+    hdctl_output = subprocess.check_output(
+        ["bash", "../hdctl", "_output_hdutils_py_content"]  # noqa: S607,S603
+    ).decode("utf-8")
+
+    assert hdctl_output.strip() == hdutils_py_content.strip()
