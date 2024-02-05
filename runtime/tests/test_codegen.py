@@ -55,7 +55,7 @@ COMPONENT_INFO = {
     "state": "DRAFT",
 }
 
-from hdutils import parse_default_value
+from hdutils import parse_default_value  # noqa: E402
 
 
 def main():
@@ -249,12 +249,12 @@ def test_function_header_optional_inputs():
         '    text="text",\n'
         "    no_text=None,\n"
         '    empty_text="",\n'
-        "    no_any=None,\n"
-        "    null_any=None,\n"
-        '    empty_string_any="",\n'
-        '    some_string_any="any",\n'
-        "    some_number_any=23,\n"
-        '    some_json_any={"test": True, "content": None, "sub_structure": {"relevant": False}},\n'
+        '    no_any=parse_default_value(COMPONENT_INFO, "no_any"),\n'
+        '    null_any=parse_default_value(COMPONENT_INFO, "null_any"),\n'
+        '    empty_string_any=parse_default_value(COMPONENT_INFO, "empty_string_any"),\n'
+        '    some_string_any=parse_default_value(COMPONENT_INFO, "some_string_any"),\n'
+        '    some_number_any=parse_default_value(COMPONENT_INFO, "some_number_any"),\n'
+        '    some_json_any=parse_default_value(COMPONENT_INFO, "some_json_any"),\n'
         '    series=parse_default_value(COMPONENT_INFO, "series"),\n'
         "):"
     ) in func_header

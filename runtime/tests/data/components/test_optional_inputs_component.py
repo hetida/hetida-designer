@@ -72,7 +72,7 @@ COMPONENT_INFO = {
     "state": "DRAFT",
 }
 
-from hdutils import parse_default_value
+from hdutils import parse_default_value  # noqa: E402
 
 
 def main(
@@ -83,11 +83,11 @@ def main(
     text="text",
     null_text="null",
     empty_text="",
-    null_any=None,
-    empty_string_any="",
-    some_string_any="text",
-    some_number_any=23,
-    some_json_any={"test": True, "content": None, "sub_structure": {"relevant": False}},
+    null_any=parse_default_value(COMPONENT_INFO, "null_any"),
+    empty_string_any=parse_default_value(COMPONENT_INFO, "empty_string_any"),
+    some_string_any=parse_default_value(COMPONENT_INFO, "some_string_any"),
+    some_number_any=parse_default_value(COMPONENT_INFO, "some_number_any"),
+    some_json_any=parse_default_value(COMPONENT_INFO, "some_json_any"),
     series=parse_default_value(COMPONENT_INFO, "series"),
     multitsframe=parse_default_value(COMPONENT_INFO, "multitsframe"),
 ):

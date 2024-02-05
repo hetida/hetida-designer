@@ -48,7 +48,7 @@ COMPONENT_INFO = {{
     "state": {state},{timestamp}
 }}
 
-from hdutils import parse_default_value
+from hdutils import parse_default_value  # noqa: E402
 
 {main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
@@ -97,8 +97,15 @@ def function_signature_default_value_string(inp: TransformationInput) -> str:
     if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
         return repr(None)
 
-    if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
-        if not isinstance(inp.value, str | dict[Any, Any] | list[Any]):
+    if inp.data_type in (
+        DataType.Series,
+        DataType.DataFrame,
+        DataType.MultiTSFrame,
+        DataType.Any,
+    ):
+        if not inp.data_type is DataType.Any and not isinstance(
+            inp.value, str | dict[Any, Any] | list[Any]
+        ):
             msg = (
                 f"Default value '{inp.value}' of input '{inp.name}' "
                 f"has wrong type for a {inp.data_type}."
