@@ -38,7 +38,6 @@ def test_function_header_no_params():
         test_wiring=[],
     )
     func_header = generate_function_header(component)
-
     assert (
         func_header
         == """\
@@ -55,6 +54,8 @@ COMPONENT_INFO = {
     "revision_group_id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
     "state": "DRAFT",
 }
+
+from hdutils import parse_default_value
 
 
 def main():
@@ -254,13 +255,7 @@ def test_function_header_optional_inputs():
         '    some_string_any="any",\n'
         "    some_number_any=23,\n"
         '    some_json_any={"test": True, "content": None, "sub_structure": {"relevant": False}},\n'
-        "    series=pd.read_json(\n"
-        "        io.StringIO(\n"
-        '            \'{"2020-01-01T01:15:27.000Z": 42.2, "2020-01-03T08:20:03.000Z": 18.7, '
-        '"2020-01-03T08:20:04.000Z": 25.9}\'\n'
-        "        ),\n"
-        '        typ="series",\n'
-        "    ),\n"
+        '    series=parse_default_value(COMPONENT_INFO, "series"),\n'
         "):"
     ) in func_header
 

@@ -72,6 +72,8 @@ COMPONENT_INFO = {
     "state": "DRAFT",
 }
 
+from hdutils import parse_default_value
+
 
 def main(
     *,
@@ -86,17 +88,8 @@ def main(
     some_string_any="text",
     some_number_any=23,
     some_json_any={"test": True, "content": None, "sub_structure": {"relevant": False}},
-    series=pd.read_json(
-        io.StringIO(
-            '{"2020-01-01T01:15:27.000Z": 42.2, "2020-01-03T08:20:03.000Z": 18.7, "2020-01-03T08:20:04.000Z": 25.9}'
-        ),
-        typ="series",
-    ),
-    multitsframe=pd.read_json(
-        io.StringIO(
-            '{"metric": ["a", "b"], "timestamp": ["2023-01-01T00:00:00.000Z", "2023-01-01T00:00:00.000Z"], "value": [2.3, "t"]}'
-        )
-    ),
+    series=parse_default_value(COMPONENT_INFO, "series"),
+    multitsframe=parse_default_value(COMPONENT_INFO, "multitsframe"),
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
