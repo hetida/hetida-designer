@@ -1,6 +1,6 @@
-"""Module Docstring of Exponential Smoothing Forecast
+"""Module Docstring of Exponential Smoothing Forecast Plot
 
-# Exponential Smoothing Forecast
+# Exponential Smoothing Forecast Plot
 
 ## Description
 
@@ -8,13 +8,19 @@ The component is designed to generate forecasts from a trained Exponential Smoot
 
 ## Inputs
 
-- **df** (Pandas DataFrame): The DataFrame containing the testing data used to align the in-sample forecast.
+- **series** (Pandas Series): The Series containing the time series data.
 - **steps** (Integer): The number of steps to forecast ahead.
+- **test_size** (Float, default value: 0.3): The proportion of the dataset to include in the test split. 
+- **shuffle** (Boolean, default value: False): Whether or not to shuffle the data before splitting. In particular, for time series data you should not shuffle the data.
+- **seasonal_periods** (Integer, default value: None): The number of observations that constitute a full seasonal cycle.
+- **use_boxcox** (Boolean, default value: True): Whether to apply Box-Cox transformation.
+- **initialization_method** (String, default value: "estimated"): Method for initializing the model ('estimated', 'heuristic', 'legacy-heuristic', None).
+- **iterations** (Integer, default value: 100): The number of iterations for the random search in the hyperparameter tuning.
+- **conf_interval** (Boolean, default value: False): If True, plots the confidence intervals for the out-of-sample forecast.
 
 ## Outputs
 
-- **in_sample_forecast** (Pandas Series): The forecasted values within the range of the historical data (in-sample).
-- **out_of_sample_forecast** (Pandas Series): The forecasted values beyond the range of the historical data (out-of-sample).
+- **fig** (Plotly Figure): Time series plot including in-sample and out-of-sample predictions, with optional confidence intervals.
 
 ## Details
 
@@ -25,48 +31,37 @@ This function is essential for users who need to project future values in time s
 Example input:
 ```
 {
-    "df": {
-        "value": {
-            "2023-09-18T00:00:00.000Z": 291,
-            "2023-09-19T00:00:00.000Z": 282,
-            "2023-09-20T00:00:00.000Z": 316,
-            "2023-09-21T00:00:00.000Z": 305,
-            "2023-09-22T00:00:00.000Z": 333,
-            "2023-09-23T00:00:00.000Z": 398,
-            "2023-09-24T00:00:00.000Z": 414
-        }
+    "series": {
+        "2023-09-04T00:00:00.000Z": 201,
+        "2023-09-05T00:00:00.000Z": 194,
+        "2023-09-06T00:00:00.000Z": 281,
+        "2023-09-07T00:00:00.000Z": 279,
+        "2023-09-08T00:00:00.000Z": 375,
+        "2023-09-09T00:00:00.000Z": 393,
+        "2023-09-10T00:00:00.000Z": 390,
+        "2023-09-11T00:00:00.000Z": 220,
+        "2023-09-12T00:00:00.000Z": 262,
+        "2023-09-13T00:00:00.000Z": 312,
+        "2023-09-14T00:00:00.000Z": 277,
+        "2023-09-15T00:00:00.000Z": 332,
+        "2023-09-16T00:00:00.000Z": 401,
+        "2023-09-17T00:00:00.000Z": 400,
+        "2023-09-18T00:00:00.000Z": 291,
+        "2023-09-19T00:00:00.000Z": 282,
+        "2023-09-20T00:00:00.000Z": 316,
+        "2023-09-21T00:00:00.000Z": 305,
+        "2023-09-22T00:00:00.000Z": 333,
+        "2023-09-23T00:00:00.000Z": 398,
+        "2023-09-24T00:00:00.000Z": 414
     },
     "steps": 7
-}
-```
-Example output:
-```
-{
-    "in_sample_forecast": {
-        "2023-09-18T00:00:00.000Z": 235.35,
-        "2023-09-19T00:00:00.000Z": 276.16,
-        "2023-09-20T00:00:00.000Z": 323.32,
-        "2023-09-21T00:00:00.000Z": 286.33,
-        "2023-09-22T00:00:00.000Z": 340.85,
-        "2023-09-23T00:00:00.000Z": 410.89,
-        "2023-09-24T00:00:00.000Z": 414.93
-    },
-    "out_of_sample_forecast": {
-        "2023-09-25T00:00:00.000Z": 245.45,
-        "2023-09-26T00:00:00.000Z": 286.27,
-        "2023-09-27T00:00:00.000Z": 333.43,
-        "2023-09-28T00:00:00.000Z": 196.43,
-        "2023-09-29T00:00:00.000Z": 350.96,
-        "2023-09-30T00:00:00.000Z": 421.01,
-        "2023-10-01T00:00:00.000Z": 426.05
-    }
 }
 ```
 """
 
 import pandas as pd
 import numpy as np
-import time
+import plotly.graph_objects as go
 import random
 from sklearn.model_selection import train_test_split 
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
@@ -74,9 +69,8 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import (
     mean_squared_error, 
     r2_score,
-    mean_absolute_percentage_error,
 )
-import plotly.graph_objects as go
+from scipy import stats
 
 from hetdesrun.runtime.exceptions import ComponentInputValidationException
 
@@ -120,10 +114,8 @@ def hyper_tuning_grid_search(
     train: pd.Series,
     test: pd.Series,
     seasonal_periods: int=None, 
-    trend: str=None, 
-    seasonal: str=None,
-    iterations: int=100,
-    use_boxcox: bool = True,
+    iterations: int=200,
+    use_boxcox: bool=True,
     initialization_method: str="estimated"
 ):
     """Optimizes hyperparameters for the Exponential Smoothing model using random search.
@@ -132,8 +124,8 @@ def hyper_tuning_grid_search(
     train (Pandas Series): Series containing the training data.
     test (Pandas Series): Series containing the test data.
     seasonal_periods (Integer, optional): The number of observations that constitute a full seasonal cycle. Default is None.
-    trend (String, optional): Type of trend component ('add', 'mul', or None). Default is None.
-    seasonal (String, optional): Type of seasonal component ('add', 'mul', or None). Default is None.
+    use_boxcox (Bool, optional): Whether to apply Box-Cox transformation. Default is True.
+    initialization_method (String, optional): Method for initializing the model ('estimated', 'heuristic', 'legacy-heuristic', None). Default is 'estimated'.
     iterations (Integer, optional): The number of iterations for the random search. Default is 100.
 
     Outputs:
@@ -143,21 +135,20 @@ def hyper_tuning_grid_search(
     if seasonal_periods:
         if not isinstance(seasonal_periods, int) or seasonal_periods <= 0:
             raise ValueError("seasonal_periods must be a positive integer")
-    if trend not in ['add', 'mul', None]:
-        raise ValueError("trend must be 'add', 'mul', or None")
-    if seasonal not in ['add', 'mul', None]:
-        raise ValueError("seasonal must be 'add', 'mul', or None")
     if not isinstance(iterations, int) or iterations <= 0:
         raise ValueError("iterations must be a positive integer")
     
     # Parameter tuning
-    best_alpha, best_beta, best_gamma, best_phi, best_score, r2, mape = None, None, None, None, float("inf"), float("inf"), float("inf")
+    best_alpha, best_beta, best_gamma, best_phi, best_score, r2 = None, None, None, None, float("inf"), float("inf")
+    pos = ["add", "mul", None]
     random.seed(42)
     for _ in range(iterations):
         alpha = round(random.uniform(0, 1), 2)
         beta = round(random.uniform(0, 1), 2)
         gamma = round(random.uniform(0, 1), 2)
         phi = round(random.uniform(0, 1), 2)
+        trend = random.choice(pos)
+        seasonal = random.choice(pos)
         
         model = ExponentialSmoothing(
             train, 
@@ -170,13 +161,12 @@ def hyper_tuning_grid_search(
         fitted_model = model.fit(smoothing_level=alpha, smoothing_trend=beta, smoothing_seasonal=gamma, damping_trend=phi)
         y_pred = fitted_model.forecast(len(test))
         if len(test) == len(y_pred.dropna()):
-            score = np.sqrt(mean_squared_error(test, y_pred))
+            score = np.sqrt(mean_squared_error(y_pred, test))
             r2 = r2_score(test, y_pred)
-            mape = mean_absolute_percentage_error(test, y_pred)
             if score < best_score:
-                best_alpha, best_beta, best_gamma, best_phi, best_score, r2, mape = alpha, beta, gamma, phi, score, r2, mape
+                best_alpha, best_beta, best_gamma, best_phi, best_score, r2, best_trend, best_seasonal = alpha, beta, gamma, phi, score, r2, trend, seasonal
 
-    return best_alpha, best_beta, best_gamma, best_phi, best_score, r2, mape
+    return best_alpha, best_beta, best_gamma, best_phi, best_score, r2, best_trend, best_seasonal
 
 def train_exponential_smoothing(
     series: pd.Series, 
@@ -269,8 +259,9 @@ def timeseries_plot_including_predictions(
     out_of_sample_forecast: pd.Series,
     mse: float,
     r2: float,
-    mape: float,
-    conf_interval: bool = False
+    sw_result: float,
+    conf_interval: bool,
+    alpha: float = 0.05
 ) -> go.Figure:
     """Creates a Plotly time series plot including in-sample and out-of-sample predictions, with optional confidence intervals.
 
@@ -330,7 +321,7 @@ def timeseries_plot_including_predictions(
             go.Scatter(
                 name="Upper Bound",
                 x=out_of_sample_forecast.index, 
-                y=(1+mape)*out_of_sample_forecast,
+                y=out_of_sample_forecast + 1.96*mse,
                 mode="lines",
                 line=dict(width=0),
                 showlegend=False,
@@ -338,7 +329,7 @@ def timeseries_plot_including_predictions(
             go.Scatter(
                 name="Lower Bound",
                 x=out_of_sample_forecast.index, 
-                y=(1-mape)*out_of_sample_forecast,
+                y=out_of_sample_forecast - 1.96*mse,
                 mode="lines",
                 line=dict(width=0),
                 showlegend=False,
@@ -385,6 +376,13 @@ def timeseries_plot_including_predictions(
     #Annotations
     annotations = []
     # Title
+    if sw_result < alpha:
+        conf_text = f"Residuals are likely not normal, since p-value ({sw_result}) is smaller than alpha ({alpha})."
+    else:
+        conf_text = f"Residuals are likely normal, since p-value ({sw_result}) is larger than alpha ({alpha})."
+
+
+    ci = f"The residuals are likely to be normally distributed, since {np.round(sw_result, 2)}"
     annotations.append(dict(xref='paper', yref='paper', x=0.0, y=1.05,
                               xanchor='left', yanchor='bottom',
                               text="Time Series Plot including In-Sample and Out-Of-Sample Forecast, based on some Exponential Smoothing model",
@@ -394,7 +392,8 @@ def timeseries_plot_including_predictions(
                               showarrow=False))
     annotations.append(dict(xref='paper', yref='paper', x=0.0, y=1.0,
                               xanchor='left', yanchor='bottom',
-                              text=f"The mean squared error on the testing data is {np.round(mse, 2)}, the r^2 score {np.round(r2, 2)}.",
+                              #text=f"Mean squared error: {np.round(mse, 2)}, r^2 score: {np.round(r2, 2)}. {conf_text}",
+                              text=f"Mean squared error: {np.round(mse, 2)}. {conf_text}",
                               font=dict(family='Arial',
                                         size=20,
                                         color='rgb(37,37,37)'),
@@ -412,17 +411,15 @@ COMPONENT_INFO = {
         "test_size": {"data_type": "FLOAT", "default_value": 0.3},
         "shuffle": {"data_type": "BOOLEAN", "default_value": False},
         "seasonal_periods": {"data_type": "INT", "default_value": None},
-        "trend": {"data_type": "STRING", "default_value": "add"},
-        "seasonal": {"data_type": "STRING", "default_value": "add"},
         "use_boxcox": {"data_type": "BOOLEAN", "default_value": True},
-        "iterations": {"data_type": "INT", "default_value": 100},
+        "iterations": {"data_type": "INT", "default_value": 200},
         "initialization_method": {"data_type": "STRING", "default_value": "estimated"},
-        "conf_interval": {"data_type": "BOOLEAN", "default_value": False},
+        "alpha": {"data_type": "FLOAT", "default_value": 0.05},
     },
     "outputs": {
         "plot": {"data_type": "PLOTLYJSON"},
     },
-    "name": "Exponetial Smoothing",
+    "name": "Exponential Smoothing",
     "category": "Time Series Analysis",
     "description": "Exponential Smoothing Plot",
     "version_tag": "1.0.0",
@@ -432,8 +429,7 @@ COMPONENT_INFO = {
 }
 
 def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None, 
-         trend="add", seasonal="add", use_boxcox=True, iterations=100, initialization_method="estimated",
-         conf_interval=False):
+         use_boxcox=True, iterations=200, initialization_method="estimated", alpha=0.05):
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
@@ -443,13 +439,11 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None,
         shuffle=shuffle
     )
 
-    best_alpha, best_beta, best_gamma, best_phi, best_score, r2, mape = hyper_tuning_grid_search(
+    best_alpha, best_beta, best_gamma, best_phi, best_score, r2, best_trend, best_seasonal = hyper_tuning_grid_search(
         train=train, 
         test=test, 
         seasonal_periods=seasonal_periods, 
         iterations=iterations, 
-        trend=trend, 
-        seasonal=seasonal,
         use_boxcox=use_boxcox,
         initialization_method=initialization_method
     )
@@ -457,8 +451,8 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None,
     model_fit = train_exponential_smoothing(
         series=train, 
         seasonal_periods=seasonal_periods,
-        trend=trend,
-        seasonal=seasonal, 
+        trend=best_trend,
+        seasonal=best_seasonal, 
         alpha=best_alpha,
         beta=best_beta,
         gamma=best_gamma,
@@ -473,6 +467,10 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None,
         steps=steps
     )
 
+    residuals = sorted([x - y for x, y in zip(in_sample_forecast.values, test.values)])
+    sw_result = np.round(stats.shapiro(residuals)[1], 2)
+    conf_interval = True if sw_result > alpha else False
+
     fig = timeseries_plot_including_predictions(
         data=series,
         in_sample_forecast=in_sample_forecast,
@@ -480,7 +478,8 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None,
         conf_interval=conf_interval,
         mse=best_score,
         r2=r2,
-        mape=mape
+        sw_result=sw_result,
+        alpha=alpha
     )
 
     return {"plot": fig}
