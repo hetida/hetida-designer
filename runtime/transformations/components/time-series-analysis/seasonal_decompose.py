@@ -244,7 +244,7 @@ COMPONENT_INFO = {
     "outputs": {
         "decomposed_series": {"data_type": "DATAFRAME"},
     },
-    "name": "Time Series Decomposition",
+    "name": "Seasonal Decompose",
     "category": "Time Series Analysis",
     "description": "Decomposition of some time series",
     "version_tag": "1.0.0",
@@ -262,7 +262,7 @@ def main(*, series, model="additive", freq=None):
         model=model,
         freq=freq
     )
-    
+
     return {"decomposed_series": decomposed_series}
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {

@@ -54,13 +54,8 @@ Example input:
 ```
 Example output:
 ```
-"result": {
-        'Test Statistic': 9.4487,
-        'p-value': 1.0,
-        'Critical Value (1%)': -4.1378,
-        'Critical Value (5%)': -3.155,
-        'Critical Value (10%)': -2.7145,
-        'Result': 'The series is likely not stationary (fail to reject H0).'
+{
+    "result": "The series is likely not stationary (fail to reject H0), since p-value (1.0) is larger than alpha (0.05)"
 }
 ```
 """
@@ -114,29 +109,31 @@ def perform_adf_test(
     # Perform ADF test
     adf_result = adfuller(series)
     p_value = np.round(adf_result[1], 4)
-    result = {
-        "p_value": p_value,
-        "Result": 'The series is likely stationary (reject H0).' if p_value < alpha else 'The series is likely not stationary (fail to reject H0).'
-    }
 
-    return result
+    # Interpretation based on p-value
+    if p_value < alpha:
+        test_result = f"The series is likely stationary (reject H0), since p-value ({p_value}) is smaller than alpha ({alpha})."
+    else:
+        test_result = f"The series is likely not stationary (fail to reject H0), since p-value ({p_value}) is larger than alpha ({alpha})."
+
+    return test_result
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
 COMPONENT_INFO = {
     "inputs": {
         "series": {"data_type": "SERIES"},
-        "alpha": {"data_type": "FLOAT", "default_value": 0.05},
+        "alpha": {"data_type": "FLOAT", "default_value": "0.05"},
     },
     "outputs": {
         "result": {"data_type": "STRING"},
     },
-    "name": "Adf Test",
+    "name": "ADF Test",
     "category": "Time Series Analysis",
-    "description": "Augmented Dickey-Fuller test to check stationarity",
+    "description": "Augmented Dickey-Fuller test",
     "version_tag": "1.0.0",
-    "id": "f0860510-1016-4346-80ca-778157935834",
-    "revision_group_id": "79e96f98-c317-4d89-b636-a4a1425bbb4d",
+    "id": "ec53f7cc-8f6c-4ac3-8927-9d1016561659",
+    "revision_group_id": "d3d13974-7ad7-4b4b-936d-c0de1bb97757",
     "state": "RELEASED",
 }
 
@@ -144,9 +141,9 @@ def main(*, series, alpha=0.05):
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
-    result = perform_adf_test(series=series, alpha=alpha)
+    test_result = perform_adf_test(series=series, alpha=alpha)
     
-    return {"result": result}
+    return {"result": test_result}
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [

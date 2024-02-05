@@ -54,14 +54,10 @@ Example input:
 ```
 Example output:
 ```
-"result": {
-    'Test Statistic': 0.328,
-    'p-value': 0.1,
-    'Critical Value (10%)': 0.347,
-    'Critical Value (5%)': 0.463,
-    'Critical Value (2.5%)': 0.574,
-    'Critical Value (1%)': 0.739,
-    'Result': 'The series is likely trend stationary (fail to reject H0).'
+Example output:
+```
+{
+    "result": "The series is likely trend stationary (fail to reject H0), since p-value (0.1) is larger than alpha (0.05)."
 }
 ```
 """
@@ -116,17 +112,13 @@ def perform_kpss_test(
     
     # Perform KPSS test
     kpss_result = kpss(series, regression='c')
-    test_statistic = np.round(kpss_result[0], 4)
     p_value = np.round(kpss_result[1], 4)
-    result = {}
-
-    result["p-value"] = p_value
 
     # Interpretation based on p-value
     if p_value < alpha:
-        result["Result"] = "The series is likely not trend stationary (reject H0)."
+        result = f"The series is likely not trend stationary (reject H0), since p-value ({p_value}) is smaller than alpha ({alpha})."
     else:
-        result["Result"] = "The series is likely trend stationary (fail to reject H0)."
+        result = f"The series is likely trend stationary (fail to reject H0), since p-value ({p_value}) is larger than alpha ({alpha})."
 
     return result
 
@@ -135,14 +127,14 @@ def perform_kpss_test(
 COMPONENT_INFO = {
     "inputs": {
         "series": {"data_type": "SERIES"},
-        "alpha": {"data_type": "FLOAT", "default_value": 0.05},
+        "alpha": {"data_type": "FLOAT", "default_value": "0.05"},
     },
     "outputs": {
-        "test_result": {"data_type": "STRING"},
+        "result": {"data_type": "STRING"},
     },
-    "name": "Kpss Test",
+    "name": "KPSS Test",
     "category": "Time Series Analysis",
-    "description": "Kwiatkowski-Phillips-Schmidt-Shin test to check trend stationarity",
+    "description": "Kwiatkowski-Phillips-Schmidt-Shin test",
     "version_tag": "1.0.0",
     "id": "fb6ae572-2634-4ad3-adbd-56932ce30788",
     "revision_group_id": "4a9372ee-12ac-41a3-9c5f-654776390232",
@@ -155,7 +147,7 @@ def main(*, series, alpha=0.05):
     # write your function code here.
     result = perform_kpss_test(series=series, alpha=alpha)
     
-    return {"test_result": result}
+    return {"result": result}
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [

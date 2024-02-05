@@ -132,9 +132,9 @@ def create_pacf_plot(
             invalid_component_inputs=["lags"],
         )
     
-    if plot_pacf and lags*2 > len(series):
+    if plot_pacf and (lags*2 + 1) >= len(series):
         raise ComponentInputValidationException(
-            "`lags` must be a positive integer of size smaller than half of the length of data",
+            f"`lags` must be a positive integer of size smaller than half the length of the time series minus 1 ({len(series)/2 - 1})",
             error_code=422,
             invalid_component_inputs=["lags", "series"],
         )
@@ -199,9 +199,9 @@ def create_pacf_plot(
 COMPONENT_INFO = {
     "inputs": {
         "series": {"data_type": "SERIES"},
-        "lags": {"data_type": "INT", "default_value": 20},
-        "alpha": {"data_type": "FLOAT", "default_value": 0.05},
-        "plot_pacf": {"data_type": "BOOLEAN", "default_value": False},
+        "lags": {"data_type": "INT", "default_value": "20"},
+        "alpha": {"data_type": "FLOAT", "default_value": "0.05"},
+        "plot_pacf": {"data_type": "BOOLEAN", "default_value": "False"},
     },
     "outputs": {
         "plot": {"data_type": "PLOTLYJSON"},
