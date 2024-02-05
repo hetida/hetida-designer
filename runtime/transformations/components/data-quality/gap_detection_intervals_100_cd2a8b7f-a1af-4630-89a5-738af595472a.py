@@ -650,6 +650,10 @@ def identify_gaps(
         }
     )
 
+    result_df["gap_size_in_seconds"] = result_df[
+        "gap_size_in_seconds"
+    ].dt.total_seconds()
+
     return result_df
 
 
