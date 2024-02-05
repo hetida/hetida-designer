@@ -1,0 +1,187 @@
+{
+    "id": "21cb6a1a-d409-4bb7-87a7-ee3d97940dfb",
+    "revision_group_id": "d414eb7d-3954-4c96-a329-fd0cefe0613a",
+    "name": "Test Optional Input Parsing",
+    "description": "Just outputs its input value",
+    "category": "Test",
+    "version_tag": "1.0.0",
+    "state": "DRAFT",
+    "type": "COMPONENT",
+    "documentation": "# Pass Through\n\n## Description\nThis component just passes data through.\n\n## Inputs\n* **input** (Any): The input.\n\n## Outputs\n* **output** (Any): The output.\n\n## Details\nThis component just passes data through. It can be used to map one dynamic workflow input to multiple component inputs.",
+    "content": "import io\n\nimport pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {},\n    \"outputs\": {},\n    \"name\": \"Test Optional Input Parsing\",\n    \"category\": \"Test\",\n    \"description\": \"Just outputs its input value\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"21cb6a1a-d409-4bb7-87a7-ee3d97940dfb\",\n    \"revision_group_id\": \"d414eb7d-3954-4c96-a329-fd0cefe0613a\",\n    \"state\": \"DRAFT\",\n}\n\n\ndef main(\n    *,\n    x=1.2,\n    ok=False,\n    neither_nor_ok=None,\n    text=\"text\",\n    null_text=\"null\",\n    empty_text=\"\",\n    null_any=None,\n    empty_string_any=\"\",\n    some_string_any=\"text\",\n    some_number_any=23,\n    some_json_any={\"test\": True, \"content\": None, \"sub_structure\": {\"relevant\": False}},\n    series=pd.read_json(\n        '{\\\\n    \"2020-01-01T01:15:27.000Z\": 42.2,\\\\n    \"2020-01-03T08:20:03.000Z\": 18.7,\\\\n    \"2020-01-03T08:20:04.000Z\": 25.9\\\\n}'\n    ),\n):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\n        \"x\": x,\n        \"ok\": ok,\n        \"neither_nor_ok\": neither_nor_ok,\n        \"text\": text,\n        \"null_text\": null_text,\n        \"empty_text\": empty_text,\n        \"null_any\": null_any,\n        \"empty_string_any\": empty_string_any,\n        \"some_string_any\": some_string_any,\n        \"some_number_any\": some_number_any,\n        \"some_json_any\": some_json_any,\n        \"series\": series,\n        \"multitsframe\": multitsframe,\n    }\n",
+    "io_interface": {
+        "inputs": [
+            {
+                "id": "979ff7dc-bf9a-4092-9349-422cff117e0b",
+                "name": "x",
+                "data_type": "FLOAT",
+                "type": "OPTIONAL",
+                "value": "1.2"
+            },
+            {
+                "id": "d3a567c3-ed53-42b5-9d14-732390390719",
+                "name": "ok",
+                "data_type": "BOOLEAN",
+                "type": "OPTIONAL",
+                "value": "false"
+            },
+            {
+                "id": "b883a7d2-e149-4e2c-acc2-82411c92893a",
+                "name": "neither_nor_ok",
+                "data_type": "BOOLEAN",
+                "type": "OPTIONAL"
+            },
+            {
+                "id": "e6b478c7-0fed-4a46-aead-5fdde5a78d3f",
+                "name": "text",
+                "data_type": "STRING",
+                "type": "OPTIONAL",
+                "value": "text"
+            },
+            {
+                "id": "49cf2e2c-b37e-42e0-b54d-3cd9542542ca",
+                "name": "null_text",
+                "data_type": "STRING",
+                "type": "OPTIONAL",
+                "value": "null"
+            },
+            {
+                "id": "233fd617-41e5-48ff-b7e6-e450b934fd5e",
+                "name": "empty_text",
+                "data_type": "STRING",
+                "type": "OPTIONAL",
+                "value": ""
+            },
+            {
+                "id": "218fbfec-a6a5-498f-a6e5-afe7669d3052",
+                "name": "null_any",
+                "data_type": "ANY",
+                "type": "OPTIONAL",
+                "value": "null"
+            },
+            {
+                "id": "4288007e-915a-460c-bc29-9e701025c73f",
+                "name": "empty_string_any",
+                "data_type": "ANY",
+                "type": "OPTIONAL",
+                "value": ""
+            },
+            {
+                "id": "d9fc0354-a613-4fe5-8e6c-880097861f3b",
+                "name": "some_string_any",
+                "data_type": "ANY",
+                "type": "OPTIONAL",
+                "value": "text"
+            },
+            {
+                "id": "83c619ed-9878-4242-9300-f726c788cdf4",
+                "name": "some_number_any",
+                "data_type": "ANY",
+                "type": "OPTIONAL",
+                "value": "23"
+            },
+            {
+                "id": "445c102d-5097-4715-ac66-22e9c2fe9d5d",
+                "name": "some_json_any",
+                "data_type": "ANY",
+                "type": "OPTIONAL",
+                "value": "{\"test\": true, \"content\": null, \"sub_structure\": {\"relevant\": false}}"
+            },
+            {
+                "id": "4b2afd2a-6b91-4cbf-ba2a-4f53d93789bb",
+                "name": "series",
+                "data_type": "SERIES",
+                "type": "OPTIONAL",
+                "value": "{\"2020-01-01T01:15:27.000Z\": 42.2, \"2020-01-03T08:20:03.000Z\": 18.7, \"2020-01-03T08:20:04.000Z\": 25.9}"
+            },
+            {
+                "id": "215f42ac-61ab-4abd-aee7-768f6c483420",
+                "name": "multitsframe",
+                "data_type": "MULTITSFRAME",
+                "type": "OPTIONAL",
+                "value": "{\"__hd_wrapped_data_object__\": \"DATAFRAME\", \"__metadata__\": {\"test\": 43}, \"__data__\": {\"metric\": [\"a\", \"b\"], \"timestamp\": [\"2023-01-01T00:00:00.000Z\", \"2023-01-01T00:00:00.000Z\"], \"value\": [2.3, \"t\"]}}"
+            }
+        ],
+        "outputs": [
+            {
+                "id": "9de120c2-ffa1-43e4-a190-53cdeaf380e0",
+                "name": "x",
+                "data_type": "FLOAT"
+            },
+            {
+                "id": "197c430e-3abb-4a2f-956d-d393c8ce9501",
+                "name": "ok",
+                "data_type": "BOOLEAN"
+            },
+            {
+                "id": "651e3140-c513-4970-9c8b-940c99e0c28d",
+                "name": "neither_nor_ok",
+                "data_type": "BOOLEAN"
+            },
+            {
+                "id": "c47269b3-3cdd-48fc-97b5-4f8fa195df9c",
+                "name": "text",
+                "data_type": "STRING"
+            },
+            {
+                "id": "56a0dec7-e894-462a-8ad9-c5818da3f342",
+                "name": "null_text",
+                "data_type": "STRING"
+            },
+            {
+                "id": "77ec0636-4168-428b-9b4e-529027065686",
+                "name": "empty_text",
+                "data_type": "STRING"
+            },
+            {
+                "id": "540cd2e0-b6b8-47f8-8c87-c4f50ea1cef5",
+                "name": "null_any",
+                "data_type": "ANY"
+            },
+            {
+                "id": "bdd38ebf-e263-4c39-8cba-199db69bd56f",
+                "name": "empty_string_any",
+                "data_type": "ANY"
+            },
+            {
+                "id": "11dcda17-4ed4-4b9b-817b-966db66b8906",
+                "name": "some_string_any",
+                "data_type": "ANY"
+            },
+            {
+                "id": "17321794-1e5f-4634-9be6-123aee9aac39",
+                "name": "some_number_any",
+                "data_type": "ANY"
+            },
+            {
+                "id": "cf6f5497-f22c-42a9-ad61-2a49cd281134",
+                "name": "some_json_any",
+                "data_type": "ANY"
+            },
+            {
+                "id": "d6cc45ff-a2db-4f98-ba17-045cdac10000",
+                "name": "series",
+                "data_type": "SERIES"
+            },
+            {
+                "id": "215f42ac-61ab-4abd-aee7-768f6c483420",
+                "name": "multitsframe",
+                "data_type": "MULTITSFRAME"
+            }
+        ]
+    },
+    "test_wiring": {
+        "input_wirings": [
+            {
+                "workflow_input_name": "inp",
+                "adapter_id": "direct_provisioning",
+                "use_default_value": true,
+                "filters": {
+                    "value": "{\"test\": true, \"content\": null}"
+                }
+            }
+        ],
+        "output_wirings": [],
+        "dashboard_positionings": []
+    }
+}

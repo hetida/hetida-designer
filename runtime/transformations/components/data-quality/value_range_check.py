@@ -137,7 +137,7 @@ class ValueRange(BaseModel):
     max_value: float
     max_value_inclusive: bool = True
 
-    @root_validator()
+    @root_validator(skip_on_failure=True)
     def verify_value_ranges(cls, values: dict) -> dict:
         try:
             min_value = values["min_value"]
@@ -231,7 +231,7 @@ COMPONENT_INFO = {
     },
     "name": "Value Range Check",
     "category": "Data Quality",
-    "description": "For each data point of the series, it is checked for all value ranges whether it lies within them.",
+    "description": "For each data point of the series, it is checked for all value ranges whether it lies within them.",  # noqa: E501
     "version_tag": "1.0.0",
     "id": "3cf8e12d-2fea-40d9-bc4b-015bddf66828",
     "revision_group_id": "83dabdfc-2d34-4e72-8010-4d61db8a9d6a",
@@ -290,12 +290,11 @@ def main(*, timeseries_data, value_range_dict):
     }
 
 
-INITIAL_TEST_WIRING = {
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "timeseries_data",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "{\n"
@@ -309,7 +308,6 @@ INITIAL_TEST_WIRING = {
         {
             "workflow_input_name": "value_range_dict",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "{\n"

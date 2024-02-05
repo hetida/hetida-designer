@@ -1,5 +1,13 @@
+import json
+import os
+
+import pytest
+
 from hetdesrun.component.code import (
+    add_documentation_as_module_doc_string,
+    add_test_wiring_dictionary,
     check_parameter_names,
+    expand_code,
     generate_function_header,
     update_code,
 )
@@ -12,6 +20,7 @@ from hetdesrun.persistence.models.io import (
     TransformationOutput,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
+from hetdesrun.trafoutils.io.load import load_json, load_python_file
 
 
 def test_function_header_no_params():
@@ -29,10 +38,50 @@ def test_function_header_no_params():
         test_wiring=[],
     )
     func_header = generate_function_header(component)
-    assert "main()" in func_header
-    assert '"inputs": {' + "}" in func_header  # noqa: ISC003
-    assert '"outputs": {' + "}" in func_header  # noqa: ISC003
-    assert '"id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565"' in func_header
+
+    assert (
+        func_header
+        == """\
+# ***** DO NOT EDIT LINES BELOW *****
+# These lines may be overwritten if component details or inputs/outputs change.
+COMPONENT_INFO = {
+    "inputs": {},
+    "outputs": {},
+    "name": "Test Component",
+    "category": "Tests",
+    "description": "A test component",
+    "version_tag": "1.0.0",
+    "id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+    "revision_group_id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+    "state": "DRAFT",
+}
+
+
+def main():
+    # entrypoint function for this component
+    # ***** DO NOT EDIT LINES ABOVE *****
+"""
+    )
+
+
+def test_function_header_description_line_too_long():
+    component = TransformationRevision(
+        io_interface=IOInterface(inputs=[], outputs=[]),
+        name="Test Component",
+        description=(
+            "A very long test component description so that the line is longer than allowed"
+        ),
+        category="Tests",
+        id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        version_tag="1.0.0",
+        state="DRAFT",
+        type="COMPONENT",
+        content="",
+        test_wiring=[],
+    )
+    func_header = generate_function_header(component)
+    assert "# noqa: E501" in func_header
 
 
 def test_function_header_multiple_inputs():
@@ -85,13 +134,13 @@ def test_function_header_optional_inputs():
                     name="x",
                     data_type=DataType.Float,
                     type=InputType.OPTIONAL,
-                    value=1.2,
+                    value="1.2",
                 ),
                 TransformationInput(
                     name="okay",
                     data_type=DataType.Boolean,
                     type=InputType.OPTIONAL,
-                    value=False,
+                    value="false",
                 ),
                 TransformationInput(
                     name="neither_nor_ok",
@@ -109,7 +158,6 @@ def test_function_header_optional_inputs():
                     name="no_text",
                     data_type=DataType.String,
                     type=InputType.OPTIONAL,
-                    value=None,
                 ),
                 TransformationInput(
                     name="empty_text",
@@ -118,12 +166,47 @@ def test_function_header_optional_inputs():
                     value="",
                 ),
                 TransformationInput(
+                    name="no_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                ),
+                TransformationInput(
+                    name="null_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                    value="null",
+                ),
+                TransformationInput(
+                    name="empty_string_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                    value="",
+                ),
+                TransformationInput(
+                    name="some_string_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                    value="any",
+                ),
+                TransformationInput(
+                    name="some_number_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                    value="23",
+                ),
+                TransformationInput(
+                    name="some_json_any",
+                    data_type=DataType.Any,
+                    type=InputType.OPTIONAL,
+                    value='{"test": true, "content": null, "sub_structure": {"relevant": false}}',
+                ),
+                TransformationInput(
                     name="series",
                     data_type=DataType.Series,
                     type=InputType.OPTIONAL,
                     value=(
-                        '{\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": '
-                        '18.7,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'
+                        '{"2020-01-01T01:15:27.000Z": 42.2, "2020-01-03T08:20:03.000Z": 18.7, '
+                        '"2020-01-03T08:20:04.000Z": 25.9}'
                     ),
                 ),
             ],
@@ -146,11 +229,69 @@ def test_function_header_optional_inputs():
     assert '"default_value": 1.2' in func_header
     assert '"default_value": "text"' in func_header
     assert '"default_value": "None"' not in func_header
+    assert '"default_value": ""' in func_header
+    assert '"default_value": "any"' in func_header
+    assert '"default_value": 23' in func_header
     assert (
-        'main(*, x=1.2, okay=False, neither_nor_ok=None, text="text", no_text=None, empty_text="", '
-        'series={\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": 18.7,'
-        '\n    "2020-01-03T08:20:04.000Z": 25.9\n})'
+        '"default_value": {\n'
+        '                "test": True,\n'
+        '                "content": None,\n'
+        '                "sub_structure": {"relevant": False},\n'
+        "            }" in func_header
+    )
+    assert (
+        "def main(\n"
+        "    *,\n"
+        "    x=1.2,\n"
+        "    okay=False,\n"
+        "    neither_nor_ok=None,\n"
+        '    text="text",\n'
+        "    no_text=None,\n"
+        '    empty_text="",\n'
+        "    no_any=None,\n"
+        "    null_any=None,\n"
+        '    empty_string_any="",\n'
+        '    some_string_any="any",\n'
+        "    some_number_any=23,\n"
+        '    some_json_any={"test": True, "content": None, "sub_structure": {"relevant": False}},\n'
+        "    series=pd.read_json(\n"
+        "        io.StringIO(\n"
+        '            \'{"2020-01-01T01:15:27.000Z": 42.2, "2020-01-03T08:20:03.000Z": 18.7, '
+        '"2020-01-03T08:20:04.000Z": 25.9}\'\n'
+        "        ),\n"
+        '        typ="series",\n'
+        "    ),\n"
+        "):"
     ) in func_header
+
+    component_with_none = TransformationRevision(
+        io_interface=IOInterface(
+            inputs=[
+                TransformationInput(
+                    name="none",
+                    data_type=DataType.Float,
+                    type=InputType.OPTIONAL,
+                    value="None",
+                ),
+            ],
+            outputs=[TransformationOutput(name="output", data_type=DataType.Float)],
+        ),
+        name="Test Component",
+        description="A test component",
+        category="Tests",
+        id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        revision_group_id="c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
+        version_tag="1.0.0",
+        state="DRAFT",
+        type="COMPONENT",
+        content="",
+        test_wiring=[],
+    )
+    with pytest.raises(
+        TypeError,
+        match="Parsing Error for value 'None' of input 'none' as FLOAT. Enter 'null' instead.",
+    ):
+        generate_function_header(component_with_none)
 
 
 def test_check_parameter_names():
@@ -158,7 +299,7 @@ def test_check_parameter_names():
     assert not check_parameter_names(["1", "x"])
 
 
-def test_update_code():
+def test_update_code_without_io():
     component = TransformationRevision(
         io_interface=IOInterface(inputs=[], outputs=[]),
         name="Test Component",
@@ -199,8 +340,95 @@ def test_update_code():
     # test input without only stop marker
     component.content = "# ***** DO NOT EDIT LINES BELOW *****"
     new_code = update_code(component)
+    assert "pass" in new_code
 
     # test with async def in function header
     component.content = example_code_async
     new_code = update_code(component)
     assert "async def" in new_code
+
+
+def test_update_code_with_optional_inputs():
+    json_path = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "test_optional_inputs_component.json",
+    )
+    with open(json_path) as f:
+        tr_json = json.load(f)
+
+    tr = TransformationRevision(**tr_json)
+
+    updated_code = update_code(tr)
+
+    py_path = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "test_optional_inputs_component.py",
+    )
+    with open(py_path) as f:
+        code_from_file = f.read()
+
+    assert updated_code == code_from_file
+
+
+def test_add_documentation_as_module_docstring():
+    component_tr_path = "tests/data/components/reduced_code.json"
+    component_tr = TransformationRevision(**load_json(component_tr_path))
+    assert "test" not in component_tr.content
+
+    component_tr.documentation = "test"
+    code_with_updated_module_doc_string = add_documentation_as_module_doc_string(
+        component_tr.content, component_tr
+    )
+    assert 'test\n"""' in code_with_updated_module_doc_string
+
+    component_tr.documentation = "test\n"
+    code_with_updated_module_doc_string = add_documentation_as_module_doc_string(
+        component_tr.content, component_tr
+    )
+    assert 'test\n"""' in code_with_updated_module_doc_string
+
+
+def test_add_test_wiring_dictionary():
+    component_tr_path = "tests/data/components/reduced_code.json"
+    component_tr = TransformationRevision(**load_json(component_tr_path))
+    component_code_path = "tests/data/components/reduced_code.py"
+    component_code_without_test_wiring_dictionary = load_python_file(
+        component_code_path
+    )
+
+    assert (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT"
+        not in component_code_without_test_wiring_dictionary
+    )
+    component_code_with_new_test_wiring_dictionary = add_test_wiring_dictionary(
+        component_code_without_test_wiring_dictionary, component_tr
+    )
+    assert (
+        "TEST_WIRING_FROM_PY_FILE_IMPORT"
+        in component_code_with_new_test_wiring_dictionary
+    )
+
+    assert "24" not in component_code_without_test_wiring_dictionary
+    component_tr.test_wiring.input_wirings[1].filters["value"] = "24"
+    component_code_with_updated_test_wiring_dictionary = add_test_wiring_dictionary(
+        component_code_without_test_wiring_dictionary, component_tr
+    )
+    assert "24" in component_code_with_updated_test_wiring_dictionary
+
+
+def test_expand_code():
+    reduced_component_tr_path = "tests/data/components/reduced_code.json"
+    reduced_component_tr = TransformationRevision(
+        **load_json(reduced_component_tr_path)
+    )
+
+    expanded_component_code_path = "tests/data/components/expanded_code.py"
+    expanded_component_code = load_python_file(expanded_component_code_path)
+
+    expanded_reduced_code = expand_code(reduced_component_tr)
+    assert expanded_reduced_code != reduced_component_tr.content
+    assert expanded_reduced_code == expanded_component_code

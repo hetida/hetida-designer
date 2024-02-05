@@ -40,7 +40,7 @@
     "[python]": {
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-            "source.organizeImports.ruff": true,
+            "source.organizeImports.ruff": "explicit"
         }
     },
     "python.formatting.provider": "black",
