@@ -127,7 +127,7 @@ def perform_kpss_test(
 COMPONENT_INFO = {
     "inputs": {
         "series": {"data_type": "SERIES"},
-        "alpha": {"data_type": "FLOAT", "default_value": "0.05"},
+        "alpha": {"data_type": "FLOAT", "default_value": 0.05},
     },
     "outputs": {
         "result": {"data_type": "STRING"},

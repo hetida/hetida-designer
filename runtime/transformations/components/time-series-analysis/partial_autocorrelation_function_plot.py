@@ -80,9 +80,6 @@ from statsmodels.tsa.stattools import acf, pacf
 from hetdesrun.utils import plotly_fig_to_json_dict
 from hetdesrun.runtime.exceptions import ComponentInputValidationException
 
-class SeriesTypeException(ComponentInputValidationException):
-    """Exception in case of unexpected value type"""
-
 def create_pacf_plot(
     series: pd.Series,
     lags: int=20, 
@@ -111,10 +108,10 @@ def create_pacf_plot(
     try:
         series.index = pd.to_datetime(series.index, utc=True)
     except:
-        raise SeriesTypeException(
+        raise ComponentInputValidationException(
             "Indices of series must be datetime, but are of type "
             + str(series.index.dtype),
-            error_code="WrongKindOfSeries",
+            error_code=422,
             invalid_component_inputs=["series"],
         )
     
@@ -199,15 +196,15 @@ def create_pacf_plot(
 COMPONENT_INFO = {
     "inputs": {
         "series": {"data_type": "SERIES"},
-        "lags": {"data_type": "INT", "default_value": "20"},
-        "alpha": {"data_type": "FLOAT", "default_value": "0.05"},
-        "plot_pacf": {"data_type": "BOOLEAN", "default_value": "False"},
+        "lags": {"data_type": "INT", "default_value": 20},
+        "alpha": {"data_type": "FLOAT", "default_value": 0.05},
+        "plot_pacf": {"data_type": "BOOLEAN", "default_value": False},
     },
     "outputs": {
         "plot": {"data_type": "PLOTLYJSON"},
     },
     "name": "Partial Autocorrelation Function Plot",
-    "category": "Visualization",
+    "category": "Time Series Analysis",
     "description": "Kwiatkowski-Phillips-Schmidt-Shin test to check trend stationarity",
     "version_tag": "1.0.0",
     "id": "7caf5722-1bbb-459a-bfe7-b6ed826ccad3",
