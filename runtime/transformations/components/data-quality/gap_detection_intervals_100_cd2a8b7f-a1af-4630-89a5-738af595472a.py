@@ -971,6 +971,9 @@ COMPONENT_INFO = {
             "default_value": None,
         },
         "fill_value": {"data_type": "ANY", "default_value": None},
+        "known_gap_points": {"data_type": "SERIES", "default_value": None},
+        "known_gap_intervals": {"data_type": "DATAFRAME", "default_value": None},
+        "only_add_known_gaps": {"data_type": "BOOLEAN", "default_value": False},
     },
     "outputs": {
         "gap_info": {"data_type": "DATAFRAME"},
@@ -987,19 +990,22 @@ COMPONENT_INFO = {
 
 def main(
     *,
-    timeseries: pd.Series,
-    interval_start_timestamp_str: str | None = None,
-    interval_end_timestamp_str: str | None = None,
-    auto_frequency_determination: bool | None = True,
-    auto_freq_end_timestamp_str: str | None = None,
-    percentile: float = 0.5,
-    interpolation_method: str = "nearest",
-    min_amount_datapoints: int = 11,
-    expected_data_frequency_str: str | None = None,
-    expected_data_frequency_factor: float = 1.0,
+    timeseries,
+    interval_start_timestamp_str=None,
+    interval_end_timestamp_str=None,
+    auto_frequency_determination=True,
+    auto_freq_end_timestamp_str=None,
+    percentile=0.5,
+    interpolation_method="nearest",
+    min_amount_datapoints=11,
+    expected_data_frequency_str=None,
+    expected_data_frequency_factor=1.0,
     expected_data_frequency_offset_str=None,
-    fill_value: Any | None = None,
-) -> dict:
+    fill_value=None,
+    known_gap_points=None,
+    known_gap_intervals=None,
+    only_add_known_gaps=False,
+):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
@@ -1135,3 +1141,4 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         },
     ],
 }
+
