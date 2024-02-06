@@ -222,7 +222,7 @@ COMPONENT_INFO = {
         "runtime": {"data_type": "FLOAT"},
     },
     "name": "Train SARIMAX Model",
-    "category": "Time Series Analysis",
+    "category": "Playground",
     "description": "Training some SARIMAX model",
     "version_tag": "1.0.0",
     "id": "8cbd19f3-13b5-4702-aad2-85b6e616b66e",

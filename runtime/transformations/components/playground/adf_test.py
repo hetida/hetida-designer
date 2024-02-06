@@ -129,7 +129,7 @@ COMPONENT_INFO = {
         "result": {"data_type": "STRING"},
     },
     "name": "ADF Test",
-    "category": "Time Series Analysis",
+    "category": "Playground",
     "description": "Augmented Dickey-Fuller test",
     "version_tag": "1.0.0",
     "id": "ec53f7cc-8f6c-4ac3-8927-9d1016561659",

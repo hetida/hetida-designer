@@ -212,7 +212,7 @@ COMPONENT_INFO = {
         "test": {"data_type": "DATAFRAME"},
     },
     "name": "Train Test Split",
-    "category": "Time Series Analysis",
+    "category": "Playground",
     "description": "Splitting of some DataFrame into training and testing sets",
     "version_tag": "1.0.0",
     "id": "5a630e34-ab59-47c6-8903-eb60ba2d648e",

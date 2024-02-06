@@ -4,7 +4,10 @@
 
 ## Description
 
-This function is designed to plot the *Autocorrelation Function (ACF)* or *Partial Autocorrelation Function (PACF)* for a given time series data. ACF and PACF plots are essential tools in time series analysis, particularly useful in identifying the type and level of autocorrelation present in the data. Understanding these aspects is crucial for effective modeling and forecasting in time series analysis.
+This function is designed to plot the *Autocorrelation Function (ACF)* or *Partial Autocorrelation Function (PACF)* 
+for a given time series data. ACF and PACF plots are essential tools in time series analysis, particularly 
+useful in identifying the type and level of autocorrelation present in the data. Understanding these aspects 
+is crucial for effective modeling and forecasting in time series analysis.
 
 - **ACF (Autocorrelation Function)** measures the correlation between time series observations and their lags. It is used to identify the presence of autocorrelation in data, which is a key factor in selecting appropriate models for time series forecasting. ACF helps in determining the memory of a time series, showing how data points are related to their past values.
 
@@ -103,8 +106,7 @@ def create_pacf_plot(
             "The input series must not be empty!",
             error_code="EmptySeries",
             invalid_component_inputs=["series"],
-        )
-    
+        ) 
     try:
         series.index = pd.to_datetime(series.index, utc=True)
     except:
@@ -113,22 +115,19 @@ def create_pacf_plot(
             + str(series.index.dtype),
             error_code=422,
             invalid_component_inputs=["series"],
-        )
-    
+        ) 
     if not 0 < alpha < 1:
         raise ComponentInputValidationException(
             "`alpha` must be between 0 and 1",
             error_code=422,
             invalid_component_inputs=["alpha"],
         )
-   
     if not isinstance(lags, int) or lags < 1:
         raise ComponentInputValidationException(
             "`lags` must be a positive integer",
             error_code=422,
             invalid_component_inputs=["lags"],
         )
-    
     if plot_pacf and (lags*2 + 1) >= len(series):
         raise ComponentInputValidationException(
             f"`lags` must be a positive integer of size smaller than half the length of the time series minus 1 ({len(series)/2 - 1})",
@@ -136,9 +135,8 @@ def create_pacf_plot(
             invalid_component_inputs=["lags", "series"],
         )
 
-    data_sorted = series.sort_index().dropna()
-
     # Prepare data
+    data_sorted = series.sort_index().dropna()
     if plot_pacf:
         array = pacf(data_sorted, nlags=lags, alpha=alpha)
         title = 'Partial Autocorrelation (PACF) Plot'
@@ -160,7 +158,6 @@ def create_pacf_plot(
             mode='lines', 
             line_color='#3f3f3f'
         )
-    
     fig.add_scatter(
         x=np.arange(len(array[0])),
         y=array[0],

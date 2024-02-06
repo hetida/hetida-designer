@@ -133,7 +133,7 @@ COMPONENT_INFO = {
         "result": {"data_type": "STRING"},
     },
     "name": "KPSS Test",
-    "category": "Time Series Analysis",
+    "category": "Playground",
     "description": "Kwiatkowski-Phillips-Schmidt-Shin test",
     "version_tag": "1.0.0",
     "id": "fb6ae572-2634-4ad3-adbd-56932ce30788",

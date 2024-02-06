@@ -4,27 +4,29 @@
 
 ## Description
 
-This function decomposes a time series into its constituent components: *trend*, *seasonality*, and *residuals*. It's essential for understanding and modeling time series data, as it helps to identify underlying patterns and structures. This decomposition is crucial for tasks like forecasting, anomaly detection, and better understanding the time series behavior.
+This function decomposes a time series into its constituent components: *trend*, *seasonality*, and *residuals*. 
+It's essential for understanding and modeling time series data, as it helps to identify underlying patterns and structures. 
+This decomposition is crucial for tasks like forecasting, anomaly detection, and better understanding the time series behavior.
 
 ## Inputs
 
-- **series** (Pandas Series):
-    The time series data to be decomposed. The index must be of the datetime data type.
-
+- **series** (Pandas Series): 
+    The time series data to be decomposed. The index must be datetimes.
 - **model** (String, default value: "additive"):
-    The type of decomposition model ('additive' or 'multiplicative'). The default is 'additive'.
-
-- **freq** (Int, default value: None):
+    The type of decomposition model ('additive' or 'multiplicative').
+- **freq** (Integer, default value: None): 
     The frequency of the time series. If not provided, it will be inferred from the data.
-
+    
 ## Outputs
 
-- **fig** (Plotly Figure):
-    A Plotly figure containing the original data and the decomposed components: trend, seasonal, and residuals.
+- **fig** (Plotly Figure): 
+    A Plotly figure containing the original data and the decomposed components.
 
 ## Details
 
-This function is used for analyzing time series data. The decomposition allows for a detailed understanding of the time series by isolating and examining its different components. It's particularly useful for:
+This function is used for analyzing time series data. The decomposition allows for a 
+detailed understanding of the time series by isolating and examining its different components. 
+It's particularly useful for:
 - **Forecasting**: Understanding trends and seasonal patterns can improve forecasting accuracy.
 - **Anomaly Detection**: Residuals can help identify unusual data points that don't follow the typical pattern.
 - **Data Understanding**: It provides insights into the data, like identifying the presence of seasonality or trends over time.
@@ -69,10 +71,8 @@ import plotly.express as px
 import plotly
 import plotly.io as pio
 
-from plotly.graph_objects import Figure
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from hetdesrun.component.registration import register
 from hetdesrun.utils import plotly_fig_to_json_dict
 from hetdesrun.runtime.exceptions import ComponentInputValidationException
 
@@ -91,7 +91,7 @@ def decompose_time_series(
     freq (Integer, optional): Frequency of the time series. If not provided, it will be inferred.
 
     Outputs:
-    df (Pandas DataFrame: DataFrame containing the original data, trend, seasonal, and residual components.
+    df (Pandas DataFrame): DataFrame containing the original data, trend, seasonal, and residual components.
     """
     # Parameter validations
     if len(series) == 0:
@@ -100,7 +100,6 @@ def decompose_time_series(
             error_code="EmptySeries",
             invalid_component_inputs=["series"],
         )
-    
     try:
         series.index = pd.to_datetime(series.index, utc=True)
     except:
@@ -110,23 +109,21 @@ def decompose_time_series(
             error_code="422",
             invalid_component_inputs=["series"],
         )
-    
     if model not in ['additive', 'multiplicative']:
         raise ComponentInputValidationException(
             "model must be 'additive' or 'multiplicative'",
             error_code=422,
             invalid_component_inputs=["model"],
         )
-    
     if freq and (not isinstance(freq, int) or freq*2 > len(series)):
         raise ComponentInputValidationException(
             "freq needs to be an integer smaller than half the length of the series",
             error_code=422,
             invalid_component_inputs=["freq"],
         )
-
+    
+    # Generate the decomposition of the time series
     series = series.sort_index().dropna()
-
     decomposition = seasonal_decompose(series, model=model, period=freq)
 
     # Combine the components with the original data
@@ -259,12 +256,13 @@ def main(*, series, model="additive", freq=None):
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # generate decomposed time series
+    # Step 1: Decompose some time series into its trend, seasonality, and residuals components
     decomposed_series = decompose_time_series(
         series=series,
         model=model,
         freq=freq
     )
-    # create plot
+    # Step 2: Create decomposition plot
     fig = multi_series_with_multi_yaxis(decomposed_series)
 
     return {"fig": plotly_fig_to_json_dict(fig)}

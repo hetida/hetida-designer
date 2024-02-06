@@ -245,7 +245,7 @@ COMPONENT_INFO = {
         "decomposed_series": {"data_type": "DATAFRAME"},
     },
     "name": "Seasonal Decompose",
-    "category": "Time Series Analysis",
+    "category": "Playground",
     "description": "Decomposition of some time series",
     "version_tag": "1.0.0",
     "id": "ac353060-bef2-490a-af5e-e9edbea2df0a",
