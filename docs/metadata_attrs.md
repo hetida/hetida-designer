@@ -79,6 +79,15 @@ The following metadata fields should be attached to timeseries objects (typicall
     # single timeseries)
 
     "ref_metrics": ["sensor_a", "sensor_b"],
+
+
+    # Fixed frequency (timedelta between subsequent datapoints) of the timeseries as
+    # Pandas date offset alias or a timedelta string.
+    # In combination with an offset this defines the absolute timestamps at which data is expected.
+
+    "ref_data_frequency": {"sensor_a": 5min}
+    "ref_data_frequency_offset": {"sensor_a": 4min}
+
 }
 ```
 
