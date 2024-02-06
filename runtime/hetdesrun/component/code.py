@@ -7,7 +7,7 @@ to provide a very elementary support system to the designer code editor.
 import json
 import logging
 from keyword import iskeyword
-from typing import Any, Literal
+from typing import Literal
 
 import black
 
@@ -95,7 +95,7 @@ def component_info_default_value_string(inp: TransformationInput) -> str:
 
 
 def function_signature_default_value_string(inp: TransformationInput) -> str:
-    if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
+    if inp.value is None or inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
         return repr(None)
 
     if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
@@ -103,7 +103,7 @@ def function_signature_default_value_string(inp: TransformationInput) -> str:
             "SERIES" if inp.data_type == DataType.Series else "DATAFRAME"
         )
 
-        if not isinstance(inp.value, str | dict[Any, Any] | list[Any]):
+        if not isinstance(inp.value, str | dict | list):
             msg = (
                 f"Default value '{inp.value}' of input '{inp.name}' "
                 f"has wrong type for a {inp.data_type}."
