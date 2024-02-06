@@ -29,7 +29,7 @@ DataFrame with information about the gaps.
 - **auto_frequency_determination** (Boolean, default value: true):
   If true, the function will automatically determine the expected data frequency based on the
   **timeseries** index and **expected_data_frequency_str** must not be set.
-  If false, a *expected_data_frequency_str** must be set.
+  If false, an **expected_data_frequency_str** must be set.
   If "ref_data_frequency" is contained in the attributes of **timeseries** this value will be used
   for the **expected_data_frequency_str** and **auto_frequency_determination** will be set to false.
 
@@ -180,9 +180,9 @@ Thus the corresponding result is
             "0": false,
             "1": false
         },
-        "gap_size": {
-            "0": "P0DT7H3M0S",
-            "1": "P0DT8H3M0S"
+        "gap_size_in_seconds": {
+            "0": 25380,
+            "1": 28980
         },
         "value_to_left": {
             "0": 20,
@@ -291,14 +291,14 @@ The result of either of these inputs is then
             "5": false,
             "6": false
         },
-        "gap_size": {
-            "0": "P0DT1H0M0S",
-            "1": "P0DT0H2M0S",
-            "2": "P0DT0H2M0S",
-            "3": "P0DT0H2M0S",
-            "4": "P0DT7H3M0S",
-            "5": "P0DT0H2M0S",
-            "6": "P0DT8H3M0S"
+        "gap_size_in_seconds": {
+            "0": 3600,
+            "1": 120,
+            "2": 120,
+            "3": 120,
+            "4": 25380,
+            "5": 120,
+            "6": 28980
         },
         "value_to_left": {
             "0": null,
@@ -328,7 +328,94 @@ The result of either of these inputs is then
             "6": 30
         }
     }
-}```
+}
+```
+In some cases, data in the timeseries is expected at specific periodic points in time, e.g. every
+full minute or every five minutes, at :04, :09, :14 etc.
+If the frequency offset is specified in addition to the expected data frequency, the corresponding
+timestamps are added as gaps of size 0s if there is no datapoint in the **timeseries** at this
+point.
+
+In the following example JSON input, the provided series would have no gaps if no
+**expected_data_frequency_offset_str** was set, since all datapoints are separated exactly by the
+data frequency of one minute.
+However, if **expected_data_frequency_offset_str** is set to `0s`, there are a total of four gaps,
+including those at the timestamps defined by **interval_start_timestamp_str** and
+**interval_end_timestamp_str**.
+```
+{
+    "timeseries": {
+        "2020-01-01T01:16:30.000Z": 10.0,
+        "2020-01-01T01:17:30.000Z": 10.0,
+        "2020-01-01T01:18:30.000Z": 10.0
+    },
+    "interval_start_timestamp_str": "2020-01-01T01:16:00.000Z",
+    "interval_end_timestamp_str": "2020-01-01T01:19:00.000Z",
+    "auto_frequency_determination": false,
+    "expected_data_frequency_str": "1min",
+    "expected_data_frequency_offset_str": "0s",
+    "fill_value": 0
+}
+```
+The **fill_value** of `0` means that the "value_to_left" for the first gap and the "value_to_right"
+for the last gap are 0 instead of NaN and thus the "mean_left_right" can be calculated, resulting in
+the following output:
+```
+{
+    "__hd_wrapped_data_object__": "DATAFRAME",
+    "__metadata__": {},
+    "__data__": {
+        "start": {
+            "0": "2020-01-01T01:16:00.000Z",
+            "1": "2020-01-01T01:17:00.000Z",
+            "2": "2020-01-01T01:18:00.000Z",
+            "3": "2020-01-01T01:19:00.000Z"
+        },
+        "end": {
+            "0": "2020-01-01T01:16:00.000Z",
+            "1": "2020-01-01T01:17:00.000Z",
+            "2": "2020-01-01T01:18:00.000Z",
+            "3": "2020-01-01T01:19:00.000Z"
+        },
+        "start_inclusive": {
+            "0": true,
+            "1": true,
+            "2": true,
+            "3": true
+        },
+        "end_inclusive": {
+            "0": true,
+            "1": true,
+            "2": true,
+            "3": true
+        },
+        "gap_size_in_seconds": {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0
+        },
+        "value_to_left": {
+            "0": 0,
+            "1": 10,
+            "2": 10,
+            "3": 10
+        },
+        "value_to_right": {
+            "0": 10,
+            "1": 10,
+            "2": 10,
+            "3": 0
+        },
+        "mean_left_right": {
+            "0": 5,
+            "1": 10,
+            "2": 10,
+            "3": 5
+        }
+    }
+}
+```
 """
 
 from typing import Any
@@ -462,7 +549,10 @@ class GapDetectionParameters(BaseModel):
                     "inbetween interval_start_timestamp and interval_end_timestamp, "
                     f"while it is {auto_freq_end_timestamp} < {interval_start_timestamp}.",
                     error_code=422,
-                    invalid_component_inputs=["auto_freq_end_timestamp_str"],
+                    invalid_component_inputs=[
+                        "interval_start_timestamp",
+                        "auto_freq_end_timestamp_str",
+                    ],
                 )
             if interval_end_timestamp < auto_freq_end_timestamp:
                 raise ComponentInputValidationException(
@@ -470,7 +560,10 @@ class GapDetectionParameters(BaseModel):
                     "inbetween interval_start_timestamp and interval_end_timestamp, "
                     f"while it is {auto_freq_end_timestamp} > {interval_end_timestamp}.",
                     error_code=422,
-                    invalid_component_inputs=["auto_freq_end_timestamp_str"],
+                    invalid_component_inputs=[
+                        "interval_end_timestamp",
+                        "auto_freq_end_timestamp_str",
+                    ],
                 )
         else:
             auto_freq_end_timestamp = None
@@ -524,14 +617,20 @@ class GapDetectionParameters(BaseModel):
                     "An expected_data_frequency_str is required for gap detection, "
                     "if it is not automatically determined.",
                     error_code=422,
-                    invalid_component_inputs=["expected_data_frequency_str"],
+                    invalid_component_inputs=[
+                        "auto_frequency_determination",
+                        "expected_data_frequency_str",
+                    ],
                 )
         elif expected_data_frequency_str is not None:
             raise ComponentInputValidationException(
                 "The expected_data_frequency_str must not be set, "
                 "if automatical frequency determination is enabled.",
                 error_code=422,
-                invalid_component_inputs=["expected_data_frequency_str"],
+                invalid_component_inputs=[
+                    "auto_frequency_determination",
+                    "expected_data_frequency_str",
+                ],
             )
         return expected_data_frequency_str
 
@@ -551,24 +650,29 @@ class GapDetectionParameters(BaseModel):
     def verify_expected_data_frequency_offset(
         cls, expected_data_frequency_offset_str: str, values: dict
     ) -> str:
+        if expected_data_frequency_offset_str is None:
+            return None
         auto_frequency_determination = values["auto_frequency_determination"]
         expected_data_frequency_str = values["expected_data_frequency_str"]
-        if (
-            auto_frequency_determination is True
-            and expected_data_frequency_offset_str is not None
-        ):
+        if auto_frequency_determination is True:
             raise ComponentInputValidationException(
                 "The expected_data_frequency_offset_str must not be set, "
                 "if automatical frequency determination is enabled.",
                 error_code=422,
-                invalid_component_inputs=["expected_data_frequency_str"],
+                invalid_component_inputs=[
+                    "auto_frequency_determination",
+                    "expected_data_frequency_offset_str",
+                ],
             )
         if expected_data_frequency_str is None:
             raise ComponentInputValidationException(
-                "A expected_data_frequency_str is required for gap detection, "
+                "An expected_data_frequency_str is required for gap detection, "
                 "if an expected_data_frequency_offset_str is provided.",
                 error_code=422,
-                invalid_component_inputs=["expected_data_frequency_str"],
+                invalid_component_inputs=[
+                    "expected_data_frequency_str",
+                    "expected_data_frequency_offset_str",
+                ],
             )
         return expected_data_frequency_offset_str
 
@@ -692,6 +796,22 @@ def identify_gaps(
     gap_ends = df_normalized_interval_sizes[
         df_normalized_interval_sizes["gap"] > expected_data_frequency_factor
     ].index.to_numpy()
+
+    if len(gap_ends) == 0:
+        return pd.DataFrame(
+            {},
+            columns=[
+                "start",
+                "end",
+                "start_inclusive",
+                "end_inclusive",
+                "gap_size_in_seconds",
+                "value_to_left",
+                "value_to_right",
+                "mean_left_right",
+            ],
+        )
+
     # Extract the start and end timestamps of the gaps
     gap_starts = [
         df_normalized_interval_sizes.index[index - 1]
@@ -765,7 +885,7 @@ def shift_timestamp_to_the_right_onto_rhythm(
     ) + data_frequency_offset
 
 
-def gaps_from_missing_expected_datapoints(
+def identify_gaps_from_missing_expected_datapoints(
     timeseries: pd.Series,
     interval_start_timestamp: pd.Timestamp,
     interval_end_timestamp: pd.Timestamp,
@@ -969,25 +1089,21 @@ def main(
         normalized_intervals_df, constricted_timeseries, expected_data_frequency_factor
     )
 
-    identified_gaps_df = gaps_from_missing_expected_datapoints(
-        timeseries,
-        input_params.interval_start_timestamp,
-        input_params.interval_end_timestamp,
-        input_params.expected_data_frequency,
-        input_params.expected_data_frequency_offset,
+    gaps_from_missing_expected_datapoints = (
+        identify_gaps_from_missing_expected_datapoints(
+            timeseries,
+            input_params.interval_start_timestamp,
+            input_params.interval_end_timestamp,
+            input_params.expected_data_frequency,
+            input_params.expected_data_frequency_offset,
+        )
     )
 
     return {
         "gap_info": pd.concat(
             [
                 identified_gaps_df,
-                gaps_from_missing_expected_datapoints(
-                    timeseries,
-                    input_params.interval_start_timestamp,
-                    input_params.interval_end_timestamp,
-                    input_params.expected_data_frequency,
-                    input_params.expected_data_frequency_offset,
-                ),
+                gaps_from_missing_expected_datapoints,
             ],
             ignore_index=True,
         )
