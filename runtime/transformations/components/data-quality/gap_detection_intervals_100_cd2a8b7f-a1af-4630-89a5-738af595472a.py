@@ -384,7 +384,7 @@ class GapDetectionParameters(BaseModel):
     expected_data_frequency_str: str | None
     expected_data_frequency: pd.Timedelta | None = None
     expected_data_frequency_factor: float
-    expected_data_frequency_offset_str: str
+    expected_data_frequency_offset_str: str | None = None
     expected_data_frequency_offset: pd.Timedelta | None = None
     fill_value: Any
 
@@ -566,7 +566,7 @@ class GapDetectionParameters(BaseModel):
         if expected_data_frequency_str is None:
             raise ComponentInputValidationException(
                 "A expected_data_frequency_str is required for gap detection, "
-                "if an expected_data_frequency_offset_str is proided.",
+                "if an expected_data_frequency_offset_str is provided.",
                 error_code=422,
                 invalid_component_inputs=["expected_data_frequency_str"],
             )
@@ -578,7 +578,10 @@ class GapDetectionParameters(BaseModel):
         expected_data_frequency_offset: pd.Timedelta | None,  # noqa: ARG002
         values: dict,
     ) -> pd.Timedelta | None:
-        if values["expected_data_frequency_offset_str"] is None:
+        if (
+            "expected_data_frequency_offset_str" not in values
+            or values["expected_data_frequency_offset_str"] is None
+        ):
             return None
         return (
             freqstr2timedelta(
@@ -763,13 +766,15 @@ def shift_timestamp_to_the_right_onto_rhythm(
 
 
 def gaps_from_missing_expected_datapoints(
-    gaps_df: pd.DataFrame,
     timeseries: pd.Series,
     interval_start_timestamp: pd.Timestamp,
     interval_end_timestamp: pd.Timestamp,
     expected_data_frequency: pd.Timedelta,
-    expected_data_frequency_offset: pd.Timedelta,
+    expected_data_frequency_offset: pd.Timedelta | None,
 ) -> pd.DataFrame:
+    if expected_data_frequency_offset is None:
+        return None
+
     missing_expected_datapoints = pd.date_range(
         start=shift_timestamp_to_the_right_onto_rhythm(
             interval_start_timestamp,
@@ -801,24 +806,30 @@ def gaps_from_missing_expected_datapoints(
         offset=expected_data_frequency_offset,
     ).first()
 
-    gaps_df.append(
-        pd.DataFrame(
-            {
-                "start": missing_expected_datapoints,
-                "end": missing_expected_datapoints,
-                "start_inclusive": True,
-                "end_inclusive": True,
-                "gap_size_in_seconds": 0,
-                "value_to_left": left_values,
-                "value_to_right": right_values,
-                "mean_left_right": np.mean((left_values, right_values), axis=0)
-                if pd.api.types.is_numeric_dtype(timeseries) is True
-                else None,
-            }
-        )
+    missing_datapoints_df = pd.DataFrame(
+        {
+            "start": missing_expected_datapoints,
+            "end": missing_expected_datapoints,
+            "start_inclusive": True,
+            "end_inclusive": True,
+            "gap_size_in_seconds": 0,
+            "value_to_left": left_values.loc[missing_expected_datapoints].to_numpy(),
+            "value_to_right": right_values.loc[missing_expected_datapoints].to_numpy(),
+            "mean_left_right": np.mean(
+                (
+                    left_values.loc[missing_expected_datapoints],
+                    right_values.loc[missing_expected_datapoints],
+                ),
+                axis=0,
+            )
+            if pd.api.types.is_numeric_dtype(timeseries) is True
+            else None,
+        }
+        if len(missing_expected_datapoints) > 0
+        else pd.DataFrame({})
     )
 
-    return gaps_df
+    return missing_datapoints_df
 
 
 # ***** DO NOT EDIT LINES BELOW *****
@@ -959,7 +970,6 @@ def main(
     )
 
     identified_gaps_df = gaps_from_missing_expected_datapoints(
-        input_params.expected_data_frequency,
         timeseries,
         input_params.interval_start_timestamp,
         input_params.interval_end_timestamp,
@@ -967,7 +977,21 @@ def main(
         input_params.expected_data_frequency_offset,
     )
 
-    return {"gap_info": identified_gaps_df}
+    return {
+        "gap_info": pd.concat(
+            [
+                identified_gaps_df,
+                gaps_from_missing_expected_datapoints(
+                    timeseries,
+                    input_params.interval_start_timestamp,
+                    input_params.interval_end_timestamp,
+                    input_params.expected_data_frequency,
+                    input_params.expected_data_frequency_offset,
+                ),
+            ],
+            ignore_index=True,
+        )
+    }
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {
