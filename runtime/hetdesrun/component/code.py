@@ -95,7 +95,11 @@ def component_info_default_value_string(inp: TransformationInput) -> str:
 
 
 def function_signature_default_value_string(inp: TransformationInput) -> str:
-    if inp.value is None or inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
+    if (
+        inp.value is None
+        or inp.value == ""
+        and inp.data_type not in (DataType.String, DataType.Any)
+    ):
         return repr(None)
 
     if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
