@@ -1077,6 +1077,16 @@ def constrict_intervals_df_to_interval(
 
 
 def merge_intervals(intervals: pd.DataFrame) -> pd.DataFrame:
+    """Merge intervals.
+
+    Apply cumsum to logical conditions that specify where in the dataframe a group change occurs in
+    order to generate group indices for grouping the data.
+    Therefore, the correct sorting of the data in the data frame is crucial.
+    Multiple steps are required to properly track whether the resulting interval boundary is
+    inclusive or not.
+    """
+    intervals = intervals.sort_values["start", "end"]
+
     intervals["same_start"] = (
         intervals["start"] != intervals["start"].shift()
     ).cumsum()
