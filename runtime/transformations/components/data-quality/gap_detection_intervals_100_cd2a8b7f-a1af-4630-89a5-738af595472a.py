@@ -88,7 +88,7 @@ DataFrame with information about the gaps.
  If this value is set
 
 - **known_gap_timestamps** (Series, default value: None):
-  Expects Pandas Series with index of datatype DateTimeIndex.
+  Expects Pandas Series with index of datatype DateTimeIndex. The values are not considered.
 
 - **known_gap_intervals** (DataFrame, default value: None):
   Expects Pandas DataFrame with columns "start", "end", "start_inclusive", "end_inclusive, which all
@@ -257,7 +257,7 @@ The same result is obtained without using metadata by the JSON input
     "interval_start_timestamp_str": "2020-01-01T00:16:00.000Z",
     "interval_end_timestamp_str": "2020-01-01T16:34:00.000Z",
     "auto_frequency_determination": false,
-    "expected_data_frequency": "1min"
+    "expected_data_frequency_str": "1min"
 }
 ```
 The result of either of these inputs is then
@@ -469,7 +469,7 @@ def freqstr2timedelta(freqstr: str, input_name: str) -> pd.Timedelta:
             ) from err
 
 
-class GapDetectionParameters(BaseModel):
+class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     interval_start_timestamp_str: str | None
     interval_start_timestamp: pd.Timestamp | None = None
     interval_end_timestamp_str: str | None
@@ -485,10 +485,10 @@ class GapDetectionParameters(BaseModel):
     expected_data_frequency_factor: float
     expected_data_frequency_offset_str: str | None = None
     expected_data_frequency_offset: pd.Timedelta | None = None
-    fill_value: Any
+    fill_value: Any | None
     timeseries: pd.Series
-    known_gap_timestamps: pd.Series
-    known_gap_intervals: pd.DataFrame
+    known_gap_timestamps: pd.Series | None
+    known_gap_intervals: pd.DataFrame | None
 
     @validator("interval_start_timestamp", always=True)
     def get_interval_start_timestamp_from_interval_start_timestamp_str(
@@ -800,20 +800,21 @@ class GapDetectionParameters(BaseModel):
 
 
 def add_boundary_timestamps(
-    timeseries: pd.Series,
+    timeseries_with_bounds: pd.Series,
     interval_start_timestamp: pd.Timestamp,
     interval_end_timestamp: pd.Timestamp,
     fill_value: Any | None,
 ) -> pd.Series:
-    if interval_start_timestamp not in timeseries.index:
-        timeseries[interval_start_timestamp] = fill_value
+    timeseries_with_bounds = timeseries_with_bounds.copy()
+    if interval_start_timestamp not in timeseries_with_bounds.index:
+        timeseries_with_bounds[interval_start_timestamp] = fill_value
 
-    if interval_end_timestamp not in timeseries.index:
-        timeseries[interval_end_timestamp] = fill_value
+    if interval_end_timestamp not in timeseries_with_bounds.index:
+        timeseries_with_bounds[interval_end_timestamp] = fill_value
 
-    timeseries = timeseries.sort_index()
+    timeseries_with_bounds = timeseries_with_bounds.sort_index()
 
-    return timeseries
+    return timeseries_with_bounds
 
 
 def constrict_series_to_interval(
@@ -978,25 +979,43 @@ def shift_timestamp_to_the_right_onto_rhythm(
 
 def get_boundary_values(
     timeseries: pd.Series,
-    gap_boundary: NDArray[np.datetime64],
-    gap_boundary_inclusive: NDArray[np.bool_],
+    gap_boundaries: NDArray[np.datetime64],
+    gap_boundaries_inclusive: NDArray[np.bool_],
     method: Literal["ffill", "bfill"],
+    fill_value: Any,
 ) -> NDArray:
     boundary_values_exclusive = timeseries.reindex(
-        timeseries.index.append(gap_boundary[np.logical_not(gap_boundary_inclusive)]),
+        timeseries.index.join(
+            pd.Index(gap_boundaries[np.logical_not(gap_boundaries_inclusive)]),
+            how="outer",
+            sort=True,
+        ),
         method=method,
     )
     boundary_values_exclusive = boundary_values_exclusive[
-        gap_boundary[np.logical_not(gap_boundary_inclusive)]
+        gap_boundaries[np.logical_not(gap_boundaries_inclusive)]
     ]
 
-    timeseries_without_inclusive_gap_starts = timeseries.copy()
-    timeseries_without_inclusive_gap_starts[gap_boundary[gap_boundary_inclusive]] = None
-    boundary_values_inclusive = timeseries_without_inclusive_gap_starts.reindex(
-        timeseries.index.append(gap_boundary[gap_boundary_inclusive]), method=method
+    timeseries_without_inclusive_gap_boundaries = timeseries.copy()
+    timeseries_without_inclusive_gap_boundaries = (
+        timeseries_without_inclusive_gap_boundaries.drop(
+            timeseries_without_inclusive_gap_boundaries.index.intersection(
+                gap_boundaries[gap_boundaries_inclusive]
+            )
+        )
     )
+    boundary_values_inclusive = timeseries_without_inclusive_gap_boundaries.reindex(
+        timeseries.index.join(
+            pd.Index(gap_boundaries[gap_boundaries_inclusive]),
+            how="outer",
+            sort=True,
+        ),
+        method=method,
+    )
+    if fill_value is not None:
+        boundary_values_inclusive = boundary_values_inclusive.fillna(value=fill_value)
     boundary_values_inclusive = boundary_values_inclusive[
-        gap_boundary[gap_boundary_inclusive]
+        gap_boundaries[gap_boundaries_inclusive]
     ]
 
     boundary_values = pd.concat(
@@ -1085,7 +1104,7 @@ def merge_intervals(intervals: pd.DataFrame) -> pd.DataFrame:
     Multiple steps are required to properly track whether the resulting interval boundary is
     inclusive or not.
     """
-    intervals = intervals.sort_values["start", "end"]
+    intervals = intervals.sort_values(["start", "end"])
 
     intervals["same_start"] = (
         intervals["start"] != intervals["start"].shift()
@@ -1138,9 +1157,10 @@ def merge_intervals(intervals: pd.DataFrame) -> pd.DataFrame:
 def get_gap_intervals_info(
     constricted_timeseries_with_bounds: pd.Series,
     constricted_gap_interval_dfs: list[pd.DataFrame],
+    fill_value: Any,
 ) -> pd.DataFrame:
     constricted_gap_interval_dfs = [
-        df for df in constricted_gap_interval_dfs if len(df) != 0
+        df for df in constricted_gap_interval_dfs if df is None or len(df) != 0
     ]
 
     if len(constricted_gap_interval_dfs) == 0:
@@ -1150,16 +1170,24 @@ def get_gap_intervals_info(
         pd.concat(constricted_gap_interval_dfs, ignore_index=True)
     )
 
-    gap_starts = merged_gap_intervals.loc["start"].to_numpy()
-    gap_starts_inclusive = merged_gap_intervals.loc["start_inclusive"].to_numpy()
+    gap_starts = merged_gap_intervals["start"].to_numpy()
+    gap_starts_inclusive = merged_gap_intervals["start_inclusive"].to_numpy()
     left_values = get_boundary_values(
-        constricted_timeseries_with_bounds, gap_starts, gap_starts_inclusive, "ffill"
+        timeseries=constricted_timeseries_with_bounds,
+        gap_boundaries=gap_starts,
+        gap_boundaries_inclusive=gap_starts_inclusive,
+        method="ffill",
+        fill_value=fill_value,
     )
 
     gap_ends = merged_gap_intervals["end"].to_numpy()
     gap_ends_inclusive = merged_gap_intervals["end_inclusive"].to_numpy()
     right_values = get_boundary_values(
-        constricted_timeseries_with_bounds, gap_ends, gap_ends_inclusive, "bfill"
+        timeseries=constricted_timeseries_with_bounds,
+        gap_boundaries=gap_ends,
+        gap_boundaries_inclusive=gap_ends_inclusive,
+        method="bfill",
+        fill_value=fill_value,
     )
 
     gap_info = pd.DataFrame(
@@ -1289,14 +1317,14 @@ def main(
         fill_value=fill_value,
     )
 
-    constricted_timeseries = constrict_series_to_interval(
+    constricted_timeseries_without_bounds = constrict_series_to_interval(
         input_params.timeseries,
         input_params.interval_start_timestamp,
         input_params.interval_end_timestamp,
     )
 
     constricted_timeseries_with_bounds = add_boundary_timestamps(
-        constricted_timeseries,
+        constricted_timeseries_without_bounds,
         input_params.interval_start_timestamp,
         input_params.interval_end_timestamp,
         fill_value,
@@ -1332,6 +1360,7 @@ def main(
                     constricted_known_gap_intervals,
                     constricted_known_gap_timestamp_intervals,
                 ],
+                fill_value=input_params.fill_value,
             )
         }
 
@@ -1363,11 +1392,11 @@ def main(
 
     gaps_from_missing_expected_datapoints = (
         identify_gaps_from_missing_expected_datapoints(
-            constricted_timeseries_with_bounds,
-            input_params.interval_start_timestamp,
-            input_params.interval_end_timestamp,
-            input_params.expected_data_frequency,
-            input_params.expected_data_frequency_offset,
+            constricted_timeseries_without_bounds=constricted_timeseries_without_bounds,
+            interval_start_timestamp=input_params.interval_start_timestamp,
+            interval_end_timestamp=input_params.interval_end_timestamp,
+            expected_data_frequency=input_params.expected_data_frequency,
+            expected_data_frequency_offset=input_params.expected_data_frequency_offset,
         )
     )
 
@@ -1380,6 +1409,7 @@ def main(
                 constricted_known_gap_timestamp_intervals,
                 gaps_from_missing_expected_datapoints,
             ],
+            fill_value=input_params.fill_value,
         )
     }
 
