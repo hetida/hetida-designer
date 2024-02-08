@@ -1220,7 +1220,7 @@ _import_from_dir() {
   # from py files
   # shellcheck disable=SC2044
   for f in $(find "$EXPORT_DIRECTORY" -name '*.py'); do
-    if [[ "$(basename "$f")" != "__init__.py" ]]; then
+    if [[ "$(basename "$f")" != "__init__.py" ]] && [[ "$(basename "$f")" != "hdutils.py" ]]; then
       _debug "handle py file $f"
 
       # only ensure jq if it is needed, i.e. only if py files need
