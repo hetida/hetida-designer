@@ -374,6 +374,11 @@ def timeseries_plot_including_predictions(
     in_sample_forecast = in_sample_forecast.sort_index()
     out_of_sample_forecast = out_of_sample_forecast.sort_index()
 
+    in_sample_forecast_last_value = in_sample_forecast.iloc[-1] #data.iloc[-1]
+    in_sample_forecast_last_index = in_sample_forecast.index[-1] #data.index[-1]
+    last_value_series = pd.Series([in_sample_forecast_last_value], index=[in_sample_forecast_last_index])
+    out_of_sample_forecast = pd.concat([last_value_series, out_of_sample_forecast])
+
     # Creating the figure (Observed Values and Forecasts)
     fig = go.Figure([
         go.Scatter(
@@ -401,19 +406,32 @@ def timeseries_plot_including_predictions(
 
     # Adding confidence intervals if specified
     if conf_interval:
+        complete_forecast = pd.concat([in_sample_forecast, out_of_sample_forecast])
+        conf_interval_upper_limit = complete_forecast + 1.96*mse
+        conf_interval_lower_limit = complete_forecast - 1.96*mse
+        value_before = data.iloc[-(len(in_sample_forecast) + 1)] 
+        index_before = data.index[-(len(in_sample_forecast) + 1)] 
+        value_before_series = pd.Series([value_before], index=[index_before])
+        conf_interval_upper_limit = pd.concat([value_before_series, conf_interval_upper_limit])
+        conf_interval_lower_limit = pd.concat([value_before_series, conf_interval_lower_limit])
+        ##Nur Forecast
+        #conf_interval_upper_limit = out_of_sample_forecast + 1.96*mse
+        #conf_interval_upper_limit[0] = data[-1]
+        #conf_interval_lower_limit = out_of_sample_forecast - 1.96*mse
+        #conf_interval_lower_limit[0] = data[-1]
         fig.add_traces([
             go.Scatter(
                 name="Upper Bound",
-                x=out_of_sample_forecast.index,
-                y=out_of_sample_forecast + 1.96*mse,
+                x=conf_interval_upper_limit.index,
+                y=conf_interval_upper_limit,
                 mode="lines",
                 line={"width": 0},
                 showlegend=False,
             ),
             go.Scatter(
                 name="Lower Bound",
-                x=out_of_sample_forecast.index,
-                y=out_of_sample_forecast - 1.96*mse,
+                x=conf_interval_lower_limit.index,
+                y=conf_interval_lower_limit,
                 mode="lines",
                 line={"width": 0},
                 showlegend=False,
