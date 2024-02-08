@@ -21,10 +21,11 @@ to forecast data points for both short-term (in-sample) and long-term (out-of-sa
     Whether or not to shuffle the data before splitting.
 - **seasonal_periods** (Integer, default value: None):
     The number of observations that constitute a full seasonal cycle.
-- **use_boxcox** (Boolean, default value: True): Whether to apply Box-Cox transformation.
+- **use_boxcox** (Boolean, default value: True): 
+    Whether to apply Box-Cox transformation.
 - **initialization_method** (String, default value: "estimated"):
     Method for initializing the model ('estimated', 'heuristic', 'legacy-heuristic', None).
-- **iterations** (Integer, default value: 100):
+- **iterations** (Integer, default value: 200):
     The number of iterations for the random search in the hyperparameter tuning.
 - **alpha** (Float, default value: 0.05):
     Significance level to compare the p-value with.
@@ -40,13 +41,14 @@ This function is essential for users who need to project future values in time s
 By providing both in-sample and out-of-sample forecasts, it allows users to gauge the model's
 performance on known data and to predict future trends. The component is devided in several steps,
 that can be summarized as follows:
-1. Split the time series into training and testing sets
-2. Optimize hyperparameters for the Exponential Smoothing model using random search
-3. Train some Exponential Smoothing model with optimized hyperparameters
-4. Forecast future values using the trained Exponential Smoothing model
-5. Decide whether to include some confidence interval for the out-of-sample forecast,
+1. Adjust the time series so that all its values are positive
+2. Split the time series into training and testing sets
+3. Optimize hyperparameters for the Exponential Smoothing model using random search
+4. Train some Exponential Smoothing model with optimized hyperparameters
+5. Forecast future values using the trained Exponential Smoothing model
+6. Decide whether to include some confidence interval for the out-of-sample forecast,
 based on the normality of the residuals specified by the Shapiro-Wilk Test
-6. Create a Plotly time series plot including in-sample and out-of-sample forecasts,
+7. Create a Plotly time series plot including in-sample and out-of-sample forecasts,
 with optional confidence intervals
 
 ## Example
@@ -95,6 +97,77 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from hetdesrun.runtime.exceptions import ComponentInputValidationException
 from hetdesrun.utils import plotly_fig_to_json_dict
 
+from pandas.tseries.frequencies import to_offset
+
+def resample_time_series_if_needed(
+    series: pd.Series
+):
+    """Checks if a time series has consistent intervals between its indices.
+    If not, it resamples the series to the most common interval.
+
+    Inputs:
+    series (Pandas Series): The time series with a DatetimeIndex.
+
+    Outputs:
+    series (Pandas Series): The resampled time series if necessary.
+    """
+    # Parameter validations
+    if len(series) == 0:
+        raise ComponentInputValidationException(
+            "The input data must not be empty!",
+            error_code="EmptyDataFrame",
+            invalid_component_inputs=["series"],
+        )
+    try:
+        series.index = pd.to_datetime(series.index, utc=True)
+    except:
+        raise ComponentInputValidationException(
+            "Indices of series must be datetime, but are of type "
+            + str(series.index.dtype),
+            error_code="422",
+            invalid_component_inputs=["series"],
+        )
+
+    # Calculate differences between timestamps
+    time_diffs = series.index.to_series().diff().dropna()
+
+    # Determine the "normal" interval as the most common value in the differences
+    normal_diff = time_diffs.value_counts().idxmax()
+
+    # Check if all intervals are equal to the "normal" interval
+    if not all(time_diffs == normal_diff):
+        # Create a new index with the "normal" interval
+        new_index = pd.date_range(start=series.index.min(), end=series.index.max(), freq=normal_diff)
+        
+        # Resample the series to the new index
+        series = series.reindex(new_index).interpolate()
+    else:
+        series = series
+
+    return series
+
+def ensure_positivity(
+    series: pd.Series
+):
+    """Adjusts a time series so that all its values are positive. 
+
+    Inputs:
+    data (Pandas Series): The time series data as a Pandas Series.
+
+    Outputs:
+    series (Pandas Series): The adjusted time series with all values being positive.
+    min_value (Float): Minimal value in the time series data.
+    """
+    # Überprüfen, ob der kleinste Wert in der Zeitreihe negativ ist
+    min_value = series.min()
+    if min_value <= 0:
+        # Verschieben der gesamten Zeitreihe nach oben, so dass der kleinste Wert 0 wird
+        series = series - min_value + 1
+    else:
+        # Wenn alle Werte bereits positiv sind, direkt die ursprüngliche Zeitreihe zurückgeben
+        series = series
+
+    return series, min_value
 
 def train_test_split_func(
     series: pd.Series,
@@ -213,6 +286,8 @@ def hyper_tuning_grid_search(
             damping_trend=phi
         )
         y_pred = fitted_model.forecast(len(test))
+        test = test[~test.isin([np.nan, np.inf, -np.inf])]
+        y_pred = y_pred[~y_pred.isin([np.nan, np.inf, -np.inf])]
         if len(test) == len(y_pred.dropna()):
             score = np.sqrt(mean_squared_error(y_pred, test))
             if score < best_score:
@@ -345,9 +420,10 @@ def timeseries_plot_including_predictions(
     out_of_sample_forecast: pd.Series,
     mse: float,
     p_value: float,
+    min_value: float,
     conf_interval: bool,
     alpha: float=0.05
-) -> go.Figure:
+):
     """Creates a Plotly time series plot including in-sample and out-of-sample predictions.
 
     Inputs:
@@ -361,6 +437,8 @@ def timeseries_plot_including_predictions(
         Mean Squared Error evaluated on the testing data.
     p_value (Float):
         P-Value of the Shapiro Wilk Test for normality of residuals.
+    min_value (Float):
+        If smaller zero, the time series data are adjusted to there original values.
     conf_interval (Bool):
         If True, it plots the confidence intervals.
     alpha (Float, optional):
@@ -373,6 +451,11 @@ def timeseries_plot_including_predictions(
     data = data.sort_index()
     in_sample_forecast = in_sample_forecast.sort_index()
     out_of_sample_forecast = out_of_sample_forecast.sort_index()
+
+    if min_value <= 0:
+        data = data + min_value - 1
+        in_sample_forecast = in_sample_forecast + min_value - 1
+        out_of_sample_forecast = out_of_sample_forecast + min_value -1 
 
     in_sample_forecast_last_value = in_sample_forecast.iloc[-1] #data.iloc[-1]
     in_sample_forecast_last_index = in_sample_forecast.index[-1] #data.index[-1]
@@ -440,6 +523,9 @@ def timeseries_plot_including_predictions(
             )
         ])
 
+    if min_value <= 0:
+        fig.add_hline(y=0, line=dict(color='gray', width=1, dash='dash'))
+
     # Layout options
     fig.update_layout(
         xaxis={
@@ -478,7 +564,7 @@ def timeseries_plot_including_predictions(
     #Annotations
     annotations = []
     if conf_interval:
-        conf_text = f"Residuals are likely normal, since p-value ({p_value}) is larger than alpha ({alpha}). Thus, the confindence interval is plotted."
+        conf_text = f"Residuals are likely normal, since p-value ({p_value}) is larger than alpha ({alpha}). Thus, the confidence interval is plotted."
     else:
         conf_text = f"Residuals are likely not normal, since p-value ({p_value}) is smaller than alpha ({alpha}). Thus, the confidence interval is not plotted."
 
@@ -531,13 +617,21 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None, 
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
-    # Step 1: Split the time series into training and testing sets
+    # Step 0: 
+    series = resample_time_series_if_needed(
+        series
+    )
+    # Step 1: Ensure positivity 
+    series, min_value = ensure_positivity(
+        series
+    )
+    # Step 2: Split the time series into training and testing sets
     train, test = train_test_split_func(
         series=series,
         test_size=test_size,
         shuffle=shuffle
     )
-    # Step 2: Optimize hyperparameters for the Exponential Smoothing model using random search
+    # Step 3: Optimize hyperparameters for the Exponential Smoothing model using random search
     best_alpha, best_beta, best_gamma, best_phi, best_score, best_trend, best_seasonal = \
         hyper_tuning_grid_search(
             train=train,
@@ -547,7 +641,7 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None, 
             use_boxcox=use_boxcox,
             initialization_method=initialization_method
         )
-    # Step 3: Train some Exponential Smoothing model with optimized hyperparameters
+    # Step 4: Train some Exponential Smoothing model with optimized hyperparameters
     model_fit = train_exponential_smoothing(
         series=train,
         seasonal_periods=seasonal_periods,
@@ -560,18 +654,18 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None, 
         use_boxcox=use_boxcox,
         initialization_method=initialization_method
     )
-    # Step 4: Forecast future values using the trained Exponential Smoothing model
+    # Step 5: Forecast future values using the trained Exponential Smoothing model
     in_sample_forecast, out_of_sample_forecast = forecast_exponential_smoothing(
         trained_model=model_fit,
         series=test,
         steps=steps
     )
-    # Step 5: Decide whether to include some confidence interval for the out-of-sample forecast,
+    # Step 6: Decide whether to include some confidence interval for the out-of-sample forecast,
     #           based on the normality of the residuals specified by the Shapiro-Wilk Test
     residuals = sorted([x - y for x, y in zip(in_sample_forecast.values, test.values)])
     p_value = np.round(stats.shapiro(residuals)[1], 2)
     conf_interval = p_value > alpha
-    # Step 6: Create a Plotly time series plot including in-sample and out-of-sample forecasts,
+    # Step 7: Create a Plotly time series plot including in-sample and out-of-sample forecasts,
     #           with optional confidence intervals
     fig = timeseries_plot_including_predictions(
         data=series,
@@ -580,7 +674,8 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None, 
         conf_interval=conf_interval,
         mse=best_score,
         p_value=p_value,
-        alpha=alpha
+        alpha=alpha,
+        min_value=min_value
     )
 
     return {"plot": plotly_fig_to_json_dict(fig)}
