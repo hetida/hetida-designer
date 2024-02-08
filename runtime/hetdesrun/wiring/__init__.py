@@ -1,9 +1,8 @@
-from collections import defaultdict
 from typing import Any
 
 from hetdesrun.adapters import load_data_from_adapter, send_data_with_adapter
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
-from hetdesrun.models.wiring import WorkflowWiring
+from hetdesrun.models.wiring import InputWiring, OutputWiring, WorkflowWiring
 
 
 async def resolve_and_load_data_from_wiring(
@@ -14,7 +13,7 @@ async def resolve_and_load_data_from_wiring(
     Data is loaded in batches per adapter.
     """
 
-    wirings_by_adapter = defaultdict(list)
+    wirings_by_adapter: dict[Any, list[InputWiring]] = {}
 
     for input_wiring in workflow_wiring.input_wirings:
         if input_wiring.use_default_value is False:
@@ -51,7 +50,7 @@ async def resolve_and_send_data_from_wiring(
     Data that is not send to a sink by the workflow wiring is returned.
     """
 
-    wirings_by_adapter = defaultdict(list)
+    wirings_by_adapter: dict[Any, list[OutputWiring]] = {}
 
     for output_wiring in workflow_wiring.output_wirings:
         wirings_by_adapter[output_wiring.adapter_id].append(output_wiring)
