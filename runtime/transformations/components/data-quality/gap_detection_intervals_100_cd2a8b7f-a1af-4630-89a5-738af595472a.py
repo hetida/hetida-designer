@@ -12,36 +12,28 @@ DataFrame with information about the gaps.
 - **timeseries** (Series):
   Expects Pandas Series with index of datatype DateTimeIndex.
 
-- **interval_start_timestamp_str** (String, default value: null):
+- **interval_start_timestamp** (String, default value: null):
   Desired start timestamp of the processing range. Expexcts ISO 8601 format.
   Alternatively, the **timeseries** can have an attribute "ref_interval_start_timestamp" (or "from")
-  that will be used if no **interval_start_timestamp_str** is provided.
+  that will be used if no **interval_start_timestamp** is provided.
   If neither is defined, the processing range begins with the first data point in **timeseries**.
   The start timestamp must not be later than the end timestamp.
 
-- **interval_end_timestamp_str** (String, default value: null):
+- **interval_end_timestamp** (String, default value: null):
   Desired end timestamp of the processing range. Expexcts ISO 8601 format.
   Alternatively, the **timeseries** can have an attribute "ref_interval_end_timestamp" (or "to")
-  that will be used if no **interval_end_timestamp_str** is provided.
+  that will be used if no **interval_end_timestamp** is provided.
   If neither is defined, the processing range ends with the last data point in **timeseries**.
   The start timestamp must not be later than the end timestamp.
 
 - **auto_frequency_determination** (Boolean, default value: true):
   If true, the function will automatically determine the expected data frequency based on the
-  **timeseries** index and **expected_data_frequency_str** must not be set.
-  If false, an **expected_data_frequency_str** must be set.
+  **timeseries** index and **expected_data_frequency** must not be set.
+  If false, an **expected_data_frequency** must be set.
   If "ref_data_frequency" is contained in the attributes of **timeseries** this value will be used
-  for the **expected_data_frequency_str** and **auto_frequency_determination** will be set to false.
+  for the **expected_data_frequency** and **auto_frequency_determination** will be set to false.
 
-- **auto_freq_end_timestamp_str** (String, default value: null):
-  Only relevant when **auto_frequency_determination** is true.
-  Expects a timestamp string  between **interval_start_timestamp** and **interval_end_timestamp** in
-  ISO 8601 format.
-  The desired end timestamp for the training data used to determine the step unit.
-  If not specified, the entire
-  processing range is used as training data.
-
-- **percentile** (Float, default value: 0.5):
+- **auto_freq_percentile** (Float, default value: 0.5):
   Only relevant when **auto_frequency_determination** is true.
   Expects a positive value smaller than or equal to 1. The percentile value to use for automatic
   determination of the expected gapsize between two consecutive data points. The value should be
@@ -49,17 +41,12 @@ DataFrame with information about the gaps.
   that more than 50% of the time differences are gaps, the value should be reduced; if fewer gaps
   are to be expected, the value can be adjusted upwards accordingly.
 
-- **interpolation_method** (String, default value: nearest):
-  Only relevant when **auto_frequency_determination** is true.
-  Is used to determine the percentile value via the Pandas method `quantile`.
-  Thus, must be one of "linear", "lower", "higher", "midpoint", "nearest".
-
-- **min_amount_datapoints** (Int, default value: 11):
+- **auto_freq_min_amount_datapoints** (Int, default value: 11):
   Only relevant when **auto_frequency_determination** is True.
   Expects a positive value. Minimum amount of datapoints required. Effects the expectable precision
   of the automatically determined expected data frequency.
 
-- **expected_data_frequency_str** (String, default value: null):
+- **expected_data_frequency** (String, default value: null):
   Must not be set if **auto_frequency_determination** is true, but must be set if
   **auto_frequency_determination** is false.
   The expected time difference between consecutive timestamps in the input **timeseries**. Must be a
@@ -67,18 +54,18 @@ DataFrame with information about the gaps.
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
   ) or a timedelta string, e.g. "D" or "60s".
   Alternatively, the **timeseries** can have an attribute "ref_data_frequency" that will be used
-  if no **expected_data_frequency_str** is provided.
+  if no **expected_data_frequency** is provided.
   In that case **auto_frequency_determination** will be set to False.
 
-- **expected_data_frequency_factor** (Float, default value: 1.0):
+- **expected_data_freq_allowed_variance_factor** (Float, default value: 1.0):
   Expects a positive value. The value is used to define when a step between two consecutive data
   points is recognized as a gap. I.e. a value of 1.0 means that all steps larger than the
   specified or determined expected data frequency are recognized as gaps, while a value of 2.0 means
   that intevals are only recognized as gaps if they are more than twice as large as the specified or
   determined expected data frequency.
 
-- **expected_data_frequency_offset_str** (String, default value: null):
-  Must not be set if **auto_frequency_determination** is true or the **expected_data_frequency_str**
+- **expected_data_frequency_offset** (String, default value: null):
+  Must not be set if **auto_frequency_determination** is true or the **expected_data_frequency**
   is not set.
   The time difference between the reference time  1970-01-01 00:00:00 and the timestamps of the
   input **timeseries** with the provided expected data frequency. Must be a
@@ -94,15 +81,9 @@ DataFrame with information about the gaps.
   Expects Pandas DataFrame with columns "start_time", "end_time", "start_inclusive", "end_inclusive,
   which all have a datatime64 dtype.
 
-- **only_known_gaps** (bool, default value: False):
+- **deactivate_gap_detection** (bool, default value: False):
   Set to `true` to disable any gap detection and only determine the gap_info for
   **known_gap_timestamps** and **known_gap_intervals**.
-
-- **fill_value** (Any, default value: None):
-  Is used as value if the start timestamp (end timestamp, respectively) is not contained in the
-  **timeseries** and must be added.
-  In this case, this value appears in the column "value_to_left" ("value_to_right", respectively)
-  in the DataFrame output **gap_info** if there is a gap at the start or end of the **timeseries**.
 
 ## Outputs
 
@@ -122,20 +103,20 @@ DataFrame with information about the gaps.
 
 ## Details
 
-If **interval_start_timestamp_str** (or **interval_end_timestamp_str**) is not zero, check whether
+If **interval_start_timestamp** (or **interval_end_timestamp**) is not zero, check whether
 it is contained in the **timeseries** and add it if necessary, and remove all data points with an
 earlier (or later) index in order to reduce the **timeseries** to the processing range.
 
 To detect gaps, the time intervals between consecutive data points are determined.
 If **auto_frequency_determination** is set to true, determine the expected data frequency using the
-**percentile**-th quantile of the time intervals in the training range.
-The training range is determined by the **interval_start_timestamp_str** and the
-**auto_freq_end_timestamp_str**.
+**auto_freq_percentile**-th quantile of the time intervals in the training range.
+The training range is determined by the **interval_start_timestamp** and the
+**auto_freq_end_timestamp**.
 If the latter is not defined, the full processing range is used as the training range.
 If **auto_frequency_determination` is set to false, the expected data frequency is defined by the
-**expected_data_frequency_str**.
-If a time interval is greater than the product of the **expected_data_frequency_factor** and the
-expected data frequency, it is considered a gap.
+**expected_data_frequency**.
+If a time interval is greater than the product of the **expected_data_freq_allowed_variance_factor**
+and the expected data frequency, it is considered a gap.
 
 For each gap, the output DataFrame **gap_info** contains the index of the preceding (following,
 respectively) data point, the information as to whether the indices belong to the gap and, if
@@ -167,8 +148,8 @@ The input may be as minimalistic as just a timeseries:
 The smallest intervals between subsequent timestamps is a minute, but because there are so many gaps
 a percentile of 0.5 (corresponding to the median of the interval distribution) will result in a
 2 minute interval as the lower limit for a gap and thus only identify the two larger gaps.
-Such issues can be tackled by choosing a smaller **percentile** or a smaller
-**expected_data_frequency_factor**.
+Such issues can be tackled by choosing a smaller **auto_freq_percentile** or a smaller
+**expected_data_freq_allowed_variance_factor**.
 Thus the corresponding result is
 ```
 {
@@ -254,10 +235,10 @@ The same result is obtained without using metadata by the JSON input
         "2020-01-01T08:31:00.000Z": 30.0,
         "2020-01-01T16:34:00.000Z": 30.0
     },
-    "interval_start_timestamp_str": "2020-01-01T00:16:00.000Z",
-    "interval_end_timestamp_str": "2020-01-01T16:34:00.000Z",
+    "interval_start_timestamp": "2020-01-01T00:16:00.000Z",
+    "interval_end_timestamp": "2020-01-01T16:34:00.000Z",
     "auto_frequency_determination": false,
-    "expected_data_frequency_str": "1min"
+    "expected_data_frequency": "1min"
 }
 ```
 The result of either of these inputs is then
@@ -348,11 +329,11 @@ timestamps are added as gaps of size 0s if there is no datapoint in the **timese
 point.
 
 In the following example JSON input, the provided series would have no gaps if no
-**expected_data_frequency_offset_str** was set, since all datapoints are separated exactly by the
-data frequency of one minute.
-However, if **expected_data_frequency_offset_str** is set to `0s`, there are a total of four gaps,
-including those at the timestamps defined by **interval_start_timestamp_str** and
-**interval_end_timestamp_str**.
+**expected_data_frequency_offset** was set, since all datapoints are separated exactly by the
+expected data frequency of one minute.
+However, if **expected_data_frequency_offset** is set to `0s`, there are a total of four gaps,
+including those at the timestamps defined by **interval_start_timestamp** and
+**interval_end_timestamp**.
 ```
 {
     "timeseries": {
@@ -360,17 +341,14 @@ including those at the timestamps defined by **interval_start_timestamp_str** an
         "2020-01-01T01:17:30.000Z": 10.0,
         "2020-01-01T01:18:30.000Z": 10.0
     },
-    "interval_start_timestamp_str": "2020-01-01T01:16:00.000Z",
-    "interval_end_timestamp_str": "2020-01-01T01:19:00.000Z",
+    "interval_start_timestamp": "2020-01-01T01:16:00.000Z",
+    "interval_end_timestamp": "2020-01-01T01:19:00.000Z",
     "auto_frequency_determination": false,
-    "expected_data_frequency_str": "1min",
-    "expected_data_frequency_offset_str": "0s",
-    "fill_value": 0
+    "expected_data_frequency": "1min",
+    "expected_data_frequency_offset": "0s",
 }
 ```
-The **fill_value** of `0` means that the "value_to_left" for the first gap and the "value_to_right"
-for the last gap are 0 instead of NaN and thus the "mean_left_right" can be calculated, resulting in
-the following output:
+The result is then the following output:
 ```
 {
     "__hd_wrapped_data_object__": "DATAFRAME",
@@ -407,7 +385,7 @@ the following output:
             "3": 0
         },
         "value_to_left": {
-            "0": 0,
+            "0": null,
             "1": 10,
             "2": 10,
             "3": 10
@@ -416,13 +394,13 @@ the following output:
             "0": 10,
             "1": 10,
             "2": 10,
-            "3": 0
+            "3": null
         },
         "mean_left_right": {
-            "0": 5,
+            "0": null,
             "1": 10,
             "2": 10,
-            "3": 5
+            "3": null
         }
     }
 }
@@ -534,8 +512,6 @@ the time interval of interest:
 ```
 """
 
-from typing import Any, Literal
-
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
@@ -584,14 +560,12 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     auto_freq_end_timestamp_str: str | None
     auto_freq_end_timestamp: pd.Timestamp | None = None
     percentile: float
-    interpolation_method: str
     min_amount_datapoints: int
     expected_data_frequency_str: str | None
     expected_data_frequency: pd.Timedelta | None = None
     expected_data_frequency_factor: float
     expected_data_frequency_offset_str: str | None = None
     expected_data_frequency_offset: pd.Timedelta | None = None
-    fill_value: Any | None
     known_gap_timestamps: pd.Series | None
     known_gap_intervals: pd.DataFrame | None
 
@@ -717,25 +691,6 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                 invalid_component_inputs=["percentile"],
             )
         return percentile
-
-    @validator("interpolation_method")
-    def check_interpolation_method_one_of_allowed_strings(
-        cls, interpolation_method: str
-    ) -> str:
-        if interpolation_method not in (
-            "linear",
-            "lower",
-            "higher",
-            "midpoint",
-            "nearest",
-        ):
-            raise ComponentInputValidationException(
-                "The interpolation method must be one of "
-                "`linear`, `lower`, `higher`, `midpoint`, `nearest`",
-                error_code=422,
-                invalid_component_inputs=["interpolation_method"],
-            )
-        return interpolation_method
 
     @validator("min_amount_datapoints")
     def check_min_amount_datapoints_non_negative(
@@ -942,20 +897,19 @@ def add_boundary_timestamps_and_sort(
     timeseries_with_bounds: pd.Series,
     interval_start_timestamp: pd.Timestamp | None,
     interval_end_timestamp: pd.Timestamp | None,
-    fill_value: Any | None,
 ) -> pd.Series:
     timeseries_with_bounds = timeseries_with_bounds.copy()
     if (
         interval_start_timestamp is not None
         and interval_start_timestamp not in timeseries_with_bounds.index
     ):
-        timeseries_with_bounds[interval_start_timestamp] = fill_value
+        timeseries_with_bounds[interval_start_timestamp] = None
 
     if (
         interval_end_timestamp is not None
         and interval_end_timestamp not in timeseries_with_bounds.index
     ):
-        timeseries_with_bounds[interval_end_timestamp] = fill_value
+        timeseries_with_bounds[interval_end_timestamp] = None
 
     return timeseries_with_bounds.sort_index()
 
@@ -972,13 +926,10 @@ def check_amount_datapoints(series: pd.Series, min_amount_datapoints: int) -> No
 def determine_expected_data_frequency(
     timeseries: pd.Series,
     percentile: float,
-    interpolation_method: str,
 ) -> pd.Timedelta:
     intervals = timeseries.index.to_series().diff().dropna()
 
-    interval_size_percentile = intervals.quantile(
-        percentile, interpolation=interpolation_method
-    )
+    interval_size_percentile = intervals.quantile(percentile, interpolation="nearest")
 
     return interval_size_percentile
 
@@ -1013,7 +964,15 @@ no_gap_intervals = pd.DataFrame(
         "start_inclusive",
         "end_inclusive",
     ],
+).astype(
+    {
+        "start_time": "datetime64[ns, UTC]",
+        "end_time": "datetime64[ns, UTC]",
+        "start_inclusive": bool,
+        "end_inclusive": bool,
+    }
 )
+
 
 empty_gap_info = pd.DataFrame(
     {},
@@ -1027,6 +986,14 @@ empty_gap_info = pd.DataFrame(
         "value_to_right",
         "mean_left_right",
     ],
+).astype(
+    {
+        "start_time": "datetime64[ns, UTC]",
+        "end_time": "datetime64[ns, UTC]",
+        "start_inclusive": bool,
+        "end_inclusive": bool,
+        "gap_size_in_seconds": float,
+    }
 )
 
 
@@ -1105,8 +1072,7 @@ def get_boundary_values(
     timeseries: pd.Series,
     gap_boundaries: NDArray[np.datetime64],
     gap_boundaries_inclusive: NDArray[np.bool_],
-    method: Literal["ffill", "bfill"],
-    fill_value: Any,
+    method: str,
 ) -> NDArray:
     exclusive_index = timeseries.index.join(
         pd.Index(gap_boundaries[np.logical_not(gap_boundaries_inclusive)]),
@@ -1137,8 +1103,6 @@ def get_boundary_values(
         ),
         method=method,
     )
-    if fill_value is not None:
-        boundary_values_inclusive = boundary_values_inclusive.fillna(value=fill_value)
     boundary_values_inclusive = boundary_values_inclusive[
         gap_boundaries[gap_boundaries_inclusive]
     ]
@@ -1304,7 +1268,6 @@ def merge_intervals(intervals: pd.DataFrame) -> pd.DataFrame:
 def get_gap_intervals_info(
     constricted_timeseries_with_bounds: pd.Series,
     constricted_gap_interval_dfs: list[pd.DataFrame],
-    fill_value: Any,
 ) -> pd.DataFrame:
     constricted_gap_interval_dfs = [
         df for df in constricted_gap_interval_dfs if df is not None and len(df) != 0
@@ -1324,7 +1287,6 @@ def get_gap_intervals_info(
         gap_boundaries=gap_starts,
         gap_boundaries_inclusive=gap_starts_inclusive,
         method="ffill",
-        fill_value=fill_value,
     )
 
     gap_ends = merged_gap_intervals["end_time"].to_numpy()
@@ -1334,7 +1296,6 @@ def get_gap_intervals_info(
         gap_boundaries=gap_ends,
         gap_boundaries_inclusive=gap_ends_inclusive,
         method="bfill",
-        fill_value=fill_value,
     )
 
     gap_info = pd.DataFrame(
@@ -1362,23 +1323,26 @@ def get_gap_intervals_info(
 COMPONENT_INFO = {
     "inputs": {
         "timeseries": {"data_type": "SERIES"},
-        "interval_start_timestamp_str": {"data_type": "STRING", "default_value": None},
-        "interval_end_timestamp_str": {"data_type": "STRING", "default_value": None},
+        "interval_start_timestamp": {"data_type": "STRING", "default_value": None},
+        "interval_end_timestamp": {"data_type": "STRING", "default_value": None},
         "auto_frequency_determination": {"data_type": "BOOLEAN", "default_value": True},
-        "auto_freq_end_timestamp_str": {"data_type": "STRING", "default_value": None},
-        "percentile": {"data_type": "FLOAT", "default_value": 0.5},
-        "interpolation_method": {"data_type": "STRING", "default_value": "nearest"},
-        "min_amount_datapoints": {"data_type": "INT", "default_value": 11},
-        "expected_data_frequency_str": {"data_type": "STRING", "default_value": None},
-        "expected_data_frequency_factor": {"data_type": "FLOAT", "default_value": 1.0},
-        "expected_data_frequency_offset_str": {
+        "auto_freq_percentile": {"data_type": "FLOAT", "default_value": 0.5},
+        "auto_freq_min_amount_datapoints": {"data_type": "INT", "default_value": 11},
+        "expected_data_frequency": {"data_type": "STRING", "default_value": None},
+        "expected_data_freq_allowed_variance_factor": {
+            "data_type": "FLOAT",
+            "default_value": 1.0,
+        },
+        "expected_data_frequency_offset": {
             "data_type": "STRING",
             "default_value": None,
         },
-        "fill_value": {"data_type": "ANY", "default_value": None},
         "known_gap_timestamps": {"data_type": "SERIES", "default_value": None},
         "known_gap_intervals": {"data_type": "DATAFRAME", "default_value": None},
-        "only_add_known_gaps": {"data_type": "BOOLEAN", "default_value": False},
+        "deactivate_freq_based_gap_detection": {
+            "data_type": "BOOLEAN",
+            "default_value": False,
+        },
     },
     "outputs": {
         "gap_info": {"data_type": "DATAFRAME"},
@@ -1390,79 +1354,71 @@ COMPONENT_INFO = {
     "id": "cd2a8b7f-a1af-4630-89a5-738af595472a",
     "revision_group_id": "415662ab-e4fb-4084-b752-80433d0df291",
     "state": "RELEASED",
-    "released_timestamp": "2024-02-09T08:52:58.538925+00:00",
+    "released_timestamp": "2024-02-09T13:35:07.594025+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402
 
 
 def main(
     *,
     timeseries,
-    interval_start_timestamp_str=None,
-    interval_end_timestamp_str=None,
+    interval_start_timestamp=None,
+    interval_end_timestamp=None,
     auto_frequency_determination=True,
-    auto_freq_end_timestamp_str=None,
-    percentile=0.5,
-    interpolation_method="nearest",
-    min_amount_datapoints=11,
-    expected_data_frequency_str=None,
-    expected_data_frequency_factor=1.0,
-    expected_data_frequency_offset_str=None,
-    fill_value=None,
-    known_gap_timestamps=None,
-    known_gap_intervals=None,
-    only_add_known_gaps=False,
+    auto_freq_percentile=0.5,
+    auto_freq_min_amount_datapoints=11,
+    expected_data_frequency=None,
+    expected_data_freq_allowed_variance_factor=1.0,
+    expected_data_frequency_offset=None,
+    known_gap_timestamps=parse_default_value(COMPONENT_INFO, "known_gap_timestamps"),
+    known_gap_intervals=parse_default_value(COMPONENT_INFO, "known_gap_intervals"),
+    deactivate_freq_based_gap_detection=False,
 ):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
-    if interval_start_timestamp_str is None:
+    if interval_start_timestamp is None:
         if "ref_interval_start_timestamp" in timeseries.attrs:
-            interval_start_timestamp_str = timeseries.attrs[
-                "ref_interval_start_timestamp"
-            ]
+            interval_start_timestamp = timeseries.attrs["ref_interval_start_timestamp"]
         elif "from" in timeseries.attrs:
-            interval_start_timestamp_str = timeseries.attrs["from"]
-    if interval_end_timestamp_str is None:
+            interval_start_timestamp = timeseries.attrs["from"]
+    if interval_end_timestamp is None:
         if "ref_interval_end_timestamp" in timeseries.attrs:
-            interval_end_timestamp_str = timeseries.attrs["ref_interval_end_timestamp"]
+            interval_end_timestamp = timeseries.attrs["ref_interval_end_timestamp"]
         elif "to" in timeseries.attrs:
-            interval_end_timestamp_str = timeseries.attrs["to"]
+            interval_end_timestamp = timeseries.attrs["to"]
 
-    if expected_data_frequency_str is None and "ref_data_frequency" in timeseries.attrs:
-        expected_data_frequency_str = timeseries.attrs["ref_data_frequency"]
+    if expected_data_frequency is None and "ref_data_frequency" in timeseries.attrs:
+        expected_data_frequency = timeseries.attrs["ref_data_frequency"]
         freqstr2timedelta(
-            expected_data_frequency_str, 'timeseries.attrs["ref_data_frequency"]'
+            expected_data_frequency, 'timeseries.attrs["ref_data_frequency"]'
         )
         auto_frequency_determination = False
 
     if (
-        expected_data_frequency_offset_str is None
+        expected_data_frequency_offset is None
         and "ref_data_frequency_offset" in timeseries.attrs
     ):
-        expected_data_frequency_offset_str = timeseries.attrs[
-            "ref_data_frequency_offset"
-        ]
+        expected_data_frequency_offset = timeseries.attrs["ref_data_frequency_offset"]
         freqstr2timedelta(
-            expected_data_frequency_offset_str,
+            expected_data_frequency_offset,
             'timeseries.attrs["ref_data_frequency_offset"]',
         )
         auto_frequency_determination = False
 
     input_params = GapDetectionParameters(
         timeseries=timeseries,
-        interval_start_timestamp_str=interval_start_timestamp_str,
-        interval_end_timestamp_str=interval_end_timestamp_str,
+        interval_start_timestamp_str=interval_start_timestamp,
+        interval_end_timestamp_str=interval_end_timestamp,
         auto_frequency_determination=auto_frequency_determination,
-        auto_freq_end_timestamp_str=auto_freq_end_timestamp_str,
-        percentile=percentile,
-        min_amount_datapoints=min_amount_datapoints,
-        interpolation_method=interpolation_method,
-        expected_data_frequency_str=expected_data_frequency_str,
-        expected_data_frequency_factor=expected_data_frequency_factor,
-        expected_data_frequency_offset_str=expected_data_frequency_offset_str,
+        percentile=auto_freq_percentile,
+        min_amount_datapoints=auto_freq_min_amount_datapoints,
+        expected_data_frequency_str=expected_data_frequency,
+        expected_data_frequency_factor=expected_data_freq_allowed_variance_factor,
+        expected_data_frequency_offset_str=expected_data_frequency_offset,
         known_gap_timestamps=known_gap_timestamps,
         known_gap_intervals=known_gap_intervals,
-        fill_value=fill_value,
     )
 
     constricted_timeseries_without_bounds = constrict_series_to_interval(
@@ -1475,7 +1431,6 @@ def main(
         constricted_timeseries_without_bounds,
         input_params.interval_start_timestamp,
         input_params.interval_end_timestamp,
-        fill_value,
     )
 
     constricted_known_gap_timestamp_intervals = (
@@ -1500,7 +1455,7 @@ def main(
         else no_gap_intervals
     )
 
-    if only_add_known_gaps is True:
+    if deactivate_freq_based_gap_detection is True:
         return {
             "gap_info": get_gap_intervals_info(
                 constricted_timeseries_with_bounds,
@@ -1508,7 +1463,6 @@ def main(
                     constricted_known_gap_intervals,
                     constricted_known_gap_timestamp_intervals,
                 ],
-                fill_value=input_params.fill_value,
             )
         }
 
@@ -1526,7 +1480,7 @@ def main(
         else:
             training_series = constricted_timeseries_with_bounds
         input_params.expected_data_frequency = determine_expected_data_frequency(
-            training_series, percentile, interpolation_method
+            training_series, auto_freq_percentile
         )
 
     normalized_intervals_df = determine_normalized_interval_sizes(
@@ -1535,7 +1489,7 @@ def main(
 
     identified_gaps_df = identify_gaps(
         normalized_intervals_df,
-        expected_data_frequency_factor,
+        expected_data_freq_allowed_variance_factor,
     )
 
     gaps_from_missing_expected_datapoints = (
@@ -1557,7 +1511,6 @@ def main(
                 constricted_known_gap_timestamp_intervals,
                 gaps_from_missing_expected_datapoints,
             ],
-            fill_value=input_params.fill_value,
         )
     }
 
