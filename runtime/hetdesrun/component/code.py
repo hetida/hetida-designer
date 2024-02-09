@@ -6,7 +6,6 @@ to provide a very elementary support system to the designer code editor.
 
 import logging
 from keyword import iskeyword
-from typing import Any
 
 import black
 
@@ -94,11 +93,7 @@ def component_info_default_value_string(inp: TransformationInput) -> str:
 
 
 def function_signature_default_value_string(inp: TransformationInput) -> str:
-    if (
-        inp.value is None
-        or inp.value == ""
-        and inp.data_type not in (DataType.String, DataType.Any)
-    ):
+    if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
         return repr(None)
 
     if inp.data_type in (
@@ -108,7 +103,7 @@ def function_signature_default_value_string(inp: TransformationInput) -> str:
         DataType.Any,
     ):
         if not inp.data_type is DataType.Any and not isinstance(
-            inp.value, str | dict[Any, Any] | list[Any]
+            inp.value, str | dict | list | None
         ):
             msg = (
                 f"Default value '{inp.value}' of input '{inp.name}' "
