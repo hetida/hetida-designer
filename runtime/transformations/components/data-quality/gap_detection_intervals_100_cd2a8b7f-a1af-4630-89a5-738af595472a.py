@@ -1363,7 +1363,8 @@ COMPONENT_INFO = {
     "version_tag": "1.0.0",
     "id": "cd2a8b7f-a1af-4630-89a5-738af595472a",
     "revision_group_id": "415662ab-e4fb-4084-b752-80433d0df291",
-    "state": "DRAFT",
+    "state": "RELEASED",
+    "released_timestamp": "2024-02-09T15:44:01.693763+00:00",
 }
 
 from hdutils import parse_default_value  # noqa: E402
