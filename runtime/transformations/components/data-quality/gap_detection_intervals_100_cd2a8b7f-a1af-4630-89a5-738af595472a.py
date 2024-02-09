@@ -13,18 +13,18 @@ DataFrame with information about the gaps.
   Expects Pandas Series with index of datatype DateTimeIndex.
 
 - **interval_start_timestamp_str** (String, default value: null):
-  Desired start date of the processing range. Expexcts ISO 8601 format.
+  Desired start timestamp of the processing range. Expexcts ISO 8601 format.
   Alternatively, the **timeseries** can have an attribute "ref_interval_start_timestamp" (or "from")
   that will be used if no **interval_start_timestamp_str** is provided.
   If neither is defined, the processing range begins with the first data point in **timeseries**.
-  The start date must not be later than the end date.
+  The start timestamp must not be later than the end timestamp.
 
 - **interval_end_timestamp_str** (String, default value: null):
-  Desired end date of the processing range. Expexcts ISO 8601 format.
+  Desired end timestamp of the processing range. Expexcts ISO 8601 format.
   Alternatively, the **timeseries** can have an attribute "ref_interval_end_timestamp" (or "to")
   that will be used if no **interval_end_timestamp_str** is provided.
   If neither is defined, the processing range ends with the last data point in **timeseries**.
-  The start date must not be later than the end date.
+  The start timestamp must not be later than the end timestamp.
 
 - **auto_frequency_determination** (Boolean, default value: true):
   If true, the function will automatically determine the expected data frequency based on the
@@ -35,9 +35,9 @@ DataFrame with information about the gaps.
 
 - **auto_freq_end_timestamp_str** (String, default value: null):
   Only relevant when **auto_frequency_determination** is true.
-  Expects a date string  between **interval_start_timestamp** and **interval_end_timestamp** inISO
-  8601 format.
-  The desired end date for the training data used to determine the step unit.
+  Expects a timestamp string  between **interval_start_timestamp** and **interval_end_timestamp** in
+  ISO 8601 format.
+  The desired end timestamp for the training data used to determine the step unit.
   If not specified, the entire
   processing range is used as training data.
 
@@ -91,16 +91,16 @@ DataFrame with information about the gaps.
   Expects Pandas Series with index of datatype DateTimeIndex. The values are not considered.
 
 - **known_gap_intervals** (DataFrame, default value: None):
-  Expects Pandas DataFrame with columns "start", "end", "start_inclusive", "end_inclusive, which all
-  have a datatime64 dtype.
+  Expects Pandas DataFrame with columns "start_time", "end_time", "start_inclusive", "end_inclusive,
+  which all have a datatime64 dtype.
 
 - **only_known_gaps** (bool, default value: False):
   Set to `true` to disable any gap detection and only determine the gap_info for
   **known_gap_timestamps** and **known_gap_intervals**.
 
 - **fill_value** (Any, default value: None):
-  Is used as value if the start date (end date, respectively) is not contained in the **timeseries**
-  and must be added.
+  Is used as value if the start timestamp (end timestamp, respectively) is not contained in the
+  **timeseries** and must be added.
   In this case, this value appears in the column "value_to_left" ("value_to_right", respectively)
   in the DataFrame output **gap_info** if there is a gap at the start or end of the **timeseries**.
 
@@ -110,10 +110,10 @@ DataFrame with information about the gaps.
   A DataFrame containing the beginning and end timestamps of gaps larger than the specified or
   determined expected data frequency.
   Columns are:
-  - "start" (Timestamp): Start index of the gap.
-  - "end" (Timestamp): End index of the gap.
-  - "start_inclusive" (Boolean): Defines whether the start boundary is inclusive or not.
-  - "end_inclusive" (Boolean): Defines whether the start boundary is inclusive or not.
+  - "start_time" (Timestamp): Start timestamp of the gap.
+  - "end_time" (Timestamp): End timestamp of the gap.
+  - "start_inclusive" (Boolean): Defines whether the start boundary timestamp is inclusive or not.
+  - "end_inclusive" (Boolean): Defines whether the end boundary timestamp is inclusive or not.
   - "gap_size_in_seconds" (Float): Size of the gap in seconds.
   - "value_to_left" (Float/Int): If existing, last value before the gap, otherwise None.
   - "value_to_right" (Float/Int): If existing, first value after the gap, otherwise None.
@@ -175,11 +175,11 @@ Thus the corresponding result is
     "__hd_wrapped_data_object__": "DATAFRAME",
     "__metadata__": {},
     "__data__": {
-        "start": {
+        "start_time": {
             "0": "2020-01-01T01:25:00.000Z",
             "1": "2020-01-01T08:31:00.000Z"
         },
-        "end": {
+        "end_time": {
             "0": "2020-01-01T08:28:00.000Z",
             "1": "2020-01-01T16:34:00.000Z"
         },
@@ -266,7 +266,7 @@ The result of either of these inputs is then
     "__hd_wrapped_data_object__": "DATAFRAME",
     "__metadata__": {},
     "__data__": {
-        "start": {
+        "start_time": {
             "0": "2020-01-01T00:16:00.000Z",
             "1": "2020-01-01T01:16:00.000Z",
             "2": "2020-01-01T01:20:00.000Z",
@@ -275,7 +275,7 @@ The result of either of these inputs is then
             "5": "2020-01-01T08:28:00.000Z",
             "6": "2020-01-01T08:31:00.000Z"
         },
-        "end": {
+        "end_time": {
             "0": "2020-01-01T01:16:00.000Z",
             "1": "2020-01-01T01:18:00.000Z",
             "2": "2020-01-01T01:22:00.000Z",
@@ -376,13 +376,13 @@ the following output:
     "__hd_wrapped_data_object__": "DATAFRAME",
     "__metadata__": {},
     "__data__": {
-        "start": {
+        "start_time": {
             "0": "2020-01-01T01:16:00.000Z",
             "1": "2020-01-01T01:17:00.000Z",
             "2": "2020-01-01T01:18:00.000Z",
             "3": "2020-01-01T01:19:00.000Z"
         },
-        "end": {
+        "end_time": {
             "0": "2020-01-01T01:16:00.000Z",
             "1": "2020-01-01T01:17:00.000Z",
             "2": "2020-01-01T01:18:00.000Z",
@@ -423,6 +423,111 @@ the following output:
             "1": 10,
             "2": 10,
             "3": 5
+        }
+    }
+}
+```
+Furthermore, it is possible to include information on gaps from external sources, for example caused
+by downtime or outages, where the data is likely to be atypical and should therefore not be included
+in the analysis.
+Gap points can be specified in a series, whereas gap intervals must be specified by a data frame
+containing the expected columns.Further gap detection can be disabled by setting **only_known_gaps**
+to true.
+The example JSON input
+```
+{
+    "timeseries": {
+        "2020-01-01T01:16:00.000Z": 10.0,
+        "2020-01-01T01:18:00.000Z": 10.0,
+        "2020-01-01T01:19:00.000Z": 10.0,
+        "2020-01-01T01:20:00.000Z": 10.0,
+        "2020-01-01T01:22:00.000Z": 20.0,
+        "2020-01-01T01:23:00.000Z": 20.0,
+        "2020-01-01T01:25:00.000Z": 20.0,
+        "2020-01-01T01:28:00.000Z": 20.0,
+        "2020-01-01T01:30:00.000Z": 30.0,
+        "2020-01-01T01:31:00.000Z": 30.0,
+        "2020-01-01T01:34:00.000Z": 30.0
+    },
+    "known_gap_timestamps": {
+        "2020-01-01T01:25:00.000Z": true,
+        "2020-01-01T01:29:00.000Z": true
+    },
+    "known_gap_intervals": [
+        {
+            "start_time": "2020-01-01T01:01:00.000Z",
+            "end_time": "2020-01-01T01:13:00.000Z",
+            "start_inclusive": false,
+            "end_inclusive": false
+        },
+        {
+            "start_time": "2020-01-01T01:14:00.000Z",
+            "end_time": "2020-01-01T01:25:00.000Z",
+            "start_inclusive": false,
+            "end_inclusive": false
+        },
+        {
+            "start_time": "2020-01-01T01:31:00.000Z",
+            "end_time": "2020-01-01T01:33:00.000Z",
+            "start_inclusive": false,
+            "end_inclusive": false
+        },
+        {
+            "start_time": "2020-01-01T01:32:00.000Z",
+            "end_time": "2020-01-01T01:38:00.000Z",
+            "start_inclusive": false,
+            "end_inclusive": false
+        }
+    ],
+    "only_known_gaps": true,
+}
+```
+then results in the following output with only those (parts of the) known gaps, which overlap with
+the time interval of interest:
+```
+{
+    "__hd_wrapped_data_object__": "DATAFRAME",
+    "__metadata__": {},
+    "__data__": {
+        "start_time": {
+            "0": "2020-01-01T01:16:00.000Z",
+            "1": "2020-01-01T01:29:00.000Z",
+            "2": "2020-01-01T01:31:00.000Z"
+        },
+        "end_time": {
+            "0": "2020-01-01T01:25:00.000Z",
+            "1": "2020-01-01T01:29:00.000Z",
+            "2": "2020-01-01T01:34:00.000Z"
+        },
+        "start_inclusive": {
+            "0": true,
+            "1": true,
+            "2": false
+        },
+        "end_inclusive": {
+            "0": true,
+            "1": true,
+            "2": true
+        },
+        "gap_size_in_seconds": {
+            "0": 540,
+            "1": 0,
+            "2": 180
+        },
+        "value_to_left": {
+            "0": null,
+            "1": 20,
+            "2": 30
+        },
+        "value_to_right": {
+            "0": 20,
+            "1": 30,
+            "2": null
+        },
+        "mean_left_right": {
+            "0": null,
+            "1": 25,
+            "2": null
         }
     }
 }
@@ -470,6 +575,7 @@ def freqstr2timedelta(freqstr: str, input_name: str) -> pd.Timedelta:
 
 
 class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
+    timeseries: pd.Series
     interval_start_timestamp_str: str | None
     interval_start_timestamp: pd.Timestamp | None = None
     interval_end_timestamp_str: str | None
@@ -486,9 +592,23 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     expected_data_frequency_offset_str: str | None = None
     expected_data_frequency_offset: pd.Timedelta | None = None
     fill_value: Any | None
-    timeseries: pd.Series
     known_gap_timestamps: pd.Series | None
     known_gap_intervals: pd.DataFrame | None
+
+    @validator("timeseries")
+    def timeseries_index_has_datetime_dtype(cls, timeseries: pd.Series) -> pd.Series:
+        if len(timeseries) == 0:
+            timeseries = pd.Series({})
+            timeseries.index = pd.to_datetime(timeseries.index, utc=True)
+
+        if pd.api.types.is_datetime64_any_dtype(timeseries.index.dtype) is False:
+            raise ComponentInputValidationException(
+                "The index of `timeseries` is not of any datetime64 dtype, "
+                f"but {timeseries.index.dtype}.",
+                error_code=422,
+                invalid_component_inputs=["timeseries"],
+            )
+        return timeseries
 
     @validator("interval_start_timestamp", always=True)
     def get_interval_start_timestamp_from_interval_start_timestamp_str(
@@ -497,6 +617,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
         values: dict,
     ) -> pd.Timestamp | None:
         if values["interval_start_timestamp_str"] is None:
+            if "timeseries" in values and len(values["timeseries"]) > 0:
+                return values["timeseries"].index[0]
             return None
 
         return timestamp_str_to_pd_timestamp(
@@ -510,6 +632,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
         values: dict,
     ) -> pd.Timestamp | None:
         if values["interval_end_timestamp_str"] is None:
+            if "timeseries" in values and len(values["timeseries"]) > 0:
+                return values["timeseries"].index[-1]
             return None
 
         return timestamp_str_to_pd_timestamp(
@@ -531,8 +655,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                 f"{interval_start_timestamp} > {interval_end_timestamp}.",
                 error_code=422,
                 invalid_component_inputs=[
-                    "interval_end_timestamp_str",
                     "interval_start_timestamp_str",
+                    "interval_end_timestamp_str",
                 ],
             )
         return interval_end_timestamp
@@ -565,7 +689,7 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                     f"while it is {auto_freq_end_timestamp} < {interval_start_timestamp}.",
                     error_code=422,
                     invalid_component_inputs=[
-                        "interval_start_timestamp",
+                        "interval_start_timestamp_str",
                         "auto_freq_end_timestamp_str",
                     ],
                 )
@@ -576,7 +700,7 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                     f"while it is {auto_freq_end_timestamp} > {interval_end_timestamp}.",
                     error_code=422,
                     invalid_component_inputs=[
-                        "interval_end_timestamp",
+                        "interval_end_timestamp_str",
                         "auto_freq_end_timestamp_str",
                     ],
                 )
@@ -724,17 +848,6 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             )
         return factor
 
-    @validator("timeseries")
-    def timeseries_index_has_datetime_dtype(cls, timeseries: pd.Series) -> pd.Series:
-        if pd.api.types.is_datetime64_any_dtype(timeseries.index.dtype) is False:
-            raise ComponentInputValidationException(
-                "The index of `timeseries` is not of any datetime64 dtype, "
-                f"but {timeseries.index.dtype}.",
-                error_code=422,
-                invalid_component_inputs=["timestamps"],
-            )
-        return timeseries
-
     @validator("known_gap_timestamps")
     def known_gap_timestamps_index_has_datetime_dtype(
         cls, known_gap_timestamps: pd.Series | None
@@ -762,7 +875,12 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
         if known_gap_intervals is None:
             return None
 
-        required_column_names = {"start", "end", "start_inclusive", "end_inclusive"}
+        required_column_names = {
+            "start_time",
+            "end_time",
+            "start_inclusive",
+            "end_inclusive",
+        }
 
         if not required_column_names.issubset(set(known_gap_intervals.columns)):
             column_names_string = ", ".join(known_gap_intervals.columns)
@@ -783,13 +901,15 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
         if known_gap_intervals is None:
             return None
 
-        required_column_names = {"start", "end", "start_inclusive", "end_inclusive"}
+        required_datetime64_column_names = ["start_time", "end_time"]
 
         if not any(
             pd.api.types.is_datetime64_any_dtype(column_dtype)
-            for column_dtype in known_gap_intervals.dtypes
+            for column_dtype in known_gap_intervals[
+                required_datetime64_column_names
+            ].dtypes
         ):
-            required_column_names_string = ", ".join(required_column_names)
+            required_column_names_string = ", ".join(required_datetime64_column_names)
             raise ComponentInputValidationException(
                 f"At least one of the required columns {required_column_names_string} "
                 "is not of any datetime64 dtype.",
@@ -797,24 +917,6 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                 invalid_component_inputs=["known_gap_intervals"],
             )
         return known_gap_intervals
-
-
-def add_boundary_timestamps(
-    timeseries_with_bounds: pd.Series,
-    interval_start_timestamp: pd.Timestamp,
-    interval_end_timestamp: pd.Timestamp,
-    fill_value: Any | None,
-) -> pd.Series:
-    timeseries_with_bounds = timeseries_with_bounds.copy()
-    if interval_start_timestamp not in timeseries_with_bounds.index:
-        timeseries_with_bounds[interval_start_timestamp] = fill_value
-
-    if interval_end_timestamp not in timeseries_with_bounds.index:
-        timeseries_with_bounds[interval_end_timestamp] = fill_value
-
-    timeseries_with_bounds = timeseries_with_bounds.sort_index()
-
-    return timeseries_with_bounds
 
 
 def constrict_series_to_interval(
@@ -834,6 +936,28 @@ def constrict_series_to_interval(
         else true_array
     )
     return timeseries[series_after_start & series_before_end]
+
+
+def add_boundary_timestamps_and_sort(
+    timeseries_with_bounds: pd.Series,
+    interval_start_timestamp: pd.Timestamp | None,
+    interval_end_timestamp: pd.Timestamp | None,
+    fill_value: Any | None,
+) -> pd.Series:
+    timeseries_with_bounds = timeseries_with_bounds.copy()
+    if (
+        interval_start_timestamp is not None
+        and interval_start_timestamp not in timeseries_with_bounds.index
+    ):
+        timeseries_with_bounds[interval_start_timestamp] = fill_value
+
+    if (
+        interval_end_timestamp is not None
+        and interval_end_timestamp not in timeseries_with_bounds.index
+    ):
+        timeseries_with_bounds[interval_end_timestamp] = fill_value
+
+    return timeseries_with_bounds.sort_index()
 
 
 def check_amount_datapoints(series: pd.Series, min_amount_datapoints: int) -> None:
@@ -884,8 +1008,8 @@ def determine_normalized_interval_sizes(
 no_gap_intervals = pd.DataFrame(
     {},
     columns=[
-        "start",
-        "end",
+        "start_time",
+        "end_time",
         "start_inclusive",
         "end_inclusive",
     ],
@@ -894,8 +1018,8 @@ no_gap_intervals = pd.DataFrame(
 empty_gap_info = pd.DataFrame(
     {},
     columns=[
-        "start",
-        "end",
+        "start_time",
+        "end_time",
         "start_inclusive",
         "end_inclusive",
         "gap_size_in_seconds",
@@ -927,8 +1051,8 @@ def identify_gaps(
 
     gap_intervals = pd.DataFrame(
         {
-            "start": gap_starts,
-            "end": gap_ends,
+            "start_time": gap_starts,
+            "end_time": gap_ends,
             "start_inclusive": False,
             "end_inclusive": False,
         }
@@ -984,12 +1108,13 @@ def get_boundary_values(
     method: Literal["ffill", "bfill"],
     fill_value: Any,
 ) -> NDArray:
+    exclusive_index = timeseries.index.join(
+        pd.Index(gap_boundaries[np.logical_not(gap_boundaries_inclusive)]),
+        how="outer",
+        sort=True,
+    ).sort_values()
     boundary_values_exclusive = timeseries.reindex(
-        timeseries.index.join(
-            pd.Index(gap_boundaries[np.logical_not(gap_boundaries_inclusive)]),
-            how="outer",
-            sort=True,
-        ),
+        index=exclusive_index,
         method=method,
     )
     boundary_values_exclusive = boundary_values_exclusive[
@@ -1037,8 +1162,8 @@ def constricted_gap_timestamps_to_intervals(
 
     gap_intervals = pd.DataFrame(
         {
-            "start": constricted_gap_points.index,
-            "end": constricted_gap_points.index,
+            "start_time": constricted_gap_points.index,
+            "end_time": constricted_gap_points.index,
             "start_inclusive": True,
             "end_inclusive": True,
         }
@@ -1083,15 +1208,33 @@ def identify_gaps_from_missing_expected_datapoints(
 
 def constrict_intervals_df_to_interval(
     gap_intervals: pd.DataFrame,
-    interval_start_timestamp: pd.Timestamp,
-    interval_end_timestamp: pd.Timestamp,
+    interval_start_timestamp: pd.Timestamp | None,
+    interval_end_timestamp: pd.Timestamp | None,
 ) -> pd.DataFrame:
-    gap_intervals[gap_intervals["start"] < interval_start_timestamp][
-        "start"
-    ] = interval_start_timestamp
-    gap_intervals[gap_intervals["end"] < interval_end_timestamp][
-        "end"
-    ] = interval_end_timestamp
+    if interval_start_timestamp is not None:
+        gap_start_before_interval_start_index = gap_intervals[
+            gap_intervals["start_time"] < interval_start_timestamp
+        ].index
+        gap_intervals.loc[
+            gap_start_before_interval_start_index, "start_time"
+        ] = interval_start_timestamp
+        gap_intervals.loc[
+            gap_start_before_interval_start_index, "start_inclusive"
+        ] = True
+
+    if interval_end_timestamp is not None:
+        gap_end_after_interval_end_index = gap_intervals[
+            gap_intervals["end_time"] > interval_end_timestamp
+        ].index
+        gap_intervals.loc[
+            gap_end_after_interval_end_index, "end_time"
+        ] = interval_end_timestamp
+        gap_intervals.loc[gap_end_after_interval_end_index, "end_inclusive"] = True
+
+    gap_intervals = gap_intervals.drop(
+        gap_intervals[gap_intervals["start_time"] >= gap_intervals["end_time"]].index
+    )
+
     return gap_intervals
 
 
@@ -1104,48 +1247,52 @@ def merge_intervals(intervals: pd.DataFrame) -> pd.DataFrame:
     Multiple steps are required to properly track whether the resulting interval boundary is
     inclusive or not.
     """
-    intervals = intervals.sort_values(["start", "end"])
+    intervals = intervals.sort_values(["start_time", "end_time"])
 
-    intervals["same_start"] = (
-        intervals["start"] != intervals["start"].shift()
+    intervals["same_start_time"] = (
+        intervals["start_time"] != intervals["start_time"].shift()
     ).cumsum()
-    intervals = intervals.groupby(intervals["same_start"]).agg(
+    intervals = intervals.groupby(intervals["same_start_time"]).agg(
         {
-            "start": "first",
-            "end": "last",
+            "start_time": "first",
+            "end_time": "last",
             "start_inclusive": any,
             "end_inclusive": "last",
         }
     )
 
-    intervals["same_end"] = (intervals["end"] != intervals["end"].shift()).cumsum()
-    intervals = intervals.groupby(intervals["same_end"]).agg(
+    intervals["same_end_time"] = (
+        intervals["end_time"] != intervals["end_time"].shift()
+    ).cumsum()
+    intervals = intervals.groupby(intervals["same_end_time"]).agg(
         {
-            "start": "first",
-            "end": "last",
+            "start_time": "first",
+            "end_time": "last",
             "start_inclusive": "first",
             "end_inclusive": any,
         }
     )
 
-    intervals["overlap"] = (intervals["start"] >= intervals["end"].shift()).cumsum()
+    intervals["overlap"] = (
+        intervals["start_time"] >= intervals["end_time"].shift()
+    ).cumsum()
     intervals = intervals.groupby(intervals["overlap"]).agg(
         {
-            "start": "first",
-            "end": "last",
+            "start_time": "first",
+            "end_time": "last",
             "start_inclusive": "first",
             "end_inclusive": "last",
         }
     )
 
     intervals["touch"] = (
-        (intervals["start"] > intervals["end"].shift())
+        (intervals["start_time"] > intervals["end_time"].shift())
         | (~(intervals["start_inclusive"] & intervals["end_inclusive"]))
     ).cumsum()
     intervals = intervals.groupby(intervals["touch"]).agg(
         {
-            "start": "first",
-            "end": "last",
+            "start_time": "first",
+            "end_time": "last",
             "start_inclusive": "first",
             "end_inclusive": "last",
         }
@@ -1160,7 +1307,7 @@ def get_gap_intervals_info(
     fill_value: Any,
 ) -> pd.DataFrame:
     constricted_gap_interval_dfs = [
-        df for df in constricted_gap_interval_dfs if df is None or len(df) != 0
+        df for df in constricted_gap_interval_dfs if df is not None and len(df) != 0
     ]
 
     if len(constricted_gap_interval_dfs) == 0:
@@ -1170,7 +1317,7 @@ def get_gap_intervals_info(
         pd.concat(constricted_gap_interval_dfs, ignore_index=True)
     )
 
-    gap_starts = merged_gap_intervals["start"].to_numpy()
+    gap_starts = merged_gap_intervals["start_time"].to_numpy()
     gap_starts_inclusive = merged_gap_intervals["start_inclusive"].to_numpy()
     left_values = get_boundary_values(
         timeseries=constricted_timeseries_with_bounds,
@@ -1180,7 +1327,7 @@ def get_gap_intervals_info(
         fill_value=fill_value,
     )
 
-    gap_ends = merged_gap_intervals["end"].to_numpy()
+    gap_ends = merged_gap_intervals["end_time"].to_numpy()
     gap_ends_inclusive = merged_gap_intervals["end_inclusive"].to_numpy()
     right_values = get_boundary_values(
         timeseries=constricted_timeseries_with_bounds,
@@ -1192,8 +1339,8 @@ def get_gap_intervals_info(
 
     gap_info = pd.DataFrame(
         {
-            "start": gap_starts,
-            "end": gap_ends,
+            "start_time": gap_starts,
+            "end_time": gap_ends,
             "start_inclusive": gap_starts_inclusive,
             "end_inclusive": gap_ends_inclusive,
             "gap_size_in_seconds": gap_ends - gap_starts,
@@ -1323,7 +1470,7 @@ def main(
         input_params.interval_end_timestamp,
     )
 
-    constricted_timeseries_with_bounds = add_boundary_timestamps(
+    constricted_timeseries_with_bounds = add_boundary_timestamps_and_sort(
         constricted_timeseries_without_bounds,
         input_params.interval_start_timestamp,
         input_params.interval_end_timestamp,
