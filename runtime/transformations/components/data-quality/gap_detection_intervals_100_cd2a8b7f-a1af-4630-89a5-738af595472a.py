@@ -74,16 +74,16 @@ DataFrame with information about the gaps.
  ) or a timedelta string, e.g. "D" or "60s".
  If this value is set
 
-- **known_gap_timestamps** (Series, default value: null):
+- **externally_determined_gap_timestamps** (Series, default value: null):
   Expects Pandas Series with index of datatype DateTimeIndex. The values are not considered.
 
-- **known_gap_intervals** (DataFrame, default value: null):
+- **externally_determined_gap_intervals** (DataFrame, default value: null):
   Expects Pandas DataFrame with columns "start_time", "end_time", "start_inclusive", "end_inclusive,
   which all have a datatime64 dtype.
 
-- **deactivate_gap_detection** (bool, default value: false):
+- **deactivate_internal_gap_detection** (bool, default value: false):
   Set to `true` to disable any gap detection and only determine the gap_info for
-  **known_gap_timestamps** and **known_gap_intervals**.
+  **externally_determined_gap_timestamps** and **externally_determined_gap_intervals**.
 
 ## Outputs
 
@@ -410,7 +410,7 @@ by downtime or outages, where the data is likely to be atypical and should there
 in the analysis.
 Gap points can be specified in a series, whereas gap intervals must be specified by a data frame
 containing the expected columns.Further gap detection can be disabled by setting
-**deactivate_gap_detection** to true.
+**deactivate_internal_gap_detection** to true.
 The example JSON input
 ```
 {
@@ -427,11 +427,11 @@ The example JSON input
         "2020-01-01T01:31:00.000Z": 30.0,
         "2020-01-01T01:34:00.000Z": 30.0
     },
-    "known_gap_timestamps": {
+    "externally_determined_gap_timestamps": {
         "2020-01-01T01:25:00.000Z": true,
         "2020-01-01T01:29:00.000Z": true
     },
-    "known_gap_intervals": [
+    "externally_determined_gap_intervals": [
         {
             "start_time": "2020-01-01T01:01:00.000Z",
             "end_time": "2020-01-01T01:13:00.000Z",
@@ -457,7 +457,7 @@ The example JSON input
             "end_inclusive": false
         }
     ],
-    "deactivate_gap_detection": true,
+    "deactivate_internal_gap_detection": true,
 }
 ```
 then results in the following output with only those (parts of the) known gaps, which overlap with
@@ -566,8 +566,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     expected_data_frequency_factor: float
     expected_data_frequency_offset_str: str | None = None
     expected_data_frequency_offset: pd.Timedelta | None = None
-    known_gap_timestamps: pd.Series | None
-    known_gap_intervals: pd.DataFrame | None
+    externally_determined_gap_timestamps: pd.Series | None
+    externally_determined_gap_intervals: pd.DataFrame | None
 
     @validator("timeseries")
     def timeseries_index_has_datetime_dtype(cls, timeseries: pd.Series) -> pd.Series:
@@ -803,31 +803,33 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             )
         return factor
 
-    @validator("known_gap_timestamps")
-    def known_gap_timestamps_index_has_datetime_dtype(
-        cls, known_gap_timestamps: pd.Series | None
+    @validator("externally_determined_gap_timestamps")
+    def externally_determined_gap_timestamps_index_has_datetime_dtype(
+        cls, externally_determined_gap_timestamps: pd.Series | None
     ) -> pd.Series | None:
-        if known_gap_timestamps is None:
-            return known_gap_timestamps
+        if externally_determined_gap_timestamps is None:
+            return externally_determined_gap_timestamps
 
         if (
-            pd.api.types.is_datetime64_any_dtype(known_gap_timestamps.index.dtype)
+            pd.api.types.is_datetime64_any_dtype(
+                externally_determined_gap_timestamps.index.dtype
+            )
             is False
         ):
             raise ComponentInputValidationException(
-                "The index of `known_gap_timestamps` is not of any datetime64 dtype, "
-                f"but {known_gap_timestamps.index.dtype}.",
+                "The index of `externally_determined_gap_timestamps` is not of "
+                f"any datetime64 dtype, but {externally_determined_gap_timestamps.index.dtype}.",
                 error_code=422,
-                invalid_component_inputs=["known_gap_timestamps"],
+                invalid_component_inputs=["externally_determined_gap_timestamps"],
             )
 
-        return known_gap_timestamps
+        return externally_determined_gap_timestamps
 
-    @validator("known_gap_intervals")
-    def check_required_known_gap_intervals_columns_are_present(
-        cls, known_gap_intervals: pd.DataFrame | None
+    @validator("externally_determined_gap_intervals")
+    def check_required_externally_determined_gap_intervals_columns_are_present(
+        cls, externally_determined_gap_intervals: pd.DataFrame | None
     ) -> pd.DataFrame | None:
-        if known_gap_intervals is None:
+        if externally_determined_gap_intervals is None:
             return None
 
         required_column_names = {
@@ -837,30 +839,32 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             "end_inclusive",
         }
 
-        if not required_column_names.issubset(set(known_gap_intervals.columns)):
-            column_names_string = ", ".join(known_gap_intervals.columns)
+        if not required_column_names.issubset(
+            set(externally_determined_gap_intervals.columns)
+        ):
+            column_names_string = ", ".join(externally_determined_gap_intervals.columns)
             required_column_names_string = ", ".join(required_column_names)
             raise ComponentInputValidationException(
-                f"The column names {column_names_string} of `known_gap_intervals` don't "
-                f"contain the required columns {required_column_names_string}.",
+                f"The column names {column_names_string} of `externally_determined_gap_intervals` "
+                f"don't contain the required columns {required_column_names_string}.",
                 error_code=422,
-                invalid_component_inputs=["known_gap_intervals"],
+                invalid_component_inputs=["externally_determined_gap_intervals"],
             )
 
-        return known_gap_intervals
+        return externally_determined_gap_intervals
 
-    @validator("known_gap_intervals")
-    def check_known_gap_intervals_columns_have_datetime_dtype(
-        cls, known_gap_intervals: pd.DataFrame | None
+    @validator("externally_determined_gap_intervals")
+    def check_externally_determined_gap_intervals_columns_have_datetime_dtype(
+        cls, externally_determined_gap_intervals: pd.DataFrame | None
     ) -> pd.DataFrame | None:
-        if known_gap_intervals is None:
+        if externally_determined_gap_intervals is None:
             return None
 
         required_datetime64_column_names = ["start_time", "end_time"]
 
         if not any(
             pd.api.types.is_datetime64_any_dtype(column_dtype)
-            for column_dtype in known_gap_intervals[
+            for column_dtype in externally_determined_gap_intervals[
                 required_datetime64_column_names
             ].dtypes
         ):
@@ -869,9 +873,9 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                 f"At least one of the required columns {required_column_names_string} "
                 "is not of any datetime64 dtype.",
                 error_code=422,
-                invalid_component_inputs=["known_gap_intervals"],
+                invalid_component_inputs=["externally_determined_gap_intervals"],
             )
-        return known_gap_intervals
+        return externally_determined_gap_intervals
 
 
 def constrict_series_to_interval(
@@ -1337,8 +1341,14 @@ COMPONENT_INFO = {
             "data_type": "STRING",
             "default_value": None,
         },
-        "known_gap_timestamps": {"data_type": "SERIES", "default_value": None},
-        "known_gap_intervals": {"data_type": "DATAFRAME", "default_value": None},
+        "externally_determined_gap_timestamps": {
+            "data_type": "SERIES",
+            "default_value": None,
+        },
+        "externally_determined_gap_intervals": {
+            "data_type": "DATAFRAME",
+            "default_value": None,
+        },
         "deactivate_freq_based_gap_detection": {
             "data_type": "BOOLEAN",
             "default_value": False,
@@ -1353,8 +1363,7 @@ COMPONENT_INFO = {
     "version_tag": "1.0.0",
     "id": "cd2a8b7f-a1af-4630-89a5-738af595472a",
     "revision_group_id": "415662ab-e4fb-4084-b752-80433d0df291",
-    "state": "RELEASED",
-    "released_timestamp": "2024-02-09T13:35:07.594025+00:00",
+    "state": "DRAFT",
 }
 
 from hdutils import parse_default_value  # noqa: E402
@@ -1371,8 +1380,12 @@ def main(
     expected_data_frequency=None,
     expected_data_freq_allowed_variance_factor=1.0,
     expected_data_frequency_offset=None,
-    known_gap_timestamps=parse_default_value(COMPONENT_INFO, "known_gap_timestamps"),
-    known_gap_intervals=parse_default_value(COMPONENT_INFO, "known_gap_intervals"),
+    externally_determined_gap_timestamps=parse_default_value(
+        COMPONENT_INFO, "externally_determined_gap_timestamps"
+    ),
+    externally_determined_gap_intervals=parse_default_value(
+        COMPONENT_INFO, "externally_determined_gap_intervals"
+    ),
     deactivate_freq_based_gap_detection=False,
 ):
     # entrypoint function for this component
@@ -1417,8 +1430,8 @@ def main(
         expected_data_frequency_str=expected_data_frequency,
         expected_data_frequency_factor=expected_data_freq_allowed_variance_factor,
         expected_data_frequency_offset_str=expected_data_frequency_offset,
-        known_gap_timestamps=known_gap_timestamps,
-        known_gap_intervals=known_gap_intervals,
+        externally_determined_gap_timestamps=externally_determined_gap_timestamps,
+        externally_determined_gap_intervals=externally_determined_gap_intervals,
     )
 
     constricted_timeseries_without_bounds = constrict_series_to_interval(
@@ -1436,22 +1449,22 @@ def main(
     constricted_known_gap_timestamp_intervals = (
         constricted_gap_timestamps_to_intervals(
             constrict_series_to_interval(
-                input_params.known_gap_timestamps,
+                input_params.externally_determined_gap_timestamps,
                 input_params.interval_start_timestamp,
                 input_params.interval_end_timestamp,
             ),
         )
-        if input_params.known_gap_timestamps is not None
+        if input_params.externally_determined_gap_timestamps is not None
         else no_gap_intervals
     )
 
-    constricted_known_gap_intervals = (
+    constricted_externally_determined_gap_intervals = (
         constrict_intervals_df_to_interval(
-            input_params.known_gap_intervals,
+            input_params.externally_determined_gap_intervals,
             input_params.interval_start_timestamp,
             input_params.interval_end_timestamp,
         )
-        if input_params.known_gap_intervals is not None
+        if input_params.externally_determined_gap_intervals is not None
         else no_gap_intervals
     )
 
@@ -1460,7 +1473,7 @@ def main(
             "gap_info": get_gap_intervals_info(
                 constricted_timeseries_with_bounds,
                 [
-                    constricted_known_gap_intervals,
+                    constricted_externally_determined_gap_intervals,
                     constricted_known_gap_timestamp_intervals,
                 ],
             )
@@ -1507,7 +1520,7 @@ def main(
             constricted_timeseries_with_bounds,
             [
                 identified_gaps_df,
-                constricted_known_gap_intervals,
+                constricted_externally_determined_gap_intervals,
                 constricted_known_gap_timestamp_intervals,
                 gaps_from_missing_expected_datapoints,
             ],
