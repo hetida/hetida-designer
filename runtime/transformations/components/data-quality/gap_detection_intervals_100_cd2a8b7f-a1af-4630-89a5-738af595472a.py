@@ -42,7 +42,7 @@ DataFrame with information about the gaps.
   are to be expected, the value can be adjusted upwards accordingly.
 
 - **auto_freq_min_amount_datapoints** (Int, default value: 11):
-  Only relevant when **auto_frequency_determination** is True.
+  Only relevant when **auto_frequency_determination** is true.
   Expects a positive value. Minimum amount of datapoints required. Effects the expectable precision
   of the automatically determined expected data frequency.
 
@@ -55,7 +55,7 @@ DataFrame with information about the gaps.
   ) or a timedelta string, e.g. "D" or "60s".
   Alternatively, the **timeseries** can have an attribute "ref_data_frequency" that will be used
   if no **expected_data_frequency** is provided.
-  In that case **auto_frequency_determination** will be set to False.
+  In that case **auto_frequency_determination** will be set to false.
 
 - **expected_data_freq_allowed_variance_factor** (Float, default value: 1.0):
   Expects a positive value. The value is used to define when a step between two consecutive data
@@ -74,14 +74,14 @@ DataFrame with information about the gaps.
  ) or a timedelta string, e.g. "D" or "60s".
  If this value is set
 
-- **known_gap_timestamps** (Series, default value: None):
+- **known_gap_timestamps** (Series, default value: null):
   Expects Pandas Series with index of datatype DateTimeIndex. The values are not considered.
 
-- **known_gap_intervals** (DataFrame, default value: None):
+- **known_gap_intervals** (DataFrame, default value: null):
   Expects Pandas DataFrame with columns "start_time", "end_time", "start_inclusive", "end_inclusive,
   which all have a datatime64 dtype.
 
-- **deactivate_gap_detection** (bool, default value: False):
+- **deactivate_gap_detection** (bool, default value: false):
   Set to `true` to disable any gap detection and only determine the gap_info for
   **known_gap_timestamps** and **known_gap_intervals**.
 
@@ -409,7 +409,7 @@ Furthermore, it is possible to include information on gaps from external sources
 by downtime or outages, where the data is likely to be atypical and should therefore not be included
 in the analysis.
 Gap points can be specified in a series, whereas gap intervals must be specified by a data frame
-containing the expected columns.Further gap detection can be disabled by setting **only_known_gaps**
+containing the expected columns.Further gap detection can be disabled by setting **deactivate_gap_detection**
 to true.
 The example JSON input
 ```
@@ -457,7 +457,7 @@ The example JSON input
             "end_inclusive": false
         }
     ],
-    "only_known_gaps": true,
+    "deactivate_gap_detection": true,
 }
 ```
 then results in the following output with only those (parts of the) known gaps, which overlap with
