@@ -409,8 +409,8 @@ Furthermore, it is possible to include information on gaps from external sources
 by downtime or outages, where the data is likely to be atypical and should therefore not be included
 in the analysis.
 Gap points can be specified in a series, whereas gap intervals must be specified by a data frame
-containing the expected columns.Further gap detection can be disabled by setting **deactivate_gap_detection**
-to true.
+containing the expected columns.Further gap detection can be disabled by setting
+**deactivate_gap_detection** to true.
 The example JSON input
 ```
 {
