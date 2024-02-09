@@ -1389,28 +1389,29 @@ COMPONENT_INFO = {
     "version_tag": "1.0.0",
     "id": "cd2a8b7f-a1af-4630-89a5-738af595472a",
     "revision_group_id": "415662ab-e4fb-4084-b752-80433d0df291",
-    "state": "DRAFT",
+    "state": "RELEASED",
+    "released_timestamp": "2024-02-09T08:52:58.538925+00:00",
 }
 
 
 def main(
     *,
-    timeseries: pd.Series,
-    interval_start_timestamp_str: str | None = None,
-    interval_end_timestamp_str: str | None = None,
-    auto_frequency_determination: bool = True,
-    auto_freq_end_timestamp_str: str | None = None,
-    percentile: float = 0.5,
-    interpolation_method: str = "nearest",
-    min_amount_datapoints: int = 11,
-    expected_data_frequency_str: str | None = None,
-    expected_data_frequency_factor: float = 1.0,
-    expected_data_frequency_offset_str: str | None = None,
-    fill_value: Any | None = None,
-    known_gap_timestamps: pd.Series | None = None,
-    known_gap_intervals: pd.DataFrame | None = None,
-    only_add_known_gaps: bool = False,
-) -> dict:
+    timeseries,
+    interval_start_timestamp_str=None,
+    interval_end_timestamp_str=None,
+    auto_frequency_determination=True,
+    auto_freq_end_timestamp_str=None,
+    percentile=0.5,
+    interpolation_method="nearest",
+    min_amount_datapoints=11,
+    expected_data_frequency_str=None,
+    expected_data_frequency_factor=1.0,
+    expected_data_frequency_offset_str=None,
+    fill_value=None,
+    known_gap_timestamps=None,
+    known_gap_intervals=None,
+    only_add_known_gaps=False,
+):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
