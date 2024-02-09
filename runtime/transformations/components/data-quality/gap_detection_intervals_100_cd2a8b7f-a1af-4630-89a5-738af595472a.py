@@ -109,10 +109,7 @@ earlier (or later) index in order to reduce the **timeseries** to the processing
 
 To detect gaps, the time intervals between consecutive data points are determined.
 If **auto_frequency_determination** is set to true, determine the expected data frequency using the
-**auto_freq_percentile**-th quantile of the time intervals in the training range.
-The training range is determined by the **interval_start_timestamp** and the
-**auto_freq_end_timestamp**.
-If the latter is not defined, the full processing range is used as the training range.
+**auto_freq_percentile**-th quantile of the time intervals.
 If **auto_frequency_determination` is set to false, the expected data frequency is defined by the
 **expected_data_frequency**.
 If a time interval is greater than the product of the **expected_data_freq_allowed_variance_factor**
@@ -557,8 +554,6 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     interval_end_timestamp_str: str | None
     interval_end_timestamp: pd.Timestamp | None = None
     auto_frequency_determination: bool
-    auto_freq_end_timestamp_str: str | None
-    auto_freq_end_timestamp: pd.Timestamp | None = None
     percentile: float
     min_amount_datapoints: int
     expected_data_frequency_str: str | None
@@ -634,53 +629,6 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                 ],
             )
         return interval_end_timestamp
-
-    @validator("auto_freq_end_timestamp", always=True)
-    def get_auto_freq_end_timestamp_from_auto_freq_end_timestamp_str(
-        cls,
-        auto_freq_end_timestamp: pd.Timestamp | None,  # noqa: ARG002
-        values: dict,
-    ) -> pd.Timestamp | None:
-        if values["auto_freq_end_timestamp_str"] is None:
-            return None
-
-        return timestamp_str_to_pd_timestamp(
-            values["auto_freq_end_timestamp_str"],
-            "auto_freq_end_timestamp_str",
-        )
-
-    @validator("auto_freq_end_timestamp")
-    def check_auto_freq_end_timestamp_between_interval_start_and_end_timestamp(
-        cls, auto_freq_end_timestamp: pd.Timestamp | None, values: dict
-    ) -> pd.Timestamp | None:
-        interval_start_timestamp = values["interval_start_timestamp"]
-        interval_end_timestamp = values["interval_end_timestamp"]
-        if auto_freq_end_timestamp is not None:
-            if interval_start_timestamp > auto_freq_end_timestamp:
-                raise ComponentInputValidationException(
-                    "The value auto_freq_end_timestamp has to be "
-                    "inbetween interval_start_timestamp and interval_end_timestamp, "
-                    f"while it is {auto_freq_end_timestamp} < {interval_start_timestamp}.",
-                    error_code=422,
-                    invalid_component_inputs=[
-                        "interval_start_timestamp_str",
-                        "auto_freq_end_timestamp_str",
-                    ],
-                )
-            if interval_end_timestamp < auto_freq_end_timestamp:
-                raise ComponentInputValidationException(
-                    "The value auto_freq_end_timestamp has to be "
-                    "inbetween interval_start_timestamp and interval_end_timestamp, "
-                    f"while it is {auto_freq_end_timestamp} > {interval_end_timestamp}.",
-                    error_code=422,
-                    invalid_component_inputs=[
-                        "interval_end_timestamp_str",
-                        "auto_freq_end_timestamp_str",
-                    ],
-                )
-        else:
-            auto_freq_end_timestamp = None
-        return auto_freq_end_timestamp
 
     @validator("percentile")
     def check_percentile_in_allowed_range(cls, percentile: float) -> float:
@@ -1397,6 +1345,7 @@ def main(
             interval_start_timestamp = timeseries.attrs["ref_interval_start_timestamp"]
         elif "from" in timeseries.attrs:
             interval_start_timestamp = timeseries.attrs["from"]
+
     if interval_end_timestamp is None:
         if "ref_interval_end_timestamp" in timeseries.attrs:
             interval_end_timestamp = timeseries.attrs["ref_interval_end_timestamp"]
@@ -1485,16 +1434,8 @@ def main(
             series=constricted_timeseries_with_bounds,
             min_amount_datapoints=input_params.min_amount_datapoints,
         )
-        if input_params.auto_freq_end_timestamp is not None:
-            training_series = constrict_series_to_interval(
-                constricted_timeseries_with_bounds,
-                None,
-                input_params.auto_freq_end_timestamp,
-            )
-        else:
-            training_series = constricted_timeseries_with_bounds
         input_params.expected_data_frequency = determine_expected_data_frequency(
-            training_series, auto_freq_percentile
+            constricted_timeseries_with_bounds, auto_freq_percentile
         )
 
     normalized_intervals_df = determine_normalized_interval_sizes(
