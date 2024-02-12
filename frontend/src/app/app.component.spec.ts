@@ -3,7 +3,7 @@ import { TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { StoreModule } from '@ngrx/store';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
-import { MonacoEditorModule } from 'ngx-monaco-editor';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { AppComponent } from './app.component';
 import { AuthService } from './auth/auth.service';
 import { BasicTestModule } from './basic-test.module';
