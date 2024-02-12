@@ -457,8 +457,8 @@ The example JSON input
     "deactivate_internal_gap_detection": true,
 }
 ```
-then results in the following output with only those (parts of the) known gaps, which overlap with
-the time interval of interest:
+then results in the following output with only those (parts of the) externally determined gaps,
+which overlap with the time interval of interest:
 ```
 {
     "__hd_wrapped_data_object__": "DATAFRAME",
@@ -1396,7 +1396,7 @@ def main(
         input_params.interval_end_timestamp,
     )
 
-    constricted_known_gap_timestamp_intervals = (
+    constricted_externally_determined_gap_timestamp_intervals = (
         constricted_gap_timestamps_to_intervals(
             constrict_series_to_interval(
                 input_params.externally_determined_gap_timestamps,
@@ -1424,7 +1424,7 @@ def main(
                 constricted_timeseries_with_bounds,
                 [
                     constricted_externally_determined_gap_intervals,
-                    constricted_known_gap_timestamp_intervals,
+                    constricted_externally_determined_gap_timestamp_intervals,
                 ],
             )
         }
@@ -1463,7 +1463,7 @@ def main(
             [
                 identified_gaps_df,
                 constricted_externally_determined_gap_intervals,
-                constricted_known_gap_timestamp_intervals,
+                constricted_externally_determined_gap_timestamp_intervals,
                 gaps_from_missing_expected_datapoints,
             ],
         )
