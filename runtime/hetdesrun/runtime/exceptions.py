@@ -6,14 +6,14 @@ from hetdesrun.runtime.context import ExecutionContext
 class RuntimeExecutionError(Exception):
     """Highest Level Exception for Runtime Execution"""
 
-    def __init__(self, *args, **kwargs):  # type: ignore
-        self.currently_executed_transformation_id = None
-        self.currently_executed_transformation_name = None
-        self.currently_executed_transformation_tag = None
-        self.currently_executed_transformation_type = None
-        self.currently_executed_hierarchical_operator_id = None
-        self.currently_executed_hierarchical_operator_name = None
-        self.currently_executed_job_id = None
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.currently_executed_transformation_id: str = "UNKNOWN"
+        self.currently_executed_transformation_name: str = "UNKNOWN"
+        self.currently_executed_transformation_tag: str = "UNKNOWN"
+        self.currently_executed_transformation_type: str = "UNKNOWN"
+        self.currently_executed_hierarchical_operator_id: str = "UNKNOWN"
+        self.currently_executed_hierarchical_operator_name: str = "UNKNOWN"
+        self.currently_executed_job_id: str = "UNKNOWN"
         super().__init__(*args, **kwargs)
 
     def set_context(

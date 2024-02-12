@@ -361,6 +361,7 @@ def recursively_parse_workflow_node(
                 for inp in dynamic_inputs_with_default_value
                 if inp.name is not None
             ],
+            optional=True,
             id_suffix="workflow_default_values",
         )
     except WorkflowInputDataValidationError as error:
