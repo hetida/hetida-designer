@@ -359,7 +359,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     ) -> pd.Timedelta | None:
         if expected_data_frequency_offset is None:
             expected_data_frequency_offset = (
-                pd.Timestamp("1970-01-01",tz="utc") - values["interval_start_timestamp"]
+                pd.Timestamp("1970-01-01", tz="utc")
+                - values["interval_start_timestamp"]
             )
 
         if (
@@ -534,7 +535,13 @@ def constrict_intervals_df_to_interval(
         gap_intervals.loc[gap_end_after_interval_end_index, "end_inclusive"] = True
 
     gap_intervals = gap_intervals.drop(
-        gap_intervals[gap_intervals["start_time"] >= gap_intervals["end_time"]].index
+        gap_intervals[gap_intervals["start_time"] > gap_intervals["end_time"]].index
+    )
+    gap_intervals = gap_intervals.drop(
+        gap_intervals[
+            (gap_intervals["start_time"] == gap_intervals["end_time"])
+            & (~gap_intervals["start_inclusive"] | ~gap_intervals["end_inclusive"])
+        ].index
     )
 
     return gap_intervals
@@ -667,7 +674,7 @@ def generate_replacement_locations(
         if gap_start_time == gap_end_time:
             replacement_locations.append(pd.DatetimeIndex([gap_start_time]))
 
-        replacement_locations.append(
+        replacement_locations = replacement_locations.append(
             pd.date_range(
                 start=shift_timestamp_to_the_right_onto_rhythm(
                     gap_start_time, data_frequency, data_frequency_offset
