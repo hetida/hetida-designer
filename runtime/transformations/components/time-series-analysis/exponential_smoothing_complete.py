@@ -4,7 +4,7 @@
 
 ## Description
 
-The component is designed to generate forecasts for some time series via an Exponential Smoothing
+The component is designed to generate forecasts for some time series via an *Exponential Smoothing*
 model. This function is particularly useful in time series analysis for predicting future values
 based on the established patterns in the historical data. It provides a simple yet effective way
 to forecast data points for both short-term (in-sample) and long-term (out-of-sample) predictions.
@@ -12,43 +12,46 @@ to forecast data points for both short-term (in-sample) and long-term (out-of-sa
 ## Inputs
 
 - **series** (Pandas Series):
-    The Series containing the time series data.
+    The Series containing the time series data. Indices must be Datetime.
 - **steps** (Integer):
     The number of steps to forecast ahead.
 - **test_size** (Float, default value: 0.3):
-    The proportion of the dataset to include in the test split.
+    The proportion of the dataset to include in the testing set.
 - **shuffle** (Boolean, default value: False):
-    Whether or not to shuffle the data before splitting.
+    Whether or not to shuffle the data before splitting into training and testing set.
 - **seasonal_periods** (Integer, default value: None):
     The number of observations that constitute a full seasonal cycle.
 - **use_boxcox** (Boolean, default value: True): 
-    Whether to apply Box-Cox transformation.
+    Whether to apply Box-Cox transformation in the Exponential Smoothing model.
 - **initialization_method** (String, default value: "estimated"):
     Method for initializing the model ('estimated', 'heuristic', 'legacy-heuristic', None).
 - **iterations** (Integer, default value: 200):
     The number of iterations for the random search in the hyperparameter tuning.
 - **alpha** (Float, default value: 0.05):
-    Significance level to compare the p-value with.
+    Significance level to compare the p-value with when analyzing the residuals of the in-sample forecast.
 
 ## Outputs
 
 - **fig** (Plotly Figure):
-    Time series plot including in-sample and out-of-sample predictions.
+    Time series plot including in-sample and out-of-sample forecasts.
 
 ## Details
 
 This function is essential for users who need to project future values in time series data.
 By providing both in-sample and out-of-sample forecasts, it allows users to gauge the model's
-performance on known data and to predict future trends. The component is devided in several steps,
+performance on known data and to predict future trends. Additionally, based on the normality 
+of the residuals of the in-sample forecast, confidence intervals for the forecasts might be added. 
+The component is devided into several steps,
 that can be summarized as follows:
-1. Adjust the time series so that all its values are positive
-2. Split the time series into training and testing sets
-3. Optimize hyperparameters for the Exponential Smoothing model using random search
-4. Train some Exponential Smoothing model with optimized hyperparameters
-5. Forecast future values using the trained Exponential Smoothing model
-6. Decide whether to include some confidence interval for the out-of-sample forecast,
+1. Check if the time series has consistent intervals between its indices
+2. Adjust the time series so that all its values are positive
+3. Split the time series into training and testing sets
+4. Optimize hyperparameters for the Exponential Smoothing model using random search
+5. Train some Exponential Smoothing model with optimized hyperparameters
+6. Forecast future values using the trained Exponential Smoothing model
+7. Decide whether to include some confidence interval for the out-of-sample forecast,
 based on the normality of the residuals specified by the Shapiro-Wilk Test
-7. Create a Plotly time series plot including in-sample and out-of-sample forecasts,
+8. Create a Plotly time series plot including in-sample and out-of-sample forecasts,
 with optional confidence intervals
 
 ## Example
@@ -397,7 +400,8 @@ def forecast_exponential_smoothing(
     steps (Integer): The number of steps to forecast ahead.
 
     Outputs:
-    Tuple containing in-sample forecast and out-of-sample forecast.
+    in-sample forecast (Pandas Series): The in-sample forecast.
+    out-of-sample forecast (Pandas Series): The out-of-sample forecast.
     """
     # Parameter validations
     if not isinstance(steps, int) or steps <= 0:
@@ -413,6 +417,34 @@ def forecast_exponential_smoothing(
     out_of_sample_forecast = np.round(forecast[-steps:], 2)
 
     return in_sample_forecast, out_of_sample_forecast
+
+def plot_confidence_interval(
+    in_sample_forecast: pd.Series,
+    test: pd.Series,
+    alpha: float=0.05
+):
+    """Decide whether to include some confidence interval for the forecast.
+
+    Inputs:
+    in_sample_forecast (Pandas Series): 
+        Series containing the in-sample forecast.
+    test (Pandas Series): 
+        Series containing the testing data.
+    alpha (Float, optional):
+        Confindence Level to compare the p-value with. Default value is 0.05.
+
+    Outputs:
+    confidence_interval (Boolean): 
+        Wheter or not to include the confidence interval.
+    p_value (Float):
+        P-value of the Shapiro-Wilk Test for normality of the residuals.
+    """
+
+    residuals = sorted([x - y for x, y in zip(in_sample_forecast.values, test.values)])
+    p_value = np.round(stats.shapiro(residuals)[1], 2)
+    conf_interval = p_value > alpha
+
+    return conf_interval, p_value
 
 def timeseries_plot_including_predictions(
     data: pd.Series,
@@ -457,8 +489,8 @@ def timeseries_plot_including_predictions(
         in_sample_forecast = in_sample_forecast + min_value - 1
         out_of_sample_forecast = out_of_sample_forecast + min_value -1 
 
-    in_sample_forecast_last_value = in_sample_forecast.iloc[-1] #data.iloc[-1]
-    in_sample_forecast_last_index = in_sample_forecast.index[-1] #data.index[-1]
+    in_sample_forecast_last_value = in_sample_forecast.iloc[-1]
+    in_sample_forecast_last_index = in_sample_forecast.index[-1]
     last_value_series = pd.Series([in_sample_forecast_last_value], index=[in_sample_forecast_last_index])
     out_of_sample_forecast = pd.concat([last_value_series, out_of_sample_forecast])
 
@@ -617,21 +649,21 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None, 
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
-    # Step 0: 
+    # Step 1: Check if the time series has consistent intervals between its indices
     series = resample_time_series_if_needed(
         series
     )
-    # Step 1: Ensure positivity 
+    # Step 2: Ensure positivity 
     series, min_value = ensure_positivity(
         series
     )
-    # Step 2: Split the time series into training and testing sets
+    # Step 3: Split the time series into training and testing sets
     train, test = train_test_split_func(
         series=series,
         test_size=test_size,
         shuffle=shuffle
     )
-    # Step 3: Optimize hyperparameters for the Exponential Smoothing model using random search
+    # Step 4: Optimize hyperparameters for the Exponential Smoothing model using random search
     best_alpha, best_beta, best_gamma, best_phi, best_score, best_trend, best_seasonal = \
         hyper_tuning_grid_search(
             train=train,
@@ -641,7 +673,7 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None, 
             use_boxcox=use_boxcox,
             initialization_method=initialization_method
         )
-    # Step 4: Train some Exponential Smoothing model with optimized hyperparameters
+    # Step 5: Train some Exponential Smoothing model with optimized hyperparameters
     model_fit = train_exponential_smoothing(
         series=train,
         seasonal_periods=seasonal_periods,
@@ -654,18 +686,20 @@ def main(*, series, steps, test_size=0.3, shuffle=False, seasonal_periods=None, 
         use_boxcox=use_boxcox,
         initialization_method=initialization_method
     )
-    # Step 5: Forecast future values using the trained Exponential Smoothing model
+    # Step 6: Forecast future values using the trained Exponential Smoothing model
     in_sample_forecast, out_of_sample_forecast = forecast_exponential_smoothing(
         trained_model=model_fit,
         series=test,
         steps=steps
     )
-    # Step 6: Decide whether to include some confidence interval for the out-of-sample forecast,
+    # Step 7: Decide whether to include some confidence interval for the forecast,
     #           based on the normality of the residuals specified by the Shapiro-Wilk Test
-    residuals = sorted([x - y for x, y in zip(in_sample_forecast.values, test.values)])
-    p_value = np.round(stats.shapiro(residuals)[1], 2)
-    conf_interval = p_value > alpha
-    # Step 7: Create a Plotly time series plot including in-sample and out-of-sample forecasts,
+    conf_interval, p_value = plot_confidence_interval(
+        in_sample_forecast=in_sample_forecast,
+        test=test,
+        alpha=alpha
+    )
+    # Step 8: Create a Plotly time series plot including in-sample and out-of-sample forecasts,
     #           with optional confidence intervals
     fig = timeseries_plot_including_predictions(
         data=series,
