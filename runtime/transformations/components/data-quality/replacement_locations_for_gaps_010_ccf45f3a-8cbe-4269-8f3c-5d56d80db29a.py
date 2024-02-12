@@ -758,7 +758,8 @@ COMPONENT_INFO = {
     "version_tag": "0.1.0",
     "id": "ccf45f3a-8cbe-4269-8f3c-5d56d80db29a",
     "revision_group_id": "fd0f4cce-9a6e-48d2-8d10-5a2a1310f6c6",
-    "state": "DRAFT",
+    "state": "RELEASED",
+    "released_timestamp": "2024-02-12T17:40:16.717325+00:00",
 }
 
 from hdutils import parse_default_value  # noqa: E402, F401
@@ -766,17 +767,17 @@ from hdutils import parse_default_value  # noqa: E402, F401
 
 def main(
     *,
-    gap_intervals: pd.DataFrame,
-    timeseries: pd.Series | None = parse_default_value(COMPONENT_INFO, "timeseries"),
-    interval_start_timestamp: str | None = None,
-    interval_end_timestamp: str | None = None,
-    auto_frequency_determination: bool = True,
-    auto_freq_percentile: float = 0.5,
-    auto_freq_min_amount_datapoints: int = 11,
-    expected_data_frequency: str | None = None,
-    expected_data_frequency_offset: str | None = None,
-    all_gap_points: bool = True,
-) -> dict:
+    gap_intervals,
+    timeseries=parse_default_value(COMPONENT_INFO, "timeseries"),
+    interval_start_timestamp=None,
+    interval_end_timestamp=None,
+    auto_frequency_determination=True,
+    auto_freq_percentile=0.5,
+    auto_freq_min_amount_datapoints=11,
+    expected_data_frequency=None,
+    expected_data_frequency_offset=None,
+    all_gap_points=True,
+):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
