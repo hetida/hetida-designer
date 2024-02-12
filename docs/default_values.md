@@ -8,12 +8,14 @@ Change the input type from "REQUIRED" to "OPTIONAL", then the input field for th
 
 <img src="./assets/default_value.png" height="110" width=645 data-align="center">
 
-Not entering a value will result in the default value `None` for all data types, even for inputs of type `STRING`.
-As a workaround, enter a string and remove it to obtain an empty string as the default value.
+Just as with [manual input](./adapter_system/manual_input.md) in the execution dialog, for simple data types (such as `STRING`, `FLOAT`, `INT`) the data can be entered directly in the input field, while for `SERIES`, `DATAFRAME`, `MULTITSFRAME` or `ANY` json-data can be entered.
+No quotation marks need to be entered for inputs of the `STRING` data type, but if you want to enter a string as the default value for an `ANY` input, it must be enclosed in quotation marks.
+If you do not enter a value, the default value for all data types is set to `null`.
+To get an empty string as the default value instead, enter any string and remove it again before clicking `Save`.
 
 Optional inputs are not displayed in the preview, but a grey bar with a white triangle in the center pointing down indicates the presence of optional inputs.
 
-For components, the code is updated accordingly after saving the changes so that the actual default value is clear.
+For components, the code is updated with the according Python object after saving the changes so that the actual default value is clear.
 
 <img src="./assets/code_with_default_value.png" height="290" width=380 data-align="center">
 

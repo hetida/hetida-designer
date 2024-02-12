@@ -74,14 +74,14 @@ PULL_QUERY_URL_APPEND='?include_dependencies=true&include_deprecated=false&id=ec
 
 Here
 * `include_dependencies` is set to true. This makes sure every (transitively) dependant component / worklow that is used by the requested workflows is also pulled
-* `include_deprecated`` is set to false, which means that deprecated component / workflows are not pulled, even if requested. Note that this does not affect trafos pulled in by `include_dependencies=true`!
+* `include_deprecated` is set to false, which means that deprecated component / workflows are not pulled, even if requested. Note that this does not affect trafos pulled in by `include_dependencies=true`!
 * `id=...` is used two times to select 2 transformation revisions by their id. 
 
 The result consists of the two transformation revisions (but not if they are deprecated) plus all their transitive dependencies (regardless of being deprecated or not).
 
 If you want to filter for certain categories you may add `category=Category1&category=Category2`.
 
-Note that filter conditions of different type are combined with logical AND and filter conditions of the same kind are combined with OR..
+Note that filter conditions of different type are combined with logical AND and filter conditions of the same kind are combined with OR.
 
 Other filters are `category_prefix`, `name`, `type`, `state`,  and `revision_group_id`.
 
@@ -183,19 +183,18 @@ PULL_QUERY_URL_APPEND=?include_dependencies=true&include_deprecated=false&catego
 
 #### Recommended hybrid working workflow
 
-* sync pull && git commit
+* `sync pull` and `git commit`
 * make local edits in component code
     * test with local scripts
     * run unit tests contained in component code locally (see below)
-* git commit
-* sync push
+* `git commit` and `sync push`
 * edit in hd user interface (press control+F5 to reload!), for example:
     * create new revision
     * change io
     * do some test executions
-* sync pull && git commit
+* `sync pull` and `git commit`
 * ... repeat, then finish your work session with:
-* git commit && sync push
+* `git commit` and `sync push`
 
 
 ## Run unit tests in component code locally

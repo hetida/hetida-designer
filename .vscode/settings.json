@@ -59,5 +59,6 @@
         "runtime/main.py",
         "demo-adapter-python/demo_adapter_python",
         "demo-adapter-python/main.py"
-    ]
+    ],
+    "editor.indentSize": "tabSize"
 }
