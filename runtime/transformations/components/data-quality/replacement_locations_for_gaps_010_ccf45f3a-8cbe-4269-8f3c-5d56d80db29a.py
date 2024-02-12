@@ -1,11 +1,15 @@
-"""Documentation for component "Replacement Positions for Gaps"
+"""Documentation for component "Replacement Locations for Gaps"
 
-# Replacement Positions for Gaps
+# Replacement Locations for Gaps
 
 ## Description
 
 
 ## Inputs
+
+- **gap_intervals** (DataFrame):
+  Expects Pandas DataFrame with columns "start_time", "end_time", "start_inclusive", "end_inclusive,
+  which all have a datatime64 dtype.
 
 - **timeseries** (Series):
   Expects Pandas Series with index of datatype DateTimeIndex.
@@ -55,13 +59,6 @@
   if no **expected_data_frequency** is provided.
   In that case **auto_frequency_determination** will be set to false.
 
-- **expected_data_freq_allowed_variance_factor** (Float, default value: 1.0):
-  Expects a positive value. The value is used to define when a step between two consecutive data
-  points is recognized as a gap. I.e. a value of 1.0 means that all steps larger than the
-  specified or determined expected data frequency are recognized as gaps, while a value of 2.0 means
-  that intevals are only recognized as gaps if they are more than twice as large as the specified or
-  determined expected data frequency.
-
 - **expected_data_frequency_offset** (String, default value: null):
   Must not be set if **auto_frequency_determination** is true or the **expected_data_frequency**
   is not set.
@@ -69,34 +66,34 @@
   input **timeseries** with the provided expected data frequency. Must be a
   [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
- ) or a timedelta string, e.g. "D" or "60s".
- If this value is set
-
-- **gap_intervals** (DataFrame):
-  Expects Pandas DataFrame with columns "start_time", "end_time", "start_inclusive", "end_inclusive,
-  which all have a datatime64 dtype.
+  ) or a timedelta string, e.g. "D" or "60s".
+  If this value is set
 
 ## Outputs
-- **replacement_value_locations** (Series):
+- **replacement_locations** (Series):
+  A Pandas Series with the replacement location timestamps as index and NaN values.
 
 ## Details
 
+Defining the time points of a periodic timeseries requires specifying both the data
+frequency and the offset by which the timestamps are shifted.
+
+If **auto_frequency_determination** is set to true, the expected data frequency is determined using
+the **auto_freq_percentile**-th quantile of the time intervals between consecutive datapoints in
+**timeseries**.
+If **auto_frequency_determination** is set to false, the expected data frequency must be provided by
+the input **expected_data_frequency**.
+
+If no **expected_data_frequency_offset** is specified, the data frequency offset is determine by
+using either the timestamp of the first datapoint of the timeseries within the specified time
+interval or, if the time series is empty, the **interval_start_timestamp**.
+If neither value is specified, the start timestamp of each gap is used.
+Depending on the gaps, the replacement locations might then be shifted against each other.
+
 ## Examples
+A valid example JSON input is:
 ```json
 {
-    "timeseries": {
-        "2020-01-01T01:16:00.000Z": 10.0,
-        "2020-01-01T01:18:00.000Z": 10.0,
-        "2020-01-01T01:19:00.000Z": 10.0,
-        "2020-01-01T01:20:00.000Z": 10.0,
-        "2020-01-01T01:22:00.000Z": 20.0,
-        "2020-01-01T01:23:00.000Z": 20.0,
-        "2020-01-01T01:25:00.000Z": 20.0,
-        "2020-01-01T01:28:00.000Z": 20.0,
-        "2020-01-01T01:30:00.000Z": 30.0,
-        "2020-01-01T01:31:00.000Z": 30.0,
-        "2020-01-01T01:34:00.000Z": 30.0
-    },
     "gap_intervals": [
         {
             "start_time": "2020-01-01T01:16:00.000Z",
@@ -116,7 +113,38 @@
             "start_inclusive": false,
             "end_inclusive": true
         }
-    ]
+    ],
+    "timeseries": {
+        "2020-01-01T01:16:00.000Z": 10.0,
+        "2020-01-01T01:18:00.000Z": 10.0,
+        "2020-01-01T01:19:00.000Z": 10.0,
+        "2020-01-01T01:20:00.000Z": 10.0,
+        "2020-01-01T01:22:00.000Z": 20.0,
+        "2020-01-01T01:23:00.000Z": 20.0,
+        "2020-01-01T01:25:00.000Z": 20.0,
+        "2020-01-01T01:28:00.000Z": 20.0,
+        "2020-01-01T01:30:00.000Z": 30.0,
+        "2020-01-01T01:31:00.000Z": 30.0,
+        "2020-01-01T01:34:00.000Z": 30.0
+    },
+}
+```
+This results in the output:
+```json
+{
+    "__hd_wrapped_data_object__": "SERIES",
+    "__metadata__": {},
+    "__data__": {
+        "2020-01-01T01:16:00.000Z": null,
+        "2020-01-01T01:18:00.000Z": null,
+        "2020-01-01T01:20:00.000Z": null,
+        "2020-01-01T01:22:00.000Z": null,
+        "2020-01-01T01:24:00.000Z": null,
+        "2020-01-01T01:29:00.000Z": null,
+        "2020-01-01T01:32:00.000Z": null,
+        "2020-01-01T01:34:00.000Z": null
+    }
+}
 ```
 """
 
@@ -168,7 +196,6 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
     min_amount_datapoints: int
     expected_data_frequency_str: str | None
     expected_data_frequency: pd.Timedelta | None = None
-    expected_data_frequency_factor: float
     expected_data_frequency_offset_str: str | None = None
     expected_data_frequency_offset: pd.Timedelta | None = None
     externally_determined_gap_timestamps: pd.Series | None
@@ -350,35 +377,6 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             )
             % values["expected_data_frequency"]
         )
-
-    @validator("expected_data_frequency_offset", always=True)
-    def get_expected_data_frequency_offset_from_interval_start_timestamp(
-        cls,
-        expected_data_frequency_offset: pd.Timedelta | None,  # noqa: ARG002
-        values: dict,
-    ) -> pd.Timedelta | None:
-        if expected_data_frequency_offset is None:
-            expected_data_frequency_offset = (
-                pd.Timestamp("1970-01-01", tz="utc")
-                - values["interval_start_timestamp"]
-            )
-
-        if (
-            "expected_data_frequency" in values
-            and values["expected_data_frequency"] is not None
-        ):
-            return expected_data_frequency_offset % values["expected_data_frequency"]
-        return expected_data_frequency_offset
-
-    @validator("expected_data_frequency_factor")
-    def check_expected_data_frequency_factor_non_negative(cls, factor: float) -> float:
-        if factor < 0:
-            raise ComponentInputValidationException(
-                "The gap size factor has to be a non-negative float.",
-                error_code=422,
-                invalid_component_inputs=["expected_data_frequency_factor"],
-            )
-        return factor
 
     @validator("gap_intervals")
     def check_required_gap_intervals_columns_are_present(
@@ -661,7 +659,8 @@ interval_inclusive_from_boundaries_inclusive = {
 def generate_replacement_locations(
     gap_intervals: pd.DataFrame,
     data_frequency: pd.Timedelta,
-    data_frequency_offset: pd.Timedelta,
+    data_frequency_offset: pd.Timedelta | None,
+    all_gap_points: bool,
 ) -> pd.Series:
     replacement_locations = pd.DatetimeIndex([])
     for gap_start_time, gap_end_time, gap_start_inclusive, gap_end_inclusive in zip(
@@ -671,25 +670,32 @@ def generate_replacement_locations(
         gap_intervals["end_inclusive"],
         strict=True,
     ):
-        if gap_start_time == gap_end_time:
-            replacement_locations.append(pd.DatetimeIndex([gap_start_time]))
-
-        replacement_locations = replacement_locations.append(
-            pd.date_range(
-                start=shift_timestamp_to_the_right_onto_rhythm(
-                    gap_start_time, data_frequency, data_frequency_offset
-                ),
-                end=shift_timestamp_to_the_right_onto_rhythm(
-                    gap_end_time, data_frequency, data_frequency_offset
-                ),
-                freq=data_frequency,
-                inclusive=interval_inclusive_from_boundaries_inclusive[
-                    gap_start_inclusive, gap_end_inclusive
-                ],
+        if all_gap_points and gap_start_time == gap_end_time:
+            replacement_locations = replacement_locations.append(
+                pd.DatetimeIndex([gap_start_time])
             )
-        )
-    replacement_location_series = pd.Series(index=replacement_locations)
-    return replacement_location_series
+        else:
+            if data_frequency_offset is None:
+                data_frequency_offset = gap_start_time
+            replacement_start = shift_timestamp_to_the_right_onto_rhythm(
+                gap_start_time, data_frequency, data_frequency_offset
+            )
+            replacement_end = shift_timestamp_to_the_left_onto_rhythm(
+                gap_end_time, data_frequency, data_frequency_offset
+            )
+            replacement_locations = replacement_locations.append(
+                pd.date_range(
+                    start=replacement_start,
+                    end=replacement_end,
+                    freq=data_frequency,
+                    inclusive=interval_inclusive_from_boundaries_inclusive[
+                        gap_start_inclusive | (replacement_start != gap_start_time),
+                        gap_end_inclusive | (replacement_end != gap_end_time),
+                    ],
+                )
+            )
+
+    return pd.Series(index=replacement_locations)
 
 
 no_gap_intervals = pd.DataFrame(
@@ -710,26 +716,38 @@ no_gap_intervals = pd.DataFrame(
 )
 
 
+def determine_expected_data_frequency_offset(
+    constricted_timeseries_without_bounds: pd.Series,
+    interval_start_timestamp: pd.Timestamp,
+) -> pd.Timedelta:
+    reference_timestamp = pd.Timestamp("1970-01-01", tz="utc")
+
+    if len(constricted_timeseries_without_bounds) > 0:
+        return reference_timestamp - constricted_timeseries_without_bounds.index[0]
+
+    if interval_start_timestamp is not None:
+        return reference_timestamp - interval_start_timestamp
+
+    return None
+
+
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
 COMPONENT_INFO = {
     "inputs": {
         "gap_intervals": {"data_type": "DATAFRAME"},
-        "timeseries": {"data_type": "SERIES"},
+        "timeseries": {"data_type": "SERIES", "default_value": None},
         "interval_start_timestamp": {"data_type": "STRING", "default_value": None},
         "interval_end_timestamp": {"data_type": "STRING", "default_value": None},
         "auto_frequency_determination": {"data_type": "BOOLEAN", "default_value": True},
         "auto_freq_percentile": {"data_type": "FLOAT", "default_value": 0.5},
         "auto_freq_min_amount_datapoints": {"data_type": "INT", "default_value": 11},
         "expected_data_frequency": {"data_type": "STRING", "default_value": None},
-        "expected_data_freq_allowed_variance_factor": {
-            "data_type": "FLOAT",
-            "default_value": 1.0,
-        },
         "expected_data_frequency_offset": {
             "data_type": "STRING",
             "default_value": None,
         },
+        "all_gap_points": {"data_type": "BOOLEAN", "default_value": True},
     },
     "outputs": {
         "replacement_locations": {"data_type": "SERIES"},
@@ -743,19 +761,21 @@ COMPONENT_INFO = {
     "state": "DRAFT",
 }
 
+from hdutils import parse_default_value  # noqa: E402, F401
+
 
 def main(
     *,
     gap_intervals: pd.DataFrame,
-    timeseries: pd.Series,
+    timeseries: pd.Series | None = parse_default_value(COMPONENT_INFO, "timeseries"),
     interval_start_timestamp: str | None = None,
     interval_end_timestamp: str | None = None,
     auto_frequency_determination: bool = True,
     auto_freq_percentile: float = 0.5,
     auto_freq_min_amount_datapoints: int = 11,
     expected_data_frequency: str | None = None,
-    expected_data_freq_allowed_variance_factor: float = 1.0,
     expected_data_frequency_offset: str | None = None,
+    all_gap_points: bool = True,
 ) -> dict:
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
@@ -799,7 +819,6 @@ def main(
         percentile=auto_freq_percentile,
         min_amount_datapoints=auto_freq_min_amount_datapoints,
         expected_data_frequency_str=expected_data_frequency,
-        expected_data_frequency_factor=expected_data_freq_allowed_variance_factor,
         expected_data_frequency_offset_str=expected_data_frequency_offset,
     )
 
@@ -824,6 +843,18 @@ def main(
             constricted_timeseries_with_bounds, auto_freq_percentile
         )
 
+    if input_params.expected_data_frequency_offset is None:
+        input_params.expected_data_frequency_offset = (
+            determine_expected_data_frequency_offset(
+                constricted_timeseries_without_bounds,
+                input_params.interval_start_timestamp,
+            )
+        )
+    input_params.expected_data_frequency_offset = (
+        input_params.expected_data_frequency_offset
+        % input_params.expected_data_frequency
+    )
+
     constricted_gap_intervals = (
         constrict_intervals_df_to_interval(
             input_params.gap_intervals,
@@ -840,6 +871,7 @@ def main(
         merged_gap_intervals,
         input_params.expected_data_frequency,
         input_params.expected_data_frequency_offset,
+        all_gap_points,
     )
 
     return {"replacement_locations": replacement_locations}

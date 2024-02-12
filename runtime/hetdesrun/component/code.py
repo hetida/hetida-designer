@@ -6,7 +6,6 @@ to provide a very elementary support system to the designer code editor.
 
 import logging
 from keyword import iskeyword
-from typing import Any
 
 import black
 
@@ -48,7 +47,7 @@ COMPONENT_INFO = {{
     "state": {state},{timestamp}
 }}
 
-from hdutils import parse_default_value  # noqa: E402
+from hdutils import parse_default_value  # noqa: E402, F401
 
 {main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
@@ -104,7 +103,7 @@ def function_signature_default_value_string(inp: TransformationInput) -> str:
         DataType.Any,
     ):
         if not inp.data_type is DataType.Any and not isinstance(
-            inp.value, str | dict[Any, Any] | list[Any]
+            inp.value, str | dict | list | None
         ):
             msg = (
                 f"Default value '{inp.value}' of input '{inp.name}' "
