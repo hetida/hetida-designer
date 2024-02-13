@@ -71,8 +71,7 @@ DataFrame with information about the gaps.
   input **timeseries** with the provided expected data frequency. Must be a
   [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
- ) or a timedelta string, e.g. "D" or "60s".
- If this value is set
+  ) or a timedelta string, e.g. "D" or "60s".
 
 - **externally_determined_gap_timestamps** (Series, default value: null):
   Expects Pandas Series with index of datatype DateTimeIndex. The values are not considered.
@@ -624,8 +623,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                 f"{interval_start_timestamp} > {interval_end_timestamp}.",
                 error_code=422,
                 invalid_component_inputs=[
-                    "interval_start_timestamp_str",
-                    "interval_end_timestamp_str",
+                    "interval_start_timestamp",
+                    "interval_end_timestamp",
                 ],
             )
         return interval_end_timestamp
@@ -636,7 +635,7 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             raise ComponentInputValidationException(
                 "The percentile value has to be a non-negative float less or equal to 1.",
                 error_code=422,
-                invalid_component_inputs=["percentile"],
+                invalid_component_inputs=["auto_freq_percentile"],
             )
         return percentile
 
@@ -648,7 +647,7 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             raise ComponentInputValidationException(
                 "The minimum amount of datapoints has to be a non-negative integer.",
                 error_code=422,
-                invalid_component_inputs=["min_amount_datapoints"],
+                invalid_component_inputs=["auto_freq_min_amount_datapoints"],
             )
         return min_amount_datapoints
 
@@ -665,7 +664,7 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                     error_code=422,
                     invalid_component_inputs=[
                         "auto_frequency_determination",
-                        "expected_data_frequency_str",
+                        "expected_data_frequency",
                     ],
                 )
         elif expected_data_frequency_str is not None:
@@ -675,7 +674,7 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                 error_code=422,
                 invalid_component_inputs=[
                     "auto_frequency_determination",
-                    "expected_data_frequency_str",
+                    "expected_data_frequency",
                 ],
             )
         return expected_data_frequency_str
@@ -707,7 +706,7 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                 error_code=422,
                 invalid_component_inputs=[
                     "auto_frequency_determination",
-                    "expected_data_frequency_offset_str",
+                    "expected_data_frequency_offset",
                 ],
             )
         if expected_data_frequency_str is None:
@@ -716,8 +715,8 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
                 "if an expected_data_frequency_offset_str is provided.",
                 error_code=422,
                 invalid_component_inputs=[
-                    "expected_data_frequency_str",
-                    "expected_data_frequency_offset_str",
+                    "expected_data_frequency",
+                    "expected_data_frequency_offset",
                 ],
             )
         return expected_data_frequency_offset_str
@@ -747,7 +746,7 @@ class GapDetectionParameters(BaseModel, arbitrary_types_allowed=True):
             raise ComponentInputValidationException(
                 "The gap size factor has to be a non-negative float.",
                 error_code=422,
-                invalid_component_inputs=["expected_data_frequency_factor"],
+                invalid_component_inputs=["expected_data_freq_allowed_variance_factor"],
             )
         return factor
 
@@ -1148,7 +1147,13 @@ def constrict_intervals_df_to_interval(
         gap_intervals.loc[gap_end_after_interval_end_index, "end_inclusive"] = True
 
     gap_intervals = gap_intervals.drop(
-        gap_intervals[gap_intervals["start_time"] >= gap_intervals["end_time"]].index
+        gap_intervals[gap_intervals["start_time"] > gap_intervals["end_time"]].index
+    )
+    gap_intervals = gap_intervals.drop(
+        gap_intervals[
+            (gap_intervals["start_time"] == gap_intervals["end_time"])
+            & (~gap_intervals["start_inclusive"] | ~gap_intervals["end_inclusive"])
+        ].index
     )
 
     return gap_intervals
