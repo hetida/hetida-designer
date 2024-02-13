@@ -68,7 +68,6 @@
   [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
   ) or a timedelta string, e.g. "D" or "60s".
-  If this value is set
 
 - **all_gap_points** (Boolean, default value: true):
   If set to true, all gap intervals of size 0 are added to the replacement locations without
