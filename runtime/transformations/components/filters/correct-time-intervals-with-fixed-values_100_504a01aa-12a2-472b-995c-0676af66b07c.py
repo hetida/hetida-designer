@@ -89,7 +89,7 @@ The expected output of the above call is:
 import pandas as pd
 from pydantic import BaseModel, ValidationError, root_validator
 
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import ComponentInputValidationException
 
 
 class TimeInterval(BaseModel):

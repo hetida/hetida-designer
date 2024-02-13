@@ -20,6 +20,43 @@ logger = logging.getLogger(__name__)
 MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
 
 
+class ComponentException(Exception):
+    """Exception to re-raise exceptions with error code raised in the component code."""
+
+    __is_hetida_designer_exception__ = True
+
+    def __init__(
+        self,
+        *args: Any,
+        error_code: int | str = "",
+        extra_information: dict | None = None,
+        **kwargs: Any,
+    ) -> None:
+        if not isinstance(error_code, int | str):
+            raise ValueError("The ComponentException.error_code must be int or string!")
+        self.error_code = error_code
+        self.extra_information = extra_information
+        super().__init__(*args, **kwargs)
+
+
+class ComponentInputValidationException(ComponentException):
+    """In code input validation failures"""
+
+    def __init__(
+        self,
+        *args: Any,
+        invalid_component_inputs: list[str],
+        error_code: int | str = "",
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(
+            *args,
+            error_code=error_code,
+            extra_information={"invalid_component_inputs": invalid_component_inputs},
+            **kwargs,
+        )
+
+
 class MetaDataWrapped(BaseModel):
     """Allows to wrap pandas object data with metadata"""
 
@@ -44,7 +81,9 @@ def try_parse_wrapped(
     hd_wrapped_data_object: Literal["SERIES", "DATAFRAME"],
 ) -> MetaDataWrapped:
     if isinstance(data, str):
-        wrapped_data = MetaDataWrapped.parse_raw(data)  # model_validate_json in pydantic 2.0
+        wrapped_data = MetaDataWrapped.parse_raw(
+            data
+        )  # model_validate_json in pydantic 2.0
 
         if wrapped_data.hd_wrapped_data_object__ != hd_wrapped_data_object:
             msg = (
@@ -97,7 +136,9 @@ def parse_pandas_data_content(
 
     except Exception:  # noqa: BLE001
         try:
-            parsed_pandas_object = pd.read_json(io.StringIO(json.dumps(data_content)), typ=typ)
+            parsed_pandas_object = pd.read_json(
+                io.StringIO(json.dumps(data_content)), typ=typ
+            )
 
         except Exception as read_json_exception:  # noqa: BLE001
             raise ValueError(
@@ -163,7 +204,9 @@ class PydanticPandasSeries:
 
         data_content, metadata = parse_wrapped_content(v, "SERIES")
 
-        return wrap_metadata_as_attrs(parse_pandas_data_content(data_content, "series"), metadata)
+        return wrap_metadata_as_attrs(
+            parse_pandas_data_content(data_content, "series"), metadata
+        )
 
 
 class PydanticPandasDataFrame:
@@ -191,13 +234,17 @@ class PydanticPandasDataFrame:
         if not isinstance(
             v, str | dict | list
         ):  # need to check at runtime since we get objects from user code
-            msg = f"Got unexpected type at runtime when parsing DataFrame: {str(type(v))}"
+            msg = (
+                f"Got unexpected type at runtime when parsing DataFrame: {str(type(v))}"
+            )
             logger.error(msg)
             raise ValueError(msg)
 
         data_content, metadata = parse_wrapped_content(v, "DATAFRAME")
 
-        return wrap_metadata_as_attrs(parse_pandas_data_content(data_content, "frame"), metadata)
+        return wrap_metadata_as_attrs(
+            parse_pandas_data_content(data_content, "frame"), metadata
+        )
 
 
 class PydanticMultiTimeseriesPandasDataFrame:
@@ -227,7 +274,9 @@ class PydanticMultiTimeseriesPandasDataFrame:
 
         data_content, metadata = parse_wrapped_content(v, "DATAFRAME")
 
-        return wrap_metadata_as_attrs(parse_pandas_data_content(data_content, "frame"), metadata)
+        return wrap_metadata_as_attrs(
+            parse_pandas_data_content(data_content, "frame"), metadata
+        )
 
     @classmethod
     def validate_multits_properties(  # noqa:PLR0912
@@ -372,14 +421,18 @@ class AdvancedTypesOutputSerializationConfig(BaseConfig):
             "__hd_wrapped_data_object__": "SERIES",
             "__metadata__": v.attrs,
             "__data__": json.loads(
-                v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null,
+                v.to_json(
+                    date_format="iso"
+                )  # in order to serialize both NaN and NaT to null,
             ),
         },
         pd.DataFrame: lambda v: {
             "__hd_wrapped_data_object__": "DATAFRAME",
             "__metadata__": v.attrs,
             "__data__": json.loads(
-                v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
+                v.to_json(
+                    date_format="iso"
+                )  # in order to serialize both NaN and NaT to null
             ),
         },
         PydanticPandasSeries: lambda v: {
@@ -391,7 +444,9 @@ class AdvancedTypesOutputSerializationConfig(BaseConfig):
             "__hd_wrapped_data_object__": "DATAFRAME",
             "__metadata__": v.attrs,
             "__data__": json.loads(
-                v.to_json(date_format="iso")  # in order to serialize both NaN and NaT to null
+                v.to_json(
+                    date_format="iso"
+                )  # in order to serialize both NaN and NaT to null
             ),
         },
         PydanticMultiTimeseriesPandasDataFrame: lambda v: {
@@ -404,7 +459,9 @@ class AdvancedTypesOutputSerializationConfig(BaseConfig):
         np.ndarray: lambda v: v.tolist(),
         datetime.datetime: lambda v: v.isoformat(),
         UUID: lambda v: str(v),  # alternatively: v.hex
-        Figure: lambda v: json.loads(json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)),
+        Figure: lambda v: json.loads(
+            json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)
+        ),
     }
 
 
@@ -458,7 +515,9 @@ def parse_single_value_dynamically(
 
 
 def parse_value(value: Any, data_type_str: str, nullable: bool) -> Any:
-    return parse_single_value_dynamically("some_value", value, DataType(data_type_str), nullable)
+    return parse_single_value_dynamically(
+        "some_value", value, DataType(data_type_str), nullable
+    )
 
 
 def parse_default_value(component_info: dict, input_name: str) -> Any:

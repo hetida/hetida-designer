@@ -111,7 +111,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from pydantic import BaseModel, ValidationError, root_validator
 
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import ComponentInputValidationException
 from hetdesrun.utils import plotly_fig_to_json_dict
 
 pio.templates.default = None
