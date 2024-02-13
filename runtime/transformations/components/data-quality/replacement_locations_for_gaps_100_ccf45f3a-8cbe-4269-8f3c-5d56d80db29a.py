@@ -70,6 +70,10 @@
   ) or a timedelta string, e.g. "D" or "60s".
   If this value is set
 
+- **all_gap_points** (Boolean, default value: true):
+  If set to true, all gap intervals of size 0 are added to the replacement locations without
+  checking whether they correspond to the pattern defined by frequency and frequency offset.
+
 ## Outputs
 - **replacement_locations** (Series):
   A Pandas Series with the replacement location timestamps as index and NaN values.
@@ -92,43 +96,30 @@ If neither value is specified, the start timestamp of each gap is used.
 Depending on the gaps, the replacement locations might then be shifted against each other.
 
 ## Examples
-A valid example JSON input is:
+The minimal valid JSON input contains just **gap_intervals** and **expected_data_frequency**, e.g.:
 ```json
 {
     "gap_intervals": [
         {
-            "start_time": "2020-01-01T01:16:00.000Z",
-            "end_time": "2020-01-01T01:25:00.000Z",
+            "start_time": "2020-01-01T01:16:30.000Z",
+            "end_time": "2020-01-01T01:25:30.000Z",
             "start_inclusive": true,
             "end_inclusive": true
         },
         {
-            "start_time": "2020-01-01T01:29:00.000Z",
-            "end_time": "2020-01-01T01:29:00.000Z",
+            "start_time": "2020-01-01T01:29:30.000Z",
+            "end_time": "2020-01-01T01:29:30.000Z",
             "start_inclusive": true,
             "end_inclusive": true
         },
         {
-            "start_time": "2020-01-01T01:31:00.000Z",
-            "end_time": "2020-01-01T01:34:00.000Z",
+            "start_time": "2020-01-01T01:31:30.000Z",
+            "end_time": "2020-01-01T01:34:30.000Z",
             "start_inclusive": false,
             "end_inclusive": true
         }
     ],
-    "auto_frequency_determination": true,
-    "timeseries": {
-        "2020-01-01T01:16:00.000Z": 10.0,
-        "2020-01-01T01:18:00.000Z": 10.0,
-        "2020-01-01T01:19:00.000Z": 10.0,
-        "2020-01-01T01:20:00.000Z": 10.0,
-        "2020-01-01T01:22:00.000Z": 20.0,
-        "2020-01-01T01:23:00.000Z": 20.0,
-        "2020-01-01T01:25:00.000Z": 20.0,
-        "2020-01-01T01:28:00.000Z": 20.0,
-        "2020-01-01T01:30:00.000Z": 30.0,
-        "2020-01-01T01:31:00.000Z": 30.0,
-        "2020-01-01T01:34:00.000Z": 30.0
-    },
+    "expected_data_frequency": "2min",
 }
 ```
 This results in the output:
@@ -137,17 +128,40 @@ This results in the output:
     "__hd_wrapped_data_object__": "SERIES",
     "__metadata__": {},
     "__data__": {
-        "2020-01-01T01:16:00.000Z": null,
+        "2020-01-01T01:16:30.000Z": null,
+        "2020-01-01T01:18:30.000Z": null,
+        "2020-01-01T01:20:30.000Z": null,
+        "2020-01-01T01:22:30.000Z": null,
+        "2020-01-01T01:24:30.000Z": null,
+        "2020-01-01T01:29:30.000Z": null,
+        "2020-01-01T01:32:30.000Z": null,
+        "2020-01-01T01:34:30.000Z": null
+    }
+}
+```
+Providing additionally **expected_data_frequency_offset** shifts the output timestamps to the
+specified pattern. For example the value "0s" yields the output:
+```json
+{
+    "__hd_wrapped_data_object__": "SERIES",
+    "__metadata__": {},
+    "__data__": {
         "2020-01-01T01:18:00.000Z": null,
         "2020-01-01T01:20:00.000Z": null,
         "2020-01-01T01:22:00.000Z": null,
         "2020-01-01T01:24:00.000Z": null,
-        "2020-01-01T01:29:00.000Z": null,
+        "2020-01-01T01:29:30.000Z": null,
         "2020-01-01T01:32:00.000Z": null,
         "2020-01-01T01:34:00.000Z": null
     }
 }
 ```
+The same input, but with **all_gap_points** set to false, would result in almost the same output in
+both cases, but without the timestamp "2020-01-01T01:29:30.000Z", since it does not match the
+pattern.
+
+Examples illustrating the input parameters used to automatically determine the frequency from the
+timeseries can be found in the documentation of the "Gap Detection Intervals" component.
 """
 
 import numpy as np
@@ -941,23 +955,9 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             },
         },
         {
-            "workflow_input_name": "timeseries",
+            "workflow_input_name": "expected_data_frequency",
             "adapter_id": "direct_provisioning",
-            "filters": {
-                "value": "{\n"
-                '    "2020-01-01T01:16:00.000Z": 10.0,\n'
-                '    "2020-01-01T01:18:00.000Z": 10.0,\n'
-                '    "2020-01-01T01:19:00.000Z": 10.0,\n'
-                '    "2020-01-01T01:20:00.000Z": 10.0,\n'
-                '    "2020-01-01T01:22:00.000Z": 20.0,\n'
-                '    "2020-01-01T01:23:00.000Z": 20.0,\n'
-                '    "2020-01-01T01:25:00.000Z": 20.0,\n'
-                '    "2020-01-01T01:28:00.000Z": 20.0,\n'
-                '    "2020-01-01T01:30:00.000Z": 30.0,\n'
-                '    "2020-01-01T01:31:00.000Z": 30.0,\n'
-                '    "2020-01-01T01:34:00.000Z": 30.0\n'
-                "}"
-            },
+            "filters": {"value": "2min"},
         },
     ]
 }
