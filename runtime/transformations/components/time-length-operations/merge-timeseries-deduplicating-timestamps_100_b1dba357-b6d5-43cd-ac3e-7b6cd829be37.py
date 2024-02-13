@@ -164,6 +164,8 @@ COMPONENT_INFO = {
     "released_timestamp": "2023-09-25T09:57:52.580730+00:00",
 }
 
+from hdutils import parse_default_value  # noqa: E402, F401
+
 
 def main(*, timeseries_df, max_distribution_delta, new_name):
     # entrypoint function for this component
