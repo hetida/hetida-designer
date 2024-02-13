@@ -199,6 +199,11 @@ class ComponentInputValidationException(ComponentException):
         )
 
 
+class WrappedModelWithCustomObjects(BaseModel):
+    model: Any
+    custom_objects: dict[str, Any]
+
+
 class MetaDataWrapped(BaseModel):
     """Allows to wrap pandas object data with metadata"""
 
