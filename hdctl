@@ -671,6 +671,21 @@ def parse_default_value(component_info: dict, input_name: str) -> Any:
     inp = component_info["inputs"][input_name]
     return parse_value(inp["default_value"], inp["data_type"], True)
 
+
+def plotly_fig_to_json_dict(fig: Figure) -> Any:
+    """Turn Plotly figure into a Python dict-like object
+
+    This function can be used in visualization components to obtain the
+    correct plotly json-like object from a Plotly Figure object.
+
+    See visualization components from the accompanying base components for
+    examples on usage.
+    """
+    # possibly quite inefficient (multiple serialisation / deserialization) but
+    # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
+    # should be definitely compatible with the plotly javascript library:
+    return json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
+
 END_HEREDOC
 )
 
