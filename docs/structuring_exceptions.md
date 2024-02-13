@@ -15,7 +15,7 @@ The error code can be either an integer or a string. The extra information must 
 The following example shows how this exception can be used in component code:
 
 ```python
-from hetdesrun.runtime.exceptions import ComponentException
+from hdutils import ComponentException
 
 # ...
 
@@ -84,7 +84,7 @@ This exception has the additional input parameter `invalid_component_inputs`, wh
 It is of course also possible to inherit again from this exception or from `ComponentException` itself.
 
 ```python
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import ComponentInputValidationException
 
 
 class SeriesTypeException(ComponentInputValidationException):
