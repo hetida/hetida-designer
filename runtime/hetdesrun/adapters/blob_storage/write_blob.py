@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 from mypy_boto3_s3 import S3Client
 from mypy_boto3_s3.type_defs import PutObjectOutputTypeDef
 
+from hdutils import WrappedModelWithCustomObjects
 from hetdesrun.adapters.blob_storage import (
     HIERARCHY_END_NODE_NAME_SEPARATOR,
     OBJECT_KEY_DIR_SEPARATOR,
@@ -20,7 +21,6 @@ from hetdesrun.adapters.blob_storage.models import (
     IdString,
     ObjectKey,
     StructureBucket,
-    WrappedModelWithCustomObjects,
     get_structure_bucket_and_object_key_prefix_from_id,
 )
 from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
