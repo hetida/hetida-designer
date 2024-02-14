@@ -54,130 +54,150 @@ async def test_default_values_with_metadata(
     assert output_data["series"]["__metadata__"] == {}
 
 
+def load_check_from_code_file(code_file_path: str) -> (str, TransformationRevision):
+    with open(code_file_path) as f:
+        code = f.read()
+    tr_from_py_json = transformation_revision_from_python_code(code)
+    tr_from_py = TransformationRevision(**tr_from_py_json)
+
+    assert tr_from_py.content == code
+
+    return code, tr_from_py
+
+
+def load_check_from_json_file(json_file_path: str) -> TransformationRevision:
+    with open(json_file_path) as f:
+        trafo = TransformationRevision(**json.load(f))
+
+    tr_from_content = transformation_revision_from_python_code(trafo.content)
+    assert tr_from_content == trafo
+
+    return trafo
+
+
+async def put_trafo_via_multiple_put_endpoint(
+    trafo: str | TransformationRevision,
+    open_async_client,
+    update_code=True,
+    trafo_id=None,
+):
+    if trafo_id is None:
+        trafo_id = trafo.id
+    response = await open_async_client.put(
+        "/api/transformations",
+        params={"overwrite_released": True, "update_code": update_code},
+        json=[
+            json.loads(trafo.json())
+            if isinstance(trafo, TransformationRevision)
+            else trafo
+        ],
+    )
+    assert response.status_code == 207
+    assert response.json()[str(trafo_id)]["status"] == "SUCCESS"
+
+
+async def put_trafo_via_single_put_endpoint(
+    trafo: TransformationRevision, open_async_client, update_code=True
+):
+    response = await open_async_client.put(
+        f"/api/transformations/{str(trafo.id)}",
+        params={"overwrite_released": True, "update_code": update_code},
+        json=json.loads(trafo.json()),
+    )
+    assert response.status_code == 201
+
+
+async def get_check_trafo_via_single_id_get_endpoint(
+    trafo: TransformationRevision, open_async_client
+) -> TransformationRevision:
+    response = await open_async_client.get(f"/api/transformations/{str(trafo.id)}")
+    assert response.status_code == 200
+
+    tr_from_resp = TransformationRevision(**response.json())
+
+    assert tr_from_resp == trafo
+
+    tr_from_response_content_json_obj = transformation_revision_from_python_code(
+        response.json()["content"]
+    )
+    assert TransformationRevision(**tr_from_response_content_json_obj) == trafo
+    return trafo
+
+
+async def get_check_trafo_via_multiple_get_endpoint(
+    trafo,
+    open_async_client,
+    update_code: bool = True,
+    expand_code: bool = True,
+    components_as_code: bool = False,
+):
+    response = await open_async_client.get(
+        f"/api/transformations?id={str(trafo.id)}",
+        params={
+            "expand_component_code": expand_code,
+            "update_component_code": update_code,
+            "components_as_code": components_as_code,
+        },
+    )
+    assert response.status_code == 200
+
+    if not components_as_code:
+        got_trafo_json_ob = response.json()[0]
+        tr_from_resp = TransformationRevision(**got_trafo_json_ob)
+        code_from_response = tr_from_resp.content
+    else:
+        code_from_response = response.json()[0]
+        tr_from_resp = TransformationRevision(
+            **transformation_revision_from_python_code(code_from_response)
+        )
+    assert tr_from_resp == trafo
+    assert code_from_response == trafo.content
+
+    tr_from_response_content_json_obj = transformation_revision_from_python_code(
+        tr_from_resp.content
+    )
+    assert TransformationRevision(**tr_from_response_content_json_obj) == trafo
+
+
 @pytest.mark.asyncio
-async def test_equivalence_component_representations(  # noqa: PLR0915
+async def test_component_trafo_code_equivalence(
     async_test_client, mocked_clean_test_db_session
 ):
-    """Test identities when switching between code and Trafo object representation
-
-    When passing a trafo back and forth through put (whether as trafo json or as code)
-    and get, both representations (code or trafo json) should be preserved.
-    """
-    py_path = os.path.join(
+    example_py_path = os.path.join(
         "tests",
         "data",
         "components",
         "test_comp_code_repr.py",
     )
-    with open(py_path) as f:
-        code = f.read()
 
-    tr_from_py_json = transformation_revision_from_python_code(code)
-    tr_from_py = TransformationRevision(**tr_from_py_json)
-
-    assert len(tr_from_py.test_wiring.input_wirings) == 1
-    assert tr_from_py.test_wiring.input_wirings[0].filters["value"] == "45.6"
+    second_example_pa_path = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "expanded_code.py",
+    )
 
     async with async_test_client as ac:
-        # put as json
-        response = await ac.put(
-            "/api/transformations?update_component_code=true&overwrite_released=true",
-            json=[json.loads(tr_from_py.json())],
-        )
-        assert response.status_code == 207
-        assert response.json()[str(tr_from_py.id)]["status"] == "SUCCESS"
+        for py_path in [example_py_path, second_example_pa_path]:
+            code, tr_from_py = load_check_from_code_file(py_path)
 
-        # get from explicit id endpoint
-        response = await ac.get(f"/api/transformations/{str(tr_from_py.id)}")
-        assert response.status_code == 200
+            await put_trafo_via_multiple_put_endpoint(tr_from_py, ac)
+            await get_check_trafo_via_single_id_get_endpoint(tr_from_py, ac)
+            await get_check_trafo_via_multiple_get_endpoint(tr_from_py, ac)
+            await get_check_trafo_via_multiple_get_endpoint(
+                tr_from_py, ac, components_as_code=True
+            )
 
-        tr_from_resp = TransformationRevision(**response.json())
+            await put_trafo_via_multiple_put_endpoint(code, ac, trafo_id=tr_from_py.id)
+            await get_check_trafo_via_single_id_get_endpoint(tr_from_py, ac)
+            await get_check_trafo_via_multiple_get_endpoint(tr_from_py, ac)
+            await get_check_trafo_via_multiple_get_endpoint(
+                tr_from_py, ac, components_as_code=True
+            )
 
-        assert tr_from_resp == tr_from_py
-        assert tr_from_resp.content == code
-
-        tr_from_response_content_json_obj = transformation_revision_from_python_code(
-            response.json()["content"]
-        )
-        assert TransformationRevision(**tr_from_response_content_json_obj) == tr_from_py
-
-        # get from multiple trafo get endpoint with code upgrades
-        response = await ac.get(
-            f"/api/transformations?id={str(tr_from_py.id)}&expand_component_code=true&update_component_code=true"
-        )
-        assert response.status_code == 200
-        got_trafo_json_ob = response.json()[0]
-
-        tr_from_resp = TransformationRevision(**got_trafo_json_ob)
-
-        assert tr_from_resp == tr_from_py
-        assert tr_from_resp.content == code
-
-        tr_from_response_content_json_obj = transformation_revision_from_python_code(
-            tr_from_resp.content
-        )
-        assert TransformationRevision(**tr_from_response_content_json_obj) == tr_from_py
-
-        # get from multiple trafo get endpoint with code upgrades returning code
-        response = await ac.get(
-            f"/api/transformations?id={str(tr_from_py.id)}&expand_component_code=true&update_component_code=true&components_as_code=true"
-        )
-        assert response.status_code == 200
-        got_trafo_code_str = response.json()[0]
-        assert got_trafo_code_str == code
-
-        trafo_json_obj_from_response_code = transformation_revision_from_python_code(
-            tr_from_resp.content
-        )
-        assert TransformationRevision(**trafo_json_obj_from_response_code) == tr_from_py
-
-        # put as code
-        response = await ac.put(
-            "/api/transformations?update_component_code=true&overwrite_released=true",
-            json=[code],
-        )
-        assert response.status_code == 207
-        assert response.json()[str(tr_from_py.id)]["status"] == "SUCCESS"
-
-        response = await ac.get(f"/api/transformations/{str(tr_from_py.id)}")
-        assert response.status_code == 200
-
-        tr_from_resp = TransformationRevision(**response.json())
-
-        assert tr_from_resp == tr_from_py
-        assert tr_from_resp.content == code
-
-        tr_from_response_content_json_obj = transformation_revision_from_python_code(
-            response.json()["content"]
-        )
-        assert TransformationRevision(**tr_from_response_content_json_obj) == tr_from_py
-
-        # get from multiple trafo get endpoint with code upgrades
-        response = await ac.get(
-            f"/api/transformations?id={str(tr_from_py.id)}&expand_component_code=true&update_component_code=true"
-        )
-        assert response.status_code == 200
-        got_trafo_json_ob = response.json()[0]
-
-        tr_from_resp = TransformationRevision(**got_trafo_json_ob)
-
-        assert tr_from_resp == tr_from_py
-        assert tr_from_resp.content == code
-
-        tr_from_response_content_json_obj = transformation_revision_from_python_code(
-            tr_from_resp.content
-        )
-        assert TransformationRevision(**tr_from_response_content_json_obj) == tr_from_py
-
-        # get from multiple trafo get endpoint with code upgrades returning code
-        response = await ac.get(
-            f"/api/transformations?id={str(tr_from_py.id)}&expand_component_code=true&update_component_code=true&components_as_code=true"
-        )
-        assert response.status_code == 200
-        got_trafo_code_str = response.json()[0]
-        assert got_trafo_code_str == code
-
-        trafo_json_obj_from_response_code = transformation_revision_from_python_code(
-            tr_from_resp.content
-        )
-        assert TransformationRevision(**trafo_json_obj_from_response_code) == tr_from_py
+            await put_trafo_via_single_put_endpoint(tr_from_py, ac)
+            await get_check_trafo_via_single_id_get_endpoint(tr_from_py, ac)
+            await get_check_trafo_via_multiple_get_endpoint(tr_from_py, ac)
+            await get_check_trafo_via_multiple_get_endpoint(
+                tr_from_py, ac, components_as_code=True
+            )

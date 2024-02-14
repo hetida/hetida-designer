@@ -408,6 +408,9 @@ async def update_transformation_revisions(
     | None = Query(
         None, description=("Filter for specified list of names."), alias="name"
     ),
+    release_drafts: bool = Query(
+        False, description="If true, all trafos in draft state will be released"
+    ),
     include_deprecated: bool = Query(
         True,
         description=(
@@ -517,6 +520,11 @@ async def update_transformation_revisions(
             broken_component_codes.append((str(error), ccs))
         else:
             updated_transformation_revisions.append(tr)
+
+    if release_drafts:
+        for trafo in updated_transformation_revisions:
+            if trafo.state is State.DRAFT:
+                trafo.release()
 
     importable = Importable(
         transformation_revisions=updated_transformation_revisions,

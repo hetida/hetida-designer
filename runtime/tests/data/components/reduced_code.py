@@ -18,6 +18,8 @@ COMPONENT_INFO = {
     "released_timestamp": "2022-02-09T17:33:29.236535+00:00",
 }
 
+from hdutils import parse_default_value  # noqa: E402
+
 
 def main(*, scores, threshold):
     # entrypoint function for this component
