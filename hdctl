@@ -138,6 +138,15 @@ value_from_env_file() {
 }
 
 # shellcheck disable=SC2046
+PYTEST_INI_CONTENT=$(
+  cat <<'END_HEREDOC'
+[pytest]
+python_files = *.py
+addopts = --doctest-modules
+END_HEREDOC
+)
+
+# shellcheck disable=SC2046
 HDUTILS_PY_CONTENT=$(
   cat <<'END_HEREDOC'
 import datetime
@@ -1312,6 +1321,10 @@ _output_hdutils_py_content() {
   echo "$HDUTILS_PY_CONTENT"
 }
 
+_output_pytest_ini_content() {
+  echo "$PYTEST_INI_CONTENT"
+}
+
 _export_to_dir() {
   _ensure_jq
   ensure_access_token
@@ -1322,6 +1335,7 @@ _export_to_dir() {
 
   mkdir -p "$EXPORT_DIRECTORY"
   _output_hdutils_py_content >"$EXPORT_DIRECTORY"/hdutils.py
+  _output_pytest_ini_content >"$EXPORT_DIRECTORY"/pytest.ini
 
   # echo curl "${curl_args[@]}" -X GET -G -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${REMAINING_ARGS[@]}"
   # write each trafo revision to its respective directory

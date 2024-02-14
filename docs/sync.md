@@ -197,6 +197,56 @@ PULL_QUERY_URL_APPEND=?include_dependencies=true&include_deprecated=false&catego
 * `git commit` and `sync push`
 
 
-## Run unit tests in component code locally
+### Run unit tests in component code locally
 
-If component code contains unit tests and a local Python environment ist present with dependencies synced with that of the instance's designer runtime image, one can run all such unit tests using pytest [with appropriate settings for python files](https://docs.pytest.org/en/7.1.x/example/pythoncollection.html#changing-naming-conventions): You must allow pytest to look for tests in all Python files in the export directory.
+If component code contains unit tests and a local Python environment ist present with dependencies synced with that of the instance's designer runtime image, one can run all such unit tests using pytest: To accomplish this, hdctl sync automatically creates an [appropriate](https://docs.pytest.org/en/7.1.x/example/pythoncollection.html#changing-naming-conventions) pytest.ini file in the export directory. This pytest.ini file also activates detection and running of [doctests](https://docs.python.org/3/library/doctest.html).
+
+#### Writing unit tests
+
+Unit tests should be entered directly in your component code files, for example as functions prefixed with `test_`.
+
+E.g. entering the following function at the bottom of a component which contains a `TEST_WIRING_FROM_PY_FILE_IMPORT` will create a test that runs the component's main function with those input wirings which are `direct_provisioning` data.
+
+```py
+from hdutils import parse_value  # noqa: E402
+
+
+def test_run_with_test_wiring():
+    result = main(
+        **{
+            inp_wiring["workflow_input_name"]: parse_value(
+                inp_wiring["filters"]["value"],
+                COMPONENT_INFO["inputs"][inp_wiring["workflow_input_name"]][
+                    "data_type"
+                ],
+                nullable=True,
+            )
+            for inp_wiring in TEST_WIRING_FROM_PY_FILE_IMPORT["input_wirings"]
+            if inp_wiring["adapter_id"] == "direct_provisioning"
+        }
+    )
+
+    assert isinstance(result, dict)
+    ...
+```
+
+#### Writing doctests
+You can enter doctests as [usual](https://docs.python.org/3/library/doctest.html) in your functions docstring. For the component's main function the docstring must be entered below the comment marking the end of the auto-generated function header:
+```py
+...
+def main(...)
+    # entrypoint function for this component
+    # ***** DO NOT EDIT LINES ABOVE *****
+
+    """Are doctests working?
+    >>> 2 +3
+    5
+    """
+```
+
+#### Running all unit tests and doctests
+To execute all unit tests run
+```
+python -m pytest .
+```
+in the export directory.
