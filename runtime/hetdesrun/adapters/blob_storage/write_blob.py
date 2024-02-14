@@ -150,7 +150,7 @@ def apply_filters_to_metadata_key(
     new value which contains the filter value.
     An exception is raised if that metadata key does not yield a valid object key.
     """
-    if "object_key_suffix" in filters:
+    if "object_key_suffix" in filters and len(filters["object_key_suffix"]) > 0:
         logger.debug("Apply 'object_key_suffix' filter.")
         object_key_suffix = filters["object_key_suffix"]
         sink_name = thing_node_id.rsplit(OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
