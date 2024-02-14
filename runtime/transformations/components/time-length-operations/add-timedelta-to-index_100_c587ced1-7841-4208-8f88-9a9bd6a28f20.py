@@ -120,3 +120,6 @@ def main(*, df_or_series, timedelta):
     new_index = df_or_series.index + pd.Timedelta(timedelta)
     df_or_series.index = new_index
     return {"df_or_series": df_or_series}
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {}

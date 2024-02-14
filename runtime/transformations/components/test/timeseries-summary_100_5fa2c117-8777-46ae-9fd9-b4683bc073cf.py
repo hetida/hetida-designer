@@ -74,3 +74,6 @@ def main(*, series):
         "end": end.isoformat(),
         "duration": duration,
     }
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {}

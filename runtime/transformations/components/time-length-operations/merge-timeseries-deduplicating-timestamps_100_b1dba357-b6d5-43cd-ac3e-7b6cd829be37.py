@@ -176,3 +176,6 @@ def main(*, timeseries_df, max_distribution_delta, new_name):
             timeseries_df, max_distribution_delta, new_name
         )
     }
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {}

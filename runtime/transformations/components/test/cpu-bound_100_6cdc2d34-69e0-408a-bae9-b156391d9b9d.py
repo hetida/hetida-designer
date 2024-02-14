@@ -97,3 +97,6 @@ def main(*, rounds, bind):
         + bind
         + '. Allowed values are "single" and "multi".'
     )
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {}
