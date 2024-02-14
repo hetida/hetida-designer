@@ -14,23 +14,21 @@ with optional confidence intervals.
 
 - **series** (Pandas Series):
     The Series containing the time series data. Indices must be Datetime.
-- **steps** (Integer):
+- **number_of_forecast_steps** (Integer):
     The number of steps to forecast ahead.
 - **seasonal_periods** (Integer, default value: None):
     The number of observations that constitute a full seasonal cycle. If not provided, it will be inferred.
-- **test_size** (Float, default value: 0.3):
+- **test_size** (Float, default value: None):
     The proportion of the dataset to include in the testing set.
-- **iterations** (Integer, default value: 200):
+- **hyperparameter_tuning_iterations** (Integer, default value: 200):
     The number of iterations for the random search in the hyperparameter tuning.
-- **alpha** (Float, default value: 0.05):
+- **confidence_level** (Float, default value: 0.05):
     Significance level to compare the p-value with when analyzing the residuals of the in-sample forecast,
     and to calculate the confidence interval for the forecast.
-- **shuffle** (Boolean, default value: False):
-    Whether or not to shuffle the data before splitting into training and testing set.
-- **use_boxcox** (Boolean, default value: True): 
-    Whether to apply Box-Cox transformation in the Exponential Smoothing model.
-- **initialization_method** (String, default value: "estimated"):
-    Method for initializing the model ('estimated', 'heuristic', 'legacy-heuristic', None).
+- **plot_in_sample_forecast** (Boolean, default value: False):
+    Whether to include the in-sample forecast in the plot.
+- **plot_marker** (Boolean, default value: True):
+    Whether to include markers for the forecast in the plot.
 
 ## Outputs
 
@@ -50,8 +48,7 @@ The component is devided into several steps, that can be summarized as follows:
 4. Optimize hyperparameters for the Exponential Smoothing model using random search
 5. Train some Exponential Smoothing model with optimized hyperparameters
 6. Forecast future values using the trained Exponential Smoothing model
-7. Decide whether to include the confidence interval for the forecast
-8. Create a Plotly time series plot including in-sample and out-of-sample forecasts
+7. Create a Plotly time series plot including out-of-sample forecast and confidence interval
 
 ## Example
 
@@ -67,7 +64,7 @@ Example input:
         "2023-09-09T00:00:00.000Z": 393,
         "2023-09-10T00:00:00.000Z": 390,
         "2023-09-11T00:00:00.000Z": 220,
-        "2023-09-12T00:00:00.000Z": 262,
+        "2023-09-12T00:00:00.000Z": 222,
         "2023-09-13T00:00:00.000Z": 312,
         "2023-09-14T00:00:00.000Z": 277,
         "2023-09-15T00:00:00.000Z": 332,
@@ -173,8 +170,7 @@ def ensure_positivity(
 
 def train_test_split_func(
     series: pd.Series,
-    test_size: float = 0.3,
-    shuffle: bool = False
+    test_size: float=None
 ):
     """Splits a Series into training and testing sets.
 
@@ -182,9 +178,7 @@ def train_test_split_func(
     series (Pandas Series): 
         The Pandas Series to split.
     test_size (Float, optional):
-        The proportion of the series to include in the test set. Default is 0.3.
-    shuffle (Bool, optional):
-        Whether or not to shuffle the data before splitting. Default is False.
+        The proportion of the series to include in the test set. Default is None.
 
     Outputs:
     train (Pandas Series): 
@@ -193,15 +187,19 @@ def train_test_split_func(
         Time series containing the testing data.
     """
     # Parameter validations
-    if not 0 < test_size < 1:
+    if test_size and (not 0.1 <= test_size <= 0.3):
         raise ComponentInputValidationException(
-            "`test_size` must be between 0 and 1",
+            "`test_size` must be between 0.1 and 0.3 to get results having some valid interpretation",
             error_code=422,
             invalid_component_inputs=["test_size"],
         )
 
-    # Split the data into training and testing datasets
-    train, test = train_test_split(series, test_size=test_size, shuffle=shuffle)
+    if test_size:
+        # Split the data into training and testing datasets
+        train, test = train_test_split(series, test_size=test_size, shuffle=False)
+    else:
+        train = series
+        test = series
 
     return train, test
 
@@ -209,9 +207,7 @@ def hyper_tuning_grid_search(
     train: pd.Series,
     test: pd.Series,
     seasonal_periods: int=None,
-    iterations: int=200,
-    use_boxcox: bool=True,
-    initialization_method: str="estimated"
+    hyperparameter_tuning_iterations: int=200
 ):
     """Optimizes hyperparameters for the Exponential Smoothing model using random search.
 
@@ -222,12 +218,7 @@ def hyper_tuning_grid_search(
         Series containing the test data.
     seasonal_periods (Integer, optional):
         The number of observations that constitute a full seasonal cycle. Default is None.
-    use_boxcox (Bool, optional): 
-        Whether to apply Box-Cox transformation. Default is True.
-    initialization_method (String, optional):
-        Method for initializing the model ('estimated', 'heuristic', 'legacy-heuristic', None).
-        Default is 'estimated'.
-    iterations (Integer, optional):
+    hyperparameter_tuning_iterations (Integer, optional):
         The number of iterations for the random search. Default is 200.
 
     Outputs:
@@ -253,11 +244,11 @@ def hyper_tuning_grid_search(
         error_code=422,
         invalid_component_inputs=["seasonal_periods"],
         )
-    if not isinstance(iterations, int) or iterations <= 0:
+    if not isinstance(hyperparameter_tuning_iterations, int) or hyperparameter_tuning_iterations <= 0:
         raise ComponentInputValidationException(
             "iterations must be a positive integer",
             error_code=422,
-            invalid_component_inputs=["iterations"],
+            invalid_component_inputs=["hyperparameter_tuning_iterations"],
         )
 
     train = train.sort_index()
@@ -266,7 +257,7 @@ def hyper_tuning_grid_search(
     best_alpha, best_beta, best_gamma, best_phi, best_score = None, None, None, None, float("inf")
     pos = ["add", "mul", None]
     random.seed(42)
-    for _ in range(iterations):
+    for _ in range(hyperparameter_tuning_iterations):
         alpha = round(random.uniform(0, 1), 2)
         beta = round(random.uniform(0, 1), 2)
         gamma = round(random.uniform(0, 1), 2)
@@ -279,8 +270,8 @@ def hyper_tuning_grid_search(
             trend=trend,
             seasonal=seasonal,
             seasonal_periods=seasonal_periods,
-            use_boxcox=use_boxcox,
-            initialization_method=initialization_method
+            use_boxcox=True,
+            initialization_method="estimated"
         )
         fitted_model = model.fit(
             smoothing_level=alpha,
@@ -288,7 +279,10 @@ def hyper_tuning_grid_search(
             smoothing_seasonal=gamma,
             damping_trend=phi
         )
-        y_pred = fitted_model.forecast(len(test))
+        if train.equals(test):
+            y_pred = fitted_model.fittedvalues
+        else:
+            y_pred = fitted_model.forecast(len(test))
         test = test[~test.isin([np.nan, np.inf, -np.inf])]
         y_pred = y_pred[~y_pred.isin([np.nan, np.inf, -np.inf])]
         if len(test) == len(y_pred.dropna()):
@@ -307,9 +301,7 @@ def train_exponential_smoothing(
     alpha: float=None,
     beta: float=None,
     gamma: float=None,
-    phi: float=None,
-    use_boxcox: bool=True,
-    initialization_method: str="estimated"
+    phi: float=None
 ):
     """Trains an Exponential Smoothing model with specified hyperparameters.
 
@@ -324,11 +316,6 @@ def train_exponential_smoothing(
         Type of seasonal component ('add', 'mul', or None). Default is None.
     alpha, beta, gamma, phi (Float, optional):
         Smoothing parameters for level, trend, seasonal, and damping trend. Default is None.
-    use_boxcox (Bool, optional):
-        Whether to apply Box-Cox transformation. Default is True.
-    initialization_method (String, optional):
-        Method for initializing the model ('estimated', 'heuristic', 'legacy-heuristic', None).
-        Default is 'estimated'.
 
     Outputs:
     model_fit: 
@@ -360,13 +347,6 @@ def train_exponential_smoothing(
             error_code=422,
             invalid_component_inputs=["alpha", "beta", "gamma", "phi"],
         )
-    valid_initialization_methods = ["estimated", "heuristic", "legacy-heuristic", "none"]
-    if initialization_method not in valid_initialization_methods:
-        raise ComponentInputValidationException(
-            f"initialization_method must be one of {valid_initialization_methods}",
-            error_code=422,
-            invalid_component_inputs=["initialization_method"],
-        )
 
     train = train.sort_index()
 
@@ -376,8 +356,8 @@ def train_exponential_smoothing(
         trend=trend,
         seasonal=seasonal,
         seasonal_periods=seasonal_periods,
-        use_boxcox=use_boxcox,
-        initialization_method=initialization_method
+        use_boxcox=True,
+        initialization_method="estimated"
     )
     model_fit = model.fit(
         smoothing_level=alpha,
@@ -392,10 +372,10 @@ def forecast_exponential_smoothing(
     trained_model,
     series: pd.Series,
     test: pd.Series,
-    steps: int,
+    number_of_forecast_steps: int,
     mse: float,
     min_value: float,
-    alpha: float=0.05
+    confidence_level: float=0.05
 ):
     """Forecasting future values using a trained Exponential Smoothing model.
     Furthermore,  
@@ -407,13 +387,13 @@ def forecast_exponential_smoothing(
         Series containing the complete time series data.
     test (Pandas Series): 
         Series containing the testing data.
-    steps (Integer): 
+    number_of_forecast_steps (Integer): 
         The number of steps to forecast ahead.
     mse (Float):
         Mean Squared Error evaluated on the testing data.
     min_value (Float):
         Minimum of the time series.
-    alpha (Float, optional):
+    confidence_level (Float, optional):
         Confidence level to calculate the confidence interval. Default value is 0.05.
 
     Outputs:
@@ -429,31 +409,34 @@ def forecast_exponential_smoothing(
         Series containing the lower limit of the confidence interval of the forecast.
     """
     # Parameter validations
-    if not isinstance(steps, int) or steps <= 0:
+    if not isinstance(number_of_forecast_steps, int) or number_of_forecast_steps <= 0:
         raise ComponentInputValidationException(
-            "steps must be a positive integer",
+            "`number_of_forecast_steps` must be a positive integer",
             error_code=422,
-            invalid_component_inputs=["steps"],
+            invalid_component_inputs=["number_of_forecast_steps"],
         )
-    if not 0 < alpha < 1:
+    if not 0 < confidence_level < 1:
         raise ComponentInputValidationException(
-            "`alpha` must be between 0 and 1",
+            "`confidence_level` must be between 0 and 1",
             error_code=422,
-            invalid_component_inputs=["alpha"],
+            invalid_component_inputs=["confidence_level"],
         )
 
     # Forecast
-    forecast = trained_model.forecast(steps=steps+len(test))
-    in_sample_forecast = np.round(forecast[:len(test)], 2)
-    out_of_sample_forecast = np.round(forecast[-steps:], 2)
+    if series.equals(test):
+        in_sample_forecast = np.round(trained_model.fittedvalues, 2)
+        out_of_sample_forecast = np.round(trained_model.forecast(steps=number_of_forecast_steps), 2)
+    else:
+        forecast = trained_model.forecast(steps=number_of_forecast_steps+len(test))
+        in_sample_forecast = np.round(forecast[:len(test)], 2)
+        out_of_sample_forecast = np.round(forecast[-number_of_forecast_steps:], 2)
 
     # Confidence interval
-    level = 1 - alpha/2
-    complete_forecast = pd.concat([in_sample_forecast, out_of_sample_forecast])
-    conf_interval_upper_limit = complete_forecast + stats.norm.ppf(level)*mse
-    conf_interval_lower_limit = complete_forecast - stats.norm.ppf(level)*mse
-    value_before = series.iloc[-(len(in_sample_forecast) + 1)] 
-    index_before = series.index[-(len(in_sample_forecast) + 1)] 
+    level = 1 - confidence_level/2
+    conf_interval_upper_limit = out_of_sample_forecast + stats.norm.ppf(level)*mse
+    conf_interval_lower_limit = out_of_sample_forecast - stats.norm.ppf(level)*mse
+    value_before = series.iloc[-1] 
+    index_before = series.index[-1] 
     value_before_series = pd.Series([value_before], index=[index_before])
     conf_interval_upper_limit = pd.concat([value_before_series, conf_interval_upper_limit])
     conf_interval_lower_limit = pd.concat([value_before_series, conf_interval_lower_limit])
@@ -465,11 +448,8 @@ def forecast_exponential_smoothing(
     conf_interval_upper_limit = conf_interval_upper_limit.sort_index()
     conf_interval_lower_limit = conf_interval_lower_limit.sort_index()
 
-    # Add last value of in-sample forecast to the out-of-sample forecast
-    in_sample_forecast_last_value = in_sample_forecast.iloc[-1]
-    in_sample_forecast_last_index = in_sample_forecast.index[-1]
-    last_value_series = pd.Series([in_sample_forecast_last_value], index=[in_sample_forecast_last_index])
-    out_of_sample_forecast = pd.concat([last_value_series, out_of_sample_forecast])
+    # Add last value of the series to the out-of-sample forecast
+    out_of_sample_forecast = pd.concat([value_before_series, out_of_sample_forecast])
     
     # If the minimum is smaller zero, the time series data are adjusted to there original values
     if min_value <= 0:
@@ -481,48 +461,26 @@ def forecast_exponential_smoothing(
 
     return series, in_sample_forecast, out_of_sample_forecast, conf_interval_upper_limit, conf_interval_lower_limit
 
-def plot_confidence_interval(
-    in_sample_forecast: pd.Series,
-    test: pd.Series,
-    alpha: float=0.05,
-):
-    """Decide whether to include some confidence interval for the forecast.
-
-    Inputs:
-    in_sample_forecast (Pandas Series): 
-        Series containing the in-sample forecast.
-    test (Pandas Series): 
-        Series containing the testing data.
-    alpha (Float, optional):
-        Confidence Level to compare the p-value with. Default value is 0.05.
-
-    Outputs:
-    confidence_interval (Bool): 
-        Wheter or not to include the confidence interval.
-    """
-    # Perform the Shapiro-Wilk Test for normality
-    residuals = sorted([x - y for x, y in zip(in_sample_forecast.values, test.values)])
-    p_value = np.round(stats.shapiro(residuals)[1], 2)
-    conf_interval = p_value > alpha
-
-    return conf_interval
-
 def timeseries_plot_including_predictions(
     series: pd.Series,
+    test: pd.Series,
     in_sample_forecast: pd.Series,
     out_of_sample_forecast: pd.Series,
-    conf_interval: bool,
     conf_interval_upper_limit: pd.Series,
     conf_interval_lower_limit: pd.Series,
     mse: float,
     min_value: float,
-    alpha: float=0.05
+    confidence_level: float=0.05,
+    plot_in_sample_forecast: bool=False,
+    plot_marker: bool=True
 ):
     """Creates a Plotly time series plot including in-sample and out-of-sample predictions.
 
     Inputs:
     series (Pandas Series):
         The Time Series containing the observed values.
+    test (Pandas Series):
+        The testing data.
     in_sample_forecast (Pandas Series):
         Series containing the in-sample forecast values.
     out_of_sample_forecast (Pandas Series):
@@ -537,16 +495,18 @@ def timeseries_plot_including_predictions(
         Mean Squared Error evaluated on the testing data.
     min_value (Float):
         If smaller zero, the time series data are adjusted to there original values.
-    conf_interval (Bool):
-        If True, it plots the confidence intervals.
-    alpha (Float, optional):
+    confidence_level (Float, optional):
         Confindence Level to compare the p-value with. Default value is 0.05.
+    plot_in_sample_forecast (Bool, optional):
+        If True, it plots the in-sample forecast.
+    plot_marker (Bool, optional):
+        Whether to include markers for the forecast in the plot. Default value is True.
 
     Outouts:
     fig (Plotly Figure): Time series plot including in-sample and out-of-sample predictions
     """ 
     # Creating the figure (Observed Values and Forecasts)
-    if conf_interval:
+    if plot_in_sample_forecast:
         fig = go.Figure([
             go.Scatter(
                 name="Confidence Interval",
@@ -570,45 +530,56 @@ def timeseries_plot_including_predictions(
                 name="Out-of-Sample Forecast",
                 x=out_of_sample_forecast.index,
                 y=out_of_sample_forecast,
-                mode="lines",
-                line={"color": "#fc7d0b", "dash": "dash"},
+                mode='lines+markers' if plot_marker else 'lines',
+                line={"color": "#fc7d0b"},
             ),
             go.Scatter(
                 name="In-Sample Forecast",
                 x=in_sample_forecast.index,
                 y=in_sample_forecast,
-                mode="lines",
-                line={"color": "#fc7d0b"},
+                mode='lines+markers' if plot_marker else 'lines',
+                line={"color": "#fc7d0b", "dash": "dash"},
             ),
             go.Scatter(
                 name="Observed Value",
                 x=series.index,
                 y=series,
-                mode="lines",
+                mode='lines+markers' if plot_marker else 'lines',
                 line={"color": "#1f77b4"},
             )
         ])
     else:
         fig = go.Figure([
             go.Scatter(
-                name="Out-of-Sample Forecast",
-                x=out_of_sample_forecast.index,
-                y=out_of_sample_forecast,
+                name="Confidence Interval",
+                x=conf_interval_upper_limit.index,
+                y=conf_interval_upper_limit,
                 mode="lines",
-                line={"color": "#fc7d0b", "dash": "dash"},
+                line={"width": 0},
+                showlegend=False,
             ),
             go.Scatter(
-                name="In-Sample Forecast",
-                x=in_sample_forecast.index,
-                y=in_sample_forecast,
+                name="Confidence Interval",
+                x=conf_interval_lower_limit.index,
+                y=conf_interval_lower_limit,
                 mode="lines",
+                line={"width": 0},
+                showlegend=True,
+                fillcolor="rgba(68, 68, 68, 0.3)",
+                fill="tonexty"
+            ),
+            go.Scatter(
+                name="Forecast",
+                x=out_of_sample_forecast.index,
+                y=out_of_sample_forecast,
+                mode='lines+markers' if plot_marker else 'lines',
                 line={"color": "#fc7d0b"},
             ),
             go.Scatter(
                 name="Observed Value",
                 x=series.index,
                 y=series,
-                mode="lines",
+                mode='lines+markers' if plot_marker else 'lines',
                 line={"color": "#1f77b4"},
             )
         ])
@@ -651,12 +622,16 @@ def timeseries_plot_including_predictions(
         plot_bgcolor="white"
     )
 
+    # Perform the Shapiro-Wilk Test for normality
+    residuals = sorted([x - y for x, y in zip(in_sample_forecast.values, test.values)])
+    p_value = np.round(stats.shapiro(residuals)[1], 2)
+
     # Annotations
     annotations = []
-    if conf_interval:
-        conf_text = f"and the residuals are likely normal. Thus, the {int((1-alpha)*100)}% confidence interval is plotted."
+    if p_value > confidence_level:
+        conf_text = f"and the residuals are likely normal. Thus, the {int((1-confidence_level)*100)}% confidence interval does have a valid interpretation."
     else:
-        conf_text = f"and the residuals are likely not normal. Thus, the confidence interval is not plotted."
+        conf_text = f"and the residuals are likely not normal. Thus, the {int((1-confidence_level)*100)}% confidence interval does not have a valid interpretation."
 
     annotations.append({"xref": "paper", "yref": "paper", "x": 0.0, "y": 1.05,
                               "xanchor": "left", "yanchor": "bottom",
@@ -667,7 +642,7 @@ def timeseries_plot_including_predictions(
                               "showarrow": False})
     annotations.append({"xref": "paper", "yref": "paper", "x": 0.0, "y": 1.0,
                               "xanchor": "left", "yanchor": "bottom",
-                              "text": f"The mean squared error (MSE) of the in-sample forecast is {np.round(mse, 2)} {conf_text}",
+                              "text": f"The mean squared error (MSE) on the testing data is {np.round(mse, 2)} {conf_text}",
                               "font": {"family": "Arial",
                                         "size": 20,
                                         "color": "rgb(37,37,37)"},
@@ -681,29 +656,28 @@ def timeseries_plot_including_predictions(
 COMPONENT_INFO = {
     "inputs": {
         "series": {"data_type": "SERIES"},
-        "steps": {"data_type": "INT"},
+        "number_of_forecast_steps": {"data_type": "INT"},
         "seasonal_periods": {"data_type": "INT", "default_value": None},
-        "test_size": {"data_type": "FLOAT", "default_value": 0.3},
-        "iterations": {"data_type": "INT", "default_value": 200},
-        "alpha": {"data_type": "FLOAT", "default_value": 0.05},
-        "shuffle": {"data_type": "BOOLEAN", "default_value": False},
-        "use_boxcox": {"data_type": "BOOLEAN", "default_value": True},
-        "initialization_method": {"data_type": "STRING", "default_value": "estimated"},
+        "test_size": {"data_type": "FLOAT", "default_value": None},
+        "hyperparameter_tuning_iterations": {"data_type": "INT", "default_value": 200},
+        "confidence_level": {"data_type": "FLOAT", "default_value": 0.05},
+        "plot_in_sample_forecast": {"data_type": "BOOLEAN", "default_value": False},
+        "plot_marker": {"data_type": "BOOLEAN", "default_value": True},
     },
     "outputs": {
         "plot": {"data_type": "PLOTLYJSON"},
     },
-    "name": "Exponential Smoothing Alt",
+    "name": "Exponential Smoothing",
     "category": "Time Series Analysis",
     "description": "Exponential Smoothing Plot",
     "version_tag": "1.0.0",
-    "id": "4401536d-9046-4ccf-87b6-f3c4e4f91f0e",
-    "revision_group_id": "b0dc6744-bcea-4407-b6f5-142f95e5b4da",
+    "id": "61ef085b-0a83-443b-a4ee-dc1cc6ce1077",
+    "revision_group_id": "b1e582b3-b2a8-47a8-a019-e0a0ba0f1d87",
     "state": "RELEASED",
 }
 
-def main(*, series, steps, seasonal_periods=None, test_size=0.3, iterations=200, alpha=0.05,
-          shuffle=False, use_boxcox=True, initialization_method="estimated"):
+def main(*, series, number_of_forecast_steps, seasonal_periods=None, test_size=None, 
+         hyperparameter_tuning_iterations=200, confidence_level=0.05, plot_in_sample_forecast=False, plot_marker=True):
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
@@ -718,8 +692,7 @@ def main(*, series, steps, seasonal_periods=None, test_size=0.3, iterations=200,
     # Step 3: Split the time series into training and testing sets.
     train, test = train_test_split_func(
         series=series,
-        test_size=test_size,
-        shuffle=shuffle
+        test_size=test_size
     )
     # Step 4: Optimize hyperparameters for the Exponential Smoothing model using random search.
     best_alpha, best_beta, best_gamma, best_phi, best_score, best_trend, best_seasonal = \
@@ -727,9 +700,7 @@ def main(*, series, steps, seasonal_periods=None, test_size=0.3, iterations=200,
             train=train,
             test=test,
             seasonal_periods=seasonal_periods,
-            iterations=iterations,
-            use_boxcox=use_boxcox,
-            initialization_method=initialization_method
+            hyperparameter_tuning_iterations=hyperparameter_tuning_iterations
         )
     # Step 5: Train some Exponential Smoothing model with optimized hyperparameters.
     model_fit = train_exponential_smoothing(
@@ -740,9 +711,7 @@ def main(*, series, steps, seasonal_periods=None, test_size=0.3, iterations=200,
         alpha=best_alpha,
         beta=best_beta,
         gamma=best_gamma,
-        phi=best_phi,
-        use_boxcox=use_boxcox,
-        initialization_method=initialization_method
+        phi=best_phi
     )
     # Step 6: Forecast future values and confidence intervals. If min_value is smaller zero,
     #           the time series data are adjusted to there original values.
@@ -751,30 +720,25 @@ def main(*, series, steps, seasonal_periods=None, test_size=0.3, iterations=200,
             trained_model=model_fit,
             series=series,
             test=test,
-            steps=steps,
+            number_of_forecast_steps=number_of_forecast_steps,
             mse=best_score,
             min_value=min_value,
-            alpha=alpha
+            confidence_level=confidence_level
     )
-    # Step 7: Decide whether to include the confidence interval in the plot,
-    #           based on the normality of the residuals specified by the Shapiro-Wilk Test.
-    conf_interval = plot_confidence_interval(
-        in_sample_forecast=in_sample_forecast,
-        test=test,
-        alpha=alpha
-    )
-    # Step 8: Create a Plotly time series plot including in-sample and out-of-sample forecasts,
+    # Step 7: Create a Plotly time series plot including in-sample and out-of-sample forecasts,
     #           with optional confidence intervals.
     fig = timeseries_plot_including_predictions(
         series=series,
+        test=test,
         in_sample_forecast=in_sample_forecast,
         out_of_sample_forecast=out_of_sample_forecast,
-        conf_interval=conf_interval,
         conf_interval_upper_limit=conf_interval_upper_limit,
         conf_interval_lower_limit=conf_interval_lower_limit,
         mse=best_score,
-        alpha=alpha,
-        min_value=min_value
+        confidence_level=confidence_level,
+        min_value=min_value,
+        plot_in_sample_forecast=plot_in_sample_forecast,
+        plot_marker=plot_marker
     )
 
     return {"plot": plotly_fig_to_json_dict(fig)}
@@ -795,7 +759,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "2023-09-09T00:00:00.000Z": 393,
     "2023-09-10T00:00:00.000Z": 390,
     "2023-09-11T00:00:00.000Z": 220,
-    "2023-09-12T00:00:00.000Z": 262,
+    "2023-09-12T00:00:00.000Z": 222,
     "2023-09-13T00:00:00.000Z": 312,
     "2023-09-14T00:00:00.000Z": 277,
     "2023-09-15T00:00:00.000Z": 332,
@@ -813,7 +777,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             }
         },
         {
-            "workflow_input_name": "steps",
+            "workflow_input_name": "number_of_forecast_steps",
             "adapter_id": "direct_provisioning",
             "filters": {
                 "value": 7

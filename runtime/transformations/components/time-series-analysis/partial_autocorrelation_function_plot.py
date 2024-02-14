@@ -1,6 +1,6 @@
-"""Module Docstring of Partial Autocorrelation Function Plot
+"""Module Docstring of Partial Autocorrelation Function
 
-# Partial Autocorrelation Function Plot
+# Partial Autocorrelation Function
 
 ## Description
 
@@ -18,12 +18,12 @@ Visualizing ACF and PACF gives a clear insight into the lag structure of the tim
 ## Inputs
 
 - **series** (Pandas Series): 
-    The time series data for which to compute ACF or PACF. The index must be of datetime64 data type.
+    The time series data for which to compute ACF or PACF. The index must be datetime.
 
 - **lags** (Int, default value: 20): 
     The number of lags to compute for ACF/PACF. Default is 20.
 
-- **alpha** (Float, default value: 0.05): 
+- **confidence_level** (Float, default value: 0.05): 
     The significance level for confidence intervals. Default is 0.05.
 
 - **plot_pacf** (Bool, default value: False): 
@@ -31,7 +31,7 @@ Visualizing ACF and PACF gives a clear insight into the lag structure of the tim
 
 ## Outputs
 
-- **fig**: 
+- **plot**: 
     A Plotly figure object containing the ACF or PACF plot.
 
 ## Details
@@ -55,7 +55,7 @@ Example input:
         "2023-09-09T00:00:00.000Z": 393,
         "2023-09-10T00:00:00.000Z": 390,
         "2023-09-11T00:00:00.000Z": 220,
-        "2023-09-12T00:00:00.000Z": 262,
+        "2023-09-12T00:00:00.000Z": 222,
         "2023-09-13T00:00:00.000Z": 312,
         "2023-09-14T00:00:00.000Z": 277,
         "2023-09-15T00:00:00.000Z": 332,
@@ -86,7 +86,7 @@ from hetdesrun.runtime.exceptions import ComponentInputValidationException
 def create_pacf_plot(
     series: pd.Series,
     lags: int=20, 
-    alpha: float=0.05, 
+    confidence_level: float=0.05, 
     plot_pacf: bool=False
 ):
     """Creates a plot for Autocorrelation Function (ACF) or Partial Autocorrelation Function (PACF).
@@ -94,11 +94,11 @@ def create_pacf_plot(
     Inputs:
     series (Pandas Series): Time series data. The index must be datetime.
     lags (Integer, optional): Number of lags to calculate ACF/PACF. Default is 20.
-    alpha (Float, optional): Significance level for confidence intervals. Default is 0.05.
+    confidence_level (Float, optional): Significance level for confidence intervals. Default is 0.05.
     plot_pacf (Bool, optional): Flag to plot PACF instead of ACF. Default is False (plots ACF).
 
     Outputs:
-    fig: A plotly figure object containing the ACF/PACF plot.
+    fig (Plotly Figure): A plotly figure object containing the ACF/PACF plot.
     """
     # Parameter validations
     if len(series) == 0:
@@ -116,11 +116,11 @@ def create_pacf_plot(
             error_code=422,
             invalid_component_inputs=["series"],
         ) 
-    if not 0 < alpha < 1:
+    if not 0 < confidence_level < 1:
         raise ComponentInputValidationException(
-            "`alpha` must be between 0 and 1",
+            "`confidence_level` must be between 0 and 1",
             error_code=422,
-            invalid_component_inputs=["alpha"],
+            invalid_component_inputs=["confidence_level"],
         )
     if not isinstance(lags, int) or lags < 1:
         raise ComponentInputValidationException(
@@ -138,10 +138,10 @@ def create_pacf_plot(
     # Prepare data
     data_sorted = series.sort_index().dropna()
     if plot_pacf:
-        array = pacf(data_sorted, nlags=lags, alpha=alpha)
+        array = pacf(data_sorted, nlags=lags, alpha=confidence_level)
         title = 'Partial Autocorrelation (PACF) Plot'
     else:
-        array = acf(data_sorted, nlags=lags, alpha=alpha)
+        array = acf(data_sorted, nlags=lags, alpha=confidence_level)
         title = 'Autocorrelation (ACF) Plot'
 
     lower_values = array[1][:,0] - array[0]
@@ -163,13 +163,15 @@ def create_pacf_plot(
         y=array[0],
         mode='markers',
         marker_color='#1f77b4',
-        marker_size=12
+        marker_size=12,
+        name='value'
     )
     fig.add_scatter(
         x=np.arange(len(array[0])),
         y=upper_values,
         mode='lines',
-        line_color='rgba(255,255,255,0)'
+        line_color='rgba(255,255,255,0)',
+        name='upper boundary'
     )
     fig.add_scatter(
         x=np.arange(len(array[0])),
@@ -177,7 +179,8 @@ def create_pacf_plot(
         mode='lines',
         line_color='rgba(255,255,255,0)',
         fillcolor='rgba(32,146,230,0.3)',
-        fill='tonexty'
+        fill='tonexty',
+        name='lower_boundary'
     )
     
     fig.update_traces(showlegend=False)
@@ -194,7 +197,7 @@ COMPONENT_INFO = {
     "inputs": {
         "series": {"data_type": "SERIES"},
         "lags": {"data_type": "INT", "default_value": 20},
-        "alpha": {"data_type": "FLOAT", "default_value": 0.05},
+        "confidence_level": {"data_type": "FLOAT", "default_value": 0.05},
         "plot_pacf": {"data_type": "BOOLEAN", "default_value": False},
     },
     "outputs": {
@@ -209,14 +212,14 @@ COMPONENT_INFO = {
     "state": "RELEASED",
 }
 
-def main(*, series, lags=20, alpha=0.05, plot_pacf=False):
+def main(*, series, lags=20, confidence_level=0.05, plot_pacf=False):
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
     fig = create_pacf_plot(
         series=series, 
         lags=lags,
-        alpha=alpha,
+        confidence_level=confidence_level,
         plot_pacf=plot_pacf
     )
     
@@ -238,7 +241,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "2023-09-09T00:00:00.000Z": 393,
     "2023-09-10T00:00:00.000Z": 390,
     "2023-09-11T00:00:00.000Z": 220,
-    "2023-09-12T00:00:00.000Z": 262,
+    "2023-09-12T00:00:00.000Z": 222,
     "2023-09-13T00:00:00.000Z": 312,
     "2023-09-14T00:00:00.000Z": 277,
     "2023-09-15T00:00:00.000Z": 332,

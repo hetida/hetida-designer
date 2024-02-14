@@ -1,6 +1,6 @@
-"""Module Docstring of Time Series Decomposition Plot
+"""Module Docstring of Time Series Decomposition
 
-# Time Series Decomposition Plot
+# Time Series Decomposition
 
 ## Description
 
@@ -19,7 +19,7 @@ This decomposition is crucial for tasks like forecasting, anomaly detection, and
     
 ## Outputs
 
-- **fig** (Plotly Figure): 
+- **plot** (Plotly Figure): 
     A Plotly figure containing the original data and the decomposed components.
 
 ## Details
@@ -45,7 +45,7 @@ Example input:
         "2023-09-09T00:00:00.000Z": 393,
         "2023-09-10T00:00:00.000Z": 390,
         "2023-09-11T00:00:00.000Z": 220,
-        "2023-09-12T00:00:00.000Z": 262,
+        "2023-09-12T00:00:00.000Z": 222,
         "2023-09-13T00:00:00.000Z": 312,
         "2023-09-14T00:00:00.000Z": 277,
         "2023-09-15T00:00:00.000Z": 332,
@@ -241,7 +241,7 @@ COMPONENT_INFO = {
         "freq": {"data_type": "INT", "default_value": None},
     },
     "outputs": {
-        "fig": {"data_type": "PLOTLYJSON"},
+        "plot": {"data_type": "PLOTLYJSON"},
     },
     "name": "Seasonal Decomposition Plot",
     "category": "Time Series Analysis",
@@ -265,7 +265,7 @@ def main(*, series, model="additive", freq=None):
     # Step 2: Create decomposition plot
     fig = multi_series_with_multi_yaxis(decomposed_series)
 
-    return {"fig": plotly_fig_to_json_dict(fig)}
+    return {"plot": plotly_fig_to_json_dict(fig)}
 
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {
@@ -284,7 +284,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "2023-09-09T00:00:00.000Z": 393,
     "2023-09-10T00:00:00.000Z": 390,
     "2023-09-11T00:00:00.000Z": 220,
-    "2023-09-12T00:00:00.000Z": 262,
+    "2023-09-12T00:00:00.000Z": 222,
     "2023-09-13T00:00:00.000Z": 312,
     "2023-09-14T00:00:00.000Z": 277,
     "2023-09-15T00:00:00.000Z": 332,
