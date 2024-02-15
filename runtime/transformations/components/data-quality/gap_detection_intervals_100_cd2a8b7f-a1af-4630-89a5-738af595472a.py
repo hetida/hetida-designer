@@ -86,6 +86,10 @@ DataFrame with information about the gaps.
 
 ## Outputs
 
+- **data_frequency** (String):
+  The [date offset aliases](
+    https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
+  ) corresponding to the data frequency used for gap detection.
 - **gap_info** (DataFrame):
   A DataFrame containing the beginning and end timestamps of gaps larger than the specified or
   determined expected data frequency.
@@ -1309,6 +1313,7 @@ COMPONENT_INFO = {
     },
     "outputs": {
         "gap_info": {"data_type": "DATAFRAME"},
+        "data_frequency": {"data_type": "STRING"},
     },
     "name": "Gap Detection Intervals",
     "category": "Data Quality",
@@ -1317,10 +1322,10 @@ COMPONENT_INFO = {
     "id": "cd2a8b7f-a1af-4630-89a5-738af595472a",
     "revision_group_id": "415662ab-e4fb-4084-b752-80433d0df291",
     "state": "RELEASED",
-    "released_timestamp": "2024-02-09T15:44:01.693763+00:00",
+    "released_timestamp": "2024-02-15T14:00:16.393911+00:00",
 }
 
-from hdutils import parse_default_value  # noqa: E402
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(
@@ -1471,7 +1476,10 @@ def main(
                 constricted_externally_determined_gap_timestamp_intervals,
                 gaps_from_missing_expected_datapoints,
             ],
-        )
+        ),
+        "data_frequency": pd.tseries.frequencies.to_offset(
+            input_params.expected_data_frequency
+        ).freqstr,
     }
 
 
