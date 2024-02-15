@@ -3,7 +3,7 @@
 # Replacement Locations for Gaps
 
 ## Description
-
+Determine timestamps at which replacement values need to be determined.
 
 ## Inputs
 
@@ -793,12 +793,12 @@ COMPONENT_INFO = {
     },
     "name": "Replacement Locations for Gaps",
     "category": "Data Quality",
-    "description": "",
+    "description": "Determine timestamps at which replacement values need to be determined.",
     "version_tag": "1.0.0",
     "id": "ccf45f3a-8cbe-4269-8f3c-5d56d80db29a",
     "revision_group_id": "fd0f4cce-9a6e-48d2-8d10-5a2a1310f6c6",
     "state": "RELEASED",
-    "released_timestamp": "2024-02-12T17:40:16.717325+00:00",
+    "released_timestamp": "2024-02-15T14:27:23.783017+00:00",
 }
 
 from hdutils import parse_default_value  # noqa: E402, F401
