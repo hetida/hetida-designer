@@ -84,7 +84,7 @@ The expected output of the above call is:
 import pandas as pd
 from pydantic import BaseModel, ValidationError, root_validator
 
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import ComponentInputValidationException
 
 
 class TimeInterval(BaseModel):
@@ -131,6 +131,8 @@ COMPONENT_INFO = {
     "state": "RELEASED",
     "released_timestamp": "2023-11-09T07:44:10.808744+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(*, series, list_of_time_intervals):

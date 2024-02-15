@@ -111,8 +111,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from pydantic import BaseModel, ValidationError, root_validator
 
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
-from hetdesrun.utils import plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
 
 pio.templates.default = None
 
@@ -250,6 +249,8 @@ COMPONENT_INFO = {
     "state": "RELEASED",
     "released_timestamp": "2023-11-08T15:09:29.370028+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(

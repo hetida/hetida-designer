@@ -6,6 +6,7 @@
   In component code, the @register decorater has been replaced by COMPONENT_INFO dictionaries.
   In addition, attributes that have already been added to the respective classes in previous releases are now added to the transformation JSONs as well.
   If you re-import them (note: this is not done automatically when updating the docker image) into an existing hd instance where you have [persisted models](./docs/persisting_models.md) you may be affected by [deserialization problems](./docs/repr_pitfalls.md) and need to re-create those persisted models.
+* Bugfixes and improvements on handling default values. Default values can now include metadata.
 
 ## 0.9.4
 * bug fixes around default value handling

@@ -63,25 +63,32 @@ docker-compose -f docker-compose-basic-R-support.yml up -d
 To test rpy2 you may write a component importing it (`import rpy2`) and verify that the component can be run. For example here is the code for a small component outputting the value of Pi from R:
 
 ```python
-from hetdesrun.component.registration import register
-from hetdesrun.datatypes import DataType
-# add your own imports here, e.g.
-#     import pandas as pd
-#     import numpy as np
 import rpy2.robjects as robjects
+
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-@register(
-    inputs={},
-    outputs={"value_of_pi": DataType.Float},
-    component_name="Test R Support",
-    description="New created component",
-    category="Draft"
-)
+COMPONENT_INFO = {
+    "inputs": {},
+    "outputs": {
+        "value_of_pi": {"data_type": "FLOAT"},
+    },
+    "name": "Value of Pi from R",
+    "category": "Draft",
+    "description": "Value of pi from R",
+    "version_tag": "0.1.0",
+    "id": "aa3bc119-2195-46ff-823d-ba69899110bc",
+    "revision_group_id": "c7cf9e20-6c0c-43e1-8aea-f445ee3c5c82",
+    "state": "DRAFT",
+}
+
+from hdutils import parse_default_value  # noqa: E402, F401
+
+
 def main():
-    """entrypoint function for this component"""
+    # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
+
     # write your function code here.
     pi = robjects.r['pi']
     return {"value_of_pi": pi[0]}
