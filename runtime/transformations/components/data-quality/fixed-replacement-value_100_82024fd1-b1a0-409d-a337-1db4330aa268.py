@@ -65,7 +65,7 @@ In both cases, the output is:
 
 import pandas as pd
 
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import ComponentInputValidationException
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -86,6 +86,8 @@ COMPONENT_INFO = {
     "state": "RELEASED",
     "released_timestamp": "2023-11-23T16:20:56.654832+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(*, gap_timestamps, replacement_value):

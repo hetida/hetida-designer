@@ -20,7 +20,7 @@ from hetdesrun.persistence.dbservice.revision import (
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import load_json
-from hetdesrun.utils import get_uuid_from_seed
+from hetdesrun.utils import State, get_uuid_from_seed
 from hetdesrun.webservice.config import get_config
 
 tr_json_component_1 = {
@@ -2213,3 +2213,34 @@ async def test_put_multiple_trafos(async_test_client, mocked_clean_test_db_sessi
         success_info = response.json()
         assert len(success_info) == 1
         assert list(success_info.values())[0]["status"] == "SUCCESS"
+
+
+@pytest.mark.asyncio
+async def test_put_releasing_drafts(async_test_client, mocked_clean_test_db_session):
+    """Test the release_drafts query param of the multiple put endpoint"""
+    path = "./tests/data/components/alerts-from-score_100_38f168ef-cb06-d89c-79b3-0cd823f32e9d.json"  # noqa: E501
+    example_component_tr_json = load_json(path)
+
+    example_component_tr_json.pop("released_timestamp")
+    example_component_tr_json["state"] = "DRAFT"
+
+    trafo = TransformationRevision(**example_component_tr_json)
+
+    async with async_test_client as ac:
+        response = await ac.put(
+            "/api/transformations/",
+            params={"update_component_code": False, "release_drafts": True},
+            json=[json.loads(trafo.json())],
+        )
+
+        assert response.status_code == 207
+
+        success_info = response.json()
+        assert len(success_info) == 1
+        assert list(success_info.values())[0]["status"] == "SUCCESS"
+
+        response = await ac.get(f"/api/transformations/{str(trafo.id)}")
+        assert response.status_code == 200
+        trafo_from_resp = TransformationRevision(**response.json())
+
+        assert trafo_from_resp.state is State.RELEASED

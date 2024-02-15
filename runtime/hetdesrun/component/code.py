@@ -47,7 +47,7 @@ COMPONENT_INFO = {{
     "state": {state},{timestamp}
 }}
 
-from hdutils import parse_default_value  # noqa: E402
+from hdutils import parse_default_value  # noqa: E402, F401
 
 {main_func_declaration_start} main({params_list}):
     # entrypoint function for this component

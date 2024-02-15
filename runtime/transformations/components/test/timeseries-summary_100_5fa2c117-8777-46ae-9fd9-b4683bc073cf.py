@@ -32,6 +32,8 @@ COMPONENT_INFO = {
     "released_timestamp": "2024-01-10T13:29:19.716925+00:00",
 }
 
+from hdutils import parse_default_value  # noqa: E402, F401
+
 
 def main(*, series):
     # entrypoint function for this component
@@ -72,3 +74,6 @@ def main(*, series):
         "end": end.isoformat(),
         "duration": duration,
     }
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {}

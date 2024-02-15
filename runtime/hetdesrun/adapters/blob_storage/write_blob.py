@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 from mypy_boto3_s3 import S3Client
 from mypy_boto3_s3.type_defs import PutObjectOutputTypeDef
 
+from hdutils import WrappedModelWithCustomObjects
 from hetdesrun.adapters.blob_storage import (
     HIERARCHY_END_NODE_NAME_SEPARATOR,
     OBJECT_KEY_DIR_SEPARATOR,
@@ -20,7 +21,6 @@ from hetdesrun.adapters.blob_storage.models import (
     IdString,
     ObjectKey,
     StructureBucket,
-    WrappedModelWithCustomObjects,
     get_structure_bucket_and_object_key_prefix_from_id,
 )
 from hetdesrun.adapters.blob_storage.service import ensure_bucket_exists, get_s3_client
@@ -150,7 +150,7 @@ def apply_filters_to_metadata_key(
     new value which contains the filter value.
     An exception is raised if that metadata key does not yield a valid object key.
     """
-    if "object_key_suffix" in filters:
+    if "object_key_suffix" in filters and len(filters["object_key_suffix"]) > 0:
         logger.debug("Apply 'object_key_suffix' filter.")
         object_key_suffix = filters["object_key_suffix"]
         sink_name = thing_node_id.rsplit(OBJECT_KEY_DIR_SEPARATOR, maxsplit=1)[1]
