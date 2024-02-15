@@ -77,7 +77,7 @@ COMPONENT_INFO = {
     "state": "DRAFT",
 }
 
-from hdutils import parse_default_value  # noqa: E402
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(

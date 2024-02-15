@@ -89,7 +89,7 @@ The expected output of the above call is:
 import pandas as pd
 from pydantic import BaseModel, ValidationError, root_validator
 
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import ComponentInputValidationException
 
 
 class TimeInterval(BaseModel):
@@ -130,20 +130,18 @@ COMPONENT_INFO = {
     },
     "name": "Correct Time Intervals With Fixed Values",
     "category": "Filters",
-    "description": (
-        "Correct all data points in provided time intervals from a time series with a "
-        "correction value for each time interval."
-    ),
+    "description": "Correct all data points in provided time intervals from a time series with a correction value for each time interval.",  # noqa: E501
     "version_tag": "1.0.0",
     "id": "504a01aa-12a2-472b-995c-0676af66b07c",
     "revision_group_id": "92d2ded2-c6ca-42a1-a15b-a8e9cf6ca635",
     "state": "RELEASED",
     "released_timestamp": "2023-11-09T08:04:31.787859+00:00",
-    "disabled_timestamp": None,
 }
 
+from hdutils import parse_default_value  # noqa: E402, F401
 
-def main(*, series: pd.Series, list_of_time_intervals):
+
+def main(*, series, list_of_time_intervals):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.

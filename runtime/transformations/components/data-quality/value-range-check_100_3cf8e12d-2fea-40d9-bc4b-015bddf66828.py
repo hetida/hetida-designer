@@ -128,7 +128,7 @@ Expected output of the above call is:
 import pandas as pd
 from pydantic import BaseModel, ValidationError, root_validator
 
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import ComponentInputValidationException
 
 
 class ValueRange(BaseModel):
@@ -238,6 +238,8 @@ COMPONENT_INFO = {
     "state": "RELEASED",
     "released_timestamp": "2023-11-23T16:20:56.654831+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(*, timeseries_data, value_range_dict):
