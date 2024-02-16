@@ -10,6 +10,7 @@ COPY ./runtime/requirements-base.txt /app/requirements-base.txt
 COPY ./runtime/requirements.txt /app/requirements.txt
 COPY ./runtime/requirements-dev.txt /app/requirements-dev.txt
 COPY ./runtime/pipt /app/pipt
+COPY ./hdctl /hdctl
 
 RUN apt-get -y update && apt-get -y install libpq-dev gcc && apt-get clean && rm -rf /var/lib/apt/lists/*
 
