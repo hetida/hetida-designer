@@ -4,6 +4,7 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
+import json
 import logging
 from keyword import iskeyword
 
@@ -364,12 +365,14 @@ def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
         expanded_code = update_module_level_variable(
             code=code,
             variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
-            value=tr.test_wiring.dict(exclude_unset=True, exclude_defaults=True),
+            value=json.loads(
+                tr.test_wiring.json(exclude_unset=True, exclude_defaults=True)
+            ),
         )
-    except CodeParsingException:
+    except CodeParsingException as e:
         msg = (
             f"Failed to update test wiring in code for trafo {tr.name} ({tr.version_tag})"
-            f"(id: {str(tr.id)}). Returning non-updated code."
+            f"(id: {str(tr.id)}). Returning non-updated code. Error was: {str(e)}"
         )
         logger.warning(msg)
         return code
