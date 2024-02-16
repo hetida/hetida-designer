@@ -273,8 +273,10 @@ def generate_complete_component_module(
 ) -> str:
     return (
         imports_template
+        + "# %%\n"
         + generate_function_header(component, is_coroutine)
         + function_body_template
+        + "\n\n# %%\n"
     )
 
 

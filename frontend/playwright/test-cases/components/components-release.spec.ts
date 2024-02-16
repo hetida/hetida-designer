@@ -64,7 +64,7 @@ ${componentInputData}
     await hetidaDesigner.clickByTestId('save-component-io-dialog');
 
     // Add component python code and remove "pass"
-    await hetidaDesigner.typeInComponentEditor(componentPythonCode, 5);
+    await hetidaDesigner.typeInComponentEditor(componentPythonCode, 12);
 
     // Execute component and get the protocol
     await hetidaDesigner.clickIconInToolbar('Execute');
