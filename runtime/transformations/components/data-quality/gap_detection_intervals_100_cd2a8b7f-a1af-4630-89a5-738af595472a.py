@@ -521,6 +521,11 @@ from hdutils import ComponentInputValidationException
 
 
 def timestamp_str_to_pd_timestamp(timestamp_str: str, input_name: str) -> pd.Timestamp:
+    """Transform timestamp string to Pandas Timestamp.
+
+    >>> timestamp_str_to_pd_timestamp("2024-02-16 09:39", "test_input")
+    Timestamp('2024-02-16 09:39:00+0000', tz='UTC')
+    """
     try:
         timestamp = pd.to_datetime(timestamp_str, utc=True)
     except ValueError as error:
@@ -531,12 +536,20 @@ def timestamp_str_to_pd_timestamp(timestamp_str: str, input_name: str) -> pd.Tim
 
 
 def freqstr2dateoffset(freqstr: str) -> pd.DateOffset:
-    """Transform frequency string to Pandas DateOffset."""
+    """Transform frequency string to Pandas DateOffset.
+
+    >>> freqstr2dateoffset("5min")
+    <5 * Minutes>
+    """
     return pd.tseries.frequencies.to_offset(freqstr)
 
 
 def freqstr2timedelta(freqstr: str, input_name: str) -> pd.Timedelta:
-    """Transform frequency string to Pandas Timedelta."""
+    """Transform frequency string to Pandas Timedelta.
+
+    >>> freqstr2timedelta("5min","test_input")
+    Timedelta('0 days 00:05:00')
+    """
     try:
         return pd.to_timedelta(freqstr)
     except ValueError:
@@ -1171,6 +1184,50 @@ def merge_intervals(intervals: pd.DataFrame) -> pd.DataFrame:
     Therefore, the correct sorting of the data in the data frame is crucial.
     Multiple steps are required to properly track whether the resulting interval boundary is
     inclusive or not.
+
+    >>> merge_intervals(
+    ...     pd.DataFrame(
+    ...         [
+    ...             {
+    ...                 "start_time": "2020-01-01T01:16:00.000Z",
+    ...                 "end_time": "2020-01-01T01:25:00.000Z",
+    ...                 "start_inclusive": True,
+    ...                 "end_inclusive": False
+    ...             },
+    ...             {
+    ...                 "start_time": "2020-01-01T01:25:00.000Z",
+    ...                 "end_time": "2020-01-01T01:25:00.000Z",
+    ...                 "start_inclusive": True,
+    ...                 "end_inclusive": True
+    ...             },
+    ...             {
+    ...                 "start_time": "2020-01-01T01:29:00.000Z",
+    ...                 "end_time": "2020-01-01T01:29:00.000Z",
+    ...                 "start_inclusive": True,
+    ...                 "end_inclusive": True
+    ...             },
+    ...             {
+    ...                 "start_time": "2020-01-01T01:31:00.000Z",
+    ...                 "end_time": "2020-01-01T01:33:00.000Z",
+    ...                 "start_inclusive": False,
+    ...                 "end_inclusive": False
+    ...             },
+    ...             {
+    ...                 "start_time": "2020-01-01T01:32:00.000Z",
+    ...                 "end_time": "2020-01-01T01:34:00.000Z",
+    ...                 "start_inclusive": False,
+    ...                 "end_inclusive": True
+    ...             }
+    ...         ]
+    ...     )
+    ... )
+                         start_time  ... end_inclusive
+    touch                            ...
+    0      2020-01-01T01:16:00.000Z  ...          True
+    1      2020-01-01T01:29:00.000Z  ...          True
+    2      2020-01-01T01:31:00.000Z  ...          True
+    <BLANKLINE>
+    [3 rows x 4 columns]
     """
     intervals = intervals.sort_values(["start_time", "end_time"])
 
