@@ -92,8 +92,8 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
-from hetdesrun.utils import plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException
+from hdutils import plotly_fig_to_json_dict
 
 def resample_time_series_if_needed(
     series: pd.Series

@@ -73,8 +73,8 @@ import plotly.io as pio
 
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from hetdesrun.utils import plotly_fig_to_json_dict
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException
 
 pio.templates.default = None
 

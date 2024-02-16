@@ -80,8 +80,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 from statsmodels.tsa.stattools import acf, pacf
-from hetdesrun.utils import plotly_fig_to_json_dict
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException
 
 def create_pacf_plot(
     series: pd.Series,
