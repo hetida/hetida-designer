@@ -792,8 +792,13 @@ usage() {
   echo "      $0 "'push physics_trafos.json --url-append "?type=COMPONENT&state=RELEASED&allow_overwrite_released=true"'
   echo
   echo "  MAINTENANCE:"
-  echo "    Examples here assume that the maintenance secret is set either in hdctl.env file"
-  echo "    (MAINTENANCE_SECRET) or as environment variable HDCTL_MAINTENANCE_SECRET."
+  echo
+  echo "    Redeploy base trafos on a remote instance hddev, e.g. after upgrading:"
+  echo
+  echo "      $0 "'deploy_base_trafos -i hddev --url-query "allow_overwrite_released=true"'
+  echo
+  echo "    Following examples assume that the maintenance secret is set either in hdctl.env"
+  echo "    file (MAINTENANCE_SECRET) or as environment variable HDCTL_MAINTENANCE_SECRET."
   echo
   echo "    Deprecate all but the latest released (i.e. by release date, disregarding version tag!)"
   echo "    revision of every transformation revision group:"
@@ -856,6 +861,9 @@ usage() {
   echo "  -e | --env-file PATH                     (HDCTL_ENV_FILE)"
   echo "      path to env file that will be sourced at startup. Defaults to ./hdctl.env."
   echo "      If set to non-default value it must exist."
+  echo
+  echo "  -i | --instance INSTANCE_NAME"
+  echo "      Use config from instance files (see sync commands) instead of env file"
   echo
   echo "  -b | --backend-api-url URL              (HDCTL_HD_BACKEND_API_URL)"
   echo "      URL of the backend api resource, e.g. http://localhost:8080/api"
@@ -1558,6 +1566,23 @@ END_HEREDOC
   echo "    hdctl sync push $sync_instance"
 }
 
+_load_instance_files() {
+  local sync_instance="$1"
+
+  if [[ -z "$sync_instance" ]]; then
+    _error "No instance specified. Aborting"
+    exit 1
+  fi
+
+  local instance_file="${sync_instance}.hd-instance"
+  local instance_creds_file="${sync_instance}.hd-creds"
+
+  # shellcheck disable=SC1090
+  source "$instance_file"
+  # shellcheck disable=SC1090
+  source "$instance_creds_file"
+}
+
 sync() {
   local sync_command="$1"
 
@@ -1581,13 +1606,7 @@ sync() {
     return 0
   fi
 
-  local instance_file="${sync_instance}.hd-instance"
-  local instance_creds_file="${sync_instance}.hd-creds"
-
-  # shellcheck disable=SC1090
-  source "$instance_file"
-  # shellcheck disable=SC1090
-  source "$instance_creds_file"
+  _load_instance_files "$sync_instance"
 
   if [[ "$sync_command" == "pull" ]] && [[ "$1" == "to" ]] && [[ -n "$2" ]]; then
 
@@ -1674,6 +1693,12 @@ _obtain_env_file_config() {
       shift
       break
       ;;
+    -i | --instance)
+      INSTANCE_NAME="$2"
+      shift
+      shift
+      break
+      ;;
     --)
       shift
       break
@@ -1741,6 +1766,11 @@ _parse_global_options() {
   while [[ "$#" -gt 0 ]]; do case $1 in
     -e | --env-file)
       ENV_FILE_PATH="$2"
+      shift
+      shift
+      ;;
+    -i | --instance)
+      INSTANCE_NAME="$2"
       shift
       shift
       ;;
@@ -1821,7 +1851,11 @@ _parse_global_options() {
 # must be called with cli arguments
 _params_setup() {
   _obtain_env_file_config "${@}"
-  _source_env_file
+  if [[ -z "$INSTANCE_NAME" ]]; then
+    _source_env_file
+  else
+    _load_instance_files "$INSTANCE_NAME"
+  fi
   _initialize_variables
   _parse_global_options "${@}"
 }
