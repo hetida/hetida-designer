@@ -167,7 +167,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, validator
 
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import ComponentInputValidationException
 
 
 def timestamp_str_to_pd_timestamp(timestamp_str: str, input_name: str) -> pd.Timestamp:
