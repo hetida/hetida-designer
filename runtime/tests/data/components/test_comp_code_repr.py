@@ -1,3 +1,8 @@
+"""Documentation for Test Component Code Repr
+
+Some documentation
+"""
+
 import io
 
 import pandas as pd
@@ -63,11 +68,11 @@ COMPONENT_INFO = {
         "series": {"data_type": "SERIES"},
         "multitsframe": {"data_type": "MULTITSFRAME"},
     },
-    "name": "Test Optional Input Parsing",
+    "name": "Test Component Code Repr",
     "category": "Test",
     "description": "Just outputs its input value",
     "version_tag": "1.0.0",
-    "id": "21cb6a1a-d409-4bb7-87a7-ee3d97940dfb",
+    "id": "31cb6a1a-d409-4bb7-87a7-ee3d97940dfc",
     "revision_group_id": "d414eb7d-3954-4c96-a329-fd0cefe0613a",
     "state": "DRAFT",
 }
@@ -110,3 +115,14 @@ def main(
         "series": series,
         "multitsframe": multitsframe,
     }
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
+    "input_wirings": [
+        {
+            "workflow_input_name": "x",
+            "adapter_id": "direct_provisioning",
+            "filters": {"value": "45.6"},
+        }
+    ]
+}

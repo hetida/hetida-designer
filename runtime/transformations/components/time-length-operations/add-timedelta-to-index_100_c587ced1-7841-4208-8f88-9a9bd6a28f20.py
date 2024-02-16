@@ -85,6 +85,8 @@ COMPONENT_INFO = {
     "released_timestamp": "2023-09-25T09:57:52.577013+00:00",
 }
 
+from hdutils import parse_default_value  # noqa: E402, F401
+
 
 def main(*, df_or_series, timedelta):
     # entrypoint function for this component
@@ -118,3 +120,6 @@ def main(*, df_or_series, timedelta):
     new_index = df_or_series.index + pd.Timedelta(timedelta)
     df_or_series.index = new_index
     return {"df_or_series": df_or_series}
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {}

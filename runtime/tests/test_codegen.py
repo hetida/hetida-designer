@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 
 import pytest
 
@@ -38,7 +39,6 @@ def test_function_header_no_params():
         test_wiring=[],
     )
     func_header = generate_function_header(component)
-
     assert (
         func_header
         == """\
@@ -55,6 +55,8 @@ COMPONENT_INFO = {
     "revision_group_id": "c6eff22c-21c4-43c6-9ae1-b2bdfb944565",
     "state": "DRAFT",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main():
@@ -248,19 +250,13 @@ def test_function_header_optional_inputs():
         '    text="text",\n'
         "    no_text=None,\n"
         '    empty_text="",\n'
-        "    no_any=None,\n"
-        "    null_any=None,\n"
-        '    empty_string_any="",\n'
-        '    some_string_any="any",\n'
-        "    some_number_any=23,\n"
-        '    some_json_any={"test": True, "content": None, "sub_structure": {"relevant": False}},\n'
-        "    series=pd.read_json(\n"
-        "        io.StringIO(\n"
-        '            \'{"2020-01-01T01:15:27.000Z": 42.2, "2020-01-03T08:20:03.000Z": 18.7, '
-        '"2020-01-03T08:20:04.000Z": 25.9}\'\n'
-        "        ),\n"
-        '        typ="series",\n'
-        "    ),\n"
+        '    no_any=parse_default_value(COMPONENT_INFO, "no_any"),\n'
+        '    null_any=parse_default_value(COMPONENT_INFO, "null_any"),\n'
+        '    empty_string_any=parse_default_value(COMPONENT_INFO, "empty_string_any"),\n'
+        '    some_string_any=parse_default_value(COMPONENT_INFO, "some_string_any"),\n'
+        '    some_number_any=parse_default_value(COMPONENT_INFO, "some_number_any"),\n'
+        '    some_json_any=parse_default_value(COMPONENT_INFO, "some_json_any"),\n'
+        '    series=parse_default_value(COMPONENT_INFO, "series"),\n'
         "):"
     ) in func_header
 
@@ -432,3 +428,22 @@ def test_expand_code():
     expanded_reduced_code = expand_code(reduced_component_tr)
     assert expanded_reduced_code != reduced_component_tr.content
     assert expanded_reduced_code == expanded_component_code
+
+
+def test_hdctl_contains_correct_hdutils_py_file():
+    """hdctls version of hdutils should always be identica
+
+    This checks whether the version of hdutils.py included inside hdctl
+    agrees with the one in this repository.
+
+    hdctl includes this file to be easily distributable as a single bash script
+    file. It needs it to create hdutils.py file for example when syncing to make
+    components as py files runnable directly.
+    """
+    with open("hdutils.py", "r") as f:  # noqa: UP015
+        hdutils_py_content = f.read()
+    hdctl_output = subprocess.check_output(
+        ["bash", "../hdctl", "_output_hdutils_py_content"]  # noqa: S607,S603
+    ).decode("utf-8")
+
+    assert hdctl_output.strip() == hdutils_py_content.strip()

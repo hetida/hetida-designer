@@ -4,10 +4,8 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
-import json
 import logging
 from keyword import iskeyword
-from typing import Any, Literal
 
 import black
 
@@ -19,7 +17,6 @@ from hetdesrun.component.code_utils import (
 from hetdesrun.datatypes import (
     DataType,
     parse_single_value_dynamically,
-    try_parse_wrapped,
 )
 from hetdesrun.persistence.models.io import InputType, TransformationInput
 from hetdesrun.persistence.models.transformation import TransformationRevision
@@ -50,6 +47,7 @@ COMPONENT_INFO = {{
     "state": {state},{timestamp}
 }}
 
+from hdutils import parse_default_value  # noqa: E402, F401
 
 {main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
@@ -71,7 +69,7 @@ def component_info_default_value_string(inp: TransformationInput) -> str:
             parse_single_value_dynamically(
                 name=inp.name if inp.name is not None else "UNKNOWN",
                 value=inp.value,
-                data_type=DataType.Any,
+                data_type=DataType.Any,  # to get an object corresponding to the json
                 nullable=True,
             )
         )
@@ -98,37 +96,22 @@ def function_signature_default_value_string(inp: TransformationInput) -> str:
     if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
         return repr(None)
 
-    if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
-        pd_type: Literal["SERIES", "DATAFRAME"] = (
-            "SERIES" if inp.data_type == DataType.Series else "DATAFRAME"
-        )
-
-        if not isinstance(inp.value, str | dict[Any, Any] | list[Any]):
+    if inp.data_type in (
+        DataType.Series,
+        DataType.DataFrame,
+        DataType.MultiTSFrame,
+        DataType.Any,
+    ):
+        if not inp.data_type is DataType.Any and not isinstance(
+            inp.value, str | dict | list | None
+        ):
             msg = (
                 f"Default value '{inp.value}' of input '{inp.name}' "
                 f"has wrong type for a {inp.data_type}."
             )
             logger.error(msg)
             raise TypeError(msg)
-
-        try:
-            wrapped_data_object = try_parse_wrapped(inp.value, pd_type)
-        except TypeError as error:
-            msg = f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type}."
-            logger.error(msg)
-            raise TypeError(msg) from error
-        except ValueError:
-            return (
-                "pd.read_json(io.StringIO("
-                + repr(inp.value)
-                + ("), typ='series')" if inp.data_type == DataType.Series else "))")
-            )
-        else:
-            return (
-                "pd.read_json(io.StringIO("
-                + repr(json.dumps(wrapped_data_object.data__))
-                + ("), typ='series')" if inp.data_type == DataType.Series else "))")
-            )
+        return f'parse_default_value(COMPONENT_INFO, "{inp.name}")'
 
     try:
         return repr(
@@ -290,8 +273,10 @@ def generate_complete_component_module(
 ) -> str:
     return (
         imports_template
+        + "# %%\n"
         + generate_function_header(component, is_coroutine)
         + function_body_template
+        + "\n\n# %%\n"
     )
 
 
