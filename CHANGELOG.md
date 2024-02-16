@@ -1,3 +1,8 @@
+## 0.9.6
+* fix receiving duplicates with inlcude_dependencies param in trafo GET endpoints
+* expand_component_code now also supports adding test wirings to code with non direct_provisioning adapters
+* add instance support for non-sync commands in hdctl
+
 ## 0.9.5
 * Add hdctl sync feature, allowing for comfortable "hybrid development" of component code,  i.e. switching frequently between working locally in your IDE and development in the hetida designer UI. Among other things this enables and streamlines several aspects of component/workflow development and operations tasks:
   * Keep your components/workflows versioned in a git repo.
