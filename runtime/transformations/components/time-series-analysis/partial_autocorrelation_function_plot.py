@@ -4,39 +4,51 @@
 
 ## Description
 
-This function is designed to plot the *Autocorrelation Function (ACF)* or *Partial Autocorrelation Function (PACF)* 
-for a given time series data. ACF and PACF plots are essential tools in time series analysis, particularly 
-useful in identifying the type and level of autocorrelation present in the data. Understanding these aspects 
-is crucial for effective modeling and forecasting in time series analysis.
+This function is designed to plot the *Autocorrelation Function (ACF)* or *Partial Autocorrelation
+Function (PACF)* for a given time series data. ACF and PACF plots are essential tools in time series
+analysis, particularly useful in identifying the type and level of autocorrelation present in the
+data. Understanding these aspects is crucial for effective modeling and forecasting in time series
+analysis.
 
-- **ACF (Autocorrelation Function)** measures the correlation between time series observations and their lags. It is used to identify the presence of autocorrelation in data, which is a key factor in selecting appropriate models for time series forecasting. ACF helps in determining the memory of a time series, showing how data points are related to their past values.
+- **ACF (Autocorrelation Function)** measures the correlation between time series observations and
+  their lags. It is used to identify the presence of autocorrelation in data, which is a key factor
+  in selecting appropriate models for time series forecasting. ACF helps in determining the memory
+  of a time series, showing how data points are related to their past values.
 
-- **PACF (Partial Autocorrelation Function)**, on the other hand, measures the correlation between the time series and its lags, controlling for the values of the intermediate lags. This is particularly helpful in identifying the order of autoregressive (AR) processes in ARIMA modeling. PACF plots can suggest the number of AR terms that should be included in a time series model.
+- **PACF (Partial Autocorrelation Function)**, on the other hand, measures the correlation between
+  the time series and its lags, controlling for the values of the intermediate lags. This is
+  particularly helpful in identifying the order of autoregressive (AR) processes in ARIMA modeling.
+  PACF plots can suggest the number of AR terms that should be included in a time series model.
 
-Visualizing ACF and PACF gives a clear insight into the lag structure of the time series, aiding in model selection and parameter tuning for time series forecasting models like ARIMA. These plots help to distinguish between random and systematic patterns in the data, which is fundamental in understanding the behavior of the time series and making accurate predictions.
+Visualizing ACF and PACF gives a clear insight into the lag structure of the time series, aiding in
+model selection and parameter tuning for time series forecasting models like ARIMA. These plots help
+to distinguish between random and systematic patterns in the data, which is fundamental in
+understanding the behavior of the time series and making accurate predictions.
 
 ## Inputs
 
-- **series** (Pandas Series): 
+- **series** (Pandas Series):
     The time series data for which to compute ACF or PACF. The index must be datetime.
 
-- **lags** (Int, default value: 20): 
+- **lags** (Int, default value: 20):
     The number of lags to compute for ACF/PACF. Default is 20.
 
-- **confidence_level** (Float, default value: 0.05): 
+- **confidence_level** (Float, default value: 0.05):
     The significance level for confidence intervals. Default is 0.05.
 
-- **plot_pacf** (Bool, default value: False): 
-    A flag to determine whether to plot PACF (True) or ACF (False). Defaults to plotting ACF (False).
+- **plot_pacf** (Bool, default value: False):
+    A flag to determine whether to plot PACF (True) or ACF (False).
+    Defaults to plotting ACF (False).
 
 ## Outputs
 
-- **plot**: 
+- **plot**:
     A Plotly figure object containing the ACF or PACF plot.
 
 ## Details
 
-The visualization of ACF and PACF is instrumental in time series analysis for identifying autocorrelation patterns. It assists in:
+The visualization of ACF and PACF is instrumental in time series analysis for identifying
+autocorrelation patterns. It assists in:
 - Determining the necessary lags for autoregressive models.
 - Diagnosing the data for randomness or seasonality.
 - Guiding the model selection process for accurate time series forecasting.
@@ -113,9 +125,8 @@ def create_pacf_plot(
             error_code="EmptySeries",
             invalid_component_inputs=["series"],
         )
-    try:
-        series.index = pd.to_datetime(series.index, utc=True)
-    except:
+
+    if pd.api.types.is_datetime64_any_dtype(series.index.dtype) is False:
         raise ComponentInputValidationException(
             "Indices of series must be datetime, but are of type "
             + str(series.index.dtype),
@@ -136,7 +147,10 @@ def create_pacf_plot(
         )
     if plot_pacf and (lags * 2 + 1) >= len(series):
         raise ComponentInputValidationException(
-            f"`lags` must be a positive integer of size smaller than half the length of the time series minus 1 ({len(series)/2 - 1})",
+            (
+                "`lags` must be a positive integer of size smaller than half the length "
+                f"of the time series minus 1 ({len(series)/2 - 1})"
+            ),
             error_code=422,
             invalid_component_inputs=["lags", "series"],
         )

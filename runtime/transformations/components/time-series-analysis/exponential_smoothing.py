@@ -16,7 +16,8 @@ to forecast data points for both short-term (in-sample) and long-term (out-of-sa
 - **number_of_forecast_steps** (Integer):
     The number of steps to forecast ahead.
 - **seasonal_periods** (Integer, default value: None):
-    The number of observations that constitute a full seasonal cycle. If not provided, it will be inferred.
+    The number of observations that constitute a full seasonal cycle. If not provided, it will be
+    inferred.
 - **test_size** (Float, default value: 0):
     The proportion of the dataset to include in the testing set.
 - **hyperparameter_tuning_iterations** (Integer, default value: 200):
@@ -25,7 +26,7 @@ to forecast data points for both short-term (in-sample) and long-term (out-of-sa
     Significance level to compare the p-value with when analyzing the residuals of the model,
     and to calculate the confidence interval for the forecast.
 - **plot_in_sample_forecast** (Boolean, default value: False):
-    Whether to include the in-sample forecast on the testing data in the plot. 
+    Whether to include the in-sample forecast on the testing data in the plot.
 - **plot_marker** (Boolean, default value: True):
     Whether to include markers in the plot.
 
@@ -38,9 +39,9 @@ to forecast data points for both short-term (in-sample) and long-term (out-of-sa
 
 This function is essential for users who need to project future values in time series data.
 By providing both in-sample and out-of-sample forecasts, it allows users to gauge the model's
-performance on known data and to predict future trends. Additionally, confidence intervals for the 
+performance on known data and to predict future trends. Additionally, confidence intervals for the
 forecasts are added. The component is devided into several steps, that can be summarized as follows:
-1. Check if the time series has consistent intervals between its indices. 
+1. Check if the time series has consistent intervals between its indices.
 If not, resample the series to the most common interval.
 2. Adjust the time series so that all its values are positive.
 3. Split the time series into training and testing sets.
@@ -115,9 +116,7 @@ def resample_time_series_if_needed(series: pd.Series):
             error_code="EmptyDataFrame",
             invalid_component_inputs=["series"],
         )
-    try:
-        series.index = pd.to_datetime(series.index, utc=True)
-    except:
+    if pd.api.types.is_datetime64_any_dtype(series.index.dtype) is False:
         raise ComponentInputValidationException(
             "Indices of series must be datetime, but are of type "
             + str(series.index.dtype),
@@ -139,8 +138,6 @@ def resample_time_series_if_needed(series: pd.Series):
         )
         # Resample the series to the new index
         series = series.reindex(new_index).interpolate()
-    else:
-        series = series
 
     return series
 
@@ -162,8 +159,6 @@ def ensure_positivity(series: pd.Series):
     min_value = series.min()
     if min_value <= 0:
         series = series - min_value + 1
-    else:
-        series = series
 
     return series, min_value
 
@@ -186,7 +181,8 @@ def train_test_split_func(series: pd.Series, test_size: float = None):
     # Parameter validations
     if test_size and (not 0.1 <= test_size <= 0.3):
         raise ComponentInputValidationException(
-            "`test_size` should be between 0.1 and 0.3 to get results having some valid interpretation",
+            "`test_size` should be between 0.1 and 0.3 "
+            "to get results having some valid interpretation",
             error_code=422,
             invalid_component_inputs=["test_size"],
         )
@@ -266,12 +262,12 @@ def hyper_tuning_grid_search(
     pos = ["add", "mul", None]
     random.seed(42)
     for _ in range(hyperparameter_tuning_iterations):
-        alpha = round(random.uniform(0, 1), 2)
-        beta = round(random.uniform(0, 1), 2)
-        gamma = round(random.uniform(0, 1), 2)
-        phi = round(random.uniform(0, 1), 2)
-        trend = random.choice(pos)
-        seasonal = random.choice(pos)
+        alpha = round(random.uniform(0, 1), 2)  # noqa: S311
+        beta = round(random.uniform(0, 1), 2)  # noqa: S311
+        gamma = round(random.uniform(0, 1), 2)  # noqa: S311
+        phi = round(random.uniform(0, 1), 2)  # noqa: S311
+        trend = random.choice(pos)  # noqa: S311
+        seasonal = random.choice(pos)  # noqa: S311
         # Train model
         model = ExponentialSmoothing(
             train,
@@ -536,7 +532,8 @@ def timeseries_plot_including_predictions(
     min_value (Float):
         If negative, the zero line is included in the plot.
     confidence_level (Float, optional):
-        Significance level to compare the p-value of the Shapiro-Wilk Test with. Default value is 0.05.
+        Significance level to compare the p-value of the Shapiro-Wilk Test with.
+        Default value is 0.05.
     plot_in_sample_forecast (Bool, optional):
         If True, it plots the in-sample forecast also. Default value is False.
     plot_marker (Bool, optional):
@@ -630,7 +627,7 @@ def timeseries_plot_including_predictions(
         )
 
     if min_value <= 0:
-        fig.add_hline(y=0, line=dict(color="gray", width=1, dash="dash"))
+        fig.add_hline(y=0, line={"color": "gray", "width": 1, "dash": "dash"})
 
     # Layout options
     fig.update_layout(
@@ -668,15 +665,23 @@ def timeseries_plot_including_predictions(
     )
 
     # Perform the Shapiro-Wilk Test for normality of residuals
-    residuals = sorted([x - y for x, y in zip(in_sample_forecast.values, test.values)])
+    residuals = sorted(
+        [x - y for x, y in zip(in_sample_forecast.values, test.values, strict=True)]
+    )
     p_value = np.round(stats.shapiro(residuals)[1], 2)
 
     # Annotations
     annotations = []
     if p_value > confidence_level:
-        conf_text = f"and the residuals are likely normal. Thus, the {int((1-confidence_level)*100)}% confidence interval does have a valid interpretation."
+        conf_text = (
+            f"and the residuals are likely normal. Thus, the {int((1-confidence_level)*100)}% "
+            "confidence interval does have a valid interpretation."
+        )
     else:
-        conf_text = f"and the residuals are likely not normal. Thus, the {int((1-confidence_level)*100)}% confidence interval does not have a valid interpretation."
+        conf_text = (
+            f"and the residuals are likely not normal. Thus, the {int((1-confidence_level)*100)}% "
+            "confidence interval does not have a valid interpretation."
+        )
 
     annotations.append(
         {
@@ -686,7 +691,10 @@ def timeseries_plot_including_predictions(
             "y": 1.05,
             "xanchor": "left",
             "yanchor": "bottom",
-            "text": "Time Series Plot including Forecast and Confidence Interval, based on some Exponential Smoothing model",
+            "text": (
+                "Time Series Plot including Forecast and Confidence Interval, "
+                "based on some Exponential Smoothing model"
+            ),
             "font": {"family": "Arial", "size": 30, "color": "rgb(37,37,37)"},
             "showarrow": False,
         }

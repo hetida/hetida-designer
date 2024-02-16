@@ -4,32 +4,36 @@
 
 ## Description
 
-This function decomposes a time series into its constituent components: *trend*, *seasonality*, and *residuals*. 
-It's essential for understanding and modeling time series data, as it helps to identify underlying patterns and structures. 
-This decomposition is crucial for tasks like forecasting, anomaly detection, and better understanding the time series behavior.
+This function decomposes a time series into its constituent components: *trend*, *seasonality*, and
+*residuals*. It's essential for understanding and modeling time series data, as it helps to identify
+underlying patterns and structures. This decomposition is crucial for tasks like forecasting,
+anomaly detection, and better understanding the time series behavior.
 
 ## Inputs
 
-- **series** (Pandas Series): 
-    The time series data to be decomposed. The index must be datetimes.
+- **series** (Pandas Series):
+  The time series data to be decomposed. The index must be datetimes.
 - **model** (String, default value: "additive"):
-    The type of decomposition model ('additive' or 'multiplicative').
+  The type of decomposition model ('additive' or 'multiplicative').
 - **seasonal_periods** (Integer, default value: None):
-    The number of observations that constitute a full seasonal cycle. If not provided, it will be inferred.
-    
+  The number of observations that constitute a full seasonal cycle. If not provided, it will be
+  inferred.
+
 ## Outputs
 
-- **plot** (Plotly Figure): 
+- **plot** (Plotly Figure):
     A Plotly figure containing the original data and the decomposed components.
 
 ## Details
 
-This function is used for analyzing time series data. The decomposition allows for a 
-detailed understanding of the time series by isolating and examining its different components. 
+This function is used for analyzing time series data. The decomposition allows for a detailed
+understanding of the time series by isolating and examining its different components.
 It's particularly useful for:
 - **Forecasting**: Understanding trends and seasonal patterns can improve forecasting accuracy.
-- **Anomaly Detection**: Residuals can help identify unusual data points that don't follow the typical pattern.
-- **Data Understanding**: It provides insights into the data, like identifying the presence of seasonality or trends over time.
+- **Anomaly Detection**: Residuals can help identify unusual data points that don't follow the
+  typical pattern.
+- **Data Understanding**: It provides insights into the data, like identifying the presence of
+  seasonality or trends over time.
 
 ## Examples
 
@@ -101,9 +105,8 @@ def decompose_time_series(
             error_code="EmptySeries",
             invalid_component_inputs=["series"],
         )
-    try:
-        series.index = pd.to_datetime(series.index, utc=True)
-    except:
+
+    if pd.api.types.is_datetime64_any_dtype(series.index.dtype) is False:
         raise ComponentInputValidationException(
             "Indices of series must be datetime, but are of type "
             + str(series.index.dtype),
@@ -179,7 +182,6 @@ def multi_series_with_multi_yaxis(df: pd.DataFrame):
     """One y_axis for each column of input dataframe"""
 
     plotly_data = []
-    plotly_layout = plotly.graph_objs.Layout()
 
     colors = px.colors.qualitative.Plotly
 
@@ -187,7 +189,6 @@ def multi_series_with_multi_yaxis(df: pd.DataFrame):
 
     # your layout goes here
     layout_kwargs = {
-        # "title": "y-axes in loop",
         "xaxis": {"domain": [0, sep_ratio]},
         "height": 200,
     }
@@ -202,26 +203,17 @@ def multi_series_with_multi_yaxis(df: pd.DataFrame):
                 x=df.index,
                 y=df[col],
                 name=col,
-                line=dict(
-                    color=colors[i % len(colors)]
-                    # , width=4, dash="dash"
-                ),
+                line={"color": colors[i % len(colors)]},
             )
         )
 
-        layout_kwargs[axis_name] = {  #'range': [0, i + 0.1],
+        layout_kwargs[axis_name] = {
             "position": positions[i],
-            # "automargin":True,
-            # "anchor":"free",
             "side": "right",  # which side of the anchor
-            # "title": col,
-            # "titlefont": dict(color=colors[i % len(colors)], size=12),
-            "tickfont": dict(color=colors[i % len(colors)], size=12),
-            # "title_standoff":0.0,
+            "tickfont": {"color": colors[i % len(colors)], "size": 12},
             "showline": True,  # axis line
             "linecolor": colors[i % len(colors)],  # axis line color
-            "showgrid": True
-            # "gridcolor": colors[i % len(colors)] # color of gridlines for this axis
+            "showgrid": True,
         }
 
         plotly_data[i]["yaxis"] = yaxis
@@ -231,7 +223,7 @@ def multi_series_with_multi_yaxis(df: pd.DataFrame):
     fig = plotly.graph_objs.Figure(
         data=plotly_data, layout=plotly.graph_objs.Layout(**layout_kwargs)
     )
-    fig.update_layout(margin=dict(l=0, r=0, b=0, t=5, pad=0))
+    fig.update_layout(margin={"l": 0, "r": 0, "b": 0, "t": 5, "pad": 0})
 
     return fig
 
