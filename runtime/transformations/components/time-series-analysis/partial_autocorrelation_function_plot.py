@@ -92,13 +92,18 @@ def create_pacf_plot(
     """Creates a plot for Autocorrelation Function (ACF) or Partial Autocorrelation Function (PACF).
 
     Inputs:
-    series (Pandas Series): Time series data. The index must be datetime.
-    lags (Integer, optional): Number of lags to calculate ACF/PACF. Default is 20.
-    confidence_level (Float, optional): Significance level for confidence intervals. Default is 0.05.
-    plot_pacf (Bool, optional): Flag to plot PACF instead of ACF. Default is False (plots ACF).
+    series (Pandas Series): 
+        Time series data. The index must be datetime.
+    lags (Integer, optional): 
+        Number of lags to calculate ACF/PACF. Default is 20.
+    confidence_level (Float, optional): 
+        Significance level for confidence intervals. Default is 0.05.
+    plot_pacf (Bool, optional): 
+        Flag to plot PACF instead of ACF. Default is False (plots ACF).
 
     Outputs:
-    fig (Plotly Figure): A plotly figure object containing the ACF/PACF plot.
+    fig (Plotly Figure): 
+        A plotly figure object containing the ACF/PACF plot.
     """
     # Parameter validations
     if len(series) == 0:
@@ -180,7 +185,7 @@ def create_pacf_plot(
         line_color='rgba(255,255,255,0)',
         fillcolor='rgba(32,146,230,0.3)',
         fill='tonexty',
-        name='lower_boundary'
+        name='lower boundary'
     )
     
     fig.update_traces(showlegend=False)

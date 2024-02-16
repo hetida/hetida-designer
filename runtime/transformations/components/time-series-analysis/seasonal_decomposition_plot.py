@@ -14,8 +14,8 @@ This decomposition is crucial for tasks like forecasting, anomaly detection, and
     The time series data to be decomposed. The index must be datetimes.
 - **model** (String, default value: "additive"):
     The type of decomposition model ('additive' or 'multiplicative').
-- **freq** (Integer, default value: None): 
-    The frequency of the time series. If not provided, it will be inferred from the data.
+- **seasonal_periods** (Integer, default value: None):
+    The number of observations that constitute a full seasonal cycle. If not provided, it will be inferred.
     
 ## Outputs
 
@@ -60,7 +60,7 @@ Example input:
         "2023-09-24T00:00:00.000Z": 414
     },
     "model": "additive",
-    "freq": 7
+    "seasonal_periods": 7
 }
 ```
 """
@@ -81,17 +81,21 @@ pio.templates.default = None
 def decompose_time_series(
     series: pd.Series,
     model: str='additive', 
-    freq: int=None
+    seasonal_periods: int=None
 ) -> pd.DataFrame:
     """Decompose some time series into its trend, seasonality, and residuals components.
 
     Inputs:
-    series (Pandas Series): Time series data. The index must be datetime.
-    model (String, optional): Type of decomposition model ('additive' or 'multiplicative'). Default is 'additive'.
-    freq (Integer, optional): Frequency of the time series. If not provided, it will be inferred.
+    series (Pandas Series): 
+        Time series data. The index must be Datetime.
+    model (String, optional): 
+        Type of decomposition model ('additive' or 'multiplicative'). Default is 'additive'.
+    seasonal_periods (Integer, optional): 
+        Frequency of the time series. If not provided, it will be inferred.
 
     Outputs:
-    df (Pandas DataFrame): DataFrame containing the original data, trend, seasonal, and residual components.
+    df (Pandas DataFrame): 
+        DataFrame containing the original data, trend, seasonal, and residual components.
     """
     # Parameter validations
     if len(series) == 0:
@@ -111,20 +115,20 @@ def decompose_time_series(
         )
     if model not in ['additive', 'multiplicative']:
         raise ComponentInputValidationException(
-            "model must be 'additive' or 'multiplicative'",
+            "`model` must be 'additive' or 'multiplicative'",
             error_code=422,
             invalid_component_inputs=["model"],
         )
-    if freq and (not isinstance(freq, int) or freq*2 > len(series)):
+    if seasonal_periods and (not isinstance(seasonal_periods, int) or seasonal_periods*2 > len(series)):
         raise ComponentInputValidationException(
-            "freq needs to be an integer smaller than half the length of the series",
+            "`seasonal_periods` needs to be an integer smaller than half the length of the series",
             error_code=422,
-            invalid_component_inputs=["freq"],
+            invalid_component_inputs=["seasonal_periods"],
         )
     
     # Generate the decomposition of the time series
     series = series.sort_index().dropna()
-    decomposition = seasonal_decompose(series, model=model, period=freq)
+    decomposition = seasonal_decompose(series, model=model, period=seasonal_periods)
 
     # Combine the components with the original data
     decomposed_series = pd.DataFrame({
@@ -238,7 +242,7 @@ COMPONENT_INFO = {
     "inputs": {
         "series": {"data_type": "SERIES"},
         "model": {"data_type": "STRING", "default_value": "additive"},
-        "freq": {"data_type": "INT", "default_value": None},
+        "seasonal_periods": {"data_type": "INT", "default_value": None},
     },
     "outputs": {
         "plot": {"data_type": "PLOTLYJSON"},
@@ -252,15 +256,15 @@ COMPONENT_INFO = {
     "state": "RELEASED",
 }
 
-def main(*, series, model="additive", freq=None):
+def main(*, series, model="additive", seasonal_periods=None):
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # generate decomposed time series
-    # Step 1: Decompose some time series into its trend, seasonality, and residuals components
+    # Step 1: Decompose some time series into its trend, seasonality, and residual components
     decomposed_series = decompose_time_series(
         series=series,
         model=model,
-        freq=freq
+        seasonal_periods=seasonal_periods
     )
     # Step 2: Create decomposition plot
     fig = multi_series_with_multi_yaxis(decomposed_series)
