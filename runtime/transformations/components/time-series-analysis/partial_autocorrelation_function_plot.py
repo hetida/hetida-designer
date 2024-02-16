@@ -76,33 +76,34 @@ Example input:
 ```
 """
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-import numpy as np
 from statsmodels.tsa.stattools import acf, pacf
-from hdutils import plotly_fig_to_json_dict
-from hdutils import ComponentInputValidationException
+
+from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
+
 
 def create_pacf_plot(
     series: pd.Series,
-    lags: int=20, 
-    confidence_level: float=0.05, 
-    plot_pacf: bool=False
+    lags: int = 20,
+    confidence_level: float = 0.05,
+    plot_pacf: bool = False,
 ):
     """Creates a plot for Autocorrelation Function (ACF) or Partial Autocorrelation Function (PACF).
 
     Inputs:
-    series (Pandas Series): 
+    series (Pandas Series):
         Time series data. The index must be datetime.
-    lags (Integer, optional): 
+    lags (Integer, optional):
         Number of lags to calculate ACF/PACF. Default is 20.
-    confidence_level (Float, optional): 
+    confidence_level (Float, optional):
         Significance level for confidence intervals. Default is 0.05.
-    plot_pacf (Bool, optional): 
+    plot_pacf (Bool, optional):
         Flag to plot PACF instead of ACF. Default is False (plots ACF).
 
     Outputs:
-    fig (Plotly Figure): 
+    fig (Plotly Figure):
         A plotly figure object containing the ACF/PACF plot.
     """
     # Parameter validations
@@ -111,7 +112,7 @@ def create_pacf_plot(
             "The input series must not be empty!",
             error_code="EmptySeries",
             invalid_component_inputs=["series"],
-        ) 
+        )
     try:
         series.index = pd.to_datetime(series.index, utc=True)
     except:
@@ -120,7 +121,7 @@ def create_pacf_plot(
             + str(series.index.dtype),
             error_code=422,
             invalid_component_inputs=["series"],
-        ) 
+        )
     if not 0 < confidence_level < 1:
         raise ComponentInputValidationException(
             "`confidence_level` must be between 0 and 1",
@@ -133,7 +134,7 @@ def create_pacf_plot(
             error_code=422,
             invalid_component_inputs=["lags"],
         )
-    if plot_pacf and (lags*2 + 1) >= len(series):
+    if plot_pacf and (lags * 2 + 1) >= len(series):
         raise ComponentInputValidationException(
             f"`lags` must be a positive integer of size smaller than half the length of the time series minus 1 ({len(series)/2 - 1})",
             error_code=422,
@@ -144,13 +145,13 @@ def create_pacf_plot(
     data_sorted = series.sort_index().dropna()
     if plot_pacf:
         array = pacf(data_sorted, nlags=lags, alpha=confidence_level)
-        title = 'Partial Autocorrelation (PACF) Plot'
+        title = "Partial Autocorrelation (PACF) Plot"
     else:
         array = acf(data_sorted, nlags=lags, alpha=confidence_level)
-        title = 'Autocorrelation (ACF) Plot'
+        title = "Autocorrelation (ACF) Plot"
 
-    lower_values = array[1][:,0] - array[0]
-    upper_values = array[1][:,1] - array[0]
+    lower_values = array[1][:, 0] - array[0]
+    upper_values = array[1][:, 1] - array[0]
 
     # Initialize Figure
     fig = go.Figure()
@@ -158,43 +159,41 @@ def create_pacf_plot(
     # Add traces
     for x in range(len(array[0])):
         fig.add_scatter(
-            x=(x,x),
-            y=(0,array[0][x]),
-            mode='lines', 
-            line_color='#3f3f3f'
+            x=(x, x), y=(0, array[0][x]), mode="lines", line_color="#3f3f3f"
         )
     fig.add_scatter(
         x=np.arange(len(array[0])),
         y=array[0],
-        mode='markers',
-        marker_color='#1f77b4',
+        mode="markers",
+        marker_color="#1f77b4",
         marker_size=12,
-        name='value'
+        name="value",
     )
     fig.add_scatter(
         x=np.arange(len(array[0])),
         y=upper_values,
-        mode='lines',
-        line_color='rgba(255,255,255,0)',
-        name='upper boundary'
+        mode="lines",
+        line_color="rgba(255,255,255,0)",
+        name="upper boundary",
     )
     fig.add_scatter(
         x=np.arange(len(array[0])),
         y=lower_values,
-        mode='lines',
-        line_color='rgba(255,255,255,0)',
-        fillcolor='rgba(32,146,230,0.3)',
-        fill='tonexty',
-        name='lower boundary'
+        mode="lines",
+        line_color="rgba(255,255,255,0)",
+        fillcolor="rgba(32,146,230,0.3)",
+        fill="tonexty",
+        name="lower boundary",
     )
-    
+
     fig.update_traces(showlegend=False)
-    fig.update_xaxes(range=[-1,lags])
-    fig.update_yaxes(zerolinecolor='#000000')
-    
+    fig.update_xaxes(range=[-1, lags])
+    fig.update_yaxes(zerolinecolor="#000000")
+
     fig.update_layout(title=title)
 
     return fig
+
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -217,18 +216,17 @@ COMPONENT_INFO = {
     "state": "RELEASED",
 }
 
+
 def main(*, series, lags=20, confidence_level=0.05, plot_pacf=False):
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
     fig = create_pacf_plot(
-        series=series, 
-        lags=lags,
-        confidence_level=confidence_level,
-        plot_pacf=plot_pacf
+        series=series, lags=lags, confidence_level=confidence_level, plot_pacf=plot_pacf
     )
-    
+
     return {"plot": plotly_fig_to_json_dict(fig)}
+
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
@@ -236,8 +234,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "workflow_input_name": "series",
             "adapter_id": "direct_provisioning",
             "filters": {
-                "value": 
-"""{
+                "value": """{
     "2023-09-04T00:00:00.000Z": 201,
     "2023-09-05T00:00:00.000Z": 194,
     "2023-09-06T00:00:00.000Z": 281,
@@ -260,7 +257,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "2023-09-23T00:00:00.000Z": 398,
     "2023-09-24T00:00:00.000Z": 414
 }"""
-            }
+            },
         }
     ]
 }

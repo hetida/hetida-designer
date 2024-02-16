@@ -84,6 +84,7 @@ Example input:
 """
 
 import random
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -92,21 +93,19 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-from hdutils import ComponentInputValidationException
-from hdutils import plotly_fig_to_json_dict
+from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
 
-def resample_time_series_if_needed(
-    series: pd.Series
-):
+
+def resample_time_series_if_needed(series: pd.Series):
     """Checks if a time series has consistent intervals between its indices.
     If not, it resamples the series to the most common interval.
 
     Inputs:
-    series (Pandas Series): 
+    series (Pandas Series):
         The time series with a Datetime index.
 
     Outputs:
-    series (Pandas Series): 
+    series (Pandas Series):
         The resampled time series if necessary.
     """
     # Parameter validations
@@ -135,7 +134,9 @@ def resample_time_series_if_needed(
     # Check if all intervals are equal to the "normal" interval
     if not all(time_diffs == normal_diff):
         # Create a new index with the "normal" interval
-        new_index = pd.date_range(start=series.index.min(), end=series.index.max(), freq=normal_diff)   
+        new_index = pd.date_range(
+            start=series.index.min(), end=series.index.max(), freq=normal_diff
+        )
         # Resample the series to the new index
         series = series.reindex(new_index).interpolate()
     else:
@@ -143,19 +144,18 @@ def resample_time_series_if_needed(
 
     return series
 
-def ensure_positivity(
-    series: pd.Series
-):
-    """Adjusts a time series so that all its values are positive. 
+
+def ensure_positivity(series: pd.Series):
+    """Adjusts a time series so that all its values are positive.
 
     Inputs:
-    series (Pandas Series): 
+    series (Pandas Series):
         The time series data with Datetime index.
 
     Outputs:
-    series (Pandas Series): 
+    series (Pandas Series):
         The adjusted time series with all values being positive.
-    min_value (Float): 
+    min_value (Float):
         Minimum value of the time series.
     """
     # Ensure positivity
@@ -167,22 +167,20 @@ def ensure_positivity(
 
     return series, min_value
 
-def train_test_split_func(
-    series: pd.Series,
-    test_size: float=None
-):
+
+def train_test_split_func(series: pd.Series, test_size: float = None):
     """Splits a Series into training and testing sets.
 
     Inputs:
-    series (Pandas Series): 
+    series (Pandas Series):
         The Pandas Series to split.
     test_size (Float, optional):
         The proportion of the series to include in the test set. Default is 0.
 
     Outputs:
-    train (Pandas Series): 
+    train (Pandas Series):
         Time series containing the training data.
-    test (Pandas Series): 
+    test (Pandas Series):
         Time series containing the testing data.
     """
     # Parameter validations
@@ -201,11 +199,12 @@ def train_test_split_func(
 
     return train, test
 
+
 def hyper_tuning_grid_search(
     train: pd.Series,
     test: pd.Series,
-    seasonal_periods: int=None,
-    hyperparameter_tuning_iterations: int=200
+    seasonal_periods: int = None,
+    hyperparameter_tuning_iterations: int = 200,
 ):
     """Optimizes hyperparameters for the Exponential Smoothing model using random search.
 
@@ -233,16 +232,21 @@ def hyper_tuning_grid_search(
     best_trend (String):
         Optimized type of trend component.
     best_seasonal (String):
-        Optimized type of seasonal component. 
+        Optimized type of seasonal component.
     """
     # Parameter validations
-    if seasonal_periods and (not isinstance(seasonal_periods, int) or seasonal_periods <= 0):
+    if seasonal_periods and (
+        not isinstance(seasonal_periods, int) or seasonal_periods <= 0
+    ):
         raise ComponentInputValidationException(
-        "`seasonal_periods` must be a positive integer",
-        error_code=422,
-        invalid_component_inputs=["seasonal_periods"],
+            "`seasonal_periods` must be a positive integer",
+            error_code=422,
+            invalid_component_inputs=["seasonal_periods"],
         )
-    if not isinstance(hyperparameter_tuning_iterations, int) or hyperparameter_tuning_iterations <= 0:
+    if (
+        not isinstance(hyperparameter_tuning_iterations, int)
+        or hyperparameter_tuning_iterations <= 0
+    ):
         raise ComponentInputValidationException(
             "`hyperparameter_tuning_iterations` must be a positive integer",
             error_code=422,
@@ -252,7 +256,13 @@ def hyper_tuning_grid_search(
     train = train.sort_index()
 
     # Parameter tuning
-    best_alpha, best_beta, best_gamma, best_phi, best_score = None, None, None, None, float("inf")
+    best_alpha, best_beta, best_gamma, best_phi, best_score = (
+        None,
+        None,
+        None,
+        None,
+        float("inf"),
+    )
     pos = ["add", "mul", None]
     random.seed(42)
     for _ in range(hyperparameter_tuning_iterations):
@@ -269,13 +279,13 @@ def hyper_tuning_grid_search(
             seasonal=seasonal,
             seasonal_periods=seasonal_periods,
             use_boxcox=True,
-            initialization_method="estimated"
+            initialization_method="estimated",
         )
         fitted_model = model.fit(
             smoothing_level=alpha,
             smoothing_trend=beta,
             smoothing_seasonal=gamma,
-            damping_trend=phi
+            damping_trend=phi,
         )
         # In-sample forecast
         if train.equals(test):
@@ -288,20 +298,36 @@ def hyper_tuning_grid_search(
         if len(test) == len(y_pred):
             score = np.sqrt(mean_squared_error(y_pred, test))
             if score < best_score:
-                best_alpha, best_beta, best_gamma, best_phi, best_score, best_trend, best_seasonal \
-                    = alpha, beta, gamma, phi, score, trend, seasonal
+                (
+                    best_alpha,
+                    best_beta,
+                    best_gamma,
+                    best_phi,
+                    best_score,
+                    best_trend,
+                    best_seasonal,
+                ) = (alpha, beta, gamma, phi, score, trend, seasonal)
 
-    return best_alpha, best_beta, best_gamma, best_phi, best_score, best_trend, best_seasonal
+    return (
+        best_alpha,
+        best_beta,
+        best_gamma,
+        best_phi,
+        best_score,
+        best_trend,
+        best_seasonal,
+    )
+
 
 def train_exponential_smoothing(
     train: pd.Series,
-    seasonal_periods: int=None,
-    trend: str=None,
-    seasonal: str=None,
-    alpha: float=None,
-    beta: float=None,
-    gamma: float=None,
-    phi: float=None
+    seasonal_periods: int = None,
+    trend: str = None,
+    seasonal: str = None,
+    alpha: float = None,
+    beta: float = None,
+    gamma: float = None,
+    phi: float = None,
 ):
     """Trains an Exponential Smoothing model with specified hyperparameters.
 
@@ -318,7 +344,7 @@ def train_exponential_smoothing(
         Smoothing parameters for level, trend, seasonal, and damping trend. Default is None.
 
     Outputs:
-    model_fit: 
+    model_fit:
         A fitted Exponential Smoothing model.
     """
     # Parameter validations
@@ -334,7 +360,9 @@ def train_exponential_smoothing(
             error_code=422,
             invalid_component_inputs=["seasonal"],
         )
-    if seasonal_periods is not None and (not isinstance(seasonal_periods, int) or seasonal_periods <= 0):
+    if seasonal_periods is not None and (
+        not isinstance(seasonal_periods, int) or seasonal_periods <= 0
+    ):
         raise ComponentInputValidationException(
             "`seasonal_periods` must be a positive integer",
             error_code=422,
@@ -356,16 +384,17 @@ def train_exponential_smoothing(
         seasonal=seasonal,
         seasonal_periods=seasonal_periods,
         use_boxcox=True,
-        initialization_method="estimated"
+        initialization_method="estimated",
     )
     model_fit = model.fit(
         smoothing_level=alpha,
         smoothing_trend=beta,
         smoothing_seasonal=gamma,
-        damping_trend=phi
+        damping_trend=phi,
     )
 
     return model_fit
+
 
 def forecast_exponential_smoothing(
     trained_model,
@@ -374,20 +403,20 @@ def forecast_exponential_smoothing(
     number_of_forecast_steps: int,
     mse: float,
     min_value: float,
-    confidence_level: float=0.05
+    confidence_level: float = 0.05,
 ):
     """Forecasting future values using a trained Exponential Smoothing model.
     Furthermore, if min_value is negative, the time series and forecasts are readjusted
     to their original scale.
 
     Inputs:
-    trained_model: 
+    trained_model:
         A trained Exponential Smoothing model.
-    series (Pandas Series): 
+    series (Pandas Series):
         Series containing the underlying time series data.
-    test (Pandas Series): 
+    test (Pandas Series):
         Series containing the testing data.
-    number_of_forecast_steps (Integer): 
+    number_of_forecast_steps (Integer):
         The number of steps to forecast ahead.
     mse (Float):
         Mean Squared Error evaluated on the testing data.
@@ -397,11 +426,11 @@ def forecast_exponential_smoothing(
         Significance level to calculate the confidence interval. Default value is 0.05.
 
     Outputs:
-    series (Pandas Series): 
+    series (Pandas Series):
         Series containing the time series data.
-    in-sample forecast (Pandas Series): 
+    in-sample forecast (Pandas Series):
         The in-sample forecast.
-    out-of-sample forecast (Pandas Series): 
+    out-of-sample forecast (Pandas Series):
         The out-of-sample forecast.
     conf_interval_upper_limit (Pandas Series):
         Series containing the upper limits of the confidence interval of the forecast.
@@ -425,21 +454,27 @@ def forecast_exponential_smoothing(
     # Forecast
     if series.equals(test):
         in_sample_forecast = np.round(trained_model.fittedvalues, 2)
-        out_of_sample_forecast = np.round(trained_model.forecast(steps=number_of_forecast_steps), 2)
+        out_of_sample_forecast = np.round(
+            trained_model.forecast(steps=number_of_forecast_steps), 2
+        )
     else:
-        forecast = trained_model.forecast(steps=number_of_forecast_steps+len(test))
-        in_sample_forecast = np.round(forecast[:len(test)], 2)
+        forecast = trained_model.forecast(steps=number_of_forecast_steps + len(test))
+        in_sample_forecast = np.round(forecast[: len(test)], 2)
         out_of_sample_forecast = np.round(forecast[-number_of_forecast_steps:], 2)
 
     # Confidence interval
-    level = 1 - confidence_level/2
-    conf_interval_upper_limit = out_of_sample_forecast + stats.norm.ppf(level)*mse
-    conf_interval_lower_limit = out_of_sample_forecast - stats.norm.ppf(level)*mse
-    value_before = series.iloc[-1] 
-    index_before = series.index[-1] 
+    level = 1 - confidence_level / 2
+    conf_interval_upper_limit = out_of_sample_forecast + stats.norm.ppf(level) * mse
+    conf_interval_lower_limit = out_of_sample_forecast - stats.norm.ppf(level) * mse
+    value_before = series.iloc[-1]
+    index_before = series.index[-1]
     value_before_series = pd.Series([value_before], index=[index_before])
-    conf_interval_upper_limit = pd.concat([value_before_series, conf_interval_upper_limit])
-    conf_interval_lower_limit = pd.concat([value_before_series, conf_interval_lower_limit])
+    conf_interval_upper_limit = pd.concat(
+        [value_before_series, conf_interval_upper_limit]
+    )
+    conf_interval_lower_limit = pd.concat(
+        [value_before_series, conf_interval_lower_limit]
+    )
 
     # Sort indices
     series = series.sort_index()
@@ -450,7 +485,7 @@ def forecast_exponential_smoothing(
 
     # Add last value of the original series to the out-of-sample forecast
     out_of_sample_forecast = pd.concat([value_before_series, out_of_sample_forecast])
-    
+
     # If the minimum is negative, the time series data are adjusted to their original values
     if min_value <= 0:
         series = series + min_value - 1
@@ -459,7 +494,14 @@ def forecast_exponential_smoothing(
         conf_interval_upper_limit = conf_interval_upper_limit + min_value - 1
         conf_interval_lower_limit = conf_interval_lower_limit + min_value - 1
 
-    return series, in_sample_forecast, out_of_sample_forecast, conf_interval_upper_limit, conf_interval_lower_limit
+    return (
+        series,
+        in_sample_forecast,
+        out_of_sample_forecast,
+        conf_interval_upper_limit,
+        conf_interval_lower_limit,
+    )
+
 
 def timeseries_plot_including_predictions(
     series: pd.Series,
@@ -470,9 +512,9 @@ def timeseries_plot_including_predictions(
     conf_interval_lower_limit: pd.Series,
     mse: float,
     min_value: float,
-    confidence_level: float=0.05,
-    plot_in_sample_forecast: bool=False,
-    plot_marker: bool=True
+    confidence_level: float = 0.05,
+    plot_in_sample_forecast: bool = False,
+    plot_marker: bool = True,
 ):
     """Creates a Plotly time series plot including predictions and confidence intervals.
 
@@ -501,90 +543,94 @@ def timeseries_plot_including_predictions(
         Whether to include markers in the plot. Default value is True.
 
     Outouts:
-    fig (Plotly Figure): 
+    fig (Plotly Figure):
         Time series plot including predictions and confindence intervals
-    """ 
+    """
     # Creating the figure
     if plot_in_sample_forecast:
-        fig = go.Figure([
-            go.Scatter(
-                name="Confidence Interval",
-                x=conf_interval_upper_limit.index,
-                y=conf_interval_upper_limit,
-                mode="lines",
-                line={"width": 0},
-                showlegend=False,
-            ),
-            go.Scatter(
-                name="Confidence Interval",
-                x=conf_interval_lower_limit.index,
-                y=conf_interval_lower_limit,
-                mode="lines",
-                line={"width": 0},
-                showlegend=True,
-                fillcolor="rgba(68, 68, 68, 0.3)",
-                fill="tonexty"
-            ),
-            go.Scatter(
-                name="Out-of-Sample Forecast",
-                x=out_of_sample_forecast.index,
-                y=out_of_sample_forecast,
-                mode='lines+markers' if plot_marker else 'lines',
-                line={"color": "#fc7d0b"},
-            ),
-            go.Scatter(
-                name="In-Sample Forecast",
-                x=in_sample_forecast.index,
-                y=in_sample_forecast,
-                mode='lines+markers' if plot_marker else 'lines',
-                line={"color": "#fc7d0b", "dash": "dash"},
-            ),
-            go.Scatter(
-                name="Observed Value",
-                x=series.index,
-                y=series,
-                mode='lines+markers' if plot_marker else 'lines',
-                line={"color": "#1f77b4"},
-            )
-        ])
+        fig = go.Figure(
+            [
+                go.Scatter(
+                    name="Confidence Interval",
+                    x=conf_interval_upper_limit.index,
+                    y=conf_interval_upper_limit,
+                    mode="lines",
+                    line={"width": 0},
+                    showlegend=False,
+                ),
+                go.Scatter(
+                    name="Confidence Interval",
+                    x=conf_interval_lower_limit.index,
+                    y=conf_interval_lower_limit,
+                    mode="lines",
+                    line={"width": 0},
+                    showlegend=True,
+                    fillcolor="rgba(68, 68, 68, 0.3)",
+                    fill="tonexty",
+                ),
+                go.Scatter(
+                    name="Out-of-Sample Forecast",
+                    x=out_of_sample_forecast.index,
+                    y=out_of_sample_forecast,
+                    mode="lines+markers" if plot_marker else "lines",
+                    line={"color": "#fc7d0b"},
+                ),
+                go.Scatter(
+                    name="In-Sample Forecast",
+                    x=in_sample_forecast.index,
+                    y=in_sample_forecast,
+                    mode="lines+markers" if plot_marker else "lines",
+                    line={"color": "#fc7d0b", "dash": "dash"},
+                ),
+                go.Scatter(
+                    name="Observed Value",
+                    x=series.index,
+                    y=series,
+                    mode="lines+markers" if plot_marker else "lines",
+                    line={"color": "#1f77b4"},
+                ),
+            ]
+        )
     else:
-        fig = go.Figure([
-            go.Scatter(
-                name="Confidence Interval",
-                x=conf_interval_upper_limit.index,
-                y=conf_interval_upper_limit,
-                mode="lines",
-                line={"width": 0},
-                showlegend=False,
-            ),
-            go.Scatter(
-                name="Confidence Interval",
-                x=conf_interval_lower_limit.index,
-                y=conf_interval_lower_limit,
-                mode="lines",
-                line={"width": 0},
-                showlegend=True,
-                fillcolor="rgba(68, 68, 68, 0.3)",
-                fill="tonexty"
-            ),
-            go.Scatter(
-                name="Forecast",
-                x=out_of_sample_forecast.index,
-                y=out_of_sample_forecast,
-                mode='lines+markers' if plot_marker else 'lines',
-                line={"color": "#fc7d0b"},
-            ),
-            go.Scatter(
-                name="Observed Value",
-                x=series.index,
-                y=series,
-                mode='lines+markers' if plot_marker else 'lines',
-                line={"color": "#1f77b4"},
-            )
-        ])
+        fig = go.Figure(
+            [
+                go.Scatter(
+                    name="Confidence Interval",
+                    x=conf_interval_upper_limit.index,
+                    y=conf_interval_upper_limit,
+                    mode="lines",
+                    line={"width": 0},
+                    showlegend=False,
+                ),
+                go.Scatter(
+                    name="Confidence Interval",
+                    x=conf_interval_lower_limit.index,
+                    y=conf_interval_lower_limit,
+                    mode="lines",
+                    line={"width": 0},
+                    showlegend=True,
+                    fillcolor="rgba(68, 68, 68, 0.3)",
+                    fill="tonexty",
+                ),
+                go.Scatter(
+                    name="Forecast",
+                    x=out_of_sample_forecast.index,
+                    y=out_of_sample_forecast,
+                    mode="lines+markers" if plot_marker else "lines",
+                    line={"color": "#fc7d0b"},
+                ),
+                go.Scatter(
+                    name="Observed Value",
+                    x=series.index,
+                    y=series,
+                    mode="lines+markers" if plot_marker else "lines",
+                    line={"color": "#1f77b4"},
+                ),
+            ]
+        )
 
     if min_value <= 0:
-        fig.add_hline(y=0, line=dict(color='gray', width=1, dash='dash'))
+        fig.add_hline(y=0, line=dict(color="gray", width=1, dash="dash"))
 
     # Layout options
     fig.update_layout(
@@ -592,7 +638,7 @@ def timeseries_plot_including_predictions(
             "showline": True,
             "showgrid": False,
             "showticklabels": True,
-        "linecolor": "rgb(204, 204, 204)",
+            "linecolor": "rgb(204, 204, 204)",
             "linewidth": 2,
             "ticks": "outside",
             "tickfont": {
@@ -618,7 +664,7 @@ def timeseries_plot_including_predictions(
             "b": 50,
         },
         showlegend=True,
-        plot_bgcolor="white"
+        plot_bgcolor="white",
     )
 
     # Perform the Shapiro-Wilk Test for normality of residuals
@@ -632,23 +678,36 @@ def timeseries_plot_including_predictions(
     else:
         conf_text = f"and the residuals are likely not normal. Thus, the {int((1-confidence_level)*100)}% confidence interval does not have a valid interpretation."
 
-    annotations.append({"xref": "paper", "yref": "paper", "x": 0.0, "y": 1.05,
-                              "xanchor": "left", "yanchor": "bottom",
-                              "text": "Time Series Plot including Forecast and Confidence Interval, based on some Exponential Smoothing model",
-                              "font": {"family": "Arial",
-                                        "size": 30,
-                                        "color": "rgb(37,37,37)"},
-                              "showarrow": False})
-    annotations.append({"xref": "paper", "yref": "paper", "x": 0.0, "y": 1.0,
-                              "xanchor": "left", "yanchor": "bottom",
-                              "text": f"The mean squared error (MSE) of the model is {np.round(mse, 2)} {conf_text}",
-                              "font": {"family": "Arial",
-                                        "size": 20,
-                                        "color": "rgb(37,37,37)"},
-                              "showarrow": False})
+    annotations.append(
+        {
+            "xref": "paper",
+            "yref": "paper",
+            "x": 0.0,
+            "y": 1.05,
+            "xanchor": "left",
+            "yanchor": "bottom",
+            "text": "Time Series Plot including Forecast and Confidence Interval, based on some Exponential Smoothing model",
+            "font": {"family": "Arial", "size": 30, "color": "rgb(37,37,37)"},
+            "showarrow": False,
+        }
+    )
+    annotations.append(
+        {
+            "xref": "paper",
+            "yref": "paper",
+            "x": 0.0,
+            "y": 1.0,
+            "xanchor": "left",
+            "yanchor": "bottom",
+            "text": f"The mean squared error (MSE) of the model is {np.round(mse, 2)} {conf_text}",
+            "font": {"family": "Arial", "size": 20, "color": "rgb(37,37,37)"},
+            "showarrow": False,
+        }
+    )
     fig.update_layout(annotations=annotations)
 
     return fig
+
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -675,32 +734,42 @@ COMPONENT_INFO = {
     "state": "RELEASED",
 }
 
-def main(*, series, number_of_forecast_steps, seasonal_periods=None, test_size=0, 
-         hyperparameter_tuning_iterations=200, confidence_level=0.05, plot_in_sample_forecast=False, plot_marker=True):
+
+def main(
+    *,
+    series,
+    number_of_forecast_steps,
+    seasonal_periods=None,
+    test_size=0,
+    hyperparameter_tuning_iterations=200,
+    confidence_level=0.05,
+    plot_in_sample_forecast=False,
+    plot_marker=True,
+):
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
     # Step 1: Check if the time series has consistent intervals between its indices.
-    series = resample_time_series_if_needed(
-        series=series
-    )
+    series = resample_time_series_if_needed(series=series)
     # Step 2: Ensure positivity.
-    series, min_value = ensure_positivity(
-        series=series
-    )
+    series, min_value = ensure_positivity(series=series)
     # Step 3: Split the time series into training and testing sets.
-    train, test = train_test_split_func(
-        series=series,
-        test_size=test_size
-    )
+    train, test = train_test_split_func(series=series, test_size=test_size)
     # Step 4: Optimize hyperparameters for the Exponential Smoothing model using random search.
-    best_alpha, best_beta, best_gamma, best_phi, best_score, best_trend, best_seasonal = \
-        hyper_tuning_grid_search(
-            train=train,
-            test=test,
-            seasonal_periods=seasonal_periods,
-            hyperparameter_tuning_iterations=hyperparameter_tuning_iterations
-        )
+    (
+        best_alpha,
+        best_beta,
+        best_gamma,
+        best_phi,
+        best_score,
+        best_trend,
+        best_seasonal,
+    ) = hyper_tuning_grid_search(
+        train=train,
+        test=test,
+        seasonal_periods=seasonal_periods,
+        hyperparameter_tuning_iterations=hyperparameter_tuning_iterations,
+    )
     # Step 5: Train some Exponential Smoothing model with optimized hyperparameters.
     model_fit = train_exponential_smoothing(
         train=train,
@@ -710,19 +779,24 @@ def main(*, series, number_of_forecast_steps, seasonal_periods=None, test_size=0
         alpha=best_alpha,
         beta=best_beta,
         gamma=best_gamma,
-        phi=best_phi
+        phi=best_phi,
     )
     # Step 6: Forecast future values and confidence intervals. If min_value is negative,
     #           the time series data are adjusted to their original values.
-    series, in_sample_forecast, out_of_sample_forecast, conf_interval_upper_limit, conf_interval_lower_limit = \
-        forecast_exponential_smoothing(
-            trained_model=model_fit,
-            series=series,
-            test=test,
-            number_of_forecast_steps=number_of_forecast_steps,
-            mse=best_score,
-            min_value=min_value,
-            confidence_level=confidence_level
+    (
+        series,
+        in_sample_forecast,
+        out_of_sample_forecast,
+        conf_interval_upper_limit,
+        conf_interval_lower_limit,
+    ) = forecast_exponential_smoothing(
+        trained_model=model_fit,
+        series=series,
+        test=test,
+        number_of_forecast_steps=number_of_forecast_steps,
+        mse=best_score,
+        min_value=min_value,
+        confidence_level=confidence_level,
     )
     # Step 7: Create a Plotly time series plot including forecasts and confidence intervals.
     fig = timeseries_plot_including_predictions(
@@ -736,10 +810,11 @@ def main(*, series, number_of_forecast_steps, seasonal_periods=None, test_size=0
         confidence_level=confidence_level,
         min_value=min_value,
         plot_in_sample_forecast=plot_in_sample_forecast,
-        plot_marker=plot_marker
+        plot_marker=plot_marker,
     )
 
     return {"plot": plotly_fig_to_json_dict(fig)}
+
 
 TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
@@ -747,8 +822,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "workflow_input_name": "series",
             "adapter_id": "direct_provisioning",
             "filters": {
-                "value":
-"""{
+                "value": """{
     "2023-09-04T00:00:00.000Z": 201,
     "2023-09-05T00:00:00.000Z": 194,
     "2023-09-06T00:00:00.000Z": 281,
@@ -772,22 +846,18 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "2023-09-24T00:00:00.000Z": 414
 }
 """
-            }
+            },
         },
         {
             "workflow_input_name": "number_of_forecast_steps",
             "adapter_id": "direct_provisioning",
-            "filters": {
-                "value": 7
-            }
+            "filters": {"value": 7},
         },
         {
             "workflow_input_name": "seasonal_periods",
             "adapter_id": "direct_provisioning",
             "use_default_value": False,
-            "filters": {
-                "value": 7
-            }
-        }
+            "filters": {"value": 7},
+        },
     ]
 }

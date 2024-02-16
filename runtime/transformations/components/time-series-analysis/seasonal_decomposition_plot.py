@@ -65,36 +65,33 @@ Example input:
 ```
 """
 
-import pandas as pd
 import numpy as np
-import plotly.express as px
+import pandas as pd
 import plotly
+import plotly.express as px
 import plotly.io as pio
-
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from hdutils import plotly_fig_to_json_dict
-from hdutils import ComponentInputValidationException
+from hdutils import ComponentInputValidationException, plotly_fig_to_json_dict
 
 pio.templates.default = None
 
+
 def decompose_time_series(
-    series: pd.Series,
-    model: str='additive', 
-    seasonal_periods: int=None
+    series: pd.Series, model: str = "additive", seasonal_periods: int = None
 ) -> pd.DataFrame:
     """Decompose some time series into its trend, seasonality, and residuals components.
 
     Inputs:
-    series (Pandas Series): 
+    series (Pandas Series):
         Time series data. The index must be Datetime.
-    model (String, optional): 
+    model (String, optional):
         Type of decomposition model ('additive' or 'multiplicative'). Default is 'additive'.
-    seasonal_periods (Integer, optional): 
+    seasonal_periods (Integer, optional):
         Frequency of the time series. If not provided, it will be inferred.
 
     Outputs:
-    df (Pandas DataFrame): 
+    df (Pandas DataFrame):
         DataFrame containing the original data, trend, seasonal, and residual components.
     """
     # Parameter validations
@@ -113,37 +110,40 @@ def decompose_time_series(
             error_code="422",
             invalid_component_inputs=["series"],
         )
-    if model not in ['additive', 'multiplicative']:
+    if model not in ["additive", "multiplicative"]:
         raise ComponentInputValidationException(
             "`model` must be 'additive' or 'multiplicative'",
             error_code=422,
             invalid_component_inputs=["model"],
         )
-    if seasonal_periods and (not isinstance(seasonal_periods, int) or seasonal_periods*2 > len(series)):
+    if seasonal_periods and (
+        not isinstance(seasonal_periods, int) or seasonal_periods * 2 > len(series)
+    ):
         raise ComponentInputValidationException(
             "`seasonal_periods` needs to be an integer smaller than half the length of the series",
             error_code=422,
             invalid_component_inputs=["seasonal_periods"],
         )
-    
+
     # Generate the decomposition of the time series
     series = series.sort_index().dropna()
     decomposition = seasonal_decompose(series, model=model, period=seasonal_periods)
 
     # Combine the components with the original data
-    decomposed_series = pd.DataFrame({
-        "value": series,
-        "trend": np.round(decomposition.trend, 4),
-        "seasonal": np.round(decomposition.seasonal, 4),
-        "residual": np.round(decomposition.resid, 4)
-    })
+    decomposed_series = pd.DataFrame(
+        {
+            "value": series,
+            "trend": np.round(decomposition.trend, 4),
+            "seasonal": np.round(decomposition.seasonal, 4),
+            "residual": np.round(decomposition.resid, 4),
+        }
+    )
 
     return decomposed_series
 
+
 def compute_plot_positions(
-    num_y_axes, 
-    horizontal_relative_space_per_y_axis=0.06, 
-    side="left"
+    num_y_axes, horizontal_relative_space_per_y_axis=0.06, side="left"
 ):
     """
     returns tuple plot_area_x_ratio, y_positions
@@ -174,9 +174,8 @@ def compute_plot_positions(
         positions = [1 - x * 0.5 / num_y_axes for x in range(num_y_axes)]
     return plot_area_x_ratio, positions
 
-def multi_series_with_multi_yaxis(
-        df: pd.DataFrame
-    ):
+
+def multi_series_with_multi_yaxis(df: pd.DataFrame):
     """One y_axis for each column of input dataframe"""
 
     plotly_data = []
@@ -236,6 +235,7 @@ def multi_series_with_multi_yaxis(
 
     return fig
 
+
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
 COMPONENT_INFO = {
@@ -256,15 +256,14 @@ COMPONENT_INFO = {
     "state": "RELEASED",
 }
 
+
 def main(*, series, model="additive", seasonal_periods=None):
     """entrypoint function for this component"""
     # ***** DO NOT EDIT LINES ABOVE *****
     # generate decomposed time series
     # Step 1: Decompose some time series into its trend, seasonality, and residual components
     decomposed_series = decompose_time_series(
-        series=series,
-        model=model,
-        seasonal_periods=seasonal_periods
+        series=series, model=model, seasonal_periods=seasonal_periods
     )
     # Step 2: Create decomposition plot
     fig = multi_series_with_multi_yaxis(decomposed_series)
@@ -278,8 +277,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "workflow_input_name": "series",
             "adapter_id": "direct_provisioning",
             "filters": {
-                "value": 
-"""{
+                "value": """{
     "2023-09-04T00:00:00.000Z": 201,
     "2023-09-05T00:00:00.000Z": 194,
     "2023-09-06T00:00:00.000Z": 281,
@@ -302,7 +300,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "2023-09-23T00:00:00.000Z": 398,
     "2023-09-24T00:00:00.000Z": 414
 }"""
-            }
+            },
         }
     ]
 }
