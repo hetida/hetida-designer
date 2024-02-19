@@ -83,7 +83,7 @@ def get_json_default_value_from_python_object(input_info: dict) -> str | None:
     return json.dumps(input_info["default_value"])
 
 
-def transformation_revision_from_python_code(code: str) -> Any:
+def transformation_revision_from_python_code(code: str) -> TransformationRevision:
     """Get the TransformationRevision as a json-like object from just the Python code
 
     This uses information from the register decorator or a global variable COMPONENT_INFO
@@ -217,9 +217,7 @@ def transformation_revision_from_python_code(code: str) -> Any:
         test_wiring=test_wiring,
     )
 
-    tr_json = json.loads(transformation_revision.json())
-
-    return tr_json
+    return transformation_revision
 
 
 def load_transformation_revisions_from_directory(  # noqa: PLR0912
@@ -244,7 +242,7 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                 python_code = load_python_file(path)
                 if python_code is not None:
                     try:
-                        transformation_json = transformation_revision_from_python_code(
+                        transformation = transformation_revision_from_python_code(
                             python_code
                         )
                     except ComponentCodeImportError as e:
@@ -254,27 +252,28 @@ def load_transformation_revisions_from_directory(  # noqa: PLR0912
                             path,
                             str(e),
                         )
+                        continue
 
             if ext == ".json":
                 logger.info("Loading transformation from json file %s", path)
                 transformation_json = load_json(path)
-            try:
-                transformation = TransformationRevision(**transformation_json)
-            except ValueError as err:
-                logger.error(
-                    "ValueError for json from path %s:\n%s", download_path, str(err)
-                )
-            else:
-                transformation_dict[transformation.id] = transformation
-                if ext == ".py":
-                    if transform_py_to_json:
-                        path = save_transformation_into_directory(
-                            transformation_revision=transformation,
-                            directory_path=download_path,
-                        )
-                        path_dict[transformation.id] = path
-                else:
+                try:
+                    transformation = TransformationRevision(**transformation_json)
+                except ValueError as err:
+                    logger.error(
+                        "ValueError for json from path %s:\n%s", download_path, str(err)
+                    )
+                    continue
+            transformation_dict[transformation.id] = transformation
+            if ext == ".py":
+                if transform_py_to_json:
+                    path = save_transformation_into_directory(
+                        transformation_revision=transformation,
+                        directory_path=download_path,
+                    )
                     path_dict[transformation.id] = path
+            else:
+                path_dict[transformation.id] = path
 
     return transformation_dict, path_dict
 
