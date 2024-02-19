@@ -153,6 +153,23 @@ def description_too_long(description: str) -> bool:
     return len(description) > 77
 
 
+def default_value_part(inp: TransformationInput) -> str:
+    if inp.type != InputType.OPTIONAL:
+        return ""
+
+    try:
+        default_value_rep_part = component_info_default_value_string(inp)
+    except TypeError as e:
+        msg = (
+            f"Could not generate default value string representation for input {inp.name}."
+            f" Error was:\n{str(e)}"
+        )
+        logger.warning(msg)
+        return ""
+
+    return ', "default_value": ' + default_value_rep_part
+
+
 def generate_function_header(
     component: TransformationRevision, is_coroutine: bool = False
 ) -> str:
@@ -187,11 +204,7 @@ def generate_function_header(
                 + '": {"data_type": "'
                 + inp.data_type.value
                 + '"'
-                + (
-                    ', "default_value": ' + component_info_default_value_string(inp)
-                    if inp.type == InputType.OPTIONAL
-                    else ""
-                )
+                + (default_value_part(inp))
                 + "},\n    "
                 for inp in component.io_interface.inputs
                 if inp.name is not None
