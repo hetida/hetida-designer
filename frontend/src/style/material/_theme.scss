@@ -31,7 +31,8 @@
   }
 
   // Angular Material overrides
-  .mat-form-field {
+  // TODO(mdc-migration)
+  .mat-mdc-form-field {
     .mat-focus {
       color: map-get($primary, 700);
     }

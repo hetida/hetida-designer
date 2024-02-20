@@ -29,17 +29,19 @@
 
 hd-popover-transformation,
 hd-copy-transformation-dialog {
+  /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
   .mat-form-field-infix {
     display: flex;
     align-items: center;
 
-    .mat-input-element:read-only {
+    .mat-mdc-input-element:read-only {
       cursor: default;
     }
   }
 }
 
 .mat-form-field--no-fixed-width {
+  /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
   .mat-form-field-infix {
     width: 100%;
   }
@@ -49,6 +51,7 @@ hd-copy-transformation-dialog {
   opacity: 1 !important;
 }
 
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
 .mat-form-field-label-wrapper {
   overflow: visible !important;
 }
@@ -59,14 +62,15 @@ hd-copy-transformation-dialog {
   }
 }
 
-.mat-form-field {
+.mat-mdc-form-field {
   width: 100%;
-
+  /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
   .mat-form-field-wrapper .mat-form-field-flex .mat-form-field-prefix {
     top: 0;
   }
 
   &.noPadding {
+    /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
     .mat-form-field-wrapper {
       padding-bottom: 0;
       margin: 0;
@@ -76,12 +80,13 @@ hd-copy-transformation-dialog {
       margin: 0;
     }
   }
-
+  /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
   .mat-form-field-appearance-standard .mat-form-field-flex {
     padding-top: 0;
   }
 }
 
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
 .mat-form-field-appearance-standard:not(.mat-form-field-disabled)
   .mat-form-field-flex:hover
   ~ .mat-form-field-underline
