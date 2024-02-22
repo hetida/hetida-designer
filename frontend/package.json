@@ -47,7 +47,7 @@
     "@ngrx/entity": "^15.4.0",
     "@ngrx/store": "^15.4.0",
     "@types/source-map": "0.5.7",
-    "angular-auth-oidc-client": "^14.1.5",
+    "angular-auth-oidc-client": "^15.0.5",
     "angular-plotly.js": "^4.0.4",
     "base64-js": "^1.5.1",
     "guid-typescript": "^1.0.9",

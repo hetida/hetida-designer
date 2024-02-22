@@ -48,6 +48,6 @@ export class AuthService {
   }
 
   public logout(): void {
-    this.oidcSecurityService.logoff();
+    this.oidcSecurityService.logoff().subscribe();
   }
 }
