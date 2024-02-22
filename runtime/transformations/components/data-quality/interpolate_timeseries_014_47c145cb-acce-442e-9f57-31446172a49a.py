@@ -3,19 +3,25 @@
 # Interpolate Timeseries
 
 ## Description
-Interpolates values in a timeseries at positions specified by a filter series. Filter series can contain additional positions not present in the original timeseries.
+Interpolates values in a timeseries at positions specified by a filter series.
+Filter series can contain additional positions not present in the original timeseries.
 
 ## Inputs
-* **timeseries** (SERIES): A pandas Series object with DateTime Index. This is the timeseries in which one wants to interpolate. Its values should be float for the typically chosen interpolation methods.
-* **filter_series** (SERIES): A pandas Series with DateTime Index and boolean values. Interpolation will be done at those positions where filter_series is True. May include positions not present in timeseries.
-* **interpolation_params** (ANY): A dictionary that is passed to the [interpolate method](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.interpolate.html). It defaults to selecting `time` as interpolation method. You can choose methods expecting a numerical index, the component handles necessary index transformations.
+* **timeseries** (SERIES): A pandas Series object with DateTime Index. This is the timeseries
+  in which one wants to interpolate. Its values should be float for the typically chosen
+  interpolation methods.
+* **filter_series** (SERIES): A pandas Series with DateTime Index and boolean values.
+  Interpolation will be done at those positions where filter_series is True.
+  May include positions not present in timeseries.
+* **interpolation_params** (ANY): A dictionary that is passed to the
+  [interpolate method](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.interpolate.html). It defaults to selecting `time` as interpolation method. You can choose methods expecting a numerical index, the component handles necessary index transformations.
 
 ## Outputs
 * **interpolated_timeseries** (SERIES): The complete resulting timeseries with old values and interpolated values.
 * **new_values** (SERIES): Only the new values added by interpolation
 
 ## Details
-Interpolates a timeseries using a parametrizable method, defaulting to linear interpolation. 
+Interpolates a timeseries using a parametrizable method, defaulting to linear interpolation.
 
 To determine at which positions new values should be interpolated, a filter_series is used. New values are computed everywhere where filter_series is True, including positions not present in timeseries. This allows to interpolate gaps.
 
@@ -70,12 +76,11 @@ with default value for interpolation_params, implying linear interpolation, the 
     "2018-05-19T23:05:00.000Z": 2
 }
 ```
-"""
+"""  # noqa: E501
 
 # add your own imports here, e.g.
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -159,14 +164,14 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "workflow_input_name": "timeseries",
             "adapter_id": "direct_provisioning",
             "filters": {
-                "value": '{\n    "2018-05-19T22:20:00.000Z": 4.0,\n    "2018-05-19T22:25:00.000Z": 5.0,\n    "2018-05-19T22:30:00.000Z": 6.0,\n    "2018-05-19T22:35:00.000Z": 0.0,\n    "2018-05-19T22:40:00.000Z": 0.0,\n    "2018-05-19T22:45:00.000Z": 0,\n    "2018-05-19T22:50:00.000Z": 0,\n    "2018-05-19T22:55:00.000Z": 4,\n    "2018-05-19T23:00:00.000Z": 3,\n    "2018-05-19T23:05:00.000Z": 2\n}'
+                "value": '{\n    "2018-05-19T22:20:00.000Z": 4.0,\n    "2018-05-19T22:25:00.000Z": 5.0,\n    "2018-05-19T22:30:00.000Z": 6.0,\n    "2018-05-19T22:35:00.000Z": 0.0,\n    "2018-05-19T22:40:00.000Z": 0.0,\n    "2018-05-19T22:45:00.000Z": 0,\n    "2018-05-19T22:50:00.000Z": 0,\n    "2018-05-19T22:55:00.000Z": 4,\n    "2018-05-19T23:00:00.000Z": 3,\n    "2018-05-19T23:05:00.000Z": 2\n}'  # noqa: E501
             },
         },
         {
             "workflow_input_name": "filter_series",
             "adapter_id": "direct_provisioning",
             "filters": {
-                "value": '{\n    "2018-05-19T22:15:00.000Z": true,\n    "2018-05-19T22:20:00.000Z": false,\n    "2018-05-19T22:25:00.000Z": false,\n    "2018-05-19T22:30:00.000Z": false,\n    "2018-05-19T22:35:00.000Z": true,\n    "2018-05-19T22:40:00.000Z": true,\n    "2018-05-19T22:45:00.000Z": true,\n    "2018-05-19T22:50:00.000Z": true,\n    "2018-05-19T22:55:00.000Z": false,\n    "2018-05-19T23:00:00.000Z": false,\n    "2018-05-19T23:05:00.000Z": false\n}'
+                "value": '{\n    "2018-05-19T22:15:00.000Z": true,\n    "2018-05-19T22:20:00.000Z": false,\n    "2018-05-19T22:25:00.000Z": false,\n    "2018-05-19T22:30:00.000Z": false,\n    "2018-05-19T22:35:00.000Z": true,\n    "2018-05-19T22:40:00.000Z": true,\n    "2018-05-19T22:45:00.000Z": true,\n    "2018-05-19T22:50:00.000Z": true,\n    "2018-05-19T22:55:00.000Z": false,\n    "2018-05-19T23:00:00.000Z": false,\n    "2018-05-19T23:05:00.000Z": false\n}'  # noqa: E501
             },
         },
         {
@@ -176,4 +181,3 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         },
     ]
 }
-

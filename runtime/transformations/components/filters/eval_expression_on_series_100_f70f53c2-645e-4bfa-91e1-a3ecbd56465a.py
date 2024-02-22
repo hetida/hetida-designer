@@ -19,13 +19,10 @@ Evaluates a string expression on a pandas Series which can be referred as `x`.
 ## Examples
 
 On a series `pd.Series([1,2,3,4])` the expression `x>2` results in a `pd.Series([False, False, True, True])`.
-"""
+"""  # noqa: E501
 
 # add your own imports here, e.g.
 import pandas as pd
-
-# import numpy as np
-
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -54,7 +51,7 @@ def main(*, series, expression):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
     # write your function code here.
-    x = series
+    x = series  # noqa: F841
     return {"result_series": pd.eval(expression)}
 
 
@@ -64,7 +61,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "workflow_input_name": "series",
             "adapter_id": "direct_provisioning",
             "filters": {
-                "value": '{\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": 18.7,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'
+                "value": '{\n    "2020-01-01T01:15:27.000Z": 42.2,\n    "2020-01-03T08:20:03.000Z": 18.7,\n    "2020-01-03T08:20:04.000Z": 25.9\n}'  # noqa: E501
             },
         },
         {
@@ -74,4 +71,3 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         },
     ]
 }
-

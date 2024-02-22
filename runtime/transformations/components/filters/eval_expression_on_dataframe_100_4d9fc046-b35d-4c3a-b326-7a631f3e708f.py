@@ -19,13 +19,7 @@ Evaluates a string expression on a pandas DataFrame.
 ## Examples
 
 On a DataFrame `pd.DataFrame({"A": [1,2,3,4], "B": [2,2,2,2]})` the expression `A + B` results in a `pd.Series([3,4,5,6])`.
-"""
-
-# add your own imports here, e.g.
-import pandas as pd
-
-# import numpy as np
-
+"""  # noqa: E501
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -63,7 +57,7 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
             "workflow_input_name": "dataframe",
             "adapter_id": "direct_provisioning",
             "filters": {
-                "value": '{\n    "A": {\n        "2019-08-01T15:45:36.000Z": 1,\n        "2019-08-02T11:33:41.000Z": 2\n    },\n    "B": {\n        "2019-08-01T15:45:36.000Z": 1.3,\n        "2019-08-02T11:33:41.000Z": 2.8\n    }\n}'
+                "value": '{\n    "A": {\n        "2019-08-01T15:45:36.000Z": 1,\n        "2019-08-02T11:33:41.000Z": 2\n    },\n    "B": {\n        "2019-08-01T15:45:36.000Z": 1.3,\n        "2019-08-02T11:33:41.000Z": 2.8\n    }\n}'  # noqa: E501
             },
         },
         {
@@ -73,4 +67,3 @@ TEST_WIRING_FROM_PY_FILE_IMPORT = {
         },
     ]
 }
-

@@ -133,7 +133,9 @@ class ComputationNode:
             if (param.kind in (Parameter.POSITIONAL_OR_KEYWORD, Parameter.KEYWORD_ONLY))
         ]
         # only non-default-valued params are required:
-        return [param.name for param in kwargable_params if param.default is Parameter.empty]
+        return [
+            param.name for param in kwargable_params if param.default is Parameter.empty
+        ]
 
     def all_required_inputs_set(self) -> bool:
         return set(self.required_params).issubset(set(self.inputs.keys()))
@@ -183,12 +185,14 @@ class ComputationNode:
         """Running the component func with exception handling"""
         try:
             function_result: dict[str, Any] = await run_func_or_coroutine(
-                self.func,
-                input_values,  # type: ignore
+                self.func,  # type: ignore
+                input_values,
             )
             function_result = function_result if function_result is not None else {}
         except Exception as exc:  # uncaught exceptions from user code  # noqa: BLE001
-            if hasattr(exc, "__is_hetida_designer_exception__") and hasattr(exc, "error_code"):
+            if hasattr(exc, "__is_hetida_designer_exception__") and hasattr(
+                exc, "error_code"
+            ):
                 runtime_execution_logger.warning(
                     "User raised a hetida designer exception in component code.",
                     exc_info=True,
@@ -249,7 +253,9 @@ class Workflow:
         self,
         sub_nodes: list[Node],
         input_mappings: dict[str, tuple[Node, str]],  # map wf input to sub_node
-        output_mappings: dict[str, tuple[Node, str]],  # map sub_node outputs to wf outputs
+        output_mappings: dict[
+            str, tuple[Node, str]
+        ],  # map sub_node outputs to wf outputs
         tr_id: str,
         tr_name: str,
         tr_tag: str,
@@ -280,7 +286,9 @@ class Workflow:
                 "UNKNOWN".
         """
         self.sub_nodes = sub_nodes
-        self.input_mappings = input_mappings  # dict wf_input_name : (sub_node, sub_node_input_name)
+        self.input_mappings = (
+            input_mappings  # dict wf_input_name : (sub_node, sub_node_input_name)
+        )
         self.output_mappings = (
             output_mappings  # dict wf_output_name : (sub_node, sub_node_output_name)
         )
@@ -335,7 +343,9 @@ class Workflow:
             + "constant_provider_"
             + id_suffix
             + HIERARCHY_SEPARATOR,
-            operator_hierarchical_id=self.operator_hierarchical_id + "" + HIERARCHY_SEPARATOR,
+            operator_hierarchical_id=self.operator_hierarchical_id
+            + ""
+            + HIERARCHY_SEPARATOR,
         )
         if add_new_provider_node_to_workflow:  # make it part of the workflow
             self.sub_nodes.append(Const_Node)
