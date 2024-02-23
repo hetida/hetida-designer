@@ -871,6 +871,11 @@ usage() {
   echo "  --insecure-backend                      (HDCTL_VERIFY_BACKEND_API_URL)"
   echo "      do not verify https when communicating with the backend."
   echo
+  echo "  --add                                   (HDCTL_SYNC_CLEAR_DIRECTORY)"
+  echo "      For sync pull commands: If set the target export directory will not be cleared."
+  echo "      Trafos will be overwritten / added instead. Note that the environment"
+  echo "      variable is true by default and setting --add sets it to false."
+  echo
   echo "  -d | --export-directory PATH            (HDCTL_EXPORT_DIRECTORY)"
   echo "      PATH to a directory where data should be exported to (fetch) or loaded from (push)."
   echo "      fetch will create the directory and distribute downloaded trafo revs into json files"
@@ -1665,7 +1670,11 @@ sync() {
 
   if [[ "$sync_command" == "pull" ]]; then
     # clear up directory first
-    rm -Rf "$EXPORT_DIRECTORY"
+    if "$SYNC_CLEAR_DIRECTORY"; then
+      rm -Rf "$EXPORT_DIRECTORY"
+    else
+      _info ">>> Adding files mode."
+    fi
 
     _export_to_dir
   elif [[ "$sync_command" == "push" ]]; then
@@ -1737,6 +1746,7 @@ _initialize_variables() {
   VERBOSITY="${HDCTL_VERBOSITY:-"${VERBOSITY:-"info"}"}"
 
   ##### Content
+  SYNC_CLEAR_DIRECTORY="${HDCTL_SYNC_CLEAR_DIRECTORY:-"${SYNC_CLEAR_DIRECOTORY}":-true}"
   EXPORT_DIRECTORY="${HDCTL_EXPORT_DIRECTORY:-"${EXPORT_DIRECTORY:-""}"}"
   EXPORT_COMPONENTS_AS_PY_FILES="${HDCTL_EXPORT_COMPONENTS_AS_PY_FILES:-"${EXPORT_COMPONENTS_AS_PY_FILES:-"true"}"}"
 
@@ -1781,6 +1791,10 @@ _parse_global_options() {
       ;;
     --insecure-backend)
       VERIFY_BACKEND_API_URL=false
+      shift
+      ;;
+    --add)
+      SYNC_CLEAR_DIRECTORY=false
       shift
       ;;
     -d | --export-directory)
