@@ -18,7 +18,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import HTMLResponse
-from pydantic import HttpUrl
+from pydantic import HttpUrl, StrictInt, StrictStr
 
 from hetdesrun.backend.execution import (
     ExecByIdInput,
@@ -439,6 +439,26 @@ async def update_transformation_revisions(
             "available on this system."
         ),
     ),
+    strip_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Query(
+        set(),
+        description="Remove all input wirings and output wirings from the trafo's"
+        " test wiring with this adapter id. Can be provided multiple times."
+        " In contrast to strip_wirings this allows to"
+        " fine-granulary exclude only those parts of test wirings corresponding to"
+        " adapters which are not present.",
+        alias="strip_wirings_with_adapter_id",
+    ),
+    keep_only_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Query(
+        set(),
+        description="In each test wiring keep only the input wirings and output wirings"
+        " with the given adapter id. Can be set multiple times and then only wirings with"
+        " any of the given ids are kept. If not set, this has no effect (use strip_wirings"
+        " if you actually want to remove all wirings in the test wiring). A typical case"
+        " is when you want to only keep the wirings with adapter id direct_provisioning,"
+        " i.e. manual inputs of the test wiring, in order to remove dependencies from"
+        " external adapters not present on the target hetida designer installation.",
+        alias="keep_only_wirings_with_adapter_id",
+    ),
     abort_on_error: bool = Query(
         False,
         description=(
@@ -500,6 +520,8 @@ async def update_transformation_revisions(
         allow_overwrite_released=allow_overwrite_released,
         update_component_code=update_component_code,
         strip_wirings=strip_wirings,
+        strip_wirings_with_adapter_ids=strip_wirings_with_adapter_ids,
+        keep_only_wirings_with_adapter_ids=keep_only_wirings_with_adapter_ids,
         abort_on_error=abort_on_error,
         deprecate_older_revisions=deprecate_older_revisions,
     )

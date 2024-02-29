@@ -1,3 +1,9 @@
+## 0.9.7
+* Add url parameters to trafo put endpoint for more fine-granular test wiring stripping
+* Several new components and example workflows
+* Add an --add parameter to hdctl which allows to add files to an existing export directory
+  instead of overwriting it.
+
 ## 0.9.6
 * fix receiving duplicates with inlcude_dependencies param in trafo GET endpoints
 * expand_component_code now also supports adding test wirings to code with non direct_provisioning adapters

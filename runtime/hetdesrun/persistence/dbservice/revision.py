@@ -3,6 +3,7 @@ import logging
 from copy import deepcopy
 from uuid import UUID
 
+from pydantic import StrictInt, StrictStr
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
@@ -297,10 +298,41 @@ def update_or_create_single_transformation_revision(
     allow_overwrite_released: bool = False,
     update_component_code: bool = True,
     strip_wiring: bool = False,
+    strip_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
+    keep_only_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
 ) -> TransformationRevision:
+    if strip_wirings_with_adapter_ids is None:
+        strip_wirings_with_adapter_ids = set()
+
+    if keep_only_wirings_with_adapter_ids is None:
+        keep_only_wirings_with_adapter_ids = set()
+
     with get_session()() as session, session.begin():
         if strip_wiring:
             transformation_revision.test_wiring = WorkflowWiring()
+
+        if len(strip_wirings_with_adapter_ids) != 0:
+            transformation_revision.test_wiring.input_wirings = [
+                inp_wiring
+                for inp_wiring in transformation_revision.test_wiring.input_wirings
+                if inp_wiring.adapter_id not in strip_wirings_with_adapter_ids
+            ]
+            transformation_revision.test_wiring.output_wirings = [
+                outp_wiring
+                for outp_wiring in transformation_revision.test_wiring.output_wirings
+                if outp_wiring.adapter_id not in strip_wirings_with_adapter_ids
+            ]
+        if len(keep_only_wirings_with_adapter_ids) != 0:
+            transformation_revision.test_wiring.input_wirings = [
+                inp_wiring
+                for inp_wiring in transformation_revision.test_wiring.input_wirings
+                if inp_wiring.adapter_id in keep_only_wirings_with_adapter_ids
+            ]
+            transformation_revision.test_wiring.output_wirings = [
+                outp_wiring
+                for outp_wiring in transformation_revision.test_wiring.output_wirings
+                if outp_wiring.adapter_id in keep_only_wirings_with_adapter_ids
+            ]
 
         try:
             existing_transformation_revision = select_tr_by_id(

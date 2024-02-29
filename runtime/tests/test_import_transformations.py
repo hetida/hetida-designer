@@ -320,6 +320,8 @@ def test_import_importable():
             allow_overwrite_released=False,
             update_component_code=True,
             strip_wiring=False,
+            strip_wirings_with_adapter_ids=set(),
+            keep_only_wirings_with_adapter_ids=set(),
         )
 
         # Changing an option
@@ -332,4 +334,6 @@ def test_import_importable():
             allow_overwrite_released=True,
             update_component_code=True,
             strip_wiring=False,
+            strip_wirings_with_adapter_ids=set(),
+            keep_only_wirings_with_adapter_ids=set(),
         )
