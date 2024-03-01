@@ -170,6 +170,13 @@ You may want to ignore the test wirings stored in the component/workflow files d
 
 To ignore test wirings when importing, simply add a keyword parameter `strip_wirings=True` to the call of the `import_transformations` function in the commands documented above.
 
+#### More fine-granular wiring stripping
+The api endpoints which hdctl uses support more fine-granular control over wiring stripping behaviour not present in the import_transformations function via url query parameters:
+
+* `strip_wirings_with_adapter_id`: strip all input wirings and output wirings with that adapter id. Can be provided multiple times
+* `keep_only_wirings_with_adapter_id`: Keep only input wirings and output wirings with that adapter id. Can be specified multiple times and then keeps only wirings with one of the specified ids.
+
+
 ### Deprecate older revisions when importing new ones
 
 To ensure that only the latest revision of a revision group can be used, you can deprecate all other revisions of the same revision group during import by setting the parameter `deprecate_older_revisions=True` in the `import_transformations` function call.
