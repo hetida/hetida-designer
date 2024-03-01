@@ -1,8 +1,9 @@
 ## 0.9.7
-* Add url parameters to trafo put endpoint for more fine-granular test wiring stripping
+* Add url parameters to multiple trafo put and get endpoints for more fine-granular test wiring stripping. Use this for example when transfering trafos between instanced where adapters are
+not present on the target system
 * Several new components and example workflows
 * Add an --add parameter to hdctl which allows to add files to an existing export directory
-  instead of overwriting it.
+  instead of overwriting the whole directory every time.
 
 ## 0.9.6
 * fix receiving duplicates with inlcude_dependencies param in trafo GET endpoints

@@ -268,6 +268,42 @@ async def get_all_transformation_revisions(
             " designer instances it is necessary to recreate such serialized objects."
         ),
     ),
+    strip_wirings: bool = Query(
+        False,
+        description=(
+            "Whether test wirings should be completely removed and be replaced"
+            " with an empty test wiring."
+            " Note that expand_component_code needs to be true for this to affect"
+            " the test wiring stored in the component code. In particular if component_as_code"
+            " is true."
+        ),
+    ),
+    strip_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Query(
+        set(),
+        description="Remove all input wirings and output wirings from the trafo's"
+        " test wiring with this adapter id. Can be provided multiple times."
+        " In contrast to strip_wirings this allows to"
+        " fine-granulary exclude only those parts of test wirings corresponding to"
+        " adapters which are not present."
+        " Note that expand_component_code needs to be true for this to affect"
+        " the test wiring stored in the component code. In particular if component_as_code"
+        " is true.",
+        alias="strip_wirings_with_adapter_id",
+    ),
+    keep_only_wirings_with_adapter_ids: set[StrictInt | StrictStr] = Query(
+        set(),
+        description="In each test wiring keep only the input wirings and output wirings"
+        " with the given adapter id. Can be set multiple times and then only wirings with"
+        " any of the given ids are kept. If not set, this has no effect (use strip_wirings"
+        " if you actually want to remove all wirings in the test wiring). A typical case"
+        " is when you want to only keep the wirings with adapter id direct_provisioning,"
+        " i.e. manual inputs of the test wiring, in order to remove dependencies from"
+        " external adapters not present on the target hetida designer installation."
+        " Note that expand_component_code needs to be true for this to affect"
+        " the test wiring stored in the component code. In particular if component_as_code"
+        " is true.",
+        alias="keep_only_wirings_with_adapter_id",
+    ),
 ) -> list[TransformationRevision | str]:
     """Get all transformation revisions from the data base.
 
@@ -302,6 +338,13 @@ async def get_all_transformation_revisions(
         msg = f"At least one entry in the DB is no valid transformation revision:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
+
+    for tr in transformation_revision_list:
+        tr.strip_wirings(
+            strip_wiring=strip_wirings,
+            strip_wirings_with_adapter_ids=strip_wirings_with_adapter_ids,
+            keep_only_wirings_with_adapter_ids=keep_only_wirings_with_adapter_ids,
+        )
 
     code_list: list[str] = []
     component_indices: list[int] = []
