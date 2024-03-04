@@ -3,7 +3,7 @@ import logging
 from typing import cast
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel, Field, StrictInt, StrictStr, ValidationError, validator
 
 from hetdesrun.models.code import (
     CodeModule,
@@ -378,6 +378,45 @@ class TransformationRevision(BaseModel):
     def deprecate(self) -> None:
         self.disabled_timestamp = datetime.datetime.now(datetime.timezone.utc)
         self.state = State.DISABLED
+
+    def strip_wirings(
+        self,
+        strip_wiring: bool = False,
+        strip_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
+        keep_only_wirings_with_adapter_ids: set[StrictInt | StrictStr] | None = None,
+    ) -> None:
+        """Strip wirings as parametrized"""
+        if strip_wirings_with_adapter_ids is None:
+            strip_wirings_with_adapter_ids = set()
+
+        if keep_only_wirings_with_adapter_ids is None:
+            keep_only_wirings_with_adapter_ids = set()
+
+        if strip_wiring:
+            self.test_wiring = WorkflowWiring()
+
+        if len(strip_wirings_with_adapter_ids) != 0:
+            self.test_wiring.input_wirings = [
+                inp_wiring
+                for inp_wiring in self.test_wiring.input_wirings
+                if inp_wiring.adapter_id not in strip_wirings_with_adapter_ids
+            ]
+            self.test_wiring.output_wirings = [
+                outp_wiring
+                for outp_wiring in self.test_wiring.output_wirings
+                if outp_wiring.adapter_id not in strip_wirings_with_adapter_ids
+            ]
+        if len(keep_only_wirings_with_adapter_ids) != 0:
+            self.test_wiring.input_wirings = [
+                inp_wiring
+                for inp_wiring in self.test_wiring.input_wirings
+                if inp_wiring.adapter_id in keep_only_wirings_with_adapter_ids
+            ]
+            self.test_wiring.output_wirings = [
+                outp_wiring
+                for outp_wiring in self.test_wiring.output_wirings
+                if outp_wiring.adapter_id in keep_only_wirings_with_adapter_ids
+            ]
 
     def to_component_revision(self) -> ComponentRevision:
         if self.type != Type.COMPONENT:
