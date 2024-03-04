@@ -14,7 +14,7 @@ DataFrame with information about the gaps.
 
 - **interval_start_timestamp** (String, default value: null):
   Desired start timestamp of the processing range. Expexcts ISO 8601 format.
-  Alternatively, the **timeseries** can have metadata in the Pandas object's .attrs entry with key
+  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
   "ref_interval_start_timestamp" (or "from") that will be used if no **interval_start_timestamp**
   is provided.
   If neither is defined, the processing range begins with the first data point in **timeseries**.
@@ -22,7 +22,7 @@ DataFrame with information about the gaps.
 
 - **interval_end_timestamp** (String, default value: null):
   Desired end timestamp of the processing range. Expexcts ISO 8601 format.
-  Alternatively, the **timeseries** can have metadata in the Pandas object's .attrs entry with key
+  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
   "ref_interval_end_timestamp" (or "to") that will be used if no **interval_end_timestamp** is
   provided.
   If neither is defined, the processing range ends with the last data point in **timeseries**.
@@ -55,7 +55,7 @@ DataFrame with information about the gaps.
   [date offset aliases](
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
   ) or a timedelta string, e.g. "D" or "60s".
-  Alternatively, the **timeseries** can have metadata in the Pandas object's .attrs entry with key
+  Alternatively, the **timeseries** can have metadata in the Pandas object's `.attrs` entry with key
   "ref_data_frequency" that will be used if no **expected_data_frequency** is provided.
   In that case **auto_frequency_determination** will be set to false.
 
