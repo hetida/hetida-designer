@@ -437,12 +437,16 @@ async def test_single_node_workflow_with_dataframe_input_and_series_output(
     assert status_code == 200
 
     assert output["result"] == "ok"
-
-    assert output["output_results_by_output_name"]["z"]["__data__"] == {
-        "0": 3.0,
-        "1": 4.0,
-        "2": 5.5,
-    }
+    assert output["output_results_by_output_name"]["z"]["__data__"]["data"] == [
+        3.0,
+        4.0,
+        5.5,
+    ]
+    assert output["output_results_by_output_name"]["z"]["__data__"]["index"] == [
+        0,
+        1,
+        2,
+    ]
 
 
 plot_workflow_json = {

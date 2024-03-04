@@ -32,9 +32,7 @@ def test_tr_from_code_for_component_without_register_decorator():
     with open(path) as f:
         code = f.read()
 
-    tr_json = transformation_revision_from_python_code(code)
-
-    tr = TransformationRevision(**tr_json)
+    tr = transformation_revision_from_python_code(code)
 
     assert tr.name == "Alerts from Score"
     assert tr.category == "Anomaly Detection"
@@ -60,9 +58,7 @@ def test_tr_from_code_for_component_with_usual_optional_inputs():
     with open(path) as f:
         code = f.read()
 
-    tr_json = transformation_revision_from_python_code(code)
-
-    tr = TransformationRevision(**tr_json)
+    tr = transformation_revision_from_python_code(code)
 
     assert tr.name == "Univariate Linear RUL Regression"
     assert tr.category == "Remaining Useful Life"
@@ -108,8 +104,7 @@ def test_tr_from_code_for_component_with_edge_case_optional_inputs():
     with open(py_path) as f:
         code = f.read()
 
-    tr_from_py_json = transformation_revision_from_python_code(code)
-    tr_from_py = TransformationRevision(**tr_from_py_json)
+    tr_from_py = transformation_revision_from_python_code(code)
 
     json_path = os.path.join(
         "tests",
@@ -325,6 +320,8 @@ def test_import_importable():
             allow_overwrite_released=False,
             update_component_code=True,
             strip_wiring=False,
+            strip_wirings_with_adapter_ids=set(),
+            keep_only_wirings_with_adapter_ids=set(),
         )
 
         # Changing an option
@@ -337,4 +334,6 @@ def test_import_importable():
             allow_overwrite_released=True,
             update_component_code=True,
             strip_wiring=False,
+            strip_wirings_with_adapter_ids=set(),
+            keep_only_wirings_with_adapter_ids=set(),
         )

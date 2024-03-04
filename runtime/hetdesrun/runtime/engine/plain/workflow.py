@@ -147,7 +147,9 @@ class ComputationNode:
                 "Computation node execution failed due to missing input source"
             )
             raise MissingInputSource(
-                "Inputs of computation node are missing"
+                f"Inputs of computation node are missing."
+                f" Provided inputs are: {str(set(self.inputs.keys()))}."
+                f" Required params are: {str(set(self.required_params))}."
             ).set_context(self.context)
 
     async def _gather_data_from_inputs(self) -> dict[str, Any]:
@@ -183,7 +185,8 @@ class ComputationNode:
         """Running the component func with exception handling"""
         try:
             function_result: dict[str, Any] = await run_func_or_coroutine(
-                self.func, input_values  # type: ignore
+                self.func,  # type: ignore
+                input_values,
             )
             function_result = function_result if function_result is not None else {}
         except Exception as exc:  # uncaught exceptions from user code  # noqa: BLE001

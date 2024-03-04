@@ -21,8 +21,7 @@ async def test_default_values_with_metadata(
     with open(py_path) as f:
         code = f.read()
 
-    tr_from_py_json = transformation_revision_from_python_code(code)
-    tr_from_py = TransformationRevision(**tr_from_py_json)
+    tr_from_py = transformation_revision_from_python_code(code)
 
     exec_by_id_input = ExecByIdInput(
         id=tr_from_py.id,
@@ -57,8 +56,7 @@ async def test_default_values_with_metadata(
 def load_check_from_code_file(code_file_path: str) -> (str, TransformationRevision):
     with open(code_file_path) as f:
         code = f.read()
-    tr_from_py_json = transformation_revision_from_python_code(code)
-    tr_from_py = TransformationRevision(**tr_from_py_json)
+    tr_from_py = transformation_revision_from_python_code(code)
 
     assert tr_from_py.content == code
 
@@ -70,7 +68,7 @@ def load_check_from_json_file(json_file_path: str) -> TransformationRevision:
         trafo = TransformationRevision(**json.load(f))
 
     tr_from_content = transformation_revision_from_python_code(trafo.content)
-    assert tr_from_content == trafo
+    assert tr_from_content.dict() == trafo
 
     return trafo
 
@@ -120,7 +118,7 @@ async def get_check_trafo_via_single_id_get_endpoint(
     tr_from_response_content_json_obj = transformation_revision_from_python_code(
         response.json()["content"]
     )
-    assert TransformationRevision(**tr_from_response_content_json_obj) == trafo
+    assert tr_from_response_content_json_obj == trafo
     return trafo
 
 
@@ -147,16 +145,14 @@ async def get_check_trafo_via_multiple_get_endpoint(
         code_from_response = tr_from_resp.content
     else:
         code_from_response = response.json()[0]
-        tr_from_resp = TransformationRevision(
-            **transformation_revision_from_python_code(code_from_response)
-        )
+        tr_from_resp = transformation_revision_from_python_code(code_from_response)
     assert tr_from_resp == trafo
     assert code_from_response == trafo.content
 
     tr_from_response_content_json_obj = transformation_revision_from_python_code(
         tr_from_resp.content
     )
-    assert TransformationRevision(**tr_from_response_content_json_obj) == trafo
+    assert tr_from_response_content_json_obj == trafo
 
 
 @pytest.mark.asyncio

@@ -1,3 +1,12 @@
+## 0.9.7
+* Allow to provide parsing options for manual input / direct_provisioning adapter for Pandas-like data. In particular this allows to choose other orients of the json representation, like "split". "split" is relevant for SERIES objects since it allows to enter series data with duplicate entries in the index, which is otherwise not possible.
+  * **BREAKING_CHANGE**: For SERIES objects hetida designer now outputs the wrapped format with `orient="split"` parsing option to guarantee inclusion of duplicate indices for "direct_provisioning" output wirings.
+* Add url parameters to multiple trafo put and get endpoints for more fine-granular test wiring stripping. Use this for example when transfering trafos between instanced where adapters are
+not present on the target system
+* Several new components and example workflows
+* Add an --add parameter to hdctl which allows to add files to an existing export directory
+  instead of overwriting the whole directory every time.
+
 ## 0.9.6
 * fix receiving duplicates with inlcude_dependencies param in trafo GET endpoints
 * expand_component_code now also supports adding test wirings to code with non direct_provisioning adapters
