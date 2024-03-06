@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"input\": DataType.Series, \"name\": DataType.String},\n    outputs={\"output\": DataType.Series},\n    name=\"Name Series\",\n    description=\"Give a name to a series\",\n    category=\"Connectors\",\n    version_tag=\"1.0.0\",\n    id=\"a4064897-66d3-9601-328e-5ae9036665c5\",\n    revision_group_id=\"a4064897-66d3-9601-328e-5ae9036665c5\",\n    state=\"RELEASED\",\n    released_timestamp=\"2022-02-09T17:33:34.594509+00:00\"\n)\ndef main(*, input, name):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    input.name = name\n    return {\"output\": input}\n",
+  "content": "\"\"\"Documentation for Name Series\n\n# Name Series\n\n## Description\nGive a name to a series.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n* **name** (String): The name for the Series.\n\n## Outputs\n* **output** (Pandas Series): The output Series.\n\n## Details\nAssigns a name to a series and passes it through. This component can be used similarly to the Pass Through (Series) component with the additional option to name the series.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"input\": {\"data_type\": \"SERIES\"},\n        \"name\": {\"data_type\": \"STRING\"},\n    },\n    \"outputs\": {\n        \"output\": {\"data_type\": \"SERIES\"},\n    },\n    \"name\": \"Name Series\",\n    \"category\": \"Connectors\",\n    \"description\": \"Give a name to a series\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"a4064897-66d3-9601-328e-5ae9036665c5\",\n    \"revision_group_id\": \"a4064897-66d3-9601-328e-5ae9036665c5\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:34.594509+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, input, name):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    input.name = name\n    return {\"output\": input}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\n",
   "description": "Give a name to a series",
   "documentation": "# Name Series\n\n## Description\nGive a name to a series.\n\n## Inputs\n* **input** (Pandas Series): The input Series.\n* **name** (String): The name for the Series.\n\n## Outputs\n* **output** (Pandas Series): The output Series.\n\n## Details\nAssigns a name to a series and passes it through. This component can be used similarly to the Pass Through (Series) component with the additional option to name the series.\n",
   "id": "a4064897-66d3-9601-328e-5ae9036665c5",
@@ -9,12 +9,14 @@
       {
         "data_type": "SERIES",
         "id": "5336c0a5-97ac-d436-ae5f-ee75fa8c8b40",
-        "name": "input"
+        "name": "input",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "44d0fd6a-4f72-3ec1-d5dc-4f8df7029652",
-        "name": "name"
+        "name": "name",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -30,9 +32,9 @@
   "revision_group_id": "a4064897-66d3-9601-328e-5ae9036665c5",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "COMPONENT",
   "version_tag": "1.0.0"

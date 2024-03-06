@@ -66,10 +66,7 @@ def import_func_from_code(
         )
 
         mod = ModuleType(module_path)
-        if register_module:
-            sys.modules[
-                module_path
-            ] = mod  # now reachable under the constructed module_path
+
         try:
             # actually import the module;
             exec(code, mod.__dict__)  # noqa: S102
@@ -89,8 +86,13 @@ def import_func_from_code(
                 str(exec_exception),
             )
             raise ComponentCodeImportError(
-                "Could not import code due to Exception"
+                "Could not import code due to Exception %s", str(exec_exception)
             ) from exec_exception
+
+        if register_module:
+            sys.modules[
+                module_path
+            ] = mod  # now reachable under the constructed module_path
 
         func = getattr(mod, func_name)
         return func

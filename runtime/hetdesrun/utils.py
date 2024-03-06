@@ -5,12 +5,9 @@ import json
 import logging
 import random
 from enum import StrEnum
-from typing import Any
 from uuid import UUID
 
 import requests  # noqa: F401
-from plotly.graph_objects import Figure
-from plotly.utils import PlotlyJSONEncoder
 from pydantic import BaseModel
 
 from hetdesrun.datatypes import DataType
@@ -144,18 +141,3 @@ def model_to_pretty_json_str(pydantic_model: BaseModel) -> str:
     For logging etc.
     """
     return json.dumps(json.loads(pydantic_model.json()), indent=2, sort_keys=True)
-
-
-def plotly_fig_to_json_dict(fig: Figure) -> Any:
-    """Turn Plotly figure into a Python dict-like object
-
-    This function can be used in visualization components to obtain the
-    correct plotly json-like object from a Plotly Figure object.
-
-    See visualization components from the accompanying base components for
-    examples on usage.
-    """
-    # possibly quite inefficient (multiple serialisation / deserialization) but
-    # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
-    # should be definitely compatible with the plotly javascript library:
-    return json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))

@@ -62,7 +62,9 @@ def store_single_transformation_revision(
 
 
 def select_tr_by_id(
-    session: SQLAlchemySession, id: UUID, log_error: bool = True  # noqa: A002
+    session: SQLAlchemySession,
+    id: UUID,  # noqa: A002
+    log_error: bool = True,
 ) -> TransformationRevision:
     result = session.execute(
         select(TransformationRevisionDBModel).where(
@@ -80,7 +82,8 @@ def select_tr_by_id(
 
 
 def read_single_transformation_revision(
-    id: UUID, log_error: bool = True  # noqa: A002
+    id: UUID,  # noqa: A002
+    log_error: bool = True,
 ) -> TransformationRevision:
     with get_session()() as session, session.begin():
         return select_tr_by_id(session, id, log_error)
@@ -361,7 +364,9 @@ def delete_tr(session: SQLAlchemySession, tr_id: UUID) -> None:
 
 
 def delete_single_transformation_revision(
-    id: UUID, type: Type | None = None, ignore_state: bool = False  # noqa: A002
+    id: UUID,  # noqa: A002
+    type: Type | None = None,  # noqa: A002
+    ignore_state: bool = False,
 ) -> None:
     with get_session()() as session, session.begin():
         result = select_tr_by_id(session, id)
@@ -482,13 +487,16 @@ def get_multiple_transformation_revisions(
         tr_list = [tr for tr in tr_list if is_unused(tr.id)]
 
     if params.include_dependencies:
-        tr_ids = [tr.id for tr in tr_list]
+        dependencies = []
+        tr_ids = {tr.id for tr in tr_list}
         for tr in tr_list:
             if tr.type == Type.WORKFLOW:
                 nested_tr_dict = get_all_nested_transformation_revisions(tr)
                 for nested_tr_id in nested_tr_dict:
                     if nested_tr_id not in tr_ids:
-                        tr_list.append(nested_tr_dict[nested_tr_id])
+                        tr_ids.add(nested_tr_id)
+                        dependencies.append(nested_tr_dict[nested_tr_id])
+        tr_list = tr_list + dependencies
 
     return tr_list
 

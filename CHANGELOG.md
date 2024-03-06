@@ -1,3 +1,25 @@
+## 0.9.6
+* fix receiving duplicates with inlcude_dependencies param in trafo GET endpoints
+* expand_component_code now also supports adding test wirings to code with non direct_provisioning adapters
+* add instance support for non-sync commands in hdctl
+
+## 0.9.5
+* Add hdctl sync feature, allowing for comfortable "hybrid development" of component code,  i.e. switching frequently between working locally in your IDE and development in the hetida designer UI. Among other things this enables and streamlines several aspects of component/workflow development and operations tasks:
+  * Keep your components/workflows versioned in a git repo.
+  * Develop unit tests / doctests along with your components.
+  * Develop component code in Jupyter.
+  * Simplified component/workflow GitOps.
+  * See the [sync documentation](https://github.com/hetida/hetida-designer/tree/release/docs/sync.md) for details.
+* Allow /transformations GET and PUT endpoints to emit / receive components as python code instead of json objects
+* new (possibly code-changing!) parameters to the /api/transformations GET endpoint that when set to true make sure that the component code contains everything (test wiring, documentation as module docstring, COMPONENT_INFO dict containing metadata)
+* **BREAKING CHANGE**: Importing components from python code which only contain the old @register decorator will no longer work. Component code must contain the new COMPONENT_INFO dictionary  from now on instead in order to be importable from code via the various [importing means](./docs/import_export.md). Importing from json files is not affected.
+* **BREAKING CHANGE**: All transformations in the open source repo have changed insignificantly:
+  In component code, the @register decorater has been replaced by COMPONENT_INFO dictionaries.
+  In addition, attributes that have already been added to the respective classes in previous releases are now added to the transformation JSONs as well.
+  If you re-import them (note: this is not done automatically when updating the docker image) into an existing hd instance where you have [persisted models](./docs/persisting_models.md) you may be affected by [deserialization problems](./docs/repr_pitfalls.md) and need to re-create those persisted models.
+* Bugfixes and improvements on handling default values. Default values can now include metadata.
+* some new base components
+
 ## 0.9.4
 * bug fixes around default value handling
 * **BREAKING CHANGE**: DRAFT transformation revisions with a released timestamp will no longer be accepted but cause a ValueError. A database migration fixing affected components and workflows is added. However if you export(ed) transformations with an earlier version than 0.9 and afterwards import them into a version >=0.9.4 the transformations may again include the bug. We therefore strongly recommend that you **make a backup and/or export both before and after upgrading**.

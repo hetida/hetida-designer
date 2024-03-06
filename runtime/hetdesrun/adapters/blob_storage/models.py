@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timezone
 from enum import Enum
 from functools import cache, cached_property
-from typing import Any, Literal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConstrainedStr, Field, ValidationError, validator
@@ -41,11 +41,6 @@ class FileExtension(str, Enum):
     H5 = "h5"
     Pickle = "pkl"
     CustomObjectsPkl = "custom_objects_pkl"
-
-
-class WrappedModelWithCustomObjects(BaseModel):
-    model: Any
-    custom_objects: dict[str, Any]
 
 
 class IdString(ConstrainedStr):

@@ -14,7 +14,8 @@
         "position": {
           "x": 40,
           "y": 400
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
@@ -27,7 +28,8 @@
         "position": {
           "x": 40,
           "y": 430
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
@@ -40,7 +42,8 @@
         "position": {
           "x": 40,
           "y": 460
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
@@ -53,7 +56,8 @@
         "position": {
           "x": 770,
           "y": 340
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
@@ -66,7 +70,8 @@
         "position": {
           "x": 770,
           "y": 370
-        }
+        },
+        "type": "REQUIRED"
       }
     ],
     "links": [
@@ -263,36 +268,40 @@
     ],
     "operators": [
       {
-        "category": "Connectors",
-        "description": "Combine as named column into a DataFrame.",
         "id": "d6a1e330-7023-4cf9-986e-a03f14e6cdd6",
         "inputs": [
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
             "name": "column_name",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
             "name": "series",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
             "name": "series_or_dataframe",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Combine as named column into DataFrame",
@@ -318,36 +327,40 @@
         "version_tag": "1.0.0"
       },
       {
-        "category": "Connectors",
-        "description": "Combine as named column into a DataFrame.",
         "id": "4081d021-3252-4a92-9cb9-3df129b2969b",
         "inputs": [
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "fc417e48-f7d8-0bbf-60ac-af92a9150170",
             "name": "column_name",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "3e1b0bf1-48d3-a534-5a6f-fa1bb37a7aab",
             "name": "series",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "801659c5-4c57-0dc6-df28-6d4f5412f44f",
             "name": "series_or_dataframe",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Combine as named column into DataFrame (2)",
@@ -397,27 +410,32 @@
       {
         "data_type": "STRING",
         "id": "fb274218-42c2-4951-8b48-13514c32b8e1",
-        "name": "column_name_1"
+        "name": "column_name_1",
+        "type": "REQUIRED"
       },
       {
         "data_type": "SERIES",
         "id": "7ef1f9fd-4198-4056-8b50-6ee79f4ef1c0",
-        "name": "series_1"
+        "name": "series_1",
+        "type": "REQUIRED"
       },
       {
         "data_type": "ANY",
         "id": "ec588521-28e5-4616-b35a-fda973f91c37",
-        "name": "series_or_dataframe"
+        "name": "series_or_dataframe",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "8106c90b-b3d6-48d8-ba61-79f06be3320f",
-        "name": "column_name_2"
+        "name": "column_name_2",
+        "type": "REQUIRED"
       },
       {
         "data_type": "SERIES",
         "id": "e71a1c04-36bc-4a8c-bff0-26454b6442a0",
-        "name": "series_2"
+        "name": "series_2",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -433,12 +451,14 @@
   "revision_group_id": "047cbb52-c7b4-4134-9fd8-4006bd66c192",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [
       {
         "adapter_id": "direct_provisioning",
         "filters": {
           "value": "asdf"
         },
+        "use_default_value": false,
         "workflow_input_name": "column_name_1"
       },
       {
@@ -446,6 +466,7 @@
         "filters": {
           "value": "{\n    \"2020-01-01T01:15:27.000Z\": 42.2,\n    \"2020-01-03T08:20:03.000Z\": 18.7,\n    \"2020-01-03T08:20:04.000Z\": 25.9\n}"
         },
+        "use_default_value": false,
         "workflow_input_name": "series_1"
       },
       {
@@ -453,6 +474,7 @@
         "filters": {
           "value": "{\n    \"a\": true,\n    \"b\": 31.56\n}"
         },
+        "use_default_value": false,
         "workflow_input_name": "series_or_dataframe"
       },
       {
@@ -460,6 +482,7 @@
         "filters": {
           "value": "asdf"
         },
+        "use_default_value": false,
         "workflow_input_name": "column_name_2"
       },
       {
@@ -467,11 +490,11 @@
         "filters": {
           "value": "{\n    \"2020-01-01T01:15:27.000Z\": 42.2,\n    \"2020-01-03T08:20:03.000Z\": 18.7,\n    \"2020-01-03T08:20:04.000Z\": 25.9\n}"
         },
+        "use_default_value": false,
         "workflow_input_name": "series_2"
       }
     ],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

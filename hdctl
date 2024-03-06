@@ -10,7 +10,7 @@
 ###############################################################################
 #
 # LICENSE
-#   Copyright © 2023 neusta analytics & insights GmbH
+#   Copyright © 2024 fuseki GmbH
 #
 #   MIT License
 #   see https://github.com/hetida/hetida-designer/blob/release/LICENSE
@@ -78,19 +78,19 @@ _JQ_AVAILABLE=true
 ###############################################################################
 
 _info() {
-    if [[ $SILENT = false ]]; then
-        echo "${@}" >&2
-    fi
+  if [[ $SILENT = false ]]; then
+    echo "${@}" >&2
+  fi
 }
 
 _debug() {
-    if [[ $VERBOSITY == "debug" ]]; then
-        echo "${@}" >&2
-    fi
+  if [[ $VERBOSITY == "debug" ]]; then
+    echo "${@}" >&2
+  fi
 }
 
 _log_error() {
-    echo "${@}" >&2
+  echo "${@}" >&2
 }
 
 ###############################################################################
@@ -100,20 +100,608 @@ _log_error() {
 ###############################################################################
 
 _detect_jq() {
-    if ! command -v jq 1>/dev/null; then
-        _info "WARNING: jq not available. Some parameters/options cannot be used."
-        _JQ_AVAILABLE=false
-    else
-        _info "Successfully detected jq in PATH."
-    fi
+  if ! command -v jq 1>/dev/null; then
+    _info "WARNING: jq not available. Some parameters/options cannot be used."
+    _JQ_AVAILABLE=false
+  else
+    _info "Successfully detected jq in PATH."
+  fi
 }
 
+JQ_ENSURED=false
 _ensure_jq() {
-    if ! command -v jq 1>/dev/null; then
-        _log_error "Called command needs jq command line tool, which was not found. Aborting."
-        exit 127
-    fi
+  if ! command -v jq 1>/dev/null; then
+    _log_error "Called command needs jq command line tool, which was not found. Aborting."
+    exit 127
+  fi
+  JQ_ENSURED=true
 }
+
+_ensure_jq_once() {
+  if ! "$JQ_ENSURED"; then
+    _ensure_jq
+  fi
+}
+
+# outputs a certain value from env file
+value_from_env_file() {
+  local var_name="$1"
+  local env_file_path="$2"
+
+  local env_file_entry
+  env_file_entry="$(grep -m 1 '^'"$var_name"= "$env_file_path")"
+
+  local str_after_equal="${env_file_entry#*=}" # may contain " or so
+  local actual_str
+  eval actual_str="$str_after_equal" # to get rid of enclosing ""
+  printf '%s' "$actual_str"
+}
+
+# shellcheck disable=SC2046
+PYTEST_INI_CONTENT=$(
+  cat <<'END_HEREDOC'
+[pytest]
+python_files = *.py
+addopts = --doctest-modules
+END_HEREDOC
+)
+
+# shellcheck disable=SC2046
+HDUTILS_PY_CONTENT=$(
+  cat <<'END_HEREDOC'
+import datetime
+import io
+import json
+import logging
+from collections.abc import Generator
+from enum import StrEnum
+from types import UnionType
+from typing import Any, Literal, TypedDict
+from uuid import UUID
+
+import numpy as np
+import pandas as pd
+import pytz
+from plotly.graph_objects import Figure
+from plotly.utils import PlotlyJSONEncoder
+from pydantic import BaseConfig, BaseModel, Field, ValidationError, create_model
+
+logger = logging.getLogger(__name__)
+
+MULTITSFRAME_COLUMN_NAMES = ["timestamp", "metric", "value"]
+
+
+class ComponentException(Exception):
+    """Exception to re-raise exceptions with error code raised in the component code."""
+
+    __is_hetida_designer_exception__ = True
+
+    def __init__(
+        self,
+        *args: Any,
+        error_code: int | str = "",
+        extra_information: dict | None = None,
+        **kwargs: Any,
+    ) -> None:
+        if not isinstance(error_code, int | str):
+            raise ValueError("The ComponentException.error_code must be int or string!")
+        self.error_code = error_code
+        self.extra_information = extra_information
+        super().__init__(*args, **kwargs)
+
+
+class ComponentInputValidationException(ComponentException):
+    """In code input validation failures"""
+
+    def __init__(
+        self,
+        *args: Any,
+        invalid_component_inputs: list[str],
+        error_code: int | str = "",
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(
+            *args,
+            error_code=error_code,
+            extra_information={"invalid_component_inputs": invalid_component_inputs},
+            **kwargs,
+        )
+
+
+class WrappedModelWithCustomObjects(BaseModel):
+    model: Any
+    custom_objects: dict[str, Any]
+
+
+class MetaDataWrapped(BaseModel):
+    """Allows to wrap pandas object data with metadata"""
+
+    hd_wrapped_data_object__: Literal["SERIES", "DATAFRAME"] = Field(
+        ..., alias="__hd_wrapped_data_object__"
+    )
+    metadata__: dict[str, Any] = Field(
+        ...,
+        alias="__metadata__",
+        description="Json serializable dictionary of metadata. Will be written"
+        "to the resulting pandas object's attrs attribute.",
+    )
+    data__: dict | list = Field(
+        ...,
+        alias="__data__",
+        description="The actual data which constitutes the pandas object.",
+    )
+
+
+def try_parse_wrapped(
+    data: str | dict | list,
+    hd_wrapped_data_object: Literal["SERIES", "DATAFRAME"],
+) -> MetaDataWrapped:
+    if isinstance(data, str):
+        wrapped_data = MetaDataWrapped.parse_raw(
+            data
+        )  # model_validate_json in pydantic 2.0
+
+        if wrapped_data.hd_wrapped_data_object__ != hd_wrapped_data_object:
+            msg = (
+                f"Unexpected hd model type: {wrapped_data.hd_wrapped_data_object__}."
+                f" Expected {hd_wrapped_data_object}"
+            )
+            logger.warning(msg)
+            raise TypeError(msg)
+    else:
+        wrapped_data = MetaDataWrapped.parse_obj(data)  # model_validate in pydantic 2.0
+
+    return wrapped_data
+
+
+def parse_wrapped_content(
+    v: str | dict | list,
+    wrapped_data_objec: Literal["SERIES", "DATAFRAME"],
+) -> tuple[str | dict | list, None | dict[str, Any]]:
+    data_content: str | dict | list
+    try:
+        wrapped_object = try_parse_wrapped(v, wrapped_data_objec)
+        parsed_metadata = wrapped_object.metadata__
+        data_content = wrapped_object.data__
+    except (ValidationError, TypeError) as e:
+        logger.debug("Data object is not wrapped: %s", str(e))
+        data_content = v
+        parsed_metadata = None
+
+    return data_content, parsed_metadata
+
+
+def wrap_metadata_as_attrs(
+    data_object: pd.Series | pd.DataFrame, metadata: None | dict[str, Any]
+) -> pd.Series | pd.DataFrame:  # TODO: make generic: input type = output type
+    if metadata is not None:
+        data_object.attrs = metadata
+    else:
+        data_object.attrs = {}
+    return data_object
+
+
+def parse_pandas_data_content(
+    data_content: str | dict | list, typ: Literal["series", "frame"]
+) -> pd.DataFrame | pd.Series:
+    try:
+        if isinstance(data_content, str):
+            parsed_pandas_object = pd.read_json(io.StringIO(data_content), typ=typ)
+        else:
+            parsed_pandas_object = pd.read_json(data_content, typ=typ)
+
+    except Exception:  # noqa: BLE001
+        try:
+            parsed_pandas_object = pd.read_json(
+                io.StringIO(json.dumps(data_content)), typ=typ
+            )
+
+        except Exception as read_json_exception:  # noqa: BLE001
+            raise ValueError(
+                "Could not parse provided input as Pandas "
+                + ("Series" if type == "series" else "DataFrame")
+            ) from read_json_exception
+
+    return parsed_pandas_object
+
+
+class DataType(StrEnum):
+    """hetida designer data types
+
+    These are the types available for component/workflow inputs/outputs.
+    """
+
+    Integer = "INT"
+    Float = "FLOAT"
+    String = "STRING"
+    DataFrame = "DATAFRAME"
+    Series = "SERIES"
+    MultiTSFrame = "MULTITSFRAME"
+    Boolean = "BOOLEAN"
+    Any = "ANY"
+    PlotlyJson = "PLOTLYJSON"
+
+
+class PydanticPandasSeries:
+    """Custom pydantic Data Type for parsing Pandas Series
+
+    Parses either a json string according to pandas.read_json
+    with typ="series" and default arguments otherwise or
+    a Python dict-like data structure using the constructor
+    of the pandas.Series class with default arguments.
+
+    Also allows a wrapped variant where metadata can be provided.
+
+    Examples of valid input:
+        '{"0":1.0,"1":2.1,"2":3.2}'
+        {"0":1.0,"1":2.1,"2":3.2}
+        [1.2, 3.5, 2.9]
+        '[1.2, 3.5, 2.9]'
+
+    """
+
+    @classmethod
+    def __get_validators__(cls) -> Generator:
+        yield cls.validate
+
+    @classmethod
+    def validate(  # noqa: PLR0911,PLR0912
+        cls, v: pd.Series | str | dict | list
+    ) -> pd.Series:
+        if isinstance(v, pd.Series):
+            return v
+
+        if not isinstance(
+            v, str | dict | list
+        ):  # need to check at runtime since we get objects from user code
+            msg = f"Got unexpected type at runtime when parsing Series: {str(type(v))}"
+            logger.error(msg)
+            raise ValueError(msg)
+
+        data_content, metadata = parse_wrapped_content(v, "SERIES")
+
+        return wrap_metadata_as_attrs(
+            parse_pandas_data_content(data_content, "series"), metadata
+        )
+
+
+class PydanticPandasDataFrame:
+    """Custom pydantic Data Type for parsing Pandas DataFrames
+
+    Parses either a json string according to pandas.read_json
+    with typ="frame" and default arguments otherwise or
+    a Python dict-like data structure using the constructor
+    of the pandas.DataFrame class with default arguments.
+
+    Additionally a MetaDataWrapped variant of these can be parsed
+    and then is equipped with the provided metadata in the `attrs`
+    attribute (https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.attrs.html
+    """
+
+    @classmethod
+    def __get_validators__(cls) -> Generator:
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
+        if isinstance(v, pd.DataFrame):
+            return v
+
+        if not isinstance(
+            v, str | dict | list
+        ):  # need to check at runtime since we get objects from user code
+            msg = (
+                f"Got unexpected type at runtime when parsing DataFrame: {str(type(v))}"
+            )
+            logger.error(msg)
+            raise ValueError(msg)
+
+        data_content, metadata = parse_wrapped_content(v, "DATAFRAME")
+
+        return wrap_metadata_as_attrs(
+            parse_pandas_data_content(data_content, "frame"), metadata
+        )
+
+
+class PydanticMultiTimeseriesPandasDataFrame:
+    """Custom pydantic Data Type for parsing Multi Timeseries Pandas DataFrames
+
+    Parses data as a dataframe similarly to PydanticPandasDataFrame but
+    additionally checks the column layout and types to match the conventions
+    for a multitsframe.
+    """
+
+    @classmethod
+    def __get_validators__(cls) -> Generator:
+        yield cls.validate_df
+        yield cls.validate_multits_properties
+
+    @classmethod
+    def validate_df(cls, v: pd.DataFrame | str | dict | list) -> pd.DataFrame:
+        if isinstance(v, pd.DataFrame):
+            return v
+
+        if not isinstance(
+            v, str | dict | list
+        ):  # need to check at runtime since we get objects from user code
+            msg = f"Got unexpected type at runtime when parsing MultiTsFrame: {str(type(v))}"
+            logger.error(msg)
+            raise ValueError(msg)
+
+        data_content, metadata = parse_wrapped_content(v, "DATAFRAME")
+
+        return wrap_metadata_as_attrs(
+            parse_pandas_data_content(data_content, "frame"), metadata
+        )
+
+    @classmethod
+    def validate_multits_properties(  # noqa:PLR0912
+        cls, df: pd.DataFrame
+    ) -> pd.DataFrame:
+        if len(df.columns) == 0:
+            df = pd.DataFrame(columns=MULTITSFRAME_COLUMN_NAMES)
+
+        if len(df.columns) < 3:
+            raise ValueError(
+                "MultiTSFrame requires at least 3 columns: metric, timestamp"
+                f" and at least one additional columns. Only found {str(df.columns)}"
+            )
+
+        if not ({"metric", "timestamp"}.issubset(set(df.columns))):
+            column_names_string = ", ".join(df.columns)
+            raise ValueError(
+                f"The column names {column_names_string} don't contain required columns"
+                ' "timestamp" and "metric" for a MultiTSFrame.'
+            )
+
+        if df["metric"].isna().any():
+            raise ValueError(
+                "No null values are allowed for the column 'metric' of a MulitTSFrame."
+            )
+
+        df["metric"] = df["metric"].astype("string")
+
+        if df["timestamp"].isna().any():
+            raise ValueError(
+                "No null values are allowed for the column 'timestamp' of a MulitTSFrame."
+            )
+
+        if len(df.index) == 0:
+            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+
+        if not isinstance(df["timestamp"].dtype, pd.DatetimeTZDtype):
+            raise ValueError(
+                "Column 'timestamp' of MultiTSFrame does not have DatetimeTZDtype dtype. "
+                f'Got {str(df["timestamp"].dtype)} index dtype instead.'
+            )
+
+        if not df["timestamp"].dt.tz in (pytz.UTC, datetime.timezone.utc):
+            raise ValueError(
+                "Column 'timestamp' of MultiTSFrame does not have UTC timezone. "
+                f'Got {str(df["timestamp"].dt.tz)} timezone instead.'
+            )
+
+        return df.sort_values("timestamp")
+
+
+class ParsedAny:
+    """Tries to parse Any objects somehow intelligently
+
+    Reason is that an object may be provided by the backend either as a proper json-object directly
+    in some cases (dict-like objects) or as json-encoded string (happens for example for lists).
+
+    Sometimes, if the frontend is involved, json strings get even double-string-encoded! This is a
+    known bug of frontend-backend-runtime interaction.
+
+    Sometimes adapter implementations deliver ANY-data directly as json objects and othertimes
+    string-encoded.
+
+    As a workaround for all these cases this class tries to json-parse a string if it receives one
+    and only if that does not work it yields the actual string value. If it works and the result is
+    itself a string again it tries to json-decode a second time and returns the result if that
+    works. Otherwise it returns the result string of the first parsing.
+
+    This workaround is justified by the argument that the user should really use a STRING input if
+    a string is expected and not an ANY input. Likewise, adapters should offer string data as STRING
+    data sources and not as ANY data sources.
+    """
+
+    @classmethod
+    def __get_validators__(cls) -> Generator:
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            # try to parse string as json
+            try:
+                parsed_json_object = json.loads(v)
+            except json.decoder.JSONDecodeError:
+                logger.info(
+                    "Could not JSON-parse string %s in Any input."
+                    " Therefore treating it as actual string value",
+                    v[:30] + "..." if len(v) > 10 else v,
+                )
+                return v
+
+            if isinstance(
+                parsed_json_object, str
+            ):  # sometimes it even gets double-encoded for some reasons
+                try:
+                    parsed_json_object = json.loads(parsed_json_object)
+                except json.decoder.JSONDecodeError:
+                    logger.info(
+                        "Could not JSON-parse string %s in Any input. "
+                        " Therefore treating it as actual string value",
+                        parsed_json_object[:30] + "..." if len(v) > 10 else v,
+                    )
+                    return parsed_json_object
+
+            return parsed_json_object
+        return v
+
+
+data_type_map: dict[DataType, type] = {
+    DataType.Integer: int,
+    DataType.Float: float,
+    DataType.String: str,
+    DataType.Series: PydanticPandasSeries,
+    DataType.MultiTSFrame: PydanticMultiTimeseriesPandasDataFrame,
+    DataType.DataFrame: PydanticPandasDataFrame,
+    DataType.Boolean: bool,
+    # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
+    DataType.Any: ParsedAny,
+    DataType.PlotlyJson: dict,
+}
+
+optional_data_type_map: dict[DataType, UnionType] = {
+    DataType.Integer: int | None,
+    DataType.Float: float | None,
+    DataType.String: str | None,
+    DataType.Series: PydanticPandasSeries | None,
+    DataType.MultiTSFrame: PydanticMultiTimeseriesPandasDataFrame | None,
+    DataType.DataFrame: PydanticPandasDataFrame | None,
+    DataType.Boolean: bool | None,
+    # Any as Type is the correct way to tell pydantic how to parse an arbitrary object:
+    DataType.Any: ParsedAny | None,
+    DataType.PlotlyJson: dict | None,
+}
+
+
+class AdvancedTypesOutputSerializationConfig(BaseConfig):
+    """Enable Pydantic Models to serialize Pandas obejcts with this config class"""
+
+    # Unfortunately there is no good way to get None for NaN or NaT:
+    json_encoders = {
+        pd.Series: lambda v: {
+            "__hd_wrapped_data_object__": "SERIES",
+            "__metadata__": v.attrs,
+            "__data__": json.loads(
+                v.to_json(
+                    date_format="iso"
+                )  # in order to serialize both NaN and NaT to null,
+            ),
+        },
+        pd.DataFrame: lambda v: {
+            "__hd_wrapped_data_object__": "DATAFRAME",
+            "__metadata__": v.attrs,
+            "__data__": json.loads(
+                v.to_json(
+                    date_format="iso"
+                )  # in order to serialize both NaN and NaT to null
+            ),
+        },
+        PydanticPandasSeries: lambda v: {
+            "__hd_wrapped_data_object__": "SERIES",
+            "__metadata__": v.attrs,
+            "__data__": v.to_dict(),
+        },
+        PydanticPandasDataFrame: lambda v: {
+            "__hd_wrapped_data_object__": "DATAFRAME",
+            "__metadata__": v.attrs,
+            "__data__": json.loads(
+                v.to_json(
+                    date_format="iso"
+                )  # in order to serialize both NaN and NaT to null
+            ),
+        },
+        PydanticMultiTimeseriesPandasDataFrame: lambda v: {
+            "__hd_wrapped_data_object__": "DATAFRAME",
+            "__metadata__": v.attrs,
+            "__data__": v.to_dict(
+                date_format="iso"
+            ),  # in order to serialize both NaN and NaT to null
+        },
+        np.ndarray: lambda v: v.tolist(),
+        datetime.datetime: lambda v: v.isoformat(),
+        UUID: lambda v: str(v),  # alternatively: v.hex
+        Figure: lambda v: json.loads(
+            json.dumps(v.to_plotly_json(), cls=PlotlyJSONEncoder)
+        ),
+    }
+
+
+class NamedDataTypedValue(TypedDict):
+    name: str
+    type: DataType  # noqa: A003
+    value: Any
+
+
+def parse_via_pydantic(
+    entries: list[NamedDataTypedValue],
+    type_map: dict[DataType, type] | dict[DataType, UnionType] | None = None,
+) -> BaseModel:
+    """Parse data dynamically into a pydantic object
+
+    Optionally a type_map can be specified which differs from the default data_type_map
+
+    Returns an instantiated pydantic object if no parsing exception is thrown.
+
+    May raise the typical exceptions of pydantic parsing.
+    """
+    type_dict: dict[str, tuple[type | UnionType, "ellipsis"]] = {  # noqa: F821
+        entry["name"]: (
+            type_map[entry["type"]]
+            if type_map is not None
+            else data_type_map[entry["type"]],  # default to data_type_map
+            ...,
+        )
+        for entry in entries
+    }
+
+    DynamicModel = create_model("DynamicyModel", **type_dict)  # type: ignore
+
+    return DynamicModel(**{entry["name"]: entry["value"] for entry in entries})  # type: ignore
+
+
+def parse_dynamically_from_datatypes(
+    entries: list[NamedDataTypedValue], nullable: bool = False
+) -> BaseModel:
+    return parse_via_pydantic(
+        entries, type_map=data_type_map if nullable is False else optional_data_type_map
+    )
+
+
+def parse_single_value_dynamically(
+    name: str, value: Any, data_type: DataType, nullable: bool
+) -> Any:
+    return parse_dynamically_from_datatypes(
+        [{"name": name, "type": data_type, "value": value}], nullable
+    ).dict()[name]
+
+
+def parse_value(value: Any, data_type_str: str, nullable: bool) -> Any:
+    return parse_single_value_dynamically(
+        "some_value", value, DataType(data_type_str), nullable
+    )
+
+
+def parse_default_value(component_info: dict, input_name: str) -> Any:
+    """Parse default value from COMPONENT_INFO dict
+
+    Used in component main function header to parse a default
+    value from the COMPONENT_INFO dict for an input.
+    """
+    inp = component_info["inputs"][input_name]
+    return parse_value(inp["default_value"], inp["data_type"], True)
+
+
+def plotly_fig_to_json_dict(fig: Figure) -> Any:
+    """Turn Plotly figure into a Python dict-like object
+
+    This function can be used in visualization components to obtain the
+    correct plotly json-like object from a Plotly Figure object.
+
+    See visualization components from the accompanying base components for
+    examples on usage.
+    """
+    # possibly quite inefficient (multiple serialisation / deserialization) but
+    # guarantees that the PlotlyJSONEncoder is used and so the resulting Json
+    # should be definitely compatible with the plotly javascript library:
+    return json.loads(json.dumps(fig.to_plotly_json(), cls=PlotlyJSONEncoder))
+
+END_HEREDOC
+)
 
 ###############################################################################
 #                                                                             #
@@ -122,250 +710,331 @@ _ensure_jq() {
 ###############################################################################
 
 usage() {
-    if [ -n "${1-}" ]; then
-        _log_error "--> ERROR: $1"
-    fi
+  if [ -n "${1-}" ]; then
+    _log_error "--> ERROR: $1"
+  fi
 
-    echo "BASIC USAGE: Run"
-    echo "  $0 SUBCOMMAND <parameters>"
-    echo
-    echo "EXAMPLES"
-    echo
-    echo "  FETCHING:"
-    echo "    Write json list of all components from Physics category to stdout"
-    echo
-    echo "        $0 "'fetch --url-append "?category=Physics&type=COMPONENT"'
-    echo
-    echo "    Notes: * In these examples configuration like backend api url, auth etc is assumed to"
-    echo "             come from ./hdctl.env file or HDCTL_* environment variables."
-    echo "           * available query parameters of the backend api are documented in the openapi"
-    echo "             documentation of the /api/transformations GET / PUT endpoints and the"
-    echo "             /api/maintenance/* endpoints"
-    echo "           * --url-append does not urlencode automatically."
-    echo
-    echo "    With recent curl (>= 7.87.0, from 2023 or later) you can also propagate query params"
-    echo "    via --url-query which automatically url encodes them as follows (note the space char"
-    echo "    in category):"
-    echo
-    echo "        $0 "'fetch -- --url-query "category=Anomaly Detection" --url-query "type=COMPONENT"'
-    echo
-    echo "    Export json list of transformation revisions of category Physics into single file,"
-    echo "    pretty printing the json by piping it through jq:"
-    echo
-    echo "        $0 fetch -- -d "'"category=Physics"'" | jq > physics_trafos.json"
-    echo
-    echo "    Export all non-deprecated workflows into directory structure at ./exported_trafos including"
-    echo "    their dependencies. The directory and subdirectories for type and catgeory will be created"
-    echo "    if necessary (This command needs awk and jq!)"
-    echo
-    echo "        $0 "'fetch --export-directory ./exported_trafos -- \'
-    echo '          --url-query "type=WORKFLOW"\'
-    echo '          --url-query "include_dependencies=true"\'
-    echo '          --url-query "include_deprecated=false"'
-    echo
-    echo "  PUSHING:"
-    echo '    Import from export directory only the workflows with name "Combine two Series'
-    echo '    into DataFrame" which are released (there may be drafts or deprecated revisions)'
-    echo "    together with their dependencies. Overwrite released trafo revs if necessary:"
-    echo
-    echo "      $0 "'push --export-trafos ./exported_trafos --\'
-    echo '        --url-query "name=Combine two Series into DataFrame"\'
-    echo '        --url-query "include_dependencies=true"\'
-    echo '        --url-query "allow_overwrite_released=true"\'
-    echo '        --url-query "state=RELEASED"'
-    echo
-    echo "    The response shows which trafo revs actually where imported and which where ignored."
-    echo "    You may want to pipe it through jq for pretty printing."
-    echo
-    echo "    Import released components from json file containing list of trafo revs allowing overwriting"
-    echo "    of released components:"
-    echo
-    echo "      $0 "'push physics_trafos.json --url-append "?type=COMPONENT&state=RELEASED&allow_overwrite_released=true"'
-    echo
-    echo "  MAINTENANCE:"
-    echo "    Examples here assume that the maintenance secret is set either in hdctl.env file"
-    echo "    (MAINTENANCE_SECRET) or as environment variable HDCTL_MAINTENANCE_SECRET."
-    echo
-    echo "    Deprecate all but the latest released (i.e. by release date, disregarding version tag!)"
-    echo "    revision of every transformation revision group:"
-    echo
-    echo "      $0 deprecate_all_but_latest_per_group"
-    echo
-    echo "    Purge your installation: Delete everything and afterwards redeploy base trafos from"
-    echo "    running backend (WARNING: irreversible data loss!):"
-    echo
-    echo "      $0 purge"
-    echo
-    echo "GENERAL HINTS"
-    echo "Parameters can be supplied with increasing priority as follows:"
-    echo " * On startup a .env file is sourced if available, by default ./hdctl.env."
-    echo "   You can configure its path via HDCTL_ENV_FILE environment variable. It should"
-    echo "   define variables corresponding to settings of form NAME_IN_UPPER_CASE"
-    echo " * Environment variables prefixed with HDCTL_ (HDCTL_NAME_IN_UPPER_CASE) are interpreted"
-    echo "   and may override NAME_IN_UPPER_CASE from the env file."
-    echo " * explicit command line parameters override all these settings"
-    echo
-    echo "On the command line values to  parameters are separated with space inbetween like"
-    echo "    --backend-api-url http://localhost:8080/api"
-    echo "or"
-    echo "    -b http://localhost:8080/api"
-    echo "(i.e. not --backend-api-url=http://localhost:8080/api )"
-    echo
-    echo "Most parameters are general and can be set independantly of subcommands. Whether they"
-    echo "are used depends on the actual subcommand invoked."
-    echo
-    echo "Arguments after -- are gathered. If the subcommand invokes curl, they are appended to "
-    echo "the curl command at the end. This allows for example to usq the --url-query curl argument"
-    echo "to control filters when fetching / pushing, as you can see in the examples above."
-    echo
-    echo "In the following we reference settings by naming them by the variable as it"
-    echo "would occur in the .env file (i.e. NAME_IN_UPPER_CASE). Recall that the corresponding"
-    echo "environment variable then is HDCTL_NAME_IN_UPPER_CASE."
-    echo
-    echo "Subcommands typically make http requests to a hd backend api configured via"
-    echo "HD_BACKEND_API_URL pointing to the /api resource of the backend service, e.g."
-    echo "  http://localhost:8080/api"
-    echo
-    echo "Authentication is handled as follows:"
-    echo "  * if DIRECT_ACCESS_TOKEN is set, it is passed as Bearer token."
-    echo "  * if DIRECT_ACCESS_TOKEN is not set / empty string:"
-    echo "    * if AUTH_URL is set (e.g. http://localhost/auth)"
-    echo "      * if USERNAME is set / non-zero, an access token is tried to be obtained"
-    echo "        with PASSWORD from the auth provider at AUTH_URL via openidconnect standard"
-    echo "        using password grant credential flow."
-    echo "      * if USERNAME is not set, CLIENT_ID and CLIENT_SECRET are used to obtain"
-    echo "        an access token from the auth provider at AUTH_URL via openidconnect standard"
-    echo "        using client credential grant flow."
-    echo "    * if AUTH_URL is not set / empty string the backend is expected to be reachable"
-    echo "      without authentication."
-    echo
-    echo "PARAMETERS"
-    echo "  Mandatory arguments to long options are mandatory for short options too. Name of"
-    echo "  corresponding environment variable with HDCTL_ prefix in parantheses."
-    echo
-    echo "  -e | --env-file PATH                     (HDCTL_ENV_FILE)"
-    echo "      path to env file that will be sourced at startup. Defaults to ./hdctl.env."
-    echo "      If set to non-default value it must exist."
-    echo
-    echo "  -b | --backend-api-url URL              (HDCTL_HD_BACKEND_API_URL)"
-    echo "      URL of the backend api resource, e.g. http://localhost:8080/api"
-    echo
-    echo "  --insecure-backend                      (HDCTL_VERIFY_BACKEND_API_URL)"
-    echo "      do not verify https when communicating with the backend."
-    echo
-    echo "  -d | --export-directory PATH            (HDCTL_EXPORT_DIRECTORY)"
-    echo "      PATH to a directory where data should be exported to (fetch) or loaded from (push)."
-    echo "      fetch will create the directory and distribute downloaded trafo revs into json files"
-    echo "      at pathes like, using jq and awk"
-    echo "          PATH/{workflows,components}/<CATEGORY>/<NAME>_<VERSION_TAG>_<ID>.json"
-    echo "      If this is not set, fetch will instead output a json list of all downloaded trafo revs"
-    echo "      to stdout."
-    echo "      push will use the directory as source if this is set. If not, push expects a path"
-    echo "      to a single json file containing an array of trafo revs as first argument instead."
-    echo
-    echo "  -a | --auth-url AUTH_URL                (HDCTL_AUTH_URL)"
-    echo "      Openidconnect auth provider auth endpoint, e.g. https://localhost/auth"
-    echo
-    echo "  --insecure-auth                         (HDCTL_VERIFY_AUTH_URL)"
-    echo "      do not verify https when communicating with auth provider"
-    echo
-    echo "  -t | --access-token TOKEN               (HDCTL_DIRECT_ACCESS_TOKEN)"
-    echo "      If this is provided, it will be used as Bearer access token and no communication"
-    echo "      with auth provider will happen. Make sure that TOKEN is not expired."
-    echo
-    echo "  -r | --realm REALM                      (HDCTL_REALM)"
-    echo "      openidconnect realm name that should be used."
-    echo
-    echo "  -c | --client-id CLIENT_ID              (HDCTL_CLIENT_ID)"
-    echo "      The client id. Necessary for both password grant and client credential grant auth flow."
-    echo
-    echo "  -s | --client-secret CLIENT_SECRET     (HDCTL_CLIENT_SECRET)"
-    echo "      The client secret when using client credential secret auth flow"
-    echo
-    echo "  -m | --maintenance-secret SECRET       (HDCTL_MAINTENANCE_SECRET)"
-    echo "      Maintenance actions require a maintenance secret to be configured in the backend"
-    echo "      and provided whith each maintenance endpoint request."
-    echo
-    echo "   -p | --url-append PARAMSTRING         (HDCTL_QUERY_URL_APPEND)"
-    echo "       PARAMSTRING will be appended as-is to the url in curl invocations. Can be used"
-    echo '       to provide query parameters, for example --url-append "?type=COMPONENT&state=RELEASED"'
-    echo
-    echo "   -q | --quiet                          (HDCTL_SILENT)"
-    echo "       suppress some output"
-    echo
-    echo "   -v | --verbose                        (HDCTL_VERBOSITY)"
-    echo '       The default is "info". Setting it will switch to "debug" and send some additional debug'
-    echo "       output to stderr"
-    echo
-    echo "    --"
-    echo "       All command line arguments following -- will be gathered and for curl-invoking"
-    echo "       subcommands they will be appended to the curl call."
-    echo
-    echo "AVAILABLE CUBCOMMANDS BY TOPIC"
-    echo "  FETCH / EXPORT / DOWNLOAD"
-    echo "    The fetch subcommand downloads / exports transformation revisions from the hetida"
-    echo "    designer backends using curl, handling auth if necessary. If an export directory"
-    echo "    is set it will use jq and awk to distribute the transformation revisions as single"
-    echo "    json file each into a directory structure, separating by type and category"
-    echo
-    echo "      $0 fetch -d EXPORT_DIRECTORY"
-    echo
-    echo "    Otherwise it will output a json array to stdout"
-    echo
-    echo "      $0 fetch"
-    echo
-    echo "    Piping its output to a file creates a single json file containing all fetched"
-    echo "    transformation revisions. See -d parameter for details."
-    echo
-    echo "    By supplying url query parameters as described in the examples at the beginning, only"
-    echo "    a part of all available trafo revs can be fetched. See the openapi documentation"
-    echo "    of the backend /api/transformations GET endpoint for available parameters."
-    echo
-    echo "  PUSH / IMPORT / UPLOAD"
-    echo "    The push subcommand uploads / imports transformation revisions (in)to the hetida"
-    echo "    designer backend using curl, handling auth if necessary. If an export directory"
-    echo "    is set it will gather the json files there for the upload:"
-    echo
-    echo "      $0 push -d -d EXPORT_DIRECTORY"
-    echo
-    echo "    Otherwise it expects a path to a json file containing a json array of transformation"
-    echo "    revisions as first argument:"
-    echo
-    echo "      $0 push ./exported_trafos.json"
-    echo
-    echo "    Similarly to the fetch subcommand, by supplying url query parameters, only"
-    echo "    a part of all provided trafo revs will be imported. See the openapi documentation"
-    echo "    of the backend /api/transformations PUT endpoint for available parameters."
-    echo
-    echo "  MAINTENANCE"
-    echo "    These subcommands correspond to the hd backend api maintenance endpoints."
-    echo "    All maintenance subcommands require a non-zero length alphanumeric maintenance"
-    echo "    secret to be set at both server and client side:"
-    echo "      * server side: configuration of hd backend service (HD_MAINTENANCE_SECRET)"
-    echo "      * client side: via -m / --maintenance-secret CLI parameters or environment"
-    echo "        variable (HDCTL_MAINTENANCE_SECRET or MAINTENANCE_SECRET in env file)"
-    echo
-    echo "    See https://github.com/hetida/hetida-designer/blob/release/docs/cleanup.md"
-    echo "    or the OpenAPI docs of a started hd backend service for details on what"
-    echo "    they do exactly."
-    echo
-    echo "    Again, query parameters can be provided as described above for fetch and push."
-    echo
-    echo "    Maintenance subcommands:"
-    echo
-    echo "      $0 deprecate_all_but_latest_per_group"
-    echo
-    echo ""
-    echo "      $0 delete_drafts"
-    echo "      $0 delete_unused_deprecated"
-    echo "      $0 purge"
-    echo "      $0 deploy_base_trafos"
-    echo "      $0 autoimport"
-    echo
+  echo "BASIC USAGE: Run"
+  echo "  $0 SUBCOMMAND <parameters>"
+  echo "  $0 sync SYNCCOMMAND INSTANCE"
+  echo
+  echo "EXAMPLES"
+  echo
+  echo "  SYNC:"
+  echo "    Init a new hetida designer instance against which you want to sync"
+  echo
+  echo "       $0 sync init my-hd-instance"
+  echo
+  echo "    After following the instructions and setting configuration options"
+  echo "    and credentials in the generated files:"
+  echo
+  echo "       $0 sync pull my-hd-instance    # sync to local dir"
+  echo "       $0 sync push my-hd-instance    # push local dir to hd instance"
+  echo
+  echo "    Sync of the local file content of my-hd-instance to/from another configured"
+  echo "    instance named my-other-hd-instance can be done via"
+  echo
+  echo "       $0 sync push my-other-hd-instance from my-hd-instance"
+  echo "       $0 sync pull my-other-hd-instance to my-hd-instance"
+  echo
+  echo "    It is recommended to use git for versioning of local files and you"
+  echo "    should commit before and after each sync operation."
+  echo
+  echo "  FETCHING:"
+  echo "    Write json list of all components from Physics category to stdout"
+  echo
+  echo "        $0 "'fetch --url-append "?category=Physics&type=COMPONENT"'
+  echo
+  echo "    Notes: * In these examples configuration like backend api url, auth etc is assumed to"
+  echo "             come from ./hdctl.env file or HDCTL_* environment variables."
+  echo "           * available query parameters of the backend api are documented in the openapi"
+  echo "             documentation of the /api/transformations GET / PUT endpoints and the"
+  echo "             /api/maintenance/* endpoints"
+  echo "           * --url-append does not urlencode automatically."
+  echo
+  echo "    With recent curl (>= 7.87.0, from 2023 or later) you can also propagate query params"
+  echo "    via --url-query which automatically url encodes them as follows (note the space char"
+  echo "    in category):"
+  echo
+  echo "        $0 "'fetch -- --url-query "category=Anomaly Detection" --url-query "type=COMPONENT"'
+  echo
+  echo "    Export json list of transformation revisions of category Physics into single file,"
+  echo "    pretty printing the json by piping it through jq:"
+  echo
+  echo "        $0 fetch -- -d "'"category=Physics"'" | jq > physics_trafos.json"
+  echo
+  echo "    Export all non-deprecated workflows into directory structure at ./exported_trafos including"
+  echo "    their dependencies. The directory and subdirectories for type and catgeory will be created"
+  echo "    if necessary (This command needs awk and jq!)"
+  echo
+  echo "        $0 "'fetch --export-directory ./exported_trafos -- \'
+  echo '          --url-query "type=WORKFLOW"\'
+  echo '          --url-query "include_dependencies=true"\'
+  echo '          --url-query "include_deprecated=false"'
+  echo
+  echo "  PUSHING:"
+  echo '    Import from export directory only the workflows with name "Combine two Series'
+  echo '    into DataFrame" which are released (there may be drafts or deprecated revisions)'
+  echo "    together with their dependencies. Overwrite released trafo revs if necessary:"
+  echo
+  echo "      $0 "'push --export-trafos ./exported_trafos --\'
+  echo '        --url-query "name=Combine two Series into DataFrame"\'
+  echo '        --url-query "include_dependencies=true"\'
+  echo '        --url-query "allow_overwrite_released=true"\'
+  echo '        --url-query "state=RELEASED"'
+  echo
+  echo "    The response shows which trafo revs actually where imported and which where ignored."
+  echo "    You may want to pipe it through jq for pretty printing."
+  echo
+  echo "    Import released components from json file containing list of trafo revs allowing overwriting"
+  echo "    of released components:"
+  echo
+  echo "      $0 "'push physics_trafos.json --url-append "?type=COMPONENT&state=RELEASED&allow_overwrite_released=true"'
+  echo
+  echo "  MAINTENANCE:"
+  echo
+  echo "    Redeploy base trafos on a remote instance hddev, e.g. after upgrading:"
+  echo
+  echo "      $0 "'deploy_base_trafos -i hddev --url-query "allow_overwrite_released=true"'
+  echo
+  echo "    Following examples assume that the maintenance secret is set either in hdctl.env"
+  echo "    file (MAINTENANCE_SECRET) or as environment variable HDCTL_MAINTENANCE_SECRET."
+  echo
+  echo "    Deprecate all but the latest released (i.e. by release date, disregarding version tag!)"
+  echo "    revision of every transformation revision group:"
+  echo
+  echo "      $0 deprecate_all_but_latest_per_group"
+  echo
+  echo "    Purge your installation: Delete everything and afterwards redeploy base trafos from"
+  echo "    running backend (WARNING: irreversible data loss!):"
+  echo
+  echo "      $0 purge"
+  echo
+  echo "GENERAL HINTS"
+  echo "Parameters can be supplied with increasing priority as follows:"
+  echo " * On startup a .env file is sourced if available, by default ./hdctl.env."
+  echo "   You can configure its path via HDCTL_ENV_FILE environment variable. It should"
+  echo "   define variables corresponding to settings of form NAME_IN_UPPER_CASE. In case"
+  echo "   of using the sync subcommands instance and credential files are used instead."
+  echo " * Environment variables prefixed with HDCTL_ (HDCTL_NAME_IN_UPPER_CASE) are interpreted"
+  echo "   and may override NAME_IN_UPPER_CASE from the env file."
+  echo " * explicit command line parameters override all these settings"
+  echo
+  echo "On the command line values to  parameters are separated with space inbetween like"
+  echo "    --backend-api-url http://localhost:8080/api"
+  echo "or"
+  echo "    -b http://localhost:8080/api"
+  echo "(i.e. not --backend-api-url=http://localhost:8080/api )"
+  echo
+  echo "Most parameters are general and can be set independantly of subcommands. Whether they"
+  echo "are used depends on the actual subcommand invoked."
+  echo
+  echo "Arguments after -- are gathered. If the subcommand invokes curl, they are appended to "
+  echo "the curl command at the end. This allows for example to usq the --url-query curl argument"
+  echo "to control filters when fetching / pushing, as you can see in the examples above."
+  echo
+  echo "In the following we reference settings by naming them by the variable as it"
+  echo "would occur in the .env file (i.e. NAME_IN_UPPER_CASE). Recall that the corresponding"
+  echo "environment variable then is HDCTL_NAME_IN_UPPER_CASE."
+  echo
+  echo "Subcommands typically make http requests to a hd backend api configured via"
+  echo "HD_BACKEND_API_URL pointing to the /api resource of the backend service, e.g."
+  echo "  http://localhost:8080/api"
+  echo
+  echo "Authentication is handled as follows:"
+  echo "  * if DIRECT_ACCESS_TOKEN is set, it is passed as Bearer token."
+  echo "  * if DIRECT_ACCESS_TOKEN is not set / empty string:"
+  echo "    * if AUTH_URL is set (e.g. http://localhost/auth)"
+  echo "      * if USERNAME is set / non-zero, an access token is tried to be obtained"
+  echo "        with PASSWORD from the auth provider at AUTH_URL via openidconnect standard"
+  echo "        using password grant credential flow."
+  echo "      * if USERNAME is not set, CLIENT_ID and CLIENT_SECRET are used to obtain"
+  echo "        an access token from the auth provider at AUTH_URL via openidconnect standard"
+  echo "        using client credential grant flow."
+  echo "    * if AUTH_URL is not set / empty string the backend is expected to be reachable"
+  echo "      without authentication."
+  echo
+  echo "PARAMETERS"
+  echo "  Mandatory arguments to long options are mandatory for short options too. Name of"
+  echo "  corresponding environment variable with HDCTL_ prefix in parantheses."
+  echo
+  echo "  -e | --env-file PATH                     (HDCTL_ENV_FILE)"
+  echo "      path to env file that will be sourced at startup. Defaults to ./hdctl.env."
+  echo "      If set to non-default value it must exist."
+  echo
+  echo "  -i | --instance INSTANCE_NAME"
+  echo "      Use config from instance files (see sync commands) instead of env file"
+  echo
+  echo "  -b | --backend-api-url URL              (HDCTL_HD_BACKEND_API_URL)"
+  echo "      URL of the backend api resource, e.g. http://localhost:8080/api"
+  echo
+  echo "  --insecure-backend                      (HDCTL_VERIFY_BACKEND_API_URL)"
+  echo "      do not verify https when communicating with the backend."
+  echo
+  echo "  -d | --export-directory PATH            (HDCTL_EXPORT_DIRECTORY)"
+  echo "      PATH to a directory where data should be exported to (fetch) or loaded from (push)."
+  echo "      fetch will create the directory and distribute downloaded trafo revs into json files"
+  echo "      at pathes like, using jq and awk"
+  echo "          PATH/{workflows,components}/<CATEGORY>/<NAME>_<VERSION_TAG>_<ID>.json"
+  echo "      If this is not set, fetch will instead output a json list of all downloaded trafo revs"
+  echo "      to stdout."
+  echo "      push will use the directory as source if this is set. If not, push expects a path"
+  echo "      to a single json file containing an array of trafo revs as first argument instead."
+  echo
+  echo "  -a | --auth-url AUTH_URL                (HDCTL_AUTH_URL)"
+  echo "      Openidconnect auth provider auth endpoint, e.g. https://localhost/auth"
+  echo
+  echo "  --insecure-auth                         (HDCTL_VERIFY_AUTH_URL)"
+  echo "      do not verify https when communicating with auth provider"
+  echo
+  echo "  -t | --access-token TOKEN               (HDCTL_DIRECT_ACCESS_TOKEN)"
+  echo "      If this is provided, it will be used as Bearer access token and no communication"
+  echo "      with auth provider will happen. Make sure that TOKEN is not expired."
+  echo
+  echo "  -r | --realm REALM                      (HDCTL_REALM)"
+  echo "      openidconnect realm name that should be used."
+  echo
+  echo "  -c | --client-id CLIENT_ID              (HDCTL_CLIENT_ID)"
+  echo "      The client id. Necessary for both password grant and client credential grant auth flow."
+  echo
+  echo "  -s | --client-secret CLIENT_SECRET     (HDCTL_CLIENT_SECRET)"
+  echo "      The client secret when using client credential secret auth flow"
+  echo
+  echo "  -m | --maintenance-secret SECRET       (HDCTL_MAINTENANCE_SECRET)"
+  echo "      Maintenance actions require a maintenance secret to be configured in the backend"
+  echo "      and provided whith each maintenance endpoint request."
+  echo
+  echo "   -p | --url-append PARAMSTRING         (HDCTL_QUERY_URL_APPEND)"
+  echo "       PARAMSTRING will be appended as-is to the url in curl invocations. Can be used"
+  echo '       to provide query parameters, for example --url-append "?type=COMPONENT&state=RELEASED"'
+  echo
+  echo "   -q | --quiet                          (HDCTL_SILENT)"
+  echo "       suppress some output"
+  echo
+  echo "   -v | --verbose                        (HDCTL_VERBOSITY)"
+  echo '       The default is "info". Setting it will switch to "debug" and send some additional debug'
+  echo "       output to stderr"
+  echo
+  echo "    --"
+  echo "       All command line arguments following -- will be gathered and for curl-invoking"
+  echo "       subcommands they will be appended to the curl call."
+  echo
+  echo "AVAILABLE CUBCOMMANDS BY TOPIC"
+  echo "  SYNC PULL / SYNC PUSH / SYNC INIT"
+  echo "    Sync is the easiest way for bidirectional transfer of selections of workflows and"
+  echo "    components between a local directory and a hetida designer instance. Under the hood"
+  echo "    it uses the fetch and push commands described below, but allows configuration and"
+  echo "    credentials to reside in local files. In combination with version control, e.g. git,"
+  echo "    this enables:"
+  echo "      * external version control"
+  echo "      * editing locally / hybrid working and frequent switching between local work"
+  echo "        and work in the hetida designer user interface"
+  echo "      * scripting CD/CI and GitOps"
+  echo
+  echo "    The configuration and credential files for a remote hetida designer instance"
+  echo '    you want to name "my-hd-instance" can be pregenerated via'
+  echo
+  echo "      $0 sync init my-hd-instance"
+  echo
+  echo "    Make sure you follow the instructions this command prints out! After that"
+  echo "    you should have at least a my-hd-instance.hd-instance file and a "
+  echo "    my-hd-instance.hd-creds file which are used as configuration for syncing."
+  echo "    Additionally a my-hd-instance.hd-creds.stub file is present that can be checked into"
+  echo "    version control together with the .hd-instance file. You should of course never"
+  echo "    put the my-hd-instance.hd-creds into version control which you have provided"
+  echo "    with actual passwords and secrets. Put *.hd-creds into your .gitignore instead!"
+  echo
+  echo "    You can now transfer transformations from/to the configured local directory via"
+  echo
+  echo "      $0 sync pull my-hd-instance"
+  echo "      $0 sync push my-hd-instance"
+  echo
+  echo "    Note that pulling overwrites the local directory completely. It is strongly"
+  echo "    recommended to use version control and commit before and after puling and"
+  echo "    pushing."
+  echo
+  echo "    Note that what is pulled and pushed depends on the settings in your .hd-instance"
+  echo "    file. The query url parameters of the /api/transformations GET and PUT endpoints"
+  echo "    allow for fine-granular filtering and updating / expanding the exported"
+  echo "    component code with documentation and a wiring."
+  echo
+  echo "    Sync of the local file content of my-hd-instance to/from another configured"
+  echo "    instance named my-other-hd-instance can be done via"
+  echo
+  echo "       $0 sync push my-other-hd-instance from my-hd-instance"
+  echo "       $0 sync pull my-other-hd-instance to my-hd-instance"
+  echo
+  echo "    This pushes / pulls with the settings of my-other-hd-instance but uses the"
+  echo "    export directory configured for my-hd-instance as source / target."
+  echo
+  echo "    Finally you can explicitely override the directory to use, e.g.:"
+  echo
+  echo "       $0 sync push my-prod-instance -d /mounted/volume/dir"
+  echo
+  echo "  FETCH / EXPORT / DOWNLOAD"
+  echo "    The fetch subcommand downloads / exports transformation revisions from the hetida"
+  echo "    designer backends using curl, handling auth if necessary. If an export directory"
+  echo "    is set it will use jq and awk to distribute the transformation revisions as single"
+  echo "    json file each into a directory structure, separating by type and category"
+  echo
+  echo "      $0 fetch -d EXPORT_DIRECTORY"
+  echo
+  echo "    Otherwise it will output a json array to stdout"
+  echo
+  echo "      $0 fetch"
+  echo
+  echo "    Piping its output to a file creates a single json file containing all fetched"
+  echo "    transformation revisions. See -d parameter for details."
+  echo
+  echo "    By supplying url query parameters as described in the examples at the beginning, only"
+  echo "    a part of all available trafo revs can be fetched. See the openapi documentation"
+  echo "    of the backend /api/transformations GET endpoint for available parameters."
+  echo
+  echo "  PUSH / IMPORT / UPLOAD"
+  echo "    The push subcommand uploads / imports transformation revisions (in)to the hetida"
+  echo "    designer backend using curl, handling auth if necessary. If an export directory"
+  echo "    is set it will gather the json files there for the upload:"
+  echo
+  echo "      $0 push -d -d EXPORT_DIRECTORY"
+  echo
+  echo "    Otherwise it expects a path to a json file containing a json array of transformation"
+  echo "    revisions as first argument:"
+  echo
+  echo "      $0 push ./exported_trafos.json"
+  echo
+  echo "    Similarly to the fetch subcommand, by supplying url query parameters, only"
+  echo "    a part of all provided trafo revs will be imported. See the openapi documentation"
+  echo "    of the backend /api/transformations PUT endpoint for available parameters."
+  echo
+  echo "  MAINTENANCE"
+  echo "    These subcommands correspond to the hd backend api maintenance endpoints."
+  echo "    All maintenance subcommands require a non-zero length alphanumeric maintenance"
+  echo "    secret to be set at both server and client side:"
+  echo "      * server side: configuration of hd backend service (HD_MAINTENANCE_SECRET)"
+  echo "      * client side: via -m / --maintenance-secret CLI parameters or environment"
+  echo "        variable (HDCTL_MAINTENANCE_SECRET or MAINTENANCE_SECRET in env file)"
+  echo
+  echo "    See https://github.com/hetida/hetida-designer/blob/release/docs/cleanup.md"
+  echo "    or the OpenAPI docs of a started hd backend service for details on what"
+  echo "    they do exactly."
+  echo
+  echo "    Again, query parameters can be provided as described above for fetch and push."
+  echo
+  echo "    Maintenance subcommands:"
+  echo
+  echo "      $0 deprecate_all_but_latest_per_group"
+  echo
+  echo ""
+  echo "      $0 delete_drafts"
+  echo "      $0 delete_unused_deprecated"
+  echo "      $0 purge"
+  echo "      $0 deploy_base_trafos"
+  echo "      $0 autoimport"
+  echo
 }
 
 help() {
-    usage
+  usage
 }
 
 ###############################################################################
@@ -375,13 +1044,13 @@ help() {
 ###############################################################################
 
 reverse_string() {
-    # pipe a string into this function to reverse it!
-    var="$(cat)" # read from stdin
-    len="${#var}"
-    i=0
-    rev=""
-    while ((i < len)); do rev="${var:i++:1}$rev"; done
-    echo "$rev"
+  # pipe a string into this function to reverse it!
+  var="$(cat)" # read from stdin
+  len="${#var}"
+  i=0
+  rev=""
+  while ((i < len)); do rev="${var:i++:1}$rev"; done
+  echo "$rev"
 }
 
 ###############################################################################
@@ -391,75 +1060,75 @@ reverse_string() {
 ###############################################################################
 
 get_token_response() {
-    curl_args=()
-    if [[ $VERIFY_AUTH_URL = false ]]; then
-        curl_args+=("--insecure")
-    fi
+  curl_args=()
+  if [[ $VERIFY_AUTH_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
 
-    curl_args+=("-d" "client_id=$CLIENT_ID")
+  curl_args+=("-d" "client_id=$CLIENT_ID")
 
-    if [[ -n "$USERNAME" ]]; then
-        _debug "Using password credential grant mode."
-        curl_args+=("-d" 'grant_type=password' "-d" "username=$USERNAME" "-d" "password=$PASSWORD")
-    else
-        _debug "Using client credential grant mode"
-        curl_args+=("-d" 'grant_type=client_credentials' "-d" "client_secret=$CLIENT_SECRET")
-    fi
+  if [[ -n "$USERNAME" ]]; then
+    _debug "Using password credential grant mode."
+    curl_args+=("-d" 'grant_type=password' "-d" "username=$USERNAME" "-d" "password=$PASSWORD")
+  else
+    _debug "Using client credential grant mode"
+    curl_args+=("-d" 'grant_type=client_credentials' "-d" "client_secret=$CLIENT_SECRET")
+  fi
 
-    curl -s "${curl_args[@]}" "$AUTH_URL/realms/$REALM/protocol/openid-connect/token"
+  curl -s "${curl_args[@]}" "$AUTH_URL/realms/$REALM/protocol/openid-connect/token"
 }
 
 extract_access_token() {
-    no_space_and_newline="$(echo "$1" | tr -d ' ' | tr -d '\n')"
-    _debug "$no_space_and_newline"
-    removed_prefix="${no_space_and_newline#*\"access_token\":\"}"
-    ACCESS_TOKEN="$(echo "$removed_prefix" | cut -d '"' -f 1)"
+  no_space_and_newline="$(echo "$1" | tr -d ' ' | tr -d '\n')"
+  _debug "$no_space_and_newline"
+  removed_prefix="${no_space_and_newline#*\"access_token\":\"}"
+  ACCESS_TOKEN="$(echo "$removed_prefix" | cut -d '"' -f 1)"
 }
 
 extract_expiration() {
-    no_space_and_newline="$(echo "$1" | tr -d ' ' | tr -d '\n')"
-    _debug "$no_space_and_newline"
-    removed_prefix="${no_space_and_newline#*\"expires_in\":}"
-    echo "$removed_prefix" | cut -d ',' -f 1 | cut -d '}' -f 1
+  no_space_and_newline="$(echo "$1" | tr -d ' ' | tr -d '\n')"
+  _debug "$no_space_and_newline"
+  removed_prefix="${no_space_and_newline#*\"expires_in\":}"
+  echo "$removed_prefix" | cut -d ',' -f 1 | cut -d '}' -f 1
 }
 
 set_expiration_epoch() {
-    local token_resp
-    token_resp="$1"
-    local expires_in
-    expires_in="$(extract_expiration "$token_resp")"
-    issue_epoch=$(date +%s)
-    EXPIRATION_EPOCH=$(($issue_epoch + $expires_in - 10)) # 10 seconds buffer
+  local token_resp
+  token_resp="$1"
+  local expires_in
+  expires_in="$(extract_expiration "$token_resp")"
+  issue_epoch=$(date +%s)
+  EXPIRATION_EPOCH=$(($issue_epoch + $expires_in - 10)) # 10 seconds buffer
 }
 
 get_access_token() {
-    local token_resp
-    token_resp="$(get_token_response)"
-    set_expiration_epoch "$token_resp"
-    extract_access_token "$token_resp"
+  local token_resp
+  token_resp="$(get_token_response)"
+  set_expiration_epoch "$token_resp"
+  extract_access_token "$token_resp"
 }
 
 check_expiration() {
-    if (($(date +%s) > $EXPIRATION_EPOCH)); then
-        return 1
-    fi
-    return 0
+  if (($(date +%s) > $EXPIRATION_EPOCH)); then
+    return 1
+  fi
+  return 0
 }
 
 ensure_access_token() {
-    if [[ -n "$DIRECT_ACCESS_TOKEN" ]]; then
-        _debug "Using directly provided access token. Expiration unknown!"
-        ACCESS_TOKEN="$DIRECT_ACCESS_TOKEN"
-        return
-    elif [[ -z "$AUTH_URL" ]]; then
-        _debug "No auth configured (empty auth url). Not setting token."
-        return
-    elif [[ -z "$ACCESS_TOKEN" ]] || ! check_expiration; then
-        _info "Need to get/renew access token."
-        get_access_token
-    else
-        _debug "Access still token okay."
-    fi
+  if [[ -n "$DIRECT_ACCESS_TOKEN" ]]; then
+    _debug "Using directly provided access token. Expiration unknown!"
+    ACCESS_TOKEN="$DIRECT_ACCESS_TOKEN"
+    return
+  elif [[ -z "$AUTH_URL" ]]; then
+    _debug "No auth configured (empty auth url). Not setting token."
+    return
+  elif [[ -z "$ACCESS_TOKEN" ]] || ! check_expiration; then
+    _info "Need to get/renew access token."
+    get_access_token
+  else
+    _debug "Access still token okay."
+  fi
 }
 
 ###############################################################################
@@ -471,10 +1140,10 @@ ensure_access_token() {
 ##################### ~=~ maintenance helper functions ~=~ ####################
 
 _ensure_maintenance_secret() {
-    if [[ -z "$MAINTENANCE_SECRET" ]]; then
-        _log_error "Setting maintenance secret required for requested subcommand! Aborting."
-        exit 1
-    fi
+  if [[ -z "$MAINTENANCE_SECRET" ]]; then
+    _log_error "Setting maintenance secret required for requested subcommand! Aborting."
+    exit 1
+  fi
 }
 
 ######################### ~=~ maintenance actions ~=~ #########################
@@ -486,38 +1155,38 @@ _ensure_maintenance_secret() {
 
 #     Note that this has nothing to to with version tags or any versioning scheme!
 deprecate_all_but_latest_per_group() {
-    _setup "${@}"
-    _ensure_maintenance_secret
-    ensure_access_token
+  _setup "${@}"
+  _ensure_maintenance_secret
+  ensure_access_token
 
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
-    fi
-    curl "${curl_args[@]}" -X POST \
-        -H "Authorization: Bearer $ACCESS_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
-        "$HD_BACKEND_API_URL/maintenance/deprecate_all_but_latest_per_group$QUERY_URL_APPEND" \
-        "${REMAINING_ARGS[@]}"
+  curl_args=()
+  if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
+  curl "${curl_args[@]}" -X POST \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
+    "$HD_BACKEND_API_URL/maintenance/deprecate_all_but_latest_per_group$QUERY_URL_APPEND" \
+    "${REMAINING_ARGS[@]}"
 }
 
 # Delete all transformation revisions with state DRAFT
 delete_drafts() {
-    _setup "${@}"
-    _ensure_maintenance_secret
-    ensure_access_token
+  _setup "${@}"
+  _ensure_maintenance_secret
+  ensure_access_token
 
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
-    fi
-    curl "${curl_args[@]}" -X POST \
-        -H "Authorization: Bearer $ACCESS_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
-        "$HD_BACKEND_API_URL/maintenance/delete_drafts$QUERY_URL_APPEND" \
-        "${REMAINING_ARGS[@]}"
+  curl_args=()
+  if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
+  curl "${curl_args[@]}" -X POST \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
+    "$HD_BACKEND_API_URL/maintenance/delete_drafts$QUERY_URL_APPEND" \
+    "${REMAINING_ARGS[@]}"
 }
 
 # Delete all unused deprecated transformation revisions
@@ -528,20 +1197,20 @@ delete_drafts() {
 #     This handles nesting, i.e. a deprecated trafo rev will not be deleted if it is used indirectly
 #     across multiple nesting levels in a workflow which is not deprecated.
 delete_unused_deprecated() {
-    _setup "${@}"
-    _ensure_maintenance_secret
-    ensure_access_token
+  _setup "${@}"
+  _ensure_maintenance_secret
+  ensure_access_token
 
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
-    fi
-    curl "${curl_args[@]}" -X POST \
-        -H "Authorization: Bearer $ACCESS_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
-        "$HD_BACKEND_API_URL/maintenance/delete_unused_deprecated$QUERY_URL_APPEND" \
-        "${REMAINING_ARGS[@]}"
+  curl_args=()
+  if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
+  curl "${curl_args[@]}" -X POST \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
+    "$HD_BACKEND_API_URL/maintenance/delete_unused_deprecated$QUERY_URL_APPEND" \
+    "${REMAINING_ARGS[@]}"
 }
 
 # Purge and reinstall base components/workflows
@@ -550,20 +1219,20 @@ delete_unused_deprecated() {
 #     components and workflows present in the running backend instance's image at the
 #     default path.
 purge() {
-    _setup "${@}"
-    _ensure_maintenance_secret
-    ensure_access_token
+  _setup "${@}"
+  _ensure_maintenance_secret
+  ensure_access_token
 
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
-    fi
-    curl "${curl_args[@]}" -X POST \
-        -H "Authorization: Bearer $ACCESS_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
-        "$HD_BACKEND_API_URL/maintenance/purge$QUERY_URL_APPEND" \
-        "${REMAINING_ARGS[@]}"
+  curl_args=()
+  if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
+  curl "${curl_args[@]}" -X POST \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
+    "$HD_BACKEND_API_URL/maintenance/purge$QUERY_URL_APPEND" \
+    "${REMAINING_ARGS[@]}"
 }
 
 # Trigger deployment of base transformations from the running backend
@@ -571,20 +1240,20 @@ purge() {
 # * allow_overwrite_released
 # * update_component_code
 deploy_base_trafos() {
-    _setup "${@}"
-    _ensure_maintenance_secret
-    ensure_access_token
+  _setup "${@}"
+  _ensure_maintenance_secret
+  ensure_access_token
 
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
-    fi
-    curl "${curl_args[@]}" -X POST \
-        -H "Authorization: Bearer $ACCESS_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
-        "$HD_BACKEND_API_URL/maintenance/deploy_base_trafos$QUERY_URL_APPEND" \
-        "${REMAINING_ARGS[@]}"
+  curl_args=()
+  if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
+  curl "${curl_args[@]}" -X POST \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
+    "$HD_BACKEND_API_URL/maintenance/deploy_base_trafos$QUERY_URL_APPEND" \
+    "${REMAINING_ARGS[@]}"
 }
 
 # Trigger autoimport
@@ -592,20 +1261,20 @@ deploy_base_trafos() {
 # note that each import is configured by accompagniying config json file, so
 # this has no query params
 autoimport() {
-    _setup "${@}"
-    _ensure_maintenance_secret
-    ensure_access_token
+  _setup "${@}"
+  _ensure_maintenance_secret
+  ensure_access_token
 
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
-    fi
-    curl "${curl_args[@]}" -X POST \
-        -H "Authorization: Bearer $ACCESS_TOKEN" \
-        -H "Content-Type: application/json" \
-        -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
-        "$HD_BACKEND_API_URL/maintenance/autoimport$QUERY_URL_APPEND" \
-        "${REMAINING_ARGS[@]}"
+  curl_args=()
+  if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
+  curl "${curl_args[@]}" -X POST \
+    -H "Authorization: Bearer $ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"maintenance_secret":"'"$MAINTENANCE_SECRET"'"}' \
+    "$HD_BACKEND_API_URL/maintenance/autoimport$QUERY_URL_APPEND" \
+    "${REMAINING_ARGS[@]}"
 }
 
 ###############################################################################
@@ -615,52 +1284,78 @@ autoimport() {
 ###############################################################################
 
 _import_multi_trafo_json_file() {
-    _file_path="$1"
-    shift
+  _file_path="$1"
+  shift
 
-    ensure_access_token
+  ensure_access_token
 
-    # put to /transformations endpoint
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
-    fi
-    curl "${curl_args[@]}" -X PUT -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" -d @"$_file_path" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${@}"
+  # put to /transformations endpoint
+  curl_args=()
+  if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
+  curl "${curl_args[@]}" -X PUT -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" -d @"$_file_path" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${@}"
+}
+
+# encodes as json string, outputs result with "" around
+_json_encode_str() {
+  printf "%s" "$1" | jq -R -s '.'
 }
 
 _import_from_dir() {
-    # load all trafos into one big json
-    _all_trafos_json='[  ' # 2 extra spaces, see comma + newline removal below
-    for f in $(find "$EXPORT_DIRECTORY" -name '*.json'); do
-        _all_trafos_json+="$(cat "$f")"
-        _all_trafos_json+=","$'\n' # add comma and newline
-    done
-    _all_trafos_json="${_all_trafos_json::-2}" # remove last comma and newline
-    _all_trafos_json+=']'
+  # load all trafos into one big json
+  _all_trafos_json='[  ' # 2 extra spaces, see comma + newline removal below
 
-    ensure_access_token
+  # trafos from json files
+  # shellcheck disable=SC2044
+  for f in $(find "$EXPORT_DIRECTORY" -name '*.json'); do
+    _all_trafos_json+="$(cat "$f")"
+    _all_trafos_json+=","$'\n' # add comma and newline
+  done
 
-    local _temp_file
-    _temp_file="$(mktemp)"
-    echo "$_all_trafos_json" >"$_temp_file"
+  # from py files
+  # shellcheck disable=SC2044
+  for f in $(find "$EXPORT_DIRECTORY" -name '*.py'); do
+    if [[ "$(basename "$f")" != "__init__.py" ]] && [[ "$(basename "$f")" != "hdutils.py" ]]; then
+      _debug "handle py file $f"
 
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
+      # only ensure jq if it is needed, i.e. only if py files need
+      # to be handled:
+      _ensure_jq_once
+
+      local py_file_content
+      py_file_content="$(cat "$f")"
+      _all_trafos_json+="$(_json_encode_str "$py_file_content")"
+      _all_trafos_json+=","$'\n' # add comma and newline
     fi
+  done
 
-    curl "${curl_args[@]}" -X PUT -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" -d @"$_temp_file" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${@}"
+  _all_trafos_json="${_all_trafos_json::-2}" # remove last comma and newline
+  _all_trafos_json+=']'
 
-    rm "$_temp_file"
+  ensure_access_token
+
+  local _temp_file
+  _temp_file="$(mktemp)"
+  echo "$_all_trafos_json" >"$_temp_file"
+
+  curl_args=()
+  if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
+
+  curl "${curl_args[@]}" -X PUT -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" -d @"$_temp_file" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${@}"
+
+  rm "$_temp_file"
 }
 
 push() {
-    _setup "${@}"
-    if [[ -z "$EXPORT_DIRECTORY" ]]; then
-        _import_multi_trafo_json_file "${REMAINING_ARGS[@]}"
-    else
-        _import_from_dir "${REMAINING_ARGS[@]}"
-    fi
+  _setup "${@}"
+  if [[ -z "$EXPORT_DIRECTORY" ]]; then
+    _import_multi_trafo_json_file "${REMAINING_ARGS[@]}"
+  else
+    _import_from_dir "${REMAINING_ARGS[@]}"
+  fi
 }
 
 ###############################################################################
@@ -671,79 +1366,312 @@ push() {
 
 # Write a json array of all trafos to stdout
 _export_to_json() {
-    ensure_access_token
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
-    fi
+  ensure_access_token
+  curl_args=()
+  if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
 
-    curl "${curl_args[@]}" -X GET -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" -G "${REMAINING_ARGS[@]}"
+  curl "${curl_args[@]}" -X GET -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" -G "${REMAINING_ARGS[@]}"
 }
 
 ### Export into dir
 _slugify() {
-    awk '{
+  awk '{
               gsub(/[äÄ]/,"a");
               gsub(/[öÖ]/,"o");
               gsub(/[üÜ]/,"u");
-              gsub(/[^0-9a-zA-Z -]/,""); 
-              gsub(/^[ \t\r\n]+/, ""); 
-              gsub(/[ \t\r\n]+$/, ""); 
+              gsub(/[^0-9a-zA-Z -]/,"");
+              gsub(/^[ \t\r\n]+/, "");
+              gsub(/[ \t\r\n]+$/, "");
               gsub(/[ ]+/,"_");
               print tolower($0);
         }'
 }
 
 _slugify_arg() {
-    printf "%s" "$1" | _slugify
+  printf "%s" "$1" | _slugify
 }
 
-_subpath() {
-    _id="$1"
-    _name="$2"
-    _category="$3"
-    _type="$4"
-    _version_tag="$5"
+_subpath_no_slugify() {
+  _id="$1"
+  _name="$2"
+  _category="$3"
+  _type="$4"
+  _version_tag="$5"
+  _extension="${6:-json}"
 
-    printf "%s" "${_type,,}"s/"$(_slugify_arg "$_category")"/"$(_slugify_arg "$_name")"_"$(_slugify_arg "$_version_tag")"_"$_id".json
+  printf "%s" "$_type"s/"$_category"/"$_name"_"$_version_tag"_"$_id"."$_extension"
+}
+
+_output_hdutils_py_content() {
+  echo "$HDUTILS_PY_CONTENT"
+}
+
+_output_pytest_ini_content() {
+  echo "$PYTEST_INI_CONTENT"
 }
 
 _export_to_dir() {
-    _ensure_jq
-    ensure_access_token
-    curl_args=()
-    if [[ $VERIFY_BACKEND_API_URL = false ]]; then
-        curl_args+=("--insecure")
+  _ensure_jq
+  ensure_access_token
+  curl_args=()
+  if [[ $VERIFY_BACKEND_API_URL = false ]]; then
+    curl_args+=("--insecure")
+  fi
+
+  mkdir -p "$EXPORT_DIRECTORY"
+  _output_hdutils_py_content >"$EXPORT_DIRECTORY"/hdutils.py
+  _output_pytest_ini_content >"$EXPORT_DIRECTORY"/pytest.ini
+
+  # echo curl "${curl_args[@]}" -X GET -G -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${REMAINING_ARGS[@]}"
+  # write each trafo revision to its respective directory
+
+  file_no=0
+
+  for row in $(curl "${curl_args[@]}" -X GET -G -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${REMAINING_ARGS[@]}" | jq -r '.[] | @base64'); do
+    file_no=$(($file_no + 1))
+    start=$(date +%s%N)
+    decoded_row="$(echo ${row} | base64 --decode)"
+
+    # shellcheck disable=SC2046,SC2005
+    read _id _name _category _type _version_tag < <(echo $(echo "$decoded_row" | jq -r '.id, .name, .category, .type, .version_tag' | _slugify))
+
+    #_id="$(echo "$decoded_row" | jq -r '.id')"
+    #_name="$(echo "$decoded_row" | jq -r '.name')"
+    # _category="$(echo "$decoded_row" | jq -r '.category')"
+    #_type="$(echo "$decoded_row" | jq -r '.type')"
+    #_version_tag="$(echo "$decoded_row" | jq -r '.version_tag')"
+
+    local extension
+    if $EXPORT_COMPONENTS_AS_PY_FILES && [[ "$_type" == "component" ]]; then
+      extension="py"
+    else
+      extension="json"
+    fi
+    _file_path="$EXPORT_DIRECTORY"/"$(_subpath_no_slugify "$_id" "$_name" "$_category" "$_type" "$_version_tag" "$extension")"
+
+    echo "Extracting $_file_path"
+
+    _debug "Writing file to $_file_path"
+    mkdir -p "$(dirname "$_file_path")"
+
+    # actual extraction into file
+    if [[ "$extension" == "json" ]]; then
+      echo "$decoded_row" | jq >"$_file_path"
+    elif [[ "$extension" == "py" ]]; then
+      touch "$EXPORT_DIRECTORY/components/__init__.py"
+      touch "$(dirname "$_file_path")"/__init__.py
+      echo "$decoded_row" | jq -r '.content' >"$_file_path"
     fi
 
-    mkdir -p "$EXPORT_DIRECTORY"
+    end=$(date +%s%N)
 
-    # write each trafo revision to its respective directory
-    for row in $(curl "${curl_args[@]}" -X GET -G -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" "$HD_BACKEND_API_URL/transformations$QUERY_URL_APPEND" "${REMAINING_ARGS[@]}" | jq -r '.[] | @base64'); do
-        decoded_row="$(echo ${row} | base64 --decode)"
-
-        _id="$(echo "$decoded_row" | jq -r '.id')"
-        _name="$(echo "$decoded_row" | jq -r '.name')"
-        _category="$(echo "$decoded_row" | jq -r '.category')"
-        _type="$(echo "$decoded_row" | jq -r '.type')"
-        _version_tag="$(echo "$decoded_row" | jq -r '.version_tag')"
-
-        _file_path="$EXPORT_DIRECTORY"/"$(_subpath "$_id" "$_name" "$_category" "$_type" "$_version_tag")"
-
-        _debug "Writing file to $_file_path"
-        mkdir -p "$(dirname "$_file_path")"
-        echo "${row}" | base64 --decode | jq >"$_file_path"
-    done
+    runtime=$(((end - start) / 1000000))
+    _debug $runtime
+  done
+  echo "Extracted $file_no files."
 
 }
 
 fetch() {
-    _setup "${@}"
-    if [[ -z "$EXPORT_DIRECTORY" ]]; then
-        _export_to_json
-    else
-        _export_to_dir
+  _setup "${@}"
+  if [[ -z "$EXPORT_DIRECTORY" ]]; then
+    _export_to_json
+  else
+    _export_to_dir
+  fi
+}
+
+###############################################################################
+#                                                                             #
+#                                Sync commands                                #
+#                                                                             #
+###############################################################################
+
+_init_sync_instance() {
+  local sync_instance="$1"
+  if [[ -z "$sync_instance" ]]; then
+    _log_error "Missing sync instance name. Aborting."
+    exit 1
+  fi
+
+  local instance_file="${sync_instance}.hd-instance"
+  local instance_creds_file="${sync_instance}.hd-creds"
+  local instance_creds_file_stub="${sync_instance}.hd-creds.stub"
+
+  if [[ -f "$instance_file" ]]; then
+    _log_error "Instance file $instance_file already exists. Aborting."
+    exit 1
+  fi
+
+  local instance_file_content
+  instance_file_content=$(
+    cat <<END_HEREDOC
+HD_BACKEND_API_URL=
+VERIFY_BACKEND_API_URL=true
+
+
+# Auth settings. Actual credentials should be configured in the
+# accompanying .hd-creds file.
+
+AUTH_URL=
+VERIFY_AUTH_URL=true
+REALM=
+CLIENT_ID=
+
+
+EXPORT_DIRECTORY="./$sync_instance-trafos"
+EXPORT_COMPONENTS_AS_PY_FILES=true
+
+
+# Options controlling sync behaviour.
+# for example you may add
+# id=... or category=... or category_prefix=...
+# url query params to filter which transformations to sync.
+
+PULL_QUERY_URL_APPEND='?include_dependencies=true&include_deprecated=false&update_component_code=true&expand_component_code=true'
+PUSH_QUERY_URL_APPEND='?include_dependencies=true&allow_overwrite_released=false'
+
+PUSH_ADDITIONAL_ARGUMENTS=()
+PULL_ADDITIONAL_ARGUMENTS=()
+
+END_HEREDOC
+  )
+  echo "$instance_file_content" >"$instance_file"
+
+  local cred_stub_file_content
+  cred_stub_file_content=$(
+    cat <<END_HEREDOC
+MAINTENANCE_SECRET=
+USERNAME=
+PASSWORD=
+CLIENT_SECRET=
+
+END_HEREDOC
+  )
+  echo "$cred_stub_file_content" >"$instance_creds_file_stub"
+
+  echo "Created files. Next steps:"
+  echo ">> 1.) Edit settings in the instance file $instance_file accordingly."
+  echo ">> 2.) Edit the credential stub file $instance_creds_file_stub to only contain entries"
+  echo ">>     relevant to the authentification method used by the configured hd instance."
+  echo ">>     Do not enter passwords yet!"
+  echo ">> 3.) Copy the stub file to $instance_creds_file and actually enter passwords"
+  echo ">> 4.) Add the cred file (containing passwords) to your gitignore!"
+  echo ">> 5.) Add the instance file and the credential stub file to your git repo."
+  echo ""
+  echo "After that start syncing using the pull and push sync commands:"
+  echo "    hdctl sync pull $sync_instance"
+  echo "    hdctl sync push $sync_instance"
+}
+
+_load_instance_files() {
+  local sync_instance="$1"
+
+  if [[ -z "$sync_instance" ]]; then
+    _error "No instance specified. Aborting"
+    exit 1
+  fi
+
+  local instance_file="${sync_instance}.hd-instance"
+  local instance_creds_file="${sync_instance}.hd-creds"
+
+  # shellcheck disable=SC1090
+  source "$instance_file"
+  # shellcheck disable=SC1090
+  source "$instance_creds_file"
+}
+
+sync() {
+  local sync_command="$1"
+
+  if [[ "$sync_command" != "push" ]] && [[ "$sync_command" != "pull" ]] && [[ "$sync_command" != "init" ]]; then
+    _log_error "Only allowed sync actions are pull, push and init. Got $sync_command instead. Aborting"
+    exit 1
+  fi
+
+  local sync_instance="$2"
+
+  if [[ -z "$sync_instance" ]]; then
+    _log_error "no hd instance specified. Aborting."
+    exit 1
+  fi
+
+  shift
+  shift
+
+  if [[ "$sync_command" == "init" ]]; then
+    _init_sync_instance "$sync_instance"
+    return 0
+  fi
+
+  _load_instance_files "$sync_instance"
+
+  if [[ "$sync_command" == "pull" ]] && [[ "$1" == "to" ]] && [[ -n "$2" ]]; then
+
+    # pull from instance to local dir of another instance
+
+    shift
+    shift
+    local other_instance_file="$2".hd-instance
+
+    # overwrite the export directory global variable with the dir from the other instance
+    EXPORT_DIRECTORY="$(value_from_env_file "EXPORT_DIRECTORY" "$other_instance_file")"
+
+  elif [[ "$sync_command" == "push" ]] && [[ "$1" == "from" ]] && [[ -n "$2" ]]; then
+    # push to instance from local dir of another instance
+    local other_instance_file="$2".hd-instance
+
+    # overwrite the export directory global variable with the dir from the other instance
+    EXPORT_DIRECTORY="$(value_from_env_file "EXPORT_DIRECTORY" "$other_instance_file")"
+
+    shift
+    shift
+  fi
+
+  _initialize_variables
+
+  local additional_arguments=()
+  if [[ "$sync_command" == "pull" ]]; then
+    if [[ -n "$PULL_QUERY_URL_APPEND" ]]; then
+      QUERY_URL_APPEND="$PULL_QUERY_URL_APPEND"
     fi
+    if [[ -n "$PULL_ADDITIONAL_ARGUMENTS" ]]; then
+      additional_arguments=("${PULL_ADDITIONAL_ARGUMENTS[@]}")
+    fi
+  fi
+
+  if [[ "$sync_command" == "push" ]]; then
+    if [[ -n "$PUSH_QUERY_URL_APPEND" ]]; then
+      QUERY_URL_APPEND="$PUSH_QUERY_URL_APPEND"
+    fi
+    if [[ -n "$PUSH_ADDITIONAL_ARGUMENTS" ]]; then
+      additional_arguments=("${PUSH_ADDITIONAL_ARGUMENTS[@]}")
+    fi
+  fi
+
+  _parse_global_options "${additional_arguments[@]}" "${@}"
+  _validate_global_parameters
+
+  # Additionally required validations for syncing
+
+  if [[ -z "$EXPORT_DIRECTORY" ]]; then
+    _log_error "No export directory specified. Aborting."
+    exit 1
+  fi
+
+  # Now we are ready to actually run the requested sync command
+
+  if [[ "$sync_command" == "pull" ]]; then
+    # clear up directory first
+    rm -Rf "$EXPORT_DIRECTORY"
+
+    _export_to_dir
+  elif [[ "$sync_command" == "push" ]]; then
+    _import_from_dir
+  fi
+
 }
 
 ###############################################################################
@@ -752,191 +1680,207 @@ fetch() {
 #                                                                             #
 ###############################################################################
 
-REMAINING_ARGS=""
+REMAINING_ARGS=()
 
 # must be called with all command line arguments
 _obtain_env_file_config() {
-    ENV_FILE_PATH="${HDCTL_ENV_FILE:-"./hdctl.env"}"
+  ENV_FILE_PATH="${HDCTL_ENV_FILE:-"./hdctl.env"}"
 
-    while [[ "$#" -gt 0 ]]; do case $1 in
-        -e | --env-file)
-            ENV_FILE_PATH="$2"
-            shift
-            shift
-            break
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            # ignore everything else
-            shift
-            ;;
-        esac done
+  while [[ "$#" -gt 0 ]]; do case $1 in
+    -e | --env-file)
+      ENV_FILE_PATH="$2"
+      shift
+      shift
+      break
+      ;;
+    -i | --instance)
+      INSTANCE_NAME="$2"
+      shift
+      shift
+      break
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      # ignore everything else
+      shift
+      ;;
+    esac done
 }
 
 _source_env_file() {
-    if [[ -z "$ENV_FILE_PATH" ]]; then
-        _debug "Env file path explicitely unset!"
-    elif [[ ! -e "$ENV_FILE_PATH" ]]; then
-        if [[ "$ENV_FILE_PATH" == "./hdctl.env" ]]; then
-            _debug "No env file at default path. Continue without sourcing"
-        else
-            _log_error "Explicit env file path set, but could not find file! Aborting."
-            exit 1
-        fi
+  if [[ -z "$ENV_FILE_PATH" ]]; then
+    _debug "Env file path explicitely unset!"
+  elif [[ ! -e "$ENV_FILE_PATH" ]]; then
+    if [[ "$ENV_FILE_PATH" == "./hdctl.env" ]]; then
+      _debug "No env file at default path. Continue without sourcing"
     else
-        _debug "Sourcing env file $ENV_FILE_PATH."
-        # shellcheck disable=SC1090
-        source "$ENV_FILE_PATH"
+      _log_error "Explicit env file path set, but could not find file! Aborting."
+      exit 1
     fi
+  else
+    _debug "Sourcing env file $ENV_FILE_PATH."
+    # shellcheck disable=SC1090
+    source "$ENV_FILE_PATH"
+  fi
 }
 
 _initialize_variables() {
-    # initialize with increasing priority
-    # * from defaults
-    # * from env file variables of form VARIABLE_NAME
-    # * from prefixed environment variables, i.e. of form HDCTL_VARIABLE_NAME
+  # initialize with increasing priority
+  # * from defaults
+  # * from env file variables of form VARIABLE_NAME
+  # * from prefixed environment variables, i.e. of form HDCTL_VARIABLE_NAME
 
-    SILENT="${HDCTL_SILENT:-"${SILENT:-false}"}"
-    VERBOSITY="${HDCTL_VERBOSITY:-"${VERBOSITY:-"info"}"}"
+  SILENT="${HDCTL_SILENT:-"${SILENT:-false}"}"
+  VERBOSITY="${HDCTL_VERBOSITY:-"${VERBOSITY:-"info"}"}"
 
-    ##### Content
-    EXPORT_DIRECTORY="${HDCTL_EXPORT_DIRECTORY:-"${EXPORT_DIRECTORY:-""}"}"
+  ##### Content
+  EXPORT_DIRECTORY="${HDCTL_EXPORT_DIRECTORY:-"${EXPORT_DIRECTORY:-""}"}"
+  EXPORT_COMPONENTS_AS_PY_FILES="${HDCTL_EXPORT_COMPONENTS_AS_PY_FILES:-"${EXPORT_COMPONENTS_AS_PY_FILES:-"true"}"}"
 
-    ##### HD backend
+  ##### HD backend
 
-    HD_BACKEND_API_URL="${HDCTL_HD_BACKEND_API_URL:-"${HD_BACKEND_API_URL:-"http://localhost/api"}"}"
-    VERIFY_BACKEND_API_URL="${HDCTL_VERIFY_BACKEND_API_URL:-"${VERIFY_BACKEND_API_URL:-true}"}"
-    QUERY_URL_APPEND=""
+  HD_BACKEND_API_URL="${HDCTL_HD_BACKEND_API_URL:-"${HD_BACKEND_API_URL:-"http://localhost/api"}"}"
+  VERIFY_BACKEND_API_URL="${HDCTL_VERIFY_BACKEND_API_URL:-"${VERIFY_BACKEND_API_URL:-true}"}"
+  QUERY_URL_APPEND="${HDCTL_QUERY_URL_APPEND:-"${QUERY_URL_APPEND:-""}"}"
 
-    ##### Authentication
-    DIRECT_ACCESS_TOKEN="${HDCTL_DIRECT_ACCESS_TOKEN:-"${DIRECT_ACCES_TOKEN:-""}"}"
-    AUTH_URL="${HDCTL_AUTH_URL:-"${AUTH_URL:-""}"}"
-    USERNAME="${HDCTL_USERNAME:-"${USERNAME:-""}"}"
-    PASSWORD="${HDCTL_PASSWORD:-"${PASSWORD:-""}"}"
-    CLIENT_ID="${HDCTL_CLIENT_ID:-"${CLIENT_ID:-""}"}"
-    CLIENT_SECRET="${HDCTL_CLIENT_SECRET:-"${CLIENT_SECRET:-""}"}"
-    REALM="${HDCTL_REALM:-"${REALM:-"hetida"}"}"
-    VERIFY_AUTH_URL="${HDCTL_VERIFY_AUTH_URL:-"${VERIFY_AUTH_URL:-true}"}"
+  ##### Authentication
+  DIRECT_ACCESS_TOKEN="${HDCTL_DIRECT_ACCESS_TOKEN:-"${DIRECT_ACCES_TOKEN:-""}"}"
+  AUTH_URL="${HDCTL_AUTH_URL:-"${AUTH_URL:-""}"}"
+  USERNAME="${HDCTL_USERNAME:-"${USERNAME:-""}"}"
+  PASSWORD="${HDCTL_PASSWORD:-"${PASSWORD:-""}"}"
+  CLIENT_ID="${HDCTL_CLIENT_ID:-"${CLIENT_ID:-""}"}"
+  CLIENT_SECRET="${HDCTL_CLIENT_SECRET:-"${CLIENT_SECRET:-""}"}"
+  REALM="${HDCTL_REALM:-"${REALM:-"hetida"}"}"
+  VERIFY_AUTH_URL="${HDCTL_VERIFY_AUTH_URL:-"${VERIFY_AUTH_URL:-true}"}"
 
-    ##### Maintenance authorization
-    MAINTENANCE_SECRET="${HDCTL_MAINTENANCE_SECRET:-"${MAINTENANCE_SECRET:-""}"}"
+  ##### Maintenance authorization
+  MAINTENANCE_SECRET="${HDCTL_MAINTENANCE_SECRET:-"${MAINTENANCE_SECRET:-""}"}"
 }
 
 _parse_global_options() {
 
-    REMAINING_ARGS=()
-    while [[ "$#" -gt 0 ]]; do case $1 in
-        -e | --env-file)
-            ENV_FILE_PATH="$2"
-            shift
-            shift
-            ;;
-        -b | --backend-api-url)
-            HD_BACKEND_API_URL="$2"
-            shift
-            shift
-            ;;
-        --insecure-backend)
-            VERIFY_BACKEND_API_URL=false
-            shift
-            ;;
-        -d | --export-directory)
-            EXPORT_DIRECTORY="$2"
-            shift
-            shift
-            ;;
-        -a | --auth-url)
-            AUTH_URL="$2"
-            shift
-            shift
-            ;;
-        --insecure-auth)
-            VERIFY_AUTH_URL=false
-            shift
-            ;;
-        -t | --access-token)
-            DIRECT_ACCESS_TOKEN="$2"
-            shift
-            shift
-            ;;
-        -r | --realm)
-            REALM="$2"
-            shift
-            shift
-            ;;
-        -c | --client-id)
-            CLIENT_ID="$2"
-            shift
-            shift
-            ;;
-        -s | --client-secret)
-            CLIENT_SECRET="$2"
-            shift
-            shift
-            ;;
-        -m | --maintenance-secret)
-            MAINTENANCE_SECRET="$2"
-            shift
-            shift
-            ;;
-        -p | --url-append)
-            QUERY_URL_APPEND="$2"
-            shift
-            shift
-            ;;
-        -q | --quiet)
-            SILENT=true
-            shift
-            ;;
-        -v | --verbose)
-            VERBOSITY="debug"
-            shift
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            REMAINING_ARGS+=("$1")
-            shift
-            ;;
-            #Unknown parameter appended to REMAINING_ARGS for access by subcommands
-        esac done
-    REMAINING_ARGS=("${REMAINING_ARGS[@]}" "${@}") # concat with remaining arguments
+  REMAINING_ARGS=()
+  while [[ "$#" -gt 0 ]]; do case $1 in
+    -e | --env-file)
+      ENV_FILE_PATH="$2"
+      shift
+      shift
+      ;;
+    -i | --instance)
+      INSTANCE_NAME="$2"
+      shift
+      shift
+      ;;
+    -b | --backend-api-url)
+      HD_BACKEND_API_URL="$2"
+      shift
+      shift
+      ;;
+    --insecure-backend)
+      VERIFY_BACKEND_API_URL=false
+      shift
+      ;;
+    -d | --export-directory)
+      EXPORT_DIRECTORY="$2"
+      shift
+      shift
+      ;;
+    -a | --auth-url)
+      AUTH_URL="$2"
+      shift
+      shift
+      ;;
+    --insecure-auth)
+      VERIFY_AUTH_URL=false
+      shift
+      ;;
+    -t | --access-token)
+      DIRECT_ACCESS_TOKEN="$2"
+      shift
+      shift
+      ;;
+    -r | --realm)
+      REALM="$2"
+      shift
+      shift
+      ;;
+    -c | --client-id)
+      CLIENT_ID="$2"
+      shift
+      shift
+      ;;
+    -s | --client-secret)
+      CLIENT_SECRET="$2"
+      shift
+      shift
+      ;;
+    -m | --maintenance-secret)
+      MAINTENANCE_SECRET="$2"
+      shift
+      shift
+      ;;
+    -p | --url-append)
+      QUERY_URL_APPEND="$2"
+      shift
+      shift
+      ;;
+    -q | --quiet)
+      SILENT=true
+      shift
+      ;;
+    -v | --verbose)
+      VERBOSITY="debug"
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      REMAINING_ARGS+=("$1")
+      shift
+      ;;
+      #Unknown parameter appended to REMAINING_ARGS for access by subcommands
+    esac done
+  REMAINING_ARGS=("${REMAINING_ARGS[@]}" "${@}") # concat with remaining arguments
 }
 
 # must be called with cli arguments
 _params_setup() {
-    _obtain_env_file_config "${@}"
+  _obtain_env_file_config "${@}"
+  if [[ -z "$INSTANCE_NAME" ]]; then
     _source_env_file
-    _initialize_variables
-    _parse_global_options "${@}"
+  else
+    _load_instance_files "$INSTANCE_NAME"
+  fi
+  _initialize_variables
+  _parse_global_options "${@}"
 }
 
 _validate_global_parameters() {
-    # if [[ -n "$AUTH_URL" ]] && [[ -z "$CLIENT_SECRET" ]]; then
-    #     _log_error "Auth Url set but no client secret provided. Please provide a client secret"
-    #     _log_error 'via -s SECRET or an empty auth url via -a "" to deactivate client credential'
-    #     _log_error "auth on the command line. Aborting."
-    #     exit 1
-    # fi
+  # if [[ -n "$AUTH_URL" ]] && [[ -z "$CLIENT_SECRET" ]]; then
+  #     _log_error "Auth Url set but no client secret provided. Please provide a client secret"
+  #     _log_error 'via -s SECRET or an empty auth url via -a "" to deactivate client credential'
+  #     _log_error "auth on the command line. Aborting."
+  #     exit 1
+  # fi
 
-    if [[ -n "$MAINTENANCE_SECRET" ]]; then
-        if [[ ! "$MAINTENANCE_SECRET" =~ ^[a-zA-Z0-9]+$ ]]; then
-            _log_error "Only numbers and alphabet letters allowed for the maintenance secret."
-            exit 1
-        fi
+  if [[ -n "$MAINTENANCE_SECRET" ]]; then
+    if [[ ! "$MAINTENANCE_SECRET" =~ ^[a-zA-Z0-9]+$ ]]; then
+      _log_error "Only numbers and alphabet letters allowed for the maintenance secret."
+      exit 1
     fi
+  fi
 }
 
 # _setup must be called with args
 # typical first function of any subcommand
 _setup() {
-    _params_setup "${@}"
-    _validate_global_parameters
+  _params_setup "${@}"
+  _validate_global_parameters
 }
 
 ###############################################################################
@@ -946,8 +1890,8 @@ _setup() {
 ###############################################################################
 
 _fn_exists() {
-    # Checks whether there exists a variable of type function with the given name.
-    LC_ALL=C type "${1:-}" 2>/dev/null | grep -q 'function'
+  # Checks whether there exists a variable of type function with the given name.
+  LC_ALL=C type "${1:-}" 2>/dev/null | grep -q 'function'
 }
 
 COMMAND=${1:-usage}
@@ -955,11 +1899,11 @@ shift || true
 ARGUMENTS=("${@}")
 
 if [[ "$COMMAND" == "--help" || "$COMMAND" == "-h" ]]; then
-    help
+  help
 fi
 
 if _fn_exists "$COMMAND"; then
-    "$COMMAND" "${ARGUMENTS[@]}"
+  "$COMMAND" "${ARGUMENTS[@]}"
 else
-    usage "No subcommand $COMMAND"
+  usage "No subcommand $COMMAND"
 fi

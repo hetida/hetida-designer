@@ -22,6 +22,7 @@ Further information about developing, deploying, connecting, using and running h
 - [Maintenance](./maintenance.md)
   - [Backup](./backup.md)
   - [Export and Import](./import_export.md)
+  - [Sync and hybrid working](./sync.md)
   - [Base Component/Workflow Deployment](./base_component_deployment.md)
   - [Autoimport](./autoimport.md)
   - [Clean up](./cleanup.md)
