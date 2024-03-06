@@ -11,7 +11,7 @@
 
 <div class="block" mat-dialog-content>
   <form *ngIf="infoForm" [formGroup]="infoForm" autocomplete="off" novalidate>
-    <mat-form-field>
+    <mat-form-field class="noPadding">
       <mat-label>{{ data.transformation.type | titlecase }} name</mat-label>
       <input
         formControlName="name"
@@ -24,7 +24,7 @@
       <mat-error [hdErrorVisual]="infoForm.get('name')"></mat-error>
     </mat-form-field>
 
-    <mat-form-field>
+    <mat-form-field class="noPadding">
       <mat-label>Category</mat-label>
       <input
         formControlName="category"
@@ -45,7 +45,7 @@
       </mat-autocomplete>
     </mat-form-field>
 
-    <mat-form-field>
+    <mat-form-field class="noPadding">
       <mat-label>Short description</mat-label>
       <input
         formControlName="description"
@@ -57,7 +57,7 @@
       <mat-error [hdErrorVisual]="infoForm.get('description')"></mat-error>
     </mat-form-field>
 
-    <mat-form-field>
+    <mat-form-field class="noPadding">
       <mat-label>Tag</mat-label>
       <input
         formControlName="tag"

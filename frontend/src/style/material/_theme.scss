@@ -33,9 +33,17 @@
   // Angular Material overrides
   // TODO(mdc-migration)
   .mat-mdc-form-field {
-    .mat-focus {
+    .mat-focused {
       color: map-get($primary, 700);
     }
+  }
+
+  .mat-mdc-text-field-wrapper {
+    background-color: map_get($secondary, 500) !important;
+  }
+
+  .mat-mdc-form-field-focus-overlay {
+    background-color: unset !important;
   }
 
   .mat-expansion-panel {
@@ -114,7 +122,7 @@
     }
   }
 
-  .mat-tab-labels {
+  .mat-mdc-tab-labels {
     background-color: map-get($secondary, 700);
 
     .mat-icon-svg {
@@ -123,8 +131,8 @@
       }
     }
 
-    .mat-tab-label-active {
-      background-color: map-get($secondary, 500);
+    .mdc-tab-indicator--active {
+      background-color: map-get($secondary, 500) !important;
 
       .mat-icon-svg {
         .cls-1 {

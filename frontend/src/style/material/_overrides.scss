@@ -1,6 +1,6 @@
 @import '../colors';
 
-.mat-tab-body-content {
+.mat-mdc-tab-body-content {
   overflow: hidden !important;
 }
 
@@ -18,19 +18,14 @@
   height: 18px;
 }
 
-.mat-tab-body-wrapper {
+.mat-mdc-tab-body-wrapper {
   width: 100%;
   height: 100%;
 }
 
-.mat-dialog-actions {
-  justify-content: flex-end;
-}
-
 hd-popover-transformation,
 hd-copy-transformation-dialog {
-  /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
-  .mat-form-field-infix {
+  .mat-mdc-form-field-infix {
     display: flex;
     align-items: center;
 
@@ -40,20 +35,10 @@ hd-copy-transformation-dialog {
   }
 }
 
-.mat-form-field--no-fixed-width {
-  /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
-  .mat-form-field-infix {
+.mat-mdc-form-field--no-fixed-width {
+  .mat-mdc-text-field-wrapper {
     width: 100%;
   }
-}
-
-.mat-tab-label-active {
-  opacity: 1 !important;
-}
-
-/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
-.mat-form-field-label-wrapper {
-  overflow: visible !important;
 }
 
 .icon {
@@ -64,33 +49,24 @@ hd-copy-transformation-dialog {
 
 .mat-mdc-form-field {
   width: 100%;
-  /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
-  .mat-form-field-wrapper .mat-form-field-flex .mat-form-field-prefix {
+
+  .mat-mdc-text-field-wrapper
+    .mat-mdc-form-field-flex
+    .mat-mdc-form-field-prefix {
     top: 0;
   }
 
   &.noPadding {
-    /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
-    .mat-form-field-wrapper {
-      padding-bottom: 0;
-      margin: 0;
+    .mat-mdc-text-field-wrapper {
+      padding: 0;
     }
-
-    .mat-form-field-appearance-outline {
-      margin: 0;
-    }
-  }
-  /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
-  .mat-form-field-appearance-standard .mat-form-field-flex {
-    padding-top: 0;
   }
 }
 
-/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
-.mat-form-field-appearance-standard:not(.mat-form-field-disabled)
-  .mat-form-field-flex:hover
-  ~ .mat-form-field-underline
-  .mat-form-field-ripple {
+.mat-form-field-appearance-standard:not(.mat-mdc-form-field-disabled)
+  .mat-mdc-form-field-flex:hover
+  ~ .mat-mdc-form-field-underline
+  .mat-mdc-form-field-ripple {
   opacity: 0 !important;
 }
 
@@ -106,23 +82,24 @@ hd-copy-transformation-dialog {
   margin-bottom: 10px !important;
 }
 
-.mat-tab-header {
-  .mat-tab-label {
+.mat-mdc-tab-header {
+  .mat-mdc-tab {
     height: 33px;
     font-size: 13px;
     padding: 0;
     min-width: 240px;
+    flex-grow: 0 !important;
     &[aria-posinset='1'] {
       min-width: 80px;
     }
-    .mat-tab-label-content {
+    .mdc-tab__content {
       width: 100%;
       padding: 0 5px;
-      .flex-container {
+      .mdc-tab__text-label {
         max-width: 300px;
         width: 100%;
         justify-content: center;
-        .mat-icon-button {
+        .mat-mdc-icon-button {
           width: 24px;
         }
       }
@@ -142,42 +119,50 @@ hd-copy-transformation-dialog {
   }
 }
 
-.mat-snack-bar-container {
+.mat-mdc-snack-bar-container {
   background-color: $hd-pink;
+  --mdc-snackbar-container-color: $hd-pink;
 }
 
 .dark-theme {
-  & .mat-snack-bar-container {
+  & .mat-mdc-snack-bar-container {
     color: rgba($hd-white, 0.7);
+    --mdc-snackbar-supporting-text-color: rgba($hd-white, 0.7);
     background-color: $hd-pink;
+    --mdc-snackbar-container-color: $hd-pink;
   }
 }
 
 // TODO: Remove important flags by increasing the specificity of these classes if possible.
-.mat-raised-button {
+.mat-mdc-raised-button {
   border-radius: 0 !important;
 }
 
-.mat-dialog-container {
+.mdc-dialog__container {
   padding: 0 !important;
 }
 
-.mat-dialog-actions {
-  border-top: 1px solid;
+.mat-mdc-dialog-actions {
+  justify-content: flex-end !important;
+  border-top: 1px solid !important;
   margin: 20px 24px 0 24px !important;
   padding: 8px 0 8px 0 !important;
 }
 
-.mat-dialog-content {
+.mat-mdc-dialog-content {
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
 
-.mat-dialog-title {
+.mat-mdc-dialog-title {
   background-color: $hd-yellow;
-  padding-left: 24px;
+  padding: 0 0 0 24px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between;
   height: 40px;
+}
+
+.mdc-dialog__title::before {
+  display: none !important;
 }
