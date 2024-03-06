@@ -14,7 +14,8 @@
         "position": {
           "x": -485,
           "y": 332
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
@@ -27,7 +28,8 @@
         "position": {
           "x": -480,
           "y": 492
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
@@ -40,7 +42,8 @@
         "position": {
           "x": -475,
           "y": 632
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
@@ -53,7 +56,8 @@
         "position": {
           "x": -480,
           "y": 782
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "8aa8f60e-0bd5-41d4-b511-372b3660c189",
@@ -66,7 +70,8 @@
         "position": {
           "x": 385,
           "y": 320
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "a29e7af3-4be2-4cbb-9f78-1b7520ed5142",
@@ -79,7 +84,8 @@
         "position": {
           "x": 385,
           "y": 350
-        }
+        },
+        "type": "REQUIRED"
       },
       {
         "connector_id": "6276625e-33a2-4e01-8b55-0c452e5c46ac",
@@ -92,7 +98,8 @@
         "position": {
           "x": 1170,
           "y": 810
-        }
+        },
+        "type": "REQUIRED"
       }
     ],
     "links": [
@@ -652,12 +659,14 @@
         "inputs": [
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "f103c395-92b6-444d-320a-93950ed6d857",
             "name": "input",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "timeseries",
@@ -687,12 +696,14 @@
         "inputs": [
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
             "name": "input",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "window_size",
@@ -722,12 +733,14 @@
         "inputs": [
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
             "name": "input",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "interval_type",
@@ -757,12 +770,14 @@
         "inputs": [
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "a8c3e9bb-91cc-12f4-c717-55f95adda207",
             "name": "input",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "label_position",
@@ -792,57 +807,69 @@
         "inputs": [
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "5bfe6402-81cc-49ef-beb2-456bbfbbd6cb",
             "name": "timeseries",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "1c0ddc42-cd17-4378-9f07-9930c1a1f7f2",
             "name": "window_size",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "8aa8f60e-0bd5-41d4-b511-372b3660c189",
             "name": "window_frequency",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "a29e7af3-4be2-4cbb-9f78-1b7520ed5142",
             "name": "frequency_offset",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "abb7a7e9-fda2-4e74-9e0c-14574410008a",
             "name": "interval_type",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "2e68e763-81db-4127-84cb-80e0c7e3f080",
             "name": "label_position",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Moving Time Window Mean",
@@ -872,57 +899,69 @@
         "inputs": [
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "0f92fa34-ee3d-4e3c-927d-4f82a9bb7afd",
             "name": "original_timeseries",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "6c8f83ee-3c55-45be-b893-72c0301ee355",
             "name": "aggregated_timeseries",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "93d14beb-1ec6-4c16-9954-797cc91ec152",
             "name": "window_size",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "a306bb25-1271-4d8c-b3d5-9f4db23807d9",
             "name": "interval_type",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "629d3bfb-3e54-49d6-ba48-7959a5482139",
             "name": "label_position",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           },
           {
             "data_type": "STRING",
+            "exposed": true,
             "id": "6276625e-33a2-4e01-8b55-0c452e5c46ac",
             "name": "plotting_mode",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Moving Window Aggregated Timeseries Plot",
@@ -952,12 +991,14 @@
         "inputs": [
           {
             "data_type": "SERIES",
+            "exposed": true,
             "id": "f103c395-92b6-444d-320a-93950ed6d857",
             "name": "input",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "window_means",
@@ -1020,37 +1061,44 @@
       {
         "data_type": "SERIES",
         "id": "c4be35c1-25a7-42bb-88ba-3953f5fb38ac",
-        "name": "timeseries"
+        "name": "timeseries",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "f212a92f-802b-4a4b-ba45-ac64fe8c0c0e",
-        "name": "window_size"
+        "name": "window_size",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "c8843c5e-e871-4459-921a-d77dbf3d7bfd",
-        "name": "interval_type"
+        "name": "interval_type",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "3c17faff-a996-495f-964b-32dbdfe3bcad",
-        "name": "label_position"
+        "name": "label_position",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "0f685fe9-541a-477d-99f5-4afe50287b30",
-        "name": "window_frequency"
+        "name": "window_frequency",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "c71f2f87-8982-4f9e-bd5b-841dcbfcb755",
-        "name": "frequency_offset"
+        "name": "frequency_offset",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "5d8b2526-b1f2-4294-9293-1f72d737cae5",
-        "name": "plotting_mode"
+        "name": "plotting_mode",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -1071,12 +1119,14 @@
   "revision_group_id": "ecbcb3f0-4873-4233-a1d0-9d0316036156",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [
       {
         "adapter_id": "direct_provisioning",
         "filters": {
           "value": "{\n    \"2022-12-06 23:17:14+00:00\": 14.360248,\n    \"2022-12-06 23:22:14+00:00\": 14.473486,\n    \"2022-12-06 23:27:14+00:00\": 14.744616,\n    \"2022-12-06 23:32:14+00:00\": 15.729985,\n    \"2022-12-06 23:37:14+00:00\": 14.945974,\n    \"2022-12-06 23:42:14+00:00\": 15.311936,\n    \"2022-12-06 23:47:14+00:00\": 13.721003,\n    \"2022-12-06 23:52:14+00:00\": 14.616136,\n    \"2022-12-06 23:57:14+00:00\": 13.544031,\n    \"2022-12-07 00:02:14+00:00\": 14.823713,\n    \"2022-12-07 00:07:14+00:00\": 15.258110,\n    \"2022-12-07 00:12:14+00:00\": 14.669657,\n    \"2022-12-07 00:17:14+00:00\": 13.963869,\n    \"2022-12-07 00:22:14+00:00\": 14.962489,\n    \"2022-12-07 00:27:14+00:00\": 13.811295,\n    \"2022-12-07 00:32:14+00:00\": 14.672031,\n    \"2022-12-07 00:37:14+00:00\": 15.038961,\n    \"2022-12-07 00:42:14+00:00\": 15.581626,\n    \"2022-12-07 00:47:14+00:00\": 15.183799,\n    \"2022-12-07 00:52:14+00:00\": 14.859828,\n    \"2022-12-07 00:57:14+00:00\": 14.865390,\n    \"2022-12-07 01:02:14+00:00\": 14.221285,\n    \"2022-12-07 01:07:14+00:00\": 14.225866,\n    \"2022-12-07 01:12:14+00:00\": 15.461512,\n    \"2022-12-07 01:17:14+00:00\": 12.252256,\n    \"2022-12-07 01:22:14+00:00\": 13.686977,\n    \"2022-12-07 01:27:14+00:00\": 13.787693,\n    \"2022-12-07 01:32:14+00:00\": 14.528163,\n    \"2022-12-07 01:37:14+00:00\": 14.218455,\n    \"2022-12-07 01:42:14+00:00\": 13.477046,\n    \"2022-12-07 01:47:14+00:00\": 13.925391,\n    \"2022-12-07 01:52:14+00:00\": 14.947494,\n    \"2022-12-07 01:57:14+00:00\": 14.591019,\n    \"2022-12-07 02:02:14+00:00\": 15.930415,\n    \"2022-12-07 02:07:14+00:00\": 15.072922,\n    \"2022-12-07 02:12:14+00:00\": 14.875850,\n    \"2022-12-07 02:17:14+00:00\": 15.044753,\n    \"2022-12-07 02:22:14+00:00\": 15.525060,\n    \"2022-12-07 02:27:14+00:00\": 13.597114,\n    \"2022-12-07 02:32:14+00:00\": 14.499883,\n    \"2022-12-07 02:37:14+00:00\": 14.095923,\n    \"2022-12-07 02:42:14+00:00\": 15.211422,\n    \"2022-12-07 02:47:14+00:00\": 14.847283,\n    \"2022-12-07 02:52:14+00:00\": 15.036699,\n    \"2022-12-07 02:57:14+00:00\": 14.336612,\n    \"2022-12-07 03:02:14+00:00\": 14.517888,\n    \"2022-12-07 03:07:14+00:00\": 13.787849,\n    \"2022-12-07 03:12:14+00:00\": 13.190419,\n    \"2022-12-07 03:17:14+00:00\": 15.435615,\n    \"2022-12-07 03:22:14+00:00\": 13.426738\n}"
         },
+        "use_default_value": false,
         "workflow_input_name": "timeseries"
       },
       {
@@ -1084,6 +1134,7 @@
         "filters": {
           "value": "15min"
         },
+        "use_default_value": false,
         "workflow_input_name": "window_size"
       },
       {
@@ -1091,6 +1142,7 @@
         "filters": {
           "value": "left_closed"
         },
+        "use_default_value": false,
         "workflow_input_name": "interval_type"
       },
       {
@@ -1098,6 +1150,7 @@
         "filters": {
           "value": "center"
         },
+        "use_default_value": false,
         "workflow_input_name": "label_position"
       },
       {
@@ -1105,6 +1158,7 @@
         "filters": {
           "value": "5min"
         },
+        "use_default_value": false,
         "workflow_input_name": "window_frequency"
       },
       {
@@ -1112,6 +1166,7 @@
         "filters": {
           "value": "0"
         },
+        "use_default_value": false,
         "workflow_input_name": "frequency_offset"
       },
       {
@@ -1119,11 +1174,11 @@
         "filters": {
           "value": "dots_and_windows"
         },
+        "use_default_value": false,
         "workflow_input_name": "plotting_mode"
       }
     ],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"

@@ -65,7 +65,7 @@ In both cases, the output is:
 
 import pandas as pd
 
-from hetdesrun.runtime.exceptions import ComponentInputValidationException
+from hdutils import ComponentInputValidationException
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
@@ -86,6 +86,8 @@ COMPONENT_INFO = {
     "state": "RELEASED",
     "released_timestamp": "2023-11-23T16:20:56.654832+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(*, gap_timestamps, replacement_value):
@@ -136,12 +138,11 @@ def main(*, gap_timestamps, replacement_value):
     }
 
 
-INITIAL_TEST_WIRING = {
+TEST_WIRING_FROM_PY_FILE_IMPORT = {
     "input_wirings": [
         {
             "workflow_input_name": "gap_timestamps",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {
                 "value": (
                     "{\n"
@@ -155,7 +156,6 @@ INITIAL_TEST_WIRING = {
         {
             "workflow_input_name": "replacement_value",
             "adapter_id": "direct_provisioning",
-            "use_default_value": False,
             "filters": {"value": "37.0"},
         },
     ],

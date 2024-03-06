@@ -23,6 +23,7 @@ from pydantic import HttpUrl
 from hetdesrun.backend.execution import (
     ExecByIdInput,
     ExecLatestByGroupIdInput,
+    TrafoExecutionInputValidationError,
     TrafoExecutionNotFoundError,
     TrafoExecutionResultValidationError,
     TrafoExecutionRuntimeConnectionError,
@@ -36,9 +37,10 @@ from hetdesrun.backend.service.dashboarding import (
     generate_login_dashboard_stub,
     override_timestamps_in_wiring,
 )
-from hetdesrun.component.code import update_code
+from hetdesrun.component.code import expand_code, update_code
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
+    UpdateProcessStatus,
     import_importable,
 )
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
@@ -55,12 +57,13 @@ from hetdesrun.persistence.dbservice.revision import (
 )
 from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
-from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
+    ComponentCodeImportError,
     Importable,
     ImportSourceConfig,
     MultipleTrafosUpdateConfig,
+    transformation_revision_from_python_code,
 )
 from hetdesrun.utils import State, Type
 from hetdesrun.webservice.auth_dependency import (
@@ -146,9 +149,26 @@ async def create_transformation_revision(
     return persisted_transformation_revision
 
 
+def change_code(
+    tr: TransformationRevision,
+    expand_component_code: bool = False,
+    update_component_code: bool = False,
+) -> str:
+    """Handle desired code changes"""
+    tr_copy = tr.copy(deep=True)
+    assert isinstance(tr_copy.content, str)  # for mypy # noqa: S101
+
+    if update_component_code:
+        tr_copy.content = update_code(tr_copy)
+    if expand_component_code:
+        tr_copy.content = expand_code(tr_copy)
+
+    return tr_copy.content
+
+
 @transformation_router.get(
     "",
-    response_model=list[TransformationRevision],
+    response_model=list[TransformationRevision | str],
     response_model_exclude_none=True,  # needed because:
     # frontend handles attributes with value null in a different way than missing attributes
     summary="Returns combined list of all transformation revisions (components and workflows)",
@@ -208,11 +228,55 @@ async def get_all_transformation_revisions(
             "not contained in workflows that do not have the state DISABLED."
         ),
     ),
-) -> list[TransformationRevision]:
+    components_as_code: bool = Query(
+        False,
+        description=(
+            "Set to True to obtain transformation revisions of type COMPOPNENT "
+            "as a string of their python code instead of as JSON."
+        ),
+    ),
+    expand_component_code: bool = Query(
+        False,
+        description=(
+            "Set to True to add the documentation as module docstring and "
+            "the test wiring as dictionary to component code."
+            ""
+            "Note: "
+            "Enabling this option leads to changed component code in the output of this request."
+            " In particular the component code hash changes which in turn is used in the Python"
+            " import module path. This affects serialized objects (e.g. trained models) based on"
+            " this component: They cannot be deserialized in runtime containers / processes where"
+            " the old component is not present anymore. When putting such components to hetida"
+            " designer instances it is necessary to recreate such serialized objects."
+        ),
+    ),
+    update_component_code: bool = Query(
+        False,
+        description=(
+            "Set to true to update the component code, in particular the main function "
+            "definition and the COMPONENT_INFO in the response of this. For example this "
+            "can be used to update old, deprecated and since 0.9.5 from code non-importable"
+            " @register decorator style components to the new more flexible  components with"
+            " a COMPONENT_INFO dict."
+            ""
+            "Note: "
+            "Enabling this option leads to changed component code in the output of this request."
+            " In particular the component code hash changes which in turn is used in the Python"
+            " import module path. This affects serialized objects (e.g. trained models) based on"
+            " this component: They cannot be deserialized in runtime containers / processes where"
+            " the old component is not present anymore. When putting such components to hetida"
+            " designer instances it is necessary to recreate such serialized objects."
+        ),
+    ),
+) -> list[TransformationRevision | str]:
     """Get all transformation revisions from the data base.
 
     Used by frontend for initial loading of all transformations to populate the sidebar
     and to export selected transformation revisions.
+
+    The parameters filtering the transformation revisions are logically combined as follows
+    * OR for the same filter, e.g. providing two ids will yield both trafos.
+    * AND between different filters.
     """
 
     filter_params = FilterParams(
@@ -239,7 +303,30 @@ async def get_all_transformation_revisions(
         logger.error(msg)
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=msg) from err
 
-    return transformation_revision_list
+    code_list: list[str] = []
+    component_indices: list[int] = []
+
+    component_indices = [
+        index
+        for index, tr in enumerate(transformation_revision_list)
+        if tr.type == Type.COMPONENT
+    ]
+    component_indices.sort(reverse=True)
+
+    if components_as_code:
+        for index in component_indices:
+            component_tr = transformation_revision_list.pop(index)
+            code_list.append(
+                change_code(component_tr, expand_component_code, update_component_code)
+            )
+    else:
+        for index in component_indices:
+            component_tr = transformation_revision_list[index]
+            component_tr.content = change_code(
+                component_tr, expand_component_code, update_component_code
+            )
+
+    return transformation_revision_list + code_list
 
 
 @transformation_router.get(
@@ -276,34 +363,6 @@ async def get_transformation_revision_by_id(
     return transformation_revision
 
 
-def contains_deprecated(transformation_id: UUID) -> bool:
-    logger.info(
-        "check if transformation revision %s contains deprecated operators",
-        str(transformation_id),
-    )
-    transformation_revision = read_single_transformation_revision(transformation_id)
-
-    if transformation_revision.type is not Type.WORKFLOW:
-        msg = f"Transformation revision {transformation_revision.id} is not a workflow!"
-        logger.error(msg)
-        raise HTTPException(status.HTTP_409_CONFLICT, detail=msg)
-
-    assert isinstance(  # noqa: S101
-        transformation_revision.content, WorkflowContent
-    )  # hint for mypy
-
-    is_disabled = []
-    for operator in transformation_revision.content.operators:
-        logger.info(
-            "operator with transformation id %s has status %s",
-            str(operator.transformation_id),
-            operator.state,
-        )
-        is_disabled.append(operator.state == State.DISABLED)
-
-    return any(is_disabled)
-
-
 @transformation_router.put(
     "",
     status_code=status.HTTP_207_MULTI_STATUS,
@@ -318,7 +377,9 @@ def contains_deprecated(transformation_id: UUID) -> bool:
     },
 )
 async def update_transformation_revisions(
-    updated_transformation_revisions: list[TransformationRevision],
+    updated_transformation_revisions_and_code_strings: list[
+        TransformationRevision | str
+    ],
     response: Response,
     type: Type  # noqa: A002
     | None = Query(
@@ -346,6 +407,9 @@ async def update_transformation_revisions(
     names: list[NonEmptyValidStr]
     | None = Query(
         None, description=("Filter for specified list of names."), alias="name"
+    ),
+    release_drafts: bool = Query(
+        False, description="If true, all trafos in draft state will be released"
     ),
     include_deprecated: bool = Query(
         True,
@@ -398,7 +462,7 @@ async def update_transformation_revisions(
             " an error anywhere."
         ),
     ),
-) -> dict[UUID, TrafoUpdateProcessSummary]:
+) -> dict[UUID | str, TrafoUpdateProcessSummary]:
     """Update/store multiple transformation revisions
 
     This updates or creates the given transformation revisions. Automatically
@@ -410,6 +474,15 @@ async def update_transformation_revisions(
     This endpoint can be used to import related sets of transformation revisions.
     Such a set does not have to be closed under dependency relation, e.g. elements
     of it can refer base components.
+
+    This endpoint allows for filltering transformation revisions like the corresponding
+    get endpoint. This means of all provided trafos in the payload only those matching the
+    filter parameters will be updated/stored. Transformation revisions that where excluded
+    will be marked as ignored in the response.
+
+    The parameters filtering the transformation revisions are logically combined as follows
+    * OR for the same filter, e.g. providing two ids will store both trafos.
+    * AND between different filters.
     """
     filter_params = FilterParams(
         type=type,
@@ -431,6 +504,28 @@ async def update_transformation_revisions(
         deprecate_older_revisions=deprecate_older_revisions,
     )
 
+    updated_transformation_revisions: list[TransformationRevision] = []
+    updated_component_code_strings: list[str] = []
+    for item in updated_transformation_revisions_and_code_strings:
+        if isinstance(item, TransformationRevision):
+            updated_transformation_revisions.append(item)
+        else:
+            updated_component_code_strings.append(item)
+
+    broken_component_codes: list[tuple[str, str]] = []
+    for ccs in updated_component_code_strings:
+        try:
+            tr = transformation_revision_from_python_code(ccs)
+        except ComponentCodeImportError as error:
+            broken_component_codes.append((str(error), ccs))
+        else:
+            updated_transformation_revisions.append(tr)
+
+    if release_drafts:
+        for trafo in updated_transformation_revisions:
+            if trafo.state is State.DRAFT:
+                trafo.release()
+
     importable = Importable(
         transformation_revisions=updated_transformation_revisions,
         import_config=ImportSourceConfig(
@@ -439,6 +534,14 @@ async def update_transformation_revisions(
     )
 
     success_per_trafo = import_importable(importable)
+    for msg, ccs in broken_component_codes:
+        success_per_trafo[ccs] = TrafoUpdateProcessSummary(
+            status=UpdateProcessStatus.FAILED,
+            msg=msg,
+            name="UNKNOWN",
+            version_tag="UNKNOWN",
+        )
+
     response.status_code = status.HTTP_207_MULTI_STATUS
 
     return success_per_trafo
@@ -578,6 +681,11 @@ async def handle_trafo_revision_execution_request(
 
     try:
         exec_response = await execute_transformation_revision(exec_by_id)
+
+    except TrafoExecutionInputValidationError as err:
+        msg = f"Could not validate execution input\n{exec_by_id.json(indent=2)}:\n{str(err)}"
+        logger.error(msg)
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=msg) from err
 
     except TrafoExecutionNotFoundError as err:
         msg = f"Could not find transformation revision {exec_by_id.id}:\n{str(err)}"

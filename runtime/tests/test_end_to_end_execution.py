@@ -352,7 +352,7 @@ def division_component_wf_exc_inp_replace(
         division_component_wf_exc_inp.code_modules[
             0
         ].code = division_component_wf_exc_inp.code_modules[0].code.replace(
-            "from hetdesrun.runtime.exceptions import ComponentException",
+            "from hdutils import ComponentException",
             imports_and_definitions,
         )
 
@@ -552,7 +552,7 @@ class TestSctructuredErrors:
     ) -> None:
         wf_exc_input = division_component_wf_exc_inp_replace(
             imports_and_definitions=(
-                "from hetdesrun.runtime.exceptions import ComponentInputValidationException"
+                "from hdutils import ComponentInputValidationException"
             ),
             function_code=(
                 """if divisor == 0:

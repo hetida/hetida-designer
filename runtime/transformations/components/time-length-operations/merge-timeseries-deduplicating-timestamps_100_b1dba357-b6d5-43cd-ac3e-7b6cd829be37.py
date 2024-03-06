@@ -3,15 +3,15 @@
 # Merge timeseries deduplicating timestamps
 
 This components merges all timeseries in a multiple timeseries dataframe
-of the form provided by the Timeseries Dataframe component. Thereby it avoids 
+of the form provided by the Timeseries Dataframe component. Thereby it avoids
 duplicates by moving duplicate timestamps into the future, distributing them
 evenly with respect to the next differing timestamp, bounded by a maximum timedelta
 providable as paramter.
 
-This component may be useful if 
+This component may be useful if
 * a signal is measured by multiple sensors
 * which may lead to duplicate timestamps (but possibly different values)
-* you want to keep all values (e.g. to detect outliers) and methods like 
+* you want to keep all values (e.g. to detect outliers) and methods like
   mean / median aggregation are not suitable
 * moving duplicate timestamps into the future does not affect your analysis
   too much.
@@ -19,11 +19,8 @@ This component may be useful if
 
 """
 
-from hetdesrun.component.registration import register
-from hetdesrun.datatypes import DataType
-
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def cumsum_resetting_at_nan(orig):
@@ -36,15 +33,19 @@ def cumsum_resetting_at_nan(orig):
     # Edge case: After the first portion the diff is null, here we can
     # simply fill with the cumsum value itself (".fillna(cumsum)")
     # The negative of this can be used adapt the cumsum.
-    reset = -(cumsum[orig.isnull()].diff().fillna(cumsum))
+    reset = -(cumsum[orig.isna()].diff().fillna(cumsum))
 
-    result = orig.where(orig.notnull(), reset).cumsum()
+    result = orig.where(orig.notna(), reset).cumsum()
 
     return result.fillna(0)
 
 
 def dupl_count_at_duplicated_positions(orig, dupl_counts):
-    """A series where the total number of duplicates in a sequence is written at every duplicate position"""
+    """Count duplicates
+
+    Return a series where the total number of duplicates in a sequence is written at every duplicate
+    position.
+    """
     last_duplicated_position = orig.duplicated() & (
         ~orig.duplicated().shift(-1).fillna(False)
     )
@@ -68,7 +69,7 @@ def dupl_delta_to_next(orig):
 
 
 def distribute_duplicated_timestamps(timestamp_series, max_distribution_delta: str):
-    """distribute duplicated timestamps to get unique timestamps
+    """Distribute duplicated timestamps to get unique timestamps
 
     This is useful if you want to "merge" two timeseries without throwing
     away values or aggregating and if you need unique timestamps in the end result.
@@ -80,8 +81,8 @@ def distribute_duplicated_timestamps(timestamp_series, max_distribution_delta: s
         Should be sorted by these timestamp values. Will be sorted here nevertheless.
         Index is ignored.
 
-    max_distribution_delta (str for pd.Timedelta): If the next timestamp after some duplicated timestamps
-        is further away than this delta, the duplicated timestamps will be distributed
+    max_distribution_delta (str for pd.Timedelta): If the next timestamp after some duplicated
+        timestamps is further away than this delta, the duplicated timestamps will be distributed
         uniformly in the time interval starting at the duplicated value and ending after
         this delta beginning from the duplicated value and continuing in
             1/(number of duplicates +1) * max_distribution_delta
@@ -127,35 +128,45 @@ def distribute_duplicated_timestamps(timestamp_series, max_distribution_delta: s
 def merge_with_deduplicated_timestamps(
     timeseries_df, max_distribution_delta: str, name="merged_timeseries"
 ):
-    """Merges multiple timeseries into one, deduplicating timestamps by moving them into the future a bit
+    """Merge multiple timeseries into one
 
-    timeseries_df should be sorted
+    Timestamps ar deduplicated by moving them into the future a bit.
     """
-    timeseries_df.sort_values("timestamp", inplace=True)
+    sorted_timeseries_df = timeseries_df.sort_values("timestamp")
 
     new_timestamps = distribute_duplicated_timestamps(
-        timeseries_df["timestamp"], max_distribution_delta
+        sorted_timeseries_df["timestamp"], max_distribution_delta
     )
 
-    return pd.Series(timeseries_df["value"].values, index=new_timestamps, name=name)
+    return pd.Series(
+        sorted_timeseries_df["value"].values, index=new_timestamps, name=name
+    )
 
 
 # ***** DO NOT EDIT LINES BELOW *****
 # These lines may be overwritten if component details or inputs/outputs change.
-@register(
-    inputs={
-        "timeseries_df": DataType.DataFrame,
-        "max_distribution_delta": DataType.String,
-        "new_name": DataType.String,
+COMPONENT_INFO = {
+    "inputs": {
+        "timeseries_df": {"data_type": "DATAFRAME"},
+        "max_distribution_delta": {"data_type": "STRING"},
+        "new_name": {"data_type": "STRING"},
     },
-    outputs={"timeseries": DataType.Series},
-    name="Merge timeseries deduplicating timestamps",
-    description="Combine multiple timeseries from a timeseries dataframe into one, avoiding duplicate timestamps.",
-    category="Time length operations",
-    id="b1dba357-b6d5-43cd-ac3e-7b6cd829be37",
-    revision_group_id="79de1ec7-b629-4360-a5e2-4eba19e60bd0",
-    version_tag="1.0.0",
-)
+    "outputs": {
+        "timeseries": {"data_type": "SERIES"},
+    },
+    "name": "Merge timeseries deduplicating timestamps",
+    "category": "Time length operations",
+    "description": "Combine multiple timeseries from a timeseries dataframe into one, avoiding duplicate timestamps.",  # noqa: E501
+    "version_tag": "1.0.0",
+    "id": "b1dba357-b6d5-43cd-ac3e-7b6cd829be37",
+    "revision_group_id": "79de1ec7-b629-4360-a5e2-4eba19e60bd0",
+    "state": "RELEASED",
+    "released_timestamp": "2023-09-25T09:57:52.580730+00:00",
+}
+
+from hdutils import parse_default_value  # noqa: E402, F401
+
+
 def main(*, timeseries_df, max_distribution_delta, new_name):
     # entrypoint function for this component
     # ***** DO NOT EDIT LINES ABOVE *****
@@ -165,3 +176,6 @@ def main(*, timeseries_df, max_distribution_delta, new_name):
             timeseries_df, max_distribution_delta, new_name
         )
     }
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {}

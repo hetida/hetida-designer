@@ -14,13 +14,13 @@ import pandas as pd
 # These lines may be overwritten if component details or inputs/outputs change.
 COMPONENT_INFO = {
     "inputs": {
-        "series": "SERIES",
+        "series": {"data_type": "SERIES"},
     },
     "outputs": {
-        "summary": "ANY",
-        "start": "STRING",
-        "end": "STRING",
-        "duration": "FLOAT",
+        "summary": {"data_type": "ANY"},
+        "start": {"data_type": "STRING"},
+        "end": {"data_type": "STRING"},
+        "duration": {"data_type": "FLOAT"},
     },
     "name": "Timeseries Summary",
     "category": "Test",
@@ -29,7 +29,10 @@ COMPONENT_INFO = {
     "id": "5fa2c117-8777-46ae-9fd9-b4683bc073cf",
     "revision_group_id": "fd964492-f3a9-4a95-8753-1a191571d63d",
     "state": "RELEASED",
+    "released_timestamp": "2024-01-10T13:29:19.716925+00:00",
 }
+
+from hdutils import parse_default_value  # noqa: E402, F401
 
 
 def main(*, series):
@@ -71,3 +74,6 @@ def main(*, series):
         "end": end.isoformat(),
         "duration": duration,
     }
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {}

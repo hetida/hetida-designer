@@ -1,6 +1,6 @@
 {
   "category": "Visualization",
-  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType  # add your own imports here\n\nimport numpy as np\nimport pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"x_min\": DataType.Float, \"x_max\": DataType.Float, \"y_min\": DataType.Float, \"y_max\": DataType.Float, \"n\": DataType.Integer},\n    outputs={\"x_values\": DataType.Series, \"y_values\": DataType.Series, \"x_indices\": DataType.Series, \"y_indices\": DataType.Series},\n    name=\"2D Grid Generator\",\n    description=\"Generates 2 dimensional grids\",\n    category=\"Visualization\",\n    version_tag=\"1.0.0\",\n    id=\"096c6181-4ba5-0ee7-361a-3c32eee8c0c2\",\n    revision_group_id=\"096c6181-4ba5-0ee7-361a-3c32eee8c0c2\",\n    state=\"RELEASED\",\n    released_timestamp=\"2022-02-09T17:33:29.783091+00:00\"\n)\ndef main(*, x_min, x_max, y_min, y_max, n):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    xs = np.linspace(x_min, x_max, n)\n    ys = np.linspace(y_min, y_max, n)\n    xx, yy = np.meshgrid(xs, ys)\n\n    return {\n        \"x_values\": pd.Series(xx.ravel(), name=\"x\"),\n        \"y_values\": pd.Series(yy.ravel(), name=\"y\"),\n        \"x_indices\": pd.Series(xs, name=\"x\"),\n        \"y_indices\": pd.Series(ys, name=\"y\"),\n    }\n",
+  "content": "\"\"\"Documentation for 2D Grid Generator\n\n# 2D Grid Generator\n\n## Description\nGenerates 2 dimensional grids, useful for visualization.\n\n## Inputs\n* **x_min** (Float): The minimum x value.\n* **x_max** (Float): The maximum x value.\n* **y_min** (Float): The minimum y value.\n* **y_max** (Float): The maximum y value.\n* **n** (Integer): The number of values in the corresponding grid will be n^2.\n\n## Outputs\n* **x_values** (Pandas Series): All x values of the generated grid as one long series (repeated for each row).\n* **y_values** (Pandas Series): All y values of the generated grid as one long series (repeated for each column).\n* **x_indices** (Pandas Series): The x values of the generated grid (only once).\n* **y_indices** (Pandas Series): The y values of the generated grid (only once).\n\n## Details\nGenerates an n times n sized grid of values evenly spaced out between minimum and maximum values for each axis. This is useful for visualization, especially to get data for contour plots.\n\"\"\"\n\n# add your own imports here\n\nimport numpy as np\nimport pandas as pd\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"x_min\": {\"data_type\": \"FLOAT\"},\n        \"x_max\": {\"data_type\": \"FLOAT\"},\n        \"y_min\": {\"data_type\": \"FLOAT\"},\n        \"y_max\": {\"data_type\": \"FLOAT\"},\n        \"n\": {\"data_type\": \"INT\"},\n    },\n    \"outputs\": {\n        \"x_values\": {\"data_type\": \"SERIES\"},\n        \"y_values\": {\"data_type\": \"SERIES\"},\n        \"x_indices\": {\"data_type\": \"SERIES\"},\n        \"y_indices\": {\"data_type\": \"SERIES\"},\n    },\n    \"name\": \"2D Grid Generator\",\n    \"category\": \"Visualization\",\n    \"description\": \"Generates 2 dimensional grids\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"096c6181-4ba5-0ee7-361a-3c32eee8c0c2\",\n    \"revision_group_id\": \"096c6181-4ba5-0ee7-361a-3c32eee8c0c2\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:29.783091+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, x_min, x_max, y_min, y_max, n):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    xs = np.linspace(x_min, x_max, n)\n    ys = np.linspace(y_min, y_max, n)\n    xx, yy = np.meshgrid(xs, ys)\n\n    return {\n        \"x_values\": pd.Series(xx.ravel(), name=\"x\"),\n        \"y_values\": pd.Series(yy.ravel(), name=\"y\"),\n        \"x_indices\": pd.Series(xs, name=\"x\"),\n        \"y_indices\": pd.Series(ys, name=\"y\"),\n    }\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\n",
   "description": "Generates 2 dimensional grids",
   "documentation": "# 2D Grid Generator\n\n## Description\nGenerates 2 dimensional grids, useful for visualization.\n\n## Inputs\n* **x_min** (Float): The minimum x value.\n* **x_max** (Float): The maximum x value.\n* **y_min** (Float): The minimum y value.\n* **y_max** (Float): The maximum y value.\n* **n** (Integer): The number of values in the corresponding grid will be n^2.\n\n## Outputs\n* **x_values** (Pandas Series): All x values of the generated grid as one long series (repeated for each row).\n* **y_values** (Pandas Series): All y values of the generated grid as one long series (repeated for each column).\n* **x_indices** (Pandas Series): The x values of the generated grid (only once).\n* **y_indices** (Pandas Series): The y values of the generated grid (only once).\n\n## Details\nGenerates an n times n sized grid of values evenly spaced out between minimum and maximum values for each axis. This is useful for visualization, especially to get data for contour plots.\n",
   "id": "096c6181-4ba5-0ee7-361a-3c32eee8c0c2",
@@ -9,27 +9,32 @@
       {
         "data_type": "FLOAT",
         "id": "4ef2610a-4321-004c-aee8-5cbf87ac1a49",
-        "name": "x_min"
+        "name": "x_min",
+        "type": "REQUIRED"
       },
       {
         "data_type": "FLOAT",
         "id": "02a7f8f6-0fb5-5a65-12d7-a21d61cdd271",
-        "name": "x_max"
+        "name": "x_max",
+        "type": "REQUIRED"
       },
       {
         "data_type": "FLOAT",
         "id": "b3492592-b3e8-caaa-a4d4-4670d110d7f0",
-        "name": "y_min"
+        "name": "y_min",
+        "type": "REQUIRED"
       },
       {
         "data_type": "FLOAT",
         "id": "80fb9d9d-d926-8cb6-6a41-777ba806f6ea",
-        "name": "y_max"
+        "name": "y_max",
+        "type": "REQUIRED"
       },
       {
         "data_type": "INT",
         "id": "64245bba-7e81-ef0a-941d-2f9b5b43d044",
-        "name": "n"
+        "name": "n",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -60,9 +65,9 @@
   "revision_group_id": "096c6181-4ba5-0ee7-361a-3c32eee8c0c2",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "COMPONENT",
   "version_tag": "1.0.0"
