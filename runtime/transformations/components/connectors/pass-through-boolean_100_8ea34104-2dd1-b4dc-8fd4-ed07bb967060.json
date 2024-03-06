@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"input\": DataType.Boolean},\n    outputs={\"output\": DataType.Boolean},\n    name=\"Pass Through (Boolean)\",\n    description=\"Just outputs its input value\",\n    category=\"Connectors\",\n    version_tag=\"1.0.0\",\n    id=\"8ea34104-2dd1-b4dc-8fd4-ed07bb967060\",\n    revision_group_id=\"8ea34104-2dd1-b4dc-8fd4-ed07bb967060\",\n    state=\"RELEASED\",\n    released_timestamp=\"2022-02-09T17:33:34.706367+00:00\"\n)\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input}\n",
+  "content": "\"\"\"Documentation for Pass Through (Boolean)\n\n# Pass Through (Boolean)\n\n## Description\nThis component just passes data through.\n\n## Inputs\n* **input** (Boolean): The input boolean value.\n\n## Outputs\n* **output** (Boolean): The output boolean value.\n\n## Details\nThis component just passes data through. It can be used to map one dynamic workflow input to multiple component inputs.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"input\": {\"data_type\": \"BOOLEAN\"},\n    },\n    \"outputs\": {\n        \"output\": {\"data_type\": \"BOOLEAN\"},\n    },\n    \"name\": \"Pass Through (Boolean)\",\n    \"category\": \"Connectors\",\n    \"description\": \"Just outputs its input value\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"8ea34104-2dd1-b4dc-8fd4-ed07bb967060\",\n    \"revision_group_id\": \"8ea34104-2dd1-b4dc-8fd4-ed07bb967060\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:34.706367+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, input):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n\n    return {\"output\": input}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\n",
   "description": "Just outputs its input value",
   "documentation": "# Pass Through (Boolean)\n\n## Description\nThis component just passes data through.\n\n## Inputs\n* **input** (Boolean): The input boolean value.\n\n## Outputs\n* **output** (Boolean): The output boolean value.\n\n## Details\nThis component just passes data through. It can be used to map one dynamic workflow input to multiple component inputs.",
   "id": "8ea34104-2dd1-b4dc-8fd4-ed07bb967060",
@@ -9,7 +9,8 @@
       {
         "data_type": "BOOLEAN",
         "id": "46cb9e3f-1b7a-d435-8625-303b51160fd4",
-        "name": "input"
+        "name": "input",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -25,9 +26,9 @@
   "revision_group_id": "8ea34104-2dd1-b4dc-8fd4-ed07bb967060",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "COMPONENT",
   "version_tag": "1.0.0"

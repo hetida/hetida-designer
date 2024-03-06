@@ -1,6 +1,6 @@
 {
   "category": "Connectors",
-  "content": "from hetdesrun.component.registration import register\nfrom hetdesrun.datatypes import DataType\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\n@register(\n    inputs={\"dataframe_left\": DataType.DataFrame, \"dataframe_right\": DataType.DataFrame, \"column_name\": DataType.String, \"how\": DataType.String},\n    outputs={\"merged_dataframe\": DataType.DataFrame},\n    name=\"Merge DataFrames on Single Column\",\n    description=\"Merges/Joins two dataframes on a equally named column.\",\n    category=\"Connectors\",\n    version_tag=\"1.0.0\",\n    id=\"a573c94f-3039-1193-b068-bc496620c6ed\",\n    revision_group_id=\"a573c94f-3039-1193-b068-bc496620c6ed\",\n    state=\"RELEASED\",\n    released_timestamp=\"2022-02-09T17:33:33.993604+00:00\"\n)\ndef main(*, dataframe_left, dataframe_right, column_name, how):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    merged_dataframe = dataframe_left.merge(\n        dataframe_right, left_on=column_name, right_on=column_name, how=how\n    )\n\n    return {\"merged_dataframe\": merged_dataframe}\n\n",
+  "content": "\"\"\"Documentation for Merge DataFrames on Single Column\n\n# Merge DataFrames on Single Column\n\n## Description\nMerges/Joins two dataframes on a equally named column.\n\n## Inputs\n* **dataframe_left** (Pandas DataFrame): The left dataframe.\n* **dataframe_right** (Pandas DataFrame): The right dataframe.\n* **column_name** (String): The name of the column to join on. Must be present in both dataframe_left and dataframe_right.\n* **how** (String): Join method (one of \"left\", \"right\", \"outer\", \"inner\")\n\n## Outputs\n* **merged_dataframe** (Pandas DataFrame): The resulting new merged DataFrame.\n\n## Details\nMerges/Joins two dataframes on a column present in both. The join method can be set using the **how** parameter.\n\"\"\"\n\n# ***** DO NOT EDIT LINES BELOW *****\n# These lines may be overwritten if component details or inputs/outputs change.\nCOMPONENT_INFO = {\n    \"inputs\": {\n        \"dataframe_left\": {\"data_type\": \"DATAFRAME\"},\n        \"dataframe_right\": {\"data_type\": \"DATAFRAME\"},\n        \"column_name\": {\"data_type\": \"STRING\"},\n        \"how\": {\"data_type\": \"STRING\"},\n    },\n    \"outputs\": {\n        \"merged_dataframe\": {\"data_type\": \"DATAFRAME\"},\n    },\n    \"name\": \"Merge DataFrames on Single Column\",\n    \"category\": \"Connectors\",\n    \"description\": \"Merges/Joins two dataframes on a equally named column.\",\n    \"version_tag\": \"1.0.0\",\n    \"id\": \"a573c94f-3039-1193-b068-bc496620c6ed\",\n    \"revision_group_id\": \"a573c94f-3039-1193-b068-bc496620c6ed\",\n    \"state\": \"RELEASED\",\n    \"released_timestamp\": \"2022-02-09T17:33:33.993604+00:00\",\n}\n\nfrom hdutils import parse_default_value  # noqa: E402, F401\n\n\ndef main(*, dataframe_left, dataframe_right, column_name, how):\n    # entrypoint function for this component\n    # ***** DO NOT EDIT LINES ABOVE *****\n    # write your function code here.\n    merged_dataframe = dataframe_left.merge(\n        dataframe_right, left_on=column_name, right_on=column_name, how=how\n    )\n\n    return {\"merged_dataframe\": merged_dataframe}\n\n\nTEST_WIRING_FROM_PY_FILE_IMPORT = {}\n",
   "description": "Merges/Joins two dataframes on a equally named column.",
   "documentation": "# Merge DataFrames on Single Column\n\n## Description\nMerges/Joins two dataframes on a equally named column.\n\n## Inputs\n* **dataframe_left** (Pandas DataFrame): The left dataframe.\n* **dataframe_right** (Pandas DataFrame): The right dataframe.\n* **column_name** (String): The name of the column to join on. Must be present in both dataframe_left and dataframe_right.\n* **how** (String): Join method (one of \"left\", \"right\", \"outer\", \"inner\")\n\n## Outputs\n* **merged_dataframe** (Pandas DataFrame): The resulting new merged DataFrame.\n\n## Details\nMerges/Joins two dataframes on a column present in both. The join method can be set using the **how** parameter.",
   "id": "a573c94f-3039-1193-b068-bc496620c6ed",
@@ -9,22 +9,26 @@
       {
         "data_type": "DATAFRAME",
         "id": "86e2c64a-7b11-9732-9827-15e88d6a214b",
-        "name": "dataframe_left"
+        "name": "dataframe_left",
+        "type": "REQUIRED"
       },
       {
         "data_type": "DATAFRAME",
         "id": "ca675bb2-34d7-52c5-bbea-abbb9f99bd70",
-        "name": "dataframe_right"
+        "name": "dataframe_right",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "4ecdc9db-d3e6-d64b-f42d-24f7c57b410b",
-        "name": "column_name"
+        "name": "column_name",
+        "type": "REQUIRED"
       },
       {
         "data_type": "STRING",
         "id": "bee98168-9c20-99cb-b5ce-f407db8f11cd",
-        "name": "how"
+        "name": "how",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -40,9 +44,9 @@
   "revision_group_id": "a573c94f-3039-1193-b068-bc496620c6ed",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "COMPONENT",
   "version_tag": "1.0.0"

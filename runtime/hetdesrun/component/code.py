@@ -4,17 +4,32 @@ This module contains functions for generating and updating component code module
 to provide a very elementary support system to the designer code editor.
 """
 
+import json
+import logging
 from keyword import iskeyword
 
-from hetdesrun.datatypes import DataType
+import black
+
+from hetdesrun.component.code_utils import (
+    CodeParsingException,
+    format_code_with_black,
+    update_module_level_variable,
+)
+from hetdesrun.datatypes import (
+    DataType,
+    parse_single_value_dynamically,
+)
 from hetdesrun.persistence.models.io import InputType, TransformationInput
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.utils import State, Type
+
+logger = logging.getLogger(__name__)
 
 imports_template: str = """\
 # add your own imports here, e.g.
 # import pandas as pd
 # import numpy as np
+
 
 """
 
@@ -26,38 +41,116 @@ COMPONENT_INFO = {{
     "outputs": {output_dict_content},
     "name": {name},
     "category": {category},
-    "description": {description},
+    "description": {description},{description_too_long_noqa}
     "version_tag": {version_tag},
     "id": {id},
     "revision_group_id": {revision_group_id},
     "state": {state},{timestamp}
 }}
 
+from hdutils import parse_default_value  # noqa: E402, F401
 
 {main_func_declaration_start} main({params_list}):
     # entrypoint function for this component
-    # ***** DO NOT EDIT LINES ABOVE *****\
+    # ***** DO NOT EDIT LINES ABOVE *****
 """
 
-function_body_template: str = """\
+function_body_template: str = """
     # write your function code here.
-    pass\
+    pass
 """
 
 
-def wrap_in_quotes_if_data_type_string(
-    default_value_string: str, data_type: DataType
-) -> str:
-    if data_type != DataType.String or default_value_string == "None":
-        return default_value_string
-    return '"' + default_value_string + '"'
+def component_info_default_value_string(inp: TransformationInput) -> str:
+    if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
+        return repr(None)
+
+    if inp.data_type in (DataType.Series, DataType.DataFrame, DataType.MultiTSFrame):
+        return repr(
+            parse_single_value_dynamically(
+                name=inp.name if inp.name is not None else "UNKNOWN",
+                value=inp.value,
+                data_type=DataType.Any,  # to get an object corresponding to the json
+                nullable=True,
+            )
+        )
+
+    try:
+        return repr(
+            parse_single_value_dynamically(
+                name=inp.name if inp.name is not None else "UNKNOWN",
+                value=inp.value,
+                data_type=inp.data_type,
+                nullable=True,
+            )
+        )
+    except ValueError as error:
+        msg = (
+            f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type.value}"
+            + (f":\n{str(error)}" if inp.value != "None" else ". Enter 'null' instead.")
+        )
+        logger.error(msg)
+        raise TypeError(msg) from error
 
 
-def default_value_string(inp: TransformationInput) -> str:
-    if inp.value == "" and inp.data_type != DataType.String:
-        return "None"
+def function_signature_default_value_string(inp: TransformationInput) -> str:
+    if inp.value == "" and inp.data_type not in (DataType.String, DataType.Any):
+        return repr(None)
 
-    return wrap_in_quotes_if_data_type_string(str(inp.value), inp.data_type)
+    if inp.data_type in (
+        DataType.Series,
+        DataType.DataFrame,
+        DataType.MultiTSFrame,
+        DataType.Any,
+    ):
+        if not inp.data_type is DataType.Any and not isinstance(
+            inp.value, str | dict | list | None
+        ):
+            msg = (
+                f"Default value '{inp.value}' of input '{inp.name}' "
+                f"has wrong type for a {inp.data_type}."
+            )
+            logger.error(msg)
+            raise TypeError(msg)
+        return f'parse_default_value(COMPONENT_INFO, "{inp.name}")'
+
+    try:
+        return repr(
+            parse_single_value_dynamically(
+                name=inp.name if inp.name is not None else "UNKNOWN",
+                value=inp.value,
+                data_type=inp.data_type,
+                nullable=True,
+            )
+        )
+    except ValueError as error:
+        msg = (
+            f"Parsing Error for value '{inp.value}' of input '{inp.name}' as {inp.data_type.value}"
+            + (f":\n{str(error)}" if inp.value != "None" else ". Enter 'null' instead.")
+        )
+        logger.error(msg)
+        raise TypeError(msg) from error
+
+
+def format_function_header(function_header: str) -> str:
+    # add function_body_template to fulfill indented block expectation after function definition
+    formatted_function_header_with_body_template = format_code_with_black(
+        function_header + function_body_template
+    )
+    # remove function_body_template again
+    formatted_function_header = (
+        formatted_function_header_with_body_template.removesuffix(
+            function_body_template
+        )
+    )
+    return formatted_function_header
+
+
+def description_too_long(description: str) -> bool:
+    # max_line length = 100
+    # overhead length = len('    "description": "",')
+    # max description length = max line length - overhead length = 77
+    return len(description) > 77
 
 
 def generate_function_header(
@@ -75,7 +168,7 @@ def generate_function_header(
                 if inp.type == InputType.REQUIRED and inp.name is not None
             ]
             + [
-                inp.name + "=" + default_value_string(inp)
+                inp.name + "=" + function_signature_default_value_string(inp)
                 for inp in component.io_interface.inputs
                 if inp.type == InputType.OPTIONAL and inp.name is not None
             ]
@@ -95,22 +188,7 @@ def generate_function_header(
                 + inp.data_type.value
                 + '"'
                 + (
-                    ', "default_value": '
-                    + (
-                        '"'
-                        if inp.data_type == DataType.String and inp.value is not None
-                        else ""
-                    )
-                    + (
-                        str(inp.value)
-                        if (inp.data_type == DataType.String or inp.value != "")
-                        else "None"
-                    )
-                    + (
-                        '"'
-                        if inp.data_type == DataType.String and inp.value is not None
-                        else ""
-                    )
+                    ', "default_value": ' + component_info_default_value_string(inp)
                     if inp.type == InputType.OPTIONAL
                     else ""
                 )
@@ -160,11 +238,14 @@ def generate_function_header(
         timestamp_str = timestamp_str + component.disabled_timestamp.isoformat()
         timestamp_str = timestamp_str + '",'
 
-    return function_definition_template.format(
+    function_header = function_definition_template.format(
         input_dict_content=input_dict_str,
         output_dict_content=output_dict_str,
         name='"' + component.name + '"',
         description='"' + component.description + '"',
+        description_too_long_noqa=(
+            "  # noqa: E501" if description_too_long(component.description) else ""
+        ),
         category='"' + component.category + '"',
         version_tag='"' + component.version_tag + '"',
         id='"' + str(component.id) + '"',
@@ -175,16 +256,28 @@ def generate_function_header(
         main_func_declaration_start=main_func_declaration_start,
     )
 
+    try:
+        return format_function_header(function_header)
+    except black.InvalidInput as error:
+        logger.warning(
+            "Error while generating function header for compoent %s:\n%s",
+            str(component.id),
+            str(error),
+        )
+        return function_header
+
+    return format_code_with_black(function_header)
+
 
 def generate_complete_component_module(
     component: TransformationRevision, is_coroutine: bool = False
 ) -> str:
     return (
         imports_template
-        + "\n"
+        + "# %%\n"
         + generate_function_header(component, is_coroutine)
-        + "\n"
         + function_body_template
+        + "\n\n# %%\n"
     )
 
 
@@ -225,19 +318,19 @@ def update_code(
     except ValueError:
         # Cannot find func def, therefore append it (assuming necessary imports are present):
         # This may secretely add a second main entrypoint function!
-        return (
-            existing_code + "\n\n" + new_function_header + "\n" + function_body_template
-        )
+        return existing_code + "\n\n" + new_function_header + function_body_template
 
-    if "    # ***** DO NOT EDIT LINES ABOVE *****" not in remaining:
+    if "    # ***** DO NOT EDIT LINES ABOVE *****\n" not in remaining:
         # Cannot find end of function definition.
         # Therefore replace all code starting from the detected beginning of the function
         # definition. This deletes all user code below!
-        return start + new_function_header + "\n" + function_body_template
+        return start + new_function_header + function_body_template
 
     # we now are quite sure that we find a complete existing function definition
 
-    old_func_def, end = remaining.split("    # ***** DO NOT EDIT LINES ABOVE *****", 1)
+    old_func_def, end = remaining.split(
+        "    # ***** DO NOT EDIT LINES ABOVE *****\n", 1
+    )
 
     old_func_def_lines = old_func_def.split("\n")
     use_async_def = (len(old_func_def_lines) >= 3) and old_func_def_lines[
@@ -248,6 +341,76 @@ def update_code(
     new_function_header = generate_function_header(tr, is_coroutine)
 
     return start + new_function_header + end
+
+
+def add_documentation_as_module_doc_string(
+    code: str, tr: TransformationRevision
+) -> str:
+    if code.startswith('"""'):
+        return code
+
+    mod_doc_string = (
+        '"""Documentation for '
+        + tr.name
+        + "\n\n"
+        + tr.documentation.strip()
+        + '\n"""\n\n'
+    )
+
+    return mod_doc_string + code
+
+
+def add_test_wiring_dictionary(code: str, tr: TransformationRevision) -> str:
+    try:
+        expanded_code = update_module_level_variable(
+            code=code,
+            variable_name="TEST_WIRING_FROM_PY_FILE_IMPORT",
+            value=json.loads(
+                tr.test_wiring.json(exclude_unset=True, exclude_defaults=True)
+            ),
+        )
+    except CodeParsingException as e:
+        msg = (
+            f"Failed to update test wiring in code for trafo {tr.name} ({tr.version_tag})"
+            f"(id: {str(tr.id)}). Returning non-updated code. Error was: {str(e)}"
+        )
+        logger.warning(msg)
+        return code
+    return expanded_code
+
+
+def expand_code(
+    tr: TransformationRevision,
+) -> str:
+    """Add documentation and test wiring to component code
+
+    Add the documentation as module docstring at the top of the component code.
+
+    Add test_wiring as dictionary at the end of the component code.
+    """
+
+    if tr.type != Type.COMPONENT:
+        raise ValueError(
+            f"Will not update code of transformation revision {tr.id} "
+            f"since its type is not COMPONENT."
+        )
+
+    existing_code = tr.content
+    assert isinstance(existing_code, str)  # hint for mypy # noqa: S101
+
+    if existing_code == "":
+        existing_code = generate_complete_component_module(tr)
+
+    expanded_code = add_documentation_as_module_doc_string(existing_code, tr)
+    expanded_code = add_test_wiring_dictionary(expanded_code, tr)
+
+    try:
+        return format_code_with_black(expanded_code)
+    except CodeParsingException:
+        logger.warning(
+            "Could not format code with black ({tr.name} ({tr.version_tag}), id: {tr.id})."
+        )
+        return expanded_code
 
 
 def check_parameter_names(names: list[str]) -> bool:

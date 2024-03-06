@@ -3,7 +3,6 @@
 pytest
 coverage
 pytest-cov
-black
 pytest-asyncio
 rope
 mypy
@@ -11,7 +10,7 @@ nest_asyncio
 types-requests
 types-pytz
 ipykernel
-moto
+moto<5.0
 ruff
 pytest-random-order
 watchfiles

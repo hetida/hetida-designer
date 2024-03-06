@@ -14,7 +14,8 @@
         "position": {
           "x": 475,
           "y": 262
-        }
+        },
+        "type": "REQUIRED"
       }
     ],
     "links": [
@@ -161,12 +162,14 @@
         "inputs": [
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "ae9ad473-be37-4e0c-8e78-2a01b24ffd3e",
             "name": "example_class_object",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Get ExampleClass Object Attributes",
@@ -214,12 +217,14 @@
         "inputs": [
           {
             "data_type": "ANY",
+            "exposed": true,
             "id": "b7803aec-db20-6bea-970f-0566ded49a7c",
             "name": "input",
             "position": {
               "x": 0,
               "y": 0
-            }
+            },
+            "type": "REQUIRED"
           }
         ],
         "name": "Forget",
@@ -310,7 +315,8 @@
       {
         "data_type": "ANY",
         "id": "9a1d7434-3e66-46d8-844c-7769e7e13603",
-        "name": "example_class_object"
+        "name": "example_class_object",
+        "type": "REQUIRED"
       }
     ],
     "outputs": [
@@ -336,9 +342,9 @@
   "revision_group_id": "bb6ffbca-abb6-4bf6-aef1-4eaa42ef816f",
   "state": "RELEASED",
   "test_wiring": {
+    "dashboard_positionings": [],
     "input_wirings": [],
-    "output_wirings": [],
-    "dashboard_positionings": []
+    "output_wirings": []
   },
   "type": "WORKFLOW",
   "version_tag": "1.0.0"
