@@ -19,6 +19,7 @@ import {
   TabItemWithTransformation
 } from '../../store/tab-item/tab-item.selectors';
 import { isComponentTransformation } from '../../model/transformation';
+import { QueryParameterService } from 'src/app/service/query-parameter/query-parameter.service';
 
 const HOME_TAB = 0;
 
@@ -67,7 +68,8 @@ export class ContentViewComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly store: Store<IAppState>,
-    private readonly popoverService: PopoverService
+    private readonly popoverService: PopoverService,
+    private readonly queryParameterService: QueryParameterService
   ) {}
 
   private readonly _ngOnDestroyNotify = new Subject<void>();
@@ -138,6 +140,12 @@ export class ContentViewComponent implements OnInit, OnDestroy {
   _onTabClose(tabItemToClose: TabItemWithTransformation) {
     this.popoverService.closePopover();
     this.store.dispatch(removeTabItem(tabItemToClose.id));
+
+    if (tabItemToClose.tabItemType === TabItemType.TRANSFORMATION) {
+      this.queryParameterService.deleteQueryParameter(
+        tabItemToClose.transformation.id
+      );
+    }
   }
 
   _closePopover(): void {

@@ -9,6 +9,7 @@ import {
 } from '../../store/tab-item/tab-item.actions';
 import { LocalStorageService } from '../local-storage/local-storage.service';
 import { Transformation } from '../../model/transformation';
+import { QueryParameterService } from '../query-parameter/query-parameter.service';
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +18,8 @@ export class TabItemService {
   constructor(
     private readonly store: Store<IAppState>,
     private readonly transformationService: TransformationService,
-    private readonly localStorageService: LocalStorageService
+    private readonly localStorageService: LocalStorageService,
+    private readonly queryParameterService: QueryParameterService
   ) {}
 
   addTransformationTab(transformationId: string): void {
@@ -25,6 +27,7 @@ export class TabItemService {
       transformationId,
       tabItemType: TabItemType.TRANSFORMATION
     });
+    this.queryParameterService.addQueryParameter(transformationId);
   }
 
   addDocumentationTab(
