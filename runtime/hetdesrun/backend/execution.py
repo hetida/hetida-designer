@@ -344,4 +344,5 @@ async def execute_transformation_revision(
     exec_resp_frontend_dto.measured_steps.prepare_execution_input = (
         prep_exec_input_measured_step
     )
+
     return exec_resp_frontend_dto

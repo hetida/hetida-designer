@@ -325,7 +325,10 @@ class RuntimeConfig(BaseSettings):
         "|http://hetida-designer-runtime:8090/adapters/localfile,"
         "sql-adapter|SQL Adapter"
         "|http://localhost:8090/adapters/sql"
-        "|http://localhost:8090/adapters/sql",
+        "|http://localhost:8090/adapters/sql,"
+        "kafka|Kafka Adapter"
+        "|http://localhost:8090/adapters/kafka"
+        "|http://localhost:8090/adapters/kafka",
         env="HETIDA_DESIGNER_ADAPTERS",
         description="list of the installed adapters",
     )
