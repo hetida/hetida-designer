@@ -22,3 +22,5 @@ async def send_data(
         )
 
         await produce_data_to_kafka_sink(data, str(id_to_use))
+
+    return {}

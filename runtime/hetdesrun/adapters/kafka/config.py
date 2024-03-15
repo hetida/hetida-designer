@@ -1,6 +1,6 @@
 import os
 
-from pydantic import BaseSettings, Field, validator
+from pydantic import BaseSettings, Field
 
 from hetdesrun.adapters.kafka.models import KafkaConfig
 

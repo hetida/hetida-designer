@@ -29,9 +29,14 @@ def get_table_names(uri: str) -> list[str]:
     return inspection.get_table_names()
 
 
-def is_allowed_dataframe_source_table(table_name: str, db_config: SQLAdapterDBConfig) -> bool:
+def is_allowed_dataframe_source_table(
+    table_name: str, db_config: SQLAdapterDBConfig
+) -> bool:
     return (
-        (db_config.explicit_source_tables is None or table_name in db_config.explicit_source_tables)
+        (
+            db_config.explicit_source_tables is None
+            or table_name in db_config.explicit_source_tables
+        )
         and not table_name in db_config.ignore_tables
         and not table_name in db_config.timeseries_tables
     )
@@ -79,7 +84,11 @@ def get_sources_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructure
                 thingNodeId=db_config.key,
                 type=ExternalType.MULTITSFRAME,
                 name="Timeseries Table " + ts_table_name,
-                path=db_config.key + "|" + db_config.name + "/ts_table/" + ts_table_name,
+                path=db_config.key
+                + "|"
+                + db_config.name
+                + "/ts_table/"
+                + ts_table_name,
                 filters={
                     "metrics": {  # metric ids as comma separated string
                         "name": "Metrics (json array or just comma separated or ALL)",
@@ -109,7 +118,9 @@ def filter_sql_sources(
     filter_lower = filter_str.lower()
 
     return [
-        x for x in sql_sources if filter_lower in x.name.lower() or filter_lower in x.path.lower()
+        x
+        for x in sql_sources
+        if filter_lower in x.name.lower() or filter_lower in x.path.lower()
     ]
 
 
@@ -120,7 +131,11 @@ def get_sinks_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructureSi
                 id=db_config.key + "/append_table/" + append_table_name,
                 thingNodeId=db_config.key,
                 name="Append Table " + append_table_name,
-                path=db_config.key + "|" + db_config.name + "/append_table/" + append_table_name,
+                path=db_config.key
+                + "|"
+                + db_config.name
+                + "/append_table/"
+                + append_table_name,
             )
             for append_table_name in db_config.append_tables
         ]
@@ -129,7 +144,11 @@ def get_sinks_of_db(db_config: SQLAdapterDBConfig) -> list[SQLAdapterStructureSi
                 id=db_config.key + "/replace_table/" + replace_table_name,
                 thingNodeId=db_config.key,
                 name="Replace Table " + replace_table_name,
-                path=db_config.key + "|" + db_config.name + "/replace_table/" + replace_table_name,
+                path=db_config.key
+                + "|"
+                + db_config.name
+                + "/replace_table/"
+                + replace_table_name,
             )
             for replace_table_name in db_config.replace_tables
         ]
@@ -168,7 +187,9 @@ def filter_sql_sinks(
     filter_lower = filter_str.lower()
 
     return [
-        x for x in sql_sinks if filter_lower in x.name.lower() or filter_lower in x.path.lower()
+        x
+        for x in sql_sinks
+        if filter_lower in x.name.lower() or filter_lower in x.path.lower()
     ]
 
 
