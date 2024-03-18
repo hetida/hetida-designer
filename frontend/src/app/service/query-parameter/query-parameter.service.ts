@@ -26,11 +26,13 @@ export class QueryParameterService {
 
     if (this.activatedRoute.snapshot.queryParamMap.has('id')) {
       const ids = this.activatedRoute.snapshot.queryParamMap.getAll('id');
+      // add only missing query parameter
       if (ids.find(id => id === transformationId) === undefined) {
         url += `&id=${transformationId}`;
       }
     } else {
-      url += `?id=${transformationId}`;
+      // add the first query parameter
+      url += `/?id=${transformationId}`;
     }
 
     this.router.navigateByUrl(url);
@@ -46,6 +48,7 @@ export class QueryParameterService {
         for (let i = 0; i < ids.length; i++) {
           if (ids[i] === transformationId) {
             if (i === ids.length - 1) {
+              // delete the found query parameter, if it is the last index in the array
               url = url.replace(`&id=${transformationId}`, '');
             } else {
               url = url.replace(`id=${transformationId}&`, '');
@@ -53,6 +56,7 @@ export class QueryParameterService {
           }
         }
       } else {
+        // delete the query parameter, if there is only one left
         url = url.replace(`/?id=${transformationId}`, '');
       }
 
