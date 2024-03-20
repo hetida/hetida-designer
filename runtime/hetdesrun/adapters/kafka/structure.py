@@ -4,6 +4,11 @@ from collections.abc import Iterable
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.kafka.config import get_kafka_adapter_config
+from hetdesrun.adapters.kafka.id_parsing import (
+    KafkaAdapterIdParsingException,
+    parse_sink_id,
+    parse_source_id,
+)
 from hetdesrun.adapters.kafka.models import (
     KafkaAdapterStructureSink,
     KafkaAdapterStructureSource,
@@ -73,12 +78,12 @@ def structure_sinks_from_kafka_config(
             else None,
             filters={
                 "message_value_key": {
-                    "name": "Message Value key (key in multi value message)",
+                    "name": "Message Value key (for multi value message)",
                     "type": "free_text",
                     "required": True,
                 },
                 "message_identifier": {
-                    "name": "Message Identifier (if >1 msg from output desired)",
+                    "name": "Message Identifier (for multiple messages from output)",
                     "type": "free_text",
                     "required": True,
                 },
@@ -165,54 +170,10 @@ def get_source_by_id(source_id: str) -> KafkaAdapterStructureSource | None:
     Returns None if source could not be found
     """
 
-    parts = source_id.rsplit("_", maxsplit=1)
-    if len(parts) != 2:
-        return None
-
-    kafka_config_key, kc_type_str = parts
-
     try:
-        kc_type = ExternalType(kc_type_str)
-    except ValueError:
-        msg = (
-            f"Could not extract type from source id {source_id}. "
-            f"Extracted {kc_type_str} does not correspond to any valid external type."
-        )
-        logger.warning(msg)
-        return None
-
-    kafka_adapter_config = get_kafka_adapter_config()
-
-    try:
-        kafka_config = kafka_adapter_config.kafka_configs[kafka_config_key]
-    except KeyError:
-        msg = (
-            f"No kafka config configured with key {kafka_config_key} for "
-            f"requested source with source_id {source_id}"
-        )
-        logger.warning(msg)
-        return None
-
-    if not kafka_config.consumable:
-        msg = (
-            f"The kafka config with key {kafka_config_key} for "
-            f"requested source with source_id {source_id} does not allow consumption. "
-            "Therefore it does not offer the requested source!"
-        )
-        logger.warning(msg)
-        return None
-
-    if kafka_config.types is None:
-        allowed_types = [e.value for e in ExternalType]
-    else:
-        allowed_types = kafka_config.types
-
-    if kc_type not in allowed_types:
-        msg = (
-            f"The kafka config with key {kafka_config_key} for "
-            f"requested source with source_id {source_id} and inferred type {kc_type} "
-            f"does not allow this type. Allowed types are: {allowed_types}"
-        )
+        kafka_config_key, kafka_config, kc_type = parse_source_id(source_id)
+    except KafkaAdapterIdParsingException as e:
+        msg = f"Could not parse Kafka adapter id {source_id}. Parsing error is:\n{str(e)}.\n"
         logger.warning(msg)
         return None
 
@@ -241,54 +202,10 @@ def get_sink_by_id(sink_id: str) -> KafkaAdapterStructureSink | None:
     Returns None if sink could not be found
     """
 
-    parts = sink_id.rsplit("_", maxsplit=1)
-    if len(parts) != 2:
-        return None
-
-    kafka_config_key, kc_type_str = parts
-
     try:
-        kc_type = ExternalType(kc_type_str)
-    except ValueError:
-        msg = (
-            f"Could not extract type from sink id {sink_id}. "
-            f"Extracted {kc_type_str} does not correspond to any valid external type."
-        )
-        logger.warning(msg)
-        return None
-
-    kafka_adapter_config = get_kafka_adapter_config()
-
-    try:
-        kafka_config = kafka_adapter_config.kafka_configs[kafka_config_key]
-    except KeyError:
-        msg = (
-            f"No kafka config configured with key {kafka_config_key} for "
-            f"requested sink with sink_id {sink_id}"
-        )
-        logger.warning(msg)
-        return None
-
-    if not kafka_config.producable:
-        msg = (
-            f"The kafka config with key {kafka_config_key} for "
-            f"requested sink with sink_id {sink_id} does not allow producing. "
-            "Therefore it does not offer the requested sink!"
-        )
-        logger.warning(msg)
-        return None
-
-    if kafka_config.types is None:
-        allowed_types = [e.value for e in ExternalType]
-    else:
-        allowed_types = kafka_config.types
-
-    if kc_type not in allowed_types:
-        msg = (
-            f"The kafka config with key {kafka_config_key} for "
-            f"requested sink with sink_id {sink_id} and inferred type {kc_type} "
-            f"does not allow this type."
-        )
+        kafka_config_key, kafka_config, kc_type = parse_sink_id(sink_id)
+    except KafkaAdapterIdParsingException as e:
+        msg = f"Could not parse Kafka adapter id {sink_id}. Parsing error is:\n{str(e)}.\n"
         logger.warning(msg)
         return None
 
@@ -303,12 +220,12 @@ def get_sink_by_id(sink_id: str) -> KafkaAdapterStructureSink | None:
         else None,
         filters={
             "message_value_key": {
-                "name": "Message Value key (key in multi value message)",
+                "name": "Message Value key (for multi value message)",
                 "type": "free_text",
                 "required": True,
             },
             "message_identifier": {
-                "name": "Message Identifier (if >1 msg from output desired)",
+                "name": "Message Identifier (for multiple messages from output)",
                 "type": "free_text",
                 "required": True,
             },

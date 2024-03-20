@@ -71,6 +71,10 @@ class ExecutionContextFilter(logging.Filter):
     def clear_context(self) -> None:
         _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
 
+    def get_value(self, key: str) -> str | None:
+        context_dict = _get_execution_context()
+        return context_dict.get(key, None)
+
     def filter(self, record: logging.LogRecord) -> Literal[True]:  # noqa: A003
         context_dict = _get_execution_context()
 
@@ -127,6 +131,10 @@ class JobIdContextFilter(logging.Filter):
 
     def clear_context(self) -> None:
         _WF_EXEC_LOGGING_CONTEXT_VAR.set({})
+
+    def get_value(self, key: str) -> str | None:
+        context_dict = _get_job_id_context()
+        return context_dict.get(key, None)
 
     def filter(self, record: logging.LogRecord) -> Literal[True]:  # noqa: A003
         context_dict = _get_job_id_context()

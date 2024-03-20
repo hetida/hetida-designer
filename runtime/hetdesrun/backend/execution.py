@@ -233,6 +233,7 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
             if exec_by_id_input.wiring is not None
             else transformation_revision.test_wiring,
             job_id=exec_by_id_input.job_id,
+            trafo_id=exec_by_id_input.id,
         )
     except ValidationError as e:
         raise TrafoExecutionInputValidationError(e) from e

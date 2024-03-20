@@ -117,6 +117,15 @@ class WorkflowExecutionInput(BaseModel):
     )
 
     job_id: UUID = Field(default_factory=uuid4)
+    trafo_id: UUID = Field(
+        ...,
+        description=(
+            "The uuid of the original (root) transformation revision that is to be "
+            "executed. Note that this does not have to be equal to the highest level WorkflowNode "
+            " id in the workflow field, since for example components get wrapped. This is primarily"
+            " used for logging and providing context information."
+        ),
+    )
 
     @validator("components")
     def components_unique(
