@@ -771,6 +771,15 @@ async def handle_trafo_revision_execution_request(
     exec_response.measured_steps.internal_full = internal_full_measured_step
     if get_config().advanced_performance_measurement_active:
         exec_response.process_id = os.getpid()
+
+    if get_config().log_execution_performance_info:
+        logger.info(
+            "Measured steps for job %s on process with PID %s:\n%s",
+            str(exec_response.job_id),
+            str(exec_response.process_id),
+            str(exec_response.measured_steps),
+        )
+
     return exec_response
 
 

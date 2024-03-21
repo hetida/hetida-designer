@@ -58,6 +58,12 @@ class RuntimeConfig(BaseSettings):
         ),
     )
 
+    log_execution_performance_info: bool = Field(
+        False,
+        description="Whether performance info (measured steps) are logged.",
+        env="HD_LOG_EXECUTION_PERFORMANCE_INFO",
+    )
+
     swagger_prefix: str = Field(
         "",
         env="OPENAPI_PREFIX",
