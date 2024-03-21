@@ -27,10 +27,7 @@ def structure_sources_from_kafka_config(
     if not kafka_config.consumable:
         return []
 
-    if kafka_config.types is None:
-        allowed_types = [e.value for e in ExternalType]
-    else:
-        allowed_types = kafka_config.types
+    allowed_types = list(ExternalType) if kafka_config.types is None else kafka_config.types
 
     return [
         KafkaAdapterStructureSource(
@@ -39,7 +36,7 @@ def structure_sources_from_kafka_config(
             name=kafka_config.display_name + " " + str(kc_type.value),
             type=kc_type,
             path=key + "/" + str(kc_type.value),
-            metadataKey=key
+            metadataKey=key + "_" + str(kc_type.value)
             if str(kc_type.value).lower().startswith("metadata")
             else None,
             filters={
@@ -61,10 +58,7 @@ def structure_sinks_from_kafka_config(
     if not kafka_config.producable:
         return []
 
-    if kafka_config.types is None:
-        allowed_types = [e.value for e in ExternalType]
-    else:
-        allowed_types = kafka_config.types
+    allowed_types = list(ExternalType) if kafka_config.types is None else kafka_config.types
 
     return [
         KafkaAdapterStructureSink(
@@ -73,7 +67,7 @@ def structure_sinks_from_kafka_config(
             name=kafka_config.display_name + " " + str(kc_type.value),
             type=kc_type,
             path=key + "/" + str(kc_type.value),
-            metadataKey=key
+            metadataKey=key + "_" + str(kc_type.value)
             if str(kc_type.value).lower().startswith("metadata")
             else None,
             filters={
@@ -118,9 +112,7 @@ def filter_kafka_sources(
 ) -> list[KafkaAdapterStructureSource]:
     filter_lower = filter_str.lower()
     return [
-        x
-        for x in kafka_sources
-        if filter_lower in x.name.lower() or filter_lower in x.path.lower()
+        x for x in kafka_sources if filter_lower in x.name.lower() or filter_lower in x.path.lower()
     ]
 
 
@@ -129,9 +121,7 @@ def filter_kafka_sinks(
 ) -> list[KafkaAdapterStructureSink]:
     filter_lower = filter_str.lower()
     return [
-        x
-        for x in kafka_sinks
-        if filter_lower in x.name.lower() or filter_lower in x.path.lower()
+        x for x in kafka_sinks if filter_lower in x.name.lower() or filter_lower in x.path.lower()
     ]
 
 
@@ -141,9 +131,7 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
             id="kafka-adapter",
             name="Kafka Adapter",
             thingNodes=[
-                StructureThingNode(
-                    id="base", parentId=None, name="Kafka", description="Kafka"
-                )
+                StructureThingNode(id="base", parentId=None, name="Kafka", description="Kafka")
             ],
             sinks=[],
             sources=[],
@@ -159,9 +147,7 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
         return StructureResponse(
             id="base", name="Kafka", thingNodes=[], sinks=all_sinks, sources=all_sources
         )
-    raise AdapterHandlingException(
-        "Unknown string provided as parent_id for kafka adapter."
-    )
+    raise AdapterHandlingException("Unknown string provided as parent_id for kafka adapter.")
 
 
 def get_source_by_id(source_id: str) -> KafkaAdapterStructureSource | None:
@@ -183,7 +169,7 @@ def get_source_by_id(source_id: str) -> KafkaAdapterStructureSource | None:
         name=kafka_config.display_name + " " + str(kc_type.value),
         type=kc_type,
         path=kafka_config_key + "/" + str(kc_type.value),
-        metadataKey=kafka_config_key
+        metadataKey=kafka_config_key + "_" + str(kc_type.value)
         if str(kc_type.value).lower().startswith("metadata")
         else None,
         filters={
@@ -215,7 +201,7 @@ def get_sink_by_id(sink_id: str) -> KafkaAdapterStructureSink | None:
         name=kafka_config.display_name + " " + str(kc_type.value),
         type=kc_type,
         path=kafka_config_key + "/" + str(kc_type.value),
-        metadataKey=kafka_config_key
+        metadataKey=kafka_config_key + "_" + str(kc_type.value)
         if str(kc_type.value).lower().startswith("metadata")
         else None,
         filters={
@@ -259,8 +245,6 @@ def get_thing_node_by_id(
     id: str,  # noqa: A002
 ) -> StructureThingNode | None:
     if id == "base":
-        return StructureThingNode(
-            id="base", parentId=None, name="Kafka", description="Kafka"
-        )
+        return StructureThingNode(id="base", parentId=None, name="Kafka", description="Kafka")
 
     return None

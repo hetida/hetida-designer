@@ -48,7 +48,7 @@ async def send_kafka_message(message_dict: dict[str, KafkaMessageValue]) -> None
         )
         logger.error(msg)
         raise AdapterHandlingException(msg) from e
-
+    await producer.stop()
     logger.debug(
         "Finished producing message %s to Kafka with config key %s to topic %s",
         message_identifier,
