@@ -27,7 +27,9 @@ def structure_sources_from_kafka_config(
     if not kafka_config.consumable:
         return []
 
-    allowed_types = list(ExternalType) if kafka_config.types is None else kafka_config.types
+    allowed_types = (
+        list(ExternalType) if kafka_config.types is None else kafka_config.types
+    )
 
     return [
         KafkaAdapterStructureSource(
@@ -58,7 +60,9 @@ def structure_sinks_from_kafka_config(
     if not kafka_config.producable:
         return []
 
-    allowed_types = list(ExternalType) if kafka_config.types is None else kafka_config.types
+    allowed_types = (
+        list(ExternalType) if kafka_config.types is None else kafka_config.types
+    )
 
     return [
         KafkaAdapterStructureSink(
@@ -112,7 +116,9 @@ def filter_kafka_sources(
 ) -> list[KafkaAdapterStructureSource]:
     filter_lower = filter_str.lower()
     return [
-        x for x in kafka_sources if filter_lower in x.name.lower() or filter_lower in x.path.lower()
+        x
+        for x in kafka_sources
+        if filter_lower in x.name.lower() or filter_lower in x.path.lower()
     ]
 
 
@@ -121,7 +127,9 @@ def filter_kafka_sinks(
 ) -> list[KafkaAdapterStructureSink]:
     filter_lower = filter_str.lower()
     return [
-        x for x in kafka_sinks if filter_lower in x.name.lower() or filter_lower in x.path.lower()
+        x
+        for x in kafka_sinks
+        if filter_lower in x.name.lower() or filter_lower in x.path.lower()
     ]
 
 
@@ -131,7 +139,9 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
             id="kafka-adapter",
             name="Kafka Adapter",
             thingNodes=[
-                StructureThingNode(id="base", parentId=None, name="Kafka", description="Kafka")
+                StructureThingNode(
+                    id="base", parentId=None, name="Kafka", description="Kafka"
+                )
             ],
             sinks=[],
             sources=[],
@@ -147,7 +157,9 @@ def get_structure(parent_id: str | None = None) -> StructureResponse:
         return StructureResponse(
             id="base", name="Kafka", thingNodes=[], sinks=all_sinks, sources=all_sources
         )
-    raise AdapterHandlingException("Unknown string provided as parent_id for kafka adapter.")
+    raise AdapterHandlingException(
+        "Unknown string provided as parent_id for kafka adapter."
+    )
 
 
 def get_source_by_id(source_id: str) -> KafkaAdapterStructureSource | None:
@@ -245,6 +257,8 @@ def get_thing_node_by_id(
     id: str,  # noqa: A002
 ) -> StructureThingNode | None:
     if id == "base":
-        return StructureThingNode(id="base", parentId=None, name="Kafka", description="Kafka")
+        return StructureThingNode(
+            id="base", parentId=None, name="Kafka", description="Kafka"
+        )
 
     return None

@@ -21,7 +21,7 @@ def test_kafka_adapter_structure(two_kafka_configs):
     structure_results = get_structure("base")
     assert len(structure_results.thingNodes) == 0
     assert len(structure_results.sources) == 1
-    assert len(structure_results.sinks) == 2
+    assert len(structure_results.sinks) == 18
 
     for src in structure_results.sources:
         assert src == get_source_by_id(src.id)
@@ -37,6 +37,6 @@ def test_kafka_adapter_structure(two_kafka_configs):
 
     # get all sinks
     all_sinks = get_sinks()
-    assert len(all_sinks) == 2
+    assert len(all_sinks) == 18
     for snk in all_sinks:
         assert snk == get_sink_by_id(snk.id)

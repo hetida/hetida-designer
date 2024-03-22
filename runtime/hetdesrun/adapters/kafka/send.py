@@ -9,6 +9,19 @@ from hetdesrun.adapters.kafka.models import KafkaMessageValue
 logger = logging.getLogger(__name__)
 
 
+async def send_encoded_message(
+    producer: aiokafka.AIOKafkaProducer,
+    topic: str,
+    encoded_message: bytes,
+    key: str | None,
+):
+    await producer.start()
+    try:
+        await producer.send_and_wait(topic, key=key, value=encoded_message)
+    finally:
+        await producer.stop()
+
+
 async def send_kafka_message(message_dict: dict[str, KafkaMessageValue]) -> None:
     first_val = next(iter(message_dict.values()))
     kafka_config = first_val.kafka_config
@@ -16,9 +29,7 @@ async def send_kafka_message(message_dict: dict[str, KafkaMessageValue]) -> None
     message_identifier = first_val.message_identifier
     topic = kafka_config.topic
 
-    producer = aiokafka.AIOKafkaProducer(**(kafka_config.producer_config))
-    await producer.start()
-
+    # prepare message
     message = create_message(message_dict)
     try:
         encoded_message = message.json().encode("utf8")
@@ -32,14 +43,20 @@ async def send_kafka_message(message_dict: dict[str, KafkaMessageValue]) -> None
         logger.error(msg)
         raise AdapterHandlingException(msg) from e
 
+    # produce
     logger.debug(
         "Start producing message %s to Kafka with config key %s to topic %s",
         message_identifier,
         kafka_config_key,
         topic,
     )
+
+    producer = aiokafka.AIOKafkaProducer(**(kafka_config.producer_config))
+
     try:
-        await producer.send_and_wait(topic, key=None, value=encoded_message)
+        await send_encoded_message(
+            producer=producer, topic=topic, encoded_message=encoded_message, key=None
+        )
     except Exception as e:  # noqa: BLE001
         msg = (
             f"Error producing message {message_identifier} to Kafka with "
@@ -48,7 +65,7 @@ async def send_kafka_message(message_dict: dict[str, KafkaMessageValue]) -> None
         )
         logger.error(msg)
         raise AdapterHandlingException(msg) from e
-    await producer.stop()
+
     logger.debug(
         "Finished producing message %s to Kafka with config key %s to topic %s",
         message_identifier,

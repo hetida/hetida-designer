@@ -23,7 +23,7 @@ def two_kafka_configs():
             "test_kafka_config2": KafkaConfig(
                 display_name="Test Kafka Config No 2",
                 topic="multi ts ingestion",
-                types=[ExternalType("multitsframe")],
+                types=None,
             ),
         },
     ) as _fixture:

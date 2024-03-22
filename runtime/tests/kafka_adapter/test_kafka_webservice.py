@@ -95,7 +95,7 @@ async def test_kafka_adapter_sinks(
 
     resp_obj = response.json()
 
-    assert len(resp_obj["sinks"]) == 2
+    assert len(resp_obj["sinks"]) == 18
 
     first_sink = resp_obj["sinks"][0]
     first_sink_id = first_sink["id"]

@@ -50,19 +50,20 @@
 
 
 # fix nixpkgs commit:
-with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/f4a8d6d5324c327dcc2d863eb7f3cc06ad630df4.tar.gz") {
+with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/f4a8d6d5324c327dcc2d863eb7f3cc06ad630df4.tar.gz")
+{
   config = {
     permittedInsecurePackages = [
-                "nodejs-14.21.3"
-                # "openssl-1.1.1u"
-              ];
+      "nodejs-14.21.3"
+      # "openssl-1.1.1u"
+    ];
   };
 };
 # 5b7cd5c39befee629be284970415b6eb3b0ff000
 # 23.05: 4ecab3273592f27479a583fb6d975d4aba3486fe
 
 let
-  nixpkgs_for_nodejs14 = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/5b7cd5c39befee629be284970415b6eb3b0ff000.tar.gz") {};
+  nixpkgs_for_nodejs14 = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/5b7cd5c39befee629be284970415b6eb3b0ff000.tar.gz") { };
   pythonPackages = python311Packages; # Fix Python version from the used nixpkgs commit
   projectDir = toString ./.;
   venvDirRuntime = toString ./runtime/nix_venv_hd_dev_runtime;
@@ -71,54 +72,55 @@ let
   pythonDemoAdapterDir = toString ./demo-adapter-python;
   backendDir = toString ./backend;
   frontendDir = toString ./frontend;
-  JUPYTER_CONFIG_DIR =  toString ./.jupyter;
+  JUPYTER_CONFIG_DIR = toString ./.jupyter;
 
   waitfor = stdenv.mkDerivation {
     name = "waitfor";
-    propagatedBuildInputs = [pkgs.netcat pkgs.wget pkgs.cacert];
+    propagatedBuildInputs = [ pkgs.netcat pkgs.wget pkgs.cacert ];
     src = fetchurl {
-        url = "https://raw.githubusercontent.com/eficode/wait-for/019516781dcca428cb0ee372e008e251e333f1ac/wait-for";
-        # Hashes must be specified so that the build is purely functional
-        # Simplest method to get the hash: add a false hash, try it out, copy the right one
-        # from the error message and insert it.
-        sha256 = "1gwysdigrcmbq3rj59h10w20cipl75g8jdf8bhvkncssl9lz0i54";
+      url = "https://raw.githubusercontent.com/eficode/wait-for/019516781dcca428cb0ee372e008e251e333f1ac/wait-for";
+      # Hashes must be specified so that the build is purely functional
+      # Simplest method to get the hash: add a false hash, try it out, copy the right one
+      # from the error message and insert it.
+      sha256 = "1gwysdigrcmbq3rj59h10w20cipl75g8jdf8bhvkncssl9lz0i54";
     };
     unpackPhase = ''
-        echo "UNPACKING OVERRIDDEN"
+      echo "UNPACKING OVERRIDDEN"
     '';
     installPhase = ''
-        mkdir -p $out/bin
-        cp $src $out/bin/waitfor
-        chmod +x $out/bin/waitfor
+      mkdir -p $out/bin
+      cp $src $out/bin/waitfor
+      chmod +x $out/bin/waitfor
     '';
   };
 
   library_join = pkgs.symlinkJoin {
-      name = "system_libraries_symlinked";
-      paths = [ pkgs.zlib pkgs.glibc ]; postBuild = "echo 'links added'; ls .";
+    name = "system_libraries_symlinked";
+    paths = [ pkgs.zlib pkgs.glibc ];
+    postBuild = "echo 'links added'; ls .";
   };
 
   symlinks_to_libs = runCommand "symlinks_to_some_libs" { } ''
-      # Gather explicit symlinks to certain library pathes.
-      # This is a simple workaround for Python imports not finding necessary libraries.
-      # It allows to add the lib path of the result explicitely
-      # to LD_LIBRARY_PATH in nix shell environments etc.
-      #
-      # Usage in nix shell / scripts:
-      #      # (Remove double ' in following line)
-      #      export LD_LIBRARY_PATH=''${lib.makeLibraryPath [stdenv.cc.cc (toString "''${symlinks_to_libs}") ]}
-      # where "symlinks_to_libs is the result of this build.
+    # Gather explicit symlinks to certain library pathes.
+    # This is a simple workaround for Python imports not finding necessary libraries.
+    # It allows to add the lib path of the result explicitely
+    # to LD_LIBRARY_PATH in nix shell environments etc.
+    #
+    # Usage in nix shell / scripts:
+    #      # (Remove double ' in following line)
+    #      export LD_LIBRARY_PATH=''${lib.makeLibraryPath [stdenv.cc.cc (toString "''${symlinks_to_libs}") ]}
+    # where "symlinks_to_libs is the result of this build.
 
-      set -e
+    set -e
 
-      mkdir -p $out/lib
+    mkdir -p $out/lib
 
-      ln -s "${postgresql.lib}"/lib/libpq.so.5 "$out"/lib/libpq.so.5
-      ln -s "${zlib}"/lib/libz.so.1 "$out"/lib/libz.so.1
-      ln -s "${glibc}"/lib/libc-2.33.so "$out"/lib/libc-2.33.so
-      ln -s "${glibc}"/lib/libc-2.33.so.1 "$out"/lib/libc-2.33.so.1
-      ln -s "${glibc}"/lib/libc-2.38.so.1 "$out"/lib/libc-2.38.so.1
-    '';
+    ln -s "${postgresql.lib}"/lib/libpq.so.5 "$out"/lib/libpq.so.5
+    ln -s "${zlib}"/lib/libz.so.1 "$out"/lib/libz.so.1
+    ln -s "${glibc}"/lib/libc-2.33.so "$out"/lib/libc-2.33.so
+    ln -s "${glibc}"/lib/libc-2.33.so.1 "$out"/lib/libc-2.33.so.1
+    ln -s "${glibc}"/lib/libc-2.38.so.1 "$out"/lib/libc-2.38.so.1
+  '';
 
   prepare-venv = writeShellScriptBin "prepare-venv" ''
     set -e
@@ -217,73 +219,97 @@ let
   '';
 
   start-python-demo-adapter = writeShellScriptBin "start-python-demo-adapter" ''
-      set -e
-      source ${prepare-python-demo-adapter-venv}/bin/prepare-python-demo-adapter-venv
-      cd ${pythonDemoAdapterDir}
+    set -e
+    source ${prepare-python-demo-adapter-venv}/bin/prepare-python-demo-adapter-venv
+    cd ${pythonDemoAdapterDir}
 
-      PORT=8092 python ./main.py
+    PORT=8092 python ./main.py
   '';
 
   start-runtime = writeShellScriptBin "start-hd-runtime" ''
-      set -e
+    set -e
 
-      source ${prepare-runtime-venv}/bin/prepare-runtime-venv
+    source ${prepare-runtime-venv}/bin/prepare-runtime-venv
 
-      cd ${runtimeDir}
-      export HD_DATABASE_URL="postgresql+psycopg2://$(whoami):hetida_designer_dbpasswd@localhost:5432/hetida_designer_db"
+    cd ${runtimeDir}
+    export HD_DATABASE_URL="postgresql+psycopg2://$(whoami):hetida_designer_dbpasswd@localhost:5432/hetida_designer_db"
 
-      WRITABLE_SQLITE_TMP_DIR="$(mktemp -d)"
-      export SQL_ADAPTER_SQL_DATABASES='
-        [
-          {
-            "name": "sqlite example db (read only)",
-            "key": "example_sqlite_db",
-            "connection_url": "sqlite+pysqlite:///./tests/data/sql_adapter/example_sqlite.db?mode=ro",
-            "append_tables": [],
-            "replace_tables" : []
-          },
-          {
-            "name": "writable sqlite db",
-            "key": "temp_sqlite_db",
-            "connection_url": "sqlite+pysqlite:///'"$WRITABLE_SQLITE_TMP_DIR"'/writable_sqlite.db",
-            "append_tables": ["append_alert_table", "model_run_stats"],
-            "replace_tables" : ["model_config_params"]
-          }
-        ]
-      '
-      export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092,local-file-adapter|Local-File-Adapter|http://localhost:8080/adapters/localfile|http://localhost:8080/adapters/localfile,sql-adapter|SQL Adapter|http://localhost:8080/adapters/sql|http://localhost:8080/adapters/sql"
-      export HD_USE_AUTH=false
-      export HD_MAINTENANCE_SECRET="maintenance"
-      echo "WAIT FOR POSTGRES DB"
-      sleep 5 # wait for stopping possibly existing postgres instances before trying
-      # wait for postgres to be up using the pg_isready utility
-      timer="2"
-      until pg_isready -h ${projectDir} 2>/dev/null; do
-          >&2 echo "Postgres is unavailable - sleeping for $timer seconds"
-          sleep $timer
-      done
+    WRITABLE_SQLITE_TMP_DIR="$(mktemp -d)"
+    export SQL_ADAPTER_SQL_DATABASES='
+      [
+        {
+          "name": "sqlite example db (read only)",
+          "key": "example_sqlite_db",
+          "connection_url": "sqlite+pysqlite:///./tests/data/sql_adapter/example_sqlite.db?mode=ro",
+          "append_tables": [],
+          "replace_tables" : []
+        },
+        {
+          "name": "writable sqlite db",
+          "key": "temp_sqlite_db",
+          "connection_url": "sqlite+pysqlite:///'"$WRITABLE_SQLITE_TMP_DIR"'/writable_sqlite.db",
+          "append_tables": ["append_alert_table", "model_run_stats"],
+          "replace_tables" : ["model_config_params"]
+        }
+      ]
+    '
+    export HETIDA_DESIGNER_ADAPTERS="demo-adapter-python|Python-Demo-Adapter|http://localhost:8092|http://localhost:8092,local-file-adapter|Local-File-Adapter|http://localhost:8080/adapters/localfile|http://localhost:8080/adapters/localfile,sql-adapter|SQL Adapter|http://localhost:8080/adapters/sql|http://localhost:8080/adapters/sql,kafka|Kafka Adapter|http://localhost:8080/adapters/kafka|http://localhost:8080/adapters/kafka"
+    export HD_USE_AUTH=false
+    export HD_MAINTENANCE_SECRET="maintenance"
+    echo "WAIT FOR POSTGRES DB"
+    sleep 5 # wait for stopping possibly existing postgres instances before trying
+    # wait for postgres to be up using the pg_isready utility
+    timer="2"
+    until pg_isready -h ${projectDir} 2>/dev/null; do
+        >&2 echo "Postgres is unavailable - sleeping for $timer seconds"
+        sleep $timer
+    done
 
-      echo "CREATING DB SCHEMA"
-      python -c "from sqlalchemy_utils import create_database; from hetdesrun.persistence import get_db_engine; create_database(get_db_engine().url);"
+    echo "CREATING DB SCHEMA"
+    python -c "from sqlalchemy_utils import create_database; from hetdesrun.persistence import get_db_engine; create_database(get_db_engine().url);"
 
-      echo "STARTING RUNTIME"
-      PORT=8080 python ./main.py
+    echo "STARTING RUNTIME"
+    PORT=8080 \
+    HD_USE_AUTH=false \
+    HD_KAFKA_CONFIGS='
+    {
+        "test_kafka_config1": {
+            "display_name": "Test Kafka Config No 1",
+            "topic": "multi-ts-ingestion",
+            "types": ["multitsframe"],
+            "producer_config": {
+              "bootstrap_servers": ["localhost:9094"]
+            },
+            "consumable": true
+        },
+        "test_kafka_config2": {
+            "display_name": "Test Kafka Config No 2",
+            "topic": "multi-ts-ingestion2",
+            "types": null,
+            "producer_config": {
+              "bootstrap_servers": ["localhost:9094"]
+            }
+        }
+    }
+    ' python main.py
+    PORT=8080 python ./main.py
   '';
 
   start-frontend = writeShellScriptBin "start-hd-frontend" ''
-      cd ${frontendDir}
-      npm run start
+    cd ${frontendDir}
+    npm run start
   '';
 
-   procfile = writeText "procfile" ''
-      runtime: ${start-runtime}/bin/start-hd-runtime
-      frontend: ${start-frontend}/bin/start-hd-frontend
-      postgres: ${start-postgres}/bin/start-hd-postgres
-      pythondemoadapter: ${start-python-demo-adapter}/bin/start-python-demo-adapter
+  procfile = writeText "procfile" ''
+    runtime: ${start-runtime}/bin/start-hd-runtime
+    frontend: ${start-frontend}/bin/start-hd-frontend
+    postgres: ${start-postgres}/bin/start-hd-postgres
+    pythondemoadapter: ${start-python-demo-adapter}/bin/start-python-demo-adapter
 
   '';
 
-in pkgs.mkShell rec {
+in
+pkgs.mkShell rec {
   name = "hetida-desiger-local-dev-environment";
 
   inherit projectDir venvDirRuntime;
@@ -336,9 +362,9 @@ in pkgs.mkShell rec {
 
   ];
 
-    OVERMIND_PROCFILE = procfile;
-    OVERMIND_NO_PORT = "1";
-    OVERMIND_CAN_DIE = "runtime";
+  OVERMIND_PROCFILE = procfile;
+  OVERMIND_NO_PORT = "1";
+  OVERMIND_CAN_DIE = "runtime";
 
 
   shellHook = ''
