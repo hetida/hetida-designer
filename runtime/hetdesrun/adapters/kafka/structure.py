@@ -49,7 +49,7 @@ def structure_sources_from_kafka_config(
                 }
             },
         )
-        for kc_type in allowed_types
+        for kc_type in allowed_types  # type:ignore
     ]
 
 
@@ -87,7 +87,7 @@ def structure_sinks_from_kafka_config(
                 },
             },
         )
-        for kc_type in allowed_types
+        for kc_type in allowed_types  # type:ignore
     ]
 
 

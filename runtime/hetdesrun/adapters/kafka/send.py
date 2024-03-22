@@ -14,7 +14,7 @@ async def send_encoded_message(
     topic: str,
     encoded_message: bytes,
     key: str | None,
-):
+) -> None:
     await producer.start()
     try:
         await producer.send_and_wait(topic, key=key, value=encoded_message)
@@ -22,7 +22,7 @@ async def send_encoded_message(
         await producer.stop()
 
 
-async def send_kafka_message(message_dict: dict[str, KafkaMessageValue]) -> None:
+async def send_kafka_message(message_dict: dict[str | None, KafkaMessageValue]) -> None:
     first_val = next(iter(message_dict.values()))
     kafka_config = first_val.kafka_config
     kafka_config_key = first_val.kafka_config_key

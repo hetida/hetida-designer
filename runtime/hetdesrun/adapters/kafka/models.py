@@ -77,7 +77,7 @@ class KafkaConfig(BaseModel):
     consumer_config: dict = {}
     offer_sources_and_sinks: bool = True
 
-    def type_allowed(self, external_type: ExternalType):
+    def type_allowed(self, external_type: ExternalType) -> bool:
         allowed_types = (
             [e.value for e in ExternalType] if self.types is None else self.types
         )

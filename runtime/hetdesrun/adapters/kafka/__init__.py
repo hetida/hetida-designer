@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 def gather_messages(
     wf_output_name_to_filtered_sink_mapping_dict: dict[str, FilteredSink],
     wf_output_name_to_value_mapping_dict: dict[str, Any],
-) -> list[dict[str, KafkaMessageValue]]:
+) -> list[dict[str | None, KafkaMessageValue]]:
     """Gather all Kafka sink information and values
 
     Returns a list of dictionaries each representing a combined message.
@@ -27,7 +27,9 @@ def gather_messages(
 
     For single value messages there is only one key "None" in the message dictionary.
     """
-    by_kafka_config_by_message = {}
+    by_kafka_config_by_message: dict[
+        str, dict[str, dict[str | None, KafkaMessageValue]]
+    ] = {}
     for (
         output_name,
         filtered_sink,
@@ -37,6 +39,7 @@ def gather_messages(
             if filtered_sink.ref_key is not None
             else filtered_sink.ref_id
         )
+        assert id_to_use is not None  # noqa: S101 # for mypy
         try:
             kafka_config_key, kafka_config, kc_type = parse_sink_id(id_to_use)
         except KafkaAdapterIdParsingException as e:
@@ -60,9 +63,9 @@ def gather_messages(
             kafka_key_message_dict = {}
             by_kafka_config_by_message[kafka_config_key] = kafka_key_message_dict
 
-        message_value_dict: list | None = kafka_key_message_dict.get(
-            message_identifier, None
-        )
+        message_value_dict: dict[
+            str | None, KafkaMessageValue
+        ] | None = kafka_key_message_dict.get(message_identifier, None)
         if message_value_dict is None:
             message_value_dict = {}
             kafka_key_message_dict[message_identifier] = message_value_dict

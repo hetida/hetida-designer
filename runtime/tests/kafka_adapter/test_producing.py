@@ -1,3 +1,4 @@
+import json
 from unittest import mock
 
 import pandas as pd
@@ -5,8 +6,16 @@ import pytest
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.kafka.message import create_message
-from hetdesrun.adapters.kafka.models import KafkaMessageValue, KafkaSingleValueMessage
+from hetdesrun.adapters.kafka.models import (
+    KafkaMessageValue,
+    KafkaMultiValueMessage,
+    KafkaSingleValueMessage,
+)
 from hetdesrun.adapters.kafka.send import send_kafka_message
+from hetdesrun.persistence.dbservice.revision import (
+    store_single_transformation_revision,
+)
+from hetdesrun.persistence.models.transformation import TransformationRevision
 
 
 @pytest.fixture
@@ -63,3 +72,163 @@ async def test_producing(two_kafka_configs, mocked_send_encoded_message):
 
     # compare after converting to json since DataFrames are not comparable by default:
     assert received_msg_object.json() == to_send_msg_object.json()
+
+
+@pytest.fixture()
+def _db_with_pass_through_component(mocked_clean_test_db_session):
+    with open(
+        "transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+    ) as f:
+        trafo_data = json.load(f)
+    store_single_transformation_revision(TransformationRevision(**trafo_data))
+
+
+@pytest.mark.asyncio
+async def test_kafka_adapter_producing_any_single_value_message_via_execution_endpoint(
+    two_kafka_configs,
+    _db_with_pass_through_component,  # noqa: PT019
+    open_async_test_client_with_kafka_adapter,
+    mocked_send_encoded_message,
+):
+    payload = {
+        "id": "1946d5f8-44a8-724c-176f-16f3e49963af",  # Pass Through (ANY)
+        "run_pure_plot_operators": False,
+        "wiring": {
+            "dashboard_positionings": [],
+            "input_wirings": [
+                {
+                    "adapter_id": "direct_provisioning",
+                    "filters": {
+                        "value": '{\n    "test": "kafka-adapter-any-producing"\n}'
+                    },
+                    "use_default_value": False,
+                    "workflow_input_name": "input",
+                }
+            ],
+            "output_wirings": [
+                {
+                    "adapter_id": "kafka",
+                    "filters": {"message_identifier": "", "message_value_key": ""},
+                    "ref_id": "base",
+                    "ref_id_type": "THINGNODE",
+                    "ref_key": "test_kafka_config2_metadata(any)",
+                    "type": "metadata(any)",
+                    "workflow_output_name": "output",
+                }
+            ],
+        },
+    }
+
+    resp = await open_async_test_client_with_kafka_adapter.post(
+        "api/transformations/execute", json=payload
+    )
+    assert resp.status_code == 200
+    assert resp.json()["error"] is None
+
+    mocked_send_encoded_message.assert_called_once_with(
+        producer=mock.ANY,
+        topic="multi ts ingestion",
+        encoded_message=mock.ANY,
+        key=None,
+    )
+
+    received_encoded_message = mocked_send_encoded_message.call_args.kwargs[
+        "encoded_message"
+    ]
+    received_msg_object = KafkaSingleValueMessage.parse_raw(
+        received_encoded_message.decode("utf8")
+    )
+
+    kf_msg_val = KafkaMessageValue(
+        kafka_config_key="test_kafka_config2",
+        message_identifier="",
+        message_value_key=None,
+        kafka_config=two_kafka_configs["test_kafka_config2"],
+        external_type=ExternalType.METADATA_ANY,
+        output_name="output",
+        value={"test": "kafka-adapter-any-producing"},
+    )
+
+    msg_dict = {None: kf_msg_val}
+    to_send_msg_object = create_message(msg_dict)
+    to_send_msg_object.message_creation_timestamp = (
+        received_msg_object.message_creation_timestamp
+    )
+    assert received_msg_object == to_send_msg_object
+
+
+@pytest.mark.asyncio
+async def test_kafka_adapter_producing_any_multi_value_message_via_execution_endpoint(
+    two_kafka_configs,
+    _db_with_pass_through_component,  # noqa: PT019
+    open_async_test_client_with_kafka_adapter,
+    mocked_send_encoded_message,
+):
+    payload = {
+        "id": "1946d5f8-44a8-724c-176f-16f3e49963af",  # Pass Through (ANY)
+        "run_pure_plot_operators": False,
+        "wiring": {
+            "dashboard_positionings": [],
+            "input_wirings": [
+                {
+                    "adapter_id": "direct_provisioning",
+                    "filters": {
+                        "value": '{\n    "test": "kafka-adapter-any-producing"\n}'
+                    },
+                    "use_default_value": False,
+                    "workflow_input_name": "input",
+                }
+            ],
+            "output_wirings": [
+                {
+                    "adapter_id": "kafka",
+                    "filters": {
+                        "message_identifier": "my_msg",
+                        "message_value_key": "first",
+                    },
+                    "ref_id": "base",
+                    "ref_id_type": "THINGNODE",
+                    "ref_key": "test_kafka_config2_metadata(any)",
+                    "type": "metadata(any)",
+                    "workflow_output_name": "output",
+                }
+            ],
+        },
+    }
+
+    resp = await open_async_test_client_with_kafka_adapter.post(
+        "api/transformations/execute", json=payload
+    )
+    assert resp.status_code == 200
+    assert resp.json()["error"] is None
+
+    mocked_send_encoded_message.assert_called_once_with(
+        producer=mock.ANY,
+        topic="multi ts ingestion",
+        encoded_message=mock.ANY,
+        key=None,
+    )
+
+    received_encoded_message = mocked_send_encoded_message.call_args.kwargs[
+        "encoded_message"
+    ]
+    received_msg_object = KafkaMultiValueMessage.parse_raw(
+        received_encoded_message.decode("utf8")
+    )
+
+    kf_msg_val = KafkaMessageValue(
+        kafka_config_key="test_kafka_config2",
+        message_identifier="my_msg",
+        message_value_key="first",
+        kafka_config=two_kafka_configs["test_kafka_config2"],
+        external_type=ExternalType.METADATA_ANY,
+        output_name="output",
+        value={"test": "kafka-adapter-any-producing"},
+    )
+
+    msg_dict = {"first": kf_msg_val}
+    to_send_msg_object = create_message(msg_dict)
+    to_send_msg_object.message_creation_timestamp = (
+        received_msg_object.message_creation_timestamp
+    )
+    assert received_msg_object == to_send_msg_object

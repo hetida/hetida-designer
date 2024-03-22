@@ -8,7 +8,7 @@ from hetdesrun.runtime.logging import job_id_context_filter
 
 
 def create_message(
-    message_dict: dict[str, KafkaMessageValue],
+    message_dict: dict[str | None, KafkaMessageValue],
 ) -> KafkaSingleValueMessage | KafkaMultiValueMessage:
     """Create actual message, single/multi value depending on message_dict"""
     if (

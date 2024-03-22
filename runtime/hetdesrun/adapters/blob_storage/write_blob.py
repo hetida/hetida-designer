@@ -1,7 +1,8 @@
 import logging
 import pickle
 from io import BytesIO
-from typing import Any
+from typing import Any, cast
+from uuid import UUID
 
 import h5py
 from botocore.exceptions import ClientError
@@ -76,7 +77,7 @@ def get_sink_and_bucket_and_object_key_from_thing_node_and_metadata_key(
             raise AdapterClientWiringInvalidError(msg) from error
     else:
         job_id_context = _get_job_id_context()
-        job_id = job_id_context["currently_executed_job_id"]
+        job_id = cast(UUID, job_id_context["currently_executed_job_id"])
         logger.info("Get bucket name and object key from sink with id %s", sink.id)
         structure_bucket, object_key = sink.to_structure_bucket_and_object_key(
             job_id=job_id, file_extension=file_extension

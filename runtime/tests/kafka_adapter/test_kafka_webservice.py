@@ -1,13 +1,4 @@
 import pytest
-import pytest_asyncio
-
-
-@pytest_asyncio.fixture
-async def open_async_test_client_with_kafka_adapter(
-    async_test_client_with_kafka_adapter,
-):
-    async with async_test_client_with_kafka_adapter as client:
-        yield client
 
 
 @pytest.mark.asyncio

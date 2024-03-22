@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+import pytest_asyncio
 from fastapi import FastAPI
 from httpx import AsyncClient
 
@@ -42,3 +43,11 @@ def async_test_client_with_kafka_adapter(
     app_without_auth: FastAPI,
 ) -> AsyncClient:
     return AsyncClient(app=app_without_auth, base_url="http://test")
+
+
+@pytest_asyncio.fixture
+async def open_async_test_client_with_kafka_adapter(
+    async_test_client_with_kafka_adapter,
+):
+    async with async_test_client_with_kafka_adapter as client:
+        yield client
