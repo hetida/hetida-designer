@@ -288,7 +288,11 @@ let
             "types": null,
             "producer_config": {
               "bootstrap_servers": ["localhost:9094"]
-            }
+            },
+            "consumer_config": {
+              "bootstrap_servers": ["localhost:9094"]
+            },
+            "consumable": true
         }
     }
     ' python main.py

@@ -46,7 +46,12 @@ def structure_sources_from_kafka_config(
                     "name": "Message Value key (key in multi value message)",
                     "type": "free_text",
                     "required": True,
-                }
+                },
+                "message_identifier": {
+                    "name": "Message Identifier (for multiple messages)",
+                    "type": "free_text",
+                    "required": True,
+                },
             },
         )
         for kc_type in allowed_types  # type:ignore
@@ -189,7 +194,12 @@ def get_source_by_id(source_id: str) -> KafkaAdapterStructureSource | None:
                 "name": "Message Value key (key in multi value message)",
                 "type": "free_text",
                 "required": True,
-            }
+            },
+            "message_identifier": {
+                "name": "Message Identifier (for multiple messages)",
+                "type": "free_text",
+                "required": True,
+            },
         },
     )
 

@@ -115,6 +115,19 @@ class KafkaMessageValue(BaseModel):
     value: Any
 
 
+class KafkaReceiveValue(BaseModel):
+    """Represents an output value to be sent into a Kafka topic"""
+
+    kafka_config_key: str
+    message_identifier: str
+    message_value_key: str | None = Field(
+        ..., description="null value indicates a single value message"
+    )
+    kafka_config: KafkaConfig
+    external_type: ExternalType = Field(..., description="External type of the value")
+    input_name: str
+
+
 class KafkaMessageValueRepresentation(BaseModel):
     value: Any
     data_type: ExternalType = Field(
