@@ -108,7 +108,6 @@ const httpLoaderFactory = (configService: ConfigService) => {
     ComponentEditorComponent,
     ContentViewComponent,
     DocumentationEditorComponent,
-    DocumentationEditorComponent,
     OperatorChangeRevisionDialogComponent,
     ProtocolViewerComponent,
     ToolbarComponent,
@@ -120,7 +119,6 @@ const httpLoaderFactory = (configService: ConfigService) => {
     TransformationContextMenuComponent,
     OptionalFieldsDialogComponent
   ],
-
   imports: [
     PlotlyViaWindowModule,
     BrowserModule,

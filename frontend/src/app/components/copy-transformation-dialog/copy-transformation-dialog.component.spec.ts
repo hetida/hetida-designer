@@ -8,6 +8,7 @@ import { TransformationType } from 'src/app/enums/transformation-type';
 import { RevisionState } from 'src/app/enums/revision-state';
 import { CopyTransformationDialogComponent } from './copy-transformation-dialog.component';
 import { selectAllTransformations } from 'src/app/store/transformation/transformation.selectors';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('CopyTransformationDialogComponent', () => {
   let component: CopyTransformationDialogComponent;
@@ -15,7 +16,12 @@ describe('CopyTransformationDialogComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [BasicTestModule, FormsModule, ReactiveFormsModule],
+      imports: [
+        BasicTestModule,
+        FormsModule,
+        ReactiveFormsModule,
+        RouterTestingModule
+      ],
       declarations: [CopyTransformationDialogComponent, ErrorVisualDirective],
       providers: [
         provideMockStore(),

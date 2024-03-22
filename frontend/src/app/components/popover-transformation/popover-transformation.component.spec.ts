@@ -9,6 +9,7 @@ import { StoreModule } from '@ngrx/store';
 import { NgHetidaFlowchartModule } from 'ng-hetida-flowchart';
 import { appReducers } from 'src/app/store/app.reducers';
 import { PopoverTransformationComponent } from './popover-transformation.component';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('PopoverTransformationComponent', () => {
   let component: PopoverTransformationComponent;
@@ -25,7 +26,8 @@ describe('PopoverTransformationComponent', () => {
         ReactiveFormsModule,
         MatAutocompleteModule,
         StoreModule.forRoot(appReducers),
-        HttpClientModule
+        HttpClientModule,
+        RouterTestingModule
       ],
       declarations: [PopoverTransformationComponent]
     }).compileComponents();
