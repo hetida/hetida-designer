@@ -3,6 +3,7 @@ import logging
 from typing import Any
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.kafka.id_parsing import (
     KafkaAdapterIdParsingException,
     parse_sink_id,
@@ -249,6 +250,23 @@ async def load_data(
     ):
         for key in result_dict:
             input_name = receive_message_dict[key].input_name
+
+            filtered_source = wf_input_name_to_filtered_source_mapping_dict[input_name]
+
+            # Validate type
+            if not receive_message_dict[key].external_type is ExternalType(
+                filtered_source.type
+            ):
+                msg = (
+                    f"Received wrong external type {str(receive_message_dict[key].external_type)} "
+                    f"for input {input_name} from Kafka Adapter config with kafka_config_key "
+                    f"{receive_message_dict[key].kafka_config_key} with message identifier "
+                    f"{receive_message_dict[key].message_identifier} and value key "
+                    f"{receive_message_dict[key].message_value_key}"
+                )
+                logger.error(msg)
+                raise AdapterHandlingException(msg)
+
             wf_input_name_to_value_dict[input_name] = result_dict[key]
 
     return wf_input_name_to_value_dict
