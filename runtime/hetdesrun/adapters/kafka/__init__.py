@@ -10,6 +10,7 @@ from hetdesrun.adapters.kafka.id_parsing import (
 from hetdesrun.adapters.kafka.models import KafkaMessageValue, KafkaReceiveValue
 from hetdesrun.adapters.kafka.receive import receive_kafka_message
 from hetdesrun.adapters.kafka.send import send_kafka_message
+from hetdesrun.adapters.kafka.utils import parse_value_and_msg_identifier
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 
 logger = logging.getLogger(__name__)
@@ -50,12 +51,14 @@ def gather_messages(
             )
             raise e
 
-        # "" corresponds to default message
-        message_identifier: str = filtered_sink.filters.get("message_identifier", "")
-
-        message_value_key: str | None = filtered_sink.filters.get(
-            "message_value_key", None
+        message_value_key: str | None
+        message_identifier, message_value_key = parse_value_and_msg_identifier(
+            filtered_sink.filters.get("message_value_key", "")
         )
+
+        # "" message_identifier corresponds to default message
+
+        # "" message_value_key corresponds to single value message
         if message_value_key == "":
             message_value_key = None
 
@@ -165,12 +168,14 @@ def gather_receive_recipes(
             )
             raise e
 
-        # "" corresponds to default message
-        message_identifier: str = filtered_source.filters.get("message_identifier", "")
-
-        message_value_key: str | None = filtered_source.filters.get(
-            "message_value_key", None
+        message_value_key: str | None
+        message_identifier, message_value_key = parse_value_and_msg_identifier(
+            filtered_source.filters.get("message_value_key", "")
         )
+
+        # "" message_identifier corresponds to default message
+
+        # "" message_value_key corresponds to single value message
         if message_value_key == "":
             message_value_key = None
 

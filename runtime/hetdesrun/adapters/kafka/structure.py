@@ -43,15 +43,10 @@ def structure_sources_from_kafka_config(
             else None,
             filters={
                 "message_value_key": {
-                    "name": "Message Value key (key in multi value message)",
+                    "name": "Key in multi value message (empty for single value msg)",
                     "type": "free_text",
                     "required": True,
-                },
-                "message_identifier": {
-                    "name": "Message Identifier (for multiple messages)",
-                    "type": "free_text",
-                    "required": True,
-                },
+                }
             },
         )
         for kc_type in allowed_types  # type:ignore
@@ -81,15 +76,10 @@ def structure_sinks_from_kafka_config(
             else None,
             filters={
                 "message_value_key": {
-                    "name": "Message Value key (for multi value message)",
+                    "name": "Key in multi value message (empty for single value msg)",
                     "type": "free_text",
                     "required": True,
-                },
-                "message_identifier": {
-                    "name": "Message Identifier (for multiple messages from output)",
-                    "type": "free_text",
-                    "required": True,
-                },
+                }
             },
         )
         for kc_type in allowed_types  # type:ignore
@@ -191,15 +181,10 @@ def get_source_by_id(source_id: str) -> KafkaAdapterStructureSource | None:
         else None,
         filters={
             "message_value_key": {
-                "name": "Message Value key (key in multi value message)",
+                "name": "Key in multi value message (empty for single value msg)",
                 "type": "free_text",
                 "required": True,
-            },
-            "message_identifier": {
-                "name": "Message Identifier (for multiple messages)",
-                "type": "free_text",
-                "required": True,
-            },
+            }
         },
     )
 
@@ -228,15 +213,10 @@ def get_sink_by_id(sink_id: str) -> KafkaAdapterStructureSink | None:
         else None,
         filters={
             "message_value_key": {
-                "name": "Message Value key (for multi value message)",
+                "name": "Key in multi value message (empty for single value msg)",
                 "type": "free_text",
                 "required": True,
-            },
-            "message_identifier": {
-                "name": "Message Identifier (for multiple messages from output)",
-                "type": "free_text",
-                "required": True,
-            },
+            }
         },
     )
 
