@@ -1,3 +1,4 @@
+import json
 from unittest import mock
 
 import pytest
@@ -7,6 +8,10 @@ from httpx import AsyncClient
 
 from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.adapters.kafka.config import KafkaConfig
+from hetdesrun.persistence.dbservice.revision import (
+    store_single_transformation_revision,
+)
+from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.webservice.application import init_app
 
 
@@ -29,6 +34,15 @@ def two_kafka_configs():
         },
     ) as _fixture:
         yield _fixture
+
+
+@pytest.fixture()
+def _db_with_pass_through_component(mocked_clean_test_db_session):
+    with open(
+        "transformations/components/connectors/pass-through_100_1946d5f8-44a8-724c-176f-16f3e49963af.json"
+    ) as f:
+        trafo_data = json.load(f)
+    store_single_transformation_revision(TransformationRevision(**trafo_data))
 
 
 @pytest.fixture(scope="session")
