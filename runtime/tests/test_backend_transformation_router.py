@@ -8,8 +8,8 @@ from uuid import UUID
 import pytest
 from fastapi import HTTPException
 
-from hetdesrun.backend.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.component.code import expand_code, update_code
+from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
 from hetdesrun.persistence.dbservice.nesting import update_or_create_nesting
 from hetdesrun.persistence.dbservice.revision import (

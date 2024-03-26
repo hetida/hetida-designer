@@ -8,12 +8,11 @@ import aiokafka
 from pydantic import ValidationError
 
 from hetdesrun.backend.execution import (
-    ExecByIdInput,
-    ExecLatestByGroupIdInput,
     TrafoExecutionError,
     execute_transformation_revision,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
+from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.persistence.dbservice.revision import (
     DBNotFoundError,
     get_latest_revision_id,

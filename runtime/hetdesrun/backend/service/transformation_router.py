@@ -21,8 +21,6 @@ from fastapi.responses import HTMLResponse
 from pydantic import HttpUrl, StrictInt, StrictStr
 
 from hetdesrun.backend.execution import (
-    ExecByIdInput,
-    ExecLatestByGroupIdInput,
     TrafoExecutionInputValidationError,
     TrafoExecutionNotFoundError,
     TrafoExecutionResultValidationError,
@@ -44,6 +42,7 @@ from hetdesrun.exportimport.importing import (
     import_importable,
 )
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
+from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
 from hetdesrun.models.run import PerformanceMeasuredStep
 from hetdesrun.models.wiring import GridstackItemPositioning
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError

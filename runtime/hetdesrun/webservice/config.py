@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic import BaseSettings, Field, Json, SecretStr, validator
 from sqlalchemy.engine import URL as SQLAlchemy_DB_URL
 
+from hetdesrun.models.execution import ExecByIdBase
 from hetdesrun.webservice.auth import FrontendAuthOptions
 from hetdesrun.webservice.auth_outgoing import ServiceCredentials
 
@@ -377,6 +378,18 @@ class RuntimeConfig(BaseSettings):
     )
     hd_adapters_verify_certs: bool = Field(
         True, env="HETIDA_DESIGNER_ADAPTERS_VERIFY_CERTS"
+    )
+
+    hd_kafka_consumption_mode: None | ExecByIdBase = Field(
+        None,
+        description=(
+            "If this is set, all backend, runtime and adapter webservices are deactivated. "
+            "Instead a kafka consumer is started listening on the kafka topic from the kafka "
+            "adapter inputs of the topic/configuration of the provided wiring (exactly one kafka "
+            "config is allowed to occur in the input wirings). Whenever it receives a kafka "
+            "message it will execute the transformation with the wiring forwarding the kafka "
+            "message content into the kafka adapter input wirings."
+        ),
     )
 
     hd_kafka_consumer_enabled: bool = Field(
