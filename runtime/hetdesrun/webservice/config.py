@@ -390,6 +390,7 @@ class RuntimeConfig(BaseSettings):
             "message it will execute the transformation with the wiring forwarding the kafka "
             "message content into the kafka adapter input wirings."
         ),
+        env="HETIDA_DESIGNER_KAFKA_CONSUMPTION_MODE",
     )
 
     hd_kafka_consumer_enabled: bool = Field(

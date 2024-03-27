@@ -22,7 +22,7 @@ async def receive_encoded_message(consumer: aiokafka.AIOKafkaConsumer) -> Any:
     try:
         message = await consumer.getone()
     finally:
-        consumer.stop()
+        await consumer.stop()
 
     return message
 
@@ -49,8 +49,6 @@ async def receive_kafka_message(
         len(receive_message_dict) == 1
         and next(iter(receive_message_dict.keys())) is None
     )
-
-    consumer = aiokafka.AIOKafkaConsumer(topic, **(kafka_config.consumer_config))
 
     if (
         msg_object := _get_kafka_messages_context().get(kafka_config_key, None)
@@ -91,6 +89,9 @@ async def receive_kafka_message(
             kafka_config_key,
             topic,
         )
+
+        consumer = aiokafka.AIOKafkaConsumer(topic, **(kafka_config.consumer_config))
+
         try:
             message = await receive_encoded_message(consumer)
         except Exception as e:  # noqa: BLE001
