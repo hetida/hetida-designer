@@ -56,9 +56,7 @@ def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
     ]
 
     if len(kafka_input_wirings) == 0:
-        raise ValueError(
-            "No kafka input wirings in provided wiring for kafka consumption mode!"
-        )
+        raise ValueError("No kafka input wirings in provided wiring for kafka consumption mode!")
 
     try:
         relevant_id_parsing_results = [
@@ -76,8 +74,7 @@ def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
     value_keys = {
         parse_value_and_msg_identifier(
             val_key
-            if (val_key := inp_wiring.filters.get(FilterKey("message_value_key"), ""))
-            is not None
+            if (val_key := inp_wiring.filters.get(FilterKey("message_value_key"), "")) is not None
             else ""
         )[1]
         for inp_wiring in kafka_input_wirings
@@ -85,11 +82,7 @@ def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
 
     first_value_key = parse_value_and_msg_identifier(
         val_key
-        if (
-            val_key := kafka_input_wirings[0].filters.get(
-                FilterKey("message_value_key"), ""
-            )
-        )
+        if (val_key := kafka_input_wirings[0].filters.get(FilterKey("message_value_key"), ""))
         is not None
         else ""
     )[1]
@@ -104,15 +97,7 @@ def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
             " In this case there are no additional single value input wirings allowed."
         )
 
-    if (
-        len(
-            {
-                parsing_result_tuple[0]
-                for parsing_result_tuple in relevant_id_parsing_results
-            }
-        )
-        != 1
-    ):
+    if len({parsing_result_tuple[0] for parsing_result_tuple in relevant_id_parsing_results}) != 1:
         raise ValueError(
             "More than one kafka_config present in input wirings configured for kafka adapter"
             " consumption mode. Kafka adapter consumption mode can only listen to one topic"
@@ -125,8 +110,7 @@ def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
     message_identifiers = {
         parse_value_and_msg_identifier(
             val_key
-            if (val_key := inp_wiring.filters.get(FilterKey("message_value_key"), ""))
-            is not None
+            if (val_key := inp_wiring.filters.get(FilterKey("message_value_key"), "")) is not None
             else ""
         )[0]
         for inp_wiring in kafka_input_wirings
@@ -241,15 +225,15 @@ async def start_consumption_mode() -> None:
         str(multi),
         consumption_mode_exec_base.json(indent=2),
     )
+    msg_handling_exception_occured = False
     try:
         async for kafka_msg in consumer:
             # need to handle in asyncio task in order to open new context for
             # message context storing
 
-            if relevant_kafka_config.consumer_commit_before and group_id is not None:
-                await consumer.commit()
-
             try:
+                if relevant_kafka_config.consumer_commit_before and group_id is not None:
+                    await consumer.commit()
                 await asyncio.create_task(
                     handle_message(
                         kafka_msg,
@@ -258,12 +242,13 @@ async def start_consumption_mode() -> None:
                     )
                 )
             except Exception as e:
+                msg_handling_exception_occured = True
                 msg = (
                     "An unexpected exception occured during handling of a kafka message in "
                     "kafka adapter consumption mode. kafka config key: "
                     f"{relevant_kafka_config_key}. Multi: {str(multi)}."
                     f"Kafka message:\n"
-                    "topic={}:partition={:d}:offset={:d}: key={} timestamp={} value=\n{}".format(
+                    "topic={}:partition={:d}:offset={:d}: key={} timestamp={} value=\n{}{}".format(
                         kafka_msg.topic,
                         kafka_msg.partition,
                         kafka_msg.offset,
@@ -274,6 +259,8 @@ async def start_consumption_mode() -> None:
                     )
                 )
                 logger.error(msg)
+                if relevant_kafka_config.continue_consumption_after_exception:
+                    continue
                 raise e
             if relevant_kafka_config.consumer_commit_after and group_id is not None:
                 await consumer.commit()
@@ -282,4 +269,8 @@ async def start_consumption_mode() -> None:
         # This will
         # * commit if enable_auto_commit is True
         # * Leave group if group_id is set
-        await consumer.stop()
+
+        if (
+            not msg_handling_exception_occured
+        ) or relevant_kafka_config.call_consumer_stop_method_after_exception:
+            await consumer.stop()
