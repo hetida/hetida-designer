@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 from posixpath import join as posix_urljoin
 from uuid import UUID, uuid4
 
@@ -274,6 +275,9 @@ async def execute_transformation_revision(
     raises subtypes of TrafoExecutionError on errors.
     """
 
+    if exec_by_id_input.job_id is None:
+        exec_by_id_input.job_id = uuid4()
+
     execution_context_filter.bind_context(job_id=exec_by_id_input.job_id)
 
     # prepare execution input
@@ -292,3 +296,33 @@ async def execute_transformation_revision(
     )
 
     return exec_resp_frontend_dto
+
+
+async def perf_measured_execute_trafo_rev(
+    exec_by_id: ExecByIdInput,
+) -> ExecutionResponseFrontendDto:
+    """Wraps execution with performance measuring
+
+    Propagates all exceptions (expected: TrafoExecutionError and subclasses).
+    """
+    internal_full_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "internal_full"
+    )
+
+    # following line may raise exceptions (TrafoExecutionError and subclasses):
+    exec_response = await execute_transformation_revision(exec_by_id)
+
+    internal_full_measured_step.stop()
+    exec_response.measured_steps.internal_full = internal_full_measured_step
+    if get_config().advanced_performance_measurement_active:
+        exec_response.process_id = os.getpid()
+
+    if get_config().log_execution_performance_info:
+        logger.info(
+            "Measured steps for job %s on process with PID %s:\n%s",
+            str(exec_response.job_id),
+            str(exec_response.process_id),
+            str(exec_response.measured_steps),
+        )
+
+    return exec_response

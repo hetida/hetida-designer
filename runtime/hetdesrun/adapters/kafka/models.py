@@ -75,6 +75,20 @@ class KafkaConfig(BaseModel):
     consumable: bool = False
     producer_config: dict = {}
     consumer_config: dict = {}
+    consumer_commit_after: bool = Field(
+        False,
+        description="In consumption mode activating this will trigger a commit after each"
+        " successfully handled message(no Exceptions). group_id must be set in consumer_config"
+        " for this to have an effect. Furthermore enable_auto_commit should be set to False. "
+        " Then this will activate at least once semantics.",
+    )
+    consumer_commit_before: bool = Field(
+        False,
+        description="In consumption mode activating this will trigger a commit before each"
+        " message handling try. group_id must be set in consumer_config"
+        " for this to have an effect. Furthermore enable_auto_commit should be set to False. "
+        " Then this will activate at at most once semantics.",
+    )
     offer_sources_and_sinks: bool = True
 
     def type_allowed(self, external_type: ExternalType) -> bool:

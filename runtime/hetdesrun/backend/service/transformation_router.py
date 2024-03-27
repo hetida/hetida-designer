@@ -1,10 +1,9 @@
 import datetime
 import json
 import logging
-import os
 from copy import deepcopy
 from typing import Annotated, Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import httpx
 from fastapi import (
@@ -25,7 +24,7 @@ from hetdesrun.backend.execution import (
     TrafoExecutionNotFoundError,
     TrafoExecutionResultValidationError,
     TrafoExecutionRuntimeConnectionError,
-    execute_transformation_revision,
+    perf_measured_execute_trafo_rev,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.backend.service.dashboarding import (
@@ -43,7 +42,6 @@ from hetdesrun.exportimport.importing import (
 )
 from hetdesrun.models.code import NonEmptyValidStr, ValidStr
 from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
-from hetdesrun.models.run import PerformanceMeasuredStep
 from hetdesrun.models.wiring import GridstackItemPositioning
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
@@ -737,14 +735,8 @@ async def delete_transformation_revision(
 async def handle_trafo_revision_execution_request(
     exec_by_id: ExecByIdInput,
 ) -> ExecutionResponseFrontendDto:
-    internal_full_measured_step = PerformanceMeasuredStep.create_and_begin(
-        "internal_full"
-    )
-    if exec_by_id.job_id is None:
-        exec_by_id.job_id = uuid4()
-
     try:
-        exec_response = await execute_transformation_revision(exec_by_id)
+        exec_response = await perf_measured_execute_trafo_rev(exec_by_id)
 
     except TrafoExecutionInputValidationError as err:
         msg = f"Could not validate execution input\n{exec_by_id.json(indent=2)}:\n{str(err)}"
@@ -765,19 +757,6 @@ async def handle_trafo_revision_execution_request(
         msg = f"Could not validate execution result for transformation {exec_by_id.id}:\n{str(err)}"
         logger.error(msg)
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=msg) from err
-
-    internal_full_measured_step.stop()
-    exec_response.measured_steps.internal_full = internal_full_measured_step
-    if get_config().advanced_performance_measurement_active:
-        exec_response.process_id = os.getpid()
-
-    if get_config().log_execution_performance_info:
-        logger.info(
-            "Measured steps for job %s on process with PID %s:\n%s",
-            str(exec_response.job_id),
-            str(exec_response.process_id),
-            str(exec_response.measured_steps),
-        )
 
     return exec_response
 

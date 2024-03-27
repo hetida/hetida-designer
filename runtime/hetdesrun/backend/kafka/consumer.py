@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from hetdesrun.backend.execution import (
     TrafoExecutionError,
-    execute_transformation_revision,
+    perf_measured_execute_trafo_rev,
 )
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.execution import ExecByIdInput, ExecLatestByGroupIdInput
@@ -203,7 +203,7 @@ async def consume_execution_trigger_message(
                 kafka_ctx.consumer_id,
             )
             try:
-                exec_result = await execute_transformation_revision(exec_by_id_input)
+                exec_result = await perf_measured_execute_trafo_rev(exec_by_id_input)
             except TrafoExecutionError as e:
                 log_msg = (
                     f"Kafka consumer failed to execute trafo rev {exec_by_id_input.id}"

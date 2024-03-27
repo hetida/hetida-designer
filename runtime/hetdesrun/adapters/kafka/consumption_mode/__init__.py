@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 from uuid import uuid4
 
 import aiokafka
@@ -14,17 +13,31 @@ from hetdesrun.adapters.kafka.id_parsing import (
 from hetdesrun.adapters.kafka.models import KafkaConfig
 from hetdesrun.adapters.kafka.receive import parse_message
 from hetdesrun.adapters.kafka.utils import parse_value_and_msg_identifier
-from hetdesrun.backend.execution import execute_transformation_revision
+from hetdesrun.backend.execution import (
+    TrafoExecutionError,
+    perf_measured_execute_trafo_rev,
+)
 from hetdesrun.models.execution import ExecByIdInput
-from hetdesrun.models.run import PerformanceMeasuredStep
 from hetdesrun.models.wiring import FilterKey
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
 
 
-def extract_relevant_kafka_config() -> tuple[str, KafkaConfig, bool]:
-    """Extract the unique relevant kafka config from the configured input wirings
+def extract_consumption_mode_config_info() -> tuple[str, KafkaConfig, bool]:
+    """Extract the relevant info from kafka consumption mode config
+
+    Returns a tuple
+        relevant_kafka_config_key, relevant_kafka_config, multi
+    where
+
+    * relevant_kafka_config_key is the single kafka config key that occurs in
+      the input wirings of the configured execution input (Uniqueness is validated)
+    * relevant_kafka_config is the associated KafkaConfig
+    * multi indicates whether KafkaaMultiValueMessage or a KafkaaSingleValueMessage
+      is expected as the topic's payload. It is validated that only one message
+      identifier occurs in input wirings and that either all input wirings have a message
+      value key or there is only one input wiring.
 
     Raises ValueError if something is invalid. In particular ensures that
     only one message needs to be fetched from one topic from one kafka config.
@@ -138,19 +151,24 @@ async def handle_message(
     except ValidationError as e:
         raise e
 
+    # bind to context in order for kafka adapter processing to use the message
+    # from context instead of fetching another one.
     bind_kafka_messages({kafka_config_key: msg_obj})
 
     consumption_mode_exec_base = get_config().hd_kafka_consumption_mode
 
     assert consumption_mode_exec_base is not None  # noqa: S101 # for mypy
 
+    # Always provide a new job id. The job id possibly received in the kafka message
+    # is logged together with the new job id below in order to being able to track
+    # jobs across multiple kafka steps.
     new_job_id = uuid4()
 
     exec_input = ExecByIdInput(
         id=consumption_mode_exec_base.id,
         wiring=consumption_mode_exec_base.wiring,
         run_pure_plot_operators=consumption_mode_exec_base.run_pure_plot_operators,
-        job_id=new_job_id,  # TODO: from kafka message: msg_obj.job_id
+        job_id=new_job_id,
     )
 
     logger.info(
@@ -165,28 +183,13 @@ async def handle_message(
             kafka_msg.timestamp,
         ),
     )
-    internal_full_measured_step = PerformanceMeasuredStep.create_and_begin(
-        "internal_full"
-    )
 
     try:
-        exec_response = await execute_transformation_revision(exec_input)
+        exec_response = await perf_measured_execute_trafo_rev(exec_input)
+    except TrafoExecutionError as e:
+        raise e
     except Exception as e:
         raise e
-
-    internal_full_measured_step.stop()
-    exec_response.measured_steps.internal_full = internal_full_measured_step
-
-    if get_config().advanced_performance_measurement_active:
-        exec_response.process_id = os.getpid()
-
-    if get_config().log_execution_performance_info:
-        logger.info(
-            "Measured steps for job %s on process with PID %s:\n%s",
-            str(exec_response.job_id),
-            str(exec_response.process_id),
-            str(exec_response.measured_steps),
-        )
 
     # Outputs wired to direct provisioning go nowhere in kafka consumption mode.
     # That's why we log properly here
@@ -216,11 +219,13 @@ async def start_consumption_mode() -> None:
         relevant_kafka_config_key,
         relevant_kafka_config,
         multi,
-    ) = extract_relevant_kafka_config()
+    ) = extract_consumption_mode_config_info()
 
     consumer = aiokafka.AIOKafkaConsumer(
         relevant_kafka_config.topic, **(relevant_kafka_config.consumer_config)
     )
+
+    group_id = relevant_kafka_config.consumer_config.get("group_id", None)
 
     consumption_mode_exec_base = get_config().hd_kafka_consumption_mode
 
@@ -240,6 +245,10 @@ async def start_consumption_mode() -> None:
         async for kafka_msg in consumer:
             # need to handle in asyncio task in order to open new context for
             # message context storing
+
+            if relevant_kafka_config.consumer_commit_before and group_id is not None:
+                await consumer.commit()
+
             try:
                 await asyncio.create_task(
                     handle_message(
@@ -266,6 +275,11 @@ async def start_consumption_mode() -> None:
                 )
                 logger.error(msg)
                 raise e
+            if relevant_kafka_config.consumer_commit_after and group_id is not None:
+                await consumer.commit()
 
     finally:
+        # This will
+        # * commit if enable_auto_commit is True
+        # * Leave group if group_id is set
         await consumer.stop()
