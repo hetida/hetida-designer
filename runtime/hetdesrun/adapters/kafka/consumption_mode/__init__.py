@@ -17,6 +17,7 @@ from hetdesrun.adapters.kafka.utils import parse_value_and_msg_identifier
 from hetdesrun.backend.execution import execute_transformation_revision
 from hetdesrun.models.execution import ExecByIdInput
 from hetdesrun.models.run import PerformanceMeasuredStep
+from hetdesrun.models.wiring import FilterKey
 from hetdesrun.webservice.config import get_config
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,9 @@ def extract_relevant_kafka_config() -> tuple[str, KafkaConfig, bool]:
     ]
 
     if len(kafka_input_wirings) == 0:
-        raise ValueError("No kafka input wirings in provided wiring for kafka consumption mode!")
+        raise ValueError(
+            "No kafka input wirings in provided wiring for kafka consumption mode!"
+        )
 
     try:
         relevant_id_parsing_results = [
@@ -58,12 +61,24 @@ def extract_relevant_kafka_config() -> tuple[str, KafkaConfig, bool]:
     multi = False
 
     value_keys = {
-        parse_value_and_msg_identifier(inp_wiring.filters.get("message_value_key", ""))[1]
+        parse_value_and_msg_identifier(
+            val_key
+            if (val_key := inp_wiring.filters.get(FilterKey("message_value_key"), ""))
+            is not None
+            else ""
+        )[1]
         for inp_wiring in kafka_input_wirings
     }
 
     first_value_key = parse_value_and_msg_identifier(
-        kafka_input_wirings[0].filters.get("message_value_key", "")
+        val_key
+        if (
+            val_key := kafka_input_wirings[0].filters.get(
+                FilterKey("message_value_key"), ""
+            )
+        )
+        is not None
+        else ""
     )[1]
 
     if len(value_keys) > 1 or first_value_key != "":
@@ -76,7 +91,15 @@ def extract_relevant_kafka_config() -> tuple[str, KafkaConfig, bool]:
             " In this case there are no additional single value input wirings allowed."
         )
 
-    if len({parsing_result_tuple[0] for parsing_result_tuple in relevant_id_parsing_results}) != 1:
+    if (
+        len(
+            {
+                parsing_result_tuple[0]
+                for parsing_result_tuple in relevant_id_parsing_results
+            }
+        )
+        != 1
+    ):
         raise ValueError(
             "More than one kafka_config present in input wirings configured for kafka adapter"
             " consumption mode. Kafka adapter consumption mode can only listen to one topic"
@@ -87,7 +110,12 @@ def extract_relevant_kafka_config() -> tuple[str, KafkaConfig, bool]:
     relevant_kafka_config = relevant_id_parsing_results[0][1]
 
     message_identifiers = {
-        parse_value_and_msg_identifier(inp_wiring.filters.get("message_value_key", ""))[0]
+        parse_value_and_msg_identifier(
+            val_key
+            if (val_key := inp_wiring.filters.get(FilterKey("message_value_key"), ""))
+            is not None
+            else ""
+        )[0]
         for inp_wiring in kafka_input_wirings
     }
 
@@ -137,7 +165,9 @@ async def handle_message(
             kafka_msg.timestamp,
         ),
     )
-    internal_full_measured_step = PerformanceMeasuredStep.create_and_begin("internal_full")
+    internal_full_measured_step = PerformanceMeasuredStep.create_and_begin(
+        "internal_full"
+    )
 
     try:
         exec_response = await execute_transformation_revision(exec_input)
