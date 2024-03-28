@@ -32,7 +32,6 @@ def parse_message(
 ) -> KafkaMultiValueMessage | KafkaSingleValueMessage:
     if multi:
         return KafkaMultiValueMessage.parse_raw(message_bytes.decode("utf8"))
-
     return KafkaSingleValueMessage.parse_raw(message_bytes.decode("utf8"))
 
 

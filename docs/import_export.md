@@ -11,7 +11,7 @@ Use Case examples:
 This guide assumes the default docker-compose setup described in the project README.
 
 ## Export / Import via hdctl bash tool
-The hdctl Bash tool provides a comfortable [sync](./sync) subcommand, that can be used for many purposes and should be your preferred option for fine-granular export / import. 
+The hdctl Bash tool provides a comfortable [sync](./sync.md) subcommand, that can be used for many purposes and should be your preferred option for fine-granular export / import. 
 
 The underlying hdctl Bash tool's `fetch` and `push` subcommands can be used directly for this purpose.
 

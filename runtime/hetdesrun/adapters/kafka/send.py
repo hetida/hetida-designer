@@ -4,9 +4,19 @@ import aiokafka
 
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.kafka.message import create_message
-from hetdesrun.adapters.kafka.models import KafkaMessageValue
+from hetdesrun.adapters.kafka.models import (
+    KafkaMessageValue,
+    KafkaMultiValueMessage,
+    KafkaSingleValueMessage,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def serialize_message(
+    msg_object: KafkaSingleValueMessage | KafkaMultiValueMessage,
+) -> bytes:
+    return msg_object.json().encode("utf8")
 
 
 async def send_encoded_message(
@@ -32,7 +42,7 @@ async def send_kafka_message(message_dict: dict[str | None, KafkaMessageValue]) 
     # prepare message
     message = create_message(message_dict)
     try:
-        encoded_message = message.json().encode("utf8")
+        encoded_message = serialize_message(message)
     except Exception as e:  # noqa: BLE001
         msg = (
             f"Error serializing and encoding message {message_identifier}"
