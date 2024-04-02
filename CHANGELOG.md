@@ -1,4 +1,6 @@
 ## 0.9.7
+* Log execution performance metrics
+* UI: Add deep links to (multiple) workflows and components
 * Allow to provide parsing options for manual input / direct_provisioning adapter for Pandas-like data. In particular this allows to choose other orients of the json representation, like "split". "split" is relevant for SERIES objects since it allows to enter series data with duplicate entries in the index, which is otherwise not possible.
   * **BREAKING_CHANGE**: For SERIES objects hetida designer now outputs the wrapped format with `orient="split"` parsing option to guarantee inclusion of duplicate indices for "direct_provisioning" output wirings.
 * Add url parameters to multiple trafo put and get endpoints for more fine-granular test wiring stripping. Use this for example when transfering trafos between instanced where adapters are
