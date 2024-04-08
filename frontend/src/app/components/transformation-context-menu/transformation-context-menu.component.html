@@ -1,6 +1,10 @@
-<button #invisibleTrigger class="mat-menu-focus-hack"></button>
 <div [matMenuTriggerFor]="itemMenu">
   <mat-menu class="app-context-menu" #itemMenu="matMenu">
+    <button
+      mat-menu-item
+      #invisibleTrigger
+      class="mat-mdc-menu-focus-hack"
+    ></button>
     <button mat-menu-item (click)="openItem()">Edit ...</button>
     <button mat-menu-item (click)="openDocumentation()">
       Show documentation...

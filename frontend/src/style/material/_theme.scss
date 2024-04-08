@@ -31,7 +31,6 @@
   }
 
   // Angular Material overrides
-  // TODO(mdc-migration)
   .mat-mdc-form-field {
     .mat-focused {
       color: map-get($primary, 700);
@@ -101,18 +100,27 @@
   .app-context-menu {
     border: 1px solid map-get($primary, 700);
 
-    .mat-menu-content {
-      .mat-menu-item {
-        height: 25px;
+    .mat-mdc-menu-content {
+      .mat-mdc-menu-item {
+        min-height: 25px;
         line-height: 25px;
       }
     }
+  }
+
+  .mat-mdc-menu-item:hover:not([disabled]) {
+    background-color: $hd-grey-dark;
+  }
+
+  .mat-mdc-menu-item:focus:not([disabled]) {
+    background-color: $hd-grey-dark;
   }
 
   .dark-theme {
     .mat-dialog-title {
       color: $hd-black;
     }
+
     .hetida-context-menu {
       ul {
         li:hover {
@@ -138,6 +146,10 @@
         .cls-1 {
           fill: $hd-yellow;
         }
+      }
+
+      .mdc-tab-indicator__content--underline {
+        border-color: map-get($secondary, 700);
       }
     }
   }

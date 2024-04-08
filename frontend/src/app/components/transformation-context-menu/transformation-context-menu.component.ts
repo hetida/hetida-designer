@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ElementRef,
   Input,
   OnDestroy,
   ViewChild
@@ -28,7 +27,6 @@ export class TransformationContextMenuComponent
 {
   @ViewChild(MatMenuTrigger) readonly _trigger: MatMenuTrigger;
   @ViewChild(MatMenu) readonly _menu: MatMenu;
-  @ViewChild('invisibleTrigger') _elementRef: ElementRef;
   _isIncomplete: boolean;
   _isNotPublished: boolean;
   _isWorkflowWithoutIo: boolean;
@@ -60,7 +58,6 @@ export class TransformationContextMenuComponent
   ngAfterViewInit(): void {
     this.changeDetector.detectChanges();
     this._menu.hasBackdrop = false;
-    this._menu.focusFirstItem(this._elementRef.nativeElement);
     this._trigger.openMenu();
     this.changeDetector.detectChanges();
   }
