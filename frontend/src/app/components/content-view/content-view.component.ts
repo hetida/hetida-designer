@@ -19,7 +19,10 @@ import {
   TabItemWithTransformation
 } from '../../store/tab-item/tab-item.selectors';
 import { isComponentTransformation } from '../../model/transformation';
+import { selectAllTransformations } from 'src/app/store/transformation/transformation.selectors';
 import { QueryParameterService } from 'src/app/service/query-parameter/query-parameter.service';
+import { TabItemService } from 'src/app/service/tab-item/tab-item.service';
+import { NotificationService } from 'src/app/service/notifications/notification.service';
 
 const HOME_TAB = 0;
 
@@ -69,7 +72,9 @@ export class ContentViewComponent implements OnInit, OnDestroy {
   constructor(
     private readonly store: Store<IAppState>,
     private readonly popoverService: PopoverService,
-    private readonly queryParameterService: QueryParameterService
+    private readonly queryParameterService: QueryParameterService,
+    private readonly tabItemService: TabItemService,
+    private readonly notificationService: NotificationService
   ) {}
 
   private readonly _ngOnDestroyNotify = new Subject<void>();
@@ -106,6 +111,8 @@ export class ContentViewComponent implements OnInit, OnDestroy {
           this._selectedTabIndex = selectedTabItemIndex;
         }, 0);
       });
+
+    this.addTabsFromQueryParameters();
   }
 
   _trackBy(
@@ -150,5 +157,38 @@ export class ContentViewComponent implements OnInit, OnDestroy {
 
   _closePopover(): void {
     this.popoverService.closePopover();
+  }
+
+  private async addTabsFromQueryParameters(): Promise<void> {
+    const _transformationsNotify = new Subject<void>();
+    const ids = await this.queryParameterService.getIdsFromQueryParameters();
+
+    this.store
+      .select(selectAllTransformations)
+      .pipe(takeUntil(_transformationsNotify))
+      .subscribe(transformations => {
+        for (const id of ids) {
+          if (
+            transformations.find(transformation => transformation.id === id) !==
+            undefined
+          ) {
+            this.tabItemService.addTransformationTab(id);
+            // ngOnInit runs two times, on the first run the store is always empty, so we ignore missing transformations
+          } else if (transformations.length > 0) {
+            // only the first missing transformation triggers an pop-up message
+            this.notificationService.warn(
+              'Could not find transformation, see console for details.'
+            );
+            // to look after all missing transformations
+            console.warn(`Could not find transformation with id '${id}'`);
+          }
+        }
+
+        // closing the store subscription after getting transformations, to prevent re-trigger on store changes
+        if (transformations.length > 0) {
+          _transformationsNotify.next();
+          _transformationsNotify.complete();
+        }
+      });
   }
 }
