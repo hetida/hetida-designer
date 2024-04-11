@@ -30,6 +30,7 @@ def two_kafka_configs():
                 display_name="Test Kafka Config No 2",
                 topic="multi ts ingestion",
                 types=None,
+                consumable=True,
             ),
         },
     ) as _fixture:

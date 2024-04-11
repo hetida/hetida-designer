@@ -212,6 +212,12 @@ async def handle_message(
     logger.info(result_msg)
 
 
+def create_aiokafka_consumer(
+    topic: str, consumer_config: dict
+) -> aiokafka.AIOKafkaConsumer:
+    return aiokafka.AIOKafkaConsumer(topic, **(consumer_config))
+
+
 async def start_consumption_mode() -> None:
     # extract unique kafka_config from input wirings in respective config
 
@@ -219,9 +225,9 @@ async def start_consumption_mode() -> None:
         relevant_kafka_config_key,
         relevant_kafka_config,
         multi,
-    ) = extract_consumption_mode_config_info()
+    ) = extract_consumption_mode_config_info()  # may raise ValueError on invalid config
 
-    consumer = aiokafka.AIOKafkaConsumer(
+    consumer = create_aiokafka_consumer(
         relevant_kafka_config.topic, **(relevant_kafka_config.consumer_config)
     )
 
@@ -231,7 +237,6 @@ async def start_consumption_mode() -> None:
 
     assert consumption_mode_exec_base is not None  # noqa: S101 # for mypy
 
-    await consumer.start()
     logger.info(
         "Start consuming in kafka adapter consumption mode.\n"
         "kafka config key: "
@@ -241,6 +246,8 @@ async def start_consumption_mode() -> None:
         str(multi),
         consumption_mode_exec_base.json(indent=2),
     )
+    await consumer.start()
+
     msg_handling_exception_occured = False
     try:
         async for kafka_msg in consumer:
